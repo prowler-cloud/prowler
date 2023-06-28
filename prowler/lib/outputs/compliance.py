@@ -13,7 +13,9 @@ from prowler.lib.outputs.models import (
     Check_Output_CSV_CIS,
     Check_Output_CSV_ENS_RD2022,
     Check_Output_CSV_Generic_Compliance,
+    Check_Output_MITRE_ATTACK,
     generate_csv_fields,
+    unroll_list,
 )
 
 
@@ -51,7 +53,6 @@ def fill_compliance(output_options, finding, audit_info, file_descriptors):
                 and compliance.Version == "RD2022"
                 and "ens_rd2022_aws" in output_options.output_modes
             ):
-                compliance_output = "ens_rd2022_aws"
                 for requirement in compliance.Requirements:
                     requirement_description = requirement.Description
                     requirement_id = requirement.Id
@@ -88,7 +89,6 @@ def fill_compliance(output_options, finding, audit_info, file_descriptors):
                 if "cis_" + compliance.Version + "_aws" in str(
                     output_options.output_modes
                 ):
-                    compliance_output = "cis_" + compliance.Version + "_aws"
                     for requirement in compliance.Requirements:
                         requirement_description = requirement.Description
                         requirement_id = requirement.Id
@@ -158,7 +158,9 @@ def fill_compliance(output_options, finding, audit_info, file_descriptors):
                                 CheckId=finding.check_metadata.CheckID,
                             )
 
-                csv_header = generate_csv_fields(Check_Output_CSV_AWS_Well_Architected)
+                    csv_header = generate_csv_fields(
+                        Check_Output_CSV_AWS_Well_Architected
+                    )
 
             elif (
                 compliance.Framework == "ISO27001"
@@ -176,7 +178,7 @@ def fill_compliance(output_options, finding, audit_info, file_descriptors):
                     for requirement in compliance.Requirements:
                         requirement_description = requirement.Description
                         requirement_id = requirement.Id
-                        requirement.Name
+                        requirement_name = requirement.Name
                         for attribute in requirement.Attributes:
                             compliance_row = Check_Output_CSV_AWS_ISO27001_2013(
                                 Provider=finding.check_metadata.Provider,
@@ -185,6 +187,7 @@ def fill_compliance(output_options, finding, audit_info, file_descriptors):
                                 Region=finding.region,
                                 AssessmentDate=timestamp.isoformat(),
                                 Requirements_Id=requirement_id,
+                                Requirements_Name=requirement_name,
                                 Requirements_Description=requirement_description,
                                 Requirements_Attributes_Category=attribute.Category,
                                 Requirements_Attributes_Objetive_ID=attribute.Objetive_ID,
@@ -196,7 +199,60 @@ def fill_compliance(output_options, finding, audit_info, file_descriptors):
                                 CheckId=finding.check_metadata.CheckID,
                             )
 
-                csv_header = generate_csv_fields(Check_Output_CSV_AWS_ISO27001_2013)
+                    csv_header = generate_csv_fields(Check_Output_CSV_AWS_ISO27001_2013)
+
+            elif (
+                compliance.Framework == "MITRE-ATTACK"
+                and compliance.Version == ""
+                and compliance.Provider == "AWS"
+            ):
+                compliance_output = compliance.Framework
+                if compliance.Version != "":
+                    compliance_output += "_" + compliance.Version
+                if compliance.Provider != "":
+                    compliance_output += "_" + compliance.Provider
+
+                compliance_output = compliance_output.lower().replace("-", "_")
+                if compliance_output in output_options.output_modes:
+                    for requirement in compliance.Requirements:
+                        requirement_description = requirement.Description
+                        requirement_id = requirement.Id
+                        requirement_name = requirement.Name
+                        attributes_aws_services = ""
+                        attributes_categories = ""
+                        attributes_values = ""
+                        attributes_comments = ""
+                        for attribute in requirement.Attributes:
+                            attributes_aws_services += attribute.AWSService + "\n"
+                            attributes_categories += attribute.Category + "\n"
+                            attributes_values += attribute.Value + "\n"
+                            attributes_comments += attribute.Comment + "\n"
+                        compliance_row = Check_Output_MITRE_ATTACK(
+                            Provider=finding.check_metadata.Provider,
+                            Description=compliance.Description,
+                            AccountId=audit_info.audited_account,
+                            Region=finding.region,
+                            AssessmentDate=timestamp.isoformat(),
+                            Requirements_Id=requirement_id,
+                            Requirements_Description=requirement_description,
+                            Requirements_Name=requirement_name,
+                            Requirements_Tactics=unroll_list(requirement.Tactics),
+                            Requirements_SubTechniques=unroll_list(
+                                requirement.SubTechniques
+                            ),
+                            Requirements_Platforms=unroll_list(requirement.Platforms),
+                            Requirements_TechniqueURL=requirement.TechniqueURL,
+                            Requirements_Attributes_AWSServices=attributes_aws_services,
+                            Requirements_Attributes_Categories=attributes_categories,
+                            Requirements_Attributes_Values=attributes_values,
+                            Requirements_Attributes_Comments=attributes_comments,
+                            Status=finding.status,
+                            StatusExtended=finding.status_extended,
+                            ResourceId=finding.resource_id,
+                            CheckId=finding.check_metadata.CheckID,
+                        )
+
+                    csv_header = generate_csv_fields(Check_Output_MITRE_ATTACK)
 
             else:
                 compliance_output = compliance.Framework
@@ -230,7 +286,9 @@ def fill_compliance(output_options, finding, audit_info, file_descriptors):
                                 CheckId=finding.check_metadata.CheckID,
                             )
 
-                csv_header = generate_csv_fields(Check_Output_CSV_Generic_Compliance)
+                    csv_header = generate_csv_fields(
+                        Check_Output_CSV_Generic_Compliance
+                    )
 
             if compliance_row:
                 csv_writer = DictWriter(

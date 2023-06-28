@@ -265,7 +265,7 @@ def parse_json_tags(tags: list):
 def generate_csv_fields(format: Any) -> list[str]:
     """Generates the CSV headers for the given class"""
     csv_fields = []
-    # __fields__ is alwayis available in the Pydantic's BaseModel class
+    # __fields__ is always available in the Pydantic's BaseModel class
     for field in format.__dict__.get("__fields__").keys():
         csv_fields.append(field)
     return csv_fields
@@ -485,6 +485,33 @@ class Gcp_Check_Output_JSON(Check_Output_JSON):
 
     def __init__(self, **metadata):
         super().__init__(**metadata)
+
+
+class Check_Output_MITRE_ATTACK(BaseModel):
+    """
+    Check_Output_MITRE_ATTACK generates a finding's output in CSV MITRE ATTACK format.
+    """
+
+    Provider: str
+    Description: str
+    AccountId: str
+    Region: str
+    AssessmentDate: str
+    Requirements_Id: str
+    Requirements_Name: str
+    Requirements_Description: str
+    Requirements_Tactics: str
+    Requirements_SubTechniques: str
+    Requirements_Platforms: str
+    Requirements_TechniqueURL: str
+    Requirements_Attributes_AWSServices: str
+    Requirements_Attributes_Categories: str
+    Requirements_Attributes_Values: str
+    Requirements_Attributes_Comments: str
+    Status: str
+    StatusExtended: str
+    ResourceId: str
+    CheckId: str
 
 
 class Check_Output_CSV_ENS_RD2022(BaseModel):

@@ -1,16 +1,16 @@
 {
-  "Framework": "MITRE ATTACK",
+  "Framework": "MITRE-ATTACK",
   "Version": "",
   "Provider": "AWS",
   "Description": "MITRE ATT&CK® is a globally-accessible knowledge base of adversary tactics and techniques based on real-world observations. The ATT&CK knowledge base is used as a foundation for the development of specific threat models and methodologies in the private sector, in government, and in the cybersecurity product and service community.",
   "Requirements": [
     {
-      "TechniqueName": "Exploit Public-Facing Application",
-      "TechniqueId": "T1190",
+      "Name": "Exploit Public-Facing Application",
+      "Id": "T1190",
       "Tactics": [
         "Initial Access"
       ],
-      "Sub-techniques": [],
+      "SubTechniques": [],
       "Platforms": [
         "Containers",
         "IaaS",
@@ -83,12 +83,12 @@
       ]
     },
     {
-      "TechniqueName": "Trusted Relationship",
-      "TechniqueId": "T1199",
+      "Name": "Trusted Relationship",
+      "Id": "T1199",
       "Tactics": [
         "Initial Access"
       ],
-      "Sub-techniques": [],
+      "SubTechniques": [],
       "Platforms": [
         "Office 365",
         "IaaS",
@@ -114,15 +114,15 @@
       ]
     },
     {
-      "TechniqueName": "Valid Accounts",
-      "TechniqueId": "T1078",
+      "Name": "Valid Accounts",
+      "Id": "T1078",
       "Tactics": [
         "Defense Evasion",
         "Persistence",
         "Privilege Escalation",
         "Initial Access"
       ],
-      "Sub-techniques": [
+      "SubTechniques": [
         "T1078.001 - Default Accounts",
         "T1078.004 - Cloud Accounts"
       ],
@@ -187,37 +187,37 @@
           "AWSService": "AWS Config",
           "Category": "Protect",
           "Value": "Minimal",
-          "Comment": "This control provides significant coverage for one of this technique's sub-techniques, resulting in an overall score of Minimal."
+          "Comment": "This control provides significant coverage for one of this technique's SubTechniques, resulting in an overall score of Minimal."
         },
         {
           "AWSService": "AWS IAM",
           "Category": "Detect",
           "Value": "Partial",
-          "Comment": ""
+          "Comment": "This control provides detection capability for one of this technique's SubTechniques and some of its procedure examples resulting in an overall Partial protection score."
         },
         {
           "AWSService": "AWS IAM",
           "Category": "Protect",
           "Value": "Partial",
-          "Comment": ""
+          "Comment": "This control provides protection capability for one of this technique's SubTechniques and some of its procedure examples resulting in an overall Partial protection score."
         },
         {
           "AWSService": "AWS Single Sign-On",
           "Category": "Protect",
           "Value": "Partial",
-          "Comment": ""
+          "Comment": "This control provides protection capability for one of this technique's SubTechniques and some of its procedure examples resulting in an overall Partial protection score."
         },
         {
           "AWSService": "AWS IoT Device Defender",
           "Category": "Detect",
           "Value": "Minimal",
-          "Comment": "This control provides partial detection capability for one of this technique's sub-techniques and a few of its procedure examples resulting in an overall Minimal protection score."
+          "Comment": "This control provides partial detection capability for one of this technique's SubTechniques and a few of its procedure examples resulting in an overall Minimal protection score."
         },
         {
           "AWSService": "AWS IoT Device Defender",
           "Category": "Protect",
           "Value": "Minimal",
-          "Comment": "This control provides partial protection for one of this technique's sub-techniques and a few of its procedure examples resulting in an overall Minimal protection score."
+          "Comment": "This control provides partial protection for one of this technique's SubTechniques and a few of its procedure examples resulting in an overall Minimal protection score."
         },
         {
           "AWSService": "AWS Organizations",
@@ -229,23 +229,23 @@
           "AWSService": "AWS Security Hub",
           "Category": "Detect",
           "Value": "Minimal",
-          "Comment": "AWS Security Hub detects suspicious activity by AWS accounts which could indicate valid accounts being leveraged by an adversary. AWS Security Hub provides these detections with the following managed insights. AWS principals with suspicious access key activity Credentials that may have leaked AWS resources with unauthorized access attempts IAM users with suspicious activity. AWS Security Hub also performs checks from the AWS Foundations CIS Benchmark and PCI-DSS security standard that, if implemented, would help towards detecting the misuse of valid accounts. AWS Security Hub provides these detections with the following checks. 3.1 Ensure a log metric filter and alarm exist for unauthorized API calls 3.2 Ensure a log metric filter and alarm exist for Management Console sign-in without MFA 3.3 Ensure a log metric filter and alarm exist for usage of root account 3.4 Ensure a log metric filter and alarm exist for IAM policy changes 3.6 Ensure a log metric filter and alarm exist for AWS Management Console authentication failures [PCI.CW.1] A log metric filter and alarm should exist for usage of the root user. By monitoring the root account, activity where accounts make unauthorized API calls, and changes to IAM permissions among other things, it may be possible to detect valid accounts that are being misused and are potentially compromised. This is scored as Minimal because it only supports a subset of the sub-techniques (1 of 4)."
+          "Comment": "AWS Security Hub detects suspicious activity by AWS accounts which could indicate valid accounts being leveraged by an adversary. AWS Security Hub provides these detections with the following managed insights. AWS principals with suspicious access key activity Credentials that may have leaked AWS resources with unauthorized access attempts IAM users with suspicious activity. AWS Security Hub also performs checks from the AWS Foundations CIS Benchmark and PCI-DSS security standard that, if implemented, would help towards detecting the misuse of valid accounts. AWS Security Hub provides these detections with the following checks. 3.1 Ensure a log metric filter and alarm exist for unauthorized API calls 3.2 Ensure a log metric filter and alarm exist for Management Console sign-in without MFA 3.3 Ensure a log metric filter and alarm exist for usage of root account 3.4 Ensure a log metric filter and alarm exist for IAM policy changes 3.6 Ensure a log metric filter and alarm exist for AWS Management Console authentication failures [PCI.CW.1] A log metric filter and alarm should exist for usage of the root user. By monitoring the root account, activity where accounts make unauthorized API calls, and changes to IAM permissions among other things, it may be possible to detect valid accounts that are being misused and are potentially compromised. This is scored as Minimal because it only supports a subset of the SubTechniques (1 of 4)."
         },
         {
           "AWSService": "Amazon Cognito",
           "Category": "Protect",
           "Value": "Minimal",
-          "Comment": "This control provides partial protection for one of this technique's sub-techniques and a few of its procedure examples resulting in an overall Minimal protection score."
+          "Comment": "This control provides partial protection for one of this technique's SubTechniques and a few of its procedure examples resulting in an overall Minimal protection score."
         }
       ]
     },
     {
-      "TechniqueName": "Command and Scripting Interpreter",
-      "TechniqueId": "T1059",
+      "Name": "Command and Scripting Interpreter",
+      "Id": "T1059",
       "Tactics": [
         "Execution"
       ],
-      "Sub-techniques": [
+      "SubTechniques": [
         "T1059.009 - Cloud API"
       ],
       "Platforms": [
@@ -268,17 +268,17 @@
           "AWSService": "AWS WAF",
           "Category": "Protect",
           "Value": "Partial",
-          "Comment": "The AWS WAF protects web applications from injection attacks that leverage command and scripting interpreters. AWS WAF provides this protection via the following rule sets that block malicious traffic across a variety of operating systems and applications. AWSManagedRulesCommonRuleSet AWSManagedRulesSQLiRuleSet AWSManagedRulesUnixRuleSet AWSManagedRulesWindowsRuleSet AWSManagedRulesPHPRuleSet AWSManagedRulesWordPressRuleSet. This is given a score of Partial (instead of Minimal) because while it only protects against a subset of sub-techniques (3 out of 8), it does provide protections for command and scripting interpreters that do not have sub-techniques (SQL, PHP, etc.). Furthermore, it blocks the malicious content in near real-time."
+          "Comment": "The AWS WAF protects web applications from injection attacks that leverage command and scripting interpreters. AWS WAF provides this protection via the following rule sets that block malicious traffic across a variety of operating systems and applications. AWSManagedRulesCommonRuleSet AWSManagedRulesSQLiRuleSet AWSManagedRulesUnixRuleSet AWSManagedRulesWindowsRuleSet AWSManagedRulesPHPRuleSet AWSManagedRulesWordPressRuleSet. This is given a score of Partial (instead of Minimal) because while it only protects against a subset of SubTechniques (3 out of 8), it does provide protections for command and scripting interpreters that do not have SubTechniques (SQL, PHP, etc.). Furthermore, it blocks the malicious content in near real-time."
         }
       ]
     },
     {
-      "TechniqueName": "Serverless Execution",
-      "TechniqueId": "T1648",
+      "Name": "Serverless Execution",
+      "Id": "T1648",
       "Tactics": [
         "Execution"
       ],
-      "Sub-techniques": [],
+      "SubTechniques": [],
       "Platforms": [
         "IaaS",
         "Office 365",
@@ -303,12 +303,12 @@
       ]
     },
     {
-      "TechniqueName": "User Execution",
-      "TechniqueId": "T1204",
+      "Name": "User Execution",
+      "Id": "T1204",
       "Tactics": [
         "Execution"
       ],
-      "Sub-techniques": [
+      "SubTechniques": [
         "T1204.003 - Malicious Image"
       ],
       "Platforms": [
@@ -328,17 +328,17 @@
           "AWSService": "AWS Config",
           "Category": "Detect",
           "Value": "Minimal",
-          "Comment": "This control provides significant coverage for one of this technique's sub-techniques, resulting in an overall score of Minimal."
+          "Comment": "This control provides significant coverage for one of this technique's SubTechniques, resulting in an overall score of Minimal."
         }
       ]
     },
     {
-      "TechniqueName": "Account Manipulation",
-      "TechniqueId": "T1098",
+      "Name": "Account Manipulation",
+      "Id": "T1098",
       "Tactics": [
         "Persistence"
       ],
-      "Sub-techniques": [
+      "SubTechniques": [
         "T1098.001 - Additional Cloud Credentials",
         "T1098.003 - Additional Cloud Roles",
         "T1098.004 - SSH Authorized Keys"
@@ -371,7 +371,7 @@
           "AWSService": "AWS Config",
           "Category": "Protect",
           "Value": "Minimal",
-          "Comment": "This control provides significant coverage for one of this technique's sub-techniques, resulting in an overall score of Minimal."
+          "Comment": "This control provides significant coverage for one of this technique's SubTechniques, resulting in an overall score of Minimal."
         },
         {
           "AWSService": "AWS IAM",
@@ -383,7 +383,7 @@
           "AWSService": "AWS Security Hub",
           "Category": "Detect",
           "Value": "Minimal",
-          "Comment": "AWS Security Hub performs a check from the AWS Foundations CIS Benchmark that, if implemented, would help towards detecting the manipulation of accounts. AWS Security Hub provides this detection with the following check. 3.4 Ensure a log metric filter and alarm exist for IAM policy changes. This is scored as Minimal because it only supports a subset of the sub-techniques (1 of 4)."
+          "Comment": "AWS Security Hub performs a check from the AWS Foundations CIS Benchmark that, if implemented, would help towards detecting the manipulation of accounts. AWS Security Hub provides this detection with the following check. 3.4 Ensure a log metric filter and alarm exist for IAM policy changes. This is scored as Minimal because it only supports a subset of the SubTechniques (1 of 4)."
         },
         {
           "AWSService": "AWS GuardDuty",
@@ -394,12 +394,12 @@
       ]
     },
     {
-      "TechniqueName": "Create Account",
-      "TechniqueId": "T1136",
+      "Name": "Create Account",
+      "Id": "T1136",
       "Tactics": [
         "Persistence"
       ],
-      "Sub-techniques": [
+      "SubTechniques": [
         "T1136.003 - Cloud Account"
       ],
       "Platforms": [
@@ -422,18 +422,18 @@
           "AWSService": "AWS Config",
           "Category": "Protect",
           "Value": "Minimal",
-          "Comment": "This control provides partial coverage for one of this technique's sub-techniques, resulting in an overall score of Minimal."
+          "Comment": "This control provides partial coverage for one of this technique's SubTechniques, resulting in an overall score of Minimal."
         }
       ]
     },
     {
-      "TechniqueName": "Event Triggered Execution",
-      "TechniqueId": "T1546",
+      "Name": "Event Triggered Execution",
+      "Id": "T1546",
       "Tactics": [
         "Privilege Escalation",
         "Persistence"
       ],
-      "Sub-techniques": [],
+      "SubTechniques": [],
       "Platforms": [
         "Google Workspace",
         "IaaS",
@@ -448,13 +448,13 @@
       "Attributes": []
     },
     {
-      "TechniqueName": "Cloud Administration Command",
-      "TechniqueId": "T1651",
+      "Name": "Cloud Administration Command",
+      "Id": "T1651",
       "Tactics": [
         "Privilege Escalation",
         "Persistence"
       ],
-      "Sub-techniques": [],
+      "SubTechniques": [],
       "Platforms": [
         "Azure AD",
         "IaaS"
@@ -465,12 +465,12 @@
       "Attributes": []
     },
     {
-      "TechniqueName": "Implant Internal Image",
-      "TechniqueId": "T1525",
+      "Name": "Implant Internal Image",
+      "Id": "T1525",
       "Tactics": [
         "Persistence"
       ],
-      "Sub-techniques": [],
+      "SubTechniques": [],
       "Platforms": [
         "IaaS",
         "Containers"
@@ -490,14 +490,14 @@
       ]
     },
     {
-      "TechniqueName": "Modify Authentication Process",
-      "TechniqueId": "T1556",
+      "Name": "Modify Authentication Process",
+      "Id": "T1556",
       "Tactics": [
         "Credential Access",
         "Defense Evasion",
         "Persistence"
       ],
-      "Sub-techniques": [
+      "SubTechniques": [
         "T1556.006 - Multi-Factor Authentication",
         "T1556.007 - Hybrid Identity"
       ],
@@ -524,17 +524,17 @@
           "AWSService": "AWS IAM",
           "Category": "Protect",
           "Value": "Partial",
-          "Comment": "This control provides coverage for one of this technique's sub-techniques, resulting in an overall score of Partial. Enforce MFA in IAM Users."
+          "Comment": "This control provides coverage for one of this technique's SubTechniques, resulting in an overall score of Partial. Enforce MFA in IAM Users."
         }
       ]
     },
     {
-      "TechniqueName": "Impair Defenses",
-      "TechniqueId": "T1562",
+      "Name": "Impair Defenses",
+      "Id": "T1562",
       "Tactics": [
         "Defense Evasion"
       ],
-      "Sub-techniques": [
+      "SubTechniques": [
         "T1562.006 - Disable or Modify Tools",
         "T1562.007 - Disable or Modify Cloud Firewall",
         "T1562.008 - Disable Cloud Logs"
@@ -561,29 +561,29 @@
           "AWSService": "AWS Config",
           "Category": "Detect",
           "Value": "Minimal",
-          "Comment": "This control provides significant coverage for a minority of this technique's sub-techniques, resulting in an overall score of Minimal."
+          "Comment": "This control provides significant coverage for a minority of this technique's SubTechniques, resulting in an overall score of Minimal."
         },
         {
           "AWSService": "AWS IoT Device Defender",
           "Category": "Detect",
           "Value": "Minimal",
-          "Comment": "This control provides partial coverage for a minority of this technique's sub-techniques, resulting in an overall score of Minimal."
+          "Comment": "This control provides partial coverage for a minority of this technique's SubTechniques, resulting in an overall score of Minimal."
         },
         {
           "AWSService": "AWS IoT Device Defender",
           "Category": "Respond",
           "Value": "Minimal",
-          "Comment": "This control provides partial coverage for a minority of this technique's sub-techniques, resulting in an overall score of Minimal."
+          "Comment": "This control provides partial coverage for a minority of this technique's SubTechniques, resulting in an overall score of Minimal."
         }
       ]
     },
     {
-      "TechniqueName": "Modify Cloud Compute Infrastructure",
-      "TechniqueId": "T1578",
+      "Name": "Modify Cloud Compute Infrastructure",
+      "Id": "T1578",
       "Tactics": [
         "Defense Evasion"
       ],
-      "Sub-techniques": [
+      "SubTechniques": [
         "T1578.001 - Create Snapshot",
         "T1578.002 - Create Cloud Instance",
         "T1578.003 - Delete Cloud Instance",
@@ -611,12 +611,12 @@
       ]
     },
     {
-      "TechniqueName": "Unused/Unsupported Cloud Regions",
-      "TechniqueId": "T1535",
+      "Name": "Unused/Unsupported Cloud Regions",
+      "Id": "T1535",
       "Tactics": [
         "Defense Evasion"
       ],
-      "Sub-techniques": [],
+      "SubTechniques": [],
       "Platforms": [
         "IaaS"
       ],
@@ -628,13 +628,13 @@
       "Attributes": []
     },
     {
-      "TechniqueName": "Use Alternate Authentication Material",
-      "TechniqueId": "T1550",
+      "Name": "Use Alternate Authentication Material",
+      "Id": "T1550",
       "Tactics": [
         "Defense Evasion",
         "Lateral Movement"
       ],
-      "Sub-techniques": [
+      "SubTechniques": [
         "T1550.001 - Application Access Token",
         "T1550.004 - Web Session Cookie"
       ],
@@ -664,7 +664,7 @@
           "AWSService": "AWS IAM",
           "Category": "Protect",
           "Value": "Minimal",
-          "Comment": ""
+          "Comment": "This control provides significant coverage for one of this technique's SubTechniques, resulting in an overall score of Minimal."
         }
       ]
     }
