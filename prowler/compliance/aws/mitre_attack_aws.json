@@ -667,6 +667,214 @@
           "Comment": "This control provides significant coverage for one of this technique's SubTechniques, resulting in an overall score of Minimal."
         }
       ]
+    },
+    {
+      "Name": "Brute Force",
+      "Id": "T1110",
+      "Tactics": [
+        "Credential Access"
+      ],
+      "SubTechniques": [
+        "T1110.001 - Password Guessing",
+        "T1110.003 - Password Spraying",
+        "T1110.004 - Credential Stuffing"
+      ],
+      "Platforms": [
+        "Azure AD",
+        "Containers",
+        "Google Workspace",
+        "IaaS",
+        "Linux",
+        "Network",
+        "Office 365",
+        "SaaS",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Adversaries may use brute force techniques to gain access to accounts when passwords are unknown or when password hashes are obtained. Without knowledge of the password for an account or set of accounts, an adversary may systematically guess the password using a repetitive or iterative mechanism. Brute forcing passwords can take place via interaction with a service that will check the validity of those credentials or offline against previously acquired credential data, such as password hashes.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1110/",
+      "Checks": [
+        "guardduty_is_enabled",
+        "config_recorder_all_regions_enabled",
+        "iam_disable_30_days_credentials",
+        "iam_password_policy_expires_passwords_within_90_days_or_less",
+        "iam_password_policy_lowercase",
+        "iam_password_policy_minimum_length_14",
+        "iam_password_policy_number",
+        "iam_password_policy_reuse_24",
+        "iam_password_policy_symbol",
+        "iam_password_policy_uppercase",
+        "iam_root_hardware_mfa_enabled",
+        "iam_root_mfa_enabled",
+        "iam_rotate_access_key_90_days",
+        "iam_user_hardware_mfa_enabled",
+        "iam_user_mfa_enabled_console_access",
+        "securityhub_enabled",
+        "inspector2_findings_exist"
+      ],
+      "Attributes": [
+        {
+          "AWSService": "AWS Config",
+          "Category": "Protect",
+          "Value": "Significant",
+          "Comment": "This control provides significant coverage for all of this technique's sub-techniques, resulting in an overall score of Significant."
+        },
+        {
+          "AWSService": "AWS IAM",
+          "Category": "Protect",
+          "Value": "Significant",
+          "Comment": "This control provides significant coverage for all of this technique's sub-techniques, resulting in an overall score of Significant."
+        },
+        {
+          "AWSService": "AWS Single Sign-On",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "This control may not provide any mitigation against password cracking."
+        },
+        {
+          "AWSService": "Amazon Cognito",
+          "Category": "Protect",
+          "Value": "Significant",
+          "Comment": "Amazon Cognito's MFA capability provides significant protection against password compromises, requiring the adversary to complete an additional authentication method before their access is permitted."
+        },
+        {
+          "AWSService": "AWS Security Hub",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "AWS Security Hub performs a check from the AWS Foundations CIS Benchmark that, if implemented, would help towards detecting the brute forcing of accounts. AWS Security Hub provides this detection with the following checks. 3.6 Ensure a log metric filter and alarm exist for AWS Management Console authentication failures. This is scored as Minimal because it only applies to the AWS Management Console and not other access mechanisms (e.g., CLI, SDK, etc.) and it only supports a subset of the sub-techniques (3 of 4). Furthermore, it does not detect brute-forcing methods for other components such as EC2 instances."
+        },
+        {
+          "AWSService": "AWS GuardDuty",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "Finding types such as UnauthorizedAccess:EC2/RDPBruteForce, UnauthorizedAccess:EC2/SSHBruteForce, Impact:EC2/WinRMBruteForce, and Stealth:IAMUser/PasswordPolicyChange can detect when an EC2 instance may be involved in a brute force attack aimed at obtaining passwords. Due to the detection being limited to a specific set of application protocols, its coverage is Minimal resulting in a Minimal score."
+        },
+        {
+          "AWSService": "Amazon Inspector",
+          "Category": "Protect",
+          "Value": "Minimal",
+          "Comment": "The Amazon Inspector Best Practices assessment package can detect security control settings related to authentication and password policies on Linux endpoints. Specific security controls it can assess include 'Disable password authentication over SSH', 'Configure password maximum age', 'Configure password minimum length', and 'Configure password complexity' all of which impact the ability to brute force a password. This information can be used identify insecure configurations and harden the endpoints. Amazon Inspector does not directly protect against brute force attacks. Given Amazon Inspector can only assess these security controls on Linux platforms (although it also supports Windows), the coverage score is Minimal leading to an overall Minimal score."
+        }
+      ]
+    },
+    {
+      "Name": "Forge Web Credentials",
+      "Id": "T1606",
+      "Tactics": [
+        "Credential Access"
+      ],
+      "SubTechniques": [
+        "T1606.001 - Web Cookies",
+        "T1606.002 - SAML Tokens"
+      ],
+      "Platforms": [
+        "Azure AD",
+        "Google Workspace",
+        "IaaS",
+        "Linux",
+        "Office 365",
+        "SaaS",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Adversaries may forge credential materials that can be used to gain access to web applications or Internet services. Web applications and services (hosted in cloud SaaS environments or on-premise servers) often use session cookies, tokens, or other materials to authenticate and authorize user access.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1606/",
+      "Checks": [
+        "iam_no_custom_policy_permissive_role_assumption",
+        "iam_policy_allows_privilege_escalation"
+      ],
+      "Attributes": [
+        {
+          "AWSService": "AWS IAM",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "Limit IAM permissions from calling the sts:GetFederationToken API unless explicitly required, in accordance with least privilege."
+        }
+      ]
+    },
+    {
+      "Name": "Multi-Factor Authentication Request Generation",
+      "Id": "T1621",
+      "Tactics": [
+        "Credential Access"
+      ],
+      "SubTechniques": [],
+      "Platforms": [
+        "Azure AD",
+        "Google Workspace",
+        "IaaS",
+        "Linux",
+        "Office 365",
+        "SaaS",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Adversaries may attempt to bypass multi-factor authentication (MFA) mechanisms and gain access to accounts by generating MFA requests sent to users.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1621/",
+      "Checks": [],
+      "Attributes": []
+    },
+    {
+      "Name": "Network Sniffing",
+      "Id": "T1040",
+      "Tactics": [
+        "Credential Access",
+        "Discovery"
+      ],
+      "SubTechniques": [],
+      "Platforms": [
+        "IaaS",
+        "Linux",
+        "Network",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Adversaries may sniff network traffic to capture information about an environment, including authentication material passed over the network. Network sniffing refers to using the network interface on a system to monitor or capture information sent over a wired or wireless connection. An adversary may place a network interface into promiscuous mode to passively access data in transit over the network, or use span ports to capture a larger amount of data.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1040/",
+      "Checks": [
+        "iam_no_custom_policy_permissive_role_assumption",
+        "iam_policy_allows_privilege_escalation",
+        "iam_customer_attached_policy_no_administrative_privileges",
+        "iam_root_hardware_mfa_enabled",
+        "iam_root_mfa_enabled",
+        "iam_user_hardware_mfa_enabled",
+        "iam_user_mfa_enabled_console_access",
+        "cloudwatch_log_group_kms_encryption_enabled",
+        "rds_instance_transport_encrypted",
+        "config_recorder_all_regions_enabled"
+      ],
+      "Attributes": [
+        {
+          "AWSService": "AWS CloudWatch",
+          "Category": "Protect",
+          "Value": "Significant",
+          "Comment": "AWS CloudWatch uses TLS/SSL connections to communicate with other AWS resources which protects against network sniffing attacks. As a result, this mapping is given a score of Significant."
+        },
+        {
+          "AWSService": "AWS RDS",
+          "Category": "Protect",
+          "Value": "Significant",
+          "Comment": "AWS RDS and AWS RDS Proxy support TLS/SSL connections to database instances which protects against network sniffing attacks. As a result, this mapping is given a score of Significant."
+        },
+        {
+          "AWSService": "Amazon Virtual Private Cloud",
+          "Category": "Protect",
+          "Value": "Significant",
+          "Comment": "The VPC service's support for the AWS Virtual Private Network (VPN) can be used to encrypt traffic traversing over untrusted networks which can prevent information from being gathered via network sniffing."
+        },
+        {
+          "AWSService": "AWS IoT Device Defender",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "The following AWS IoT Device Defender audit checks and corresponding mitigation actions can identify and resolve configuration problems that should be fixed in order to ensure SSL/TLS encryption is enabled and secure to protect network traffic to/from IoT devices: 'CA certificate expiring' ('CA_CERTIFICATE_EXPIRING_CHECK' in the CLI and API), 'CA certificate key quality' ('CA_CERTIFICATE_KEY_QUALITY_CHECK' in the CLI and API), and 'CA certificate revoked but device certificates still active' ('REVOKED_CA_CERTIFICATE_STILL_ACTIVE_CHECK' in the CLI and API) can identify problems with certificate authority (CA) certificates being used for signing and support the 'UPDATE_CA_CERTIFICATE' mitigation action which can resolve them. 'Device certificate expiring' ('DEVICE_CERTIFICATE_EXPIRING_CHECK' in the CLI and API), 'Device certificate key quality' ('DEVICE_CERTIFICATE_KEY_QUALITY_CHECK' in the CLI and API), 'Device certificate shared' ('DEVICE_CERTIFICATE_SHARED_CHECK' in the CLI and API), and 'Revoked device certificate still active' ('REVOKED_DEVICE_CERTIFICATE_STILL_ACTIVE_CHECK' in the CLI and API) can identify problems with IoT devices' certificates and support the 'UPDATE_DEVICE_CERTIFICATE' and 'ADD_THINGS_TO_THING_GROUP' mitigation actions which can resolve them. Coverage factor is partial for these checks and mitigations, since they are specific to IoT device communication and can only mitigate behavior for adversaries who are unable to decrypt the relevant traffic, resulting in an overall score of Partial."
+        },
+        {
+          "AWSService": "AWS Config",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "The following AWS Config managed rules can identify configuration problems that should be fixed in order to ensure SSL/TLS encryption is enabled to protect network traffic: 'acm-certificate-expiration-check' for nearly expired certificates in AWS Certificate Manager (ACM); 'alb-http-to-https-redirection-check' for Application Load Balancer (ALB) HTTP listeners; 'api-gw-ssl-enabled' for API Gateway REST API stages; 'cloudfront-custom-ssl-certificate', 'cloudfront-sni-enabled', and 'cloudfront-viewer-policy-https', for Amazon CloudFront distributions; 'elb-acm-certificate-required', 'elb-custom-security-policy-ssl-check', 'elb-predefined-security-policy-ssl-check', and 'elb-tls-https-listeners-only' for Elastic Load Balancing (ELB) Classic Load Balancer listeners; 'redshift-require-tls-ssl' for Amazon Redshift cluster connections to SQL clients; 's3-bucket-ssl-requests-only' for requests for S3 bucket contents; and 'elasticsearch-node-to-node-encryption-check' for Amazon ElasticSearch Service node-to-node communications. The following AWS Config managed rules can identify configuration problems that should be fixed in order to ensure that private traffic is routed securely and only within VPCs rather than on the public Internet: 'api-gw-endpoint-type-check' for Amazon API Gateway APIs, 'elasticsearch-in-vpc-only' for Amazon ElasticSearch Service domains, and 'redshift-enhanced-vpc-routing-enabled' for Amazon Redshift cluster traffic. All of these are run on configuration changes except 'alb-http-to-https-redirection-check' and 'elasticsearch-in-vpc-only', which are run periodically. Coverage factor is partial for these rules, since they are specific to a subset of the available AWS services and can only mitigate behavior for adversaries who are unable to decrypt the relevant traffic and/or do not have access to traffic within the relevant VPCs, resulting in an overall score of Partial."
+        }
+      ]
     }
   ]
 }
