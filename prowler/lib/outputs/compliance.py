@@ -53,6 +53,7 @@ def fill_compliance(output_options, finding, audit_info, file_descriptors):
                 and compliance.Version == "RD2022"
                 and "ens_rd2022_aws" in output_options.output_modes
             ):
+                compliance_output = "ens_rd2022_aws"
                 for requirement in compliance.Requirements:
                     requirement_description = requirement.Description
                     requirement_id = requirement.Id
@@ -85,10 +86,9 @@ def fill_compliance(output_options, finding, audit_info, file_descriptors):
             elif compliance.Framework == "CIS" and "cis_" in str(
                 output_options.output_modes
             ):
+                compliance_output = "cis_" + compliance.Version + "_aws"
                 # Only with the version of CIS that was selected
-                if "cis_" + compliance.Version + "_aws" in str(
-                    output_options.output_modes
-                ):
+                if compliance_output in str(output_options.output_modes):
                     for requirement in compliance.Requirements:
                         requirement_description = requirement.Description
                         requirement_id = requirement.Id

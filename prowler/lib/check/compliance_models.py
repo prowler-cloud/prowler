@@ -166,7 +166,7 @@ class Compliance_Base_Model(BaseModel):
     Provider: str
     Version: Optional[str]
     Description: str
-    Requirements: list[Union[Compliance_Requirement, Mitre_Requirement]]
+    Requirements: list[Union[Mitre_Requirement, Compliance_Requirement]]
 
     @root_validator(pre=True)
     # noqa: F841 - since vulture raises unused variable 'cls'

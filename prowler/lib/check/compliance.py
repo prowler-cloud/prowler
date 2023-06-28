@@ -1,4 +1,3 @@
-import copy
 import sys
 
 from pydantic import parse_obj_as
@@ -18,13 +17,10 @@ def update_checks_metadata_with_compliance(
             for framework in bulk_compliance_frameworks.values():
                 for requirement in framework.Requirements:
                     compliance_requirements = []
-                    requirement_copy = copy.deepcopy(requirement)
                     # Verify if check is in the requirement
                     if check in requirement.Checks:
-                        # For the check metadata we don't need the "Checks" key
-                        delattr(requirement_copy, "Checks")
-                        # Include the requirment into the check's framework requirements
-                        compliance_requirements.append(requirement_copy)
+                        # Include the requirement into the check's framework requirements
+                        compliance_requirements.append(requirement)
                         # Create the Compliance_Model
                         compliance = Compliance_Base_Model(
                             Framework=framework.Framework,
