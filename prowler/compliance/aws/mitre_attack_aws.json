@@ -57,7 +57,7 @@
           "Comment": "AWS RDS supports the replication and recovery of database instances. In the event that a database instance is compromised, AWS RDS can be used to restore the database instance to a previous point in time. As a result, this mapping is given a score of Significant."
         },
         {
-          "AWSService": "AWS GuardDuty",
+          "AWSService": "Amazon GuardDuty",
           "Category": "Detect",
           "Value": "Minimal",
           "Comment": "There is a GuardDuty finding type that captures when vulnerable publicly facing resources are leveraged to capture data not intended to be viewable (e.g., IAM credentials associated with the resource). UnauthorizedAccess:EC2/MetadataDNSRebind - This finding type only detects MetadataDNSRebind and is more focused on the EC2 instance and not the application running on the instance itself resulting in Minimal coverage."
@@ -178,7 +178,7 @@
       ],
       "Attributes": [
         {
-          "AWSService": "AWS GuardDuty",
+          "AWSService": "Amazon GuardDuty",
           "Category": "Detect",
           "Value": "Partial",
           "Comment": "GuardDuty implements a finding that flags occurrences unattended behavior from an IAM User in the Account. PenTest:IAMUser/KaliLinux, PenTest:IAMUser/ParrotLinux, PenTest:IAMUser/PentooLinux, Policy:IAMUser/RootCredentialUsage, PrivilegeEscalation:IAMUser/AdministrativePermissions, UnauthorizedAccess:IAMUser/ConsoleLogin, UnauthorizedAccess:IAMUser/ConsoleLoginSuccess.B, UnauthorizedAccess:IAMUser/MaliciousIPCaller, UnauthorizedAccess:IAMUser/MaliciousIPCaller.Custom, UnauthorizedAccess:IAMUser/TorIPCaller, Policy:S3/AccountBlockPublicAccessDisabled, Policy:S3/BucketAnonymousAccessGranted, Policy:S3/BucketBlockPublicAccessDisabled, Policy:S3/BucketPublicAccessGranted, CredentialAccess:IAMUser/AnomalousBehavior, DefenseEvasion:IAMUser/AnomalousBehavior, Discovery:IAMUser/AnomalousBehavior, Exfiltration:IAMUser/AnomalousBehavior, Impact:IAMUser/AnomalousBehavior, Persistence:IAMUser/AnomalousBehavior, Recon:IAMUser/MaliciousIPCaller, Recon:IAMUser/MaliciousIPCaller.Custom, UnauthorizedAccess:IAMUser/InstanceCredentialExfiltration."
@@ -386,7 +386,7 @@
           "Comment": "AWS Security Hub performs a check from the AWS Foundations CIS Benchmark that, if implemented, would help towards detecting the manipulation of accounts. AWS Security Hub provides this detection with the following check. 3.4 Ensure a log metric filter and alarm exist for IAM policy changes. This is scored as Minimal because it only supports a subset of the SubTechniques (1 of 4)."
         },
         {
-          "AWSService": "AWS GuardDuty",
+          "AWSService": "Amazon GuardDuty",
           "Category": "Detect",
           "Value": "Partial",
           "Comment": "GuardDuty has a finding types that flag events where an adversary may have compromised an AWS IAM User. Finding Type: Persistence:IAMUser/AnomalousBehavior."
@@ -744,7 +744,7 @@
           "Comment": "AWS Security Hub performs a check from the AWS Foundations CIS Benchmark that, if implemented, would help towards detecting the brute forcing of accounts. AWS Security Hub provides this detection with the following checks. 3.6 Ensure a log metric filter and alarm exist for AWS Management Console authentication failures. This is scored as Minimal because it only applies to the AWS Management Console and not other access mechanisms (e.g., CLI, SDK, etc.) and it only supports a subset of the sub-techniques (3 of 4). Furthermore, it does not detect brute-forcing methods for other components such as EC2 instances."
         },
         {
-          "AWSService": "AWS GuardDuty",
+          "AWSService": "Amazon GuardDuty",
           "Category": "Detect",
           "Value": "Minimal",
           "Comment": "Finding types such as UnauthorizedAccess:EC2/RDPBruteForce, UnauthorizedAccess:EC2/SSHBruteForce, Impact:EC2/WinRMBruteForce, and Stealth:IAMUser/PasswordPolicyChange can detect when an EC2 instance may be involved in a brute force attack aimed at obtaining passwords. Due to the detection being limited to a specific set of application protocols, its coverage is Minimal resulting in a Minimal score."
@@ -946,7 +946,7 @@
           "Comment": "This control is relevant for credentials stored in applications or configuration files but not credentials entered directly by a user."
         },
         {
-          "AWSService": "AWS GuardDuty",
+          "AWSService": "Amazon GuardDuty",
           "Category": "Detect",
           "Value": "Minimal",
           "Comment": "This control provides minimal to partial coverage for a minority of this technique's sub-techniques, and without specific coverage for its procedures, resulting in an overall score of Minimal."
@@ -993,7 +993,7 @@
           "Comment": "AWS Network Firewall has the ability to pass, drop, or alert on traffic based on the network protocol as well as perform deep packet inspection on the payload. This functionality can be used to block adversaries from accessing resources from which to exfiltrate data as well as prevent resources from communicating with known-bad IP addresses and domains that might be used to receive exfiltrated data. This mapping is given a score of Partial because the known-bad IP addresses and domains would need to be known in advance and AWS Network Firewall wouldn't have deep packet inspection visibility into encrypted non-C2 protocols."
         },
         {
-          "AWSService": "AWS GuardDuty",
+          "AWSService": "Amazon GuardDuty",
           "Category": "Detect",
           "Value": "Partial",
           "Comment": "The following GuardDuty finding type flags events where adversaries may steal data by exfiltrating it over a different protocol than that of the existing command-and-control channel. Trojan:EC2/DNSDataExfiltration Behavior:EC2/TrafficVolumeUnusual."
@@ -1033,6 +1033,614 @@
           "Category": "Detect",
           "Value": "Minimal",
           "Comment": "The following Macie findings can detect attempts to replicate data objects from a monitored bucket to an Amazon Web Services account that isn't part of your organization: Policy:IAMUser/S3BucketReplicatedExternally Policy:IAMUser/S3BucketSharedExternally. This type of detection is limited to only the S3 storage type and not other storage types available on the platform (such as file or block storage) and therefore has Minimal coverage resulting in a Minimal score."
+        }
+      ]
+    },
+    {
+      "Name": "Automated Collection",
+      "Id": "T1119",
+      "Tactics": [
+        "Collection"
+      ],
+      "SubTechniques": [],
+      "Platforms": [
+        "IaaS",
+        "Linux",
+        "SaaS",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Once established within a system or network, an adversary may use automated techniques for collecting internal data. Methods for performing this technique could include use of a Command and Scripting Interpreter to search for and copy information fitting set criteria such as file type, location, or name at specific time intervals. In cloud-based environments, adversaries may also use cloud APIs, command line interfaces, or extract, transform, and load (ETL) services to automatically collect data. This functionality could also be built into remote access tools.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1119/",
+      "Checks": [
+        "config_recorder_all_regions_enabled",
+        "ec2_ebs_default_encryption",
+        "ec2_ebs_snapshots_encrypted",
+        "ec2_ebs_volume_encryption",
+        "s3_bucket_default_encryption",
+        "rds_instance_storage_encrypted"
+      ],
+      "Attributes": [
+        {
+          "AWSService": "AWS Config",
+          "Category": "Protect",
+          "Value": "Minimal",
+          "Comment": "The following AWS Config managed rules can identify configuration problems that should be fixed in order to ensure that storage volumes are encrypted, which may mitigate adversary attempts to automate collection within cloud environments: 'ec2-ebs-encryption-by-default' which is run periodically and 'encrypted-volumes' which is run on configuration changes. Coverage factor is minimal for these rules, since they are specific to EBS volumes and will only prevent certain forms of collection since adversaries with access to mounted volumes may be able to decrypt their contents, resulting in an overall score of Minimal."
+        }
+      ]
+    },
+    {
+      "Name": "Data from Cloud Storage",
+      "Id": "T1530",
+      "Tactics": [
+        "Collection"
+      ],
+      "SubTechniques": [],
+      "Platforms": [
+        "IaaS",
+        "SaaS"
+      ],
+      "Description": "Adversaries may collect sensitive data from these cloud storage solutions. Providers typically offer security guides to help end users configure systems, though misconfigurations are a common problem.[5][6][7] There have been numerous incidents where cloud storage has been improperly secured, typically by unintentionally allowing public access to unauthenticated users, overly-broad access by all users, or even access for any anonymous person outside the control of the Identity Access Management system without even needing basic user permissions.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1530/",
+      "Checks": [
+        "config_recorder_all_regions_enabled",
+        "s3_account_level_public_access_blocks",
+        "s3_bucket_public_access",
+        "s3_bucket_level_public_access_block",
+        "emr_cluster_publicly_accesible",
+        "rds_snapshots_public_access",
+        "rds_instance_no_public_access",
+        "sagemaker_notebook_instance_without_direct_internet_access_configured",
+        "dynamodb_accelerator_cluster_encryption_enabled",
+        "dynamodb_tables_kms_cmk_encryption_enabled",
+        "efs_encryption_at_rest_enabled",
+        "efs_not_publicly_accessible",
+        "rds_instance_storage_encrypted",
+        "rds_instance_transport_encrypted",
+        "s3_bucket_default_encryption",
+        "sns_topics_kms_encryption_at_rest_enabled",
+        "redshift_cluster_public_access",
+        "sagemaker_notebook_instance_encryption_enabled",
+        "sagemaker_training_jobs_intercontainer_encryption_enabled",
+        "networkfirewall_in_all_vpc",
+        "securityhub_enabled",
+        "macie_is_enabled"
+      ],
+      "Attributes": [
+        {
+          "AWSService": "AWS Config",
+          "Category": "Protect",
+          "Value": "Significant",
+          "Comment": "The following AWS Config managed rules can identify configuration problems that should be fixed in order to prevent malicious access of data within Amazon Simple Storage Service (S3) storage: 's3-account-level-public-access-blocks', 's3-bucket-level-public-access-prohibited', 's3-bucket-public-read-prohibited', 's3-bucket-policy-not-more-permissive', 'cloudfront-origin-access-identity-enabled', and 'cloudfront-default-root-object-configured' identify objects that are publicly available or subject to overly permissive access policies; 's3-bucket-blacklisted-actions-prohibited' checks whether bucket policies prohibit disallowed actions for principals from other AWS accounts; and 's3-bucket-policy-grantee-check' checks whether bucket policies appropriately control which AWS principals, federated users, service principals, IP addresses, and VPCs have access. All of these controls are run on configuration changes. The following AWS Config managed rules can identify configuration problems that should be fixed in order to prevent malicious access of data from other AWS services: 'dms-replication-not-public' for AWS Database Migration Service; 'emr-master-no-public-ip' for Amazon Elastic MapReduce (EMR); 'rds-cluster-iam-authentication-enabled', 'rds-instance-iam-authentication-enabled', 'rds-instance-public-access-check' and 'rds-snapshots-public-prohibited' for Amazon Relational Database Service; 'redshift-cluster-public-access-check' for Amazon Redshift; and 'sagemaker-notebook-no-direct-internet-access' for SageMaker. The following AWS Config managed rules can identify configuration problems that should be fixed in order to ensure that cloud storage data are encrypted to prevent malicious access: 'dax-encryption-enabled', 'dynamodb-table-encrypted-kms', and 'dynamodb-table-encryption-enabled' for Amazon DynamoDB table contents; 'efs-encrypted-check' for Amazon Elastic File System (EFS) file systems; 'elasticsearch-encrypted-at-rest' for Elasticsearch Service (ES) domains; 'rds-snapshot-encrypted' and 'rds-storage-encrypted' for Amazon Relational Database Service; 's3-bucket-server-side-encryption-enabled' and 's3-default-encryption-kms' for S3 storage; 'sns-encrypted-kms' for Amazon Simple Notification Service (SNS); 'redshift-cluster-configuration-check' and 'redshift-cluster-kms-enabled' for Redshift clusters; 'sagemaker-endpoint-configuration-kms-key-configured' and 'sagemaker-notebook-instance-kms-key-configured' for SageMaker. These rules provide a wide range of coverage for many AWS services, especially those most significant to procedures for this technique, resulting in an overall score of Significant."
+        },
+        {
+          "AWSService": "AWS IoT Device Defender",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "The following AWS IoT Device Defender cloud-side detection metrics can detect indicators that an adversary may be leveraging compromised AWS IoT devices and the Message Queuing Telemetry Transport (MQTT) protocol for unauthorized data transfer from cloud-side data sources: 'Source IP' ('aws:source-ip-address') values outside of expected IP address ranges may suggest that a device has been stolen. 'Messages sent' ('aws:num-messages-sent'), 'Messages received' ('aws:num-messages-received'), and 'Message size' ('aws:message-byte-size') values outside of expected norms may indicate that devices are sending and/or receiving non-standard traffic, which may include data retrieved from cloud storage. The following AWS IoT Device Defender device-side detection metrics can detect indicators that an adversary may be leveraging compromised AWS IoT devices and the Message Queuing Telemetry Transport (MQTT) protocol for unauthorized data transfer from cloud-side data sources: 'Bytes in' ('aws:all-bytes-in'), 'Bytes out' ('aws:all-bytes-out'), 'Packets in' ('aws:all-packets-in'), and 'Packets out' ('aws:all-packets-out') values outside of expected norms may indicate that devices are sending and/or receiving non-standard traffic, which may include data retrieved from cloud storage. Coverage factor is partial, since these metrics are limited to IoT device-based collection, resulting in an overall score of Partial."
+        },
+        {
+          "AWSService": "AWS Network Firewall",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "AWS Network Firewall has the ability to pass, drop, or alert on traffic based on the network protocol as well as perform deep packet inspection on the payload. This functionality can be used to block adversaries from accessing resources such as cloud storage objects by implementing restrictions on which IP addresses and domains can access the resources (e.g., allow lists). However, since cloud storage objects are located outside the virtual private cloud where the AWS Network Firewall protects, the mapping is only given a score of Partial."
+        },
+        {
+          "AWSService": "AWS RDS",
+          "Category": "Protect",
+          "Value": "Significant",
+          "Comment": "AWS RDS supports the encryption of the underlying storage for database instances, backups, read replicas, and snapshots using the AES-256 encryption algorithm. This can protect against an adversary from gaining access to a database instance in the event they get access to the underlying system where the database instance is hosted or to S3 where the backups are stored. Furthermore, with AWS RDS, there is a setting that specifies whether or not a database instances is publicly accessible. When public accessibility is turned off, the database instance will not be available outside the VPC in which it was created. As a result, this mapping is given a score of Significant."
+        },
+        {
+          "AWSService": "AWS S3",
+          "Category": "Protect",
+          "Value": "Significant",
+          "Comment": "S3 provides full control of access via Identity and Access Management (IAM) policies and with its access control lists (ACLs). The S3 Block Public Access feature allows for policies limiting public access to Amazon S3 resources that are enforced regardless of how the resources are created or associated IAM policies. Server-side encryption can be enabled for data at rest and allows for use of S3-managed keys, AWS Key Management Service managed keys, or customer-provided keys."
+        },
+        {
+          "AWSService": "AWS Security Hub",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "AWS Security Hub detects improperly secured data from S3 buckets such as public read and write access that may result in an adversary getting access to data in cloud storage. AWS Security Hub provides this detection with the following managed insight. S3 buckets with public write or read permissions. AWS Security Hub also performs checks from the AWS Foundations CIS Benchmark that, if implemented, would help towards detecting improperly secured S3 buckets which could result in them being discovered. AWS Security Hub provides this detection with the following check. 3.8 Ensure a log metric filter and alarm exist for S3 bucket policy changes. This is scored as Partial because it only detects when S3 buckets have public read or write access and doesn't detect improperly secured data in other storage types (e.g., DBs, NFS, etc.)."
+        },
+        {
+          "AWSService": "Amazon GuardDuty",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "The following GuardDuty finding types flag events where adversaries may have access data objects from improperly secured cloud storage. UnauthorizedAccess:S3/MaliciousIPCaller.Custom UnauthorizedAccess:S3/TorIPCaller Impact:S3/MaliciousIPCaller Exfiltration:S3/MaliciousIPCaller Exfiltration:S3/ObjectRead.Unusual PenTest:S3/KaliLinux PenTest:S3/ParrotLinux PenTest:S3/PentooLinux UnauthorizedAccess:S3/MaliciousIPCaller.Custom UnauthorizedAccess:S3/TorIPCaller."
+        },
+        {
+          "AWSService": "Amazon Macie",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "The following Macie findings can detect the collection of data from S3 buckets: Policy:IAMUser/S3BlockPublicAccessDisabled Policy:IAMUser/S3BucketEncryptionDisabled Policy:IAMUser/S3BucketPublic Policy:IAMUser/S3BucketReplicatedExternally Policy:IAMUser/S3BucketSharedExternally. This type of detection is limited to only the S3 storage type and not other storage types available on the platform (such as file or block storage) and therefore has Minimal coverage resulting in a Minimal score."
+        },
+        {
+          "AWSService": "Amazon Macie",
+          "Category": "Protect",
+          "Value": "Minimal",
+          "Comment": "The following Macie findings can protect against collection of sensitive data from S3 buckets: SensitiveData:S3Object/Credentials SensitiveData:S3Object/CustomIdentifier SensitiveData:S3Object/Financial SensitiveData:S3Object/Multiple SensitiveData:S3Object/Personal. The ability to discover this type of sensitive data stored in a bucket may lead to hardening steps or removing the data altogether which would prevent an adversary from being able to collect the data. This type of protection is limited to only the S3 storage type and not other storage types available on the platform (such as file or block storage) and therefore has Minimal coverage resulting in a Minimal score."
+        }
+      ]
+    },
+    {
+      "Name": "Data from Information Repositories",
+      "Id": "T1213",
+      "Tactics": [
+        "Collection"
+      ],
+      "SubTechniques": [],
+      "Platforms": [
+        "Google Workspace",
+        "IaaS",
+        "Linux",
+        "Office 365",
+        "SaaS",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Adversaries may leverage information repositories to mine valuable information. Information repositories are tools that allow for storage of information, typically to facilitate collaboration or information sharing between users, and can store a wide variety of data that may aid adversaries in further objectives, or direct access to the target information. Adversaries may also abuse external sharing features to share sensitive documents with recipients outside of the organization.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1213/",
+      "Checks": [],
+      "Attributes": []
+    },
+    {
+      "Name": "Data from Cloud Storage",
+      "Id": "T1074",
+      "Tactics": [
+        "Collection"
+      ],
+      "SubTechniques": [
+        "T1074.002 - Remote Data Staging"
+      ],
+      "Platforms": [
+        "IaaS",
+        "Linux",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Adversaries may stage collected data in a central location or directory prior to Exfiltration. Data may be kept in separate files or combined into one file through techniques such as Archive Collected Data. Interactive command shells may be used, and common functionality within cmd and bash may be used to copy data into a staging location.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1074/",
+      "Checks": [],
+      "Attributes": []
+    },
+    {
+      "Name": "Data Destruction",
+      "Id": "T1485",
+      "Tactics": [
+        "Impact"
+      ],
+      "SubTechniques": [],
+      "Platforms": [
+        "IaaS",
+        "Linux",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Adversaries may destroy data and files on specific systems or in large numbers on a network to interrupt availability to systems, services, and network resources. Data destruction is likely to render stored data irrecoverable by forensic techniques through overwriting files or data on local and remote drives.[1][2][3][4][5][6] Common operating system file deletion commands such as del and rm often only remove pointers to files without wiping the contents of the files themselves, making the files recoverable by proper forensic methodology. This behavior is distinct from Disk Content Wipe and Disk Structure Wipe because individual files are destroyed rather than sections of a storage disk or the disk's logical structure.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1485/",
+      "Checks": [
+        "drs_job_exist",
+        "rds_instance_deletion_protection",
+        "rds_instance_backup_enabled",
+        "efs_have_backup_enabled",
+        "backup_plans_exist",
+        "s3_bucket_object_lock",
+        "s3_bucket_no_mfa_delete",
+        "cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk",
+        "s3_bucket_policy_public_write_access",
+        "dynamodb_tables_pitr_enabled",
+        "s3_bucket_object_versioning",
+        "config_recorder_all_regions_enabled"
+      ],
+      "Attributes": [
+        {
+          "AWSService": "AWS CloudEndure Disaster Recovery",
+          "Category": "Respond",
+          "Value": "Significant",
+          "Comment": "AWS CloudEndure Disaster Recovery enables the replication and recovery of servers into AWS Cloud. In the event that data on servers is destroyed, AWS CloudEndure can be used to provision an instance of the server from a previous point in time within minutes. As a result, this mapping is given a score of Significant."
+        },
+        {
+          "AWSService": "AWS Config",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "The following AWS Config managed rules can identify configuration problems that should be fixed in order to prevent malicious write access to data within Amazon Simple Storage Service (S3) storage, which may include data destruction: 's3-bucket-blacklisted-actions-prohibited' checks whether bucket policies prohibit disallowed actions (including S3:DeleteObject) for principals from other AWS accounts, 's3-bucket-default-lock-enabled' checks whether a bucket that should be locked in write-once-read-many (WORM) mode is configured to prevent modification, and 's3-bucket-public-write-prohibited' checks whether a bucket is configured to allow public access and modification. All of these controls are run on configuration changes. The following AWS Config managed rules can identify configuration problems that should be fixed in order to ensure backups and redundancy are in place which can mitigate the effects of data destruction: 'aurora-mysql-backtracking-enabled' for data in Aurora MySQL; 'db-instance-backup-enabled' and 'rds-in-backup-plan' for Amazon Relational Database Service (RDS) data; 'dynamodb-in-backup-plan' and 'dynamodb-pitr-enabled' for Amazon DynamoDB table contents; 'ebs-in-backup-plan' for Elastic Block Store (EBS) volumes; 'efs-in-backup-plan' for Amazon Elastic File System (EFS) file systems; 'elasticache-redis-cluster-automatic-backup-check' for Amazon ElastiCache Redis cluster data; 'redshift-backup-enabled' and 'redshift-cluster-maintenancesettings-check' for Redshift; 's3-bucket-replication-enabled' and 's3-bucket-versioning-enabled' for S3 storage; and 'cloudfront-origin-failover-enabled' for CloudFront. The following AWS Config managed rules provide specific detections for configuration problems that should be fixed in order to prevent malicious deletion of specific data: 'elb-deletion-protection-enabled' for Elastic Block Store (EBS) volumes, and 'rds-cluster-deletion-protection-enabled' and 'rds-instance-deletion-protection-enabled' for RDS data. Coverage factor is partial for these rules, since they are specific to a subset of the available AWS services and will only protect certain types of data against destruction, resulting in an overall score of Partial."
+        },
+        {
+          "AWSService": "AWS RDS",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "AWS RDS generates events for database instances and includes the following events that may indicate that an adversary has destroyed the database instance. RDS-EVENT-0003: The DB instance has been deleted RDS-EVENT-0041: A DB snapshot has been deleted. This mapping is given a score of Partial because it can't differentiate between an authorized and unauthorized deletion."
+        },
+        {
+          "AWSService": "AWS RDS",
+          "Category": "Protect",
+          "Value": "Significant",
+          "Comment": "AWS RDS provides deletion protection which prevents any user from deleting a database instance. If applied, the setting may mitigate attempts to delete a database instance. As a result, this mapping is given a score of Significant."
+        },
+        {
+          "AWSService": "AWS RDS",
+          "Category": "Respond",
+          "Value": "Significant",
+          "Comment": "AWS RDS supports the replication and recovery of database instances. In the event that a database instance is deleted, AWS RDS can be used to restore the database instance to a previous point in time. As a result, this mapping is given a score of Significant."
+        },
+        {
+          "AWSService": "AWS S3",
+          "Category": "Protect",
+          "Value": "Significant",
+          "Comment": "AWS S3 may protect against data destruction through application of several best practices. Multi-factor authentication can be enabled for delete operations and for changing the versioning state of a bucket. Versioning can be enabled to revert objects to a previous state after malicious destruction or corruption. S3 Object Lock can help prevent objects from being deleted or overwritten for a fixed amount of time or indefinitely. In addition, S3 Cross Region Replication can be used to replicate S3 buckets to another AWS region for add protection."
+        },
+        {
+          "AWSService": "AWS Security Hub",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "AWS Security Hub performs a check from the AWS Foundations CIS Benchmark that, if implemented, would help towards detecting the scheduled destruction of Customer Master Keys (CMKs) which are critical for being able to decrypt data. AWS Security Hub provides this detection with the following check. Ensure a log metric filter and alarm exist for disabling or scheduled deletion of customer created CMKs. This is scored as Minimal because CMKs only represent one type of data that could be destroyed by an adversary."
+        },
+        {
+          "AWSService": "Amazon GuardDuty",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "The following GuardDuty finding type flags events where adversaries may destroy data and files on specific systems or in large numbers on a network to interrupt availability to systems, services, and network resources. Impact:S3/MaliciousIPCaller, Impact:IAMUser/AnomalousBehavior Stealth:S3/ServerAccessLoggingDisabled UnauthorizedAccess:S3/MaliciousIPCaller.Custom UnauthorizedAccess:S3/TorIPCaller PenTest:S3/PentooLinux PenTest:S3/ParrotLinux PenTest:S3/KaliLinux."
+        }
+      ]
+    },
+    {
+      "Name": "Data Encrypted for Impact",
+      "Id": "T1486",
+      "Tactics": [
+        "Impact"
+      ],
+      "SubTechniques": [],
+      "Platforms": [
+        "IaaS",
+        "Linux",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Adversaries may encrypt data on target systems or on large numbers of systems in a network to interrupt availability to system and network resources. They can attempt to render stored data inaccessible by encrypting files or data on local and remote drives and withholding access to a decryption key. This may be done in order to extract monetary compensation from a victim in exchange for decryption or a decryption key (ransomware) or to render data permanently inaccessible in cases where the key is not saved or transmitted.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1486/",
+      "Checks": [
+        "drs_job_exist",
+        "s3_bucket_object_lock",
+        "s3_bucket_policy_public_write_access",
+        "dynamodb_tables_pitr_enabled",
+        "backup_plans_exist",
+        "s3_bucket_object_versioning",
+        "rds_instance_backup_enabled",
+        "efs_have_backup_enabled",
+        "config_recorder_all_regions_enabled"
+      ],
+      "Attributes": [
+        {
+          "AWSService": "AWS CloudEndure Disaster Recovery",
+          "Category": "Respond",
+          "Value": "Significant",
+          "Comment": "AWS CloudEndure Disaster Recovery enables the replication and recovery of servers into AWS Cloud. In the event that data on servers is destroyed, AWS CloudEndure can be used to provision an instance of the server from a previous point in time within minutes. As a result, this mapping is given a score of Significant."
+        },
+        {
+          "AWSService": "AWS Config",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "The following AWS Config managed rules can identify configuration problems that should be fixed in order to prevent malicious changes to data encryption within Amazon Simple Storage Service (S3) storage: 's3-bucket-blacklisted-actions-prohibited' checks whether bucket policies prohibit disallowed actions (including encryption configuration changes) for principals from other AWS accounts, 's3-bucket-default-lock-enabled' checks whether a bucket that should be locked in write-once-read-many (WORM) mode is configured to prevent modification, and 's3-bucket-public-write-prohibited' checks whether a bucket is configured to allow public access and modification. All of these controls are run on configuration changes. The following AWS Config managed rules can identify configuration problems that should be fixed in order to ensure backups and redundancy are in place which can mitigate the effects of malicious changes to data encryption: 'aurora-mysql-backtracking-enabled' for data in Aurora MySQL; 'db-instance-backup-enabled' and 'rds-in-backup-plan' for Amazon Relational Database Service (RDS) data; 'dynamodb-in-backup-plan' and 'dynamodb-pitr-enabled' for Amazon DynamoDB table contents; 'ebs-in-backup-plan' for Elastic Block Store (EBS) volumes; 'efs-in-backup-plan' for Amazon Elastic File System (EFS) file systems; 'elasticache-redis-cluster-automatic-backup-check' for Amazon ElastiCache Redis cluster data; 'redshift-backup-enabled' and 'redshift-cluster-maintenancesettings-check' for Redshift; 's3-bucket-replication-enabled' and 's3-bucket-versioning-enabled' for S3 storage; and 'cloudfront-origin-failover-enabled' for CloudFront. Coverage factor is partial for these rules, since they are specific to a subset of the available AWS services and will only protect certain types of data against malicious encryption changes, resulting in an overall score of Partial."
+        },
+        {
+          "AWSService": "AWS RDS",
+          "Category": "Respond",
+          "Value": "Significant",
+          "Comment": "AWS RDS supports the replication and recovery of database instances. In the event that a database instance is encrypted by an adversary (e.g., ransomware), AWS RDS can be used to restore the database instance to a previous point in time. As a result, this mapping is given a score of Significant."
+        },
+        {
+          "AWSService": "Amazon GuardDuty",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "The following GuardDuty finding type flags events where adversaries may encrypt data on target systems or on large numbers of systems in a network to interrupt availability to system and network resources. Impact:S3/MaliciousIPCaller Stealth:S3/ServerAccessLoggingDisabled UnauthorizedAccess:S3/MaliciousIPCaller.Custom UnauthorizedAccess:S3/TorIPCaller PenTest:S3/PentooLinux PenTest:S3/ParrotLinux PenTest:S3/KaliLinux"
+        }
+      ]
+    },
+    {
+      "Name": "Defacement",
+      "Id": "T1491",
+      "Tactics": [
+        "Impact"
+      ],
+      "SubTechniques": [
+        "T1491.002 - External Defacement"
+      ],
+      "Platforms": [
+        "IaaS",
+        "Linux",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Adversaries may modify visual content available internally or externally to an enterprise network, thus affecting the integrity of the original content. Reasons for Defacement include delivering messaging, intimidation, or claiming (possibly false) credit for an intrusion. Disturbing or offensive images may be used as a part of Defacement in order to cause user discomfort, or to pressure compliance with accompanying messages.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1491/",
+      "Checks": [
+        "drs_job_exist",
+        "config_recorder_all_regions_enabled"
+      ],
+      "Attributes": [
+        {
+          "AWSService": "AWS CloudEndure Disaster Recovery",
+          "Category": "Respond",
+          "Value": "Significant",
+          "Comment": "AWS CloudEndure Disaster Recovery enables the replication and recovery of servers into AWS Cloud. In the event that servers are defaced, AWS CloudEndure can be used to provision an instance of the server from a previous point in time within minutes. This mapping is given a score of Significant because it supports all of the sub-techniques (2 of 2)."
+        },
+        {
+          "AWSService": "AWS Config",
+          "Category": "Protect",
+          "Value": "Significant",
+          "Comment": "This control provides significant coverage for all of this technique's sub-techniques, resulting in an overall score of Significant."
+        },
+        {
+          "AWSService": "Amazon GuardDuty",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "GuardDuty provides multiple finding types that flag malicious activity against resources. These findings focus on API calls that look suspicious and although they do not flag events such as Defacement specifically, it can be inferred that these findings can result in mitigating this technique's negative impact. With this assumption the score is capped at Partial."
+        }
+      ]
+    },
+    {
+      "Name": "Endpoint Denial of Service",
+      "Id": "T1499",
+      "Tactics": [
+        "Impact"
+      ],
+      "SubTechniques": [
+        "T1499.002 - Service Exhaustion Flood",
+        "T1499.003 - Application Exhaustion Flood",
+        "T1499.004 - Application or System Exploitation"
+      ],
+      "Platforms": [
+        "Azure AD",
+        "Containers",
+        "Google Workspace",
+        "IaaS",
+        "Linux",
+        "Office 365",
+        "SaaS",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Adversaries may perform Endpoint Denial of Service (DoS) attacks to degrade or block the availability of services to users. Endpoint DoS can be performed by exhausting the system resources those services are hosted on or exploiting the system to cause a persistent crash condition. Example services include websites, email services, DNS, and web-based applications. Adversaries have been observed conducting DoS attacks for political purposes[1] and to support other malicious activities, including distraction[2], hacktivism, and extortion.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1499/",
+      "Checks": [
+        "networkfirewall_in_all_vpc",
+        "config_recorder_all_regions_enabled",
+        "shield_advanced_protection_in_associated_elastic_ips",
+        "shield_advanced_protection_in_classic_load_balancers",
+        "shield_advanced_protection_in_cloudfront_distributions",
+        "shield_advanced_protection_in_global_accelerators",
+        "shield_advanced_protection_in_internet_facing_load_balancers",
+        "shield_advanced_protection_in_route53_hosted_zones",
+        "ec2_networkacl_allow_ingress_any_port",
+        "ec2_networkacl_allow_ingress_tcp_port_22",
+        "ec2_networkacl_allow_ingress_tcp_port_3389",
+        "ec2_securitygroup_allow_ingress_from_internet_to_any_port",
+        "ec2_securitygroup_allow_ingress_from_internet_to_port_mongodb_27017_27018",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_ftp_port_20_21",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_3389",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_cassandra_7199_9160_8888",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_elasticsearch_kibana_9200_9300_5601",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_kafka_9092",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_memcached_11211",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_mysql_3306",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_oracle_1521_2483",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_redis_6379",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_sql_server_1433_1434",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_telnet_23"
+      ],
+      "Attributes": [
+        {
+          "AWSService": "AWS Shield",
+          "Category": "Respond",
+          "Value": "Significant",
+          "Comment": "AWS Shield is a service that protects against Distributed Denial of Service attacks. There are two tiers for this service Standard and Advanced. AWS Shield Standard defends against most common, frequently occurring network and transport (Layer 3 and 4 attacks) layer DDoS attacks that target your web site or applications. AWS Shield Advanced adds on to standard by providing additional detection and mitigation against large and sophisticated DDoS attacks. There is near real-time visibility into attacks. AWS Shield Advanced also comes with 24x7 access to the AWS DDoS Response Team (DRT)."
+        },
+        {
+          "AWSService": "AWS Config",
+          "Category": "Protect",
+          "Value": "Minimal",
+          "Comment": "This control provides minimal coverage for this technique's sub-techniques as well as its procedures, resulting in an overall score of Minimal."
+        },
+        {
+          "AWSService": "AWS Network Firewall",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "AWS Network Firewall has the ability to pass, drop, or alert on traffic based on the network protocol as well as perform deep packet inspection on the payload. This functionality can be used to block adversaries from carrying out denial of service attacks by implementing restrictions on which IP addresses and domains can access the resources (e.g., allow lists) as well as which protocol traffic is permitted. That is, the AWS Network Firewall could block the source of the denial of service attack. This mapping is given a score of Partial because it only supports a subset of the sub-techniques (3 of 4) and because the source of the attack would have to be known before rules could be put in place to protect against it."
+        },
+        {
+          "AWSService": "Amazon Virtual Private Cloud",
+          "Category": "Protect",
+          "Value": "Minimal",
+          "Comment": "VPC security groups and network access control lists (NACLs) provides minimal protection for a majority of this control's sub-techniques and procedure examples resulting in an overall score of Minimal."
+        }
+      ]
+    },
+    {
+      "Name": "Inhibit System Recovery",
+      "Id": "T1490",
+      "Tactics": [
+        "Impact"
+      ],
+      "SubTechniques": [],
+      "Platforms": [
+        "IaaS",
+        "Linux",
+        "Network",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Adversaries may delete or remove built-in data and turn off services designed to aid in the recovery of a corrupted system to prevent recovery.[1][2] This may deny access to available backups and recovery options.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1490/",
+      "Checks": [
+        "drs_job_exist",
+        "rds_instance_backup_enabled"
+      ],
+      "Attributes": [
+        {
+          "AWSService": "AWS CloudEndure Disaster Recovery",
+          "Category": "Respond",
+          "Value": "Significant",
+          "Comment": "AWS CloudEndure Disaster Recovery enables the replication and recovery of servers into AWS Cloud. In the event that servers are defaced, AWS CloudEndure can be used to provision an instance of the server from a previous point in time within minutes. This mapping is given a score of Significant because it supports all of the sub-techniques (2 of 2)."
+        },
+        {
+          "AWSService": "AWS RDS",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "AWS RDS generates events for database instances and includes the following event that may indicate that an adversary has attempted to inhibit system recovery. RDS-EVENT-0028: Automatic backups for this DB instance have been disabled. This mapping is given a score of Partial because it can't differentiate between an authorized and unauthorized disabling of automatic backups."
+        },
+        {
+          "AWSService": "AWS RDS",
+          "Category": "Respond",
+          "Value": "Significant",
+          "Comment": "AWS RDS supports the replication and recovery of database instances. In the event that a database instance is compromised and modified to disrupt recovery, AWS RDS can be used to restore the database instance to a previous point in time. As a result, this mapping is given a score of Significant."
+        }
+      ]
+    },
+    {
+      "Name": "Resource Hijacking",
+      "Id": "T1496",
+      "Tactics": [
+        "Impact"
+      ],
+      "SubTechniques": [],
+      "Platforms": [
+        "IaaS",
+        "Linux",
+        "Containers",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Adversaries may leverage the resources of co-opted systems in order to solve resource intensive problems, which may impact system and/or hosted service availability.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1496/",
+      "Checks": [
+        "config_recorder_all_regions_enabled",
+        "guardduty_is_enabled",
+        "rds_instance_enhanced_monitoring_enabled",
+        "cloudwatch_changes_to_network_acls_alarm_configured",
+        "cloudwatch_changes_to_network_gateways_alarm_configured",
+        "cloudwatch_changes_to_network_route_tables_alarm_configured",
+        "cloudwatch_changes_to_vpcs_alarm_configured",
+        "cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled",
+        "cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled",
+        "cloudwatch_log_metric_filter_authentication_failures",
+        "cloudwatch_log_metric_filter_aws_organizations_changes",
+        "cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk",
+        "cloudwatch_log_metric_filter_for_s3_bucket_policy_changes",
+        "cloudwatch_log_metric_filter_policy_changes",
+        "cloudwatch_log_metric_filter_root_usage",
+        "cloudwatch_log_metric_filter_security_group_changes",
+        "cloudwatch_log_metric_filter_sign_in_without_mfa",
+        "cloudwatch_log_metric_filter_unauthorized_api_calls"
+      ],
+      "Attributes": [
+        {
+          "AWSService": "AWS CloudWatch",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "AWS CloudWatch provides various metrics including CPU utilization, connections, disk space, memory, bytes sent/received, and the number of running containers among others. The following metrics (not an exhaustive list) could be used to detect if the usage of a resource has increased such as when an adversary hijacks a resource to perform intensive tasks. Linux/Mac OS ------------- cpu_time_active cpu_time_guest cpu_usage_active cpu_usage_guest disk_free disk_total disk_used ethtool_bw_in_allowance_exceeded ethtool_bw_out_allowance_exceeded ethtool_conntrack_allowance_exceeded mem_active mem_available_percent mem_free net_bytes_recv net_bytes_sent net_packets_sent net_packets_recv netstat_tcp_established netstat_tcp_listen processes_running processes_total swap_free swap_used. Containers ---------- CpuUtilized MemoryUtilized NetworkRxBytes NetworkTxBytes node_cpu_usage_total node_cpu_utilization node_filesystem_utilization node_memory_utilization. This mapping is given a score of Partial because it is not possible to differentiate between an authorized and unauthorized increase in resource utilization."
+        },
+        {
+          "AWSService": "AWS Config",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "The following AWS Config managed rules can identify configuration problems that should be fixed in order to ensure alarms exist for spikes in resource utilization, which help to identify malicious use of resources within a cloud environment: 'cloudwatch-alarm-action-check', 'cloudwatch-alarm-resource-check', 'cloudwatch-alarm-settings-check', 'desired-instance-tenancy', 'desired-instance-type', 'dynamodb-autoscaling-enabled', 'dynamodb-throughput-limit-check', 'ec2-instance-detailed-monitoring-enabled', and 'rds-enhanced-monitoring-enabled'. Coverage factor is partial for these rules, since they are specific to a subset of the available AWS services and will only detect resource hijacking that results in a change in utilization that is significant enough to trigger alarms, resulting in an overall score of Partial."
+        },
+        {
+          "AWSService": "AWS IoT Device Defender",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "The following AWS IoT Device Defender device-side detection metrics can detect indicators that an adversary may be leveraging compromised AWS IoT devices' resources to perform resource-intensive operations like mining cryptocurrency or performing denial of service attacks on other environments: 'Destination IPs' ('aws:destination-ip-addresses') outside of expected IP address ranges may suggest that a device is communicating with unexpected parties. 'Bytes in' ('aws:all-bytes-in'), 'Bytes out' ('aws:all-bytes-out'), 'Packets in' ('aws:all-packets-in'), and 'Packets out' ('aws:all-packets-out') values outside of expected norms may indicate that the device is sending and/or receiving non-standard traffic, which may include traffic related to resource hijacking activities. 'Listening TCP ports' ('aws:listening-tcp-ports'), 'Listening TCP port count' ('aws:num-listening-tcp-ports'), 'Established TCP connections count' ('aws:num-established-tcp-connections'), 'Listening UDP ports' ('aws:listening-udp-ports'), and 'Listening UDP port count' ('aws:num-listening-udp-ports') values outside of expected norms may indicate that devices are communicating via unexpected ports/protocols which may include traffic related to resource hijacking activities. Coverage factor is partial, since these metrics are limited to IoT device hijacking, resulting in an overall score of Partial."
+        },
+        {
+          "AWSService": "Amazon GuardDuty",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "The following GuardDuty finding types flag events where adversaries may leverage the resources of co-opted systems in order to solve resource intensive problems which may impact system and/or hosted service availability. CryptoCurrency:EC2/BitcoinTool.B CryptoCurrency:EC2/BitcoinTool.B!DNS Impact:EC2/BitcoinDomainRequest.Reputation UnauthorizedAccess:EC2/TorRelay"
+        }
+      ]
+    },
+    {
+      "Name": "Network Denial of Service",
+      "Id": "T1498",
+      "Tactics": [
+        "Impact"
+      ],
+      "SubTechniques": [],
+      "Platforms": [
+        "Azure AD",
+        "Containers",
+        "Google Workspace",
+        "IaaS",
+        "Linux",
+        "Office 365",
+        "SaaS",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Adversaries may perform Network Denial of Service (DoS) attacks to degrade or block the availability of targeted resources to users. Network DoS can be performed by exhausting the network bandwidth services rely on. Example resources include specific websites, email services, DNS, and web-based applications. Adversaries have been observed conducting network DoS attacks for political purposes[1] and to support other malicious activities, including distraction[2], hacktivism, and extortion.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1498/",
+      "Checks": [
+        "config_recorder_all_regions_enabled",
+        "networkfirewall_in_all_vpc",
+        "guardduty_is_enabled",
+        "shield_advanced_protection_in_associated_elastic_ips",
+        "shield_advanced_protection_in_classic_load_balancers",
+        "shield_advanced_protection_in_cloudfront_distributions",
+        "shield_advanced_protection_in_global_accelerators",
+        "shield_advanced_protection_in_internet_facing_load_balancers",
+        "shield_advanced_protection_in_route53_hosted_zones",
+        "ec2_networkacl_allow_ingress_any_port",
+        "ec2_networkacl_allow_ingress_tcp_port_22",
+        "ec2_networkacl_allow_ingress_tcp_port_3389",
+        "ec2_securitygroup_allow_ingress_from_internet_to_any_port",
+        "ec2_securitygroup_allow_ingress_from_internet_to_port_mongodb_27017_27018",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_ftp_port_20_21",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_3389",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_cassandra_7199_9160_8888",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_elasticsearch_kibana_9200_9300_5601",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_kafka_9092",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_memcached_11211",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_mysql_3306",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_oracle_1521_2483",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_redis_6379",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_sql_server_1433_1434",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_telnet_23"
+      ],
+      "Attributes": [
+        {
+          "AWSService": "AWS Config",
+          "Category": "Protect",
+          "Value": "Minimal",
+          "Comment": "This control provides minimal coverage for this technique's sub-techniques as well as its procedures, resulting in an overall score of Minimal."
+        },
+        {
+          "AWSService": "AWS Network Firewall",
+          "Category": "Protect",
+          "Value": "Minimal",
+          "Comment": "AWS Network Firewall has the ability to pass, drop, or alert on traffic based on the network protocol as well as perform deep packet inspection on the payload. This functionality can be used to block the sources of smaller-scale network denial of service attacks. While AWS Network Firewall supports both all sub-techniques (2 of 2), this mapping is given a score of Minimal because often times it is necessary to block the traffic at an Internet Service Provider or Content Provider Network level."
+        },
+        {
+          "AWSService": "AWS Shield",
+          "Category": "Respond",
+          "Value": "Significant",
+          "Comment": "AWS Shield is a service that protects against Distributed Denial of Service attacks. There are two tiers for this service Standard and Advanced. AWS Shield Standard defends against most common, frequently occurring network and transport (Layer 3 and 4 attacks) layer DDoS attacks that target your web site or applications. AWS Shield Advanced adds on to standard by providing additional detection and mitigation against large and sophisticated DDoS attacks. There is near real-time visibility into attacks. AWS Shield Advanced also comes with 24x7 access to the AWS DDoS Response Team (DRT)."
+        },
+        {
+          "AWSService": "Amazon GuardDuty",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "The following finding types in GuardDuty flag events where adversaries may perform Network Denial of Service (DoS) attacks to degrade or block the availability of targeted resources to users. Backdoor:EC2/DenialOfService.UdpOnTcpPorts Backdoor:EC2/DenialOfService.UnusualProtocol Backdoor:EC2/DenialOfService.Udp Backdoor:EC2/DenialOfService.Tcp Backdoor:EC2/DenialOfService.Dns"
+        },
+        {
+          "AWSService": "Amazon Virtual Private Cloud",
+          "Category": "Protect",
+          "Value": "Minimal",
+          "Comment": "VPC security groups and network access control lists (NACLs) can be used to restrict access to endpoints but will prove effective at mitigating only low-end DOS attacks resulting in a Minimal score."
         }
       ]
     }
