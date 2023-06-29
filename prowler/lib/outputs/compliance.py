@@ -120,7 +120,7 @@ def fill_compliance(output_options, finding, audit_info, file_descriptors):
                     csv_header = generate_csv_fields(Check_Output_CSV_CIS)
 
             elif (
-                compliance.Framework == "AWS-Well-Architected-Framework-Security-Pillar"
+                "AWS-Well-Architected-Framework" in compliance.Framework
                 and compliance.Provider == "AWS"
             ):
                 compliance_output = compliance.Framework

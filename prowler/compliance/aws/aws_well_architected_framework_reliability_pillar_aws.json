@@ -6,7 +6,7 @@
   "Requirements": [
     {
       "Id": "REL09-BP03",
-      "Description": "Configure backups to be taken automatically based on a periodic schedule informed by the Recovery Point Objective (RPO), or by changes in the dataset. Critical datasets with low data loss requirements need to be backed up automatically on a frequent basis, whereas less critical data where some loss is acceptable can be backed up less frequently.      ",
+      "Description": "Configure backups to be taken automatically based on a periodic schedule informed by the Recovery Point Objective (RPO), or by changes in the dataset. Critical datasets with low data loss requirements need to be backed up automatically on a frequent basis, whereas less critical data where some loss is acceptable can be backed up less frequently.",
       "Attributes": [
         {
           "Name": "REL09-BP03 Perform data backup automatically",
