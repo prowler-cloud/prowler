@@ -29,7 +29,9 @@
         "securityhub_enabled",
         "elbv2_waf_acl_attached",
         "guardduty_is_enabled",
-        "inspector2_findings_exist"
+        "inspector2_findings_exist",
+        "awslambda_function_not_publicly_accessible",
+        "ec2_instance_public_ip"
       ],
       "Attributes": [
         {
@@ -69,7 +71,7 @@
           "Comment": "AWS Security Hub reports on EC2 instances that are missing security patches for vulnerabilities which could enable an adversary to exploit vulnerabilities through the attack lifecycle. AWS Security Hub provides this detection with the following managed insight. EC2 instances that have missing security patches for important vulnerabilities. This is scored as Partial because the checks associated with Security Hub would only report on missing patches for known vulnerabilities. It doesn't not cover zero-day vulnerabilities."
         },
         {
-          "AWSService": "AWS WAF",
+          "AWSService": "AWS Web Application Firewall",
           "Category": "Protect",
           "Value": "Significant",
           "Comment": "The AWS WAF protects public-facing applications against a range of vulnerabilities including those listed in the OWASP Top 10. AWS WAF provides this protection via the following rule sets that block malicious traffic across a variety of operating systems and applications. AWSManagedRulesCommonRuleSet AWSManagedRulesKnownBadInputRuleSet AWSManagedRulesSQLiRuleSet AWSManagedRulesLinuxRuleSet AWSManagedRulesUnixRuleSet AWSManagedRulesWindowsRuleSet AWSManagedRulesPHPRuleSet AWSManagedRulesWordPressRuleSet. This is given a score of Significant because it protects against vulnerabilities across multiple operating systems (Windows, Linux, POSIX) and technologies (JavaScript, SQL, PHP, WordPress). Furthermore, it blocks the malicious content in near real-time."
@@ -102,7 +104,22 @@
       "Checks": [
         "ec2_networkacl_allow_ingress_any_port",
         "ec2_networkacl_allow_ingress_tcp_port_22",
-        "ec2_networkacl_allow_ingress_tcp_port_3389"
+        "ec2_networkacl_allow_ingress_tcp_port_3389",
+        "ec2_securitygroup_allow_ingress_from_internet_to_any_port",
+        "ec2_securitygroup_allow_ingress_from_internet_to_port_mongodb_27017_27018",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_ftp_port_20_21",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_3389",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_cassandra_7199_9160_8888",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_elasticsearch_kibana_9200_9300_5601",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_kafka_9092",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_memcached_11211",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_mysql_3306",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_oracle_1521_2483",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_redis_6379",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_sql_server_1433_1434",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_telnet_23"
       ],
       "Attributes": [
         {
@@ -265,7 +282,7 @@
       ],
       "Attributes": [
         {
-          "AWSService": "AWS WAF",
+          "AWSService": "AWS Web Application Firewall",
           "Category": "Protect",
           "Value": "Partial",
           "Comment": "The AWS WAF protects web applications from injection attacks that leverage command and scripting interpreters. AWS WAF provides this protection via the following rule sets that block malicious traffic across a variety of operating systems and applications. AWSManagedRulesCommonRuleSet AWSManagedRulesSQLiRuleSet AWSManagedRulesUnixRuleSet AWSManagedRulesWindowsRuleSet AWSManagedRulesPHPRuleSet AWSManagedRulesWordPressRuleSet. This is given a score of Partial (instead of Minimal) because while it only protects against a subset of SubTechniques (3 out of 8), it does provide protections for command and scripting interpreters that do not have SubTechniques (SQL, PHP, etc.). Furthermore, it blocks the malicious content in near real-time."
@@ -841,7 +858,12 @@
         "iam_user_mfa_enabled_console_access",
         "cloudwatch_log_group_kms_encryption_enabled",
         "rds_instance_transport_encrypted",
-        "config_recorder_all_regions_enabled"
+        "config_recorder_all_regions_enabled",
+        "acm_certificates_expiration_check",
+        "elb_ssl_listeners",
+        "elbv2_ssl_listeners",
+        "cloudfront_distributions_https_enabled",
+        "s3_bucket_secure_transport_policy"
       ],
       "Attributes": [
         {
@@ -912,7 +934,8 @@
         "ec2_instance_secrets_user_data",
         "ecs_task_definitions_no_environment_secrets",
         "eks_cluster_kms_cmk_encryption_in_secrets_enabled",
-        "ssm_document_secrets"
+        "ssm_document_secrets",
+        "secretsmanager_automatic_rotation_enabled"
       ],
       "Attributes": [
         {
@@ -983,7 +1006,22 @@
         "guardduty_is_enabled",
         "ec2_networkacl_allow_ingress_any_port",
         "ec2_networkacl_allow_ingress_tcp_port_22",
-        "ec2_networkacl_allow_ingress_tcp_port_3389"
+        "ec2_networkacl_allow_ingress_tcp_port_3389",
+        "ec2_securitygroup_allow_ingress_from_internet_to_any_port",
+        "ec2_securitygroup_allow_ingress_from_internet_to_port_mongodb_27017_27018",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_ftp_port_20_21",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_3389",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_cassandra_7199_9160_8888",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_elasticsearch_kibana_9200_9300_5601",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_kafka_9092",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_memcached_11211",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_mysql_3306",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_oracle_1521_2483",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_redis_6379",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_sql_server_1433_1434",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_telnet_23"
       ],
       "Attributes": [
         {
@@ -1643,6 +1681,395 @@
           "Comment": "VPC security groups and network access control lists (NACLs) can be used to restrict access to endpoints but will prove effective at mitigating only low-end DOS attacks resulting in a Minimal score."
         }
       ]
+    },
+    {
+      "Name": "Account Discovery",
+      "Id": "T1087",
+      "Tactics": [
+        "Discovery"
+      ],
+      "SubTechniques": [
+        "T1087.004 - Cloud Account"
+      ],
+      "Platforms": [
+        "Azure AD",
+        "Google Workspace",
+        "IaaS",
+        "Linux",
+        "Office 365",
+        "SaaS",
+        "Network",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Adversaries may attempt to get a listing of valid accounts, usernames, or email addresses on a system or within a compromised environment. This information can help adversaries determine which accounts exist, which can aid in follow-on behavior such as brute-forcing, spear-phishing attacks, or account takeovers (e.g., Valid Accounts).",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1087/",
+      "Checks": [
+        "organizations_account_part_of_organizations"
+      ],
+      "Attributes": [
+        {
+          "AWSService": "AWS Organizations",
+          "Category": "Protect",
+          "Value": "Minimal",
+          "Comment": "This control may protect against cloud account discovery but does not mitigate against other forms of account discovery."
+        }
+      ]
+    },
+    {
+      "Name": "Cloud Infrastructure Discovery",
+      "Id": "T1580",
+      "Tactics": [
+        "Discovery"
+      ],
+      "SubTechniques": [],
+      "Platforms": [
+        "IaaS"
+      ],
+      "Description": "An adversary may attempt to discover infrastructure and resources that are available within an infrastructure-as-a-service (IaaS) environment. This includes compute service resources such as instances, virtual machines, and snapshots as well as resources of other services including the storage and database services.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1580/",
+      "Checks": [
+        "organizations_account_part_of_organizations",
+        "securityhub_enabled",
+        "guardduty_is_enabled",
+        "iam_aws_attached_policy_no_administrative_privileges",
+        "iam_customer_attached_policy_no_administrative_privileges",
+        "iam_no_custom_policy_permissive_role_assumption",
+        "iam_policy_allows_privilege_escalation",
+        "iam_policy_no_full_access_to_cloudtrail",
+        "iam_policy_no_full_access_to_kms"
+      ],
+      "Attributes": [
+        {
+          "AWSService": "AWS Organizations",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "This control may protect against cloud infrastructure discovery by segmenting accounts into separate organizational units and restricting infrastructure access by least privilege."
+        },
+        {
+          "AWSService": "AWS Security Hub",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "AWS Security Hub detects improperly secured data from S3 buckets such as public read and write access as well as accessible EC2 instances that may result in an adversary learning about cloud infrastructure used by the organization. AWS Security Hub provides these detections with the following managed insights. S3 buckets with public write or read permissions EC2 instances that have ports accessible from the Internet EC2 instances that are open to the Internet. AWS Security Hub also performs checks from the AWS Foundations CIS Benchmark that, if implemented, would help towards detecting improperly secured S3 buckets which could result in them being discovered. AWS Security Hub provides this detection with the following check. 3.8 Ensure a log metric filter and alarm exist for S3 bucket policy changes. This is scored as Partial because S3 and EC2 only represent a subset of available cloud infrastructure components."
+        },
+        {
+          "AWSService": "Amazon GuardDuty",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "The following GuardDuty finding types flag events that are linked to Discovery techniques and can be used to capture events where a malicious user may be searching through the account looking for available resources. The finding types are also used to flag certain signatures of running services to detect malicious user activities from commonly used pentest operating systems. Discovery:IAMUser/AnomalousBehavior Discovery:S3/MaliciousIPCaller Discovery:S3/MaliciousIPCaller.Custom Discovery:S3/TorIPCaller PenTest:IAMUser/KaliLinux PenTest:IAMUser/ParrotLinux PenTest:IAMUser/PentooLinux PenTest:S3/KaliLinux PenTest:S3/ParrotLinux PenTest:S3/PentooLinux."
+        },
+        {
+          "AWSService": "AWS IAM",
+          "Category": "Protect",
+          "Value": "Significant",
+          "Comment": "Limit IAM permissions to discover cloud infrastructure in accordance with least privilege. Organizations should limit the number of users within the organization with an IAM role that has administrative privileges, strive to reduce all permanent privileged role assignments, and conduct periodic entitlement reviews on IAM users, roles and policies."
+        }
+      ]
+    },
+    {
+      "Name": "Cloud Service Dashboard",
+      "Id": "T1538",
+      "Tactics": [
+        "Discovery"
+      ],
+      "SubTechniques": [],
+      "Platforms": [
+        "Azure AD",
+        "Google Workspace",
+        "IaaS",
+        "Office 365"
+      ],
+      "Description": "An adversary may use a cloud service dashboard GUI with stolen credentials to gain useful information from an operational cloud environment, such as specific services, resources, and features. For example, the GCP Command Center can be used to view all assets, findings of potential security risks, and to run additional queries, such as finding public IP addresses and open ports.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1538/",
+      "Checks": [
+        "organizations_account_part_of_organizations",
+        "iam_user_mfa_enabled_console_access",
+        "iam_customer_attached_policy_no_administrative_privileges",
+        "iam_aws_attached_policy_no_administrative_privileges"
+      ],
+      "Attributes": [
+        {
+          "AWSService": "AWS Organizations",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "This control may protect against cloud service dashboard abuse by segmenting accounts into separate organizational units and restricting dashboard access by least privilege."
+        },
+        {
+          "AWSService": "AWS Config",
+          "Category": "Protect",
+          "Value": "Significant",
+          "Comment": "The 'mfa-enabled-for-iam-console-access' managed rule checks whether multi-factor authentication is enabled for all AWS IAM users that use a console password, protecting against misuse of those accounts' dashboard access. It is run periodically, and provides significant coverage, resulting in an overall score of Significant."
+        }
+      ]
+    },
+    {
+      "Name": "Cloud Service Discovery",
+      "Id": "T1526",
+      "Tactics": [
+        "Discovery"
+      ],
+      "SubTechniques": [],
+      "Platforms": [
+        "Azure AD",
+        "Google Workspace",
+        "IaaS",
+        "Office 365",
+        "SaaS"
+      ],
+      "Description": "An adversary may attempt to enumerate the cloud services running on a system after gaining access. These methods can differ from platform-as-a-service (PaaS), to infrastructure-as-a-service (IaaS), or software-as-a-service (SaaS). Many services exist throughout the various cloud providers and can include Continuous Integration and Continuous Delivery (CI/CD), Lambda Functions, Azure AD, etc. They may also include security services, such as AWS GuardDuty and Microsoft Defender for Cloud, and logging services, such as AWS CloudTrail and Google Cloud Audit Logs.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1526/",
+      "Checks": [
+        "guardduty_is_enabled"
+      ],
+      "Attributes": [
+        {
+          "AWSService": "Amazon GuardDuty",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "GuardDuty has the following finding types to flag events where there is an attempt to discover information about resources on the account. Recon:IAMUser/MaliciousIPCaller Recon:IAMUser/MaliciousIPCaller.Custom Recon:IAMUser/TorIPCaller"
+        }
+      ]
+    },
+    {
+      "Name": "Cloud Storage Object Discovery",
+      "Id": "T1619",
+      "Tactics": [
+        "Discovery"
+      ],
+      "SubTechniques": [],
+      "Platforms": [
+        "IaaS"
+      ],
+      "Description": "Adversaries may enumerate objects in cloud storage infrastructure. Adversaries may use this information during automated discovery to shape follow-on behaviors, including requesting all or specific objects from cloud storage. Similar to File and Directory Discovery on a local host, after identifying available storage services (i.e. Cloud Infrastructure Discovery) adversaries may access the contents/objects stored in cloud infrastructure.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1619/",
+      "Checks": [
+        "iam_customer_attached_policy_no_administrative_privileges",
+        "iam_aws_attached_policy_no_administrative_privileges",
+        "iam_policy_allows_privilege_escalation"
+      ],
+      "Attributes": [
+        {
+          "AWSService": "AWS IAM",
+          "Category": "Protect",
+          "Value": "Significant",
+          "Comment": "Restrict granting of permissions related to listing objects in AWS S3 Buckets to necessary accounts."
+        }
+      ]
+    },
+    {
+      "Name": "Network Service Discovery",
+      "Id": "T1046",
+      "Tactics": [
+        "Discovery"
+      ],
+      "SubTechniques": [],
+      "Platforms": [
+        "Containers",
+        "IaaS",
+        "Linux",
+        "Network",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Adversaries may attempt to get a listing of services running on remote hosts and local network infrastructure devices, including those that may be vulnerable to remote software exploitation. Common methods to acquire this information include port and/or vulnerability scans using tools that are brought onto a system.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1046/",
+      "Checks": [
+        "networkfirewall_in_all_vpc",
+        "elbv2_waf_acl_attached",
+        "guardduty_is_enabled",
+        "inspector2_findings_exist",
+        "ec2_networkacl_allow_ingress_any_port",
+        "ec2_networkacl_allow_ingress_tcp_port_22",
+        "ec2_networkacl_allow_ingress_tcp_port_3389",
+        "ec2_securitygroup_allow_ingress_from_internet_to_any_port",
+        "ec2_securitygroup_allow_ingress_from_internet_to_port_mongodb_27017_27018",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_ftp_port_20_21",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_3389",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_cassandra_7199_9160_8888",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_elasticsearch_kibana_9200_9300_5601",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_kafka_9092",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_memcached_11211",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_mysql_3306",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_oracle_1521_2483",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_redis_6379",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_sql_server_1433_1434",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_telnet_23"
+      ],
+      "Attributes": [
+        {
+          "AWSService": "AWS IoT Device Defender",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "The following AWS IoT Device Defender device-side detection metrics can detect indicators that an adversary may be leveraging compromised AWS IoT devices to search their networks for other hosts and their running services, possibly to subsequently carry out lateral movement techniques: 'Destination IPs' ('aws:destination-ip-addresses') outside of expected IP address ranges may suggest that a device is communicating with unexpected devices. 'Bytes in' ('aws:all-bytes-in'), 'Bytes out' ('aws:all-bytes-out'), 'Packets in' ('aws:all-packets-in'), and 'Packets out' ('aws:all-packets-out') values outside of expected norms may indicate that the device is sending and/or receiving non-standard traffic, which may traffic used to discover other hosts/services. 'Listening TCP ports' ('aws:listening-tcp-ports'), 'Listening TCP port count' ('aws:num-listening-tcp-ports'), 'Established TCP connections count' ('aws:num-established-tcp-connections'), 'Listening UDP ports' ('aws:listening-udp-ports'), and 'Listening UDP port count' ('aws:num-listening-udp-ports') values outside of expected norms may indicate that devices are communicating via unexpected ports/protocols that may suggest scanning is taking place. Coverage factor is partial, since these metrics are limited to IoT device communication and detection is only based on network traffic, resulting in an overall score of Partial."
+        },
+        {
+          "AWSService": "AWS Network Firewall",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "AWS Network Firewall has the ability to pass, drop, or alert on traffic based on the network protocol as well as perform deep packet inspection on the payload. This functionality can be used to restrict access to the endpoints within the virtual private cloud and protect against network service scanning. This mapping is given a score of Partial because it only protects against network service scanning attacks that originate from outside the firewall and not from within network protected by the firewall."
+        },
+        {
+          "AWSService": "AWS Web Application Firewall",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "AWS WAF protects against bots that run scans against web applications such as Nessus (vulnerability assessments) and Nmap (IP address and port scans) among others. AWS WAF does this by blocking malicious traffic that indicate bad bots such as those listed above (e.g., via User-Agent values). AWS WAF uses the following rule sets to provide this protection. AWSManagedRulesCommonRuleSet AWSManagedRulesBotControlRuleSet. This is scored as Partial because the rule sets, while they block malicious traffic in near real-time, only protect web applications against scans performed by bots."
+        },
+        {
+          "AWSService": "Amazon GuardDuty",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "The following GuardDuty finding types reflect flagged events where there is an attempt to get a list of services running on a remote host. Recon:EC2/PortProbeEMRUnprotectedPort Recon:EC2/PortProbeUnprotectedPort Recon:EC2/Portscan Impact:EC2/PortSweep"
+        },
+        {
+          "AWSService": "Amazon Inspector",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "The Amazon Inspector Network Reachability assessment package can assess whether or not cloud/network components are vulnerable (e.g., publicly accessible from the Internet). Amazon Inspector does not directly protect cloud/network components rather reports on vulnerabilities that it identifies which can then be used to securely configure the cloud/network components. Due to this, the score is capped at Partial."
+        },
+        {
+          "AWSService": "Amazon Virtual Private Cloud",
+          "Category": "Protect",
+          "Value": "Significant",
+          "Comment": "VPC security groups and network access control lists (NACLs) can filter both internal and external network traffic and therefore, can mitigate unauthorized network service scanning."
+        }
+      ]
+    },
+    {
+      "Name": "Password Policy Discovery",
+      "Id": "T1201",
+      "Tactics": [
+        "Discovery"
+      ],
+      "SubTechniques": [],
+      "Platforms": [
+        "IaaS",
+        "Linux",
+        "Network",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Adversaries may attempt to access detailed information about the password policy used within an enterprise network or cloud environment. Password policies are a way to enforce complex passwords that are difficult to guess or crack through Brute Force. This information may help the adversary to create a list of common passwords and launch dictionary and/or brute force attacks which adheres to the policy (e.g. if the minimum password length should be 8, then not trying passwords such as 'pass123'; not checking for more than 3-4 passwords per account if the lockout is set to 6 as to not lock out accounts).",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1201/",
+      "Checks": [
+        "iam_customer_attached_policy_no_administrative_privileges",
+        "iam_aws_attached_policy_no_administrative_privileges",
+        "iam_policy_allows_privilege_escalation"
+      ],
+      "Attributes": [
+        {
+          "AWSService": "AWS IAM",
+          "Category": "Protect",
+          "Value": "Significant",
+          "Comment": "Ensure least privilege in IAM since password policies can be discovered in cloud environments using available APIs such as GetAccountPasswordPolicy in AWS."
+        }
+      ]
+    },
+    {
+      "Name": "System Network Connections Discovery",
+      "Id": "T1049",
+      "Tactics": [
+        "Discovery"
+      ],
+      "SubTechniques": [],
+      "Platforms": [
+        "IaaS",
+        "Linux",
+        "Network",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Adversaries may attempt to get a listing of network connections to or from the compromised system they are currently accessing or from remote systems by querying for information over the network.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1049/",
+      "Checks": [],
+      "Attributes": []
+    },
+    {
+      "Name": "System Location Discovery",
+      "Id": "T1614",
+      "Tactics": [
+        "Discovery"
+      ],
+      "SubTechniques": [],
+      "Platforms": [
+        "IaaS",
+        "Linux",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Adversaries may gather information in an attempt to calculate the geographical location of a victim host. Adversaries may use the information from System Location Discovery during automated discovery to shape follow-on behaviors, including whether or not the adversary fully infects the target and/or attempts specific actions.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1614/",
+      "Checks": [],
+      "Attributes": []
+    },
+    {
+      "Name": "System Information Discovery",
+      "Id": "T1082",
+      "Tactics": [
+        "Discovery"
+      ],
+      "SubTechniques": [],
+      "Platforms": [
+        "IaaS",
+        "Linux",
+        "Network",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "An adversary may attempt to get detailed information about the operating system and hardware, including version, patches, hotfixes, service packs, and architecture. Adversaries may use the information from System Information Discovery during automated discovery to shape follow-on behaviors, including whether or not the adversary fully infects the target and/or attempts specific actions.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1082/",
+      "Checks": [],
+      "Attributes": []
+    },
+    {
+      "Name": "Software Discovery",
+      "Id": "T1518",
+      "Tactics": [
+        "Discovery"
+      ],
+      "SubTechniques": [
+        "T1518.001 - Security Software Discovery"
+      ],
+      "Platforms": [
+        "Azure AD",
+        "Google Workspace",
+        "IaaS",
+        "Linux",
+        "Office 365",
+        "SaaS",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Adversaries may attempt to get a listing of software and software versions that are installed on a system or in a cloud environment. Adversaries may use the information from Software Discovery during automated discovery to shape follow-on behaviors, including whether or not the adversary fully infects the target and/or attempts specific actions.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1518/",
+      "Checks": [],
+      "Attributes": []
+    },
+    {
+      "Name": "Permission Groups Discovery",
+      "Id": "T1069",
+      "Tactics": [
+        "Discovery"
+      ],
+      "SubTechniques": [
+        "T1069.003 - Cloud Groups"
+      ],
+      "Platforms": [
+        "Azure AD",
+        "Containers",
+        "Google Workspace",
+        "IaaS",
+        "Linux",
+        "Office 365",
+        "SaaS",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Adversaries may attempt to discover group and permission settings. This information can help adversaries determine which user accounts and groups are available, the membership of users in particular groups, and which users and groups have elevated permissions.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1069/",
+      "Checks": [],
+      "Attributes": []
     }
   ]
 }
