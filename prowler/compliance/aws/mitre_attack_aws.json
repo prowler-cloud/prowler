@@ -875,6 +875,166 @@
           "Comment": "The following AWS Config managed rules can identify configuration problems that should be fixed in order to ensure SSL/TLS encryption is enabled to protect network traffic: 'acm-certificate-expiration-check' for nearly expired certificates in AWS Certificate Manager (ACM); 'alb-http-to-https-redirection-check' for Application Load Balancer (ALB) HTTP listeners; 'api-gw-ssl-enabled' for API Gateway REST API stages; 'cloudfront-custom-ssl-certificate', 'cloudfront-sni-enabled', and 'cloudfront-viewer-policy-https', for Amazon CloudFront distributions; 'elb-acm-certificate-required', 'elb-custom-security-policy-ssl-check', 'elb-predefined-security-policy-ssl-check', and 'elb-tls-https-listeners-only' for Elastic Load Balancing (ELB) Classic Load Balancer listeners; 'redshift-require-tls-ssl' for Amazon Redshift cluster connections to SQL clients; 's3-bucket-ssl-requests-only' for requests for S3 bucket contents; and 'elasticsearch-node-to-node-encryption-check' for Amazon ElasticSearch Service node-to-node communications. The following AWS Config managed rules can identify configuration problems that should be fixed in order to ensure that private traffic is routed securely and only within VPCs rather than on the public Internet: 'api-gw-endpoint-type-check' for Amazon API Gateway APIs, 'elasticsearch-in-vpc-only' for Amazon ElasticSearch Service domains, and 'redshift-enhanced-vpc-routing-enabled' for Amazon Redshift cluster traffic. All of these are run on configuration changes except 'alb-http-to-https-redirection-check' and 'elasticsearch-in-vpc-only', which are run periodically. Coverage factor is partial for these rules, since they are specific to a subset of the available AWS services and can only mitigate behavior for adversaries who are unable to decrypt the relevant traffic and/or do not have access to traffic within the relevant VPCs, resulting in an overall score of Partial."
         }
       ]
+    },
+    {
+      "Name": "Unsecured Credentials",
+      "Id": "T1552",
+      "Tactics": [
+        "Credential Access"
+      ],
+      "SubTechniques": [
+        "T1552.001 - Credentials In Files",
+        "T1552.005 - Cloud Instance Metadata API"
+      ],
+      "Platforms": [
+        "Azure AD",
+        "Containers",
+        "Google Workspace",
+        "IaaS",
+        "Linux",
+        "Network",
+        "Office 365",
+        "SaaS",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Adversaries may search compromised systems to find and obtain insecurely stored credentials. These credentials can be stored and/or misplaced in many locations on a system, including plaintext files (e.g. Bash History), operating system or application-specific repositories (e.g. Credentials in Registry), or other specialized files/artifacts (e.g. Private Keys).",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1552/",
+      "Checks": [
+        "macie_is_enabled",
+        "guardduty_is_enabled",
+        "autoscaling_find_secrets_ec2_launch_configuration",
+        "ec2_instance_imdsv2_enabled",
+        "awslambda_function_no_secrets_in_code",
+        "awslambda_function_no_secrets_in_variables",
+        "cloudformation_stack_outputs_find_secrets",
+        "cloudwatch_log_group_no_secrets_in_logs",
+        "ec2_instance_secrets_user_data",
+        "ecs_task_definitions_no_environment_secrets",
+        "eks_cluster_kms_cmk_encryption_in_secrets_enabled",
+        "ssm_document_secrets"
+      ],
+      "Attributes": [
+        {
+          "AWSService": "AWS CloudHSM",
+          "Category": "Protect",
+          "Value": "Minimal",
+          "Comment": "This control's protection is specific to a minority of this technique's sub-techniques and procedure examples resulting in a Minimal Coverage score and consequently an overall score of Minimal."
+        },
+        {
+          "AWSService": "AWS Config",
+          "Category": "Protect",
+          "Value": "Significant",
+          "Comment": "The following AWS Config managed rules can identify insecure plaintext credentials within specific parts of a cloud environment: 'codebuild-project-envvar-awscred-check' for credentials (AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY) stored within environment variables, 'codebuild-project-source-repo-url-check' for personal access tokens and/or credentials within source repository URLs. The following AWS Config managed rules can identify configuration problems that should be fixed in order to ensure that the contents of secrets in AWS Secrets Manager (including credentials) are properly secured to avoid adversary access: 'secretsmanager-rotation-enabled-check', 'secretsmanager-scheduled-rotation-success-check', 'secretsmanager-secret-periodic-rotation', and 'secretsmanager-using-cmk'. This control provides partial coverage for a minority of this technique's sub-techniques, in addition to the parent coverage above, resulting in an overall score of Partial."
+        },
+        {
+          "AWSService": "AWS IoT Device Defender",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "This control provides partial coverage for a minority of this technique's sub-techniques, resulting in an overall score of Minimal."
+        },
+        {
+          "AWSService": "AWS Key Management Service",
+          "Category": "Protect",
+          "Value": "Minimal",
+          "Comment": "This control's protection is specific to a minority of this technique's sub-techniques and procedure examples resulting in a Minimal Coverage score and consequently an overall score of Minimal."
+        },
+        {
+          "AWSService": "AWS Secrets Manager",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "This control is relevant for credentials stored in applications or configuration files but not credentials entered directly by a user."
+        },
+        {
+          "AWSService": "AWS GuardDuty",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "This control provides minimal to partial coverage for a minority of this technique's sub-techniques, and without specific coverage for its procedures, resulting in an overall score of Minimal."
+        },
+        {
+          "AWSService": "Amazon Macie",
+          "Category": "Protect",
+          "Value": "Minimal",
+          "Comment": "Macie only provides detection for the Credentials in Files sub-technique of this technique and only for the S3 storage type resulting in Minimal coverage and an overall Minimal score."
+        }
+      ]
+    },
+    {
+      "Name": "Exfiltration Over Alternative Protocol",
+      "Id": "T1048",
+      "Tactics": [
+        "Exfiltration"
+      ],
+      "SubTechniques": [],
+      "Platforms": [
+        "Google Workspace",
+        "IaaS",
+        "Linux",
+        "Network",
+        "Office 365",
+        "SaaS",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Adversaries may steal data by exfiltrating it over a different protocol than that of the existing command and control channel. The data may also be sent to an alternate network location from the main command and control server.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1048/",
+      "Checks": [
+        "networkfirewall_in_all_vpc",
+        "guardduty_is_enabled",
+        "ec2_networkacl_allow_ingress_any_port",
+        "ec2_networkacl_allow_ingress_tcp_port_22",
+        "ec2_networkacl_allow_ingress_tcp_port_3389"
+      ],
+      "Attributes": [
+        {
+          "AWSService": "AWS Network Firewall",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "AWS Network Firewall has the ability to pass, drop, or alert on traffic based on the network protocol as well as perform deep packet inspection on the payload. This functionality can be used to block adversaries from accessing resources from which to exfiltrate data as well as prevent resources from communicating with known-bad IP addresses and domains that might be used to receive exfiltrated data. This mapping is given a score of Partial because the known-bad IP addresses and domains would need to be known in advance and AWS Network Firewall wouldn't have deep packet inspection visibility into encrypted non-C2 protocols."
+        },
+        {
+          "AWSService": "AWS GuardDuty",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "The following GuardDuty finding type flags events where adversaries may steal data by exfiltrating it over a different protocol than that of the existing command-and-control channel. Trojan:EC2/DNSDataExfiltration Behavior:EC2/TrafficVolumeUnusual."
+        },
+        {
+          "AWSService": "AWS IoT Device Defender",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "This control provides partial coverage for this technique and all of its sub-techniques, resulting in an overall score of Partial."
+        },
+        {
+          "AWSService": "Amazon Virtual Private Cloud",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "VPC security groups and network access control lists (NACLs) can limit access to external hosts and can therefore provide mitigation of this technique. For environments where Internet access is required, these controls can be used to block known malicious addresses. Because this latter protection is limited to known malicious endpoints, it provides Partial coverage resulting in an overall Partial score."
+        }
+      ]
+    },
+    {
+      "Name": "Transfer Data to Cloud Account",
+      "Id": "T1537",
+      "Tactics": [
+        "Exfiltration"
+      ],
+      "SubTechniques": [],
+      "Platforms": [
+        "IaaS"
+      ],
+      "Description": "Adversaries may exfiltrate data by transferring the data, including backups of cloud environments, to another cloud account they control on the same service to avoid typical file transfers/downloads and network-based exfiltration detection.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1537/",
+      "Checks": [
+        "macie_is_enabled"
+      ],
+      "Attributes": [
+        {
+          "AWSService": "Amazon Macie",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "The following Macie findings can detect attempts to replicate data objects from a monitored bucket to an Amazon Web Services account that isn't part of your organization: Policy:IAMUser/S3BucketReplicatedExternally Policy:IAMUser/S3BucketSharedExternally. This type of detection is limited to only the S3 storage type and not other storage types available on the platform (such as file or block storage) and therefore has Minimal coverage resulting in a Minimal score."
+        }
+      ]
     }
   ]
 }
