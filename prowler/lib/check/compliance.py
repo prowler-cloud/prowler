@@ -2,10 +2,7 @@ import sys
 
 from pydantic import parse_obj_as
 
-from prowler.lib.check.compliance_models import (
-    Compliance_Base_Model,
-    Compliance_Requirement,
-)
+from prowler.lib.check.compliance_models import Compliance_Base_Model
 from prowler.lib.check.models import Check_Metadata_Model
 from prowler.lib.logger import logger
 
@@ -22,16 +19,7 @@ def update_checks_metadata_with_compliance(
                     compliance_requirements = []
                     # Verify if check is in the requirement
                     if check in requirement.Checks:
-                        # Create the Compliance_Requirement
-                        requirement = Compliance_Requirement(
-                            Id=requirement.Id,
-                            Description=requirement.Description,
-                            Attributes=requirement.Attributes,
-                            Checks=requirement.Checks,
-                        )
-                        # For the check metadata we don't need the "Checks" key
-                        delattr(requirement, "Checks")
-                        # Include the requirment into the check's framework requirements
+                        # Include the requirement into the check's framework requirements
                         compliance_requirements.append(requirement)
                         # Create the Compliance_Model
                         compliance = Compliance_Base_Model(

@@ -19,6 +19,7 @@ from prowler.lib.outputs.models import (
     Check_Output_CSV_CIS,
     Check_Output_CSV_ENS_RD2022,
     Check_Output_CSV_Generic_Compliance,
+    Check_Output_MITRE_ATTACK,
     Gcp_Check_Output_CSV,
     generate_csv_fields,
 )
@@ -184,6 +185,16 @@ def fill_file_descriptors(output_modes, output_directory, output_filename, audit
                             output_mode,
                             audit_info,
                             Check_Output_CSV_AWS_ISO27001_2013,
+                        )
+                        file_descriptors.update({output_mode: file_descriptor})
+
+                    elif output_mode == "mitre_attack_aws":
+                        filename = f"{output_directory}/{output_filename}_mitre_attack_aws{csv_file_suffix}"
+                        file_descriptor = initialize_file_descriptor(
+                            filename,
+                            output_mode,
+                            audit_info,
+                            Check_Output_MITRE_ATTACK,
                         )
                         file_descriptors.update({output_mode: file_descriptor})
 
