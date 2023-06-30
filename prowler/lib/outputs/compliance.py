@@ -367,7 +367,7 @@ def display_compliance_table(
 
             # Add results to table
             for marco in sorted(marcos):
-                ens_compliance_table["Proveedor"].append("aws")
+                ens_compliance_table["Proveedor"].append(compliance.Provider)
                 ens_compliance_table["Marco/Categoria"].append(marco)
                 ens_compliance_table["Estado"].append(marcos[marco]["Estado"])
                 ens_compliance_table["Opcional"].append(
@@ -459,7 +459,7 @@ def display_compliance_table(
             # Add results to table
             sections = dict(sorted(sections.items()))
             for section in sections:
-                cis_compliance_table["Provider"].append("aws")
+                cis_compliance_table["Provider"].append(compliance.Provider)
                 cis_compliance_table["Section"].append(section)
                 if sections[section]["Level 1"]["FAIL"] > 0:
                     cis_compliance_table["Level 1"].append(
@@ -498,6 +498,77 @@ def display_compliance_table(
                 print(
                     tabulate(
                         cis_compliance_table, headers="keys", tablefmt="rounded_grid"
+                    )
+                )
+                print(
+                    f"{Style.BRIGHT}* Only sections containing results appear.{Style.RESET_ALL}"
+                )
+                print(f"\nDetailed results of {compliance_fm} are in:")
+                print(
+                    f" - CSV: {output_directory}/{output_filename}_{compliance_framework}.csv\n"
+                )
+        elif "mitre_attack" in compliance_framework:
+            tactics = {}
+            mitre_compliance_table = {
+                "Provider": [],
+                "Tactic": [],
+                "Status": [],
+            }
+            pass_count = fail_count = 0
+            for finding in findings:
+                check = bulk_checks_metadata[finding.check_metadata.CheckID]
+                check_compliances = check.Compliance
+                for compliance in check_compliances:
+                    if (
+                        "MITRE-ATTACK" in compliance.Framework
+                        and compliance.Version in compliance_framework
+                    ):
+                        compliance_fm = compliance.Framework
+                        for requirement in compliance.Requirements:
+                            for tactic in requirement.Tactics:
+                                if tactic not in tactics:
+                                    tactics[tactic] = {"FAIL": 0, "PASS": 0}
+                                if finding.status == "FAIL":
+                                    fail_count += 1
+                                    tactics[tactic]["FAIL"] += 1
+                                elif finding.status == "PASS":
+                                    pass_count += 1
+                                    tactics[tactic]["PASS"] += 1
+
+            # Add results to table
+            tactics = dict(sorted(tactics.items()))
+            for tactic in tactics:
+                mitre_compliance_table["Provider"].append(compliance.Provider)
+                mitre_compliance_table["Tactic"].append(tactic)
+                if tactics[tactic]["FAIL"] > 0:
+                    mitre_compliance_table["Status"].append(
+                        f"{Fore.RED}FAIL({tactics[tactic]['FAIL']}){Style.RESET_ALL}"
+                    )
+                else:
+                    mitre_compliance_table["Status"].append(
+                        f"{Fore.GREEN}PASS({tactics[tactic]['PASS']}){Style.RESET_ALL}"
+                    )
+            if fail_count + pass_count < 1:
+                print(
+                    f"\n {Style.BRIGHT}There are no resources for {Fore.YELLOW}{compliance_fm}{Style.RESET_ALL}.\n"
+                )
+            else:
+                print(
+                    f"\nCompliance Status of {Fore.YELLOW}{compliance_fm}{Style.RESET_ALL} Framework:"
+                )
+                overview_table = [
+                    [
+                        f"{Fore.RED}{round(fail_count/(fail_count+pass_count)*100, 2)}% ({fail_count}) FAIL{Style.RESET_ALL}",
+                        f"{Fore.GREEN}{round(pass_count/(fail_count+pass_count)*100, 2)}% ({pass_count}) PASS{Style.RESET_ALL}",
+                    ]
+                ]
+                print(tabulate(overview_table, tablefmt="rounded_grid"))
+                print(
+                    f"\nFramework {Fore.YELLOW}{compliance_fm}{Style.RESET_ALL} Results:"
+                )
+                print(
+                    tabulate(
+                        mitre_compliance_table, headers="keys", tablefmt="rounded_grid"
                     )
                 )
                 print(

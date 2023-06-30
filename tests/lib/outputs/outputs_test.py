@@ -20,7 +20,7 @@ from prowler.config.config import (
     timestamp_utc,
 )
 from prowler.lib.check.compliance_models import (
-    CIS_Requirements,
+    CIS_Requirement_Attribute,
     Compliance_Base_Model,
     Compliance_Requirement,
 )
@@ -1351,7 +1351,7 @@ class Test_Outputs:
                         Id="2.1.3",
                         Description="Ensure MFA Delete is enabled on S3 buckets",
                         Attributes=[
-                            CIS_Requirements(
+                            CIS_Requirement_Attribute(
                                 Section="2.1. Simple Storage Service (S3)",
                                 Profile="Level 1",
                                 AssessmentStatus="Automated",
@@ -1378,7 +1378,7 @@ class Test_Outputs:
                         Id="2.1.3",
                         Description="Ensure MFA Delete is enabled on S3 buckets",
                         Attributes=[
-                            CIS_Requirements(
+                            CIS_Requirement_Attribute(
                                 Section="2.1. Simple Storage Service (S3)",
                                 Profile="Level 1",
                                 AssessmentStatus="Automated",
