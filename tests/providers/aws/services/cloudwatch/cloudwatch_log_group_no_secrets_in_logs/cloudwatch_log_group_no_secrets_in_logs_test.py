@@ -79,7 +79,12 @@ class Test_cloudwatch_log_group_no_secrets_in_logs:
         logs_client.put_log_events(
             logGroupName="test",
             logStreamName="test stream",
-            logEvents=[{"timestamp": 0, "message": "line"}],
+            logEvents=[
+                {
+                    "timestamp": int(unix_time_millis()),
+                    "message": "non sensitive message",
+                }
+            ],
         )
         from prowler.providers.aws.services.cloudwatch.cloudwatch_service import Logs
 
