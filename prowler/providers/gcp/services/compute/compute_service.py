@@ -17,7 +17,9 @@ class Compute:
         self.instances = []
         self.networks = []
         self.firewalls = []
+        self.projects = []
         self.__get_regions__()
+        self.__get_projects__()
         self.__get_zones__()
         self.__get_instances__()
         self.__get_networks__()
@@ -54,6 +56,22 @@ class Compute:
                     request = self.client.zones().list_next(
                         previous_request=request, previous_response=response
                     )
+            except Exception as error:
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+
+    def __get_projects__(self):
+        for project_id in self.project_ids:
+            try:
+                enable_oslogin = False
+                response = self.client.projects().get(project=project_id).execute()
+                for item in response["commonInstanceMetadata"].get("items", []):
+                    if item["key"] == "enable-oslogin" and item["value"] == "TRUE":
+                        enable_oslogin = True
+                self.projects.append(
+                    Project(id=project_id, enable_oslogin=enable_oslogin)
+                )
             except Exception as error:
                 logger.error(
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -195,3 +213,8 @@ class Firewall(BaseModel):
     direction: str
     allowed_rules: list
     project_id: str
+
+
+class Project(BaseModel):
+    id: str
+    enable_oslogin: bool

@@ -1,0 +1,30 @@
+{
+  "Provider": "gcp",
+  "CheckID": "compute_project_os_login_enabled",
+  "CheckTitle": "Ensure Os Login Is Enabled for a Project",
+  "CheckType": [],
+  "ServiceName": "compute",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "Project",
+  "Description": "Ensure that the OS Login feature is enabled at the Google Cloud Platform (GCP) project level in order to provide you with centralized and automated SSH key pair management.",
+  "Risk": "Enabling OS Login feature ensures that the SSH keys used to connect to VM instances are mapped with Google Cloud IAM users. Revoking access to corresponding IAM users will revoke all the SSH keys associated with these users, therefore it facilitates centralized SSH key pair management, which is extremely useful in handling compromised or stolen SSH key pairs and/or revocation of external/third-party/vendor users.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "https://docs.bridgecrew.io/docs/bc_gcp_networking_9#cli-command",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/ComputeEngine/enable-os-login.html",
+      "Terraform": "https://docs.bridgecrew.io/docs/bc_gcp_networking_9#terraform"
+    },
+    "Recommendation": {
+      "Text": "Ensure that the OS Login feature is enabled at the Google Cloud Platform (GCP) project level in order to provide you with centralized and automated SSH key pair management.",
+      "Url": "https://cloud.google.com/compute/confidential-vm/docs/creating-cvm-instance:https://cloud.google.com/compute/confidential-vm/docs/about-cvm:https://cloud.google.com/confidential-computing:https://cloud.google.com/blog/products/identity-security/introducing-google-cloud-confidential-computing-with-confidential-vms"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

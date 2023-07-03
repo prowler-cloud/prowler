@@ -18,7 +18,7 @@ class compute_instance_shielded_vm_enabled(Check):
                 or not instance.shielded_enabled_integrity_monitoring
             ):
                 report.status = "FAIL"
-                report.status_extended = f"VM Instance {instance.name} don't have vTPM and Integrity Monitoring set to on"
+                report.status_extended = f"VM Instance {instance.name} doesn't have vTPM and Integrity Monitoring set to on"
             findings.append(report)
 
         return findings
