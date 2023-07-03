@@ -4,21 +4,21 @@ from unittest import mock
 GCP_PROJECT_ID = "123456789012"
 
 
-class Test_compute_serial_ports_in_use:
+class Test_compute_instance_serial_ports_in_use:
     def test_compute_no_instances(self):
         compute_client = mock.MagicMock
         compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.instances = []
 
         with mock.patch(
-            "prowler.providers.gcp.services.compute.compute_serial_ports_in_use.compute_serial_ports_in_use.compute_client",
+            "prowler.providers.gcp.services.compute.compute_instance_serial_ports_in_use.compute_instance_serial_ports_in_use.compute_client",
             new=compute_client,
         ):
-            from prowler.providers.gcp.services.compute.compute_serial_ports_in_use.compute_serial_ports_in_use import (
-                compute_serial_ports_in_use,
+            from prowler.providers.gcp.services.compute.compute_instance_serial_ports_in_use.compute_instance_serial_ports_in_use import (
+                compute_instance_serial_ports_in_use,
             )
 
-            check = compute_serial_ports_in_use()
+            check = compute_instance_serial_ports_in_use()
             result = check.execute()
             assert len(result) == 0
 
@@ -44,14 +44,14 @@ class Test_compute_serial_ports_in_use:
         compute_client.instances = [instance]
 
         with mock.patch(
-            "prowler.providers.gcp.services.compute.compute_serial_ports_in_use.compute_serial_ports_in_use.compute_client",
+            "prowler.providers.gcp.services.compute.compute_instance_serial_ports_in_use.compute_instance_serial_ports_in_use.compute_client",
             new=compute_client,
         ):
-            from prowler.providers.gcp.services.compute.compute_serial_ports_in_use.compute_serial_ports_in_use import (
-                compute_serial_ports_in_use,
+            from prowler.providers.gcp.services.compute.compute_instance_serial_ports_in_use.compute_instance_serial_ports_in_use import (
+                compute_instance_serial_ports_in_use,
             )
 
-            check = compute_serial_ports_in_use()
+            check = compute_instance_serial_ports_in_use()
             result = check.execute()
 
             assert len(result) == 1
@@ -84,14 +84,14 @@ class Test_compute_serial_ports_in_use:
         compute_client.instances = [instance]
 
         with mock.patch(
-            "prowler.providers.gcp.services.compute.compute_serial_ports_in_use.compute_serial_ports_in_use.compute_client",
+            "prowler.providers.gcp.services.compute.compute_instance_serial_ports_in_use.compute_instance_serial_ports_in_use.compute_client",
             new=compute_client,
         ):
-            from prowler.providers.gcp.services.compute.compute_serial_ports_in_use.compute_serial_ports_in_use import (
-                compute_serial_ports_in_use,
+            from prowler.providers.gcp.services.compute.compute_instance_serial_ports_in_use.compute_instance_serial_ports_in_use import (
+                compute_instance_serial_ports_in_use,
             )
 
-            check = compute_serial_ports_in_use()
+            check = compute_instance_serial_ports_in_use()
             result = check.execute()
 
             assert len(result) == 1
@@ -124,14 +124,14 @@ class Test_compute_serial_ports_in_use:
         compute_client.instances = [instance]
 
         with mock.patch(
-            "prowler.providers.gcp.services.compute.compute_serial_ports_in_use.compute_serial_ports_in_use.compute_client",
+            "prowler.providers.gcp.services.compute.compute_instance_serial_ports_in_use.compute_instance_serial_ports_in_use.compute_client",
             new=compute_client,
         ):
-            from prowler.providers.gcp.services.compute.compute_serial_ports_in_use.compute_serial_ports_in_use import (
-                compute_serial_ports_in_use,
+            from prowler.providers.gcp.services.compute.compute_instance_serial_ports_in_use.compute_instance_serial_ports_in_use import (
+                compute_instance_serial_ports_in_use,
             )
 
-            check = compute_serial_ports_in_use()
+            check = compute_instance_serial_ports_in_use()
             result = check.execute()
 
             assert len(result) == 1
@@ -164,14 +164,14 @@ class Test_compute_serial_ports_in_use:
         compute_client.instances = [instance]
 
         with mock.patch(
-            "prowler.providers.gcp.services.compute.compute_serial_ports_in_use.compute_serial_ports_in_use.compute_client",
+            "prowler.providers.gcp.services.compute.compute_instance_serial_ports_in_use.compute_instance_serial_ports_in_use.compute_client",
             new=compute_client,
         ):
-            from prowler.providers.gcp.services.compute.compute_serial_ports_in_use.compute_serial_ports_in_use import (
-                compute_serial_ports_in_use,
+            from prowler.providers.gcp.services.compute.compute_instance_serial_ports_in_use.compute_instance_serial_ports_in_use import (
+                compute_instance_serial_ports_in_use,
             )
 
-            check = compute_serial_ports_in_use()
+            check = compute_instance_serial_ports_in_use()
             result = check.execute()
 
             assert len(result) == 1
@@ -204,14 +204,14 @@ class Test_compute_serial_ports_in_use:
         compute_client.instances = [instance]
 
         with mock.patch(
-            "prowler.providers.gcp.services.compute.compute_serial_ports_in_use.compute_serial_ports_in_use.compute_client",
+            "prowler.providers.gcp.services.compute.compute_instance_serial_ports_in_use.compute_instance_serial_ports_in_use.compute_client",
             new=compute_client,
         ):
-            from prowler.providers.gcp.services.compute.compute_serial_ports_in_use.compute_serial_ports_in_use import (
-                compute_serial_ports_in_use,
+            from prowler.providers.gcp.services.compute.compute_instance_serial_ports_in_use.compute_instance_serial_ports_in_use import (
+                compute_instance_serial_ports_in_use,
             )
 
-            check = compute_serial_ports_in_use()
+            check = compute_instance_serial_ports_in_use()
             result = check.execute()
 
             assert len(result) == 1

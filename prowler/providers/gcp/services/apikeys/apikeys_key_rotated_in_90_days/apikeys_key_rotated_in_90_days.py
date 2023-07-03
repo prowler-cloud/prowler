@@ -20,7 +20,7 @@ class apikeys_key_rotated_in_90_days(Check):
             ).days > 90:
                 report.status = "FAIL"
                 report.status_extended = (
-                    f"API key {key.name} creation date have more than 90 days."
+                    f"API key {key.name} creation date has more than 90 days."
                 )
             findings.append(report)
 

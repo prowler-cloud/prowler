@@ -1,6 +1,6 @@
 {
   "Provider": "gcp",
-  "CheckID": "compute_shielded_vm_enabled",
+  "CheckID": "compute_instance_shielded_vm_enabled",
   "CheckTitle": "Ensure Compute Instances Are Launched With Shielded VM Enabled",
   "CheckType": [],
   "ServiceName": "compute",

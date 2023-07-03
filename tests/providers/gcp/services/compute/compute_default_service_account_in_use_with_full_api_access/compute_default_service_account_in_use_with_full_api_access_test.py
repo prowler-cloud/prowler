@@ -4,20 +4,22 @@ from unittest import mock
 GCP_PROJECT_ID = "123456789012"
 
 
-class Test_compute_default_service_account_in_use_with_full_api_access:
+class Test_compute_instance_default_service_account_in_use_with_full_api_access:
     def test_compute_no_instances(self):
         compute_client = mock.MagicMock
         compute_client.instances = []
 
         with mock.patch(
-            "prowler.providers.gcp.services.compute.compute_default_service_account_in_use_with_full_api_access.compute_default_service_account_in_use_with_full_api_access.compute_client",
+            "prowler.providers.gcp.services.compute.compute_instance_default_service_account_in_use_with_full_api_access.compute_instance_default_service_account_in_use_with_full_api_access.compute_client",
             new=compute_client,
         ):
-            from prowler.providers.gcp.services.compute.compute_default_service_account_in_use_with_full_api_access.compute_default_service_account_in_use_with_full_api_access import (
-                compute_default_service_account_in_use_with_full_api_access,
+            from prowler.providers.gcp.services.compute.compute_instance_default_service_account_in_use_with_full_api_access.compute_instance_default_service_account_in_use_with_full_api_access import (
+                compute_instance_default_service_account_in_use_with_full_api_access,
             )
 
-            check = compute_default_service_account_in_use_with_full_api_access()
+            check = (
+                compute_instance_default_service_account_in_use_with_full_api_access()
+            )
             result = check.execute()
             assert len(result) == 0
 
@@ -45,14 +47,16 @@ class Test_compute_default_service_account_in_use_with_full_api_access:
         compute_client.instances = [instance]
 
         with mock.patch(
-            "prowler.providers.gcp.services.compute.compute_default_service_account_in_use_with_full_api_access.compute_default_service_account_in_use_with_full_api_access.compute_client",
+            "prowler.providers.gcp.services.compute.compute_instance_default_service_account_in_use_with_full_api_access.compute_instance_default_service_account_in_use_with_full_api_access.compute_client",
             new=compute_client,
         ):
-            from prowler.providers.gcp.services.compute.compute_default_service_account_in_use_with_full_api_access.compute_default_service_account_in_use_with_full_api_access import (
-                compute_default_service_account_in_use_with_full_api_access,
+            from prowler.providers.gcp.services.compute.compute_instance_default_service_account_in_use_with_full_api_access.compute_instance_default_service_account_in_use_with_full_api_access import (
+                compute_instance_default_service_account_in_use_with_full_api_access,
             )
 
-            check = compute_default_service_account_in_use_with_full_api_access()
+            check = (
+                compute_instance_default_service_account_in_use_with_full_api_access()
+            )
             result = check.execute()
 
             assert len(result) == 1
@@ -90,14 +94,16 @@ class Test_compute_default_service_account_in_use_with_full_api_access:
         compute_client.instances = [instance]
 
         with mock.patch(
-            "prowler.providers.gcp.services.compute.compute_default_service_account_in_use_with_full_api_access.compute_default_service_account_in_use_with_full_api_access.compute_client",
+            "prowler.providers.gcp.services.compute.compute_instance_default_service_account_in_use_with_full_api_access.compute_instance_default_service_account_in_use_with_full_api_access.compute_client",
             new=compute_client,
         ):
-            from prowler.providers.gcp.services.compute.compute_default_service_account_in_use_with_full_api_access.compute_default_service_account_in_use_with_full_api_access import (
-                compute_default_service_account_in_use_with_full_api_access,
+            from prowler.providers.gcp.services.compute.compute_instance_default_service_account_in_use_with_full_api_access.compute_instance_default_service_account_in_use_with_full_api_access import (
+                compute_instance_default_service_account_in_use_with_full_api_access,
             )
 
-            check = compute_default_service_account_in_use_with_full_api_access()
+            check = (
+                compute_instance_default_service_account_in_use_with_full_api_access()
+            )
             result = check.execute()
 
             assert len(result) == 1
@@ -135,14 +141,16 @@ class Test_compute_default_service_account_in_use_with_full_api_access:
         compute_client.instances = [instance]
 
         with mock.patch(
-            "prowler.providers.gcp.services.compute.compute_default_service_account_in_use_with_full_api_access.compute_default_service_account_in_use_with_full_api_access.compute_client",
+            "prowler.providers.gcp.services.compute.compute_instance_default_service_account_in_use_with_full_api_access.compute_instance_default_service_account_in_use_with_full_api_access.compute_client",
             new=compute_client,
         ):
-            from prowler.providers.gcp.services.compute.compute_default_service_account_in_use_with_full_api_access.compute_default_service_account_in_use_with_full_api_access import (
-                compute_default_service_account_in_use_with_full_api_access,
+            from prowler.providers.gcp.services.compute.compute_instance_default_service_account_in_use_with_full_api_access.compute_instance_default_service_account_in_use_with_full_api_access import (
+                compute_instance_default_service_account_in_use_with_full_api_access,
             )
 
-            check = compute_default_service_account_in_use_with_full_api_access()
+            check = (
+                compute_instance_default_service_account_in_use_with_full_api_access()
+            )
             result = check.execute()
 
             assert len(result) == 1

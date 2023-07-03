@@ -1,6 +1,6 @@
 {
   "Provider": "gcp",
-  "CheckID": "compute_encryption_with_csek_is_disabled",
+  "CheckID": "compute_instance_encryption_with_csek_enabled",
   "CheckTitle": "Ensure VM Disks for Critical VMs Are Encrypted With Customer-Supplied Encryption Keys (CSEK)",
   "CheckType": [],
   "ServiceName": "compute",

@@ -2,7 +2,7 @@ from prowler.lib.check.models import Check, Check_Report_GCP
 from prowler.providers.gcp.services.compute.compute_client import compute_client
 
 
-class compute_block_project_wide_ssh_keys_disabled(Check):
+class compute_instance_block_project_wide_ssh_keys_disabled(Check):
     def execute(self) -> Check_Report_GCP:
         findings = []
         for instance in compute_client.instances:

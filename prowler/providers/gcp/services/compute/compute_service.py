@@ -88,6 +88,9 @@ class Compute:
                                     shielded_enabled_integrity_monitoring=instance[
                                         "shieldedInstanceConfig"
                                     ]["enableIntegrityMonitoring"],
+                                    confidential_computing=instance[
+                                        "confidentialInstanceConfig"
+                                    ]["enableConfidentialCompute"],
                                     service_accounts=instance["serviceAccounts"],
                                     ip_forward=instance.get("canIpForward", False),
                                     disks_encryption=[
@@ -173,6 +176,7 @@ class Instance(BaseModel):
     metadata: dict
     shielded_enabled_vtpm: bool
     shielded_enabled_integrity_monitoring: bool
+    confidential_computing: bool
     service_accounts: list
     ip_forward: bool
     disks_encryption: list

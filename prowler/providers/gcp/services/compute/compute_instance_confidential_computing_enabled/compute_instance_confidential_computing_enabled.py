@@ -2,7 +2,7 @@ from prowler.lib.check.models import Check, Check_Report_GCP
 from prowler.providers.gcp.services.compute.compute_client import compute_client
 
 
-class compute_ip_forwarding_is_enabled(Check):
+class compute_instance_confidential_computing_enabled(Check):
     def execute(self) -> Check_Report_GCP:
         findings = []
         for instance in compute_client.instances:
@@ -13,13 +13,11 @@ class compute_ip_forwarding_is_enabled(Check):
             report.location = instance.zone
             report.status = "PASS"
             report.status_extended = (
-                f"The IP Forwarding of VM Instance {instance.name} is not enabled"
+                f"VM Instance {instance.name} has Confidential Computing enabled"
             )
-            if instance.ip_forward and instance.name[:4] != "gke-":
+            if not instance.confidential_computing:
                 report.status = "FAIL"
-                report.status_extended = (
-                    f"The IP Forwarding of VM Instance {instance.name} is enabled"
-                )
+                report.status_extended = f"VM Instance {instance.name} does not have Confidential Computing enabled"
             findings.append(report)
 
         return findings

@@ -1,6 +1,6 @@
 {
   "Provider": "gcp",
-  "CheckID": "compute_block_project_wide_ssh_keys_disabled",
+  "CheckID": "compute_instance_block_project_wide_ssh_keys_disabled",
   "CheckTitle": "Ensure “Block Project-Wide SSH Keys” Is Enabled for VM Instances",
   "CheckType": [],
   "ServiceName": "compute",

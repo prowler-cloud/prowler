@@ -4,21 +4,21 @@ from unittest import mock
 GCP_PROJECT_ID = "123456789012"
 
 
-class Test_compute_block_project_wide_ssh_keys_disabled:
+class Test_compute_instance_block_project_wide_ssh_keys_disabled:
     def test_compute_no_instances(self):
         compute_client = mock.MagicMock
         compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.instances = []
 
         with mock.patch(
-            "prowler.providers.gcp.services.compute.compute_block_project_wide_ssh_keys_disabled.compute_block_project_wide_ssh_keys_disabled.compute_client",
+            "prowler.providers.gcp.services.compute.compute_instance_block_project_wide_ssh_keys_disabled.compute_instance_block_project_wide_ssh_keys_disabled.compute_client",
             new=compute_client,
         ):
-            from prowler.providers.gcp.services.compute.compute_block_project_wide_ssh_keys_disabled.compute_block_project_wide_ssh_keys_disabled import (
-                compute_block_project_wide_ssh_keys_disabled,
+            from prowler.providers.gcp.services.compute.compute_instance_block_project_wide_ssh_keys_disabled.compute_instance_block_project_wide_ssh_keys_disabled import (
+                compute_instance_block_project_wide_ssh_keys_disabled,
             )
 
-            check = compute_block_project_wide_ssh_keys_disabled()
+            check = compute_instance_block_project_wide_ssh_keys_disabled()
             result = check.execute()
             assert len(result) == 0
 
@@ -44,14 +44,14 @@ class Test_compute_block_project_wide_ssh_keys_disabled:
         compute_client.instances = [instance]
 
         with mock.patch(
-            "prowler.providers.gcp.services.compute.compute_block_project_wide_ssh_keys_disabled.compute_block_project_wide_ssh_keys_disabled.compute_client",
+            "prowler.providers.gcp.services.compute.compute_instance_block_project_wide_ssh_keys_disabled.compute_instance_block_project_wide_ssh_keys_disabled.compute_client",
             new=compute_client,
         ):
-            from prowler.providers.gcp.services.compute.compute_block_project_wide_ssh_keys_disabled.compute_block_project_wide_ssh_keys_disabled import (
-                compute_block_project_wide_ssh_keys_disabled,
+            from prowler.providers.gcp.services.compute.compute_instance_block_project_wide_ssh_keys_disabled.compute_instance_block_project_wide_ssh_keys_disabled import (
+                compute_instance_block_project_wide_ssh_keys_disabled,
             )
 
-            check = compute_block_project_wide_ssh_keys_disabled()
+            check = compute_instance_block_project_wide_ssh_keys_disabled()
             result = check.execute()
 
             assert len(result) == 1
@@ -84,14 +84,14 @@ class Test_compute_block_project_wide_ssh_keys_disabled:
         compute_client.instances = [instance]
 
         with mock.patch(
-            "prowler.providers.gcp.services.compute.compute_block_project_wide_ssh_keys_disabled.compute_block_project_wide_ssh_keys_disabled.compute_client",
+            "prowler.providers.gcp.services.compute.compute_instance_block_project_wide_ssh_keys_disabled.compute_instance_block_project_wide_ssh_keys_disabled.compute_client",
             new=compute_client,
         ):
-            from prowler.providers.gcp.services.compute.compute_block_project_wide_ssh_keys_disabled.compute_block_project_wide_ssh_keys_disabled import (
-                compute_block_project_wide_ssh_keys_disabled,
+            from prowler.providers.gcp.services.compute.compute_instance_block_project_wide_ssh_keys_disabled.compute_instance_block_project_wide_ssh_keys_disabled import (
+                compute_instance_block_project_wide_ssh_keys_disabled,
             )
 
-            check = compute_block_project_wide_ssh_keys_disabled()
+            check = compute_instance_block_project_wide_ssh_keys_disabled()
             result = check.execute()
 
             assert len(result) == 1
@@ -124,14 +124,14 @@ class Test_compute_block_project_wide_ssh_keys_disabled:
         compute_client.instances = [instance]
 
         with mock.patch(
-            "prowler.providers.gcp.services.compute.compute_block_project_wide_ssh_keys_disabled.compute_block_project_wide_ssh_keys_disabled.compute_client",
+            "prowler.providers.gcp.services.compute.compute_instance_block_project_wide_ssh_keys_disabled.compute_instance_block_project_wide_ssh_keys_disabled.compute_client",
             new=compute_client,
         ):
-            from prowler.providers.gcp.services.compute.compute_block_project_wide_ssh_keys_disabled.compute_block_project_wide_ssh_keys_disabled import (
-                compute_block_project_wide_ssh_keys_disabled,
+            from prowler.providers.gcp.services.compute.compute_instance_block_project_wide_ssh_keys_disabled.compute_instance_block_project_wide_ssh_keys_disabled import (
+                compute_instance_block_project_wide_ssh_keys_disabled,
             )
 
-            check = compute_block_project_wide_ssh_keys_disabled()
+            check = compute_instance_block_project_wide_ssh_keys_disabled()
             result = check.execute()
 
             assert len(result) == 1

@@ -4,20 +4,20 @@ from unittest import mock
 GCP_PROJECT_ID = "123456789012"
 
 
-class Test_compute_ssh_access_from_the_internet_allowed:
+class Test_compute_firewall_ssh_access_from_the_internet_allowed:
     def test_compute_no_instances(self):
         compute_client = mock.MagicMock
         compute_client.firewalls = []
 
         with mock.patch(
-            "prowler.providers.gcp.services.compute.compute_ssh_access_from_the_internet_allowed.compute_ssh_access_from_the_internet_allowed.compute_client",
+            "prowler.providers.gcp.services.compute.compute_firewall_ssh_access_from_the_internet_allowed.compute_firewall_ssh_access_from_the_internet_allowed.compute_client",
             new=compute_client,
         ):
-            from prowler.providers.gcp.services.compute.compute_ssh_access_from_the_internet_allowed.compute_ssh_access_from_the_internet_allowed import (
-                compute_ssh_access_from_the_internet_allowed,
+            from prowler.providers.gcp.services.compute.compute_firewall_ssh_access_from_the_internet_allowed.compute_firewall_ssh_access_from_the_internet_allowed import (
+                compute_firewall_ssh_access_from_the_internet_allowed,
             )
 
-            check = compute_ssh_access_from_the_internet_allowed()
+            check = compute_firewall_ssh_access_from_the_internet_allowed()
             result = check.execute()
             assert len(result) == 0
 
@@ -38,14 +38,14 @@ class Test_compute_ssh_access_from_the_internet_allowed:
         compute_client.firewalls = [firewall]
 
         with mock.patch(
-            "prowler.providers.gcp.services.compute.compute_ssh_access_from_the_internet_allowed.compute_ssh_access_from_the_internet_allowed.compute_client",
+            "prowler.providers.gcp.services.compute.compute_firewall_ssh_access_from_the_internet_allowed.compute_firewall_ssh_access_from_the_internet_allowed.compute_client",
             new=compute_client,
         ):
-            from prowler.providers.gcp.services.compute.compute_ssh_access_from_the_internet_allowed.compute_ssh_access_from_the_internet_allowed import (
-                compute_ssh_access_from_the_internet_allowed,
+            from prowler.providers.gcp.services.compute.compute_firewall_ssh_access_from_the_internet_allowed.compute_firewall_ssh_access_from_the_internet_allowed import (
+                compute_firewall_ssh_access_from_the_internet_allowed,
             )
 
-            check = compute_ssh_access_from_the_internet_allowed()
+            check = compute_firewall_ssh_access_from_the_internet_allowed()
             result = check.execute()
 
             assert len(result) == 1
@@ -73,14 +73,14 @@ class Test_compute_ssh_access_from_the_internet_allowed:
         compute_client.firewalls = [firewall]
 
         with mock.patch(
-            "prowler.providers.gcp.services.compute.compute_ssh_access_from_the_internet_allowed.compute_ssh_access_from_the_internet_allowed.compute_client",
+            "prowler.providers.gcp.services.compute.compute_firewall_ssh_access_from_the_internet_allowed.compute_firewall_ssh_access_from_the_internet_allowed.compute_client",
             new=compute_client,
         ):
-            from prowler.providers.gcp.services.compute.compute_ssh_access_from_the_internet_allowed.compute_ssh_access_from_the_internet_allowed import (
-                compute_ssh_access_from_the_internet_allowed,
+            from prowler.providers.gcp.services.compute.compute_firewall_ssh_access_from_the_internet_allowed.compute_firewall_ssh_access_from_the_internet_allowed import (
+                compute_firewall_ssh_access_from_the_internet_allowed,
             )
 
-            check = compute_ssh_access_from_the_internet_allowed()
+            check = compute_firewall_ssh_access_from_the_internet_allowed()
             result = check.execute()
 
             assert len(result) == 1
@@ -108,14 +108,14 @@ class Test_compute_ssh_access_from_the_internet_allowed:
         compute_client.firewalls = [firewall]
 
         with mock.patch(
-            "prowler.providers.gcp.services.compute.compute_ssh_access_from_the_internet_allowed.compute_ssh_access_from_the_internet_allowed.compute_client",
+            "prowler.providers.gcp.services.compute.compute_firewall_ssh_access_from_the_internet_allowed.compute_firewall_ssh_access_from_the_internet_allowed.compute_client",
             new=compute_client,
         ):
-            from prowler.providers.gcp.services.compute.compute_ssh_access_from_the_internet_allowed.compute_ssh_access_from_the_internet_allowed import (
-                compute_ssh_access_from_the_internet_allowed,
+            from prowler.providers.gcp.services.compute.compute_firewall_ssh_access_from_the_internet_allowed.compute_firewall_ssh_access_from_the_internet_allowed import (
+                compute_firewall_ssh_access_from_the_internet_allowed,
             )
 
-            check = compute_ssh_access_from_the_internet_allowed()
+            check = compute_firewall_ssh_access_from_the_internet_allowed()
             result = check.execute()
 
             assert len(result) == 1
@@ -143,14 +143,14 @@ class Test_compute_ssh_access_from_the_internet_allowed:
         compute_client.firewalls = [firewall]
 
         with mock.patch(
-            "prowler.providers.gcp.services.compute.compute_ssh_access_from_the_internet_allowed.compute_ssh_access_from_the_internet_allowed.compute_client",
+            "prowler.providers.gcp.services.compute.compute_firewall_ssh_access_from_the_internet_allowed.compute_firewall_ssh_access_from_the_internet_allowed.compute_client",
             new=compute_client,
         ):
-            from prowler.providers.gcp.services.compute.compute_ssh_access_from_the_internet_allowed.compute_ssh_access_from_the_internet_allowed import (
-                compute_ssh_access_from_the_internet_allowed,
+            from prowler.providers.gcp.services.compute.compute_firewall_ssh_access_from_the_internet_allowed.compute_firewall_ssh_access_from_the_internet_allowed import (
+                compute_firewall_ssh_access_from_the_internet_allowed,
             )
 
-            check = compute_ssh_access_from_the_internet_allowed()
+            check = compute_firewall_ssh_access_from_the_internet_allowed()
             result = check.execute()
 
             assert len(result) == 1
@@ -178,14 +178,14 @@ class Test_compute_ssh_access_from_the_internet_allowed:
         compute_client.firewalls = [firewall]
 
         with mock.patch(
-            "prowler.providers.gcp.services.compute.compute_ssh_access_from_the_internet_allowed.compute_ssh_access_from_the_internet_allowed.compute_client",
+            "prowler.providers.gcp.services.compute.compute_firewall_ssh_access_from_the_internet_allowed.compute_firewall_ssh_access_from_the_internet_allowed.compute_client",
             new=compute_client,
         ):
-            from prowler.providers.gcp.services.compute.compute_ssh_access_from_the_internet_allowed.compute_ssh_access_from_the_internet_allowed import (
-                compute_ssh_access_from_the_internet_allowed,
+            from prowler.providers.gcp.services.compute.compute_firewall_ssh_access_from_the_internet_allowed.compute_firewall_ssh_access_from_the_internet_allowed import (
+                compute_firewall_ssh_access_from_the_internet_allowed,
             )
 
-            check = compute_ssh_access_from_the_internet_allowed()
+            check = compute_firewall_ssh_access_from_the_internet_allowed()
             result = check.execute()
 
             assert len(result) == 1
@@ -213,14 +213,14 @@ class Test_compute_ssh_access_from_the_internet_allowed:
         compute_client.firewalls = [firewall]
 
         with mock.patch(
-            "prowler.providers.gcp.services.compute.compute_ssh_access_from_the_internet_allowed.compute_ssh_access_from_the_internet_allowed.compute_client",
+            "prowler.providers.gcp.services.compute.compute_firewall_ssh_access_from_the_internet_allowed.compute_firewall_ssh_access_from_the_internet_allowed.compute_client",
             new=compute_client,
         ):
-            from prowler.providers.gcp.services.compute.compute_ssh_access_from_the_internet_allowed.compute_ssh_access_from_the_internet_allowed import (
-                compute_ssh_access_from_the_internet_allowed,
+            from prowler.providers.gcp.services.compute.compute_firewall_ssh_access_from_the_internet_allowed.compute_firewall_ssh_access_from_the_internet_allowed import (
+                compute_firewall_ssh_access_from_the_internet_allowed,
             )
 
-            check = compute_ssh_access_from_the_internet_allowed()
+            check = compute_firewall_ssh_access_from_the_internet_allowed()
             result = check.execute()
 
             assert len(result) == 1
@@ -248,14 +248,14 @@ class Test_compute_ssh_access_from_the_internet_allowed:
         compute_client.firewalls = [firewall]
 
         with mock.patch(
-            "prowler.providers.gcp.services.compute.compute_ssh_access_from_the_internet_allowed.compute_ssh_access_from_the_internet_allowed.compute_client",
+            "prowler.providers.gcp.services.compute.compute_firewall_ssh_access_from_the_internet_allowed.compute_firewall_ssh_access_from_the_internet_allowed.compute_client",
             new=compute_client,
         ):
-            from prowler.providers.gcp.services.compute.compute_ssh_access_from_the_internet_allowed.compute_ssh_access_from_the_internet_allowed import (
-                compute_ssh_access_from_the_internet_allowed,
+            from prowler.providers.gcp.services.compute.compute_firewall_ssh_access_from_the_internet_allowed.compute_firewall_ssh_access_from_the_internet_allowed import (
+                compute_firewall_ssh_access_from_the_internet_allowed,
             )
 
-            check = compute_ssh_access_from_the_internet_allowed()
+            check = compute_firewall_ssh_access_from_the_internet_allowed()
             result = check.execute()
 
             assert len(result) == 1
@@ -283,14 +283,14 @@ class Test_compute_ssh_access_from_the_internet_allowed:
         compute_client.firewalls = [firewall]
 
         with mock.patch(
-            "prowler.providers.gcp.services.compute.compute_ssh_access_from_the_internet_allowed.compute_ssh_access_from_the_internet_allowed.compute_client",
+            "prowler.providers.gcp.services.compute.compute_firewall_ssh_access_from_the_internet_allowed.compute_firewall_ssh_access_from_the_internet_allowed.compute_client",
             new=compute_client,
         ):
-            from prowler.providers.gcp.services.compute.compute_ssh_access_from_the_internet_allowed.compute_ssh_access_from_the_internet_allowed import (
-                compute_ssh_access_from_the_internet_allowed,
+            from prowler.providers.gcp.services.compute.compute_firewall_ssh_access_from_the_internet_allowed.compute_firewall_ssh_access_from_the_internet_allowed import (
+                compute_firewall_ssh_access_from_the_internet_allowed,
             )
 
-            check = compute_ssh_access_from_the_internet_allowed()
+            check = compute_firewall_ssh_access_from_the_internet_allowed()
             result = check.execute()
 
             assert len(result) == 1
@@ -318,14 +318,14 @@ class Test_compute_ssh_access_from_the_internet_allowed:
         compute_client.firewalls = [firewall]
 
         with mock.patch(
-            "prowler.providers.gcp.services.compute.compute_ssh_access_from_the_internet_allowed.compute_ssh_access_from_the_internet_allowed.compute_client",
+            "prowler.providers.gcp.services.compute.compute_firewall_ssh_access_from_the_internet_allowed.compute_firewall_ssh_access_from_the_internet_allowed.compute_client",
             new=compute_client,
         ):
-            from prowler.providers.gcp.services.compute.compute_ssh_access_from_the_internet_allowed.compute_ssh_access_from_the_internet_allowed import (
-                compute_ssh_access_from_the_internet_allowed,
+            from prowler.providers.gcp.services.compute.compute_firewall_ssh_access_from_the_internet_allowed.compute_firewall_ssh_access_from_the_internet_allowed import (
+                compute_firewall_ssh_access_from_the_internet_allowed,
             )
 
-            check = compute_ssh_access_from_the_internet_allowed()
+            check = compute_firewall_ssh_access_from_the_internet_allowed()
             result = check.execute()
 
             assert len(result) == 1
@@ -356,14 +356,14 @@ class Test_compute_ssh_access_from_the_internet_allowed:
         compute_client.firewalls = [firewall]
 
         with mock.patch(
-            "prowler.providers.gcp.services.compute.compute_ssh_access_from_the_internet_allowed.compute_ssh_access_from_the_internet_allowed.compute_client",
+            "prowler.providers.gcp.services.compute.compute_firewall_ssh_access_from_the_internet_allowed.compute_firewall_ssh_access_from_the_internet_allowed.compute_client",
             new=compute_client,
         ):
-            from prowler.providers.gcp.services.compute.compute_ssh_access_from_the_internet_allowed.compute_ssh_access_from_the_internet_allowed import (
-                compute_ssh_access_from_the_internet_allowed,
+            from prowler.providers.gcp.services.compute.compute_firewall_ssh_access_from_the_internet_allowed.compute_firewall_ssh_access_from_the_internet_allowed import (
+                compute_firewall_ssh_access_from_the_internet_allowed,
             )
 
-            check = compute_ssh_access_from_the_internet_allowed()
+            check = compute_firewall_ssh_access_from_the_internet_allowed()
             result = check.execute()
 
             assert len(result) == 1
@@ -395,14 +395,14 @@ class Test_compute_ssh_access_from_the_internet_allowed:
         compute_client.firewalls = [firewall]
 
         with mock.patch(
-            "prowler.providers.gcp.services.compute.compute_ssh_access_from_the_internet_allowed.compute_ssh_access_from_the_internet_allowed.compute_client",
+            "prowler.providers.gcp.services.compute.compute_firewall_ssh_access_from_the_internet_allowed.compute_firewall_ssh_access_from_the_internet_allowed.compute_client",
             new=compute_client,
         ):
-            from prowler.providers.gcp.services.compute.compute_ssh_access_from_the_internet_allowed.compute_ssh_access_from_the_internet_allowed import (
-                compute_ssh_access_from_the_internet_allowed,
+            from prowler.providers.gcp.services.compute.compute_firewall_ssh_access_from_the_internet_allowed.compute_firewall_ssh_access_from_the_internet_allowed import (
+                compute_firewall_ssh_access_from_the_internet_allowed,
             )
 
-            check = compute_ssh_access_from_the_internet_allowed()
+            check = compute_firewall_ssh_access_from_the_internet_allowed()
             result = check.execute()
 
             assert len(result) == 1

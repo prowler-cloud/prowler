@@ -2,7 +2,7 @@ from prowler.lib.check.models import Check, Check_Report_GCP
 from prowler.providers.gcp.services.compute.compute_client import compute_client
 
 
-class compute_ssh_access_from_the_internet_allowed(Check):
+class compute_firewall_ssh_access_from_the_internet_allowed(Check):
     def execute(self) -> Check_Report_GCP:
         findings = []
         for firewall in compute_client.firewalls:

@@ -12,12 +12,12 @@ class dns_dnssec_disabled(Check):
             report.resource_name = managed_zone.name
             report.status = "PASS"
             report.status_extended = (
-                f"Cloud DNS {managed_zone.name} have DNSSEC enabled."
+                f"Cloud DNS {managed_zone.name} has DNSSEC enabled."
             )
             if not managed_zone.dnssec:
                 report.status = "FAIL"
                 report.status_extended = (
-                    f"Cloud DNS {managed_zone.name} doens't have DNSSEC enabled."
+                    f"Cloud DNS {managed_zone.name} doesn't have DNSSEC enabled."
                 )
             findings.append(report)
 

@@ -1,6 +1,6 @@
 {
   "Provider": "gcp",
-  "CheckID": "compute_ip_forwarding_is_enabled",
+  "CheckID": "compute_instance_ip_forwarding_is_enabled",
   "CheckTitle": "Ensure That IP Forwarding Is Not Enabled on Instances",
   "CheckType": [],
   "ServiceName": "compute",
