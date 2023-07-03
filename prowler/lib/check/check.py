@@ -93,6 +93,9 @@ def exclude_checks_to_run(checks_to_execute: set, excluded_checks: list) -> set:
 def exclude_services_to_run(
     checks_to_execute: set, excluded_services: list, provider: str
 ) -> set:
+    excluded_services = [
+        "awslambda" if service == "lambda" else service for service in excluded_services
+    ]
     # Recover checks from the input services
     for service in excluded_services:
         modules = recover_checks_from_provider(provider, service)
@@ -581,6 +584,9 @@ def update_audit_metadata(
 
 def recover_checks_from_service(service_list: list, provider: str) -> list:
     checks = set()
+    service_list = [
+        "awslambda" if service == "lambda" else service for service in service_list
+    ]
     for service in service_list:
         modules = recover_checks_from_provider(provider, service)
         if not modules:
