@@ -1,0 +1,30 @@
+{
+  "Provider": "gcp",
+  "CheckID": "iam_sa_role_enforce_separation_of_duties",
+  "CheckTitle": "Enforce Separation of Duties for Service-Account Related Roles",
+  "CheckType": [],
+  "ServiceName": "iam",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "ServiceAccount",
+  "Description": "Ensure that separation of duties (also known as segregation of duties - SoD) is enforced for all Google Cloud Platform (GCP) service-account related roles. The security principle of separation of duties has as its primary objective the prevention of fraud and human error. This objective is achieved by disbanding the tasks and associated privileges for a specific business process among multiple users/members. To follow security best practices, your GCP service accounts should not have the Service Account Admin and Service Account User roles assigned at the same time.",
+  "Risk": "The principle of separation of duties should be enforced in order to eliminate the need for high-privileged IAM members, as the permissions granted to these members can allow them to perform malicious or unwanted actions.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudIAM/enforce-separation-of-duties-for-service-account-roles.html",
+      "Terraform": "https://docs.bridgecrew.io/docs/bc_gcp_iam_10#terraform"
+    },
+    "Recommendation": {
+      "Text": "Ensure that separation of duties (also known as segregation of duties - SoD) is enforced for all Google Cloud Platform (GCP) service-account related roles. The security principle of separation of duties has as its primary objective the prevention of fraud and human error. This objective is achieved by disbanding the tasks and associated privileges for a specific business process among multiple users/members. To follow security best practices, your GCP service accounts should not have the Service Account Admin and Service Account User roles assigned at the same time.",
+      "Url": "https://cloud.google.com/iam/docs/understanding-roles"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
