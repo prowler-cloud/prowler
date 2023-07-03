@@ -33,6 +33,7 @@ class Test_compute_instance_serial_ports_in_use:
             metadata={},
             shielded_enabled_vtpm=True,
             shielded_enabled_integrity_monitoring=True,
+            confidential_computing=True,
             service_accounts=[],
             ip_forward=False,
             disks_encryption=[("disk1", False), ("disk2", False)],
@@ -57,7 +58,7 @@ class Test_compute_instance_serial_ports_in_use:
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert search(
-                f"VM Instance {instance.name} have ‘Enable Connecting to Serial Ports’ off",
+                f"VM Instance {instance.name} has Enable Connecting to Serial Ports off",
                 result[0].status_extended,
             )
             assert result[0].resource_id == instance.id
@@ -73,6 +74,7 @@ class Test_compute_instance_serial_ports_in_use:
             metadata={"items": [{"key": "serial-port-enabled", "value": "0"}]},
             shielded_enabled_vtpm=True,
             shielded_enabled_integrity_monitoring=True,
+            confidential_computing=True,
             service_accounts=[],
             ip_forward=False,
             disks_encryption=[("disk1", False), ("disk2", False)],
@@ -97,7 +99,7 @@ class Test_compute_instance_serial_ports_in_use:
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert search(
-                f"VM Instance {instance.name} have ‘Enable Connecting to Serial Ports’ off",
+                f"VM Instance {instance.name} has Enable Connecting to Serial Ports off",
                 result[0].status_extended,
             )
             assert result[0].resource_id == instance.id
@@ -113,6 +115,7 @@ class Test_compute_instance_serial_ports_in_use:
             metadata={"items": [{"key": "serial-port-enabled", "value": "false"}]},
             shielded_enabled_vtpm=True,
             shielded_enabled_integrity_monitoring=True,
+            confidential_computing=True,
             service_accounts=[],
             ip_forward=False,
             disks_encryption=[("disk1", False), ("disk2", False)],
@@ -137,7 +140,7 @@ class Test_compute_instance_serial_ports_in_use:
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert search(
-                f"VM Instance {instance.name} have ‘Enable Connecting to Serial Ports’ off",
+                f"VM Instance {instance.name} has Enable Connecting to Serial Ports off",
                 result[0].status_extended,
             )
             assert result[0].resource_id == instance.id
@@ -153,6 +156,7 @@ class Test_compute_instance_serial_ports_in_use:
             metadata={"items": [{"key": "serial-port-enable", "value": "1"}]},
             shielded_enabled_vtpm=True,
             shielded_enabled_integrity_monitoring=True,
+            confidential_computing=True,
             service_accounts=[],
             ip_forward=False,
             disks_encryption=[("disk1", False), ("disk2", False)],
@@ -177,7 +181,7 @@ class Test_compute_instance_serial_ports_in_use:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert search(
-                f"VM Instance {instance.name} have ‘Enable Connecting to Serial Ports’ set to on",
+                f"VM Instance {instance.name} has Enable Connecting to Serial Ports set to on",
                 result[0].status_extended,
             )
             assert result[0].resource_id == instance.id
@@ -193,6 +197,7 @@ class Test_compute_instance_serial_ports_in_use:
             metadata={"items": [{"key": "serial-port-enable", "value": "true"}]},
             shielded_enabled_vtpm=True,
             shielded_enabled_integrity_monitoring=True,
+            confidential_computing=True,
             service_accounts=[],
             ip_forward=False,
             disks_encryption=[("disk1", False), ("disk2", False)],
@@ -217,7 +222,7 @@ class Test_compute_instance_serial_ports_in_use:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert search(
-                f"VM Instance {instance.name} have ‘Enable Connecting to Serial Ports’ set to on",
+                f"VM Instance {instance.name} has Enable Connecting to Serial Ports set to on",
                 result[0].status_extended,
             )
             assert result[0].resource_id == instance.id

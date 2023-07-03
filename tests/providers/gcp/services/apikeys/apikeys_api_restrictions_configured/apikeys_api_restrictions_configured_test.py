@@ -55,7 +55,7 @@ class Test_apikeys_api_restrictions_configured:
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert search(
-                f"API key {key.name} have restrictions configured.",
+                f"API key {key.name} has restrictions configured.",
                 result[0].status_extended,
             )
             assert result[0].resource_id == key.id

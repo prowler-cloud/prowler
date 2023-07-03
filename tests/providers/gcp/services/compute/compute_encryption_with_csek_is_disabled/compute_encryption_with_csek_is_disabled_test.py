@@ -33,6 +33,7 @@ class Test_compute_instance_encryption_with_csek_enabled:
             metadata={"items": [{"key": "block-project-ssh-keys", "value": "true"}]},
             shielded_enabled_vtpm=True,
             shielded_enabled_integrity_monitoring=True,
+            confidential_computing=True,
             service_accounts=[],
             ip_forward=False,
             disks_encryption=[("disk1", True), ("disk2", True)],
@@ -57,7 +58,7 @@ class Test_compute_instance_encryption_with_csek_enabled:
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert search(
-                f"The VM Instance {instance.name} have every disk encrypted.",
+                f"The VM Instance {instance.name} has every disk encrypted.",
                 result[0].status_extended,
             )
             assert result[0].resource_id == instance.id
@@ -73,6 +74,7 @@ class Test_compute_instance_encryption_with_csek_enabled:
             metadata={},
             shielded_enabled_vtpm=True,
             shielded_enabled_integrity_monitoring=True,
+            confidential_computing=True,
             service_accounts=[],
             ip_forward=False,
             disks_encryption=[("disk1", False), ("disk2", True)],
@@ -97,7 +99,7 @@ class Test_compute_instance_encryption_with_csek_enabled:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert search(
-                f"The VM Instance {instance.name} have the following unencrypted disks: '{', '.join([i[0] for i in instance.disks_encryption if not i[1]])}'",
+                f"The VM Instance {instance.name} has the following unencrypted disks: '{', '.join([i[0] for i in instance.disks_encryption if not i[1]])}'",
                 result[0].status_extended,
             )
             assert result[0].resource_id == instance.id
@@ -113,6 +115,7 @@ class Test_compute_instance_encryption_with_csek_enabled:
             metadata={"items": [{"key": "block-project-ssh-keys", "value": "false"}]},
             shielded_enabled_vtpm=True,
             shielded_enabled_integrity_monitoring=True,
+            confidential_computing=True,
             service_accounts=[],
             ip_forward=False,
             disks_encryption=[("disk1", False), ("disk2", False)],
@@ -137,7 +140,7 @@ class Test_compute_instance_encryption_with_csek_enabled:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert search(
-                f"The VM Instance {instance.name} have the following unencrypted disks: '{', '.join([i[0] for i in instance.disks_encryption if not i[1]])}'",
+                f"The VM Instance {instance.name} has the following unencrypted disks: '{', '.join([i[0] for i in instance.disks_encryption if not i[1]])}'",
                 result[0].status_extended,
             )
             assert result[0].resource_id == instance.id

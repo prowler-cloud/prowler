@@ -32,6 +32,7 @@ class Test_compute_instance_ip_forwarding_is_enabled:
             metadata={},
             shielded_enabled_vtpm=True,
             shielded_enabled_integrity_monitoring=True,
+            confidential_computing=True,
             service_accounts=[{"email": "123-compute@developer.gserviceaccount.com"}],
             ip_forward=False,
             disks_encryption=[("disk1", False), ("disk2", False)],
@@ -72,6 +73,7 @@ class Test_compute_instance_ip_forwarding_is_enabled:
             metadata={},
             shielded_enabled_vtpm=True,
             shielded_enabled_integrity_monitoring=True,
+            confidential_computing=True,
             service_accounts=[
                 {"email": f"{GCP_PROJECT_ID}-compute@developer.gserviceaccount.com"}
             ],
@@ -114,6 +116,7 @@ class Test_compute_instance_ip_forwarding_is_enabled:
             metadata={},
             shielded_enabled_vtpm=True,
             shielded_enabled_integrity_monitoring=True,
+            confidential_computing=True,
             service_accounts=[
                 {"email": f"{GCP_PROJECT_ID}-compute@developer.gserviceaccount.com"}
             ],

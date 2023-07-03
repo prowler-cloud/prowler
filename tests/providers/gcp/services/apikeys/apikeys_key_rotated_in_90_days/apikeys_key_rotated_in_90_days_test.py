@@ -84,7 +84,7 @@ class Test_apikeys_key_rotated_in_90_days:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert search(
-                f"API key {key.name} creation date have more than 90 days.",
+                f"API key {key.name} creation date has more than 90 days.",
                 result[0].status_extended,
             )
             assert result[0].resource_id == key.id

@@ -103,3 +103,42 @@ class ServiceAccount(BaseModel):
     display_name: str
     keys: list[Key] = []
     project_id: str
+
+
+################## AccessApproval
+class AccessApproval:
+    def __init__(self, audit_info):
+        self.service = "accessapproval"
+        self.api_version = "v1"
+        self.project_ids = audit_info.project_ids
+        self.region = "global"
+        self.client = generate_client(self.service, self.api_version, audit_info)
+        self.settings = {}
+        self.__get_settings__()
+
+    def __get_client__(self):
+        return self.client
+
+    def __get_settings__(self):
+        for project_id in self.project_ids:
+            try:
+                response = (
+                    self.client.projects().getAccessApprovalSettings(
+                        name=f"projects/{project_id}/accessApprovalSettings"
+                    )
+                ).execute()
+                self.settings[project_id].append(
+                    Setting(
+                        name=response["name"],
+                        project_id=project_id,
+                    )
+                )
+            except Exception as error:
+                logger.error(
+                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+
+
+class Setting(BaseModel):
+    name: str
+    project_id: str

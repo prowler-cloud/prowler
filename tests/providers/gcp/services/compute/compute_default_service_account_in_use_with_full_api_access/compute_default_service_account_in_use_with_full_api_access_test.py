@@ -34,6 +34,7 @@ class Test_compute_instance_default_service_account_in_use_with_full_api_access:
             metadata={},
             shielded_enabled_vtpm=True,
             shielded_enabled_integrity_monitoring=True,
+            confidential_computing=True,
             service_accounts=[
                 {"email": "123-compute@developer.gserviceaccount.com", "scopes": []}
             ],
@@ -78,6 +79,7 @@ class Test_compute_instance_default_service_account_in_use_with_full_api_access:
             metadata={},
             shielded_enabled_vtpm=True,
             shielded_enabled_integrity_monitoring=True,
+            confidential_computing=True,
             service_accounts=[
                 {
                     "email": f"{GCP_PROJECT_ID}-compute@developer.gserviceaccount.com",
@@ -125,6 +127,7 @@ class Test_compute_instance_default_service_account_in_use_with_full_api_access:
             metadata={},
             shielded_enabled_vtpm=True,
             shielded_enabled_integrity_monitoring=True,
+            confidential_computing=True,
             service_accounts=[
                 {
                     "email": f"{GCP_PROJECT_ID}-compute@developer.gserviceaccount.com",
