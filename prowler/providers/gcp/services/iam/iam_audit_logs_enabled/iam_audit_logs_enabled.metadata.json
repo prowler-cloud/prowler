@@ -15,8 +15,8 @@
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudIAM/enforce-separation-of-duties-for-kms-related-roles.html",
-      "Terraform": ""
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudIAM/record-all-activities.html",
+      "Terraform": "https://docs.bridgecrew.io/docs/ensure-that-cloud-audit-logging-is-configured-properly-across-all-services-and-all-users-from-a-project#terraform"
     },
     "Recommendation": {
       "Text": "It is recommended that Cloud Audit Logging is configured to track all admin activities and read, write access to user data.",
