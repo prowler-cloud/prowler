@@ -12,6 +12,7 @@ class Compute:
         self.project_ids = audit_info.project_ids
         self.default_project_id = audit_info.default_project_id
         self.client = generate_client(self.service, self.api_version, audit_info)
+        self.region = "global"
         self.regions = set()
         self.zones = set()
         self.instances = []
@@ -20,9 +21,9 @@ class Compute:
         self.firewalls = []
         self.projects = []
         self.__get_regions__()
-        # self.__get_projects__()
-        # self.__get_zones__()
-        # self.__get_instances__()
+        self.__get_projects__()
+        self.__get_zones__()
+        self.__get_instances__()
         self.__get_networks__()
         self.__get_subnetworks__()
         self.__get_firewalls__()
