@@ -109,7 +109,7 @@ Prowler is available as a project in [PyPI](https://pypi.org/project/prowler-clo
     _Requirements_:
 
     * AWS, GCP and/or Azure credentials
-    * Latest Amazon Linux 2 should come with Python 3.9 already installed however it may need pip. Install Python pip 3.9 with: `sudo dnf install -y python3-pip`.
+    * Latest Amazon Linux 2 should come with Python 3.9 already installed however it may need pip. Install Python pip 3.9 with: `sudo yum install -y python3-pip`.
     * Make sure setuptools for python is already installed with: `pip3 install setuptools`
 
     _Commands_:
