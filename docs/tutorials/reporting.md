@@ -25,13 +25,19 @@ prowler <provider> -M csv json json-asff html -F <custom_report_name> -o <custom
 ```
 ## Send report to AWS S3 Bucket
 
-To save your report in an S3 bucket, use `-B`/`--output-bucket` to define a custom output bucket along with `-M` to define the output format that is going to be uploaded to S3:
+To save your report in an S3 bucket, use `-B`/`--output-bucket`.
+
+```sh
+prowler <provider> -B my-bucket/folder/
+```
+
+By default Prowler sends HTML, JSON and CSV output formats, if you want to send a custom output format or a single one of the defaults you can specify it with the `-M` flag.
 
 ```sh
 prowler <provider> -M csv -B my-bucket/folder/
 ```
 
-> In the case you do not want to use the assumed role credentials but the initial credentials to put the reports into the S3 bucket, use `-D`/`--output-bucket-no-assume` instead of `-B`/`--output-bucket.
+> In the case you do not want to use the assumed role credentials but the initial credentials to put the reports into the S3 bucket, use `-D`/`--output-bucket-no-assume` instead of `-B`/`--output-bucket`.
 
 > Make sure that the used credentials have s3:PutObject permissions in the S3 path where the reports are going to be uploaded.
 
