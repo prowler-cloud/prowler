@@ -379,7 +379,7 @@ class Test_Allowlist:
             allowlist,
             AWS_ACCOUNT_NUMBER,
             AWS_ACCOUNT_NUMBER,
-            "s3_bucket_public_access",
+            "s3_bucket_no_mfa_delete",
             AWS_REGION,
             "prowler-test",
             "",
@@ -389,7 +389,7 @@ class Test_Allowlist:
             allowlist,
             AWS_ACCOUNT_NUMBER,
             AWS_ACCOUNT_NUMBER,
-            "s3_bucket_public_access",
+            "s3_bucket_policy_public_write_access",
             AWS_REGION,
             "test-prowler",
             "",
@@ -405,6 +405,114 @@ class Test_Allowlist:
                 "test",
                 "",
             )
+        )
+
+    def test_is_allowlisted_lambda_generic_check(self):
+        allowlist = {
+            "Accounts": {
+                AWS_ACCOUNT_NUMBER: {
+                    "Checks": {
+                        "lambda_*": {
+                            "Regions": ["us-east-1", "eu-west-1"],
+                            "Resources": ["*"],
+                        }
+                    }
+                }
+            }
+        }
+
+        assert is_allowlisted_in_check(
+            allowlist,
+            AWS_ACCOUNT_NUMBER,
+            AWS_ACCOUNT_NUMBER,
+            "awslambda_function_invoke_api_operations_cloudtrail_logging_enabled",
+            AWS_REGION,
+            "prowler",
+            "",
+        )
+
+        assert is_allowlisted_in_check(
+            allowlist,
+            AWS_ACCOUNT_NUMBER,
+            AWS_ACCOUNT_NUMBER,
+            "awslambda_function_no_secrets_in_code",
+            AWS_REGION,
+            "prowler",
+            "",
+        )
+
+        assert is_allowlisted_in_check(
+            allowlist,
+            AWS_ACCOUNT_NUMBER,
+            AWS_ACCOUNT_NUMBER,
+            "awslambda_function_no_secrets_in_variables",
+            AWS_REGION,
+            "prowler",
+            "",
+        )
+
+        assert is_allowlisted_in_check(
+            allowlist,
+            AWS_ACCOUNT_NUMBER,
+            AWS_ACCOUNT_NUMBER,
+            "awslambda_function_not_publicly_accessible",
+            AWS_REGION,
+            "prowler",
+            "",
+        )
+
+        assert is_allowlisted_in_check(
+            allowlist,
+            AWS_ACCOUNT_NUMBER,
+            AWS_ACCOUNT_NUMBER,
+            "awslambda_function_url_cors_policy",
+            AWS_REGION,
+            "prowler",
+            "",
+        )
+
+        assert is_allowlisted_in_check(
+            allowlist,
+            AWS_ACCOUNT_NUMBER,
+            AWS_ACCOUNT_NUMBER,
+            "awslambda_function_url_public",
+            AWS_REGION,
+            "prowler",
+            "",
+        )
+
+        assert is_allowlisted_in_check(
+            allowlist,
+            AWS_ACCOUNT_NUMBER,
+            AWS_ACCOUNT_NUMBER,
+            "awslambda_function_using_supported_runtimes",
+            AWS_REGION,
+            "prowler",
+            "",
+        )
+
+    def test_is_allowlisted_lambda_concrete_check(self):
+        allowlist = {
+            "Accounts": {
+                AWS_ACCOUNT_NUMBER: {
+                    "Checks": {
+                        "lambda_function_no_secrets_in_variables": {
+                            "Regions": ["us-east-1", "eu-west-1"],
+                            "Resources": ["*"],
+                        }
+                    }
+                }
+            }
+        }
+
+        assert is_allowlisted_in_check(
+            allowlist,
+            AWS_ACCOUNT_NUMBER,
+            AWS_ACCOUNT_NUMBER,
+            "awslambda_function_no_secrets_in_variables",
+            AWS_REGION,
+            "prowler",
+            "",
         )
 
     def test_is_allowlisted_tags(self):

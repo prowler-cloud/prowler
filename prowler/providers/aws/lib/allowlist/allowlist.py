@@ -142,6 +142,15 @@ def is_allowlisted_in_check(
     try:
         allowlisted_checks = allowlist["Accounts"][account]["Checks"]
         for allowlisted_check in allowlisted_checks.keys():
+            if re.search("^lambda", allowlisted_check):
+                mapped_check = re.sub("^lambda", "awslambda", allowlisted_check)
+                # we update the dictionary
+                allowlisted_checks[mapped_check] = allowlisted_checks.pop(
+                    allowlisted_check
+                )
+                # and the single element
+                allowlisted_check = mapped_check
+
             # Check if there are exceptions
             if is_excepted(
                 allowlisted_checks,
