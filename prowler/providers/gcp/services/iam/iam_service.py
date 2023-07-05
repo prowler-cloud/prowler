@@ -4,6 +4,9 @@ from pydantic import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.providers.gcp.gcp_provider import generate_client
+from prowler.providers.gcp.services.cloudresourcemanager.cloudresourcemanager_client import (
+    cloudresourcemanager_client,
+)
 
 
 ################## IAM
@@ -142,3 +145,47 @@ class AccessApproval:
 class Setting(BaseModel):
     name: str
     project_id: str
+
+
+################## EssentialContacts
+class EssentialContacts:
+    def __init__(self, audit_info):
+        self.service = "essentialcontacts"
+        self.api_version = "v1"
+        self.region = "global"
+        self.client = generate_client(self.service, self.api_version, audit_info)
+        self.organizations = []
+        self.__get_contacts__()
+
+    def __get_client__(self):
+        return self.client
+
+    def __get_contacts__(self):
+        for org in cloudresourcemanager_client.organizations:
+            try:
+                contacts = False
+                response = (
+                    self.client.organizations()
+                    .contacts()
+                    .list(parent="organizations/" + org.id)
+                ).execute()
+                if len(response["contacts"]) > 0:
+                    contacts = True
+
+                self.organizations.append(
+                    Organization(
+                        name=org.name,
+                        email=org.id,
+                        contacts=contacts,
+                    )
+                )
+            except Exception as error:
+                logger.error(
+                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+
+
+class Organization(BaseModel):
+    name: str
+    id: str
+    contacts: bool

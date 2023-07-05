@@ -14,7 +14,9 @@ class CloudResourceManager:
         self.client = generate_client(self.service, self.api_version, audit_info)
         self.bindings = []
         self.projects = []
+        self.organizations = []
         self.__get_iam_policy__()
+        self.__get_organizations__()
 
     def __get_client__(self):
         return self.client
@@ -44,6 +46,18 @@ class CloudResourceManager:
                     f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
+    def __get_organizations__(self):
+        try:
+            response = self.client.organizations().search().execute()
+            for org in response["organizations"]:
+                self.organizations.append(
+                    Organization(id=org["name"].split("/")[-1], name=org["displayName"])
+                )
+        except Exception as error:
+            logger.error(
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
 
 class Binding(BaseModel):
     role: str
@@ -54,3 +68,8 @@ class Binding(BaseModel):
 class Project(BaseModel):
     id: str
     audit_logging: bool
+
+
+class Organization(BaseModel):
+    id: str
+    name: str
