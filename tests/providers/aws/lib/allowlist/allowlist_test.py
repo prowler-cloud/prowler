@@ -262,54 +262,52 @@ class Test_Allowlist:
 
     def test_is_allowlisted_in_region(self):
         # Allowlist example
-        allowlist = {
-            "Accounts": {
-                AWS_ACCOUNT_NUMBER: {
-                    "Checks": {
-                        "check_test": {
-                            "Regions": ["us-east-1", "eu-west-1"],
-                            "Resources": ["*"],
-                        }
-                    }
-                }
-            }
-        }
+        allowlisted_regions = ["us-east-1", "eu-west-1"]
+        allowlisted_resources = ["*"]
 
         assert is_allowlisted_in_region(
-            allowlist, AWS_ACCOUNT_NUMBER, "check_test", AWS_REGION, "prowler", ""
+            allowlisted_regions, allowlisted_resources, None, AWS_REGION, "prowler", ""
         )
 
         assert is_allowlisted_in_region(
-            allowlist, AWS_ACCOUNT_NUMBER, "check_test", AWS_REGION, "prowler-test", ""
+            allowlisted_regions,
+            allowlisted_resources,
+            None,
+            AWS_REGION,
+            "prowler-test",
+            "",
         )
 
         assert is_allowlisted_in_region(
-            allowlist, AWS_ACCOUNT_NUMBER, "check_test", AWS_REGION, "test-prowler", ""
+            allowlisted_regions,
+            allowlisted_resources,
+            None,
+            AWS_REGION,
+            "test-prowler",
+            "",
         )
 
         assert not (
             is_allowlisted_in_region(
-                allowlist, AWS_ACCOUNT_NUMBER, "check_test", "us-east-2", "test", ""
+                allowlisted_regions,
+                allowlisted_resources,
+                None,
+                "us-east-2",
+                "test",
+                "",
             )
         )
 
     def test_is_allowlisted_in_check(self):
-        # Allowlist example
-        allowlist = {
-            "Accounts": {
-                AWS_ACCOUNT_NUMBER: {
-                    "Checks": {
-                        "check_test": {
-                            "Regions": ["us-east-1", "eu-west-1"],
-                            "Resources": ["*"],
-                        }
-                    }
-                }
+        allowlisted_checks = {
+            "check_test": {
+                "Regions": ["us-east-1", "eu-west-1"],
+                "Resources": ["*"],
             }
         }
 
         assert is_allowlisted_in_check(
-            allowlist,
+            allowlisted_checks,
             AWS_ACCOUNT_NUMBER,
             AWS_ACCOUNT_NUMBER,
             "check_test",
@@ -319,7 +317,7 @@ class Test_Allowlist:
         )
 
         assert is_allowlisted_in_check(
-            allowlist,
+            allowlisted_checks,
             AWS_ACCOUNT_NUMBER,
             AWS_ACCOUNT_NUMBER,
             "check_test",
@@ -329,7 +327,7 @@ class Test_Allowlist:
         )
 
         assert is_allowlisted_in_check(
-            allowlist,
+            allowlisted_checks,
             AWS_ACCOUNT_NUMBER,
             AWS_ACCOUNT_NUMBER,
             "check_test",
@@ -340,7 +338,7 @@ class Test_Allowlist:
 
         assert not (
             is_allowlisted_in_check(
-                allowlist,
+                allowlisted_checks,
                 AWS_ACCOUNT_NUMBER,
                 AWS_ACCOUNT_NUMBER,
                 "check_test",
@@ -352,21 +350,15 @@ class Test_Allowlist:
 
     def test_is_allowlisted_in_check_regex(self):
         # Allowlist example
-        allowlist = {
-            "Accounts": {
-                AWS_ACCOUNT_NUMBER: {
-                    "Checks": {
-                        "s3_*": {
-                            "Regions": ["us-east-1", "eu-west-1"],
-                            "Resources": ["*"],
-                        }
-                    }
-                }
+        allowlisted_checks = {
+            "s3_*": {
+                "Regions": ["us-east-1", "eu-west-1"],
+                "Resources": ["*"],
             }
         }
 
         assert is_allowlisted_in_check(
-            allowlist,
+            allowlisted_checks,
             AWS_ACCOUNT_NUMBER,
             AWS_ACCOUNT_NUMBER,
             "s3_bucket_public_access",
@@ -376,7 +368,7 @@ class Test_Allowlist:
         )
 
         assert is_allowlisted_in_check(
-            allowlist,
+            allowlisted_checks,
             AWS_ACCOUNT_NUMBER,
             AWS_ACCOUNT_NUMBER,
             "s3_bucket_no_mfa_delete",
@@ -386,7 +378,7 @@ class Test_Allowlist:
         )
 
         assert is_allowlisted_in_check(
-            allowlist,
+            allowlisted_checks,
             AWS_ACCOUNT_NUMBER,
             AWS_ACCOUNT_NUMBER,
             "s3_bucket_policy_public_write_access",
@@ -397,7 +389,7 @@ class Test_Allowlist:
 
         assert not (
             is_allowlisted_in_check(
-                allowlist,
+                allowlisted_checks,
                 AWS_ACCOUNT_NUMBER,
                 AWS_ACCOUNT_NUMBER,
                 "iam_user_hardware_mfa_enabled",
@@ -408,21 +400,15 @@ class Test_Allowlist:
         )
 
     def test_is_allowlisted_lambda_generic_check(self):
-        allowlist = {
-            "Accounts": {
-                AWS_ACCOUNT_NUMBER: {
-                    "Checks": {
-                        "lambda_*": {
-                            "Regions": ["us-east-1", "eu-west-1"],
-                            "Resources": ["*"],
-                        }
-                    }
-                }
+        allowlisted_checks = {
+            "lambda_*": {
+                "Regions": ["us-east-1", "eu-west-1"],
+                "Resources": ["*"],
             }
         }
 
         assert is_allowlisted_in_check(
-            allowlist,
+            allowlisted_checks,
             AWS_ACCOUNT_NUMBER,
             AWS_ACCOUNT_NUMBER,
             "awslambda_function_invoke_api_operations_cloudtrail_logging_enabled",
@@ -432,7 +418,7 @@ class Test_Allowlist:
         )
 
         assert is_allowlisted_in_check(
-            allowlist,
+            allowlisted_checks,
             AWS_ACCOUNT_NUMBER,
             AWS_ACCOUNT_NUMBER,
             "awslambda_function_no_secrets_in_code",
@@ -442,7 +428,7 @@ class Test_Allowlist:
         )
 
         assert is_allowlisted_in_check(
-            allowlist,
+            allowlisted_checks,
             AWS_ACCOUNT_NUMBER,
             AWS_ACCOUNT_NUMBER,
             "awslambda_function_no_secrets_in_variables",
@@ -452,7 +438,7 @@ class Test_Allowlist:
         )
 
         assert is_allowlisted_in_check(
-            allowlist,
+            allowlisted_checks,
             AWS_ACCOUNT_NUMBER,
             AWS_ACCOUNT_NUMBER,
             "awslambda_function_not_publicly_accessible",
@@ -462,7 +448,7 @@ class Test_Allowlist:
         )
 
         assert is_allowlisted_in_check(
-            allowlist,
+            allowlisted_checks,
             AWS_ACCOUNT_NUMBER,
             AWS_ACCOUNT_NUMBER,
             "awslambda_function_url_cors_policy",
@@ -472,7 +458,7 @@ class Test_Allowlist:
         )
 
         assert is_allowlisted_in_check(
-            allowlist,
+            allowlisted_checks,
             AWS_ACCOUNT_NUMBER,
             AWS_ACCOUNT_NUMBER,
             "awslambda_function_url_public",
@@ -482,7 +468,7 @@ class Test_Allowlist:
         )
 
         assert is_allowlisted_in_check(
-            allowlist,
+            allowlisted_checks,
             AWS_ACCOUNT_NUMBER,
             AWS_ACCOUNT_NUMBER,
             "awslambda_function_using_supported_runtimes",
@@ -492,21 +478,15 @@ class Test_Allowlist:
         )
 
     def test_is_allowlisted_lambda_concrete_check(self):
-        allowlist = {
-            "Accounts": {
-                AWS_ACCOUNT_NUMBER: {
-                    "Checks": {
-                        "lambda_function_no_secrets_in_variables": {
-                            "Regions": ["us-east-1", "eu-west-1"],
-                            "Resources": ["*"],
-                        }
-                    }
-                }
+        allowlisted_checks = {
+            "lambda_function_no_secrets_in_variables": {
+                "Regions": ["us-east-1", "eu-west-1"],
+                "Resources": ["*"],
             }
         }
 
         assert is_allowlisted_in_check(
-            allowlist,
+            allowlisted_checks,
             AWS_ACCOUNT_NUMBER,
             AWS_ACCOUNT_NUMBER,
             "awslambda_function_no_secrets_in_variables",
@@ -531,7 +511,7 @@ class Test_Allowlist:
             }
         }
 
-        assert not is_allowlisted(
+        assert is_allowlisted(
             allowlist,
             AWS_ACCOUNT_NUMBER,
             "check_test",
@@ -561,84 +541,68 @@ class Test_Allowlist:
         )
 
     def test_is_allowlisted_in_tags(self):
-        # Allowlist example
-        check_allowlist = {
-            "Regions": ["us-east-1", "eu-west-1"],
-            "Resources": ["*"],
-            "Tags": ["environment=dev", "project=prowler"],
-        }
+        allowlist_tags = ["environment=dev", "project=prowler"]
+        allowlist_resource = "*"
 
-        assert not is_allowlisted_in_tags(
-            check_allowlist,
-            check_allowlist["Resources"][0],
+        assert is_allowlisted_in_tags(
+            allowlist_tags,
+            "*",
             "prowler",
             "environment=dev",
         )
 
         assert is_allowlisted_in_tags(
-            check_allowlist,
-            check_allowlist["Resources"][0],
+            allowlist_tags,
+            allowlist_resource,
             "prowler-test",
             "environment=dev | project=prowler",
         )
 
         assert not (
             is_allowlisted_in_tags(
-                check_allowlist,
-                check_allowlist["Resources"][0],
+                allowlist_tags,
+                allowlist_resource,
                 "test",
                 "environment=pro",
             )
         )
 
     def test_is_allowlisted_in_tags_regex(self):
-        # Allowlist example
-        check_allowlist = {
-            "Regions": ["us-east-1", "eu-west-1"],
-            "Resources": ["*"],
-            "Tags": ["environment=(dev|test)", ".*=prowler"],
-        }
+        allowlist_tags = ["environment=(dev|test)", ".*=prowler"]
+        allowlist_resource = "*"
 
         assert is_allowlisted_in_tags(
-            check_allowlist,
-            check_allowlist["Resources"][0],
+            allowlist_tags,
+            allowlist_resource,
             "prowler-test",
             "environment=test | proj=prowler",
         )
 
-        assert not is_allowlisted_in_tags(
-            check_allowlist,
-            check_allowlist["Resources"][0],
+        assert is_allowlisted_in_tags(
+            allowlist_tags,
+            allowlist_resource,
             "prowler-test",
             "env=prod | project=prowler",
         )
 
         assert not is_allowlisted_in_tags(
-            check_allowlist,
-            check_allowlist["Resources"][0],
+            allowlist_tags,
+            allowlist_resource,
             "prowler-test",
             "environment=prod | project=myproj",
         )
 
     def test_is_excepted(self):
         # Allowlist example
-        check_allowlist = {
-            "check_test": {
-                "Regions": ["us-east-1", "eu-west-1"],
-                "Resources": ["*"],
-                "Tags": ["environment=dev"],
-                "Exceptions": {
-                    "Accounts": [AWS_ACCOUNT_NUMBER],
-                    "Regions": ["eu-central-1", "eu-south-3"],
-                    "Resources": ["test"],
-                    "Tags": ["environment=test", "project=.*"],
-                },
-            }
+        exceptions = {
+            "Accounts": [AWS_ACCOUNT_NUMBER],
+            "Regions": ["eu-central-1", "eu-south-3"],
+            "Resources": ["test"],
+            "Tags": ["environment=test", "project=.*"],
         }
 
         assert is_excepted(
-            check_allowlist,
-            "check_test",
+            exceptions,
             AWS_ACCOUNT_NUMBER,
             "eu-central-1",
             "test",
@@ -646,8 +610,7 @@ class Test_Allowlist:
         )
 
         assert is_excepted(
-            check_allowlist,
-            "check_test",
+            exceptions,
             AWS_ACCOUNT_NUMBER,
             "eu-south-3",
             "test",
@@ -655,8 +618,7 @@ class Test_Allowlist:
         )
 
         assert is_excepted(
-            check_allowlist,
-            "check_test",
+            exceptions,
             AWS_ACCOUNT_NUMBER,
             "eu-south-3",
             "test123",
@@ -664,8 +626,7 @@ class Test_Allowlist:
         )
 
         assert not is_excepted(
-            check_allowlist,
-            "check_test",
+            exceptions,
             AWS_ACCOUNT_NUMBER,
             "eu-south-2",
             "test",
@@ -673,8 +634,7 @@ class Test_Allowlist:
         )
 
         assert not is_excepted(
-            check_allowlist,
-            "check_test",
+            exceptions,
             AWS_ACCOUNT_NUMBER,
             "eu-south-3",
             "prowler",
@@ -682,8 +642,7 @@ class Test_Allowlist:
         )
 
         assert not is_excepted(
-            check_allowlist,
-            "check_test",
+            exceptions,
             AWS_ACCOUNT_NUMBER,
             "eu-south-3",
             "test",
