@@ -20,13 +20,16 @@ class Compute:
         self.subnets = []
         self.firewalls = []
         self.projects = []
-        self.__get_regions__()
-        self.__get_projects__()
-        self.__get_zones__()
-        self.__get_instances__()
-        self.__get_networks__()
-        self.__get_subnetworks__()
-        self.__get_firewalls__()
+        self.load_balancers = []
+        self.__get_url_maps__()
+        self.__describe_backend_service__()
+        # self.__get_regions__()
+        # self.__get_projects__()
+        # self.__get_zones__()
+        # self.__get_instances__()
+        # self.__get_networks__()
+        # self.__get_subnetworks__()
+        # self.__get_firewalls__()
 
     def __get_regions__(self):
         for project_id in self.project_ids:
@@ -216,6 +219,47 @@ class Compute:
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
+    def __get_url_maps__(self):
+        for project_id in self.project_ids:
+            try:
+                request = self.client.urlMaps().list(project=project_id)
+                while request is not None:
+                    response = request.execute()
+                    for urlmap in response.get("items", []):
+                        self.load_balancers.append(
+                            LoadBalancer(
+                                name=urlmap["name"],
+                                id=urlmap["id"],
+                                service=urlmap["defaultService"],
+                                project_id=project_id,
+                            )
+                        )
+
+                    request = self.client.urlMaps().list_next(
+                        previous_request=request, previous_response=response
+                    )
+            except Exception as error:
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+
+    def __describe_backend_service__(self):
+        for balancer in self.load_balancers:
+            try:
+                response = (
+                    self.client.backendServices()
+                    .get(
+                        project=balancer.project_id,
+                        backendService=balancer.service.split("/")[-1],
+                    )
+                    .execute()
+                )
+                balancer.logging = response.get("logConfig", False).get("enable", False)
+            except Exception as error:
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+
 
 class Instance(BaseModel):
     name: str
@@ -259,3 +303,11 @@ class Firewall(BaseModel):
 class Project(BaseModel):
     id: str
     enable_oslogin: bool
+
+
+class LoadBalancer(BaseModel):
+    name: str
+    id: str
+    service: str
+    logging: bool = False
+    project_id: str

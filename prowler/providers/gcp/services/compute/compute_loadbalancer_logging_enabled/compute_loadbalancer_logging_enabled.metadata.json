@@ -1,0 +1,30 @@
+{
+  "Provider": "gcp",
+  "CheckID": "compute_loadbalancer_logging_enabled",
+  "CheckTitle": "Ensure Logging is enabled for HTTP(S) Load Balancer",
+  "CheckType": [],
+  "ServiceName": "compute",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "LoadBalancer",
+  "Description": "Logging enabled on a HTTPS Load Balancer will show all network traffic and its destination.",
+  "Risk": "HTTP(S) load balancing log entries contain information useful for monitoring and debugging web traffic. Google Cloud exports this logging data to Cloud Monitoring service so that monitoring metrics can be created to evaluate a load balancer's configuration, usage, and performance, troubleshoot problems, and improve resource utilization and user experience.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "gcloud compute backend-services update <serviceName> --region=REGION --enable-logging --logging-sample-rate=<percentageAsADecimal>",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudLoadBalancing/enableLoad-balancing-backend-service-logging.html",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Logging will allow you to view HTTPS network traffic to your web applications.",
+      "Url": "https://cloud.google.com/load-balancing/docs/https/https-logging-monitoring#gcloud:-global-mode"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
