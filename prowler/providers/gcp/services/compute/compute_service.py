@@ -21,15 +21,15 @@ class Compute:
         self.firewalls = []
         self.projects = []
         self.load_balancers = []
-        self.__get_url_maps__()
-        self.__describe_backend_service__()
+        # self.__get_url_maps__()
+        # self.__describe_backend_service__()
         # self.__get_regions__()
         # self.__get_projects__()
         # self.__get_zones__()
         # self.__get_instances__()
-        # self.__get_networks__()
-        # self.__get_subnetworks__()
-        # self.__get_firewalls__()
+        self.__get_networks__()
+        self.__get_subnetworks__()
+        self.__get_firewalls__()
 
     def __get_regions__(self):
         for project_id in self.project_ids:
@@ -147,10 +147,18 @@ class Compute:
                 while request is not None:
                     response = request.execute()
                     for network in response.get("items", []):
+                        subnet_mode = (
+                            "legacy"
+                            if "autoCreateSubnetworks" not in network
+                            else "auto"
+                            if network["autoCreateSubnetworks"]
+                            else "custom"
+                        )
                         self.networks.append(
                             Network(
                                 name=network["name"],
                                 id=network["id"],
+                                subnet_mode=subnet_mode,
                                 project_id=project_id,
                             )
                         )
@@ -279,6 +287,7 @@ class Instance(BaseModel):
 class Network(BaseModel):
     name: str
     id: str
+    subnet_mode: str
     project_id: str
 
 

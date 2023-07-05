@@ -29,9 +29,7 @@ class Test_compute_network_dns_logging_enabled:
         from prowler.providers.gcp.services.compute.compute_service import Network
 
         network = Network(
-            name="test",
-            id="test_id",
-            project_id=GCP_PROJECT_ID,
+            name="test", id="test_id", project_id=GCP_PROJECT_ID, subnet_mode="auto"
         )
 
         compute_client = mock.MagicMock
@@ -81,9 +79,7 @@ class Test_compute_network_dns_logging_enabled:
         from prowler.providers.gcp.services.compute.compute_service import Network
 
         network = Network(
-            name="test",
-            id="test_id",
-            project_id=GCP_PROJECT_ID,
+            name="test", id="test_id", project_id=GCP_PROJECT_ID, subnet_mode="auto"
         )
 
         compute_client = mock.MagicMock
