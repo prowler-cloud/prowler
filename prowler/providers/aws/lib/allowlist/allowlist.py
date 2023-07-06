@@ -260,8 +260,9 @@ def is_excepted(exceptions, audited_account, region, resource, tags):
                 for excepted_resource in excepted_resources:
                     if re.search(excepted_resource, resource):
                         is_resource_excepted = True
-                if tags in excepted_tags:
-                    is_tag_excepted = True
+                for tag in excepted_tags:
+                    if tag in tags:
+                        is_tag_excepted = True
                 if (
                     (
                         (excepted_accounts and is_account_excepted)
