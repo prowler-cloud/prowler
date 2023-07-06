@@ -35,6 +35,7 @@ class Test_apikeys_key_rotated_in_90_days:
         apikeys_client = mock.MagicMock
         apikeys_client.project_ids = [GCP_PROJECT_ID]
         apikeys_client.keys = [key]
+        apikeys_client.region = "global"
 
         with mock.patch(
             "prowler.providers.gcp.services.apikeys.apikeys_key_rotated_in_90_days.apikeys_key_rotated_in_90_days.apikeys_client",
@@ -69,6 +70,7 @@ class Test_apikeys_key_rotated_in_90_days:
         apikeys_client = mock.MagicMock
         apikeys_client.project_ids = [GCP_PROJECT_ID]
         apikeys_client.keys = [key]
+        apikeys_client.region = "global"
 
         with mock.patch(
             "prowler.providers.gcp.services.apikeys.apikeys_key_rotated_in_90_days.apikeys_key_rotated_in_90_days.apikeys_client",

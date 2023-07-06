@@ -40,6 +40,7 @@ class Test_apikeys_api_restrictions_configured:
         apikeys_client = mock.MagicMock
         apikeys_client.project_ids = [GCP_PROJECT_ID]
         apikeys_client.keys = [key]
+        apikeys_client.region = "global"
 
         with mock.patch(
             "prowler.providers.gcp.services.apikeys.apikeys_api_restrictions_configured.apikeys_api_restrictions_configured.apikeys_client",
@@ -74,6 +75,7 @@ class Test_apikeys_api_restrictions_configured:
         apikeys_client = mock.MagicMock
         apikeys_client.project_ids = [GCP_PROJECT_ID]
         apikeys_client.keys = [key]
+        apikeys_client.region = "global"
 
         with mock.patch(
             "prowler.providers.gcp.services.apikeys.apikeys_api_restrictions_configured.apikeys_api_restrictions_configured.apikeys_client",
@@ -114,6 +116,7 @@ class Test_apikeys_api_restrictions_configured:
         apikeys_client = mock.MagicMock
         apikeys_client.project_ids = [GCP_PROJECT_ID]
         apikeys_client.keys = [key]
+        apikeys_client.region = "global"
 
         with mock.patch(
             "prowler.providers.gcp.services.apikeys.apikeys_api_restrictions_configured.apikeys_api_restrictions_configured.apikeys_client",

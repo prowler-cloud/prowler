@@ -36,6 +36,7 @@ class Test_compute_firewall_rdp_access_from_the_internet_allowed:
         compute_client = mock.MagicMock
         compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.firewalls = [firewall]
+        compute_client.region = "global"
 
         with mock.patch(
             "prowler.providers.gcp.services.compute.compute_firewall_rdp_access_from_the_internet_allowed.compute_firewall_rdp_access_from_the_internet_allowed.compute_client",
@@ -71,6 +72,7 @@ class Test_compute_firewall_rdp_access_from_the_internet_allowed:
         compute_client = mock.MagicMock
         compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.firewalls = [firewall]
+        compute_client.region = "global"
 
         with mock.patch(
             "prowler.providers.gcp.services.compute.compute_firewall_rdp_access_from_the_internet_allowed.compute_firewall_rdp_access_from_the_internet_allowed.compute_client",
@@ -106,6 +108,7 @@ class Test_compute_firewall_rdp_access_from_the_internet_allowed:
         compute_client = mock.MagicMock
         compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.firewalls = [firewall]
+        compute_client.region = "global"
 
         with mock.patch(
             "prowler.providers.gcp.services.compute.compute_firewall_rdp_access_from_the_internet_allowed.compute_firewall_rdp_access_from_the_internet_allowed.compute_client",
@@ -141,6 +144,7 @@ class Test_compute_firewall_rdp_access_from_the_internet_allowed:
         compute_client = mock.MagicMock
         compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.firewalls = [firewall]
+        compute_client.region = "global"
 
         with mock.patch(
             "prowler.providers.gcp.services.compute.compute_firewall_rdp_access_from_the_internet_allowed.compute_firewall_rdp_access_from_the_internet_allowed.compute_client",
@@ -176,6 +180,7 @@ class Test_compute_firewall_rdp_access_from_the_internet_allowed:
         compute_client = mock.MagicMock
         compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.firewalls = [firewall]
+        compute_client.region = "global"
 
         with mock.patch(
             "prowler.providers.gcp.services.compute.compute_firewall_rdp_access_from_the_internet_allowed.compute_firewall_rdp_access_from_the_internet_allowed.compute_client",
@@ -211,6 +216,7 @@ class Test_compute_firewall_rdp_access_from_the_internet_allowed:
         compute_client = mock.MagicMock
         compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.firewalls = [firewall]
+        compute_client.region = "global"
 
         with mock.patch(
             "prowler.providers.gcp.services.compute.compute_firewall_rdp_access_from_the_internet_allowed.compute_firewall_rdp_access_from_the_internet_allowed.compute_client",
@@ -246,6 +252,7 @@ class Test_compute_firewall_rdp_access_from_the_internet_allowed:
         compute_client = mock.MagicMock
         compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.firewalls = [firewall]
+        compute_client.region = "global"
 
         with mock.patch(
             "prowler.providers.gcp.services.compute.compute_firewall_rdp_access_from_the_internet_allowed.compute_firewall_rdp_access_from_the_internet_allowed.compute_client",
@@ -281,6 +288,7 @@ class Test_compute_firewall_rdp_access_from_the_internet_allowed:
         compute_client = mock.MagicMock
         compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.firewalls = [firewall]
+        compute_client.region = "global"
 
         with mock.patch(
             "prowler.providers.gcp.services.compute.compute_firewall_rdp_access_from_the_internet_allowed.compute_firewall_rdp_access_from_the_internet_allowed.compute_client",
@@ -316,6 +324,7 @@ class Test_compute_firewall_rdp_access_from_the_internet_allowed:
         compute_client = mock.MagicMock
         compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.firewalls = [firewall]
+        compute_client.region = "global"
 
         with mock.patch(
             "prowler.providers.gcp.services.compute.compute_firewall_rdp_access_from_the_internet_allowed.compute_firewall_rdp_access_from_the_internet_allowed.compute_client",
@@ -354,6 +363,7 @@ class Test_compute_firewall_rdp_access_from_the_internet_allowed:
         compute_client = mock.MagicMock
         compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.firewalls = [firewall]
+        compute_client.region = "global"
 
         with mock.patch(
             "prowler.providers.gcp.services.compute.compute_firewall_rdp_access_from_the_internet_allowed.compute_firewall_rdp_access_from_the_internet_allowed.compute_client",
@@ -393,6 +403,7 @@ class Test_compute_firewall_rdp_access_from_the_internet_allowed:
         compute_client = mock.MagicMock
         compute_client.project_ids = [GCP_PROJECT_ID]
         compute_client.firewalls = [firewall]
+        compute_client.region = "global"
 
         with mock.patch(
             "prowler.providers.gcp.services.compute.compute_firewall_rdp_access_from_the_internet_allowed.compute_firewall_rdp_access_from_the_internet_allowed.compute_client",
