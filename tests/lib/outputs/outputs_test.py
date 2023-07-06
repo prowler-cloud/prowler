@@ -1026,12 +1026,12 @@ class Test_Outputs:
                 product=Product(
                     language="en",
                     name="Prowler",
-                    version="3.6.1",
+                    version=prowler_version,
                     vendor_name="Prowler/ProwlerPro",
                     feature=Feature(
                         name="iam_disable_30_days_credentials",
                         uid="iam_disable_30_days_credentials",
-                        version="3.6.1",
+                        version=prowler_version,
                     ),
                 ),
                 version="1.0.0-rc.3",
@@ -1054,7 +1054,8 @@ class Test_Outputs:
             class_name="Security Finding",
         )
         output_options = mock.MagicMock()
-
+        print(fill_json_ocsf(input_audit_info, finding, output_options))
+        print(expected)
         assert fill_json_ocsf(input_audit_info, finding, output_options) == expected
 
     @mock_s3
