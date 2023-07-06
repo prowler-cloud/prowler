@@ -63,7 +63,7 @@ class Test_dns_dnssec_disabled:
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert search(
-                f"Cloud DNS {managed_zone.name} have DNSSEC enabled.",
+                f"Cloud DNS {managed_zone.name} has DNSSEC enabled.",
                 result[0].status_extended,
             )
             assert result[0].resource_id == managed_zone.id
@@ -110,7 +110,7 @@ class Test_dns_dnssec_disabled:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert search(
-                f"Cloud DNS {managed_zone.name} doens't have DNSSEC enabled.",
+                f"Cloud DNS {managed_zone.name} doesn't have DNSSEC enabled.",
                 result[0].status_extended,
             )
             assert result[0].resource_id == managed_zone.id

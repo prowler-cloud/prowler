@@ -40,6 +40,7 @@ class Test_apikeys_api_restrictions_configured:
         apikeys_client = mock.MagicMock
         apikeys_client.project_ids = [GCP_PROJECT_ID]
         apikeys_client.keys = [key]
+        apikeys_client.region = "global"
 
         with mock.patch(
             "prowler.providers.gcp.services.apikeys.apikeys_api_restrictions_configured.apikeys_api_restrictions_configured.apikeys_client",
@@ -55,7 +56,7 @@ class Test_apikeys_api_restrictions_configured:
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert search(
-                f"API key {key.name} have restrictions configured.",
+                f"API key {key.name} has restrictions configured.",
                 result[0].status_extended,
             )
             assert result[0].resource_id == key.id
@@ -74,6 +75,7 @@ class Test_apikeys_api_restrictions_configured:
         apikeys_client = mock.MagicMock
         apikeys_client.project_ids = [GCP_PROJECT_ID]
         apikeys_client.keys = [key]
+        apikeys_client.region = "global"
 
         with mock.patch(
             "prowler.providers.gcp.services.apikeys.apikeys_api_restrictions_configured.apikeys_api_restrictions_configured.apikeys_client",
@@ -114,6 +116,7 @@ class Test_apikeys_api_restrictions_configured:
         apikeys_client = mock.MagicMock
         apikeys_client.project_ids = [GCP_PROJECT_ID]
         apikeys_client.keys = [key]
+        apikeys_client.region = "global"
 
         with mock.patch(
             "prowler.providers.gcp.services.apikeys.apikeys_api_restrictions_configured.apikeys_api_restrictions_configured.apikeys_client",

@@ -1,3 +1,5 @@
+from typing import Optional
+
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
@@ -40,6 +42,7 @@ class CloudStorage:
                                     "uniformBucketLevelAccess"
                                 ]["enabled"],
                                 public=public,
+                                retention_policy=bucket.get("retentionPolicy"),
                                 project_id=project_id,
                             )
                         )
@@ -60,3 +63,4 @@ class Bucket(BaseModel):
     uniform_bucket_level_access: bool
     public: bool
     project_id: str
+    retention_policy: Optional[dict]

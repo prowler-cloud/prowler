@@ -4,20 +4,20 @@ from unittest import mock
 GCP_PROJECT_ID = "123456789012"
 
 
-class Test_compute_ip_forwarding_is_enabled:
+class Test_compute_instance_ip_forwarding_is_enabled:
     def test_compute_no_instances(self):
         compute_client = mock.MagicMock
         compute_client.instances = []
 
         with mock.patch(
-            "prowler.providers.gcp.services.compute.compute_ip_forwarding_is_enabled.compute_ip_forwarding_is_enabled.compute_client",
+            "prowler.providers.gcp.services.compute.compute_instance_ip_forwarding_is_enabled.compute_instance_ip_forwarding_is_enabled.compute_client",
             new=compute_client,
         ):
-            from prowler.providers.gcp.services.compute.compute_ip_forwarding_is_enabled.compute_ip_forwarding_is_enabled import (
-                compute_ip_forwarding_is_enabled,
+            from prowler.providers.gcp.services.compute.compute_instance_ip_forwarding_is_enabled.compute_instance_ip_forwarding_is_enabled import (
+                compute_instance_ip_forwarding_is_enabled,
             )
 
-            check = compute_ip_forwarding_is_enabled()
+            check = compute_instance_ip_forwarding_is_enabled()
             result = check.execute()
             assert len(result) == 0
 
@@ -32,6 +32,7 @@ class Test_compute_ip_forwarding_is_enabled:
             metadata={},
             shielded_enabled_vtpm=True,
             shielded_enabled_integrity_monitoring=True,
+            confidential_computing=True,
             service_accounts=[{"email": "123-compute@developer.gserviceaccount.com"}],
             ip_forward=False,
             disks_encryption=[("disk1", False), ("disk2", False)],
@@ -43,14 +44,14 @@ class Test_compute_ip_forwarding_is_enabled:
         compute_client.instances = [instance]
 
         with mock.patch(
-            "prowler.providers.gcp.services.compute.compute_ip_forwarding_is_enabled.compute_ip_forwarding_is_enabled.compute_client",
+            "prowler.providers.gcp.services.compute.compute_instance_ip_forwarding_is_enabled.compute_instance_ip_forwarding_is_enabled.compute_client",
             new=compute_client,
         ):
-            from prowler.providers.gcp.services.compute.compute_ip_forwarding_is_enabled.compute_ip_forwarding_is_enabled import (
-                compute_ip_forwarding_is_enabled,
+            from prowler.providers.gcp.services.compute.compute_instance_ip_forwarding_is_enabled.compute_instance_ip_forwarding_is_enabled import (
+                compute_instance_ip_forwarding_is_enabled,
             )
 
-            check = compute_ip_forwarding_is_enabled()
+            check = compute_instance_ip_forwarding_is_enabled()
             result = check.execute()
 
             assert len(result) == 1
@@ -72,6 +73,7 @@ class Test_compute_ip_forwarding_is_enabled:
             metadata={},
             shielded_enabled_vtpm=True,
             shielded_enabled_integrity_monitoring=True,
+            confidential_computing=True,
             service_accounts=[
                 {"email": f"{GCP_PROJECT_ID}-compute@developer.gserviceaccount.com"}
             ],
@@ -85,14 +87,14 @@ class Test_compute_ip_forwarding_is_enabled:
         compute_client.instances = [instance]
 
         with mock.patch(
-            "prowler.providers.gcp.services.compute.compute_ip_forwarding_is_enabled.compute_ip_forwarding_is_enabled.compute_client",
+            "prowler.providers.gcp.services.compute.compute_instance_ip_forwarding_is_enabled.compute_instance_ip_forwarding_is_enabled.compute_client",
             new=compute_client,
         ):
-            from prowler.providers.gcp.services.compute.compute_ip_forwarding_is_enabled.compute_ip_forwarding_is_enabled import (
-                compute_ip_forwarding_is_enabled,
+            from prowler.providers.gcp.services.compute.compute_instance_ip_forwarding_is_enabled.compute_instance_ip_forwarding_is_enabled import (
+                compute_instance_ip_forwarding_is_enabled,
             )
 
-            check = compute_ip_forwarding_is_enabled()
+            check = compute_instance_ip_forwarding_is_enabled()
             result = check.execute()
 
             assert len(result) == 1
@@ -114,6 +116,7 @@ class Test_compute_ip_forwarding_is_enabled:
             metadata={},
             shielded_enabled_vtpm=True,
             shielded_enabled_integrity_monitoring=True,
+            confidential_computing=True,
             service_accounts=[
                 {"email": f"{GCP_PROJECT_ID}-compute@developer.gserviceaccount.com"}
             ],
@@ -127,14 +130,14 @@ class Test_compute_ip_forwarding_is_enabled:
         compute_client.instances = [instance]
 
         with mock.patch(
-            "prowler.providers.gcp.services.compute.compute_ip_forwarding_is_enabled.compute_ip_forwarding_is_enabled.compute_client",
+            "prowler.providers.gcp.services.compute.compute_instance_ip_forwarding_is_enabled.compute_instance_ip_forwarding_is_enabled.compute_client",
             new=compute_client,
         ):
-            from prowler.providers.gcp.services.compute.compute_ip_forwarding_is_enabled.compute_ip_forwarding_is_enabled import (
-                compute_ip_forwarding_is_enabled,
+            from prowler.providers.gcp.services.compute.compute_instance_ip_forwarding_is_enabled.compute_instance_ip_forwarding_is_enabled import (
+                compute_instance_ip_forwarding_is_enabled,
             )
 
-            check = compute_ip_forwarding_is_enabled()
+            check = compute_instance_ip_forwarding_is_enabled()
             result = check.execute()
 
             assert len(result) == 1
