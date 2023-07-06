@@ -21,12 +21,12 @@ class Compute:
         self.firewalls = []
         self.projects = []
         self.load_balancers = []
-        # self.__get_url_maps__()
-        # self.__describe_backend_service__()
-        # self.__get_regions__()
-        # self.__get_projects__()
-        # self.__get_zones__()
-        # self.__get_instances__()
+        self.__get_url_maps__()
+        self.__describe_backend_service__()
+        self.__get_regions__()
+        self.__get_projects__()
+        self.__get_zones__()
+        self.__get_instances__()
         self.__get_networks__()
         self.__get_subnetworks__()
         self.__get_firewalls__()

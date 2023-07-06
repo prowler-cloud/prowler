@@ -8,10 +8,11 @@ from prowler.config.config import orange_color, timestamp
 from prowler.lib.check.models import Check_Report
 from prowler.lib.logger import logger
 from prowler.lib.outputs.models import (
+    Check_Output_CSV_AWS_CIS,
     Check_Output_CSV_AWS_ISO27001_2013,
     Check_Output_CSV_AWS_Well_Architected,
-    Check_Output_CSV_CIS,
     Check_Output_CSV_ENS_RD2022,
+    Check_Output_CSV_GCP_CIS,
     Check_Output_CSV_Generic_Compliance,
     Check_Output_MITRE_ATTACK,
     generate_csv_fields,
@@ -29,6 +30,7 @@ def add_manual_controls(output_options, audit_info, file_descriptors):
             manual_finding.status = "INFO"
             manual_finding.status_extended = "Manual check"
             manual_finding.resource_id = "manual_check"
+            manual_finding.resource_name = ""
             manual_finding.region = ""
             manual_finding.location = ""
             manual_finding.project_id = ""
@@ -97,35 +99,61 @@ def fill_compliance(output_options, finding, audit_info, file_descriptors):
                         requirement_description = requirement.Description
                         requirement_id = requirement.Id
                         for attribute in requirement.Attributes:
-                            compliance_row = Check_Output_CSV_CIS(
-                                Provider=finding.check_metadata.Provider,
-                                Description=compliance.Description,
-                                Region=finding.region
-                                if compliance.Provider == "AWS"
-                                else finding.location,
-                                AssessmentDate=timestamp.isoformat(),
-                                Requirements_Id=requirement_id,
-                                Requirements_Description=requirement_description,
-                                Requirements_Attributes_Section=attribute.Section,
-                                Requirements_Attributes_Profile=attribute.Profile,
-                                Requirements_Attributes_AssessmentStatus=attribute.AssessmentStatus,
-                                Requirements_Attributes_Description=attribute.Description,
-                                Requirements_Attributes_RationaleStatement=attribute.RationaleStatement,
-                                Requirements_Attributes_ImpactStatement=attribute.ImpactStatement,
-                                Requirements_Attributes_RemediationProcedure=attribute.RemediationProcedure,
-                                Requirements_Attributes_AuditProcedure=attribute.AuditProcedure,
-                                Requirements_Attributes_AdditionalInformation=attribute.AdditionalInformation,
-                                Requirements_Attributes_References=attribute.References,
-                                Status=finding.status,
-                                StatusExtended=finding.status_extended,
-                                ResourceId=finding.resource_id,
-                                CheckId=finding.check_metadata.CheckID,
-                            )
                             if compliance.Provider == "AWS":
-                                compliance_row.AccountId = audit_info.audited_account
-                            else:
-                                compliance_row.ProjectId = finding.project_id
-                    csv_header = generate_csv_fields(Check_Output_CSV_CIS)
+                                compliance_row = Check_Output_CSV_AWS_CIS(
+                                    Provider=finding.check_metadata.Provider,
+                                    Description=compliance.Description,
+                                    AccountId=audit_info.audited_account,
+                                    Region=finding.region,
+                                    AssessmentDate=timestamp.isoformat(),
+                                    Requirements_Id=requirement_id,
+                                    Requirements_Description=requirement_description,
+                                    Requirements_Attributes_Section=attribute.Section,
+                                    Requirements_Attributes_Profile=attribute.Profile,
+                                    Requirements_Attributes_AssessmentStatus=attribute.AssessmentStatus,
+                                    Requirements_Attributes_Description=attribute.Description,
+                                    Requirements_Attributes_RationaleStatement=attribute.RationaleStatement,
+                                    Requirements_Attributes_ImpactStatement=attribute.ImpactStatement,
+                                    Requirements_Attributes_RemediationProcedure=attribute.RemediationProcedure,
+                                    Requirements_Attributes_AuditProcedure=attribute.AuditProcedure,
+                                    Requirements_Attributes_AdditionalInformation=attribute.AdditionalInformation,
+                                    Requirements_Attributes_References=attribute.References,
+                                    Status=finding.status,
+                                    StatusExtended=finding.status_extended,
+                                    ResourceId=finding.resource_id,
+                                    CheckId=finding.check_metadata.CheckID,
+                                )
+                                csv_header = generate_csv_fields(
+                                    Check_Output_CSV_AWS_CIS
+                                )
+                            elif compliance.Provider == "GCP":
+                                compliance_row = Check_Output_CSV_GCP_CIS(
+                                    Provider=finding.check_metadata.Provider,
+                                    Description=compliance.Description,
+                                    ProjectId=finding.project_id,
+                                    Location=finding.location,
+                                    AssessmentDate=timestamp.isoformat(),
+                                    Requirements_Id=requirement_id,
+                                    Requirements_Description=requirement_description,
+                                    Requirements_Attributes_Section=attribute.Section,
+                                    Requirements_Attributes_Profile=attribute.Profile,
+                                    Requirements_Attributes_AssessmentStatus=attribute.AssessmentStatus,
+                                    Requirements_Attributes_Description=attribute.Description,
+                                    Requirements_Attributes_RationaleStatement=attribute.RationaleStatement,
+                                    Requirements_Attributes_ImpactStatement=attribute.ImpactStatement,
+                                    Requirements_Attributes_RemediationProcedure=attribute.RemediationProcedure,
+                                    Requirements_Attributes_AuditProcedure=attribute.AuditProcedure,
+                                    Requirements_Attributes_AdditionalInformation=attribute.AdditionalInformation,
+                                    Requirements_Attributes_References=attribute.References,
+                                    Status=finding.status,
+                                    StatusExtended=finding.status_extended,
+                                    ResourceId=finding.resource_id,
+                                    ResourceName=finding.resource_name,
+                                    CheckId=finding.check_metadata.CheckID,
+                                )
+                                csv_header = generate_csv_fields(
+                                    Check_Output_CSV_GCP_CIS
+                                )
 
             elif (
                 "AWS-Well-Architected-Framework" in compliance.Framework
