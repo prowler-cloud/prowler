@@ -9,6 +9,7 @@ class apikeys_key_exists(Check):
             report = Check_Report_GCP(self.metadata())
             report.project_id = project
             report.resource_id = project
+            report.location = apikeys_client.region
             report.status = "PASS"
             report.status_extended = f"Project {project} does not have active API Keys."
             for key in apikeys_client.keys:

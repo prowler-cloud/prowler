@@ -25,6 +25,7 @@ banner_color = "\033[1;92m"
 # Compliance
 actual_directory = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))
 compliance_aws_dir = f"{actual_directory}/../compliance/aws"
+compliance_gcp_dir = f"{actual_directory}/../compliance/gcp"
 available_compliance_frameworks = []
 with os.scandir(compliance_aws_dir) as files:
     files = [
@@ -34,7 +35,14 @@ with os.scandir(compliance_aws_dir) as files:
         and file.name.endswith(".json")
         and available_compliance_frameworks.append(file.name.removesuffix(".json"))
     ]
-
+with os.scandir(compliance_gcp_dir) as files:
+    files = [
+        file.name
+        for file in files
+        if file.is_file()
+        and file.name.endswith(".json")
+        and available_compliance_frameworks.append(file.name.removesuffix(".json"))
+    ]
 # AWS services-regions matrix json
 aws_services_json_file = "aws_regions_by_service.json"
 

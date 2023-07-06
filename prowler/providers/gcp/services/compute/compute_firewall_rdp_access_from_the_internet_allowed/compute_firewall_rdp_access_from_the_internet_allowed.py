@@ -10,6 +10,7 @@ class compute_firewall_rdp_access_from_the_internet_allowed(Check):
             report.project_id = firewall.project_id
             report.resource_id = firewall.id
             report.resource_name = firewall.name
+            report.location = compute_client.region
             report.status = "PASS"
             report.status_extended = f"Firewall {firewall.name} does not expose port 3389 (RDP) to the internet."
             opened_port = False

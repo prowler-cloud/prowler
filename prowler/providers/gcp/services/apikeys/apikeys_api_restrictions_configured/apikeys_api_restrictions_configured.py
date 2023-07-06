@@ -11,6 +11,7 @@ class apikeys_api_restrictions_configured(Check):
             report.resource_id = key.id
             report.resource_name = key.name
             report.status = "PASS"
+            report.location = apikeys_client.region
             report.status_extended = f"API key {key.name} has restrictions configured."
             if key.restrictions == {} or any(
                 [

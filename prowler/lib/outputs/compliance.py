@@ -30,6 +30,8 @@ def add_manual_controls(output_options, audit_info, file_descriptors):
             manual_finding.status_extended = "Manual check"
             manual_finding.resource_id = "manual_check"
             manual_finding.region = ""
+            manual_finding.location = ""
+            manual_finding.project_id = ""
             fill_compliance(
                 output_options, manual_finding, audit_info, file_descriptors
             )
@@ -86,7 +88,9 @@ def fill_compliance(output_options, finding, audit_info, file_descriptors):
             elif compliance.Framework == "CIS" and "cis_" in str(
                 output_options.output_modes
             ):
-                compliance_output = "cis_" + compliance.Version + "_aws"
+                compliance_output = (
+                    "cis_" + compliance.Version + "_" + compliance.Provider.lower()
+                )
                 # Only with the version of CIS that was selected
                 if compliance_output in str(output_options.output_modes):
                     for requirement in compliance.Requirements:
@@ -96,8 +100,9 @@ def fill_compliance(output_options, finding, audit_info, file_descriptors):
                             compliance_row = Check_Output_CSV_CIS(
                                 Provider=finding.check_metadata.Provider,
                                 Description=compliance.Description,
-                                AccountId=audit_info.audited_account,
-                                Region=finding.region,
+                                Region=finding.region
+                                if compliance.Provider == "AWS"
+                                else finding.location,
                                 AssessmentDate=timestamp.isoformat(),
                                 Requirements_Id=requirement_id,
                                 Requirements_Description=requirement_description,
@@ -116,7 +121,10 @@ def fill_compliance(output_options, finding, audit_info, file_descriptors):
                                 ResourceId=finding.resource_id,
                                 CheckId=finding.check_metadata.CheckID,
                             )
-
+                            if compliance.Provider == "AWS":
+                                compliance_row.AccountId = audit_info.audited_account
+                            else:
+                                compliance_row.ProjectId = finding.project_id
                     csv_header = generate_csv_fields(Check_Output_CSV_CIS)
 
             elif (

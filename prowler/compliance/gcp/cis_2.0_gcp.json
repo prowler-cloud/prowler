@@ -2,13 +2,12 @@
   "Framework": "CIS",
   "Version": "2.0",
   "Provider": "GCP",
+  "Description": "This CIS Benchmark is the product of a community consensus process and consists of secure configuration guidelines developed for Google Cloud Computing Platform",
   "Requirements": [
     {
       "Id": "1.1",
       "Description": "Use corporate login credentials instead of personal accounts, such as Gmail accounts.",
-      "Checks": [
-        ""
-      ],
+      "Checks": [],
       "Attributes": [
         {
           "Section": "1",
@@ -27,9 +26,7 @@
     {
       "Id": "1.2",
       "Description": "Setup multi-factor authentication for Google Cloud Platform accounts.",
-      "Checks": [
-        ""
-      ],
+      "Checks": [],
       "Attributes": [
         {
           "Section": "1",
@@ -48,9 +45,7 @@
     {
       "Id": "1.3",
       "Description": "Setup Security Key Enforcement for Google Cloud Platform admin accounts.",
-      "Checks": [
-        ""
-      ],
+      "Checks": [],
       "Attributes": [
         {
           "Section": "1",
@@ -258,9 +253,7 @@
     {
       "Id": "1.13",
       "Description": "API Keys should only be used for services in cases where other authentication methods are unavailable. In this case, unrestricted keys are insecure because they can be viewed publicly, such as from within a browser, or they can be accessed on a device where the key resides. It is recommended to restrict API key usage to trusted hosts, HTTP referrers and apps. It is recommended to use the more secure standard authentication flow instead.",
-      "Checks": [
-        ""
-      ],
+      "Checks": [],
       "Attributes": [
         {
           "Section": "1",
@@ -363,9 +356,7 @@
     {
       "Id": "1.18",
       "Description": "Google Cloud Functions allow you to host serverless code that is executed when an event is triggered, without the requiring the management a host operating system. These functions can also store environment variables to be used by the code that may contain authentication or other information that needs to remain confidential.",
-      "Checks": [
-        ""
-      ],
+      "Checks": [],
       "Attributes": [
         {
           "Section": "1",
@@ -657,9 +648,7 @@
     {
       "Id": "2.14",
       "Description": "GCP Access Transparency provides audit logs for all actions that Google personnel take in your Google Cloud resources.",
-      "Checks": [
-        ""
-      ],
+      "Checks": [],
       "Attributes": [
         {
           "Section": "2",
@@ -888,9 +877,7 @@
     {
       "Id": "3.9",
       "Description": "Secure Sockets Layer (SSL) policies determine what port Transport Layer Security (TLS) features clients are permitted to use when connecting to load balancers. To prevent usage of insecure features, SSL policies should use (a) at least TLS 1.2 with the MODERN profile; or (b) the RESTRICTED profile, because it effectively requires clients to use TLS 1.2 regardless of the chosen minimum TLS version; or (3) a CUSTOM profile that does not support any of the following features: \n```\nTLS_RSA_WITH_AES_128_GCM_SHA256\nTLS_RSA_WITH_AES_256_GCM_SHA384\nTLS_RSA_WITH_AES_128_CBC_SHA\nTLS_RSA_WITH_AES_256_CBC_SHA\nTLS_RSA_WITH_3DES_EDE_CBC_SHA\n```",
-      "Checks": [
-        ""
-      ],
+      "Checks": [],
       "Attributes": [
         {
           "Section": "3",
@@ -909,9 +896,7 @@
     {
       "Id": "3.10",
       "Description": "IAP authenticates the user requests to your apps via a Google single sign in. You can then manage these users with permissions to control access. It is recommended to use both IAP permissions and firewalls to restrict this access to your apps with sensitive information.",
-      "Checks": [
-        ""
-      ],
+      "Checks": [],
       "Attributes": [
         {
           "Section": "3",
@@ -1119,9 +1104,7 @@
     {
       "Id": "4.10",
       "Description": "In order to maintain the highest level of security all connections to an application should be secure by default.",
-      "Checks": [
-        ""
-      ],
+      "Checks": [],
       "Attributes": [
         {
           "Section": "4",
@@ -1161,9 +1144,7 @@
     {
       "Id": "4.12",
       "Description": "Google Cloud Virtual Machines have the ability via an OS Config agent API to periodically (about every 10 minutes) report OS inventory data. A patch compliance API periodically reads this data, and cross references metadata to determine if the latest updates are installed.\n\nThis is not the only Patch Management solution available to your organization and you should weigh your needs before committing to using this method.",
-      "Checks": [
-        ""
-      ],
+      "Checks": [],
       "Attributes": [
         {
           "Section": "4",
@@ -1308,9 +1289,7 @@
     {
       "Id": "6.1.1",
       "Description": "It is recommended to set a password for the administrative user (`root` by default) to prevent unauthorized access to the SQL database instances.\n\nThis recommendation is applicable only for MySQL Instances. PostgreSQL does not offer any setting for No Password from the cloud console.",
-      "Checks": [
-        ""
-      ],
+      "Checks": [],
       "Attributes": [
         {
           "Section": "6.1",

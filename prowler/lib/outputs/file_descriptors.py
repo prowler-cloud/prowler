@@ -120,6 +120,14 @@ def fill_file_descriptors(output_modes, output_directory, output_filename, audit
                     )
                     file_descriptors.update({output_mode: file_descriptor})
 
+                elif isinstance(audit_info, GCP_Audit_Info):
+                    if output_mode == "cis_2.0_gcp":
+                        filename = f"{output_directory}/{output_filename}_cis_2.0_gcp{csv_file_suffix}"
+                        file_descriptor = initialize_file_descriptor(
+                            filename, output_mode, audit_info, Check_Output_CSV_CIS
+                        )
+                        file_descriptors.update({output_mode: file_descriptor})
+
                 elif isinstance(audit_info, AWS_Audit_Info):
                     if output_mode == "json-asff":
                         filename = f"{output_directory}/{output_filename}{json_asff_file_suffix}"

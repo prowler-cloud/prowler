@@ -546,7 +546,8 @@ class Check_Output_CSV_CIS(BaseModel):
 
     Provider: str
     Description: str
-    AccountId: str
+    AccountId: Optional[str]
+    ProjectId: Optional[str]
     Region: str
     AssessmentDate: str
     Requirements_Id: str

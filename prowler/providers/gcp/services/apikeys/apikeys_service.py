@@ -11,6 +11,7 @@ class APIKeys:
         self.api_version = "v2"
         self.project_ids = audit_info.project_ids
         self.default_project_id = audit_info.default_project_id
+        self.region = "global"
         self.client = generate_client(self.service, self.api_version, audit_info)
         self.keys = []
         self.__get_keys__()
