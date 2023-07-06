@@ -115,20 +115,22 @@ def parse_allowlist_file(audit_info, allowlist_file):
 
 def is_allowlisted(allowlist, audited_account, check, region, resource, tags):
     try:
+        # By default is not allowlisted
+        is_finding_allowlisted = False
+        # First set account key from allowlist dict
         if audited_account in allowlist["Accounts"]:
             account = audited_account
-            if is_allowlisted_in_check(
-                allowlist, audited_account, account, check, region, resource, tags
-            ):
-                return True
         # If there is a *, it affects to all accounts
-        if "*" in allowlist["Accounts"]:
+        elif "*" in allowlist["Accounts"]:
             account = "*"
-            if is_allowlisted_in_check(
-                allowlist, audited_account, account, check, region, resource, tags
-            ):
-                return True
-        return False
+        # Test if it is allowlisted
+        allowlisted_checks = allowlist["Accounts"][account]["Checks"]
+        if is_allowlisted_in_check(
+            allowlisted_checks, audited_account, account, check, region, resource, tags
+        ):
+            is_finding_allowlisted = True
+
+        return is_finding_allowlisted
     except Exception as error:
         logger.critical(
             f"{error.__class__.__name__} -- {error}[{error.__traceback__.tb_lineno}]"
@@ -137,55 +139,47 @@ def is_allowlisted(allowlist, audited_account, check, region, resource, tags):
 
 
 def is_allowlisted_in_check(
-    allowlist, audited_account, account, check, region, resource, tags
+    allowlisted_checks, audited_account, account, check, region, resource, tags
 ):
     try:
-        allowlisted_checks = allowlist["Accounts"][account]["Checks"]
-        for allowlisted_check in allowlisted_checks.keys():
-            if re.search("^lambda", allowlisted_check):
-                mapped_check = re.sub("^lambda", "awslambda", allowlisted_check)
-                # we update the dictionary
-                allowlisted_checks[mapped_check] = allowlisted_checks.pop(
-                    allowlisted_check
-                )
-                # and the single element
-                allowlisted_check = mapped_check
-
+        # Default value is not allowlisted
+        is_check_allowlisted = False
+        for allowlisted_check, allowlisted_check_info in allowlisted_checks.items():
+            # map lambda to awslambda
+            allowlisted_check = re.sub("^lambda", "awslambda", allowlisted_check)
+            # extract the exceptions
+            exceptions = allowlisted_check_info.get("Exceptions")
             # Check if there are exceptions
             if is_excepted(
-                allowlisted_checks,
-                allowlisted_check,
+                exceptions,
                 audited_account,
                 region,
                 resource,
                 tags,
             ):
-                return False
+                # Break loop and return default value since is excepted
+                break
+
+            allowlisted_regions = allowlisted_check_info.get("Regions")
+            allowlisted_resources = allowlisted_check_info.get("Resources")
+            allowlisted_tags = allowlisted_check_info.get("Tags")
             # If there is a *, it affects to all checks
-            if "*" == allowlisted_check:
-                check = "*"
+            if (
+                "*" == allowlisted_check
+                or check == allowlisted_check
+                or re.search(allowlisted_check, check)
+            ):
                 if is_allowlisted_in_region(
-                    allowlist, account, check, region, resource, tags
-                ):
-                    return True
-            # Check if there is the specific check
-            elif check == allowlisted_check:
-                if is_allowlisted_in_region(
-                    allowlist, account, check, region, resource, tags
-                ):
-                    return True
-            # Check if check is a regex
-            elif re.search(allowlisted_check, check):
-                if is_allowlisted_in_region(
-                    allowlist,
-                    account,
-                    allowlisted_check,
+                    allowlisted_regions,
+                    allowlisted_resources,
+                    allowlisted_tags,
                     region,
                     resource,
                     tags,
                 ):
-                    return True
-        return False
+                    is_check_allowlisted = True
+
+        return is_check_allowlisted
     except Exception as error:
         logger.critical(
             f"{error.__class__.__name__} -- {error}[{error.__traceback__.tb_lineno}]"
@@ -193,28 +187,26 @@ def is_allowlisted_in_check(
         sys.exit(1)
 
 
-def is_allowlisted_in_region(allowlist, account, check, region, resource, tags):
+def is_allowlisted_in_region(
+    allowlist_regions, allowlist_resources, allowlisted_tags, region, resource, tags
+):
     try:
+        # By default is not allowlisted
+        is_region_allowlisted = False
         # If there is a *, it affects to all regions
-        if "*" in allowlist["Accounts"][account]["Checks"][check]["Regions"]:
-            for elem in allowlist["Accounts"][account]["Checks"][check]["Resources"]:
+        if "*" in allowlist_regions or region in allowlist_regions:
+            for elem in allowlist_resources:
                 if is_allowlisted_in_tags(
-                    allowlist["Accounts"][account]["Checks"][check],
+                    allowlisted_tags,
                     elem,
                     resource,
                     tags,
                 ):
-                    return True
-        # Check if there is the specific region
-        if region in allowlist["Accounts"][account]["Checks"][check]["Regions"]:
-            for elem in allowlist["Accounts"][account]["Checks"][check]["Resources"]:
-                if is_allowlisted_in_tags(
-                    allowlist["Accounts"][account]["Checks"][check],
-                    elem,
-                    resource,
-                    tags,
-                ):
-                    return True
+                    is_region_allowlisted = True
+                    # if we find the element there is no point in continuing with the loop
+                    break
+
+            return is_region_allowlisted
     except Exception as error:
         logger.critical(
             f"{error.__class__.__name__} -- {error}[{error.__traceback__.tb_lineno}]"
@@ -222,31 +214,25 @@ def is_allowlisted_in_region(allowlist, account, check, region, resource, tags):
         sys.exit(1)
 
 
-def is_allowlisted_in_tags(check_allowlist, elem, resource, tags):
+def is_allowlisted_in_tags(allowlisted_tags, elem, resource, tags):
     try:
+        # By default is not allowlisted
+        is_tag_allowlisted = False
         # Check if it is an *
         if elem == "*":
             elem = ".*"
         # Check if there are allowlisted tags
-        if "Tags" in check_allowlist:
-            # Check if there are resource tags
-            if not tags or not re.search(elem, resource):
-                return False
-
-            all_allowed_tags_in_resource_tags = True
-            for allowed_tag in check_allowlist["Tags"]:
-                found_allowed_tag = False
-                if re.search(allowed_tag, tags):
-                    found_allowed_tag = True
-
-                if not found_allowed_tag:
-                    all_allowed_tags_in_resource_tags = False
+        if allowlisted_tags:
+            for allowlisted_tag in allowlisted_tags:
+                if re.search(allowlisted_tag, tags):
+                    is_tag_allowlisted = True
                     break
 
-            return all_allowed_tags_in_resource_tags
         else:
             if re.search(elem, resource):
-                return True
+                is_tag_allowlisted = True
+
+        return is_tag_allowlisted
     except Exception as error:
         logger.critical(
             f"{error.__class__.__name__} -- {error}[{error.__traceback__.tb_lineno}]"
@@ -254,16 +240,13 @@ def is_allowlisted_in_tags(check_allowlist, elem, resource, tags):
         sys.exit(1)
 
 
-def is_excepted(
-    allowlisted_checks, allowlisted_check, audited_account, region, resource, tags
-):
+def is_excepted(exceptions, audited_account, region, resource, tags):
     try:
         excepted = False
         is_account_excepted = False
         is_region_excepted = False
         is_resource_excepted = False
         is_tag_excepted = False
-        exceptions = allowlisted_checks[allowlisted_check].get("Exceptions")
         if exceptions:
             excepted_accounts = exceptions.get("Accounts", [])
             excepted_regions = exceptions.get("Regions", [])
@@ -277,8 +260,9 @@ def is_excepted(
                 for excepted_resource in excepted_resources:
                     if re.search(excepted_resource, resource):
                         is_resource_excepted = True
-                if tags in excepted_tags:
-                    is_tag_excepted = True
+                for tag in excepted_tags:
+                    if tag in tags:
+                        is_tag_excepted = True
                 if (
                     (
                         (excepted_accounts and is_account_excepted)
