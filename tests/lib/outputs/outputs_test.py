@@ -1054,8 +1054,6 @@ class Test_Outputs:
             class_name="Security Finding",
         )
         output_options = mock.MagicMock()
-        print(fill_json_ocsf(input_audit_info, finding, output_options))
-        print(expected)
         assert fill_json_ocsf(input_audit_info, finding, output_options) == expected
 
     @mock_s3
