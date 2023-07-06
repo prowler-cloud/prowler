@@ -30,7 +30,7 @@ def add_manual_controls(output_options, audit_info, file_descriptors):
             manual_finding.status = "INFO"
             manual_finding.status_extended = "Manual check"
             manual_finding.resource_id = "manual_check"
-            manual_finding.resource_name = ""
+            manual_finding.resource_name = "Manual check"
             manual_finding.region = ""
             manual_finding.location = ""
             manual_finding.project_id = ""
@@ -448,7 +448,7 @@ def display_compliance_table(
                 print(
                     f" - CSV: {output_directory}/{output_filename}_{compliance_framework}.csv\n"
                 )
-        elif "cis_1." in compliance_framework:
+        elif "cis_" in compliance_framework:
             sections = {}
             cis_compliance_table = {
                 "Provider": [],
