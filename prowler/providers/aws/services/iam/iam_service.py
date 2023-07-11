@@ -363,17 +363,23 @@ class IAM:
         logger.info("IAM - List Attached User Policies...")
         try:
             for role in self.roles:
-                attached_role_policies = []
-                list_attached_role_policies_paginator = self.client.get_paginator(
-                    "list_attached_role_policies"
-                )
-                for page in list_attached_role_policies_paginator.paginate(
-                    RoleName=role.name
-                ):
-                    for policy in page["AttachedPolicies"]:
-                        attached_role_policies.append(policy)
+                try:
+                    attached_role_policies = []
+                    list_attached_role_policies_paginator = self.client.get_paginator(
+                        "list_attached_role_policies"
+                    )
+                    for page in list_attached_role_policies_paginator.paginate(
+                        RoleName=role.name
+                    ):
+                        for policy in page["AttachedPolicies"]:
+                            attached_role_policies.append(policy)
 
-                role.attached_policies = attached_role_policies
+                    role.attached_policies = attached_role_policies
+                except ClientError as error:
+                    if error.response["Error"]["Code"] == "NoSuchEntityException":
+                        logger.warning(
+                            f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
 
         except Exception as error:
             logger.error(
