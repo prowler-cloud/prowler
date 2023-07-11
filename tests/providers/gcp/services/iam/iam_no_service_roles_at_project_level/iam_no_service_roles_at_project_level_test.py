@@ -9,8 +9,12 @@ class Test_iam_no_service_roles_at_project_level:
         cloudresourcemanager_client = mock.MagicMock
         cloudresourcemanager_client.bindings = []
         cloudresourcemanager_client.project_ids = [GCP_PROJECT_ID]
+        cloudresourcemanager_client.region = "global"
 
         with mock.patch(
+            "prowler.providers.gcp.services.cloudresourcemanager.cloudresourcemanager_service.CloudResourceManager",
+            new=cloudresourcemanager_client,
+        ), mock.patch(
             "prowler.providers.gcp.services.iam.iam_no_service_roles_at_project_level.iam_no_service_roles_at_project_level.cloudresourcemanager_client",
             new=cloudresourcemanager_client,
         ):
@@ -52,8 +56,12 @@ class Test_iam_no_service_roles_at_project_level:
         cloudresourcemanager_client = mock.MagicMock
         cloudresourcemanager_client.project_ids = [GCP_PROJECT_ID]
         cloudresourcemanager_client.bindings = [binding1, binding2, binding3]
+        cloudresourcemanager_client.region = "global"
 
         with mock.patch(
+            "prowler.providers.gcp.services.cloudresourcemanager.cloudresourcemanager_service.CloudResourceManager",
+            new=cloudresourcemanager_client,
+        ), mock.patch(
             "prowler.providers.gcp.services.iam.iam_no_service_roles_at_project_level.iam_no_service_roles_at_project_level.cloudresourcemanager_client",
             new=cloudresourcemanager_client,
         ):
@@ -65,13 +73,16 @@ class Test_iam_no_service_roles_at_project_level:
             result = check.execute()
 
             assert len(result) == 1
-            for idx, r in enumerate(result):
-                assert r.status == "PASS"
-                assert search(
-                    "No IAM Users assigned to service roles at project level",
-                    r.status_extended,
-                )
-                assert r.resource_id == GCP_PROJECT_ID
+
+            assert result[0].status == "PASS"
+            assert search(
+                "No IAM Users assigned to service roles at project level",
+                result[0].status_extended,
+            )
+            assert result[0].resource_id == GCP_PROJECT_ID
+            assert result[0].resource_name == ""
+            assert result[0].project_id == GCP_PROJECT_ID
+            assert result[0].location == cloudresourcemanager_client.region
 
     def test_binding_with_service_account_user(self):
         from prowler.providers.gcp.services.cloudresourcemanager.cloudresourcemanager_service import (
@@ -87,8 +98,12 @@ class Test_iam_no_service_roles_at_project_level:
         cloudresourcemanager_client = mock.MagicMock
         cloudresourcemanager_client.project_ids = [GCP_PROJECT_ID]
         cloudresourcemanager_client.bindings = [binding]
+        cloudresourcemanager_client.region = "global"
 
         with mock.patch(
+            "prowler.providers.gcp.services.cloudresourcemanager.cloudresourcemanager_service.CloudResourceManager",
+            new=cloudresourcemanager_client,
+        ), mock.patch(
             "prowler.providers.gcp.services.iam.iam_no_service_roles_at_project_level.iam_no_service_roles_at_project_level.cloudresourcemanager_client",
             new=cloudresourcemanager_client,
         ):
@@ -106,6 +121,9 @@ class Test_iam_no_service_roles_at_project_level:
                 result[0].status_extended,
             )
             assert result[0].resource_id == binding.role
+            assert result[0].resource_name == binding.role
+            assert result[0].project_id == GCP_PROJECT_ID
+            assert result[0].location == cloudresourcemanager_client.region
 
     def test_binding_with_service_account_token_creator(self):
         from prowler.providers.gcp.services.cloudresourcemanager.cloudresourcemanager_service import (
@@ -121,8 +139,12 @@ class Test_iam_no_service_roles_at_project_level:
         cloudresourcemanager_client = mock.MagicMock
         cloudresourcemanager_client.project_ids = [GCP_PROJECT_ID]
         cloudresourcemanager_client.bindings = [binding]
+        cloudresourcemanager_client.region = "global"
 
         with mock.patch(
+            "prowler.providers.gcp.services.cloudresourcemanager.cloudresourcemanager_service.CloudResourceManager",
+            new=cloudresourcemanager_client,
+        ), mock.patch(
             "prowler.providers.gcp.services.iam.iam_no_service_roles_at_project_level.iam_no_service_roles_at_project_level.cloudresourcemanager_client",
             new=cloudresourcemanager_client,
         ):
@@ -140,3 +162,6 @@ class Test_iam_no_service_roles_at_project_level:
                 result[0].status_extended,
             )
             assert result[0].resource_id == binding.role
+            assert result[0].resource_name == binding.role
+            assert result[0].project_id == GCP_PROJECT_ID
+            assert result[0].location == cloudresourcemanager_client.region
