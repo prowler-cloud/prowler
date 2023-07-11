@@ -41,7 +41,7 @@ google-api-python-client = "2.91.0"
 mkdocs = {version = "1.4.3", optional = true}
 mkdocs-material = {version = "9.1.18", optional = true}
 msgraph-core = "0.2.2"
-pydantic = "1.10.9"
+pydantic = "1.10.11"
 python = "^3.9"
 schema = "0.7.5"
 shodan = "1.29.1"
