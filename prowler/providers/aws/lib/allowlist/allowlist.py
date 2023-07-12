@@ -115,18 +115,27 @@ def parse_allowlist_file(audit_info, allowlist_file):
 
 def is_allowlisted(allowlist, audited_account, check, region, resource, tags):
     try:
+        allowlisted_checks = {}
         # By default is not allowlisted
         is_finding_allowlisted = False
         # First set account key from allowlist dict
         if audited_account in allowlist["Accounts"]:
-            account = audited_account
+            allowlisted_checks = allowlist["Accounts"][audited_account]["Checks"]
         # If there is a *, it affects to all accounts
-        elif "*" in allowlist["Accounts"]:
-            account = "*"
+        # This cannot be elif since in the case of * and single accounts we
+        # want to merge allowlisted checks from * to the other accounts check list
+        if "*" in allowlist["Accounts"]:
+            checks_multi_account = allowlist["Accounts"]["*"]["Checks"]
         # Test if it is allowlisted
-        allowlisted_checks = allowlist["Accounts"][account]["Checks"]
+        allowlisted_checks.update(checks_multi_account)
         if is_allowlisted_in_check(
-            allowlisted_checks, audited_account, account, check, region, resource, tags
+            allowlisted_checks,
+            audited_account,
+            audited_account,
+            check,
+            region,
+            resource,
+            tags,
         ):
             is_finding_allowlisted = True
 

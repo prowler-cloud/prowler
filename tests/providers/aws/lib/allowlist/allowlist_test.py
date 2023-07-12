@@ -88,7 +88,7 @@ class Test_Allowlist:
             Item={
                 "Accounts": "*",
                 "Checks": "iam_user_hardware_mfa_enabled",
-                "Regions": ["eu-west-1", "us-east-1"],
+                "Regions": ["eu-west-1", AWS_REGION],
                 "Resources": ["keyword"],
             }
         )
@@ -159,7 +159,7 @@ class Test_Allowlist:
                 "*": {
                     "Checks": {
                         "check_test": {
-                            "Regions": ["us-east-1", "eu-west-1"],
+                            "Regions": [AWS_REGION, "eu-west-1"],
                             "Resources": ["prowler", "^test", "prowler-pro"],
                         }
                     }
@@ -201,7 +201,7 @@ class Test_Allowlist:
                 "*": {
                     "Checks": {
                         "check_test": {
-                            "Regions": ["us-east-1", "eu-west-1"],
+                            "Regions": [AWS_REGION, "eu-west-1"],
                             "Resources": [".*"],
                         }
                     }
@@ -234,7 +234,7 @@ class Test_Allowlist:
                 "*": {
                     "Checks": {
                         "check_test": {
-                            "Regions": ["us-east-1", "eu-west-1"],
+                            "Regions": [AWS_REGION, "eu-west-1"],
                             "Resources": ["*"],
                         }
                     }
@@ -260,9 +260,54 @@ class Test_Allowlist:
             )
         )
 
+    def test_is_allowlisted_all_and_single_account(self):
+        # Allowlist example
+        allowlist = {
+            "Accounts": {
+                "*": {
+                    "Checks": {
+                        "check_test_2": {
+                            "Regions": [AWS_REGION, "eu-west-1"],
+                            "Resources": ["*"],
+                        }
+                    }
+                },
+                AWS_ACCOUNT_NUMBER: {
+                    "Checks": {
+                        "check_test": {
+                            "Regions": [AWS_REGION],
+                            "Resources": ["*"],
+                        }
+                    }
+                },
+            }
+        }
+
+        assert is_allowlisted(
+            allowlist, AWS_ACCOUNT_NUMBER, "check_test_2", AWS_REGION, "prowler", ""
+        )
+
+        assert is_allowlisted(
+            allowlist, AWS_ACCOUNT_NUMBER, "check_test", AWS_REGION, "prowler", ""
+        )
+
+        assert is_allowlisted(
+            allowlist, AWS_ACCOUNT_NUMBER, "check_test", AWS_REGION, "prowler-test", ""
+        )
+
+        assert is_allowlisted(
+            allowlist, AWS_ACCOUNT_NUMBER, "check_test", AWS_REGION, "test-prowler", ""
+        )
+
+        assert not (
+            is_allowlisted(
+                allowlist, AWS_ACCOUNT_NUMBER, "check_test", "us-east-2", "test", ""
+            )
+        )
+
     def test_is_allowlisted_in_region(self):
         # Allowlist example
-        allowlisted_regions = ["us-east-1", "eu-west-1"]
+        allowlisted_regions = [AWS_REGION, "eu-west-1"]
         allowlisted_resources = ["*"]
 
         assert is_allowlisted_in_region(
@@ -301,7 +346,7 @@ class Test_Allowlist:
     def test_is_allowlisted_in_check(self):
         allowlisted_checks = {
             "check_test": {
-                "Regions": ["us-east-1", "eu-west-1"],
+                "Regions": [AWS_REGION, "eu-west-1"],
                 "Resources": ["*"],
             }
         }
@@ -352,7 +397,7 @@ class Test_Allowlist:
         # Allowlist example
         allowlisted_checks = {
             "s3_*": {
-                "Regions": ["us-east-1", "eu-west-1"],
+                "Regions": [AWS_REGION, "eu-west-1"],
                 "Resources": ["*"],
             }
         }
@@ -402,7 +447,7 @@ class Test_Allowlist:
     def test_is_allowlisted_lambda_generic_check(self):
         allowlisted_checks = {
             "lambda_*": {
-                "Regions": ["us-east-1", "eu-west-1"],
+                "Regions": [AWS_REGION, "eu-west-1"],
                 "Resources": ["*"],
             }
         }
@@ -480,7 +525,7 @@ class Test_Allowlist:
     def test_is_allowlisted_lambda_concrete_check(self):
         allowlisted_checks = {
             "lambda_function_no_secrets_in_variables": {
-                "Regions": ["us-east-1", "eu-west-1"],
+                "Regions": [AWS_REGION, "eu-west-1"],
                 "Resources": ["*"],
             }
         }
@@ -502,7 +547,7 @@ class Test_Allowlist:
                 "*": {
                     "Checks": {
                         "check_test": {
-                            "Regions": ["us-east-1", "eu-west-1"],
+                            "Regions": [AWS_REGION, "eu-west-1"],
                             "Resources": ["*"],
                             "Tags": ["environment=dev", "project=.*"],
                         }
