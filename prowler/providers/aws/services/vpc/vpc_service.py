@@ -2,11 +2,15 @@ import json
 import threading
 from typing import Optional
 
+from botocore.client import ClientError
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
-from prowler.providers.aws.aws_provider import generate_regional_clients
+from prowler.providers.aws.aws_provider import (
+    generate_regional_clients,
+    get_default_region,
+)
 
 
 ################## VPC
@@ -16,6 +20,8 @@ class VPC:
         self.session = audit_info.audit_session
         self.audited_account = audit_info.audited_account
         self.audit_resources = audit_info.audit_resources
+        self.audited_partition = audit_info.audited_partition
+        self.audited_account_arn = audit_info.audited_account_arn
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.vpcs = {}
         self.vpc_peering_connections = []
@@ -30,11 +36,7 @@ class VPC:
         self.__describe_vpc_endpoint_service_permissions__()
         self.vpc_subnets = {}
         self.__threading_call__(self.__describe_vpc_subnets__)
-        self.region = (
-            audit_info.profile_region
-            if audit_info.profile_region
-            else list(self.regional_clients.keys())[0]
-        )
+        self.region = get_default_region(self.service, audit_info)
 
     def __get_session__(self):
         return self.session
@@ -54,10 +56,12 @@ class VPC:
             describe_vpcs_paginator = regional_client.get_paginator("describe_vpcs")
             for page in describe_vpcs_paginator.paginate():
                 for vpc in page["Vpcs"]:
+                    arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:vpc/{vpc['VpcId']}"
                     if not self.audit_resources or (
-                        is_resource_filtered(vpc["VpcId"], self.audit_resources)
+                        is_resource_filtered(arn, self.audit_resources)
                     ):
                         self.vpcs[vpc["VpcId"]] = VPCs(
+                            arn=arn,
                             id=vpc["VpcId"],
                             default=vpc["IsDefault"],
                             cidr_block=vpc["CidrBlock"],
@@ -77,14 +81,14 @@ class VPC:
             )
             for page in describe_vpc_peering_connections_paginator.paginate():
                 for conn in page["VpcPeeringConnections"]:
+                    arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:vpc-peering-connection/{conn['VpcPeeringConnectionId']}"
                     if not self.audit_resources or (
-                        is_resource_filtered(
-                            conn["VpcPeeringConnectionId"], self.audit_resources
-                        )
+                        is_resource_filtered(arn, self.audit_resources)
                     ):
                         conn["AccepterVpcInfo"]["CidrBlock"] = None
                         self.vpc_peering_connections.append(
                             VpcPeeringConnection(
+                                arn=arn,
                                 id=conn["VpcPeeringConnectionId"],
                                 accepter_vpc=conn["AccepterVpcInfo"]["VpcId"],
                                 accepter_cidr=conn["AccepterVpcInfo"].get("CidrBlock"),
@@ -166,16 +170,16 @@ class VPC:
             )
             for page in describe_vpc_endpoints_paginator.paginate():
                 for endpoint in page["VpcEndpoints"]:
+                    arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:vpc-endpoint/{endpoint['VpcEndpointId']}"
                     if not self.audit_resources or (
-                        is_resource_filtered(
-                            endpoint["VpcEndpointId"], self.audit_resources
-                        )
+                        is_resource_filtered(arn, self.audit_resources)
                     ):
                         endpoint_policy = None
                         if endpoint.get("PolicyDocument"):
                             endpoint_policy = json.loads(endpoint["PolicyDocument"])
                         self.vpc_endpoints.append(
                             VpcEndpoint(
+                                arn=arn,
                                 id=endpoint["VpcEndpointId"],
                                 vpc_id=endpoint["VpcId"],
                                 state=endpoint["State"],
@@ -199,13 +203,13 @@ class VPC:
             for page in describe_vpc_endpoint_services_paginator.paginate():
                 for endpoint in page["ServiceDetails"]:
                     if endpoint["Owner"] != "amazon":
+                        arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:vpc-endpoint-service/{endpoint['ServiceId']}"
                         if not self.audit_resources or (
-                            is_resource_filtered(
-                                endpoint["ServiceId"], self.audit_resources
-                            )
+                            is_resource_filtered(arn, self.audit_resources)
                         ):
                             self.vpc_endpoint_services.append(
                                 VpcEndpointService(
+                                    arn=arn,
                                     id=endpoint["ServiceId"],
                                     service=endpoint["ServiceName"],
                                     owner_id=endpoint["Owner"],
@@ -223,14 +227,23 @@ class VPC:
         try:
             for service in self.vpc_endpoint_services:
                 regional_client = self.regional_clients[service.region]
-                for (
-                    principal
-                ) in regional_client.describe_vpc_endpoint_service_permissions(
-                    ServiceId=service.id
-                )[
-                    "AllowedPrincipals"
-                ]:
-                    service.allowed_principals.append(principal["Principal"])
+                try:
+                    for (
+                        principal
+                    ) in regional_client.describe_vpc_endpoint_service_permissions(
+                        ServiceId=service.id
+                    )[
+                        "AllowedPrincipals"
+                    ]:
+                        service.allowed_principals.append(principal["Principal"])
+                except ClientError as error:
+                    if (
+                        error.response["Error"]["Code"]
+                        == "InvalidVpcEndpointServiceId.NotFound"
+                    ):
+                        logger.warning(
+                            f"{service.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
@@ -245,7 +258,7 @@ class VPC:
             for page in describe_subnets_paginator.paginate():
                 for subnet in page["Subnets"]:
                     if not self.audit_resources or (
-                        is_resource_filtered(subnet["SubnetId"], self.audit_resources)
+                        is_resource_filtered(subnet["SubnetArn"], self.audit_resources)
                     ):
                         try:
                             # Check the route table associated with the subnet to see if it's public
@@ -285,6 +298,7 @@ class VPC:
                                     nat_gateway = True
                             # Add it to to list of vpc_subnets and to the VPC object
                             object = VpcSubnet(
+                                arn=subnet["SubnetArn"],
                                 id=subnet["SubnetId"],
                                 default=subnet["DefaultForAz"],
                                 vpc_id=subnet["VpcId"],
@@ -294,6 +308,7 @@ class VPC:
                                 public=public,
                                 nat_gateway=nat_gateway,
                                 tags=subnet.get("Tags"),
+                                mapPublicIpOnLaunch=subnet["MapPublicIpOnLaunch"],
                             )
                             self.vpc_subnets[subnet["SubnetId"]] = object
                             # Add it to the VPC object
@@ -311,6 +326,7 @@ class VPC:
 
 
 class VpcSubnet(BaseModel):
+    arn: str
     id: str
     default: bool
     vpc_id: str
@@ -319,10 +335,12 @@ class VpcSubnet(BaseModel):
     public: bool
     nat_gateway: bool
     region: str
+    mapPublicIpOnLaunch: bool
     tags: Optional[list] = []
 
 
 class VPCs(BaseModel):
+    arn: str
     id: str
     default: bool
     cidr_block: str
@@ -338,6 +356,7 @@ class Route(BaseModel):
 
 
 class VpcPeeringConnection(BaseModel):
+    arn: str
     id: str
     accepter_vpc: str
     accepter_cidr: Optional[str]
@@ -349,6 +368,7 @@ class VpcPeeringConnection(BaseModel):
 
 
 class VpcEndpoint(BaseModel):
+    arn: str
     id: str
     vpc_id: str
     state: str
@@ -359,6 +379,7 @@ class VpcEndpoint(BaseModel):
 
 
 class VpcEndpointService(BaseModel):
+    arn: str
     id: str
     service: str
     owner_id: str

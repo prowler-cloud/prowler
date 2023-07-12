@@ -14,6 +14,8 @@ class Redshift:
         self.service = "redshift"
         self.session = audit_info.audit_session
         self.audit_resources = audit_info.audit_resources
+        self.audited_partition = audit_info.audited_partition
+        self.audited_account = audit_info.audited_account
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.clusters = []
         self.__threading_call__(self.__describe_clusters__)
@@ -38,12 +40,12 @@ class Redshift:
             list_clusters_paginator = regional_client.get_paginator("describe_clusters")
             for page in list_clusters_paginator.paginate():
                 for cluster in page["Clusters"]:
+                    arn = f"arn:{self.audited_partition}:redshift:{regional_client.region}:{self.audited_account}:cluster:{cluster['ClusterIdentifier']}"
                     if not self.audit_resources or (
-                        is_resource_filtered(
-                            cluster["ClusterIdentifier"], self.audit_resources
-                        )
+                        is_resource_filtered(arn, self.audit_resources)
                     ):
                         cluster_to_append = Cluster(
+                            arn=arn,
                             id=cluster["ClusterIdentifier"],
                             region=regional_client.region,
                             tags=cluster.get("Tags"),

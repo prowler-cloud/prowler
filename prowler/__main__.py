@@ -12,7 +12,6 @@ from prowler.lib.check.check import (
     exclude_services_to_run,
     execute_checks,
     list_categories,
-    list_checks,
     list_services,
     parse_checks_from_folder,
     print_categories,
@@ -80,7 +79,7 @@ def prowler():
     bulk_checks_metadata = bulk_load_checks_metadata(provider)
 
     if args.list_categories:
-        print_categories(list_categories(provider, bulk_checks_metadata))
+        print_categories(list_categories(bulk_checks_metadata))
         sys.exit()
 
     bulk_compliance_frameworks = {}
@@ -101,18 +100,6 @@ def prowler():
         )
         sys.exit()
 
-    # If -l/--list-checks passed as argument, print checks to execute and quit
-    if args.list_checks:
-        print_checks(provider, list_checks(provider), bulk_checks_metadata)
-        sys.exit()
-
-    # Set the audit info based on the selected provider
-    audit_info = set_provider_audit_info(provider, args.__dict__)
-
-    # Import custom checks from folder
-    if checks_folder:
-        parse_checks_from_folder(audit_info, checks_folder, provider)
-
     # Load checks to execute
     checks_to_execute = load_checks_to_execute(
         bulk_checks_metadata,
@@ -126,6 +113,18 @@ def prowler():
         provider,
     )
 
+    # If -l/--list-checks passed as argument, print checks to execute and quit
+    if args.list_checks:
+        print_checks(provider, sorted(checks_to_execute), bulk_checks_metadata)
+        sys.exit()
+
+    # Set the audit info based on the selected provider
+    audit_info = set_provider_audit_info(provider, args.__dict__)
+
+    # Import custom checks from folder
+    if checks_folder:
+        parse_checks_from_folder(audit_info, checks_folder, provider)
+
     # Exclude checks if -e/--excluded-checks
     if excluded_checks:
         checks_to_execute = exclude_checks_to_run(checks_to_execute, excluded_checks)
@@ -136,13 +135,13 @@ def prowler():
             checks_to_execute, excluded_services, provider
         )
 
-    # Sort final check list
-    checks_to_execute = sorted(checks_to_execute)
-
     # Once the audit_info is set and we have the eventual checks based on the resource identifier,
     # it is time to check what Prowler's checks are going to be executed
     if audit_info.audit_resources:
         checks_to_execute = set_provider_execution_parameters(provider, audit_info)
+
+    # Sort final check list
+    checks_to_execute = sorted(checks_to_execute)
 
     # Parse Allowlist
     allowlist_file = set_provider_allowlist(provider, audit_info, args)
@@ -154,7 +153,7 @@ def prowler():
 
     # Run the quick inventory for the provider if available
     if hasattr(args, "quick_inventory") and args.quick_inventory:
-        run_provider_quick_inventory(provider, audit_info, args.output_directory)
+        run_provider_quick_inventory(provider, audit_info, args)
         sys.exit()
 
     # Execute checks
@@ -189,7 +188,7 @@ def prowler():
     if args.output_modes:
         for mode in args.output_modes:
             # Close json file if exists
-            if mode == "json" or mode == "json-asff":
+            if "json" in mode:
                 close_json(
                     audit_output_options.output_filename, args.output_directory, mode
                 )

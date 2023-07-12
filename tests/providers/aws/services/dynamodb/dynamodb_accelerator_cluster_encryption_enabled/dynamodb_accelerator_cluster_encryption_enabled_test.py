@@ -20,6 +20,7 @@ class Test_dynamodb_accelerator_cluster_encryption_enabled:
                 botocore_session=None,
             ),
             audited_account=DEFAULT_ACCOUNT_ID,
+            audited_account_arn=f"arn:aws:iam::{DEFAULT_ACCOUNT_ID}:root",
             audited_user_id=None,
             audited_partition="aws",
             audited_identity_arn=None,
@@ -30,6 +31,7 @@ class Test_dynamodb_accelerator_cluster_encryption_enabled:
             audited_regions=["us-east-1", "eu-west-1"],
             organizations_metadata=None,
             audit_resources=None,
+            mfa_enabled=False,
         )
 
         return audit_info

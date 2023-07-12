@@ -9,11 +9,11 @@ class efs_not_publicly_accessible(Check):
             report = Check_Report_AWS(self.metadata())
             report.region = fs.region
             report.resource_id = fs.id
-            report.resource_arn = ""
+            report.resource_arn = fs.arn
             report.resource_tags = fs.tags
             report.status = "PASS"
             report.status_extended = (
-                f"EFS {fs.id} has policy which does not allow access to everyone"
+                f"EFS {fs.id} has a policy which does not allow access to everyone"
             )
             if not fs.policy:
                 report.status = "FAIL"
@@ -34,7 +34,7 @@ class efs_not_publicly_accessible(Check):
                             )
                         ):
                             report.status = "FAIL"
-                            report.status_extended = f"EFS {fs.id} has policy which allows access to everyone"
+                            report.status_extended = f"EFS {fs.id} has a policy which allows access to everyone"
                             break
             findings.append(report)
 

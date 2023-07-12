@@ -12,6 +12,7 @@ class vpc_subnet_separate_private_public(Check):
             report.status = "FAIL"
             report.status_extended = f"VPC {vpc.id} has no subnets."
             report.resource_id = vpc.id
+            report.resource_arn = vpc.arn
             if vpc.subnets:
                 public = False
                 private = False

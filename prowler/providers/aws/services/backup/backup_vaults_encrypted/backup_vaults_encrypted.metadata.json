@@ -15,17 +15,17 @@
   "ResourceType": "AwsBackupBackupVault",
   "Description": "This check ensures that AWS Backup vaults are encrypted with AWS KMS.",
   "Risk": "Without encryption using AWS KMS, an organization's backup data may be at risk of unauthorized access, which can lead to data breaches and other security incidents.",
-  "RelatedUrl": "",
+  "RelatedUrl": "https://docs.aws.amazon.com/aws-backup/latest/devguide/encryption.html",
   "Remediation": {
     "Code": {
       "CLI": "aws backup update-backup-vault --backup-vault-name <backup_vault_name> --encryption-key-arn <kms_key_arn>",
       "NativeIaC": "",
-      "Other": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Athena/encrypted-with-cmk.html",
       "Terraform": ""
     },
     "Recommendation": {
       "Text": "Use AWS KMS to encrypt your AWS Backup vaults and backup data.",
-      "Url": ""
+      "Url": "https://docs.aws.amazon.com/aws-backup/latest/devguide/encryption.html"
     }
   },
   "Categories": [],

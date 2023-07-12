@@ -14,6 +14,8 @@ AWS_REGION = "us-west-2"
 # Mocking Access Analyzer Calls
 make_api_call = botocore.client.BaseClient._make_api_call
 
+TEST_ACCELERATOR_ARN = f"arn:aws:globalaccelerator::{DEFAULT_ACCOUNT_ID}:accelerator/5555abcd-abcd-5555-abcd-5555EXAMPLE1"
+
 
 def mock_make_api_call(self, operation_name, kwarg):
     """We have to mock every AWS API call using Boto3"""
@@ -21,7 +23,7 @@ def mock_make_api_call(self, operation_name, kwarg):
         return {
             "Accelerators": [
                 {
-                    "AcceleratorArn": f"arn:aws:globalaccelerator::{DEFAULT_ACCOUNT_ID}:accelerator/5555abcd-abcd-5555-abcd-5555EXAMPLE1",
+                    "AcceleratorArn": TEST_ACCELERATOR_ARN,
                     "Name": "TestAccelerator",
                     "IpAddressType": "IPV4",
                     "Enabled": True,
@@ -57,6 +59,7 @@ class Test_GlobalAccelerator_Service:
                 botocore_session=None,
             ),
             audited_account=DEFAULT_ACCOUNT_ID,
+            audited_account_arn=f"arn:aws:iam::{DEFAULT_ACCOUNT_ID}:root",
             audited_user_id=None,
             audited_partition="aws",
             audited_identity_arn=None,
@@ -67,6 +70,7 @@ class Test_GlobalAccelerator_Service:
             audited_regions=None,
             organizations_metadata=None,
             audit_resources=None,
+            mfa_enabled=False,
         )
         return audit_info
 
@@ -96,13 +100,18 @@ class Test_GlobalAccelerator_Service:
         audit_info = self.set_mocked_audit_info()
         globalaccelerator = GlobalAccelerator(audit_info)
 
-        accelerator_arn = f"arn:aws:globalaccelerator::{DEFAULT_ACCOUNT_ID}:accelerator/5555abcd-abcd-5555-abcd-5555EXAMPLE1"
         accelerator_name = "TestAccelerator"
 
         assert globalaccelerator.accelerators
         assert len(globalaccelerator.accelerators) == 1
-        assert globalaccelerator.accelerators[accelerator_name]
-        assert globalaccelerator.accelerators[accelerator_name].name == accelerator_name
-        assert globalaccelerator.accelerators[accelerator_name].arn == accelerator_arn
-        assert globalaccelerator.accelerators[accelerator_name].region == AWS_REGION
-        assert globalaccelerator.accelerators[accelerator_name].enabled
+        assert globalaccelerator.accelerators[TEST_ACCELERATOR_ARN]
+        assert (
+            globalaccelerator.accelerators[TEST_ACCELERATOR_ARN].name
+            == accelerator_name
+        )
+        assert (
+            globalaccelerator.accelerators[TEST_ACCELERATOR_ARN].arn
+            == TEST_ACCELERATOR_ARN
+        )
+        assert globalaccelerator.accelerators[TEST_ACCELERATOR_ARN].region == AWS_REGION
+        assert globalaccelerator.accelerators[TEST_ACCELERATOR_ARN].enabled

@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "vpc_subnet_no_public_ip_by_default",
+  "CheckTitle": "Ensure VPC subnets do not assign public IP by default",
+  "CheckType": [
+    "Infrastructure Security"
+  ],
+  "ServiceName": "vpc",
+  "SubServiceName": "subnet",
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "Severity": "medium",
+  "ResourceType": "AwsEc2Subnet",
+  "Description": "Ensure VPC subnets do not assign public IP by default",
+  "Risk": "VPC subnet is a part of the VPC having its own rules for traffic. Assigning the Public IP to the subnet automatically (on launch) can accidentally expose the instances within this subnet to internet and should be edited to 'No' post creation of the Subnet.",
+  "RelatedUrl": "https://docs.aws.amazon.com/config/latest/developerguide/subnet-auto-assign-public-ip-disabled.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": "https://docs.bridgecrew.io/docs/ensure-vpc-subnets-do-not-assign-public-ip-by-default#terraform"
+    },
+    "Recommendation": {
+      "Text": "VPC subnets should not allow automatic public IP assignment",
+      "Url": "https://docs.aws.amazon.com/config/latest/developerguide/subnet-auto-assign-public-ip-disabled.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

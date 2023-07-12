@@ -57,10 +57,11 @@ repos:
         args: ["--ignore=E266,W503,E203,E501,W605"]
 
   - repo: https://github.com/python-poetry/poetry
-    rev: 1.4.0 # add version here
+    rev: 1.5.1 # add version here
     hooks:
       - id: poetry-check
       - id: poetry-lock
+        args: ["--no-update"]
 
   - repo: https://github.com/hadolint/hadolint
     rev: v2.12.1-beta

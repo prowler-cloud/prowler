@@ -22,6 +22,7 @@ class Test_iam_password_policy_expires_passwords_within_90_days_or_less:
                 region_name=AWS_REGION,
             ),
             audited_account=AWS_ACCOUNT_NUMBER,
+            audited_account_arn=f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root",
             audited_user_id=None,
             audited_partition="aws",
             audited_identity_arn=None,
@@ -32,6 +33,7 @@ class Test_iam_password_policy_expires_passwords_within_90_days_or_less:
             audited_regions=None,
             organizations_metadata=None,
             audit_resources=None,
+            mfa_enabled=False,
         )
         return audit_info
 
@@ -68,7 +70,7 @@ class Test_iam_password_policy_expires_passwords_within_90_days_or_less:
                 check = iam_password_policy_expires_passwords_within_90_days_or_less()
                 result = check.execute()
                 assert result[0].status == "PASS"
-                assert result[0].resource_id == "password_policy"
+                assert result[0].resource_id == AWS_ACCOUNT_NUMBER
                 assert search(
                     "Password expiration is set lower than 90 days",
                     result[0].status_extended,
@@ -107,7 +109,7 @@ class Test_iam_password_policy_expires_passwords_within_90_days_or_less:
                 check = iam_password_policy_expires_passwords_within_90_days_or_less()
                 result = check.execute()
                 assert result[0].status == "FAIL"
-                assert result[0].resource_id == "password_policy"
+                assert result[0].resource_id == AWS_ACCOUNT_NUMBER
                 assert search(
                     "Password expiration is set greater than 90 days",
                     result[0].status_extended,
@@ -146,7 +148,7 @@ class Test_iam_password_policy_expires_passwords_within_90_days_or_less:
                 check = iam_password_policy_expires_passwords_within_90_days_or_less()
                 result = check.execute()
                 assert result[0].status == "PASS"
-                assert result[0].resource_id == "password_policy"
+                assert result[0].resource_id == AWS_ACCOUNT_NUMBER
                 assert search(
                     "Password expiration is set lower than 90 days",
                     result[0].status_extended,

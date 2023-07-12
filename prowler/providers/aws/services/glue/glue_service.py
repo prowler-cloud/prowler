@@ -15,6 +15,8 @@ class Glue:
         self.session = audit_info.audit_session
         self.audited_account = audit_info.audited_account
         self.audit_resources = audit_info.audit_resources
+        self.audited_partition = audit_info.audited_partition
+        self.audited_account_arn = audit_info.audited_account_arn
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.connections = []
         self.__threading_call__(self.__get_connections__)
@@ -47,11 +49,13 @@ class Glue:
             get_connections_paginator = regional_client.get_paginator("get_connections")
             for page in get_connections_paginator.paginate():
                 for conn in page["ConnectionList"]:
+                    arn = f"arn:{self.audited_partition}:glue:{regional_client.region}:{self.audited_account}:connection/{conn['Name']}"
                     if not self.audit_resources or (
-                        is_resource_filtered(conn["Name"], self.audit_resources)
+                        is_resource_filtered(arn, self.audit_resources)
                     ):
                         self.connections.append(
                             Connection(
+                                arn=arn,
                                 name=conn["Name"],
                                 type=conn["ConnectionType"],
                                 properties=conn["ConnectionProperties"],
@@ -71,13 +75,13 @@ class Glue:
             )
             for page in get_dev_endpoints_paginator.paginate():
                 for endpoint in page["DevEndpoints"]:
+                    arn = f"arn:{self.audited_partition}:glue:{regional_client.region}:{self.audited_account}:devEndpoint/{endpoint['EndpointName']}"
                     if not self.audit_resources or (
-                        is_resource_filtered(
-                            endpoint["EndpointName"], self.audit_resources
-                        )
+                        is_resource_filtered(arn, self.audit_resources)
                     ):
                         self.dev_endpoints.append(
                             DevEndpoint(
+                                arn=arn,
                                 name=endpoint["EndpointName"],
                                 security=endpoint.get("SecurityConfiguration"),
                                 region=regional_client.region,
@@ -94,12 +98,14 @@ class Glue:
             get_jobs_paginator = regional_client.get_paginator("get_jobs")
             for page in get_jobs_paginator.paginate():
                 for job in page["Jobs"]:
+                    arn = f"arn:{self.audited_partition}:glue:{regional_client.region}:{self.audited_account}:job/{job['Name']}"
                     if not self.audit_resources or (
-                        is_resource_filtered(job["Name"], self.audit_resources)
+                        is_resource_filtered(arn, self.audit_resources)
                     ):
                         self.jobs.append(
                             Job(
                                 name=job["Name"],
+                                arn=arn,
                                 security=job.get("SecurityConfiguration"),
                                 arguments=job.get("DefaultArguments"),
                                 region=regional_client.region,
@@ -154,11 +160,13 @@ class Glue:
         logger.info("Glue - Search Tables...")
         try:
             for table in regional_client.search_tables()["TableList"]:
+                arn = f"arn:{self.audited_partition}:glue:{regional_client.region}:{self.audited_account}:table/{table['DatabaseName']}/{table['Name']}"
                 if not self.audit_resources or (
-                    is_resource_filtered(table["Name"], self.audit_resources)
+                    is_resource_filtered(arn, self.audit_resources)
                 ):
                     self.tables.append(
                         Table(
+                            arn=arn,
                             name=table["Name"],
                             database=table["DatabaseName"],
                             catalog=table["CatalogId"],
@@ -197,6 +205,7 @@ class Glue:
 
 class Connection(BaseModel):
     name: str
+    arn: str
     type: str
     properties: dict
     region: str
@@ -204,6 +213,7 @@ class Connection(BaseModel):
 
 class Table(BaseModel):
     name: str
+    arn: str
     database: str
     catalog: Optional[str]
     region: str
@@ -219,11 +229,13 @@ class CatalogEncryptionSetting(BaseModel):
 
 class DevEndpoint(BaseModel):
     name: str
+    arn: str
     security: Optional[str]
     region: str
 
 
 class Job(BaseModel):
+    arn: str
     name: str
     security: Optional[str]
     arguments: Optional[dict]

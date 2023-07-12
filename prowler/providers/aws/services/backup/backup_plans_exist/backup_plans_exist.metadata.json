@@ -14,7 +14,7 @@
   "ResourceType": "AwsBackupBackupPlan",
   "Description": "This check ensures that there is at least one backup plan in place.",
   "Risk": "Without a backup plan, an organization may be at risk of losing important data due to accidental deletion, system failures, or natural disasters. This can result in significant financial and reputational damage for the organization.",
-  "RelatedUrl": "",
+  "RelatedUrl": "https://docs.aws.amazon.com/aws-backup/latest/devguide/about-backup-plans.html",
   "Remediation": {
     "Code": {
       "CLI": "aws backup create-backup-plan --backup-plan <backup_plan_name> --backup-plan-rule <backup_rule_name>",
@@ -24,7 +24,7 @@
     },
     "Recommendation": {
       "Text": "Use AWS Backup to create backup plans for your critical data and services.",
-      "Url": ""
+      "Url": "https://docs.aws.amazon.com/aws-backup/latest/devguide/about-backup-plans.html"
     }
   },
   "Categories": [],

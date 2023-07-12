@@ -408,6 +408,14 @@ def get_azure_html_assessment_summary(audit_info):
             for key, value in audit_info.identity.subscriptions.items():
                 intermediate = key + " : " + value
                 printed_subscriptions.append(intermediate)
+
+            # check if identity is str(coming from SP) or dict(coming from browser or)
+            if isinstance(audit_info.identity.identity_id, dict):
+                html_identity = audit_info.identity.identity_id.get(
+                    "userPrincipalName", "Identity not found"
+                )
+            else:
+                html_identity = audit_info.identity.identity_id
             return (
                 """
             <div class="col-md-2">
@@ -447,7 +455,7 @@ def get_azure_html_assessment_summary(audit_info):
                         </li>
                         <li class="list-group-item">
                             <b>Azure Identity ID:</b> """
-                + audit_info.identity.identity_id
+                + html_identity
                 + """
                         </li>
                     </ul>
@@ -483,8 +491,8 @@ def get_gcp_html_assessment_summary(audit_info):
                     </div>
                     <ul class="list-group list-group-flush">
                         <li class="list-group-item">
-                            <b>GCP Project ID:</b> """
-                + audit_info.project_id
+                            <b>GCP Project IDs:</b> """
+                + ", ".join(audit_info.project_ids)
                 + """
                         </li>
                     </ul>

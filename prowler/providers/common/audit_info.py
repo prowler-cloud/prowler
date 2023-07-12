@@ -1,10 +1,9 @@
 import sys
 
-from arnparse import arnparse
-from boto3 import client, session
 from botocore.config import Config
 from colorama import Fore, Style
 
+from prowler.config.config import boto3_user_agent_extra
 from prowler.lib.logger import logger
 from prowler.providers.aws.aws_provider import (
     AWS_Provider,
@@ -12,12 +11,15 @@ from prowler.providers.aws.aws_provider import (
     get_checks_from_input_arn,
     get_regions_from_audit_resources,
 )
-from prowler.providers.aws.lib.arn.arn import arn_parsing
+from prowler.providers.aws.lib.arn.arn import parse_iam_credentials_arn
 from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
-from prowler.providers.aws.lib.audit_info.models import (
-    AWS_Audit_Info,
-    AWS_Credentials,
-    AWS_Organizations_Info,
+from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info, AWS_Credentials
+from prowler.providers.aws.lib.credentials.credentials import (
+    print_aws_credentials,
+    validate_aws_credentials,
+)
+from prowler.providers.aws.lib.organizations.organizations import (
+    get_organizations_metadata,
 )
 from prowler.providers.aws.lib.resource_api_tagging.resource_api_tagging import (
     get_tagged_resources,
@@ -34,39 +36,6 @@ class Audit_Info:
     def __init__(self):
         logger.info("Setting Audit Info ...")
 
-    def validate_credentials(self, validate_session: session) -> dict:
-        try:
-            validate_credentials_client = validate_session.client("sts")
-            caller_identity = validate_credentials_client.get_caller_identity()
-        except Exception as error:
-            logger.critical(f"{error.__class__.__name__} -- {error}")
-            sys.exit(1)
-        else:
-            return caller_identity
-
-    def print_aws_credentials(self, audit_info: AWS_Audit_Info):
-        # Beautify audited regions, set "all" if there is no filter region
-        regions = (
-            ", ".join(audit_info.audited_regions)
-            if audit_info.audited_regions is not None
-            else "all"
-        )
-        # Beautify audited profile, set "default" if there is no profile set
-        profile = audit_info.profile if audit_info.profile is not None else "default"
-
-        report = f"""
-This report is being generated using credentials below:
-
-AWS-CLI Profile: {Fore.YELLOW}[{profile}]{Style.RESET_ALL} AWS Filter Region: {Fore.YELLOW}[{regions}]{Style.RESET_ALL}
-AWS Account: {Fore.YELLOW}[{audit_info.audited_account}]{Style.RESET_ALL} UserId: {Fore.YELLOW}[{audit_info.audited_user_id}]{Style.RESET_ALL}
-Caller Identity ARN: {Fore.YELLOW}[{audit_info.audited_identity_arn}]{Style.RESET_ALL}
-"""
-        # If -A is set, print Assumed Role ARN
-        if audit_info.assumed_role_info.role_arn is not None:
-            report += f"""Assumed Role ARN: {Fore.YELLOW}[{audit_info.assumed_role_info.role_arn}]{Style.RESET_ALL}
-"""
-        print(report)
-
     def print_gcp_credentials(self, audit_info: GCP_Audit_Info):
         # Beautify audited profile, set "default" if there is no profile set
         try:
@@ -82,7 +51,7 @@ Caller Identity ARN: {Fore.YELLOW}[{audit_info.audited_identity_arn}]{Style.RESE
         report = f"""
 This report is being generated using credentials below:
 
-GCP Account: {Fore.YELLOW}[{profile}]{Style.RESET_ALL}  GCP Project ID: {Fore.YELLOW}[{audit_info.project_id}]{Style.RESET_ALL}
+GCP Account: {Fore.YELLOW}[{profile}]{Style.RESET_ALL}  GCP Project IDs: {Fore.YELLOW}[{", ".join(audit_info.project_ids)}]{Style.RESET_ALL}
 """
         print(report)
 
@@ -100,43 +69,6 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
 """
         print(report)
 
-    def get_organizations_metadata(
-        self, metadata_account: str, assumed_credentials: dict
-    ) -> AWS_Organizations_Info:
-        try:
-            organizations_client = client(
-                "organizations",
-                aws_access_key_id=assumed_credentials["Credentials"]["AccessKeyId"],
-                aws_secret_access_key=assumed_credentials["Credentials"][
-                    "SecretAccessKey"
-                ],
-                aws_session_token=assumed_credentials["Credentials"]["SessionToken"],
-            )
-            organizations_metadata = organizations_client.describe_account(
-                AccountId=metadata_account
-            )
-            list_tags_for_resource = organizations_client.list_tags_for_resource(
-                ResourceId=metadata_account
-            )
-        except Exception as error:
-            logger.critical(f"{error.__class__.__name__} -- {error}")
-            sys.exit(1)
-        else:
-            # Convert Tags dictionary to String
-            account_details_tags = ""
-            for tag in list_tags_for_resource["Tags"]:
-                account_details_tags += tag["Key"] + ":" + tag["Value"] + ","
-            organizations_info = AWS_Organizations_Info(
-                account_details_email=organizations_metadata["Account"]["Email"],
-                account_details_name=organizations_metadata["Account"]["Name"],
-                account_details_arn=organizations_metadata["Account"]["Arn"],
-                account_details_org=organizations_metadata["Account"]["Arn"].split("/")[
-                    1
-                ],
-                account_details_tags=account_details_tags,
-            )
-            return organizations_info
-
     def set_aws_audit_info(self, arguments) -> AWS_Audit_Info:
         """
         set_aws_audit_info returns the AWS_Audit_Info
@@ -145,8 +77,10 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
 
         # Assume Role Options
         input_role = arguments.get("role")
+        current_audit_info.assumed_role_info.role_arn = input_role
         input_session_duration = arguments.get("session_duration")
         input_external_id = arguments.get("external_id")
+
         # Since the range(i,j) goes from i to j-1 we have to j+1
         if input_session_duration and input_session_duration not in range(900, 43201):
             raise Exception("Value for -T option must be between 900 and 43200")
@@ -156,6 +90,10 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
         ) or input_external_id:
             if not input_role:
                 raise Exception("To use -I/-T options -R option is needed")
+
+        # MFA Configuration (false by default)
+        input_mfa = arguments.get("mfa")
+        current_audit_info.mfa_enabled = input_mfa
 
         input_profile = arguments.get("profile")
         input_regions = arguments.get("region")
@@ -172,7 +110,8 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
                 retries={
                     "max_attempts": aws_retries_max_attempts,
                     "mode": "standard",
-                }
+                },
+                user_agent_extra=boto3_user_agent_extra,
             )
             # Merge the new configuration
             new_boto3_config = current_audit_info.session_config.merge(config)
@@ -188,7 +127,9 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
         current_audit_info.original_session = aws_provider.aws_session
         logger.info("Validating credentials ...")
         # Verificate if we have valid credentials
-        caller_identity = self.validate_credentials(current_audit_info.original_session)
+        caller_identity = validate_aws_credentials(
+            current_audit_info.original_session, input_regions
+        )
 
         logger.info("Credentials validated")
         logger.info(f"Original caller identity UserId: {caller_identity['UserId']}")
@@ -197,9 +138,10 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
         current_audit_info.audited_account = caller_identity["Account"]
         current_audit_info.audited_identity_arn = caller_identity["Arn"]
         current_audit_info.audited_user_id = caller_identity["UserId"]
-        current_audit_info.audited_partition = arnparse(
+        current_audit_info.audited_partition = parse_iam_credentials_arn(
             caller_identity["Arn"]
         ).partition
+        current_audit_info.audited_account_arn = f"arn:{current_audit_info.audited_partition}:iam::{current_audit_info.audited_account}:root"
 
         logger.info("Checking if organizations role assumption is needed ...")
         if organizations_role_arn:
@@ -207,11 +149,13 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
             current_audit_info.assumed_role_info.session_duration = (
                 input_session_duration
             )
+            current_audit_info.assumed_role_info.external_id = input_external_id
+            current_audit_info.assumed_role_info.mfa_enabled = input_mfa
 
             # Check if role arn is valid
             try:
-                # this returns the arn already parsed, calls arnparse, into a dict to be used when it is needed to access its fields
-                role_arn_parsed = arn_parsing(
+                # this returns the arn already parsed into a dict to be used when it is needed to access its fields
+                role_arn_parsed = parse_iam_credentials_arn(
                     current_audit_info.assumed_role_info.role_arn
                 )
 
@@ -226,10 +170,8 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
                 assumed_credentials = assume_role(
                     aws_provider.aws_session, aws_provider.role_info
                 )
-                current_audit_info.organizations_metadata = (
-                    self.get_organizations_metadata(
-                        current_audit_info.audited_account, assumed_credentials
-                    )
+                current_audit_info.organizations_metadata = get_organizations_metadata(
+                    current_audit_info.audited_account, assumed_credentials
                 )
                 logger.info("Organizations metadata retrieved")
 
@@ -240,11 +182,12 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
                 input_session_duration
             )
             current_audit_info.assumed_role_info.external_id = input_external_id
+            current_audit_info.assumed_role_info.mfa_enabled = input_mfa
 
             # Check if role arn is valid
             try:
-                # this returns the arn already parsed, calls arnparse, into a dict to be used when it is needed to access its fields
-                role_arn_parsed = arn_parsing(
+                # this returns the arn already parsed into a dict to be used when it is needed to access its fields
+                role_arn_parsed = parse_iam_credentials_arn(
                     current_audit_info.assumed_role_info.role_arn
                 )
 
@@ -276,14 +219,17 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
                 )
                 # new session is needed
                 assumed_session = aws_provider.set_session(current_audit_info)
+
         if assumed_session:
             logger.info("Audit session is the new session created assuming role")
             current_audit_info.audit_session = assumed_session
             current_audit_info.audited_account = role_arn_parsed.account_id
             current_audit_info.audited_partition = role_arn_parsed.partition
+            current_audit_info.audited_account_arn = f"arn:{current_audit_info.audited_partition}:iam::{current_audit_info.audited_account}:root"
         else:
             logger.info("Audit session is the original one")
             current_audit_info.audit_session = current_audit_info.original_session
+
         # Setting default region of session
         if current_audit_info.audit_session.region_name:
             current_audit_info.profile_region = (
@@ -293,7 +239,7 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
             current_audit_info.profile_region = "us-east-1"
 
         if not arguments.get("only_logs"):
-            self.print_aws_credentials(current_audit_info)
+            print_aws_credentials(current_audit_info)
 
         # Parse Scan Tags
         if arguments.get("resource_tags"):
@@ -334,6 +280,7 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
         sp_env_auth = arguments.get("sp_env_auth")
         browser_auth = arguments.get("browser_auth")
         managed_entity_auth = arguments.get("managed_entity_auth")
+        tenant_id = arguments.get("tenant_id")
         if (
             not az_cli_auth
             and not sp_env_auth
@@ -343,6 +290,10 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
             raise Exception(
                 "Azure provider requires at least one authentication method set: [--az-cli-auth | --sp-env-auth | --browser-auth | --managed-identity-auth]"
             )
+        if (not browser_auth and tenant_id) or (browser_auth and not tenant_id):
+            raise Exception(
+                "Azure Tenant ID is required only for browser authentication mode"
+            )
 
         azure_provider = Azure_Provider(
             az_cli_auth,
@@ -350,6 +301,7 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
             browser_auth,
             managed_entity_auth,
             subscription_ids,
+            tenant_id,
         )
         azure_audit_info.credentials = azure_provider.get_credentials()
         azure_audit_info.identity = azure_provider.get_identity()
@@ -364,17 +316,20 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
         set_gcp_audit_info returns the GCP_Audit_Info
         """
         logger.info("Setting GCP session ...")
+        project_ids = arguments.get("project_ids")
 
         logger.info("Checking if any credentials mode is set ...")
         credentials_file = arguments.get("credentials_file")
 
         gcp_provider = GCP_Provider(
             credentials_file,
+            project_ids,
         )
 
         (
             gcp_audit_info.credentials,
-            gcp_audit_info.project_id,
+            gcp_audit_info.default_project_id,
+            gcp_audit_info.project_ids,
         ) = gcp_provider.get_credentials()
 
         if not arguments.get("only_logs"):

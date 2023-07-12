@@ -124,8 +124,8 @@ Detailed documentation at https://docs.prowler.cloud
             "--output-modes",
             nargs="+",
             help="Output modes, by default csv, html and json",
-            default=["csv", "json", "html"],
-            choices=["csv", "json", "json-asff", "html"],
+            default=["csv", "json", "html", "json-ocsf"],
+            choices=["csv", "json", "json-asff", "html", "json-ocsf"],
         )
         common_outputs_parser.add_argument(
             "-F",
@@ -258,7 +258,7 @@ Detailed documentation at https://docs.prowler.cloud
         list_group.add_argument(
             "--list-compliance-requirements",
             nargs="+",
-            help="List compliance requirements for a given requirement",
+            help="List compliance requirements for a given compliance framework",
             choices=available_compliance_frameworks,
         )
         list_group.add_argument(
@@ -288,6 +288,11 @@ Detailed documentation at https://docs.prowler.cloud
             default=None,
             help="ARN of the role to be assumed",
             # Pending ARN validation
+        )
+        aws_auth_subparser.add_argument(
+            "--mfa",
+            action="store_true",
+            help="IAM entity enforces MFA so you need to input the MFA ARN and the TOTP",
         )
         aws_auth_subparser.add_argument(
             "-T",
@@ -430,7 +435,7 @@ Detailed documentation at https://docs.prowler.cloud
         azure_auth_modes_group.add_argument(
             "--browser-auth",
             action="store_true",
-            help="Use browser authentication to log in against azure ",
+            help="Use browser authentication to log in against Azure, --tenant-id is required for this option",
         )
         azure_auth_modes_group.add_argument(
             "--managed-identity-auth",
@@ -443,7 +448,13 @@ Detailed documentation at https://docs.prowler.cloud
             "--subscription-ids",
             nargs="+",
             default=[],
-            help="Azure subscription ids to be scanned by prowler",
+            help="Azure Subscription IDs to be scanned by Prowler",
+        )
+        azure_parser.add_argument(
+            "--tenant-id",
+            nargs="?",
+            default=None,
+            help="Azure Tenant ID to be used with --browser-auth option",
         )
 
     def __init_gcp_parser__(self):
@@ -459,4 +470,12 @@ Detailed documentation at https://docs.prowler.cloud
             nargs="?",
             metavar="FILE_PATH",
             help="Authenticate using a Google Service Account Application Credentials JSON file",
+        )
+        # Subscriptions
+        gcp_subscriptions_subparser = gcp_parser.add_argument_group("Projects")
+        gcp_subscriptions_subparser.add_argument(
+            "--project-ids",
+            nargs="+",
+            default=[],
+            help="GCP Project IDs to be scanned by Prowler",
         )

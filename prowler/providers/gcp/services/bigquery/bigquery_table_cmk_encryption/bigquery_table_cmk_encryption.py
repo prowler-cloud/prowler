@@ -7,7 +7,7 @@ class bigquery_table_cmk_encryption(Check):
         findings = []
         for table in bigquery_client.tables:
             report = Check_Report_GCP(self.metadata())
-            report.project_id = bigquery_client.project_id
+            report.project_id = table.project_id
             report.resource_id = table.id
             report.resource_name = table.name
             report.location = table.region

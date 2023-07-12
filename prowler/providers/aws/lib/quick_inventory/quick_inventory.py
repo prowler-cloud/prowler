@@ -14,10 +14,12 @@ from prowler.config.config import (
     output_file_timestamp,
 )
 from prowler.lib.logger import logger
+from prowler.lib.outputs.outputs import send_to_s3_bucket
+from prowler.providers.aws.lib.arn.models import get_arn_resource_type
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 
 
-def quick_inventory(audit_info: AWS_Audit_Info, output_directory: str):
+def quick_inventory(audit_info: AWS_Audit_Info, args):
     resources = []
     global_resources = []
     total_resources_per_region = {}
@@ -62,27 +64,32 @@ def quick_inventory(audit_info: AWS_Audit_Info, output_directory: str):
                 )
                 # Get all the resources
                 resources_count = 0
-                get_resources_paginator = client.get_paginator("get_resources")
-                for page in get_resources_paginator.paginate():
-                    resources_count += len(page["ResourceTagMappingList"])
-                    for resource in page["ResourceTagMappingList"]:
-                        # Avoid adding S3 buckets again:
-                        if resource["ResourceARN"].split(":")[2] != "s3":
-                            # Check if region is not in ARN --> Global service
-                            if not resource["ResourceARN"].split(":")[3]:
-                                global_resources.append(
-                                    {
-                                        "arn": resource["ResourceARN"],
-                                        "tags": resource["Tags"],
-                                    }
-                                )
-                            else:
-                                resources_in_region.append(
-                                    {
-                                        "arn": resource["ResourceARN"],
-                                        "tags": resource["Tags"],
-                                    }
-                                )
+                try:
+                    get_resources_paginator = client.get_paginator("get_resources")
+                    for page in get_resources_paginator.paginate():
+                        resources_count += len(page["ResourceTagMappingList"])
+                        for resource in page["ResourceTagMappingList"]:
+                            # Avoid adding S3 buckets again:
+                            if resource["ResourceARN"].split(":")[2] != "s3":
+                                # Check if region is not in ARN --> Global service
+                                if not resource["ResourceARN"].split(":")[3]:
+                                    global_resources.append(
+                                        {
+                                            "arn": resource["ResourceARN"],
+                                            "tags": resource["Tags"],
+                                        }
+                                    )
+                                else:
+                                    resources_in_region.append(
+                                        {
+                                            "arn": resource["ResourceARN"],
+                                            "tags": resource["Tags"],
+                                        }
+                                    )
+                except Exception as error:
+                    logger.error(
+                        f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
                 bar()
                 if len(resources_in_region) > 0:
                     total_resources_per_region[region] = len(resources_in_region)
@@ -112,7 +119,7 @@ def quick_inventory(audit_info: AWS_Audit_Info, output_directory: str):
     )
     print(f"\nTotal resources found: {Fore.GREEN}{len(resources)}{Style.RESET_ALL}")
 
-    create_output(resources, audit_info, output_directory)
+    create_output(resources, audit_info, args)
 
 
 def create_inventory_table(resources: list, resources_in_region: dict) -> dict:
@@ -153,22 +160,8 @@ def create_inventory_table(resources: list, resources_in_region: dict) -> dict:
             services[service] = 0
         services[service] += 1
 
-        if service == "s3":
-            resource_type = "bucket"
-        elif service == "sns":
-            resource_type = "topic"
-        elif service == "sqs":
-            resource_type = "queue"
-        elif service == "apigateway":
-            split_parts = resource["arn"].split(":")[5].split("/")
-            if "integration" in split_parts and "responses" in split_parts:
-                resource_type = "restapis-resources-methods-integration-response"
-            elif "documentation" in split_parts and "parts" in split_parts:
-                resource_type = "restapis-documentation-parts"
-            else:
-                resource_type = resource["arn"].split(":")[5].split("/")[1]
-        else:
-            resource_type = resource["arn"].split(":")[5].split("/")[0]
+        resource_type = get_arn_resource_type(resource["arn"], service)
+
         if service not in resources_type:
             resources_type[service] = {}
         if resource_type not in resources_type[service]:
@@ -216,9 +209,11 @@ def create_inventory_table(resources: list, resources_in_region: dict) -> dict:
     return inventory_table
 
 
-def create_output(resources: list, audit_info: AWS_Audit_Info, output_directory: str):
+def create_output(resources: list, audit_info: AWS_Audit_Info, args):
     json_output = []
-    output_file = f"{output_directory}/prowler-inventory-{audit_info.audited_account}-{output_file_timestamp}"
+    output_file = (
+        f"prowler-inventory-{audit_info.audited_account}-{output_file_timestamp}"
+    )
 
     for item in sorted(resources, key=lambda d: d["arn"]):
         resource = {}
@@ -257,10 +252,14 @@ def create_output(resources: list, audit_info: AWS_Audit_Info, output_directory:
     json_object = json.dumps(json_output, indent=4)
 
     # Writing to sample.json
-    with open(output_file + json_file_suffix, "w") as outfile:
+    with open(
+        args.output_directory + "/" + output_file + json_file_suffix, "w"
+    ) as outfile:
         outfile.write(json_object)
 
-    csv_file = open(output_file + csv_file_suffix, "w", newline="")
+    csv_file = open(
+        args.output_directory + "/" + output_file + csv_file_suffix, "w", newline=""
+    )
     csv_writer = csv.writer(csv_file)
 
     count = 0
@@ -272,68 +271,115 @@ def create_output(resources: list, audit_info: AWS_Audit_Info, output_directory:
         csv_writer.writerow(data.values())
 
     csv_file.close()
-
+    print(
+        f"\n{Fore.YELLOW}WARNING: Only resources that have or have had tags will appear (except for IAM and S3).\nSee more in https://docs.prowler.cloud/en/latest/tutorials/quick-inventory/#objections{Style.RESET_ALL}"
+    )
     print("\nMore details in files:")
-    print(f" - CSV: {output_file+csv_file_suffix}")
-    print(f" - JSON: {output_file+json_file_suffix}")
+    print(f" - CSV: {args.output_directory}/{output_file+csv_file_suffix}")
+    print(f" - JSON: {args.output_directory}/{output_file+json_file_suffix}")
+
+    # Send output to S3 if needed (-B / -D)
+    for mode in ["json", "csv"]:
+        if args.output_bucket or args.output_bucket_no_assume:
+            # Check if -B was input
+            if args.output_bucket:
+                output_bucket = args.output_bucket
+                bucket_session = audit_info.audit_session
+            # Check if -D was input
+            elif args.output_bucket_no_assume:
+                output_bucket = args.output_bucket_no_assume
+                bucket_session = audit_info.original_session
+            send_to_s3_bucket(
+                output_file,
+                args.output_directory,
+                mode,
+                output_bucket,
+                bucket_session,
+            )
 
 
 def get_regional_buckets(audit_info: AWS_Audit_Info, region: str) -> list:
     regional_buckets = []
     s3_client = audit_info.audit_session.client("s3", region_name=region)
-    buckets = s3_client.list_buckets()
-    for bucket in buckets["Buckets"]:
-        bucket_region = s3_client.get_bucket_location(Bucket=bucket["Name"])[
-            "LocationConstraint"
-        ]
-        if bucket_region == "EU":  # If EU, bucket_region is eu-west-1
-            bucket_region = "eu-west-1"
-        if not bucket_region:  # If None, bucket_region is us-east-1
-            bucket_region = "us-east-1"
-        if bucket_region == region:  # Only add bucket if is in current region
-            try:
-                bucket_tags = s3_client.get_bucket_tagging(Bucket=bucket["Name"])[
-                    "TagSet"
-                ]
-            except ClientError as error:
-                bucket_tags = []
-                if error.response["Error"]["Code"] != "NoSuchTagSet":
-                    logger.error(
-                        f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                    )
-            bucket_arn = (
-                f"arn:{audit_info.audited_partition}:s3:{region}::{bucket['Name']}"
-            )
-            regional_buckets.append({"arn": bucket_arn, "tags": bucket_tags})
+    try:
+        buckets = s3_client.list_buckets()
+        for bucket in buckets["Buckets"]:
+            bucket_region = s3_client.get_bucket_location(Bucket=bucket["Name"])[
+                "LocationConstraint"
+            ]
+            if bucket_region == "EU":  # If EU, bucket_region is eu-west-1
+                bucket_region = "eu-west-1"
+            if not bucket_region:  # If None, bucket_region is us-east-1
+                bucket_region = "us-east-1"
+            if bucket_region == region:  # Only add bucket if is in current region
+                try:
+                    bucket_tags = s3_client.get_bucket_tagging(Bucket=bucket["Name"])[
+                        "TagSet"
+                    ]
+                except ClientError as error:
+                    bucket_tags = []
+                    if error.response["Error"]["Code"] != "NoSuchTagSet":
+                        logger.error(
+                            f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
+                bucket_arn = (
+                    f"arn:{audit_info.audited_partition}:s3:{region}::{bucket['Name']}"
+                )
+                regional_buckets.append({"arn": bucket_arn, "tags": bucket_tags})
+    except Exception as error:
+        logger.error(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+        )
     return regional_buckets
 
 
 def get_iam_resources(session) -> list:
     iam_resources = []
     iam_client = session.client("iam")
-    get_roles_paginator = iam_client.get_paginator("list_roles")
-    for page in get_roles_paginator.paginate():
-        for role in page["Roles"]:
-            # Avoid aws-service-role roles
-            if "aws-service-role" not in role["Arn"]:
-                iam_resources.append({"arn": role["Arn"], "tags": role.get("Tags")})
-
-    get_users_paginator = iam_client.get_paginator("list_users")
-    for page in get_users_paginator.paginate():
-        for user in page["Users"]:
-            iam_resources.append({"arn": user["Arn"], "tags": user.get("Tags")})
-
-    get_groups_paginator = iam_client.get_paginator("list_groups")
-    for page in get_groups_paginator.paginate():
-        for group in page["Groups"]:
-            iam_resources.append({"arn": group["Arn"], "tags": []})
-
-    get_policies_paginator = iam_client.get_paginator("list_policies")
-    for page in get_policies_paginator.paginate(Scope="Local"):
-        for policy in page["Policies"]:
-            iam_resources.append({"arn": policy["Arn"], "tags": policy.get("Tags")})
-
-    for saml_provider in iam_client.list_saml_providers()["SAMLProviderList"]:
-        iam_resources.append({"arn": saml_provider["Arn"], "tags": []})
+    try:
+        get_roles_paginator = iam_client.get_paginator("list_roles")
+        for page in get_roles_paginator.paginate():
+            for role in page["Roles"]:
+                # Avoid aws-service-role roles
+                if "aws-service-role" not in role["Arn"]:
+                    iam_resources.append({"arn": role["Arn"], "tags": role.get("Tags")})
+    except Exception as error:
+        logger.error(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+        )
+    try:
+        get_users_paginator = iam_client.get_paginator("list_users")
+        for page in get_users_paginator.paginate():
+            for user in page["Users"]:
+                iam_resources.append({"arn": user["Arn"], "tags": user.get("Tags")})
+    except Exception as error:
+        logger.error(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+        )
+    try:
+        get_groups_paginator = iam_client.get_paginator("list_groups")
+        for page in get_groups_paginator.paginate():
+            for group in page["Groups"]:
+                iam_resources.append({"arn": group["Arn"], "tags": []})
+    except Exception as error:
+        logger.error(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+        )
+    try:
+        get_policies_paginator = iam_client.get_paginator("list_policies")
+        for page in get_policies_paginator.paginate(Scope="Local"):
+            for policy in page["Policies"]:
+                iam_resources.append({"arn": policy["Arn"], "tags": policy.get("Tags")})
+    except Exception as error:
+        logger.error(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+        )
+    try:
+        for saml_provider in iam_client.list_saml_providers()["SAMLProviderList"]:
+            iam_resources.append({"arn": saml_provider["Arn"], "tags": []})
+    except Exception as error:
+        logger.error(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+        )
 
     return iam_resources

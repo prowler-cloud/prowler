@@ -9,14 +9,14 @@ class vpc_flow_logs_enabled(Check):
             report = Check_Report_AWS(self.metadata())
             report.region = vpc.region
             report.resource_tags = vpc.tags
+            report.resource_id = vpc.id
+            report.resource_arn = vpc.arn
+            report.status = "FAIL"
+            report.status_extended = f"VPC {vpc.id} Flow logs are disabled."
             if vpc.flow_log:
                 report.status = "PASS"
                 report.status_extended = f"VPC {vpc.id} Flow logs are enabled."
-                report.resource_id = vpc.id
-            else:
-                report.status = "FAIL"
-                report.status_extended = f"VPC {vpc.id} Flow logs are disabled."
-                report.resource_id = vpc.id
+
             findings.append(report)
 
         return findings

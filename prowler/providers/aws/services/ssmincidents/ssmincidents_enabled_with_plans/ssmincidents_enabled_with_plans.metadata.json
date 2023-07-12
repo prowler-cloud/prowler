@@ -20,12 +20,10 @@
     },
     "Recommendation": {
       "Text": "Enable SSM Incidents and create response plans",
-      "Url": ""
+      "Url": "https://docs.aws.amazon.com/incident-manager/latest/userguide/response-plans.html"
     }
   },
-  "Categories": [
-    ""
-  ],
+  "Categories": [],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

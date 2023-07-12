@@ -1,9 +1,9 @@
 # Reporting
 
-By default, Prowler will generate a CSV, JSON and a HTML report, however you could generate a JSON-ASFF (used by AWS Security Hub) report with `-M` or `--output-modes`:
+By default, Prowler will generate a CSV, JSON, JSON-OCSF and a HTML report, however you could generate a JSON-ASFF (used by AWS Security Hub) report with `-M` or `--output-modes`:
 
 ```console
-prowler <provider> -M csv json json-asff html
+prowler <provider> -M csv json json-ocsf json-asff html
 ```
 
 ## Custom Output Flags
@@ -25,13 +25,19 @@ prowler <provider> -M csv json json-asff html -F <custom_report_name> -o <custom
 ```
 ## Send report to AWS S3 Bucket
 
-To save your report in an S3 bucket, use `-B`/`--output-bucket` to define a custom output bucket along with `-M` to define the output format that is going to be uploaded to S3:
+To save your report in an S3 bucket, use `-B`/`--output-bucket`.
+
+```sh
+prowler <provider> -B my-bucket/folder/
+```
+
+By default Prowler sends HTML, JSON and CSV output formats, if you want to send a custom output format or a single one of the defaults you can specify it with the `-M` flag.
 
 ```sh
 prowler <provider> -M csv -B my-bucket/folder/
 ```
 
-> In the case you do not want to use the assumed role credentials but the initial credentials to put the reports into the S3 bucket, use `-D`/`--output-bucket-no-assume` instead of `-B`/`--output-bucket.
+> In the case you do not want to use the assumed role credentials but the initial credentials to put the reports into the S3 bucket, use `-D`/`--output-bucket-no-assume` instead of `-B`/`--output-bucket`.
 
 > Make sure that the used credentials have s3:PutObject permissions in the S3 path where the reports are going to be uploaded.
 
@@ -41,6 +47,7 @@ Prowler supports natively the following output formats:
 
 - CSV
 - JSON
+- JSON-OCSF
 - JSON-ASFF
 - HTML
 
@@ -147,6 +154,265 @@ Hereunder is the structure for each of the supported report formats by Prowler:
 
 > NOTE: Each finding is a `json` object.
 
+### JSON-OCSF
+
+Based on [Open Cybersecurity Schema Framework Security Finding v1.0.0-rc.3](https://schema.ocsf.io/1.0.0-rc.3/classes/security_finding?extensions=)
+
+```
+[{
+    "finding": {
+        "title": "Check if ACM Certificates are about to expire in specific days or less",
+        "desc": "Check if ACM Certificates are about to expire in specific days or less",
+        "supporting_data": {
+            "Risk": "Expired certificates can impact service availability.",
+            "Notes": ""
+        },
+        "remediation": {
+            "kb_articles": [
+                "https://docs.aws.amazon.com/config/latest/developerguide/acm-certificate-expiration-check.html"
+            ],
+            "desc": "Monitor certificate expiration and take automated action to renew; replace or remove. Having shorter TTL for any security artifact is a general recommendation; but requires additional automation in place. If not longer required delete certificate. Use AWS config using the managed rule: acm-certificate-expiration-check."
+        },
+        "types": [
+            "Data Protection"
+        ],
+        "src_url": "https://docs.aws.amazon.com/config/latest/developerguide/acm-certificate-expiration-check.html",
+        "uid": "prowler-aws-acm_certificates_expiration_check-012345678912-eu-west-1-*.xxxxxxxxxxxxxx",
+        "related_events": []
+    },
+    "resources": [
+        {
+            "group": {
+                "name": "acm"
+            },
+            "region": "eu-west-1",
+            "name": "xxxxxxxxxxxxxx",
+            "uid": "arn:aws:acm:eu-west-1:012345678912:certificate/xxxxxxxxxxxxxx",
+            "labels": [
+                {
+                    "Key": "project",
+                    "Value": "prowler-pro"
+                },
+                {
+                    "Key": "environment",
+                    "Value": "dev"
+                },
+                {
+                    "Key": "terraform",
+                    "Value": "true"
+                },
+                {
+                    "Key": "terraform_state",
+                    "Value": "aws"
+                }
+            ],
+            "type": "AwsCertificateManagerCertificate",
+            "details": ""
+        }
+    ],
+    "status_detail": "ACM Certificate for xxxxxxxxxxxxxx expires in 111 days.",
+    "compliance": {
+        "status": "Success",
+        "requirements": [
+            "CISA: ['your-data-2']",
+            "SOC2: ['cc_6_7']",
+            "MITRE-ATTACK: ['T1040']",
+            "GDPR: ['article_32']",
+            "HIPAA: ['164_308_a_4_ii_a', '164_312_e_1']",
+            "AWS-Well-Architected-Framework-Security-Pillar: ['SEC09-BP01']",
+            "NIST-800-171-Revision-2: ['3_13_1', '3_13_2', '3_13_8', '3_13_11']",
+            "NIST-800-53-Revision-4: ['ac_4', 'ac_17_2', 'sc_12']",
+            "NIST-800-53-Revision-5: ['sc_7_12', 'sc_7_16']",
+            "NIST-CSF-1.1: ['ac_5', 'ds_2']",
+            "RBI-Cyber-Security-Framework: ['annex_i_1_3']",
+            "FFIEC: ['d3-pc-im-b-1']",
+            "FedRamp-Moderate-Revision-4: ['ac-4', 'ac-17-2', 'sc-12']",
+            "FedRAMP-Low-Revision-4: ['ac-17', 'sc-12']"
+        ],
+        "status_detail": "ACM Certificate for xxxxxxxxxxxxxx expires in 111 days."
+    },
+    "message": "ACM Certificate for xxxxxxxxxxxxxx expires in 111 days.",
+    "severity_id": 4,
+    "severity": "High",
+    "cloud": {
+        "account": {
+            "name": "",
+            "uid": "012345678912"
+        },
+        "region": "eu-west-1",
+        "org": {
+            "uid": "",
+            "name": ""
+        },
+        "provider": "aws",
+        "project_uid": ""
+    },
+    "time": "2023-06-30 10:28:55.297615",
+    "metadata": {
+        "original_time": "2023-06-30T10:28:55.297615",
+        "profiles": [
+            "dev"
+        ],
+        "product": {
+            "language": "en",
+            "name": "Prowler",
+            "version": "3.6.1",
+            "vendor_name": "Prowler/ProwlerPro",
+            "feature": {
+                "name": "acm_certificates_expiration_check",
+                "uid": "acm_certificates_expiration_check",
+                "version": "3.6.1"
+            }
+        },
+        "version": "1.0.0-rc.3"
+    },
+    "state_id": 0,
+    "state": "New",
+    "status_id": 1,
+    "status": "Success",
+    "type_uid": 200101,
+    "type_name": "Security Finding: Create",
+    "impact_id": 0,
+    "impact": "Unknown",
+    "confidence_id": 0,
+    "confidence": "Unknown",
+    "activity_id": 1,
+    "activity_name": "Create",
+    "category_uid": 2,
+    "category_name": "Findings",
+    "class_uid": 2001,
+    "class_name": "Security Finding"
+},{
+    "finding": {
+        "title": "Check if ACM Certificates are about to expire in specific days or less",
+        "desc": "Check if ACM Certificates are about to expire in specific days or less",
+        "supporting_data": {
+            "Risk": "Expired certificates can impact service availability.",
+            "Notes": ""
+        },
+        "remediation": {
+            "kb_articles": [
+                "https://docs.aws.amazon.com/config/latest/developerguide/acm-certificate-expiration-check.html"
+            ],
+            "desc": "Monitor certificate expiration and take automated action to renew; replace or remove. Having shorter TTL for any security artifact is a general recommendation; but requires additional automation in place. If not longer required delete certificate. Use AWS config using the managed rule: acm-certificate-expiration-check."
+        },
+        "types": [
+            "Data Protection"
+        ],
+        "src_url": "https://docs.aws.amazon.com/config/latest/developerguide/acm-certificate-expiration-check.html",
+        "uid": "prowler-aws-acm_certificates_expiration_check-012345678912-eu-west-1-xxxxxxxxxxxxx",
+        "related_events": []
+    },
+    "resources": [
+        {
+            "group": {
+                "name": "acm"
+            },
+            "region": "eu-west-1",
+            "name": "xxxxxxxxxxxxx",
+            "uid": "arn:aws:acm:eu-west-1:012345678912:certificate/3ea965a0-368d-4d13-95eb-5042a994edc4",
+            "labels": [
+                {
+                    "Key": "name",
+                    "Value": "prowler-pro-saas-dev-acm-internal-wildcard"
+                },
+                {
+                    "Key": "project",
+                    "Value": "prowler-pro-saas"
+                },
+                {
+                    "Key": "environment",
+                    "Value": "dev"
+                },
+                {
+                    "Key": "terraform",
+                    "Value": "true"
+                },
+                {
+                    "Key": "terraform_state",
+                    "Value": "aws/saas/base"
+                }
+            ],
+            "type": "AwsCertificateManagerCertificate",
+            "details": ""
+        }
+    ],
+    "status_detail": "ACM Certificate for xxxxxxxxxxxxx expires in 119 days.",
+    "compliance": {
+        "status": "Success",
+        "requirements": [
+            "CISA: ['your-data-2']",
+            "SOC2: ['cc_6_7']",
+            "MITRE-ATTACK: ['T1040']",
+            "GDPR: ['article_32']",
+            "HIPAA: ['164_308_a_4_ii_a', '164_312_e_1']",
+            "AWS-Well-Architected-Framework-Security-Pillar: ['SEC09-BP01']",
+            "NIST-800-171-Revision-2: ['3_13_1', '3_13_2', '3_13_8', '3_13_11']",
+            "NIST-800-53-Revision-4: ['ac_4', 'ac_17_2', 'sc_12']",
+            "NIST-800-53-Revision-5: ['sc_7_12', 'sc_7_16']",
+            "NIST-CSF-1.1: ['ac_5', 'ds_2']",
+            "RBI-Cyber-Security-Framework: ['annex_i_1_3']",
+            "FFIEC: ['d3-pc-im-b-1']",
+            "FedRamp-Moderate-Revision-4: ['ac-4', 'ac-17-2', 'sc-12']",
+            "FedRAMP-Low-Revision-4: ['ac-17', 'sc-12']"
+        ],
+        "status_detail": "ACM Certificate for xxxxxxxxxxxxx expires in 119 days."
+    },
+    "message": "ACM Certificate for xxxxxxxxxxxxx expires in 119 days.",
+    "severity_id": 4,
+    "severity": "High",
+    "cloud": {
+        "account": {
+            "name": "",
+            "uid": "012345678912"
+        },
+        "region": "eu-west-1",
+        "org": {
+            "uid": "",
+            "name": ""
+        },
+        "provider": "aws",
+        "project_uid": ""
+    },
+    "time": "2023-06-30 10:28:55.297615",
+    "metadata": {
+        "original_time": "2023-06-30T10:28:55.297615",
+        "profiles": [
+            "dev"
+        ],
+        "product": {
+            "language": "en",
+            "name": "Prowler",
+            "version": "3.6.1",
+            "vendor_name": "Prowler/ProwlerPro",
+            "feature": {
+                "name": "acm_certificates_expiration_check",
+                "uid": "acm_certificates_expiration_check",
+                "version": "3.6.1"
+            }
+        },
+        "version": "1.0.0-rc.3"
+    },
+    "state_id": 0,
+    "state": "New",
+    "status_id": 1,
+    "status": "Success",
+    "type_uid": 200101,
+    "type_name": "Security Finding: Create",
+    "impact_id": 0,
+    "impact": "Unknown",
+    "confidence_id": 0,
+    "confidence": "Unknown",
+    "activity_id": 1,
+    "activity_name": "Create",
+    "category_uid": 2,
+    "category_name": "Findings",
+    "class_uid": 2001,
+    "class_name": "Security Finding"
+}]
+```
+
+> NOTE: Each finding is a `json` object.
 ### JSON-ASFF
 
 ```

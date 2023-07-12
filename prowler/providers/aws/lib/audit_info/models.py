@@ -19,6 +19,7 @@ class AWS_Assume_Role:
     role_arn: str
     session_duration: int
     external_id: str
+    mfa_enabled: bool
 
 
 @dataclass
@@ -37,12 +38,14 @@ class AWS_Audit_Info:
     # https://boto3.amazonaws.com/v1/documentation/api/latest/guide/retries.html
     session_config: Config
     audited_account: int
+    audited_account_arn: str
     audited_identity_arn: str
     audited_user_id: str
     audited_partition: str
     profile: str
     profile_region: str
     credentials: AWS_Credentials
+    mfa_enabled: bool
     assumed_role_info: AWS_Assume_Role
     audited_regions: list
     audit_resources: list

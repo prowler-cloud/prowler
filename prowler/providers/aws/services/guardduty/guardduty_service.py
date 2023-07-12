@@ -43,10 +43,10 @@ class GuardDuty:
             list_detectors_paginator = regional_client.get_paginator("list_detectors")
             for page in list_detectors_paginator.paginate():
                 for detector in page["DetectorIds"]:
+                    arn = f"arn:{self.audited_partition}:guardduty:{regional_client.region}:{self.audited_account}:detector/{detector}"
                     if not self.audit_resources or (
-                        is_resource_filtered(detector, self.audit_resources)
+                        is_resource_filtered(arn, self.audit_resources)
                     ):
-                        arn = f"arn:{self.audited_partition}:guardduty:{regional_client.region}:{self.audited_account}:detector/{detector}"
                         self.detectors.append(
                             Detector(
                                 id=detector, arn=arn, region=regional_client.region

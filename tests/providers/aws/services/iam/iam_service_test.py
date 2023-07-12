@@ -22,6 +22,7 @@ class Test_IAM_Service:
                 botocore_session=None,
             ),
             audited_account=None,
+            audited_account_arn=None,
             audited_user_id=None,
             audited_partition="aws",
             audited_identity_arn=None,
@@ -32,6 +33,7 @@ class Test_IAM_Service:
             audited_regions=None,
             organizations_metadata=None,
             audit_resources=None,
+            mfa_enabled=False,
         )
         return audit_info
 
@@ -326,13 +328,13 @@ class Test_IAM_Service:
     def test__get_account_summary__(self):
         # Generate IAM Client
         iam_client = client("iam")
-        account_summary = iam_client.get_account_summary()
+        account_summary = iam_client.get_account_summary()["SummaryMap"]
 
         # IAM client for this test class
         audit_info = self.set_mocked_audit_info()
         iam = IAM(audit_info)
 
-        assert iam.account_summary == account_summary
+        assert iam.account_summary["SummaryMap"] == account_summary
 
     # Test IAM Get Password Policy
     @mock_iam

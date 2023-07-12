@@ -9,7 +9,7 @@ class cloudstorage_bucket_public_access(Check):
         findings = []
         for bucket in cloudstorage_client.buckets:
             report = Check_Report_GCP(self.metadata())
-            report.project_id = cloudstorage_client.project_id
+            report.project_id = bucket.project_id
             report.resource_id = bucket.id
             report.resource_name = bucket.name
             report.location = bucket.region

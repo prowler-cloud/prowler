@@ -41,7 +41,7 @@ class APIGateway:
             get_rest_apis_paginator = regional_client.get_paginator("get_rest_apis")
             for page in get_rest_apis_paginator.paginate():
                 for apigw in page["items"]:
-                    arn = f"arn:{self.audited_partition}:apigateway:{regional_client.region}::/apis/{apigw['id']}"
+                    arn = f"arn:{self.audited_partition}:apigateway:{regional_client.region}::/restapis/{apigw['id']}"
                     if not self.audit_resources or (
                         is_resource_filtered(arn, self.audit_resources)
                     ):
@@ -100,7 +100,7 @@ class APIGateway:
                             logging = True
                     if "clientCertificateId" in stage:
                         client_certificate = True
-                    arn = f"arn:{self.audited_partition}:apigateway:{regional_client.region}::/apis/{rest_api.id}/stages/{stage['stageName']}"
+                    arn = f"arn:{self.audited_partition}:apigateway:{regional_client.region}::/restapis/{rest_api.id}/stages/{stage['stageName']}"
                     rest_api.stages.append(
                         Stage(
                             name=stage["stageName"],

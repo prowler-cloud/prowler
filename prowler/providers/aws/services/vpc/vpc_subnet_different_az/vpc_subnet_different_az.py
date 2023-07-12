@@ -12,6 +12,7 @@ class vpc_subnet_different_az(Check):
             report.status = "FAIL"
             report.status_extended = f"VPC {vpc.id} has no subnets."
             report.resource_id = vpc.id
+            report.resource_arn = vpc.arn
             if vpc.subnets:
                 availability_zone = None
                 for subnet in vpc.subnets:

@@ -11,20 +11,25 @@ class inspector2_findings_exist(Check):
             report = Check_Report_AWS(self.metadata())
             report.status = "FAIL"
             report.status_extended = "Inspector2 is not enabled."
-            report.resource_id = inspector.id
-            report.resource_arn = ""
+            report.resource_id = inspector2_client.audited_account
+            report.resource_arn = inspector2_client.audited_account_arn
             report.region = inspector.region
             if inspector.status == "ENABLED":
+                active_findings = 0
                 report.status = "PASS"
                 report.status_extended = "Inspector2 is enabled with no findings"
                 for finding in inspector.findings:
+                    if finding.status == "ACTIVE":
+                        active_findings += 1
+                if len(inspector.findings) > 0:
                     report.status_extended = (
                         "Inspector2 is enabled with no active findings"
                     )
-                    if finding.status == "ACTIVE":
+                    if active_findings > 0:
                         report.status = "FAIL"
-                        report.status_extended = f"There are {str(len(inspector.findings))} ACTIVE Inspector2 findings."
-                        break
+                        report.status_extended = (
+                            f"There are {active_findings} ACTIVE Inspector2 findings."
+                        )
 
             findings.append(report)
 

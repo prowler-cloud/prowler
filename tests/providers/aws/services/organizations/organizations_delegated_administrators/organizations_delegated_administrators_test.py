@@ -23,6 +23,7 @@ class Test_organizations_delegated_administrators:
                 botocore_session=None,
             ),
             audited_account=None,
+            audited_account_arn=None,
             audited_user_id=None,
             audited_partition="aws",
             audited_identity_arn=None,
@@ -33,6 +34,7 @@ class Test_organizations_delegated_administrators:
             audited_regions=[AWS_REGION],
             organizations_metadata=None,
             audit_resources=None,
+            mfa_enabled=False,
         )
         return audit_info
 

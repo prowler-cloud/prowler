@@ -34,6 +34,7 @@ class Test_awslambda_function_invoke_api_operations_cloudtrail_logging_enabled:
                 botocore_session=None,
             ),
             audited_account=None,
+            audited_account_arn=None,
             audited_user_id=None,
             audited_partition="aws",
             audited_identity_arn=None,
@@ -44,6 +45,7 @@ class Test_awslambda_function_invoke_api_operations_cloudtrail_logging_enabled:
             audited_regions=None,
             organizations_metadata=None,
             audit_resources=None,
+            mfa_enabled=False,
         )
         return audit_info
 

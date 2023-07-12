@@ -79,6 +79,7 @@ class Test_AccessAnalyzer_Service:
                 botocore_session=None,
             ),
             audited_account=AWS_ACCOUNT_NUMBER,
+            audited_account_arn=f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root",
             audited_user_id=None,
             audited_partition="aws",
             audited_identity_arn=None,
@@ -89,6 +90,7 @@ class Test_AccessAnalyzer_Service:
             audited_regions=["us-east-1", "eu-west-1"],
             organizations_metadata=None,
             audit_resources=None,
+            mfa_enabled=False,
         )
         return audit_info
 

@@ -58,12 +58,13 @@ class SSM:
             list_documents_paginator = regional_client.get_paginator("list_documents")
             for page in list_documents_paginator.paginate(**list_documents_parameters):
                 for document in page["DocumentIdentifiers"]:
+                    document_name = document["Name"]
+                    document_arn = f"arn:{self.audited_partition}:ssm:{regional_client.region}:{self.audited_account}:document/{document_name}"
                     if not self.audit_resources or (
-                        is_resource_filtered(document["Name"], self.audit_resources)
+                        is_resource_filtered(document_arn, self.audit_resources)
                     ):
-                        document_name = document["Name"]
-                        document_arn = f"arn:{self.audited_partition}:ssm:{regional_client.region}:{self.audited_account}:document/{document_name}"
-                        self.documents[document_name] = Document(
+                        # We must use the Document ARN as the dict key to have unique keys
+                        self.documents[document_arn] = Document(
                             arn=document_arn,
                             name=document_name,
                             region=regional_client.region,
@@ -83,7 +84,7 @@ class SSM:
             try:
                 if document.region == regional_client.region:
                     document_info = regional_client.get_document(Name=document.name)
-                    self.documents[document.name].content = json.loads(
+                    self.documents[document.arn].content = json.loads(
                         document_info["Content"]
                     )
 
@@ -111,7 +112,7 @@ class SSM:
                     document_permissions = regional_client.describe_document_permission(
                         Name=document.name, PermissionType="Share"
                     )
-                    self.documents[document.name].account_owners = document_permissions[
+                    self.documents[document.arn].account_owners = document_permissions[
                         "AccountIds"
                     ]
 

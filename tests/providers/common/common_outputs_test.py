@@ -45,7 +45,8 @@ class Test_Common_Output_Options:
     def set_mocked_gcp_audit_info(self):
         audit_info = GCP_Audit_Info(
             credentials=None,
-            project_id="test-project",
+            default_project_id="test-project1",
+            project_ids=["test-project1", "test-project2"],
             audit_resources=None,
             audit_metadata=None,
         )
@@ -61,6 +62,7 @@ class Test_Common_Output_Options:
                 botocore_session=None,
             ),
             audited_account=AWS_ACCOUNT_NUMBER,
+            audited_account_arn=f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root",
             audited_user_id="test-user",
             audited_partition="aws",
             audited_identity_arn="test-user-arn",
@@ -71,6 +73,7 @@ class Test_Common_Output_Options:
             audited_regions=None,
             organizations_metadata=None,
             audit_resources=None,
+            mfa_enabled=False,
         )
         return audit_info
 
@@ -347,7 +350,7 @@ class Test_Common_Output_Options:
                     </div>
                     <ul class="list-group list-group-flush">
                         <li class="list-group-item">
-                            <b>GCP Project ID:</b> {audit_info.project_id}
+                            <b>GCP Project IDs:</b> {', '.join(audit_info.project_ids)}
                         </li>
                     </ul>
                 </div>

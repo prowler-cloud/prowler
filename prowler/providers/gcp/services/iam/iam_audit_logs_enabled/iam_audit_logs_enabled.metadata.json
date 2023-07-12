@@ -1,0 +1,30 @@
+{
+  "Provider": "gcp",
+  "CheckID": "iam_audit_logs_enabled",
+  "CheckTitle": "Configure Google Cloud Audit Logs to Track All Activities",
+  "CheckType": [],
+  "ServiceName": "iam",
+  "SubServiceName": "Audit Logs",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "",
+  "Description": "Ensure that Google Cloud Audit Logs feature is configured to track Data Access logs for all Google Cloud Platform (GCP) services and users, in order to enhance overall access security and meet compliance requirements. Once configured, the feature can record all admin related activities, as well as all the read and write access requests to user data.",
+  "Risk": "In order to maintain an effective Google Cloud audit configuration for your project, folder, and organization, all 3 types of Data Access logs (ADMIN_READ, DATA_READ and DATA_WRITE) must be enabled for all supported GCP services. Also, Data Access logs should be captured for all IAM users, without exempting any of them. Exemptions let you control which users generate audit logs. When you add an exempted user to your log configuration, audit logs are not created for that user, for the selected log type(s). Data Access audit logs are disabled by default and must be explicitly enabled based on your business requirements.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudIAM/record-all-activities.html",
+      "Terraform": "https://docs.bridgecrew.io/docs/ensure-that-cloud-audit-logging-is-configured-properly-across-all-services-and-all-users-from-a-project#terraform"
+    },
+    "Recommendation": {
+      "Text": "It is recommended that Cloud Audit Logging is configured to track all admin activities and read, write access to user data.",
+      "Url": "https://cloud.google.com/logging/docs/audit/"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

@@ -21,6 +21,7 @@ class cloudwatch_log_metric_filter_security_group_changes(Check):
         )
         report.region = cloudwatch_client.region
         report.resource_id = cloudtrail_client.audited_account
+        report.resource_arn = cloudtrail_client.audited_account_arn
         # 1. Iterate for CloudWatch Log Group in CloudTrail trails
         log_groups = []
         for trail in cloudtrail_client.trails:
@@ -31,6 +32,7 @@ class cloudwatch_log_metric_filter_security_group_changes(Check):
             if metric_filter.log_group in log_groups:
                 if re.search(pattern, metric_filter.pattern):
                     report.resource_id = metric_filter.log_group
+                    report.resource_arn = metric_filter.arn
                     report.region = metric_filter.region
                     report.status = "FAIL"
                     report.status_extended = f"CloudWatch log group {metric_filter.log_group} found with metric filter {metric_filter.name} but no alarms associated."

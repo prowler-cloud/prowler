@@ -1,11 +1,12 @@
 import importlib
 import sys
 from csv import DictWriter
-from typing import Any, List, Optional
+from datetime import datetime
+from typing import Any, List, Literal, Optional
 
 from pydantic import BaseModel
 
-from prowler.config.config import timestamp
+from prowler.config.config import prowler_version, timestamp
 from prowler.lib.check.models import Remediation
 from prowler.lib.logger import logger
 from prowler.providers.aws.lib.audit_info.models import AWS_Organizations_Info
@@ -228,6 +229,18 @@ def unroll_dict(dict: dict):
     return unrolled_items
 
 
+def unroll_dict_to_list(dict: dict):
+    list = []
+    for key, value in dict.items():
+        if type(value) == list:
+            value = ", ".join(value)
+            list.append(f"{key}: {value}")
+        else:
+            list.append(f"{key}: {value}")
+
+    return list
+
+
 def parse_html_string(str: str):
     string = ""
     for elem in str.split(" | "):
@@ -252,7 +265,7 @@ def parse_json_tags(tags: list):
 def generate_csv_fields(format: Any) -> list[str]:
     """Generates the CSV headers for the given class"""
     csv_fields = []
-    # __fields__ is alwayis available in the Pydantic's BaseModel class
+    # __fields__ is always available in the Pydantic's BaseModel class
     for field in format.__dict__.get("__fields__").keys():
         csv_fields.append(field)
     return csv_fields
@@ -363,7 +376,7 @@ def generate_provider_output_json(
             )
 
         if provider == "gcp":
-            finding_output.ProjectId = audit_info.project_id
+            finding_output.ProjectId = finding.project_id
             finding_output.Location = finding.location
             finding_output.ResourceId = finding.resource_id
             finding_output.ResourceName = finding.resource_name
@@ -474,6 +487,33 @@ class Gcp_Check_Output_JSON(Check_Output_JSON):
         super().__init__(**metadata)
 
 
+class Check_Output_MITRE_ATTACK(BaseModel):
+    """
+    Check_Output_MITRE_ATTACK generates a finding's output in CSV MITRE ATTACK format.
+    """
+
+    Provider: str
+    Description: str
+    AccountId: str
+    Region: str
+    AssessmentDate: str
+    Requirements_Id: str
+    Requirements_Name: str
+    Requirements_Description: str
+    Requirements_Tactics: str
+    Requirements_SubTechniques: str
+    Requirements_Platforms: str
+    Requirements_TechniqueURL: str
+    Requirements_Attributes_AWSServices: str
+    Requirements_Attributes_Categories: str
+    Requirements_Attributes_Values: str
+    Requirements_Attributes_Comments: str
+    Status: str
+    StatusExtended: str
+    ResourceId: str
+    CheckId: str
+
+
 class Check_Output_CSV_ENS_RD2022(BaseModel):
     """
     Check_Output_CSV_ENS_RD2022 generates a finding's output in CSV ENS RD2022 format.
@@ -499,7 +539,7 @@ class Check_Output_CSV_ENS_RD2022(BaseModel):
     CheckId: str
 
 
-class Check_Output_CSV_CIS(BaseModel):
+class Check_Output_CSV_AWS_CIS(BaseModel):
     """
     Check_Output_CSV_CIS generates a finding's output in CSV CIS format.
     """
@@ -527,6 +567,35 @@ class Check_Output_CSV_CIS(BaseModel):
     CheckId: str
 
 
+class Check_Output_CSV_GCP_CIS(BaseModel):
+    """
+    Check_Output_CSV_CIS generates a finding's output in CSV CIS format.
+    """
+
+    Provider: str
+    Description: str
+    ProjectId: str
+    Location: str
+    AssessmentDate: str
+    Requirements_Id: str
+    Requirements_Description: str
+    Requirements_Attributes_Section: str
+    Requirements_Attributes_Profile: str
+    Requirements_Attributes_AssessmentStatus: str
+    Requirements_Attributes_Description: str
+    Requirements_Attributes_RationaleStatement: str
+    Requirements_Attributes_ImpactStatement: str
+    Requirements_Attributes_RemediationProcedure: str
+    Requirements_Attributes_AuditProcedure: str
+    Requirements_Attributes_AdditionalInformation: str
+    Requirements_Attributes_References: str
+    Status: str
+    StatusExtended: str
+    ResourceId: str
+    ResourceName: str
+    CheckId: str
+
+
 class Check_Output_CSV_Generic_Compliance(BaseModel):
     """
     Check_Output_CSV_Generic_Compliance generates a finding's output in CSV Generic Compliance format.
@@ -544,6 +613,51 @@ class Check_Output_CSV_Generic_Compliance(BaseModel):
     Requirements_Attributes_SubGroup: Optional[str]
     Requirements_Attributes_Service: str
     Requirements_Attributes_Soc_Type: Optional[str]
+    Status: str
+    StatusExtended: str
+    ResourceId: str
+    CheckId: str
+
+
+class Check_Output_CSV_AWS_Well_Architected(BaseModel):
+    """
+    Check_Output_CSV_AWS_Well_Architected generates a finding's output in CSV AWS Well Architected Compliance format.
+    """
+
+    Provider: str
+    Description: str
+    AccountId: str
+    Region: str
+    AssessmentDate: str
+    Requirements_Attributes_Name: str
+    Requirements_Attributes_WellArchitectedQuestionId: str
+    Requirements_Attributes_WellArchitectedPracticeId: str
+    Requirements_Attributes_Section: str
+    Requirements_Attributes_SubSection: Optional[str]
+    Requirements_Attributes_LevelOfRisk: str
+    Requirements_Attributes_AssessmentMethod: str
+    Requirements_Attributes_Description: str
+    Requirements_Attributes_ImplementationGuidanceUrl: str
+    Status: str
+    StatusExtended: str
+    ResourceId: str
+    CheckId: str
+
+
+class Check_Output_CSV_AWS_ISO27001_2013(BaseModel):
+    """
+    Check_Output_CSV_AWS_ISO27001_2013 generates a finding's output in CSV AWS ISO27001 Compliance format.
+    """
+
+    Provider: str
+    Description: str
+    AccountId: str
+    Region: str
+    AssessmentDate: str
+    Requirements_Attributes_Category: str
+    Requirements_Attributes_Objetive_ID: str
+    Requirements_Attributes_Objetive_Name: str
+    Requirements_Attributes_Check_Summary: str
     Status: str
     StatusExtended: str
     ResourceId: str
@@ -596,3 +710,115 @@ class Check_Output_JSON_ASFF(BaseModel):
     Resources: List[Resource] = None
     Compliance: Compliance = None
     Remediation: dict = None
+
+
+# JSON OCSF
+class Remediation_OCSF(BaseModel):
+    kb_articles: List[str]
+    desc: str
+
+
+class Finding(BaseModel):
+    title: str
+    desc: str
+    supporting_data: dict
+    remediation: Remediation_OCSF
+    types: List[str]
+    src_url: str
+    uid: str
+    related_events: List[str]
+
+
+class Group(BaseModel):
+    name: str
+
+
+class Resources(BaseModel):
+    group: Group
+    region: str
+    name: str
+    uid: str
+    labels: list
+    type: str
+    details: str
+
+
+class Compliance_OCSF(BaseModel):
+    status: str
+    requirements: List[str]
+    status_detail: str
+
+
+class Account(BaseModel):
+    name: str
+    uid: str
+
+
+class Organization(BaseModel):
+    uid: str
+    name: str
+
+
+class Cloud(BaseModel):
+    account: Optional[Account]
+    region: str
+    org: Optional[Organization]
+    provider: str
+    project_uid: str
+
+
+class Feature(BaseModel):
+    name: str
+    uid: str
+    version: str = prowler_version
+
+
+class Product(BaseModel):
+    language: str = "en"
+    name: str = "Prowler"
+    version: str = prowler_version
+    vendor_name: str = "Prowler/ProwlerPro"
+    feature: Feature
+
+
+class Metadata(BaseModel):
+    original_time: str
+    profiles: List[str]
+    product: Product
+    version: str = "1.0.0-rc.3"
+
+
+class Check_Output_JSON_OCSF(BaseModel):
+    """
+    Check_Output_JSON_OCSF generates a finding's output in JSON OCSF format.
+    https://schema.ocsf.io/1.0.0-rc.3/classes/security_finding
+    """
+
+    finding: Finding
+    resources: List[Resources]
+    status_detail: str
+    compliance: Compliance_OCSF
+    message: str
+    severity_id: Literal[0, 1, 2, 3, 4, 5, 6, 99]
+    severity: Literal[
+        "Informational", "Low", "Medium", "High", "Critical", "Fatal", "Other"
+    ]
+    cloud: Cloud
+    time: datetime
+    metadata: Metadata
+    state_id: int = 0
+    state: str = "New"
+    status_id: Literal[0, 1, 2, 99]
+    status: Literal["Unknown", "Success", "Failure", "Other"]
+    type_uid: int = 200101
+    type_name: str = "Security Finding: Create"
+    impact_id: int = 0
+    impact: str = "Unknown"
+    confidence_id: int = 0
+    confidence: str = "Unknown"
+    activity_id: int = 1
+    activity_name: str = "Create"
+    category_uid: int = 2
+    category_name: str = "Findings"
+    class_uid: int = 2001
+    class_name: str = "Security Finding"

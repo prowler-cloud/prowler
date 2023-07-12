@@ -10,7 +10,8 @@ from prowler.lib.logger import logger
 
 timestamp = datetime.today()
 timestamp_utc = datetime.now(timezone.utc).replace(tzinfo=timezone.utc)
-prowler_version = "3.4.1"
+prowler_version = "3.7.0"
+boto3_user_agent_extra = "APN_1826889"
 html_logo_url = "https://github.com/prowler-cloud/prowler/"
 html_logo_img = "https://user-images.githubusercontent.com/3985464/113734260-7ba06900-96fb-11eb-82bc-d4f68a1e2710.png"
 square_logo_img = "https://user-images.githubusercontent.com/38561120/235905862-9ece5bd7-9aa3-4e48-807a-3a9035eb8bfb.png"
@@ -23,17 +24,16 @@ banner_color = "\033[1;92m"
 
 # Compliance
 actual_directory = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))
-compliance_aws_dir = f"{actual_directory}/../compliance/aws"
 available_compliance_frameworks = []
-with os.scandir(compliance_aws_dir) as files:
-    files = [
-        file.name
-        for file in files
-        if file.is_file()
-        and file.name.endswith(".json")
-        and available_compliance_frameworks.append(file.name.removesuffix(".json"))
-    ]
-
+for provider in ["aws", "gcp"]:
+    with os.scandir(f"{actual_directory}/../compliance/{provider}") as files:
+        files = [
+            file.name
+            for file in files
+            if file.is_file()
+            and file.name.endswith(".json")
+            and available_compliance_frameworks.append(file.name.removesuffix(".json"))
+        ]
 # AWS services-regions matrix json
 aws_services_json_file = "aws_regions_by_service.json"
 
@@ -46,6 +46,7 @@ timestamp_iso = timestamp.isoformat(sep=" ", timespec="seconds")
 csv_file_suffix = ".csv"
 json_file_suffix = ".json"
 json_asff_file_suffix = ".asff.json"
+json_ocsf_file_suffix = ".ocsf.json"
 html_file_suffix = ".html"
 config_yaml = f"{pathlib.Path(os.path.dirname(os.path.realpath(__file__)))}/config.yaml"
 

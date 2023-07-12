@@ -46,7 +46,8 @@ class Glacier:
                     ):
                         vault_name = vault["VaultName"]
                         vault_arn = vault["VaultARN"]
-                        self.vaults[vault_name] = Vault(
+                        # We must use the Vault ARN as the dict key to have unique keys
+                        self.vaults[vault_arn] = Vault(
                             name=vault_name,
                             arn=vault_arn,
                             region=regional_client.region,
@@ -68,12 +69,12 @@ class Glacier:
                         vault_access_policy = regional_client.get_vault_access_policy(
                             vaultName=vault.name
                         )
-                        self.vaults[vault.name].access_policy = json.loads(
+                        self.vaults[vault.arn].access_policy = json.loads(
                             vault_access_policy["policy"]["Policy"]
                         )
                     except ClientError as e:
                         if e.response["Error"]["Code"] == "ResourceNotFoundException":
-                            self.vaults[vault.name].access_policy = {}
+                            self.vaults[vault.arn].access_policy = {}
         except Exception as error:
             logger.error(
                 f"{regional_client.region} --"

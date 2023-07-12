@@ -11,11 +11,10 @@
 </p>
 <p align="center">
   <a href="https://join.slack.com/t/prowler-workspace/shared_invite/zt-1hix76xsl-2uq222JIXrC7Q8It~9ZNog"><img alt="Slack Shield" src="https://img.shields.io/badge/slack-prowler-brightgreen.svg?logo=slack"></a>
-  <a href="https://pypi.org/project/prowler-cloud/"><img alt="Python Version" src="https://img.shields.io/pypi/v/prowler.svg"></a>
-  <a href="https://pypi.python.org/pypi/prowler-cloud/"><img alt="Python Version" src="https://img.shields.io/pypi/pyversions/prowler.svg"></a>
+  <a href="https://pypi.org/project/prowler/"><img alt="Python Version" src="https://img.shields.io/pypi/v/prowler.svg"></a>
+  <a href="https://pypi.python.org/pypi/prowler/"><img alt="Python Version" src="https://img.shields.io/pypi/pyversions/prowler.svg"></a>
   <a href="https://pypistats.org/packages/prowler"><img alt="PyPI Prowler Downloads" src="https://img.shields.io/pypi/dw/prowler.svg?label=prowler%20downloads"></a>
   <a href="https://pypistats.org/packages/prowler-cloud"><img alt="PyPI Prowler-Cloud Downloads" src="https://img.shields.io/pypi/dw/prowler-cloud.svg?label=prowler-cloud%20downloads"></a>
-  <a href="https://formulae.brew.sh/formula/prowler#default"><img alt="Brew Prowler Downloads" src="https://img.shields.io/homebrew/installs/dm/prowler?label=brew%20downloads"></a>
   <a href="https://hub.docker.com/r/toniblyx/prowler"><img alt="Docker Pulls" src="https://img.shields.io/docker/pulls/toniblyx/prowler"></a>
   <a href="https://hub.docker.com/r/toniblyx/prowler"><img alt="Docker" src="https://img.shields.io/docker/cloud/build/toniblyx/prowler"></a>
   <a href="https://hub.docker.com/r/toniblyx/prowler"><img alt="Docker" src="https://img.shields.io/docker/image-size/toniblyx/prowler"></a>
@@ -36,7 +35,14 @@
 
 `Prowler` is an Open Source security tool to perform AWS, GCP and Azure security best practices assessments, audits, incident response, continuous monitoring, hardening and forensics readiness.
 
-It contains hundreds of controls covering CIS, PCI-DSS, ISO27001, GDPR, HIPAA, FFIEC, SOC2, AWS FTR, ENS and custom security frameworks.
+It contains hundreds of controls covering CIS, NIST 800, NIST CSF, CISA, RBI, FedRAMP, PCI-DSS, GDPR, HIPAA, FFIEC, SOC2, GXP, AWS Well-Architected Framework Security Pillar, AWS Foundational Technical Review (FTR), ENS (Spainish National Security Schema) and your custom security frameworks.
+
+| Provider | Checks | Services | [Compliance Frameworks](https://docs.prowler.cloud/en/latest/tutorials/compliance/) | [Categories](https://docs.prowler.cloud/en/latest/tutorials/misc/#categories) |
+|---|---|---|---|---|
+| AWS | 283 | 55 -> `prowler aws --list-services` | 25 -> `prowler aws --list-compliance` | 5 -> `prowler aws --list-categories` |
+| GCP | 73 | 11 -> `prowler gcp --list-services` | 1 -> `prowler gcp --list-compliance` | 0 -> `prowler gcp --list-categories`|
+| Azure | 20 | 3 -> `prowler azure --list-services` | CIS soon | 1 -> `prowler azure --list-categories` |
+| Kubernetes | Planned | - | - | - |
 
 # 📖 Documentation
 
@@ -85,11 +91,11 @@ python prowler.py -v
 
 You can run Prowler from your workstation, an EC2 instance, Fargate or any other container, Codebuild, CloudShell and Cloud9.
 
-![Architecture](https://github.com/prowler-cloud/prowler/blob/62c1ce73bbcdd6b9e5ba03dfcae26dfd165defd9/docs/img/architecture.png?raw=True)
+![Architecture](https://github.com/prowler-cloud/prowler/assets/38561120/080261d9-773d-4af1-af79-217a273e3176)
 
 # 📝 Requirements
 
-Prowler has been written in Python using the [AWS SDK (Boto3)](https://boto3.amazonaws.com/v1/documentation/api/latest/index.html#) and [Azure SDK](https://azure.github.io/azure-sdk-for-python/).
+Prowler has been written in Python using the [AWS SDK (Boto3)](https://boto3.amazonaws.com/v1/documentation/api/latest/index.html#), [Azure SDK](https://azure.github.io/azure-sdk-for-python/) and [GCP API Python Client](https://github.com/googleapis/google-api-python-client/).
 ## AWS
 
 Since Prowler uses AWS Credentials under the hood, you can follow any authentication method as described [here](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-quickstart.html#cli-configure-quickstart-precedence).
@@ -116,22 +122,6 @@ Those credentials must be associated to a user or role with proper permissions t
 
   > If you want Prowler to send findings to [AWS Security Hub](https://aws.amazon.com/security-hub), make sure you also attach the custom policy [prowler-security-hub.json](https://github.com/prowler-cloud/prowler/blob/master/permissions/prowler-security-hub.json).
 
-## Google Cloud Platform
-
-Prowler will follow the same credentials search as [Google authentication libraries](https://cloud.google.com/docs/authentication/application-default-credentials#search_order):
-
-1. [GOOGLE_APPLICATION_CREDENTIALS environment variable](https://cloud.google.com/docs/authentication/application-default-credentials#GAC)
-2. [User credentials set up by using the Google Cloud CLI](https://cloud.google.com/docs/authentication/application-default-credentials#personal)
-3. [The attached service account, returned by the metadata server](https://cloud.google.com/docs/authentication/application-default-credentials#attached-sa)
-
-Those credentials must be associated to a user or service account with proper permissions to do all checks. To make sure, add the following roles to the member associated with the credentials:
-
-  - Viewer
-  - Security Reviewer
-  - Stackdriver Account Viewer
-
-> `prowler` will scan the project associated with the credentials.
-
   ## Azure
 
   Prowler for Azure supports the following authentication types:
@@ -154,7 +144,7 @@ export AZURE_CLIENT_SECRET="XXXXXXX"
 If you try to execute Prowler with the `--sp-env-auth` flag and those variables are empty or not exported, the execution is going to fail.
 ### AZ CLI / Browser / Managed Identity authentication
 
-The other three cases do not need additional configuration, `--az-cli-auth` and `--managed-identity-auth` are automated options, `--browser-auth` needs the user to authenticate using the default browser to start the scan.
+The other three cases do not need additional configuration, `--az-cli-auth` and `--managed-identity-auth` are automated options, `--browser-auth` needs the user to authenticate using the default browser to start the scan. Also `--browser-auth` needs the tenant id to be specified with `--tenant-id`.
 
 ### Permissions
 
@@ -179,6 +169,22 @@ Regarding the subscription scope, Prowler by default scans all the subscriptions
 - `Security Reader`
 - `Reader`
 
+
+## Google Cloud Platform
+
+Prowler will follow the same credentials search as [Google authentication libraries](https://cloud.google.com/docs/authentication/application-default-credentials#search_order):
+
+1. [GOOGLE_APPLICATION_CREDENTIALS environment variable](https://cloud.google.com/docs/authentication/application-default-credentials#GAC)
+2. [User credentials set up by using the Google Cloud CLI](https://cloud.google.com/docs/authentication/application-default-credentials#personal)
+3. [The attached service account, returned by the metadata server](https://cloud.google.com/docs/authentication/application-default-credentials#attached-sa)
+
+Those credentials must be associated to a user or service account with proper permissions to do all checks. To make sure, add the following roles to the member associated with the credentials:
+
+  - Viewer
+  - Security Reviewer
+  - Stackdriver Account Viewer
+
+> By default, `prowler` will scan all accessible GCP Projects, use flag `--project-ids` to specify the projects to be scanned.
 
 # 💻 Basic Usage
 
@@ -245,14 +251,6 @@ prowler aws --profile custom-profile -f us-east-1 eu-south-2
 ```
 > By default, `prowler` will scan all AWS regions.
 
-## Google Cloud Platform
-
-Optionally, you can provide the location of an application credential JSON file with the following argument:
-
-```console
-prowler gcp --credentials-file path
-```
-
 ## Azure
 
 With Azure you need to specify which auth method is going to be used:
@@ -262,12 +260,14 @@ prowler azure [--sp-env-auth, --az-cli-auth, --browser-auth, --managed-identity-
 ```
 > By default, `prowler` will scan all Azure subscriptions.
 
-# 🎉 New Features
+## Google Cloud Platform
 
-- Python: we got rid of all bash and it is now all in Python.
-- Faster: huge performance improvements (same account from 2.5 hours to 4 minutes).
-- Developers and community: we have made it easier to contribute with new checks and new compliance frameworks. We also included unit tests.
-- Multi-cloud: in addition to AWS, we have added Azure, we plan to include GCP and OCI soon, let us know if you want to contribute!
+Optionally, you can provide the location of an application credential JSON file with the following argument:
+
+```console
+prowler gcp --credentials-file path
+```
+> By default, `prowler` will scan all accessible GCP Projects, use flag `--project-ids` to specify the projects to be scanned.
 
 # 📃 License
 

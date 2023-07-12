@@ -21,6 +21,7 @@ class Test_s3_account_level_public_access_blocks:
                 region_name=AWS_REGION,
             ),
             audited_account=AWS_ACCOUNT_NUMBER,
+            audited_account_arn=f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root",
             audited_user_id=None,
             audited_partition="aws",
             audited_identity_arn=None,
@@ -31,6 +32,7 @@ class Test_s3_account_level_public_access_blocks:
             audited_regions=None,
             organizations_metadata=None,
             audit_resources=None,
+            mfa_enabled=False,
         )
         return audit_info
 

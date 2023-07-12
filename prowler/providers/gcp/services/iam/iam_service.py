@@ -4,6 +4,9 @@ from pydantic import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.providers.gcp.gcp_provider import generate_client
+from prowler.providers.gcp.services.cloudresourcemanager.cloudresourcemanager_client import (
+    cloudresourcemanager_client,
+)
 
 
 ################## IAM
@@ -11,7 +14,7 @@ class IAM:
     def __init__(self, audit_info):
         self.service = "iam"
         self.api_version = "v1"
-        self.project_id = audit_info.project_id
+        self.project_ids = audit_info.project_ids
         self.region = "global"
         self.client = generate_client(self.service, self.api_version, audit_info)
         self.service_accounts = []
@@ -22,33 +25,35 @@ class IAM:
         return self.client
 
     def __get_service_accounts__(self):
-        try:
-            request = (
-                self.client.projects()
-                .serviceAccounts()
-                .list(name="projects/" + self.project_id)
-            )
-            while request is not None:
-                response = request.execute()
-
-                for account in response["accounts"]:
-                    self.service_accounts.append(
-                        ServiceAccount(
-                            name=account["name"],
-                            email=account["email"],
-                            display_name=account.get("displayName", ""),
-                        )
-                    )
-
+        for project_id in self.project_ids:
+            try:
                 request = (
                     self.client.projects()
                     .serviceAccounts()
-                    .list_next(previous_request=request, previous_response=response)
+                    .list(name="projects/" + project_id)
                 )
-        except Exception as error:
-            logger.error(
-                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
+                while request is not None:
+                    response = request.execute()
+
+                    for account in response["accounts"]:
+                        self.service_accounts.append(
+                            ServiceAccount(
+                                name=account["name"],
+                                email=account["email"],
+                                display_name=account.get("displayName", ""),
+                                project_id=project_id,
+                            )
+                        )
+
+                    request = (
+                        self.client.projects()
+                        .serviceAccounts()
+                        .list_next(previous_request=request, previous_response=response)
+                    )
+            except Exception as error:
+                logger.error(
+                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
 
     def __get_service_accounts_keys__(self):
         try:
@@ -59,7 +64,7 @@ class IAM:
                     .keys()
                     .list(
                         name="projects/"
-                        + self.project_id
+                        + sa.project_id
                         + "/serviceAccounts/"
                         + sa.email
                     )
@@ -100,3 +105,87 @@ class ServiceAccount(BaseModel):
     email: str
     display_name: str
     keys: list[Key] = []
+    project_id: str
+
+
+################## AccessApproval
+class AccessApproval:
+    def __init__(self, audit_info):
+        self.service = "accessapproval"
+        self.api_version = "v1"
+        self.project_ids = audit_info.project_ids
+        self.region = "global"
+        self.client = generate_client(self.service, self.api_version, audit_info)
+        self.settings = {}
+        self.__get_settings__()
+
+    def __get_client__(self):
+        return self.client
+
+    def __get_settings__(self):
+        for project_id in self.project_ids:
+            try:
+                response = (
+                    self.client.projects().getAccessApprovalSettings(
+                        name=f"projects/{project_id}/accessApprovalSettings"
+                    )
+                ).execute()
+                self.settings[project_id].append(
+                    Setting(
+                        name=response["name"],
+                        project_id=project_id,
+                    )
+                )
+            except Exception as error:
+                logger.error(
+                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+
+
+class Setting(BaseModel):
+    name: str
+    project_id: str
+
+
+################## EssentialContacts
+class EssentialContacts:
+    def __init__(self, audit_info):
+        self.service = "essentialcontacts"
+        self.api_version = "v1"
+        self.region = "global"
+        self.client = generate_client(self.service, self.api_version, audit_info)
+        self.organizations = []
+        self.__get_contacts__()
+
+    def __get_client__(self):
+        return self.client
+
+    def __get_contacts__(self):
+        for org in cloudresourcemanager_client.organizations:
+            try:
+                contacts = False
+                response = (
+                    self.client.organizations()
+                    .contacts()
+                    .list(parent="organizations/" + org.id)
+                ).execute()
+                if len(response["contacts"]) > 0:
+                    contacts = True
+
+                self.organizations.append(
+                    Organization(
+                        name=org.name,
+                        email=org.id,
+                        contacts=contacts,
+                    )
+                )
+            except Exception as error:
+                logger.error(
+                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+
+
+class Organization(BaseModel):
+    name: str
+    id: str
+    contacts: bool

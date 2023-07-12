@@ -12,7 +12,7 @@ class networkfirewall_in_all_vpc(Check):
             report = Check_Report_AWS(self.metadata())
             report.region = vpc.region
             report.resource_id = vpc.id
-            report.resource_arn = ""
+            report.resource_arn = vpc.arn
             report.resource_tags = vpc.tags
             report.status = "FAIL"
             report.status_extended = (

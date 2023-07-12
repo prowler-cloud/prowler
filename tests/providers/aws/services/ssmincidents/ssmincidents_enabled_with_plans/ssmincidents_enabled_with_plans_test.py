@@ -8,11 +8,16 @@ from prowler.providers.aws.services.ssmincidents.ssmincidents_service import (
 AWS_REGION = "us-east-1"
 REPLICATION_SET_ARN = "arn:aws:ssm-incidents::111122223333:replication-set/40bd98f0-4110-2dee-b35e-b87006f9e172"
 RESPONSE_PLAN_ARN = "arn:aws:ssm-incidents::111122223333:response-plan/example-response"
+AWS_ACCOUNT_NUMBER = "123456789012"
 
 
 class Test_ssmincidents_enabled_with_plans:
     def test_ssmincidents_no_replicationset(self):
         ssmincidents_client = mock.MagicMock
+        ssmincidents_client.audited_account = AWS_ACCOUNT_NUMBER
+        ssmincidents_client.audited_account_arn = (
+            f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
+        )
         ssmincidents_client.region = AWS_REGION
         ssmincidents_client.replication_set = []
         with mock.patch(
@@ -32,12 +37,16 @@ class Test_ssmincidents_enabled_with_plans:
             assert (
                 result[0].status_extended == "No SSM Incidents replication set exists."
             )
-            assert result[0].resource_id == "SSMIncidents"
-            assert result[0].resource_arn == ""
+            assert result[0].resource_id == AWS_ACCOUNT_NUMBER
+            assert result[0].resource_arn == f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
             assert result[0].region == AWS_REGION
 
     def test_ssmincidents_replicationset_not_active(self):
         ssmincidents_client = mock.MagicMock
+        ssmincidents_client.audited_account = AWS_ACCOUNT_NUMBER
+        ssmincidents_client.audited_account_arn = (
+            f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
+        )
         ssmincidents_client.region = AWS_REGION
         ssmincidents_client.replication_set = [
             ReplicationSet(arn=REPLICATION_SET_ARN, status="CREATING")
@@ -60,12 +69,16 @@ class Test_ssmincidents_enabled_with_plans:
                 result[0].status_extended
                 == f"SSM Incidents replication set {REPLICATION_SET_ARN} exists but not ACTIVE."
             )
-            assert result[0].resource_id == "SSMIncidents"
+            assert result[0].resource_id == AWS_ACCOUNT_NUMBER
             assert result[0].resource_arn == REPLICATION_SET_ARN
             assert result[0].region == AWS_REGION
 
     def test_ssmincidents_replicationset_active_no_plans(self):
         ssmincidents_client = mock.MagicMock
+        ssmincidents_client.audited_account = AWS_ACCOUNT_NUMBER
+        ssmincidents_client.audited_account_arn = (
+            f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
+        )
         ssmincidents_client.region = AWS_REGION
         ssmincidents_client.replication_set = [
             ReplicationSet(arn=REPLICATION_SET_ARN, status="ACTIVE")
@@ -89,12 +102,16 @@ class Test_ssmincidents_enabled_with_plans:
                 result[0].status_extended
                 == f"SSM Incidents replication set {REPLICATION_SET_ARN} is ACTIVE but no response plans exist."
             )
-            assert result[0].resource_id == "SSMIncidents"
+            assert result[0].resource_id == AWS_ACCOUNT_NUMBER
             assert result[0].resource_arn == REPLICATION_SET_ARN
             assert result[0].region == AWS_REGION
 
     def test_ssmincidents_replicationset_active_with_plans(self):
         ssmincidents_client = mock.MagicMock
+        ssmincidents_client.audited_account = AWS_ACCOUNT_NUMBER
+        ssmincidents_client.audited_account_arn = (
+            f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
+        )
         ssmincidents_client.region = AWS_REGION
         ssmincidents_client.replication_set = [
             ReplicationSet(arn=REPLICATION_SET_ARN, status="ACTIVE")
@@ -120,6 +137,6 @@ class Test_ssmincidents_enabled_with_plans:
                 result[0].status_extended
                 == f"SSM Incidents replication set {REPLICATION_SET_ARN} is ACTIVE and has response plans."
             )
-            assert result[0].resource_id == "SSMIncidents"
+            assert result[0].resource_id == AWS_ACCOUNT_NUMBER
             assert result[0].resource_arn == REPLICATION_SET_ARN
             assert result[0].region == AWS_REGION

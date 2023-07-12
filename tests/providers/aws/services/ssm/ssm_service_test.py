@@ -53,6 +53,14 @@ def mock_make_api_call(self, operation_name, kwarg):
                 },
             ],
         }
+    if operation_name == "DescribeInstanceInformation":
+        return {
+            "InstanceInformationList": [
+                {
+                    "InstanceId": "test-instance-id",
+                },
+            ],
+        }
 
     return make_api_call(self, operation_name, kwarg)
 
@@ -132,7 +140,8 @@ class Test_SSM_Service:
                 profile_name=None,
                 botocore_session=None,
             ),
-            audited_account=None,
+            audited_account=DEFAULT_ACCOUNT_ID,
+            audited_account_arn=f"arn:aws:iam::{DEFAULT_ACCOUNT_ID}:root",
             audited_user_id=None,
             audited_partition="aws",
             audited_identity_arn=None,
@@ -143,6 +152,7 @@ class Test_SSM_Service:
             audited_regions=None,
             organizations_metadata=None,
             audit_resources=None,
+            mfa_enabled=False,
         )
         return audit_info
 
@@ -187,18 +197,19 @@ class Test_SSM_Service:
 
         ssm = SSM(self.set_mocked_audit_info())
 
+        document_arn = f"arn:aws:ssm:{AWS_REGION}:{DEFAULT_ACCOUNT_ID}:document/{ssm_document_name}"
+
         assert len(ssm.documents) == 1
         assert ssm.documents
-        assert ssm.documents[ssm_document_name]
-        assert ssm.documents[ssm_document_name].name == ssm_document_name
-        assert ssm.documents[ssm_document_name].region == AWS_REGION
-        assert ssm.documents[ssm_document_name].tags == [
+        assert ssm.documents[document_arn]
+        assert ssm.documents[document_arn].arn == document_arn
+        assert ssm.documents[document_arn].name == ssm_document_name
+        assert ssm.documents[document_arn].region == AWS_REGION
+        assert ssm.documents[document_arn].tags == [
             {"Key": "test", "Value": "test"},
         ]
-        assert ssm.documents[ssm_document_name].content == yaml.safe_load(
-            ssm_document_yaml
-        )
-        assert ssm.documents[ssm_document_name].account_owners == [DEFAULT_ACCOUNT_ID]
+        assert ssm.documents[document_arn].content == yaml.safe_load(ssm_document_yaml)
+        assert ssm.documents[document_arn].account_owners == [DEFAULT_ACCOUNT_ID]
 
     @mock_ssm
     def test__list_resource_compliance_summaries__(self):

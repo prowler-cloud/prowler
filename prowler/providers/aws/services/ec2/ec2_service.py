@@ -8,6 +8,7 @@ from pydantic import BaseModel
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.aws_provider import generate_regional_clients
+from prowler.providers.aws.services.ec2.lib.security_groups import check_security_group
 
 
 ################## EC2
@@ -17,7 +18,9 @@ class EC2:
         self.session = audit_info.audit_session
         self.audited_partition = audit_info.audited_partition
         self.audited_account = audit_info.audited_account
+        self.audited_account_arn = audit_info.audited_account_arn
         self.audit_resources = audit_info.audit_resources
+        self.audited_checks = audit_info.audit_metadata.expected_checks
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.instances = []
         self.__threading_call__(self.__describe_instances__)
@@ -124,6 +127,18 @@ class EC2:
                     if not self.audit_resources or (
                         is_resource_filtered(arn, self.audit_resources)
                     ):
+                        # check if sg has public access to all ports to reduce noise
+                        all_public_ports = False
+                        for ingress_rule in sg["IpPermissions"]:
+                            if (
+                                check_security_group(
+                                    ingress_rule, "-1", any_address=True
+                                )
+                                and "ec2_securitygroup_allow_ingress_from_internet_to_any_port"
+                                in self.audited_checks
+                            ):
+                                all_public_ports = True
+                                break
                         self.security_groups.append(
                             SecurityGroup(
                                 name=sg["GroupName"],
@@ -132,6 +147,7 @@ class EC2:
                                 id=sg["GroupId"],
                                 ingress_rules=sg["IpPermissions"],
                                 egress_rules=sg["IpPermissionsEgress"],
+                                public_ports=all_public_ports,
                                 tags=sg.get("Tags"),
                             )
                         )
@@ -439,6 +455,7 @@ class SecurityGroup(BaseModel):
     arn: str
     region: str
     id: str
+    public_ports: bool
     network_interfaces: list[str] = []
     ingress_rules: list[dict]
     egress_rules: list[dict]

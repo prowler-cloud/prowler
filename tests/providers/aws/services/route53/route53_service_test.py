@@ -44,6 +44,7 @@ class Test_Route53_Service:
                 botocore_session=None,
             ),
             audited_account=None,
+            audited_account_arn=None,
             audited_user_id=None,
             audited_partition="aws",
             audited_identity_arn=None,
@@ -54,6 +55,7 @@ class Test_Route53_Service:
             audited_regions=None,
             organizations_metadata=None,
             audit_resources=None,
+            mfa_enabled=False,
         )
         return audit_info
 
@@ -106,7 +108,7 @@ class Test_Route53_Service:
         assert route53.hosted_zones[hosted_zone_id].id == hosted_zone_id
         assert (
             route53.hosted_zones[hosted_zone_id].arn
-            == f"arn:aws:route53:::{hosted_zone_id}"
+            == f"arn:aws:route53:::hostedzone/{hosted_zone_id}"
         )
         assert route53.hosted_zones[hosted_zone_id].name == hosted_zone_name
         assert route53.hosted_zones[hosted_zone_id].private_zone
@@ -151,7 +153,7 @@ class Test_Route53_Service:
         assert route53.hosted_zones[hosted_zone_id].id == hosted_zone_id
         assert (
             route53.hosted_zones[hosted_zone_id].arn
-            == f"arn:aws:route53:::{hosted_zone_id}"
+            == f"arn:aws:route53:::hostedzone/{hosted_zone_id}"
         )
         assert route53.hosted_zones[hosted_zone_id].name == hosted_zone_name
         assert not route53.hosted_zones[hosted_zone_id].private_zone
@@ -183,7 +185,7 @@ class Test_Route53_Service:
         assert route53.hosted_zones[hosted_zone_id].id == hosted_zone_id
         assert (
             route53.hosted_zones[hosted_zone_id].arn
-            == f"arn:aws:route53:::{hosted_zone_id}"
+            == f"arn:aws:route53:::hostedzone/{hosted_zone_id}"
         )
         assert route53.hosted_zones[hosted_zone_id].name == hosted_zone_name
         assert route53.hosted_zones[hosted_zone_id].private_zone
@@ -211,7 +213,7 @@ class Test_Route53_Service:
         assert route53.hosted_zones[hosted_zone_id].id == hosted_zone_id
         assert (
             route53.hosted_zones[hosted_zone_id].arn
-            == f"arn:aws:route53:::{hosted_zone_id}"
+            == f"arn:aws:route53:::hostedzone/{hosted_zone_id}"
         )
         assert route53.hosted_zones[hosted_zone_id].name == hosted_zone_name
         assert not route53.hosted_zones[hosted_zone_id].private_zone

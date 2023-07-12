@@ -4,7 +4,10 @@ from pydantic import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
-from prowler.providers.aws.aws_provider import generate_regional_clients
+from prowler.providers.aws.aws_provider import (
+    generate_regional_clients,
+    get_default_region,
+)
 
 
 ################################ Inspector2
@@ -13,16 +16,11 @@ class Inspector2:
         self.service = "inspector2"
         self.session = audit_info.audit_session
         self.audited_account = audit_info.audited_account
-        self.audit_resources = audit_info.audit_resources
         self.audited_partition = audit_info.audited_partition
+        self.audited_account_arn = audit_info.audited_account_arn
+        self.audit_resources = audit_info.audit_resources
         self.regional_clients = generate_regional_clients(self.service, audit_info)
-        # If the region is not set in the audit profile,
-        # we pick the first region from the regional clients list
-        self.region = (
-            audit_info.profile_region
-            if audit_info.profile_region
-            else list(self.regional_clients.keys())[0]
-        )
+        self.region = get_default_region(self.service, audit_info)
         self.inspectors = []
         self.__threading_call__(self.__batch_get_account_status__)
         self.__list_findings__()
@@ -48,7 +46,7 @@ class Inspector2:
             ][0]
             self.inspectors.append(
                 Inspector(
-                    id="Inspector2",
+                    id=self.audited_account,
                     status=batch_get_account_status.get("state").get("status"),
                     region=regional_client.region,
                 )
@@ -70,11 +68,13 @@ class Inspector2:
                     for page in list_findings_paginator.paginate():
                         for finding in page["findings"]:
                             if not self.audit_resources or (
-                                is_resource_filtered(finding, self.audit_resources)
+                                is_resource_filtered(
+                                    finding["findingArn"], self.audit_resources
+                                )
                             ):
                                 inspector.findings.append(
                                     InspectorFinding(
-                                        arn=finding.get("findingArn"),
+                                        arn=finding["findingArn"],
                                         region=regional_client.region,
                                         severity=finding.get("severity"),
                                         status=finding.get("status"),

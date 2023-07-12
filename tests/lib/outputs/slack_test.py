@@ -32,6 +32,7 @@ class Test_Slack_Integration:
             original_session=None,
             audit_session=None,
             audited_account=AWS_ACCOUNT_ID,
+            audited_account_arn=f"arn:aws:iam::{AWS_ACCOUNT_ID}:root",
             audited_identity_arn="test-arn",
             audited_user_id="test",
             audited_partition="aws",
@@ -42,10 +43,12 @@ class Test_Slack_Integration:
             audited_regions=["eu-west-2", "eu-west-1"],
             organizations_metadata=None,
             audit_resources=None,
+            mfa_enabled=False,
         )
         gcp_audit_info = GCP_Audit_Info(
             credentials=None,
-            project_id="test-project",
+            default_project_id="test-project1",
+            project_ids=["test-project1", "test-project2"],
             audit_resources=None,
             audit_metadata=None,
         )
@@ -69,7 +72,7 @@ class Test_Slack_Integration:
             aws_logo,
         )
         assert create_message_identity("gcp", gcp_audit_info) == (
-            f"GCP Project *{gcp_audit_info.project_id}*",
+            f"GCP Projects *{', '.join(gcp_audit_info.project_ids)}*",
             gcp_logo,
         )
         assert create_message_identity("azure", azure_audit_info) == (

@@ -21,6 +21,7 @@ class Test_cloudwatch_log_group_no_secrets_in_logs:
                 botocore_session=None,
             ),
             audited_account=AWS_ACCOUNT_NUMBER,
+            audited_account_arn=f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root",
             audited_user_id=None,
             audited_partition="aws",
             audited_identity_arn=None,
@@ -31,6 +32,7 @@ class Test_cloudwatch_log_group_no_secrets_in_logs:
             audited_regions=["us-east-1", "eu-west-1"],
             organizations_metadata=None,
             audit_resources=None,
+            mfa_enabled=False,
         )
 
         return audit_info
@@ -77,7 +79,12 @@ class Test_cloudwatch_log_group_no_secrets_in_logs:
         logs_client.put_log_events(
             logGroupName="test",
             logStreamName="test stream",
-            logEvents=[{"timestamp": 0, "message": "line"}],
+            logEvents=[
+                {
+                    "timestamp": int(unix_time_millis()),
+                    "message": "non sensitive message",
+                }
+            ],
         )
         from prowler.providers.aws.services.cloudwatch.cloudwatch_service import Logs
 

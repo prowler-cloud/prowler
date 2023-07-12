@@ -23,7 +23,7 @@ def mock_make_api_call(self, operation_name, kwargs):
         return {
             "accounts": [
                 {
-                    "accountId": "string",
+                    "accountId": AWS_ACCOUNT_ID,
                     "resourceState": {
                         "ec2": {
                             "errorCode": "ALREADY_ENABLED",
@@ -81,7 +81,6 @@ def mock_generate_regional_clients(service, audit_info):
     new=mock_generate_regional_clients,
 )
 class Test_Inspector2_Service:
-
     # Mocked Audit Info
     def set_mocked_audit_info(self):
         audit_info = AWS_Audit_Info(
@@ -91,7 +90,8 @@ class Test_Inspector2_Service:
                 profile_name=None,
                 botocore_session=None,
             ),
-            audited_account=None,
+            audited_account=AWS_ACCOUNT_ID,
+            audited_account_arn=f"arn:aws:iam::{AWS_ACCOUNT_ID}:root",
             audited_user_id=None,
             audited_partition="aws",
             audited_identity_arn=None,
@@ -102,38 +102,38 @@ class Test_Inspector2_Service:
             audited_regions=None,
             organizations_metadata=None,
             audit_resources=None,
+            mfa_enabled=False,
         )
         return audit_info
 
     def test__get_client__(self):
         audit_info = self.set_mocked_audit_info()
-        ssmincidents = Inspector2(audit_info)
+        inspector2 = Inspector2(audit_info)
         assert (
-            ssmincidents.regional_clients[AWS_REGION].__class__.__name__ == "Inspector2"
+            inspector2.regional_clients[AWS_REGION].__class__.__name__ == "Inspector2"
         )
 
     def test__get_service__(self):
         audit_info = self.set_mocked_audit_info()
-        ssmincidents = Inspector2(audit_info)
-        assert ssmincidents.service == "inspector2"
+        inspector2 = Inspector2(audit_info)
+        assert inspector2.service == "inspector2"
 
     def test__batch_get_account_status__(self):
         audit_info = self.set_mocked_audit_info()
-        ssmincidents = Inspector2(audit_info)
-        assert len(ssmincidents.inspectors) == 1
-        assert ssmincidents.inspectors[0].id == "Inspector2"
-        assert ssmincidents.inspectors[0].region == AWS_REGION
-        assert ssmincidents.inspectors[0].status == "ENABLED"
+        inspector2 = Inspector2(audit_info)
+        assert len(inspector2.inspectors) == 1
+        assert inspector2.inspectors[0].id == AWS_ACCOUNT_ID
+        assert inspector2.inspectors[0].region == AWS_REGION
+        assert inspector2.inspectors[0].status == "ENABLED"
 
     def test__list_findings__(self):
         audit_info = self.set_mocked_audit_info()
-        ssmincidents = Inspector2(audit_info)
-        assert len(ssmincidents.inspectors[0].findings) == 1
-        assert ssmincidents.inspectors[0].findings[0].arn == FINDING_ARN
-        assert ssmincidents.inspectors[0].findings[0].region == AWS_REGION
-        assert ssmincidents.inspectors[0].findings[0].severity == "MEDIUM"
-        assert ssmincidents.inspectors[0].findings[0].status == "ACTIVE"
+        inspector2 = Inspector2(audit_info)
+        assert len(inspector2.inspectors[0].findings) == 1
+        assert inspector2.inspectors[0].findings[0].arn == FINDING_ARN
+        assert inspector2.inspectors[0].findings[0].region == AWS_REGION
+        assert inspector2.inspectors[0].findings[0].severity == "MEDIUM"
+        assert inspector2.inspectors[0].findings[0].status == "ACTIVE"
         assert (
-            ssmincidents.inspectors[0].findings[0].title
-            == "CVE-2022-40897 - setuptools"
+            inspector2.inspectors[0].findings[0].title == "CVE-2022-40897 - setuptools"
         )

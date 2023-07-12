@@ -3,6 +3,13 @@ import sys
 from colorama import Fore, Style
 from tabulate import tabulate
 
+from prowler.config.config import (
+    csv_file_suffix,
+    html_file_suffix,
+    json_asff_file_suffix,
+    json_file_suffix,
+    json_ocsf_file_suffix,
+)
 from prowler.lib.logger import logger
 from prowler.providers.common.outputs import Provider_Output_Options
 
@@ -30,8 +37,8 @@ def display_summary_table(
                 entity_type = "Tenant ID/s"
                 audited_entities = " ".join(audit_info.identity.tenant_ids)
         elif provider == "gcp":
-            entity_type = "Project ID"
-            audited_entities = audit_info.project_id
+            entity_type = "Project ID/s"
+            audited_entities = ", ".join(audit_info.project_ids)
 
         if findings:
             current = {
@@ -108,13 +115,23 @@ def display_summary_table(
             )
             print("\nDetailed results are in:")
             if "html" in output_options.output_modes:
-                print(f" - HTML: {output_directory}/{output_filename}.html")
+                print(
+                    f" - HTML: {output_directory}/{output_filename}{html_file_suffix}"
+                )
             if "json-asff" in output_options.output_modes:
-                print(f" - JSON-ASFF: {output_directory}/{output_filename}.asff.json")
+                print(
+                    f" - JSON-ASFF: {output_directory}/{output_filename}{json_asff_file_suffix}"
+                )
+            if "json-ocsf" in output_options.output_modes:
+                print(
+                    f" - JSON-OCSF: {output_directory}/{output_filename}{json_ocsf_file_suffix}"
+                )
             if "csv" in output_options.output_modes:
-                print(f" - CSV: {output_directory}/{output_filename}.csv")
+                print(f" - CSV: {output_directory}/{output_filename}{csv_file_suffix}")
             if "json" in output_options.output_modes:
-                print(f" - JSON: {output_directory}/{output_filename}.json")
+                print(
+                    f" - JSON: {output_directory}/{output_filename}{json_file_suffix}"
+                )
 
         else:
             print(

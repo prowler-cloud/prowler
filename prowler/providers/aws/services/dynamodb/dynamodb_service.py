@@ -16,6 +16,7 @@ class DynamoDB:
         self.session = audit_info.audit_session
         self.audited_account = audit_info.audited_account
         self.audit_resources = audit_info.audit_resources
+        self.audited_partition = audit_info.audited_partition
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.tables = []
         self.__threading_call__(self.__list_tables__)
@@ -41,12 +42,13 @@ class DynamoDB:
             list_tables_paginator = regional_client.get_paginator("list_tables")
             for page in list_tables_paginator.paginate():
                 for table in page["TableNames"]:
+                    arn = f"arn:{self.audited_partition}:dynamodb:{regional_client.region}:{self.audited_account}:table/{table}"
                     if not self.audit_resources or (
-                        is_resource_filtered(table, self.audit_resources)
+                        is_resource_filtered(arn, self.audit_resources)
                     ):
                         self.tables.append(
                             Table(
-                                arn="",
+                                arn=arn,
                                 name=table,
                                 encryption_type=None,
                                 kms_arn=None,
@@ -66,7 +68,6 @@ class DynamoDB:
                 properties = regional_client.describe_table(TableName=table.name)[
                     "Table"
                 ]
-                table.arn = properties["TableArn"]
                 if "SSEDescription" in properties:
                     if "SSEType" in properties["SSEDescription"]:
                         table.encryption_type = properties["SSEDescription"]["SSEType"]
@@ -102,11 +103,22 @@ class DynamoDB:
         logger.info("DynamoDB - List Tags...")
         try:
             for table in self.tables:
-                regional_client = self.regional_clients[table.region]
-                response = regional_client.list_tags_of_resource(ResourceArn=table.arn)[
-                    "Tags"
-                ]
-                table.tags = response
+                try:
+                    regional_client = self.regional_clients[table.region]
+                    response = regional_client.list_tags_of_resource(
+                        ResourceArn=table.arn
+                    )["Tags"]
+                    table.tags = response
+                except ClientError as error:
+                    if error.response["Error"]["Code"] == "ResourceNotFoundException":
+                        logger.warning(
+                            f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
+                    else:
+                        logger.error(
+                            f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
+                    continue
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

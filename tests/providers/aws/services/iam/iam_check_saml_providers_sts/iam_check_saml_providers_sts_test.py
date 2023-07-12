@@ -21,6 +21,7 @@ class Test_iam_check_saml_providers_sts:
                 region_name=AWS_REGION,
             ),
             audited_account=AWS_ACCOUNT_NUMBER,
+            audited_account_arn=f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root",
             audited_user_id=None,
             audited_partition="aws",
             audited_identity_arn=None,
@@ -31,6 +32,7 @@ class Test_iam_check_saml_providers_sts:
             audited_regions=None,
             organizations_metadata=None,
             audit_resources=None,
+            mfa_enabled=False,
         )
         return audit_info
 

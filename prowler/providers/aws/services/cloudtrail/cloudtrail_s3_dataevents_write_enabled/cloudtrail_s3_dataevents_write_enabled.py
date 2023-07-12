@@ -9,8 +9,8 @@ class cloudtrail_s3_dataevents_write_enabled(Check):
         findings = []
         report = Check_Report_AWS(self.metadata())
         report.region = cloudtrail_client.region
-        report.resource_id = "No trails"
-        report.resource_arn = "No trails"
+        report.resource_arn = cloudtrail_client.audited_account_arn
+        report.resource_id = cloudtrail_client.audited_account
         report.status = "FAIL"
         report.status_extended = "No CloudTrail trails have a data event to record all S3 object-level API operations."
         for trail in cloudtrail_client.trails:
@@ -34,7 +34,7 @@ class cloudtrail_s3_dataevents_write_enabled(Check):
                                 report.resource_arn = trail.arn
                                 report.resource_tags = trail.tags
                                 report.status = "PASS"
-                                report.status_extended = f"Trail {trail.name} has a classic data event selector to record all S3 object-level API operations."
+                                report.status_extended = f"Trail {trail.name} from home region {trail.home_region} has a classic data event selector to record all S3 object-level API operations."
                 # advanced event selectors
                 elif data_event.is_advanced:
                     for field_selector in data_event.event_selector["FieldSelectors"]:
@@ -47,6 +47,6 @@ class cloudtrail_s3_dataevents_write_enabled(Check):
                             report.resource_arn = trail.arn
                             report.resource_tags = trail.tags
                             report.status = "PASS"
-                            report.status_extended = f"Trail {trail.name} has an advanced data event selector to record all S3 object-level API operations."
+                            report.status_extended = f"Trail {trail.name} from home region {trail.home_region} has an advanced data event selector to record all S3 object-level API operations."
         findings.append(report)
         return findings

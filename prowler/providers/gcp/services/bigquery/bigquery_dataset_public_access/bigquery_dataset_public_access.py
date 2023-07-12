@@ -7,16 +7,18 @@ class bigquery_dataset_public_access(Check):
         findings = []
         for dataset in bigquery_client.datasets:
             report = Check_Report_GCP(self.metadata())
-            report.project_id = bigquery_client.project_id
+            report.project_id = dataset.project_id
             report.resource_id = dataset.id
             report.resource_name = dataset.name
             report.location = dataset.region
             report.status = "PASS"
-            report.status_extended = f"Dataset {dataset.name} is publicly accessible!"
-            if not dataset.public:
+            report.status_extended = (
+                f"Dataset {dataset.name} is not publicly accessible"
+            )
+            if dataset.public:
                 report.status = "FAIL"
                 report.status_extended = (
-                    f"Dataset {dataset.name} is not publicly accessible"
+                    f"Dataset {dataset.name} is publicly accessible!"
                 )
             findings.append(report)
 

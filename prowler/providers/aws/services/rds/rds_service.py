@@ -15,6 +15,7 @@ class RDS:
         self.service = "rds"
         self.session = audit_info.audit_session
         self.audited_account = audit_info.audited_account
+        self.audited_partition = audit_info.audited_partition
         self.audit_resources = audit_info.audit_resources
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.db_instances = []
@@ -51,15 +52,15 @@ class RDS:
             )
             for page in describe_db_instances_paginator.paginate():
                 for instance in page["DBInstances"]:
+                    arn = f"arn:{self.audited_partition}:rds:{regional_client.region}:{self.audited_account}:db:{instance['DBInstanceIdentifier']}"
                     if not self.audit_resources or (
-                        is_resource_filtered(
-                            instance["DBInstanceIdentifier"], self.audit_resources
-                        )
+                        is_resource_filtered(arn, self.audit_resources)
                     ):
                         if instance["Engine"] != "docdb":
                             self.db_instances.append(
                                 DBInstance(
                                     id=instance["DBInstanceIdentifier"],
+                                    arn=arn,
                                     endpoint=instance.get("Endpoint"),
                                     engine=instance["Engine"],
                                     engine_version=instance["EngineVersion"],
@@ -85,8 +86,9 @@ class RDS:
                                     ],
                                     multi_az=instance["MultiAZ"],
                                     cluster_id=instance.get("DBClusterIdentifier"),
+                                    cluster_arn=f"arn:{self.audited_partition}:rds:{regional_client.region}:{self.audited_account}:cluster:{instance.get('DBClusterIdentifier')}",
                                     region=regional_client.region,
-                                    tags=instance.get("TagList"),
+                                    tags=instance.get("TagList", []),
                                 )
                             )
         except Exception as error:
@@ -122,18 +124,18 @@ class RDS:
             )
             for page in describe_db_snapshots_paginator.paginate():
                 for snapshot in page["DBSnapshots"]:
+                    arn = f"arn:{self.audited_partition}:rds:{regional_client.region}:{self.audited_account}:snapshot:{snapshot['DBSnapshotIdentifier']}"
                     if not self.audit_resources or (
-                        is_resource_filtered(
-                            snapshot["DBSnapshotIdentifier"], self.audit_resources
-                        )
+                        is_resource_filtered(arn, self.audit_resources)
                     ):
                         if snapshot["Engine"] != "docdb":
                             self.db_snapshots.append(
                                 DBSnapshot(
                                     id=snapshot["DBSnapshotIdentifier"],
+                                    arn=arn,
                                     instance_id=snapshot["DBInstanceIdentifier"],
                                     region=regional_client.region,
-                                    tags=snapshot.get("TagList"),
+                                    tags=snapshot.get("TagList", []),
                                 )
                             )
         except Exception as error:
@@ -171,14 +173,14 @@ class RDS:
             )
             for page in describe_db_clusters_paginator.paginate():
                 for cluster in page["DBClusters"]:
+                    db_cluster_arn = f"arn:{self.audited_partition}:rds:{regional_client.region}:{self.audited_account}:cluster:{cluster['DBClusterIdentifier']}"
                     if not self.audit_resources or (
-                        is_resource_filtered(
-                            cluster["DBClusterIdentifier"], self.audit_resources
-                        )
+                        is_resource_filtered(db_cluster_arn, self.audit_resources)
                     ):
                         if cluster["Engine"] != "docdb":
                             db_cluster = DBCluster(
                                 id=cluster["DBClusterIdentifier"],
+                                arn=db_cluster_arn,
                                 endpoint=cluster.get("Endpoint"),
                                 engine=cluster["Engine"],
                                 status=cluster["Status"],
@@ -197,11 +199,10 @@ class RDS:
                                 parameter_group=cluster["DBClusterParameterGroup"],
                                 multi_az=cluster["MultiAZ"],
                                 region=regional_client.region,
-                                tags=cluster.get("TagList"),
+                                tags=cluster.get("TagList", []),
                             )
-                            self.db_clusters[
-                                cluster["DBClusterIdentifier"]
-                            ] = db_cluster
+                            # We must use a unique value as the dict key to have unique keys
+                            self.db_clusters[db_cluster_arn] = db_cluster
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -215,9 +216,10 @@ class RDS:
             )
             for page in describe_db_snapshots_paginator.paginate():
                 for snapshot in page["DBClusterSnapshots"]:
+                    arn = f"arn:{self.audited_partition}:rds:{regional_client.region}:{self.audited_account}:cluster-snapshot:{snapshot['DBClusterSnapshotIdentifier']}"
                     if not self.audit_resources or (
                         is_resource_filtered(
-                            snapshot["DBClusterSnapshotIdentifier"],
+                            arn,
                             self.audit_resources,
                         )
                     ):
@@ -225,9 +227,10 @@ class RDS:
                             self.db_cluster_snapshots.append(
                                 ClusterSnapshot(
                                     id=snapshot["DBClusterSnapshotIdentifier"],
+                                    arn=arn,
                                     cluster_id=snapshot["DBClusterIdentifier"],
                                     region=regional_client.region,
-                                    tags=snapshot.get("TagList"),
+                                    tags=snapshot.get("TagList", []),
                                 )
                             )
         except Exception as error:
@@ -285,6 +288,8 @@ class RDS:
 
 class DBInstance(BaseModel):
     id: str
+    # arn:{partition}:rds:{region}:{account}:db:{resource_id}
+    arn: str
     endpoint: Optional[dict]
     engine: str
     engine_version: str
@@ -300,12 +305,14 @@ class DBInstance(BaseModel):
     parameter_groups: list[str] = []
     parameters: list[dict] = []
     cluster_id: Optional[str]
+    cluster_arn: Optional[str]
     region: str
     tags: Optional[list] = []
 
 
 class DBCluster(BaseModel):
     id: str
+    arn: str
     endpoint: Optional[str]
     engine: str
     status: str
@@ -323,6 +330,8 @@ class DBCluster(BaseModel):
 
 class DBSnapshot(BaseModel):
     id: str
+    # arn:{partition}:rds:{region}:{account}:snapshot:{resource_id}
+    arn: str
     instance_id: str
     public: bool = False
     region: str
@@ -332,6 +341,8 @@ class DBSnapshot(BaseModel):
 class ClusterSnapshot(BaseModel):
     id: str
     cluster_id: str
+    # arn:{partition}:rds:{region}:{account}:cluster-snapshot:{resource_id}
+    arn: str
     public: bool = False
     region: str
     tags: Optional[list] = []

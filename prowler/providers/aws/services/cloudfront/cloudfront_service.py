@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 from enum import Enum
 from typing import Optional
 
@@ -140,9 +139,8 @@ class GeoRestrictionType(Enum):
     whitelist = "whitelist"
 
 
-@dataclass
-class DefaultCacheConfigBehaviour:
-    realtime_log_config_arn: str
+class DefaultCacheConfigBehaviour(BaseModel):
+    realtime_log_config_arn: Optional[str]
     viewer_protocol_policy: ViewerProtocolPolicy
     field_level_encryption_id: str
 

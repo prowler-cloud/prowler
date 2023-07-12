@@ -14,6 +14,7 @@ class Codebuild:
         self.service = "codebuild"
         self.session = audit_info.audit_session
         self.audited_account = audit_info.audited_account
+        self.audited_partition = audit_info.audited_partition
         self.audit_resources = audit_info.audit_resources
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.projects = []
@@ -38,12 +39,14 @@ class Codebuild:
             list_projects_paginator = regional_client.get_paginator("list_projects")
             for page in list_projects_paginator.paginate():
                 for project in page["projects"]:
+                    project_arn = f"arn:{self.audited_partition}:codebuild:{regional_client.region}:{self.audited_account}:project/{project}"
                     if not self.audit_resources or (
-                        is_resource_filtered(project, self.audit_resources)
+                        is_resource_filtered(project_arn, self.audit_resources)
                     ):
                         self.projects.append(
-                            CodebuildProject(
+                            Project(
                                 name=project,
+                                arn=project_arn,
                                 region=regional_client.region,
                                 last_invoked_time=None,
                                 buildspec=None,
@@ -84,8 +87,9 @@ class Codebuild:
 
 
 @dataclass
-class CodebuildProject:
+class Project:
     name: str
+    arn: str
     region: str
     last_invoked_time: Optional[datetime.datetime]
     buildspec: Optional[str]

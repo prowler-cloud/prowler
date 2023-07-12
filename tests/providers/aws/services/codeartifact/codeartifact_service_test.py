@@ -20,6 +20,10 @@ AWS_ACCOUNT_NUMBER = "123456789012"
 # Mocking Access Analyzer Calls
 make_api_call = botocore.client.BaseClient._make_api_call
 
+TEST_REPOSITORY_ARN = (
+    f"arn:aws:codebuild:{AWS_REGION}:{DEFAULT_ACCOUNT_ID}:repository/test-repository"
+)
+
 
 def mock_make_api_call(self, operation_name, kwarg):
     """We have to mock every AWS API call using Boto3"""
@@ -31,7 +35,7 @@ def mock_make_api_call(self, operation_name, kwarg):
                     "administratorAccount": DEFAULT_ACCOUNT_ID,
                     "domainName": "test-domain",
                     "domainOwner": DEFAULT_ACCOUNT_ID,
-                    "arn": f"arn:aws:codebuild:{AWS_REGION}:{DEFAULT_ACCOUNT_ID}:repository/test-repository",
+                    "arn": TEST_REPOSITORY_ARN,
                     "description": "test description",
                 },
             ]
@@ -108,6 +112,7 @@ class Test_CodeArtifact_Service:
                 botocore_session=None,
             ),
             audited_account=AWS_ACCOUNT_NUMBER,
+            audited_account_arn=f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root",
             audited_user_id=None,
             audited_partition="aws",
             audited_identity_arn=None,
@@ -118,6 +123,7 @@ class Test_CodeArtifact_Service:
             audited_regions=["us-east-1", "eu-west-1"],
             organizations_metadata=None,
             audit_resources=None,
+            mfa_enabled=False,
         )
 
         return audit_info
@@ -146,63 +152,70 @@ class Test_CodeArtifact_Service:
 
         assert len(codeartifact.repositories) == 1
         assert codeartifact.repositories
-        assert codeartifact.repositories["test-repository"]
-        assert codeartifact.repositories["test-repository"].name == "test-repository"
-        assert codeartifact.repositories["test-repository"].tags == [
+        assert codeartifact.repositories[
+            f"arn:aws:codebuild:{AWS_REGION}:{DEFAULT_ACCOUNT_ID}:repository/test-repository"
+        ]
+        assert codeartifact.repositories[TEST_REPOSITORY_ARN].name == "test-repository"
+        assert codeartifact.repositories[
+            f"arn:aws:codebuild:{AWS_REGION}:{DEFAULT_ACCOUNT_ID}:repository/test-repository"
+        ].tags == [
             {"key": "test", "value": "test"},
         ]
+        assert codeartifact.repositories[TEST_REPOSITORY_ARN].arn == TEST_REPOSITORY_ARN
         assert (
-            codeartifact.repositories["test-repository"].arn
-            == f"arn:aws:codebuild:{AWS_REGION}:{DEFAULT_ACCOUNT_ID}:repository/test-repository"
+            codeartifact.repositories[TEST_REPOSITORY_ARN].domain_name == "test-domain"
         )
-        assert codeartifact.repositories["test-repository"].domain_name == "test-domain"
         assert (
-            codeartifact.repositories["test-repository"].domain_owner
+            codeartifact.repositories[TEST_REPOSITORY_ARN].domain_owner
             == DEFAULT_ACCOUNT_ID
         )
-        assert codeartifact.repositories["test-repository"].region == AWS_REGION
+        assert codeartifact.repositories[TEST_REPOSITORY_ARN].region == AWS_REGION
 
-        assert codeartifact.repositories["test-repository"].packages
-        assert len(codeartifact.repositories["test-repository"].packages) == 1
+        assert codeartifact.repositories[
+            f"arn:aws:codebuild:{AWS_REGION}:{DEFAULT_ACCOUNT_ID}:repository/test-repository"
+        ].packages
+        assert len(codeartifact.repositories[TEST_REPOSITORY_ARN].packages) == 1
         assert (
-            codeartifact.repositories["test-repository"].packages[0].name
+            codeartifact.repositories[TEST_REPOSITORY_ARN].packages[0].name
             == "test-package"
         )
         assert (
-            codeartifact.repositories["test-repository"].packages[0].namespace
+            codeartifact.repositories[TEST_REPOSITORY_ARN].packages[0].namespace
             == "test-namespace"
         )
 
-        assert codeartifact.repositories["test-repository"].packages[0].format == "pypi"
         assert (
-            codeartifact.repositories["test-repository"]
+            codeartifact.repositories[TEST_REPOSITORY_ARN].packages[0].format == "pypi"
+        )
+        assert (
+            codeartifact.repositories[TEST_REPOSITORY_ARN]
             .packages[0]
             .origin_configuration.restrictions.publish
             == RestrictionValues.ALLOW
         )
         assert (
-            codeartifact.repositories["test-repository"]
+            codeartifact.repositories[TEST_REPOSITORY_ARN]
             .packages[0]
             .origin_configuration.restrictions.upstream
             == RestrictionValues.ALLOW
         )
 
         assert (
-            codeartifact.repositories["test-repository"]
+            codeartifact.repositories[TEST_REPOSITORY_ARN]
             .packages[0]
             .latest_version.version
             == "latest"
         )
 
         assert (
-            codeartifact.repositories["test-repository"]
+            codeartifact.repositories[TEST_REPOSITORY_ARN]
             .packages[0]
             .latest_version.status
             == LatestPackageVersionStatus.Published
         )
 
         assert (
-            codeartifact.repositories["test-repository"]
+            codeartifact.repositories[TEST_REPOSITORY_ARN]
             .packages[0]
             .latest_version.origin.origin_type
             == OriginInformationValues.INTERNAL

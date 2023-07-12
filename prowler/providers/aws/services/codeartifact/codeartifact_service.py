@@ -52,7 +52,8 @@ class CodeArtifact:
                         package_domain_owner = repository["domainOwner"]
                         package_arn = repository["arn"]
                         # Save Repository
-                        self.repositories[package_name] = Repository(
+                        # We must use the Package ARN as the dict key to have unique keys
+                        self.repositories[package_arn] = Repository(
                             name=package_name,
                             arn=package_arn,
                             domain_name=package_domain_name,

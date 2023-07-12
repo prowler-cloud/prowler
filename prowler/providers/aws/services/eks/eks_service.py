@@ -14,6 +14,8 @@ class EKS:
         self.service = "eks"
         self.session = audit_info.audit_session
         self.audit_resources = audit_info.audit_resources
+        self.audited_partition = audit_info.audited_partition
+        self.audited_account = audit_info.audited_account
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.clusters = []
         self.__threading_call__(self.__list_clusters__)
@@ -37,11 +39,13 @@ class EKS:
             list_clusters_paginator = regional_client.get_paginator("list_clusters")
             for page in list_clusters_paginator.paginate():
                 for cluster in page["clusters"]:
+                    arn = f"arn:{self.audited_partition}:eks:{regional_client.region}:{self.audited_account}:cluster/{cluster}"
                     if not self.audit_resources or (
-                        is_resource_filtered(cluster, self.audit_resources)
+                        is_resource_filtered(arn, self.audit_resources)
                     ):
                         self.clusters.append(
                             EKSCluster(
+                                arn=arn,
                                 name=cluster,
                                 region=regional_client.region,
                             )
@@ -58,7 +62,6 @@ class EKS:
             for cluster in self.clusters:
                 regional_client = regional_clients[cluster.region]
                 describe_cluster = regional_client.describe_cluster(name=cluster.name)
-                cluster.arn = describe_cluster["cluster"]["arn"]
                 if "logging" in describe_cluster["cluster"]:
                     cluster.logging = EKSClusterLoggingEntity(
                         types=describe_cluster["cluster"]["logging"]["clusterLogging"][
@@ -106,7 +109,7 @@ class EKSClusterLoggingEntity(BaseModel):
 
 class EKSCluster(BaseModel):
     name: str
-    arn: str = None
+    arn: str
     region: str
     logging: EKSClusterLoggingEntity = None
     endpoint_public_access: bool = None

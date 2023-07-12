@@ -7,6 +7,7 @@ from moto.core import DEFAULT_ACCOUNT_ID
 
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.aws.services.shield.shield_service import Protection
+from prowler.providers.common.models import Audit_Metadata
 
 AWS_REGION = "eu-west-1"
 
@@ -34,6 +35,7 @@ class Test_shield_advanced_protection_in_associated_elastic_ips:
                 botocore_session=None,
             ),
             audited_account=DEFAULT_ACCOUNT_ID,
+            audited_account_arn=f"arn:aws:iam::{DEFAULT_ACCOUNT_ID}:root",
             audited_user_id=None,
             audited_partition="aws",
             audited_identity_arn=None,
@@ -44,6 +46,13 @@ class Test_shield_advanced_protection_in_associated_elastic_ips:
             audited_regions=None,
             organizations_metadata=None,
             audit_resources=None,
+            mfa_enabled=False,
+            audit_metadata=Audit_Metadata(
+                services_scanned=0,
+                expected_checks=[],
+                completed_checks=0,
+                audit_progress=0,
+            ),
         )
         return audit_info
 

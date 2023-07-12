@@ -2,6 +2,7 @@ import threading
 from datetime import datetime, timezone
 from typing import Optional
 
+from botocore.exceptions import ClientError
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
@@ -16,6 +17,7 @@ class CloudWatch:
         self.session = audit_info.audit_session
         self.audited_account = audit_info.audited_account
         self.audit_resources = audit_info.audit_resources
+        self.audited_partition = audit_info.audited_partition
         self.region = list(
             generate_regional_clients(
                 self.service, audit_info, global_service=True
@@ -88,6 +90,7 @@ class Logs:
         self.service = "logs"
         self.session = audit_info.audit_session
         self.audited_account = audit_info.audited_account
+        self.audited_partition = audit_info.audited_partition
         self.audit_resources = audit_info.audit_resources
         self.regional_clients = generate_regional_clients(self.service, audit_info)
         self.metric_filters = []
@@ -124,11 +127,13 @@ class Logs:
             )
             for page in describe_metric_filters_paginator.paginate():
                 for filter in page["metricFilters"]:
+                    arn = f"arn:{self.audited_partition}:logs:{regional_client.region}:{self.audited_account}:metric-filter/{filter['filterName']}"
                     if not self.audit_resources or (
-                        is_resource_filtered(filter["filterName"], self.audit_resources)
+                        is_resource_filtered(arn, self.audit_resources)
                     ):
                         self.metric_filters.append(
                             MetricFilter(
+                                arn=arn,
                                 name=filter["filterName"],
                                 metric=filter["metricTransformations"][0]["metricName"],
                                 pattern=filter.get("filterPattern", ""),
@@ -209,11 +214,17 @@ class Logs:
         logger.info("CloudWatch Logs - List Tags...")
         try:
             for log_group in self.log_groups:
-                regional_client = self.regional_clients[log_group.region]
-                response = regional_client.list_tags_log_group(
-                    logGroupName=log_group.name
-                )["tags"]
-                log_group.tags = [response]
+                try:
+                    regional_client = self.regional_clients[log_group.region]
+                    response = regional_client.list_tags_log_group(
+                        logGroupName=log_group.name
+                    )["tags"]
+                    log_group.tags = [response]
+                except ClientError as error:
+                    if error.response["Error"]["Code"] == "ResourceNotFoundException":
+                        log_group.tags = []
+
+                    continue
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -230,6 +241,7 @@ class MetricAlarm(BaseModel):
 
 
 class MetricFilter(BaseModel):
+    arn: str
     name: str
     metric: str
     pattern: str

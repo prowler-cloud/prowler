@@ -1,11 +1,15 @@
 import threading
 from datetime import datetime
+from typing import Optional
 
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
-from prowler.providers.aws.aws_provider import generate_regional_clients
+from prowler.providers.aws.aws_provider import (
+    generate_regional_clients,
+    get_default_region,
+)
 
 
 ################## Backup
@@ -14,15 +18,11 @@ class Backup:
         self.service = "backup"
         self.session = audit_info.audit_session
         self.audited_account = audit_info.audited_account
+        self.audited_partition = audit_info.audited_partition
+        self.audited_account_arn = audit_info.audited_account_arn
         self.audit_resources = audit_info.audit_resources
         self.regional_clients = generate_regional_clients(self.service, audit_info)
-        # If the region is not set in the audit profile,
-        # we pick the first region from the regional clients list
-        self.region = (
-            audit_info.profile_region
-            if audit_info.profile_region
-            else list(self.regional_clients.keys())[0]
-        )
+        self.region = get_default_region(self.service, audit_info)
         self.backup_vaults = []
         self.__threading_call__(self.__list_backup_vaults__)
         self.backup_plans = []
@@ -163,7 +163,7 @@ class BackupPlan(BaseModel):
     region: str
     name: str
     version_id: str
-    last_execution_date: datetime
+    last_execution_date: Optional[datetime]
     advanced_settings: list
 
 
@@ -172,4 +172,4 @@ class BackupReportPlan(BaseModel):
     region: str
     name: str
     last_attempted_execution_date: datetime
-    last_successful_execution_date: datetime
+    last_successful_execution_date: Optional[datetime]

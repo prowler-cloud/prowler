@@ -42,7 +42,6 @@ def mock_generate_regional_clients(service, audit_info):
     new=mock_generate_regional_clients,
 )
 class Test_ResourceExplorer2_Service:
-
     # Mocked Audit Info
     def set_mocked_audit_info(self):
         audit_info = AWS_Audit_Info(
@@ -53,6 +52,7 @@ class Test_ResourceExplorer2_Service:
                 botocore_session=None,
             ),
             audited_account=AWS_ACCOUNT_NUMBER,
+            audited_account_arn=f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root",
             audited_user_id=None,
             audited_partition="aws",
             audited_identity_arn=None,
@@ -60,9 +60,10 @@ class Test_ResourceExplorer2_Service:
             profile_region=None,
             credentials=None,
             assumed_role_info=None,
-            audited_regions="us-east-1",
+            audited_regions=["us-east-1"],
             organizations_metadata=None,
             audit_resources=None,
+            mfa_enabled=False,
         )
         return audit_info
 

@@ -1,6 +1,6 @@
 # Requirements
 
-Prowler has been written in Python using the [AWS SDK (Boto3)](https://boto3.amazonaws.com/v1/documentation/api/latest/index.html#) and [Azure SDK](https://learn.microsoft.com/en-us/python/api/overview/azure/?view=azure-python).
+Prowler has been written in Python using the [AWS SDK (Boto3)](https://boto3.amazonaws.com/v1/documentation/api/latest/index.html#), [Azure SDK](https://azure.github.io/azure-sdk-for-python/) and [GCP API Python Client](https://github.com/googleapis/google-api-python-client/).
 ## AWS
 
 Since Prowler uses AWS Credentials under the hood, you can follow any authentication method as described [here](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-quickstart.html#cli-configure-quickstart-precedence).
@@ -30,6 +30,13 @@ Those credentials must be associated to a user or role with proper permissions t
 
   > If you want Prowler to send findings to [AWS Security Hub](https://aws.amazon.com/security-hub), make sure you also attach the custom policy [prowler-security-hub.json](https://github.com/prowler-cloud/prowler/blob/master/permissions/prowler-security-hub.json).
 
+### Multi-Factor Authentication
+
+If your IAM entity enforces MFA you can use `--mfa` and Prowler will ask you to input the following values to get a new session:
+
+- ARN of your MFA device
+- TOTP (Time-Based One-Time Password)
+
 ## Azure
 
 Prowler for azure supports the following authentication types:
@@ -52,7 +59,7 @@ export AZURE_CLIENT_SECRET="XXXXXXX"
 If you try to execute Prowler with the `--sp-env-auth` flag and those variables are empty or not exported, the execution is going to fail.
 ### AZ CLI / Browser / Managed Identity authentication
 
-The other three cases does not need additional configuration, `--az-cli-auth` and `--managed-identity-auth` are automated options, `--browser-auth` needs the user to authenticate using the default browser to start the scan.
+The other three cases does not need additional configuration, `--az-cli-auth` and `--managed-identity-auth` are automated options. To use `--browser-auth`  the user needs to authenticate against Azure using the default browser to start the scan, also `tenant-id` is required.
 
 ### Permissions
 
@@ -96,4 +103,4 @@ Those credentials must be associated to a user or service account with proper pe
   - Security Reviewer
   - Stackdriver Account Viewer
 
-> `prowler` will scan the project associated with the credentials.
+> By default, `prowler` will scan all accessible GCP Projects, use flag `--project-ids` to specify the projects to be scanned.

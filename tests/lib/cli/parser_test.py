@@ -18,7 +18,7 @@ class Test_Parser:
         parsed = self.parser.parse(command)
         assert parsed.provider == provider
         assert not parsed.quiet
-        assert len(parsed.output_modes) == 3
+        assert len(parsed.output_modes) == 4
         assert "csv" in parsed.output_modes
         assert "html" in parsed.output_modes
         assert "json" in parsed.output_modes
@@ -64,7 +64,7 @@ class Test_Parser:
         parsed = self.parser.parse(command)
         assert parsed.provider == provider
         assert not parsed.quiet
-        assert len(parsed.output_modes) == 3
+        assert len(parsed.output_modes) == 4
         assert "csv" in parsed.output_modes
         assert "html" in parsed.output_modes
         assert "json" in parsed.output_modes
@@ -102,7 +102,7 @@ class Test_Parser:
         parsed = self.parser.parse(command)
         assert parsed.provider == provider
         assert not parsed.quiet
-        assert len(parsed.output_modes) == 3
+        assert len(parsed.output_modes) == 4
         assert "csv" in parsed.output_modes
         assert "html" in parsed.output_modes
         assert "json" in parsed.output_modes
@@ -203,7 +203,7 @@ class Test_Parser:
     def test_root_parser_default_output_modes(self):
         command = [prowler_command]
         parsed = self.parser.parse(command)
-        assert len(parsed.output_modes) == 3
+        assert len(parsed.output_modes) == 4
         assert "csv" in parsed.output_modes
         assert "json" in parsed.output_modes
         assert "html" in parsed.output_modes
@@ -677,6 +677,12 @@ class Test_Parser:
         parsed = self.parser.parse(command)
         assert parsed.role == role
 
+    def test_aws_parser_mfa(self):
+        argument = "--mfa"
+        command = [prowler_command, argument]
+        parsed = self.parser.parse(command)
+        assert parsed.mfa
+
     def test_aws_parser_session_duration_short(self):
         argument = "-T"
         duration = "900"
@@ -924,6 +930,14 @@ class Test_Parser:
         assert parsed.provider == "azure"
         assert parsed.browser_auth
 
+    def test_parser_azure_tenant_id(self):
+        argument = "--tenant-id"
+        tenant_id = "test-tenant-id"
+        command = [prowler_command, "azure", argument, tenant_id]
+        parsed = self.parser.parse(command)
+        assert parsed.provider == "azure"
+        assert parsed.tenant_id == tenant_id
+
     def test_parser_azure_auth_az_cli(self):
         argument = "--az-cli-auth"
         command = [prowler_command, "azure", argument]
@@ -972,3 +986,14 @@ class Test_Parser:
         parsed = self.parser.parse(command)
         assert parsed.provider == "gcp"
         assert parsed.credentials_file == file
+
+    def test_parser_gcp_project_ids(self):
+        argument = "--project-ids"
+        project_1 = "test_project_1"
+        project_2 = "test_project_2"
+        command = [prowler_command, "gcp", argument, project_1, project_2]
+        parsed = self.parser.parse(command)
+        assert parsed.provider == "gcp"
+        assert len(parsed.project_ids) == 2
+        assert parsed.project_ids[0] == project_1
+        assert parsed.project_ids[1] == project_2

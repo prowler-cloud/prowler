@@ -9,13 +9,14 @@ from prowler.config.config import (
     html_file_suffix,
     json_asff_file_suffix,
     json_file_suffix,
+    json_ocsf_file_suffix,
     orange_color,
 )
 from prowler.lib.logger import logger
 from prowler.lib.outputs.compliance import add_manual_controls, fill_compliance
 from prowler.lib.outputs.file_descriptors import fill_file_descriptors
 from prowler.lib.outputs.html import fill_html
-from prowler.lib.outputs.json import fill_json_asff
+from prowler.lib.outputs.json import fill_json_asff, fill_json_ocsf
 from prowler.lib.outputs.models import (
     Check_Output_JSON_ASFF,
     generate_provider_output_csv,
@@ -85,25 +86,24 @@ def report(check_findings, output_options, audit_info):
                 if file_descriptors:
                     # Check if --quiet to only add fails to outputs
                     if not (finding.status != "FAIL" and output_options.is_quiet):
+                        if any(
+                            compliance in output_options.output_modes
+                            for compliance in available_compliance_frameworks
+                        ):
+                            fill_compliance(
+                                output_options,
+                                finding,
+                                audit_info,
+                                file_descriptors,
+                            )
+
+                            add_manual_controls(
+                                output_options,
+                                audit_info,
+                                file_descriptors,
+                            )
                         # AWS specific outputs
                         if finding.check_metadata.Provider == "aws":
-                            if any(
-                                compliance in output_options.output_modes
-                                for compliance in available_compliance_frameworks
-                            ):
-                                fill_compliance(
-                                    output_options,
-                                    finding,
-                                    audit_info,
-                                    file_descriptors,
-                                )
-
-                                add_manual_controls(
-                                    output_options,
-                                    audit_info,
-                                    file_descriptors,
-                                )
-
                             if "json-asff" in file_descriptors:
                                 finding_output = Check_Output_JSON_ASFF()
                                 fill_json_asff(
@@ -161,6 +161,19 @@ def report(check_findings, output_options, audit_info):
                             )
                             file_descriptors["json"].write(",")
 
+                        if "json-ocsf" in file_descriptors:
+                            finding_output = fill_json_ocsf(
+                                audit_info, finding, output_options
+                            )
+
+                            json.dump(
+                                finding_output.dict(),
+                                file_descriptors["json-ocsf"],
+                                indent=4,
+                                default=str,
+                            )
+                            file_descriptors["json-ocsf"].write(",")
+
         else:  # No service resources in the whole account
             color = set_report_color("INFO")
             if output_options.verbose:
@@ -208,6 +221,8 @@ def send_to_s3_bucket(
             filename = f"{output_filename}{json_file_suffix}"
         elif output_mode == "json-asff":
             filename = f"{output_filename}{json_asff_file_suffix}"
+        elif output_mode == "json-ocsf":
+            filename = f"{output_filename}{json_ocsf_file_suffix}"
         elif output_mode == "html":
             filename = f"{output_filename}{html_file_suffix}"
         else:  # Compliance output mode

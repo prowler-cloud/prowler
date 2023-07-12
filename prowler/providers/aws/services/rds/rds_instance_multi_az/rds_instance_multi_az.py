@@ -9,10 +9,14 @@ class rds_instance_multi_az(Check):
             report = Check_Report_AWS(self.metadata())
             report.region = db_instance.region
             report.resource_id = db_instance.id
+            report.resource_arn = db_instance.arn
             report.resource_tags = db_instance.tags
             # Check if is member of a cluster
             if db_instance.cluster_id:
-                if rds_client.db_clusters[db_instance.cluster_id].multi_az:
+                if (
+                    db_instance.cluster_arn in rds_client.db_clusters
+                    and rds_client.db_clusters[db_instance.cluster_arn].multi_az
+                ):
                     report.status = "PASS"
                     report.status_extended = f"RDS Instance {db_instance.id} has multi-AZ enabled at cluster {db_instance.cluster_id} level."
                 else:

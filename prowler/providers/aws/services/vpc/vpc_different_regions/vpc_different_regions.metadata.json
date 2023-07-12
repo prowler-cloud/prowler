@@ -22,7 +22,7 @@
     },
     "Recommendation": {
       "Text": "Ensure there are vpcs in more than one region",
-      "Url": ""
+      "Url": "https://docs.aws.amazon.com/vpc/latest/userguide/vpc-example-private-subnets-nat.html"
     }
   },
   "Categories": [],

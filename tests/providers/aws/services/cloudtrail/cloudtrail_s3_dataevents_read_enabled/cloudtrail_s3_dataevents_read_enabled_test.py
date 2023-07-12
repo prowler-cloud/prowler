@@ -19,6 +19,7 @@ class Test_cloudtrail_s3_dataevents_read_enabled:
                 botocore_session=None,
             ),
             audited_account=AWS_ACCOUNT_NUMBER,
+            audited_account_arn=f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root",
             audited_user_id=None,
             audited_partition="aws",
             audited_identity_arn=None,
@@ -29,6 +30,7 @@ class Test_cloudtrail_s3_dataevents_read_enabled:
             audited_regions=["us-east-1"],
             organizations_metadata=None,
             audit_resources=None,
+            mfa_enabled=False,
         )
         return audit_info
 
@@ -54,7 +56,6 @@ class Test_cloudtrail_s3_dataevents_read_enabled:
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             new=current_audit_info,
         ):
-
             with mock.patch(
                 "prowler.providers.aws.services.cloudtrail.cloudtrail_s3_dataevents_read_enabled.cloudtrail_s3_dataevents_read_enabled.cloudtrail_client",
                 new=Cloudtrail(current_audit_info),
@@ -73,8 +74,10 @@ class Test_cloudtrail_s3_dataevents_read_enabled:
                     "No CloudTrail trails have a data event to record all S3 object-level API operations.",
                     result[0].status_extended,
                 )
-                assert result[0].resource_id == "No trails"
-                assert result[0].resource_arn == "No trails"
+                assert result[0].resource_id == AWS_ACCOUNT_NUMBER
+                assert (
+                    result[0].resource_arn == f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
+                )
 
     @mock_cloudtrail
     @mock_s3
@@ -110,7 +113,6 @@ class Test_cloudtrail_s3_dataevents_read_enabled:
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             new=current_audit_info,
         ):
-
             with mock.patch(
                 "prowler.providers.aws.services.cloudtrail.cloudtrail_s3_dataevents_read_enabled.cloudtrail_s3_dataevents_read_enabled.cloudtrail_client",
                 new=Cloudtrail(current_audit_info),
@@ -129,8 +131,10 @@ class Test_cloudtrail_s3_dataevents_read_enabled:
                     "No CloudTrail trails have a data event to record all S3 object-level API operations.",
                     result[0].status_extended,
                 )
-                assert result[0].resource_id == "No trails"
-                assert result[0].resource_arn == "No trails"
+                assert result[0].resource_id == AWS_ACCOUNT_NUMBER
+                assert (
+                    result[0].resource_arn == f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
+                )
 
     @mock_cloudtrail
     @mock_s3
@@ -166,7 +170,6 @@ class Test_cloudtrail_s3_dataevents_read_enabled:
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             new=current_audit_info,
         ):
-
             with mock.patch(
                 "prowler.providers.aws.services.cloudtrail.cloudtrail_s3_dataevents_read_enabled.cloudtrail_s3_dataevents_read_enabled.cloudtrail_client",
                 new=Cloudtrail(current_audit_info),
@@ -222,7 +225,6 @@ class Test_cloudtrail_s3_dataevents_read_enabled:
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             new=current_audit_info,
         ):
-
             with mock.patch(
                 "prowler.providers.aws.services.cloudtrail.cloudtrail_s3_dataevents_read_enabled.cloudtrail_s3_dataevents_read_enabled.cloudtrail_client",
                 new=Cloudtrail(current_audit_info),
