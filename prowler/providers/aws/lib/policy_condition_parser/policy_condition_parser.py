@@ -1,4 +1,6 @@
-def condition_parser(condition_statement: dict, source_account: str):
+def is_account_only_allowed_in_condition(
+    condition_statement: dict, source_account: str
+):
     is_condition_valid = False
     valid_condition_options = {
         "StringEquals": "aws:SourceAccount",
