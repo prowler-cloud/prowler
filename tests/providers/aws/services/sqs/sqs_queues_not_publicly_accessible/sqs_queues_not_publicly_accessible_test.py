@@ -138,7 +138,10 @@ class Test_sqs_queues_not_publicly_accessible:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert search("policy with public access", result[0].status_extended)
+            assert search(
+                "is public because its policy allows public access",
+                result[0].status_extended,
+            )
             assert result[0].resource_id == queue_id
             assert result[0].resource_arn == "arn_test"
 
@@ -167,7 +170,7 @@ class Test_sqs_queues_not_publicly_accessible:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert search(
-                "policy with public access",
+                "is public because its policy allows public access",
                 result[0].status_extended,
             )
             assert result[0].resource_id == queue_id
@@ -199,7 +202,7 @@ class Test_sqs_queues_not_publicly_accessible:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"SQS queue {queue_id} is not public due to filter in queue resource policy condition block"
+                == f"SQS queue {queue_id} is not public because its policy only allows access from the same account"
             )
             assert result[0].resource_id == queue_id
             assert result[0].resource_arn == "arn_test"

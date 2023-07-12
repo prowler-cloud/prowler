@@ -37,12 +37,10 @@ class sqs_queues_not_publicly_accessible(Check):
                                     statement["Condition"], sqs_client.audited_account
                                 )
                             ):
-                                report.status_extended = f"SQS queue {queue.id} is not public due to filter in queue resource policy condition block"
+                                report.status_extended = f"SQS queue {queue.id} is not public because its policy only allows access from the same account"
                             else:
                                 report.status = "FAIL"
-                                report.status_extended = (
-                                    f"SQS queue {queue.id} policy with public access"
-                                )
+                                report.status_extended = f"SQS queue {queue.id} is public because its policy allows public access"
             findings.append(report)
 
         return findings
