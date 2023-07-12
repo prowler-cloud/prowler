@@ -1,4 +1,7 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
+from prowler.providers.aws.lib.policy_condition_parser.policy_condition_parser import (
+    condition_parser,
+)
 from prowler.providers.aws.services.sqs.sqs_client import sqs_client
 
 
@@ -28,14 +31,15 @@ class sqs_queues_not_publicly_accessible(Check):
                                 and "*" in statement["Principal"]["CanonicalUser"]
                             )
                         ):
-                            if "Condition" not in statement:
+                            if "Condition" in statement and condition_parser(
+                                statement["Condition"], sqs_client.audited_account
+                            ):
+                                report.status_extended = f"SQS queue {queue.id} is not public due to filter in queue resource policy condition block"
+                            else:
                                 report.status = "FAIL"
                                 report.status_extended = (
                                     f"SQS queue {queue.id} policy with public access"
                                 )
-                            else:
-                                report.status = "FAIL"
-                                report.status_extended = f"SQS queue {queue.id} policy with public access but has a Condition"
             findings.append(report)
 
         return findings
