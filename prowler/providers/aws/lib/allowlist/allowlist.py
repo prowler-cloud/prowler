@@ -116,6 +116,7 @@ def parse_allowlist_file(audit_info, allowlist_file):
 def is_allowlisted(allowlist, audited_account, check, region, resource, tags):
     try:
         allowlisted_checks = {}
+        checks_multi_account = {}
         # By default is not allowlisted
         is_finding_allowlisted = False
         # First set account key from allowlist dict
