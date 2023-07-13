@@ -121,7 +121,6 @@ def is_allowlisted(allowlist, audited_account, check, region, resource, tags):
         # First set account key from allowlist dict
         if audited_account in allowlist["Accounts"]:
             allowlisted_checks = allowlist["Accounts"][audited_account]["Checks"]
-
         # If there is a *, it affects to all accounts
         # This cannot be elif since in the case of * and single accounts we
         # want to merge allowlisted checks from * to the other accounts check list
