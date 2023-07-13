@@ -1,0 +1,1 @@
+AWS_STS_GLOBAL_ENDPOINT_REGION = "us-east-1"

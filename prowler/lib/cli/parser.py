@@ -9,6 +9,7 @@ from prowler.config.config import (
 )
 from prowler.providers.aws.aws_provider import get_aws_available_regions
 from prowler.providers.aws.lib.arn.arn import is_valid_arn
+from prowler.providers.aws.config import AWS_STS_GLOBAL_ENDPOINT_REGION
 
 
 def arn_type(arn: str) -> bool:
@@ -287,6 +288,13 @@ Detailed documentation at https://docs.prowler.cloud
             nargs="?",
             default=None,
             help="ARN of the role to be assumed",
+            # Pending ARN validation
+        )
+        aws_auth_subparser.add_argument(
+            "--sts-endpoint-region",
+            nargs="?",
+            default=AWS_STS_GLOBAL_ENDPOINT_REGION,
+            help="Specify the AWS STS endpoint region to use. Read more at https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_temp_enable-regions.html",
             # Pending ARN validation
         )
         aws_auth_subparser.add_argument(

@@ -105,7 +105,11 @@ class AWS_Provider:
         return refreshed_credentials
 
 
-def assume_role(session: session.Session, assumed_role_info: AWS_Assume_Role) -> dict:
+def assume_role(
+    session: session.Session,
+    assumed_role_info: AWS_Assume_Role,
+    sts_endpoint_region: str,
+) -> dict:
     try:
         assume_role_arguments = {
             "RoleArn": assumed_role_info.role_arn,
@@ -113,6 +117,7 @@ def assume_role(session: session.Session, assumed_role_info: AWS_Assume_Role) ->
             "DurationSeconds": assumed_role_info.session_duration,
         }
 
+        # Set the info to assume the role from the partition, account and role name
         if assumed_role_info.external_id:
             assume_role_arguments["ExternalId"] = assumed_role_info.external_id
 
@@ -121,8 +126,7 @@ def assume_role(session: session.Session, assumed_role_info: AWS_Assume_Role) ->
             assume_role_arguments["SerialNumber"] = mfa_ARN
             assume_role_arguments["TokenCode"] = mfa_TOTP
 
-        # set the info to assume the role from the partition, account and role name
-        sts_client = session.client("sts")
+        sts_client = session.client("sts", sts_endpoint_region)
         assumed_credentials = sts_client.assume_role(**assume_role_arguments)
     except Exception as error:
         logger.critical(
