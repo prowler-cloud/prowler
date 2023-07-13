@@ -121,13 +121,14 @@ def is_allowlisted(allowlist, audited_account, check, region, resource, tags):
         # First set account key from allowlist dict
         if audited_account in allowlist["Accounts"]:
             allowlisted_checks = allowlist["Accounts"][audited_account]["Checks"]
+
         # If there is a *, it affects to all accounts
         # This cannot be elif since in the case of * and single accounts we
         # want to merge allowlisted checks from * to the other accounts check list
         if "*" in allowlist["Accounts"]:
             checks_multi_account = allowlist["Accounts"]["*"]["Checks"]
+            allowlisted_checks.update(checks_multi_account)
         # Test if it is allowlisted
-        allowlisted_checks.update(checks_multi_account)
         if is_allowlisted_in_check(
             allowlisted_checks,
             audited_account,
