@@ -305,6 +305,30 @@ class Test_Allowlist:
             )
         )
 
+    def test_is_allowlisted_single_account(self):
+        allowlist = {
+            "Accounts": {
+                AWS_ACCOUNT_NUMBER: {
+                    "Checks": {
+                        "check_test": {
+                            "Regions": [AWS_REGION],
+                            "Resources": ["prowler"],
+                        }
+                    }
+                }
+            }
+        }
+
+        assert is_allowlisted(
+            allowlist, AWS_ACCOUNT_NUMBER, "check_test", AWS_REGION, "prowler", ""
+        )
+
+        assert not (
+            is_allowlisted(
+                allowlist, AWS_ACCOUNT_NUMBER, "check_test", "us-east-2", "test", ""
+            )
+        )
+
     def test_is_allowlisted_in_region(self):
         # Allowlist example
         allowlisted_regions = [AWS_REGION, "eu-west-1"]
