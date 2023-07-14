@@ -10,6 +10,7 @@ from prowler.config.config import aws_services_json_file
 from prowler.lib.check.check import list_modules, recover_checks_from_service
 from prowler.lib.logger import logger
 from prowler.lib.utils.utils import open_file, parse_json_file
+from prowler.providers.aws.config import AWS_STS_GLOBAL_ENDPOINT_REGION
 from prowler.providers.aws.lib.audit_info.models import AWS_Assume_Role, AWS_Audit_Info
 
 
@@ -125,6 +126,10 @@ def assume_role(
             mfa_ARN, mfa_TOTP = input_role_mfa_token_and_code()
             assume_role_arguments["SerialNumber"] = mfa_ARN
             assume_role_arguments["TokenCode"] = mfa_TOTP
+
+        # Set the STS Endpoint Region
+        if sts_endpoint_region is None:
+            sts_endpoint_region = AWS_STS_GLOBAL_ENDPOINT_REGION
 
         sts_client = session.client("sts", sts_endpoint_region)
         assumed_credentials = sts_client.assume_role(**assume_role_arguments)
