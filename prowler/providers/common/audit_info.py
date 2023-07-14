@@ -131,7 +131,7 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
         logger.info("Validating credentials ...")
         # Verificate if we have valid credentials
         caller_identity = validate_aws_credentials(
-            current_audit_info.original_session, input_regions
+            current_audit_info.original_session, input_regions, sts_endpoint_region
         )
 
         logger.info("Credentials validated")
