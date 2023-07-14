@@ -109,7 +109,7 @@ class AWS_Provider:
 def assume_role(
     session: session.Session,
     assumed_role_info: AWS_Assume_Role,
-    sts_endpoint_region: str,
+    sts_endpoint_region: str = None,
 ) -> dict:
     try:
         assume_role_arguments = {
