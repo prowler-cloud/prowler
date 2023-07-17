@@ -17,7 +17,7 @@ class iam_policy_attached_only_to_group_or_roles(Check):
                             report = Check_Report_AWS(self.metadata())
                             report.region = iam_client.region
                             report.status = "FAIL"
-                            report.status_extended = f"User {user.name} has attached the following policy {policy['PolicyName']}"
+                            report.status_extended = f"User {user.name} has the policy {policy['PolicyName']} attached."
                             report.resource_id = user.name
                             findings.append(report)
                     if user.inline_policies:
@@ -25,7 +25,7 @@ class iam_policy_attached_only_to_group_or_roles(Check):
                             report = Check_Report_AWS(self.metadata())
                             report.region = iam_client.region
                             report.status = "FAIL"
-                            report.status_extended = f"User {user.name} has the following inline policy {policy}"
+                            report.status_extended = f"User {user.name} has the inline policy {policy} attached."
                             report.resource_id = user.name
                             findings.append(report)
 
