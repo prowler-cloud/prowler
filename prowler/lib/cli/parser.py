@@ -8,14 +8,7 @@ from prowler.config.config import (
     default_output_directory,
 )
 from prowler.providers.aws.aws_provider import get_aws_available_regions
-from prowler.providers.aws.lib.arn.arn import is_valid_arn
-
-
-def arn_type(arn: str) -> bool:
-    """arn_type returns a string ARN if it is valid and raises an argparse.ArgumentError if not."""
-    if not is_valid_arn(arn):
-        raise argparse.ArgumentError("Invalid ARN")
-    return arn
+from prowler.providers.aws.lib.arn.arn import arn_type
 
 
 class ProwlerArgumentParser:
@@ -288,6 +281,12 @@ Detailed documentation at https://docs.prowler.cloud
             default=None,
             help="ARN of the role to be assumed",
             # Pending ARN validation
+        )
+        aws_auth_subparser.add_argument(
+            "--sts-endpoint-region",
+            nargs="?",
+            default=None,
+            help="Specify the AWS STS endpoint region to use. Read more at https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_temp_enable-regions.html",
         )
         aws_auth_subparser.add_argument(
             "--mfa",
