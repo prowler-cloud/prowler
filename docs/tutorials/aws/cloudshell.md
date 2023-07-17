@@ -1,6 +1,6 @@
 # AWS CloudShell
 
-Prowler can be easely executed in AWS CloudShell but it has some prerequsites to be able to to so. AWS CloudShell is a container running with `Amazon Linux release 2 (Karoo)` that comes with Python 3.7, since Prowler requires Python >= 3.9 we need to first install a newer version of Python. Follow the steps below to successfully execute Prowler v3 in AWS CloudShell:
+Prowler can be easily executed in AWS CloudShell but it has some prerequisites to be able to to so. AWS CloudShell is a container running with `Amazon Linux release 2 (Karoo)` that comes with Python 3.7, since Prowler requires Python >= 3.9 we need to first install a newer version of Python. Follow the steps below to successfully execute Prowler v3 in AWS CloudShell:
 
 - First install all dependences and then Python, in this case we need to compile it because there is not a package available at the time this document is written:
 ```

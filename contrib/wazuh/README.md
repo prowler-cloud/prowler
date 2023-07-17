@@ -92,7 +92,7 @@ To make sure rules are working fine, run `/var/ossec/bin/ossec-logtest` and copy
 ```
 You must see 3 phases goin on.
 
-To check if there is any error you can enable the debug mode of `modulesd` setting the `wazuh_modules.debug=0` variable to 2 in `/var/ossec/etc/internal_options.conf` file. Restart wazun-manager and errors should appear in the `/var/ossec/logs/ossec.log` file.
+To check if there is any error you can enable the debug mode of `modulesd` setting the `wazuh_modules.debug=0` variable to 2 in `/var/ossec/etc/internal_options.conf` file. Restart wazuh-manager and errors should appear in the `/var/ossec/logs/ossec.log` file.
 
 ## Thanks
 

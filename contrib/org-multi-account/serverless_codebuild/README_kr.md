@@ -1,6 +1,6 @@
 # Organizational Prowler with Serverless
 
-Langage: [English](README.md)
+Language: [English](README.md)
 
 이 문서는 AWS Organization 내의 multi account 환경에서 prowler 를 적용하기 위해 작성된 문서입니다.
 일정 시간마다 CloudWatch는 CodeBuild 를 트리거합니다.
@@ -22,7 +22,7 @@ prowler 의 자세한 사용방법은 [이 곳](https://github.com/prowler-cloud
 
       [ProwlerRole.yaml](templates/ProwlerRole.yaml)
 
-      - ProwlerCodeBuildAccount : CodeBuild 가 있는 Audit Acccount ID
+      - ProwlerCodeBuildAccount : CodeBuild 가 있는 Audit Account ID
       - ProwlerCodeBuildRole : CodeBuild의 생성될 Role 이름
       - ProwlerCrossAccountRole : Cross account 용 Assume할 Role 이름
       - ProwlerS3 : report 가 저장될 S3 bucket 명
@@ -30,7 +30,7 @@ prowler 의 자세한 사용방법은 [이 곳](https://github.com/prowler-cloud
 
       [ProwlerRole.yaml](templates/ProwlerRole.yaml)
 
-      - ProwlerCodeBuildAccount : CodeBuild 가 있는 Audit Acccount
+      - ProwlerCodeBuildAccount : CodeBuild 가 있는 Audit Account
       - ProwlerCodeBuildRole : CodeBuild에서 사용할 Role 이름
       - ProwlerCrossAccountRole : Cross account 용 Assume할 Role 이름
       - ProwlerS3 : report 가 저장될 S3 bucket 명

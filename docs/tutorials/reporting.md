@@ -19,7 +19,7 @@ prowler <provider> -M csv json json-asff html -F <custom_report_name>
 ```console
 prowler <provider> -M csv json json-asff html -o <custom_report_directory>
 ```
-> Both flags can be used simultainously to provide a custom directory and filename.
+> Both flags can be used simultaneously to provide a custom directory and filename.
 ```console
 prowler <provider> -M csv json json-asff html -F <custom_report_name> -o <custom_report_directory>
 ```

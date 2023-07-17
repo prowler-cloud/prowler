@@ -4,7 +4,7 @@ You can extend Prowler in many different ways, in most cases you will want to cr
 
 ## Get the code and install all dependencies
 
-First of all, you need a version of Python 3.9 or higher and also pip installed to be able to install all dependencies requred. Once that is satisfied go a head and clone the repo:
+First of all, you need a version of Python 3.9 or higher and also pip installed to be able to install all dependencies required. Once that is satisfied go a head and clone the repo:
 
 ```
 git clone https://github.com/prowler-cloud/prowler
@@ -229,7 +229,7 @@ If you want to create or contribute with your own security frameworks or add pub
 
 Each file version of a framework will have the following structure at high level with the case that each framework needs to be generally identified, one requirement can be also called one control but one requirement can be linked to multiple prowler checks.:
 
-- `Framework`: string. Indistiguish name of the framework, like CIS
+- `Framework`: string. Distinguish name of the framework, like CIS
 - `Provider`: string. Provider where the framework applies, such as AWS, Azure, OCI,...
 - `Version`: string. Version of the framework itself, like 1.4 for CIS.
 - `Requirements`: array of objects. Include all requirements or controls with the mapping to Prowler.
@@ -269,7 +269,7 @@ Finally, to have a proper output file for your reports, your framework data mode
 
 ## Contribute with documentation
 
-We use `mkdocs` to build this Prowler documentation site so you can easely contribute back with new docs or improving them.
+We use `mkdocs` to build this Prowler documentation site so you can easily contribute back with new docs or improving them.
 
 1. Install `mkdocs` with your favorite package manager.
 2. Inside the `prowler` repository folder run `mkdocs serve` and point your browser to `http://localhost:8000` and you will see live changes to your local copy of this documentation site.

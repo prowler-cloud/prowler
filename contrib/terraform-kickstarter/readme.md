@@ -2,7 +2,7 @@
 
 ## Introduction
 
-The following demonstartes how to quickly install the resources necessary to perform a security baseline using Prowler.  The speed is based on the prebuilt terraform module that can configure all the resources necessuary to run Prowler with the findings being sent to AWS Security Hub.
+The following demonstrates how to quickly install the resources necessary to perform a security baseline using Prowler.  The speed is based on the prebuilt terraform module that can configure all the resources necessary to run Prowler with the findings being sent to AWS Security Hub.
 
 ## Install
 
@@ -24,7 +24,7 @@ Installing Prowler with Terraform is simple and can be completed in under 1 minu
 
   ![Prowler Install](https://prowler-docs.s3.amazonaws.com/Prowler-Terraform-Install.gif)
 
-   - It is likely an error will return related to the SecurityHub subscription.  This appears to be Terraform related and you can validate the configuration by navigating to the SecurityHub console.  Click Integreations and search for Prowler. Take note of the green check where it says *Accepting findings*
+   - It is likely an error will return related to the SecurityHub subscription.  This appears to be Terraform related and you can validate the configuration by navigating to the SecurityHub console.  Click Integrations and search for Prowler. Take note of the green check where it says *Accepting findings*
 
   ![Prowler Subscription](https://prowler-docs.s3.amazonaws.com/Validate-Prowler-Subscription.gif)
 
