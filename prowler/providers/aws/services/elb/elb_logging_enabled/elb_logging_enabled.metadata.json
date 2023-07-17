@@ -21,7 +21,7 @@
       "Terraform": "https://docs.bridgecrew.io/docs/bc_aws_logging_23#terraform"
     },
     "Recommendation": {
-      "Text": "Enable ELB logging, create la log lifecycle and define use cases.",
+      "Text": "Enable ELB logging, create a log lifecycle and define use cases.",
       "Url": "https://docs.aws.amazon.com/elasticloadbalancing/latest/classic/access-log-collection.html"
     }
   },
