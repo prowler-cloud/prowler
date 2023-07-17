@@ -123,7 +123,7 @@ class SSMIncidents:
                         ResponsePlan(
                             arn=response_plan.get("Arn", ""),
                             region=regional_client.region,
-                            name=response_plan["Name"],
+                            name=response_plan.get("Name", ""),
                         )
                     )
         except Exception as error:
