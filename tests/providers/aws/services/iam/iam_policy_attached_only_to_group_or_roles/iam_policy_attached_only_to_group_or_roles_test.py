@@ -113,11 +113,11 @@ class Test_iam_policy_attached_only_to_group_or_roles:
             assert result[0].status == "FAIL"
             assert result[1].status == "FAIL"
             assert search(
-                f"User {user} has attached the following policy",
+                f"User {user} has attached the following policy.",
                 result[0].status_extended,
             )
             assert search(
-                f"User {user} has the following inline policy",
+                f"User {user} has the following inline policy.",
                 result[1].status_extended,
             )
 
