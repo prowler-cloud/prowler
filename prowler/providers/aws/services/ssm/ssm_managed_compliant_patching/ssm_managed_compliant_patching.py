@@ -14,12 +14,12 @@ class ssm_managed_compliant_patching(Check):
             if resource.status == ResourceStatus.COMPLIANT:
                 report.status = "PASS"
                 report.status_extended = (
-                    f"EC2 managed instance {resource.id} is compliant"
+                    f"EC2 managed instance {resource.id} is compliant."
                 )
             else:
                 report.status = "FAIL"
                 report.status_extended = (
-                    f"EC2 managed instance {resource.id} is non-compliant"
+                    f"EC2 managed instance {resource.id} is non-compliant."
                 )
 
             findings.append(report)

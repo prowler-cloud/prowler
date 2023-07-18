@@ -1,6 +1,6 @@
 # Organizational Prowler with Serverless
 
-Langage: [Korean](README_kr.md)
+Language: [Korean](README_kr.md)
 
 This project is created to apply prowler in a multi-account environment within AWS Organizations.
 CloudWatch triggers CodeBuild every fixed time.
@@ -18,12 +18,12 @@ For more information on how to use prowler, see [here](https://github.com/prowle
 2. **Master Account**
    1. Deploy [ProwlerRole.yaml](templates/ProwlerRole.yaml) stack to CloudFormation in a bid to create resources to master account itself.
       (The template will be also deployed for other member accounts as a StackSet)
-      - ProwlerCodeBuildAccount :  Audit Acccount ID where CodeBuild resides. (preferably Audit/Security account)
+      - ProwlerCodeBuildAccount :  Audit Account ID where CodeBuild resides. (preferably Audit/Security account)
       - ProwlerCodeBuildRole : Role name to use in CodeBuild service
       - ProwlerCrossAccountRole : Role name to assume for Cross account
       - ProwlerS3 : The S3 bucket name where reports will be put
    1. Create **StackSet** with [ProwlerRole.yaml](templates/ProwlerRole.yaml) to deploy Role into member accounts in AWS Organizations.
-      - ProwlerCodeBuildAccount :  Audit Acccount ID where CodeBuild resides. (preferably Audit/Security account)
+      - ProwlerCodeBuildAccount :  Audit Account ID where CodeBuild resides. (preferably Audit/Security account)
       - ProwlerCodeBuildRole : Role name to use in CodeBuild service
       - ProwlerCrossAccountRole : Role name to assume for Cross account
       - ProwlerS3 : The S3 bucket name where reports will be put
@@ -45,4 +45,4 @@ For more information on how to use prowler, see [here](https://github.com/prowle
       - ProwlerReportS3Account : The account where the report S3 bucket resides.
    1. If you'd like to change the scheduled time,
       1. You can change the cron expression of ScheduleExpression within [ProwlerCodeBuildStack.yaml](templates/ProwlerCodeBuildStack.yaml).
-      2. Alternatively, you can make changes directrly from Events > Rules > ProwlerExecuteRule > Actions > Edit in CloudWatch console.
+      2. Alternatively, you can make changes directly from Events > Rules > ProwlerExecuteRule > Actions > Edit in CloudWatch console.

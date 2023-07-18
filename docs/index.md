@@ -237,7 +237,7 @@ prowler azure --excluded-services defender iam
 prowler gcp --excluded-services kms
 ```
 
-More options and executions methods that will save your time in [Miscelaneous](tutorials/misc.md).
+More options and executions methods that will save your time in [Miscellaneous](tutorials/misc.md).
 
 You can always use `-h`/`--help` to access to the usage information and all the possible options:
 

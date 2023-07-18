@@ -51,7 +51,7 @@ class Test_accessanalyzer_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "IAM Access Analyzer in account 012345678910 is not enabled"
+                == "IAM Access Analyzer in account 012345678910 is not enabled."
             )
             assert result[0].resource_id == "012345678910"
 
@@ -93,14 +93,14 @@ class Test_accessanalyzer_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "IAM Access Analyzer in account 012345678910 is not enabled"
+                == "IAM Access Analyzer in account 012345678910 is not enabled."
             )
             assert result[0].resource_id == "012345678910"
             assert result[0].region == "eu-west-1"
             assert result[1].status == "PASS"
             assert (
                 result[1].status_extended
-                == "IAM Access Analyzer Test Analyzer is enabled"
+                == "IAM Access Analyzer Test Analyzer is enabled."
             )
             assert result[1].resource_id == "Test Analyzer"
             assert result[1].region == "eu-west-2"
@@ -134,7 +134,7 @@ class Test_accessanalyzer_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "IAM Access Analyzer Test Analyzer is enabled"
+                == "IAM Access Analyzer Test Analyzer is enabled."
             )
             assert result[0].resource_id == "Test Analyzer"
             assert result[0].region == "eu-west-2"

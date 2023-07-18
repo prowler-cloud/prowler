@@ -41,7 +41,7 @@ for accountId in $ACCOUNTS_LIST; do
 done
 ```
 
-## Scan mutiple accounts from AWS Organizations in parallel
+## Scan multiple accounts from AWS Organizations in parallel
 
 - Declare a variable with all the accounts to scan. To do so, get the list of your AWS accounts in your AWS Organization by running the following command (will create a variable with all your ACTIVE accounts). Remember to run that command with the permissions needed to get that information in your AWS Organizations Management account.
 

@@ -10,7 +10,7 @@ If you have AWS Organizations Prowler can get your account details like Account 
 ```
 prowler aws -O arn:aws:iam::<management_organizations_account_id>:role/<role_name>
 ```
-> Make sure the role in your AWS Organizatiosn management account has the permissions `organizations:ListAccounts*` and `organizations:ListTagsForResource`.
+> Make sure the role in your AWS Organizations management account has the permissions `organizations:ListAccounts*` and `organizations:ListTagsForResource`.
 
 - In that command Prowler will scan the account and getting the account details from the AWS Organizations management account assuming a role and creating two reports with those details in JSON and CSV.
 
