@@ -89,7 +89,7 @@ class OpenSearchService:
                         describe_domain["DomainConfig"]["AccessPolicies"]["Options"]
                     )
                 except JSONDecodeError as error:
-                    logger.error(
+                    logger.warning(
                         f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
                     continue

@@ -3,7 +3,6 @@ import sys
 from botocore.config import Config
 from colorama import Fore, Style
 
-from prowler.config.config import boto3_user_agent_extra
 from prowler.lib.logger import logger
 from prowler.providers.aws.aws_provider import (
     AWS_Provider,
@@ -81,10 +80,14 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
         input_session_duration = arguments.get("session_duration")
         input_external_id = arguments.get("external_id")
 
+        # STS Endpoint Region
+        sts_endpoint_region = arguments.get("sts_endpoint_region")
+
         # Since the range(i,j) goes from i to j-1 we have to j+1
         if input_session_duration and input_session_duration not in range(900, 43201):
             raise Exception("Value for -T option must be between 900 and 43200")
 
+        # Handle if session_duration is not the default value or external_id is set
         if (
             input_session_duration and input_session_duration != 3600
         ) or input_external_id:
@@ -111,7 +114,6 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
                     "max_attempts": aws_retries_max_attempts,
                     "mode": "standard",
                 },
-                user_agent_extra=boto3_user_agent_extra,
             )
             # Merge the new configuration
             new_boto3_config = current_audit_info.session_config.merge(config)
@@ -128,7 +130,7 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
         logger.info("Validating credentials ...")
         # Verificate if we have valid credentials
         caller_identity = validate_aws_credentials(
-            current_audit_info.original_session, input_regions
+            current_audit_info.original_session, input_regions, sts_endpoint_region
         )
 
         logger.info("Credentials validated")
@@ -168,7 +170,9 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
                     f"Getting organizations metadata for account {organizations_role_arn}"
                 )
                 assumed_credentials = assume_role(
-                    aws_provider.aws_session, aws_provider.role_info
+                    aws_provider.aws_session,
+                    aws_provider.role_info,
+                    sts_endpoint_region,
                 )
                 current_audit_info.organizations_metadata = get_organizations_metadata(
                     current_audit_info.audited_account, assumed_credentials
@@ -201,7 +205,9 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
                 )
                 # Assume the role
                 assumed_role_response = assume_role(
-                    aws_provider.aws_session, aws_provider.role_info
+                    aws_provider.aws_session,
+                    aws_provider.role_info,
+                    sts_endpoint_region,
                 )
                 logger.info("Role assumed")
                 # Set the info needed to create a session with an assumed role

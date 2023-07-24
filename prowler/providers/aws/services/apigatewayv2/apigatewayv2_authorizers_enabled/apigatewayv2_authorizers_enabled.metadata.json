@@ -1,7 +1,7 @@
 {
   "Provider": "aws",
   "CheckID": "apigatewayv2_authorizers_enabled",
-  "CheckTitle": "Checks if API Gateway V2 has Access Logging enabled.",
+  "CheckTitle": "Checks if API Gateway V2 has configured authorizers.",
   "CheckType": [
     "Logging and Monitoring"
   ],
@@ -10,8 +10,8 @@
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
   "ResourceType": "AwsApiGatewayV2Api",
-  "Description": "Checks if API Gateway V2 has Access Logging enabled.",
-  "Risk": "If not enabled the logging of API calls is not possible. This information is important for monitoring API access.",
+  "Description": "Checks if API Gateway V2 has configured authorizers.",
+  "Risk": "If no authorizer is enabled anyone can use the service.",
   "RelatedUrl": "",
   "Remediation": {
     "Code": {
@@ -21,8 +21,8 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Enable Access Logging in the API stage.",
-      "Url": "https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-apigatewayv2-stage-accesslogsettings.html"
+      "Text": "Implement Amazon Cognito or a Lambda function to control access to your API",
+      "Url": "https://docs.aws.amazon.com/apigateway/latest/developerguide/apigateway-use-lambda-authorizer.html"
     }
   },
   "Categories": [],

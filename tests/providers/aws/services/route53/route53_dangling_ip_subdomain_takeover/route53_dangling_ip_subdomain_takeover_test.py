@@ -6,6 +6,7 @@ from moto import mock_ec2, mock_route53
 from moto.core import DEFAULT_ACCOUNT_ID
 
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
+from prowler.providers.common.models import Audit_Metadata
 
 AWS_REGION = "us-east-1"
 
@@ -34,6 +35,12 @@ class Test_route53_dangling_ip_subdomain_takeover:
             organizations_metadata=None,
             audit_resources=None,
             mfa_enabled=False,
+            audit_metadata=Audit_Metadata(
+                services_scanned=0,
+                expected_checks=[],
+                completed_checks=0,
+                audit_progress=0,
+            ),
         )
         return audit_info
 
@@ -161,7 +168,7 @@ class Test_route53_dangling_ip_subdomain_takeover:
                     assert result[0].resource_id == zone_id.replace("/hostedzone/", "")
                     assert (
                         result[0].resource_arn
-                        == f"arn:{audit_info.audited_partition}:route53:::{zone_id.replace('/hostedzone/','')}"
+                        == f"arn:{audit_info.audited_partition}:route53:::hostedzone/{zone_id.replace('/hostedzone/','')}"
                     )
 
     @mock_ec2
@@ -222,7 +229,7 @@ class Test_route53_dangling_ip_subdomain_takeover:
                     assert result[0].resource_id == zone_id.replace("/hostedzone/", "")
                     assert (
                         result[0].resource_arn
-                        == f"arn:{audit_info.audited_partition}:route53:::{zone_id.replace('/hostedzone/','')}"
+                        == f"arn:{audit_info.audited_partition}:route53:::hostedzone/{zone_id.replace('/hostedzone/','')}"
                     )
 
     @mock_ec2
@@ -283,7 +290,7 @@ class Test_route53_dangling_ip_subdomain_takeover:
                     assert result[0].resource_id == zone_id.replace("/hostedzone/", "")
                     assert (
                         result[0].resource_arn
-                        == f"arn:{audit_info.audited_partition}:route53:::{zone_id.replace('/hostedzone/','')}"
+                        == f"arn:{audit_info.audited_partition}:route53:::hostedzone/{zone_id.replace('/hostedzone/','')}"
                     )
 
     @mock_ec2
@@ -347,7 +354,7 @@ class Test_route53_dangling_ip_subdomain_takeover:
                     assert result[0].resource_id == zone_id.replace("/hostedzone/", "")
                     assert (
                         result[0].resource_arn
-                        == f"arn:{audit_info.audited_partition}:route53:::{zone_id.replace('/hostedzone/','')}"
+                        == f"arn:{audit_info.audited_partition}:route53:::hostedzone/{zone_id.replace('/hostedzone/','')}"
                     )
 
     @mock_ec2
@@ -417,5 +424,5 @@ class Test_route53_dangling_ip_subdomain_takeover:
                     assert result[0].resource_id == zone_id.replace("/hostedzone/", "")
                     assert (
                         result[0].resource_arn
-                        == f"arn:{audit_info.audited_partition}:route53:::{zone_id.replace('/hostedzone/','')}"
+                        == f"arn:{audit_info.audited_partition}:route53:::hostedzone/{zone_id.replace('/hostedzone/','')}"
                     )

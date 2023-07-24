@@ -13,6 +13,7 @@ class iam_no_service_roles_at_project_level(Check):
             report.project_id = binding.project_id
             report.resource_id = binding.role
             report.resource_name = binding.role
+            report.location = cloudresourcemanager_client.region
             if binding.role in [
                 "roles/iam.serviceAccountUser",
                 "roles/iam.serviceAccountTokenCreator",
@@ -29,6 +30,7 @@ class iam_no_service_roles_at_project_level(Check):
                 report.resource_id = project
                 report.resource_name = ""
                 report.status = "PASS"
+                report.location = cloudresourcemanager_client.region
                 report.status_extended = f"No IAM Users assigned to service roles at project level {project}."
                 findings.append(report)
         return findings

@@ -2,6 +2,7 @@
 ### Resources and tags are lists that can have either Regex or Keywords.
 ### Tags is an optional list that matches on tuples of 'key=value' and are "ANDed" together.
 ### Use an alternation Regex to match one of multiple tags with "ORed" logic.
+### For each check you can except Accounts, Regions, Resources and/or Tags.
 ###########################  ALLOWLIST EXAMPLE  ###########################
 Allowlist:
   Accounts:
@@ -44,6 +45,34 @@ Allowlist:
             - "*"
           Tags:
             - "environment=dev"    # Will ignore every resource containing the tag 'environment=dev' in every account and region
+
+    "*":
+      Checks:
+        "ecs_task_definitions_no_environment_secrets":
+          Regions:
+            - "*"
+          Resources:
+            - "*"
+          Exceptions:
+            Accounts:
+              - "0123456789012"
+            Regions:
+              - "eu-west-1"
+              - "eu-south-2"        # Will ignore every resource in check ecs_task_definitions_no_environment_secrets except the ones in account 0123456789012 located in eu-south-2 or eu-west-1
+
+    "123456789012":
+      Checks:
+        "*":
+          Regions:
+            - "*"
+          Resources:
+            - "*"
+          Exceptions:
+            Resources:
+              - "test"
+            Tags:
+              - "environment=prod"   # Will ignore every resource except in account 123456789012 except the ones containing the string "test" and tag environment=prod
+
 
 
 # EXAMPLE: CONTROL TOWER (to migrate)

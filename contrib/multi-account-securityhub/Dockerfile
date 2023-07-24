@@ -1,45 +1,24 @@
 # Build command
 # docker build --platform=linux/amd64  --no-cache -t prowler:latest .
 
-FROM public.ecr.aws/amazonlinux/amazonlinux:2022
+ARG PROWLER_VERSION=latest
 
-ARG PROWLERVER=2.9.0
-ARG USERNAME=prowler
-ARG USERID=34000
+FROM toniblyx/prowler:${PROWLER_VERSION}
 
-# Install Dependencies
-RUN \
-    dnf update -y && \
-    dnf install -y bash file findutils git jq python3 python3-pip \
-                   python3-setuptools python3-wheel shadow-utils tar unzip which && \
-    dnf remove -y awscli && \
-    dnf clean all && \
-    useradd -l -s /bin/sh -U -u ${USERID} ${USERNAME} && \
-    curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" && \
-    unzip awscliv2.zip && \
-    ./aws/install && \
-    pip3 install --no-cache-dir --upgrade pip && \
-    pip3 install --no-cache-dir "git+https://github.com/ibm/detect-secrets.git@master#egg=detect-secrets" && \
-    rm -rf aws awscliv2.zip /var/cache/dnf
+USER 0
+# hadolint ignore=DL3018
+RUN apk --no-cache add bash aws-cli jq
 
-# Place script and env vars
-COPY .awsvariables run-prowler-securityhub.sh /
+ARG MULTI_ACCOUNT_SECURITY_HUB_PATH=/home/prowler/multi-account-securityhub
 
-# Installs prowler and change permissions
-RUN \
-    curl -L "https://github.com/prowler-cloud/prowler/archive/refs/tags/${PROWLERVER}.tar.gz" -o "prowler.tar.gz" && \
-    tar xvzf prowler.tar.gz && \
-    rm -f prowler.tar.gz && \
-    mv prowler-${PROWLERVER} prowler && \
-    chown ${USERNAME}:${USERNAME} /run-prowler-securityhub.sh && \
-    chmod 500 /run-prowler-securityhub.sh && \
-    chown ${USERNAME}:${USERNAME} /.awsvariables && \
-    chmod 400 /.awsvariables && \
-    chown ${USERNAME}:${USERNAME} -R /prowler && \
-    chmod +x /prowler/prowler
+USER prowler
 
-# Drop to user
-USER ${USERNAME}
+# Move script and environment variables
+RUN mkdir "${MULTI_ACCOUNT_SECURITY_HUB_PATH}"
+COPY --chown=prowler:prowler .awsvariables run-prowler-securityhub.sh  "${MULTI_ACCOUNT_SECURITY_HUB_PATH}"/
+RUN chmod 500 "${MULTI_ACCOUNT_SECURITY_HUB_PATH}"/run-prowler-securityhub.sh & \
+    chmod 400 "${MULTI_ACCOUNT_SECURITY_HUB_PATH}"/.awsvariables
 
-# Run script
-ENTRYPOINT ["/run-prowler-securityhub.sh"]
+WORKDIR ${MULTI_ACCOUNT_SECURITY_HUB_PATH}
+
+ENTRYPOINT ["./run-prowler-securityhub.sh"]

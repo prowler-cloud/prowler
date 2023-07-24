@@ -12,7 +12,7 @@
   "ResourceType": "AwsEc2Vpc",
   "Description": "Ensure all vpc has subnets in more than one availability zone",
   "Risk": "",
-  "RelatedUrl": "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Scenario2.html",
+  "RelatedUrl": "https://docs.aws.amazon.com/vpc/latest/userguide/configure-subnets.html",
   "Remediation": {
     "Code": {
       "CLI": "aws ec2 create-subnet",
@@ -22,7 +22,7 @@
     },
     "Recommendation": {
       "Text": "Ensure all vpc has subnets in more than one availability zone",
-      "Url": ""
+      "Url": "https://docs.aws.amazon.com/vpc/latest/userguide/configure-subnets.html"
     }
   },
   "Categories": [],

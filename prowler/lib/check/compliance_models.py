@@ -8,8 +8,8 @@ from prowler.lib.logger import logger
 
 
 # ENS - Esquema Nacional de Seguridad - España
-class ENS_Requirements_Nivel(str, Enum):
-    """ENS V3 Requirements Level"""
+class ENS_Requirement_Attribute_Nivel(str, Enum):
+    """ENS V3 Requirement Attribute Level"""
 
     opcional = "opcional"
     bajo = "bajo"
@@ -17,8 +17,8 @@ class ENS_Requirements_Nivel(str, Enum):
     alto = "alto"
 
 
-class ENS_Requirements_Dimensiones(str, Enum):
-    """ENS V3 Requirements Dimensions"""
+class ENS_Requirement_Attribute_Dimensiones(str, Enum):
+    """ENS V3 Requirement Attribute Dimensions"""
 
     confidencialidad = "confidencialidad"
     integridad = "integridad"
@@ -27,8 +27,8 @@ class ENS_Requirements_Dimensiones(str, Enum):
     disponibilidad = "disponibilidad"
 
 
-class ENS_Requirements_Tipos(str, Enum):
-    """ENS Requirements  Tipos"""
+class ENS_Requirement_Attribute_Tipos(str, Enum):
+    """ENS Requirement Attribute  Tipos"""
 
     refuerzo = "refuerzo"
     requisito = "requisito"
@@ -36,21 +36,21 @@ class ENS_Requirements_Tipos(str, Enum):
     medida = "medida"
 
 
-class ENS_Requirements(BaseModel):
-    """ENS V3 Framework Requirements"""
+class ENS_Requirement_Attribute(BaseModel):
+    """ENS V3 Framework Requirement Attribute"""
 
-    IdGrupoControl: Optional[str]
-    Marco: Optional[str]
-    Categoria: Optional[str]
-    DescripcionControl: Optional[str]
-    Tipo: ENS_Requirements_Tipos
-    Nivel: ENS_Requirements_Nivel
-    Dimensiones: list[ENS_Requirements_Dimensiones]
+    IdGrupoControl: str
+    Marco: str
+    Categoria: str
+    DescripcionControl: str
+    Tipo: ENS_Requirement_Attribute_Tipos
+    Nivel: ENS_Requirement_Attribute_Nivel
+    Dimensiones: list[ENS_Requirement_Attribute_Dimensiones]
 
 
-# Generic Compliance Requirements
-class Generic_Compliance_Requirements(BaseModel):
-    """Generic Compliance Requirements"""
+# Generic Compliance Requirement Attribute
+class Generic_Compliance_Requirement_Attribute(BaseModel):
+    """Generic Compliance Requirement Attribute"""
 
     ItemId: str
     Section: Optional[str]
@@ -60,49 +60,84 @@ class Generic_Compliance_Requirements(BaseModel):
     Soc_Type: Optional[str]
 
 
-class CIS_Requirements_Profile(str):
-    """CIS Requirements Profile"""
+class CIS_Requirement_Attribute_Profile(str):
+    """CIS Requirement Attribute Profile"""
 
     Level_1 = "Level 1"
     Level_2 = "Level 2"
 
 
-class CIS_Requirements_AssessmentStatus(str):
-    """CIS Requirements Assessment Status"""
+class CIS_Requirement_Attribute_AssessmentStatus(str):
+    """CIS Requirement Attribute Assessment Status"""
 
     Manual = "Manual"
     Automated = "Automated"
 
 
-# CIS Requirements
-class CIS_Requirements(BaseModel):
-    """CIS Requirements"""
+# CIS Requirement Attribute
+class CIS_Requirement_Attribute(BaseModel):
+    """CIS Requirement Attribute"""
 
-    Section: Optional[str]
-    Profile: CIS_Requirements_Profile
-    AssessmentStatus: CIS_Requirements_AssessmentStatus
-    Description: Optional[str]
-    RationaleStatement: Optional[str]
-    ImpactStatement: Optional[str]
-    RemediationProcedure: Optional[str]
-    AuditProcedure: Optional[str]
-    AdditionalInformation: Optional[str]
-    References: Optional[str]
+    Section: str
+    Profile: CIS_Requirement_Attribute_Profile
+    AssessmentStatus: CIS_Requirement_Attribute_AssessmentStatus
+    Description: str
+    RationaleStatement: str
+    ImpactStatement: str
+    RemediationProcedure: str
+    AuditProcedure: str
+    AdditionalInformation: str
+    References: str
 
 
-# Well Architected Requirements
-class AWS_Well_Architected_Requirements(BaseModel):
-    """AWS Well Architected Requirements"""
+# Well Architected Requirement Attribute
+class AWS_Well_Architected_Requirement_Attribute(BaseModel):
+    """AWS Well Architected Requirement Attribute"""
 
-    Name: Optional[str]
-    WellArchitectedQuestionId: Optional[str]
-    WellArchitectedPracticeId: Optional[str]
-    Section: Optional[str]
+    Name: str
+    WellArchitectedQuestionId: str
+    WellArchitectedPracticeId: str
+    Section: str
     SubSection: Optional[str]
-    LevelOfRisk: Optional[str]
-    AssessmentMethod: Optional[str]
-    Description: Optional[str]
-    ImplementationGuidanceUrl: Optional[str]
+    LevelOfRisk: str
+    AssessmentMethod: str
+    Description: str
+    ImplementationGuidanceUrl: str
+
+
+# ISO27001 Requirement Attribute
+class ISO27001_2013_Requirement_Attribute(BaseModel):
+    """ISO27001 Requirement Attribute"""
+
+    Category: str
+    Objetive_ID: str
+    Objetive_Name: str
+    Check_Summary: str
+
+
+# MITRE Requirement Attribute
+class Mitre_Requirement_Attribute(BaseModel):
+    """MITRE Requirement Attribute"""
+
+    AWSService: str
+    Category: str
+    Value: str
+    Comment: str
+
+
+# MITRE Requirement
+class Mitre_Requirement(BaseModel):
+    """Mitre_Requirement holds the model for every MITRE requirement"""
+
+    Name: str
+    Id: str
+    Tactics: list[str]
+    SubTechniques: list[str]
+    Description: str
+    Platforms: list[str]
+    TechniqueURL: str
+    Attributes: list[Mitre_Requirement_Attribute]
+    Checks: list[str]
 
 
 # Base Compliance Model
@@ -114,10 +149,11 @@ class Compliance_Requirement(BaseModel):
     Name: Optional[str]
     Attributes: list[
         Union[
-            CIS_Requirements,
-            ENS_Requirements,
-            Generic_Compliance_Requirements,
-            AWS_Well_Architected_Requirements,
+            CIS_Requirement_Attribute,
+            ENS_Requirement_Attribute,
+            Generic_Compliance_Requirement_Attribute,
+            ISO27001_2013_Requirement_Attribute,
+            AWS_Well_Architected_Requirement_Attribute,
         ]
     ]
     Checks: list[str]
@@ -130,7 +166,7 @@ class Compliance_Base_Model(BaseModel):
     Provider: str
     Version: Optional[str]
     Description: str
-    Requirements: list[Compliance_Requirement]
+    Requirements: list[Union[Mitre_Requirement, Compliance_Requirement]]
 
     @root_validator(pre=True)
     # noqa: F841 - since vulture raises unused variable 'cls'

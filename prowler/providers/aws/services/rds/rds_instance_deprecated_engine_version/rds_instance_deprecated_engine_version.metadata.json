@@ -10,17 +10,17 @@
   "ResourceType": "AwsRdsDbInstance",
   "Description": "Check if RDS is using a supported engine version for MariaDB, MySQL and PostgreSQL",
   "Risk": "If not enabled RDS instances may be vulnerable to security issues",
-  "RelatedUrl": "",
+  "RelatedUrl": "https://docs.aws.amazon.com/cli/latest/reference/rds/describe-db-engine-versions.html",
   "Remediation": {
     "Code": {
       "CLI": "aws rds describe-db-engine-versions --engine <my_engine>'",
       "NativeIaC": "",
-      "Other": "https://docs.aws.amazon.com/cli/latest/reference/rds/describe-db-engine-versions.html",
+      "Other": "",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "",
-      "Url": ""
+      "Text": "Ensure all the RDS instances are using a supported engine version",
+      "Url": "https://docs.aws.amazon.com/cli/latest/reference/rds/describe-db-engine-versions.html"
     }
   },
   "Categories": [],

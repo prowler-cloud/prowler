@@ -21,7 +21,7 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Ensure that S3 buckets has encryption in transit enabled.",
+      "Text": "Ensure that S3 buckets have encryption in transit enabled.",
       "Url": "https://aws.amazon.com/premiumsupport/knowledge-center/s3-bucket-policy-for-config-rule/"
     }
   },

@@ -5,6 +5,7 @@ from moto import mock_ec2
 
 from prowler.config.config import get_config_var
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
+from prowler.providers.common.models import Audit_Metadata
 
 EXAMPLE_AMI_ID = "ami-12c6146b"
 shodan_api_key = get_config_var("shodan_api_key")
@@ -33,6 +34,12 @@ class Test_ec2_elastic_ip_shodan:
             organizations_metadata=None,
             audit_resources=None,
             mfa_enabled=False,
+            audit_metadata=Audit_Metadata(
+                services_scanned=0,
+                expected_checks=[],
+                completed_checks=0,
+                audit_progress=0,
+            ),
         )
 
         return audit_info

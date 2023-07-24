@@ -5,6 +5,7 @@ from mock import patch
 from moto import mock_ec2
 
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
+from prowler.providers.common.models import Audit_Metadata
 
 AWS_REGION = "us-east-1"
 AWS_ACCOUNT_NUMBER = "123456789012"
@@ -42,6 +43,12 @@ class Test_ec2_ebs_snapshots_encrypted:
             organizations_metadata=None,
             audit_resources=None,
             mfa_enabled=False,
+            audit_metadata=Audit_Metadata(
+                services_scanned=0,
+                expected_checks=[],
+                completed_checks=0,
+                audit_progress=0,
+            ),
         )
 
         return audit_info
@@ -68,7 +75,7 @@ class Test_ec2_ebs_snapshots_encrypted:
             result = check.execute()
 
             # Default snapshots
-            assert len(result) == 565
+            assert len(result) == 561
 
     @mock_ec2
     def test_ec2_unencrypted_snapshot(self):
@@ -97,7 +104,7 @@ class Test_ec2_ebs_snapshots_encrypted:
             results = check.execute()
 
             # Default snapshots + 1 created
-            assert len(results) == 566
+            assert len(results) == 562
 
             for snap in results:
                 if snap.resource_id == snapshot.id:
@@ -140,7 +147,7 @@ class Test_ec2_ebs_snapshots_encrypted:
             results = check.execute()
 
             # Default snapshots + 1 created
-            assert len(results) == 566
+            assert len(results) == 562
 
             for snap in results:
                 if snap.resource_id == snapshot.id:

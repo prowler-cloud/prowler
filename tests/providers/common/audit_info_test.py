@@ -1,5 +1,6 @@
 import boto3
 import botocore
+import pytest
 import sure  # noqa
 from boto3 import session
 from mock import patch
@@ -120,37 +121,6 @@ class Test_Set_Audit_Info:
         return audit_info
 
     @patch(
-        "prowler.providers.common.audit_info.validate_aws_credentials",
-        new=mock_validate_credentials,
-    )
-    @patch(
-        "prowler.providers.common.audit_info.print_aws_credentials",
-        new=mock_print_audit_credentials,
-    )
-    def test_set_audit_info_aws(self):
-        with patch(
-            "prowler.providers.common.audit_info.current_audit_info",
-            new=self.set_mocked_audit_info(),
-        ):
-            provider = "aws"
-            arguments = {
-                "profile": None,
-                "role": None,
-                "session_duration": None,
-                "external_id": None,
-                "regions": None,
-                "organizations_role": None,
-                "subscriptions": None,
-                "az_cli_auth": None,
-                "sp_env_auth": None,
-                "browser_auth": None,
-                "managed_entity_auth": None,
-            }
-
-            audit_info = set_provider_audit_info(provider, arguments)
-            assert isinstance(audit_info, AWS_Audit_Info)
-
-    @patch(
         "prowler.providers.common.audit_info.azure_audit_info",
         new=mock_azure_audit_info,
     )
@@ -245,3 +215,89 @@ class Test_Set_Audit_Info:
             assert instance_id in str(
                 get_tagged_resources(["MY_TAG1=MY_VALUE1"], mock_audit_info)
             )
+
+    @patch(
+        "prowler.providers.common.audit_info.validate_aws_credentials",
+        new=mock_validate_credentials,
+    )
+    @patch(
+        "prowler.providers.common.audit_info.print_aws_credentials",
+        new=mock_print_audit_credentials,
+    )
+    def test_set_audit_info_aws(self):
+        with patch(
+            "prowler.providers.common.audit_info.current_audit_info",
+            new=self.set_mocked_audit_info(),
+        ):
+            provider = "aws"
+            arguments = {
+                "profile": None,
+                "role": None,
+                "session_duration": None,
+                "external_id": None,
+                "regions": None,
+                "organizations_role": None,
+            }
+
+            audit_info = set_provider_audit_info(provider, arguments)
+            assert isinstance(audit_info, AWS_Audit_Info)
+
+    def test_set_audit_info_aws_bad_session_duration(self):
+        with patch(
+            "prowler.providers.common.audit_info.current_audit_info",
+            new=self.set_mocked_audit_info(),
+        ):
+            provider = "aws"
+            arguments = {
+                "profile": None,
+                "role": None,
+                "session_duration": 100,
+                "external_id": None,
+                "regions": None,
+                "organizations_role": None,
+            }
+
+            with pytest.raises(SystemExit) as exception:
+                _ = set_provider_audit_info(provider, arguments)
+            # assert exception == "Value for -T option must be between 900 and 43200"
+            assert isinstance(exception, pytest.ExceptionInfo)
+
+    def test_set_audit_info_aws_session_duration_without_role(self):
+        with patch(
+            "prowler.providers.common.audit_info.current_audit_info",
+            new=self.set_mocked_audit_info(),
+        ):
+            provider = "aws"
+            arguments = {
+                "profile": None,
+                "role": None,
+                "session_duration": 1000,
+                "external_id": None,
+                "regions": None,
+                "organizations_role": None,
+            }
+
+            with pytest.raises(SystemExit) as exception:
+                _ = set_provider_audit_info(provider, arguments)
+            # assert exception == "To use -I/-T options -R option is needed"
+            assert isinstance(exception, pytest.ExceptionInfo)
+
+    def test_set_audit_info_external_id_without_role(self):
+        with patch(
+            "prowler.providers.common.audit_info.current_audit_info",
+            new=self.set_mocked_audit_info(),
+        ):
+            provider = "aws"
+            arguments = {
+                "profile": None,
+                "role": None,
+                "session_duration": 3600,
+                "external_id": "test-external-id",
+                "regions": None,
+                "organizations_role": None,
+            }
+
+            with pytest.raises(SystemExit) as exception:
+                _ = set_provider_audit_info(provider, arguments)
+            # assert exception == "To use -I/-T options -R option is needed"
+            assert isinstance(exception, pytest.ExceptionInfo)

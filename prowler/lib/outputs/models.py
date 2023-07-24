@@ -265,7 +265,7 @@ def parse_json_tags(tags: list):
 def generate_csv_fields(format: Any) -> list[str]:
     """Generates the CSV headers for the given class"""
     csv_fields = []
-    # __fields__ is alwayis available in the Pydantic's BaseModel class
+    # __fields__ is always available in the Pydantic's BaseModel class
     for field in format.__dict__.get("__fields__").keys():
         csv_fields.append(field)
     return csv_fields
@@ -487,6 +487,33 @@ class Gcp_Check_Output_JSON(Check_Output_JSON):
         super().__init__(**metadata)
 
 
+class Check_Output_MITRE_ATTACK(BaseModel):
+    """
+    Check_Output_MITRE_ATTACK generates a finding's output in CSV MITRE ATTACK format.
+    """
+
+    Provider: str
+    Description: str
+    AccountId: str
+    Region: str
+    AssessmentDate: str
+    Requirements_Id: str
+    Requirements_Name: str
+    Requirements_Description: str
+    Requirements_Tactics: str
+    Requirements_SubTechniques: str
+    Requirements_Platforms: str
+    Requirements_TechniqueURL: str
+    Requirements_Attributes_AWSServices: str
+    Requirements_Attributes_Categories: str
+    Requirements_Attributes_Values: str
+    Requirements_Attributes_Comments: str
+    Status: str
+    StatusExtended: str
+    ResourceId: str
+    CheckId: str
+
+
 class Check_Output_CSV_ENS_RD2022(BaseModel):
     """
     Check_Output_CSV_ENS_RD2022 generates a finding's output in CSV ENS RD2022 format.
@@ -512,7 +539,7 @@ class Check_Output_CSV_ENS_RD2022(BaseModel):
     CheckId: str
 
 
-class Check_Output_CSV_CIS(BaseModel):
+class Check_Output_CSV_AWS_CIS(BaseModel):
     """
     Check_Output_CSV_CIS generates a finding's output in CSV CIS format.
     """
@@ -537,6 +564,35 @@ class Check_Output_CSV_CIS(BaseModel):
     Status: str
     StatusExtended: str
     ResourceId: str
+    CheckId: str
+
+
+class Check_Output_CSV_GCP_CIS(BaseModel):
+    """
+    Check_Output_CSV_CIS generates a finding's output in CSV CIS format.
+    """
+
+    Provider: str
+    Description: str
+    ProjectId: str
+    Location: str
+    AssessmentDate: str
+    Requirements_Id: str
+    Requirements_Description: str
+    Requirements_Attributes_Section: str
+    Requirements_Attributes_Profile: str
+    Requirements_Attributes_AssessmentStatus: str
+    Requirements_Attributes_Description: str
+    Requirements_Attributes_RationaleStatement: str
+    Requirements_Attributes_ImpactStatement: str
+    Requirements_Attributes_RemediationProcedure: str
+    Requirements_Attributes_AuditProcedure: str
+    Requirements_Attributes_AdditionalInformation: str
+    Requirements_Attributes_References: str
+    Status: str
+    StatusExtended: str
+    ResourceId: str
+    ResourceName: str
     CheckId: str
 
 
@@ -575,13 +631,33 @@ class Check_Output_CSV_AWS_Well_Architected(BaseModel):
     AssessmentDate: str
     Requirements_Attributes_Name: str
     Requirements_Attributes_WellArchitectedQuestionId: str
-    Requirements_Attributes_WellArchitectedPracticeId: Optional[str]
+    Requirements_Attributes_WellArchitectedPracticeId: str
     Requirements_Attributes_Section: str
-    Requirements_Attributes_SubSection: str
+    Requirements_Attributes_SubSection: Optional[str]
     Requirements_Attributes_LevelOfRisk: str
     Requirements_Attributes_AssessmentMethod: str
     Requirements_Attributes_Description: str
     Requirements_Attributes_ImplementationGuidanceUrl: str
+    Status: str
+    StatusExtended: str
+    ResourceId: str
+    CheckId: str
+
+
+class Check_Output_CSV_AWS_ISO27001_2013(BaseModel):
+    """
+    Check_Output_CSV_AWS_ISO27001_2013 generates a finding's output in CSV AWS ISO27001 Compliance format.
+    """
+
+    Provider: str
+    Description: str
+    AccountId: str
+    Region: str
+    AssessmentDate: str
+    Requirements_Attributes_Category: str
+    Requirements_Attributes_Objetive_ID: str
+    Requirements_Attributes_Objetive_Name: str
+    Requirements_Attributes_Check_Summary: str
     Status: str
     StatusExtended: str
     ResourceId: str
@@ -684,11 +760,11 @@ class Organization(BaseModel):
 
 
 class Cloud(BaseModel):
-    account: Account = None
-    region: str = ""
-    org: Organization = None
+    account: Optional[Account]
+    region: str
+    org: Optional[Organization]
     provider: str
-    project_uid: str = ""
+    project_uid: str
 
 
 class Feature(BaseModel):
@@ -718,22 +794,22 @@ class Check_Output_JSON_OCSF(BaseModel):
     https://schema.ocsf.io/1.0.0-rc.3/classes/security_finding
     """
 
-    finding: Finding = None
-    resources: List[Resources] = []
-    status_detail: str = ""
-    compliance: Compliance_OCSF = None
-    message: str = ""
-    severity_id: Literal[0, 1, 2, 3, 4, 5, 6, 99] = 99
+    finding: Finding
+    resources: List[Resources]
+    status_detail: str
+    compliance: Compliance_OCSF
+    message: str
+    severity_id: Literal[0, 1, 2, 3, 4, 5, 6, 99]
     severity: Literal[
         "Informational", "Low", "Medium", "High", "Critical", "Fatal", "Other"
-    ] = "Other"
-    cloud: Cloud = None
-    time: datetime = None
-    metadata: Metadata = None
-    state_id: str = 0
+    ]
+    cloud: Cloud
+    time: datetime
+    metadata: Metadata
+    state_id: int = 0
     state: str = "New"
-    status_id: Literal[0, 1, 2, 99] = 0
-    status: Literal["Unknown", "Success", "Failure", "Other"] = "Unknown"
+    status_id: Literal[0, 1, 2, 99]
+    status: Literal["Unknown", "Success", "Failure", "Other"]
     type_uid: int = 200101
     type_name: str = "Security Finding: Create"
     impact_id: int = 0

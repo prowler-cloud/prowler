@@ -31,7 +31,7 @@ class Test_securityhub_enabled:
             result = check.execute()
 
             assert result[0].status == "FAIL"
-            assert result[0].status_extended == "Security Hub is not enabled"
+            assert result[0].status_extended == "Security Hub is not enabled."
             assert result[0].resource_id == "Security Hub"
 
     def test_securityhub_hub_active_with_standards(self):
@@ -61,7 +61,7 @@ class Test_securityhub_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "Security Hub is enabled with standards: cis-aws-foundations-benchmark/v/1.2.0"
+                == "Security Hub is enabled with standards: cis-aws-foundations-benchmark/v/1.2.0."
             )
             assert result[0].resource_id == "default"
 
@@ -92,7 +92,7 @@ class Test_securityhub_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "Security Hub is enabled without standards but with integrations: prowler"
+                == "Security Hub is enabled without standards but with integrations: prowler."
             )
             assert result[0].resource_id == "default"
 
@@ -123,6 +123,6 @@ class Test_securityhub_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "Security Hub is enabled but without any standard or integration"
+                == "Security Hub is enabled but without any standard or integration."
             )
             assert result[0].resource_id == "default"

@@ -21,8 +21,8 @@
       "Terraform": "https://docs.bridgecrew.io/docs/bc_aws_logging_30#cloudformation"
     },
     "Recommendation": {
-      "Text": "Implement Amazon Cognito or a Lambda function to control access to your API.",
-      "Url": "https://docs.aws.amazon.com/apigatewayv2/latest/api-reference/apis-apiid-authorizers.html"
+      "Text": "Monitoring is an important part of maintaining the reliability, availability and performance of API Gateway and your AWS solutions. You should collect monitoring data from all of the parts of your AWS solution. CloudTrail provides a record of actions taken by a user, role, or an AWS service in API Gateway. Using the information collected by CloudTrail, you can determine the request that was made to API Gateway, the IP address from which the request was made, who made the request, etc.",
+      "Url": "https://docs.aws.amazon.com/apigateway/latest/developerguide/security-monitoring.html"
     }
   },
   "Categories": [],

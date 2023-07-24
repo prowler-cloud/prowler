@@ -11,6 +11,7 @@ You can use `-w`/`--allowlist-file` with the path of your allowlist yaml file, b
     ### Resources and tags are lists that can have either Regex or Keywords.
     ### Tags is an optional list that matches on tuples of 'key=value' and are "ANDed" together.
     ### Use an alternation Regex to match one of multiple tags with "ORed" logic.
+    ### For each check you can except Accounts, Regions, Resources and/or Tags.
     ###########################  ALLOWLIST EXAMPLE  ###########################
     Allowlist:
       Accounts:
@@ -54,6 +55,33 @@ You can use `-w`/`--allowlist-file` with the path of your allowlist yaml file, b
               Tags:
                 - "environment=dev"    # Will ignore every resource containing the tag 'environment=dev' in every account and region
 
+        "*":
+          Checks:
+            "ecs_task_definitions_no_environment_secrets":
+              Regions:
+                - "*"
+              Resources:
+                - "*"
+              Exceptions:
+                Accounts:
+                  - "0123456789012"
+                Regions:
+                  - "eu-west-1"
+                  - "eu-south-2"        # Will ignore every resource in check ecs_task_definitions_no_environment_secrets except the ones in account 0123456789012 located in eu-south-2 or eu-west-1
+
+        "123456789012":
+          Checks:
+            "*":
+              Regions:
+                - "*"
+              Resources:
+                - "*"
+              Exceptions:
+                Resources:
+                  - "test"
+                Tags:
+                  - "environment=prod"   # Will ignore every resource except in account 123456789012 except the ones containing the string "test" and tag environment=prod
+
 
 ## Supported Allowlist Locations
 
@@ -88,6 +116,9 @@ prowler aws -w arn:aws:dynamodb:<region_name>:<account_id>:table/<table_name>
     - Regions (List): This field contains a list of regions where this allowlist rule is applied (it can also contains an `*` to apply all scanned regions).
     - Resources (List): This field contains a list of regex expressions that applies to the resources that are wanted to be allowlisted.
     - Tags (List): -Optional- This field contains a list of tuples in the form of 'key=value' that applies to the resources tags that are wanted to be allowlisted.
+    - Exceptions (Map): -Optional- This field contains a map of lists of accounts/regions/resources/tags that are wanted to be excepted in the allowlist.
+
+The following example will allowlist all resources in all accounts for the EC2 checks in the regions `eu-west-1` and `us-east-1` with the tags `environment=dev` and `environment=prod`, except the resources containing the string `test` in the account `012345678912` and region `eu-west-1` with the tag `environment=prod`:
 
 <img src="../img/allowlist-row.png"/>
 

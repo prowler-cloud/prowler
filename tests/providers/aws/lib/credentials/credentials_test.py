@@ -190,6 +190,47 @@ class Test_AWS_Credentials:
 
     @mock_sts
     @mock_iam
+    def test_validate_credentials_commercial_partition_with_regions_none_and_profile_region_but_sts_endpoint_region(
+        self,
+    ):
+        # AWS Region for AWS COMMERCIAL
+        aws_region = "eu-west-1"
+        sts_endpoint_region = aws_region
+        aws_partition = "aws"
+        # Create a mock IAM user
+        iam_client = boto3.client("iam", region_name=aws_region)
+        iam_user = iam_client.create_user(UserName="test-user")["User"]
+        # Create a mock IAM access keys
+        access_key = iam_client.create_access_key(UserName=iam_user["UserName"])[
+            "AccessKey"
+        ]
+        access_key_id = access_key["AccessKeyId"]
+        secret_access_key = access_key["SecretAccessKey"]
+
+        # Create AWS session to validate
+        session = boto3.session.Session(
+            aws_access_key_id=access_key_id,
+            aws_secret_access_key=secret_access_key,
+            region_name=aws_region,
+        )
+
+        get_caller_identity = validate_aws_credentials(
+            session, None, sts_endpoint_region
+        )
+
+        assert get_caller_identity["region"] == aws_region
+
+        caller_identity_arn = parse_iam_credentials_arn(get_caller_identity["Arn"])
+
+        assert caller_identity_arn.partition == aws_partition
+        assert caller_identity_arn.region is None
+        assert caller_identity_arn.resource == "test-user"
+        assert caller_identity_arn.resource_type == "user"
+        assert re.match("[0-9a-zA-Z]{20}", get_caller_identity["UserId"])
+        assert get_caller_identity["Account"] == AWS_ACCOUNT_NUMBER
+
+    @mock_sts
+    @mock_iam
     def test_validate_credentials_china_partition_without_regions_and_profile_region_so_us_east_1(
         self,
     ):
@@ -271,6 +312,53 @@ class Test_AWS_Credentials:
     @mock_sts
     @mock_iam
     @patch(
+        "botocore.client.BaseClient._make_api_call", new=mock_get_caller_identity_china
+    )
+    def test_validate_credentials_china_partition_without_regions_but_sts_endpoint_region(
+        self,
+    ):
+        # AWS Region for AWS CHINA
+        aws_region = "cn-north-1"
+        sts_endpoint_region = aws_region
+        aws_partition = "aws-cn"
+        # Create a mock IAM user
+        iam_client = boto3.client("iam", region_name=aws_region)
+        iam_user = iam_client.create_user(UserName="test-user")["User"]
+        # Create a mock IAM access keys
+        access_key = iam_client.create_access_key(UserName=iam_user["UserName"])[
+            "AccessKey"
+        ]
+        access_key_id = access_key["AccessKeyId"]
+        secret_access_key = access_key["SecretAccessKey"]
+
+        # Create AWS session to validate
+        session = boto3.session.Session(
+            aws_access_key_id=access_key_id,
+            aws_secret_access_key=secret_access_key,
+            region_name=aws_region,
+        )
+
+        get_caller_identity = validate_aws_credentials(
+            session, None, sts_endpoint_region
+        )
+
+        # To use GovCloud or China it is either required:
+        # - Set the AWS profile region with a valid partition region
+        # - Use the -f/--region with a valid partition region
+        assert get_caller_identity["region"] == aws_region
+
+        caller_identity_arn = parse_iam_credentials_arn(get_caller_identity["Arn"])
+
+        assert caller_identity_arn.partition == aws_partition
+        assert caller_identity_arn.region is None
+        assert caller_identity_arn.resource == "test-user"
+        assert caller_identity_arn.resource_type == "user"
+        assert re.match("[0-9a-zA-Z]{20}", get_caller_identity["UserId"])
+        assert get_caller_identity["Account"] == AWS_ACCOUNT_NUMBER
+
+    @mock_sts
+    @mock_iam
+    @patch(
         "botocore.client.BaseClient._make_api_call",
         new=mock_get_caller_identity_gov_cloud,
     )
@@ -296,6 +384,54 @@ class Test_AWS_Credentials:
         )
 
         get_caller_identity = validate_aws_credentials(session, [aws_region])
+
+        # To use GovCloud or China it is either required:
+        # - Set the AWS profile region with a valid partition region
+        # - Use the -f/--region with a valid partition region
+        assert get_caller_identity["region"] == aws_region
+
+        caller_identity_arn = parse_iam_credentials_arn(get_caller_identity["Arn"])
+
+        assert caller_identity_arn.partition == aws_partition
+        assert caller_identity_arn.region is None
+        assert caller_identity_arn.resource == "test-user"
+        assert caller_identity_arn.resource_type == "user"
+        assert re.match("[0-9a-zA-Z]{20}", get_caller_identity["UserId"])
+        assert get_caller_identity["Account"] == AWS_ACCOUNT_NUMBER
+
+    @mock_sts
+    @mock_iam
+    @patch(
+        "botocore.client.BaseClient._make_api_call",
+        new=mock_get_caller_identity_gov_cloud,
+    )
+    def test_validate_credentials_gov_cloud_partition_without_regions_but_sts_endpoint_region(
+        self,
+    ):
+        # AWS Region for US GOV CLOUD
+        aws_region = "us-gov-east-1"
+        sts_endpoint_region = aws_region
+        aws_partition = "aws-us-gov"
+        # Create a mock IAM user
+        iam_client = boto3.client("iam", region_name=aws_region)
+        iam_user = iam_client.create_user(UserName="test-user")["User"]
+        # Create a mock IAM access keys
+        access_key = iam_client.create_access_key(UserName=iam_user["UserName"])[
+            "AccessKey"
+        ]
+        access_key_id = access_key["AccessKeyId"]
+        secret_access_key = access_key["SecretAccessKey"]
+
+        # Create AWS session to validate
+        session = boto3.session.Session(
+            aws_access_key_id=access_key_id,
+            aws_secret_access_key=secret_access_key,
+            region_name=aws_region,
+        )
+
+        get_caller_identity = validate_aws_credentials(
+            session, None, sts_endpoint_region
+        )
 
         # To use GovCloud or China it is either required:
         # - Set the AWS profile region with a valid partition region

@@ -21,7 +21,7 @@
       "Terraform": "https://docs.bridgecrew.io/docs/s3_14-data-encrypted-at-rest#terraform"
     },
     "Recommendation": {
-      "Text": "Ensure that S3 buckets has encryption at rest enabled.",
+      "Text": "Ensure that S3 buckets have encryption at rest enabled.",
       "Url": "https://aws.amazon.com/blogs/security/how-to-prevent-uploads-of-unencrypted-objects-to-amazon-s3/"
     }
   },

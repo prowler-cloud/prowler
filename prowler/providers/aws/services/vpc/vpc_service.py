@@ -2,11 +2,15 @@ import json
 import threading
 from typing import Optional
 
+from botocore.client import ClientError
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
-from prowler.providers.aws.aws_provider import generate_regional_clients
+from prowler.providers.aws.aws_provider import (
+    generate_regional_clients,
+    get_default_region,
+)
 
 
 ################## VPC
@@ -32,11 +36,7 @@ class VPC:
         self.__describe_vpc_endpoint_service_permissions__()
         self.vpc_subnets = {}
         self.__threading_call__(self.__describe_vpc_subnets__)
-        self.region = (
-            audit_info.profile_region
-            if audit_info.profile_region
-            else list(self.regional_clients.keys())[0]
-        )
+        self.region = get_default_region(self.service, audit_info)
 
     def __get_session__(self):
         return self.session
@@ -227,14 +227,23 @@ class VPC:
         try:
             for service in self.vpc_endpoint_services:
                 regional_client = self.regional_clients[service.region]
-                for (
-                    principal
-                ) in regional_client.describe_vpc_endpoint_service_permissions(
-                    ServiceId=service.id
-                )[
-                    "AllowedPrincipals"
-                ]:
-                    service.allowed_principals.append(principal["Principal"])
+                try:
+                    for (
+                        principal
+                    ) in regional_client.describe_vpc_endpoint_service_permissions(
+                        ServiceId=service.id
+                    )[
+                        "AllowedPrincipals"
+                    ]:
+                        service.allowed_principals.append(principal["Principal"])
+                except ClientError as error:
+                    if (
+                        error.response["Error"]["Code"]
+                        == "InvalidVpcEndpointServiceId.NotFound"
+                    ):
+                        logger.warning(
+                            f"{service.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"

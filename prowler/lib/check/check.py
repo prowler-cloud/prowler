@@ -93,6 +93,9 @@ def exclude_checks_to_run(checks_to_execute: set, excluded_checks: list) -> set:
 def exclude_services_to_run(
     checks_to_execute: set, excluded_services: list, provider: str
 ) -> set:
+    excluded_services = [
+        "awslambda" if service == "lambda" else service for service in excluded_services
+    ]
     # Recover checks from the input services
     for service in excluded_services:
         modules = recover_checks_from_provider(provider, service)
@@ -191,14 +194,6 @@ def list_services(provider: str) -> set():
             service_name = check_path.split("/")[-2]
         available_services.add(service_name)
     return sorted(available_services)
-
-
-def list_checks(provider: str) -> set():
-    available_checks = set()
-    checks_tuple = recover_checks_from_provider(provider)
-    for check_name, _ in checks_tuple:
-        available_checks.add(check_name)
-    return sorted(available_checks)
 
 
 def list_categories(bulk_checks_metadata: dict) -> set():
@@ -581,6 +576,9 @@ def update_audit_metadata(
 
 def recover_checks_from_service(service_list: list, provider: str) -> list:
     checks = set()
+    service_list = [
+        "awslambda" if service == "lambda" else service for service in service_list
+    ]
     for service in service_list:
         modules = recover_checks_from_provider(provider, service)
         if not modules:
