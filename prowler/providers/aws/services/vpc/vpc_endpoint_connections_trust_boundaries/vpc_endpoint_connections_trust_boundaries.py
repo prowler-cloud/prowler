@@ -31,14 +31,16 @@ class vpc_endpoint_connections_trust_boundaries(Check):
                         else:
                             principals = statement["Principal"]["AWS"]
                         for principal_arn in principals:
-                            report = Check_Report_AWS(self.metadata())
-                            report.region = endpoint.region
                             if principal_arn == "*":
+                                report = Check_Report_AWS(self.metadata())
+                                report.region = endpoint.region
                                 report.status = "FAIL"
                                 report.status_extended = f"VPC Endpoint {endpoint.id} in VPC {endpoint.vpc_id} has full access."
                                 report.resource_id = endpoint.id
                                 report.resource_arn = endpoint.arn
                                 report.resource_tags = endpoint.tags
+                                findings.append(report)
+                                break
                             else:
                                 # Account ID can be an ARN or just a 12-digit string
                                 pattern = compile(r"^[0-9]{12}$")
@@ -51,17 +53,22 @@ class vpc_endpoint_connections_trust_boundaries(Check):
                                     account_id in trusted_account_ids
                                     or account_id in vpc_client.audited_account
                                 ):
+                                    report = Check_Report_AWS(self.metadata())
+                                    report.region = endpoint.region
                                     report.status = "PASS"
                                     report.status_extended = f"Found trusted account {account_id} in VPC Endpoint {endpoint.id} in VPC {endpoint.vpc_id}."
                                     report.resource_id = endpoint.id
                                     report.resource_arn = endpoint.arn
                                     report.resource_tags = endpoint.tags
                                 else:
+                                    report = Check_Report_AWS(self.metadata())
+                                    report.region = endpoint.region
                                     report.status = "FAIL"
                                     report.status_extended = f"Found untrusted account {account_id} in VPC Endpoint {endpoint.id} in VPC {endpoint.vpc_id}."
                                     report.resource_id = endpoint.id
                                     report.resource_arn = endpoint.arn
                                     report.resource_tags = endpoint.tags
-                            findings.append(report)
+
+                                findings.append(report)
 
         return findings
