@@ -291,8 +291,19 @@ class S3:
             regional_client.get_object_lock_configuration(Bucket=bucket.name)
             bucket.object_lock = True
         except Exception as error:
-            if "ObjectLockConfigurationNotFoundError" in str(error):
+            if (
+                "ObjectLockConfigurationNotFoundError" in str(error)
+                or error.response["Error"]["Code"] == "NoSuchBucket"
+            ):
                 bucket.object_lock = False
+                if regional_client:
+                    logger.warning(
+                        f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
+                else:
+                    logger.warning(
+                        f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
             else:
                 if regional_client:
                     logger.error(
