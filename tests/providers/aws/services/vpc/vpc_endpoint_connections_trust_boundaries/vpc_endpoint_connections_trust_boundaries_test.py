@@ -126,7 +126,7 @@ class Test_vpc_endpoint_connections_trust_boundaries:
                 assert result[0].region == AWS_REGION
 
     @mock_ec2
-    def test_vpc_endpoint_with_trusted_account(self):
+    def test_vpc_endpoint_with_trusted_account_with_arn(self):
         # Create VPC Mocked Resources
         ec2_client = client("ec2", region_name=AWS_REGION)
 
@@ -144,6 +144,64 @@ class Test_vpc_endpoint_connections_trust_boundaries:
                         {
                             "Effect": "Allow",
                             "Principal": {"AWS": "arn:aws:iam::123456789012:root"},
+                            "Action": "*",
+                            "Resource": "*",
+                        }
+                    ]
+                }
+            ),
+        )
+        from prowler.providers.aws.services.vpc.vpc_service import VPC
+
+        current_audit_info = self.set_mocked_audit_info()
+
+        with mock.patch(
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=current_audit_info,
+        ):
+            with mock.patch(
+                "prowler.providers.aws.services.vpc.vpc_endpoint_connections_trust_boundaries.vpc_endpoint_connections_trust_boundaries.vpc_client",
+                new=VPC(current_audit_info),
+            ):
+                # Test Check
+                from prowler.providers.aws.services.vpc.vpc_endpoint_connections_trust_boundaries.vpc_endpoint_connections_trust_boundaries import (
+                    vpc_endpoint_connections_trust_boundaries,
+                )
+
+                check = vpc_endpoint_connections_trust_boundaries()
+                result = check.execute()
+
+                assert len(result) == 1
+                assert result[0].status == "PASS"
+                assert (
+                    result[0].status_extended
+                    == f"Found trusted account {AWS_ACCOUNT_NUMBER} in VPC Endpoint {vpc_endpoint['VpcEndpoint']['VpcEndpointId']} in VPC {vpc['VpcId']}."
+                )
+                assert (
+                    result[0].resource_id
+                    == vpc_endpoint["VpcEndpoint"]["VpcEndpointId"]
+                )
+                assert result[0].region == AWS_REGION
+
+    @mock_ec2
+    def test_vpc_endpoint_with_trusted_account(self):
+        # Create VPC Mocked Resources
+        ec2_client = client("ec2", region_name=AWS_REGION)
+
+        vpc = ec2_client.create_vpc(CidrBlock="10.0.0.0/16")["Vpc"]
+
+        route_table = ec2_client.create_route_table(VpcId=vpc["VpcId"])["RouteTable"]
+        vpc_endpoint = ec2_client.create_vpc_endpoint(
+            VpcId=vpc["VpcId"],
+            ServiceName="com.amazonaws.us-east-1.s3",
+            RouteTableIds=[route_table["RouteTableId"]],
+            VpcEndpointType="Gateway",
+            PolicyDocument=json.dumps(
+                {
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Principal": {"AWS": "123456789012"},
                             "Action": "*",
                             "Resource": "*",
                         }
@@ -242,7 +300,7 @@ class Test_vpc_endpoint_connections_trust_boundaries:
                 )
 
     @mock_ec2
-    def test_vpc_endpoint_with_config_trusted_account(self):
+    def test_vpc_endpoint_with_config_trusted_account_with_arn(self):
         # Create VPC Mocked Resources
         ec2_client = client("ec2", region_name=AWS_REGION)
 
@@ -260,6 +318,68 @@ class Test_vpc_endpoint_connections_trust_boundaries:
                         {
                             "Effect": "Allow",
                             "Principal": {"AWS": "arn:aws:iam::123456789010:root"},
+                            "Action": "*",
+                            "Resource": "*",
+                        }
+                    ]
+                }
+            ),
+        )
+        from prowler.providers.aws.services.vpc.vpc_service import VPC
+
+        current_audit_info = self.set_mocked_audit_info()
+
+        with mock.patch(
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=current_audit_info,
+        ):
+            with mock.patch(
+                "prowler.providers.aws.services.vpc.vpc_endpoint_connections_trust_boundaries.vpc_endpoint_connections_trust_boundaries.vpc_client",
+                new=VPC(current_audit_info),
+            ):
+                with mock.patch(
+                    "prowler.providers.aws.services.vpc.vpc_endpoint_connections_trust_boundaries.vpc_endpoint_connections_trust_boundaries.get_config_var",
+                    new=mock_get_config_var,
+                ):
+                    # Test Check
+                    from prowler.providers.aws.services.vpc.vpc_endpoint_connections_trust_boundaries.vpc_endpoint_connections_trust_boundaries import (
+                        vpc_endpoint_connections_trust_boundaries,
+                    )
+
+                    check = vpc_endpoint_connections_trust_boundaries()
+                    result = check.execute()
+
+                    assert len(result) == 1
+                    assert result[0].status == "PASS"
+                    assert (
+                        result[0].status_extended
+                        == f"Found trusted account 123456789010 in VPC Endpoint {vpc_endpoint['VpcEndpoint']['VpcEndpointId']} in VPC {vpc['VpcId']}."
+                    )
+                    assert (
+                        result[0].resource_id
+                        == vpc_endpoint["VpcEndpoint"]["VpcEndpointId"]
+                    )
+                    assert result[0].region == AWS_REGION
+
+    @mock_ec2
+    def test_vpc_endpoint_with_config_trusted_account(self):
+        # Create VPC Mocked Resources
+        ec2_client = client("ec2", region_name=AWS_REGION)
+
+        vpc = ec2_client.create_vpc(CidrBlock="10.0.0.0/16")["Vpc"]
+
+        route_table = ec2_client.create_route_table(VpcId=vpc["VpcId"])["RouteTable"]
+        vpc_endpoint = ec2_client.create_vpc_endpoint(
+            VpcId=vpc["VpcId"],
+            ServiceName="com.amazonaws.us-east-1.s3",
+            RouteTableIds=[route_table["RouteTableId"]],
+            VpcEndpointType="Gateway",
+            PolicyDocument=json.dumps(
+                {
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Principal": {"AWS": ["123456789010"]},
                             "Action": "*",
                             "Resource": "*",
                         }

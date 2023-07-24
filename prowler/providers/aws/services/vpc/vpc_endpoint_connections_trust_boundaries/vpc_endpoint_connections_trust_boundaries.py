@@ -1,3 +1,5 @@
+from re import compile
+
 from prowler.config.config import get_config_var
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.vpc.vpc_client import vpc_client
@@ -38,7 +40,13 @@ class vpc_endpoint_connections_trust_boundaries(Check):
                                 report.resource_arn = endpoint.arn
                                 report.resource_tags = endpoint.tags
                             else:
-                                account_id = principal_arn.split(":")[4]
+                                # Account ID can be an ARN or just a 12-digit string
+                                pattern = compile(r"^[0-9]{12}$")
+                                match = pattern.match(principal_arn)
+                                if not match:
+                                    account_id = principal_arn.split(":")[4]
+                                else:
+                                    account_id = match.string
                                 if (
                                     account_id in trusted_account_ids
                                     or account_id in vpc_client.audited_account
