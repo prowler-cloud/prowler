@@ -39,7 +39,7 @@ colorama = "0.4.6"
 detect-secrets = "1.4.0"
 google-api-python-client = "2.93.0"
 mkdocs = {version = "1.4.3", optional = true}
-mkdocs-material = {version = "9.1.18", optional = true}
+mkdocs-material = {version = "9.1.19", optional = true}
 msgraph-core = "0.2.2"
 pydantic = "1.10.12"
 python = "^3.9"
