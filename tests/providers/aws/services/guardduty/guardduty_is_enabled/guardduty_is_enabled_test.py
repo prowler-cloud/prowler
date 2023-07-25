@@ -17,6 +17,13 @@ class Test_guardduty_is_enabled:
     def test_no_detectors(self):
         guardduty_client = mock.MagicMock
         guardduty_client.detectors = []
+        guardduty_client.detectors.append(
+            Detector(
+                id="",
+                region=AWS_REGION,
+                arn="",
+            )
+        )
         with mock.patch(
             "prowler.providers.aws.services.guardduty.guardduty_service.GuardDuty",
             guardduty_client,
@@ -27,7 +34,11 @@ class Test_guardduty_is_enabled:
 
             check = guardduty_is_enabled()
             result = check.execute()
-            assert len(result) == 0
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert search("is not enabled", result[0].status_extended)
+            assert result[0].resource_id == ""
+            assert result[0].resource_arn == ""
 
     def test_guardduty_enabled(self):
         guardduty_client = mock.MagicMock

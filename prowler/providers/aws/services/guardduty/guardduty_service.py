@@ -40,9 +40,11 @@ class GuardDuty:
     def __list_detectors__(self, regional_client):
         logger.info("GuardDuty - listing detectors...")
         try:
+            detectors = False
             list_detectors_paginator = regional_client.get_paginator("list_detectors")
             for page in list_detectors_paginator.paginate():
                 for detector in page["DetectorIds"]:
+                    detectors = True
                     arn = f"arn:{self.audited_partition}:guardduty:{regional_client.region}:{self.audited_account}:detector/{detector}"
                     if not self.audit_resources or (
                         is_resource_filtered(arn, self.audit_resources)
@@ -52,6 +54,10 @@ class GuardDuty:
                                 id=detector, arn=arn, region=regional_client.region
                             )
                         )
+            if not detectors:
+                self.detectors.append(
+                    Detector(id="", arn="", region=regional_client.region)
+                )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -61,10 +67,14 @@ class GuardDuty:
         logger.info("GuardDuty - getting detector info...")
         try:
             for detector in self.detectors:
-                regional_client = self.regional_clients[detector.region]
-                detector_info = regional_client.get_detector(DetectorId=detector.id)
-                if "Status" in detector_info and detector_info["Status"] == "ENABLED":
-                    detector.status = True
+                if detector.id:
+                    regional_client = self.regional_clients[detector.region]
+                    detector_info = regional_client.get_detector(DetectorId=detector.id)
+                    if (
+                        "Status" in detector_info
+                        and detector_info["Status"] == "ENABLED"
+                    ):
+                        detector.status = True
 
         except Exception as error:
             logger.error(
@@ -75,23 +85,26 @@ class GuardDuty:
         logger.info("GuardDuty - getting administrator account...")
         try:
             for detector in self.detectors:
-                try:
-                    regional_client = self.regional_clients[detector.region]
-                    detector_administrator = regional_client.get_administrator_account(
-                        DetectorId=detector.id
-                    )
-                    detector_administrator_account = detector_administrator.get(
-                        "Administrator"
-                    )
-                    if detector_administrator_account:
-                        detector.administrator_account = (
-                            detector_administrator_account.get("AccountId")
+                if detector.id:
+                    try:
+                        regional_client = self.regional_clients[detector.region]
+                        detector_administrator = (
+                            regional_client.get_administrator_account(
+                                DetectorId=detector.id
+                            )
                         )
-                except Exception as error:
-                    logger.error(
-                        f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                    )
-                    continue
+                        detector_administrator_account = detector_administrator.get(
+                            "Administrator"
+                        )
+                        if detector_administrator_account:
+                            detector.administrator_account = (
+                                detector_administrator_account.get("AccountId")
+                            )
+                    except Exception as error:
+                        logger.error(
+                            f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
+                        continue
 
         except Exception as error:
             logger.error(
@@ -102,21 +115,22 @@ class GuardDuty:
         logger.info("GuardDuty - listing members...")
         try:
             for detector in self.detectors:
-                try:
-                    regional_client = self.regional_clients[detector.region]
-                    list_members_paginator = regional_client.get_paginator(
-                        "list_members"
-                    )
-                    for page in list_members_paginator.paginate(
-                        DetectorId=detector.id,
-                    ):
-                        for member in page["Members"]:
-                            detector.member_accounts.append(member.get("AccountId"))
-                except Exception as error:
-                    logger.error(
-                        f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                    )
-                    continue
+                if detector.id:
+                    try:
+                        regional_client = self.regional_clients[detector.region]
+                        list_members_paginator = regional_client.get_paginator(
+                            "list_members"
+                        )
+                        for page in list_members_paginator.paginate(
+                            DetectorId=detector.id,
+                        ):
+                            for member in page["Members"]:
+                                detector.member_accounts.append(member.get("AccountId"))
+                    except Exception as error:
+                        logger.error(
+                            f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
+                        continue
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
@@ -126,27 +140,30 @@ class GuardDuty:
         logger.info("GuardDuty - listing findings...")
         try:
             for detector in self.detectors:
-                regional_client = self.regional_clients[detector.region]
-                list_findings_paginator = regional_client.get_paginator("list_findings")
-                for page in list_findings_paginator.paginate(
-                    DetectorId=detector.id,
-                    FindingCriteria={
-                        "Criterion": {
-                            "severity": {
-                                "Eq": [
-                                    "8",
-                                ],
-                            },
-                            "service.archived": {
-                                "Eq": [
-                                    "false",
-                                ],
-                            },
-                        }
-                    },
-                ):
-                    for finding in page["FindingIds"]:
-                        detector.findings.append(finding)
+                if detector.id:
+                    regional_client = self.regional_clients[detector.region]
+                    list_findings_paginator = regional_client.get_paginator(
+                        "list_findings"
+                    )
+                    for page in list_findings_paginator.paginate(
+                        DetectorId=detector.id,
+                        FindingCriteria={
+                            "Criterion": {
+                                "severity": {
+                                    "Eq": [
+                                        "8",
+                                    ],
+                                },
+                                "service.archived": {
+                                    "Eq": [
+                                        "false",
+                                    ],
+                                },
+                            }
+                        },
+                    ):
+                        for finding in page["FindingIds"]:
+                            detector.findings.append(finding)
 
         except Exception as error:
             logger.error(
@@ -157,11 +174,12 @@ class GuardDuty:
         logger.info("Guardduty - List Tags...")
         try:
             for detector in self.detectors:
-                regional_client = self.regional_clients[detector.region]
-                response = regional_client.list_tags_for_resource(
-                    ResourceArn=detector.arn
-                )["Tags"]
-                detector.tags = [response]
+                if detector.arn:
+                    regional_client = self.regional_clients[detector.region]
+                    response = regional_client.list_tags_for_resource(
+                        ResourceArn=detector.arn
+                    )["Tags"]
+                    detector.tags = [response]
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
