@@ -112,10 +112,12 @@ class Compute:
                                     shielded_enabled_integrity_monitoring=instance[
                                         "shieldedInstanceConfig"
                                     ]["enableIntegrityMonitoring"],
-                                    confidential_computing=instance[
-                                        "confidentialInstanceConfig"
-                                    ]["enableConfidentialCompute"],
-                                    service_accounts=instance["serviceAccounts"],
+                                    confidential_computing=instance.get(
+                                        "confidentialInstanceConfig", {}
+                                    ).get("enableConfidentialCompute", False),
+                                    service_accounts=instance.get(
+                                        "serviceAccounts", []
+                                    ),
                                     ip_forward=instance.get("canIpForward", False),
                                     disks_encryption=[
                                         (
@@ -212,7 +214,7 @@ class Compute:
                             Firewall(
                                 name=firewall["name"],
                                 id=firewall["id"],
-                                source_ranges=firewall["sourceRanges"],
+                                source_ranges=firewall.get("sourceRanges", []),
                                 direction=firewall["direction"],
                                 allowed_rules=firewall.get("allowed", []),
                                 project_id=project_id,
@@ -238,7 +240,7 @@ class Compute:
                             LoadBalancer(
                                 name=urlmap["name"],
                                 id=urlmap["id"],
-                                service=urlmap["defaultService"],
+                                service=urlmap.get("defaultService", ""),
                                 project_id=project_id,
                             )
                         )
@@ -262,7 +264,7 @@ class Compute:
                     )
                     .execute()
                 )
-                balancer.logging = response.get("logConfig", False).get("enable", False)
+                balancer.logging = response.get("logConfig", {}).get("enable", False)
             except Exception as error:
                 logger.error(
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
