@@ -316,20 +316,17 @@ class EC2:
     def __describe_images__(self, regional_client):
         logger.info("EC2 - Describing Images...")
         try:
-            public = False
             for image in regional_client.describe_images(Owners=["self"])["Images"]:
                 arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:image/{image['ImageId']}"
                 if not self.audit_resources or (
                     is_resource_filtered(arn, self.audit_resources)
                 ):
-                    if image["Public"]:
-                        public = True
                     self.images.append(
                         Image(
                             id=image["ImageId"],
                             arn=arn,
                             name=image["Name"],
-                            public=public,
+                            public=image.get("Public", False),
                             region=regional_client.region,
                             tags=image.get("Tags"),
                         )
