@@ -12,8 +12,8 @@ class ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_3389(Check):
             report.region = security_group.region
             report.status = "PASS"
             report.status_extended = f"Security group {security_group.name} ({security_group.id}) has not Microsoft RDP port 3389 open to the Internet."
-            report.resource_details = security_group.id
-            report.resource_id = security_group.name
+            report.resource_details = security_group.name
+            report.resource_id = security_group.id
             report.resource_arn = security_group.arn
             report.resource_tags = security_group.tags
             if not security_group.public_ports:
