@@ -23,11 +23,13 @@ class SSM:
         self.documents = {}
         self.compliance_resources = {}
         self.managed_instances = {}
+        self.parameters = []
         self.__threading_call__(self.__list_documents__)
         self.__threading_call__(self.__get_document__)
         self.__threading_call__(self.__describe_document_permission__)
         self.__threading_call__(self.__list_resource_compliance_summaries__)
         self.__threading_call__(self.__describe_instance_information__)
+        self.__threading_call__(self.__describe_parameters__)
 
     def __get_session__(self):
         return self.session
@@ -162,6 +164,22 @@ class SSM:
                         id=resource_id,
                         region=regional_client.region,
                     )
+
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} --"
+                f" {error.__class__.__name__}[{error.__traceback__.tb_lineno}]:"
+                f" {error}"
+            )
+
+    def __describe_parameters__(self, regional_client):
+        logger.info("SSM - Describing Parameters...")
+        try:
+            describe_parameters_paginator = regional_client.get_paginator(
+                "describe_parameters"
+            )
+            for page in describe_parameters_paginator.paginate():
+                self.parameters += page["Parameters"]
 
         except Exception as error:
             logger.error(

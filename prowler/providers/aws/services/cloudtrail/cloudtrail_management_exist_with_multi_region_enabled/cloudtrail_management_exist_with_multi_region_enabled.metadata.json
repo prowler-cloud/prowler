@@ -1,0 +1,34 @@
+{
+  "Provider": "aws",
+  "CheckID": "cloudtrail_management_exist_with_multi_region_enabled",
+  "CheckTitle": "Ensure CloudTrail logging management events in All Regions",
+  "CheckType": [
+    "CIS AWS Foundations Benchmark"
+  ],
+  "ServiceName": "cloudtrail",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "Severity": "low",
+  "ResourceType": "AwsCloudTrailTrail",
+  "Description": "Ensure CloudTrail logging management events in All Regions",
+  "Risk": "",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable CloudTrail logging management events in All Regions",
+      "Url": "https://docs.bridgecrew.io/docs/logging_14"
+    }
+  },
+  "Categories": [
+    "forensics-ready"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

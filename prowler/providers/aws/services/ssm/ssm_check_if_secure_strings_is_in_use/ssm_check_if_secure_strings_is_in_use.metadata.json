@@ -1,0 +1,30 @@
+{
+  "Provider": "aws",
+  "CheckID": "ssm_check_if_secure_strings_is_in_use",
+  "CheckTitle": "Check if SSM secure strings is in use.",
+  "CheckType": [],
+  "ServiceName": "ssm",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "AwsSsmParameter",
+  "Description": "Check if SSM secure strings is in use.",
+  "Risk": "",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "",
+      "Url": ""
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Infrastructure Protection"
+}
