@@ -21,7 +21,7 @@
       "Terraform": "https://docs.bridgecrew.io/docs/logging_5-enable-aws-config-regions#terraform"
     },
     "Recommendation": {
-      "Text": "It is recommended to enable AWS Config be enabled in all regions.",
+      "Text": "It is recommended to enable AWS Config in all regions.",
       "Url": "https://aws.amazon.com/blogs/mt/aws-config-best-practices/"
     }
   },
