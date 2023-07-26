@@ -6,6 +6,7 @@ on:
 
 env:
   RELEASE_TAG: ${{ github.event.release.tag_name }}
+  GITHUB_BRANCH: master
 
 jobs:
   release-prowler-job:
@@ -16,7 +17,8 @@ jobs:
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3
-
+        with:
+          ref: ${{ env.GITHUB_BRANCH }}
       - name: Install dependencies
         run: |
           pipx install poetry
@@ -35,8 +37,6 @@ jobs:
           git commit -m "chore(release): ${{ env.RELEASE_TAG }}" --no-verify
           git tag -fa ${{ env.RELEASE_TAG }} -m "chore(release): ${{ env.RELEASE_TAG }}"
           git push -f origin ${{ env.RELEASE_TAG }}
-          git checkout -B release-${{ env.RELEASE_TAG }}
-          git push origin release-${{ env.RELEASE_TAG }}
           poetry build
       - name: Publish prowler package to PyPI
         run: |
@@ -48,7 +48,6 @@ jobs:
         with:
           token: ${{ secrets.PROWLER_ACCESS_TOKEN }}
           commit-message: "chore(release): update Prowler Version to ${{ env.RELEASE_TAG }}."
-          base: master
           branch: release-${{ env.RELEASE_TAG }}
           labels: "status/waiting-for-revision, severity/low"
           title: "chore(release): update Prowler Version to ${{ env.RELEASE_TAG }}"
