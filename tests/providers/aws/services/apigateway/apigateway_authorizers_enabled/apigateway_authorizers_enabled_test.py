@@ -117,7 +117,7 @@ class Test_apigateway_authorizers_enabled:
             assert len(result) == 1
             assert (
                 result[0].status_extended
-                == f"API Gateway test-rest-api ID {rest_api['id']} has authorizer configured."
+                == f"API Gateway test-rest-api ID {rest_api['id']} has an authorizer configured."
             )
             assert result[0].resource_id == "test-rest-api"
             assert (
@@ -158,7 +158,7 @@ class Test_apigateway_authorizers_enabled:
             assert len(result) == 1
             assert (
                 result[0].status_extended
-                == f"API Gateway test-rest-api ID {rest_api['id']} has not authorizer configured."
+                == f"API Gateway test-rest-api ID {rest_api['id']} does not have an authorizer configured."
             )
             assert result[0].resource_id == "test-rest-api"
             assert (

@@ -16,11 +16,11 @@ class iam_role_cross_account_readonlyaccess_policy(Check):
                 report.resource_tags = role.tags
                 report.status = "PASS"
                 report.status_extended = (
-                    f"IAM Role {role.name} has not ReadOnlyAccess policy"
+                    f"IAM Role {role.name} does not have ReadOnlyAccess policy."
                 )
                 for policy in role.attached_policies:
                     if policy["PolicyName"] == "ReadOnlyAccess":
-                        report.status_extended = f"IAM Role {role.name} has read-only access but is not cross account"
+                        report.status_extended = f"IAM Role {role.name} has read-only access but is not cross account."
                         cross_account_access = False
                         if type(role.assume_role_policy["Statement"]) == list:
                             for statement in role.assume_role_policy["Statement"]:
@@ -72,7 +72,7 @@ class iam_role_cross_account_readonlyaccess_policy(Check):
                                         cross_account_access = True
                         if cross_account_access:
                             report.status = "FAIL"
-                            report.status_extended = f"IAM Role {role.name} gives cross account read-only access!"
+                            report.status_extended = f"IAM Role {role.name} gives cross account read-only access."
 
                 findings.append(report)
 

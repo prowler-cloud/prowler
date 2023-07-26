@@ -97,7 +97,7 @@ class Test_iam_role_cross_account_readonlyaccess_policy:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "IAM Role test has not ReadOnlyAccess policy"
+                == "IAM Role test does not have ReadOnlyAccess policy"
             )
             assert result[0].resource_id == "test"
             assert result[0].resource_arn == response["Role"]["Arn"]

@@ -194,7 +194,7 @@ class Test_ec2_networkacl_allow_ingress_tcp_port_22:
                     assert nacl.status == "PASS"
                     assert (
                         nacl.status_extended
-                        == f"Network ACL {nacl_id} has not SSH port 22 open to the Internet."
+                        == f"Network ACL {nacl_id} does not have SSH port 22 open to the Internet."
                     )
                     assert (
                         nacl.resource_arn

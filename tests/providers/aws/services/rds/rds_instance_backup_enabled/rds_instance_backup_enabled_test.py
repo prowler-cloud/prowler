@@ -117,7 +117,7 @@ class Test_rds_instance_backup_enabled:
                 assert len(result) == 1
                 assert result[0].status == "FAIL"
                 assert search(
-                    "has not backup enabled",
+                    "does not have backup enabled",
                     result[0].status_extended,
                 )
                 assert result[0].resource_id == "db-master-1"

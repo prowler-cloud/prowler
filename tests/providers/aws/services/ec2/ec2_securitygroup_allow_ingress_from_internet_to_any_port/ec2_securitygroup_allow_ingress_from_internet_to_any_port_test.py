@@ -179,7 +179,7 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_any_port:
                 if sg.resource_id == default_sg_id:
                     assert sg.status == "PASS"
                     assert search(
-                        "has not all ports open to the Internet",
+                        "does not have all ports open to the Internet",
                         sg.status_extended,
                     )
                     assert (
@@ -240,7 +240,7 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_any_port:
                 if sg.resource_id == default_sg_id:
                     assert sg.status == "PASS"
                     assert search(
-                        "has not all ports open to the Internet",
+                        "does not have all ports open to the Internet",
                         sg.status_extended,
                     )
                     assert (

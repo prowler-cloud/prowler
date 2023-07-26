@@ -71,7 +71,7 @@ class Test_awslambda_function_url_public:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Lambda function {function_name} has a publicly accessible function URL"
+                == f"Lambda function {function_name} has a publicly accessible function URL."
             )
 
     def test_function_private_url(self):
@@ -114,5 +114,5 @@ class Test_awslambda_function_url_public:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Lambda function {function_name} has not a publicly accessible function URL"
+                == f"Lambda function {function_name} does not have a publicly accessible function URL."
             )

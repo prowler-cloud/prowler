@@ -104,7 +104,7 @@ class Test_elb_insecure_ssl_ciphers:
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert search(
-                "has not insecure SSL protocols or ciphers",
+                "does not have insecure SSL protocols or ciphers",
                 result[0].status_extended,
             )
             assert result[0].resource_id == "my-lb"

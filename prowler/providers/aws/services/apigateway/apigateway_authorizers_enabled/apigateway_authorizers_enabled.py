@@ -15,10 +15,10 @@ class apigateway_authorizers_enabled(Check):
             report.resource_tags = rest_api.tags
             if rest_api.authorizer:
                 report.status = "PASS"
-                report.status_extended = f"API Gateway {rest_api.name} ID {rest_api.id} has authorizer configured."
+                report.status_extended = f"API Gateway {rest_api.name} ID {rest_api.id} has an authorizer configured."
             else:
                 report.status = "FAIL"
-                report.status_extended = f"API Gateway {rest_api.name} ID {rest_api.id} has not authorizer configured."
+                report.status_extended = f"API Gateway {rest_api.name} ID {rest_api.id} does not have an authorizer configured."
             findings.append(report)
 
         return findings

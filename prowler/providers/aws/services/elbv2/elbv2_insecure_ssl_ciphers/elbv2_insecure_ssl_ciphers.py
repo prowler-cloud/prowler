@@ -25,7 +25,7 @@ class elbv2_insecure_ssl_ciphers(Check):
             report.resource_tags = lb.tags
             report.status = "PASS"
             report.status_extended = (
-                f"ELBv2 {lb.name} has not insecure SSL protocols or ciphers."
+                f"ELBv2 {lb.name} does not have insecure SSL protocols or ciphers."
             )
             for listener in lb.listeners:
                 if (

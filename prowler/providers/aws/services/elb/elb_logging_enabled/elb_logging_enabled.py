@@ -11,7 +11,7 @@ class elb_logging_enabled(Check):
             report.resource_id = lb.name
             report.resource_tags = lb.tags
             report.status = "FAIL"
-            report.status_extended = f"ELB {lb.name} has not configured access logs."
+            report.status_extended = f"ELB {lb.name} does not have access logs configured."
             if lb.access_logs:
                 report.status = "PASS"
                 report.status_extended = (

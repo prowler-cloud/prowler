@@ -97,7 +97,7 @@ class Test_elb_logging_enabled:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert search(
-                "has not configured access logs",
+                "does not have access logs configured",
                 result[0].status_extended,
             )
             assert result[0].resource_id == "my-lb"

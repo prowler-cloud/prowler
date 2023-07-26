@@ -187,7 +187,7 @@ class ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_sql_server_1433_
                 if sg.resource_id == default_sg_id:
                     assert sg.status == "PASS"
                     assert search(
-                        "has not Microsoft SQL Server ports 1433 and 1434 open to the Internet",
+                        "does not have Microsoft SQL Server ports 1433 and 1434 open to the Internet",
                         sg.status_extended,
                     )
                     assert (

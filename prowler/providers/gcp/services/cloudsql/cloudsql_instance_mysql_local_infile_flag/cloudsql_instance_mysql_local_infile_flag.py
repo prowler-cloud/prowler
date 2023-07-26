@@ -13,11 +13,11 @@ class cloudsql_instance_mysql_local_infile_flag(Check):
                 report.resource_name = instance.name
                 report.location = instance.region
                 report.status = "FAIL"
-                report.status_extended = f"MySQL Instance {instance.name} has not 'local_infile' flag set to 'off'"
+                report.status_extended = f"MySQL Instance {instance.name} does not have 'local_infile' flag set to 'off'."
                 for flag in instance.flags:
                     if flag["name"] == "local_infile" and flag["value"] == "off":
                         report.status = "PASS"
-                        report.status_extended = f"MySQL Instance {instance.name} has 'local_infile' flag set to 'off'"
+                        report.status_extended = f"MySQL Instance {instance.name} has 'local_infile' flag set to 'off'."
                         break
                 findings.append(report)
 
