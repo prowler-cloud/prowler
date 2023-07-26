@@ -78,8 +78,9 @@ class Test_ec2_securitygroup_not_used:
         ec2 = resource("ec2", AWS_REGION)
         ec2_client = client("ec2", region_name=AWS_REGION)
         vpc_id = ec2_client.create_vpc(CidrBlock="10.0.0.0/16")["Vpc"]["VpcId"]
+        sg_name = "test-sg"
         sg = ec2.create_security_group(
-            GroupName="test-sg", Description="test", VpcId=vpc_id
+            GroupName=sg_name, Description="test", VpcId=vpc_id
         )
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
@@ -112,6 +113,9 @@ class Test_ec2_securitygroup_not_used:
                 result[0].resource_arn
                 == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:security-group/{sg.id}"
             )
+            assert result[0].resource_id == sg.id
+            assert result[0].resource_details == sg_name
+            assert result[0].resource_tags == []
 
     @mock_ec2
     def test_ec2_used_default_sg(self):
@@ -119,8 +123,9 @@ class Test_ec2_securitygroup_not_used:
         ec2 = resource("ec2", AWS_REGION)
         ec2_client = client("ec2", region_name=AWS_REGION)
         vpc_id = ec2_client.create_vpc(CidrBlock="10.0.0.0/16")["Vpc"]["VpcId"]
+        sg_name = "test-sg"
         sg = ec2.create_security_group(
-            GroupName="test-sg", Description="test", VpcId=vpc_id
+            GroupName=sg_name, Description="test", VpcId=vpc_id
         )
         subnet = ec2.create_subnet(VpcId=vpc_id, CidrBlock="10.0.0.0/18")
         subnet.create_network_interface(Groups=[sg.id])
@@ -155,3 +160,6 @@ class Test_ec2_securitygroup_not_used:
                 result[0].resource_arn
                 == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:security-group/{sg.id}"
             )
+            assert result[0].resource_id == sg.id
+            assert result[0].resource_details == sg_name
+            assert result[0].resource_tags == []
