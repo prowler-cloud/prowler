@@ -90,7 +90,7 @@ class Test_cloudtrail_insights_exist:
                 assert result[0].status == "FAIL"
                 assert (
                     result[0].status_extended
-                    == f"Trail {trail_name_us} has not insight selectors and it is logging"
+                    == f"Trail {trail_name_us} does not have insight selectors and it is logging."
                 )
                 assert result[0].resource_id == trail_name_us
                 assert result[0].region == "us-east-1"
@@ -135,7 +135,7 @@ class Test_cloudtrail_insights_exist:
                 assert result[0].status == "PASS"
                 assert (
                     result[0].status_extended
-                    == f"Trail {trail_name_us} has insight selectors and it is logging"
+                    == f"Trail {trail_name_us} has insight selectors and it is logging."
                 )
                 assert result[0].resource_id == trail_name_us
                 assert result[0].region == "us-east-1"

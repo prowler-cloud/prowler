@@ -108,7 +108,7 @@ class Test_elbv2_deletion_protection:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert search(
-                "has not deletion protection",
+                "does not have deletion protection",
                 result[0].status_extended,
             )
             assert result[0].resource_id == "my-lb"

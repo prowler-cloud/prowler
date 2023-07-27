@@ -194,7 +194,7 @@ class Test_ec2_networkacl_allow_ingress_tcp_port_3389:
                     assert nacl.status == "PASS"
                     assert (
                         nacl.status_extended
-                        == f"Network ACL {nacl_id} has not Microsoft RDP port 3389 open to the Internet."
+                        == f"Network ACL {nacl_id} does not have Microsoft RDP port 3389 open to the Internet."
                     )
                     assert (
                         nacl.resource_arn

@@ -205,7 +205,7 @@ class Test_apigateway_waf_acl_attached:
             assert len(result) == 1
             assert (
                 result[0].status_extended
-                == f"API Gateway test-rest-api ID {rest_api['id']} in stage test has not WAF ACL attached."
+                == f"API Gateway test-rest-api ID {rest_api['id']} in stage test does not have WAF ACL attached."
             )
             assert result[0].resource_id == "test-rest-api"
             assert (

@@ -15,10 +15,10 @@ class awslambda_function_url_public(Check):
             if function.url_config:
                 if function.url_config.auth_type == AuthType.AWS_IAM:
                     report.status = "PASS"
-                    report.status_extended = f"Lambda function {function.name} has not a publicly accessible function URL"
+                    report.status_extended = f"Lambda function {function.name} does not have a publicly accessible function URL."
                 else:
                     report.status = "FAIL"
-                    report.status_extended = f"Lambda function {function.name} has a publicly accessible function URL"
+                    report.status_extended = f"Lambda function {function.name} has a publicly accessible function URL."
 
                 findings.append(report)
 

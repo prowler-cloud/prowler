@@ -186,7 +186,7 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_telnet_23:
                 if sg.resource_id == default_sg_id:
                     assert sg.status == "PASS"
                     assert search(
-                        "has not Telnet port 23 open to the Internet",
+                        "does not have Telnet port 23 open to the Internet",
                         sg.status_extended,
                     )
                     assert (

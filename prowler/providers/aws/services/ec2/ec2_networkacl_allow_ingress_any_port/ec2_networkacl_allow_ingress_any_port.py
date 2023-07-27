@@ -17,7 +17,7 @@ class ec2_networkacl_allow_ingress_any_port(Check):
             # If some entry allows it, that ACL is not securely configured
             if not check_network_acl(network_acl.entries, tcp_protocol, check_port):
                 report.status = "PASS"
-                report.status_extended = f"Network ACL {network_acl.id} has not every port open to the Internet."
+                report.status_extended = f"Network ACL {network_acl.id} does not have every port open to the Internet."
             else:
                 report.status = "FAIL"
                 report.status_extended = (

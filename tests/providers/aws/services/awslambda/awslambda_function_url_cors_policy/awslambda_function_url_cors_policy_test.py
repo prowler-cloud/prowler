@@ -71,7 +71,7 @@ class Test_awslambda_function_url_cors_policy:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Lambda function {function_name} URL has a wide CORS configuration"
+                == f"Lambda function {function_name} URL has a wide CORS configuration."
             )
 
     def test_function_cors_not_wide(self):
@@ -114,7 +114,7 @@ class Test_awslambda_function_url_cors_policy:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Lambda function {function_name} has not a wide CORS configuration"
+                == f"Lambda function {function_name} does not have a wide CORS configuration."
             )
 
     def test_function_cors_wide_with_two_origins(self):
@@ -159,5 +159,5 @@ class Test_awslambda_function_url_cors_policy:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Lambda function {function_name} URL has a wide CORS configuration"
+                == f"Lambda function {function_name} URL has a wide CORS configuration."
             )

@@ -97,7 +97,7 @@ class Test_cloudtrail_bucket_requires_mfa_delete:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Trail {trail_name_us} bucket ({bucket_name_us}) has not MFA delete enabled"
+                == f"Trail {trail_name_us} bucket ({bucket_name_us}) does not have MFA delete enabled."
             )
             assert result[0].resource_id == trail_name_us
             assert result[0].region == "us-east-1"
@@ -157,7 +157,7 @@ class Test_cloudtrail_bucket_requires_mfa_delete:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Trail {trail_name_us} bucket ({bucket_name_us}) has MFA delete enabled"
+                == f"Trail {trail_name_us} bucket ({bucket_name_us}) has MFA delete enabled."
             )
             assert result[0].resource_id == trail_name_us
             assert result[0].region == "us-east-1"
@@ -203,7 +203,7 @@ class Test_cloudtrail_bucket_requires_mfa_delete:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Trail {trail_name_us} bucket ({bucket_name_us}) is a cross-account bucket in another account out of Prowler's permissions scope, please check it manually"
+                == f"Trail {trail_name_us} bucket ({bucket_name_us}) is a cross-account bucket in another account out of Prowler's permissions scope, please check it manually."
             )
             assert result[0].resource_id == trail_name_us
             assert result[0].region == "us-east-1"
@@ -255,7 +255,7 @@ class Test_cloudtrail_bucket_requires_mfa_delete:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Trail {trail_name_us} bucket ({bucket_name_us}) is a cross-account bucket in another account out of Prowler's permissions scope, please check it manually"
+                == f"Trail {trail_name_us} bucket ({bucket_name_us}) is a cross-account bucket in another account out of Prowler's permissions scope, please check it manually."
             )
             assert result[0].resource_id == trail_name_us
             assert result[0].region == "us-east-1"

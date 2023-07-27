@@ -186,7 +186,7 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_redis_6379:
                 if sg.resource_id == default_sg_id:
                     assert sg.status == "PASS"
                     assert search(
-                        "has not Redis port 6379 open to the Internet",
+                        "does not have Redis port 6379 open to the Internet",
                         sg.status_extended,
                     )
                     assert (

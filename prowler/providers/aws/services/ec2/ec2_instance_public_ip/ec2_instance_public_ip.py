@@ -18,7 +18,7 @@ class ec2_instance_public_ip(Check):
                 else:
                     report.status = "PASS"
                     report.status_extended = (
-                        f"EC2 Instance {instance.id} has not a Public IP."
+                        f"EC2 Instance {instance.id} does not have a Public IP."
                     )
                     report.resource_id = instance.id
                 findings.append(report)

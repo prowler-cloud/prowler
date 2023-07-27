@@ -97,7 +97,7 @@ class Test_ecr_repositories_lifecycle_policy_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Repository {repository_name} has a lifecycle policy configured"
+                == f"Repository {repository_name} has a lifecycle policy configured."
             )
             assert result[0].resource_id == repository_name
             assert result[0].resource_arn == repository_arn
@@ -138,7 +138,7 @@ class Test_ecr_repositories_lifecycle_policy_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Repository {repository_name} has not a lifecycle policy configured"
+                == f"Repository {repository_name} does not have a lifecycle policy configured."
             )
             assert result[0].resource_id == repository_name
             assert result[0].resource_arn == repository_arn

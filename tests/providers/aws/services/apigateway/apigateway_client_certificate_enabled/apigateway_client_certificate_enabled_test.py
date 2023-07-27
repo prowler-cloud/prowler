@@ -127,7 +127,7 @@ class Test_apigateway_client_certificate_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"API Gateway test-rest-api ID {rest_api['id']} in stage test has not client certificate enabled."
+                == f"API Gateway test-rest-api ID {rest_api['id']} in stage test does not have client certificate enabled."
             )
             assert result[0].resource_id == "test-rest-api"
             assert (
