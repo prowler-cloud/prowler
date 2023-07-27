@@ -45,7 +45,7 @@ class s3_bucket_public_write_acl(Check):
                                 ) and (
                                     grantee.permission == "FULL_CONTROL"
                                     or grantee.permission == "WRITE"
-                                    or grantee.permission == "WRITE_ACL"
+                                    or grantee.permission == "WRITE_ACP"
                                 ):
                                     report.status = "FAIL"
                                     report.status_extended = f"S3 Bucket {bucket.name} is writable by anyone due to the bucket ACL: {grantee.URI.split('/')[-1]} having the {grantee.permission} permission."
