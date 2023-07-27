@@ -7,7 +7,7 @@
   ],
   "ServiceName": "s3",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:s3:::bucket-name",
+  "ResourceIdTemplate": "arn:partition:s3:::bucket_name",
   "Severity": "low",
   "ResourceType": "AwsS3Bucket",
   "Description": "Check if S3 buckets have object lock enabled",

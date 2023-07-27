@@ -14,7 +14,7 @@ class s3_bucket_public_list_acl(Check):
         ):
             report = Check_Report_AWS(self.metadata())
             report.status = "PASS"
-            report.status_extended = "All S3 public access blocked at account level."
+            report.status_extended = "All S3 public access is blocked at account level."
             report.region = s3control_client.region
             report.resource_id = s3_client.audited_account
             report.resource_arn = s3_client.audited_account_arn
@@ -29,7 +29,9 @@ class s3_bucket_public_list_acl(Check):
                     report.resource_arn = bucket.arn
                     report.resource_tags = bucket.tags
                     report.status = "PASS"
-                    report.status_extended = f"S3 Bucket {bucket.name} is not publicly listable."
+                    report.status_extended = (
+                        f"S3 Bucket {bucket.name} is not publicly listable."
+                    )
                     if not (
                         bucket.public_access_block.ignore_public_acls
                         and bucket.public_access_block.restrict_public_buckets
@@ -41,12 +43,11 @@ class s3_bucket_public_list_acl(Check):
                                     "AllUsers" in grantee.URI
                                     or "AuthenticatedUsers" in grantee.URI
                                 ) and (
-                                    grantee.permission == "FULL_CONTROL" or
-                                    grantee.permission == "READ"
+                                    grantee.permission == "FULL_CONTROL"
+                                    or grantee.permission == "READ"
                                 ):
                                     report.status = "FAIL"
-                                    report.status_extended = f"S3 Bucket {bucket.name} is listable by anyone due to bucket ACL: {grantee.URI.split('/')[-1]} having {grantee.permission}"
-
+                                    report.status_extended = f"S3 Bucket {bucket.name} is listable by anyone due to the bucket ACL: {grantee.URI.split('/')[-1]} having the {grantee.permission} permission."
 
                     findings.append(report)
         return findings

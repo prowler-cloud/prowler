@@ -29,7 +29,9 @@ class s3_bucket_public_write_acl(Check):
                     report.resource_arn = bucket.arn
                     report.resource_tags = bucket.tags
                     report.status = "PASS"
-                    report.status_extended = f"S3 Bucket {bucket.name} is not publicly writable."
+                    report.status_extended = (
+                        f"S3 Bucket {bucket.name} is not publicly writable."
+                    )
                     if not (
                         bucket.public_access_block.ignore_public_acls
                         and bucket.public_access_block.restrict_public_buckets
@@ -41,13 +43,11 @@ class s3_bucket_public_write_acl(Check):
                                     "AllUsers" in grantee.URI
                                     or "AuthenticatedUsers" in grantee.URI
                                 ) and (
-                                    grantee.permission == "FULL_CONTROL" or
-                                    grantee.permission == "WRITE" or
-                                    grantee.permission == "WRITE_ACL"
+                                    grantee.permission == "FULL_CONTROL"
+                                    or grantee.permission == "WRITE"
+                                    or grantee.permission == "WRITE_ACL"
                                 ):
                                     report.status = "FAIL"
-                                    report.status_extended = f"S3 Bucket {bucket.name} writable by anyone due to bucket ACL: {grantee.URI.split('/')[-1]} having {grantee.permission}"
-
-
+                                    report.status_extended = f"S3 Bucket {bucket.name} is writable by anyone due to the bucket ACL: {grantee.URI.split('/')[-1]} having the {grantee.permission} permission."
                     findings.append(report)
         return findings
