@@ -4,22 +4,14 @@ from pydantic import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
-from prowler.providers.aws.aws_provider import (
-    generate_regional_clients,
-    get_default_region,
-)
+from prowler.providers.aws.lib.service.service import AWS_Service
 
 
 ################## NetworkFirewall
-class NetworkFirewall:
+class NetworkFirewall(AWS_Service):
     def __init__(self, audit_info):
-        self.service = "network-firewall"
-        self.session = audit_info.audit_session
-        self.audited_account = audit_info.audited_account
-        self.audited_partition = audit_info.audited_partition
-        self.audit_resources = audit_info.audit_resources
-        self.regional_clients = generate_regional_clients(self.service, audit_info)
-        self.region = get_default_region(self.service, audit_info)
+        # Call AWS_Service's __init__
+        super().__init__("network-firewall", audit_info)
         self.network_firewalls = []
         self.__threading_call__(self.__list_firewalls__)
         self.__describe_firewall__()

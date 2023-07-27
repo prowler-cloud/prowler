@@ -7,20 +7,15 @@ from pydantic import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
-from prowler.providers.aws.aws_provider import generate_regional_clients
+from prowler.providers.aws.lib.service.service import AWS_Service
 
 
 ################## S3
-class S3:
+class S3(AWS_Service):
     def __init__(self, audit_info):
-        self.service = "s3"
-        self.session = audit_info.audit_session
-        self.client = self.session.client(self.service)
-        self.audited_account = audit_info.audited_account
-        self.audit_resources = audit_info.audit_resources
-        self.audited_partition = audit_info.audited_partition
-        self.audited_account_arn = audit_info.audited_account_arn
-        self.regional_clients = generate_regional_clients(self.service, audit_info)
+        # Call AWS_Service's __init__
+        super().__init__(__class__.__name__, audit_info)
+
         self.buckets = self.__list_buckets__(audit_info)
         self.__threading_call__(self.__get_bucket_versioning__)
         self.__threading_call__(self.__get_bucket_logging__)
@@ -345,17 +340,12 @@ class S3:
 
 
 ################## S3Control
-class S3Control:
+class S3Control(AWS_Service):
     def __init__(self, audit_info):
-        self.service = "s3control"
-        self.session = audit_info.audit_session
-        self.audited_account = audit_info.audited_account
-        global_client = generate_regional_clients(
-            self.service, audit_info, global_service=True
-        )
-        if global_client:
-            self.client = list(global_client.values())[0]
-            self.region = self.client.region
+        global_service = True
+        # Call AWS_Service's __init__
+        super().__init__(__class__.__name__, audit_info, global_service)
+        if global_service:
             self.account_public_access_block = self.__get_public_access_block__()
 
     def __get_session__(self):

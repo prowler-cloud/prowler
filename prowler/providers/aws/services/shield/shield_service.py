@@ -1,23 +1,18 @@
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
-from prowler.providers.aws.aws_provider import generate_regional_clients
+from prowler.providers.aws.lib.service.service import AWS_Service
 
 
 ################### Shield
-class Shield:
+class Shield(AWS_Service):
     def __init__(self, audit_info):
-        self.service = "shield"
-        self.session = audit_info.audit_session
-        self.audited_account = audit_info.audited_account
-        global_client = generate_regional_clients(
-            self.service, audit_info, global_service=True
-        )
+        global_service = True
+        # Call AWS_Service's __init__
+        super().__init__(__class__.__name__, audit_info, global_service)
         self.protections = {}
         self.enabled = False
-        if global_client:
-            self.client = list(global_client.values())[0]
-            self.region = self.client.region
+        if global_service:
             self.enabled = self.__get_subscription_state__()
             if self.enabled:
                 self.__list_protections__()

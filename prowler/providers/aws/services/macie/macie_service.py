@@ -3,18 +3,14 @@ import threading
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
-from prowler.providers.aws.aws_provider import generate_regional_clients
+from prowler.providers.aws.lib.service.service import AWS_Service
 
 
 ################## Macie
-class Macie:
+class Macie(AWS_Service):
     def __init__(self, audit_info):
-        self.service = "macie2"
-        self.session = audit_info.audit_session
-        self.audited_account = audit_info.audited_account
-        self.audited_partition = audit_info.audited_partition
-        self.audited_account_arn = audit_info.audited_account_arn
-        self.regional_clients = generate_regional_clients(self.service, audit_info)
+        # Call AWS_Service's __init__
+        super().__init__("macie2", audit_info)
         self.sessions = []
         self.__threading_call__(self.__get_macie_session__)
 

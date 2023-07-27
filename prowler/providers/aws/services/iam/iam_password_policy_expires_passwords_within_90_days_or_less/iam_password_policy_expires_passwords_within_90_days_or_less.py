@@ -7,8 +7,8 @@ class iam_password_policy_expires_passwords_within_90_days_or_less(Check):
         findings = []
         report = Check_Report_AWS(self.metadata())
         report.region = iam_client.region
-        report.resource_arn = iam_client.account_arn
-        report.resource_id = iam_client.account
+        report.resource_arn = iam_client.audited_account_arn
+        report.resource_id = iam_client.audited_account
         # Check if password policy exists
         if iam_client.password_policy:
             # Check if password policy expiration exists

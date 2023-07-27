@@ -6,7 +6,7 @@ from pydantic import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
-from prowler.providers.aws.aws_provider import generate_regional_clients
+from prowler.providers.aws.lib.service.service import AWS_Service
 
 available_organizations_policies = [
     "SERVICE_CONTROL_POLICY",
@@ -17,17 +17,10 @@ available_organizations_policies = [
 
 
 ################## Organizations
-class Organizations:
+class Organizations(AWS_Service):
     def __init__(self, audit_info):
-        self.service = "organizations"
-        self.session = audit_info.audit_session
-        self.audited_account = audit_info.audited_account
-        self.audit_resources = audit_info.audit_resources
-        global_client = generate_regional_clients(
-            self.service, audit_info, global_service=True
-        )
-        self.client = list(global_client.values())[0]
-        self.region = self.client.region
+        # Call AWS_Service's __init__
+        super().__init__(__class__.__name__, audit_info)
         self.organizations = []
         self.policies = []
         self.delegated_administrators = []

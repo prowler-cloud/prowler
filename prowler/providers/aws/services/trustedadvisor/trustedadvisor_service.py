@@ -5,14 +5,14 @@ from pydantic import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.providers.aws.aws_provider import get_default_region
+from prowler.providers.aws.lib.service.service import AWS_Service
 
 
 ################################ TrustedAdvisor
-class TrustedAdvisor:
+class TrustedAdvisor(AWS_Service):
     def __init__(self, audit_info):
-        self.service = "support"
-        self.session = audit_info.audit_session
-        self.account = audit_info.audited_account
+        # Call AWS_Service's __init__
+        super().__init__("support", audit_info)
         self.checks = []
         self.enabled = True
         # Support API is not available in China Partition

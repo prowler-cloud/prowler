@@ -1,19 +1,11 @@
-from prowler.providers.aws.aws_provider import (
-    generate_regional_clients,
-    get_default_region,
-)
-
-
 ################## Account
-class Account:
+from prowler.providers.aws.lib.service.service import AWS_Service
+
+
+class Account(AWS_Service):
     def __init__(self, audit_info):
-        self.service = "account"
-        self.session = audit_info.audit_session
-        self.audited_account = audit_info.audited_account
-        self.audited_partition = audit_info.audited_partition
-        self.audited_account_arn = audit_info.audited_account_arn
-        self.regional_clients = generate_regional_clients(self.service, audit_info)
-        self.region = get_default_region(self.service, audit_info)
+        # Call AWS_Service's __init__
+        super().__init__(__class__.__name__, audit_info)
 
     def __get_session__(self):
         return self.session

@@ -6,13 +6,13 @@ class iam_root_hardware_mfa_enabled(Check):
     def execute(self) -> Check_Report_AWS:
         findings = []
         # This check is only avaible in Commercial Partition
-        if iam_client.partition == "aws":
+        if iam_client.audited_partition == "aws":
             if iam_client.account_summary:
                 virtual_mfa = False
                 report = Check_Report_AWS(self.metadata())
                 report.region = iam_client.region
                 report.resource_id = "<root_account>"
-                report.resource_arn = iam_client.account_arn
+                report.resource_arn = iam_client.audited_account_arn
 
                 if iam_client.account_summary["SummaryMap"]["AccountMFAEnabled"] > 0:
                     virtual_mfas = iam_client.virtual_mfa_devices
