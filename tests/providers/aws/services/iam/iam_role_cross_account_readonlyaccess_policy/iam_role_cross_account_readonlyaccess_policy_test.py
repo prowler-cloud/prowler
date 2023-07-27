@@ -97,7 +97,7 @@ class Test_iam_role_cross_account_readonlyaccess_policy:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "IAM Role test does not have ReadOnlyAccess policy"
+                == "IAM Role test does not have ReadOnlyAccess policy."
             )
             assert result[0].resource_id == "test"
             assert result[0].resource_arn == response["Role"]["Arn"]
@@ -146,7 +146,7 @@ class Test_iam_role_cross_account_readonlyaccess_policy:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "IAM Role test has read-only access but is not cross account"
+                == "IAM Role test has read-only access but is not cross account."
             )
             assert result[0].resource_id == "test"
             assert result[0].resource_arn == response["Role"]["Arn"]
@@ -195,7 +195,7 @@ class Test_iam_role_cross_account_readonlyaccess_policy:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "IAM Role test gives cross account read-only access!"
+                == "IAM Role test gives cross account read-only access."
             )
             assert result[0].resource_id == "test"
             assert result[0].resource_arn == response["Role"]["Arn"]
@@ -244,7 +244,7 @@ class Test_iam_role_cross_account_readonlyaccess_policy:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "IAM Role test gives cross account read-only access!"
+                == "IAM Role test gives cross account read-only access."
             )
             assert result[0].resource_id == "test"
             assert result[0].resource_arn == response["Role"]["Arn"]

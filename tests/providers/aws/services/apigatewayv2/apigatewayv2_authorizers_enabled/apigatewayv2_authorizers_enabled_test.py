@@ -127,6 +127,6 @@ class Test_apigatewayv2_authorizers_enabled:
             assert len(result) == 1
             assert (
                 result[0].status_extended
-                == f"API Gateway V2 test-api ID {api['ApiId']} has authorizer configured."
+                == f"API Gateway V2 test-api ID {api['ApiId']} has an authorizer configured."
             )
             assert result[0].resource_id == "test-api"
