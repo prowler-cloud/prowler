@@ -5,6 +5,13 @@ from prowler.providers.aws.aws_provider import (
 
 
 class AWS_Service:
+    """The AWS_Service class offers a parent class for each AWS Service to generate:
+    - AWS Regional Clients
+    - Shared information like the account ID and ARN, the the AWS partition and the checks audited
+    - AWS Session
+    - Also handles if the AWS Service is Global
+    """
+
     def __init__(self, service, audit_info, global_service=False):
         # Audit Information
         self.audit_info = audit_info
@@ -17,22 +24,17 @@ class AWS_Service:
         # AWS Session
         self.session = audit_info.audit_session
 
-        # We receive the service using __class__.__name__
-        # e.g.: AccessAnalyzer --> we need a lowercase string, so service.lower()
-        self.service = service.lower()
+        # We receive the service using __class__.__name__ or the service name in lowercase
+        if not self.service.islower():
+            # e.g.: AccessAnalyzer --> we need a lowercase string, so service.lower()
+            self.service = service.lower()
 
         # Generate Regional Clients
-        self.regional_clients = generate_regional_clients(
-            self.service, audit_info, global_service
-        )
+        if not global_service:
+            self.regional_clients = generate_regional_clients(
+                self.service, audit_info, global_service
+            )
 
-        # Get a single region if the service needs it
+        # Get a single region and client if the service needs it (e.g. AWS Global Service)
         self.region = get_default_region(self.service, audit_info)
-        if self.service in ["iam", "fms", "s3", "organizations"]:
-            self.client = self.session.client(self.service, self.region)
-
-        # If the service is global we need to set a single client and a region
-        # that replaces the default region set
-        if global_service:
-            self.client = list(self.regional_clients.values())[0]
-            self.region = self.client.region
+        self.client = self.session.client(self.service, self.region)
