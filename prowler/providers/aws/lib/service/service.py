@@ -25,9 +25,8 @@ class AWS_Service:
         self.session = audit_info.audit_session
 
         # We receive the service using __class__.__name__ or the service name in lowercase
-        if not self.service.islower():
-            # e.g.: AccessAnalyzer --> we need a lowercase string, so service.lower()
-            self.service = service.lower()
+        # e.g.: AccessAnalyzer --> we need a lowercase string, so service.lower()
+        self.service = service.lower() if not service.islower() else service
 
         # Generate Regional Clients
         if not global_service:

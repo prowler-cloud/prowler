@@ -4,7 +4,6 @@ from botocore.client import ClientError
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
-from prowler.providers.aws.aws_provider import get_default_region
 from prowler.providers.aws.lib.service.service import AWS_Service
 
 
@@ -19,10 +18,10 @@ class TrustedAdvisor(AWS_Service):
         # But only in us-east-1 or us-gov-west-1 https://docs.aws.amazon.com/general/latest/gr/awssupport.html
         if audit_info.audited_partition != "aws-cn":
             if audit_info.audited_partition == "aws":
-                self.region = get_default_region(self.service, audit_info)
                 support_region = "us-east-1"
             else:
                 support_region = "us-gov-west-1"
+
             self.client = audit_info.audit_session.client(
                 self.service, region_name=support_region
             )

@@ -342,11 +342,9 @@ class S3(AWS_Service):
 ################## S3Control
 class S3Control(AWS_Service):
     def __init__(self, audit_info):
-        global_service = True
         # Call AWS_Service's __init__
-        super().__init__(__class__.__name__, audit_info, global_service)
-        if global_service:
-            self.account_public_access_block = self.__get_public_access_block__()
+        super().__init__(__class__.__name__, audit_info, global_service=True)
+        self.account_public_access_block = self.__get_public_access_block__()
 
     def __get_session__(self):
         return self.session

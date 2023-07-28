@@ -7,15 +7,13 @@ from prowler.providers.aws.lib.service.service import AWS_Service
 ################### Shield
 class Shield(AWS_Service):
     def __init__(self, audit_info):
-        global_service = True
         # Call AWS_Service's __init__
-        super().__init__(__class__.__name__, audit_info, global_service)
+        super().__init__(__class__.__name__, audit_info, global_service=True)
         self.protections = {}
         self.enabled = False
-        if global_service:
-            self.enabled = self.__get_subscription_state__()
-            if self.enabled:
-                self.__list_protections__()
+        self.enabled = self.__get_subscription_state__()
+        if self.enabled:
+            self.__list_protections__()
 
     def __get_session__(self):
         return self.session

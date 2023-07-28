@@ -10,16 +10,14 @@ from prowler.providers.aws.lib.service.service import AWS_Service
 ################## Route53
 class Route53(AWS_Service):
     def __init__(self, audit_info):
-        global_service = True
         # Call AWS_Service's __init__
-        super().__init__(__class__.__name__, audit_info, global_service)
+        super().__init__(__class__.__name__, audit_info, global_service=True)
         self.hosted_zones = {}
         self.record_sets = []
-        if global_service:
-            self.__list_hosted_zones__()
-            self.__list_query_logging_configs__()
-            self.__list_tags_for_resource__()
-            self.__list_resource_record_sets__()
+        self.__list_hosted_zones__()
+        self.__list_query_logging_configs__()
+        self.__list_tags_for_resource__()
+        self.__list_resource_record_sets__()
 
     def __get_session__(self):
         return self.session

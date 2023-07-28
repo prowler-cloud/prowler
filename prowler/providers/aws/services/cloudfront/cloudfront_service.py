@@ -11,18 +11,12 @@ from prowler.providers.aws.lib.service.service import AWS_Service
 ################## CloudFront
 class CloudFront(AWS_Service):
     def __init__(self, audit_info):
-        global_service = True
         # Call AWS_Service's __init__
-        super().__init__(__class__.__name__, audit_info, global_service)
+        super().__init__(__class__.__name__, audit_info, global_service=True)
         self.distributions = {}
-        if global_service:
-            self.__list_distributions__(self.client, self.region)
-            self.__get_distribution_config__(
-                self.client, self.distributions, self.region
-            )
-            self.__list_tags_for_resource__(
-                self.client, self.distributions, self.region
-            )
+        self.__list_distributions__(self.client, self.region)
+        self.__get_distribution_config__(self.client, self.distributions, self.region)
+        self.__list_tags_for_resource__(self.client, self.distributions, self.region)
 
     def __get_session__(self):
         return self.session
