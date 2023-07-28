@@ -13,7 +13,7 @@ AWS_REGION = "eu-west-1"
 
 
 # Mock generate_regional_clients()
-def mock_generate_regional_clients(service, audit_info):
+def mock_generate_regional_clients(service, audit_info, _):
     regional_client = audit_info.audit_session.client(service, region_name=AWS_REGION)
     regional_client.region = AWS_REGION
     return {AWS_REGION: regional_client}
@@ -21,7 +21,7 @@ def mock_generate_regional_clients(service, audit_info):
 
 # Patch every AWS call using Boto3 and generate_regional_clients to have 1 client
 @patch(
-    "prowler.providers.aws.services.accessanalyzer.accessanalyzer_service.generate_regional_clients",
+    "prowler.providers.aws.lib.service.service.generate_regional_clients",
     new=mock_generate_regional_clients,
 )
 class Test_shield_advanced_protection_in_associated_elastic_ips:

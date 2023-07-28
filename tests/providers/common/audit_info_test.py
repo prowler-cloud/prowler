@@ -17,6 +17,7 @@ from prowler.providers.common.audit_info import (
     get_tagged_resources,
     set_provider_audit_info,
 )
+from prowler.providers.common.models import Audit_Metadata
 from prowler.providers.gcp.gcp_provider import GCP_Provider
 from prowler.providers.gcp.lib.audit_info.models import GCP_Audit_Info
 
@@ -116,6 +117,12 @@ class Test_Set_Audit_Info:
             organizations_metadata=None,
             audit_resources=None,
             mfa_enabled=False,
+            audit_metadata=Audit_Metadata(
+                services_scanned=0,
+                expected_checks=[],
+                completed_checks=0,
+                audit_progress=0,
+            ),
         )
 
         return audit_info

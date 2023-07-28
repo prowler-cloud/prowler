@@ -5,6 +5,7 @@ from boto3 import client, session
 from moto import mock_cloudtrail, mock_s3
 
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
+from prowler.providers.common.models import Audit_Metadata
 
 AWS_ACCOUNT_NUMBER = "123456789012"
 
@@ -31,6 +32,12 @@ class Test_cloudtrail_logs_s3_bucket_access_logging_enabled:
             organizations_metadata=None,
             audit_resources=None,
             mfa_enabled=False,
+            audit_metadata=Audit_Metadata(
+                services_scanned=0,
+                expected_checks=[],
+                completed_checks=0,
+                audit_progress=0,
+            ),
         )
         return audit_info
 

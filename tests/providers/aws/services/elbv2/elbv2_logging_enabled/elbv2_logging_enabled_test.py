@@ -5,6 +5,7 @@ from boto3 import client, resource, session
 from moto import mock_ec2, mock_elbv2
 
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
+from prowler.providers.common.models import Audit_Metadata
 
 AWS_REGION = "eu-west-1"
 AWS_ACCOUNT_NUMBER = "123456789012"
@@ -32,6 +33,12 @@ class Test_elbv2_logging_enabled:
             organizations_metadata=None,
             audit_resources=None,
             mfa_enabled=False,
+            audit_metadata=Audit_Metadata(
+                services_scanned=0,
+                expected_checks=[],
+                completed_checks=0,
+                audit_progress=0,
+            ),
         )
 
         return audit_info
@@ -59,7 +66,7 @@ class Test_elbv2_logging_enabled:
 
     @mock_ec2
     @mock_elbv2
-    def test_elbv2_without_deletion_protection(self):
+    def test_elbv2_without_logging_enabled(self):
         conn = client("elbv2", region_name=AWS_REGION)
         ec2 = resource("ec2", region_name=AWS_REGION)
 
@@ -119,7 +126,7 @@ class Test_elbv2_logging_enabled:
 
     @mock_ec2
     @mock_elbv2
-    def test_elbv2_with_deletion_protection(self):
+    def test_elbv2_with_logging_enabled(self):
         conn = client("elbv2", region_name=AWS_REGION)
         ec2 = resource("ec2", region_name=AWS_REGION)
 

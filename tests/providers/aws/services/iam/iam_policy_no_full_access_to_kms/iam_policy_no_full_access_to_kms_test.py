@@ -6,6 +6,7 @@ from moto import mock_iam
 
 from prowler.providers.aws.lib.audit_info.audit_info import AWS_Audit_Info
 from prowler.providers.aws.services.iam.iam_service import IAM
+from prowler.providers.common.models import Audit_Metadata
 
 
 class Test_iam_policy_no_full_access_to_kms:
@@ -31,6 +32,12 @@ class Test_iam_policy_no_full_access_to_kms:
             organizations_metadata=None,
             audit_resources=None,
             mfa_enabled=False,
+            audit_metadata=Audit_Metadata(
+                services_scanned=0,
+                expected_checks=[],
+                completed_checks=0,
+                audit_progress=0,
+            ),
         )
         return audit_info
 

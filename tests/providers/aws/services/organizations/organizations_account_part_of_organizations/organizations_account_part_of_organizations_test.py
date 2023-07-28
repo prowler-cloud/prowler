@@ -8,6 +8,7 @@ from prowler.providers.aws.lib.audit_info.audit_info import AWS_Audit_Info
 from prowler.providers.aws.services.organizations.organizations_service import (
     Organizations,
 )
+from prowler.providers.common.models import Audit_Metadata
 
 AWS_REGION = "us-east-1"
 
@@ -35,6 +36,12 @@ class Test_organizations_account_part_of_organizations:
             organizations_metadata=None,
             audit_resources=None,
             mfa_enabled=False,
+            audit_metadata=Audit_Metadata(
+                services_scanned=0,
+                expected_checks=[],
+                completed_checks=0,
+                audit_progress=0,
+            ),
         )
         return audit_info
 
