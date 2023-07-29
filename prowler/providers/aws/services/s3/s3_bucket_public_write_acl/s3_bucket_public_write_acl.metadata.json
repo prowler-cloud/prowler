@@ -7,7 +7,7 @@
   ],
   "ServiceName": "s3",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "ResourceIdTemplate": "arn:partition:s3:::bucket_name",
   "Severity": "critical",
   "ResourceType": "AwsS3Bucket",
   "Description": "Ensure there are no S3 buckets writable by Everyone or Any AWS customer.",
@@ -15,10 +15,10 @@
   "RelatedUrl": "",
   "Remediation": {
     "Code": {
-      "CLI": "aws s3api put-public-access-block --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true --bucket <bucket_name>",
-      "NativeIaC": "",
-      "Other": "https://github.com/cloudmatos/matos/tree/master/remediations/aws/s3/s3/block-public-access",
-      "Terraform": "https://docs.bridgecrew.io/docs/s3-bucket-should-have-public-access-blocks-defaults-to-false-if-the-public-access-block-is-not-attached#terraform"
+      "CLI": "aws s3api put-bucket-acl --bucket <bucket_name> --acl private",
+      "NativeIaC": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/S3/s3-bucket-public-write-access.html",
+      "Other": "",
+      "Terraform": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/S3/s3-bucket-public-write-access.html"
     },
     "Recommendation": {
       "Text": "You can enable block public access settings only for access points, buckets and AWS accounts. Amazon S3 does not support block public access settings on a per-object basis. When you apply block public access settings to an account; the settings apply to all AWS Regions globally. The settings might not take effect in all Regions immediately or simultaneously, but they eventually propagate to all Regions.",

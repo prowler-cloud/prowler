@@ -7,7 +7,7 @@
   ],
   "ServiceName": "s3",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "ResourceIdTemplate": "arn:partition:s3:::bucket_name",
   "Severity": "medium",
   "ResourceType": "AwsS3Bucket",
   "Description": "Check if S3 buckets have ACLs enabled",
