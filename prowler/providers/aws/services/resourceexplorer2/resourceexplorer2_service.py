@@ -1,5 +1,3 @@
-import threading
-
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
@@ -14,18 +12,6 @@ class ResourceExplorer2(AWS_Service):
         super().__init__("resource-explorer-2", audit_info)
         self.indexes = []
         self.__threading_call__(self.__list_indexes__)
-
-    def __get_session__(self):
-        return self.session
-
-    def __threading_call__(self, call):
-        threads = []
-        for regional_client in self.regional_clients.values():
-            threads.append(threading.Thread(target=call, args=(regional_client,)))
-        for t in threads:
-            t.start()
-        for t in threads:
-            t.join()
 
     def __list_indexes__(self, regional_client):
         logger.info("ResourceExplorer - list indexes...")

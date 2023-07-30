@@ -19,9 +19,6 @@ class GlobalAccelerator(AWS_Service):
             self.client = self.session.client(self.service, self.region)
             self.__list_accelerators__()
 
-    def __get_session__(self):
-        return self.session
-
     def __list_accelerators__(self):
         logger.info("GlobalAccelerator - Listing Accelerators...")
         try:

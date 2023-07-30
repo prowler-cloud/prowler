@@ -29,9 +29,6 @@ class TrustedAdvisor(AWS_Service):
             self.__describe_trusted_advisor_checks__()
             self.__describe_trusted_advisor_check_result__()
 
-    def __get_session__(self):
-        return self.session
-
     def __describe_trusted_advisor_checks__(self):
         logger.info("TrustedAdvisor - Describing Checks...")
         try:

@@ -1,3 +1,5 @@
+import threading
+
 from prowler.providers.aws.aws_provider import (
     generate_regional_clients,
     get_default_region,
@@ -37,3 +39,15 @@ class AWS_Service:
         # Get a single region and client if the service needs it (e.g. AWS Global Service)
         self.region = get_default_region(self.service, audit_info)
         self.client = self.session.client(self.service, self.region)
+
+    def __get_session__(self):
+        return self.session
+
+    def __threading_call__(self, call):
+        threads = []
+        for regional_client in self.regional_clients.values():
+            threads.append(threading.Thread(target=call, args=(regional_client,)))
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()

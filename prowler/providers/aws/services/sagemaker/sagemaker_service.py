@@ -1,4 +1,3 @@
-import threading
 from typing import Optional
 
 from botocore.client import ClientError
@@ -24,18 +23,6 @@ class SageMaker(AWS_Service):
         self.__describe_notebook_instance__(self.regional_clients)
         self.__describe_training_job__(self.regional_clients)
         self.__list_tags_for_resource__()
-
-    def __get_session__(self):
-        return self.session
-
-    def __threading_call__(self, call):
-        threads = []
-        for regional_client in self.regional_clients.values():
-            threads.append(threading.Thread(target=call, args=(regional_client,)))
-        for t in threads:
-            t.start()
-        for t in threads:
-            t.join()
 
     def __list_notebook_instances__(self, regional_client):
         logger.info("SageMaker - listing notebook instances...")

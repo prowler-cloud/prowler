@@ -1,4 +1,3 @@
-import threading
 from datetime import datetime
 from typing import Optional
 
@@ -20,15 +19,6 @@ class Backup(AWS_Service):
         self.__threading_call__(self.__list_backup_plans__)
         self.backup_report_plans = []
         self.__threading_call__(self.__list_backup_report_plans__)
-
-    def __threading_call__(self, call):
-        threads = []
-        for regional_client in self.regional_clients.values():
-            threads.append(threading.Thread(target=call, args=(regional_client,)))
-        for t in threads:
-            t.start()
-        for t in threads:
-            t.join()
 
     def __list_backup_vaults__(self, regional_client):
         logger.info("Backup - Listing Backup Vaults...")

@@ -1,5 +1,4 @@
 import json
-import threading
 from typing import Optional
 
 from botocore.client import ClientError
@@ -28,18 +27,6 @@ class VPC(AWS_Service):
         self.__describe_vpc_endpoint_service_permissions__()
         self.vpc_subnets = {}
         self.__threading_call__(self.__describe_vpc_subnets__)
-
-    def __get_session__(self):
-        return self.session
-
-    def __threading_call__(self, call):
-        threads = []
-        for regional_client in self.regional_clients.values():
-            threads.append(threading.Thread(target=call, args=(regional_client,)))
-        for t in threads:
-            t.start()
-        for t in threads:
-            t.join()
 
     def __describe_vpcs__(self, regional_client):
         logger.info("VPC - Describing VPCs...")

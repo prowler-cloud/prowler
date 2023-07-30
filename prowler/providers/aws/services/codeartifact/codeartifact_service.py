@@ -1,4 +1,3 @@
-import threading
 from enum import Enum
 from typing import Optional
 
@@ -20,18 +19,6 @@ class CodeArtifact(AWS_Service):
         self.__threading_call__(self.__list_repositories__)
         self.__threading_call__(self.__list_packages__)
         self.__list_tags_for_resource__()
-
-    def __get_session__(self):
-        return self.session
-
-    def __threading_call__(self, call):
-        threads = []
-        for regional_client in self.regional_clients.values():
-            threads.append(threading.Thread(target=call, args=(regional_client,)))
-        for t in threads:
-            t.start()
-        for t in threads:
-            t.join()
 
     def __list_repositories__(self, regional_client):
         logger.info("CodeArtifact - Listing Repositories...")

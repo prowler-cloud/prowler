@@ -1,4 +1,3 @@
-import threading
 from datetime import datetime, timezone
 from typing import Optional
 
@@ -18,18 +17,6 @@ class CloudWatch(AWS_Service):
         self.metric_alarms = []
         self.__threading_call__(self.__describe_alarms__)
         self.__list_tags_for_resource__()
-
-    def __get_session__(self):
-        return self.session
-
-    def __threading_call__(self, call):
-        threads = []
-        for regional_client in self.regional_clients.values():
-            threads.append(threading.Thread(target=call, args=(regional_client,)))
-        for t in threads:
-            t.start()
-        for t in threads:
-            t.join()
 
     def __describe_alarms__(self, regional_client):
         logger.info("CloudWatch - Describing alarms...")
@@ -93,18 +80,6 @@ class Logs(AWS_Service):
             )
             self.__threading_call__(self.__get_log_events__)
         self.__list_tags_for_resource__()
-
-    def __get_session__(self):
-        return self.session
-
-    def __threading_call__(self, call):
-        threads = []
-        for regional_client in self.regional_clients.values():
-            threads.append(threading.Thread(target=call, args=(regional_client,)))
-        for t in threads:
-            t.start()
-        for t in threads:
-            t.join()
 
     def __describe_metric_filters__(self, regional_client):
         logger.info("CloudWatch Logs - Describing metric filters...")

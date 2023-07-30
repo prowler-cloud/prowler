@@ -18,9 +18,6 @@ class CloudFront(AWS_Service):
         self.__get_distribution_config__(self.client, self.distributions, self.region)
         self.__list_tags_for_resource__(self.client, self.distributions, self.region)
 
-    def __get_session__(self):
-        return self.session
-
     def __list_distributions__(self, client, region) -> dict:
         logger.info("CloudFront - Listing Distributions...")
         try:

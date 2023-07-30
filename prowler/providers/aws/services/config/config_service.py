@@ -1,4 +1,3 @@
-import threading
 from typing import Optional
 
 from pydantic import BaseModel
@@ -15,18 +14,6 @@ class Config(AWS_Service):
         super().__init__(__class__.__name__, audit_info)
         self.recorders = []
         self.__threading_call__(self.__describe_configuration_recorder_status__)
-
-    def __get_session__(self):
-        return self.session
-
-    def __threading_call__(self, call):
-        threads = []
-        for regional_client in self.regional_clients.values():
-            threads.append(threading.Thread(target=call, args=(regional_client,)))
-        for t in threads:
-            t.start()
-        for t in threads:
-            t.join()
 
     def __describe_configuration_recorder_status__(self, regional_client):
         logger.info("Config - Listing Recorders...")

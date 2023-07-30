@@ -86,9 +86,6 @@ class IAM(AWS_Service):
     def __get_client__(self):
         return self.client
 
-    def __get_session__(self):
-        return self.session
-
     def __get_roles__(self):
         logger.info("IAM - List Roles...")
         try:

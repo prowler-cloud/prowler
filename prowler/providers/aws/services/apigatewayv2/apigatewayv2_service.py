@@ -1,4 +1,3 @@
-import threading
 from typing import Optional
 
 from pydantic import BaseModel
@@ -17,18 +16,6 @@ class ApiGatewayV2(AWS_Service):
         self.__threading_call__(self.__get_apis__)
         self.__get_authorizers__()
         self.__get_stages__()
-
-    def __get_session__(self):
-        return self.session
-
-    def __threading_call__(self, call):
-        threads = []
-        for regional_client in self.regional_clients.values():
-            threads.append(threading.Thread(target=call, args=(regional_client,)))
-        for t in threads:
-            t.start()
-        for t in threads:
-            t.join()
 
     def __get_apis__(self, regional_client):
         logger.info("APIGatewayv2 - Getting APIs...")

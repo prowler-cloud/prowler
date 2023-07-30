@@ -1,4 +1,3 @@
-import threading
 from typing import Optional
 
 from botocore.client import ClientError
@@ -19,18 +18,6 @@ class DynamoDB(AWS_Service):
         self.__describe_table__()
         self.__describe_continuous_backups__()
         self.__list_tags_for_resource__()
-
-    def __get_session__(self):
-        return self.session
-
-    def __threading_call__(self, call):
-        threads = []
-        for regional_client in self.regional_clients.values():
-            threads.append(threading.Thread(target=call, args=(regional_client,)))
-        for t in threads:
-            t.start()
-        for t in threads:
-            t.join()
 
     def __list_tables__(self, regional_client):
         logger.info("DynamoDB - Listing tables...")
@@ -129,18 +116,6 @@ class DAX(AWS_Service):
         self.clusters = []
         self.__threading_call__(self.__describe_clusters__)
         self.__list_tags_for_resource__()
-
-    def __get_session__(self):
-        return self.session
-
-    def __threading_call__(self, call):
-        threads = []
-        for regional_client in self.regional_clients.values():
-            threads.append(threading.Thread(target=call, args=(regional_client,)))
-        for t in threads:
-            t.start()
-        for t in threads:
-            t.join()
 
     def __describe_clusters__(self, regional_client):
         logger.info("DynamoDB DAX - Describing clusters...")

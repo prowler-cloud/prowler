@@ -15,9 +15,6 @@ class Shield(AWS_Service):
         if self.enabled:
             self.__list_protections__()
 
-    def __get_session__(self):
-        return self.session
-
     def __get_subscription_state__(self):
         logger.info("Shield - Getting Subscription State...")
         try:

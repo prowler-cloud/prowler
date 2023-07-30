@@ -1,4 +1,3 @@
-import threading
 from typing import Optional
 
 from pydantic import BaseModel
@@ -18,18 +17,6 @@ class EKS(AWS_Service):
         self.clusters = []
         self.__threading_call__(self.__list_clusters__)
         self.__describe_cluster__(self.regional_clients)
-
-    def __get_session__(self):
-        return self.session
-
-    def __threading_call__(self, call):
-        threads = []
-        for regional_client in self.regional_clients.values():
-            threads.append(threading.Thread(target=call, args=(regional_client,)))
-        for t in threads:
-            t.start()
-        for t in threads:
-            t.join()
 
     def __list_clusters__(self, regional_client):
         logger.info("EKS listing clusters...")

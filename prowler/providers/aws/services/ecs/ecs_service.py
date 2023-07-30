@@ -1,4 +1,3 @@
-import threading
 from re import sub
 from typing import Optional
 
@@ -17,18 +16,6 @@ class ECS(AWS_Service):
         self.task_definitions = []
         self.__threading_call__(self.__list_task_definitions__)
         self.__describe_task_definition__()
-
-    def __get_session__(self):
-        return self.session
-
-    def __threading_call__(self, call):
-        threads = []
-        for regional_client in self.regional_clients.values():
-            threads.append(threading.Thread(target=call, args=(regional_client,)))
-        for t in threads:
-            t.start()
-        for t in threads:
-            t.join()
 
     def __list_task_definitions__(self, regional_client):
         logger.info("ECS - Listing Task Definitions...")

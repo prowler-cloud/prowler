@@ -19,9 +19,6 @@ class Route53(AWS_Service):
         self.__list_tags_for_resource__()
         self.__list_resource_record_sets__()
 
-    def __get_session__(self):
-        return self.session
-
     def __list_hosted_zones__(self):
         logger.info("Route53 - Listing Hosting Zones...")
         try:
@@ -154,9 +151,6 @@ class Route53Domains(AWS_Service):
             self.__list_domains__()
             self.__get_domain_detail__()
             self.__list_tags_for_domain__()
-
-    def __get_session__(self):
-        return self.session
 
     def __list_domains__(self):
         logger.info("Route53Domains - Listing Domains...")

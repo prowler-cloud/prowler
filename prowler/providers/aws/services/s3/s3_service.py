@@ -27,9 +27,7 @@ class S3(AWS_Service):
         self.__threading_call__(self.__get_object_lock_configuration__)
         self.__threading_call__(self.__get_bucket_tagging__)
 
-    def __get_session__(self):
-        return self.session
-
+    # In the S3 service we override the "__threading_call__" method because we spawn a process per bucket instead of per region
     def __threading_call__(self, call):
         threads = []
         for bucket in self.buckets:
@@ -345,9 +343,6 @@ class S3Control(AWS_Service):
         # Call AWS_Service's __init__
         super().__init__(__class__.__name__, audit_info, global_service=True)
         self.account_public_access_block = self.__get_public_access_block__()
-
-    def __get_session__(self):
-        return self.session
 
     def __get_public_access_block__(self):
         logger.info("S3 - Get account public access block...")

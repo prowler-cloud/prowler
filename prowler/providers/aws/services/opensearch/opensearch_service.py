@@ -1,4 +1,3 @@
-import threading
 from json import JSONDecodeError, loads
 from typing import Optional
 
@@ -19,18 +18,6 @@ class OpenSearchService(AWS_Service):
         self.__describe_domain_config__(self.regional_clients)
         self.__describe_domain__(self.regional_clients)
         self.__list_tags__()
-
-    def __get_session__(self):
-        return self.session
-
-    def __threading_call__(self, call):
-        threads = []
-        for regional_client in self.regional_clients.values():
-            threads.append(threading.Thread(target=call, args=(regional_client,)))
-        for t in threads:
-            t.start()
-        for t in threads:
-            t.join()
 
     def __list_domain_names__(self, regional_client):
         logger.info("OpenSearch - listing domain names...")
