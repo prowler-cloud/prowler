@@ -37,6 +37,8 @@ class AWSService:
             )
 
         # Get a single region and client if the service needs it (e.g. AWS Global Service)
+        # We cannot include this within an else because some services needs both the regional_clients
+        # and a single client like S3
         self.region = get_default_region(self.service, audit_info)
         self.client = self.session.client(self.service, self.region)
 
