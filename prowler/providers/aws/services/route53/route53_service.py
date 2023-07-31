@@ -4,31 +4,20 @@ from pydantic import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
-from prowler.providers.aws.aws_provider import generate_regional_clients
+from prowler.providers.aws.lib.service.service import AWSService
 
 
 ################## Route53
-class Route53:
+class Route53(AWSService):
     def __init__(self, audit_info):
-        self.service = "route53"
-        self.session = audit_info.audit_session
-        self.audited_partition = audit_info.audited_partition
-        self.audit_resources = audit_info.audit_resources
+        # Call AWSService's __init__
+        super().__init__(__class__.__name__, audit_info, global_service=True)
         self.hosted_zones = {}
         self.record_sets = []
-        global_client = generate_regional_clients(
-            self.service, audit_info, global_service=True
-        )
-        if global_client:
-            self.client = list(global_client.values())[0]
-            self.region = self.client.region
-            self.__list_hosted_zones__()
-            self.__list_query_logging_configs__()
-            self.__list_tags_for_resource__()
-            self.__list_resource_record_sets__()
-
-    def __get_session__(self):
-        return self.session
+        self.__list_hosted_zones__()
+        self.__list_query_logging_configs__()
+        self.__list_tags_for_resource__()
+        self.__list_resource_record_sets__()
 
     def __list_hosted_zones__(self):
         logger.info("Route53 - Listing Hosting Zones...")
@@ -149,11 +138,10 @@ class RecordSet(BaseModel):
 
 
 ################## Route53Domains
-class Route53Domains:
+class Route53Domains(AWSService):
     def __init__(self, audit_info):
-        self.service = "route53domains"
-        self.session = audit_info.audit_session
-        self.audited_account = audit_info.audited_account
+        # Call AWSService's __init__
+        super().__init__(__class__.__name__, audit_info)
         self.domains = {}
         if audit_info.audited_partition == "aws":
             # Route53Domains is a global service that supports endpoints in multiple AWS Regions
@@ -163,9 +151,6 @@ class Route53Domains:
             self.__list_domains__()
             self.__get_domain_detail__()
             self.__list_tags_for_domain__()
-
-    def __get_session__(self):
-        return self.session
 
     def __list_domains__(self):
         logger.info("Route53Domains - Listing Domains...")

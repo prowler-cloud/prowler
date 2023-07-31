@@ -69,6 +69,7 @@ from prowler.lib.outputs.outputs import (
 from prowler.lib.utils.utils import hash_sha512, open_file
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.aws.lib.security_hub.security_hub import send_to_security_hub
+from prowler.providers.common.models import Audit_Metadata
 
 AWS_ACCOUNT_ID = "123456789012"
 
@@ -116,6 +117,12 @@ class Test_Outputs:
             organizations_metadata=None,
             audit_resources=None,
             mfa_enabled=False,
+            audit_metadata=Audit_Metadata(
+                services_scanned=0,
+                expected_checks=[],
+                completed_checks=0,
+                audit_progress=0,
+            ),
         )
         test_output_modes = [
             ["csv"],
@@ -436,6 +443,12 @@ class Test_Outputs:
             organizations_metadata=None,
             audit_resources=None,
             mfa_enabled=False,
+            audit_metadata=Audit_Metadata(
+                services_scanned=0,
+                expected_checks=[],
+                completed_checks=0,
+                audit_progress=0,
+            ),
         )
         finding = Check_Report(
             load_check_metadata(
@@ -507,6 +520,12 @@ class Test_Outputs:
             organizations_metadata=None,
             audit_resources=None,
             mfa_enabled=False,
+            audit_metadata=Audit_Metadata(
+                services_scanned=0,
+                expected_checks=[],
+                completed_checks=0,
+                audit_progress=0,
+            ),
         )
         finding = Check_Report(
             load_check_metadata(
@@ -592,6 +611,12 @@ class Test_Outputs:
             organizations_metadata=None,
             audit_resources=None,
             mfa_enabled=False,
+            audit_metadata=Audit_Metadata(
+                services_scanned=0,
+                expected_checks=[],
+                completed_checks=0,
+                audit_progress=0,
+            ),
         )
         finding = Check_Report(
             load_check_metadata(
@@ -677,6 +702,12 @@ class Test_Outputs:
             organizations_metadata=None,
             audit_resources=None,
             mfa_enabled=False,
+            audit_metadata=Audit_Metadata(
+                services_scanned=0,
+                expected_checks=[],
+                completed_checks=0,
+                audit_progress=0,
+            ),
         )
         with patch(
             "prowler.lib.outputs.json.get_check_compliance",
@@ -953,6 +984,12 @@ class Test_Outputs:
             organizations_metadata=None,
             audit_resources=None,
             mfa_enabled=False,
+            audit_metadata=Audit_Metadata(
+                services_scanned=0,
+                expected_checks=[],
+                completed_checks=0,
+                audit_progress=0,
+            ),
         )
         finding = Check_Report(
             load_check_metadata(
@@ -1080,6 +1117,12 @@ class Test_Outputs:
             organizations_metadata=None,
             audit_resources=None,
             mfa_enabled=False,
+            audit_metadata=Audit_Metadata(
+                services_scanned=0,
+                expected_checks=[],
+                completed_checks=0,
+                audit_progress=0,
+            ),
         )
         # Creat mock bucket
         bucket_name = "test_bucket"
@@ -1131,6 +1174,12 @@ class Test_Outputs:
             organizations_metadata=None,
             audit_resources=None,
             mfa_enabled=False,
+            audit_metadata=Audit_Metadata(
+                services_scanned=0,
+                expected_checks=[],
+                completed_checks=0,
+                audit_progress=0,
+            ),
         )
         # Creat mock bucket
         bucket_name = "test_bucket"
@@ -1189,6 +1238,12 @@ class Test_Outputs:
             organizations_metadata=None,
             audit_resources=None,
             mfa_enabled=False,
+            audit_metadata=Audit_Metadata(
+                services_scanned=0,
+                expected_checks=[],
+                completed_checks=0,
+                audit_progress=0,
+            ),
         )
         # Creat mock bucket
         bucket_name = "test_bucket"
@@ -1298,6 +1353,12 @@ class Test_Outputs:
             organizations_metadata=None,
             audit_resources=None,
             mfa_enabled=False,
+            audit_metadata=Audit_Metadata(
+                services_scanned=0,
+                expected_checks=[],
+                completed_checks=0,
+                audit_progress=0,
+            ),
         )
         finding = Check_Report(
             load_check_metadata(

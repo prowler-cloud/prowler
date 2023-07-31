@@ -8,6 +8,7 @@ from moto import mock_cloudtrail, mock_iam, mock_s3
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.aws.services.cloudtrail.cloudtrail_service import Cloudtrail
 from prowler.providers.aws.services.s3.s3_service import S3
+from prowler.providers.common.models import Audit_Metadata
 
 AWS_ACCOUNT_NUMBER = "123456789012"
 
@@ -37,6 +38,12 @@ class Test_cloudtrail_bucket_requires_mfa_delete:
             organizations_metadata=None,
             audit_resources=None,
             mfa_enabled=False,
+            audit_metadata=Audit_Metadata(
+                services_scanned=0,
+                expected_checks=[],
+                completed_checks=0,
+                audit_progress=0,
+            ),
         )
         return audit_info
 

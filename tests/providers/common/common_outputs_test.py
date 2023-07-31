@@ -9,6 +9,7 @@ from prowler.providers.azure.lib.audit_info.audit_info import (
     Azure_Audit_Info,
     Azure_Identity_Info,
 )
+from prowler.providers.common.models import Audit_Metadata
 from prowler.providers.common.outputs import (
     Aws_Output_Options,
     Azure_Output_Options,
@@ -74,6 +75,12 @@ class Test_Common_Output_Options:
             organizations_metadata=None,
             audit_resources=None,
             mfa_enabled=False,
+            audit_metadata=Audit_Metadata(
+                services_scanned=0,
+                expected_checks=[],
+                completed_checks=0,
+                audit_progress=0,
+            ),
         )
         return audit_info
 

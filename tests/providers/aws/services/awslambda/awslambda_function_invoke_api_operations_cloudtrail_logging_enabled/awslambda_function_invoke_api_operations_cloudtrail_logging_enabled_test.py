@@ -7,12 +7,13 @@ from moto.core import DEFAULT_ACCOUNT_ID
 
 from prowler.providers.aws.lib.audit_info.audit_info import AWS_Audit_Info
 from prowler.providers.aws.services.awslambda.awslambda_service import Function
+from prowler.providers.common.models import Audit_Metadata
 
 AWS_REGION = "us-east-1"
 
 
 # Mock generate_regional_clients()
-def mock_generate_regional_clients(service, audit_info):
+def mock_generate_regional_clients(service, audit_info, _):
     regional_client = audit_info.audit_session.client(service, region_name=AWS_REGION)
     regional_client.region = AWS_REGION
     return {AWS_REGION: regional_client}
@@ -20,7 +21,7 @@ def mock_generate_regional_clients(service, audit_info):
 
 # Patch every AWS call using Boto3 and generate_regional_clients to have 1 client
 @patch(
-    "prowler.providers.aws.services.accessanalyzer.accessanalyzer_service.generate_regional_clients",
+    "prowler.providers.aws.lib.service.service.generate_regional_clients",
     new=mock_generate_regional_clients,
 )
 class Test_awslambda_function_invoke_api_operations_cloudtrail_logging_enabled:
@@ -46,6 +47,12 @@ class Test_awslambda_function_invoke_api_operations_cloudtrail_logging_enabled:
             organizations_metadata=None,
             audit_resources=None,
             mfa_enabled=False,
+            audit_metadata=Audit_Metadata(
+                services_scanned=0,
+                expected_checks=[],
+                completed_checks=0,
+                audit_progress=0,
+            ),
         )
         return audit_info
 

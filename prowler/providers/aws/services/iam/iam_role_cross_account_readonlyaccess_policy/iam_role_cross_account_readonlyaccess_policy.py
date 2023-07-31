@@ -34,7 +34,7 @@ class iam_role_cross_account_readonlyaccess_policy(Check):
                                                 "AWS"
                                             ]:
                                                 if (
-                                                    iam_client.account
+                                                    iam_client.audited_account
                                                     not in aws_account
                                                     or "*" == aws_account
                                                 ):
@@ -42,7 +42,7 @@ class iam_role_cross_account_readonlyaccess_policy(Check):
                                                     break
                                         else:
                                             if (
-                                                iam_client.account
+                                                iam_client.audited_account
                                                 not in statement["Principal"]["AWS"]
                                                 or "*" == statement["Principal"]["AWS"]
                                             ):
@@ -58,14 +58,15 @@ class iam_role_cross_account_readonlyaccess_policy(Check):
                                 if type(statement["Principal"]["AWS"]) == list:
                                     for aws_account in statement["Principal"]["AWS"]:
                                         if (
-                                            iam_client.account not in aws_account
+                                            iam_client.audited_account
+                                            not in aws_account
                                             or "*" == aws_account
                                         ):
                                             cross_account_access = True
                                             break
                                 else:
                                     if (
-                                        iam_client.account
+                                        iam_client.audited_account
                                         not in statement["Principal"]["AWS"]
                                         or "*" == statement["Principal"]["AWS"]
                                     ):

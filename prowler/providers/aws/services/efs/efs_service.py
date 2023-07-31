@@ -1,5 +1,4 @@
 import json
-import threading
 from typing import Optional
 
 from botocore.client import ClientError
@@ -7,33 +6,17 @@ from pydantic import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
-from prowler.providers.aws.aws_provider import generate_regional_clients
+from prowler.providers.aws.lib.service.service import AWSService
 
 
 ################### EFS
-class EFS:
+class EFS(AWSService):
     def __init__(self, audit_info):
-        self.service = "efs"
-        self.session = audit_info.audit_session
-        self.audit_resources = audit_info.audit_resources
-        self.audited_account = audit_info.audited_account
-        self.audited_partition = audit_info.audited_partition
-        self.regional_clients = generate_regional_clients(self.service, audit_info)
+        # Call AWSService's __init__
+        super().__init__(__class__.__name__, audit_info)
         self.filesystems = []
         self.__threading_call__(self.__describe_file_systems__)
         self.__describe_file_system_policies__()
-
-    def __get_session__(self):
-        return self.session
-
-    def __threading_call__(self, call):
-        threads = []
-        for regional_client in self.regional_clients.values():
-            threads.append(threading.Thread(target=call, args=(regional_client,)))
-        for t in threads:
-            t.start()
-        for t in threads:
-            t.join()
 
     def __describe_file_systems__(self, regional_client):
         logger.info("EFS - Describing file systems...")

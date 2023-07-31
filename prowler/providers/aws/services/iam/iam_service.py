@@ -7,7 +7,7 @@ from pydantic import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
-from prowler.providers.aws.aws_provider import generate_regional_clients
+from prowler.providers.aws.lib.service.service import AWSService
 
 
 def is_service_role(role):
@@ -47,20 +47,10 @@ def is_service_role(role):
 
 
 ################## IAM
-class IAM:
+class IAM(AWSService):
     def __init__(self, audit_info):
-        self.service = "iam"
-        self.session = audit_info.audit_session
-        self.account = audit_info.audited_account
-        self.audit_resources = audit_info.audit_resources
-        self.partition = audit_info.audited_partition
-        self.account_arn = audit_info.audited_account_arn
-        self.client = self.session.client(self.service)
-        global_client = generate_regional_clients(
-            self.service, audit_info, global_service=True
-        )
-        self.client = list(global_client.values())[0]
-        self.region = self.client.region
+        # Call AWSService's __init__
+        super().__init__(__class__.__name__, audit_info)
         self.users = self.__get_users__()
         self.roles = self.__get_roles__()
         self.account_summary = self.__get_account_summary__()
@@ -95,9 +85,6 @@ class IAM:
 
     def __get_client__(self):
         return self.client
-
-    def __get_session__(self):
-        return self.session
 
     def __get_roles__(self):
         logger.info("IAM - List Roles...")
