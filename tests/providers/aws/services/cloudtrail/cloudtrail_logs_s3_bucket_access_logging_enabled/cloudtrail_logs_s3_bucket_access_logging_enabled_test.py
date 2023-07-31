@@ -188,7 +188,7 @@ class Test_cloudtrail_logs_s3_bucket_access_logging_enabled:
             result = check.execute()
 
             assert len(result) == 1
-            assert result[0].status == "FAIL"
+            assert result[0].status == "INFO"
             assert search(
                 "in another account out of Prowler's permissions scope, please check it manually",
                 result[0].status_extended,
