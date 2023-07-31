@@ -43,25 +43,24 @@ class Test_vpc_flow_logs_enabled:
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             new=current_audit_info,
+        ), mock.patch(
+            "prowler.providers.aws.services.vpc.vpc_flow_logs_enabled.vpc_flow_logs_enabled.vpc_client",
+            new=VPC(current_audit_info),
         ):
-            with mock.patch(
-                "prowler.providers.aws.services.vpc.vpc_flow_logs_enabled.vpc_flow_logs_enabled.vpc_client",
-                new=VPC(current_audit_info),
-            ):
-                # Test Check
-                from prowler.providers.aws.services.vpc.vpc_flow_logs_enabled.vpc_flow_logs_enabled import (
-                    vpc_flow_logs_enabled,
-                )
+            # Test Check
+            from prowler.providers.aws.services.vpc.vpc_flow_logs_enabled.vpc_flow_logs_enabled import (
+                vpc_flow_logs_enabled,
+            )
 
-                check = vpc_flow_logs_enabled()
-                result = check.execute()
+            check = vpc_flow_logs_enabled()
+            result = check.execute()
 
-                assert (
-                    len(result) == 2
-                )  # Number of AWS regions, one default VPC per region
+            assert len(result) == 2  # Number of AWS regions, one default VPC per region
 
     @mock_ec2
     def test_vpc_with_flow_logs(self):
+        from prowler.providers.aws.services.vpc.vpc_service import VPC
+
         # Create VPC Mocked Resources
         ec2_client = client("ec2", region_name=AWS_REGION)
 
@@ -83,6 +82,9 @@ class Test_vpc_flow_logs_enabled:
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             new=current_audit_info,
+        ), mock.patch(
+            "prowler.providers.aws.services.vpc.vpc_flow_logs_enabled.vpc_flow_logs_enabled.vpc_client",
+            new=VPC(current_audit_info),
         ):
             # Test Check
             from prowler.providers.aws.services.vpc.vpc_flow_logs_enabled.vpc_flow_logs_enabled import (
@@ -104,6 +106,8 @@ class Test_vpc_flow_logs_enabled:
 
     @mock_ec2
     def test_vpc_without_flow_logs(self):
+        from prowler.providers.aws.services.vpc.vpc_service import VPC
+
         # Create VPC Mocked Resources
         ec2_client = client("ec2", region_name=AWS_REGION)
 
@@ -114,6 +118,9 @@ class Test_vpc_flow_logs_enabled:
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             new=current_audit_info,
+        ), mock.patch(
+            "prowler.providers.aws.services.vpc.vpc_flow_logs_enabled.vpc_flow_logs_enabled.vpc_client",
+            new=VPC(current_audit_info),
         ):
             # Test Check
             from prowler.providers.aws.services.vpc.vpc_flow_logs_enabled.vpc_flow_logs_enabled import (
