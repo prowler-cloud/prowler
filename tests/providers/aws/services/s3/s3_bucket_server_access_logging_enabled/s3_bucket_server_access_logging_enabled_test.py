@@ -7,6 +7,7 @@ from moto import mock_s3
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 
 AWS_ACCOUNT_NUMBER = "123456789012"
+AWS_ACCOUNT_ARN = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
 AWS_REGION = "us-east-1"
 
 
@@ -22,7 +23,7 @@ class Test_s3_bucket_server_access_logging_enabled:
                 region_name=AWS_REGION,
             ),
             audited_account=AWS_ACCOUNT_NUMBER,
-            audited_account_arn=f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root",
+            audited_account_arn=AWS_ACCOUNT_ARN,
             audited_user_id=None,
             audited_partition="aws",
             audited_identity_arn=None,
