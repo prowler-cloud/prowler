@@ -86,7 +86,7 @@ class Test_ec2_instance_secrets_user_data:
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_instance_secrets_user_data.ec2_instance_secrets_user_data.ec2_client",
             new=EC2(current_audit_info),
-        ):
+        ) as ec2_client:
             from prowler.providers.aws.services.ec2.ec2_instance_secrets_user_data.ec2_instance_secrets_user_data import (
                 ec2_instance_secrets_user_data,
             )
@@ -101,6 +101,12 @@ class Test_ec2_instance_secrets_user_data:
                 == f"No secrets found in EC2 instance {instance.id} User Data."
             )
             assert result[0].resource_id == instance.id
+            assert (
+                result[0].resource_arn
+                == f"arn:{ec2_client.audited_partition}:ec2:{AWS_REGION}:{ec2_client.audited_account}:instance/{instance.id}"
+            )
+            assert result[0].resource_tags is None
+            assert result[0].region == AWS_REGION
 
     @mock_ec2
     def test_one_ec2_with_secrets(self):
@@ -134,13 +140,15 @@ class Test_ec2_instance_secrets_user_data:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Potential secret found in EC2 instance {instance.id} User Data."
+                == f"Potential secret found in EC2 instance {instance.id} User Data -> Secret Keyword on line 1."
             )
             assert result[0].resource_id == instance.id
             assert (
                 result[0].resource_arn
                 == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:instance/{instance.id}"
             )
+            assert result[0].resource_tags is None
+            assert result[0].region == AWS_REGION
 
     @mock_ec2
     def test_one_ec2_file_with_secrets(self):
@@ -177,13 +185,15 @@ class Test_ec2_instance_secrets_user_data:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Potential secret found in EC2 instance {instance.id} User Data."
+                == f"Potential secret found in EC2 instance {instance.id} User Data -> Secret Keyword on line 1, Hex High Entropy String on line 3, Secret Keyword on line 3, Secret Keyword on line 4."
             )
             assert result[0].resource_id == instance.id
             assert (
                 result[0].resource_arn
                 == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:instance/{instance.id}"
             )
+            assert result[0].resource_tags is None
+            assert result[0].region == AWS_REGION
 
     @mock_ec2
     def test_one_launch_configurations_without_user_data(self):
@@ -221,3 +231,5 @@ class Test_ec2_instance_secrets_user_data:
                 result[0].resource_arn
                 == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:instance/{instance.id}"
             )
+            assert result[0].resource_tags is None
+            assert result[0].region == AWS_REGION

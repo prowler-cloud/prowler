@@ -38,9 +38,19 @@ class ec2_instance_secrets_user_data(Check):
                     with default_settings():
                         secrets.scan_file(temp_user_data_file.name)
 
-                    if secrets.json():
+                    detect_secrets_output = secrets.json()
+                    if detect_secrets_output:
+                        secrets_string = ", ".join(
+                            [
+                                f"{secret['type']} on line {secret['line_number']}"
+                                for secret in detect_secrets_output[
+                                    temp_user_data_file.name
+                                ]
+                            ]
+                        )
                         report.status = "FAIL"
-                        report.status_extended = f"Potential secret found in EC2 instance {instance.id} User Data."
+                        report.status_extended = f"Potential secret found in EC2 instance {instance.id} User Data -> {secrets_string}."
+
                     else:
                         report.status = "PASS"
                         report.status_extended = (
