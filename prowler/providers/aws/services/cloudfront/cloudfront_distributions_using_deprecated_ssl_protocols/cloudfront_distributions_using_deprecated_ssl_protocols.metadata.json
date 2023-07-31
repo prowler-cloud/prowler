@@ -19,7 +19,7 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Use a Security policy with a ciphers that are stronger as possible. Drop legacy and unsecure ciphers.",
+      "Text": "Use a Security policy with ciphers that are as strong as possible. Drop legacy and insecure ciphers.",
       "Url": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/secure-connections-supported-viewer-protocols-ciphers.html"
     }
   },

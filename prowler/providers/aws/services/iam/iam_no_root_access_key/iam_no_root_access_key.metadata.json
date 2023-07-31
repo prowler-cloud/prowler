@@ -23,7 +23,7 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Use the credential report to  that the user and ensure the access_key_1_active and access_key_2_active fields are set to FALSE.",
+      "Text": "Use the credential report to check the user and ensure the access_key_1_active and access_key_2_active fields are set to FALSE.",
       "Url": "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_getting-report.html"
     }
   },
