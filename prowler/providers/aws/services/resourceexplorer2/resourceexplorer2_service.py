@@ -2,13 +2,13 @@ from pydantic import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
-from prowler.providers.aws.lib.service.service import AWS_Service
+from prowler.providers.aws.lib.service.service import AWSService
 
 
 ################################ ResourceExplorer2
-class ResourceExplorer2(AWS_Service):
+class ResourceExplorer2(AWSService):
     def __init__(self, audit_info):
-        # Call AWS_Service's __init__
+        # Call AWSService's __init__
         super().__init__("resource-explorer-2", audit_info)
         self.indexes = []
         self.__threading_call__(self.__list_indexes__)

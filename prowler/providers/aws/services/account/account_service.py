@@ -1,10 +1,10 @@
 ################## Account
-from prowler.providers.aws.lib.service.service import AWS_Service
+from prowler.providers.aws.lib.service.service import AWSService
 
 
-class Account(AWS_Service):
+class Account(AWSService):
     def __init__(self, audit_info):
-        # Call AWS_Service's __init__
+        # Call AWSService's __init__
         super().__init__(__class__.__name__, audit_info)
 
 

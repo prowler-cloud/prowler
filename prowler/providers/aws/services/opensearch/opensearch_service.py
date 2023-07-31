@@ -5,13 +5,13 @@ from pydantic import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
-from prowler.providers.aws.lib.service.service import AWS_Service
+from prowler.providers.aws.lib.service.service import AWSService
 
 
 ################################ OpenSearch
-class OpenSearchService(AWS_Service):
+class OpenSearchService(AWSService):
     def __init__(self, audit_info):
-        # Call AWS_Service's __init__
+        # Call AWSService's __init__
         super().__init__("opensearch", audit_info)
         self.opensearch_domains = []
         self.__threading_call__(self.__list_domain_names__)

@@ -6,13 +6,13 @@ from pydantic import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
-from prowler.providers.aws.lib.service.service import AWS_Service
+from prowler.providers.aws.lib.service.service import AWSService
 
 
 ################## VPC
-class VPC(AWS_Service):
+class VPC(AWSService):
     def __init__(self, audit_info):
-        # Call AWS_Service's __init__
+        # Call AWSService's __init__
         super().__init__("ec2", audit_info)
         self.vpcs = {}
         self.vpc_peering_connections = []

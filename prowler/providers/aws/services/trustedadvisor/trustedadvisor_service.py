@@ -4,13 +4,13 @@ from botocore.client import ClientError
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
-from prowler.providers.aws.lib.service.service import AWS_Service
+from prowler.providers.aws.lib.service.service import AWSService
 
 
 ################################ TrustedAdvisor
-class TrustedAdvisor(AWS_Service):
+class TrustedAdvisor(AWSService):
     def __init__(self, audit_info):
-        # Call AWS_Service's __init__
+        # Call AWSService's __init__
         super().__init__("support", audit_info)
         self.checks = []
         self.enabled = True

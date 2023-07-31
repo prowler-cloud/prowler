@@ -1,13 +1,13 @@
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
-from prowler.providers.aws.lib.service.service import AWS_Service
+from prowler.providers.aws.lib.service.service import AWSService
 
 
 ################### Shield
-class Shield(AWS_Service):
+class Shield(AWSService):
     def __init__(self, audit_info):
-        # Call AWS_Service's __init__
+        # Call AWSService's __init__
         super().__init__(__class__.__name__, audit_info, global_service=True)
         self.protections = {}
         self.enabled = False

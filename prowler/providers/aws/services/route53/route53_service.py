@@ -4,13 +4,13 @@ from pydantic import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
-from prowler.providers.aws.lib.service.service import AWS_Service
+from prowler.providers.aws.lib.service.service import AWSService
 
 
 ################## Route53
-class Route53(AWS_Service):
+class Route53(AWSService):
     def __init__(self, audit_info):
-        # Call AWS_Service's __init__
+        # Call AWSService's __init__
         super().__init__(__class__.__name__, audit_info, global_service=True)
         self.hosted_zones = {}
         self.record_sets = []
@@ -138,9 +138,9 @@ class RecordSet(BaseModel):
 
 
 ################## Route53Domains
-class Route53Domains(AWS_Service):
+class Route53Domains(AWSService):
     def __init__(self, audit_info):
-        # Call AWS_Service's __init__
+        # Call AWSService's __init__
         super().__init__(__class__.__name__, audit_info)
         self.domains = {}
         if audit_info.audited_partition == "aws":

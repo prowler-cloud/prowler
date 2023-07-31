@@ -6,8 +6,8 @@ from prowler.providers.aws.aws_provider import (
 )
 
 
-class AWS_Service:
-    """The AWS_Service class offers a parent class for each AWS Service to generate:
+class AWSService:
+    """The AWSService class offers a parent class for each AWS Service to generate:
     - AWS Regional Clients
     - Shared information like the account ID and ARN, the the AWS partition and the checks audited
     - AWS Session

@@ -3,7 +3,7 @@ from pydantic import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
-from prowler.providers.aws.lib.service.service import AWS_Service
+from prowler.providers.aws.lib.service.service import AWSService
 
 # Note:
 # This service is a bit special because it creates a resource (Replication Set) in one region, but you can list it in from any region using list_replication_sets
@@ -13,9 +13,9 @@ from prowler.providers.aws.lib.service.service import AWS_Service
 
 
 ################## SSMIncidents
-class SSMIncidents(AWS_Service):
+class SSMIncidents(AWSService):
     def __init__(self, audit_info):
-        # Call AWS_Service's __init__
+        # Call AWSService's __init__
         super().__init__("ssm-incidents", audit_info)
         self.replication_set = []
         self.__list_replication_sets__()

@@ -6,13 +6,13 @@ from pydantic import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
-from prowler.providers.aws.lib.service.service import AWS_Service
+from prowler.providers.aws.lib.service.service import AWSService
 
 
 ################## Glacier
-class Glacier(AWS_Service):
+class Glacier(AWSService):
     def __init__(self, audit_info):
-        # Call AWS_Service's __init__
+        # Call AWSService's __init__
         super().__init__(__class__.__name__, audit_info)
         self.vaults = {}
         self.__threading_call__(self.__list_vaults__)
