@@ -7,7 +7,7 @@ from prowler.providers.gcp.lib.service.service import GCPService
 ################## ServiceUsage
 class ServiceUsage(GCPService):
     def __init__(self, audit_info):
-        super().__init__(__class__.__name__, audit_info, api_version="v1")
+        super().__init__(__class__.__name__, audit_info)
         self.active_services = {}
         self.__get_active_services__()
 

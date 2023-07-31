@@ -7,7 +7,7 @@ from prowler.providers.gcp.lib.service.service import GCPService
 ################## Compute
 class Compute(GCPService):
     def __init__(self, audit_info):
-        super().__init__(__class__.__name__, audit_info, api_version="v1")
+        super().__init__(__class__.__name__, audit_info)
         self.regions = set()
         self.zones = set()
         self.instances = []

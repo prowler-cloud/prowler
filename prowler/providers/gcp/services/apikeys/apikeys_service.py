@@ -7,7 +7,7 @@ from prowler.providers.gcp.lib.service.service import GCPService
 ################## API Keys
 class APIKeys(GCPService):
     def __init__(self, audit_info):
-        super().__init__(__class__.__name__, audit_info)
+        super().__init__(__class__.__name__, audit_info, api_version="v2")
 
         self.keys = []
         self.__get_keys__()

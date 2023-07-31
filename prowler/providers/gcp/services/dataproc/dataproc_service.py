@@ -8,7 +8,7 @@ from prowler.providers.gcp.services.compute.compute_client import compute_client
 ################## Dataproc
 class Dataproc(GCPService):
     def __init__(self, audit_info):
-        super().__init__(__class__.__name__, audit_info, api_version="v1")
+        super().__init__(__class__.__name__, audit_info)
         self.clusters = []
         self.__get_clusters__()
 

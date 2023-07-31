@@ -7,7 +7,7 @@ from prowler.providers.gcp.lib.service.service import GCPService
 ################## DNS
 class DNS(GCPService):
     def __init__(self, audit_info):
-        super().__init__(__class__.__name__, audit_info, api_version="v1")
+        super().__init__(__class__.__name__, audit_info)
         self.managed_zones = []
         self.__get_managed_zones__()
         self.policies = []
