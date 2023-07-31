@@ -3,17 +3,13 @@ from typing import Optional
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
-from prowler.providers.gcp.gcp_provider import generate_client
+from prowler.providers.gcp.lib.service.service import GCPService
 
 
 ################## KMS
-class KMS:
+class KMS(GCPService):
     def __init__(self, audit_info):
-        self.service = "cloudkms"
-        self.api_version = "v1"
-        self.project_ids = audit_info.project_ids
-        self.region = "global"
-        self.client = generate_client(self.service, self.api_version, audit_info)
+        super().__init__("cloudkms", audit_info)
         self.locations = []
         self.key_rings = []
         self.crypto_keys = []
@@ -21,9 +17,6 @@ class KMS:
         self.__get_key_rings__()
         self.__get_crypto_keys__()
         self.__get_crypto_keys_iam_policy__()
-
-    def __get_client__(self):
-        return self.client
 
     def __get_locations__(self):
         for project_id in self.project_ids:

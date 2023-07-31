@@ -1,25 +1,19 @@
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
-from prowler.providers.gcp.gcp_provider import generate_client
+from prowler.providers.gcp.lib.service.service import GCPService
 
 
 ################## CloudResourceManager
-class CloudResourceManager:
+class CloudResourceManager(GCPService):
     def __init__(self, audit_info):
-        self.service = "cloudresourcemanager"
-        self.api_version = "v1"
-        self.region = "global"
-        self.project_ids = audit_info.project_ids
-        self.client = generate_client(self.service, self.api_version, audit_info)
+        super().__init__(__class__.__name__, audit_info)
+
         self.bindings = []
         self.projects = []
         self.organizations = []
         self.__get_iam_policy__()
         self.__get_organizations__()
-
-    def __get_client__(self):
-        return self.client
 
     def __get_iam_policy__(self):
         for project_id in self.project_ids:

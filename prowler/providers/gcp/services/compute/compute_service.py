@@ -1,18 +1,13 @@
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
-from prowler.providers.gcp.gcp_provider import generate_client
+from prowler.providers.gcp.lib.service.service import GCPService
 
 
 ################## Compute
-class Compute:
+class Compute(GCPService):
     def __init__(self, audit_info):
-        self.service = "compute"
-        self.api_version = "v1"
-        self.project_ids = audit_info.project_ids
-        self.default_project_id = audit_info.default_project_id
-        self.client = generate_client(self.service, self.api_version, audit_info)
-        self.region = "global"
+        super().__init__(__class__.__name__, audit_info)
         self.regions = set()
         self.zones = set()
         self.instances = []
