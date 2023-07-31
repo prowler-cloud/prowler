@@ -1,18 +1,13 @@
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
-from prowler.providers.gcp.gcp_provider import generate_client
+from prowler.providers.gcp.lib.service.service import GCPService
 
 
 ################## DNS
-class DNS:
+class DNS(GCPService):
     def __init__(self, audit_info):
-        self.service = "dns"
-        self.api_version = "v1"
-        self.project_ids = audit_info.project_ids
-        self.default_project_id = audit_info.default_project_id
-        self.client = generate_client(self.service, self.api_version, audit_info)
-        self.region = "global"
+        super().__init__(__class__.__name__, audit_info, api_version="v1")
         self.managed_zones = []
         self.__get_managed_zones__()
         self.policies = []

@@ -1,16 +1,14 @@
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
-from prowler.providers.gcp.gcp_provider import generate_client
+from prowler.providers.gcp.lib.service.service import GCPService
 
 
 ################## BigQuery
-class BigQuery:
+class BigQuery(GCPService):
     def __init__(self, audit_info):
-        self.service = "bigquery"
-        self.api_version = "v2"
-        self.project_ids = audit_info.project_ids
-        self.client = generate_client(self.service, self.api_version, audit_info)
+        super().__init__(__class__.__name__, audit_info)
+
         self.datasets = []
         self.tables = []
         self.__get_datasets__()

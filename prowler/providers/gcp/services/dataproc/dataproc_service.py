@@ -1,18 +1,14 @@
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
-from prowler.providers.gcp.gcp_provider import generate_client
+from prowler.providers.gcp.lib.service.service import GCPService
 from prowler.providers.gcp.services.compute.compute_client import compute_client
 
 
 ################## Dataproc
-class Dataproc:
+class Dataproc(GCPService):
     def __init__(self, audit_info):
-        self.service = "dataproc"
-        self.api_version = "v1"
-        self.project_ids = audit_info.project_ids
-        self.default_project_id = audit_info.default_project_id
-        self.client = generate_client(self.service, self.api_version, audit_info)
+        super().__init__(__class__.__name__, audit_info, api_version="v1")
         self.clusters = []
         self.__get_clusters__()
 
