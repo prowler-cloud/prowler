@@ -86,7 +86,7 @@ class Test_ec2_instance_secrets_user_data:
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_instance_secrets_user_data.ec2_instance_secrets_user_data.ec2_client",
             new=EC2(current_audit_info),
-        ) as ec2_client:
+        ):
             from prowler.providers.aws.services.ec2.ec2_instance_secrets_user_data.ec2_instance_secrets_user_data import (
                 ec2_instance_secrets_user_data,
             )
@@ -103,7 +103,7 @@ class Test_ec2_instance_secrets_user_data:
             assert result[0].resource_id == instance.id
             assert (
                 result[0].resource_arn
-                == f"arn:{ec2_client.audited_partition}:ec2:{AWS_REGION}:{ec2_client.audited_account}:instance/{instance.id}"
+                == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:instance/{instance.id}"
             )
             assert result[0].resource_tags is None
             assert result[0].region == AWS_REGION
