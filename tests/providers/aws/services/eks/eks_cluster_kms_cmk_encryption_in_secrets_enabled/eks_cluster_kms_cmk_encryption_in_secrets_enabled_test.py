@@ -51,7 +51,8 @@ class Test_eks_cluster_kms_cmk_encryption_in_secrets_enabled:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert search(
-                "has not encryption for Kubernetes secrets", result[0].status_extended
+                "does not have encryption for Kubernetes secrets",
+                result[0].status_extended,
             )
             assert result[0].resource_id == cluster_name
             assert result[0].resource_arn == cluster_arn

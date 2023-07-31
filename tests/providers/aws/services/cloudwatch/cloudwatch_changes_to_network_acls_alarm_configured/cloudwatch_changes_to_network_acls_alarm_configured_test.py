@@ -5,6 +5,7 @@ from moto import mock_cloudtrail, mock_cloudwatch, mock_logs, mock_s3
 from moto.core import DEFAULT_ACCOUNT_ID
 
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
+from prowler.providers.common.models import Audit_Metadata
 
 AWS_REGION = "us-east-1"
 AWS_ACCOUNT_NUMBER = "123456789012"
@@ -32,6 +33,12 @@ class Test_cloudwatch_changes_to_network_acls_alarm_configured:
             organizations_metadata=None,
             audit_resources=None,
             mfa_enabled=False,
+            audit_metadata=Audit_Metadata(
+                services_scanned=0,
+                expected_checks=[],
+                completed_checks=0,
+                audit_progress=0,
+            ),
         )
 
         return audit_info

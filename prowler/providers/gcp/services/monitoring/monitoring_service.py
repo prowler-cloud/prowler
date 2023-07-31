@@ -1,17 +1,13 @@
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
-from prowler.providers.gcp.gcp_provider import generate_client
+from prowler.providers.gcp.lib.service.service import GCPService
 
 
 ################## Monitoring
-class Monitoring:
+class Monitoring(GCPService):
     def __init__(self, audit_info):
-        self.service = "monitoring"
-        self.api_version = "v3"
-        self.region = "global"
-        self.project_ids = audit_info.project_ids
-        self.client = generate_client(self.service, self.api_version, audit_info)
+        super().__init__(__class__.__name__, audit_info, api_version="v3")
         self.alert_policies = []
         self.__get_alert_policies__()
 

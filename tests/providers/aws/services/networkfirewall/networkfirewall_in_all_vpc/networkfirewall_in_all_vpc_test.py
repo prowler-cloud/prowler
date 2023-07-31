@@ -7,6 +7,7 @@ from prowler.providers.aws.services.networkfirewall.networkfirewall_service impo
     Firewall,
 )
 from prowler.providers.aws.services.vpc.vpc_service import VPCs, VpcSubnet
+from prowler.providers.common.models import Audit_Metadata
 
 AWS_REGION = "us-east-1"
 AWS_ACCOUNT_NUMBER = "123456789012"
@@ -41,6 +42,12 @@ class Test_networkfirewall_in_all_vpc:
             organizations_metadata=None,
             audit_resources=None,
             mfa_enabled=False,
+            audit_metadata=Audit_Metadata(
+                services_scanned=0,
+                expected_checks=[],
+                completed_checks=0,
+                audit_progress=0,
+            ),
         )
         return audit_info
 

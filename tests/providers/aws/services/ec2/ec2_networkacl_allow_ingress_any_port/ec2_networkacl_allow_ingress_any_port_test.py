@@ -192,7 +192,7 @@ class ec2_networkacl_allow_ingress_any_port:
                     assert nacl.status == "PASS"
                     assert (
                         nacl.status_extended
-                        == f"Network ACL {nacl_id} has not every port open to the Internet."
+                        == f"Network ACL {nacl_id} does not have every port open to the Internet."
                     )
                     assert (
                         nacl.resource_arn

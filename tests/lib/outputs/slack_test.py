@@ -12,6 +12,7 @@ from prowler.providers.azure.lib.audit_info.models import (
     Azure_Audit_Info,
     Azure_Identity_Info,
 )
+from prowler.providers.common.models import Audit_Metadata
 from prowler.providers.gcp.lib.audit_info.models import GCP_Audit_Info
 
 AWS_ACCOUNT_ID = "123456789012"
@@ -44,6 +45,12 @@ class Test_Slack_Integration:
             organizations_metadata=None,
             audit_resources=None,
             mfa_enabled=False,
+            audit_metadata=Audit_Metadata(
+                services_scanned=0,
+                expected_checks=[],
+                completed_checks=0,
+                audit_progress=0,
+            ),
         )
         gcp_audit_info = GCP_Audit_Info(
             credentials=None,

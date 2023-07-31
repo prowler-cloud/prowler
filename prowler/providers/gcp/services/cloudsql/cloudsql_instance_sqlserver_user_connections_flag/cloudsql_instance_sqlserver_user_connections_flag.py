@@ -13,11 +13,11 @@ class cloudsql_instance_sqlserver_user_connections_flag(Check):
                 report.resource_name = instance.name
                 report.location = instance.region
                 report.status = "PASS"
-                report.status_extended = f"SQL Server Instance {instance.name} has 'user connections' flag set to '0'"
+                report.status_extended = f"SQL Server Instance {instance.name} has 'user connections' flag set to '0'."
                 for flag in instance.flags:
                     if flag["name"] == "user connections" and flag["value"] == "0":
                         report.status = "FAIL"
-                        report.status_extended = f"SQL Server Instance {instance.name} has not 'user connections' flag set to '0'"
+                        report.status_extended = f"SQL Server Instance {instance.name} does not have 'user connections' flag set to '0'."
                         break
                 findings.append(report)
 

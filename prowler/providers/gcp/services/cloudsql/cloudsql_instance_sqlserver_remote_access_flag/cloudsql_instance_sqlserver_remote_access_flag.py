@@ -13,11 +13,11 @@ class cloudsql_instance_sqlserver_remote_access_flag(Check):
                 report.resource_name = instance.name
                 report.location = instance.region
                 report.status = "PASS"
-                report.status_extended = f"SQL Server Instance {instance.name} has not 'remote access' flag set to 'on'"
+                report.status_extended = f"SQL Server Instance {instance.name} does not have 'remote access' flag set to 'on'."
                 for flag in instance.flags:
                     if flag["name"] == "remote access" and flag["value"] == "on":
                         report.status = "FAIL"
-                        report.status_extended = f"SQL Server Instance {instance.name} has 'remote access' flag set to 'on'"
+                        report.status_extended = f"SQL Server Instance {instance.name} has 'remote access' flag set to 'on'."
                         break
                 findings.append(report)
 

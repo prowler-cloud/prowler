@@ -5,6 +5,7 @@ from moto import mock_cloudtrail, mock_s3
 
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.aws.services.cloudtrail.cloudtrail_service import Cloudtrail
+from prowler.providers.common.models import Audit_Metadata
 
 AWS_ACCOUNT_NUMBER = "123456789012"
 
@@ -31,6 +32,12 @@ class Test_cloudtrail_insights_exist:
             organizations_metadata=None,
             audit_resources=None,
             mfa_enabled=False,
+            audit_metadata=Audit_Metadata(
+                services_scanned=0,
+                expected_checks=[],
+                completed_checks=0,
+                audit_progress=0,
+            ),
         )
         return audit_info
 
@@ -90,7 +97,7 @@ class Test_cloudtrail_insights_exist:
                 assert result[0].status == "FAIL"
                 assert (
                     result[0].status_extended
-                    == f"Trail {trail_name_us} has not insight selectors and it is logging"
+                    == f"Trail {trail_name_us} does not have insight selectors and it is logging."
                 )
                 assert result[0].resource_id == trail_name_us
                 assert result[0].region == "us-east-1"
@@ -135,7 +142,7 @@ class Test_cloudtrail_insights_exist:
                 assert result[0].status == "PASS"
                 assert (
                     result[0].status_extended
-                    == f"Trail {trail_name_us} has insight selectors and it is logging"
+                    == f"Trail {trail_name_us} has insight selectors and it is logging."
                 )
                 assert result[0].resource_id == trail_name_us
                 assert result[0].region == "us-east-1"

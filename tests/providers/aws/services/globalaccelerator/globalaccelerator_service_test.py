@@ -7,6 +7,7 @@ from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.aws.services.globalaccelerator.globalaccelerator_service import (
     GlobalAccelerator,
 )
+from prowler.providers.common.models import Audit_Metadata
 
 # Mock Test Region
 AWS_REGION = "us-west-2"
@@ -71,6 +72,12 @@ class Test_GlobalAccelerator_Service:
             organizations_metadata=None,
             audit_resources=None,
             mfa_enabled=False,
+            audit_metadata=Audit_Metadata(
+                services_scanned=0,
+                expected_checks=[],
+                completed_checks=0,
+                audit_progress=0,
+            ),
         )
         return audit_info
 

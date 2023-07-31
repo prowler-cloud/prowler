@@ -4,8 +4,10 @@ from boto3 import client, session
 from moto import mock_s3, mock_s3control
 
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
+from prowler.providers.common.models import Audit_Metadata
 
 AWS_ACCOUNT_NUMBER = "123456789012"
+AWS_ACCOUNT_ARN = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
 AWS_REGION = "us-east-1"
 
 
@@ -21,7 +23,7 @@ class Test_s3_account_level_public_access_blocks:
                 region_name=AWS_REGION,
             ),
             audited_account=AWS_ACCOUNT_NUMBER,
-            audited_account_arn=f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root",
+            audited_account_arn=AWS_ACCOUNT_ARN,
             audited_user_id=None,
             audited_partition="aws",
             audited_identity_arn=None,
@@ -33,6 +35,12 @@ class Test_s3_account_level_public_access_blocks:
             organizations_metadata=None,
             audit_resources=None,
             mfa_enabled=False,
+            audit_metadata=Audit_Metadata(
+                services_scanned=0,
+                expected_checks=[],
+                completed_checks=0,
+                audit_progress=0,
+            ),
         )
         return audit_info
 
@@ -81,6 +89,7 @@ class Test_s3_account_level_public_access_blocks:
                         == f"Block Public Access is configured for the account {AWS_ACCOUNT_NUMBER}."
                     )
                     assert result[0].resource_id == AWS_ACCOUNT_NUMBER
+                    assert result[0].resource_arn == AWS_ACCOUNT_ARN
                     assert result[0].region == AWS_REGION
 
     @mock_s3
@@ -128,4 +137,5 @@ class Test_s3_account_level_public_access_blocks:
                         == f"Block Public Access is not configured for the account {AWS_ACCOUNT_NUMBER}."
                     )
                     assert result[0].resource_id == AWS_ACCOUNT_NUMBER
+                    assert result[0].resource_arn == AWS_ACCOUNT_ARN
                     assert result[0].region == AWS_REGION

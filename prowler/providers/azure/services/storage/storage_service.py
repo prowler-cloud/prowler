@@ -4,14 +4,13 @@ from azure.mgmt.storage import StorageManagementClient
 from azure.mgmt.storage.v2022_09_01.models import NetworkRuleSet
 
 from prowler.lib.logger import logger
+from prowler.providers.azure.lib.service.service import AzureService
 
 
 ########################## Storage
-class Storage:
+class Storage(AzureService):
     def __init__(self, audit_info):
-        self.service = "storage"
-        self.credentials = audit_info.credentials
-        self.subscriptions = audit_info.identity.subscriptions
+        super().__init__(__class__.__name__, audit_info)
         self.clients = self.__set_clients__(
             audit_info.identity.subscriptions, audit_info.credentials
         )

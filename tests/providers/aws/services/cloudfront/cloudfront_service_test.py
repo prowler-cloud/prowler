@@ -10,6 +10,7 @@ from prowler.providers.aws.services.cloudfront.cloudfront_service import (
     CloudFront,
     ViewerProtocolPolicy,
 )
+from prowler.providers.common.models import Audit_Metadata
 
 # Mock Test Region
 AWS_REGION = "eu-west-1"
@@ -176,6 +177,12 @@ class Test_CloudFront_Service:
             organizations_metadata=None,
             audit_resources=None,
             mfa_enabled=False,
+            audit_metadata=Audit_Metadata(
+                services_scanned=0,
+                expected_checks=[],
+                completed_checks=0,
+                audit_progress=0,
+            ),
         )
         return audit_info
 

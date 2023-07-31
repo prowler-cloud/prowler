@@ -14,14 +14,14 @@ class cloudsql_instance_postgres_log_min_messages_flag(Check):
                 report.resource_name = instance.name
                 report.location = instance.region
                 report.status = "FAIL"
-                report.status_extended = f"PostgreSQL Instance {instance.name} has not 'log_min_messages' flag set minimum to '{desired_log_min_messages}'"
+                report.status_extended = f"PostgreSQL Instance {instance.name} does not have 'log_min_messages' flag set minimum to '{desired_log_min_messages}'."
                 for flag in instance.flags:
                     if (
                         flag["name"] == "log_min_messages"
                         and flag["value"] == desired_log_min_messages
                     ):
                         report.status = "PASS"
-                        report.status_extended = f"PostgreSQL Instance {instance.name} has 'log_min_messages' flag set minimum to '{desired_log_min_messages}'"
+                        report.status_extended = f"PostgreSQL Instance {instance.name} has 'log_min_messages' flag set minimum to '{desired_log_min_messages}'."
                         break
                 findings.append(report)
 

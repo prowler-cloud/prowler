@@ -4,14 +4,14 @@ from azure.mgmt.security import SecurityCenter
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
+from prowler.providers.azure.lib.service.service import AzureService
 
 
 ########################## Defender
-class Defender:
+class Defender(AzureService):
     def __init__(self, audit_info):
-        self.service = "defender"
-        self.credentials = audit_info.credentials
-        self.subscriptions = audit_info.identity.subscriptions
+        super().__init__(__class__.__name__, audit_info)
+
         self.clients = self.__set_clients__(
             audit_info.identity.subscriptions, audit_info.credentials
         )

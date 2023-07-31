@@ -15,7 +15,7 @@ class workspaces_vpc_2private_1public_subnets_nat(Check):
             report.resource_arn = workspace.arn
             report.resource_tags = workspace.tags
             report.status = "PASS"
-            report.status_extended = f"Workspace {workspace.id} is in a private subnet within a VPC which has 1 public subnet 2 private subnets with a NAT Gateway attached"
+            report.status_extended = f"Workspace {workspace.id} is in a private subnet within a VPC which has 1 public subnet 2 private subnets with a NAT Gateway attached."
             vpc_object = None
             is_in_private_subnet = False
             if workspace.subnet_id:
@@ -45,7 +45,7 @@ class workspaces_vpc_2private_1public_subnets_nat(Check):
                 or not is_in_private_subnet
             ):
                 report.status = "FAIL"
-                report.status_extended = f"Workspace {workspace.id} is not in a private subnet or its VPC has not 1 public subnet and 2 private subnets with a NAT Gateway attached"
+                report.status_extended = f"Workspace {workspace.id} is not in a private subnet or its VPC does not have 1 public subnet and 2 private subnets with a NAT Gateway attached."
 
             findings.append(report)
         return findings

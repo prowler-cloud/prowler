@@ -19,7 +19,7 @@ class apigateway_client_certificate_enabled(Check):
                     report.status_extended = f"API Gateway {rest_api.name} ID {rest_api.id} in stage {stage.name} has client certificate enabled."
                 else:
                     report.status = "FAIL"
-                    report.status_extended = f"API Gateway {rest_api.name} ID {rest_api.id} in stage {stage.name} has not client certificate enabled."
+                    report.status_extended = f"API Gateway {rest_api.name} ID {rest_api.id} in stage {stage.name} does not have client certificate enabled."
                 findings.append(report)
 
         return findings

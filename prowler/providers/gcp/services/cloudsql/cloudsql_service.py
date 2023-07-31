@@ -1,16 +1,13 @@
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
-from prowler.providers.gcp.gcp_provider import generate_client
+from prowler.providers.gcp.lib.service.service import GCPService
 
 
 ################## CloudSQL
-class CloudSQL:
+class CloudSQL(GCPService):
     def __init__(self, audit_info):
-        self.service = "sqladmin"
-        self.api_version = "v1"
-        self.project_ids = audit_info.project_ids
-        self.client = generate_client(self.service, self.api_version, audit_info)
+        super().__init__("sqladmin", audit_info)
         self.instances = []
         self.__get_instances__()
 

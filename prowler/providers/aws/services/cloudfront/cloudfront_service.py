@@ -5,33 +5,18 @@ from pydantic import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
-from prowler.providers.aws.aws_provider import generate_regional_clients
+from prowler.providers.aws.lib.service.service import AWSService
 
 
 ################## CloudFront
-class CloudFront:
+class CloudFront(AWSService):
     def __init__(self, audit_info):
-        self.service = "cloudfront"
-        self.session = audit_info.audit_session
-        self.audited_account = audit_info.audited_account
-        self.audit_resources = audit_info.audit_resources
-        global_client = generate_regional_clients(
-            self.service, audit_info, global_service=True
-        )
+        # Call AWSService's __init__
+        super().__init__(__class__.__name__, audit_info, global_service=True)
         self.distributions = {}
-        if global_client:
-            self.client = list(global_client.values())[0]
-            self.region = self.client.region
-            self.__list_distributions__(self.client, self.region)
-            self.__get_distribution_config__(
-                self.client, self.distributions, self.region
-            )
-            self.__list_tags_for_resource__(
-                self.client, self.distributions, self.region
-            )
-
-    def __get_session__(self):
-        return self.session
+        self.__list_distributions__(self.client, self.region)
+        self.__get_distribution_config__(self.client, self.distributions, self.region)
+        self.__list_tags_for_resource__(self.client, self.distributions, self.region)
 
     def __list_distributions__(self, client, region) -> dict:
         logger.info("CloudFront - Listing Distributions...")

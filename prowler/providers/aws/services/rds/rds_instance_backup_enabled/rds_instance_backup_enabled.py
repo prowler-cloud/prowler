@@ -17,7 +17,7 @@ class rds_instance_backup_enabled(Check):
             else:
                 report.status = "FAIL"
                 report.status_extended = (
-                    f"RDS Instance {db_instance.id} has not backup enabled."
+                    f"RDS Instance {db_instance.id} does not have backup enabled."
                 )
 
             findings.append(report)

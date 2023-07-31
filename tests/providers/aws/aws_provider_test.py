@@ -12,6 +12,7 @@ from prowler.providers.aws.aws_provider import (
     get_global_region,
 )
 from prowler.providers.aws.lib.audit_info.models import AWS_Assume_Role, AWS_Audit_Info
+from prowler.providers.common.models import Audit_Metadata
 
 ACCOUNT_ID = 123456789012
 AWS_REGION = "us-east-1"
@@ -62,6 +63,12 @@ class Test_AWS_Provider:
             organizations_metadata=None,
             audit_resources=None,
             mfa_enabled=False,
+            audit_metadata=Audit_Metadata(
+                services_scanned=0,
+                expected_checks=[],
+                completed_checks=0,
+                audit_progress=0,
+            ),
         )
 
         # Call assume_role
@@ -185,6 +192,12 @@ class Test_AWS_Provider:
             organizations_metadata=None,
             audit_resources=None,
             mfa_enabled=False,
+            audit_metadata=Audit_Metadata(
+                services_scanned=0,
+                expected_checks=[],
+                completed_checks=0,
+                audit_progress=0,
+            ),
         )
 
         # Call assume_role
@@ -271,6 +284,12 @@ class Test_AWS_Provider:
             organizations_metadata=None,
             audit_resources=None,
             mfa_enabled=False,
+            audit_metadata=Audit_Metadata(
+                services_scanned=0,
+                expected_checks=[],
+                completed_checks=0,
+                audit_progress=0,
+            ),
         )
 
         # Call assume_role
@@ -354,6 +373,12 @@ class Test_AWS_Provider:
             organizations_metadata=None,
             audit_resources=None,
             mfa_enabled=False,
+            audit_metadata=Audit_Metadata(
+                services_scanned=0,
+                expected_checks=[],
+                completed_checks=0,
+                audit_progress=0,
+            ),
         )
 
         # Call assume_role
@@ -411,6 +436,12 @@ class Test_AWS_Provider:
             organizations_metadata=None,
             audit_resources=None,
             mfa_enabled=False,
+            audit_metadata=Audit_Metadata(
+                services_scanned=0,
+                expected_checks=[],
+                completed_checks=0,
+                audit_progress=0,
+            ),
         )
         generate_regional_clients_response = generate_regional_clients(
             "ec2", audit_info
@@ -443,6 +474,12 @@ class Test_AWS_Provider:
             organizations_metadata=None,
             audit_resources=None,
             mfa_enabled=False,
+            audit_metadata=Audit_Metadata(
+                services_scanned=0,
+                expected_checks=[],
+                completed_checks=0,
+                audit_progress=0,
+            ),
         )
         generate_regional_clients_response = generate_regional_clients(
             "route53", audit_info, global_service=True
@@ -474,6 +511,12 @@ class Test_AWS_Provider:
             organizations_metadata=None,
             audit_resources=None,
             mfa_enabled=False,
+            audit_metadata=Audit_Metadata(
+                services_scanned=0,
+                expected_checks=[],
+                completed_checks=0,
+                audit_progress=0,
+            ),
         )
         generate_regional_clients_response = generate_regional_clients(
             "shield", audit_info, global_service=True
@@ -502,6 +545,12 @@ class Test_AWS_Provider:
             organizations_metadata=None,
             audit_resources=None,
             mfa_enabled=False,
+            audit_metadata=Audit_Metadata(
+                services_scanned=0,
+                expected_checks=[],
+                completed_checks=0,
+                audit_progress=0,
+            ),
         )
         assert get_default_region("ec2", audit_info) == "eu-west-1"
 
@@ -525,6 +574,12 @@ class Test_AWS_Provider:
             organizations_metadata=None,
             audit_resources=None,
             mfa_enabled=False,
+            audit_metadata=Audit_Metadata(
+                services_scanned=0,
+                expected_checks=[],
+                completed_checks=0,
+                audit_progress=0,
+            ),
         )
         assert get_default_region("ec2", audit_info) == "eu-west-1"
 
@@ -548,6 +603,12 @@ class Test_AWS_Provider:
             organizations_metadata=None,
             audit_resources=None,
             mfa_enabled=False,
+            audit_metadata=Audit_Metadata(
+                services_scanned=0,
+                expected_checks=[],
+                completed_checks=0,
+                audit_progress=0,
+            ),
         )
         assert get_default_region("ec2", audit_info) == "eu-west-1"
 
@@ -571,6 +632,12 @@ class Test_AWS_Provider:
             organizations_metadata=None,
             audit_resources=None,
             mfa_enabled=False,
+            audit_metadata=Audit_Metadata(
+                services_scanned=0,
+                expected_checks=[],
+                completed_checks=0,
+                audit_progress=0,
+            ),
         )
         assert get_default_region("ec2", audit_info) == "us-east-1"
 
@@ -592,6 +659,12 @@ class Test_AWS_Provider:
             organizations_metadata=None,
             audit_resources=None,
             mfa_enabled=False,
+            audit_metadata=Audit_Metadata(
+                services_scanned=0,
+                expected_checks=[],
+                completed_checks=0,
+                audit_progress=0,
+            ),
         )
         assert get_default_region("ec2", audit_info) == "us-east-1"
 
@@ -613,6 +686,12 @@ class Test_AWS_Provider:
             organizations_metadata=None,
             audit_resources=None,
             mfa_enabled=False,
+            audit_metadata=Audit_Metadata(
+                services_scanned=0,
+                expected_checks=[],
+                completed_checks=0,
+                audit_progress=0,
+            ),
         )
         assert get_global_region(audit_info) == "us-gov-east-1"
 
@@ -634,6 +713,12 @@ class Test_AWS_Provider:
             organizations_metadata=None,
             audit_resources=None,
             mfa_enabled=False,
+            audit_metadata=Audit_Metadata(
+                services_scanned=0,
+                expected_checks=[],
+                completed_checks=0,
+                audit_progress=0,
+            ),
         )
         assert get_global_region(audit_info) == "cn-north-1"
 
@@ -655,6 +740,12 @@ class Test_AWS_Provider:
             organizations_metadata=None,
             audit_resources=None,
             mfa_enabled=False,
+            audit_metadata=Audit_Metadata(
+                services_scanned=0,
+                expected_checks=[],
+                completed_checks=0,
+                audit_progress=0,
+            ),
         )
         assert get_global_region(audit_info) == "aws-iso-global"
 
@@ -677,6 +768,12 @@ class Test_AWS_Provider:
             organizations_metadata=None,
             audit_resources=None,
             mfa_enabled=False,
+            audit_metadata=Audit_Metadata(
+                services_scanned=0,
+                expected_checks=[],
+                completed_checks=0,
+                audit_progress=0,
+            ),
         )
         with patch(
             "prowler.providers.aws.aws_provider.parse_json_file",
@@ -728,6 +825,12 @@ class Test_AWS_Provider:
             organizations_metadata=None,
             audit_resources=None,
             mfa_enabled=False,
+            audit_metadata=Audit_Metadata(
+                services_scanned=0,
+                expected_checks=[],
+                completed_checks=0,
+                audit_progress=0,
+            ),
         )
         with patch(
             "prowler.providers.aws.aws_provider.parse_json_file",

@@ -13,11 +13,11 @@ class cloudsql_instance_postgres_log_connections_flag(Check):
                 report.resource_name = instance.name
                 report.location = instance.region
                 report.status = "FAIL"
-                report.status_extended = f"PostgreSQL Instance {instance.name} has not 'log_connections' flag set to 'on'"
+                report.status_extended = f"PostgreSQL Instance {instance.name} does not have 'log_connections' flag set to 'on'."
                 for flag in instance.flags:
                     if flag["name"] == "log_connections" and flag["value"] == "on":
                         report.status = "PASS"
-                        report.status_extended = f"PostgreSQL Instance {instance.name} has 'log_connections' flag set to 'on'"
+                        report.status_extended = f"PostgreSQL Instance {instance.name} has 'log_connections' flag set to 'on'."
                         break
                 findings.append(report)
 

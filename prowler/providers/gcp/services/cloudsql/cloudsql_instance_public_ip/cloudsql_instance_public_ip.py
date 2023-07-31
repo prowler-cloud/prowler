@@ -13,12 +13,12 @@ class cloudsql_instance_public_ip(Check):
             report.location = instance.region
             report.status = "PASS"
             report.status_extended = (
-                f"Database Instance {instance.name} has not a public IP"
+                f"Database Instance {instance.name} does not have a public IP."
             )
             if instance.public_ip:
                 report.status = "FAIL"
                 report.status_extended = (
-                    f"Database Instance {instance.name} has a public IP"
+                    f"Database Instance {instance.name} has a public IP."
                 )
             findings.append(report)
 

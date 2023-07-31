@@ -12,10 +12,12 @@ class compute_instance_public_ip(Check):
             report.resource_name = instance.name
             report.location = instance.zone
             report.status = "PASS"
-            report.status_extended = f"VM Instance {instance.name} has not a public IP"
+            report.status_extended = (
+                f"VM Instance {instance.name} does not have a public IP."
+            )
             if instance.public_ip:
                 report.status = "FAIL"
-                report.status_extended = f"VM Instance {instance.name} has a public IP"
+                report.status_extended = f"VM Instance {instance.name} has a public IP."
             findings.append(report)
 
         return findings

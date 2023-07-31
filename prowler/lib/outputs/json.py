@@ -40,6 +40,8 @@ def fill_json_asff(finding_output, audit_info, finding, output_options):
             if finding.resource_id == "":
                 finding.resource_id = "NONE_PROVIDED"
             finding.resource_arn = finding.resource_id
+        # The following line cannot be changed because it is the format we use to generate unique findings for AWS Security Hub
+        # If changed some findings could be lost because the unique identifier will be different
         finding_output.Id = f"prowler-{finding.check_metadata.CheckID}-{audit_info.audited_account}-{finding.region}-{hash_sha512(finding.resource_id)}"
         finding_output.ProductArn = f"arn:{audit_info.audited_partition}:securityhub:{finding.region}::product/prowler/prowler"
         finding_output.ProductFields = ProductFields(

@@ -13,6 +13,7 @@ from prowler.providers.aws.lib.audit_info.audit_info import AWS_Audit_Info
 from prowler.providers.aws.services.cloudformation.cloudformation_service import (
     CloudFormation,
 )
+from prowler.providers.common.models import Audit_Metadata
 
 # Mock Test Region
 AWS_REGION = "eu-west-1"
@@ -120,7 +121,7 @@ def mock_make_api_call(self, operation_name, kwarg):
 
 
 # Mock generate_regional_clients()
-def mock_generate_regional_clients(service, audit_info):
+def mock_generate_regional_clients(service, audit_info, _):
     regional_client = audit_info.audit_session.client(service, region_name=AWS_REGION)
     regional_client.region = AWS_REGION
     return {AWS_REGION: regional_client}
@@ -129,7 +130,7 @@ def mock_generate_regional_clients(service, audit_info):
 # Patch every AWS call using Boto3 and generate_regional_clients to have 1 client
 @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
 @patch(
-    "prowler.providers.aws.services.cloudformation.cloudformation_service.generate_regional_clients",
+    "prowler.providers.aws.lib.service.service.generate_regional_clients",
     new=mock_generate_regional_clients,
 )
 class Test_CloudFormation_Service:
@@ -145,7 +146,7 @@ class Test_CloudFormation_Service:
             audited_account=None,
             audited_account_arn=None,
             audited_user_id=None,
-            audited_partition=None,
+            audited_partition="aws",
             audited_identity_arn=None,
             profile=None,
             profile_region=None,
@@ -155,6 +156,12 @@ class Test_CloudFormation_Service:
             organizations_metadata=None,
             audit_resources=None,
             mfa_enabled=False,
+            audit_metadata=Audit_Metadata(
+                services_scanned=0,
+                expected_checks=[],
+                completed_checks=0,
+                audit_progress=0,
+            ),
         )
         return audit_info
 

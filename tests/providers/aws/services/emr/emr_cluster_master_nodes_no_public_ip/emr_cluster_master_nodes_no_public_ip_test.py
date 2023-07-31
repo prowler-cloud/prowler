@@ -59,7 +59,8 @@ class Test_emr_cluster_master_nodes_no_public_ip:
             assert result[0].resource_arn == cluster_arn
             assert result[0].status == "FAIL"
             assert (
-                result[0].status_extended == f"EMR Cluster {cluster_id} has a Public IP"
+                result[0].status_extended
+                == f"EMR Cluster {cluster_id} has a Public IP."
             )
 
     def test_cluster_private_running(self):
@@ -97,7 +98,7 @@ class Test_emr_cluster_master_nodes_no_public_ip:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"EMR Cluster {cluster_id} has not a Public IP"
+                == f"EMR Cluster {cluster_id} does not have a Public IP."
             )
 
     def test_cluster_public_terminated(self):
@@ -165,5 +166,5 @@ class Test_emr_cluster_master_nodes_no_public_ip:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"EMR Cluster {cluster_id} has not a Public IP"
+                == f"EMR Cluster {cluster_id} does not have a Public IP."
             )

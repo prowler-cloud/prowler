@@ -32,7 +32,7 @@ class iam_role_cross_service_confused_deputy_prevention(Check):
                                 "StringEquals" in statement["Condition"]
                                 and "aws:SourceAccount"
                                 in statement["Condition"]["StringEquals"]
-                                and iam_client.account
+                                and iam_client.audited_account
                                 in str(
                                     statement["Condition"]["StringEquals"][
                                         "aws:SourceAccount"
@@ -43,7 +43,7 @@ class iam_role_cross_service_confused_deputy_prevention(Check):
                                 "StringLike" in statement["Condition"]
                                 and "aws:SourceAccount"
                                 in statement["Condition"]["StringLike"]
-                                and iam_client.account
+                                and iam_client.audited_account
                                 in str(
                                     statement["Condition"]["StringLike"][
                                         "aws:SourceAccount"
@@ -54,7 +54,7 @@ class iam_role_cross_service_confused_deputy_prevention(Check):
                                 "ArnEquals" in statement["Condition"]
                                 and "aws:SourceArn"
                                 in statement["Condition"]["ArnEquals"]
-                                and iam_client.account
+                                and iam_client.audited_account
                                 in str(
                                     statement["Condition"]["ArnEquals"]["aws:SourceArn"]
                                 )
@@ -62,7 +62,7 @@ class iam_role_cross_service_confused_deputy_prevention(Check):
                             or (
                                 "ArnLike" in statement["Condition"]
                                 and "aws:SourceArn" in statement["Condition"]["ArnLike"]
-                                and iam_client.account
+                                and iam_client.audited_account
                                 in str(
                                     statement["Condition"]["ArnLike"]["aws:SourceArn"]
                                 )

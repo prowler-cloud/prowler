@@ -19,7 +19,7 @@ class apigateway_waf_acl_attached(Check):
                     report.status_extended = f"API Gateway {rest_api.name} ID {rest_api.id} in stage {stage.name} has {stage.waf} WAF ACL attached."
                 else:
                     report.status = "FAIL"
-                    report.status_extended = f"API Gateway {rest_api.name} ID {rest_api.id} in stage {stage.name} has not WAF ACL attached."
+                    report.status_extended = f"API Gateway {rest_api.name} ID {rest_api.id} in stage {stage.name} does not have WAF ACL attached."
                 findings.append(report)
 
         return findings

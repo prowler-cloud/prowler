@@ -5,6 +5,7 @@ from boto3 import client, session
 from moto import mock_cloudtrail, mock_s3
 
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
+from prowler.providers.common.models import Audit_Metadata
 
 AWS_ACCOUNT_NUMBER = "123456789012"
 
@@ -31,6 +32,12 @@ class Test_cloudtrail_logs_s3_bucket_is_not_publicly_accessible:
             organizations_metadata=None,
             audit_resources=None,
             mfa_enabled=False,
+            audit_metadata=Audit_Metadata(
+                services_scanned=0,
+                expected_checks=[],
+                completed_checks=0,
+                audit_progress=0,
+            ),
         )
         return audit_info
 
@@ -243,7 +250,7 @@ class Test_cloudtrail_logs_s3_bucket_is_not_publicly_accessible:
             result = check.execute()
 
             assert len(result) == 1
-            assert result[0].status == "PASS"
+            assert result[0].status == "INFO"
             assert result[0].resource_id == trail_name_us
             assert result[0].resource_arn == trail_us["TrailARN"]
             assert search(
