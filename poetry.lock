@@ -124,19 +124,19 @@ six = ">=1.12.0"
 
 [[package]]
 name = "azure-mgmt-authorization"
-version = "3.0.0"
+version = "4.0.0"
 description = "Microsoft Azure Authorization Management Client Library for Python"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "azure-mgmt-authorization-3.0.0.zip", hash = "sha256:0a5d7f683bf3372236b841cdbd4677f6b08ed7ce41b999c3e644d4286252057d"},
-    {file = "azure_mgmt_authorization-3.0.0-py3-none-any.whl", hash = "sha256:b3f9e584b87d5cc39d41283211237945e620c0b868394880aeded80a126b2c40"},
+    {file = "azure-mgmt-authorization-4.0.0.zip", hash = "sha256:69b85abc09ae64fc72975bd43431170d8c7eb5d166754b98aac5f3845de57dc4"},
+    {file = "azure_mgmt_authorization-4.0.0-py3-none-any.whl", hash = "sha256:d8feeb3842e6ddf1a370963ca4f61fb6edc124e8997b807dd025bc9b2379cd1a"},
 ]
 
 [package.dependencies]
 azure-common = ">=1.1,<2.0"
 azure-mgmt-core = ">=1.3.2,<2.0.0"
-msrest = ">=0.7.1"
+isodate = ">=0.6.1,<1.0.0"
 
 [[package]]
 name = "azure-mgmt-core"
@@ -2876,4 +2876,4 @@ docs = ["mkdocs", "mkdocs-material"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "65839dc1cf3c28d3e311494a1709bb3f49796d89f71675763a9473ce1a7e7f36"
+content-hash = "0dcd58a094380d0e001a751afd104a543f27cc55c4dbd42db02e120f4da90220"
