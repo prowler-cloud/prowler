@@ -22,14 +22,16 @@ class iam_role_cross_account_readonlyaccess_policy(Check):
                     if policy["PolicyName"] == "ReadOnlyAccess":
                         report.status_extended = f"IAM Role {role.name} has read-only access but is not cross account."
                         cross_account_access = False
-                        if type(role.assume_role_policy["Statement"]) == list:
+                        if isinstance(role.assume_role_policy["Statement"], list):
                             for statement in role.assume_role_policy["Statement"]:
                                 if not cross_account_access:
                                     if (
                                         statement["Effect"] == "Allow"
                                         and "AWS" in statement["Principal"]
                                     ):
-                                        if type(statement["Principal"]["AWS"]) == list:
+                                        if isinstance(
+                                            statement["Principal"]["AWS"], list
+                                        ):
                                             for aws_account in statement["Principal"][
                                                 "AWS"
                                             ]:
@@ -55,7 +57,7 @@ class iam_role_cross_account_readonlyaccess_policy(Check):
                                 statement["Effect"] == "Allow"
                                 and "AWS" in statement["Principal"]
                             ):
-                                if type(statement["Principal"]["AWS"]) == list:
+                                if isinstance(statement["Principal"]["AWS"], list):
                                     for aws_account in statement["Principal"]["AWS"]:
                                         if (
                                             iam_client.audited_account

@@ -24,7 +24,7 @@ class vpc_endpoint_connections_trust_boundaries(Check):
                         break
 
                     else:
-                        if type(statement["Principal"]["AWS"]) == str:
+                        if isinstance(statement["Principal"]["AWS"], str):
                             principals = [statement["Principal"]["AWS"]]
                         else:
                             principals = statement["Principal"]["AWS"]

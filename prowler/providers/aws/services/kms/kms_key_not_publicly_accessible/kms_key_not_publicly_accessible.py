@@ -31,7 +31,7 @@ class kms_key_not_publicly_accessible(Check):
                         elif (
                             "Principal" in statement and "AWS" in statement["Principal"]
                         ):
-                            if type(statement["Principal"]["AWS"]) == str:
+                            if isinstance(statement["Principal"]["AWS"], str):
                                 principals = [statement["Principal"]["AWS"]]
                             else:
                                 principals = statement["Principal"]["AWS"]

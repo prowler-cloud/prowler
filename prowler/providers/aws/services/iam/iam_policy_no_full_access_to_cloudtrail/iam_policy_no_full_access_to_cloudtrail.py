@@ -18,7 +18,7 @@ class iam_policy_no_full_access_to_cloudtrail(Check):
                 report.status = "PASS"
                 report.status_extended = f"Custom Policy {policy.name} does not allow '{critical_service}:*' privileges"
                 if policy.document:
-                    if type(policy.document["Statement"]) != list:
+                    if isinstance(policy.document["Statement"], list):
                         policy_statements = [policy.document["Statement"]]
                     else:
                         policy_statements = policy.document["Statement"]

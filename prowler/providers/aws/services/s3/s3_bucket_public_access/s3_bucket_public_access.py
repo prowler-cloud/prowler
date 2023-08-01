@@ -60,7 +60,9 @@ class s3_bucket_public_access(Check):
                                         and "AWS" in statement["Principal"]
                                         and statement["Effect"] == "Allow"
                                     ):
-                                        if type(statement["Principal"]["AWS"]) == str:
+                                        if isinstance(
+                                            statement["Principal"]["AWS"], str
+                                        ):
                                             principals = [statement["Principal"]["AWS"]]
                                         else:
                                             principals = statement["Principal"]["AWS"]
