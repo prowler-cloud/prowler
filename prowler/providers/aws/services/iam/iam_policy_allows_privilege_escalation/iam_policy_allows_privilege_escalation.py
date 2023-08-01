@@ -102,6 +102,8 @@ class iam_policy_allows_privilege_escalation(Check):
                 report.resource_arn = policy.arn
                 report.region = iam_client.region
                 report.resource_tags = policy.tags
+                report.status = "PASS"
+                report.status_extended = f"Custom Policy {report.resource_arn} does not allow privilege escalation"
 
                 # List of policy actions
                 allowed_actions = set()
@@ -157,10 +159,7 @@ class iam_policy_allows_privilege_escalation(Check):
                         if privileged_actions.intersection(values) == values:
                             policies_combination.add(key)
 
-                    if len(policies_combination) == 0:
-                        report.status = "PASS"
-                        report.status_extended = f"Custom Policy {report.resource_arn} does not allow privilege escalation"
-                    else:
+                    if len(policies_combination) != 0:
                         report.status = "FAIL"
                         policies_affected = ""
                         for key in policies_combination:

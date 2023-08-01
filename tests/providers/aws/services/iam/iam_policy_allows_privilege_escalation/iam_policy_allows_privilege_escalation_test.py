@@ -581,3 +581,190 @@ class Test_iam_policy_allows_privilege_escalation:
 
                 # Delete each IAM policy after the test
                 iam_client.delete_policy(PolicyArn=policy_arn)
+
+    @mock_iam
+    def test_iam_policy_allows_privilege_escalation_two_policies_one_good_one_bad(
+        self,
+    ):
+        current_audit_info = self.set_mocked_audit_info()
+        iam_client = client("iam", region_name=AWS_REGION)
+        policy_name_1 = "privileged_policy_1"
+        policy_document_1 = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Action": ["ec2:RunInstances"],
+                    "Resource": "*",
+                },
+            ],
+        }
+        policy_name_2 = "privileged_policy_2"
+        policy_document_2 = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Action": [
+                        "iam:PassRole",
+                    ],
+                    "Resource": "*",
+                },
+                {
+                    "Effect": "Allow",
+                    "Action": [
+                        "lambda:CreateFunction",
+                    ],
+                    "Resource": "*",
+                },
+                {
+                    "Effect": "Allow",
+                    "Action": ["lambda:InvokeFunction"],
+                    "Resource": "*",
+                },
+            ],
+        }
+        policy_arn_1 = iam_client.create_policy(
+            PolicyName=policy_name_1, PolicyDocument=dumps(policy_document_1)
+        )["Policy"]["Arn"]
+
+        policy_arn_2 = iam_client.create_policy(
+            PolicyName=policy_name_2, PolicyDocument=dumps(policy_document_2)
+        )["Policy"]["Arn"]
+
+        from prowler.providers.aws.services.iam.iam_service import IAM
+
+        with mock.patch(
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=current_audit_info,
+        ), mock.patch(
+            "prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation.iam_client",
+            new=IAM(current_audit_info),
+        ):
+            # Test Check
+            from prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation import (
+                iam_policy_allows_privilege_escalation,
+            )
+
+            check = iam_policy_allows_privilege_escalation()
+            result = check.execute()
+            assert len(result) == 2
+            for finding in result:
+                if finding.resource_id == policy_name_1:
+                    assert finding.status == "PASS"
+                    assert finding.resource_arn == policy_arn_1
+                    assert (
+                        finding.status_extended
+                        == f"Custom Policy {policy_arn_1} does not allow privilege escalation"
+                    )
+
+                if finding.resource_id == policy_name_2:
+                    assert finding.status == "FAIL"
+                    assert finding.resource_arn == policy_arn_2
+
+                    assert search(
+                        f"Custom Policy {policy_arn_2} allows privilege escalation using the following actions: ",
+                        finding.status_extended,
+                    )
+                    assert search("iam:PassRole", finding.status_extended)
+                    assert search("lambda:InvokeFunction", finding.status_extended)
+                    assert search("lambda:CreateFunction", finding.status_extended)
+
+    @mock_iam
+    def test_iam_policy_allows_privilege_escalation_two_bad_policies(
+        self,
+    ):
+        current_audit_info = self.set_mocked_audit_info()
+        iam_client = client("iam", region_name=AWS_REGION)
+        policy_name_1 = "privileged_policy_1"
+        policy_document_1 = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Action": [
+                        "iam:PassRole",
+                    ],
+                    "Resource": "*",
+                },
+                {
+                    "Effect": "Allow",
+                    "Action": ["ec2:RunInstances"],
+                    "Resource": "*",
+                },
+            ],
+        }
+        policy_name_2 = "privileged_policy_2"
+        policy_document_2 = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Action": [
+                        "iam:PassRole",
+                    ],
+                    "Resource": "*",
+                },
+                {
+                    "Effect": "Allow",
+                    "Action": [
+                        "lambda:CreateFunction",
+                    ],
+                    "Resource": "*",
+                },
+                {
+                    "Effect": "Allow",
+                    "Action": ["lambda:InvokeFunction"],
+                    "Resource": "*",
+                },
+            ],
+        }
+        policy_arn_1 = iam_client.create_policy(
+            PolicyName=policy_name_1, PolicyDocument=dumps(policy_document_1)
+        )["Policy"]["Arn"]
+
+        policy_arn_2 = iam_client.create_policy(
+            PolicyName=policy_name_2, PolicyDocument=dumps(policy_document_2)
+        )["Policy"]["Arn"]
+
+        from prowler.providers.aws.services.iam.iam_service import IAM
+
+        with mock.patch(
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=current_audit_info,
+        ), mock.patch(
+            "prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation.iam_client",
+            new=IAM(current_audit_info),
+        ):
+            # Test Check
+            from prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation import (
+                iam_policy_allows_privilege_escalation,
+            )
+
+            check = iam_policy_allows_privilege_escalation()
+            result = check.execute()
+            assert len(result) == 2
+            for finding in result:
+                if finding.resource_id == policy_name_1:
+                    assert finding.status == "FAIL"
+                    assert finding.resource_arn == policy_arn_1
+
+                    assert search(
+                        f"Custom Policy {policy_arn_1} allows privilege escalation using the following actions: ",
+                        finding.status_extended,
+                    )
+
+                    assert search("iam:PassRole", finding.status_extended)
+                    assert search("ec2:RunInstances", finding.status_extended)
+
+                if finding.resource_id == policy_name_2:
+                    assert finding.status == "FAIL"
+                    assert finding.resource_arn == policy_arn_2
+
+                    assert search(
+                        f"Custom Policy {policy_arn_2} allows privilege escalation using the following actions: ",
+                        finding.status_extended,
+                    )
+                    assert search("iam:PassRole", finding.status_extended)
+                    assert search("lambda:InvokeFunction", finding.status_extended)
+                    assert search("lambda:CreateFunction", finding.status_extended)
