@@ -24,6 +24,7 @@ class iam_policy_allows_privilege_escalation(Check):
         privilege_escalation_policies_combination = {
             "CreatePolicyVersion": {"iam:CreatePolicyVersion"},
             "SetDefaultPolicyVersion": {"iam:SetDefaultPolicyVersion"},
+            "iam:PassRole": {"iam:PassRole"},
             "PassRole+EC2": {
                 "iam:PassRole",
                 "ec2:RunInstances",
@@ -72,6 +73,8 @@ class iam_policy_allows_privilege_escalation(Check):
             "iam:PutUserPolicy": {"iam:PutUserPolicy"},
             "iam:AddUserToGroup": {"iam:AddUserToGroup"},
             "iam:UpdateAssumeRolePolicy": {"iam:UpdateAssumeRolePolicy"},
+            "sts:AssumeRole": {"sts:AssumeRole"},
+            "sts:*": {"sts:*"},
         }
 
         findings = []
@@ -130,12 +133,21 @@ class iam_policy_allows_privilege_escalation(Check):
                     else:
                         privileged_actions = left_actions
 
+                    # Store all the action's combinations
                     policies_combination = set()
 
                     for (
                         key,
                         values,
                     ) in privilege_escalation_policies_combination.items():
+                        # If just one action is needed to perform privilege escalation
+                        # we have to check if it is present in our privileged_actions
+                        if len(values) == 1:
+                            if privileged_actions.intersection(values) == values:
+                                policies_combination.add(key)
+                                continue
+                        # If some actions needs to be combined we have to check that all
+                        # actions are allowed in the policy
                         if values == privileged_actions:
                             policies_combination.add(key)
 
