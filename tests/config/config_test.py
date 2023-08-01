@@ -18,7 +18,7 @@ def mock_prowler_get_latest_release(_):
 
 class Test_Config:
     def test_get_aws_available_regions(self):
-        assert len(get_aws_available_regions()) == 31
+        assert len(get_aws_available_regions()) == 32
 
     @mock.patch(
         "prowler.config.config.requests.get", new=mock_prowler_get_latest_release
