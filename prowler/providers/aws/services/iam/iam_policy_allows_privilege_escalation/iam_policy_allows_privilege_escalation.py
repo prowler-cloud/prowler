@@ -31,13 +31,13 @@ class iam_policy_allows_privilege_escalation(Check):
             },
             "PassRole+CreateLambda+Invoke": {
                 "iam:PassRole",
-                "lambda:CreateFunction,",
+                "lambda:CreateFunction",
                 "lambda:InvokeFunction",
             },
             # REVIEW
             "PassRole+CreateLambda+Extra": {
                 "iam:PassRole",
-                "lambda:CreateFunction,",
+                "lambda:CreateFunction",
                 "lambda:CreateEventSourceMapping",
             },
             "PassRole+GlueEndpoint": {
@@ -140,15 +140,7 @@ class iam_policy_allows_privilege_escalation(Check):
                         key,
                         values,
                     ) in privilege_escalation_policies_combination.items():
-                        # If just one action is needed to perform privilege escalation
-                        # we have to check if it is present in our privileged_actions
-                        if len(values) == 1:
-                            if privileged_actions.intersection(values) == values:
-                                policies_combination.add(key)
-                                continue
-                        # If some actions needs to be combined we have to check that all
-                        # actions are allowed in the policy
-                        if values == privileged_actions:
+                        if privileged_actions.intersection(values) == values:
                             policies_combination.add(key)
 
                     if len(policies_combination) == 0:
@@ -158,8 +150,9 @@ class iam_policy_allows_privilege_escalation(Check):
                         report.status = "FAIL"
                         policies_affected = ""
                         for key in policies_combination:
-                            policies_affected += str(
-                                privilege_escalation_policies_combination[key]
+                            policies_affected += (
+                                str(privilege_escalation_policies_combination[key])
+                                + " "
                             )
 
                         report.status_extended = f"Custom Policy {report.resource_arn} allows privilege escalation using the following actions: {policies_affected}"
