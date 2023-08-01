@@ -18,9 +18,11 @@ class iam_policy_allows_privilege_escalation(Check):
         # each service that has a policy that could
         # allow for privilege escalation
 
-        # From https://bishopfox.com/blog/privilege-escalation-in-aws
+        # Based on:
+        # - https://bishopfox.com/blog/privilege-escalation-in-aws
+        # - https://github.com/RhinoSecurityLabs/Security-Research/blob/master/tools/aws-pentest-tools/aws_escalate.py
+        # - https://rhinosecuritylabs.com/aws/aws-privilege-escalation-methods-mitigation/
 
-        # Comprobar para los servicios si tiene *
         privilege_escalation_policies_combination = {
             "CreatePolicyVersion": {"iam:CreatePolicyVersion"},
             "SetDefaultPolicyVersion": {"iam:SetDefaultPolicyVersion"},
@@ -35,10 +37,17 @@ class iam_policy_allows_privilege_escalation(Check):
                 "lambda:InvokeFunction",
             },
             # REVIEW
-            "PassRole+CreateLambda+Extra": {
+            "PassRole+CreateLambda+ExistingDynamo": {
                 "iam:PassRole",
                 "lambda:CreateFunction",
                 "lambda:CreateEventSourceMapping",
+            },
+            "PassRole+CreateLambda+NewDynamo": {
+                "iam:PassRole",
+                "lambda:CreateFunction",
+                "lambda:CreateEventSourceMapping",
+                "dynamodb:CreateTable",
+                "dynamodb:PutItem",
             },
             "PassRole+GlueEndpoint": {
                 "iam:PassRole",
@@ -68,11 +77,17 @@ class iam_policy_allows_privilege_escalation(Check):
             "iam:AttachUserPolicy": {"iam:AttachUserPolicy"},
             "iam:AttachGroupPolicy": {"iam:AttachGroupPolicy"},
             "iam:AttachRolePolicy": {"iam:AttachRolePolicy"},
+            "AssumeRole+AttachRolePolicy": {"sts:AssumeRole", "iam:AttachRolePolicy"},
             "iam:PutGroupPolicy": {"iam:PutGroupPolicy"},
             "iam:PutRolePolicy": {"iam:PutRolePolicy"},
+            "AssumeRole+PutRolePolicy": {"sts:AssumeRole", "iam:PutRolePolicy"},
             "iam:PutUserPolicy": {"iam:PutUserPolicy"},
             "iam:AddUserToGroup": {"iam:AddUserToGroup"},
             "iam:UpdateAssumeRolePolicy": {"iam:UpdateAssumeRolePolicy"},
+            "AssumeRole+UpdateAssumeRolePolicy": {
+                "sts:AssumeRole",
+                "iam:UpdateAssumeRolePolicy",
+            },
             "sts:AssumeRole": {"sts:AssumeRole"},
             "sts:*": {"sts:*"},
         }
