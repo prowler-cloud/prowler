@@ -5,7 +5,6 @@ from boto3 import client, session
 from moto import mock_s3, mock_s3control
 
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
-from prowler.providers.aws.services.s3.s3_service import S3Control
 from prowler.providers.common.models import Audit_Metadata
 
 AWS_ACCOUNT_NUMBER = "123456789012"
@@ -48,7 +47,7 @@ class Test_s3_bucket_level_public_access_block:
 
     @mock_s3
     def test_no_buckets(self):
-        from prowler.providers.aws.services.s3.s3_service import S3
+        from prowler.providers.aws.services.s3.s3_service import S3, S3Control
 
         audit_info = self.set_mocked_audit_info()
 
@@ -99,7 +98,7 @@ class Test_s3_bucket_level_public_access_block:
                 "RestrictPublicBuckets": False,
             },
         )
-        from prowler.providers.aws.services.s3.s3_service import S3
+        from prowler.providers.aws.services.s3.s3_service import S3, S3Control
 
         audit_info = self.set_mocked_audit_info()
 
@@ -161,7 +160,7 @@ class Test_s3_bucket_level_public_access_block:
                 "RestrictPublicBuckets": False,
             },
         )
-        from prowler.providers.aws.services.s3.s3_service import S3
+        from prowler.providers.aws.services.s3.s3_service import S3, S3Control
 
         audit_info = self.set_mocked_audit_info()
 
@@ -223,7 +222,7 @@ class Test_s3_bucket_level_public_access_block:
                 "RestrictPublicBuckets": True,
             },
         )
-        from prowler.providers.aws.services.s3.s3_service import S3
+        from prowler.providers.aws.services.s3.s3_service import S3, S3Control
 
         audit_info = self.set_mocked_audit_info()
 
@@ -285,7 +284,7 @@ class Test_s3_bucket_level_public_access_block:
                 "RestrictPublicBuckets": False,
             },
         )
-        from prowler.providers.aws.services.s3.s3_service import S3
+        from prowler.providers.aws.services.s3.s3_service import S3, S3Control
 
         audit_info = self.set_mocked_audit_info()
 
