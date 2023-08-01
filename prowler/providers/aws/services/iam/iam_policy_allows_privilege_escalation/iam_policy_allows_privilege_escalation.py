@@ -11,17 +11,17 @@ from prowler.providers.aws.services.iam.iam_client import iam_client
 # Does the tool handle Condition constraints? --> Not yet.
 # Does the tool handle service control policy (SCP) restrictions? --> No, SCP are within Organizations AWS API.
 
+# Based on:
+# - https://bishopfox.com/blog/privilege-escalation-in-aws
+# - https://github.com/RhinoSecurityLabs/Security-Research/blob/master/tools/aws-pentest-tools/aws_escalate.py
+# - https://rhinosecuritylabs.com/aws/aws-privilege-escalation-methods-mitigation/
+
 
 class iam_policy_allows_privilege_escalation(Check):
     def execute(self) -> Check_Report_AWS:
-        # Is necessary to include the "Action:*" for
+        # TO-DO: Is necessary to include the "Action:*" for
         # each service that has a policy that could
         # allow for privilege escalation
-
-        # Based on:
-        # - https://bishopfox.com/blog/privilege-escalation-in-aws
-        # - https://github.com/RhinoSecurityLabs/Security-Research/blob/master/tools/aws-pentest-tools/aws_escalate.py
-        # - https://rhinosecuritylabs.com/aws/aws-privilege-escalation-methods-mitigation/
 
         privilege_escalation_policies_combination = {
             "CreatePolicyVersion": {"iam:CreatePolicyVersion"},
@@ -36,7 +36,6 @@ class iam_policy_allows_privilege_escalation(Check):
                 "lambda:CreateFunction",
                 "lambda:InvokeFunction",
             },
-            # REVIEW
             "PassRole+CreateLambda+ExistingDynamo": {
                 "iam:PassRole",
                 "lambda:CreateFunction",
@@ -90,6 +89,7 @@ class iam_policy_allows_privilege_escalation(Check):
             },
             "sts:AssumeRole": {"sts:AssumeRole"},
             "sts:*": {"sts:*"},
+            "iam:*": {"iam:*"},
         }
 
         findings = []
