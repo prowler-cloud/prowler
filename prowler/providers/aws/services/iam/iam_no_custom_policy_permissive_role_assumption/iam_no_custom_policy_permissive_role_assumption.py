@@ -16,7 +16,7 @@ class iam_no_custom_policy_permissive_role_assumption(Check):
                 report.status = "PASS"
                 report.status_extended = f"Custom Policy {policy.name} does not allow permissive STS Role assumption"
                 if policy.document:
-                    if isinstance(policy.document["Statement"], list):
+                    if not isinstance(policy.document["Statement"], list):
                         policy_statements = [policy.document["Statement"]]
                     else:
                         policy_statements = policy.document["Statement"]

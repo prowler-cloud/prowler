@@ -17,7 +17,7 @@ class iam_customer_attached_policy_no_administrative_privileges(Check):
                 report.status_extended = f"{policy.type} policy {policy.name} is attached but does not allow '*:*' administrative privileges"
                 if policy.document:
                     # Check the statements, if one includes *:* stop iterating over the rest
-                    if isinstance(policy.document["Statement"], list):
+                    if not isinstance(policy.document["Statement"], list):
                         policy_statements = [policy.document["Statement"]]
                     else:
                         policy_statements = policy.document["Statement"]

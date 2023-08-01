@@ -76,7 +76,7 @@ class iam_policy_allows_privilege_escalation(Check):
 
                 # Recover all policy actions
                 if policy.document:
-                    if isinstance(policy.document["Statement"], list):
+                    if not isinstance(policy.document["Statement"], list):
                         policy_statements = [policy.document["Statement"]]
                     else:
                         policy_statements = policy.document["Statement"]
