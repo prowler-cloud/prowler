@@ -147,7 +147,6 @@ class iam_policy_allows_privilege_escalation(Check):
                     # If there is no Denied Not Actions
                     else:
                         privileged_actions = left_actions
-
                     # Store all the action's combinations
                     policies_combination = set()
 
@@ -170,6 +169,6 @@ class iam_policy_allows_privilege_escalation(Check):
                                 + " "
                             )
 
-                        report.status_extended = f"Custom Policy {report.resource_arn} allows privilege escalation using the following actions: {policies_affected}"
+                        report.status_extended = f"Custom Policy {report.resource_arn} allows privilege escalation using the following actions: {policies_affected}".rstrip()
                 findings.append(report)
         return findings

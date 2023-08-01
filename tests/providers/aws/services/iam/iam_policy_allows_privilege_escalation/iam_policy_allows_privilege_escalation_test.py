@@ -11,6 +11,76 @@ from prowler.providers.common.models import Audit_Metadata
 AWS_REGION = "us-east-1"
 AWS_ACCOUNT_NUMBER = "123456789012"
 
+# Keep this up-to-date with the check's actions that allows for privilege escalation
+privilege_escalation_policies_combination = {
+    "CreatePolicyVersion": {"iam:CreatePolicyVersion"},
+    "SetDefaultPolicyVersion": {"iam:SetDefaultPolicyVersion"},
+    "iam:PassRole": {"iam:PassRole"},
+    "PassRole_EC2": {
+        "iam:PassRole",
+        "ec2:RunInstances",
+    },
+    "PassRole+CreateLambda+Invoke": {
+        "iam:PassRole",
+        "lambda:CreateFunction",
+        "lambda:InvokeFunction",
+    },
+    "PassRole+CreateLambda+ExistingDynamo": {
+        "iam:PassRole",
+        "lambda:CreateFunction",
+        "lambda:CreateEventSourceMapping",
+    },
+    "PassRole+CreateLambda+NewDynamo": {
+        "iam:PassRole",
+        "lambda:CreateFunction",
+        "lambda:CreateEventSourceMapping",
+        "dynamodb:CreateTable",
+        "dynamodb:PutItem",
+    },
+    "PassRole+GlueEndpoint": {
+        "iam:PassRole",
+        "glue:CreateDevEndpoint",
+        "glue:GetDevEndpoint",
+    },
+    "PassRole+GlueEndpoints": {
+        "iam:PassRole",
+        "glue:CreateDevEndpoint",
+        "glue:GetDevEndpoints",
+    },
+    "PassRole+CloudFormation": {
+        "cloudformation:CreateStack",
+        "cloudformation:DescribeStacks",
+    },
+    "PassRole+DataPipeline": {
+        "datapipeline:CreatePipeline",
+        "datapipeline:PutPipelineDefinition",
+        "datapipeline:ActivatePipeline",
+    },
+    "GlueUpdateDevEndpoint": {"glue:UpdateDevEndpoint"},
+    "GlueUpdateDevEndpoints": {"glue:UpdateDevEndpoint"},
+    "lambda:UpdateFunctionCode": {"lambda:UpdateFunctionCode"},
+    "iam:CreateAccessKey": {"iam:CreateAccessKey"},
+    "iam:CreateLoginProfile": {"iam:CreateLoginProfile"},
+    "iam:UpdateLoginProfile": {"iam:UpdateLoginProfile"},
+    "iam:AttachUserPolicy": {"iam:AttachUserPolicy"},
+    "iam:AttachGroupPolicy": {"iam:AttachGroupPolicy"},
+    "iam:AttachRolePolicy": {"iam:AttachRolePolicy"},
+    "AssumeRole+AttachRolePolicy": {"sts:AssumeRole", "iam:AttachRolePolicy"},
+    "iam:PutGroupPolicy": {"iam:PutGroupPolicy"},
+    "iam:PutRolePolicy": {"iam:PutRolePolicy"},
+    "AssumeRole+PutRolePolicy": {"sts:AssumeRole", "iam:PutRolePolicy"},
+    "iam:PutUserPolicy": {"iam:PutUserPolicy"},
+    "iam:AddUserToGroup": {"iam:AddUserToGroup"},
+    "iam:UpdateAssumeRolePolicy": {"iam:UpdateAssumeRolePolicy"},
+    "AssumeRole+UpdateAssumeRolePolicy": {
+        "sts:AssumeRole",
+        "iam:UpdateAssumeRolePolicy",
+    },
+    "sts:AssumeRole": {"sts:AssumeRole"},
+    "sts:*": {"sts:*"},
+    "iam:*": {"iam:*"},
+}
+
 
 class Test_iam_policy_allows_privilege_escalation:
     def set_mocked_audit_info(self):
@@ -172,62 +242,62 @@ class Test_iam_policy_allows_privilege_escalation:
             assert result[0].resource_id == policy_name
             assert result[0].resource_arn == policy_arn
 
-    # @mock_iam
-    # def test_iam_policy_not_allows_privilege_escalation_dynamodb_PutItem(self):
-    #     iam_client = client("iam", region_name=AWS_REGION)
-    #     policy_name = "policy1"
-    #     policy_document = {
-    #         "Version": "2012-10-17",
-    #         "Statement": [
-    #             {
-    #                 "Effect": "Allow",
-    #                 "Action": [
-    #                     "lambda:*",
-    #                     "iam:PassRole",
-    #                     "dynamodb:PutItem",
-    #                     "cloudformation:CreateStack",
-    #                     "cloudformation:DescribeStacks",
-    #                     "ec2:RunInstances",
-    #                 ],
-    #                 "Resource": "*",
-    #             },
-    #             {
-    #                 "Effect": "Deny",
-    #                 "Action": ["lambda:InvokeFunction", "cloudformation:CreateStack"],
-    #                 "Resource": "*",
-    #             },
-    #             {"Effect": "Deny", "NotAction": "dynamodb:PutItem", "Resource": "*"},
-    #         ],
-    #     }
-    #     policy_arn = iam_client.create_policy(
-    #         PolicyName=policy_name, PolicyDocument=dumps(policy_document)
-    #     )["Policy"]["Arn"]
+    @mock_iam
+    def test_iam_policy_not_allows_privilege_escalation_dynamodb_PutItem(self):
+        iam_client = client("iam", region_name=AWS_REGION)
+        policy_name = "policy1"
+        policy_document = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Action": [
+                        "lambda:*",
+                        "iam:PassRole",
+                        "dynamodb:PutItem",
+                        "cloudformation:CreateStack",
+                        "cloudformation:DescribeStacks",
+                        "ec2:RunInstances",
+                    ],
+                    "Resource": "*",
+                },
+                {
+                    "Effect": "Deny",
+                    "Action": ["lambda:InvokeFunction", "cloudformation:CreateStack"],
+                    "Resource": "*",
+                },
+                {"Effect": "Deny", "NotAction": "dynamodb:PutItem", "Resource": "*"},
+            ],
+        }
+        policy_arn = iam_client.create_policy(
+            PolicyName=policy_name, PolicyDocument=dumps(policy_document)
+        )["Policy"]["Arn"]
 
-    #     current_audit_info = self.set_mocked_audit_info()
-    #     from prowler.providers.aws.services.iam.iam_service import IAM
+        current_audit_info = self.set_mocked_audit_info()
+        from prowler.providers.aws.services.iam.iam_service import IAM
 
-    #     with mock.patch(
-    #         "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-    #         new=current_audit_info,
-    #     ), mock.patch(
-    #         "prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation.iam_client",
-    #         new=IAM(current_audit_info),
-    #     ):
-    #         # Test Check
-    #         from prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation import (
-    #             iam_policy_allows_privilege_escalation,
-    #         )
+        with mock.patch(
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=current_audit_info,
+        ), mock.patch(
+            "prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation.iam_client",
+            new=IAM(current_audit_info),
+        ):
+            # Test Check
+            from prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation import (
+                iam_policy_allows_privilege_escalation,
+            )
 
-    #         check = iam_policy_allows_privilege_escalation()
-    #         result = check.execute()
-    #         assert len(result) == 1
-    #         assert result[0].status == "FAIL"
-    #         assert (
-    #             result[0].status_extended
-    #             == f"Custom Policy {policy_arn} allows privilege escalation using the following actions: {{'dynamodb:PutItem'}}"
-    #         )
-    #         assert result[0].resource_id == policy_name
-    #         assert result[0].resource_arn == policy_arn
+            check = iam_policy_allows_privilege_escalation()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert (
+                result[0].status_extended
+                == f"Custom Policy {policy_arn} does not allow privilege escalation"
+            )
+            assert result[0].resource_id == policy_name
+            assert result[0].resource_arn == policy_arn
 
     @mock_iam
     def test_iam_policy_allows_privilege_escalation_iam_PassRole_and_ec2_RunInstances(
@@ -455,3 +525,59 @@ class Test_iam_policy_allows_privilege_escalation:
                 result[0].status_extended,
             )
             assert search("iam:PassRole", result[0].status_extended)
+
+    @mock_iam
+    def test_iam_policy_allows_privilege_escalation_policies_combination(
+        self,
+    ):
+        current_audit_info = self.set_mocked_audit_info()
+        iam_client = client("iam", region_name=AWS_REGION)
+        policy_name = "privileged_policy"
+        for values in privilege_escalation_policies_combination.values():
+            # We create a new statement in each loop with the combinations required to allow the privilege escalation
+            policy_document = {
+                "Version": "2012-10-17",
+                "Statement": [
+                    {
+                        "Effect": "Allow",
+                        "Action": list(values),
+                        "Resource": "*",
+                    },
+                ],
+            }
+            policy_arn = iam_client.create_policy(
+                PolicyName=policy_name, PolicyDocument=dumps(policy_document)
+            )["Policy"]["Arn"]
+
+            from prowler.providers.aws.services.iam.iam_service import IAM
+
+            with mock.patch(
+                "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+                new=current_audit_info,
+            ), mock.patch(
+                "prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation.iam_client",
+                new=IAM(current_audit_info),
+            ):
+                # Test Check
+                from prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation import (
+                    iam_policy_allows_privilege_escalation,
+                )
+
+                check = iam_policy_allows_privilege_escalation()
+                result = check.execute()
+                assert len(result) == 1
+                assert result[0].status == "FAIL"
+                assert result[0].resource_id == policy_name
+                assert result[0].resource_arn == policy_arn
+
+                assert search(
+                    f"Custom Policy {policy_arn} allows privilege escalation using the following actions: ",
+                    result[0].status_extended,
+                )
+
+                # Check the actions that allow for privilege escalation
+                for action in values:
+                    assert search(action, result[0].status_extended)
+
+                # Delete each IAM policy after the test
+                iam_client.delete_policy(PolicyArn=policy_arn)
