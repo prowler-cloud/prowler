@@ -19,7 +19,7 @@
       "Terraform": "https://docs.bridgecrew.io/docs/logging_20#terraform"
     },
     "Recommendation": {
-      "Text": "Real-time monitoring can be achieved by directing CloudTrail Logs to CloudWatch Logs and establishing corresponding metric filters and alarms. Enable logging for services with defined log rotation. This logs are useful for Incident Response and forensics investigation among other use cases.",
+      "Text": "Real-time monitoring can be achieved by directing CloudTrail Logs to CloudWatch Logs and establishing corresponding metric filters and alarms. Enable logging for services with defined log rotation. These logs are useful for Incident Response and forensics investigation among other use cases.",
       "Url": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/AccessLogs.html"
     }
   },

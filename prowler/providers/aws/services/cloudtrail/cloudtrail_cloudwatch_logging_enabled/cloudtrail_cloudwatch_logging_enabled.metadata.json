@@ -23,7 +23,7 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Validate that the trails in CloudTrail has an arn set in the CloudWatchLogsLogGroupArn property.",
+      "Text": "Validate that the trails in CloudTrail have an arn set in the CloudWatchLogsLogGroupArn property.",
       "Url": "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/send-cloudtrail-events-to-cloudwatch-logs.html"
     }
   },
