@@ -13,7 +13,7 @@ from prowler.providers.aws.lib.service.service import AWSService
 def is_service_role(role):
     try:
         if "Statement" in role["AssumeRolePolicyDocument"]:
-            if type(role["AssumeRolePolicyDocument"]["Statement"]) == list:
+            if isinstance(role["AssumeRolePolicyDocument"]["Statement"], list):
                 for statement in role["AssumeRolePolicyDocument"]["Statement"]:
                     if (
                         statement["Effect"] == "Allow"
