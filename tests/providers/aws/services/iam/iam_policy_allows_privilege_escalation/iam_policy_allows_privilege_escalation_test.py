@@ -1,4 +1,5 @@
 from json import dumps
+from re import search
 from unittest import mock
 
 from boto3 import client, session
@@ -227,3 +228,57 @@ class Test_iam_policy_allows_privilege_escalation:
             )
             assert result[0].resource_id == policy_name
             assert result[0].resource_arn == policy_arn
+
+    @mock_iam
+    def test_iam_combo(self):
+        iam_client = client("iam", region_name=AWS_REGION)
+        policy_name = "policy1"
+        policy_document = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Action": [
+                        "iam:PassRole",
+                    ],
+                    "Resource": "*",
+                },
+                {
+                    "Effect": "Allow",
+                    "Action": ["ec2:RunInstances"],
+                    "Resource": "*",
+                },
+            ],
+        }
+        policy_arn = iam_client.create_policy(
+            PolicyName=policy_name, PolicyDocument=dumps(policy_document)
+        )["Policy"]["Arn"]
+
+        current_audit_info = self.set_mocked_audit_info()
+        from prowler.providers.aws.services.iam.iam_service import IAM
+
+        with mock.patch(
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=current_audit_info,
+        ), mock.patch(
+            "prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation.iam_client",
+            new=IAM(current_audit_info),
+        ):
+            # Test Check
+            from prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation import (
+                iam_policy_allows_privilege_escalation,
+            )
+
+            check = iam_policy_allows_privilege_escalation()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert result[0].resource_id == policy_name
+            assert result[0].resource_arn == policy_arn
+
+            assert search(
+                f"Custom Policy {policy_arn} allows privilege escalation using the following actions: ",
+                result[0].status_extended,
+            )
+            assert search("iam:PassRole", result[0].status_extended)
+            assert search("ec2:RunInstances", result[0].status_extended)
