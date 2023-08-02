@@ -44,6 +44,7 @@ class vpc_endpoint_connections_trust_boundaries(Check):
                             not access_from_trusted_accounts
                             or len(trusted_account_ids) == 0
                         ):
+                            access_from_trusted_accounts = False
                             report.status = "FAIL"
                             report.status_extended = f"VPC Endpoint {endpoint.id} in VPC {endpoint.vpc_id} can be accessed from non-trusted accounts."
                         else:
@@ -83,6 +84,7 @@ class vpc_endpoint_connections_trust_boundaries(Check):
                                     not access_from_trusted_accounts
                                     or len(trusted_account_ids) == 0
                                 ):
+                                    access_from_trusted_accounts = False
                                     report.status = "FAIL"
                                     report.status_extended = f"VPC Endpoint {endpoint.id} in VPC {endpoint.vpc_id} can be accessed from non-trusted accounts."
                                 else:
@@ -135,6 +137,7 @@ class vpc_endpoint_connections_trust_boundaries(Check):
                                         not access_from_trusted_accounts
                                         or len(trusted_account_ids) == 0
                                     ):
+                                        access_from_trusted_accounts = False
                                         report.status = "FAIL"
                                         report.status_extended = f"VPC Endpoint {endpoint.id} in VPC {endpoint.vpc_id} can be accessed from non-trusted accounts."
                                     else:
