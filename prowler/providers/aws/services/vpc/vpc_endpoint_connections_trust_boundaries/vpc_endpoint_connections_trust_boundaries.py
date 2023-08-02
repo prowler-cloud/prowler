@@ -13,6 +13,8 @@ class vpc_endpoint_connections_trust_boundaries(Check):
         findings = []
         # Get trusted account_ids from prowler.config.yaml
         trusted_account_ids = get_config_var("trusted_account_ids")
+        # Always include the same account as trusted
+        trusted_account_ids.append(vpc_client.audited_account)
         for endpoint in vpc_client.vpc_endpoints:
             # Check VPC endpoint policy
             if endpoint.policy_document:
