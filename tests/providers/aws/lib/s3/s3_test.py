@@ -144,7 +144,10 @@ class TestS3:
         )
 
     def test_get_s3_object_path_with_prowler(self):
-        assert get_s3_object_path(default_output_directory) == "output"
+        assert (
+            get_s3_object_path(default_output_directory)
+            == default_output_directory.partition("prowler/")[-1]
+        )
 
     def test_get_s3_object_path_without_prowler(self):
         output_directory = "/Users/admin"
