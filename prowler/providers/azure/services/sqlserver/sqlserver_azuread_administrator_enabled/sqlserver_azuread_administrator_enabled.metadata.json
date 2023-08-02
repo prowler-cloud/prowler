@@ -9,7 +9,7 @@
   "Severity": "medium",
   "ResourceType": "SQLServer",
   "Description": "Ensure that there is an Azure Active Directory administrator configured",
-  "Risk": "Azure Active Directory provides a centralized way of managing identities. Using local SQL administrator identites makes more difficult the management of user accounts. In addition, from Azure Active Directory, security policies can be enforced to users in centralized way.",
+  "Risk": "Azure Active Directory provides a centralized way of managing identities. Using local SQL administrator identites makes it more difficult to manage user accounts. In addition, from Azure Active Directory, security policies can be enforced to users in centralized way.",
   "RelatedUrl": "",
   "Remediation": {
     "Code": {
