@@ -230,15 +230,15 @@ def unroll_dict(dict: dict):
 
 
 def unroll_dict_to_list(dict: dict):
-    list = []
+    dict_list = []
     for key, value in dict.items():
         if isinstance(value, list):
             value = ", ".join(value)
-            list.append(f"{key}: {value}")
+            dict_list.append(f"{key}: {value}")
         else:
-            list.append(f"{key}: {value}")
+            dict_list.append(f"{key}: {value}")
 
-    return list
+    return dict_list
 
 
 def parse_html_string(str: str):
