@@ -23,7 +23,9 @@
       "Url": "https://cloud.google.com/storage/docs/access-control/iam-reference"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "internet-exposed"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

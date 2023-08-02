@@ -23,7 +23,9 @@
       "Url": "https://cloud.google.com/compute/docs/instances/connecting-to-instance"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "internet-exposed"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

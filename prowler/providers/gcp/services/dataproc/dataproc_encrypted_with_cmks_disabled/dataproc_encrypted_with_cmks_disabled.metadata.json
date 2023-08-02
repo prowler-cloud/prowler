@@ -23,7 +23,9 @@
       "Url": "https://cloud.google.com/dataproc/docs/concepts/configuring-clusters/customer-managed-encryption"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "encryption"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
