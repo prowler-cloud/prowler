@@ -23,7 +23,9 @@
       "Url": "https://cloud.google.com/vpc/docs/using-firewalls"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "internet-exposed"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

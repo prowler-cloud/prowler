@@ -33,7 +33,7 @@ nav:
       - Reporting: tutorials/reporting.md
       - Compliance: tutorials/compliance.md
       - Quick Inventory: tutorials/quick-inventory.md
-      - Integrations: tutorials/integrations.md
+      - Slack Integration: tutorials/integrations.md
       - Configuration File: tutorials/configuration_file.md
       - Logging: tutorials/logging.md
       - Allowlist: tutorials/allowlist.md
