@@ -34,7 +34,7 @@ class sqs_queues_not_publicly_accessible(Check):
                             if (
                                 "Condition" in statement
                                 and is_account_only_allowed_in_condition(
-                                    statement["Condition"], [sqs_client.audited_account]
+                                    statement["Condition"], sqs_client.audited_account
                                 )
                             ):
                                 report.status_extended = f"SQS queue {queue.id} is not public because its policy only allows access from the same account"

@@ -1,6 +1,6 @@
 # lista de cuentas y te devuelva las válidas
 def is_account_only_allowed_in_condition(
-    condition_statement: dict, source_account_list: str
+    condition_statement: dict, source_account: str
 ):
     is_condition_valid = False
     valid_condition_options = {
@@ -27,22 +27,19 @@ def is_account_only_allowed_in_condition(
                         # here by default we assume is true and look for false entries
                         is_condition_valid = True
                         for item in condition_statement[condition_operator][value]:
-                            for account in source_account_list:
-                                if account not in item:
-                                    is_condition_valid = False
-                                    break
-                            if is_condition_valid is False:
+                            if source_account not in item:
+                                is_condition_valid = False
                                 break
+
                     # value is a string
                     elif isinstance(
                         condition_statement[condition_operator][value],
                         str,
                     ):
-                        for account in source_account_list:
-                            if (
-                                account
-                                in condition_statement[condition_operator][value]
-                            ):
-                                is_condition_valid = True
+                        if (
+                            source_account
+                            in condition_statement[condition_operator][value]
+                        ):
+                            is_condition_valid = True
 
     return is_condition_valid
