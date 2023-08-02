@@ -117,7 +117,7 @@ class Test_vpc_endpoint_connections_trust_boundaries:
                 assert result[0].status == "FAIL"
                 assert (
                     result[0].status_extended
-                    == f"VPC Endpoint {vpc_endpoint['VpcEndpoint']['VpcEndpointId']} in VPC {vpc['VpcId']} has full access."
+                    == f"VPC Endpoint {vpc_endpoint['VpcEndpoint']['VpcEndpointId']} in VPC {vpc['VpcId']} can be accessed from non-trusted accounts."
                 )
                 assert (
                     result[0].resource_id
@@ -126,7 +126,7 @@ class Test_vpc_endpoint_connections_trust_boundaries:
                 assert result[0].region == AWS_REGION
 
     @mock_ec2
-    def test_vpc_endpoint_with_trusted_account_with_arn(self):
+    def test_vpc_endpoint_with_trusted_account_arn(self):
         # Create VPC Mocked Resources
         ec2_client = client("ec2", region_name=AWS_REGION)
 
@@ -184,7 +184,7 @@ class Test_vpc_endpoint_connections_trust_boundaries:
                 assert result[0].region == AWS_REGION
 
     @mock_ec2
-    def test_vpc_endpoint_with_trusted_account(self):
+    def test_vpc_endpoint_with_trusted_account_id(self):
         # Create VPC Mocked Resources
         ec2_client = client("ec2", region_name=AWS_REGION)
 
@@ -292,7 +292,7 @@ class Test_vpc_endpoint_connections_trust_boundaries:
                 assert result[0].status == "FAIL"
                 assert (
                     result[0].status_extended
-                    == f"Found untrusted account 123456789010 in VPC Endpoint {vpc_endpoint['VpcEndpoint']['VpcEndpointId']} in VPC {vpc['VpcId']}."
+                    == f"VPC Endpoint {vpc_endpoint['VpcEndpoint']['VpcEndpointId']} in VPC {vpc['VpcId']} can be accessed from non-trusted accounts."
                 )
                 assert (
                     result[0].resource_id
@@ -303,6 +303,9 @@ class Test_vpc_endpoint_connections_trust_boundaries:
     def test_vpc_endpoint_with_config_trusted_account_with_arn(self):
         # Create VPC Mocked Resources
         ec2_client = client("ec2", region_name=AWS_REGION)
+
+        # Trusted AWS Account
+        trusted_account = "123456789010"
 
         vpc = ec2_client.create_vpc(CidrBlock="10.0.0.0/16")["Vpc"]
 
@@ -317,7 +320,9 @@ class Test_vpc_endpoint_connections_trust_boundaries:
                     "Statement": [
                         {
                             "Effect": "Allow",
-                            "Principal": {"AWS": "arn:aws:iam::123456789010:root"},
+                            "Principal": {
+                                "AWS": f"arn:aws:iam::{trusted_account}:root"
+                            },
                             "Action": "*",
                             "Resource": "*",
                         }
@@ -353,7 +358,7 @@ class Test_vpc_endpoint_connections_trust_boundaries:
                     assert result[0].status == "PASS"
                     assert (
                         result[0].status_extended
-                        == f"Found trusted account 123456789010 in VPC Endpoint {vpc_endpoint['VpcEndpoint']['VpcEndpointId']} in VPC {vpc['VpcId']}."
+                        == f"Found trusted account {trusted_account} in VPC Endpoint {vpc_endpoint['VpcEndpoint']['VpcEndpointId']} in VPC {vpc['VpcId']}."
                     )
                     assert (
                         result[0].resource_id
