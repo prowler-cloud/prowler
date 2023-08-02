@@ -1,6 +1,6 @@
 from os import getcwd
 
-import boto3
+from boto3 import client, session
 from moto import mock_s3
 
 from prowler.config.config import csv_file_suffix, default_output_directory
@@ -13,14 +13,13 @@ AWS_ACCOUNT_ID = "123456789012"
 
 class TestS3:
     def set_mocked_audit_info(self):
-        # Create mock session
-        session = boto3.session.Session(
-            region_name="us-east-1",
-        )
         return AWS_Audit_Info(
             session_config=None,
             original_session=None,
-            audit_session=session,
+            audit_session=session.Session(
+                profile_name=None,
+                botocore_session=None,
+            ),
             audited_account=AWS_ACCOUNT_ID,
             audited_account_arn=f"arn:aws:iam::{AWS_ACCOUNT_ID}:root",
             audited_identity_arn="test-arn",
@@ -48,8 +47,8 @@ class TestS3:
         input_audit_info = self.set_mocked_audit_info()
         # Create mock bucket
         bucket_name = "test_bucket"
-        client = boto3.client("s3")
-        client.create_bucket(Bucket=bucket_name)
+        s3_client = client("s3")
+        s3_client.create_bucket(Bucket=bucket_name)
         # Create mock csv output file
         fixtures_dir = "tests/lib/outputs/fixtures"
         output_directory = getcwd() + "/" + fixtures_dir
@@ -65,7 +64,7 @@ class TestS3:
         )
         # Check if the file has been sent by checking its content type
         assert (
-            client.get_object(
+            s3_client.get_object(
                 Bucket=bucket_name,
                 Key=fixtures_dir + "/" + output_mode + "/" + filename + csv_file_suffix,
             )["ContentType"]
@@ -78,8 +77,8 @@ class TestS3:
         input_audit_info = self.set_mocked_audit_info()
         # Create mock bucket
         bucket_name = "test_bucket"
-        client = boto3.client("s3")
-        client.create_bucket(Bucket=bucket_name)
+        s3_client = client("s3")
+        s3_client.create_bucket(Bucket=bucket_name)
         # Create mock csv output file
         fixtures_dir = "tests/lib/outputs/fixtures"
         output_directory = getcwd() + "/" + fixtures_dir
@@ -95,7 +94,7 @@ class TestS3:
         )
         # Check if the file has been sent by checking its content type
         assert (
-            client.get_object(
+            s3_client.get_object(
                 Bucket=bucket_name,
                 Key=fixtures_dir
                 + "/"
@@ -115,8 +114,8 @@ class TestS3:
         input_audit_info = self.set_mocked_audit_info()
         # Create mock bucket
         bucket_name = "test_bucket"
-        client = boto3.client("s3")
-        client.create_bucket(Bucket=bucket_name)
+        s3_client = client("s3")
+        s3_client.create_bucket(Bucket=bucket_name)
         # Create mock csv output file
         fixtures_dir = "fixtures"
         output_directory = f"tests/lib/outputs/{fixtures_dir}"
@@ -132,7 +131,7 @@ class TestS3:
         )
         # Check if the file has been sent by checking its content type
         assert (
-            client.get_object(
+            s3_client.get_object(
                 Bucket=bucket_name,
                 Key=output_directory
                 + "/"
