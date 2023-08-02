@@ -1,4 +1,7 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
+from prowler.providers.aws.lib.policy_condition_parser.policy_condition_parser import (
+    is_account_only_allowed_in_condition,
+)
 from prowler.providers.aws.services.sns.sns_client import sns_client
 
 
@@ -28,14 +31,16 @@ class sns_topics_not_publicly_accessible(Check):
                                 and "*" in statement["Principal"]["CanonicalUser"]
                             )
                         ):
-                            if "Condition" not in statement:
-                                report.status = "FAIL"
-                                report.status_extended = (
-                                    f"SNS topic {topic.name} is publicly accesible"
+                            if (
+                                "Condition" in statement
+                                and is_account_only_allowed_in_condition(
+                                    statement["Condition"], sns_client.audited_account
                                 )
+                            ):
+                                report.status_extended = f"SNS topic {topic.name} is not public because its policy only allows access from the same account"
                             else:
-                                report.status = "PASS"
-                                report.status_extended = f"SNS topic {topic.name} is publicly accesible but has a Condition that could filter it"
+                                report.status = "FAIL"
+                                report.status_extended = f"SNS topic {topic.name} is public because its policy allows public access"
 
             findings.append(report)
 
