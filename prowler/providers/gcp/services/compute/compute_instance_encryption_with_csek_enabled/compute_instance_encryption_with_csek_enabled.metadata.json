@@ -23,7 +23,9 @@
       "Url": "https://cloud.google.com/storage/docs/encryption/using-customer-supplied-keys"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "encryption"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

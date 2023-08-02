@@ -23,7 +23,9 @@
       "Url": "https://cloud.google.com/bigquery/docs/customer-managed-encryption"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "encryption"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

@@ -23,7 +23,9 @@
       "Url": "https://cloud.google.com/kms/docs/iam"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "internet-exposed"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
