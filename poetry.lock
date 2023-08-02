@@ -169,6 +169,22 @@ azure-mgmt-core = ">=1.3.2,<2.0.0"
 isodate = ">=0.6.1,<1.0.0"
 
 [[package]]
+name = "azure-mgmt-sql"
+version = "3.0.1"
+description = "Microsoft Azure SQL Management Client Library for Python"
+optional = false
+python-versions = "*"
+files = [
+    {file = "azure-mgmt-sql-3.0.1.zip", hash = "sha256:129042cc011225e27aee6ef2697d585fa5722e5d1aeb0038af6ad2451a285457"},
+    {file = "azure_mgmt_sql-3.0.1-py2.py3-none-any.whl", hash = "sha256:1d1dd940d4d41be4ee319aad626341251572a5bf4a2addec71779432d9a1381f"},
+]
+
+[package.dependencies]
+azure-common = ">=1.1,<2.0"
+azure-mgmt-core = ">=1.2.0,<2.0.0"
+msrest = ">=0.6.21"
+
+[[package]]
 name = "azure-mgmt-storage"
 version = "21.0.0"
 description = "Microsoft Azure Storage Management Client Library for Python"
@@ -2876,4 +2892,4 @@ docs = ["mkdocs", "mkdocs-material"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "95a3c66d752dc8552a3e2c032545cda76f13f056ff0f0554a8664f20c8da39c4"
+content-hash = "7bfd4909429fa0ea7d80ecc89a2f3bca9288566f1a9e13561a416b32497563a8"
