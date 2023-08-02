@@ -22,8 +22,8 @@ class GCPService:
 
     def __is_api_active__(self, audited_project_ids):
         project_ids = []
-        try:
-            for project_id in audited_project_ids:
+        for project_id in audited_project_ids:
+            try:
                 client = discovery.build("serviceusage", "v1")
                 request = client.services().get(
                     name=f"projects/{project_id}/services/{self.service}.googleapis.com"
@@ -35,8 +35,8 @@ class GCPService:
                     logger.error(
                         f"{self.service} API has not been used in project {project_id} before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/dataproc.googleapis.com/overview?project={project_id} then retry."
                     )
-        except Exception as error:
-            logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
+            except Exception as error:
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
         return project_ids
