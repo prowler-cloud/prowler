@@ -3,23 +3,21 @@ from os import getcwd
 import boto3
 from moto import mock_s3
 
-from prowler.config.config import csv_file_suffix
+from prowler.config.config import csv_file_suffix, default_output_directory
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
-from prowler.providers.aws.lib.s3.s3 import send_to_s3_bucket
+from prowler.providers.aws.lib.s3.s3 import get_s3_object_path, send_to_s3_bucket
 from prowler.providers.common.models import Audit_Metadata
 
 AWS_ACCOUNT_ID = "123456789012"
 
 
 class TestS3:
-    @mock_s3
-    def test_send_to_s3_bucket(self):
+    def set_mocked_audit_info(self):
         # Create mock session
         session = boto3.session.Session(
             region_name="us-east-1",
         )
-        # Create mock audit_info
-        input_audit_info = AWS_Audit_Info(
+        return AWS_Audit_Info(
             session_config=None,
             original_session=None,
             audit_session=session,
@@ -43,7 +41,12 @@ class TestS3:
                 audit_progress=0,
             ),
         )
-        # Creat mock bucket
+
+    @mock_s3
+    def test_send_to_s3_bucket(self):
+        # Mocked Audit Info
+        input_audit_info = self.set_mocked_audit_info()
+        # Create mock bucket
         bucket_name = "test_bucket"
         client = boto3.client("s3")
         client.create_bucket(Bucket=bucket_name)
@@ -71,36 +74,9 @@ class TestS3:
 
     @mock_s3
     def test_send_to_s3_bucket_compliance(self):
-        # Create mock session
-        session = boto3.session.Session(
-            region_name="us-east-1",
-        )
-        # Create mock audit_info
-        input_audit_info = AWS_Audit_Info(
-            session_config=None,
-            original_session=None,
-            audit_session=session,
-            audited_account=AWS_ACCOUNT_ID,
-            audited_account_arn=f"arn:aws:iam::{AWS_ACCOUNT_ID}:root",
-            audited_identity_arn="test-arn",
-            audited_user_id="test",
-            audited_partition="aws",
-            profile="default",
-            profile_region="eu-west-1",
-            credentials=None,
-            assumed_role_info=None,
-            audited_regions=["eu-west-2", "eu-west-1"],
-            organizations_metadata=None,
-            audit_resources=None,
-            mfa_enabled=False,
-            audit_metadata=Audit_Metadata(
-                services_scanned=0,
-                expected_checks=[],
-                completed_checks=0,
-                audit_progress=0,
-            ),
-        )
-        # Creat mock bucket
+        # Mocked Audit Info
+        input_audit_info = self.set_mocked_audit_info()
+        # Create mock bucket
         bucket_name = "test_bucket"
         client = boto3.client("s3")
         client.create_bucket(Bucket=bucket_name)
@@ -135,36 +111,9 @@ class TestS3:
 
     @mock_s3
     def test_send_to_s3_bucket_custom_directory(self):
-        # Create mock session
-        session = boto3.session.Session(
-            region_name="us-east-1",
-        )
-        # Create mock audit_info
-        input_audit_info = AWS_Audit_Info(
-            session_config=None,
-            original_session=None,
-            audit_session=session,
-            audited_account=AWS_ACCOUNT_ID,
-            audited_account_arn=f"arn:aws:iam::{AWS_ACCOUNT_ID}:root",
-            audited_identity_arn="test-arn",
-            audited_user_id="test",
-            audited_partition="aws",
-            profile="default",
-            profile_region="eu-west-1",
-            credentials=None,
-            assumed_role_info=None,
-            audited_regions=["eu-west-2", "eu-west-1"],
-            organizations_metadata=None,
-            audit_resources=None,
-            mfa_enabled=False,
-            audit_metadata=Audit_Metadata(
-                services_scanned=0,
-                expected_checks=[],
-                completed_checks=0,
-                audit_progress=0,
-            ),
-        )
-        # Creat mock bucket
+        # Mocked Audit Info
+        input_audit_info = self.set_mocked_audit_info()
+        # Create mock bucket
         bucket_name = "test_bucket"
         client = boto3.client("s3")
         client.create_bucket(Bucket=bucket_name)
@@ -194,3 +143,10 @@ class TestS3:
             )["ContentType"]
             == "binary/octet-stream"
         )
+
+    def test_get_s3_object_path_with_prowler(self):
+        assert get_s3_object_path(default_output_directory) == "output"
+
+    def test_get_s3_object_path_without_prowler(self):
+        output_directory = "/Users/admin"
+        assert get_s3_object_path(output_directory) == output_directory

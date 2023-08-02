@@ -49,7 +49,7 @@ def send_to_s3_bucket(
 
 def get_s3_object_path(output_directory: str) -> str:
     bucket_remote_dir = output_directory
-    while "prowler/" in bucket_remote_dir:  # Check if it is not a custom directory
+    if "prowler/" in bucket_remote_dir:  # Check if it is not a custom directory
         bucket_remote_dir = bucket_remote_dir.partition("prowler/")[-1]
 
     return bucket_remote_dir
