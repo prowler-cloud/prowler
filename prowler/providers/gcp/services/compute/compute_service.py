@@ -1,3 +1,7 @@
+import threading
+
+import google_auth_httplib2
+import httplib2
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
@@ -8,6 +12,7 @@ from prowler.providers.gcp.lib.service.service import GCPService
 class Compute(GCPService):
     def __init__(self, audit_info):
         super().__init__(__class__.__name__, audit_info)
+        self.credentials = audit_info.credentials
         self.regions = set()
         self.zones = set()
         self.instances = []
@@ -21,10 +26,28 @@ class Compute(GCPService):
         self.__get_regions__()
         self.__get_projects__()
         self.__get_zones__()
-        self.__get_instances__()
+        self.__zone_threading_call__(self.__get_instances__)
         self.__get_networks__()
-        self.__get_subnetworks__()
+        self.__region_threading_call__(self.__get_subnetworks__)
         self.__get_firewalls__()
+
+    def __zone_threading_call__(self, call):
+        threads = []
+        for zone in self.zones:
+            threads.append(threading.Thread(target=call, args=(zone,)))
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+
+    def __region_threading_call__(self, call):
+        threads = []
+        for region in self.regions:
+            threads.append(threading.Thread(target=call, args=(region,)))
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
 
     def __get_regions__(self):
         for project_id in self.project_ids:
@@ -78,60 +101,58 @@ class Compute(GCPService):
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
-    def __get_instances__(self):
+    def __get_instances__(self, zone):
         for project_id in self.project_ids:
             try:
-                for zone in self.zones:
-                    request = self.client.instances().list(
-                        project=project_id, zone=zone
-                    )
-                    while request is not None:
-                        response = request.execute()
+                request = self.client.instances().list(project=project_id, zone=zone)
+                http = google_auth_httplib2.AuthorizedHttp(
+                    self.credentials, http=httplib2.Http()
+                )
+                while request is not None:
+                    response = request.execute(http=http)
 
-                        for instance in response.get("items", []):
-                            public_ip = False
-                            for interface in instance["networkInterfaces"]:
-                                for config in interface.get("accessConfigs", []):
-                                    if "natIP" in config:
-                                        public_ip = True
-                            self.instances.append(
-                                Instance(
-                                    name=instance["name"],
-                                    id=instance["id"],
-                                    zone=zone,
-                                    public_ip=public_ip,
-                                    metadata=instance["metadata"],
-                                    shielded_enabled_vtpm=instance[
-                                        "shieldedInstanceConfig"
-                                    ]["enableVtpm"],
-                                    shielded_enabled_integrity_monitoring=instance[
-                                        "shieldedInstanceConfig"
-                                    ]["enableIntegrityMonitoring"],
-                                    confidential_computing=instance.get(
-                                        "confidentialInstanceConfig", {}
-                                    ).get("enableConfidentialCompute", False),
-                                    service_accounts=instance.get(
-                                        "serviceAccounts", []
-                                    ),
-                                    ip_forward=instance.get("canIpForward", False),
-                                    disks_encryption=[
-                                        (
-                                            disk["deviceName"],
-                                            True
-                                            if disk.get("diskEncryptionKey", {}).get(
-                                                "sha256"
-                                            )
-                                            else False,
+                    for instance in response.get("items", []):
+                        public_ip = False
+                        for interface in instance["networkInterfaces"]:
+                            for config in interface.get("accessConfigs", []):
+                                if "natIP" in config:
+                                    public_ip = True
+                        self.instances.append(
+                            Instance(
+                                name=instance["name"],
+                                id=instance["id"],
+                                zone=zone,
+                                public_ip=public_ip,
+                                metadata=instance["metadata"],
+                                shielded_enabled_vtpm=instance[
+                                    "shieldedInstanceConfig"
+                                ]["enableVtpm"],
+                                shielded_enabled_integrity_monitoring=instance[
+                                    "shieldedInstanceConfig"
+                                ]["enableIntegrityMonitoring"],
+                                confidential_computing=instance.get(
+                                    "confidentialInstanceConfig", {}
+                                ).get("enableConfidentialCompute", False),
+                                service_accounts=instance.get("serviceAccounts", []),
+                                ip_forward=instance.get("canIpForward", False),
+                                disks_encryption=[
+                                    (
+                                        disk["deviceName"],
+                                        True
+                                        if disk.get("diskEncryptionKey", {}).get(
+                                            "sha256"
                                         )
-                                        for disk in instance["disks"]
-                                    ],
-                                    project_id=project_id,
-                                )
+                                        else False,
+                                    )
+                                    for disk in instance["disks"]
+                                ],
+                                project_id=project_id,
                             )
-
-                        request = self.client.instances().list_next(
-                            previous_request=request, previous_response=response
                         )
+
+                    request = self.client.instances().list_next(
+                        previous_request=request, previous_response=response
+                    )
             except Exception as error:
                 logger.error(
                     f"{zone} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -168,30 +189,32 @@ class Compute(GCPService):
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
-    def __get_subnetworks__(self):
+    def __get_subnetworks__(self, region):
         for project_id in self.project_ids:
             try:
-                for region in self.regions:
-                    request = self.client.subnetworks().list(
-                        project=project_id, region=region
-                    )
-                    while request is not None:
-                        response = request.execute()
-                        for subnet in response.get("items", []):
-                            self.subnets.append(
-                                Subnet(
-                                    name=subnet["name"],
-                                    id=subnet["id"],
-                                    project_id=project_id,
-                                    flow_logs=subnet.get("enableFlowLogs", False),
-                                    network=subnet["network"].split("/")[-1],
-                                    region=region,
-                                )
+                request = self.client.subnetworks().list(
+                    project=project_id, region=region
+                )
+                http = google_auth_httplib2.AuthorizedHttp(
+                    self.credentials, http=httplib2.Http()
+                )
+                while request is not None:
+                    response = request.execute(http=http)
+                    for subnet in response.get("items", []):
+                        self.subnets.append(
+                            Subnet(
+                                name=subnet["name"],
+                                id=subnet["id"],
+                                project_id=project_id,
+                                flow_logs=subnet.get("enableFlowLogs", False),
+                                network=subnet["network"].split("/")[-1],
+                                region=region,
                             )
-
-                        request = self.client.subnetworks().list_next(
-                            previous_request=request, previous_response=response
                         )
+
+                    request = self.client.subnetworks().list_next(
+                        previous_request=request, previous_response=response
+                    )
             except Exception as error:
                 logger.error(
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
