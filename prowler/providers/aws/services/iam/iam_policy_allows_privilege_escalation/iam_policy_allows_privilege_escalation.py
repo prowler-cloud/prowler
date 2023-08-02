@@ -1,3 +1,5 @@
+from re import search
+
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.iam.iam_client import iam_client
 
@@ -88,8 +90,6 @@ class iam_policy_allows_privilege_escalation(Check):
                 "iam:UpdateAssumeRolePolicy",
             },
             "sts:AssumeRole": {"sts:AssumeRole"},
-            "sts:*": {"sts:*"},
-            "iam:*": {"iam:*"},
         }
 
         findings = []
@@ -149,20 +149,41 @@ class iam_policy_allows_privilege_escalation(Check):
                     # If there is no Denied Not Actions
                     else:
                         privileged_actions = left_actions
+
                     # Store all the action's combinations
                     policies_combination = set()
 
+                    for values in privilege_escalation_policies_combination.values():
+                        for val in values:
+                            val_set = set()
+                            val_set.add(val)
+                            # Look for specific api:action
+                            if privileged_actions.intersection(val_set) == val_set:
+                                policies_combination.add(val)
+                            # Look for api:*
+                            else:
+                                for permission in privileged_actions:
+                                    api = permission.split(":")[0]
+                                    api_action = permission.split(":")[1]
+
+                                    if api_action == "*":
+                                        if search(api, val):
+                                            policies_combination.add(val)
+
+                    # Check all policies combinations and see if matchs with some combo key
+                    combos = set()
                     for (
                         key,
                         values,
                     ) in privilege_escalation_policies_combination.items():
-                        if privileged_actions.intersection(values) == values:
-                            policies_combination.add(key)
+                        intersection = policies_combination.intersection(values)
+                        if intersection == values:
+                            combos.add(key)
 
-                    if len(policies_combination) != 0:
+                    if len(combos) != 0:
                         report.status = "FAIL"
                         policies_affected = ""
-                        for key in policies_combination:
+                        for key in combos:
                             policies_affected += (
                                 str(privilege_escalation_policies_combination[key])
                                 + " "

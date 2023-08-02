@@ -149,7 +149,7 @@ class Test_iam_policy_allows_privilege_escalation:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Custom Policy {policy_arn} allows privilege escalation using the following actions: {{'sts:*'}}"
+                == f"Custom Policy {policy_arn} allows privilege escalation using the following actions: {{'sts:AssumeRole'}}"
             )
             assert result[0].resource_id == policy_name
             assert result[0].resource_arn == policy_arn
@@ -300,7 +300,7 @@ class Test_iam_policy_allows_privilege_escalation:
             assert result[0].resource_arn == policy_arn
 
     @mock_iam
-    def test_iam_policy_allows_privilege_escalation_iam_PassRole_and_ec2_RunInstances(
+    def test_iam_policy_allows_privilege_escalation_iam_all_and_ec2_RunInstances(
         self,
     ):
         iam_client = client("iam", region_name=AWS_REGION)
@@ -311,7 +311,7 @@ class Test_iam_policy_allows_privilege_escalation:
                 {
                     "Effect": "Allow",
                     "Action": [
-                        "iam:PassRole",
+                        "iam:*",
                     ],
                     "Resource": "*",
                 },
