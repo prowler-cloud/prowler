@@ -298,7 +298,7 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
             )
         if (not browser_auth and tenant_id) or (browser_auth and not tenant_id):
             raise Exception(
-                "Azure Tenant ID is required only for browser authentication mode"
+                "Azure Tenant ID (--tenant-id) is required only for browser authentication mode"
             )
 
         azure_provider = Azure_Provider(
