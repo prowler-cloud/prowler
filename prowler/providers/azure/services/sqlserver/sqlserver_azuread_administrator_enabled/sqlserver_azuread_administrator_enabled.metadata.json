@@ -1,0 +1,30 @@
+{
+  "Provider": "azure",
+  "CheckID": "sqlserver_azuread_administrator_enabled",
+  "CheckTitle": "Ensure that SQL Servers have an Azure Active Directory administrator",
+  "CheckType": [],
+  "ServiceName": "sqlserver",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "SQLServer",
+  "Description": "Ensure that there is an Azure Active Directory administrator configured",
+  "Risk": "Azure Active Directory provides a centralized way of managing identities. Using local SQL administrator identites makes more difficult the management of user accounts. In addition, from Azure Active Directory, security policies can be enforced to users in centralized way.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "az sql server ad-admin create --resource-group resource_group_name --server server_name --display-name display_name --object-id user_object_id",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable an Azure Active Directory administrator",
+      "Url": ""
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

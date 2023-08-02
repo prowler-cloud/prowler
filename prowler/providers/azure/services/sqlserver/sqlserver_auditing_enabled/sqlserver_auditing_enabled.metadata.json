@@ -1,0 +1,30 @@
+{
+  "Provider": "azure",
+  "CheckID": "sqlserver_auditing_enabled",
+  "CheckTitle": "Ensure that SQL Servers have an audit policy configured",
+  "CheckType": [],
+  "ServiceName": "sqlserver",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "SQLServer",
+  "Description": "Ensure that there is an audit policy configured",
+  "Risk": "Audit policies are used to store logs associated to the SLQ server (for instance, successful/unsuccesful log in attempts). These logs may be useful to detect anomalies or to perform an investigation in case a security incident is detected",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "https://docs.bridgecrew.io/docs/bc_azr_logging_2",
+      "Other": "",
+      "Terraform": "https://docs.bridgecrew.io/docs/bc_azr_logging_2"
+    },
+    "Recommendation": {
+      "Text": "Create an audit policy for the SQL server",
+      "Url": ""
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
