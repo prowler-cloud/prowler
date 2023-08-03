@@ -15,7 +15,6 @@ class IAM(AzureService):
             audit_info.identity.subscriptions, audit_info.credentials
         )
         self.roles = self.__get_roles__()
-        self.region = "azure"
 
     def __set_clients__(self, subscriptions, credentials):
         clients = {}
