@@ -2,7 +2,7 @@ from prowler.lib.check.models import Check, Check_Report_Azure
 from prowler.providers.azure.services.sqlserver.sqlserver_client import sqlserver_client
 
 
-class sqlserver_no_ingress_from_any(Check):
+class sqlserver_allow_unrestricted_inbound_access(Check):
     def execute(self) -> Check_Report_Azure:
         findings = []
         for subscription, sql_servers in sqlserver_client.sql_servers.items():
@@ -15,7 +15,10 @@ class sqlserver_no_ingress_from_any(Check):
                 report.resource_id = sql_server.id
 
                 for firewall_rule in sql_server.firewall_rules:
-                    if firewall_rule.start_ip_address == "0.0.0.0" and firewall_rule.end_ip_address == "255.255.255.255":
+                    if (
+                        firewall_rule.start_ip_address == "0.0.0.0"
+                        and firewall_rule.end_ip_address == "255.255.255.255"
+                    ):
                         report.status = "FAIL"
                         report.status_extended = f"SQL Server {sql_server.name} from subscription {subscription} has firewall rules allowing 0.0.0.0-255.255.255.255"
                         break

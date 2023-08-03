@@ -10,13 +10,13 @@
   "ResourceType": "SQLServer",
   "Description": "Ensure that there is an Azure Active Directory administrator configured",
   "Risk": "Azure Active Directory provides a centralized way of managing identities. Using local SQL administrator identites makes it more difficult to manage user accounts. In addition, from Azure Active Directory, security policies can be enforced to users in centralized way.",
-  "RelatedUrl": "",
+  "RelatedUrl": "https://docs.microsoft.com/en-us/azure/sql-database/sql-database-aad-authentication",
   "Remediation": {
     "Code": {
       "CLI": "az sql server ad-admin create --resource-group resource_group_name --server server_name --display-name display_name --object-id user_object_id",
       "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/Sql/active-directory-admin.html",
+      "Terraform": "https://docs.bridgecrew.io/docs/ensure-that-azure-active-directory-admin-is-configured#terraform"
     },
     "Recommendation": {
       "Text": "Enable an Azure Active Directory administrator",
