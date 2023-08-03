@@ -16,7 +16,7 @@ privilege_escalation_policies_combination = {
     "CreatePolicyVersion": {"iam:CreatePolicyVersion"},
     "SetDefaultPolicyVersion": {"iam:SetDefaultPolicyVersion"},
     "iam:PassRole": {"iam:PassRole"},
-    "PassRole_EC2": {
+    "PassRole+EC2": {
         "iam:PassRole",
         "ec2:RunInstances",
     },
@@ -76,9 +76,8 @@ privilege_escalation_policies_combination = {
         "sts:AssumeRole",
         "iam:UpdateAssumeRolePolicy",
     },
-    "sts:AssumeRole": {"sts:AssumeRole"},
-    "sts:*": {"sts:*"},
-    "iam:*": {"iam:*"},
+    # TO-DO: We have to handle AssumeRole just if the resource is * and without conditions
+    # "sts:AssumeRole": {"sts:AssumeRole"},
 }
 
 
@@ -114,45 +113,45 @@ class Test_iam_policy_allows_privilege_escalation:
 
         return audit_info
 
-    @mock_iam
-    def test_iam_policy_allows_privilege_escalation_sts(self):
-        iam_client = client("iam", region_name=AWS_REGION)
-        policy_name = "policy1"
-        policy_document = {
-            "Version": "2012-10-17",
-            "Statement": [
-                {"Effect": "Allow", "Action": "sts:*", "Resource": "*"},
-            ],
-        }
-        policy_arn = iam_client.create_policy(
-            PolicyName=policy_name, PolicyDocument=dumps(policy_document)
-        )["Policy"]["Arn"]
+    # @mock_iam
+    # def test_iam_policy_allows_privilege_escalation_sts(self):
+    #     iam_client = client("iam", region_name=AWS_REGION)
+    #     policy_name = "policy1"
+    #     policy_document = {
+    #         "Version": "2012-10-17",
+    #         "Statement": [
+    #             {"Effect": "Allow", "Action": "sts:*", "Resource": "*"},
+    #         ],
+    #     }
+    #     policy_arn = iam_client.create_policy(
+    #         PolicyName=policy_name, PolicyDocument=dumps(policy_document)
+    #     )["Policy"]["Arn"]
 
-        current_audit_info = self.set_mocked_audit_info()
-        from prowler.providers.aws.services.iam.iam_service import IAM
+    #     current_audit_info = self.set_mocked_audit_info()
+    #     from prowler.providers.aws.services.iam.iam_service import IAM
 
-        with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
-        ), mock.patch(
-            "prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation.iam_client",
-            new=IAM(current_audit_info),
-        ):
-            # Test Check
-            from prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation import (
-                iam_policy_allows_privilege_escalation,
-            )
+    #     with mock.patch(
+    #         "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+    #         new=current_audit_info,
+    #     ), mock.patch(
+    #         "prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation.iam_client",
+    #         new=IAM(current_audit_info),
+    #     ):
+    #         # Test Check
+    #         from prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation import (
+    #             iam_policy_allows_privilege_escalation,
+    #         )
 
-            check = iam_policy_allows_privilege_escalation()
-            result = check.execute()
-            assert len(result) == 1
-            assert result[0].status == "FAIL"
-            assert (
-                result[0].status_extended
-                == f"Custom Policy {policy_arn} allows privilege escalation using the following actions: {{'sts:AssumeRole'}}"
-            )
-            assert result[0].resource_id == policy_name
-            assert result[0].resource_arn == policy_arn
+    #         check = iam_policy_allows_privilege_escalation()
+    #         result = check.execute()
+    #         assert len(result) == 1
+    #         assert result[0].status == "FAIL"
+    #         assert (
+    #             result[0].status_extended
+    #             == f"Custom Policy {policy_arn} allows privilege escalation using the following actions: {{'sts:AssumeRole'}}"
+    #         )
+    #         assert result[0].resource_id == policy_name
+    #         assert result[0].resource_arn == policy_arn
 
     @mock_iam
     def test_iam_policy_not_allows_privilege_escalation(self):
@@ -534,6 +533,7 @@ class Test_iam_policy_allows_privilege_escalation:
         iam_client = client("iam", region_name=AWS_REGION)
         policy_name = "privileged_policy"
         for values in privilege_escalation_policies_combination.values():
+            print(list(values))
             # We create a new statement in each loop with the combinations required to allow the privilege escalation
             policy_document = {
                 "Version": "2012-10-17",

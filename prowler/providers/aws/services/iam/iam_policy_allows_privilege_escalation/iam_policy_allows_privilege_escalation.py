@@ -85,7 +85,8 @@ class iam_policy_allows_privilege_escalation(Check):
                 "sts:AssumeRole",
                 "iam:UpdateAssumeRolePolicy",
             },
-            "sts:AssumeRole": {"sts:AssumeRole"},
+            # TO-DO: We have to handle AssumeRole just if the resource is * and without conditions
+            # "sts:AssumeRole": {"sts:AssumeRole"},
         }
 
         findings = []
