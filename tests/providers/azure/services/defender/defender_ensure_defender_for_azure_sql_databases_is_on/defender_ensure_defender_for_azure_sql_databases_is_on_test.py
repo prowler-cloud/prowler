@@ -50,10 +50,10 @@ class Test_defender_ensure_defender_for_azure_sql_databases_is_on:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Defender plan Defender for SQL DB Servers from subscription {AZURE_SUSCRIPTION} is set to OFF (pricing tier not standard)"
+                == f"Defender plan Defender for Azure SQL DB Servers from subscription {AZURE_SUSCRIPTION} is set to OFF (pricing tier not standard)"
             )
             assert result[0].subscription == AZURE_SUSCRIPTION
-            assert result[0].resource_name == "Defender plan SQL DB Servers"
+            assert result[0].resource_name == "Defender plan Azure SQL DB Servers"
             assert result[0].resource_id == resource_id
 
     def test_defender_sql_databases_pricing_tier_standard(self):
@@ -83,8 +83,8 @@ class Test_defender_ensure_defender_for_azure_sql_databases_is_on:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Defender plan Defender for SQL DB Servers from subscription {AZURE_SUSCRIPTION} is set to ON (pricing tier standard)"
+                == f"Defender plan Defender for Azure SQL DB Servers from subscription {AZURE_SUSCRIPTION} is set to ON (pricing tier standard)"
             )
             assert result[0].subscription == AZURE_SUSCRIPTION
-            assert result[0].resource_name == "Defender plan SQL DB Servers"
+            assert result[0].resource_name == "Defender plan Azure SQL DB Servers"
             assert result[0].resource_id == resource_id
