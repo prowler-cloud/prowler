@@ -279,11 +279,13 @@ class Test_iam_role_cross_account_readonlyaccess_policy:
             )
         )
 
+        current_audit_info = self.set_mocked_audit_info()
+
         with mock.patch(
-            "prowler.providers.aws.services.iam.iam_service.IAM",
-            new=iam_client,
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=current_audit_info,
         ), mock.patch(
-            "prowler.providers.aws.services.iam.iam_client.iam_client",
+            "prowler.providers.aws.services.iam.iam_role_cross_account_readonlyaccess_policy.iam_role_cross_account_readonlyaccess_policy.iam_client",
             new=iam_client,
         ):
             # Test Check
