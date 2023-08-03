@@ -24,29 +24,24 @@ class vpc_endpoint_connections_trust_boundaries(Check):
                     if not access_from_trusted_accounts:
                         break
                     if "*" == statement["Principal"]:
+                        access_from_trusted_accounts = False
                         report = Check_Report_AWS(self.metadata())
                         report.region = endpoint.region
                         report.resource_id = endpoint.id
                         report.resource_arn = endpoint.arn
                         report.resource_tags = endpoint.tags
 
-                        for account_id in trusted_account_ids:
-                            if (
-                                "Condition" in statement
-                                and is_account_only_allowed_in_condition(
+                        if "Condition" in statement:
+                            for account_id in trusted_account_ids:
+                                if is_account_only_allowed_in_condition(
                                     statement["Condition"], account_id
-                                )
-                            ):
-                                access_from_trusted_accounts = True
-                            else:
-                                access_from_trusted_accounts = False
-                                break
+                                ):
+                                    access_from_trusted_accounts = True
+                                else:
+                                    access_from_trusted_accounts = False
+                                    break
 
-                        if (
-                            not access_from_trusted_accounts
-                            or len(trusted_account_ids) == 0
-                        ):
-                            access_from_trusted_accounts = False
+                        if not access_from_trusted_accounts:
                             report.status = "FAIL"
                             report.status_extended = f"VPC Endpoint {endpoint.id} in VPC {endpoint.vpc_id} can be accessed from non-trusted accounts."
                         else:
@@ -63,30 +58,25 @@ class vpc_endpoint_connections_trust_boundaries(Check):
                         else:
                             principals = statement["Principal"]["AWS"]
                         for principal_arn in principals:
+                            report = Check_Report_AWS(self.metadata())
+                            report.region = endpoint.region
+                            report.resource_id = endpoint.id
+                            report.resource_arn = endpoint.arn
+                            report.resource_tags = endpoint.tags
+
                             if principal_arn == "*":
-                                report = Check_Report_AWS(self.metadata())
-                                report.region = endpoint.region
-                                report.resource_id = endpoint.id
-                                report.resource_arn = endpoint.arn
-                                report.resource_tags = endpoint.tags
-
-                                for account_id in trusted_account_ids:
-                                    if (
-                                        "Condition" in statement
-                                        and is_account_only_allowed_in_condition(
+                                access_from_trusted_accounts = False
+                                if "Condition" in statement:
+                                    for account_id in trusted_account_ids:
+                                        if is_account_only_allowed_in_condition(
                                             statement["Condition"], account_id
-                                        )
-                                    ):
-                                        access_from_trusted_accounts = True
-                                    else:
-                                        access_from_trusted_accounts = False
-                                        break
+                                        ):
+                                            access_from_trusted_accounts = True
+                                        else:
+                                            access_from_trusted_accounts = False
+                                            break
 
-                                if (
-                                    not access_from_trusted_accounts
-                                    or len(trusted_account_ids) == 0
-                                ):
-                                    access_from_trusted_accounts = False
+                                if not access_from_trusted_accounts:
                                     report.status = "FAIL"
                                     report.status_extended = f"VPC Endpoint {endpoint.id} in VPC {endpoint.vpc_id} can be accessed from non-trusted accounts."
                                 else:
@@ -104,50 +94,29 @@ class vpc_endpoint_connections_trust_boundaries(Check):
                                     account_id = principal_arn.split(":")[4]
                                 else:
                                     account_id = match.string
-                                if (
-                                    account_id in trusted_account_ids
-                                    or account_id in vpc_client.audited_account
-                                ):
-                                    report = Check_Report_AWS(self.metadata())
-                                    report.region = endpoint.region
-                                    report.status = "PASS"
-                                    report.status_extended = f"Found trusted account {account_id} in VPC Endpoint {endpoint.id} in VPC {endpoint.vpc_id}."
-                                    report.resource_id = endpoint.id
-                                    report.resource_arn = endpoint.arn
-                                    report.resource_tags = endpoint.tags
-                                    findings.append(report)
-                                else:
-                                    report = Check_Report_AWS(self.metadata())
-                                    report.region = endpoint.region
-                                    report.resource_id = endpoint.id
-                                    report.resource_arn = endpoint.arn
-                                    report.resource_tags = endpoint.tags
 
+                                if account_id not in trusted_account_ids:
+                                    access_from_trusted_accounts = False
+
+                                if "Condition" in statement:
                                     for account_id in trusted_account_ids:
-                                        if (
-                                            "Condition" in statement
-                                            and is_account_only_allowed_in_condition(
-                                                statement["Condition"], account_id
-                                            )
+                                        if is_account_only_allowed_in_condition(
+                                            statement["Condition"], account_id
                                         ):
                                             access_from_trusted_accounts = True
                                         else:
                                             access_from_trusted_accounts = False
                                             break
 
-                                    if (
-                                        not access_from_trusted_accounts
-                                        or len(trusted_account_ids) == 0
-                                    ):
-                                        access_from_trusted_accounts = False
-                                        report.status = "FAIL"
-                                        report.status_extended = f"VPC Endpoint {endpoint.id} in VPC {endpoint.vpc_id} can be accessed from non-trusted accounts."
-                                    else:
-                                        report.status = "PASS"
-                                        report.status_extended = f"VPC Endpoint {endpoint.id} in VPC {endpoint.vpc_id} can only be accessed from trusted accounts."
+                                if not access_from_trusted_accounts:
+                                    report.status = "FAIL"
+                                    report.status_extended = f"VPC Endpoint {endpoint.id} in VPC {endpoint.vpc_id} can be accessed from non-trusted accounts."
+                                else:
+                                    report.status = "PASS"
+                                    report.status_extended = f"VPC Endpoint {endpoint.id} in VPC {endpoint.vpc_id} can only be accessed from trusted accounts."
 
-                                    findings.append(report)
-                                    if not access_from_trusted_accounts:
-                                        break
+                                findings.append(report)
+                                if not access_from_trusted_accounts:
+                                    break
 
         return findings
