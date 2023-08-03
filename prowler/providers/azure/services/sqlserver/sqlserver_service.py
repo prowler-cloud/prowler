@@ -1,7 +1,12 @@
 from dataclasses import dataclass
 
 from azure.mgmt.sql import SqlManagementClient
-from azure.mgmt.sql.models import ServerExternalAdministrator, ServerBlobAuditingPolicy, FirewallRule
+from azure.mgmt.sql.models import (
+    FirewallRule,
+    ServerBlobAuditingPolicy,
+    ServerExternalAdministrator,
+)
+
 from prowler.lib.logger import logger
 from prowler.providers.azure.lib.service.service import AzureService
 
@@ -14,7 +19,6 @@ class SQLServer(AzureService):
             audit_info.identity.subscriptions, audit_info.credentials
         )
         self.sql_servers = self.__get_sql_servers__()
-        self.region = "azure"
 
     def __set_clients__(self, subscriptions, credentials):
         clients = {}
@@ -43,8 +47,15 @@ class SQLServer(AzureService):
                 sql_servers_list = client.servers.list()
                 for sql_server in sql_servers_list:
                     resource_group = self.__get_resource_group__(sql_server.id)
-                    auditing_policies = client.server_blob_auditing_policies.list_by_server(resource_group_name=resource_group, server_name=sql_server.name)
-                    firewall_rules = client.firewall_rules.list_by_server(resource_group_name=resource_group, server_name=sql_server.name)
+                    auditing_policies = (
+                        client.server_blob_auditing_policies.list_by_server(
+                            resource_group_name=resource_group,
+                            server_name=sql_server.name,
+                        )
+                    )
+                    firewall_rules = client.firewall_rules.list_by_server(
+                        resource_group_name=resource_group, server_name=sql_server.name
+                    )
                     sql_servers[subscription].append(
                         SQL_Server(
                             id=sql_server.id,
@@ -53,7 +64,7 @@ class SQLServer(AzureService):
                             minimal_tls_version=sql_server.minimal_tls_version,
                             administrators=sql_server.administrators,
                             auditing_policies=auditing_policies,
-                            firewall_rules=firewall_rules
+                            firewall_rules=firewall_rules,
                         )
                     )
             except Exception as error:
@@ -64,7 +75,7 @@ class SQLServer(AzureService):
         return sql_servers
 
     def __get_resource_group__(self, id):
-        resource_group = id.split('/')[4]
+        resource_group = id.split("/")[4]
         return resource_group
 
 

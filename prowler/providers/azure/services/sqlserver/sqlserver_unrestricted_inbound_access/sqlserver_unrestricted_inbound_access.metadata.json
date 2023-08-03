@@ -1,6 +1,6 @@
 {
   "Provider": "azure",
-  "CheckID": "sqlserver_allow_unrestricted_inbound_access",
+  "CheckID": "sqlserver_unrestricted_inbound_access",
   "CheckTitle": "Ensure that there are no firewall rules allowing traffic from 0.0.0.0-255.255.255.255",
   "CheckType": [],
   "ServiceName": "sqlserver",

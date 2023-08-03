@@ -15,7 +15,6 @@ class Storage(AzureService):
             audit_info.identity.subscriptions, audit_info.credentials
         )
         self.storage_accounts = self.__get_storage_accounts__()
-        self.region = "azure"
 
     def __set_clients__(self, subscriptions, credentials):
         clients = {}
