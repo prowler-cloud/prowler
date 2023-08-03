@@ -14,7 +14,7 @@ class KMS(GCPService):
         self.key_rings = []
         self.crypto_keys = []
         self.__get_locations__()
-        self.__get_key_rings__()
+        self.__threading_call__(self.__get_key_rings__, self.locations)
         self.__get_crypto_keys__()
         self.__get_crypto_keys_iam_policy__()
 
@@ -44,36 +44,32 @@ class KMS(GCPService):
                     f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
-    def __get_key_rings__(self):
-        for location in self.locations:
-            try:
+    def __get_key_rings__(self, location):
+        try:
+            request = (
+                self.client.projects().locations().keyRings().list(parent=location.name)
+            )
+            while request is not None:
+                response = request.execute(http=self.__get_AuthorizedHttp_client__())
+
+                for ring in response.get("keyRings", []):
+                    self.key_rings.append(
+                        KeyRing(
+                            name=ring["name"],
+                            project_id=location.project_id,
+                        )
+                    )
+
                 request = (
                     self.client.projects()
                     .locations()
                     .keyRings()
-                    .list(parent=location.name)
+                    .list_next(previous_request=request, previous_response=response)
                 )
-                while request is not None:
-                    response = request.execute()
-
-                    for ring in response.get("keyRings", []):
-                        self.key_rings.append(
-                            KeyRing(
-                                name=ring["name"],
-                                project_id=location.project_id,
-                            )
-                        )
-
-                    request = (
-                        self.client.projects()
-                        .locations()
-                        .keyRings()
-                        .list_next(previous_request=request, previous_response=response)
-                    )
-            except Exception as error:
-                logger.error(
-                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                )
+        except Exception as error:
+            logger.error(
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
 
     def __get_crypto_keys__(self):
         for ring in self.key_rings:
