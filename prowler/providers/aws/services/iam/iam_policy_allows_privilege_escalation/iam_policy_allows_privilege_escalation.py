@@ -1,3 +1,5 @@
+from re import search
+
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.iam.iam_client import iam_client
 
@@ -11,63 +13,94 @@ from prowler.providers.aws.services.iam.iam_client import iam_client
 # Does the tool handle Condition constraints? --> Not yet.
 # Does the tool handle service control policy (SCP) restrictions? --> No, SCP are within Organizations AWS API.
 
+# Based on:
+# - https://bishopfox.com/blog/privilege-escalation-in-aws
+# - https://github.com/RhinoSecurityLabs/Security-Research/blob/master/tools/aws-pentest-tools/aws_escalate.py
+# - https://rhinosecuritylabs.com/aws/aws-privilege-escalation-methods-mitigation/
+
 
 class iam_policy_allows_privilege_escalation(Check):
     def execute(self) -> Check_Report_AWS:
-        # Is necessary to include the "Action:*" for
-        # each service that has a policy that could
-        # allow for privilege escalation
-        privilege_escalation_iam_actions = {
-            "iam:AttachGroupPolicy",
-            "iam:SetDefaultPolicyVersion2",
-            "iam:AddUserToGroup",
-            "iam:AttachRolePolicy",
-            "iam:AttachUserPolicy",
-            "iam:CreateAccessKey",
-            "iam:CreatePolicyVersion",
-            "iam:CreateLoginProfile",
-            "iam:PassRole",
-            "iam:PutGroupPolicy",
-            "iam:PutRolePolicy",
-            "iam:PutUserPolicy",
-            "iam:SetDefaultPolicyVersion",
-            "iam:UpdateAssumeRolePolicy",
-            "iam:UpdateLoginProfile",
-            "iam:*",
-            "sts:AssumeRole",
-            "sts:*",
-            "ec2:RunInstances",
-            "ec2:*",
-            "lambda:CreateEventSourceMapping",
-            "lambda:CreateFunction",
-            "lambda:InvokeFunction",
-            "lambda:UpdateFunctionCode",
-            "lambda:*",
-            "dynamodb:CreateTable",
-            "dynamodb:PutItem",
-            "dynamodb:*",
-            "glue:CreateDevEndpoint",
-            "glue:GetDevEndpoint",
-            "glue:GetDevEndpoints",
-            "glue:UpdateDevEndpoint",
-            "glue:*",
-            "cloudformation:CreateStack",
-            "cloudformation:DescribeStacks",
-            "cloudformation:*",
-            "datapipeline:CreatePipeline",
-            "datapipeline:PutPipelineDefinition",
-            "datapipeline:ActivatePipeline",
-            "datapipeline:*",
+        privilege_escalation_policies_combination = {
+            "CreatePolicyVersion": {"iam:CreatePolicyVersion"},
+            "SetDefaultPolicyVersion": {"iam:SetDefaultPolicyVersion"},
+            "iam:PassRole": {"iam:PassRole"},
+            "PassRole+EC2": {
+                "iam:PassRole",
+                "ec2:RunInstances",
+            },
+            "PassRole+CreateLambda+Invoke": {
+                "iam:PassRole",
+                "lambda:CreateFunction",
+                "lambda:InvokeFunction",
+            },
+            "PassRole+CreateLambda+ExistingDynamo": {
+                "iam:PassRole",
+                "lambda:CreateFunction",
+                "lambda:CreateEventSourceMapping",
+            },
+            "PassRole+CreateLambda+NewDynamo": {
+                "iam:PassRole",
+                "lambda:CreateFunction",
+                "lambda:CreateEventSourceMapping",
+                "dynamodb:CreateTable",
+                "dynamodb:PutItem",
+            },
+            "PassRole+GlueEndpoint": {
+                "iam:PassRole",
+                "glue:CreateDevEndpoint",
+                "glue:GetDevEndpoint",
+            },
+            "PassRole+GlueEndpoints": {
+                "iam:PassRole",
+                "glue:CreateDevEndpoint",
+                "glue:GetDevEndpoints",
+            },
+            "PassRole+CloudFormation": {
+                "cloudformation:CreateStack",
+                "cloudformation:DescribeStacks",
+            },
+            "PassRole+DataPipeline": {
+                "datapipeline:CreatePipeline",
+                "datapipeline:PutPipelineDefinition",
+                "datapipeline:ActivatePipeline",
+            },
+            "GlueUpdateDevEndpoint": {"glue:UpdateDevEndpoint"},
+            "GlueUpdateDevEndpoints": {"glue:UpdateDevEndpoint"},
+            "lambda:UpdateFunctionCode": {"lambda:UpdateFunctionCode"},
+            "iam:CreateAccessKey": {"iam:CreateAccessKey"},
+            "iam:CreateLoginProfile": {"iam:CreateLoginProfile"},
+            "iam:UpdateLoginProfile": {"iam:UpdateLoginProfile"},
+            "iam:AttachUserPolicy": {"iam:AttachUserPolicy"},
+            "iam:AttachGroupPolicy": {"iam:AttachGroupPolicy"},
+            "iam:AttachRolePolicy": {"iam:AttachRolePolicy"},
+            "AssumeRole+AttachRolePolicy": {"sts:AssumeRole", "iam:AttachRolePolicy"},
+            "iam:PutGroupPolicy": {"iam:PutGroupPolicy"},
+            "iam:PutRolePolicy": {"iam:PutRolePolicy"},
+            "AssumeRole+PutRolePolicy": {"sts:AssumeRole", "iam:PutRolePolicy"},
+            "iam:PutUserPolicy": {"iam:PutUserPolicy"},
+            "iam:AddUserToGroup": {"iam:AddUserToGroup"},
+            "iam:UpdateAssumeRolePolicy": {"iam:UpdateAssumeRolePolicy"},
+            "AssumeRole+UpdateAssumeRolePolicy": {
+                "sts:AssumeRole",
+                "iam:UpdateAssumeRolePolicy",
+            },
+            # TO-DO: We have to handle AssumeRole just if the resource is * and without conditions
+            # "sts:AssumeRole": {"sts:AssumeRole"},
         }
+
         findings = []
+
+        # Iterate over all the IAM "Customer Managed" policies
         for policy in iam_client.policies:
-            # Check only custom policies
             if policy.type == "Custom":
                 report = Check_Report_AWS(self.metadata())
                 report.resource_id = policy.name
                 report.resource_arn = policy.arn
                 report.region = iam_client.region
                 report.resource_tags = policy.tags
+                report.status = "PASS"
+                report.status_extended = f"Custom Policy {report.resource_arn} does not allow privilege escalation"
 
                 # List of policy actions
                 allowed_actions = set()
@@ -85,42 +118,74 @@ class iam_policy_allows_privilege_escalation(Check):
                         if statements["Effect"] == "Allow":
                             if "Action" in statements:
                                 if type(statements["Action"]) is str:
-                                    allowed_actions = {statements["Action"]}
+                                    allowed_actions.add(statements["Action"])
                                 if type(statements["Action"]) is list:
-                                    allowed_actions = set(statements["Action"])
+                                    allowed_actions.update(statements["Action"])
 
                         # Recover denied actions
                         if statements["Effect"] == "Deny":
                             if "Action" in statements:
                                 if type(statements["Action"]) is str:
-                                    denied_actions = {statements["Action"]}
+                                    denied_actions.add(statements["Action"])
                                 if type(statements["Action"]) is list:
-                                    denied_actions = set(statements["Action"])
+                                    denied_actions.update(statements["Action"])
 
                             if "NotAction" in statements:
                                 if type(statements["NotAction"]) is str:
-                                    denied_not_actions = {statements["NotAction"]}
+                                    denied_not_actions.add(statements["NotAction"])
                                 if type(statements["NotAction"]) is list:
-                                    denied_not_actions = set(statements["NotAction"])
+                                    denied_not_actions.update(statements["NotAction"])
 
-                # First, we need to perform a left join with ALLOWED_ACTIONS and DENIED_ACTIONS
-                left_actions = allowed_actions.difference(denied_actions)
-                # Then, we need to find the DENIED_NOT_ACTIONS in LEFT_ACTIONS
-                if denied_not_actions:
-                    privileged_actions = left_actions.intersection(denied_not_actions)
-                # If there is no Denied Not Actions
-                else:
-                    privileged_actions = left_actions
-                # Finally, check if there is a privilege escalation action within this policy
-                policy_privilege_escalation_actions = privileged_actions.intersection(
-                    privilege_escalation_iam_actions
-                )
+                    # First, we need to perform a left join with ALLOWED_ACTIONS and DENIED_ACTIONS
+                    left_actions = allowed_actions.difference(denied_actions)
+                    # Then, we need to find the DENIED_NOT_ACTIONS in LEFT_ACTIONS
+                    if denied_not_actions:
+                        privileged_actions = left_actions.intersection(
+                            denied_not_actions
+                        )
+                    # If there is no Denied Not Actions
+                    else:
+                        privileged_actions = left_actions
 
-                if len(policy_privilege_escalation_actions) == 0:
-                    report.status = "PASS"
-                    report.status_extended = f"Custom Policy {report.resource_arn} does not allow privilege escalation"
-                else:
-                    report.status = "FAIL"
-                    report.status_extended = f"Custom Policy {report.resource_arn} allows privilege escalation using the following actions: {policy_privilege_escalation_actions}"
+                    # Store all the action's combinations
+                    policies_combination = set()
+
+                    for values in privilege_escalation_policies_combination.values():
+                        for val in values:
+                            val_set = set()
+                            val_set.add(val)
+                            # Look for specific api:action
+                            if privileged_actions.intersection(val_set) == val_set:
+                                policies_combination.add(val)
+                            # Look for api:*
+                            else:
+                                for permission in privileged_actions:
+                                    api = permission.split(":")[0]
+                                    api_action = permission.split(":")[1]
+
+                                    if api_action == "*":
+                                        if search(api, val):
+                                            policies_combination.add(val)
+
+                    # Check all policies combinations and see if matchs with some combo key
+                    combos = set()
+                    for (
+                        key,
+                        values,
+                    ) in privilege_escalation_policies_combination.items():
+                        intersection = policies_combination.intersection(values)
+                        if intersection == values:
+                            combos.add(key)
+
+                    if len(combos) != 0:
+                        report.status = "FAIL"
+                        policies_affected = ""
+                        for key in combos:
+                            policies_affected += (
+                                str(privilege_escalation_policies_combination[key])
+                                + " "
+                            )
+
+                        report.status_extended = f"Custom Policy {report.resource_arn} allows privilege escalation using the following actions: {policies_affected}".rstrip()
                 findings.append(report)
         return findings
