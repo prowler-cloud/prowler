@@ -30,6 +30,7 @@ awsipranges = "0.3.3"
 azure-identity = "1.13.0"
 azure-mgmt-authorization = "4.0.0"
 azure-mgmt-security = "5.0.0"
+azure-mgmt-sql = "3.0.1"
 azure-mgmt-storage = "21.0.0"
 azure-mgmt-subscription = "3.1.1"
 azure-storage-blob = "12.17.0"
@@ -48,7 +49,6 @@ schema = "0.7.5"
 shodan = "1.29.1"
 slack-sdk = "3.21.3"
 tabulate = "0.9.0"
-azure-mgmt-sql = "^3.0.1"
 
 [tool.poetry.extras]
 docs = ["mkdocs", "mkdocs-material"]
