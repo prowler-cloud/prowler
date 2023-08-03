@@ -1,0 +1,30 @@
+{
+  "Provider": "aws",
+  "CheckID": "documentdb_instance_storage_encrypted",
+  "CheckTitle": "Check if DocumentDB instances storage is encrypted.",
+  "CheckType": [],
+  "ServiceName": "documentdb",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "AwsDocDbInstance",
+  "Description": "Check if DocumentDB instances storage is encrypted.",
+  "Risk": "If not enabled sensitive information at rest is not protected.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws docdb create-db-cluster --db-cluster-identifier <db_cluster_id> --port 27017 --engine docdb --master-username <yourMasterUsername> --master-user-password <yourMasterPassword> --storage-encrypted",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": "https://docs.bridgecrew.io/docs/bc_aws_general_28#terraform"
+    },
+    "Recommendation": {
+      "Text": "Enable Encryption. Use a CMK where possible. It will provide additional management and privacy benefits.",
+      "Url": ""
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

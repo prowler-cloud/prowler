@@ -188,6 +188,7 @@ class EC2(AWSService):
                                 region=regional_client.region,
                                 encrypted=snapshot.get("Encrypted", False),
                                 tags=snapshot.get("Tags"),
+                                volume=snapshot["VolumeId"],
                             )
                         )
         except Exception as error:
@@ -422,6 +423,7 @@ class Snapshot(BaseModel):
     encrypted: bool
     public: bool = False
     tags: Optional[list] = []
+    volume: str
 
 
 class Volume(BaseModel):

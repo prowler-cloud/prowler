@@ -1,0 +1,34 @@
+{
+  "Provider": "aws",
+  "CheckID": "dlm_ebs_snapshot_policy_exists",
+  "CheckTitle": "Ensure EBS snapshot policies are defined.",
+  "CheckType": [
+    "Logging and Monitoring"
+  ],
+  "ServiceName": "dlm",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "Other",
+  "Description": "Ensure EBS snapshot policies are defined.",
+  "Risk": "",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "",
+      "Url": ""
+    }
+  },
+  "Categories": [
+    "forensics-ready"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
