@@ -21,10 +21,6 @@ from prowler.providers.aws.services.iam.iam_client import iam_client
 
 class iam_policy_allows_privilege_escalation(Check):
     def execute(self) -> Check_Report_AWS:
-        # TO-DO: Is necessary to include the "Action:*" for
-        # each service that has a policy that could
-        # allow for privilege escalation
-
         privilege_escalation_policies_combination = {
             "CreatePolicyVersion": {"iam:CreatePolicyVersion"},
             "SetDefaultPolicyVersion": {"iam:SetDefaultPolicyVersion"},
