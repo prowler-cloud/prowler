@@ -1,4 +1,3 @@
-import threading
 from typing import Optional
 
 import google_auth_httplib2
@@ -16,20 +15,10 @@ class KMS(GCPService):
         self.locations = []
         self.key_rings = []
         self.crypto_keys = []
-        self.credentials = audit_info.credentials
         self.__get_locations__()
-        self.__threading_call__(self.__get_key_rings__)
+        self.__location_threading_call__(self.__get_key_rings__)
         self.__get_crypto_keys__()
         self.__get_crypto_keys_iam_policy__()
-
-    def __threading_call__(self, call):
-        threads = []
-        for location in self.locations:
-            threads.append(threading.Thread(target=call, args=(location,)))
-        for t in threads:
-            t.start()
-        for t in threads:
-            t.join()
 
     def __get_locations__(self):
         for project_id in self.project_ids:

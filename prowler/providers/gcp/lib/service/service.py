@@ -1,3 +1,5 @@
+import threading
+
 from googleapiclient import discovery
 
 from prowler.lib.logger import logger
@@ -9,16 +11,43 @@ class GCPService:
         # We receive the service using __class__.__name__ or the service name in lowercase
         # e.g.: APIKeys --> we need a lowercase string, so service.lower()
         self.service = service.lower() if not service.islower() else service
-
+        self.credentials = audit_info.credentials
         self.api_version = api_version
         self.default_project_id = audit_info.default_project_id
-
         self.region = region
         self.client = generate_client(service, api_version, audit_info)
+        # Only project ids that have their API enabled will be scanned
         self.project_ids = self.__is_api_active__(audit_info.project_ids)
 
     def __get_client__(self):
         return self.client
+
+    def __location_threading_call__(self, call):
+        threads = []
+        for location in self.locations:
+            threads.append(threading.Thread(target=call, args=(location,)))
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+
+    def __zone_threading_call__(self, call):
+        threads = []
+        for zone in self.zones:
+            threads.append(threading.Thread(target=call, args=(zone,)))
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+
+    def __region_threading_call__(self, call):
+        threads = []
+        for region in self.regions:
+            threads.append(threading.Thread(target=call, args=(region,)))
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
 
     def __is_api_active__(self, audited_project_ids):
         project_ids = []

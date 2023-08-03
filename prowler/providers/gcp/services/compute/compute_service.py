@@ -1,5 +1,3 @@
-import threading
-
 import google_auth_httplib2
 import httplib2
 from pydantic import BaseModel
@@ -12,7 +10,6 @@ from prowler.providers.gcp.lib.service.service import GCPService
 class Compute(GCPService):
     def __init__(self, audit_info):
         super().__init__(__class__.__name__, audit_info)
-        self.credentials = audit_info.credentials
         self.regions = set()
         self.zones = set()
         self.instances = []
@@ -30,24 +27,6 @@ class Compute(GCPService):
         self.__get_networks__()
         self.__region_threading_call__(self.__get_subnetworks__)
         self.__get_firewalls__()
-
-    def __zone_threading_call__(self, call):
-        threads = []
-        for zone in self.zones:
-            threads.append(threading.Thread(target=call, args=(zone,)))
-        for t in threads:
-            t.start()
-        for t in threads:
-            t.join()
-
-    def __region_threading_call__(self, call):
-        threads = []
-        for region in self.regions:
-            threads.append(threading.Thread(target=call, args=(region,)))
-        for t in threads:
-            t.start()
-        for t in threads:
-            t.join()
 
     def __get_regions__(self):
         for project_id in self.project_ids:

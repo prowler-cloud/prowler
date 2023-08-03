@@ -1,5 +1,3 @@
-import threading
-
 import google_auth_httplib2
 import httplib2
 from pydantic import BaseModel
@@ -13,18 +11,9 @@ from prowler.providers.gcp.services.compute.compute_client import compute_client
 class Dataproc(GCPService):
     def __init__(self, audit_info):
         super().__init__(__class__.__name__, audit_info)
-        self.credentials = audit_info.credentials
+        self.regions = compute_client.regions
         self.clusters = []
-        self.__threading_call__(self.__get_clusters__)
-
-    def __threading_call__(self, call):
-        threads = []
-        for region in compute_client.regions:
-            threads.append(threading.Thread(target=call, args=(region,)))
-        for t in threads:
-            t.start()
-        for t in threads:
-            t.join()
+        self.__region_threading_call__(self.__get_clusters__)
 
     def __get_clusters__(self, region):
         for project_id in self.project_ids:
