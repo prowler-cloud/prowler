@@ -22,28 +22,10 @@ class GCPService:
     def __get_client__(self):
         return self.client
 
-    def __location_threading_call__(self, call):
+    def __threading_call__(self, call, iterator):
         threads = []
-        for location in self.locations:
-            threads.append(threading.Thread(target=call, args=(location,)))
-        for t in threads:
-            t.start()
-        for t in threads:
-            t.join()
-
-    def __zone_threading_call__(self, call):
-        threads = []
-        for zone in self.zones:
-            threads.append(threading.Thread(target=call, args=(zone,)))
-        for t in threads:
-            t.start()
-        for t in threads:
-            t.join()
-
-    def __region_threading_call__(self, call):
-        threads = []
-        for region in self.regions:
-            threads.append(threading.Thread(target=call, args=(region,)))
+        for value in iterator:
+            threads.append(threading.Thread(target=call, args=(value,)))
         for t in threads:
             t.start()
         for t in threads:

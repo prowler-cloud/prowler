@@ -23,9 +23,9 @@ class Compute(GCPService):
         self.__get_regions__()
         self.__get_projects__()
         self.__get_zones__()
-        self.__zone_threading_call__(self.__get_instances__)
+        self.__threading_call__(self.__get_instances__, self.zones)
         self.__get_networks__()
-        self.__region_threading_call__(self.__get_subnetworks__)
+        self.__threading_call__(self.__get_subnetworks__, self.regions)
         self.__get_firewalls__()
 
     def __get_regions__(self):

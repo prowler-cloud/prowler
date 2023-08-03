@@ -16,7 +16,7 @@ class KMS(GCPService):
         self.key_rings = []
         self.crypto_keys = []
         self.__get_locations__()
-        self.__location_threading_call__(self.__get_key_rings__)
+        self.__threading_call__(self.__get_key_rings__, self.locations)
         self.__get_crypto_keys__()
         self.__get_crypto_keys_iam_policy__()
 
