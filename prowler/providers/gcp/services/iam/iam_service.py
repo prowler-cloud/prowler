@@ -14,39 +14,38 @@ class IAM(GCPService):
     def __init__(self, audit_info):
         super().__init__(__class__.__name__, audit_info)
         self.service_accounts = []
-        self.__get_service_accounts__()
+        self.__threading_call__(self.__get_service_accounts__, self.project_ids)
         self.__get_service_accounts_keys__()
 
-    def __get_service_accounts__(self):
-        for project_id in self.project_ids:
-            try:
+    def __get_service_accounts__(self, project_id):
+        try:
+            request = (
+                self.client.projects()
+                .serviceAccounts()
+                .list(name="projects/" + project_id)
+            )
+            while request is not None:
+                response = request.execute(http=self.__get_AuthorizedHttp_client__())
+
+                for account in response["accounts"]:
+                    self.service_accounts.append(
+                        ServiceAccount(
+                            name=account["name"],
+                            email=account["email"],
+                            display_name=account.get("displayName", ""),
+                            project_id=project_id,
+                        )
+                    )
+
                 request = (
                     self.client.projects()
                     .serviceAccounts()
-                    .list(name="projects/" + project_id)
+                    .list_next(previous_request=request, previous_response=response)
                 )
-                while request is not None:
-                    response = request.execute()
-
-                    for account in response["accounts"]:
-                        self.service_accounts.append(
-                            ServiceAccount(
-                                name=account["name"],
-                                email=account["email"],
-                                display_name=account.get("displayName", ""),
-                                project_id=project_id,
-                            )
-                        )
-
-                    request = (
-                        self.client.projects()
-                        .serviceAccounts()
-                        .list_next(previous_request=request, previous_response=response)
-                    )
-            except Exception as error:
-                logger.error(
-                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                )
+        except Exception as error:
+            logger.error(
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
 
     def __get_service_accounts_keys__(self):
         try:
@@ -106,26 +105,25 @@ class AccessApproval(GCPService):
     def __init__(self, audit_info):
         super().__init__(__class__.__name__, audit_info)
         self.settings = {}
-        self.__get_settings__()
+        self.__threading_call__(self.__get_settings__, self.project_ids)
 
-    def __get_settings__(self):
-        for project_id in self.project_ids:
-            try:
-                response = (
-                    self.client.projects().getAccessApprovalSettings(
-                        name=f"projects/{project_id}/accessApprovalSettings"
-                    )
-                ).execute()
-                self.settings[project_id].append(
-                    Setting(
-                        name=response["name"],
-                        project_id=project_id,
-                    )
+    def __get_settings__(self, project_id):
+        try:
+            response = (
+                self.client.projects().getAccessApprovalSettings(
+                    name=f"projects/{project_id}/accessApprovalSettings"
                 )
-            except Exception as error:
-                logger.error(
-                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            ).execute()
+            self.settings[project_id].append(
+                Setting(
+                    name=response["name"],
+                    project_id=project_id,
                 )
+            )
+        except Exception as error:
+            logger.error(
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
 
 
 class Setting(BaseModel):

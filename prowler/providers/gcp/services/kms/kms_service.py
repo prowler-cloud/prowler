@@ -13,36 +13,33 @@ class KMS(GCPService):
         self.locations = []
         self.key_rings = []
         self.crypto_keys = []
-        self.__get_locations__()
+        self.__threading_call__(self.__get_locations__, self.project_ids)
         self.__threading_call__(self.__get_key_rings__, self.locations)
         self.__get_crypto_keys__()
         self.__get_crypto_keys_iam_policy__()
 
-    def __get_locations__(self):
-        for project_id in self.project_ids:
-            try:
+    def __get_locations__(self, project_id):
+        try:
+            request = (
+                self.client.projects().locations().list(name="projects/" + project_id)
+            )
+            while request is not None:
+                response = request.execute(http=self.__get_AuthorizedHttp_client__())
+
+                for location in response["locations"]:
+                    self.locations.append(
+                        KeyLocation(name=location["name"], project_id=project_id)
+                    )
+
                 request = (
                     self.client.projects()
                     .locations()
-                    .list(name="projects/" + project_id)
+                    .list_next(previous_request=request, previous_response=response)
                 )
-                while request is not None:
-                    response = request.execute()
-
-                    for location in response["locations"]:
-                        self.locations.append(
-                            KeyLocation(name=location["name"], project_id=project_id)
-                        )
-
-                    request = (
-                        self.client.projects()
-                        .locations()
-                        .list_next(previous_request=request, previous_response=response)
-                    )
-            except Exception as error:
-                logger.error(
-                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                )
+        except Exception as error:
+            logger.error(
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
 
     def __get_key_rings__(self, location):
         try:

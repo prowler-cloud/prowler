@@ -12,33 +12,28 @@ class CloudResourceManager(GCPService):
         self.bindings = []
         self.projects = []
         self.organizations = []
-        self.__get_iam_policy__()
+        self.__threading_call__(self.__get_iam_policy__, self.project_ids)
         self.__get_organizations__()
 
-    def __get_iam_policy__(self):
-        for project_id in self.project_ids:
-            try:
-                policy = (
-                    self.client.projects().getIamPolicy(resource=project_id).execute()
-                )
-                audit_logging = False
-                if policy.get("auditConfigs"):
-                    audit_logging = True
-                self.projects.append(
-                    Project(id=project_id, audit_logging=audit_logging)
-                )
-                for binding in policy["bindings"]:
-                    self.bindings.append(
-                        Binding(
-                            role=binding["role"],
-                            members=binding["members"],
-                            project_id=project_id,
-                        )
+    def __get_iam_policy__(self, project_id):
+        try:
+            policy = self.client.projects().getIamPolicy(resource=project_id).execute()
+            audit_logging = False
+            if policy.get("auditConfigs"):
+                audit_logging = True
+            self.projects.append(Project(id=project_id, audit_logging=audit_logging))
+            for binding in policy["bindings"]:
+                self.bindings.append(
+                    Binding(
+                        role=binding["role"],
+                        members=binding["members"],
+                        project_id=project_id,
                     )
-            except Exception as error:
-                logger.error(
-                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
+        except Exception as error:
+            logger.error(
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
 
     def __get_organizations__(self):
         try:

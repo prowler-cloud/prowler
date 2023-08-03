@@ -11,46 +11,45 @@ class CloudStorage(GCPService):
     def __init__(self, audit_info):
         super().__init__("storage", audit_info)
         self.buckets = []
-        self.__get_buckets__()
+        self.__threading_call__(self.__get_buckets__, self.project_ids)
 
-    def __get_buckets__(self):
-        for project_id in self.project_ids:
-            try:
-                request = self.client.buckets().list(project=project_id)
-                while request is not None:
-                    response = request.execute()
-                    for bucket in response.get("items", []):
-                        bucket_iam = (
-                            self.client.buckets()
-                            .getIamPolicy(bucket=bucket["id"])
-                            .execute()["bindings"]
-                        )
-                        public = False
-                        if "allAuthenticatedUsers" in str(
-                            bucket_iam
-                        ) or "allUsers" in str(bucket_iam):
-                            public = True
-                        self.buckets.append(
-                            Bucket(
-                                name=bucket["name"],
-                                id=bucket["id"],
-                                region=bucket["location"],
-                                uniform_bucket_level_access=bucket["iamConfiguration"][
-                                    "uniformBucketLevelAccess"
-                                ]["enabled"],
-                                public=public,
-                                retention_policy=bucket.get("retentionPolicy"),
-                                project_id=project_id,
-                            )
-                        )
-
-                    request = self.client.buckets().list_next(
-                        previous_request=request, previous_response=response
+    def __get_buckets__(self, project_id):
+        try:
+            request = self.client.buckets().list(project=project_id)
+            while request is not None:
+                response = request.execute(http=self.__get_AuthorizedHttp_client__())
+                for bucket in response.get("items", []):
+                    bucket_iam = (
+                        self.client.buckets()
+                        .getIamPolicy(bucket=bucket["id"])
+                        .execute()["bindings"]
                     )
-            except Exception as error:
-                logger.error(
-                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    public = False
+                    if "allAuthenticatedUsers" in str(bucket_iam) or "allUsers" in str(
+                        bucket_iam
+                    ):
+                        public = True
+                    self.buckets.append(
+                        Bucket(
+                            name=bucket["name"],
+                            id=bucket["id"],
+                            region=bucket["location"],
+                            uniform_bucket_level_access=bucket["iamConfiguration"][
+                                "uniformBucketLevelAccess"
+                            ]["enabled"],
+                            public=public,
+                            retention_policy=bucket.get("retentionPolicy"),
+                            project_id=project_id,
+                        )
+                    )
+
+                request = self.client.buckets().list_next(
+                    previous_request=request, previous_response=response
                 )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
 
 
 class Bucket(BaseModel):

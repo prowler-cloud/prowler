@@ -16,67 +16,62 @@ class Compute(GCPService):
         self.firewalls = []
         self.projects = []
         self.load_balancers = []
-        self.__get_url_maps__()
-        self.__describe_backend_service__()
-        self.__get_regions__()
-        self.__get_projects__()
-        self.__get_zones__()
+        self.__threading_call__(self.__get_regions__, self.project_ids)
+        self.__threading_call__(self.__get_zones__, self.project_ids)
+        self.__threading_call__(self.__get_projects__, self.project_ids)
         self.__threading_call__(self.__get_instances__, self.zones)
-        self.__get_networks__()
+        self.__threading_call__(self.__get_url_maps__, self.project_ids)
+        self.__threading_call__(self.__get_networks__, self.project_ids)
+        self.__describe_backend_service__()
         self.__threading_call__(self.__get_subnetworks__, self.regions)
-        self.__get_firewalls__()
+        self.__threading_call__(self.__get_firewalls__, self.project_ids)
 
-    def __get_regions__(self):
-        for project_id in self.project_ids:
-            try:
-                request = self.client.regions().list(project=project_id)
-                while request is not None:
-                    response = request.execute()
+    def __get_regions__(self, project_id):
+        try:
+            request = self.client.regions().list(project=project_id)
+            while request is not None:
+                response = request.execute(http=self.__get_AuthorizedHttp_client__())
 
-                    for region in response.get("items", []):
-                        self.regions.add(region["name"])
+                for region in response.get("items", []):
+                    self.regions.add(region["name"])
 
-                    request = self.client.regions().list_next(
-                        previous_request=request, previous_response=response
-                    )
-            except Exception as error:
-                logger.error(
-                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                request = self.client.regions().list_next(
+                    previous_request=request, previous_response=response
                 )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
 
-    def __get_zones__(self):
-        for project_id in self.project_ids:
-            try:
-                request = self.client.zones().list(project=project_id)
-                while request is not None:
-                    response = request.execute()
+    def __get_zones__(self, project_id):
+        try:
+            request = self.client.zones().list(project=project_id)
+            while request is not None:
+                response = request.execute(http=self.__get_AuthorizedHttp_client__())
 
-                    for zone in response.get("items", []):
-                        self.zones.add(zone["name"])
+                for zone in response.get("items", []):
+                    self.zones.add(zone["name"])
 
-                    request = self.client.zones().list_next(
-                        previous_request=request, previous_response=response
-                    )
-            except Exception as error:
-                logger.error(
-                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                request = self.client.zones().list_next(
+                    previous_request=request, previous_response=response
                 )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
 
-    def __get_projects__(self):
-        for project_id in self.project_ids:
-            try:
-                enable_oslogin = False
-                response = self.client.projects().get(project=project_id).execute()
-                for item in response["commonInstanceMetadata"].get("items", []):
-                    if item["key"] == "enable-oslogin" and item["value"] == "TRUE":
-                        enable_oslogin = True
-                self.projects.append(
-                    Project(id=project_id, enable_oslogin=enable_oslogin)
-                )
-            except Exception as error:
-                logger.error(
-                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                )
+    def __get_projects__(self, project_id):
+        try:
+            enable_oslogin = False
+            response = self.client.projects().get(project=project_id).execute()
+            for item in response["commonInstanceMetadata"].get("items", []):
+                if item["key"] == "enable-oslogin" and item["value"] == "TRUE":
+                    enable_oslogin = True
+            self.projects.append(Project(id=project_id, enable_oslogin=enable_oslogin))
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
 
     def __get_instances__(self, zone):
         for project_id in self.project_ids:
@@ -134,36 +129,35 @@ class Compute(GCPService):
                     f"{zone} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
-    def __get_networks__(self):
-        for project_id in self.project_ids:
-            try:
-                request = self.client.networks().list(project=project_id)
-                while request is not None:
-                    response = request.execute()
-                    for network in response.get("items", []):
-                        subnet_mode = (
-                            "legacy"
-                            if "autoCreateSubnetworks" not in network
-                            else "auto"
-                            if network["autoCreateSubnetworks"]
-                            else "custom"
-                        )
-                        self.networks.append(
-                            Network(
-                                name=network["name"],
-                                id=network["id"],
-                                subnet_mode=subnet_mode,
-                                project_id=project_id,
-                            )
-                        )
-
-                    request = self.client.networks().list_next(
-                        previous_request=request, previous_response=response
+    def __get_networks__(self, project_id):
+        try:
+            request = self.client.networks().list(project=project_id)
+            while request is not None:
+                response = request.execute(http=self.__get_AuthorizedHttp_client__())
+                for network in response.get("items", []):
+                    subnet_mode = (
+                        "legacy"
+                        if "autoCreateSubnetworks" not in network
+                        else "auto"
+                        if network["autoCreateSubnetworks"]
+                        else "custom"
                     )
-            except Exception as error:
-                logger.error(
-                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    self.networks.append(
+                        Network(
+                            name=network["name"],
+                            id=network["id"],
+                            subnet_mode=subnet_mode,
+                            project_id=project_id,
+                        )
+                    )
+
+                request = self.client.networks().list_next(
+                    previous_request=request, previous_response=response
                 )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
 
     def __get_subnetworks__(self, region):
         for project_id in self.project_ids:
@@ -195,56 +189,54 @@ class Compute(GCPService):
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
-    def __get_firewalls__(self):
-        for project_id in self.project_ids:
-            try:
-                request = self.client.firewalls().list(project=project_id)
-                while request is not None:
-                    response = request.execute()
+    def __get_firewalls__(self, project_id):
+        try:
+            request = self.client.firewalls().list(project=project_id)
+            while request is not None:
+                response = request.execute(http=self.__get_AuthorizedHttp_client__())
 
-                    for firewall in response.get("items", []):
-                        self.firewalls.append(
-                            Firewall(
-                                name=firewall["name"],
-                                id=firewall["id"],
-                                source_ranges=firewall.get("sourceRanges", []),
-                                direction=firewall["direction"],
-                                allowed_rules=firewall.get("allowed", []),
-                                project_id=project_id,
-                            )
+                for firewall in response.get("items", []):
+                    self.firewalls.append(
+                        Firewall(
+                            name=firewall["name"],
+                            id=firewall["id"],
+                            source_ranges=firewall.get("sourceRanges", []),
+                            direction=firewall["direction"],
+                            allowed_rules=firewall.get("allowed", []),
+                            project_id=project_id,
                         )
-
-                    request = self.client.firewalls().list_next(
-                        previous_request=request, previous_response=response
                     )
-            except Exception as error:
-                logger.error(
-                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                )
 
-    def __get_url_maps__(self):
-        for project_id in self.project_ids:
-            try:
-                request = self.client.urlMaps().list(project=project_id)
-                while request is not None:
-                    response = request.execute()
-                    for urlmap in response.get("items", []):
-                        self.load_balancers.append(
-                            LoadBalancer(
-                                name=urlmap["name"],
-                                id=urlmap["id"],
-                                service=urlmap.get("defaultService", ""),
-                                project_id=project_id,
-                            )
+                request = self.client.firewalls().list_next(
+                    previous_request=request, previous_response=response
+                )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def __get_url_maps__(self, project_id):
+        try:
+            request = self.client.urlMaps().list(project=project_id)
+            while request is not None:
+                response = request.execute(http=self.__get_AuthorizedHttp_client__())
+                for urlmap in response.get("items", []):
+                    self.load_balancers.append(
+                        LoadBalancer(
+                            name=urlmap["name"],
+                            id=urlmap["id"],
+                            service=urlmap.get("defaultService", ""),
+                            project_id=project_id,
                         )
-
-                    request = self.client.urlMaps().list_next(
-                        previous_request=request, previous_response=response
                     )
-            except Exception as error:
-                logger.error(
-                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+
+                request = self.client.urlMaps().list_next(
+                    previous_request=request, previous_response=response
                 )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
 
     def __describe_backend_service__(self):
         for balancer in self.load_balancers:
