@@ -47,7 +47,9 @@ class GCP_Provider:
             if credentials_file:
                 self.__set_gcp_creds_env_var__(credentials_file)
 
-            return auth.default()
+            return auth.default(
+                scopes=["https://www.googleapis.com/auth/cloud-platform"]
+            )
         except Exception as error:
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

@@ -43,7 +43,7 @@ class CloudResourceManager(GCPService):
     def __get_organizations__(self):
         try:
             response = self.client.organizations().search().execute()
-            for org in response["organizations"]:
+            for org in response.get("organizations", []):
                 self.organizations.append(
                     Organization(id=org["name"].split("/")[-1], name=org["displayName"])
                 )
