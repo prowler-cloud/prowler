@@ -1,7 +1,5 @@
 from typing import Optional
 
-import google_auth_httplib2
-import httplib2
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
@@ -51,11 +49,8 @@ class KMS(GCPService):
             request = (
                 self.client.projects().locations().keyRings().list(parent=location.name)
             )
-            http = google_auth_httplib2.AuthorizedHttp(
-                self.credentials, http=httplib2.Http()
-            )
             while request is not None:
-                response = request.execute(http=http)
+                response = request.execute(http=self.__get_AuthorizedHttp_client__())
 
                 for ring in response.get("keyRings", []):
                     self.key_rings.append(

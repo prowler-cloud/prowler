@@ -1,5 +1,7 @@
 import threading
 
+import google_auth_httplib2
+import httplib2
 from googleapiclient import discovery
 
 from prowler.lib.logger import logger
@@ -30,6 +32,11 @@ class GCPService:
             t.start()
         for t in threads:
             t.join()
+
+    def __get_AuthorizedHttp_client__(self):
+        return google_auth_httplib2.AuthorizedHttp(
+            self.credentials, http=httplib2.Http()
+        )
 
     def __is_api_active__(self, audited_project_ids):
         project_ids = []

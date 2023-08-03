@@ -1,5 +1,3 @@
-import google_auth_httplib2
-import httplib2
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
@@ -84,11 +82,10 @@ class Compute(GCPService):
         for project_id in self.project_ids:
             try:
                 request = self.client.instances().list(project=project_id, zone=zone)
-                http = google_auth_httplib2.AuthorizedHttp(
-                    self.credentials, http=httplib2.Http()
-                )
                 while request is not None:
-                    response = request.execute(http=http)
+                    response = request.execute(
+                        http=self.__get_AuthorizedHttp_client__()
+                    )
 
                     for instance in response.get("items", []):
                         public_ip = False
@@ -174,11 +171,10 @@ class Compute(GCPService):
                 request = self.client.subnetworks().list(
                     project=project_id, region=region
                 )
-                http = google_auth_httplib2.AuthorizedHttp(
-                    self.credentials, http=httplib2.Http()
-                )
                 while request is not None:
-                    response = request.execute(http=http)
+                    response = request.execute(
+                        http=self.__get_AuthorizedHttp_client__()
+                    )
                     for subnet in response.get("items", []):
                         self.subnets.append(
                             Subnet(
