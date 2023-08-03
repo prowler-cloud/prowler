@@ -14,29 +14,8 @@ from prowler.providers.azure.lib.service.service import AzureService
 ########################## SQLServer
 class SQLServer(AzureService):
     def __init__(self, audit_info):
-        super().__init__(__class__.__name__, audit_info)
-        self.clients = self.__set_clients__(
-            audit_info.identity.subscriptions, audit_info.credentials
-        )
+        super().__init__(SqlManagementClient, audit_info)
         self.sql_servers = self.__get_sql_servers__()
-
-    def __set_clients__(self, subscriptions, credentials):
-        clients = {}
-        try:
-            for display_name, id in subscriptions.items():
-                clients.update(
-                    {
-                        display_name: SqlManagementClient(
-                            credential=credentials, subscription_id=id
-                        )
-                    }
-                )
-        except Exception as error:
-            logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
-        else:
-            return clients
 
     def __get_sql_servers__(self):
         logger.info("SQL Server - Getting SQL servers...")

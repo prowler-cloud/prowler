@@ -10,30 +10,9 @@ from prowler.providers.azure.lib.service.service import AzureService
 ########################## Defender
 class Defender(AzureService):
     def __init__(self, audit_info):
-        super().__init__(__class__.__name__, audit_info)
+        super().__init__(SecurityCenter, audit_info)
 
-        self.clients = self.__set_clients__(
-            audit_info.identity.subscriptions, audit_info.credentials
-        )
         self.pricings = self.__get_pricings__()
-
-    def __set_clients__(self, subscriptions, credentials):
-        clients = {}
-        try:
-            for display_name, id in subscriptions.items():
-                clients.update(
-                    {
-                        display_name: SecurityCenter(
-                            credential=credentials, subscription_id=id
-                        )
-                    }
-                )
-        except Exception as error:
-            logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
-        else:
-            return clients
 
     def __get_pricings__(self):
         logger.info("Defender - Getting pricings...")
