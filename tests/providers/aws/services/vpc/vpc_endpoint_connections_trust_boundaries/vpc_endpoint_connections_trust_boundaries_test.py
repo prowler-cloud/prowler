@@ -186,7 +186,7 @@ class Test_vpc_endpoint_connections_trust_boundaries:
                 assert result[0].status == "PASS"
                 assert (
                     result[0].status_extended
-                    == f"Found trusted account {AWS_ACCOUNT_NUMBER} in VPC Endpoint {vpc_endpoint['VpcEndpoint']['VpcEndpointId']} in VPC {vpc['VpcId']}."
+                    == f"VPC Endpoint {vpc_endpoint['VpcEndpoint']['VpcEndpointId']} in VPC {vpc['VpcId']} can only be accessed from trusted accounts."
                 )
                 assert (
                     result[0].resource_id
@@ -244,7 +244,7 @@ class Test_vpc_endpoint_connections_trust_boundaries:
                 assert result[0].status == "PASS"
                 assert (
                     result[0].status_extended
-                    == f"Found trusted account {AWS_ACCOUNT_NUMBER} in VPC Endpoint {vpc_endpoint['VpcEndpoint']['VpcEndpointId']} in VPC {vpc['VpcId']}."
+                    == f"VPC Endpoint {vpc_endpoint['VpcEndpoint']['VpcEndpointId']} in VPC {vpc['VpcId']} can only be accessed from trusted accounts."
                 )
                 assert (
                     result[0].resource_id
@@ -368,7 +368,7 @@ class Test_vpc_endpoint_connections_trust_boundaries:
                     assert result[0].status == "PASS"
                     assert (
                         result[0].status_extended
-                        == f"Found trusted account {TRUSTED_AWS_ACCOUNT_NUMBER} in VPC Endpoint {vpc_endpoint['VpcEndpoint']['VpcEndpointId']} in VPC {vpc['VpcId']}."
+                        == f"VPC Endpoint {vpc_endpoint['VpcEndpoint']['VpcEndpointId']} in VPC {vpc['VpcId']} can only be accessed from trusted accounts."
                     )
                     assert (
                         result[0].resource_id
@@ -430,7 +430,7 @@ class Test_vpc_endpoint_connections_trust_boundaries:
                     assert result[0].status == "PASS"
                     assert (
                         result[0].status_extended
-                        == f"Found trusted account {TRUSTED_AWS_ACCOUNT_NUMBER} in VPC Endpoint {vpc_endpoint['VpcEndpoint']['VpcEndpointId']} in VPC {vpc['VpcId']}."
+                        == f"VPC Endpoint {vpc_endpoint['VpcEndpoint']['VpcEndpointId']} in VPC {vpc['VpcId']} can only be accessed from trusted accounts."
                     )
                     assert (
                         result[0].resource_id
