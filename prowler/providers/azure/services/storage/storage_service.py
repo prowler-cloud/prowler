@@ -10,29 +10,8 @@ from prowler.providers.azure.lib.service.service import AzureService
 ########################## Storage
 class Storage(AzureService):
     def __init__(self, audit_info):
-        super().__init__(__class__.__name__, audit_info)
-        self.clients = self.__set_clients__(
-            audit_info.identity.subscriptions, audit_info.credentials
-        )
+        super().__init__(StorageManagementClient, audit_info)
         self.storage_accounts = self.__get_storage_accounts__()
-
-    def __set_clients__(self, subscriptions, credentials):
-        clients = {}
-        try:
-            for display_name, id in subscriptions.items():
-                clients.update(
-                    {
-                        display_name: StorageManagementClient(
-                            credential=credentials, subscription_id=id
-                        )
-                    }
-                )
-        except Exception as error:
-            logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
-        else:
-            return clients
 
     def __get_storage_accounts__(self):
         logger.info("Storage - Getting storage accounts...")
