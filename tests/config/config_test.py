@@ -2,7 +2,11 @@ from unittest import mock
 
 from requests import Response
 
-from prowler.config.config import change_config_var, check_current_version
+from prowler.config.config import (
+    change_config_var,
+    check_current_version,
+    get_available_compliance_frameworks,
+)
 from prowler.providers.aws.aws_provider import get_aws_available_regions
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 
@@ -96,3 +100,34 @@ class Test_Config:
         assert updated_audit_info.audit_config.get("not_found") is None
 
     # Test load_and_validate_config_file
+
+    def test_get_available_compliance_frameworks(self):
+        compliance_frameworks = [
+            "cisa_aws",
+            "soc2_aws",
+            "cis_1.4_aws",
+            "cis_1.5_aws",
+            "mitre_attack_aws",
+            "gdpr_aws",
+            "aws_foundational_security_best_practices_aws",
+            "iso27001_2013_aws",
+            "hipaa_aws",
+            "cis_2.0_aws",
+            "gxp_21_cfr_part_11_aws",
+            "aws_well_architected_framework_security_pillar_aws",
+            "gxp_eu_annex_11_aws",
+            "nist_800_171_revision_2_aws",
+            "nist_800_53_revision_4_aws",
+            "nist_800_53_revision_5_aws",
+            "ens_rd2022_aws",
+            "nist_csf_1.1_aws",
+            "aws_well_architected_framework_reliability_pillar_aws",
+            "aws_audit_manager_control_tower_guardrails_aws",
+            "rbi_cyber_security_framework_aws",
+            "ffiec_aws",
+            "pci_3.2.1_aws",
+            "fedramp_moderate_revision_4_aws",
+            "fedramp_low_revision_4_aws",
+            "cis_2.0_gcp",
+        ]
+        assert get_available_compliance_frameworks() == compliance_frameworks
