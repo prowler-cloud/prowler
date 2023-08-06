@@ -1,4 +1,3 @@
-from prowler.config.config import get_config_var
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.cloudwatch.logs_client import logs_client
 
@@ -6,7 +5,11 @@ from prowler.providers.aws.services.cloudwatch.logs_client import logs_client
 class cloudwatch_log_group_retention_policy_specific_days_enabled(Check):
     def execute(self):
         findings = []
-        specific_retention_days = get_config_var("log_group_retention_days")
+
+        # log_group_retention_days, default: 365 days
+        specific_retention_days = logs_client.audit_config.get(
+            "log_group_retention_days", 365
+        )
         for log_group in logs_client.log_groups:
             report = Check_Report_AWS(self.metadata())
             report.region = log_group.region

@@ -1,6 +1,5 @@
 import shodan
 
-from prowler.config.config import get_config_var
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.lib.logger import logger
 from prowler.providers.aws.services.ec2.ec2_client import ec2_client
@@ -9,7 +8,7 @@ from prowler.providers.aws.services.ec2.ec2_client import ec2_client
 class ec2_elastic_ip_shodan(Check):
     def execute(self):
         findings = []
-        shodan_api_key = get_config_var("shodan_api_key")
+        shodan_api_key = ec2_client.audit_config.get("shodan_api_key")
         if shodan_api_key:
             api = shodan.Shodan(shodan_api_key)
             for eip in ec2_client.elastic_ips:

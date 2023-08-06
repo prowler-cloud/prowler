@@ -19,9 +19,13 @@ class Azure_Audit_Info:
     identity: Azure_Identity_Info
     audit_resources: Optional[Any]
     audit_metadata: Optional[Any]
+    audit_config: dict
 
-    def __init__(self, credentials, identity, audit_metadata, audit_resources):
+    def __init__(
+        self, credentials, identity, audit_metadata, audit_resources, audit_config
+    ):
         self.credentials = credentials
         self.identity = identity
         self.audit_metadata = audit_metadata
         self.audit_resources = audit_resources
+        self.audit_config = audit_config

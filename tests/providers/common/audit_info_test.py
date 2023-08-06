@@ -6,6 +6,7 @@ from boto3 import session
 from mock import patch
 from moto import mock_ec2, mock_resourcegroupstaggingapi
 
+from prowler.config.config import default_config_file_path
 from prowler.providers.aws.lib.audit_info.models import AWS_Assume_Role, AWS_Audit_Info
 from prowler.providers.azure.azure_provider import Azure_Provider
 from prowler.providers.azure.lib.audit_info.models import (
@@ -30,6 +31,7 @@ mock_azure_audit_info = Azure_Audit_Info(
     identity=Azure_Identity_Info(),
     audit_metadata=None,
     audit_resources=None,
+    audit_config=None,
 )
 
 mock_set_audit_info = Audit_Info()
@@ -148,6 +150,7 @@ class Test_Set_Audit_Info:
             "sp_env_auth": None,
             "browser_auth": None,
             "managed_entity_auth": None,
+            "config_file": default_config_file_path,
         }
 
         audit_info = set_provider_audit_info(provider, arguments)
@@ -169,6 +172,7 @@ class Test_Set_Audit_Info:
             # We need to set exactly one auth method
             "credentials_file": None,
             "project_ids": ["project"],
+            "config_file": default_config_file_path,
         }
 
         audit_info = set_provider_audit_info(provider, arguments)
@@ -244,6 +248,7 @@ class Test_Set_Audit_Info:
                 "external_id": None,
                 "regions": None,
                 "organizations_role": None,
+                "config_file": default_config_file_path,
             }
 
             audit_info = set_provider_audit_info(provider, arguments)

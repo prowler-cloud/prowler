@@ -1,4 +1,3 @@
-from prowler.config.config import get_config_var
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.vpc.vpc_client import vpc_client
 
@@ -7,7 +6,7 @@ class vpc_endpoint_services_allowed_principals_trust_boundaries(Check):
     def execute(self):
         findings = []
         # Get trusted account_ids from prowler.config.yaml
-        trusted_account_ids = get_config_var("trusted_account_ids")
+        trusted_account_ids = vpc_client.audit_config.get("trusted_account_ids", [])
         for service in vpc_client.vpc_endpoint_services:
             if not service.allowed_principals:
                 report = Check_Report_AWS(self.metadata())

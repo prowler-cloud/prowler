@@ -1,5 +1,6 @@
 import os
 import pathlib
+import sys
 from datetime import datetime, timezone
 from os import getcwd
 
@@ -47,7 +48,9 @@ json_file_suffix = ".json"
 json_asff_file_suffix = ".asff.json"
 json_ocsf_file_suffix = ".ocsf.json"
 html_file_suffix = ".html"
-config_yaml = f"{pathlib.Path(os.path.dirname(os.path.realpath(__file__)))}/config.yaml"
+default_config_file_path = (
+    f"{pathlib.Path(os.path.dirname(os.path.realpath(__file__)))}/config.yaml"
+)
 
 
 def check_current_version():
@@ -62,29 +65,37 @@ def check_current_version():
         else:
             return f"{prowler_version_string} (it is the latest version, yay!)"
     except Exception as error:
-        logger.error(f"{error.__class__.__name__}: {error}")
+        logger.error(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+        )
         return f"{prowler_version_string}"
 
 
-def change_config_var(variable, value):
+def change_config_var(variable: str, value: str, audit_info):
     try:
-        with open(config_yaml) as f:
-            doc = yaml.safe_load(f)
-
-        doc[variable] = value
-
-        with open(config_yaml, "w") as f:
-            yaml.dump(doc, f)
+        if (
+            hasattr(audit_info, "audit_config")
+            and audit_info.audit_config is not None
+            and variable in audit_info.audit_config
+        ):
+            audit_info.audit_config[variable] = value
+        return audit_info
     except Exception as error:
-        logger.error(f"{error.__class__.__name__}: {error}")
+        logger.error(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+        )
 
 
-def get_config_var(variable):
+def load_and_validate_config_file(provider: str, config_file_path: str) -> dict:
+    """
+    load_and_validate_config_file reads the Prowler config file in YAML format from the default location or the file passed with the --config-file flag
+    """
     try:
-        with open(config_yaml) as f:
-            doc = yaml.safe_load(f)
+        with open(config_file_path) as f:
+            return yaml.safe_load(f).get(provider)
 
-        return doc[variable]
     except Exception as error:
-        logger.error(f"{error.__class__.__name__}: {error}")
-        return ""
+        logger.critical(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+        )
+        sys.exit(1)

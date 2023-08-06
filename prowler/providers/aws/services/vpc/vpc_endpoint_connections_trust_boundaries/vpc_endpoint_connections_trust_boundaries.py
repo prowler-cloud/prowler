@@ -1,6 +1,5 @@
 from re import compile
 
-from prowler.config.config import get_config_var
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.lib.policy_condition_parser.policy_condition_parser import (
     is_account_only_allowed_in_condition,
@@ -12,7 +11,7 @@ class vpc_endpoint_connections_trust_boundaries(Check):
     def execute(self):
         findings = []
         # Get trusted account_ids from prowler.config.yaml
-        trusted_account_ids = get_config_var("trusted_account_ids")
+        trusted_account_ids = vpc_client.audit_config.get("trusted_account_ids", [])
         # Always include the same account as trusted
         trusted_account_ids.append(vpc_client.audited_account)
         for endpoint in vpc_client.vpc_endpoints:

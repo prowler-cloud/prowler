@@ -1,4 +1,3 @@
-from prowler.config.config import get_config_var
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.organizations.organizations_client import (
     organizations_client,
@@ -8,7 +7,9 @@ from prowler.providers.aws.services.organizations.organizations_client import (
 class organizations_scp_check_deny_regions(Check):
     def execute(self):
         findings = []
-        organizations_enabled_regions = get_config_var("organizations_enabled_regions")
+        organizations_enabled_regions = organizations_client.audit_config.get(
+            "organizations_enabled_regions", []
+        )
 
         for org in organizations_client.organizations:
             report = Check_Report_AWS(self.metadata())

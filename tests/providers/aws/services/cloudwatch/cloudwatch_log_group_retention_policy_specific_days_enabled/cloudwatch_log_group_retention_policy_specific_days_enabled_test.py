@@ -46,6 +46,7 @@ class Test_cloudwatch_log_group_retention_policy_specific_days_enabled:
         from prowler.providers.aws.services.cloudwatch.cloudwatch_service import Logs
 
         current_audit_info = self.set_mocked_audit_info()
+        current_audit_info.audit_config = {"log_group_retention_days": 365}
 
         from prowler.providers.common.models import Audit_Metadata
 
@@ -85,6 +86,7 @@ class Test_cloudwatch_log_group_retention_policy_specific_days_enabled:
         from prowler.providers.aws.services.cloudwatch.cloudwatch_service import Logs
 
         current_audit_info = self.set_mocked_audit_info()
+        current_audit_info.audit_config = {"log_group_retention_days": 365}
 
         from prowler.providers.common.models import Audit_Metadata
 
@@ -136,6 +138,7 @@ class Test_cloudwatch_log_group_retention_policy_specific_days_enabled:
         from prowler.providers.aws.services.cloudwatch.cloudwatch_service import Logs
 
         current_audit_info = self.set_mocked_audit_info()
+        current_audit_info.audit_config = {"log_group_retention_days": 365}
 
         from prowler.providers.common.models import Audit_Metadata
 
@@ -187,6 +190,7 @@ class Test_cloudwatch_log_group_retention_policy_specific_days_enabled:
         from prowler.providers.aws.services.cloudwatch.cloudwatch_service import Logs
 
         current_audit_info = self.set_mocked_audit_info()
+        current_audit_info.audit_config = {"log_group_retention_days": 365}
 
         from prowler.providers.common.models import Audit_Metadata
 

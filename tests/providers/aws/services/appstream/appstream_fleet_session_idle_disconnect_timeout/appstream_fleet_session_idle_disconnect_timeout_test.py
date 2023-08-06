@@ -40,6 +40,8 @@ class Test_appstream_fleet_session_idle_disconnect_timeout:
 
         appstream_client.fleets.append(fleet1)
 
+        appstream_client.audit_config = {"max_idle_disconnect_timeout_in_seconds": 300}
+
         with mock.patch(
             "prowler.providers.aws.services.appstream.appstream_service.AppStream",
             new=appstream_client,
@@ -77,6 +79,8 @@ class Test_appstream_fleet_session_idle_disconnect_timeout:
         )
 
         appstream_client.fleets.append(fleet1)
+
+        appstream_client.audit_config = {"max_idle_disconnect_timeout_in_seconds": 600}
 
         with mock.patch(
             "prowler.providers.aws.services.appstream.appstream_service.AppStream",
@@ -128,6 +132,8 @@ class Test_appstream_fleet_session_idle_disconnect_timeout:
 
         appstream_client.fleets.append(fleet1)
         appstream_client.fleets.append(fleet2)
+
+        appstream_client.audit_config = {"max_idle_disconnect_timeout_in_seconds": 300}
 
         with mock.patch(
             "prowler.providers.aws.services.appstream.appstream_service.AppStream",

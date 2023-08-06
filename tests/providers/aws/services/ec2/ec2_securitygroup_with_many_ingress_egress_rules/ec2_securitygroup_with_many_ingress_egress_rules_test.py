@@ -52,6 +52,7 @@ class Test_ec2_securitygroup_with_many_ingress_egress_rules:
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
         current_audit_info = self.set_mocked_audit_info()
+        current_audit_info.audit_config = {"max_security_group_rules": 50}
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -101,6 +102,7 @@ class Test_ec2_securitygroup_with_many_ingress_egress_rules:
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
         current_audit_info = self.set_mocked_audit_info()
+        current_audit_info.audit_config = {"max_security_group_rules": 50}
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -158,6 +160,7 @@ class Test_ec2_securitygroup_with_many_ingress_egress_rules:
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
         current_audit_info = self.set_mocked_audit_info()
+        current_audit_info.audit_config = {"max_security_group_rules": 50}
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
