@@ -100,7 +100,9 @@ class Aws_Output_Options(Provider_Output_Options):
 
         # Confire Shodan API
         if arguments.shodan:
-            change_config_var("shodan_api_key", arguments.shodan)
+            audit_info = change_config_var(
+                "shodan_api_key", arguments.shodan, audit_info
+            )
 
         # Check if custom output filename was input, if not, set the default
         if (
