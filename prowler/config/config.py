@@ -99,7 +99,11 @@ def load_and_validate_config_file(provider: str, config_file_path: str) -> dict:
     """
     try:
         with open(config_file_path) as f:
-            return yaml.safe_load(f).get(provider)
+            config = {}
+            config_file = yaml.safe_load(f)
+            if config_file:
+                config = config_file.get(provider, {})
+            return config
 
     except Exception as error:
         logger.critical(
