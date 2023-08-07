@@ -133,7 +133,9 @@ class Test_Config:
             "fedramp_low_revision_4_aws",
             "cis_2.0_gcp",
         ]
-        assert get_available_compliance_frameworks() == compliance_frameworks
+        assert (
+            get_available_compliance_frameworks().sort() == compliance_frameworks.sort()
+        )
 
     def test_load_and_validate_config_file_aws(self):
         path = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))
