@@ -65,18 +65,29 @@ class DynamoDB(AWSService):
         logger.info("DynamoDB - Describing Continuous Backups...")
         try:
             for table in self.tables:
-                regional_client = self.regional_clients[table.region]
-                properties = regional_client.describe_continuous_backups(
-                    TableName=table.name
-                )["ContinuousBackupsDescription"]
-                if "PointInTimeRecoveryDescription" in properties:
-                    if (
-                        properties["PointInTimeRecoveryDescription"][
-                            "PointInTimeRecoveryStatus"
-                        ]
-                        == "ENABLED"
-                    ):
-                        table.pitr = True
+                try:
+                    regional_client = self.regional_clients[table.region]
+                    properties = regional_client.describe_continuous_backups(
+                        TableName=table.name
+                    )["ContinuousBackupsDescription"]
+                    if "PointInTimeRecoveryDescription" in properties:
+                        if (
+                            properties["PointInTimeRecoveryDescription"][
+                                "PointInTimeRecoveryStatus"
+                            ]
+                            == "ENABLED"
+                        ):
+                            table.pitr = True
+                except ClientError as error:
+                    if error.response["Error"]["Code"] == "TableNotFoundException":
+                        logger.warning(
+                            f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
+                    else:
+                        logger.error(
+                            f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
+                    continue
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
