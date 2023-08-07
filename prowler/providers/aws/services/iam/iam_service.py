@@ -442,10 +442,21 @@ class IAM(AWSService):
         logger.info("IAM - List Policies Version...")
         try:
             for policy in policies:
-                policy_version = self.client.get_policy_version(
-                    PolicyArn=policy.arn, VersionId=policy.version_id
-                )
-                policy.document = policy_version["PolicyVersion"]["Document"]
+                try:
+                    policy_version = self.client.get_policy_version(
+                        PolicyArn=policy.arn, VersionId=policy.version_id
+                    )
+                    policy.document = policy_version["PolicyVersion"]["Document"]
+                except ClientError as error:
+                    if error.response["Error"]["Code"] == "NoSuchEntity":
+                        logger.warning(
+                            f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
+                    else:
+                        logger.error(
+                            f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
+                    continue
         except Exception as error:
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
