@@ -145,7 +145,6 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
         ).partition
         current_audit_info.audited_account_arn = f"arn:{current_audit_info.audited_partition}:iam::{current_audit_info.audited_account}:root"
 
-
         logger.info("Checking if role assumption is needed ...")
         if input_role:
             current_audit_info.assumed_role_info.role_arn = input_role
@@ -236,8 +235,6 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
                     current_audit_info.audited_account, assumed_credentials
                 )
                 logger.info("Organizations metadata retrieved")
-
-
 
         # Setting default region of session
         if current_audit_info.audit_session.region_name:
