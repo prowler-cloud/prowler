@@ -145,39 +145,6 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
         ).partition
         current_audit_info.audited_account_arn = f"arn:{current_audit_info.audited_partition}:iam::{current_audit_info.audited_account}:root"
 
-        logger.info("Checking if organizations role assumption is needed ...")
-        if organizations_role_arn:
-            current_audit_info.assumed_role_info.role_arn = organizations_role_arn
-            current_audit_info.assumed_role_info.session_duration = (
-                input_session_duration
-            )
-            current_audit_info.assumed_role_info.external_id = input_external_id
-            current_audit_info.assumed_role_info.mfa_enabled = input_mfa
-
-            # Check if role arn is valid
-            try:
-                # this returns the arn already parsed into a dict to be used when it is needed to access its fields
-                role_arn_parsed = parse_iam_credentials_arn(
-                    current_audit_info.assumed_role_info.role_arn
-                )
-
-            except Exception as error:
-                logger.critical(f"{error.__class__.__name__} -- {error}")
-                sys.exit(1)
-
-            else:
-                logger.info(
-                    f"Getting organizations metadata for account {organizations_role_arn}"
-                )
-                assumed_credentials = assume_role(
-                    aws_provider.aws_session,
-                    aws_provider.role_info,
-                    sts_endpoint_region,
-                )
-                current_audit_info.organizations_metadata = get_organizations_metadata(
-                    current_audit_info.audited_account, assumed_credentials
-                )
-                logger.info("Organizations metadata retrieved")
 
         logger.info("Checking if role assumption is needed ...")
         if input_role:
@@ -235,6 +202,42 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
         else:
             logger.info("Audit session is the original one")
             current_audit_info.audit_session = current_audit_info.original_session
+
+        logger.info("Checking if organizations role assumption is needed ...")
+        if organizations_role_arn:
+            current_audit_info.assumed_role_info.role_arn = organizations_role_arn
+            current_audit_info.assumed_role_info.session_duration = (
+                input_session_duration
+            )
+            current_audit_info.assumed_role_info.external_id = input_external_id
+            current_audit_info.assumed_role_info.mfa_enabled = input_mfa
+
+            # Check if role arn is valid
+            try:
+                # this returns the arn already parsed into a dict to be used when it is needed to access its fields
+                role_arn_parsed = parse_iam_credentials_arn(
+                    current_audit_info.assumed_role_info.role_arn
+                )
+
+            except Exception as error:
+                logger.critical(f"{error.__class__.__name__} -- {error}")
+                sys.exit(1)
+
+            else:
+                logger.info(
+                    f"Getting organizations metadata for account {organizations_role_arn}"
+                )
+                assumed_credentials = assume_role(
+                    aws_provider.aws_session,
+                    aws_provider.role_info,
+                    sts_endpoint_region,
+                )
+                current_audit_info.organizations_metadata = get_organizations_metadata(
+                    current_audit_info.audited_account, assumed_credentials
+                )
+                logger.info("Organizations metadata retrieved")
+
+
 
         # Setting default region of session
         if current_audit_info.audit_session.region_name:
