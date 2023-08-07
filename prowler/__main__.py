@@ -113,6 +113,12 @@ def prowler():
         provider,
     )
 
+    if args.list_checks_json:
+        import json
+        output = {provider: sorted(checks_to_execute)}
+        print(json.dumps(output, indent=2, default=str))
+        sys.exit()
+
     # If -l/--list-checks passed as argument, print checks to execute and quit
     if args.list_checks:
         print_checks(provider, sorted(checks_to_execute), bulk_checks_metadata)
