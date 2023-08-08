@@ -51,6 +51,50 @@ class iam_role_cross_service_confused_deputy_prevention(Check):
                                 )
                             )
                             or (
+                                "StringEquals" in statement["Condition"]
+                                and "aws:PrincipalAccount"
+                                in statement["Condition"]["StringEquals"]
+                                and iam_client.audited_account
+                                in str(
+                                    statement["Condition"]["StringEquals"][
+                                        "aws:PrincipalAccount"
+                                    ]
+                                )
+                            )
+                            or (
+                                "StringLike" in statement["Condition"]
+                                and "aws:PrincipalAccount"
+                                in statement["Condition"]["StringLike"]
+                                and iam_client.audited_account
+                                in str(
+                                    statement["Condition"]["StringLike"][
+                                        "aws:PrincipalAccount"
+                                    ]
+                                )
+                            )
+                            or (
+                                "StringEquals" in statement["Condition"]
+                                and "aws:ResourceAccount"
+                                in statement["Condition"]["StringEquals"]
+                                and iam_client.audited_account
+                                in str(
+                                    statement["Condition"]["StringEquals"][
+                                        "aws:ResourceAccount"
+                                    ]
+                                )
+                            )
+                            or (
+                                "StringLike" in statement["Condition"]
+                                and "aws:ResourceAccount"
+                                in statement["Condition"]["StringLike"]
+                                and iam_client.audited_account
+                                in str(
+                                    statement["Condition"]["StringLike"][
+                                        "aws:ResourceAccount"
+                                    ]
+                                )
+                            )
+                            or (
                                 "ArnEquals" in statement["Condition"]
                                 and "aws:SourceArn"
                                 in statement["Condition"]["ArnEquals"]
