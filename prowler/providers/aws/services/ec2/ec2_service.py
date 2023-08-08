@@ -23,6 +23,7 @@ class EC2(AWSService):
         self.network_acls = []
         self.__threading_call__(self.__describe_network_acls__)
         self.snapshots = []
+        self.volumes_with_snapshots = {}
         self.__threading_call__(self.__describe_snapshots__)
         self.__get_snapshot_public__()
         self.network_interfaces = []
@@ -191,6 +192,8 @@ class EC2(AWSService):
                                 volume=snapshot["VolumeId"],
                             )
                         )
+                        if self.volumes_with_snapshots.get(snapshot["VolumeId"], True):
+                            self.volumes_with_snapshots[snapshot["VolumeId"]] = True
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
