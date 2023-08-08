@@ -9,6 +9,7 @@ from prowler.providers.aws.lib.s3.s3 import get_s3_object_path, send_to_s3_bucke
 from prowler.providers.common.models import Audit_Metadata
 
 AWS_ACCOUNT_ID = "123456789012"
+AWS_REGION = "us-east-1"
 
 
 class TestS3:
@@ -16,10 +17,7 @@ class TestS3:
         audit_info = AWS_Audit_Info(
             session_config=None,
             original_session=None,
-            audit_session=boto3.session.Session(
-                profile_name=None,
-                botocore_session=None,
-            ),
+            audit_session=boto3.session.Session(region_name=AWS_REGION),
             audited_account=AWS_ACCOUNT_ID,
             audited_account_arn=f"arn:aws:iam::{AWS_ACCOUNT_ID}:root",
             audited_identity_arn="test-arn",
@@ -50,7 +48,7 @@ class TestS3:
 
         # Create mock bucket
         bucket_name = "test_bucket"
-        client = boto3.client("s3")
+        client = audit_info.audit_session.client("s3", region_name=AWS_REGION)
         client.create_bucket(Bucket=bucket_name)
 
         # Create mock csv output file
@@ -84,7 +82,7 @@ class TestS3:
 
         # Create mock bucket
         bucket_name = "test_bucket"
-        client = boto3.client("s3")
+        client = audit_info.audit_session.client("s3", region_name=AWS_REGION)
         client.create_bucket(Bucket=bucket_name)
 
         # Create mock csv output file
@@ -124,7 +122,7 @@ class TestS3:
 
         # Create mock bucket
         bucket_name = "test_bucket"
-        client = boto3.client("s3")
+        client = audit_info.audit_session.client("s3", region_name=AWS_REGION)
         client.create_bucket(Bucket=bucket_name)
 
         # Create mock csv output file
