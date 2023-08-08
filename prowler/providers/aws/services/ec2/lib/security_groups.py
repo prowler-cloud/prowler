@@ -33,7 +33,7 @@ def check_security_group(
 
     @param ports: List of ports to check. (Default: [])
 
-    @param any_address: If True, only 0.0.0.0/0 will be public and do not search for public addresses. (Default: False)
+    @param any_address: If True, only 0.0.0.0/0 or "::/0" will be public and do not search for public addresses. (Default: False)
     """
     # Check for all traffic ingress rules regardless of the protocol
     if ingress_rule["IpProtocol"] == "-1":
@@ -76,7 +76,7 @@ def check_security_group(
 
         # IPv6
         for ip_ingress_rule in ingress_rule["Ipv6Ranges"]:
-            if _is_cidr_public(ip_ingress_rule["CidrIpv6"]):
+            if _is_cidr_public(ip_ingress_rule["CidrIpv6"], any_address):
                 # If there are input ports to check
                 if ports:
                     for port in ports:
@@ -98,13 +98,10 @@ def _is_cidr_public(cidr: str, any_address: bool = False) -> bool:
 
     @param cidr: CIDR 10.22.33.44/8
 
-    @param any_address: If True, only 0.0.0.0/0 will be public and do not search for public addresses. (Default: False)
+    @param any_address: If True, only 0.0.0.0/0 or "::/0" will be public and do not search for public addresses. (Default: False)
     """
     public_IPv4 = "0.0.0.0/0"
     public_IPv6 = "::/0"
-    # Workaround until this issue is fixed
-    # PR https://github.com/python/cpython/pull/97733
-    # Issue https://github.com/python/cpython/issues/82836
     if cidr in (public_IPv4, public_IPv6):
         return True
     if not any_address:
