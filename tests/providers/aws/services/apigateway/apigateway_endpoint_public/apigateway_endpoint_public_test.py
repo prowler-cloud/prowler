@@ -112,6 +112,8 @@ class Test_apigateway_endpoint_public:
                 result[0].resource_arn
                 == f"arn:{current_audit_info.audited_partition}:apigateway:{AWS_REGION}::/restapis/{rest_api['id']}"
             )
+            assert result[0].region == AWS_REGION
+            assert result[0].resource_tags == [{}]
 
     @mock_apigateway
     def test_apigateway_one_public_rest_api(self):
@@ -158,3 +160,5 @@ class Test_apigateway_endpoint_public:
                 result[0].resource_arn
                 == f"arn:{current_audit_info.audited_partition}:apigateway:{AWS_REGION}::/restapis/{rest_api['id']}"
             )
+            assert result[0].region == AWS_REGION
+            assert result[0].resource_tags == [{}]
