@@ -25,6 +25,7 @@ class accessanalyzer_enabled(Check):
                     f"IAM Access Analyzer in account {analyzer.name} is not enabled."
                 )
                 report.resource_id = analyzer.name
+                report.resource_arn = analyzer.arn
             else:
                 report.status = "FAIL"
                 report.status_extended = (
