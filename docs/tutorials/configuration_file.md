@@ -37,6 +37,7 @@ The following list includes all the checks with configurable variables that can 
 ## GCP
 
 ## Config YAML File Structure
+> This is the new Prowler configuration file format. The old one without provider keys is still compatible just for the AWS provider.
 ```yaml
 # AWS Configuration
 aws:

@@ -24,6 +24,34 @@ def mock_prowler_get_latest_release(_):
     return response
 
 
+config_aws = {
+    "shodan_api_key": None,
+    "max_security_group_rules": 50,
+    "max_ec2_instance_age_in_days": 180,
+    "trusted_account_ids": [],
+    "log_group_retention_days": 365,
+    "max_idle_disconnect_timeout_in_seconds": 600,
+    "max_disconnect_timeout_in_seconds": 300,
+    "max_session_duration_seconds": 36000,
+    "obsolete_lambda_runtimes": [
+        "python3.6",
+        "python2.7",
+        "nodejs4.3",
+        "nodejs4.3-edge",
+        "nodejs6.10",
+        "nodejs",
+        "nodejs8.10",
+        "nodejs10.x",
+        "dotnetcore1.0",
+        "dotnetcore2.0",
+        "dotnetcore2.1",
+        "ruby2.5",
+    ],
+    "organizations_enabled_regions": [],
+    "organizations_trusted_delegated_administrators": [],
+}
+
+
 class Test_Config:
     def test_get_aws_available_regions(self):
         assert len(get_aws_available_regions()) == 32
@@ -142,33 +170,6 @@ class Test_Config:
         config_test_file = f"{path}/fixtures/config.yaml"
         provider = "aws"
 
-        config_aws = {
-            "shodan_api_key": None,
-            "max_security_group_rules": 50,
-            "max_ec2_instance_age_in_days": 180,
-            "trusted_account_ids": [],
-            "log_group_retention_days": 365,
-            "max_idle_disconnect_timeout_in_seconds": 600,
-            "max_disconnect_timeout_in_seconds": 300,
-            "max_session_duration_seconds": 36000,
-            "obsolete_lambda_runtimes": [
-                "python3.6",
-                "python2.7",
-                "nodejs4.3",
-                "nodejs4.3-edge",
-                "nodejs6.10",
-                "nodejs",
-                "nodejs8.10",
-                "nodejs10.x",
-                "dotnetcore1.0",
-                "dotnetcore2.0",
-                "dotnetcore2.1",
-                "ruby2.5",
-            ],
-            "organizations_enabled_regions": [],
-            "organizations_trusted_delegated_administrators": [],
-        }
-
         assert load_and_validate_config_file(provider, config_test_file) == config_aws
 
     def test_load_and_validate_config_file_gcp(self):
@@ -184,3 +185,11 @@ class Test_Config:
         provider = "azure"
 
         assert load_and_validate_config_file(provider, config_test_file) is None
+
+    def test_load_and_validate_config_file_old_format(self):
+        path = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))
+        config_test_file = f"{path}/fixtures/config_old.yaml"
+
+        assert load_and_validate_config_file("aws", config_test_file) == config_aws
+        assert load_and_validate_config_file("gcp", config_test_file) == {}
+        assert load_and_validate_config_file("azure", config_test_file) == {}

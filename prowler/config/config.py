@@ -101,8 +101,18 @@ def load_and_validate_config_file(provider: str, config_file_path: str) -> dict:
         with open(config_file_path) as f:
             config = {}
             config_file = yaml.safe_load(f)
-            if config_file:
+
+            # Not to introduce a breaking change we have to allow the old format config file without any provider keys
+            # and a new format with a key for each provider to include their configuration values within
+            # Check if the new format is passed
+            if "aws" in config_file or "gcp" in config_file or "azure" in config_file:
                 config = config_file.get(provider, {})
+            else:
+                config = config_file if config_file else {}
+                # Not to break Azure and GCP does not support neither use the old config format
+                if provider in ["azure", "gcp"]:
+                    config = {}
+
             return config
 
     except Exception as error:
