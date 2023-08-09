@@ -61,8 +61,9 @@ class Test_cloudfront_distributions_using_waf:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"CloudFront Distribution {DISTRIBUTION_ID} is using AWS WAF web ACL {wef_acl_id}"
+                == f"CloudFront Distribution {DISTRIBUTION_ID} is using AWS WAF web ACL {wef_acl_id}."
             )
+            assert result[0].resource_tags == []
 
     def test_one_distribution_no_waf(self):
         cloudfront_client = mock.MagicMock
@@ -94,5 +95,6 @@ class Test_cloudfront_distributions_using_waf:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"CloudFront Distribution {DISTRIBUTION_ID} is not using AWS WAF web ACL"
+                == f"CloudFront Distribution {DISTRIBUTION_ID} is not using AWS WAF web ACL."
             )
+            assert result[0].resource_tags == []

@@ -15,10 +15,10 @@ class cloudfront_distributions_using_waf(Check):
             report.resource_tags = distribution.tags
             if distribution.web_acl_id:
                 report.status = "PASS"
-                report.status_extended = f"CloudFront Distribution {distribution.id} is using AWS WAF web ACL {distribution.web_acl_id}"
+                report.status_extended = f"CloudFront Distribution {distribution.id} is using AWS WAF web ACL {distribution.web_acl_id}."
             else:
                 report.status = "FAIL"
-                report.status_extended = f"CloudFront Distribution {distribution.id} is not using AWS WAF web ACL"
+                report.status_extended = f"CloudFront Distribution {distribution.id} is not using AWS WAF web ACL."
             findings.append(report)
 
         return findings
