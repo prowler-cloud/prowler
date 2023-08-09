@@ -62,8 +62,9 @@ class Test_awslambda_function_no_secrets_in_variables:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"No secrets found in Lambda function {function_name} variables"
+                == f"No secrets found in Lambda function {function_name} variables."
             )
+            assert result[0].resource_tags == []
 
     def test_function_secrets_in_variables(self):
         lambda_client = mock.MagicMock
@@ -102,8 +103,9 @@ class Test_awslambda_function_no_secrets_in_variables:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Potential secret found in Lambda function {function_name} variables -> Secret Keyword in variable db_password"
+                == f"Potential secret found in Lambda function {function_name} variables -> Secret Keyword in variable db_password."
             )
+            assert result[0].resource_tags == []
 
     def test_function_no_secrets_in_variables(self):
         lambda_client = mock.MagicMock
@@ -142,5 +144,6 @@ class Test_awslambda_function_no_secrets_in_variables:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"No secrets found in Lambda function {function_name} variables"
+                == f"No secrets found in Lambda function {function_name} variables."
             )
+            assert result[0].resource_tags == []

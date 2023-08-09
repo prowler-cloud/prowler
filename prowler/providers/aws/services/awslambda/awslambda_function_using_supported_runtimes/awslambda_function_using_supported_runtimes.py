@@ -17,10 +17,10 @@ class awslambda_function_using_supported_runtimes(Check):
                     "obsolete_lambda_runtimes", []
                 ):
                     report.status = "FAIL"
-                    report.status_extended = f"Lambda function {function.name} is using {function.runtime} which is obsolete"
+                    report.status_extended = f"Lambda function {function.name} is using {function.runtime} which is obsolete."
                 else:
                     report.status = "PASS"
-                    report.status_extended = f"Lambda function {function.name} is using {function.runtime} which is supported"
+                    report.status_extended = f"Lambda function {function.name} is using {function.runtime} which is supported."
 
                 findings.append(report)
 

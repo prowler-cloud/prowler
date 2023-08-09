@@ -17,7 +17,7 @@ class awslambda_function_invoke_api_operations_cloudtrail_logging_enabled(Check)
 
             report.status = "FAIL"
             report.status_extended = (
-                f"Lambda function {function.name} is not recorded by CloudTrail"
+                f"Lambda function {function.name} is not recorded by CloudTrail."
             )
             lambda_recorded_cloudtrail = False
             for trail in cloudtrail_client.trails:
@@ -46,7 +46,7 @@ class awslambda_function_invoke_api_operations_cloudtrail_logging_enabled(Check)
                         break
                 if lambda_recorded_cloudtrail:
                     report.status = "PASS"
-                    report.status_extended = f"Lambda function {function.name} is recorded by CloudTrail trail {trail.name}"
+                    report.status_extended = f"Lambda function {function.name} is recorded by CloudTrail trail {trail.name}."
                     break
             findings.append(report)
 
