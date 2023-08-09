@@ -37,9 +37,10 @@ class Test_backup_vaults_exist:
         backup_client.audited_account = AWS_ACCOUNT_NUMBER
         backup_client.audited_account_arn = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
         backup_client.region = AWS_REGION
+        backup_vault_arn = f"arn:aws:backup:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:backup-vault:MyBackupVault"
         backup_client.backup_vaults = [
             BackupVault(
-                arn="ARN",
+                arn=backup_vault_arn,
                 name="MyBackupVault",
                 region=AWS_REGION,
                 encryption="",
@@ -69,5 +70,5 @@ class Test_backup_vaults_exist:
                 == "At least one backup vault exists: " + result[0].resource_id
             )
             assert result[0].resource_id == "MyBackupVault"
-            assert result[0].resource_arn == "ARN"
+            assert result[0].resource_arn == backup_vault_arn
             assert result[0].region == AWS_REGION
