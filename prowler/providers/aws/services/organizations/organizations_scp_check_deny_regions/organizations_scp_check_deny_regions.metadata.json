@@ -21,7 +21,7 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Restrict AWS Regiosn using SCP piolicies.",
+      "Text": "Restrict AWS Regions using SCP policies.",
       "Url": "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps_examples_general.html#example-scp-deny-region"
     }
   },
