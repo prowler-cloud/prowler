@@ -19,12 +19,12 @@ class appstream_fleet_default_internet_access_disabled(Check):
             if fleet.enable_default_internet_access:
                 report.status = "FAIL"
                 report.status_extended = (
-                    f"Fleet {fleet.name} has default internet access enabled"
+                    f"Fleet {fleet.name} has default internet access enabled."
                 )
             else:
                 report.status = "PASS"
                 report.status_extended = (
-                    f"Fleet {fleet.name} has default internet access disabled"
+                    f"Fleet {fleet.name} has default internet access disabled."
                 )
 
             findings.append(report)

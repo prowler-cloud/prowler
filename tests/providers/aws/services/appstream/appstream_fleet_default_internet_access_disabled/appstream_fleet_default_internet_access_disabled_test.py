@@ -58,8 +58,9 @@ class Test_appstream_fleet_default_internet_access_disabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Fleet {fleet1.name} has default internet access enabled"
+                == f"Fleet {fleet1.name} has default internet access enabled."
             )
+            assert result[0].resource_tags == []
 
     def test_one_fleet_internet_access_disbaled(self):
         appstream_client = mock.MagicMock
@@ -95,8 +96,9 @@ class Test_appstream_fleet_default_internet_access_disabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Fleet {fleet1.name} has default internet access disabled"
+                == f"Fleet {fleet1.name} has default internet access disabled."
             )
+            assert result[0].resource_tags == []
 
     def test_two_fleets_internet_access_one_enabled_two_disabled(self):
         appstream_client = mock.MagicMock
@@ -145,8 +147,9 @@ class Test_appstream_fleet_default_internet_access_disabled:
                     assert result[0].status == "FAIL"
                     assert (
                         result[0].status_extended
-                        == f"Fleet {fleet1.name} has default internet access enabled"
+                        == f"Fleet {fleet1.name} has default internet access enabled."
                     )
+                    assert result[0].resource_tags == []
                 if res.resource_id == fleet2.name:
                     assert result[1].resource_arn == fleet2.arn
                     assert result[1].region == fleet2.region
@@ -154,5 +157,6 @@ class Test_appstream_fleet_default_internet_access_disabled:
                     assert result[1].status == "PASS"
                     assert (
                         result[1].status_extended
-                        == f"Fleet {fleet2.name} has default internet access disabled"
+                        == f"Fleet {fleet2.name} has default internet access disabled."
                     )
+                    assert result[1].resource_tags == []

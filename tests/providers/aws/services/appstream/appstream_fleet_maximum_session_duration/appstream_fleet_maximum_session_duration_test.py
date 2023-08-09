@@ -61,8 +61,9 @@ class Test_appstream_fleet_maximum_session_duration:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Fleet {fleet1.name} has the maximum session duration configured for more that 10 hours"
+                == f"Fleet {fleet1.name} has the maximum session duration configured for more that 10 hours."
             )
+            assert result[0].resource_tags == []
 
     def test_one_fleet_maximum_session_duration_less_than_10_hours(self):
         appstream_client = mock.MagicMock
@@ -101,8 +102,9 @@ class Test_appstream_fleet_maximum_session_duration:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Fleet {fleet1.name} has the maximum session duration configured for less that 10 hours"
+                == f"Fleet {fleet1.name} has the maximum session duration configured for less that 10 hours."
             )
+            assert result[0].resource_tags == []
 
     def test_two_fleets_one_maximum_session_duration_less_than_10_hours_on_more_than_10_hours(
         self,
@@ -157,8 +159,10 @@ class Test_appstream_fleet_maximum_session_duration:
                     assert result[0].status == "PASS"
                     assert (
                         result[0].status_extended
-                        == f"Fleet {fleet1.name} has the maximum session duration configured for less that 10 hours"
+                        == f"Fleet {fleet1.name} has the maximum session duration configured for less that 10 hours."
                     )
+                    assert result[0].resource_tags == []
+
                 if res.resource_id == fleet2.name:
                     assert result[1].resource_arn == fleet2.arn
                     assert result[1].region == fleet2.region
@@ -166,5 +170,6 @@ class Test_appstream_fleet_maximum_session_duration:
                     assert result[1].status == "FAIL"
                     assert (
                         result[1].status_extended
-                        == f"Fleet {fleet2.name} has the maximum session duration configured for more that 10 hours"
+                        == f"Fleet {fleet2.name} has the maximum session duration configured for more that 10 hours."
                     )
+                    assert result[1].resource_tags == []

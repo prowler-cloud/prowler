@@ -23,10 +23,10 @@ class appstream_fleet_maximum_session_duration(Check):
 
             if fleet.max_user_duration_in_seconds < max_session_duration_seconds:
                 report.status = "PASS"
-                report.status_extended = f"Fleet {fleet.name} has the maximum session duration configured for less that 10 hours"
+                report.status_extended = f"Fleet {fleet.name} has the maximum session duration configured for less that 10 hours."
             else:
                 report.status = "FAIL"
-                report.status_extended = f"Fleet {fleet.name} has the maximum session duration configured for more that 10 hours"
+                report.status_extended = f"Fleet {fleet.name} has the maximum session duration configured for more that 10 hours."
 
             findings.append(report)
 
