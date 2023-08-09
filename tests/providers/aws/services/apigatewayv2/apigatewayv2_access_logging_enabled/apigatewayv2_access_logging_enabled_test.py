@@ -130,4 +130,11 @@ class Test_apigatewayv2_access_logging_enabled:
                 result[0].status_extended
                 == f"API Gateway V2 test-api ID {api['ApiId']} in stage test-stage has access logging enabled."
             )
+
             assert result[0].resource_id == "test-api"
+            assert (
+                result[0].resource_arn
+                == f"arn:aws:apigateway:{AWS_REGION}::apis/{api['ApiId']}"
+            )
+            assert result[0].region == AWS_REGION
+            assert result[0].resource_tags == [{}]

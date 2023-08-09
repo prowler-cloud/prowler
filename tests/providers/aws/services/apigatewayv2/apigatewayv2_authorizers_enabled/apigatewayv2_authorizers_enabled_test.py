@@ -137,3 +137,9 @@ class Test_apigatewayv2_authorizers_enabled:
                 == f"API Gateway V2 test-api ID {api['ApiId']} has an authorizer configured."
             )
             assert result[0].resource_id == "test-api"
+            assert (
+                result[0].resource_arn
+                == f"arn:aws:apigateway:{AWS_REGION}::apis/{api['ApiId']}"
+            )
+            assert result[0].region == AWS_REGION
+            assert result[0].resource_tags == [{}]

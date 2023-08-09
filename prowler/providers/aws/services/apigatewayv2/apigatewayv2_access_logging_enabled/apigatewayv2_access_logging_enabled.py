@@ -15,11 +15,13 @@ class apigatewayv2_access_logging_enabled(Check):
                     report.status = "PASS"
                     report.status_extended = f"API Gateway V2 {api.name} ID {api.id} in stage {stage.name} has access logging enabled."
                     report.resource_id = api.name
+                    report.resource_arn = api.arn
                     report.resource_tags = api.tags
                 else:
                     report.status = "FAIL"
                     report.status_extended = f"API Gateway V2 {api.name} ID {api.id} in stage {stage.name} has access logging disabled."
                     report.resource_id = api.name
+                    report.resource_arn = api.arn
                     report.resource_tags = api.tags
                 findings.append(report)
 
