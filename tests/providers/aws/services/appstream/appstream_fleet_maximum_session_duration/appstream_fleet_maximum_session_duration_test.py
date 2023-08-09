@@ -40,6 +40,8 @@ class Test_appstream_fleet_maximum_session_duration:
 
         appstream_client.fleets.append(fleet1)
 
+        appstream_client.audit_config = {"max_session_duration_seconds": 36000}
+
         with mock.patch(
             "prowler.providers.aws.services.appstream.appstream_service.AppStream",
             new=appstream_client,
@@ -77,6 +79,8 @@ class Test_appstream_fleet_maximum_session_duration:
         )
 
         appstream_client.fleets.append(fleet1)
+
+        appstream_client.audit_config = {"max_session_duration_seconds": 36000}
 
         with mock.patch(
             "prowler.providers.aws.services.appstream.appstream_service.AppStream",
@@ -128,6 +132,8 @@ class Test_appstream_fleet_maximum_session_duration:
 
         appstream_client.fleets.append(fleet1)
         appstream_client.fleets.append(fleet2)
+
+        appstream_client.audit_config = {"max_session_duration_seconds": 36000}
 
         with mock.patch(
             "prowler.providers.aws.services.appstream.appstream_service.AppStream",

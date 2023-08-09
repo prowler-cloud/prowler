@@ -48,7 +48,7 @@ class Test_organizations_delegated_administrators:
     @mock_organizations
     def test_no_organization(self):
         audit_info = self.set_mocked_audit_info()
-
+        audit_info.audit_config = {"organizations_trusted_delegated_administrators": []}
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             new=audit_info,
@@ -70,6 +70,7 @@ class Test_organizations_delegated_administrators:
     @mock_organizations
     def test_organization_no_delegations(self):
         audit_info = self.set_mocked_audit_info()
+        audit_info.audit_config = {"organizations_trusted_delegated_administrators": []}
 
         # Create Organization
         conn = client("organizations", region_name=AWS_REGION)
@@ -119,6 +120,13 @@ class Test_organizations_delegated_administrators:
             ServicePrincipal="config-multiaccountsetup.amazonaws.com",
         )
 
+        # Set config variable
+        audit_info.audit_config = {
+            "organizations_trusted_delegated_administrators": [
+                account["CreateAccountStatus"]["AccountId"]
+            ]
+        }
+
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             new=audit_info,
@@ -127,27 +135,23 @@ class Test_organizations_delegated_administrators:
                 "prowler.providers.aws.services.organizations.organizations_delegated_administrators.organizations_delegated_administrators.organizations_client",
                 new=Organizations(audit_info),
             ):
-                with mock.patch(
-                    "prowler.providers.aws.services.organizations.organizations_delegated_administrators.organizations_delegated_administrators.get_config_var",
-                    return_value=[account["CreateAccountStatus"]["AccountId"]],
-                ):
-                    # Test Check
-                    from prowler.providers.aws.services.organizations.organizations_delegated_administrators.organizations_delegated_administrators import (
-                        organizations_delegated_administrators,
-                    )
+                # Test Check
+                from prowler.providers.aws.services.organizations.organizations_delegated_administrators.organizations_delegated_administrators import (
+                    organizations_delegated_administrators,
+                )
 
-                    check = organizations_delegated_administrators()
-                    result = check.execute()
+                check = organizations_delegated_administrators()
+                result = check.execute()
 
-                    assert len(result) == 1
-                    assert result[0].status == "PASS"
-                    assert result[0].resource_id == response["Organization"]["Id"]
-                    assert result[0].resource_arn == response["Organization"]["Arn"]
-                    assert search(
-                        "Trusted Delegated Administrator",
-                        result[0].status_extended,
-                    )
-                    assert result[0].region == AWS_REGION
+                assert len(result) == 1
+                assert result[0].status == "PASS"
+                assert result[0].resource_id == response["Organization"]["Id"]
+                assert result[0].resource_arn == response["Organization"]["Arn"]
+                assert search(
+                    "Trusted Delegated Administrator",
+                    result[0].status_extended,
+                )
+                assert result[0].region == AWS_REGION
 
     @mock_organizations
     def test_organization_untrusted_delegated(self):
@@ -166,6 +170,9 @@ class Test_organizations_delegated_administrators:
             AccountId=account["CreateAccountStatus"]["AccountId"],
             ServicePrincipal="config-multiaccountsetup.amazonaws.com",
         )
+
+        # Set config variable
+        audit_info.audit_config = {"organizations_trusted_delegated_administrators": []}
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",

@@ -1,4 +1,3 @@
-from prowler.config.config import get_config_var
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.organizations.organizations_client import (
     organizations_client,
@@ -8,8 +7,11 @@ from prowler.providers.aws.services.organizations.organizations_client import (
 class organizations_delegated_administrators(Check):
     def execute(self):
         findings = []
-        organizations_trusted_delegated_administrators = get_config_var(
-            "organizations_trusted_delegated_administrators"
+
+        organizations_trusted_delegated_administrators = (
+            organizations_client.audit_config.get(
+                "organizations_trusted_delegated_administrators", []
+            )
         )
 
         for org in organizations_client.organizations:

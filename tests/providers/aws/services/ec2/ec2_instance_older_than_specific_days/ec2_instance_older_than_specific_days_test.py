@@ -51,6 +51,7 @@ class Test_ec2_instance_older_than_specific_days:
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
         current_audit_info = self.set_mocked_audit_info()
+        current_audit_info.audit_config = {"max_ec2_instance_age_in_days": 180}
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -82,6 +83,7 @@ class Test_ec2_instance_older_than_specific_days:
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
         current_audit_info = self.set_mocked_audit_info()
+        current_audit_info.audit_config = {"max_ec2_instance_age_in_days": 180}
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -121,6 +123,7 @@ class Test_ec2_instance_older_than_specific_days:
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
         current_audit_info = self.set_mocked_audit_info()
+        current_audit_info.audit_config = {"max_ec2_instance_age_in_days": 180}
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",

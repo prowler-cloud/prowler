@@ -51,6 +51,7 @@ class Test_Slack_Integration:
                 completed_checks=0,
                 audit_progress=0,
             ),
+            audit_config=None,
         )
         gcp_audit_info = GCP_Audit_Info(
             credentials=None,
@@ -58,6 +59,7 @@ class Test_Slack_Integration:
             project_ids=["test-project1", "test-project2"],
             audit_resources=None,
             audit_metadata=None,
+            audit_config=None,
         )
         azure_audit_info = Azure_Audit_Info(
             credentials=None,
@@ -73,6 +75,7 @@ class Test_Slack_Integration:
             ),
             audit_resources=None,
             audit_metadata=None,
+            audit_config=None,
         )
         assert create_message_identity("aws", aws_audit_info) == (
             f"AWS Account *{aws_audit_info.audited_account}*",

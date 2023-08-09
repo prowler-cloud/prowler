@@ -8,4 +8,5 @@ azure_audit_info = Azure_Audit_Info(
     identity=Azure_Identity_Info(),
     audit_resources=None,
     audit_metadata=None,
+    audit_config=None,
 )

@@ -22,6 +22,7 @@ class AWSService:
         self.audited_partition = audit_info.audited_partition
         self.audit_resources = audit_info.audit_resources
         self.audited_checks = audit_info.audit_metadata.expected_checks
+        self.audit_config = audit_info.audit_config
 
         # AWS Session
         self.session = audit_info.audit_session

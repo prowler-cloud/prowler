@@ -5,6 +5,7 @@ from argparse import RawTextHelpFormatter
 from prowler.config.config import (
     available_compliance_frameworks,
     check_current_version,
+    default_config_file_path,
     default_output_directory,
 )
 from prowler.providers.aws.aws_provider import get_aws_available_regions
@@ -45,6 +46,7 @@ Detailed documentation at https://docs.prowler.cloud
         self.__init_checks_parser__()
         self.__init_exclude_checks_parser__()
         self.__init_list_checks_parser__()
+        self.__init_config_parser__()
 
         # Init Providers Arguments
         self.__init_aws_parser__()
@@ -258,6 +260,15 @@ Detailed documentation at https://docs.prowler.cloud
             "--list-categories",
             action="store_true",
             help="List the available check's categories",
+        )
+
+    def __init_config_parser__(self):
+        config_parser = self.common_providers_parser.add_argument_group("Configuration")
+        config_parser.add_argument(
+            "--config-file",
+            nargs="?",
+            default=default_config_file_path,
+            help="Set configuration file path",
         )
 
     def __init_aws_parser__(self):

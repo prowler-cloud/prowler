@@ -3,6 +3,7 @@ import sys
 from botocore.config import Config
 from colorama import Fore, Style
 
+from prowler.config.config import load_and_validate_config_file
 from prowler.lib.logger import logger
 from prowler.providers.aws.aws_provider import (
     AWS_Provider,
@@ -351,6 +352,11 @@ def set_provider_audit_info(provider: str, arguments: dict):
     try:
         provider_set_audit_info = f"set_{provider}_audit_info"
         provider_audit_info = getattr(Audit_Info(), provider_set_audit_info)(arguments)
+
+        # Set the audit configuration from the config file
+        provider_audit_info.audit_config = load_and_validate_config_file(
+            provider, arguments["config_file"]
+        )
     except Exception as error:
         logger.critical(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

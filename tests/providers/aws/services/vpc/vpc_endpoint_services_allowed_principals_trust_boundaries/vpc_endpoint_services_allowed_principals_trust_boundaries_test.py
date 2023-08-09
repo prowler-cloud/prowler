@@ -73,6 +73,8 @@ class Test_vpc_endpoint_services_allowed_principals_trust_boundaries:
         from prowler.providers.aws.services.vpc.vpc_service import VPC
 
         current_audit_info = self.set_mocked_audit_info()
+        # Set config variable
+        current_audit_info.audit_config = {"trusted_account_ids": []}
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -123,6 +125,8 @@ class Test_vpc_endpoint_services_allowed_principals_trust_boundaries:
         from prowler.providers.aws.services.vpc.vpc_service import VPC
 
         current_audit_info = self.set_mocked_audit_info()
+        # Set config variable
+        current_audit_info.audit_config = {"trusted_account_ids": []}
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
