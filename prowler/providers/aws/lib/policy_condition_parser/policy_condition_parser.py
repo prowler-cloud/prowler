@@ -8,8 +8,16 @@ def is_account_only_allowed_in_condition(
             "aws:SourceAccount",
             "s3:ResourceAccount",
             "aws:PrincipalAccount",
+            "aws:ResourceAccount",
+            "aws:PrincipalAccount",
         ],
-        "StringLike": ["aws:SourceArn", "aws:PrincipalArn"],
+        "StringLike": [
+            "aws:SourceAccount",
+            "aws:SourceArn",
+            "aws:PrincipalArn",
+            "aws:ResourceAccount",
+            "aws:PrincipalAccount",
+        ],
         "ArnLike": ["aws:SourceArn", "aws:PrincipalArn"],
         "ArnEquals": ["aws:SourceArn", "aws:PrincipalArn"],
     }

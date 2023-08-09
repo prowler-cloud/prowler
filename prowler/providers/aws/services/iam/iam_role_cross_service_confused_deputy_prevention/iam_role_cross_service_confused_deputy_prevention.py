@@ -1,4 +1,7 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
+from prowler.providers.aws.lib.policy_condition_parser.policy_condition_parser import (
+    is_account_only_allowed_in_condition,
+)
 from prowler.providers.aws.services.iam.iam_client import iam_client
 
 
@@ -27,90 +30,8 @@ class iam_role_cross_service_confused_deputy_prevention(Check):
                         and "Service" in statement["Principal"]
                         # Check to see if the appropriate condition statements have been implemented
                         and "Condition" in statement
-                        and (
-                            (
-                                "StringEquals" in statement["Condition"]
-                                and "aws:SourceAccount"
-                                in statement["Condition"]["StringEquals"]
-                                and iam_client.audited_account
-                                in str(
-                                    statement["Condition"]["StringEquals"][
-                                        "aws:SourceAccount"
-                                    ]
-                                )
-                            )
-                            or (
-                                "StringLike" in statement["Condition"]
-                                and "aws:SourceAccount"
-                                in statement["Condition"]["StringLike"]
-                                and iam_client.audited_account
-                                in str(
-                                    statement["Condition"]["StringLike"][
-                                        "aws:SourceAccount"
-                                    ]
-                                )
-                            )
-                            or (
-                                "StringEquals" in statement["Condition"]
-                                and "aws:PrincipalAccount"
-                                in statement["Condition"]["StringEquals"]
-                                and iam_client.audited_account
-                                in str(
-                                    statement["Condition"]["StringEquals"][
-                                        "aws:PrincipalAccount"
-                                    ]
-                                )
-                            )
-                            or (
-                                "StringLike" in statement["Condition"]
-                                and "aws:PrincipalAccount"
-                                in statement["Condition"]["StringLike"]
-                                and iam_client.audited_account
-                                in str(
-                                    statement["Condition"]["StringLike"][
-                                        "aws:PrincipalAccount"
-                                    ]
-                                )
-                            )
-                            or (
-                                "StringEquals" in statement["Condition"]
-                                and "aws:ResourceAccount"
-                                in statement["Condition"]["StringEquals"]
-                                and iam_client.audited_account
-                                in str(
-                                    statement["Condition"]["StringEquals"][
-                                        "aws:ResourceAccount"
-                                    ]
-                                )
-                            )
-                            or (
-                                "StringLike" in statement["Condition"]
-                                and "aws:ResourceAccount"
-                                in statement["Condition"]["StringLike"]
-                                and iam_client.audited_account
-                                in str(
-                                    statement["Condition"]["StringLike"][
-                                        "aws:ResourceAccount"
-                                    ]
-                                )
-                            )
-                            or (
-                                "ArnEquals" in statement["Condition"]
-                                and "aws:SourceArn"
-                                in statement["Condition"]["ArnEquals"]
-                                and iam_client.audited_account
-                                in str(
-                                    statement["Condition"]["ArnEquals"]["aws:SourceArn"]
-                                )
-                            )
-                            or (
-                                "ArnLike" in statement["Condition"]
-                                and "aws:SourceArn" in statement["Condition"]["ArnLike"]
-                                and iam_client.audited_account
-                                in str(
-                                    statement["Condition"]["ArnLike"]["aws:SourceArn"]
-                                )
-                            )
+                        and is_account_only_allowed_in_condition(
+                            statement["Condition"], iam_client.audited_account
                         )
                     ):
                         report.status = "PASS"
