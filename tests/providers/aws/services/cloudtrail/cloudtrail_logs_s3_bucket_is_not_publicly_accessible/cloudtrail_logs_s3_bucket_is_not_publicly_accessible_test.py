@@ -43,6 +43,34 @@ class Test_cloudtrail_logs_s3_bucket_is_not_publicly_accessible:
 
     @mock_cloudtrail
     @mock_s3
+    def test_not_trails(self):
+        from prowler.providers.aws.services.cloudtrail.cloudtrail_service import (
+            Cloudtrail,
+        )
+        from prowler.providers.aws.services.s3.s3_service import S3
+
+        with mock.patch(
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=self.set_mocked_audit_info(),
+        ), mock.patch(
+            "prowler.providers.aws.services.cloudtrail.cloudtrail_logs_s3_bucket_is_not_publicly_accessible.cloudtrail_logs_s3_bucket_is_not_publicly_accessible.cloudtrail_client",
+            new=Cloudtrail(self.set_mocked_audit_info()),
+        ), mock.patch(
+            "prowler.providers.aws.services.cloudtrail.cloudtrail_logs_s3_bucket_is_not_publicly_accessible.cloudtrail_logs_s3_bucket_is_not_publicly_accessible.s3_client",
+            new=S3(self.set_mocked_audit_info()),
+        ):
+            # Test Check
+            from prowler.providers.aws.services.cloudtrail.cloudtrail_logs_s3_bucket_is_not_publicly_accessible.cloudtrail_logs_s3_bucket_is_not_publicly_accessible import (
+                cloudtrail_logs_s3_bucket_is_not_publicly_accessible,
+            )
+
+            check = cloudtrail_logs_s3_bucket_is_not_publicly_accessible()
+            result = check.execute()
+
+            assert len(result) == 0
+
+    @mock_cloudtrail
+    @mock_s3
     def test_trail_bucket_no_acl(self):
         cloudtrail_client = client("cloudtrail", region_name="us-east-1")
         s3_client = client("s3", region_name="us-east-1")
@@ -83,8 +111,10 @@ class Test_cloudtrail_logs_s3_bucket_is_not_publicly_accessible:
             assert result[0].resource_arn == trail_us["TrailARN"]
             assert search(
                 result[0].status_extended,
-                f"S3 Bucket {bucket_name_us} from single region trail {trail_name_us} is not publicly accessible",
+                f"S3 Bucket {bucket_name_us} from single region trail {trail_name_us} is not publicly accessible.",
             )
+            assert result[0].resource_tags == []
+            assert result[0].region == "us-east-1"
 
     @mock_cloudtrail
     @mock_s3
@@ -146,8 +176,10 @@ class Test_cloudtrail_logs_s3_bucket_is_not_publicly_accessible:
             assert result[0].resource_arn == trail_us["TrailARN"]
             assert search(
                 result[0].status_extended,
-                f"S3 Bucket {bucket_name_us} from single region trail {trail_name_us} is publicly accessible",
+                f"S3 Bucket {bucket_name_us} from single region trail {trail_name_us} is publicly accessible.",
             )
+            assert result[0].resource_tags == []
+            assert result[0].region == "us-east-1"
 
     @mock_cloudtrail
     @mock_s3
@@ -208,8 +240,10 @@ class Test_cloudtrail_logs_s3_bucket_is_not_publicly_accessible:
             assert result[0].resource_arn == trail_us["TrailARN"]
             assert search(
                 result[0].status_extended,
-                f"S3 Bucket {bucket_name_us} from single region trail {trail_name_us} is not publicly accessible",
+                f"S3 Bucket {bucket_name_us} from single region trail {trail_name_us} is not publicly accessible.",
             )
+            assert result[0].resource_tags == []
+            assert result[0].region == "us-east-1"
 
     @mock_cloudtrail
     @mock_s3
@@ -254,6 +288,8 @@ class Test_cloudtrail_logs_s3_bucket_is_not_publicly_accessible:
             assert result[0].resource_id == trail_name_us
             assert result[0].resource_arn == trail_us["TrailARN"]
             assert search(
-                "is a cross-account bucket in another account out of Prowler's permissions scope",
+                "is a cross-account bucket in another account out of Prowler's permissions scope.",
                 result[0].status_extended,
             )
+            assert result[0].resource_tags == []
+            assert result[0].region == "us-east-1"

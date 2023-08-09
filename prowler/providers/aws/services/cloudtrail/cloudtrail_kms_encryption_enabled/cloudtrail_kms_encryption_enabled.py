@@ -17,21 +17,21 @@ class cloudtrail_kms_encryption_enabled(Check):
                 report.status = "FAIL"
                 if trail.is_multiregion:
                     report.status_extended = (
-                        f"Multiregion trail {trail.name} has encryption disabled"
+                        f"Multiregion trail {trail.name} has encryption disabled."
                     )
                 else:
                     report.status_extended = (
-                        f"Single region trail {trail.name} has encryption disabled"
+                        f"Single region trail {trail.name} has encryption disabled."
                     )
                 if trail.kms_key:
                     report.status = "PASS"
                     if trail.is_multiregion:
                         report.status_extended = (
-                            f"Multiregion trail {trail.name} has encryption enabled"
+                            f"Multiregion trail {trail.name} has encryption enabled."
                         )
                     else:
                         report.status_extended = (
-                            f"Single region trail {trail.name} has encryption enabled"
+                            f"Single region trail {trail.name} has encryption enabled."
                         )
                 findings.append(report)
 

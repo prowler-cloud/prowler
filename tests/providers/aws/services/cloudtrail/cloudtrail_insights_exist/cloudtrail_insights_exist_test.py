@@ -102,6 +102,7 @@ class Test_cloudtrail_insights_exist:
                 assert result[0].resource_id == trail_name_us
                 assert result[0].region == "us-east-1"
                 assert result[0].resource_arn == trail_us["TrailARN"]
+                assert result[0].resource_tags == []
 
     @mock_cloudtrail
     @mock_s3
@@ -147,3 +148,4 @@ class Test_cloudtrail_insights_exist:
                 assert result[0].resource_id == trail_name_us
                 assert result[0].region == "us-east-1"
                 assert result[0].resource_arn == trail_us["TrailARN"]
+                assert result[0].resource_tags == []
