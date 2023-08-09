@@ -65,7 +65,7 @@ class Test_backup_reportplans_exist:
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert result[0].status_extended == "No Backup Report Plan Exist"
+            assert result[0].status_extended == "No Backup Report Plan exist."
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
             assert result[0].resource_arn == f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
             assert result[0].region == AWS_REGION
@@ -118,7 +118,7 @@ class Test_backup_reportplans_exist:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "At least one backup report plan exists: " + result[0].resource_id
+                == f"At least one backup report plan exists: {result[0].resource_id}."
             )
             assert result[0].resource_id == "MyBackupReportPlan"
             assert result[0].resource_arn == backup_report_plan_arn

@@ -29,7 +29,7 @@ class Test_backup_plans_exist:
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert result[0].status_extended == "No Backup Plan Exist"
+            assert result[0].status_extended == "No Backup Plan exist."
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
             assert result[0].resource_arn == f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
             assert result[0].region == AWS_REGION
@@ -70,7 +70,7 @@ class Test_backup_plans_exist:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "At least one backup plan exists: " + result[0].resource_id
+                == f"At least one backup plan exists: {result[0].resource_id}."
             )
             assert result[0].resource_id == "MyBackupPlan"
             assert (

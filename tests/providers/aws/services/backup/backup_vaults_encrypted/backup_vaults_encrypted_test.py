@@ -56,7 +56,7 @@ class Test_backup_vaults_encrypted:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "Backup Vault " + result[0].resource_id + " is not encrypted"
+                == f"Backup Vault {result[0].resource_id} is not encrypted."
             )
             assert result[0].resource_id == "MyBackupVault"
             assert result[0].resource_arn == backup_vault_arn
@@ -94,7 +94,7 @@ class Test_backup_vaults_encrypted:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "Backup Vault " + result[0].resource_id + " is encrypted"
+                == f"Backup Vault {result[0].resource_id} is encrypted."
             )
             assert result[0].resource_id == "MyBackupVault"
             assert result[0].resource_arn == backup_vault_arn
