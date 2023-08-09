@@ -60,6 +60,7 @@ class Test_cloudformation_stacks_termination_protection_enabled:
                 == "arn:aws:cloudformation:eu-west-1:123456789012:stack/Test-Stack/796c8d26-b390-41d7-a23c-0702c4e78b60"
             )
             assert result[0].region == AWS_REGION
+            assert result[0].resource_tags == []
 
     def test_stack_termination_protection_disabled(self):
         cloudformation_client = mock.MagicMock
@@ -97,3 +98,4 @@ class Test_cloudformation_stacks_termination_protection_enabled:
                 == "arn:aws:cloudformation:eu-west-1:123456789012:stack/Test-Stack/796c8d26-b390-41d7-a23c-0702c4e78b60"
             )
             assert result[0].region == AWS_REGION
+            assert result[0].resource_tags == []
