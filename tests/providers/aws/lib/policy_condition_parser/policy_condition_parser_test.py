@@ -38,6 +38,12 @@ class Test_policy_condition_parser:
             condition_statement, AWS_ACCOUNT_NUMBER
         )
 
+    def test_condition_parser_string_like_aws_SourceAccount_str_not_valid(self):
+        condition_statement = {"StringLike": {"aws:SourceAccount": "111222333444"}}
+        assert not is_account_only_allowed_in_condition(
+            condition_statement, AWS_ACCOUNT_NUMBER
+        )
+
     def test_condition_parser_string_like_aws_SourceAccount_str(self):
         condition_statement = {"StringLike": {"aws:SourceAccount": "123456789012"}}
         assert is_account_only_allowed_in_condition(
@@ -100,6 +106,12 @@ class Test_policy_condition_parser:
 
     def test_condition_parser_string_equals_aws_SourceOwner_list(self):
         condition_statement = {"StringEquals": {"aws:SourceOwner": ["123456789012"]}}
+        assert is_account_only_allowed_in_condition(
+            condition_statement, AWS_ACCOUNT_NUMBER
+        )
+
+    def test_condition_parser_string_equals_s3_ResourceAccount_list(self):
+        condition_statement = {"StringEquals": {"s3:ResourceAccount": ["123456789012"]}}
         assert is_account_only_allowed_in_condition(
             condition_statement, AWS_ACCOUNT_NUMBER
         )
