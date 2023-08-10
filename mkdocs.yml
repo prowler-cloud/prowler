@@ -38,7 +38,7 @@ nav:
       - Logging: tutorials/logging.md
       - Allowlist: tutorials/allowlist.md
       - Pentesting: tutorials/pentesting.md
-      - Developer Guide: tutorials/developer-guide.md
+      - Developer Guide: tutorials/developer-guide/developer-guide.md
       - AWS:
           - Authentication: tutorials/aws/authentication.md
           - Assume Role: tutorials/aws/role-assumption.md
