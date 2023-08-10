@@ -6,12 +6,14 @@ def is_account_only_allowed_in_condition(
     valid_condition_options = {
         "StringEquals": [
             "aws:SourceAccount",
+            "aws:SourceOwner",
             "s3:ResourceAccount",
             "aws:PrincipalAccount",
             "aws:ResourceAccount",
         ],
         "StringLike": [
             "aws:SourceAccount",
+            "aws:SourceOwner",
             "aws:SourceArn",
             "aws:PrincipalArn",
             "aws:ResourceAccount",
