@@ -1,5 +1,5 @@
 # AWS Organizations
-## Get AWS Account details from your AWS Organization:
+## Get AWS Account details from your AWS Organization
 
 Prowler allows you to get additional information of the scanned account in CSV and JSON outputs. When scanning a single account you get the Account ID as part of the output.
 
@@ -30,7 +30,7 @@ The additional fields in CSV header output are as follow:
 ACCOUNT_DETAILS_EMAIL,ACCOUNT_DETAILS_NAME,ACCOUNT_DETAILS_ARN,ACCOUNT_DETAILS_ORG,ACCOUNT_DETAILS_TAGS
 ```
 
-## Assume Role and across all accounts in AWS Organizations or just a list of accounts:
+## Extra: run Prowler across all accounts in AWS Organizations by assuming roles
 
 If you want to run Prowler across all accounts of AWS Organizations you can do this:
 
@@ -43,7 +43,7 @@ ACCOUNTS_IN_ORGS=$(aws organizations list-accounts --query Accounts[?Status==`AC
 - Then run Prowler to assume a role (same in all members) per each account, in this example it is just running one particular check:
 
 ```
-for accountId in $ACCOUNTS_IN_ORGS; do prowler aws -O arn:aws:iam::<management_organizations_account_id>:role/<role_name>; done
+for accountId in $ACCOUNTS_IN_ORGS; do prowler aws -O arn:aws:iam::<management_organizations_account_id>:role/<role_name> -R arn:aws:iam::$accountId:role/<role_name>; done
 ```
 
 - Using the same for loop it can be scanned a list of accounts with a variable like `ACCOUNTS_LIST='11111111111 2222222222 333333333'`
