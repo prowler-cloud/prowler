@@ -6,10 +6,17 @@ from googleapiclient import discovery
 
 from prowler.lib.logger import logger
 from prowler.providers.gcp.gcp_provider import generate_client
+from prowler.providers.gcp.lib.audit_info.models import GCP_Audit_Info
 
 
 class GCPService:
-    def __init__(self, service, audit_info, region="global", api_version="v1"):
+    def __init__(
+        self,
+        service: str,
+        audit_info: GCP_Audit_Info,
+        region="global",
+        api_version="v1",
+    ):
         # We receive the service using __class__.__name__ or the service name in lowercase
         # e.g.: APIKeys --> we need a lowercase string, so service.lower()
         self.service = service.lower() if not service.islower() else service
