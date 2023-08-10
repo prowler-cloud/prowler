@@ -88,22 +88,32 @@ class <Service>(ServiceParentClass):
 
             # Paginator to get every item
             for page in describe_<items>_paginator.paginate():
-                for <item> in page["<Items>"]:
 
-                    # For the AWS provider we MUST include the following lines to retrieve
-                    # or not data for the resource passed as argument using the --resource-arn
-                    if not self.audit_resources or (
-                        is_resource_filtered(<item>["<item_arn>"], self.audit_resources)
-                    ):
-                        # Then we have to include the retrieved resource in the object
-                        # previously created
-                        self.<items>[<item_unique_id>] =
-                            <Item>(
-                                arn=stack["<item_arn>"],
-                                name=stack["<item_name>"],
-                                tags=stack.get("Tags", []),
-                                region=regional_client.region,
-                            )
+                # Another try/except within the loop for to continue looping
+                # if something unexpected happens
+                try:
+
+                    for <item> in page["<Items>"]:
+
+                        # For the AWS provider we MUST include the following lines to retrieve
+                        # or not data for the resource passed as argument using the --resource-arn
+                        if not self.audit_resources or (
+                            is_resource_filtered(<item>["<item_arn>"], self.audit_resources)
+                        ):
+                            # Then we have to include the retrieved resource in the object
+                            # previously created
+                            self.<items>[<item_unique_id>] =
+                                <Item>(
+                                    arn=stack["<item_arn>"],
+                                    name=stack["<item_name>"],
+                                    tags=stack.get("Tags", []),
+                                    region=regional_client.region,
+                                )
+
+                except Exception as error:
+                    logger.error(
+                        f"{<provider_specific_field>} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
 
         # In the except part we have to use the following code to log the errors
         except Exception as error:
