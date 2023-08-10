@@ -14,7 +14,7 @@ logging_levels = {
 def set_logging_config(log_level: str, log_file: str = None, only_logs: bool = False):
     # Logs formatter
     stream_formatter = logging.Formatter(
-        "%(asctime)s [File: %(filename)s:%(lineno)d] \t[Module: %(module)s]\t %(levelname)s: %(message)s"
+        "\n%(asctime)s [File: %(filename)s:%(lineno)d] \t[Module: %(module)s]\t %(levelname)s: %(message)s"
     )
     log_file_formatter = logging.Formatter(
         '{"timestamp": "%(asctime)s", "filename": "%(filename)s:%(lineno)d", "level": "%(levelname)s", "module": "%(module)s", "message": "%(message)s"}'
