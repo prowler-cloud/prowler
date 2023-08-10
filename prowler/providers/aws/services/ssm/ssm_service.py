@@ -115,7 +115,7 @@ class SSM(AWSService):
             for page in list_resource_compliance_summaries_paginator.paginate():
                 for item in page["ResourceComplianceSummaryItems"]:
                     resource_id = item["ResourceId"]
-                    resource_status = ResourceStatus(item["Status"])
+                    resource_status = item["Status"]
 
                     self.compliance_resources[resource_id] = ComplianceResource(
                         id=resource_id,
