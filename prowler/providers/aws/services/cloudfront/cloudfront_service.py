@@ -55,13 +55,11 @@ class CloudFront(AWSService):
                 ]["Logging"]["Enabled"]
                 distributions[
                     distribution_id
-                ].geo_restriction_type = distribution_config["DistributionConfig"][
-                    "Restrictions"
-                ][
-                    "GeoRestriction"
-                ][
-                    "RestrictionType"
-                ]
+                ].geo_restriction_type = GeoRestrictionType(
+                    distribution_config["DistributionConfig"]["Restrictions"][
+                        "GeoRestriction"
+                    ]["RestrictionType"]
+                )
                 distributions[distribution_id].web_acl_id = distribution_config[
                     "DistributionConfig"
                 ]["WebACLId"]
@@ -71,9 +69,11 @@ class CloudFront(AWSService):
                     realtime_log_config_arn=distribution_config["DistributionConfig"][
                         "DefaultCacheBehavior"
                     ].get("RealtimeLogConfigArn"),
-                    viewer_protocol_policy=distribution_config["DistributionConfig"][
-                        "DefaultCacheBehavior"
-                    ].get("ViewerProtocolPolicy"),
+                    viewer_protocol_policy=ViewerProtocolPolicy(
+                        distribution_config["DistributionConfig"][
+                            "DefaultCacheBehavior"
+                        ].get("ViewerProtocolPolicy")
+                    ),
                     field_level_encryption_id=distribution_config["DistributionConfig"][
                         "DefaultCacheBehavior"
                     ].get("FieldLevelEncryptionId"),
@@ -131,7 +131,7 @@ class DefaultCacheConfigBehaviour(BaseModel):
 
 
 class Distribution(BaseModel):
-    """Distribution holds a CloudFront Distribution with the required information to run the rela"""
+    """Distribution holds a CloudFront Distribution resource"""
 
     arn: str
     id: str
