@@ -7,7 +7,7 @@ class cloudwatch_cross_account_sharing_disabled(Check):
         findings = []
         report = Check_Report_AWS(self.metadata())
         report.status = "PASS"
-        report.status_extended = "CloudWatch doesn't allow cross-account sharing"
+        report.status_extended = "CloudWatch doesn't allow cross-account sharing."
         report.resource_arn = iam_client.audited_account_arn
         report.resource_id = iam_client.audited_account
         report.region = iam_client.region
