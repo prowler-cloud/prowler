@@ -58,6 +58,11 @@ To run the Prowler test suite you need to install the testing dependencies alrea
 
 Then in the project's root path execute `pytest -n auto -vvv -s -x` or use the `Makefile` with `make test`.
 
+Other commands to run tests:
+- Run tests for a provider: `pytest -n auto -vvv -s -x tests/providers/<provider>/services`
+- Run tests for a provider service: `pytest -n auto -vvv -s -x tests/providers/<provider>/services/<service>`
+- Run tests for a provider check: `pytest -n auto -vvv -s -x tests/providers/<provider>/services/<service>/<check>`
+
 ## AWS
 
 For the AWS provider we have ways to test a Prowler check based on the following criteria:
