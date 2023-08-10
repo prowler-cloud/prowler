@@ -220,7 +220,9 @@ def prowler():
     # Resolve previous fails of Security Hub
     if provider == "aws" and args.security_hub and not args.skip_sh_update:
         resolve_security_hub_previous_findings(
-            args.output_directory, args.output_filename, audit_info
+            audit_output_options.output_directory,
+            audit_output_options.output_filename,
+            audit_info,
         )
 
     # Display summary table
