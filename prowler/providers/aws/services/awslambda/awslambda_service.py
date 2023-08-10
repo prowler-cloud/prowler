@@ -127,7 +127,7 @@ class Lambda(AWSService):
                         else:
                             allow_origins = []
                         self.functions[function.arn].url_config = URLConfig(
-                            auth_type=function_url_config["AuthType"],
+                            auth_type=AuthType(function_url_config["AuthType"]),
                             url=function_url_config["FunctionUrl"],
                             cors_config=URLConfigCORS(allow_origins=allow_origins),
                         )

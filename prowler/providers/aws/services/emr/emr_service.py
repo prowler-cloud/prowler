@@ -34,7 +34,7 @@ class EMR(AWSService):
                         cluster_name = cluster["Name"]
                         cluster_id = cluster["Id"]
                         cluster_arn = cluster["ClusterArn"]
-                        cluster_status = cluster["Status"]["State"]
+                        cluster_status = ClusterStatus(cluster["Status"]["State"])
 
                         self.clusters[cluster_id] = Cluster(
                             id=cluster_id,

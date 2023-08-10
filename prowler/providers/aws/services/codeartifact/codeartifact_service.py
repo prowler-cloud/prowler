@@ -118,15 +118,23 @@ class CodeArtifact(AWSService):
                                     format=package_format,
                                     origin_configuration=OriginConfiguration(
                                         restrictions=Restrictions(
-                                            publish=package_origin_configuration_restrictions_publish,
-                                            upstream=package_origin_configuration_restrictions_upstream,
+                                            publish=RestrictionValues(
+                                                package_origin_configuration_restrictions_publish
+                                            ),
+                                            upstream=RestrictionValues(
+                                                package_origin_configuration_restrictions_upstream
+                                            ),
                                         )
                                     ),
                                     latest_version=LatestPackageVersion(
                                         version=latest_version,
-                                        status=latest_status,
+                                        status=LatestPackageVersionStatus(
+                                            latest_status
+                                        ),
                                         origin=OriginInformation(
-                                            origin_type=latest_origin_type
+                                            origin_type=OriginInformationValues(
+                                                latest_origin_type
+                                            )
                                         ),
                                     ),
                                 )
