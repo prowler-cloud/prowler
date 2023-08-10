@@ -2,524 +2,634 @@ from prowler.providers.aws.lib.policy_condition_parser.policy_condition_parser i
     is_account_only_allowed_in_condition,
 )
 
-AWS_ACCOUNT_NUMBER = "123456789012"
+TRUSTED_AWS_ACCOUNT_NUMBER = "123456789012"
+NON_TRUSTED_AWS_ACCOUNT_NUMBER = "111222333444"
 
 
 class Test_policy_condition_parser:
     def test_condition_parser_string_equals_aws_SourceAccount_list(self):
-        condition_statement = {"StringEquals": {"aws:SourceAccount": ["123456789012"]}}
+        condition_statement = {
+            "StringEquals": {"aws:SourceAccount": [TRUSTED_AWS_ACCOUNT_NUMBER]}
+        }
         assert is_account_only_allowed_in_condition(
-            condition_statement, AWS_ACCOUNT_NUMBER
-        )
-
-    def test_condition_parser_string_equals_aws_SourceAccount_str(self):
-        condition_statement = {"StringEquals": {"aws:SourceAccount": "123456789012"}}
-        assert is_account_only_allowed_in_condition(
-            condition_statement, AWS_ACCOUNT_NUMBER
+            condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
     def test_condition_parser_string_equals_aws_SourceAccount_list_not_valid(self):
         condition_statement = {
-            "StringEquals": {"aws:SourceAccount": ["123456789012", "111222333444"]}
+            "StringEquals": {
+                "aws:SourceAccount": [
+                    TRUSTED_AWS_ACCOUNT_NUMBER,
+                    NON_TRUSTED_AWS_ACCOUNT_NUMBER,
+                ]
+            }
         }
         assert not is_account_only_allowed_in_condition(
-            condition_statement, AWS_ACCOUNT_NUMBER
+            condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
+        )
+
+    def test_condition_parser_string_equals_aws_SourceAccount_str(self):
+        condition_statement = {
+            "StringEquals": {"aws:SourceAccount": TRUSTED_AWS_ACCOUNT_NUMBER}
+        }
+        assert is_account_only_allowed_in_condition(
+            condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
     def test_condition_parser_string_equals_aws_SourceAccount_str_not_valid(self):
-        condition_statement = {"StringEquals": {"aws:SourceAccount": "111222333444"}}
+        condition_statement = {
+            "StringEquals": {"aws:SourceAccount": NON_TRUSTED_AWS_ACCOUNT_NUMBER}
+        }
         assert not is_account_only_allowed_in_condition(
-            condition_statement, AWS_ACCOUNT_NUMBER
+            condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
     def test_condition_parser_string_like_aws_SourceAccount_list(self):
-        condition_statement = {"StringLike": {"aws:SourceAccount": ["123456789012"]}}
+        condition_statement = {
+            "StringLike": {"aws:SourceAccount": [TRUSTED_AWS_ACCOUNT_NUMBER]}
+        }
         assert is_account_only_allowed_in_condition(
-            condition_statement, AWS_ACCOUNT_NUMBER
-        )
-
-    def test_condition_parser_string_like_aws_SourceAccount_str_not_valid(self):
-        condition_statement = {"StringLike": {"aws:SourceAccount": "111222333444"}}
-        assert not is_account_only_allowed_in_condition(
-            condition_statement, AWS_ACCOUNT_NUMBER
-        )
-
-    def test_condition_parser_string_like_aws_SourceAccount_str(self):
-        condition_statement = {"StringLike": {"aws:SourceAccount": "123456789012"}}
-        assert is_account_only_allowed_in_condition(
-            condition_statement, AWS_ACCOUNT_NUMBER
+            condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
     def test_condition_parser_string_like_aws_SourceAccount_list_not_valid(self):
         condition_statement = {
-            "StringLike": {"aws:SourceAccount": ["123456789012", "111222333444"]}
+            "StringLike": {
+                "aws:SourceAccount": [
+                    TRUSTED_AWS_ACCOUNT_NUMBER,
+                    NON_TRUSTED_AWS_ACCOUNT_NUMBER,
+                ]
+            }
         }
         assert not is_account_only_allowed_in_condition(
-            condition_statement, AWS_ACCOUNT_NUMBER
+            condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
+        )
+
+    def test_condition_parser_string_like_aws_SourceAccount_str(self):
+        condition_statement = {
+            "StringLike": {"aws:SourceAccount": TRUSTED_AWS_ACCOUNT_NUMBER}
+        }
+        assert is_account_only_allowed_in_condition(
+            condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
+        )
+
+    def test_condition_parser_string_like_aws_SourceAccount_str_not_valid(self):
+        condition_statement = {
+            "StringLike": {"aws:SourceAccount": NON_TRUSTED_AWS_ACCOUNT_NUMBER}
+        }
+        assert not is_account_only_allowed_in_condition(
+            condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
     def test_condition_parser_string_equals_aws_SourceOwner_str(self):
-        condition_statement = {"StringEquals": {"aws:SourceOwner": "123456789012"}}
+        condition_statement = {
+            "StringEquals": {"aws:SourceOwner": TRUSTED_AWS_ACCOUNT_NUMBER}
+        }
         assert is_account_only_allowed_in_condition(
-            condition_statement, AWS_ACCOUNT_NUMBER
+            condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
+        )
+
+    def test_condition_parser_string_equals_aws_SourceOwner_str_not_valid(self):
+        condition_statement = {
+            "StringEquals": {"aws:SourceOwner": NON_TRUSTED_AWS_ACCOUNT_NUMBER}
+        }
+        assert not is_account_only_allowed_in_condition(
+            condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
+        )
+
+    def test_condition_parser_string_equals_aws_SourceOwner_list(self):
+        condition_statement = {
+            "StringEquals": {"aws:SourceOwner": [TRUSTED_AWS_ACCOUNT_NUMBER]}
+        }
+        assert is_account_only_allowed_in_condition(
+            condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
     def test_condition_parser_string_equals_aws_SourceOwner_list_not_valid(self):
         condition_statement = {
-            "StringEquals": {"aws:SourceOwner": ["123456789012", "111222333444"]}
+            "StringEquals": {
+                "aws:SourceOwner": [
+                    TRUSTED_AWS_ACCOUNT_NUMBER,
+                    NON_TRUSTED_AWS_ACCOUNT_NUMBER,
+                ]
+            }
         }
         assert not is_account_only_allowed_in_condition(
-            condition_statement, AWS_ACCOUNT_NUMBER
-        )
-
-    def test_condition_parser_string_equals_aws_SourceOwner_str_not_valid(self):
-        condition_statement = {"StringEquals": {"aws:SourceOwner": "111222333444"}}
-        assert not is_account_only_allowed_in_condition(
-            condition_statement, AWS_ACCOUNT_NUMBER
+            condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
     def test_condition_parser_string_like_aws_SourceOwner_list(self):
-        condition_statement = {"StringLike": {"aws:SourceOwner": ["123456789012"]}}
+        condition_statement = {
+            "StringLike": {"aws:SourceOwner": [TRUSTED_AWS_ACCOUNT_NUMBER]}
+        }
         assert is_account_only_allowed_in_condition(
-            condition_statement, AWS_ACCOUNT_NUMBER
-        )
-
-    def test_condition_parser_string_like_aws_SourceOwner_str(self):
-        condition_statement = {"StringLike": {"aws:SourceOwner": "123456789012"}}
-        assert is_account_only_allowed_in_condition(
-            condition_statement, AWS_ACCOUNT_NUMBER
+            condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
     def test_condition_parser_string_like_aws_SourceOwner_list_not_valid(self):
         condition_statement = {
-            "StringLike": {"aws:SourceOwner": ["123456789012", "111222333444"]}
+            "StringLike": {
+                "aws:SourceOwner": [
+                    TRUSTED_AWS_ACCOUNT_NUMBER,
+                    NON_TRUSTED_AWS_ACCOUNT_NUMBER,
+                ]
+            }
         }
         assert not is_account_only_allowed_in_condition(
-            condition_statement, AWS_ACCOUNT_NUMBER
+            condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
+        )
+
+    def test_condition_parser_string_like_aws_SourceOwner_str(self):
+        condition_statement = {
+            "StringLike": {"aws:SourceOwner": TRUSTED_AWS_ACCOUNT_NUMBER}
+        }
+        assert is_account_only_allowed_in_condition(
+            condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
     def test_condition_parser_string_like_aws_SourceOwner_str_not_valid(self):
-        condition_statement = {"StringLike": {"aws:SourceOwner": "111222333444"}}
+        condition_statement = {
+            "StringLike": {"aws:SourceOwner": NON_TRUSTED_AWS_ACCOUNT_NUMBER}
+        }
         assert not is_account_only_allowed_in_condition(
-            condition_statement, AWS_ACCOUNT_NUMBER
-        )
-
-    def test_condition_parser_string_equals_aws_SourceOwner_list(self):
-        condition_statement = {"StringEquals": {"aws:SourceOwner": ["123456789012"]}}
-        assert is_account_only_allowed_in_condition(
-            condition_statement, AWS_ACCOUNT_NUMBER
+            condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
     def test_condition_parser_string_equals_s3_ResourceAccount_list(self):
-        condition_statement = {"StringEquals": {"s3:ResourceAccount": ["123456789012"]}}
+        condition_statement = {
+            "StringEquals": {"s3:ResourceAccount": [TRUSTED_AWS_ACCOUNT_NUMBER]}
+        }
         assert is_account_only_allowed_in_condition(
-            condition_statement, AWS_ACCOUNT_NUMBER
-        )
-
-    def test_condition_parser_string_equals_s3_ResourceAccount_str(self):
-        condition_statement = {"StringEquals": {"s3:ResourceAccount": "123456789012"}}
-        assert is_account_only_allowed_in_condition(
-            condition_statement, AWS_ACCOUNT_NUMBER
+            condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
     def test_condition_parser_string_equals_s3_ResourceAccount_list_not_valid(self):
         condition_statement = {
-            "StringEquals": {"s3:ResourceAccount": ["123456789012", "111222333444"]}
+            "StringEquals": {
+                "s3:ResourceAccount": [
+                    TRUSTED_AWS_ACCOUNT_NUMBER,
+                    NON_TRUSTED_AWS_ACCOUNT_NUMBER,
+                ]
+            }
         }
         assert not is_account_only_allowed_in_condition(
-            condition_statement, AWS_ACCOUNT_NUMBER
+            condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
+        )
+
+    def test_condition_parser_string_equals_s3_ResourceAccount_str(self):
+        condition_statement = {
+            "StringEquals": {"s3:ResourceAccount": TRUSTED_AWS_ACCOUNT_NUMBER}
+        }
+        assert is_account_only_allowed_in_condition(
+            condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
     def test_condition_parser_string_equals_s3_ResourceAccount_str_not_valid(self):
-        condition_statement = {"StringEquals": {"s3:ResourceAccount": "111222333444"}}
+        condition_statement = {
+            "StringEquals": {"s3:ResourceAccount": NON_TRUSTED_AWS_ACCOUNT_NUMBER}
+        }
         assert not is_account_only_allowed_in_condition(
-            condition_statement, AWS_ACCOUNT_NUMBER
+            condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
     def test_condition_parser_string_equals_aws_PrincipalAccount_list(self):
         condition_statement = {
-            "StringEquals": {"aws:PrincipalAccount": ["123456789012"]}
+            "StringEquals": {"aws:PrincipalAccount": [TRUSTED_AWS_ACCOUNT_NUMBER]}
         }
         assert is_account_only_allowed_in_condition(
-            condition_statement, AWS_ACCOUNT_NUMBER
-        )
-
-    def test_condition_parser_string_equals_aws_PrincipalAccount_str(self):
-        condition_statement = {"StringEquals": {"aws:PrincipalAccount": "123456789012"}}
-        assert is_account_only_allowed_in_condition(
-            condition_statement, AWS_ACCOUNT_NUMBER
+            condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
     def test_condition_parser_string_equals_aws_PrincipalAccount_list_not_valid(self):
         condition_statement = {
-            "StringEquals": {"aws:PrincipalAccount": ["123456789012", "111222333444"]}
+            "StringEquals": {
+                "aws:PrincipalAccount": [
+                    TRUSTED_AWS_ACCOUNT_NUMBER,
+                    NON_TRUSTED_AWS_ACCOUNT_NUMBER,
+                ]
+            }
         }
         assert not is_account_only_allowed_in_condition(
-            condition_statement, AWS_ACCOUNT_NUMBER
+            condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
+        )
+
+    def test_condition_parser_string_equals_aws_PrincipalAccount_str(self):
+        condition_statement = {
+            "StringEquals": {"aws:PrincipalAccount": TRUSTED_AWS_ACCOUNT_NUMBER}
+        }
+        assert is_account_only_allowed_in_condition(
+            condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
     def test_condition_parser_string_equals_aws_PrincipalAccount_str_not_valid(self):
-        condition_statement = {"StringEquals": {"aws:PrincipalAccount": "111222333444"}}
+        condition_statement = {
+            "StringEquals": {"aws:PrincipalAccount": NON_TRUSTED_AWS_ACCOUNT_NUMBER}
+        }
         assert not is_account_only_allowed_in_condition(
-            condition_statement, AWS_ACCOUNT_NUMBER
+            condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
     def test_condition_parser_string_like_aws_PrincipalAccount_list(self):
-        condition_statement = {"StringLike": {"aws:PrincipalAccount": ["123456789012"]}}
+        condition_statement = {
+            "StringLike": {"aws:PrincipalAccount": [TRUSTED_AWS_ACCOUNT_NUMBER]}
+        }
         assert is_account_only_allowed_in_condition(
-            condition_statement, AWS_ACCOUNT_NUMBER
-        )
-
-    def test_condition_parser_string_like_aws_PrincipalAccount_str(self):
-        condition_statement = {"StringLike": {"aws:PrincipalAccount": "123456789012"}}
-        assert is_account_only_allowed_in_condition(
-            condition_statement, AWS_ACCOUNT_NUMBER
+            condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
     def test_condition_parser_string_like_aws_PrincipalAccount_list_not_valid(self):
         condition_statement = {
-            "StringLike": {"aws:PrincipalAccount": ["123456789012", "111222333444"]}
+            "StringLike": {
+                "aws:PrincipalAccount": [
+                    TRUSTED_AWS_ACCOUNT_NUMBER,
+                    NON_TRUSTED_AWS_ACCOUNT_NUMBER,
+                ]
+            }
         }
         assert not is_account_only_allowed_in_condition(
-            condition_statement, AWS_ACCOUNT_NUMBER
+            condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
+        )
+
+    def test_condition_parser_string_like_aws_PrincipalAccount_str(self):
+        condition_statement = {
+            "StringLike": {"aws:PrincipalAccount": TRUSTED_AWS_ACCOUNT_NUMBER}
+        }
+        assert is_account_only_allowed_in_condition(
+            condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
     def test_condition_parser_string_like_aws_PrincipalAccount_str_not_valid(self):
-        condition_statement = {"StringLike": {"aws:PrincipalAccount": "111222333444"}}
+        condition_statement = {
+            "StringLike": {"aws:PrincipalAccount": NON_TRUSTED_AWS_ACCOUNT_NUMBER}
+        }
         assert not is_account_only_allowed_in_condition(
-            condition_statement, AWS_ACCOUNT_NUMBER
+            condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
     def test_condition_parser_arn_like_aws_SourceArn_list(self):
         condition_statement = {
-            "ArnLike": {"aws:SourceArn": ["arn:aws:cloudtrail:*:123456789012:trail/*"]}
+            "ArnLike": {
+                "aws:SourceArn": [
+                    f"arn:aws:cloudtrail:*:{TRUSTED_AWS_ACCOUNT_NUMBER}:trail/*"
+                ]
+            }
         }
 
         assert is_account_only_allowed_in_condition(
-            condition_statement, AWS_ACCOUNT_NUMBER
+            condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
     def test_condition_parser_arn_like_aws_SourceArn_list_not_valid(self):
         condition_statement = {
             "ArnLike": {
                 "aws:SourceArn": [
-                    "arn:aws:cloudtrail:*:123456789012:trail/*",
-                    "arn:aws:cloudtrail:*:111222333444:trail/*",
+                    f"arn:aws:cloudtrail:*:{TRUSTED_AWS_ACCOUNT_NUMBER}:trail/*",
+                    f"arn:aws:cloudtrail:*:{NON_TRUSTED_AWS_ACCOUNT_NUMBER}:trail/*",
                 ]
             }
         }
 
         assert not is_account_only_allowed_in_condition(
-            condition_statement, AWS_ACCOUNT_NUMBER
+            condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
     def test_condition_parser_arn_like_aws_SourceArn_str(self):
         condition_statement = {
-            "ArnLike": {"aws:SourceArn": "arn:aws:cloudtrail:*:123456789012:trail/*"}
+            "ArnLike": {
+                "aws:SourceArn": f"arn:aws:cloudtrail:*:{TRUSTED_AWS_ACCOUNT_NUMBER}:trail/*"
+            }
         }
 
         assert is_account_only_allowed_in_condition(
-            condition_statement, AWS_ACCOUNT_NUMBER
+            condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
     def test_condition_parser_arn_like_aws_SourceArn_str_not_valid(self):
         condition_statement = {
-            "ArnLike": {"aws:SourceArn": "arn:aws:cloudtrail:*:111222333444:trail/*"}
+            "ArnLike": {
+                "aws:SourceArn": f"arn:aws:cloudtrail:*:{NON_TRUSTED_AWS_ACCOUNT_NUMBER}:trail/*"
+            }
         }
 
         assert not is_account_only_allowed_in_condition(
-            condition_statement, AWS_ACCOUNT_NUMBER
+            condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
     def test_condition_parser_arn_like_aws_PrincipalArn_list(self):
         condition_statement = {
             "ArnLike": {
-                "aws:PrincipalArn": ["arn:aws:cloudtrail:*:123456789012:trail/*"]
+                "aws:PrincipalArn": [
+                    f"arn:aws:cloudtrail:*:{TRUSTED_AWS_ACCOUNT_NUMBER}:trail/*"
+                ]
             }
         }
 
         assert is_account_only_allowed_in_condition(
-            condition_statement, AWS_ACCOUNT_NUMBER
+            condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
     def test_condition_parser_arn_like_aws_PrincipalArn_list_not_valid(self):
         condition_statement = {
             "ArnLike": {
                 "aws:PrincipalArn": [
-                    "arn:aws:cloudtrail:*:123456789012:trail/*",
-                    "arn:aws:cloudtrail:*:111222333444:trail/*",
+                    f"arn:aws:cloudtrail:*:{TRUSTED_AWS_ACCOUNT_NUMBER}:trail/*",
+                    f"arn:aws:cloudtrail:*:{NON_TRUSTED_AWS_ACCOUNT_NUMBER}:trail/*",
                 ]
             }
         }
 
         assert not is_account_only_allowed_in_condition(
-            condition_statement, AWS_ACCOUNT_NUMBER
+            condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
     def test_condition_parser_arn_like_aws_PrincipalArn_str(self):
         condition_statement = {
-            "ArnLike": {"aws:PrincipalArn": "arn:aws:cloudtrail:*:123456789012:trail/*"}
+            "ArnLike": {
+                "aws:PrincipalArn": f"arn:aws:cloudtrail:*:{TRUSTED_AWS_ACCOUNT_NUMBER}:trail/*"
+            }
         }
 
         assert is_account_only_allowed_in_condition(
-            condition_statement, AWS_ACCOUNT_NUMBER
+            condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
     def test_condition_parser_arn_like_aws_PrincipalArn_str_not_valid(self):
         condition_statement = {
-            "ArnLike": {"aws:PrincipalArn": "arn:aws:cloudtrail:*:111222333444:trail/*"}
+            "ArnLike": {
+                "aws:PrincipalArn": f"arn:aws:cloudtrail:*:{NON_TRUSTED_AWS_ACCOUNT_NUMBER}:trail/*"
+            }
         }
 
         assert not is_account_only_allowed_in_condition(
-            condition_statement, AWS_ACCOUNT_NUMBER
+            condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
     def test_condition_parser_arn_equals_aws_SourceArn_list(self):
         condition_statement = {
             "ArnEquals": {
                 "aws:SourceArn": [
-                    "arn:aws:cloudtrail:eu-west-1:123456789012:trail/test"
+                    f"arn:aws:cloudtrail:eu-west-1:{TRUSTED_AWS_ACCOUNT_NUMBER}:trail/test"
                 ]
             }
         }
 
         assert is_account_only_allowed_in_condition(
-            condition_statement, AWS_ACCOUNT_NUMBER
+            condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
     def test_condition_parser_arn_equals_aws_SourceArn_list_not_valid(self):
         condition_statement = {
             "ArnEquals": {
                 "aws:SourceArn": [
-                    "arn:aws:cloudtrail:eu-west-1:123456789012:trail/test",
-                    "arn:aws:cloudtrail:eu-west-1:111222333444:trail/test",
+                    f"arn:aws:cloudtrail:eu-west-1:{TRUSTED_AWS_ACCOUNT_NUMBER}:trail/test",
+                    f"arn:aws:cloudtrail:eu-west-1:{NON_TRUSTED_AWS_ACCOUNT_NUMBER}:trail/test",
                 ]
             }
         }
 
         assert not is_account_only_allowed_in_condition(
-            condition_statement, AWS_ACCOUNT_NUMBER
+            condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
     def test_condition_parser_arn_equals_aws_SourceArn_str(self):
         condition_statement = {
             "ArnEquals": {
-                "aws:SourceArn": "arn:aws:cloudtrail:eu-west-1:123456789012:trail/test"
+                "aws:SourceArn": f"arn:aws:cloudtrail:eu-west-1:{TRUSTED_AWS_ACCOUNT_NUMBER}:trail/test"
             }
         }
 
         assert is_account_only_allowed_in_condition(
-            condition_statement, AWS_ACCOUNT_NUMBER
+            condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
     def test_condition_parser_arn_equals_aws_SourceArn_str_not_valid(self):
         condition_statement = {
             "ArnEquals": {
-                "aws:SourceArn": "arn:aws:cloudtrail:eu-west-1:111222333444:trail/test"
+                "aws:SourceArn": f"arn:aws:cloudtrail:eu-west-1:{NON_TRUSTED_AWS_ACCOUNT_NUMBER}:trail/test"
             }
         }
 
         assert not is_account_only_allowed_in_condition(
-            condition_statement, AWS_ACCOUNT_NUMBER
+            condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
     def test_condition_parser_arn_equals_aws_PrincipalArn_list(self):
         condition_statement = {
             "ArnEquals": {
                 "aws:PrincipalArn": [
-                    "arn:aws:cloudtrail:eu-west-1:123456789012:trail/test"
+                    f"arn:aws:cloudtrail:eu-west-1:{TRUSTED_AWS_ACCOUNT_NUMBER}:trail/test"
                 ]
             }
         }
 
         assert is_account_only_allowed_in_condition(
-            condition_statement, AWS_ACCOUNT_NUMBER
+            condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
     def test_condition_parser_arn_equals_aws_PrincipalArn_list_not_valid(self):
         condition_statement = {
             "ArnEquals": {
                 "aws:PrincipalArn": [
-                    "arn:aws:cloudtrail:eu-west-1:123456789012:trail/test",
-                    "arn:aws:cloudtrail:eu-west-1:111222333444:trail/test",
+                    f"arn:aws:cloudtrail:eu-west-1:{TRUSTED_AWS_ACCOUNT_NUMBER}:trail/test",
+                    f"arn:aws:cloudtrail:eu-west-1:{NON_TRUSTED_AWS_ACCOUNT_NUMBER}:trail/test",
                 ]
             }
         }
 
         assert not is_account_only_allowed_in_condition(
-            condition_statement, AWS_ACCOUNT_NUMBER
+            condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
     def test_condition_parser_arn_equals_aws_PrincipalArn_str(self):
         condition_statement = {
             "ArnEquals": {
-                "aws:PrincipalArn": "arn:aws:cloudtrail:eu-west-1:123456789012:trail/test"
+                "aws:PrincipalArn": f"arn:aws:cloudtrail:eu-west-1:{TRUSTED_AWS_ACCOUNT_NUMBER}:trail/test"
             }
         }
 
         assert is_account_only_allowed_in_condition(
-            condition_statement, AWS_ACCOUNT_NUMBER
+            condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
     def test_condition_parser_arn_equals_aws_PrincipalArn_str_not_valid(self):
         condition_statement = {
             "ArnEquals": {
-                "aws:PrincipalArn": "arn:aws:cloudtrail:eu-west-1:111222333444:trail/test"
+                "aws:PrincipalArn": f"arn:aws:cloudtrail:eu-west-1:{NON_TRUSTED_AWS_ACCOUNT_NUMBER}:trail/test"
             }
         }
 
         assert not is_account_only_allowed_in_condition(
-            condition_statement, AWS_ACCOUNT_NUMBER
+            condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
     def test_condition_parser_string_like_aws_SourceArn_list(self):
         condition_statement = {
             "StringLike": {
                 "aws:SourceArn": [
-                    "arn:aws:cloudtrail:eu-west-1:123456789012:trail/test"
+                    f"arn:aws:cloudtrail:eu-west-1:{TRUSTED_AWS_ACCOUNT_NUMBER}:trail/test"
                 ]
             }
         }
 
         assert is_account_only_allowed_in_condition(
-            condition_statement, AWS_ACCOUNT_NUMBER
+            condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
     def test_condition_parser_string_like_aws_SourceArn_list_not_valid(self):
         condition_statement = {
             "StringLike": {
                 "aws:SourceArn": [
-                    "arn:aws:cloudtrail:eu-west-1:123456789012:trail/test",
-                    "arn:aws:cloudtrail:eu-west-1:111222333444:trail/test",
+                    f"arn:aws:cloudtrail:eu-west-1:{TRUSTED_AWS_ACCOUNT_NUMBER}:trail/test",
+                    f"arn:aws:cloudtrail:eu-west-1:{NON_TRUSTED_AWS_ACCOUNT_NUMBER}:trail/test",
                 ]
             }
         }
 
         assert not is_account_only_allowed_in_condition(
-            condition_statement, AWS_ACCOUNT_NUMBER
+            condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
     def test_condition_parser_string_like_aws_SourceArn_str(self):
         condition_statement = {
             "StringLike": {
-                "aws:SourceArn": "arn:aws:cloudtrail:eu-west-1:123456789012:trail/test"
+                "aws:SourceArn": f"arn:aws:cloudtrail:eu-west-1:{TRUSTED_AWS_ACCOUNT_NUMBER}:trail/test"
             }
         }
 
         assert is_account_only_allowed_in_condition(
-            condition_statement, AWS_ACCOUNT_NUMBER
+            condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
     def test_condition_parser_string_like_aws_SourceArn_str_not_valid(self):
         condition_statement = {
             "StringLike": {
-                "aws:SourceArn": "arn:aws:cloudtrail:eu-west-1:111222333444:trail/test"
+                "aws:SourceArn": f"arn:aws:cloudtrail:eu-west-1:{NON_TRUSTED_AWS_ACCOUNT_NUMBER}:trail/test"
             }
         }
 
         assert not is_account_only_allowed_in_condition(
-            condition_statement, AWS_ACCOUNT_NUMBER
+            condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
     def test_condition_parser_string_like_aws_PrincipalArn_list(self):
         condition_statement = {
             "StringLike": {
                 "aws:PrincipalArn": [
-                    "arn:aws:cloudtrail:eu-west-1:123456789012:trail/test"
+                    f"arn:aws:cloudtrail:eu-west-1:{TRUSTED_AWS_ACCOUNT_NUMBER}:trail/test"
                 ]
             }
         }
 
         assert is_account_only_allowed_in_condition(
-            condition_statement, AWS_ACCOUNT_NUMBER
+            condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
     def test_condition_parser_string_like_aws_PrincipalArn_list_not_valid(self):
         condition_statement = {
             "StringLike": {
                 "aws:PrincipalArn": [
-                    "arn:aws:cloudtrail:eu-west-1:123456789012:trail/test",
-                    "arn:aws:cloudtrail:eu-west-1:111222333444:trail/test",
+                    f"arn:aws:cloudtrail:eu-west-1:{TRUSTED_AWS_ACCOUNT_NUMBER}:trail/test",
+                    f"arn:aws:cloudtrail:eu-west-1:{NON_TRUSTED_AWS_ACCOUNT_NUMBER}:trail/test",
                 ]
             }
         }
 
         assert not is_account_only_allowed_in_condition(
-            condition_statement, AWS_ACCOUNT_NUMBER
+            condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
     def test_condition_parser_string_like_aws_PrincipalArn_str(self):
         condition_statement = {
             "StringLike": {
-                "aws:PrincipalArn": "arn:aws:cloudtrail:eu-west-1:123456789012:trail/test"
+                "aws:PrincipalArn": f"arn:aws:cloudtrail:eu-west-1:{TRUSTED_AWS_ACCOUNT_NUMBER}:trail/test"
             }
         }
 
         assert is_account_only_allowed_in_condition(
-            condition_statement, AWS_ACCOUNT_NUMBER
+            condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
     def test_condition_parser_string_like_aws_PrincipalArn_str_not_valid(self):
         condition_statement = {
             "StringLike": {
-                "aws:PrincipalArn": "arn:aws:cloudtrail:eu-west-1:111222333444:trail/test"
+                "aws:PrincipalArn": f"arn:aws:cloudtrail:eu-west-1:{NON_TRUSTED_AWS_ACCOUNT_NUMBER}:trail/test"
             }
         }
 
         assert not is_account_only_allowed_in_condition(
-            condition_statement, AWS_ACCOUNT_NUMBER
+            condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
     def test_condition_parser_string_equals_aws_ResourceAccount_list(self):
         condition_statement = {
-            "StringEquals": {"aws:ResourceAccount": ["123456789012"]}
+            "StringEquals": {"aws:ResourceAccount": [TRUSTED_AWS_ACCOUNT_NUMBER]}
         }
         assert is_account_only_allowed_in_condition(
-            condition_statement, AWS_ACCOUNT_NUMBER
-        )
-
-    def test_condition_parser_string_equals_aws_ResourceAccount_str(self):
-        condition_statement = {"StringEquals": {"aws:ResourceAccount": "123456789012"}}
-        assert is_account_only_allowed_in_condition(
-            condition_statement, AWS_ACCOUNT_NUMBER
+            condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
     def test_condition_parser_string_equals_aws_ResourceAccount_list_not_valid(self):
         condition_statement = {
-            "StringEquals": {"aws:ResourceAccount": ["123456789012", "111222333444"]}
+            "StringEquals": {
+                "aws:ResourceAccount": [
+                    TRUSTED_AWS_ACCOUNT_NUMBER,
+                    NON_TRUSTED_AWS_ACCOUNT_NUMBER,
+                ]
+            }
         }
         assert not is_account_only_allowed_in_condition(
-            condition_statement, AWS_ACCOUNT_NUMBER
+            condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
+        )
+
+    def test_condition_parser_string_equals_aws_ResourceAccount_str(self):
+        condition_statement = {
+            "StringEquals": {"aws:ResourceAccount": TRUSTED_AWS_ACCOUNT_NUMBER}
+        }
+        assert is_account_only_allowed_in_condition(
+            condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
     def test_condition_parser_string_equals_aws_ResourceAccount_str_not_valid(self):
-        condition_statement = {"StringEquals": {"aws:ResourceAccount": "111222333444"}}
+        condition_statement = {
+            "StringEquals": {"aws:ResourceAccount": NON_TRUSTED_AWS_ACCOUNT_NUMBER}
+        }
         assert not is_account_only_allowed_in_condition(
-            condition_statement, AWS_ACCOUNT_NUMBER
+            condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
     def test_condition_parser_string_like_aws_ResourceAccount_list(self):
-        condition_statement = {"StringLike": {"aws:ResourceAccount": ["123456789012"]}}
+        condition_statement = {
+            "StringLike": {"aws:ResourceAccount": [TRUSTED_AWS_ACCOUNT_NUMBER]}
+        }
         assert is_account_only_allowed_in_condition(
-            condition_statement, AWS_ACCOUNT_NUMBER
-        )
-
-    def test_condition_parser_string_like_aws_ResourceAccount_str(self):
-        condition_statement = {"StringLike": {"aws:ResourceAccount": "123456789012"}}
-        assert is_account_only_allowed_in_condition(
-            condition_statement, AWS_ACCOUNT_NUMBER
+            condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
     def test_condition_parser_string_like_aws_ResourceAccount_list_not_valid(self):
         condition_statement = {
-            "StringLike": {"aws:ResourceAccount": ["123456789012", "111222333444"]}
+            "StringLike": {
+                "aws:ResourceAccount": [
+                    TRUSTED_AWS_ACCOUNT_NUMBER,
+                    NON_TRUSTED_AWS_ACCOUNT_NUMBER,
+                ]
+            }
         }
         assert not is_account_only_allowed_in_condition(
-            condition_statement, AWS_ACCOUNT_NUMBER
+            condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
+        )
+
+    def test_condition_parser_string_like_aws_ResourceAccount_str(self):
+        condition_statement = {
+            "StringLike": {"aws:ResourceAccount": TRUSTED_AWS_ACCOUNT_NUMBER}
+        }
+        assert is_account_only_allowed_in_condition(
+            condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
     def test_condition_parser_string_like_aws_ResourceAccount_str_not_valid(self):
-        condition_statement = {"StringLike": {"aws:ResourceAccount": "111222333444"}}
+        condition_statement = {
+            "StringLike": {"aws:ResourceAccount": NON_TRUSTED_AWS_ACCOUNT_NUMBER}
+        }
         assert not is_account_only_allowed_in_condition(
-            condition_statement, AWS_ACCOUNT_NUMBER
+            condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
