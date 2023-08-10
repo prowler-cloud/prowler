@@ -1,6 +1,6 @@
 # Unit Tests
 
-Unit testing for the Prowler checks varies between each provider supported.
+The unit tests for the Prowler checks varies between each provider supported.
 
 Here we left some good reads about unit testing and things we've learnt through all the process.
 
@@ -120,10 +120,6 @@ def set_mocked_audit_info(self):
 
   return audit_info
 ```
-
-### Services
-
-Coming soon ...
 ### Checks
 #### API calls covered
 
@@ -341,11 +337,37 @@ Note that this does not use Moto, to keep it simple, but if you use any `moto`-d
 
 > The above code comes from here https://docs.getmoto.org/en/latest/docs/services/patching_other_services.html
 
-## GCP
+#### Mocking more than one service
+
+If the test your are creating belongs to a check that uses more than one provider service, you should mock each of the services used. For example, the check `cloudtrail_logs_s3_bucket_access_logging_enabled` requires the CloudTrail and the S3 client, hence the service's mock part of the test will be as follows:
+
+
+```python
+with mock.patch(
+    "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+    new=mock_audit_info,
+), mock.patch(
+    "prowler.providers.aws.services.cloudtrail.cloudtrail_logs_s3_bucket_access_logging_enabled.cloudtrail_logs_s3_bucket_access_logging_enabled.cloudtrail_client",
+    new=Cloudtrail(mock_audit_info),
+), mock.patch(
+    "prowler.providers.aws.services.cloudtrail.cloudtrail_logs_s3_bucket_access_logging_enabled.cloudtrail_logs_s3_bucket_access_logging_enabled.s3_client",
+    new=S3(mock_audit_info),
+):
+```
+
+
+As you can see in the above code, it is required to mock the AWS audit info and both services used.
 
 ### Services
 
-Coming soon ...
+For testing the AWS services we have to follow the same logic as with the AWS checks, we have to check if the AWS API calls made by the service are covered by Moto and we have to test the service `__init__` to verifiy that the information is being correctly retrieved.
+
+The service tests could act as *Integration Tests* since we test how the service retrieves the information from the provider, but since Moto or the custom mock objects mocks that calls this test will fall into *Unit Tests*.
+
+Please refer to the [AWS checks tests](./unit-testing.md#checks) for more information on how to create tests and check the existing services tests [here](https://github.com/prowler-cloud/prowler/tree/master/tests/providers/aws/services).
+
+## GCP
+
 ### Checks
 
 For the GCP Provider we don't have any library to mock out the API calls we use. So in this scenario we inject the objects in the service client using [MagicMock](https://docs.python.org/3/library/unittest.mock.html#unittest.mock.MagicMock).
@@ -420,11 +442,12 @@ class Test_compute_firewall_rdp_access_from_the_internet_allowed:
             assert result[0].location = compute_client.region
 ```
 
-## Azure
-
 ### Services
 
 Coming soon ...
+
+## Azure
+
 ### Checks
 
 For the Azure Provider we don't have any library to mock out the API calls we use. So in this scenario we inject the objects in the service client using [MagicMock](https://docs.python.org/3/library/unittest.mock.html#unittest.mock.MagicMock).
@@ -502,3 +525,7 @@ class Test_defender_ensure_defender_for_arm_is_on:
             assert result[0].resource_name == "Defender plan ARM"
             assert result[0].resource_id == resource_id
 ```
+
+### Services
+
+Coming soon ...

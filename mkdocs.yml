@@ -65,7 +65,9 @@ nav:
       - Compliance: tutorials/developer-guide/security-compliance-framework.md
       - Outputs: tutorials/developer-guide/outputs.md
       - Integrations: tutorials/developer-guide/integrations.md
-      - Testing: tutorials/developer-guide/testing.md
+      - Testing:
+          - Unit Tests: tutorials/developer-guide/unit-testing.md
+          - Integration Tests: tutorials/developer-guide/integration-testing.md
   - Security: security.md
   - Contact Us: contact.md
   - Troubleshooting: troubleshooting.md
