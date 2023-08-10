@@ -195,7 +195,7 @@ class IAM(AWSService):
                 uppercase=password_policy["RequireUppercaseCharacters"],
                 lowercase=password_policy["RequireLowercaseCharacters"],
                 allow_change=password_policy["AllowUsersToChangePassword"],
-                expiration=password_policy["RequireNumbers"],
+                expiration=password_policy["ExpirePasswords"],
                 max_age=max_age,
                 reuse_prevention=reuse_prevention,
                 hard_expiry=hard_expiry,
