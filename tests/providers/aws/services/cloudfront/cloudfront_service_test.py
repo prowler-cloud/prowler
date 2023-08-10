@@ -8,6 +8,7 @@ from moto.core import DEFAULT_ACCOUNT_ID
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.aws.services.cloudfront.cloudfront_service import (
     CloudFront,
+    GeoRestrictionType,
     ViewerProtocolPolicy,
 )
 from prowler.providers.common.models import Audit_Metadata
@@ -243,7 +244,7 @@ class Test_CloudFront_Service:
         )
         assert (
             cloudfront.distributions[cloudfront_distribution_id].geo_restriction_type
-            == "blacklist"
+            == GeoRestrictionType.blacklist
         )
         assert (
             cloudfront.distributions[cloudfront_distribution_id].web_acl_id
