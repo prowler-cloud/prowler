@@ -116,7 +116,7 @@ class DirectoryService(AWSService):
                                 EventTopics(
                                     topic_arn=event_topic["TopicArn"],
                                     topic_name=event_topic["TopicName"],
-                                    status=EventTopicStatus(event_topic["Status"]),
+                                    status=event_topic["Status"],
                                     created_date_time=event_topic["CreatedDateTime"],
                                 )
                             )
@@ -149,13 +149,11 @@ class DirectoryService(AWSService):
                                     Certificate(
                                         id=certificate_info["CertificateId"],
                                         common_name=certificate_info["CommonName"],
-                                        state=CertificateState(
-                                            certificate_info["State"]
-                                        ),
+                                        state=certificate_info["State"],
                                         expiry_date_time=certificate_info[
                                             "ExpiryDateTime"
                                         ],
-                                        type=CertificateType(certificate_info["Type"]),
+                                        type=certificate_info["Type"],
                                     )
                                 )
                         self.directories[directory.id].certificates = certificates
