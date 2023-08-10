@@ -38,15 +38,17 @@ class DirectoryService(AWSService):
                     ):
                         directory_id = directory["DirectoryId"]
                         directory_name = directory["Name"]
-                        directory_type = directory["Type"]
+                        directory_type = DirectoryType(directory["Type"])
                         # Radius Configuration
                         radius_authentication_protocol = (
-                            directory["RadiusSettings"]["AuthenticationProtocol"]
+                            AuthenticationProtocol(
+                                directory["RadiusSettings"]["AuthenticationProtocol"]
+                            )
                             if "RadiusSettings" in directory
                             else None
                         )
                         radius_status = (
-                            directory["RadiusStatus"]
+                            RadiusStatus(directory["RadiusStatus"])
                             if "RadiusStatus" in directory
                             else None
                         )
@@ -114,7 +116,7 @@ class DirectoryService(AWSService):
                                 EventTopics(
                                     topic_arn=event_topic["TopicArn"],
                                     topic_name=event_topic["TopicName"],
-                                    status=event_topic["Status"],
+                                    status=EventTopicStatus(event_topic["Status"]),
                                     created_date_time=event_topic["CreatedDateTime"],
                                 )
                             )
@@ -147,11 +149,13 @@ class DirectoryService(AWSService):
                                     Certificate(
                                         id=certificate_info["CertificateId"],
                                         common_name=certificate_info["CommonName"],
-                                        state=certificate_info["State"],
+                                        state=CertificateState(
+                                            certificate_info["State"]
+                                        ),
                                         expiry_date_time=certificate_info[
                                             "ExpiryDateTime"
                                         ],
-                                        type=certificate_info["Type"],
+                                        type=CertificateType(certificate_info["Type"]),
                                     )
                                 )
                         self.directories[directory.id].certificates = certificates

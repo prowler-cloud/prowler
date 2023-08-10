@@ -86,6 +86,6 @@ class emr_cluster_publicly_accesible(Check):
                             else ""
                         )
 
-                    findings.append(report)
+                findings.append(report)
 
         return findings
