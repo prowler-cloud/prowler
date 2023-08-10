@@ -1,11 +1,12 @@
 from prowler.lib.logger import logger
+from prowler.providers.azure.lib.audit_info.models import Azure_Audit_Info
 
 
 class AzureService:
     def __init__(
         self,
-        service,
-        audit_info,
+        service: str,
+        audit_info: Azure_Audit_Info,
     ):
         self.clients = self.__set_clients__(
             audit_info.identity.subscriptions, audit_info.credentials, service

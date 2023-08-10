@@ -4,6 +4,7 @@ from prowler.providers.aws.aws_provider import (
     generate_regional_clients,
     get_default_region,
 )
+from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 
 
 class AWSService:
@@ -14,7 +15,7 @@ class AWSService:
     - Also handles if the AWS Service is Global
     """
 
-    def __init__(self, service, audit_info, global_service=False):
+    def __init__(self, service: str, audit_info: AWS_Audit_Info, global_service=False):
         # Audit Information
         self.audit_info = audit_info
         self.audited_account = audit_info.audited_account
