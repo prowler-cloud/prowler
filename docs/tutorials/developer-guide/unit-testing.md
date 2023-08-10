@@ -126,10 +126,14 @@ def set_mocked_audit_info(self):
   return audit_info
 ```
 ### Checks
+
+For the AWS tests examples we are going to use the tests for the `iam_password_policy_uppercase` check.
+
+This section is going to be divided based on the API coverage of the [Moto](https://github.com/getmoto/moto) library.
+
 #### API calls covered
 
 If the [Moto](https://github.com/getmoto/moto) library covers the API calls we want to test we can use the `@mock_<service>` decorator which will mocked out all the API calls made to AWS keeping the state within the code decorated, in this case the test function.
-
 
 ```python
 # We need to import the unittest.mock to allow us to patch some objects
@@ -210,7 +214,7 @@ class Test_iam_password_policy_uppercase:
 
 #### API calls not covered
 
-If the IAM service for the check's we want to test is not covered by Moto we have to inject the objects in the service client using [MagicMock](https://docs.python.org/3/library/unittest.mock.html#unittest.mock.MagicMock).
+If the IAM service for the check's we want to test is not covered by Moto we have to inject the objects in the service client using [MagicMock](https://docs.python.org/3/library/unittest.mock.html#unittest.mock.MagicMock) because we cannot instantiate the service since it will make real calls to the AWS APIs.
 
 > The following example uses the IAM GetAccountPasswordPolicy which is covered by Moto but this is only for demonstration purposes.
 
@@ -288,10 +292,10 @@ class Test_iam_password_policy_uppercase:
 
 #### API calls partially covered
 
-If the API calls we want to use in the service are not covered by the Moto decorator we have to create our own mocked API calls.
+If the API calls we want to use in the service are partially covered by the Moto decorator we have to create our own mocked API calls to use it in combination.
 
+To do so, you need to mock the `botocore.client.BaseClient._make_api_call` function, which is the Boto3 function in charge of making the real API call to the AWS APIs, using `mock.patch <https://docs.python.org/3/library/unittest.mock.html#patch>`:
 
-To do so, you need to mock the `botocore.client.BaseClient._make_api_call` function using `mock.patch <https://docs.python.org/3/library/unittest.mock.html#patch>`:
 
 ```python
 
