@@ -17,7 +17,7 @@ class iam_role_cross_service_confused_deputy_prevention(Check):
                 report.resource_id = role.name
                 report.resource_tags = role.tags
                 report.status = "FAIL"
-                report.status_extended = f"IAM Service Role {role.name} does not prevent against a cross-service confused deputy attack"
+                report.status_extended = f"IAM Service Role {role.name} does not prevent against a cross-service confused deputy attack."
                 for statement in role.assume_role_policy["Statement"]:
                     if (
                         statement["Effect"] == "Allow"
@@ -35,7 +35,7 @@ class iam_role_cross_service_confused_deputy_prevention(Check):
                         )
                     ):
                         report.status = "PASS"
-                        report.status_extended = f"IAM Service Role {role.name} prevents against a cross-service confused deputy attack"
+                        report.status_extended = f"IAM Service Role {role.name} prevents against a cross-service confused deputy attack."
                         break
 
                 findings.append(report)

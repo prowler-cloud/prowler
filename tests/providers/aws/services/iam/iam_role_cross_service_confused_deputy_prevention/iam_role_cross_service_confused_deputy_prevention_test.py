@@ -147,7 +147,7 @@ class Test_iam_role_cross_service_confused_deputy_prevention:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "IAM Service Role test does not prevent against a cross-service confused deputy attack"
+                == "IAM Service Role test does not prevent against a cross-service confused deputy attack."
             )
             assert result[0].resource_id == "test"
             assert result[0].resource_arn == response["Role"]["Arn"]
@@ -195,7 +195,7 @@ class Test_iam_role_cross_service_confused_deputy_prevention:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "IAM Service Role test prevents against a cross-service confused deputy attack"
+                == "IAM Service Role test prevents against a cross-service confused deputy attack."
             )
             assert result[0].resource_id == "test"
             assert result[0].resource_arn == response["Role"]["Arn"]
@@ -245,7 +245,7 @@ class Test_iam_role_cross_service_confused_deputy_prevention:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "IAM Service Role test prevents against a cross-service confused deputy attack"
+                == "IAM Service Role test prevents against a cross-service confused deputy attack."
             )
             assert result[0].resource_id == "test"
             assert result[0].resource_arn == response["Role"]["Arn"]
@@ -295,7 +295,7 @@ class Test_iam_role_cross_service_confused_deputy_prevention:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "IAM Service Role test prevents against a cross-service confused deputy attack"
+                == "IAM Service Role test prevents against a cross-service confused deputy attack."
             )
             assert result[0].resource_id == "test"
             assert result[0].resource_arn == response["Role"]["Arn"]
@@ -345,7 +345,7 @@ class Test_iam_role_cross_service_confused_deputy_prevention:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "IAM Service Role test prevents against a cross-service confused deputy attack"
+                == "IAM Service Role test prevents against a cross-service confused deputy attack."
             )
             assert result[0].resource_id == "test"
             assert result[0].resource_arn == response["Role"]["Arn"]

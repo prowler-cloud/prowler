@@ -24,6 +24,6 @@ class iam_password_policy_symbol(Check):
                 )
         else:
             report.status = "FAIL"
-            report.status_extended = "There is no password policy."
+            report.status_extended = "Password policy cannot be found."
         findings.append(report)
         return findings

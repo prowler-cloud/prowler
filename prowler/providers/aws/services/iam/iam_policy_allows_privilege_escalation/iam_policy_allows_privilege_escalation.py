@@ -100,7 +100,7 @@ class iam_policy_allows_privilege_escalation(Check):
                 report.region = iam_client.region
                 report.resource_tags = policy.tags
                 report.status = "PASS"
-                report.status_extended = f"Custom Policy {report.resource_arn} does not allow privilege escalation"
+                report.status_extended = f"Custom Policy {report.resource_arn} does not allow privilege escalation."
 
                 # List of policy actions
                 allowed_actions = set()
@@ -186,6 +186,9 @@ class iam_policy_allows_privilege_escalation(Check):
                                 + " "
                             )
 
-                        report.status_extended = f"Custom Policy {report.resource_arn} allows privilege escalation using the following actions: {policies_affected}".rstrip()
+                        report.status_extended = (
+                            f"Custom Policy {report.resource_arn} allows privilege escalation using the following actions: {policies_affected}".rstrip()
+                            + "."
+                        )
                 findings.append(report)
         return findings
