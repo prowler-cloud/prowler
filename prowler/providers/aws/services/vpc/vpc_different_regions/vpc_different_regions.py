@@ -16,7 +16,7 @@ class vpc_different_regions(Check):
         report.resource_id = vpc_client.audited_account
         report.resource_arn = vpc_client.audited_account_arn
         report.status = "FAIL"
-        report.status_extended = "VPCs found only in one region"
+        report.status_extended = "VPCs found only in one region."
         if len(vpc_regions) > 1:
             report.status = "PASS"
             report.status_extended = "VPCs found in more than one region."

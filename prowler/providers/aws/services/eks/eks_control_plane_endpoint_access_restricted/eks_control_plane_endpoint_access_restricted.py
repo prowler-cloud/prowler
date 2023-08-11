@@ -13,14 +13,14 @@ class eks_control_plane_endpoint_access_restricted(Check):
             report.resource_tags = cluster.tags
             report.status = "PASS"
             report.status_extended = (
-                f"Cluster endpoint access is private for EKS cluster {cluster.name}"
+                f"Cluster endpoint access is private for EKS cluster {cluster.name}."
             )
             if cluster.endpoint_public_access and not cluster.endpoint_private_access:
                 if "0.0.0.0/0" in cluster.public_access_cidrs:
                     report.status = "FAIL"
-                    report.status_extended = f"Cluster control plane access is not restricted for EKS cluster {cluster.name}"
+                    report.status_extended = f"Cluster control plane access is not restricted for EKS cluster {cluster.name}."
                 else:
-                    report.status_extended = f"Cluster control plane access is restricted for EKS cluster {cluster.name}"
+                    report.status_extended = f"Cluster control plane access is restricted for EKS cluster {cluster.name}."
             findings.append(report)
 
         return findings

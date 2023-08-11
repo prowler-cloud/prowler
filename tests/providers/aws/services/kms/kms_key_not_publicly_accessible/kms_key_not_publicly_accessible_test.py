@@ -147,7 +147,7 @@ class Test_kms_key_not_publicly_accessible:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"KMS key {key['KeyId']} may be publicly accessible!"
+                == f"KMS key {key['KeyId']} may be publicly accessible."
             )
             assert result[0].resource_id == key["KeyId"]
             assert result[0].resource_arn == key["Arn"]

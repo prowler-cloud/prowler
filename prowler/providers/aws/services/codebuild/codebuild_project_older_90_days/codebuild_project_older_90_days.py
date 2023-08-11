@@ -21,7 +21,7 @@ class codebuild_project_older_90_days(Check):
             else:
                 report.status = "FAIL"
                 report.status_extended = (
-                    f"CodeBuild project {project.name} has never been built"
+                    f"CodeBuild project {project.name} has never been built."
                 )
 
             findings.append(report)

@@ -13,12 +13,12 @@ class redshift_cluster_automated_snapshot(Check):
             report.resource_tags = cluster.tags
             report.status = "PASS"
             report.status_extended = (
-                f"Redshift Cluster {cluster.arn} has automated snapshots"
+                f"Redshift Cluster {cluster.arn} has automated snapshots."
             )
             if not cluster.cluster_snapshots:
                 report.status = "FAIL"
                 report.status_extended = (
-                    f"Redshift Cluster {cluster.arn} has automated snapshots disabled"
+                    f"Redshift Cluster {cluster.arn} has automated snapshots disabled."
                 )
 
             findings.append(report)

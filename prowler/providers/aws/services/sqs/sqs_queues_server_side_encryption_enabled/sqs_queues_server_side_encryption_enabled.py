@@ -13,12 +13,12 @@ class sqs_queues_server_side_encryption_enabled(Check):
             report.resource_tags = queue.tags
             report.status = "PASS"
             report.status_extended = (
-                f"SQS queue {queue.id} is using Server Side Encryption"
+                f"SQS queue {queue.id} is using Server Side Encryption."
             )
             if not queue.kms_key_id:
                 report.status = "FAIL"
                 report.status_extended = (
-                    f"SQS queue {queue.id} is not using Server Side Encryption"
+                    f"SQS queue {queue.id} is not using Server Side Encryption."
                 )
             findings.append(report)
 

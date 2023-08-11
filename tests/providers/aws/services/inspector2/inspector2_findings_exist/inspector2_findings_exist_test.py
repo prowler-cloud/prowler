@@ -68,7 +68,9 @@ class Test_inspector2_findings_exist:
 
             assert len(result) == 1
             assert result[0].status == "PASS"
-            assert result[0].status_extended == "Inspector2 is enabled with no findings"
+            assert (
+                result[0].status_extended == "Inspector2 is enabled with no findings."
+            )
             assert result[0].resource_id == AWS_ACCOUNT_ID
             assert result[0].resource_arn == f"arn:aws:iam::{AWS_ACCOUNT_ID}:root"
             assert result[0].region == AWS_REGION
@@ -112,7 +114,7 @@ class Test_inspector2_findings_exist:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "Inspector2 is enabled with no active findings"
+                == "Inspector2 is enabled with no active findings."
             )
             assert result[0].resource_id == AWS_ACCOUNT_ID
             assert result[0].resource_arn == f"arn:aws:iam::{AWS_ACCOUNT_ID}:root"

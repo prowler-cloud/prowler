@@ -14,10 +14,10 @@ class emr_cluster_account_public_block_enabled(Check):
                 region
             ].block_public_security_group_rules:
                 report.status = "PASS"
-                report.status_extended = "EMR Account has Block Public Access enabled"
+                report.status_extended = "EMR Account has Block Public Access enabled."
             else:
                 report.status = "FAIL"
-                report.status_extended = "EMR Account has Block Public Access disabled"
+                report.status_extended = "EMR Account has Block Public Access disabled."
 
             findings.append(report)
 

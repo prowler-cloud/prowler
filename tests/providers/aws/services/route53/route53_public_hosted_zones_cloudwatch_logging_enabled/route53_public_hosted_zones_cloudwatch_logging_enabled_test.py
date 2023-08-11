@@ -72,7 +72,7 @@ class Test_route53_public_hosted_zones_cloudwatch_logging_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Route53 Public Hosted Zone {hosted_zone_id} has query logging enabled in Log Group {log_group_arn}"
+                == f"Route53 Public Hosted Zone {hosted_zone_id} has query logging enabled in Log Group {log_group_arn}."
             )
 
     def test_hosted_zone__public_logging_disabled(self):
@@ -110,7 +110,7 @@ class Test_route53_public_hosted_zones_cloudwatch_logging_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Route53 Public Hosted Zone {hosted_zone_id} has query logging disabled"
+                == f"Route53 Public Hosted Zone {hosted_zone_id} has query logging disabled."
             )
 
     def test_hosted_zone__private(self):

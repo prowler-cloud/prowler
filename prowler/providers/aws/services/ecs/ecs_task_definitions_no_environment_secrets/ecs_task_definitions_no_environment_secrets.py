@@ -19,7 +19,7 @@ class ecs_task_definitions_no_environment_secrets(Check):
             report.resource_arn = task_definition.arn
             report.resource_tags = task_definition.tags
             report.status = "PASS"
-            report.status_extended = f"No secrets found in variables of ECS task definition {task_definition.name} with revision {task_definition.revision}"
+            report.status_extended = f"No secrets found in variables of ECS task definition {task_definition.name} with revision {task_definition.revision}."
             if task_definition.environment_variables:
                 dump_env_vars = {}
                 for env_var in task_definition.environment_variables:
@@ -44,7 +44,7 @@ class ecs_task_definitions_no_environment_secrets(Check):
                         ]
                     )
                     report.status = "FAIL"
-                    report.status_extended = f"Potential secret found in variables of ECS task definition {task_definition.name} with revision {task_definition.revision} -> {secrets_string}"
+                    report.status_extended = f"Potential secret found in variables of ECS task definition {task_definition.name} with revision {task_definition.revision} -> {secrets_string}."
 
                 os.remove(temp_env_data_file.name)
 

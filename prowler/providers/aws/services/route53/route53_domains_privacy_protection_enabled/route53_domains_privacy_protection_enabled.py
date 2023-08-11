@@ -16,12 +16,12 @@ class route53_domains_privacy_protection_enabled(Check):
             if domain.admin_privacy:
                 report.status = "PASS"
                 report.status_extended = (
-                    f"Contact information is private for the {domain.name} domain"
+                    f"Contact information is private for the {domain.name} domain."
                 )
             else:
                 report.status = "FAIL"
                 report.status_extended = (
-                    f"Contact information is public for the {domain.name} domain"
+                    f"Contact information is public for the {domain.name} domain."
                 )
 
             findings.append(report)

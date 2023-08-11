@@ -13,12 +13,12 @@ class eks_endpoints_not_publicly_accessible(Check):
             report.resource_tags = cluster.tags
             report.status = "PASS"
             report.status_extended = (
-                f"Cluster endpoint access is private for EKS cluster {cluster.name}"
+                f"Cluster endpoint access is private for EKS cluster {cluster.name}."
             )
             if cluster.endpoint_public_access and not cluster.endpoint_private_access:
                 report.status = "FAIL"
                 report.status_extended = (
-                    f"Cluster endpoint access is public for EKS cluster {cluster.name}"
+                    f"Cluster endpoint access is public for EKS cluster {cluster.name}."
                 )
             findings.append(report)
 

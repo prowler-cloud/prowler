@@ -15,12 +15,12 @@ class shield_advanced_protection_in_internet_facing_load_balancers(Check):
                     report.resource_arn = elbv2.arn
                     report.resource_tags = elbv2.tags
                     report.status = "FAIL"
-                    report.status_extended = f"ELBv2 ALB {elbv2.name} is not protected by AWS Shield Advanced"
+                    report.status_extended = f"ELBv2 ALB {elbv2.name} is not protected by AWS Shield Advanced."
 
                     for protection in shield_client.protections.values():
                         if elbv2.arn == protection.resource_arn:
                             report.status = "PASS"
-                            report.status_extended = f"ELBv2 ALB {elbv2.name} is protected by AWS Shield Advanced"
+                            report.status_extended = f"ELBv2 ALB {elbv2.name} is protected by AWS Shield Advanced."
                             break
 
                     findings.append(report)

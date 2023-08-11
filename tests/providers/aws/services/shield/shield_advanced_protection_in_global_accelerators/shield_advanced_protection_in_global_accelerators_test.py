@@ -86,7 +86,7 @@ class Test_shield_advanced_protection_in_global_accelerators:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Global Accelerator {accelerator_id} is protected by AWS Shield Advanced"
+                == f"Global Accelerator {accelerator_id} is protected by AWS Shield Advanced."
             )
 
     def test_shield_enabled_globalaccelerator_not_protected(self):
@@ -132,7 +132,7 @@ class Test_shield_advanced_protection_in_global_accelerators:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Global Accelerator {accelerator_id} is not protected by AWS Shield Advanced"
+                == f"Global Accelerator {accelerator_id} is not protected by AWS Shield Advanced."
             )
 
     def test_shield_disabled_globalaccelerator_not_protected(self):

@@ -13,7 +13,7 @@ class eks_control_plane_logging_all_types_enabled(Check):
             report.resource_tags = cluster.tags
             report.status = "FAIL"
             report.status_extended = (
-                f"Control plane logging is not enabled for EKS cluster {cluster.name}"
+                f"Control plane logging is not enabled for EKS cluster {cluster.name}."
             )
             if cluster.logging and cluster.logging.enabled:
                 if all(
@@ -27,9 +27,9 @@ class eks_control_plane_logging_all_types_enabled(Check):
                     ]
                 ):
                     report.status = "PASS"
-                    report.status_extended = f"Control plane logging enabled and correctly configured for EKS cluster {cluster.name}"
+                    report.status_extended = f"Control plane logging enabled and correctly configured for EKS cluster {cluster.name}."
                 else:
-                    report.status_extended = f"Control plane logging enabled but not all log types collected for EKS cluster {cluster.name}"
+                    report.status_extended = f"Control plane logging enabled but not all log types collected for EKS cluster {cluster.name}."
             findings.append(report)
 
         return findings

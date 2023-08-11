@@ -13,10 +13,10 @@ class ssm_documents_set_as_public(Check):
             report.resource_tags = document.tags
             if document.account_owners:
                 report.status = "FAIL"
-                report.status_extended = f"SSM Document {document.name} is public"
+                report.status_extended = f"SSM Document {document.name} is public."
             else:
                 report.status = "PASS"
-                report.status_extended = f"SSM Document {document.name} is not public"
+                report.status_extended = f"SSM Document {document.name} is not public."
 
             findings.append(report)
 

@@ -116,7 +116,7 @@ class Test_opensearch_service_domains_not_publicly_accessible:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Opensearch domain {domain_name} does not allow anonymous access"
+                == f"Opensearch domain {domain_name} does not allow anonymous access."
             )
             assert result[0].resource_id == domain_name
             assert result[0].resource_arn == domain_arn
@@ -148,7 +148,7 @@ class Test_opensearch_service_domains_not_publicly_accessible:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Opensearch domain {domain_name} policy allows access (Principal: '*')"
+                == f"Opensearch domain {domain_name} policy allows access (Principal: '*')."
             )
             assert result[0].resource_id == domain_name
             assert result[0].resource_arn == domain_arn
@@ -180,7 +180,7 @@ class Test_opensearch_service_domains_not_publicly_accessible:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Opensearch domain {domain_name} policy allows access (Principal: '*')"
+                == f"Opensearch domain {domain_name} policy allows access (Principal: '*')."
             )
             assert result[0].resource_id == domain_name
             assert result[0].resource_arn == domain_arn
@@ -212,7 +212,7 @@ class Test_opensearch_service_domains_not_publicly_accessible:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Opensearch domain {domain_name} policy allows access (Principal: '*') and network *"
+                == f"Opensearch domain {domain_name} policy allows access (Principal: '*') and network *."
             )
             assert result[0].resource_id == domain_name
             assert result[0].resource_arn == domain_arn
@@ -244,7 +244,7 @@ class Test_opensearch_service_domains_not_publicly_accessible:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Opensearch domain {domain_name} policy allows access (Principal: '*') and network 0.0.0.0/0"
+                == f"Opensearch domain {domain_name} policy allows access (Principal: '*') and network 0.0.0.0/0."
             )
             assert result[0].resource_id == domain_name
             assert result[0].resource_arn == domain_arn

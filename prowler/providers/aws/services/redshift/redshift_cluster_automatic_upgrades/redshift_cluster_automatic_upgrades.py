@@ -13,12 +13,12 @@ class redshift_cluster_automatic_upgrades(Check):
             report.resource_tags = cluster.tags
             report.status = "PASS"
             report.status_extended = (
-                f"Redshift Cluster {cluster.arn} has AllowVersionUpgrade enabled"
+                f"Redshift Cluster {cluster.arn} has AllowVersionUpgrade enabled."
             )
             if not cluster.allow_version_upgrade:
                 report.status = "FAIL"
                 report.status_extended = (
-                    f"Redshift Cluster {cluster.arn} has AllowVersionUpgrade disabled"
+                    f"Redshift Cluster {cluster.arn} has AllowVersionUpgrade disabled."
                 )
 
             findings.append(report)

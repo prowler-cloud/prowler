@@ -134,7 +134,7 @@ class Test_shield_advanced_protection_in_associated_elastic_ips:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Elastic IP {allocation_id} is protected by AWS Shield Advanced"
+                == f"Elastic IP {allocation_id} is protected by AWS Shield Advanced."
             )
 
     @mock_ec2
@@ -178,7 +178,7 @@ class Test_shield_advanced_protection_in_associated_elastic_ips:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Elastic IP {allocation_id} is not protected by AWS Shield Advanced"
+                == f"Elastic IP {allocation_id} is not protected by AWS Shield Advanced."
             )
 
     @mock_ec2

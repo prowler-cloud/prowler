@@ -14,23 +14,19 @@ class workspaces_volume_encryption_enabled(Check):
             report.resource_arn = workspace.arn
             report.resource_tags = workspace.tags
             report.status = "PASS"
-            report.status_extended = f"WorkSpaces workspace {workspace.id} without root or user unencrypted volumes"
+            report.status_extended = f"WorkSpaces workspace {workspace.id} without root or user unencrypted volumes."
             if not workspace.user_volume_encryption_enabled:
                 report.status = "FAIL"
-                report.status_extended = (
-                    f"WorkSpaces workspace {workspace.id} with user unencrypted volumes"
-                )
+                report.status_extended = f"WorkSpaces workspace {workspace.id} with user unencrypted volumes."
             if not workspace.root_volume_encryption_enabled:
                 report.status = "FAIL"
-                report.status_extended = (
-                    f"WorkSpaces workspace {workspace.id} with root unencrypted volumes"
-                )
+                report.status_extended = f"WorkSpaces workspace {workspace.id} with root unencrypted volumes."
             if (
                 not workspace.root_volume_encryption_enabled
                 and not workspace.user_volume_encryption_enabled
             ):
                 report.status = "FAIL"
-                report.status_extended = f"WorkSpaces workspace {workspace.id} with root and user unencrypted volumes"
+                report.status_extended = f"WorkSpaces workspace {workspace.id} with root and user unencrypted volumes."
 
             findings.append(report)
         return findings

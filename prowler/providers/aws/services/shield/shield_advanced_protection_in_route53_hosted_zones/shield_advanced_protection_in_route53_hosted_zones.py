@@ -14,12 +14,12 @@ class shield_advanced_protection_in_route53_hosted_zones(Check):
                 report.resource_arn = hosted_zone.arn
                 report.resource_tags = hosted_zone.tags
                 report.status = "FAIL"
-                report.status_extended = f"Route53 Hosted Zone {hosted_zone.id} is not protected by AWS Shield Advanced"
+                report.status_extended = f"Route53 Hosted Zone {hosted_zone.id} is not protected by AWS Shield Advanced."
 
                 for protection in shield_client.protections.values():
                     if hosted_zone.arn == protection.resource_arn:
                         report.status = "PASS"
-                        report.status_extended = f"Route53 Hosted Zone {hosted_zone.id} is protected by AWS Shield Advanced"
+                        report.status_extended = f"Route53 Hosted Zone {hosted_zone.id} is protected by AWS Shield Advanced."
                         break
 
                 findings.append(report)
