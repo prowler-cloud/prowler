@@ -37,8 +37,9 @@ class DirectoryService(AWSService):
                         )
                     ):
                         directory_id = directory["DirectoryId"]
+                        directory_arn = f"arn:{self.audited_partition}:ds:{regional_client.region}:{self.audited_account}:directory/{directory_id}"
                         directory_name = directory["Name"]
-                        directory_type = DirectoryType(directory["Type"])
+                        directory_type = directory["Type"]
                         # Radius Configuration
                         radius_authentication_protocol = (
                             AuthenticationProtocol(
@@ -56,6 +57,7 @@ class DirectoryService(AWSService):
                         self.directories[directory_id] = Directory(
                             name=directory_name,
                             id=directory_id,
+                            arn=directory_arn,
                             type=directory_type,
                             region=regional_client.region,
                             radius_settings=RadiusSettings(
@@ -297,6 +299,7 @@ class DirectoryType(Enum):
 class Directory(BaseModel):
     name: str
     id: str
+    arn: str
     type: DirectoryType
     log_subscriptions: list[LogSubscriptions] = []
     event_topics: list[EventTopics] = []

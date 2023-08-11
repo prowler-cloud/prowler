@@ -179,6 +179,10 @@ class Test_DirectoryService_Service:
         # __describe_directories__
         assert directoryservice.directories["d-12345a1b2"].id == "d-12345a1b2"
         assert (
+            directoryservice.directories["d-12345a1b2"].arn
+            == f"arn:aws:ds:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:directory/d-12345a1b2"
+        )
+        assert (
             directoryservice.directories["d-12345a1b2"].type
             == DirectoryType.MicrosoftAD
         )

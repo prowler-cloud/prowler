@@ -17,6 +17,7 @@ class directoryservice_ldap_certificate_expiration(Check):
                 report = Check_Report_AWS(self.metadata())
                 report.region = directory.region
                 report.resource_id = certificate.id
+                report.resource_arn = directory.arn
                 report.resource_tags = directory.tags
 
                 remaining_days_to_expire = (
@@ -30,10 +31,10 @@ class directoryservice_ldap_certificate_expiration(Check):
 
                 if remaining_days_to_expire <= DAYS_TO_EXPIRE_THRESHOLD:
                     report.status = "FAIL"
-                    report.status_extended = f"LDAP Certificate {certificate.id} configured at {directory.id} is about to expire in {remaining_days_to_expire} days"
+                    report.status_extended = f"LDAP Certificate {certificate.id} configured at {directory.id} is about to expire in {remaining_days_to_expire} days."
                 else:
                     report.status = "PASS"
-                    report.status_extended = f"LDAP Certificate {certificate.id} configured at {directory.id} expires in {remaining_days_to_expire} days"
+                    report.status_extended = f"LDAP Certificate {certificate.id} configured at {directory.id} expires in {remaining_days_to_expire} days."
 
                 findings.append(report)
 
