@@ -8,6 +8,7 @@ from prowler.providers.common.models import Audit_Metadata
 
 AWS_REGION = "us-east-1"
 AWS_ACCOUNT_NUMBER = "123456789012"
+AWS_ACCOUNT_ARN = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
 
 
 class Test_config_recorder_all_regions_enabled:
@@ -20,7 +21,7 @@ class Test_config_recorder_all_regions_enabled:
                 botocore_session=None,
             ),
             audited_account=AWS_ACCOUNT_NUMBER,
-            audited_account_arn=f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root",
+            audited_account_arn=AWS_ACCOUNT_ARN,
             audited_user_id=None,
             audited_partition="aws",
             audited_identity_arn=None,
@@ -67,6 +68,12 @@ class Test_config_recorder_all_regions_enabled:
                 len(result) == 2
             )  # One fail result per region, since there are no recorders
             assert result[0].status == "FAIL"
+            assert (
+                result[0].status_extended
+                == f"AWS Config recorder {AWS_ACCOUNT_NUMBER} is disabled."
+            )
+            assert result[0].resource_arn == AWS_ACCOUNT_ARN
+            assert result[0].resource_id == AWS_ACCOUNT_NUMBER
 
     @mock_config
     def test_config_one_recoder_disabled(self):
@@ -105,6 +112,8 @@ class Test_config_recorder_all_regions_enabled:
                         == "AWS Config recorder default is disabled."
                     )
                     assert recorder.resource_id == "default"
+                    assert recorder.resource_arn == AWS_ACCOUNT_ARN
+                    assert recorder.region == AWS_REGION
 
     @mock_config
     def test_config_one_recoder_enabled(self):
@@ -148,3 +157,5 @@ class Test_config_recorder_all_regions_enabled:
                         == "AWS Config recorder default is enabled."
                     )
                     assert recorder.resource_id == "default"
+                    assert recorder.resource_arn == AWS_ACCOUNT_ARN
+                    assert recorder.region == AWS_REGION
