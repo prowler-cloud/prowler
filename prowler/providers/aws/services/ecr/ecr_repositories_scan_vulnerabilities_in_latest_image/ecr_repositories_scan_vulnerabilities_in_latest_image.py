@@ -18,14 +18,14 @@ class ecr_repositories_scan_vulnerabilities_in_latest_image(Check):
                     report.resource_arn = repository.arn
                     report.resource_tags = repository.tags
                     report.status = "PASS"
-                    report.status_extended = f"ECR repository {repository.name} has imageTag {image.latest_tag} scanned without findings"
+                    report.status_extended = f"ECR repository {repository.name} has imageTag {image.latest_tag} scanned without findings."
                     if not image.scan_findings_status:
                         report.status = "FAIL"
-                        report.status_extended = f"ECR repository {repository.name} has imageTag {image.latest_tag} without a scan"
+                        report.status_extended = f"ECR repository {repository.name} has imageTag {image.latest_tag} without a scan."
                     elif image.scan_findings_status == "FAILED":
                         report.status = "FAIL"
                         report.status_extended = (
-                            f"ECR repository {repository.name} with scan status FAILED"
+                            f"ECR repository {repository.name} with scan status FAILED."
                         )
                     elif image.scan_findings_status != "FAILED":
                         if image.scan_findings_severity_count and (
@@ -34,7 +34,7 @@ class ecr_repositories_scan_vulnerabilities_in_latest_image(Check):
                             or image.scan_findings_severity_count.medium
                         ):
                             report.status = "FAIL"
-                            report.status_extended = f"ECR repository {repository.name} has imageTag {image.latest_tag} scanned with findings: CRITICAL->{image.scan_findings_severity_count.critical}, HIGH->{image.scan_findings_severity_count.high}, MEDIUM->{image.scan_findings_severity_count.medium} "
+                            report.status_extended = f"ECR repository {repository.name} has imageTag {image.latest_tag} scanned with findings: CRITICAL->{image.scan_findings_severity_count.critical}, HIGH->{image.scan_findings_severity_count.high}, MEDIUM->{image.scan_findings_severity_count.medium}."
 
                     findings.append(report)
 

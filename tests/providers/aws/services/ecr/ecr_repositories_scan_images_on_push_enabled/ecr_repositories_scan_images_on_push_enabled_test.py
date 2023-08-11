@@ -97,7 +97,7 @@ class Test_ecr_repositories_scan_images_on_push_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"ECR repository {repository_name} has scan on push enabled"
+                == f"ECR repository {repository_name} has scan on push enabled."
             )
             assert result[0].resource_id == repository_name
             assert result[0].resource_arn == repository_arn
@@ -137,7 +137,7 @@ class Test_ecr_repositories_scan_images_on_push_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"ECR repository {repository_name} has scan on push disabled"
+                == f"ECR repository {repository_name} has scan on push disabled."
             )
             assert result[0].resource_id == repository_name
             assert result[0].resource_arn == repository_arn
