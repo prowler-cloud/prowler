@@ -109,6 +109,7 @@ class Test_cloudtrail_bucket_requires_mfa_delete:
             assert result[0].resource_id == trail_name_us
             assert result[0].region == "us-east-1"
             assert result[0].resource_arn == trail_us["TrailARN"]
+            assert result[0].resource_tags == []
 
     # Create an MFA device is not supported for moto, so we mock the call:
     def mock_make_api_call_getbucketversioning_mfadelete_enabled(
@@ -169,6 +170,7 @@ class Test_cloudtrail_bucket_requires_mfa_delete:
             assert result[0].resource_id == trail_name_us
             assert result[0].region == "us-east-1"
             assert result[0].resource_arn == trail_us["TrailARN"]
+            assert result[0].resource_tags == []
 
     @mock_cloudtrail
     @mock_s3
@@ -215,6 +217,7 @@ class Test_cloudtrail_bucket_requires_mfa_delete:
             assert result[0].resource_id == trail_name_us
             assert result[0].region == "us-east-1"
             assert result[0].resource_arn == trail_us["TrailARN"]
+            assert result[0].resource_tags == []
 
     @mock_cloudtrail
     @mock_s3
@@ -267,3 +270,4 @@ class Test_cloudtrail_bucket_requires_mfa_delete:
             assert result[0].resource_id == trail_name_us
             assert result[0].region == "us-east-1"
             assert result[0].resource_arn == trail_us["TrailARN"]
+            assert result[0].resource_tags == []

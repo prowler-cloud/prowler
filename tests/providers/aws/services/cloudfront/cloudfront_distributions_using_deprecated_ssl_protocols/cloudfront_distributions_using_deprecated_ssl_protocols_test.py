@@ -95,8 +95,9 @@ class Test_cloudfront_distributions_using_deprecated_ssl_protocols:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"CloudFront Distribution {DISTRIBUTION_ID} is using a deprecated SSL protocol"
+                == f"CloudFront Distribution {DISTRIBUTION_ID} is using a deprecated SSL protocol."
             )
+            assert result[0].resource_tags == []
 
     def test_one_distribution_using_SSL_and_TLS(self):
         cloudfront_client = mock.MagicMock
@@ -165,8 +166,9 @@ class Test_cloudfront_distributions_using_deprecated_ssl_protocols:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"CloudFront Distribution {DISTRIBUTION_ID} is using a deprecated SSL protocol"
+                == f"CloudFront Distribution {DISTRIBUTION_ID} is using a deprecated SSL protocol."
             )
+            assert result[0].resource_tags == []
 
     def test_one_distribution_using_SSL_and_bad_TLS(self):
         cloudfront_client = mock.MagicMock
@@ -235,8 +237,9 @@ class Test_cloudfront_distributions_using_deprecated_ssl_protocols:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"CloudFront Distribution {DISTRIBUTION_ID} is using a deprecated SSL protocol"
+                == f"CloudFront Distribution {DISTRIBUTION_ID} is using a deprecated SSL protocol."
             )
+            assert result[0].resource_tags == []
 
     def test_one_distribution_not_using_deprecated_ssl_protocols(self):
         cloudfront_client = mock.MagicMock
@@ -302,5 +305,6 @@ class Test_cloudfront_distributions_using_deprecated_ssl_protocols:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"CloudFront Distribution {DISTRIBUTION_ID} is not using a deprecated SSL protocol"
+                == f"CloudFront Distribution {DISTRIBUTION_ID} is not using a deprecated SSL protocol."
             )
+            assert result[0].resource_tags == []

@@ -12,9 +12,7 @@ class accessanalyzer_enabled_without_findings(Check):
             report.region = analyzer.region
             if analyzer.status == "ACTIVE":
                 report.status = "PASS"
-                report.status_extended = (
-                    f"IAM Access Analyzer {analyzer.name} does not have active findings"
-                )
+                report.status_extended = f"IAM Access Analyzer {analyzer.name} does not have active findings."
                 report.resource_id = analyzer.name
                 report.resource_arn = analyzer.arn
                 report.resource_tags = analyzer.tags
@@ -26,20 +24,21 @@ class accessanalyzer_enabled_without_findings(Check):
 
                     if active_finding_counter > 0:
                         report.status = "FAIL"
-                        report.status_extended = f"IAM Access Analyzer {analyzer.name} has {active_finding_counter} active findings"
+                        report.status_extended = f"IAM Access Analyzer {analyzer.name} has {active_finding_counter} active findings."
                         report.resource_id = analyzer.name
                         report.resource_arn = analyzer.arn
                         report.resource_tags = analyzer.tags
             elif analyzer.status == "NOT_AVAILABLE":
                 report.status = "FAIL"
                 report.status_extended = (
-                    f"IAM Access Analyzer in account {analyzer.name} is not enabled"
+                    f"IAM Access Analyzer in account {analyzer.name} is not enabled."
                 )
                 report.resource_id = analyzer.name
+                report.resource_arn = analyzer.arn
             else:
                 report.status = "FAIL"
                 report.status_extended = (
-                    f"IAM Access Analyzer {analyzer.name} is not active"
+                    f"IAM Access Analyzer {analyzer.name} is not active."
                 )
                 report.resource_id = analyzer.name
                 report.resource_arn = analyzer.arn

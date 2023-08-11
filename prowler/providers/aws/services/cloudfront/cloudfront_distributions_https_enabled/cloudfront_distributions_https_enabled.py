@@ -24,7 +24,7 @@ class cloudfront_distributions_https_enabled(Check):
             ):
                 report.status = "PASS"
                 report.status_extended = (
-                    f"CloudFront Distribution {distribution.id} has redirect to HTTPS"
+                    f"CloudFront Distribution {distribution.id} has redirect to HTTPS."
                 )
             elif (
                 distribution.default_cache_config
@@ -33,11 +33,11 @@ class cloudfront_distributions_https_enabled(Check):
             ):
                 report.status = "PASS"
                 report.status_extended = (
-                    f"CloudFront Distribution {distribution.id} has HTTPS only"
+                    f"CloudFront Distribution {distribution.id} has HTTPS only."
                 )
             else:
                 report.status = "FAIL"
-                report.status_extended = f"CloudFront Distribution {distribution.id} viewers can use HTTP or HTTPS"
+                report.status_extended = f"CloudFront Distribution {distribution.id} viewers can use HTTP or HTTPS."
 
             findings.append(report)
 

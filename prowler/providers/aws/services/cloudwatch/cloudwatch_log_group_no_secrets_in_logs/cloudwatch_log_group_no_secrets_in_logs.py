@@ -81,7 +81,7 @@ class cloudwatch_log_group_no_secrets_in_logs(Check):
             if log_group_secrets:
                 secrets_string = "; ".join(log_group_secrets)
                 report.status = "FAIL"
-                report.status_extended = f"Potential secrets found in log group {log_group.name} {secrets_string}"
+                report.status_extended = f"Potential secrets found in log group {log_group.name} {secrets_string}."
             findings.append(report)
         return findings
 

@@ -27,11 +27,11 @@ class appstream_fleet_session_idle_disconnect_timeout(Check):
                 <= max_idle_disconnect_timeout_in_seconds
             ):
                 report.status = "PASS"
-                report.status_extended = f"Fleet {fleet.name} has the session idle disconnect timeout set to less than 10 minutes"
+                report.status_extended = f"Fleet {fleet.name} has the session idle disconnect timeout set to less than 10 minutes."
 
             else:
                 report.status = "FAIL"
-                report.status_extended = f"Fleet {fleet.name} has the session idle disconnect timeout set to more than 10 minutes"
+                report.status_extended = f"Fleet {fleet.name} has the session idle disconnect timeout set to more than 10 minutes."
 
             findings.append(report)
 

@@ -18,10 +18,10 @@ class cloudfront_distributions_field_level_encryption_enabled(Check):
                 and distribution.default_cache_config.field_level_encryption_id
             ):
                 report.status = "PASS"
-                report.status_extended = f"CloudFront Distribution {distribution.id} has Field Level Encryption enabled"
+                report.status_extended = f"CloudFront Distribution {distribution.id} has Field Level Encryption enabled."
             else:
                 report.status = "FAIL"
-                report.status_extended = f"CloudFront Distribution {distribution.id} has Field Level Encryption disabled"
+                report.status_extended = f"CloudFront Distribution {distribution.id} has Field Level Encryption disabled."
 
             findings.append(report)
 

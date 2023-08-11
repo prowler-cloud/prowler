@@ -76,8 +76,9 @@ class Test_awslambda_function_no_secrets_in_code:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Potential secret found in Lambda function {function_name} code -> lambda_function.py: Secret Keyword on line 3"
+                == f"Potential secret found in Lambda function {function_name} code -> lambda_function.py: Secret Keyword on line 3."
             )
+            assert result[0].resource_tags == []
 
     def test_function_code_without_secrets(self):
         lambda_client = mock.MagicMock
@@ -123,5 +124,6 @@ class Test_awslambda_function_no_secrets_in_code:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"No secrets found in Lambda function {function_name} code"
+                == f"No secrets found in Lambda function {function_name} code."
             )
+            assert result[0].resource_tags == []

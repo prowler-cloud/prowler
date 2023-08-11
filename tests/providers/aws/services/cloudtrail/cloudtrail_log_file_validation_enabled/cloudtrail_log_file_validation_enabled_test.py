@@ -43,6 +43,30 @@ class Test_cloudtrail_log_file_validation_enabled:
 
     @mock_cloudtrail
     @mock_s3
+    def test_no_trails(self):
+        from prowler.providers.aws.services.cloudtrail.cloudtrail_service import (
+            Cloudtrail,
+        )
+
+        with mock.patch(
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=self.set_mocked_audit_info(),
+        ), mock.patch(
+            "prowler.providers.aws.services.cloudtrail.cloudtrail_log_file_validation_enabled.cloudtrail_log_file_validation_enabled.cloudtrail_client",
+            new=Cloudtrail(self.set_mocked_audit_info()),
+        ):
+            # Test Check
+            from prowler.providers.aws.services.cloudtrail.cloudtrail_log_file_validation_enabled.cloudtrail_log_file_validation_enabled import (
+                cloudtrail_log_file_validation_enabled,
+            )
+
+            check = cloudtrail_log_file_validation_enabled()
+            result = check.execute()
+
+            assert len(result) == 0
+
+    @mock_cloudtrail
+    @mock_s3
     def test_no_logging_validation(self):
         cloudtrail_client_us_east_1 = client("cloudtrail", region_name="us-east-1")
         s3_client_us_east_1 = client("s3", region_name="us-east-1")
@@ -76,6 +100,8 @@ class Test_cloudtrail_log_file_validation_enabled:
             assert search("log file validation disabled", result[0].status_extended)
             assert result[0].resource_id == trail_name_us
             assert result[0].resource_arn == trail_us["TrailARN"]
+            assert result[0].resource_tags == []
+            assert result[0].region == "us-east-1"
 
     @mock_cloudtrail
     @mock_s3
@@ -132,6 +158,8 @@ class Test_cloudtrail_log_file_validation_enabled:
                     assert search("log file validation enabled", report.status_extended)
                     assert report.resource_id == trail_name_us
                     assert report.resource_arn == trail_us["TrailARN"]
+                    assert report.resource_tags == []
+                    assert report.region == "us-east-1"
                 elif report.resource_id == trail_name_eu:
                     assert report.status == "FAIL"
                     assert search(
@@ -139,3 +167,5 @@ class Test_cloudtrail_log_file_validation_enabled:
                     )
                     assert report.resource_id == trail_name_eu
                     assert report.resource_arn == trail_eu["TrailARN"]
+                    assert report.resource_tags == []
+                    assert report.region == "eu-west-1"

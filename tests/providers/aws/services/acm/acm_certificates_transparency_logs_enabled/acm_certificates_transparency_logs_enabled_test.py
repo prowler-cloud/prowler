@@ -64,6 +64,7 @@ class Test_acm_certificates_transparency_logs_enabled:
             assert result[0].resource_id == certificate_name
             assert result[0].resource_arn == certificate_arn
             assert result[0].region == AWS_REGION
+            assert result[0].resource_tags == []
 
     def test_acm_certificate_without_logging(self):
         certificate_arn = f"arn:aws:acm:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:certificate/{str(uuid.uuid4())}"
@@ -103,3 +104,4 @@ class Test_acm_certificates_transparency_logs_enabled:
             assert result[0].resource_id == certificate_name
             assert result[0].resource_arn == certificate_arn
             assert result[0].region == AWS_REGION
+            assert result[0].resource_tags == []

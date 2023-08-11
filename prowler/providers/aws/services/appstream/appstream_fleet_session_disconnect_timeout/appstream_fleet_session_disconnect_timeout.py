@@ -23,11 +23,11 @@ class appstream_fleet_session_disconnect_timeout(Check):
 
             if fleet.disconnect_timeout_in_seconds <= max_disconnect_timeout_in_seconds:
                 report.status = "PASS"
-                report.status_extended = f"Fleet {fleet.name} has the session disconnect timeout set to less than 5 minutes"
+                report.status_extended = f"Fleet {fleet.name} has the session disconnect timeout set to less than 5 minutes."
 
             else:
                 report.status = "FAIL"
-                report.status_extended = f"Fleet {fleet.name} has the session disconnect timeout set to more than 5 minutes"
+                report.status_extended = f"Fleet {fleet.name} has the session disconnect timeout set to more than 5 minutes."
 
             findings.append(report)
 

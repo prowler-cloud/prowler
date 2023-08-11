@@ -73,6 +73,7 @@ class Test_awslambda_function_url_public:
                 result[0].status_extended
                 == f"Lambda function {function_name} has a publicly accessible function URL."
             )
+            assert result[0].resource_tags == []
 
     def test_function_private_url(self):
         lambda_client = mock.MagicMock
@@ -116,3 +117,4 @@ class Test_awslambda_function_url_public:
                 result[0].status_extended
                 == f"Lambda function {function_name} does not have a publicly accessible function URL."
             )
+            assert result[0].resource_tags == []

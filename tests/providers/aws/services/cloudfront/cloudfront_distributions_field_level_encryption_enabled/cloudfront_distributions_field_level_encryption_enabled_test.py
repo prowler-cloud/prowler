@@ -68,8 +68,9 @@ class Test_cloudfront_distributions_field_level_encryption_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"CloudFront Distribution {DISTRIBUTION_ID} has Field Level Encryption enabled"
+                == f"CloudFront Distribution {DISTRIBUTION_ID} has Field Level Encryption enabled."
             )
+            assert result[0].resource_tags == []
 
     def test_one_distribution_field_level_encryption_disabled(self):
         cloudfront_client = mock.MagicMock
@@ -106,5 +107,6 @@ class Test_cloudfront_distributions_field_level_encryption_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"CloudFront Distribution {DISTRIBUTION_ID} has Field Level Encryption disabled"
+                == f"CloudFront Distribution {DISTRIBUTION_ID} has Field Level Encryption disabled."
             )
+            assert result[0].resource_tags == []

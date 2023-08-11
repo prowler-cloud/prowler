@@ -147,8 +147,9 @@ class Test_awslambda_function_invoke_api_operations_cloudtrail_logging_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Lambda function {function_name} is not recorded by CloudTrail"
+                == f"Lambda function {function_name} is not recorded by CloudTrail."
             )
+            assert result[0].resource_tags == []
 
     @mock_cloudtrail
     @mock_s3
@@ -222,8 +223,9 @@ class Test_awslambda_function_invoke_api_operations_cloudtrail_logging_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Lambda function {function_name} is recorded by CloudTrail trail {trail_name}"
+                == f"Lambda function {function_name} is recorded by CloudTrail trail {trail_name}."
             )
+            assert result[0].resource_tags == []
 
     @mock_cloudtrail
     @mock_s3
@@ -300,8 +302,9 @@ class Test_awslambda_function_invoke_api_operations_cloudtrail_logging_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Lambda function {function_name} is recorded by CloudTrail trail {trail_name}"
+                == f"Lambda function {function_name} is recorded by CloudTrail trail {trail_name}."
             )
+            assert result[0].resource_tags == []
 
     @mock_cloudtrail
     @mock_s3
@@ -373,5 +376,6 @@ class Test_awslambda_function_invoke_api_operations_cloudtrail_logging_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Lambda function {function_name} is recorded by CloudTrail trail {trail_name}"
+                == f"Lambda function {function_name} is recorded by CloudTrail trail {trail_name}."
             )
+            assert result[0].resource_tags == []

@@ -79,8 +79,9 @@ class Test_awslambda_function_using_supported_runtimes:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Lambda function {function_name} is using {function_runtime} which is obsolete"
+                == f"Lambda function {function_name} is using {function_runtime} which is obsolete."
             )
+            assert result[0].resource_tags == []
 
     def test_function_supported_runtime(self):
         lambda_client = mock.MagicMock
@@ -135,8 +136,9 @@ class Test_awslambda_function_using_supported_runtimes:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Lambda function {function_name} is using {function_runtime} which is supported"
+                == f"Lambda function {function_name} is using {function_runtime} which is supported."
             )
+            assert result[0].resource_tags == []
 
     def test_function_no_runtime(self):
         lambda_client = mock.MagicMock

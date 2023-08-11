@@ -77,7 +77,7 @@ class Test_cloudwatch_cross_account_sharing_disabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "CloudWatch doesn't allow cross-account sharing"
+                == "CloudWatch doesn't allow cross-account sharing."
             )
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
 

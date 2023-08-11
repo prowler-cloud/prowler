@@ -19,10 +19,10 @@ class cloudtrail_multi_region_enabled(Check):
                         report.resource_tags = trail.tags
                         if trail.is_multiregion:
                             report.status_extended = (
-                                f"Trail {trail.name} is multiregion and it is logging"
+                                f"Trail {trail.name} is multiregion and it is logging."
                             )
                         else:
-                            report.status_extended = f"Trail {trail.name} is not multiregion and it is logging"
+                            report.status_extended = f"Trail {trail.name} is not multiregion and it is logging."
                         # Since there exists a logging trail in that region there is no point in checking the reamaining trails
                         # Store the finding and exit the loop
                         findings.append(report)
@@ -30,7 +30,7 @@ class cloudtrail_multi_region_enabled(Check):
                     else:
                         report.status = "FAIL"
                         report.status_extended = (
-                            "No CloudTrail trails enabled and logging were found"
+                            "No CloudTrail trails enabled and logging were found."
                         )
                         report.resource_arn = cloudtrail_client.audited_account_arn
                         report.resource_id = cloudtrail_client.audited_account

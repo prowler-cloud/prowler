@@ -11,7 +11,7 @@ class backup_vaults_encrypted(Check):
             report = Check_Report_AWS(self.metadata())
             report.status = "FAIL"
             report.status_extended = (
-                f"Backup Vault {backup_vault.name} is not encrypted"
+                f"Backup Vault {backup_vault.name} is not encrypted."
             )
             report.resource_arn = backup_vault.arn
             report.resource_id = backup_vault.name
@@ -20,7 +20,7 @@ class backup_vaults_encrypted(Check):
             if backup_vault.encryption:
                 report.status = "PASS"
                 report.status_extended = (
-                    f"Backup Vault {backup_vault.name} is encrypted"
+                    f"Backup Vault {backup_vault.name} is encrypted."
                 )
             # then we store the finding
             findings.append(report)
