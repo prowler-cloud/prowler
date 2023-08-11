@@ -95,7 +95,19 @@ class ec2_ami_public(Check):
         return findings
 ```
 
-All checks must fill the `report.resource_id` and `report.resource_arn` with the following criteria:
+### Check Status
+
+All the checks MUST fill the `report.status` and `report.status_extended` with the following criteria:
+
+- Status -- `report.status`
+    - `PASS` --> If the check is passing against the configured value.
+    - `FAIL` --> If the check is passing against the configured value.
+    - `INFO` --> This value cannot be used unless a manual operation is required in order to determine if the `report.status` is whether `PASS` or `FAIL`.
+- Status Extended -- `report.status_extended`
+    - MUST end in a dot `.`
+    - MUST include the service audited with the resource and a brief explanation of the result generated, e.g.: `EC2 AMI ami-0123456789 is not public.`
+### Resource ID, Name and ARN
+All the hecks must fill the `report.resource_id` and `report.resource_arn` with the following criteria:
 
 - AWS
     - Resource ID -- `report.resource_id`
