@@ -23,13 +23,17 @@ class s3_bucket_policy_public_write_access(Check):
                 and s3control_client.account_public_access_block.restrict_public_buckets
             ):
                 report.status = "PASS"
-                report.status_extended = "All S3 public access blocked at account level."
+                report.status_extended = (
+                    "All S3 public access blocked at account level."
+                )
             elif (
                 bucket.public_access_block
                 and bucket.public_access_block.restrict_public_buckets
             ):
                 report.status = "PASS"
-                report.status_extended = f"S3 public access blocked at bucket level for {bucket.name}."
+                report.status_extended = (
+                    f"S3 public access blocked at bucket level for {bucket.name}."
+                )
             else:
                 report.status = "PASS"
                 report.status_extended = f"S3 Bucket {bucket.name} does not allow public write access in the bucket policy."
