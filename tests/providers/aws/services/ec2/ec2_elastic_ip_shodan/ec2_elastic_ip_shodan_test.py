@@ -190,5 +190,5 @@ class Test_ec2_elastic_ip_shodan:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Elastic IP {public_ip} listed in Shodan with open ports {str(ports)} and ISP {isp} in {country}. More info https://www.shodan.io/host/{public_ip}"
+                == f"Elastic IP {public_ip} listed in Shodan with open ports {str(ports)} and ISP {isp} in {country}. More info at https://www.shodan.io/host/{public_ip}."
             )
