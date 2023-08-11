@@ -110,10 +110,12 @@ class Test_codeartifact_packages_external_public_publishing_disabled:
             assert len(result) == 1
             assert result[0].region == AWS_REGION
             assert result[0].resource_id == "test-package"
+            assert result[0].resource_arn == repository_arn
+            assert result[0].resource_tags == []
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Internal package {package_name} is vulnerable to dependency confusion in repository {repository_arn}"
+                == f"Internal package {package_name} is vulnerable to dependency confusion in repository {repository_arn}."
             )
 
     def test_repository_package_private_publishing_origin_internal(self):
@@ -165,8 +167,10 @@ class Test_codeartifact_packages_external_public_publishing_disabled:
             assert len(result) == 1
             assert result[0].region == AWS_REGION
             assert result[0].resource_id == "test-package"
+            assert result[0].resource_arn == repository_arn
+            assert result[0].resource_tags == []
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Internal package {package_name} is not vulnerable to dependency confusion in repository {repository_arn}"
+                == f"Internal package {package_name} is not vulnerable to dependency confusion in repository {repository_arn}."
             )
