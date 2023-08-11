@@ -40,6 +40,8 @@ class Test_codebuild_project_user_controlled_buildspec:
             )
             assert result[0].resource_id == project_name
             assert result[0].resource_arn == project_arn
+            assert result[0].resource_tags == []
+            assert result[0].region == AWS_REGION
 
     def test_project_buildspec_not_yaml(self):
         codebuild_client = mock.MagicMock
@@ -73,6 +75,8 @@ class Test_codebuild_project_user_controlled_buildspec:
             )
             assert result[0].resource_id == project_name
             assert result[0].resource_arn == project_arn
+            assert result[0].resource_tags == []
+            assert result[0].region == AWS_REGION
 
     def test_project_valid_buildspec(self):
         codebuild_client = mock.MagicMock
@@ -105,6 +109,8 @@ class Test_codebuild_project_user_controlled_buildspec:
             )
             assert result[0].resource_id == project_name
             assert result[0].resource_arn == project_arn
+            assert result[0].resource_tags == []
+            assert result[0].region == AWS_REGION
 
     def test_project_invalid_buildspec_without_extension(self):
         codebuild_client = mock.MagicMock
@@ -138,3 +144,5 @@ class Test_codebuild_project_user_controlled_buildspec:
             )
             assert result[0].resource_id == project_name
             assert result[0].resource_arn == project_arn
+            assert result[0].resource_tags == []
+            assert result[0].region == AWS_REGION

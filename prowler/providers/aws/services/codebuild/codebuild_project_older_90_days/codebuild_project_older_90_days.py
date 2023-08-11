@@ -13,13 +13,11 @@ class codebuild_project_older_90_days(Check):
             report.resource_id = project.name
             report.resource_arn = project.arn
             report.status = "PASS"
-            report.status_extended = (
-                f"CodeBuild project {project.name} has been invoked in the last 90 days"
-            )
+            report.status_extended = f"CodeBuild project {project.name} has been invoked in the last 90 days."
             if project.last_invoked_time:
                 if (datetime.now(timezone.utc) - project.last_invoked_time).days > 90:
                     report.status = "FAIL"
-                    report.status_extended = f"CodeBuild project {project.name} has not been invoked in the last 90 days"
+                    report.status_extended = f"CodeBuild project {project.name} has not been invoked in the last 90 days."
             else:
                 report.status = "FAIL"
                 report.status_extended = (
