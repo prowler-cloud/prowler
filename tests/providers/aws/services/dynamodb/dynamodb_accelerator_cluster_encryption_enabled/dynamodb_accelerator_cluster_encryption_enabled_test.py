@@ -103,6 +103,8 @@ class Test_dynamodb_accelerator_cluster_encryption_enabled:
             )
             assert result[0].resource_id == cluster["ClusterName"]
             assert result[0].resource_arn == cluster["ClusterArn"]
+            assert result[0].region == AWS_REGION
+            assert result[0].resource_tags == []
 
     @mock_dax
     def test_dax_cluster_with_encryption(self):
@@ -139,3 +141,5 @@ class Test_dynamodb_accelerator_cluster_encryption_enabled:
             assert search("has encryption at rest enabled", result[0].status_extended)
             assert result[0].resource_id == cluster["ClusterName"]
             assert result[0].resource_arn == cluster["ClusterArn"]
+            assert result[0].region == AWS_REGION
+            assert result[0].resource_tags == []
