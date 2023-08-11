@@ -202,7 +202,7 @@ class Test_sqs_queues_not_publicly_accessible:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"SQS queue {queue_id} is not public because its policy only allows access from the same account"
+                == f"SQS queue {queue_id} is not public because its policy only allows access from the same account."
             )
             assert result[0].resource_id == queue_id
             assert result[0].resource_arn == "arn_test"

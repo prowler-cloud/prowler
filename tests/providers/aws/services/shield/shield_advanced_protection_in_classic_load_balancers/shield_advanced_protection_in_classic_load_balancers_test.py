@@ -137,7 +137,7 @@ class Test_shield_advanced_protection_in_classic_load_balancers:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"ELB {elb_name} is protected by AWS Shield Advanced"
+                == f"ELB {elb_name} is protected by AWS Shield Advanced."
             )
 
     @mock_elb
@@ -196,7 +196,7 @@ class Test_shield_advanced_protection_in_classic_load_balancers:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"ELB {elb_name} is not protected by AWS Shield Advanced"
+                == f"ELB {elb_name} is not protected by AWS Shield Advanced."
             )
 
     @mock_elb

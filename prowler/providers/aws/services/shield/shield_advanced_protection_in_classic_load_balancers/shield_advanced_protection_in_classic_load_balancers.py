@@ -15,14 +15,14 @@ class shield_advanced_protection_in_classic_load_balancers(Check):
                 report.resource_tags = elb.tags
                 report.status = "FAIL"
                 report.status_extended = (
-                    f"ELB {elb.name} is not protected by AWS Shield Advanced"
+                    f"ELB {elb.name} is not protected by AWS Shield Advanced."
                 )
 
                 for protection in shield_client.protections.values():
                     if elb.arn == protection.resource_arn:
                         report.status = "PASS"
                         report.status_extended = (
-                            f"ELB {elb.name} is protected by AWS Shield Advanced"
+                            f"ELB {elb.name} is protected by AWS Shield Advanced."
                         )
                         break
 

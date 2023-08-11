@@ -15,7 +15,9 @@ class sns_topics_not_publicly_accessible(Check):
             report.resource_arn = topic.arn
             report.resource_tags = topic.tags
             report.status = "PASS"
-            report.status_extended = f"SNS topic {topic.name} is not publicly accesible"
+            report.status_extended = (
+                f"SNS topic {topic.name} is not publicly accesible."
+            )
             if topic.policy:
                 for statement in topic.policy["Statement"]:
                     # Only check allow statements
@@ -37,10 +39,10 @@ class sns_topics_not_publicly_accessible(Check):
                                     statement["Condition"], sns_client.audited_account
                                 )
                             ):
-                                report.status_extended = f"SNS topic {topic.name} is not public because its policy only allows access from the same account"
+                                report.status_extended = f"SNS topic {topic.name} is not public because its policy only allows access from the same account."
                             else:
                                 report.status = "FAIL"
-                                report.status_extended = f"SNS topic {topic.name} is public because its policy allows public access"
+                                report.status_extended = f"SNS topic {topic.name} is public because its policy allows public access."
 
             findings.append(report)
 

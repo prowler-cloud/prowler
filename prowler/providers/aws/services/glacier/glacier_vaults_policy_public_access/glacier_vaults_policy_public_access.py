@@ -12,9 +12,7 @@ class glacier_vaults_policy_public_access(Check):
             report.resource_arn = vault.arn
             report.resource_tags = vault.tags
             report.status = "PASS"
-            report.status_extended = (
-                f"Vault {vault.name} has policy which does not allow access to everyone"
-            )
+            report.status_extended = f"Vault {vault.name} has policy which does not allow access to everyone."
 
             public_access = False
             if vault.access_policy:
@@ -35,11 +33,11 @@ class glacier_vaults_policy_public_access(Check):
                             public_access = True
                             break
             else:
-                report.status_extended = f"Vault {vault.name} does not have a policy"
+                report.status_extended = f"Vault {vault.name} does not have a policy."
             if public_access:
                 report.status = "FAIL"
                 report.status_extended = (
-                    f"Vault {vault.name} has policy which allows access to everyone"
+                    f"Vault {vault.name} has policy which allows access to everyone."
                 )
 
             findings.append(report)

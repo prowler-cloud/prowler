@@ -7,6 +7,8 @@ from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.common.models import Audit_Metadata
 
 AWS_ACCOUNT_NUMBER = "123456789012"
+AWS_REGION = "us-east-1"
+AWS_ACCOUNT_ARN = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
 
 
 class Test_iam_password_policy_reuse_24:
@@ -64,7 +66,15 @@ class Test_iam_password_policy_reuse_24:
 
             check = iam_password_policy_reuse_24()
             result = check.execute()
+            assert len(result) == 1
             assert result[0].status == "PASS"
+            assert (
+                result[0].status_extended
+                == "IAM password policy reuse prevention is equal to 24."
+            )
+            assert result[0].resource_id == AWS_ACCOUNT_NUMBER
+            assert result[0].resource_arn == AWS_ACCOUNT_ARN
+            assert result[0].region == AWS_REGION
 
     @mock_iam
     def test_iam_password_policy_reuse_prevention_less_24(self):
@@ -89,4 +99,12 @@ class Test_iam_password_policy_reuse_24:
 
             check = iam_password_policy_reuse_24()
             result = check.execute()
+            assert len(result) == 1
             assert result[0].status == "FAIL"
+            assert (
+                result[0].status_extended
+                == "IAM password policy reuse prevention is less than 24 or not set."
+            )
+            assert result[0].resource_id == AWS_ACCOUNT_NUMBER
+            assert result[0].resource_arn == AWS_ACCOUNT_ARN
+            assert result[0].region == AWS_REGION

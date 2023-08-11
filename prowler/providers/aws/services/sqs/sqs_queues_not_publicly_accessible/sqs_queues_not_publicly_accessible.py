@@ -15,7 +15,7 @@ class sqs_queues_not_publicly_accessible(Check):
             report.resource_arn = queue.arn
             report.resource_tags = queue.tags
             report.status = "PASS"
-            report.status_extended = f"SQS queue {queue.id} is not public"
+            report.status_extended = f"SQS queue {queue.id} is not public."
             if queue.policy:
                 for statement in queue.policy["Statement"]:
                     # Only check allow statements
@@ -37,10 +37,10 @@ class sqs_queues_not_publicly_accessible(Check):
                                     statement["Condition"], sqs_client.audited_account
                                 )
                             ):
-                                report.status_extended = f"SQS queue {queue.id} is not public because its policy only allows access from the same account"
+                                report.status_extended = f"SQS queue {queue.id} is not public because its policy only allows access from the same account."
                             else:
                                 report.status = "FAIL"
-                                report.status_extended = f"SQS queue {queue.id} is public because its policy allows public access"
+                                report.status_extended = f"SQS queue {queue.id} is public because its policy allows public access."
             findings.append(report)
 
         return findings

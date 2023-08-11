@@ -9,6 +9,7 @@ from prowler.providers.common.models import Audit_Metadata
 
 AWS_ACCOUNT_NUMBER = "123456789012"
 AWS_REGION = "us-east-1"
+AWS_ACCOUNT_ARN = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
 
 
 class Test_iam_password_policy_expires_passwords_within_90_days_or_less:
@@ -23,7 +24,7 @@ class Test_iam_password_policy_expires_passwords_within_90_days_or_less:
                 region_name=AWS_REGION,
             ),
             audited_account=AWS_ACCOUNT_NUMBER,
-            audited_account_arn=f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root",
+            audited_account_arn=AWS_ACCOUNT_ARN,
             audited_user_id=None,
             audited_partition="aws",
             audited_identity_arn=None,
@@ -76,8 +77,11 @@ class Test_iam_password_policy_expires_passwords_within_90_days_or_less:
                 )
                 check = iam_password_policy_expires_passwords_within_90_days_or_less()
                 result = check.execute()
+                assert len(result) == 1
                 assert result[0].status == "PASS"
                 assert result[0].resource_id == AWS_ACCOUNT_NUMBER
+                assert result[0].resource_arn == AWS_ACCOUNT_ARN
+                assert result[0].region == AWS_REGION
                 assert search(
                     "Password expiration is set lower than 90 days",
                     result[0].status_extended,
@@ -115,8 +119,11 @@ class Test_iam_password_policy_expires_passwords_within_90_days_or_less:
                 )
                 check = iam_password_policy_expires_passwords_within_90_days_or_less()
                 result = check.execute()
+                assert len(result) == 1
                 assert result[0].status == "FAIL"
                 assert result[0].resource_id == AWS_ACCOUNT_NUMBER
+                assert result[0].resource_arn == AWS_ACCOUNT_ARN
+                assert result[0].region == AWS_REGION
                 assert search(
                     "Password expiration is set greater than 90 days",
                     result[0].status_extended,
@@ -154,8 +161,11 @@ class Test_iam_password_policy_expires_passwords_within_90_days_or_less:
                 )
                 check = iam_password_policy_expires_passwords_within_90_days_or_less()
                 result = check.execute()
+                assert len(result) == 1
                 assert result[0].status == "PASS"
                 assert result[0].resource_id == AWS_ACCOUNT_NUMBER
+                assert result[0].resource_arn == AWS_ACCOUNT_ARN
+                assert result[0].region == AWS_REGION
                 assert search(
                     "Password expiration is set lower than 90 days",
                     result[0].status_extended,

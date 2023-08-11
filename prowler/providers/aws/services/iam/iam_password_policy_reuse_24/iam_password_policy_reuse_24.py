@@ -27,6 +27,6 @@ class iam_password_policy_reuse_24(Check):
                 )
         else:
             report.status = "FAIL"
-            report.status_extended = "Password policy cannot be found"
+            report.status_extended = "Password policy cannot be found."
         findings.append(report)
         return findings

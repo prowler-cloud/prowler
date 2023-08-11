@@ -25,6 +25,6 @@ class iam_password_policy_minimum_length_14(Check):
                 report.status_extended = "IAM password policy does not require minimum length of 14 characters."
         else:
             report.status = "FAIL"
-            report.status_extended = "Password policy cannot be found"
+            report.status_extended = "Password policy cannot be found."
         findings.append(report)
         return findings

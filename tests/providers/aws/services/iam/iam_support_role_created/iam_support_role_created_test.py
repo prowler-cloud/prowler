@@ -83,7 +83,7 @@ class Test_iam_support_role_created:
             result = check.execute()
             assert result[0].status == "PASS"
             assert search(
-                f"Support policy attached to role {role_name}",
+                f"Support policy attached to role {role_name}.",
                 result[0].status_extended,
             )
             assert result[0].resource_id == "AWSSupportServiceRolePolicy"
@@ -113,7 +113,7 @@ class Test_iam_support_role_created:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "Support policy is not attached to any role"
+                == "Support policy is not attached to any role."
             )
             assert result[0].resource_id == "AWSSupportServiceRolePolicy"
             assert (

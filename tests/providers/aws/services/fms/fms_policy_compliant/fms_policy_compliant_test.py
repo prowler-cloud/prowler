@@ -68,7 +68,7 @@ class Test_fms_policy_compliant:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"FMS with non-compliant policy {fms_client.fms_policies[0].name} for account {fms_client.fms_policies[0].compliance_status[0].account_id}"
+                == f"FMS with non-compliant policy {fms_client.fms_policies[0].name} for account {fms_client.fms_policies[0].compliance_status[0].account_id}."
             )
             assert result[0].resource_id == "12345678901"
             assert result[0].resource_arn == "arn:aws:fms:us-east-1:12345678901"
@@ -113,7 +113,7 @@ class Test_fms_policy_compliant:
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert (
-                result[0].status_extended == "FMS enabled with all compliant accounts"
+                result[0].status_extended == "FMS enabled with all compliant accounts."
             )
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
             assert result[0].resource_arn == f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
@@ -164,7 +164,7 @@ class Test_fms_policy_compliant:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"FMS with non-compliant policy {fms_client.fms_policies[0].name} for account {fms_client.fms_policies[0].compliance_status[0].account_id}"
+                == f"FMS with non-compliant policy {fms_client.fms_policies[0].name} for account {fms_client.fms_policies[0].compliance_status[0].account_id}."
             )
             assert result[0].resource_id == "12345678901"
             assert result[0].resource_arn == "arn:aws:fms:us-east-1:12345678901"

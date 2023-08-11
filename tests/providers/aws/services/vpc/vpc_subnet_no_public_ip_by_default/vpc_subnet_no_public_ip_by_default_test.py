@@ -83,7 +83,7 @@ class Test_vpc_subnet_separate_private_public:
                         assert result.status == "FAIL"
                         assert (
                             result.status_extended
-                            == f"VPC subnet {subnet_private['Subnet']['SubnetId']} assigns public IP by default"
+                            == f"VPC subnet {subnet_private['Subnet']['SubnetId']} assigns public IP by default."
                         )
 
     @mock_ec2
@@ -127,5 +127,5 @@ class Test_vpc_subnet_separate_private_public:
                         assert result.status == "PASS"
                         assert (
                             result.status_extended
-                            == f"VPC subnet {subnet_private['Subnet']['SubnetId']} does NOT assign public IP by default"
+                            == f"VPC subnet {subnet_private['Subnet']['SubnetId']} does NOT assign public IP by default."
                         )

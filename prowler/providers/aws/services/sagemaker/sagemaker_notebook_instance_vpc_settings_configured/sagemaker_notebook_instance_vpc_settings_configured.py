@@ -13,11 +13,11 @@ class sagemaker_notebook_instance_vpc_settings_configured(Check):
             report.resource_tags = notebook_instance.tags
             report.status = "PASS"
             report.status_extended = (
-                f"Sagemaker notebook instance {notebook_instance.name} is in a VPC"
+                f"Sagemaker notebook instance {notebook_instance.name} is in a VPC."
             )
             if not notebook_instance.subnet_id:
                 report.status = "FAIL"
-                report.status_extended = f"Sagemaker notebook instance {notebook_instance.name} has VPC settings disabled"
+                report.status_extended = f"Sagemaker notebook instance {notebook_instance.name} has VPC settings disabled."
 
             findings.append(report)
 

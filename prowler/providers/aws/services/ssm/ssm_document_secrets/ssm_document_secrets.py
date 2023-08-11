@@ -19,7 +19,9 @@ class ssm_document_secrets(Check):
             report.resource_id = document.name
             report.resource_tags = document.tags
             report.status = "PASS"
-            report.status_extended = f"No secrets found in SSM Document {document.name}"
+            report.status_extended = (
+                f"No secrets found in SSM Document {document.name}."
+            )
 
             if document.content:
                 temp_env_data_file = tempfile.NamedTemporaryFile(delete=False)
@@ -43,7 +45,7 @@ class ssm_document_secrets(Check):
                         ]
                     )
                     report.status = "FAIL"
-                    report.status_extended = f"Potential secret found in SSM Document {document.name} -> {secrets_string}"
+                    report.status_extended = f"Potential secret found in SSM Document {document.name} -> {secrets_string}."
 
                 os.remove(temp_env_data_file.name)
 

@@ -74,7 +74,7 @@ class Test_iam_policy_no_full_access_to_kms:
                 assert result[0].status == "FAIL"
                 assert (
                     result[0].status_extended
-                    == f"Custom Policy {policy_name} allows 'kms:*' privileges"
+                    == f"Custom Policy {policy_name} allows 'kms:*' privileges."
                 )
                 assert result[0].resource_id == "policy_kms_full"
                 assert result[0].resource_arn == arn
@@ -113,7 +113,7 @@ class Test_iam_policy_no_full_access_to_kms:
                 assert result[0].status == "PASS"
                 assert (
                     result[0].status_extended
-                    == f"Custom Policy {policy_name} does not allow 'kms:*' privileges"
+                    == f"Custom Policy {policy_name} does not allow 'kms:*' privileges."
                 )
                 assert result[0].resource_id == "policy_no_kms_full"
                 assert result[0].resource_arn == arn
@@ -152,7 +152,7 @@ class Test_iam_policy_no_full_access_to_kms:
                 assert result[0].status == "FAIL"
                 assert (
                     result[0].status_extended
-                    == f"Custom Policy {policy_name} allows 'kms:*' privileges"
+                    == f"Custom Policy {policy_name} allows 'kms:*' privileges."
                 )
                 assert result[0].resource_id == "policy_mixed"
                 assert result[0].resource_arn == arn

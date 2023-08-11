@@ -32,7 +32,7 @@ class s3_bucket_policy_public_write_access(Check):
                         )
                     ):
                         report.status = "FAIL"
-                        report.status_extended = f"S3 Bucket {bucket.name} allows public write access in the bucket policy.."
+                        report.status_extended = f"S3 Bucket {bucket.name} allows public write access in the bucket policy."
 
             findings.append(report)
         return findings

@@ -36,7 +36,7 @@ class Test_emr_cluster_account_public_block_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "EMR Account has Block Public Access enabled"
+                == "EMR Account has Block Public Access enabled."
             )
 
     def test_account_public_block_disabled(self):
@@ -65,5 +65,5 @@ class Test_emr_cluster_account_public_block_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "EMR Account has Block Public Access disabled"
+                == "EMR Account has Block Public Access disabled."
             )

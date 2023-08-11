@@ -22,6 +22,6 @@ class iam_password_policy_lowercase(Check):
                 report.status_extended = "IAM password policy does not require at least one lowercase letter."
         else:
             report.status = "FAIL"
-            report.status_extended = "Password policy cannot be found"
+            report.status_extended = "Password policy cannot be found."
         findings.append(report)
         return findings

@@ -20,7 +20,7 @@ class ec2_elastic_ip_shodan(Check):
                     try:
                         shodan_info = api.host(eip.public_ip)
                         report.status = "FAIL"
-                        report.status_extended = f"Elastic IP {eip.public_ip} listed in Shodan with open ports {str(shodan_info['ports'])} and ISP {shodan_info['isp']} in {shodan_info['country_name']}. More info https://www.shodan.io/host/{eip.public_ip}"
+                        report.status_extended = f"Elastic IP {eip.public_ip} listed in Shodan with open ports {str(shodan_info['ports'])} and ISP {shodan_info['isp']} in {shodan_info['country_name']}. More info at https://www.shodan.io/host/{eip.public_ip}."
                         report.resource_id = eip.public_ip
                         findings.append(report)
                     except shodan.APIError as error:

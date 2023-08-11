@@ -18,7 +18,7 @@ class ec2_securitygroup_with_many_ingress_egress_rules(Check):
             report.resource_arn = security_group.arn
             report.resource_tags = security_group.tags
             report.status = "PASS"
-            report.status_extended = f"Security group {security_group.name} ({security_group.id}) has {len(security_group.ingress_rules)} inbound rules and {len(security_group.egress_rules)} outbound rules"
+            report.status_extended = f"Security group {security_group.name} ({security_group.id}) has {len(security_group.ingress_rules)} inbound rules and {len(security_group.egress_rules)} outbound rules."
             if (
                 len(security_group.ingress_rules) > max_security_group_rules
                 or len(security_group.egress_rules) > max_security_group_rules

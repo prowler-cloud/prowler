@@ -106,6 +106,8 @@ class Test_dynamodb_tables_kms_cmk_encryption_enabled:
             assert search("KMS encryption enabled", result[0].status_extended)
             assert result[0].resource_id == table["TableName"]
             assert result[0].resource_arn == table["TableArn"]
+            assert result[0].region == AWS_REGION
+            assert result[0].resource_tags == []
 
     @mock_dynamodb
     def test_dynamodb_table_default_encryption(self):
@@ -146,3 +148,5 @@ class Test_dynamodb_tables_kms_cmk_encryption_enabled:
             assert search("DEFAULT encryption enabled", result[0].status_extended)
             assert result[0].resource_id == table["TableName"]
             assert result[0].resource_arn == table["TableArn"]
+            assert result[0].region == AWS_REGION
+            assert result[0].resource_tags == []

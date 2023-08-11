@@ -59,7 +59,7 @@ class Test_ssm_documents_set_as_public:
             assert result[0].resource_arn == document_arn
             assert result[0].status == "FAIL"
             assert (
-                result[0].status_extended == f"SSM Document {document_name} is public"
+                result[0].status_extended == f"SSM Document {document_name} is public."
             )
 
     def test_document_not_public(self):
@@ -97,5 +97,5 @@ class Test_ssm_documents_set_as_public:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"SSM Document {document_name} is not public"
+                == f"SSM Document {document_name} is not public."
             )

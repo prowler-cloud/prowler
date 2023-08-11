@@ -15,7 +15,7 @@ class opensearch_service_domains_not_publicly_accessible(Check):
             report.resource_tags = domain.tags
             report.status = "PASS"
             report.status_extended = (
-                f"Opensearch domain {domain.name} does not allow anonymous access"
+                f"Opensearch domain {domain.name} does not allow anonymous access."
             )
             if domain.access_policy:
                 for statement in domain.access_policy["Statement"]:
@@ -30,7 +30,7 @@ class opensearch_service_domains_not_publicly_accessible(Check):
                     ):
                         if "Condition" not in statement:
                             report.status = "FAIL"
-                            report.status_extended = f"Opensearch domain {domain.name} policy allows access (Principal: '*')"
+                            report.status_extended = f"Opensearch domain {domain.name} policy allows access (Principal: '*')."
                             break
                         else:
                             if (
@@ -43,11 +43,11 @@ class opensearch_service_domains_not_publicly_accessible(Check):
                                 ]:
                                     if ip == "*":
                                         report.status = "FAIL"
-                                        report.status_extended = f"Opensearch domain {domain.name} policy allows access (Principal: '*') and network *"
+                                        report.status_extended = f"Opensearch domain {domain.name} policy allows access (Principal: '*') and network *."
                                         break
                                     elif ip == "0.0.0.0/0":
                                         report.status = "FAIL"
-                                        report.status_extended = f"Opensearch domain {domain.name} policy allows access (Principal: '*') and network 0.0.0.0/0"
+                                        report.status_extended = f"Opensearch domain {domain.name} policy allows access (Principal: '*') and network 0.0.0.0/0."
                                         break
 
             findings.append(report)

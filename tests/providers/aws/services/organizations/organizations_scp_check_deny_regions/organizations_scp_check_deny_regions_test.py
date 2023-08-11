@@ -197,7 +197,7 @@ class Test_organizations_scp_check_deny_regions:
                 assert result[0].resource_id == response["Organization"]["Id"]
                 assert result[0].resource_arn == response["Organization"]["Arn"]
                 assert search(
-                    "restricting some AWS Regions, but not all the configured ones, please check config...",
+                    "restricting some AWS Regions, but not all the configured ones, please check config.",
                     result[0].status_extended,
                 )
                 assert result[0].region == AWS_REGION

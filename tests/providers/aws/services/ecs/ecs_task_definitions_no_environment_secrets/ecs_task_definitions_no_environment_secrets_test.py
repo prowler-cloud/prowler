@@ -63,7 +63,7 @@ class Test_ecs_task_definitions_no_environment_secrets:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"No secrets found in variables of ECS task definition {task_name} with revision {task_revision}"
+                == f"No secrets found in variables of ECS task definition {task_name} with revision {task_revision}."
             )
             assert result[0].resource_id == f"{task_name}:1"
             assert (
@@ -102,7 +102,7 @@ class Test_ecs_task_definitions_no_environment_secrets:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Potential secret found in variables of ECS task definition {task_name} with revision {task_revision} -> Secret Keyword on line 2"
+                == f"Potential secret found in variables of ECS task definition {task_name} with revision {task_revision} -> Secret Keyword on line 2."
             )
             assert result[0].resource_id == f"{task_name}:1"
             assert (

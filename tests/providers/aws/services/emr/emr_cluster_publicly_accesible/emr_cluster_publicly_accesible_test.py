@@ -199,7 +199,7 @@ class Test_emr_cluster_publicly_accesible:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"EMR Cluster {cluster_id} is not publicly accessible"
+                == f"EMR Cluster {cluster_id} is not publicly accessible."
             )
 
     @mock_ec2

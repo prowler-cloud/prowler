@@ -13,11 +13,11 @@ class efs_encryption_at_rest_enabled(Check):
             report.resource_tags = fs.tags
             report.status = "FAIL"
             report.status_extended = (
-                f"EFS {fs.id} does not have encryption at rest enabled"
+                f"EFS {fs.id} does not have encryption at rest enabled."
             )
             if fs.encrypted:
                 report.status = "PASS"
-                report.status_extended = f"EFS {fs.id} has encryption at rest enabled"
+                report.status_extended = f"EFS {fs.id} has encryption at rest enabled."
 
             findings.append(report)
 

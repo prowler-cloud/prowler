@@ -16,7 +16,7 @@ class guardduty_no_high_severity_findings(Check):
                 report.status_extended = f"GuardDuty detector {detector.id} does not have high severity findings."
                 if len(detector.findings) > 0:
                     report.status = "FAIL"
-                    report.status_extended = f"GuardDuty detector {detector.id} has {str(len(detector.findings))} high severity findings"
+                    report.status_extended = f"GuardDuty detector {detector.id} has {str(len(detector.findings))} high severity findings."
 
                 findings.append(report)
 

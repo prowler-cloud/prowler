@@ -12,12 +12,12 @@ class organizations_account_part_of_organizations(Check):
             if org.status == "ACTIVE":
                 report.status = "PASS"
                 report.status_extended = (
-                    f"Account is part of AWS Organization: {org.id}"
+                    f"Account is part of AWS Organization: {org.id}."
                 )
             else:
                 report.status = "FAIL"
                 report.status_extended = (
-                    "AWS Organizations is not in-use for this AWS Account"
+                    "AWS Organizations is not in-use for this AWS Account."
                 )
             report.region = organizations_client.region
             report.resource_id = org.id

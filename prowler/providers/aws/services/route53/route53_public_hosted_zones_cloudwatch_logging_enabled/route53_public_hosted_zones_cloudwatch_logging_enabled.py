@@ -18,11 +18,11 @@ class route53_public_hosted_zones_cloudwatch_logging_enabled(Check):
                     and hosted_zone.logging_config.cloudwatch_log_group_arn
                 ):
                     report.status = "PASS"
-                    report.status_extended = f"Route53 Public Hosted Zone {hosted_zone.id} has query logging enabled in Log Group {hosted_zone.logging_config.cloudwatch_log_group_arn}"
+                    report.status_extended = f"Route53 Public Hosted Zone {hosted_zone.id} has query logging enabled in Log Group {hosted_zone.logging_config.cloudwatch_log_group_arn}."
 
                 else:
                     report.status = "FAIL"
-                    report.status_extended = f"Route53 Public Hosted Zone {hosted_zone.id} has query logging disabled"
+                    report.status_extended = f"Route53 Public Hosted Zone {hosted_zone.id} has query logging disabled."
 
                 findings.append(report)
 

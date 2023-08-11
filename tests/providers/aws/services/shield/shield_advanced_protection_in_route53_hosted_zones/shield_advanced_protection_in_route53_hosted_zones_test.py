@@ -91,7 +91,7 @@ class Test_shield_advanced_protection_in_route53_hosted_zones:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Route53 Hosted Zone {hosted_zone_id} is protected by AWS Shield Advanced"
+                == f"Route53 Hosted Zone {hosted_zone_id} is protected by AWS Shield Advanced."
             )
 
     def test_shield_enabled_route53_hosted_zone_not_protected(self):
@@ -143,7 +143,7 @@ class Test_shield_advanced_protection_in_route53_hosted_zones:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Route53 Hosted Zone {hosted_zone_id} is not protected by AWS Shield Advanced"
+                == f"Route53 Hosted Zone {hosted_zone_id} is not protected by AWS Shield Advanced."
             )
 
     def test_shield_disabled_route53_hosted_zone_not_protected(self):

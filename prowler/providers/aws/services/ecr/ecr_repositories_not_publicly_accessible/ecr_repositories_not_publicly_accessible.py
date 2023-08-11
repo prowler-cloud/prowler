@@ -14,7 +14,7 @@ class ecr_repositories_not_publicly_accessible(Check):
                 report.resource_tags = repository.tags
                 report.status = "PASS"
                 report.status_extended = (
-                    f"Repository {repository.name} is not publicly accesible"
+                    f"Repository {repository.name} is not publicly accesible."
                 )
                 if repository.policy:
                     for statement in repository.policy["Statement"]:
@@ -24,7 +24,7 @@ class ecr_repositories_not_publicly_accessible(Check):
                                 and "*" in statement["Principal"]["AWS"]
                             ):
                                 report.status = "FAIL"
-                                report.status_extended = f"Repository {repository.name} policy may allow anonymous users to perform actions (Principal: '*')"
+                                report.status_extended = f"Repository {repository.name} policy may allow anonymous users to perform actions (Principal: '*')."
                                 break
 
                 findings.append(report)

@@ -15,11 +15,11 @@ class opensearch_service_domains_https_communications_enforced(Check):
             report.resource_tags = domain.tags
             report.status = "PASS"
             report.status_extended = (
-                f"Opensearch domain {domain.name} has enforce HTTPS enabled"
+                f"Opensearch domain {domain.name} has enforce HTTPS enabled."
             )
             if not domain.enforce_https:
                 report.status = "FAIL"
-                report.status_extended = f"Opensearch domain {domain.name} does not have enforce HTTPS enabled"
+                report.status_extended = f"Opensearch domain {domain.name} does not have enforce HTTPS enabled."
 
             findings.append(report)
 

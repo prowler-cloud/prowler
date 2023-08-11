@@ -82,7 +82,7 @@ class Test_shield_advanced_protection_in_cloudfront_distributions:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"CloudFront distribution {distribution_id} is protected by AWS Shield Advanced"
+                == f"CloudFront distribution {distribution_id} is protected by AWS Shield Advanced."
             )
 
     def test_shield_enabled_cloudfront_not_protected(self):
@@ -126,7 +126,7 @@ class Test_shield_advanced_protection_in_cloudfront_distributions:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"CloudFront distribution {distribution_id} is not protected by AWS Shield Advanced"
+                == f"CloudFront distribution {distribution_id} is not protected by AWS Shield Advanced."
             )
 
     def test_shield_disabled_cloudfront_not_protected(self):

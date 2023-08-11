@@ -13,11 +13,11 @@ class efs_not_publicly_accessible(Check):
             report.resource_tags = fs.tags
             report.status = "PASS"
             report.status_extended = (
-                f"EFS {fs.id} has a policy which does not allow access to everyone"
+                f"EFS {fs.id} has a policy which does not allow access to everyone."
             )
             if not fs.policy:
                 report.status = "FAIL"
-                report.status_extended = f"EFS {fs.id} doesn't have any policy which means it grants full access to any client"
+                report.status_extended = f"EFS {fs.id} doesn't have any policy which means it grants full access to any client."
             else:
                 for statement in fs.policy["Statement"]:
                     if statement["Effect"] == "Allow":
@@ -34,7 +34,7 @@ class efs_not_publicly_accessible(Check):
                             )
                         ):
                             report.status = "FAIL"
-                            report.status_extended = f"EFS {fs.id} has a policy which allows access to everyone"
+                            report.status_extended = f"EFS {fs.id} has a policy which allows access to everyone."
                             break
             findings.append(report)
 

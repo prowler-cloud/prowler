@@ -12,10 +12,10 @@ class sagemaker_models_network_isolation_enabled(Check):
             report.resource_arn = model.arn
             report.resource_tags = model.tags
             report.status = "PASS"
-            report.status_extended = f"Sagemaker notebook instance {model.name} has network isolation enabled"
+            report.status_extended = f"Sagemaker notebook instance {model.name} has network isolation enabled."
             if not model.network_isolation:
                 report.status = "FAIL"
-                report.status_extended = f"Sagemaker notebook instance {model.name} has network isolation disabled"
+                report.status_extended = f"Sagemaker notebook instance {model.name} has network isolation disabled."
 
             findings.append(report)
 

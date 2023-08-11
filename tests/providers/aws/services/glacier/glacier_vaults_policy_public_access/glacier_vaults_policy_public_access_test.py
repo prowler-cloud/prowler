@@ -58,7 +58,7 @@ class Test_glacier_vaults_policy_public_access:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Vault {vault_name} does not have a policy"
+                == f"Vault {vault_name} does not have a policy."
             )
 
     def test_vault_policy_pricipal_aws_list_asterisk(self):
@@ -112,7 +112,7 @@ class Test_glacier_vaults_policy_public_access:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Vault {vault_name} has policy which allows access to everyone"
+                == f"Vault {vault_name} has policy which allows access to everyone."
             )
 
     def test_vault_policy_pricipal_asterisk(self):
@@ -166,7 +166,7 @@ class Test_glacier_vaults_policy_public_access:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Vault {vault_name} has policy which allows access to everyone"
+                == f"Vault {vault_name} has policy which allows access to everyone."
             )
 
     def test_vault_policy_pricipal_canonical_user_asterisk(self):
@@ -220,7 +220,7 @@ class Test_glacier_vaults_policy_public_access:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Vault {vault_name} has policy which allows access to everyone"
+                == f"Vault {vault_name} has policy which allows access to everyone."
             )
 
     def test_vault_policy_private(self):
@@ -278,5 +278,5 @@ class Test_glacier_vaults_policy_public_access:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Vault {vault_name} has policy which does not allow access to everyone"
+                == f"Vault {vault_name} has policy which does not allow access to everyone."
             )

@@ -15,7 +15,7 @@ class organizations_tags_policies_enabled_and_attached(Check):
             report.region = organizations_client.region
             report.status = "FAIL"
             report.status_extended = (
-                "AWS Organizations is not in-use for this AWS Account"
+                "AWS Organizations is not in-use for this AWS Account."
             )
             if org.status == "ACTIVE":
                 if org.policies is None:
@@ -26,11 +26,11 @@ class organizations_tags_policies_enabled_and_attached(Check):
                     if policy.type != "TAG_POLICY":
                         continue
 
-                    report.status_extended = f"AWS Organization {org.id} has tag policies enabled but not attached"
+                    report.status_extended = f"AWS Organization {org.id} has tag policies enabled but not attached."
 
                     if policy.targets:
                         report.status = "PASS"
-                        report.status_extended = f"AWS Organization {org.id} has tag policies enabled and attached to an AWS account"
+                        report.status_extended = f"AWS Organization {org.id} has tag policies enabled and attached to an AWS account."
 
             findings.append(report)
 

@@ -109,6 +109,6 @@ class Test_vpc_different_regions:
                 assert len(result) == 1
                 assert result[0].status == "FAIL"
                 assert result[0].region == "us-east-1"
-                assert result[0].status_extended == "VPCs found only in one region"
+                assert result[0].status_extended == "VPCs found only in one region."
                 assert result[0].resource_id == AWS_ACCOUNT_NUMBER
                 assert result[0].resource_tags == []

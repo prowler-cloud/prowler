@@ -45,8 +45,7 @@ class route53_dangling_ip_subdomain_takeover(Check):
                             aws_ip_ranges = awsipranges.get_ranges()
                             if aws_ip_ranges.get(record):
                                 report.status = "FAIL"
-                                report.status_extended = f"Route53 record {record} in Hosted Zone {route53_client.hosted_zones[record_set.hosted_zone_id].name} is a dangling IP which can lead to a subdomain takeover attack!"
-
+                                report.status_extended = f"Route53 record {record} in Hosted Zone {route53_client.hosted_zones[record_set.hosted_zone_id].name} is a dangling IP which can lead to a subdomain takeover attack."
                         findings.append(report)
 
         return findings

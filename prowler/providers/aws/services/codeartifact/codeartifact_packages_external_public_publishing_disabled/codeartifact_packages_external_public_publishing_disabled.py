@@ -28,10 +28,10 @@ class codeartifact_packages_external_public_publishing_disabled(Check):
                         == RestrictionValues.ALLOW
                     ):
                         report.status = "FAIL"
-                        report.status_extended = f"Internal package {package.name} is vulnerable to dependency confusion in repository {repository.arn}"
+                        report.status_extended = f"Internal package {package.name} is vulnerable to dependency confusion in repository {repository.arn}."
                     else:
                         report.status = "PASS"
-                        report.status_extended = f"Internal package {package.name} is not vulnerable to dependency confusion in repository {repository.arn}"
+                        report.status_extended = f"Internal package {package.name} is not vulnerable to dependency confusion in repository {repository.arn}."
 
                     findings.append(report)
 

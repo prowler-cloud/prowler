@@ -74,7 +74,7 @@ class Test_iam_policy_no_full_access_to_cloudtrail:
                 assert result[0].status == "FAIL"
                 assert (
                     result[0].status_extended
-                    == f"Custom Policy {policy_name} allows 'cloudtrail:*' privileges"
+                    == f"Custom Policy {policy_name} allows 'cloudtrail:*' privileges."
                 )
                 assert result[0].resource_id == "policy_cloudtrail_full"
                 assert result[0].resource_arn == arn
@@ -113,7 +113,7 @@ class Test_iam_policy_no_full_access_to_cloudtrail:
                 assert result[0].status == "PASS"
                 assert (
                     result[0].status_extended
-                    == f"Custom Policy {policy_name} does not allow 'cloudtrail:*' privileges"
+                    == f"Custom Policy {policy_name} does not allow 'cloudtrail:*' privileges."
                 )
                 assert result[0].resource_id == "policy_no_cloudtrail_full"
                 assert result[0].resource_arn == arn
@@ -156,7 +156,7 @@ class Test_iam_policy_no_full_access_to_cloudtrail:
                 assert result[0].status == "FAIL"
                 assert (
                     result[0].status_extended
-                    == f"Custom Policy {policy_name} allows 'cloudtrail:*' privileges"
+                    == f"Custom Policy {policy_name} allows 'cloudtrail:*' privileges."
                 )
                 assert result[0].resource_id == "policy_mixed"
                 assert result[0].resource_arn == arn

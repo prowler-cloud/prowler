@@ -14,7 +14,7 @@ class iam_aws_attached_policy_no_administrative_privileges(Check):
                 report.resource_id = policy.name
                 report.resource_tags = policy.tags
                 report.status = "PASS"
-                report.status_extended = f"{policy.type} policy {policy.name} is attached but does not allow '*:*' administrative privileges"
+                report.status_extended = f"{policy.type} policy {policy.name} is attached but does not allow '*:*' administrative privileges."
                 if policy.document:
                     # Check the statements, if one includes *:* stop iterating over the rest
                     if not isinstance(policy.document["Statement"], list):
@@ -36,7 +36,7 @@ class iam_aws_attached_policy_no_administrative_privileges(Check):
                             )
                         ):
                             report.status = "FAIL"
-                            report.status_extended = f"{policy.type} policy {policy.name} is attached and allows '*:*' administrative privileges"
+                            report.status_extended = f"{policy.type} policy {policy.name} is attached and allows '*:*' administrative privileges."
                             break
                 findings.append(report)
         return findings

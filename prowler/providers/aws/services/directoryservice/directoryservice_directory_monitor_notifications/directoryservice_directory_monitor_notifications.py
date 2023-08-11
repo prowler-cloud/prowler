@@ -11,16 +11,17 @@ class directoryservice_directory_monitor_notifications(Check):
             report = Check_Report_AWS(self.metadata())
             report.region = directory.region
             report.resource_id = directory.id
+            report.resource_arn = directory.arn
             report.resource_tags = directory.tags
             if directory.event_topics:
                 report.status = "PASS"
                 report.status_extended = (
-                    f"Directory Service {directory.id} have SNS messaging enabled"
+                    f"Directory Service {directory.id} have SNS messaging enabled."
                 )
             else:
                 report.status = "FAIL"
                 report.status_extended = (
-                    f"Directory Service {directory.id} have SNS messaging disabled"
+                    f"Directory Service {directory.id} have SNS messaging disabled."
                 )
 
             findings.append(report)

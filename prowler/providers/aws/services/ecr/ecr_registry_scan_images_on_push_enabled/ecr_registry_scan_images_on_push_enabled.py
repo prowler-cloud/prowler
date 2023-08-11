@@ -14,17 +14,17 @@ class ecr_registry_scan_images_on_push_enabled(Check):
                 # A registry cannot have tags
                 report.resource_tags = []
                 report.status = "FAIL"
-                report.status_extended = f"ECR registry {registry.id} has {registry.scan_type} scanning without scan on push enabled"
+                report.status_extended = f"ECR registry {registry.id} has {registry.scan_type} scanning without scan on push enabled."
                 if registry.rules:
                     report.status = "PASS"
-                    report.status_extended = f"ECR registry {registry.id} has {registry.scan_type} scan with scan on push enabled"
+                    report.status_extended = f"ECR registry {registry.id} has {registry.scan_type} scan with scan on push enabled."
                     filters = True
                     for rule in registry.rules:
                         if not rule.scan_filters or "'*'" in str(rule.scan_filters):
                             filters = False
                     if filters:
                         report.status = "FAIL"
-                        report.status_extended = f"ECR registry {registry.id} has {registry.scan_type} scanning with scan on push but with repository filters"
+                        report.status_extended = f"ECR registry {registry.id} has {registry.scan_type} scanning with scan on push but with repository filters."
 
                 findings.append(report)
 
