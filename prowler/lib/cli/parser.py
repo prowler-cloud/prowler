@@ -245,7 +245,9 @@ Detailed documentation at https://docs.prowler.cloud
             "-l", "--list-checks", action="store_true", help="List checks"
         )
         list_group.add_argument(
-            "-j", "--list-checks-json", action="store_true", help="Output a list of checks in json"
+            "--list-checks-json",
+            action="store_true",
+            help="Output a list of checks in json for use with --checks-file",
         )
         list_group.add_argument(
             "--list-services", action="store_true", help="List services"

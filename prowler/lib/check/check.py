@@ -270,6 +270,13 @@ def print_compliance_requirements(
                     )
 
 
+def print_checks_json(provider: str, check_list: set):
+    import json
+
+    output = {provider: sorted(checks_to_execute)}
+    print(json.dumps(output, indent=2, default=str))
+
+
 def print_checks(
     provider: str,
     check_list: set,
