@@ -90,7 +90,7 @@ Detailed documentation at https://docs.prowler.cloud
             )
 
         # Only Logging Configuration
-        if args.only_logs:
+        if args.only_logs or args.list_checks_json:
             args.no_banner = True
 
         return args
