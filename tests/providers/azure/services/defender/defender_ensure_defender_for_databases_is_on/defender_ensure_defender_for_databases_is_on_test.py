@@ -165,7 +165,7 @@ class Test_defender_ensure_defender_for_databases_is_on:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Defender plan Defender for Databases from subscription {AZURE_SUSCRIPTION} is set to ON (pricing tier standard)"
+                == f"Defender plan Defender for Databases from subscription {AZURE_SUSCRIPTION} is set to ON (pricing tier standard)."
             )
             assert result[0].subscription == AZURE_SUSCRIPTION
             assert result[0].resource_name == "Defender plan Databases"
@@ -213,7 +213,7 @@ class Test_defender_ensure_defender_for_databases_is_on:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Defender plan Defender for Databases from subscription {AZURE_SUSCRIPTION} is set to OFF (pricing tier not standard)"
+                == f"Defender plan Defender for Databases from subscription {AZURE_SUSCRIPTION} is set to OFF (pricing tier not standard)."
             )
             assert result[0].subscription == AZURE_SUSCRIPTION
             assert result[0].resource_name == "Defender plan Databases"

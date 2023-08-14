@@ -12,10 +12,10 @@ class defender_ensure_defender_for_arm_is_on(Check):
                 report.subscription = subscription
                 report.resource_id = pricings["Arm"].resource_id
                 report.resource_name = "Defender plan ARM"
-                report.status_extended = f"Defender plan Defender for ARM from subscription {subscription} is set to ON (pricing tier standard)"
+                report.status_extended = f"Defender plan Defender for ARM from subscription {subscription} is set to ON (pricing tier standard)."
                 if pricings["Arm"].pricing_tier != "Standard":
                     report.status = "FAIL"
-                    report.status_extended = f"Defender plan Defender for ARM from subscription {subscription} is set to OFF (pricing tier not standard)"
+                    report.status_extended = f"Defender plan Defender for ARM from subscription {subscription} is set to OFF (pricing tier not standard)."
 
                 findings.append(report)
         return findings

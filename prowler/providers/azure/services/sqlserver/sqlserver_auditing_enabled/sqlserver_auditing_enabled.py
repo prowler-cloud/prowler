@@ -10,14 +10,14 @@ class sqlserver_auditing_enabled(Check):
                 report = Check_Report_Azure(self.metadata())
                 report.subscription = subscription
                 report.status = "PASS"
-                report.status_extended = f"SQL Server {sql_server.name} from subscription {subscription} has a auditing policy configured"
+                report.status_extended = f"SQL Server {sql_server.name} from subscription {subscription} has a auditing policy configured."
                 report.resource_name = sql_server.name
                 report.resource_id = sql_server.id
 
                 for auditing_policy in sql_server.auditing_policies:
                     if auditing_policy.state == "Disabled":
                         report.status = "FAIL"
-                        report.status_extended = f"SQL Server {sql_server.name} from subscription {subscription} does not have any auditing policy configured"
+                        report.status_extended = f"SQL Server {sql_server.name} from subscription {subscription} does not have any auditing policy configured."
                         break
 
                 findings.append(report)

@@ -10,7 +10,7 @@ class sqlserver_unrestricted_inbound_access(Check):
                 report = Check_Report_Azure(self.metadata())
                 report.subscription = subscription
                 report.status = "PASS"
-                report.status_extended = f"SQL Server {sql_server.name} from subscription {subscription} does not have firewall rules allowing 0.0.0.0-255.255.255.255"
+                report.status_extended = f"SQL Server {sql_server.name} from subscription {subscription} does not have firewall rules allowing 0.0.0.0-255.255.255.255."
                 report.resource_name = sql_server.name
                 report.resource_id = sql_server.id
 
@@ -20,7 +20,7 @@ class sqlserver_unrestricted_inbound_access(Check):
                         and firewall_rule.end_ip_address == "255.255.255.255"
                     ):
                         report.status = "FAIL"
-                        report.status_extended = f"SQL Server {sql_server.name} from subscription {subscription} has firewall rules allowing 0.0.0.0-255.255.255.255"
+                        report.status_extended = f"SQL Server {sql_server.name} from subscription {subscription} has firewall rules allowing 0.0.0.0-255.255.255.255."
                         break
 
                 findings.append(report)

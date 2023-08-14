@@ -50,7 +50,7 @@ class Test_defender_ensure_defender_for_storage_is_on:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Defender plan Defender for Storage Accounts from subscription {AZURE_SUSCRIPTION} is set to OFF (pricing tier not standard)"
+                == f"Defender plan Defender for Storage Accounts from subscription {AZURE_SUSCRIPTION} is set to OFF (pricing tier not standard)."
             )
             assert result[0].subscription == AZURE_SUSCRIPTION
             assert result[0].resource_name == "Defender plan Storage Accounts"
@@ -83,7 +83,7 @@ class Test_defender_ensure_defender_for_storage_is_on:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Defender plan Defender for Storage Accounts from subscription {AZURE_SUSCRIPTION} is set to ON (pricing tier standard)"
+                == f"Defender plan Defender for Storage Accounts from subscription {AZURE_SUSCRIPTION} is set to ON (pricing tier standard)."
             )
             assert result[0].subscription == AZURE_SUSCRIPTION
             assert result[0].resource_name == "Defender plan Storage Accounts"

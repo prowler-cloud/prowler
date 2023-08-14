@@ -61,7 +61,7 @@ class Test_defender_ensure_defender_for_storage_is_on:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"SQL Server {sql_server_name} from subscription {AZURE_SUSCRIPTION} has firewall rules allowing 0.0.0.0-255.255.255.255"
+                == f"SQL Server {sql_server_name} from subscription {AZURE_SUSCRIPTION} has firewall rules allowing 0.0.0.0-255.255.255.255."
             )
             assert result[0].subscription == AZURE_SUSCRIPTION
             assert result[0].resource_name == sql_server_name
@@ -103,7 +103,7 @@ class Test_defender_ensure_defender_for_storage_is_on:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"SQL Server {sql_server_name} from subscription {AZURE_SUSCRIPTION} does not have firewall rules allowing 0.0.0.0-255.255.255.255"
+                == f"SQL Server {sql_server_name} from subscription {AZURE_SUSCRIPTION} does not have firewall rules allowing 0.0.0.0-255.255.255.255."
             )
             assert result[0].subscription == AZURE_SUSCRIPTION
             assert result[0].resource_name == sql_server_name

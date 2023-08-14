@@ -58,7 +58,7 @@ class Test_storage_ensure_azure_services_are_trusted_to_access_is_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Storage account {storage_account_name} from subscription {AZURE_SUSCRIPTION} does not allow trusted Microsoft services to access this storage account"
+                == f"Storage account {storage_account_name} from subscription {AZURE_SUSCRIPTION} does not allow trusted Microsoft services to access this storage account."
             )
             assert result[0].subscription == AZURE_SUSCRIPTION
             assert result[0].resource_name == storage_account_name
@@ -97,7 +97,7 @@ class Test_storage_ensure_azure_services_are_trusted_to_access_is_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Storage account {storage_account_name} from subscription {AZURE_SUSCRIPTION} allows trusted Microsoft services to access this storage account"
+                == f"Storage account {storage_account_name} from subscription {AZURE_SUSCRIPTION} allows trusted Microsoft services to access this storage account."
             )
             assert result[0].subscription == AZURE_SUSCRIPTION
             assert result[0].resource_name == storage_account_name

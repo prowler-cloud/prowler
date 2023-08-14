@@ -10,12 +10,12 @@ class storage_infrastructure_encryption_is_enabled(Check):
                 report = Check_Report_Azure(self.metadata())
                 report.subscription = subscription
                 report.status = "PASS"
-                report.status_extended = f"Storage account {storage_account.name} from subscription {subscription} has infrastructure encryption enabled"
+                report.status_extended = f"Storage account {storage_account.name} from subscription {subscription} has infrastructure encryption enabled."
                 report.resource_name = storage_account.name
                 report.resource_id = storage_account.id
                 if not storage_account.infrastructure_encryption:
                     report.status = "FAIL"
-                    report.status_extended = f"Storage account {storage_account.name} from subscription {subscription} has infrastructure encryption disabled"
+                    report.status_extended = f"Storage account {storage_account.name} from subscription {subscription} has infrastructure encryption disabled."
 
                 findings.append(report)
 
