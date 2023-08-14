@@ -12,11 +12,11 @@ from prowler.lib.check.check import (
     exclude_services_to_run,
     execute_checks,
     list_categories,
+    list_checks_json,
     list_services,
     parse_checks_from_folder,
     print_categories,
     print_checks,
-    print_checks_json,
     print_compliance_frameworks,
     print_compliance_requirements,
     print_services,
@@ -116,7 +116,7 @@ def prowler():
 
     # if --list-checks-json, dump a json file and exit
     if args.list_checks_json:
-        print_checks_json(provider, sorted(checks_to_execute))
+        print(list_checks_json(provider, sorted(checks_to_execute)))
         sys.exit()
 
     # If -l/--list-checks passed as argument, print checks to execute and quit

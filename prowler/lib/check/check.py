@@ -1,5 +1,6 @@
 import functools
 import importlib
+import json
 import os
 import re
 import shutil
@@ -270,11 +271,13 @@ def print_compliance_requirements(
                     )
 
 
-def print_checks_json(provider: str, check_list: set):
-    import json
-
-    output = {provider: sorted(check_list)}
-    print(json.dumps(output, indent=2, default=str))
+def list_checks_json(provider: str, check_list: set):
+    try:
+        output = {provider: check_list}
+        return json.dumps(output, indent=2, default=str)
+    except Exception as e:
+        logger.critical(f"{e.__class__.__name__}[{e.__traceback__.tb_lineno}]: {e}")
+        sys.exit(1)
 
 
 def print_checks(
