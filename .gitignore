@@ -46,3 +46,6 @@ junit-reports/
 
 # .env
 .env*
+
+# Coverage
+.coverage*
