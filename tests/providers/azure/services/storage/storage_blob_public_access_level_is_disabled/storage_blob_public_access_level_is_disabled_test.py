@@ -56,7 +56,7 @@ class Test_storage_blob_public_access_level_is_disabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Storage account {storage_account_name} from subscription {AZURE_SUSCRIPTION} has allow blob public access enabled"
+                == f"Storage account {storage_account_name} from subscription {AZURE_SUSCRIPTION} has allow blob public access enabled."
             )
             assert result[0].subscription == AZURE_SUSCRIPTION
             assert result[0].resource_name == storage_account_name
@@ -95,7 +95,7 @@ class Test_storage_blob_public_access_level_is_disabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Storage account {storage_account_name} from subscription {AZURE_SUSCRIPTION} has allow blob public access disabled"
+                == f"Storage account {storage_account_name} from subscription {AZURE_SUSCRIPTION} has allow blob public access disabled."
             )
             assert result[0].subscription == AZURE_SUSCRIPTION
             assert result[0].resource_name == storage_account_name

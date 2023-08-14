@@ -56,7 +56,7 @@ class Test_storage_ensure_minimum_tls_version_12:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Storage account {storage_account_name} from subscription {AZURE_SUSCRIPTION} does not have TLS version set to 1.2"
+                == f"Storage account {storage_account_name} from subscription {AZURE_SUSCRIPTION} does not have TLS version set to 1.2."
             )
             assert result[0].subscription == AZURE_SUSCRIPTION
             assert result[0].resource_name == storage_account_name
@@ -95,7 +95,7 @@ class Test_storage_ensure_minimum_tls_version_12:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Storage account {storage_account_name} from subscription {AZURE_SUSCRIPTION} has TLS version set to 1.2"
+                == f"Storage account {storage_account_name} from subscription {AZURE_SUSCRIPTION} has TLS version set to 1.2."
             )
             assert result[0].subscription == AZURE_SUSCRIPTION
             assert result[0].resource_name == storage_account_name

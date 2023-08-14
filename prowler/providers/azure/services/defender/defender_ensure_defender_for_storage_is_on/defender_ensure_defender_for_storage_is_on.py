@@ -12,10 +12,10 @@ class defender_ensure_defender_for_storage_is_on(Check):
                 report.subscription = subscription
                 report.resource_name = "Defender plan Storage Accounts"
                 report.resource_id = pricings["StorageAccounts"].resource_id
-                report.status_extended = f"Defender plan Defender for Storage Accounts from subscription {subscription} is set to ON (pricing tier standard)"
+                report.status_extended = f"Defender plan Defender for Storage Accounts from subscription {subscription} is set to ON (pricing tier standard)."
                 if pricings["StorageAccounts"].pricing_tier != "Standard":
                     report.status = "FAIL"
-                    report.status_extended = f"Defender plan Defender for Storage Accounts from subscription {subscription} is set to OFF (pricing tier not standard)"
+                    report.status_extended = f"Defender plan Defender for Storage Accounts from subscription {subscription} is set to OFF (pricing tier not standard)."
 
                 findings.append(report)
         return findings

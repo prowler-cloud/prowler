@@ -58,7 +58,7 @@ class Test_storage_default_network_access_rule_is_denied:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Storage account {storage_account_name} from subscription {AZURE_SUSCRIPTION} has network access rule set to Allow"
+                == f"Storage account {storage_account_name} from subscription {AZURE_SUSCRIPTION} has network access rule set to Allow."
             )
             assert result[0].subscription == AZURE_SUSCRIPTION
             assert result[0].resource_name == storage_account_name
@@ -97,7 +97,7 @@ class Test_storage_default_network_access_rule_is_denied:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Storage account {storage_account_name} from subscription {AZURE_SUSCRIPTION} has network access rule set to Deny"
+                == f"Storage account {storage_account_name} from subscription {AZURE_SUSCRIPTION} has network access rule set to Deny."
             )
             assert result[0].subscription == AZURE_SUSCRIPTION
             assert result[0].resource_name == storage_account_name

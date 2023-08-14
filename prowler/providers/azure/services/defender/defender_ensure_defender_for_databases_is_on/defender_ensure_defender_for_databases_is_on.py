@@ -17,7 +17,7 @@ class defender_ensure_defender_for_databases_is_on(Check):
                 report.subscription = subscription
                 report.resource_id = pricings["SqlServers"].resource_id
                 report.status = "PASS"
-                report.status_extended = f"Defender plan Defender for Databases from subscription {subscription} is set to ON (pricing tier standard)"
+                report.status_extended = f"Defender plan Defender for Databases from subscription {subscription} is set to ON (pricing tier standard)."
                 if (
                     pricings["SqlServers"].pricing_tier != "Standard"
                     or pricings["SqlServerVirtualMachines"].pricing_tier != "Standard"
@@ -26,7 +26,7 @@ class defender_ensure_defender_for_databases_is_on(Check):
                     or pricings["CosmosDbs"].pricing_tier != "Standard"
                 ):
                     report.status = "FAIL"
-                    report.status_extended = f"Defender plan Defender for Databases from subscription {subscription} is set to OFF (pricing tier not standard)"
+                    report.status_extended = f"Defender plan Defender for Databases from subscription {subscription} is set to OFF (pricing tier not standard)."
 
                 findings.append(report)
         return findings

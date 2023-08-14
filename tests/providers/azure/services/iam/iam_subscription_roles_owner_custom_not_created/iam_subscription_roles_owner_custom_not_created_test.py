@@ -54,7 +54,7 @@ class Test_defender_ensure_defender_for_storage_is_on:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Role {role_name} from subscription {AZURE_SUSCRIPTION} is a custom owner role"
+                == f"Role {role_name} from subscription {AZURE_SUSCRIPTION} is a custom owner role."
             )
 
     def test_iam_custom_owner_role_created_with_no_permissions(self):
@@ -86,5 +86,5 @@ class Test_defender_ensure_defender_for_storage_is_on:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Role {role_name} from subscription {AZURE_SUSCRIPTION} is not a custom owner role"
+                == f"Role {role_name} from subscription {AZURE_SUSCRIPTION} is not a custom owner role."
             )

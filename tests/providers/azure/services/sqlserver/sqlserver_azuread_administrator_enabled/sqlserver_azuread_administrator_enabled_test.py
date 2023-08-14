@@ -57,7 +57,7 @@ class Test_defender_ensure_defender_for_storage_is_on:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"SQL Server {sql_server_name} from subscription {AZURE_SUSCRIPTION} does not have an Active Directory administrator"
+                == f"SQL Server {sql_server_name} from subscription {AZURE_SUSCRIPTION} does not have an Active Directory administrator."
             )
             assert result[0].subscription == AZURE_SUSCRIPTION
             assert result[0].resource_name == sql_server_name
@@ -97,7 +97,7 @@ class Test_defender_ensure_defender_for_storage_is_on:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"SQL Server {sql_server_name} from subscription {AZURE_SUSCRIPTION} does not have an Active Directory administrator"
+                == f"SQL Server {sql_server_name} from subscription {AZURE_SUSCRIPTION} does not have an Active Directory administrator."
             )
             assert result[0].subscription == AZURE_SUSCRIPTION
             assert result[0].resource_name == sql_server_name
@@ -137,7 +137,7 @@ class Test_defender_ensure_defender_for_storage_is_on:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"SQL Server {sql_server_name} from subscription {AZURE_SUSCRIPTION} has an Active Directory administrator"
+                == f"SQL Server {sql_server_name} from subscription {AZURE_SUSCRIPTION} has an Active Directory administrator."
             )
             assert result[0].subscription == AZURE_SUSCRIPTION
             assert result[0].resource_name == sql_server_name
