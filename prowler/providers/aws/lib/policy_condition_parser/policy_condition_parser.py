@@ -4,9 +4,14 @@ def is_account_only_allowed_in_condition(
     """
     is_account_only_allowed_in_condition parses the IAM Condition policy block and returns True if the source_account passed as argument is within, False if not.
 
-    @param condition_statement: dict with IAM Condition block
+    @param condition_statement: dict with an IAM Condition block, e.g.:
+        {
+            "StringLike": {
+                "AWS:SourceAccount": 111122223333
+            }
+        }
 
-    @param source_account: str 12 digit AWS Account number
+    @param source_account: str with a 12-digit AWS Account number, e.g.: 111122223333
     """
     is_condition_valid = False
 
@@ -63,7 +68,7 @@ def is_account_only_allowed_in_condition(
                     ):
                         if (
                             source_account
-                            in condition_statement[condition_operator][value.lower()]
+                            in condition_statement[condition_operator][value]
                         ):
                             is_condition_valid = True
 
