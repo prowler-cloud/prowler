@@ -49,3 +49,4 @@ junit-reports/
 
 # Coverage
 .coverage*
+coverage*

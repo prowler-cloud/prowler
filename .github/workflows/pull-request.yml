@@ -29,7 +29,6 @@ jobs:
       - name: Install dependencies
         run: |
           poetry install
-          pip install pytest-cov
           poetry run pip list
           VERSION=$(curl --silent "https://api.github.com/repos/hadolint/hadolint/releases/latest" | \
             grep '"tag_name":' | \
