@@ -2,7 +2,7 @@ from re import search
 from unittest import mock
 
 from boto3 import client, session
-from moto import mock_s3
+from moto import mock_s3, mock_s3control
 
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.common.models import Audit_Metadata
@@ -85,6 +85,7 @@ class Test_s3_bucket_policy_public_write_access:
                 assert result[0].region == "us-east-1"
 
     @mock_s3
+    @mock_s3control
     def test_bucket_comply_policy(self):
         s3_client_us_east_1 = client("s3", region_name="us-east-1")
         bucket_name_us = "bucket_test_us"
@@ -97,7 +98,20 @@ class Test_s3_bucket_policy_public_write_access:
             Bucket=bucket_name_us,
             Policy=encryption_policy,
         )
-        from prowler.providers.aws.services.s3.s3_service import S3
+
+        # Generate S3Control Client
+        s3control_client = client("s3control", region_name=AWS_REGION)
+        s3control_client.put_public_access_block(
+            AccountId=AWS_ACCOUNT_NUMBER,
+            PublicAccessBlockConfiguration={
+                "BlockPublicAcls": False,
+                "IgnorePublicAcls": False,
+                "BlockPublicPolicy": False,
+                "RestrictPublicBuckets": False,
+            },
+        )
+
+        from prowler.providers.aws.services.s3.s3_service import S3, S3Control
 
         audit_info = self.set_mocked_audit_info()
 
@@ -108,6 +122,9 @@ class Test_s3_bucket_policy_public_write_access:
             with mock.patch(
                 "prowler.providers.aws.services.s3.s3_bucket_policy_public_write_access.s3_bucket_policy_public_write_access.s3_client",
                 new=S3(audit_info),
+            ), mock.patch(
+                "prowler.providers.aws.services.s3.s3_bucket_policy_public_write_access.s3_bucket_policy_public_write_access.s3control_client",
+                new=S3Control(audit_info),
             ):
                 # Test Check
                 from prowler.providers.aws.services.s3.s3_bucket_policy_public_write_access.s3_bucket_policy_public_write_access import (
@@ -131,6 +148,7 @@ class Test_s3_bucket_policy_public_write_access:
                 assert result[0].region == "us-east-1"
 
     @mock_s3
+    @mock_s3control
     def test_bucket_public_write_policy(self):
         s3_client_us_east_1 = client("s3", region_name="us-east-1")
         bucket_name_us = "bucket_test_us"
@@ -142,13 +160,29 @@ class Test_s3_bucket_policy_public_write_access:
             Bucket=bucket_name_us,
             Policy=public_write_policy,
         )
-        from prowler.providers.aws.services.s3.s3_service import S3
+
+        # Generate S3Control Client
+        s3control_client = client("s3control", region_name=AWS_REGION)
+        s3control_client.put_public_access_block(
+            AccountId=AWS_ACCOUNT_NUMBER,
+            PublicAccessBlockConfiguration={
+                "BlockPublicAcls": False,
+                "IgnorePublicAcls": False,
+                "BlockPublicPolicy": False,
+                "RestrictPublicBuckets": False,
+            },
+        )
+
+        from prowler.providers.aws.services.s3.s3_service import S3, S3Control
 
         audit_info = self.set_mocked_audit_info()
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             new=audit_info,
+        ), mock.patch(
+            "prowler.providers.aws.services.s3.s3_bucket_policy_public_write_access.s3_bucket_policy_public_write_access.s3control_client",
+            new=S3Control(audit_info),
         ):
             with mock.patch(
                 "prowler.providers.aws.services.s3.s3_bucket_policy_public_write_access.s3_bucket_policy_public_write_access.s3_client",
