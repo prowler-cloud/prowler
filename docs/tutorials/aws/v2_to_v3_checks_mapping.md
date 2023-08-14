@@ -2,7 +2,7 @@
 
 Prowler v3 comes with different identifiers but we maintained the same checks that were implemented in v2. The reason for this change is because in previous versions of Prowler, check names were mostly based on CIS Benchmark for AWS. In v3 all checks are independent from any security framework and they have its own name and ID.
 
-If you need more information about how new compliance implementation works in Prowler v3 see [Compliance](../../compliance/) section.
+If you need more information about how new compliance implementation works in Prowler v3 see [Compliance](../compliance.md) section.
 
 ```
 checks_v3_to_v2_mapping = {

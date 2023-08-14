@@ -38,7 +38,7 @@ nav:
       - Logging: tutorials/logging.md
       - Allowlist: tutorials/allowlist.md
       - Pentesting: tutorials/pentesting.md
-      - Developer Guide: tutorials/developer-guide/developer-guide.md
+      - Developer Guide: developer-guide/introduction.md
       - AWS:
           - Authentication: tutorials/aws/authentication.md
           - Assume Role: tutorials/aws/role-assumption.md
@@ -57,17 +57,17 @@ nav:
       - Google Cloud:
           - Authentication: tutorials/gcp/authentication.md
   - Developer Guide:
-      - Introduction: tutorials/developer-guide/developer-guide.md
-      - Audit Info: tutorials/developer-guide/audit-info.md
-      - Services: tutorials/developer-guide/service.md
-      - Checks: tutorials/developer-guide/checks.md
-      - Documentation: tutorials/developer-guide/documentation.md
-      - Compliance: tutorials/developer-guide/security-compliance-framework.md
-      - Outputs: tutorials/developer-guide/outputs.md
-      - Integrations: tutorials/developer-guide/integrations.md
+      - Introduction: developer-guide/introduction.md
+      - Audit Info: developer-guide/audit-info.md
+      - Services: developer-guide/services.md
+      - Checks: developer-guide/checks.md
+      - Documentation: developer-guide/documentation.md
+      - Compliance: developer-guide/security-compliance-framework.md
+      - Outputs: developer-guide/outputs.md
+      - Integrations: developer-guide/integrations.md
       - Testing:
-          - Unit Tests: tutorials/developer-guide/unit-testing.md
-          - Integration Tests: tutorials/developer-guide/integration-testing.md
+          - Unit Tests: developer-guide/unit-testing.md
+          - Integration Tests: developer-guide/integration-testing.md
   - Security: security.md
   - Contact Us: contact.md
   - Troubleshooting: troubleshooting.md

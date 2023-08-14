@@ -11,4 +11,4 @@
     This error is also related with a lack of system requirements. To improve performance, Prowler stores information in memory so it may need to be run in a system with more than 1GB of memory.
 
 
-See section [Logging](/tutorials/logging/) for further information or [contact us](/contact/).
+See section [Logging](./tutorials/logging.md) for further information or [contact us](./contact.md).

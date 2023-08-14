@@ -2,7 +2,7 @@
 
 Here you can find how to create new checks for Prowler.
 
-**To create a check is required to have a Prowler provider service already created, so if the service is not present or the attribute you want to audit is not retrieved by the service, please refer to the [Service](./service.md) documentation.**
+**To create a check is required to have a Prowler provider service already created, so if the service is not present or the attribute you want to audit is not retrieved by the service, please refer to the [Service](./services.md) documentation.**
 
 ## Introduction
 To create a new check for a supported Prowler provider, you will need to create a folder with the check name inside the specific service for the selected provider.
