@@ -11,14 +11,14 @@ AWS_REGION = "us-east-1"
 AWS_ACCOUNT_NUMBER = "123456789012"
 
 
-def mock_generate_regional_clients(service, audit_info):
+def mock_generate_regional_clients(service, audit_info, _):
     regional_client = audit_info.audit_session.client(service, region_name=AWS_REGION)
     regional_client.region = AWS_REGION
     return {AWS_REGION: regional_client}
 
 
 @patch(
-    "prowler.providers.aws.services.ec2.ec2_service.generate_regional_clients",
+    "prowler.providers.aws.lib.service.service.generate_regional_clients",
     new=mock_generate_regional_clients,
 )
 class Test_ec2_ebs_snapshots_exists:
@@ -55,6 +55,8 @@ class Test_ec2_ebs_snapshots_exists:
 
     @mock_ec2
     def test_ec2_volume_without_snapshots(self):
+        ec2 = resource("ec2", region_name=AWS_REGION)
+        _ = ec2.create_volume(Size=80, AvailabilityZone=f"{AWS_REGION}a")
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
         current_audit_info = self.set_mocked_audit_info()
@@ -74,15 +76,19 @@ class Test_ec2_ebs_snapshots_exists:
             check = ec2_ebs_snapshots_exists()
             result = check.execute()
 
-            # Default snapshots
-            assert len(result) == 561
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert (
+                result[0].status_extended
+                == f"Snapshots not found to EBS volume {result[0].resource_id}"
+            )
 
     @mock_ec2
     def test_ec2_volume_with_snapshot(self):
         # Create EC2 Mocked Resources
         ec2 = resource("ec2", region_name=AWS_REGION)
         volume = ec2.create_volume(Size=80, AvailabilityZone=f"{AWS_REGION}a")
-        snapshot = volume.create_snapshot(Description="testsnap")
+        _ = volume.create_snapshot(Description="testsnap")
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
@@ -101,19 +107,50 @@ class Test_ec2_ebs_snapshots_exists:
             )
 
             check = ec2_ebs_snapshots_exists()
-            results = check.execute()
+            result = check.execute()
 
-            # Default snapshots + 1 created
-            assert len(results) == 562
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert (
+                result[0].status_extended
+                == f"Snapshots found to EBS volume {result[0].resource_id}"
+            )
 
-            for snap in results:
-                if snap.resource_id == snapshot.id:
-                    assert snap.status == "FAIL"
-                    assert (
-                        snap.status_extended
-                        == f"EBS Snapshot {snapshot.id} is unencrypted."
-                    )
-                    assert (
-                        snap.resource_arn
-                        == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:snapshot/{snapshot.id}"
-                    )
+    @mock_ec2
+    def test_ec2_volume_with_and_without_snapshot(self):
+        # Create EC2 Mocked Resources
+        ec2 = resource("ec2", region_name=AWS_REGION)
+        volume1 = ec2.create_volume(Size=80, AvailabilityZone=f"{AWS_REGION}a")
+        _ = ec2.create_volume(Size=80, AvailabilityZone=f"{AWS_REGION}a")
+        _ = volume1.create_snapshot(Description="testsnap")
+
+        from prowler.providers.aws.services.ec2.ec2_service import EC2
+
+        current_audit_info = self.set_mocked_audit_info()
+
+        with mock.patch(
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=current_audit_info,
+        ), mock.patch(
+            "prowler.providers.aws.services.ec2.ec2_ebs_snapshots_exists.ec2_ebs_snapshots_exists.ec2_client",
+            new=EC2(current_audit_info),
+        ):
+            # Test Check
+            from prowler.providers.aws.services.ec2.ec2_ebs_snapshots_exists.ec2_ebs_snapshots_exists import (
+                ec2_ebs_snapshots_exists,
+            )
+
+            check = ec2_ebs_snapshots_exists()
+            result = check.execute()
+
+            assert len(result) == 2
+            assert result[0].status == "PASS"
+            assert (
+                result[0].status_extended
+                == f"Snapshots found to EBS volume {result[0].resource_id}"
+            )
+            assert result[1].status == "FAIL"
+            assert (
+                result[1].status_extended
+                == f"Snapshots not found to EBS volume {result[1].resource_id}"
+            )
