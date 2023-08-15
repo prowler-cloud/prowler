@@ -69,7 +69,7 @@ pytest-randomly = "3.13.0"
 pytest-xdist = "3.3.1"
 safety = "2.3.5"
 sure = "2.0.1"
-vulture = "2.7"
+vulture = "2.8"
 
 [tool.poetry.scripts]
 prowler = "prowler.__main__:prowler"
