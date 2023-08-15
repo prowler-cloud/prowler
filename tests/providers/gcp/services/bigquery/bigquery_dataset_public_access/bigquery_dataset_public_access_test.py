@@ -1,4 +1,3 @@
-from re import search
 from unittest import mock
 
 GCP_PROJECT_ID = "123456789012"
@@ -50,9 +49,9 @@ class Test_bigquery_dataset_public_access:
 
             assert len(result) == 1
             assert result[0].status == "PASS"
-            assert search(
-                f"Dataset {dataset.name} is not publicly accessible",
-                result[0].status_extended,
+            assert (
+                result[0].status_extended
+                == f"Dataset {dataset.name} is not publicly accessible."
             )
             assert result[0].resource_id == dataset.id
             assert result[0].resource_name == dataset.name
@@ -88,9 +87,9 @@ class Test_bigquery_dataset_public_access:
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert search(
-                f"Dataset {dataset.name} is publicly accessible!",
-                result[0].status_extended,
+            assert (
+                result[0].status_extended
+                == f"Dataset {dataset.name} is publicly accessible."
             )
             assert result[0].resource_id == dataset.id
             assert result[0].resource_name == dataset.name

@@ -12,7 +12,7 @@ class compute_instance_default_service_account_in_use(Check):
             report.resource_name = instance.name
             report.location = instance.zone
             report.status = "PASS"
-            report.status_extended = f"The default service account is not configured to be used with VM Instance {instance.name}"
+            report.status_extended = f"The default service account is not configured to be used with VM Instance {instance.name}."
             if (
                 any(
                     [
@@ -23,7 +23,7 @@ class compute_instance_default_service_account_in_use(Check):
                 and instance.name[:4] != "gke-"
             ):
                 report.status = "FAIL"
-                report.status_extended = f"The default service account is configured to be used with VM Instance {instance.name}"
+                report.status_extended = f"The default service account is configured to be used with VM Instance {instance.name}."
             findings.append(report)
 
         return findings

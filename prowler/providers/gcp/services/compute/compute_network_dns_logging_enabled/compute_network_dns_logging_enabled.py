@@ -14,13 +14,13 @@ class compute_network_dns_logging_enabled(Check):
             report.location = compute_client.region
             report.status = "FAIL"
             report.status_extended = (
-                f"Network {network.name} does not have DNS logging enabled"
+                f"Network {network.name} does not have DNS logging enabled."
             )
             for policy in dns_client.policies:
                 if network.name in policy.networks and policy.logging:
                     report.status = "PASS"
                     report.status_extended = (
-                        f"Network {network.name} has DNS logging enabled"
+                        f"Network {network.name} has DNS logging enabled."
                     )
                     break
             findings.append(report)

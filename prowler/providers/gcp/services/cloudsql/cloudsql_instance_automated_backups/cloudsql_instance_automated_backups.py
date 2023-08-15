@@ -13,11 +13,11 @@ class cloudsql_instance_automated_backups(Check):
             report.location = instance.region
             report.status = "PASS"
             report.status_extended = (
-                f"Database Instance {instance.name} has automated backups configured"
+                f"Database Instance {instance.name} has automated backups configured."
             )
             if not instance.automated_backups:
                 report.status = "FAIL"
-                report.status_extended = f"Database Instance {instance.name} does not have automated backups configured"
+                report.status_extended = f"Database Instance {instance.name} does not have automated backups configured."
             findings.append(report)
 
         return findings

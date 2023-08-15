@@ -15,12 +15,12 @@ class cloudstorage_bucket_uniform_bucket_level_access(Check):
             report.location = bucket.region
             report.status = "PASS"
             report.status_extended = (
-                f"Bucket {bucket.name} has uniform Bucket Level Access enabled"
+                f"Bucket {bucket.name} has uniform Bucket Level Access enabled."
             )
             if not bucket.uniform_bucket_level_access:
                 report.status = "FAIL"
                 report.status_extended = (
-                    f"Bucket {bucket.name} has uniform Bucket Level Access disabled"
+                    f"Bucket {bucket.name} has uniform Bucket Level Access disabled."
                 )
             findings.append(report)
 

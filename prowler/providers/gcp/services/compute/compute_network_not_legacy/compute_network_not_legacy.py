@@ -12,10 +12,10 @@ class compute_network_not_legacy(Check):
             report.resource_name = network.name
             report.location = compute_client.region
             report.status = "PASS"
-            report.status_extended = f"Network {network.name} is not legacy"
+            report.status_extended = f"Network {network.name} is not legacy."
             if network.subnet_mode == "legacy":
                 report.status = "FAIL"
-                report.status_extended = f"Legacy network {network.name} exists"
+                report.status_extended = f"Legacy network {network.name} exists."
             findings.append(report)
 
         return findings

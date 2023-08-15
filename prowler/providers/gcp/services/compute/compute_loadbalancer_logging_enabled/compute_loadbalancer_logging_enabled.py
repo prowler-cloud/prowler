@@ -12,11 +12,11 @@ class compute_loadbalancer_logging_enabled(Check):
             report.resource_name = lb.name
             report.location = compute_client.region
             report.status = "PASS"
-            report.status_extended = f"LoadBalancer {lb.name} has logging enabled"
+            report.status_extended = f"LoadBalancer {lb.name} has logging enabled."
             if not lb.logging:
                 report.status = "FAIL"
                 report.status_extended = (
-                    f"LoadBalancer {lb.name} does not have logging enabled"
+                    f"LoadBalancer {lb.name} does not have logging enabled."
                 )
             findings.append(report)
 
