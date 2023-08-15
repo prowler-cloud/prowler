@@ -1350,20 +1350,20 @@ min-versions = ["babel (==2.9.0)", "click (==7.0)", "colorama (==0.4)", "ghp-imp
 
 [[package]]
 name = "mkdocs-material"
-version = "9.1.20"
+version = "9.1.21"
 description = "Documentation that simply works"
 optional = true
 python-versions = ">=3.7"
 files = [
-    {file = "mkdocs_material-9.1.20-py3-none-any.whl", hash = "sha256:152db66f667825d5aa3398386fe4d227640ec393c31e7cf109b114a569fc40fc"},
-    {file = "mkdocs_material-9.1.20.tar.gz", hash = "sha256:91621b6a6002138c72d50a0beef20ed12cf367d2af27d1f53382562b3a9625c7"},
+    {file = "mkdocs_material-9.1.21-py3-none-any.whl", hash = "sha256:58bb2f11ef240632e176d6f0f7d1cff06be1d11c696a5a1b553b808b4280ed47"},
+    {file = "mkdocs_material-9.1.21.tar.gz", hash = "sha256:71940cdfca84ab296b6362889c25395b1621273fb16c93deda257adb7ff44ec8"},
 ]
 
 [package.dependencies]
 colorama = ">=0.4"
 jinja2 = ">=3.0"
 markdown = ">=3.2"
-mkdocs = ">=1.4.2"
+mkdocs = ">=1.5.0"
 mkdocs-material-extensions = ">=1.1"
 pygments = ">=2.14"
 pymdown-extensions = ">=9.9.1"
@@ -2916,4 +2916,4 @@ docs = ["mkdocs", "mkdocs-material"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "0e77ceb14534eacd5ac23360446b6b190876a13900a4e994d97de03911509b06"
+content-hash = "c5987150cae123163048bfc948adb2520a48f6bf954b1680f112980924c6899f"
