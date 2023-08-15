@@ -10,7 +10,7 @@ AWS_REGION = "us-east-1"
 AWS_ACCOUNT_NUMBER = "123456789012"
 
 
-class Test_vpc_subnet_separate_private_public:
+class Test_vpc_subnet_no_public_ip_by_default:
     def set_mocked_audit_info(self):
         audit_info = AWS_Audit_Info(
             session_config=None,
@@ -68,7 +68,7 @@ class Test_vpc_subnet_separate_private_public:
             new=current_audit_info,
         ):
             with mock.patch(
-                "prowler.providers.aws.services.vpc.vpc_subnet_separate_private_public.vpc_subnet_separate_private_public.vpc_client",
+                "prowler.providers.aws.services.vpc.vpc_subnet_no_public_ip_by_default.vpc_subnet_no_public_ip_by_default.vpc_client",
                 new=VPC(current_audit_info),
             ):
                 from prowler.providers.aws.services.vpc.vpc_subnet_no_public_ip_by_default.vpc_subnet_no_public_ip_by_default import (
@@ -112,7 +112,7 @@ class Test_vpc_subnet_separate_private_public:
             new=current_audit_info,
         ):
             with mock.patch(
-                "prowler.providers.aws.services.vpc.vpc_subnet_separate_private_public.vpc_subnet_separate_private_public.vpc_client",
+                "prowler.providers.aws.services.vpc.vpc_subnet_no_public_ip_by_default.vpc_subnet_no_public_ip_by_default.vpc_client",
                 new=VPC(current_audit_info),
             ):
                 from prowler.providers.aws.services.vpc.vpc_subnet_no_public_ip_by_default.vpc_subnet_no_public_ip_by_default import (
