@@ -496,6 +496,17 @@
         ]
       }
     },
+    "appfabric": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "eu-west-1",
+          "us-east-1"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
     "appflow": {
       "regions": {
         "aws": [
@@ -6981,6 +6992,16 @@
         "aws-us-gov": []
       }
     },
+    "payment-cryptography": {
+      "regions": {
+        "aws": [
+          "us-east-1",
+          "us-west-2"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
     "personalize": {
       "regions": {
         "aws": [
@@ -7786,6 +7807,7 @@
           "ap-southeast-1",
           "ap-southeast-2",
           "ap-southeast-3",
+          "ap-southeast-4",
           "ca-central-1",
           "eu-central-1",
           "eu-north-1",
@@ -8219,6 +8241,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "il-central-1",
           "me-central-1",
           "me-south-1",
           "sa-east-1",
