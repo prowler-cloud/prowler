@@ -54,7 +54,7 @@ When creating tests for some provider's checks we follow these guidelines trying
 
 ## How to run Prowler tests
 
-To run the Prowler test suite you need to install the testing dependencies already included in the `pyproject.toml` file. If you didn't install it yet please read the developer guide introduction [here](./developer-guide.md#get-the-code-and-install-all-dependencies).
+To run the Prowler test suite you need to install the testing dependencies already included in the `pyproject.toml` file. If you didn't install it yet please read the developer guide introduction [here](./introduction.md#get-the-code-and-install-all-dependencies).
 
 Then in the project's root path execute `pytest -n auto -vvv -s -x` or use the `Makefile` with `make test`.
 

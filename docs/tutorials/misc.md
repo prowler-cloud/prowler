@@ -65,7 +65,7 @@ The custom checks folder must contain one subfolder per check, each subfolder mu
 - A `check_name.metadata.json` containing the check's metadata.
 >The check name must start with the service name followed by an underscore (e.g., ec2_instance_public_ip).
 
-To see more information about how to write checks see the [Developer Guide](../developer-guide/#create-a-new-check-for-a-provider).
+To see more information about how to write checks see the [Developer Guide](../developer-guide/checks.md#create-a-new-check-for-a-provider).
 
 > If you want to run ONLY your custom check(s), import it with -x (--checks-folder) and then run it with -c (--checks), e.g.:
 ```console

@@ -32,7 +32,7 @@ Due to the complexity and differencies of each provider API we are going to use 
 
 The following is the `<service>_service.py` file:
 
-```python
+```python title="Service Class"
 from datetime import datetime
 from typing import Optional
 
@@ -174,9 +174,15 @@ class <Service>(ServiceParentClass):
             logger.error(
                 f"{<item>.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+```
 
+### Service Models
 
-# In each service class we have to create some classes using the Pydantic's Basemodel for the resources we want to audit.
+For each class object we need to model we use the Pydantic's [BaseModel](https://docs.pydantic.dev/latest/api/base_model/#pydantic.BaseModel) to take advantage of the data validation.
+
+```python title="Service Model"
+# In each service class we have to create some classes using
+# the Pydantic's Basemodel for the resources we want to audit.
 class <Item>(BaseModel):
     """<Item> holds a <Service> <Item>"""
 
@@ -193,19 +199,18 @@ class <Item>(BaseModel):
     """<Items>[].public"""
 
     # We can create Optional attributes set to None by default
-    tags: Optional[list] = []
+    tags: Optional[list]
      """<Items>[].tags"""
-
-
 ```
-
 ### Service Objects
-In the service each list of resources should be created as a Python [dictionaries](https://docs.python.org/3/tutorial/datastructures.html#dictionaries) since we are performing lookups all the time the Python dictionary lookup has [O(1) complexity](https://en.wikipedia.org/wiki/Big_O_notation#Orders_of_common_functions).
+In the service each group of resources should be created as a Python [dictionary](https://docs.python.org/3/tutorial/datastructures.html#dictionaries). This is because we are performing lookups all the time and the Python dictionary lookup has [O(1) complexity](https://en.wikipedia.org/wiki/Big_O_notation#Orders_of_common_functions).
+
+We MUST set as the dictionary key a unique ID, like the resource Unique ID or ARN.
 
 Example:
 ```python
 self.vpcs = {}
-self.vpcs["vpc-01234567890abcdef"] = VPC_Object_Class
+self.vpcs["vpc-01234567890abcdef"] = VPC_Object_Class()
 ```
 
 ## Service Client

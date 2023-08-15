@@ -2,7 +2,7 @@
 
 Here you can find how to create new checks for Prowler.
 
-**To create a check is required to have a Prowler provider service already created, so if the service is not present or the attribute you want to audit is not retrieved by the service, please refer to the [Service](./service.md) documentation.**
+**To create a check is required to have a Prowler provider service already created, so if the service is not present or the attribute you want to audit is not retrieved by the service, please refer to the [Service](./services.md) documentation.**
 
 ## Introduction
 To create a new check for a supported Prowler provider, you will need to create a folder with the check name inside the specific service for the selected provider.
@@ -106,6 +106,7 @@ All the checks MUST fill the `report.status` and `report.status_extended` with t
 - Status Extended -- `report.status_extended`
     - MUST end in a dot `.`
     - MUST include the service audited with the resource and a brief explanation of the result generated, e.g.: `EC2 AMI ami-0123456789 is not public.`
+
 ### Resource ID, Name and ARN
 All the hecks must fill the `report.resource_id` and `report.resource_arn` with the following criteria:
 
