@@ -1,3 +1,4 @@
+import time
 from re import search
 from unittest import mock
 
@@ -119,9 +120,10 @@ class Test_cloudtrail_management_exist_with_multi_region_enabled:
                 result = check.execute()
                 assert len(result) == 1
                 report = result[0]
+                time.sleep(1)
                 assert report.status == "PASS"
                 assert search(
-                    f"Trail {trail_name_us} has multi-region and management events logs enabled",
+                    f"Trail {trail_name_us} is multi-region, is logging and have management events logs enabled",
                     report.status_extended,
                 )
                 assert report.resource_id == trail_name_us
