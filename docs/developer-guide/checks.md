@@ -160,6 +160,38 @@ class Check(ABC, Check_Metadata_Model):
         """Execute the check's logic"""
 ```
 
+### Using the audit config
+
+Prowler has a [configuration file](../tutorials/configuration_file.md) which is used to pass certain configuration values to the checks, like the following:
+
+```python title="ec2_securitygroup_with_many_ingress_egress_rules.py"
+class ec2_securitygroup_with_many_ingress_egress_rules(Check):
+    def execute(self):
+        findings = []
+
+        # max_security_group_rules, default: 50
+        max_security_group_rules = ec2_client.audit_config.get(
+            "max_security_group_rules", 50
+        )
+        for security_group in ec2_client.security_groups:
+```
+
+```yaml title="config.yaml"
+# AWS Configuration
+aws:
+  # AWS EC2 Configuration
+
+  # aws.ec2_securitygroup_with_many_ingress_egress_rules
+  # The default value is 50 rules
+  max_security_group_rules: 50
+```
+
+As you can see in the above code, within the service client, in this case the `ec2_client`, there is an object called `audit_config` which is a Python dictionary containing the values read from the configuration file.
+
+In order to use it, you have to check first if the value is present in the configuration file. If the value is not present, you can create it in the `config.yaml` file and then, read it from the check.
+> It is mandatory to always use the `dictionary.get(value, default)` syntax to set a default value in the case the configuration value is not present.
+
+
 ## Check Metadata
 
 Each Prowler check has metadata associated which is stored at the same level of the check's folder in a file called A `check_name.metadata.json` containing the check's metadata.
@@ -275,34 +307,3 @@ class Check_Metadata_Model(BaseModel):
     # store the compliance later if supplied
     Compliance: list = None
 ```
-
-### Using the audit config
-
-Prowler has a [configuration file](../tutorials/configuration_file.md) which is used to pass certain configuration values to the checks, like the following:
-
-```python title="ec2_securitygroup_with_many_ingress_egress_rules.py"
-class ec2_securitygroup_with_many_ingress_egress_rules(Check):
-    def execute(self):
-        findings = []
-
-        # max_security_group_rules, default: 50
-        max_security_group_rules = ec2_client.audit_config.get(
-            "max_security_group_rules", 50
-        )
-        for security_group in ec2_client.security_groups:
-```
-
-```yaml title="config.yaml"
-# AWS Configuration
-aws:
-  # AWS EC2 Configuration
-
-  # aws.ec2_securitygroup_with_many_ingress_egress_rules
-  # The default value is 50 rules
-  max_security_group_rules: 50
-```
-
-As you can see in the above code, within the service client, in this case the `ec2_client`, there is an object called `audit_config` which is a Python dictionary containing the values read from the configuration file.
-
-In order to use it, you have to check first if the value is present in the configuration file. If the value is not present, you can create it in the `config.yaml` file and then, read it from the check. 
-> It is mandatory to always use the `dictionary.get(value, default)` syntax to set a default value in the case the configuration value is not present.
