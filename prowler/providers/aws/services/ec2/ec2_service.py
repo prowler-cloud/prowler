@@ -56,6 +56,7 @@ class EC2(AWSService):
                             public_ip = None
                             private_ip = None
                             instance_profile = None
+                            monitoring_state = "disabled"
                             if "MetadataOptions" in instance:
                                 http_tokens = instance["MetadataOptions"]["HttpTokens"]
                                 http_endpoint = instance["MetadataOptions"][
@@ -67,6 +68,10 @@ class EC2(AWSService):
                             ):
                                 public_dns = instance["PublicDnsName"]
                                 public_ip = instance["PublicIpAddress"]
+                            if "Monitoring" in instance:
+                                monitoring_state = instance.get(
+                                    "Monitoring", {"State": "disabled"}
+                                ).get("State", "disabled")
                             if "PrivateIpAddress" in instance:
                                 private_ip = instance["PrivateIpAddress"]
                             if "IamInstanceProfile" in instance:
@@ -88,6 +93,7 @@ class EC2(AWSService):
                                     http_tokens=http_tokens,
                                     http_endpoint=http_endpoint,
                                     instance_profile=instance_profile,
+                                    monitoring_state=monitoring_state,
                                     tags=instance.get("Tags"),
                                 )
                             )
@@ -407,6 +413,7 @@ class Instance(BaseModel):
     user_data: Optional[str]
     http_tokens: Optional[str]
     http_endpoint: Optional[str]
+    monitoring_state: str
     instance_profile: Optional[dict]
     tags: Optional[list] = []
 
