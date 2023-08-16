@@ -2893,4 +2893,4 @@ docs = ["mkdocs", "mkdocs-material"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "43dd8af19bd3b5cbf14642523ce46b5a19eebbfb87dd9bb86274f25aea782d98"
+content-hash = "7dc4127465abad1d20e55c5889ed9e3c61a241fd728c30646d48bf1f24129d5c"
