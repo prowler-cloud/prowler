@@ -1,0 +1,33 @@
+{
+  "Provider": "aws",
+  "CheckID": "ec2_detailed_monitoring_enabled",
+  "CheckTitle": "Check if EC2 instances have detailed monitoring enabled.",
+  "CheckType": [
+    "Infrastructure Security"
+  ],
+  "ServiceName": "ec2",
+  "SubServiceName": "instance",
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "Severity": "medium",
+  "ResourceType": "AwsEc2Instance",
+  "Description": "Check if EC2 instances have detailed monitoring enabled.",
+  "Risk": "Enabling detailed monitoring provides enhanced monitoring and granular insights into EC2 instance metrics. Not having detailed monitoring enabled may limit the ability to troubleshoot performance issues effectively.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-cloudwatch-new.html#enable-detailed-monitoring-instance",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable detailed monitoring for EC2 instances to gain better insights into performance metrics.",
+      "Url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-cloudwatch-new.html#enable-detailed-monitoring-instance"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "",
+  "Attributes": []
+}
