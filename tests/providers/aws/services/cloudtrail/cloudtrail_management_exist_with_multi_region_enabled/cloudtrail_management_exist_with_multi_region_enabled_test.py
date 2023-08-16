@@ -120,7 +120,7 @@ class Test_cloudtrail_management_exist_with_multi_region_enabled:
                 result = check.execute()
                 assert len(result) == 1
                 report = result[0]
-                time.sleep(1)
+                time.sleep(3)
                 assert report.status == "PASS"
                 assert search(
                     f"Trail {trail_name_us} is multi-region, is logging and have management events logs enabled",
@@ -176,7 +176,7 @@ class Test_cloudtrail_management_exist_with_multi_region_enabled:
                 result = check.execute()
                 assert len(result) == 1
                 report = result[0]
-                time.sleep(1)
+                time.sleep(3)
                 assert report.status == "FAIL"
                 assert search(
                     "No trail found with multi-region enabled and logging management events",
