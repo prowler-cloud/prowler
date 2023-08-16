@@ -12,12 +12,12 @@ class cloudsql_instance_private_ip_assignment(Check):
             report.resource_name = instance.name
             report.location = instance.region
             report.status = "PASS"
-            report.status_extended = f"Database Instance {instance.name} does not have private IP assignments"
+            report.status_extended = f"Database Instance {instance.name} does not have private IP assignments."
             for address in instance.ip_addresses:
                 if address["type"] != "PRIVATE":
                     report.status = "FAIL"
                     report.status_extended = (
-                        f"Database Instance {instance.name} has public IP assignments"
+                        f"Database Instance {instance.name} has public IP assignments."
                     )
                     break
             findings.append(report)

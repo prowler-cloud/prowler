@@ -13,11 +13,11 @@ class compute_instance_confidential_computing_enabled(Check):
             report.location = instance.zone
             report.status = "PASS"
             report.status_extended = (
-                f"VM Instance {instance.name} has Confidential Computing enabled"
+                f"VM Instance {instance.name} has Confidential Computing enabled."
             )
             if not instance.confidential_computing:
                 report.status = "FAIL"
-                report.status_extended = f"VM Instance {instance.name} does not have Confidential Computing enabled"
+                report.status_extended = f"VM Instance {instance.name} does not have Confidential Computing enabled."
             findings.append(report)
 
         return findings

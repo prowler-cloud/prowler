@@ -12,11 +12,11 @@ class cloudsql_instance_public_access(Check):
             report.resource_name = instance.name
             report.location = instance.region
             report.status = "PASS"
-            report.status_extended = f"Database Instance {instance.name} does not whitelist all Public IP Addresses"
+            report.status_extended = f"Database Instance {instance.name} does not whitelist all Public IP Addresses."
             for network in instance.authorized_networks:
                 if network["value"] == "0.0.0.0/0":
                     report.status = "FAIL"
-                    report.status_extended = f"Database Instance {instance.name} whitelist all Public IP Addresses"
+                    report.status_extended = f"Database Instance {instance.name} whitelist all Public IP Addresses."
             findings.append(report)
 
         return findings

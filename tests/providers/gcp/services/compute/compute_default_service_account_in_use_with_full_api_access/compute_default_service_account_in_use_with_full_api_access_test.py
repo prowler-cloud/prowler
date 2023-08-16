@@ -1,4 +1,3 @@
-from re import search
 from unittest import mock
 
 GCP_PROJECT_ID = "123456789012"
@@ -62,9 +61,9 @@ class Test_compute_instance_default_service_account_in_use_with_full_api_access:
 
             assert len(result) == 1
             assert result[0].status == "PASS"
-            assert search(
-                f"The VM Instance {instance.name} is not configured to use the default service account with full access to all cloud APIs ",
-                result[0].status_extended,
+            assert (
+                result[0].status_extended
+                == f"The VM Instance {instance.name} is not configured to use the default service account with full access to all cloud APIs."
             )
             assert result[0].resource_id == instance.id
 
@@ -110,9 +109,9 @@ class Test_compute_instance_default_service_account_in_use_with_full_api_access:
 
             assert len(result) == 1
             assert result[0].status == "PASS"
-            assert search(
-                f"The VM Instance {instance.name} is not configured to use the default service account with full access to all cloud APIs ",
-                result[0].status_extended,
+            assert (
+                result[0].status_extended
+                == f"The VM Instance {instance.name} is not configured to use the default service account with full access to all cloud APIs."
             )
             assert result[0].resource_id == instance.id
 
@@ -158,8 +157,8 @@ class Test_compute_instance_default_service_account_in_use_with_full_api_access:
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert search(
-                f"The VM Instance {instance.name} is configured to use the default service account with full access to all cloud APIs ",
-                result[0].status_extended,
+            assert (
+                result[0].status_extended
+                == f"The VM Instance {instance.name} is configured to use the default service account with full access to all cloud APIs."
             )
             assert result[0].resource_id == instance.id

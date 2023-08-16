@@ -15,7 +15,7 @@ class serviceusage_cloudasset_inventory_enabled(Check):
             report.location = serviceusage_client.region
             report.status = "FAIL"
             report.status_extended = (
-                f"Cloud Asset Inventory is not enabled in project {project_id}"
+                f"Cloud Asset Inventory is not enabled in project {project_id}."
             )
             for active_service in serviceusage_client.active_services.get(
                 project_id, []
@@ -23,7 +23,7 @@ class serviceusage_cloudasset_inventory_enabled(Check):
                 if active_service.name == "cloudasset.googleapis.com":
                     report.status = "PASS"
                     report.status_extended = (
-                        f"Cloud Asset Inventory is enabled in project {project_id}"
+                        f"Cloud Asset Inventory is enabled in project {project_id}."
                     )
                     break
             findings.append(report)

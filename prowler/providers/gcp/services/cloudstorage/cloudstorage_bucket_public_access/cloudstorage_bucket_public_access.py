@@ -14,10 +14,10 @@ class cloudstorage_bucket_public_access(Check):
             report.resource_name = bucket.name
             report.location = bucket.region
             report.status = "PASS"
-            report.status_extended = f"Bucket {bucket.name} is not publicly accessible"
+            report.status_extended = f"Bucket {bucket.name} is not publicly accessible."
             if bucket.public:
                 report.status = "FAIL"
-                report.status_extended = f"Bucket {bucket.name} is publicly accessible!"
+                report.status_extended = f"Bucket {bucket.name} is publicly accessible."
             findings.append(report)
 
         return findings

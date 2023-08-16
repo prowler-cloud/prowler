@@ -13,11 +13,11 @@ class bigquery_table_cmk_encryption(Check):
             report.location = table.region
             report.status = "PASS"
             report.status_extended = (
-                f"Table {table.name} is encrypted with Customer-Managed Keys (CMKs)"
+                f"Table {table.name} is encrypted with Customer-Managed Keys (CMKs)."
             )
             if not table.cmk_encryption:
                 report.status = "FAIL"
-                report.status_extended = f"Table {table.name} is not encrypted with Customer-Managed Keys (CMKs)"
+                report.status_extended = f"Table {table.name} is not encrypted with Customer-Managed Keys (CMKs)."
             findings.append(report)
 
         return findings

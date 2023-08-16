@@ -17,7 +17,7 @@ class compute_network_default_in_use(Check):
                 report.location = "global"
                 report.status = "FAIL"
                 report.status_extended = (
-                    f"Default network is in use in project {network.project_id}"
+                    f"Default network is in use in project {network.project_id}."
                 )
                 findings.append(report)
 
@@ -30,7 +30,7 @@ class compute_network_default_in_use(Check):
                 report.location = "global"
                 report.status = "PASS"
                 report.status_extended = (
-                    f"Default network does not exist in project {project}"
+                    f"Default network does not exist in project {project}."
                 )
 
         return findings

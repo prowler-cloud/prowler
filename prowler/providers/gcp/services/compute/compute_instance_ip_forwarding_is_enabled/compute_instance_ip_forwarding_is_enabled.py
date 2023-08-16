@@ -13,12 +13,12 @@ class compute_instance_ip_forwarding_is_enabled(Check):
             report.location = instance.zone
             report.status = "PASS"
             report.status_extended = (
-                f"The IP Forwarding of VM Instance {instance.name} is not enabled"
+                f"The IP Forwarding of VM Instance {instance.name} is not enabled."
             )
             if instance.ip_forward and instance.name[:4] != "gke-":
                 report.status = "FAIL"
                 report.status_extended = (
-                    f"The IP Forwarding of VM Instance {instance.name} is enabled"
+                    f"The IP Forwarding of VM Instance {instance.name} is enabled."
                 )
             findings.append(report)
 

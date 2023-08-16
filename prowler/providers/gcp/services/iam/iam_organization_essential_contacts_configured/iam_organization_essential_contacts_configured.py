@@ -15,12 +15,12 @@ class iam_organization_essential_contacts_configured(Check):
             report.location = essentialcontacts_client.region
             report.status = "FAIL"
             report.status_extended = (
-                f"Organization {org.name} does not have essential contacts configured"
+                f"Organization {org.name} does not have essential contacts configured."
             )
             if org.contacts:
                 report.status = "PASS"
                 report.status_extended = (
-                    f"Organization {org.name} has essential contacts configured"
+                    f"Organization {org.name} has essential contacts configured."
                 )
             findings.append(report)
 
