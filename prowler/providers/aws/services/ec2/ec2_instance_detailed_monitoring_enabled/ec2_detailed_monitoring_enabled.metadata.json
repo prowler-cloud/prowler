@@ -1,24 +1,24 @@
 {
   "Provider": "aws",
-  "CheckID": "ec2_detailed_monitoring_enabled",
+  "CheckID": "ec2_instance_detailed_monitoring_enabled",
   "CheckTitle": "Check if EC2 instances have detailed monitoring enabled.",
   "CheckType": [
     "Infrastructure Security"
   ],
   "ServiceName": "ec2",
-  "SubServiceName": "instance",
+  "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
   "ResourceType": "AwsEc2Instance",
   "Description": "Check if EC2 instances have detailed monitoring enabled.",
   "Risk": "Enabling detailed monitoring provides enhanced monitoring and granular insights into EC2 instance metrics. Not having detailed monitoring enabled may limit the ability to troubleshoot performance issues effectively.",
-  "RelatedUrl": "",
+  "RelatedUrl": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-cloudwatch-new.html",
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
+      "CLI": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/EC2/instance-detailed-monitoring.html",
+      "NativeIaC": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/EC2/instance-detailed-monitoring.html",
       "Other": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-cloudwatch-new.html#enable-detailed-monitoring-instance",
-      "Terraform": ""
+      "Terraform": "https://docs.bridgecrew.io/docs/ensure-that-detailed-monitoring-is-enabled-for-ec2-instances#terraform"
     },
     "Recommendation": {
       "Text": "Enable detailed monitoring for EC2 instances to gain better insights into performance metrics.",
@@ -28,6 +28,5 @@
   "Categories": [],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "",
-  "Attributes": []
+  "Notes": ""
 }
