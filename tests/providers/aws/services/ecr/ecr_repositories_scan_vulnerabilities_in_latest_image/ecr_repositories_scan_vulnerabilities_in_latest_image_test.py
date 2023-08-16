@@ -317,6 +317,118 @@ class Test_ecr_repositories_scan_vulnerabilities_in_latest_image:
             assert result[0].resource_id == repository_name
             assert result[0].resource_arn == repository_arn
 
+    def test_image_scanned_without_CRITICAL_findings_default_severity_CRITICAL(self):
+        ecr_client = mock.MagicMock
+        ecr_client.registries = {}
+        ecr_client.registries[AWS_REGION] = Registry(
+            id=AWS_ACCOUNT_NUMBER,
+            region=AWS_REGION,
+            scan_type="BASIC",
+            repositories=[
+                Repository(
+                    name=repository_name,
+                    arn=repository_arn,
+                    region=AWS_REGION,
+                    scan_on_push=True,
+                    policy=repo_policy_public,
+                    images_details=[
+                        ImageDetails(
+                            latest_tag=latest_tag,
+                            latest_digest="test-digest",
+                            image_pushed_at=datetime(2023, 1, 1),
+                            scan_findings_status="COMPLETE",
+                            scan_findings_severity_count=FindingSeverityCounts(
+                                critical=0, high=34, medium=7
+                            ),
+                        )
+                    ],
+                    lifecycle_policy=None,
+                )
+            ],
+            rules=[],
+        )
+
+        # Set audit_config
+        ecr_client.audit_config = {
+            "ecr_repository_vulnerability_minimum_severity": "CRITICAL"
+        }
+
+        with mock.patch(
+            "prowler.providers.aws.services.ecr.ecr_service.ECR",
+            ecr_client,
+        ):
+            from prowler.providers.aws.services.ecr.ecr_repositories_scan_vulnerabilities_in_latest_image.ecr_repositories_scan_vulnerabilities_in_latest_image import (
+                ecr_repositories_scan_vulnerabilities_in_latest_image,
+            )
+
+            check = ecr_repositories_scan_vulnerabilities_in_latest_image()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert (
+                result[0].status_extended
+                == f"ECR repository {repository_name} has imageTag {latest_tag} scanned without findings."
+            )
+            assert result[0].resource_id == repository_name
+            assert result[0].resource_arn == repository_arn
+
+    def test_image_scanned_without_CRITICAL_and_HIGH_findings_default_severity_HIGH(
+        self,
+    ):
+        ecr_client = mock.MagicMock
+        ecr_client.registries = {}
+        ecr_client.registries[AWS_REGION] = Registry(
+            id=AWS_ACCOUNT_NUMBER,
+            region=AWS_REGION,
+            scan_type="BASIC",
+            repositories=[
+                Repository(
+                    name=repository_name,
+                    arn=repository_arn,
+                    region=AWS_REGION,
+                    scan_on_push=True,
+                    policy=repo_policy_public,
+                    images_details=[
+                        ImageDetails(
+                            latest_tag=latest_tag,
+                            latest_digest="test-digest",
+                            image_pushed_at=datetime(2023, 1, 1),
+                            scan_findings_status="COMPLETE",
+                            scan_findings_severity_count=FindingSeverityCounts(
+                                critical=0, high=0, medium=7
+                            ),
+                        )
+                    ],
+                    lifecycle_policy=None,
+                )
+            ],
+            rules=[],
+        )
+
+        # Set audit_config
+        ecr_client.audit_config = {
+            "ecr_repository_vulnerability_minimum_severity": "HIGH"
+        }
+
+        with mock.patch(
+            "prowler.providers.aws.services.ecr.ecr_service.ECR",
+            ecr_client,
+        ):
+            from prowler.providers.aws.services.ecr.ecr_repositories_scan_vulnerabilities_in_latest_image.ecr_repositories_scan_vulnerabilities_in_latest_image import (
+                ecr_repositories_scan_vulnerabilities_in_latest_image,
+            )
+
+            check = ecr_repositories_scan_vulnerabilities_in_latest_image()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert (
+                result[0].status_extended
+                == f"ECR repository {repository_name} has imageTag {latest_tag} scanned without findings."
+            )
+            assert result[0].resource_id == repository_name
+            assert result[0].resource_arn == repository_arn
+
     def test_image_scanned_fail_scan(self):
         ecr_client = mock.MagicMock
         ecr_client.registries = {}
