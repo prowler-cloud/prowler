@@ -1,7 +1,6 @@
 import boto3
 import botocore
 import pytest
-import sure  # noqa
 from boto3 import session
 from mock import patch
 from moto import mock_ec2, mock_resourcegroupstaggingapi

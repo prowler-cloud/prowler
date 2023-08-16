@@ -1,5 +1,6 @@
+from re import search
+
 import boto3
-import sure  # noqa
 from mock import patch
 from moto import mock_iam, mock_sts
 
@@ -214,27 +215,30 @@ class Test_AWS_Provider:
             credentials = assume_role_response["Credentials"]
             # Test the response
             # SessionToken
-            credentials["SessionToken"].should.have.length_of(356)
-            credentials["SessionToken"].startswith("FQoGZXIvYXdzE")
+            assert len(credentials["SessionToken"]) == 356
+            assert search(r"^FQoGZXIvYXdzE.*$", credentials["SessionToken"])
             # AccessKeyId
-            credentials["AccessKeyId"].should.have.length_of(20)
-            credentials["AccessKeyId"].startswith("ASIA")
+            assert len(credentials["AccessKeyId"]) == 20
+            assert search(r"^ASIA.*$", credentials["AccessKeyId"])
             # SecretAccessKey
-            credentials["SecretAccessKey"].should.have.length_of(40)
+            assert len(credentials["SecretAccessKey"]) == 40
             # Assumed Role
-            assume_role_response["AssumedRoleUser"]["Arn"].should.equal(
-                f"arn:aws:sts::{ACCOUNT_ID}:assumed-role/{role_name}/{sessionName}"
+            assert (
+                assume_role_response["AssumedRoleUser"]["Arn"]
+                == f"arn:aws:sts::{ACCOUNT_ID}:assumed-role/{role_name}/{sessionName}"
             )
+
             # AssumedRoleUser
-            assert assume_role_response["AssumedRoleUser"]["AssumedRoleId"].startswith(
-                "AROA"
+            assert search(
+                r"^AROA.*$", assume_role_response["AssumedRoleUser"]["AssumedRoleId"]
             )
-            assert assume_role_response["AssumedRoleUser"]["AssumedRoleId"].endswith(
-                ":" + sessionName
+            assert search(
+                rf"^.*:{sessionName}$",
+                assume_role_response["AssumedRoleUser"]["AssumedRoleId"],
             )
-            assume_role_response["AssumedRoleUser"][
-                "AssumedRoleId"
-            ].should.have.length_of(21 + 1 + len(sessionName))
+            assert len(
+                assume_role_response["AssumedRoleUser"]["AssumedRoleId"]
+            ) == 21 + 1 + len(sessionName)
 
     @mock_iam
     @mock_sts
@@ -301,27 +305,30 @@ class Test_AWS_Provider:
         credentials = assume_role_response["Credentials"]
         # Test the response
         # SessionToken
-        credentials["SessionToken"].should.have.length_of(356)
-        credentials["SessionToken"].startswith("FQoGZXIvYXdzE")
+        assert len(credentials["SessionToken"]) == 356
+        assert search(r"^FQoGZXIvYXdzE.*$", credentials["SessionToken"])
         # AccessKeyId
-        credentials["AccessKeyId"].should.have.length_of(20)
-        credentials["AccessKeyId"].startswith("ASIA")
+        assert len(credentials["AccessKeyId"]) == 20
+        assert search(r"^ASIA.*$", credentials["AccessKeyId"])
         # SecretAccessKey
-        credentials["SecretAccessKey"].should.have.length_of(40)
+        assert len(credentials["SecretAccessKey"]) == 40
         # Assumed Role
-        assume_role_response["AssumedRoleUser"]["Arn"].should.equal(
-            f"arn:aws:sts::{ACCOUNT_ID}:assumed-role/{role_name}/{sessionName}"
+        assert (
+            assume_role_response["AssumedRoleUser"]["Arn"]
+            == f"arn:aws:sts::{ACCOUNT_ID}:assumed-role/{role_name}/{sessionName}"
         )
+
         # AssumedRoleUser
-        assert assume_role_response["AssumedRoleUser"]["AssumedRoleId"].startswith(
-            "AROA"
+        assert search(
+            r"^AROA.*$", assume_role_response["AssumedRoleUser"]["AssumedRoleId"]
         )
-        assert assume_role_response["AssumedRoleUser"]["AssumedRoleId"].endswith(
-            ":" + sessionName
+        assert search(
+            rf"^.*:{sessionName}$",
+            assume_role_response["AssumedRoleUser"]["AssumedRoleId"],
         )
-        assume_role_response["AssumedRoleUser"]["AssumedRoleId"].should.have.length_of(
-            21 + 1 + len(sessionName)
-        )
+        assert len(
+            assume_role_response["AssumedRoleUser"]["AssumedRoleId"]
+        ) == 21 + 1 + len(sessionName)
 
     @mock_iam
     @mock_sts
@@ -390,27 +397,30 @@ class Test_AWS_Provider:
         credentials = assume_role_response["Credentials"]
         # Test the response
         # SessionToken
-        credentials["SessionToken"].should.have.length_of(356)
-        credentials["SessionToken"].startswith("FQoGZXIvYXdzE")
+        assert len(credentials["SessionToken"]) == 356
+        assert search(r"^FQoGZXIvYXdzE.*$", credentials["SessionToken"])
         # AccessKeyId
-        credentials["AccessKeyId"].should.have.length_of(20)
-        credentials["AccessKeyId"].startswith("ASIA")
+        assert len(credentials["AccessKeyId"]) == 20
+        assert search(r"^ASIA.*$", credentials["AccessKeyId"])
         # SecretAccessKey
-        credentials["SecretAccessKey"].should.have.length_of(40)
+        assert len(credentials["SecretAccessKey"]) == 40
         # Assumed Role
-        assume_role_response["AssumedRoleUser"]["Arn"].should.equal(
-            f"arn:aws:sts::{ACCOUNT_ID}:assumed-role/{role_name}/{sessionName}"
+        assert (
+            assume_role_response["AssumedRoleUser"]["Arn"]
+            == f"arn:aws:sts::{ACCOUNT_ID}:assumed-role/{role_name}/{sessionName}"
         )
+
         # AssumedRoleUser
-        assert assume_role_response["AssumedRoleUser"]["AssumedRoleId"].startswith(
-            "AROA"
+        assert search(
+            r"^AROA.*$", assume_role_response["AssumedRoleUser"]["AssumedRoleId"]
         )
-        assert assume_role_response["AssumedRoleUser"]["AssumedRoleId"].endswith(
-            ":" + sessionName
+        assert search(
+            rf"^.*:{sessionName}$",
+            assume_role_response["AssumedRoleUser"]["AssumedRoleId"],
         )
-        assume_role_response["AssumedRoleUser"]["AssumedRoleId"].should.have.length_of(
-            21 + 1 + len(sessionName)
-        )
+        assert len(
+            assume_role_response["AssumedRoleUser"]["AssumedRoleId"]
+        ) == 21 + 1 + len(sessionName)
 
     def test_generate_regional_clients(self):
         # New Boto3 session with the previously create user

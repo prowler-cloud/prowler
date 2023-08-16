@@ -68,7 +68,6 @@ pytest-cov = "4.1.0"
 pytest-randomly = "3.13.0"
 pytest-xdist = "3.3.1"
 safety = "2.3.5"
-sure = "2.0.1"
 vulture = "2.8"
 
 [tool.poetry.scripts]

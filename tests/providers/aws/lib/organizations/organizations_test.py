@@ -1,7 +1,6 @@
 import json
 
 import boto3
-import sure  # noqa
 from moto import mock_iam, mock_organizations, mock_sts
 
 from prowler.providers.aws.lib.organizations.organizations import (
@@ -52,10 +51,11 @@ class Test_AWS_Organizations:
 
         org = get_organizations_metadata(account_id, assumed_role)
 
-        org.account_details_email.should.equal(mockemail)
-        org.account_details_name.should.equal(mockname)
-        org.account_details_arn.should.equal(
-            f"arn:aws:organizations::{AWS_ACCOUNT_NUMBER}:account/{org_id}/{account_id}"
+        assert org.account_details_email == mockemail
+        assert org.account_details_name == mockname
+        assert (
+            org.account_details_arn
+            == f"arn:aws:organizations::{AWS_ACCOUNT_NUMBER}:account/{org_id}/{account_id}"
         )
-        org.account_details_org.should.equal(org_id)
-        org.account_details_tags.should.equal("key:value,")
+        assert org.account_details_org == org_id
+        assert org.account_details_tags == "key:value,"
