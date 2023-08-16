@@ -7202,6 +7202,7 @@
       "regions": {
         "aws": [
           "ap-south-1",
+          "eu-central-1",
           "us-east-1"
         ],
         "aws-cn": [],
