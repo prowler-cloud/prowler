@@ -12,10 +12,12 @@ class ec2_instance_detailed_monitoring_enabled(Check):
             report.resource_arn = instance.arn
             report.resource_tags = instance.tags
             report.status = "PASS"
-            report.status_extended = f"EC2 Instance {instance.id} has detailed monitoring enabled."
+            report.status_extended = (
+                f"EC2 Instance {instance.id} has detailed monitoring enabled."
+            )
             if instance.monitoring_state != "enabled":
-               report.status = "FAIL"
-               report.status_extended = f"EC2 Instance {instance.id} does not have detailed monitoring enabled."
+                report.status = "FAIL"
+                report.status_extended = f"EC2 Instance {instance.id} does not have detailed monitoring enabled."
 
             findings.append(report)
 
