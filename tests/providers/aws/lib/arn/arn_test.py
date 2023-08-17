@@ -1,4 +1,3 @@
-import sure  # noqa
 from pytest import raises
 
 from prowler.providers.aws.lib.arn.arn import is_valid_arn, parse_iam_credentials_arn
@@ -250,12 +249,12 @@ class Test_ARN_Parsing:
         for test in test_cases:
             input_arn = test["input_arn"]
             parsed_arn = parse_iam_credentials_arn(input_arn)
-            parsed_arn.partition.should.equal(test["expected"]["partition"])
-            parsed_arn.service.should.equal(test["expected"]["service"])
-            parsed_arn.region.should.equal(test["expected"]["region"])
-            parsed_arn.account_id.should.equal(test["expected"]["account_id"])
-            parsed_arn.resource_type.should.equal(test["expected"]["resource_type"])
-            parsed_arn.resource.should.equal(test["expected"]["resource"])
+            assert parsed_arn.partition == test["expected"]["partition"]
+            assert parsed_arn.service == test["expected"]["service"]
+            assert parsed_arn.region == test["expected"]["region"]
+            assert parsed_arn.account_id == test["expected"]["account_id"]
+            assert parsed_arn.resource_type == test["expected"]["resource_type"]
+            assert parsed_arn.resource == test["expected"]["resource"]
 
     def test_iam_credentials_arn_parsing_raising_RoleArnParsingFailedMissingFields(
         self,

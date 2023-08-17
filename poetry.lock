@@ -1374,13 +1374,13 @@ files = [
 
 [[package]]
 name = "mock"
-version = "5.0.2"
+version = "5.1.0"
 description = "Rolling backport of unittest.mock for all Pythons"
 optional = false
 python-versions = ">=3.6"
 files = [
-    {file = "mock-5.0.2-py3-none-any.whl", hash = "sha256:0e0bc5ba78b8db3667ad636d964eb963dc97a59f04c6f6214c5f0e4a8f726c56"},
-    {file = "mock-5.0.2.tar.gz", hash = "sha256:06f18d7d65b44428202b145a9a36e99c2ee00d1eb992df0caf881d4664377891"},
+    {file = "mock-5.1.0-py3-none-any.whl", hash = "sha256:18c694e5ae8a208cdb3d2c20a993ca1a7b0efa258c247a1e565150f477f83744"},
+    {file = "mock-5.1.0.tar.gz", hash = "sha256:5e96aad5ccda4718e0a229ed94b2024df75cc2d55575ba5762d31f5767b8767d"},
 ]
 
 [package.extras]
@@ -2585,20 +2585,6 @@ files = [
 pbr = ">=2.0.0,<2.1.0 || >2.1.0"
 
 [[package]]
-name = "sure"
-version = "2.0.1"
-description = "utility belt for automated testing in python for python"
-optional = false
-python-versions = "*"
-files = [
-    {file = "sure-2.0.1.tar.gz", hash = "sha256:c8fc6fabc0e7f6984eeabb942540e45646e5bef0bb99fe59e02da634e4d4b9ca"},
-]
-
-[package.dependencies]
-mock = "*"
-six = "*"
-
-[[package]]
 name = "tabulate"
 version = "0.9.0"
 description = "Pretty-print tabular data"
@@ -2907,4 +2893,4 @@ docs = ["mkdocs", "mkdocs-material"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "3e70fe34df97f080cc7698f420ee7564b8250b223ad826fba9aabcbe71a3309e"
+content-hash = "7dc4127465abad1d20e55c5889ed9e3c61a241fd728c30646d48bf1f24129d5c"
