@@ -435,7 +435,7 @@ class Check_Output_JSON(BaseModel):
     Risk: str
     RelatedUrl: str
     Remediation: Remediation
-    Compliance: Optional[dict]
+    Compliance: Optional[list]
     Categories: List[str]
     DependsOn: List[str]
     RelatedTo: List[str]

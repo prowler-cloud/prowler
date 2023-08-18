@@ -1,4 +1,3 @@
-import os
 import sys
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
@@ -56,24 +55,27 @@ class Check_Metadata_Model(BaseModel):
     Compliance: list = None
 
 
-class Check(ABC, Check_Metadata_Model):
+class Check(ABC):  # , Check_Metadata_Model):
     """Prowler Check"""
 
-    def __init__(self, **data):
+    check_metadata: Check_Metadata_Model
+
+    def __init__(self, metadata):
         """Check's init function. Calls the CheckMetadataModel init."""
-        # Parse the Check's metadata file
-        metadata_file = (
-            os.path.abspath(sys.modules[self.__module__].__file__)[:-3]
-            + ".metadata.json"
-        )
-        # Store it to validate them with Pydantic
-        data = Check_Metadata_Model.parse_file(metadata_file).dict()
+        # # Parse the Check's metadata file
+        # metadata_file = (
+        #     os.path.abspath(sys.modules[self.__module__].__file__)[:-3]
+        #     + ".metadata.json"
+        # )
+        # # Store it to validate them with Pydantic
+        # data = Check_Metadata_Model.parse_file(metadata_file).dict()
+        self.check_metadata = metadata
         # Calls parents init function
-        super().__init__(**data)
+        # super().__init__(**data)
 
     def metadata(self) -> dict:
         """Return the JSON representation of the check's metadata"""
-        return self.json()
+        return self.check_metadata.json()
 
     @abstractmethod
     def execute(self):
