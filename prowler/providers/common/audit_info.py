@@ -84,17 +84,6 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
         # STS Endpoint Region
         sts_endpoint_region = arguments.get("sts_endpoint_region")
 
-        # Since the range(i,j) goes from i to j-1 we have to j+1
-        if input_session_duration and input_session_duration not in range(900, 43201):
-            raise Exception("Value for -T option must be between 900 and 43200")
-
-        # Handle if session_duration is not the default value or external_id is set
-        if (
-            input_session_duration and input_session_duration != 3600
-        ) or input_external_id:
-            if not input_role:
-                raise Exception("To use -I/-T options -R option is needed")
-
         # MFA Configuration (false by default)
         input_mfa = arguments.get("mfa")
         current_audit_info.mfa_enabled = input_mfa
