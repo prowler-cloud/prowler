@@ -138,7 +138,8 @@ def prowler():
     # Once the audit_info is set and we have the eventual checks based on the resource identifier,
     # it is time to check what Prowler's checks are going to be executed
     if audit_info.audit_resources:
-        checks_to_execute = set_provider_execution_parameters(provider, audit_info)
+        checks_from_resources = set_provider_execution_parameters(provider, audit_info)
+        checks_to_execute = checks_to_execute.intersection(checks_from_resources)
 
     # Sort final check list
     checks_to_execute = sorted(checks_to_execute)
