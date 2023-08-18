@@ -385,13 +385,13 @@ def import_check(check_path: str) -> ModuleType:
 
 def run_check(check: Check, output_options: Provider_Output_Options) -> list:
     findings = []
-    if output_options.verbose:
-        print(
-            f"\nCheck ID: {check.check_metadata.CheckID} - {Fore.MAGENTA}{check.check_metadata.ServiceName}{Fore.YELLOW} [{check.check_metadata.Severity}]{Style.RESET_ALL}"
-        )
-        logger.debug(f"Executing check: {check.check_metadata.CheckID}")
+
     try:
-        print(check)
+        if output_options.verbose:
+            print(
+                f"\nCheck ID: {check.check_metadata.CheckID} - {Fore.MAGENTA}{check.check_metadata.ServiceName}{Fore.YELLOW} [{check.check_metadata.Severity}]{Style.RESET_ALL}"
+            )
+            logger.debug(f"Executing check: {check.check_metadata.CheckID}")
         findings = check.execute()
     except Exception as error:
         if not output_options.only_logs:
