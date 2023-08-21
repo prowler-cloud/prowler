@@ -246,6 +246,8 @@ def get_checks_from_input_arn(audit_resources: list, provider: str) -> set:
             if any(sub_service in check for sub_service in sub_service_list):
                 if not (sub_service == "policy" and "password_policy" in check):
                     checks_from_arn.add(check)
+            else:
+                checks_from_arn.add(check)
 
     # Return final checks list
     return sorted(checks_from_arn)
