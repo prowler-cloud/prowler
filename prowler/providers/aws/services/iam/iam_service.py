@@ -61,7 +61,6 @@ class IAM(AWSService):
         self.__list_attached_group_policies__()
         self.__list_attached_user_policies__()
         self.__list_attached_role_policies__()
-        self.__list_inline_user_policies__()
         self.__list_mfa_devices__()
         self.password_policy = self.__get_password_policy__()
         support_policy_arn = (
@@ -79,6 +78,9 @@ class IAM(AWSService):
         self.policies.extend(self.__list_policies__("AWS"))
         self.policies.extend(self.__list_policies__("Local"))
         self.__list_policies_version__(self.policies)
+        self.__list_inline_user_policies__()
+        self.__list_inline_group_policies__()
+        self.__list_inline_role_policies__()
         self.saml_providers = self.__list_saml_providers__()
         self.server_certificates = self.__list_server_certificates__()
         self.__list_tags_for_resource__()
@@ -386,8 +388,96 @@ class IAM(AWSService):
                 ):
                     for policy in page["PolicyNames"]:
                         inline_user_policies.append(policy)
+                        #Get inline policies & their policy documents here:
+                        inline_policy = self.client.get_user_policy(
+                            UserName=user.name,
+                            PolicyName=policy
+                            )
+                        inline_user_policy_doc = inline_policy["PolicyDocument"]
+                        self.policies.append(
+                            Policy(
+                                name=policy,
+                                arn = user.arn,
+                                type = "Inline",
+                                attached = True,
+                                version_id = "v1",
+                                document = inline_user_policy_doc
+                            )
+                        )
 
                 user.inline_policies = inline_user_policies
+
+        except Exception as error:
+            logger.error(
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def __list_inline_group_policies__(self):
+        logger.info("IAM - List Inline Group Policies...")
+        try:
+            for group in self.groups:
+                inline_group_policies = []
+                get_group_inline_policies_paginator = self.client.get_paginator(
+                    "list_group_policies"
+                )
+                for page in get_group_inline_policies_paginator.paginate(
+                    GroupName=group.name
+                ):
+                    for policy in page["PolicyNames"]:
+                        inline_group_policies.append(policy)
+                        #Get inline policies & their policy documents here:
+                        inline_policy = self.client.get_group_policy(
+                            GroupName=group.name,
+                            PolicyName=policy
+                            )
+                        inline_group_policy_doc = inline_policy["PolicyDocument"]
+                        self.policies.append(
+                            Policy(
+                                name=policy,
+                                arn = group.arn,
+                                type = "Inline",
+                                attached = True,
+                                version_id = "v1",
+                                document = inline_group_policy_doc
+                            )
+                        )
+                group.inline_policies = inline_group_policies
+
+        except Exception as error:
+            logger.error(
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def __list_inline_role_policies__(self):
+        logger.info("IAM - List Inline Role Policies...")
+        try:
+            for role in self.roles:
+                inline_role_policies = []
+                get_role_inline_policies_paginator = self.client.get_paginator(
+                    "list_role_policies"
+                )
+                for page in get_role_inline_policies_paginator.paginate(
+                    RoleName=role.name
+                ):
+                    for policy in page["PolicyNames"]:
+                        inline_role_policies.append(policy)
+                        #Get inline policies & their policy documents here:
+                        inline_policy = self.client.get_role_policy(
+                            RoleName=role.name,
+                            PolicyName=policy
+                            )
+                        inline_role_policy_doc = inline_policy["PolicyDocument"]
+                        self.policies.append(
+                            Policy(
+                                name=policy,
+                                arn = role.arn,
+                                type = "Inline",
+                                attached = True,
+                                version_id = "v1",
+                                document = inline_role_policy_doc
+                            )
+                        )
+                role.inline_policies = inline_role_policies
 
         except Exception as error:
             logger.error(
@@ -567,6 +657,7 @@ class Role(BaseModel):
     assume_role_policy: dict
     is_service_role: bool
     attached_policies: list[dict] = []
+    inline_policies: list[str] = []
     tags: Optional[list] = []
 
 
@@ -574,6 +665,7 @@ class Group(BaseModel):
     name: str
     arn: str
     attached_policies: list[dict] = []
+    inline_policies: list[str] = []
     users: list[User] = []
 
 
