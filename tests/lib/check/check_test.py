@@ -137,6 +137,40 @@ def mock_recover_checks_from_aws_provider_lambda_service(*_):
     ]
 
 
+def mock_recover_checks_from_aws_provider_iam_service(*_):
+    return [
+        (
+            "iam_customer_attached_policy_no_administrative_privileges",
+            "/root_dir/fake_path/iam/iam_customer_attached_policy_no_administrative_privileges",
+        ),
+        (
+            "iam_check_saml_providers_sts",
+            "/root_dir/fake_path/iam/iam_check_saml_providers_sts",
+        ),
+        (
+            "iam_password_policy_minimum_length_14",
+            "/root_dir/fake_path/iam/iam_password_policy_minimum_length_14",
+        ),
+    ]
+
+
+def mock_recover_checks_from_aws_provider_s3_service(*_):
+    return [
+        (
+            "s3_account_level_public_access_blocks",
+            "/root_dir/fake_path/s3/s3_account_level_public_access_blocks",
+        ),
+        (
+            "s3_bucket_acl_prohibited",
+            "/root_dir/fake_path/s3/s3_bucket_acl_prohibited",
+        ),
+        (
+            "s3_bucket_policy_public_write_access",
+            "/root_dir/fake_path/s3/s3_bucket_policy_public_write_access",
+        ),
+    ]
+
+
 class Test_Check:
     def set_mocked_audit_info(self):
         audit_info = AWS_Audit_Info(
@@ -384,7 +418,7 @@ class Test_Check:
         "prowler.lib.check.check.recover_checks_from_provider",
         new=mock_recover_checks_from_aws_provider_lambda_service,
     )
-    def test_get_checks_from_input_arn(self):
+    def test_get_checks_from_input_arn_lambda(self):
         audit_resources = ["arn:aws:lambda:us-east-1:123456789:function:test-lambda"]
         provider = "aws"
         expected_checks = [
@@ -395,16 +429,45 @@ class Test_Check:
         recovered_checks = get_checks_from_input_arn(audit_resources, provider)
         assert recovered_checks == expected_checks
 
+    @patch(
+        "prowler.lib.check.check.recover_checks_from_provider",
+        new=mock_recover_checks_from_aws_provider_iam_service,
+    )
+    def test_get_checks_from_input_arn_iam(self):
+        audit_resources = [f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:user/user-name"]
+        provider = "aws"
+        expected_checks = [
+            "iam_check_saml_providers_sts",
+            "iam_customer_attached_policy_no_administrative_privileges",
+            "iam_password_policy_minimum_length_14",
+        ]
+        recovered_checks = get_checks_from_input_arn(audit_resources, provider)
+        assert recovered_checks == expected_checks
+
+    @patch(
+        "prowler.lib.check.check.recover_checks_from_provider",
+        new=mock_recover_checks_from_aws_provider_s3_service,
+    )
+    def test_get_checks_from_input_arn_s3(self):
+        audit_resources = ["arn:aws:s3:::bucket-name"]
+        provider = "aws"
+        expected_checks = [
+            "s3_account_level_public_access_blocks",
+            "s3_bucket_acl_prohibited",
+            "s3_bucket_policy_public_write_access",
+        ]
+        recovered_checks = get_checks_from_input_arn(audit_resources, provider)
+        assert recovered_checks == expected_checks
+
     def test_get_regions_from_audit_resources(self):
         audit_resources = [
-            "arn:aws:lambda:us-east-1:123456789:function:test-lambda",
-            "arn:aws:iam::106908755756:policy/test",
-            "arn:aws:ec2:eu-west-1:106908755756:security-group/sg-test",
+            f"arn:aws:lambda:us-east-1:{AWS_ACCOUNT_NUMBER}:function:test-lambda",
+            f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:policy/test",
+            f"arn:aws:ec2:eu-west-1:{AWS_ACCOUNT_NUMBER}:security-group/sg-test",
+            "arn:aws:s3:::bucket-name",
+            "arn:aws:apigateway:us-east-2::/restapis/api-id/stages/stage-name",
         ]
-        expected_regions = [
-            "us-east-1",
-            "eu-west-1",
-        ]
+        expected_regions = ["us-east-1", "eu-west-1", "us-east-2"]
         recovered_regions = get_regions_from_audit_resources(audit_resources)
         assert recovered_regions == expected_regions
 
