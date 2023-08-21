@@ -1,5 +1,6 @@
 import functools
 import importlib
+import json
 import os
 import re
 import shutil
@@ -268,6 +269,15 @@ def print_compliance_requirements(
                     print(
                         f"Requirement Id: {Fore.MAGENTA}{requirement.Id}{Style.RESET_ALL}\n\t- Description: {requirement.Description}\n\t- Checks:\n{checks}"
                     )
+
+
+def list_checks_json(provider: str, check_list: set):
+    try:
+        output = {provider: check_list}
+        return json.dumps(output, indent=2, default=str)
+    except Exception as e:
+        logger.critical(f"{e.__class__.__name__}[{e.__traceback__.tb_lineno}]: {e}")
+        sys.exit(1)
 
 
 def print_checks(

@@ -90,7 +90,7 @@ Detailed documentation at https://docs.prowler.cloud
             )
 
         # Only Logging Configuration
-        if args.only_logs:
+        if args.only_logs or args.list_checks_json:
             args.no_banner = True
 
         return args
@@ -243,6 +243,11 @@ Detailed documentation at https://docs.prowler.cloud
         list_group = list_checks_parser.add_mutually_exclusive_group()
         list_group.add_argument(
             "-l", "--list-checks", action="store_true", help="List checks"
+        )
+        list_group.add_argument(
+            "--list-checks-json",
+            action="store_true",
+            help="Output a list of checks in json for use with --checks-file",
         )
         list_group.add_argument(
             "--list-services", action="store_true", help="List services"

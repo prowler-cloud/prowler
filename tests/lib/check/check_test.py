@@ -12,6 +12,7 @@ from prowler.lib.check.check import (
     exclude_checks_to_run,
     exclude_services_to_run,
     list_categories,
+    list_checks_json,
     list_modules,
     list_services,
     parse_checks_from_file,
@@ -595,3 +596,20 @@ class Test_Check:
         assert audit_metadata.services_scanned == 1
         assert audit_metadata.expected_checks == expected_checks
         assert audit_metadata.completed_checks == 1
+
+    def test_list_checks_json_aws_lambda_and_s3(self):
+        provider = "aws"
+        check_list = {
+            "awslambda_function_invoke_api_operations_cloudtrail_logging_enabled",
+            "awslambda_function_no_secrets_in_code",
+            "awslambda_function_no_secrets_in_variables",
+            "awslambda_function_not_publicly_accessible",
+            "awslambda_function_url_cors_policy",
+            "awslambda_function_url_public",
+            "awslambda_function_using_supported_runtimes",
+        }
+        checks_json = list_checks_json(provider, sorted(check_list))
+        assert (
+            checks_json
+            == '{\n  "aws": [\n    "awslambda_function_invoke_api_operations_cloudtrail_logging_enabled",\n    "awslambda_function_no_secrets_in_code",\n    "awslambda_function_no_secrets_in_variables",\n    "awslambda_function_not_publicly_accessible",\n    "awslambda_function_url_cors_policy",\n    "awslambda_function_url_public",\n    "awslambda_function_using_supported_runtimes"\n  ]\n}'
+        )

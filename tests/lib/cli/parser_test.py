@@ -592,6 +592,12 @@ class Test_Parser:
         parsed = self.parser.parse(command)
         assert parsed.list_checks
 
+    def test_list_checks_parser_list_checks_json(self):
+        argument = "--list-checks-json"
+        command = [prowler_command, argument]
+        parsed = self.parser.parse(command)
+        assert parsed.list_checks_json
+
     def test_list_checks_parser_list_services(self):
         argument = "--list-services"
         command = [prowler_command, argument]
