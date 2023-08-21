@@ -1,6 +1,6 @@
 from os import getcwd
 
-import boto3
+from boto3 import session
 from moto import mock_s3
 
 from prowler.config.config import csv_file_suffix, default_output_directory
@@ -17,17 +17,20 @@ class TestS3:
         audit_info = AWS_Audit_Info(
             session_config=None,
             original_session=None,
-            audit_session=boto3.session.Session(region_name=AWS_REGION),
+            audit_session=session.Session(
+                profile_name=None,
+                botocore_session=None,
+            ),
             audited_account=AWS_ACCOUNT_ID,
             audited_account_arn=f"arn:aws:iam::{AWS_ACCOUNT_ID}:root",
-            audited_identity_arn="test-arn",
-            audited_user_id="test",
+            audited_user_id=None,
             audited_partition="aws",
-            profile="default",
-            profile_region="eu-west-1",
+            audited_identity_arn=None,
+            profile=None,
+            profile_region=None,
             credentials=None,
             assumed_role_info=None,
-            audited_regions=["eu-west-2", "eu-west-1"],
+            audited_regions=None,
             organizations_metadata=None,
             audit_resources=None,
             mfa_enabled=False,
