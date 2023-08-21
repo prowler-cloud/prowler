@@ -20,30 +20,6 @@ Here we left some good reads about unit testing and things we've learnt through 
 - https://docs.python.org/3/library/sys.html#sys.settrace
 - https://github.com/kunalb/panopticon
 
-**Patching vs. Importing**
-
-This is an important topic within the Prowler check's unit testing. Due to the dynamic nature of the check's load, the process of importing the service client from a check is the following:
-
-1. `<check>.py`:
-```python
-from prowler.providers.<provider>.services.<service>.<service>_client import <service>_client
-```
-2. `<service>_client.py`:
-```python
-from prowler.providers.<provider>.lib.audit_info.audit_info import audit_info
-from prowler.providers.<provider>.services.<service>.<service>_service import <SERVICE>
-
-<service>_client = <SERVICE>(audit_info)
-```
-
-Due to the above import path it's not the same to patch the following objects because if you run a bunch of tests, either in parallel or not, some clients can be already instantiated by another check, hence your test exection will be using another test's service instance:
-
-- `<service>_client` imported at `<check>.py`
-- `<service>_client` initialised at `<service>_client.py`
-- `<SERVICE>` imported at `<service>_client.py`
-
-A useful read about this topic can be found in the following article: https://stackoverflow.com/questions/8658043/how-to-mock-an-import
-
 ## General Recommendations
 
 When creating tests for some provider's checks we follow these guidelines trying to cover as much test scenarios as possible:
@@ -369,6 +345,77 @@ with mock.patch(
 
 
 As you can see in the above code, it is required to mock the AWS audit info and both services used.
+
+
+#### Patching vs. Importing
+
+This is an important topic within the Prowler check's unit testing. Due to the dynamic nature of the check's load, the process of importing the service client from a check is the following:
+
+1. `<check>.py`:
+```python
+from prowler.providers.<provider>.services.<service>.<service>_client import <service>_client
+```
+2. `<service>_client.py`:
+```python
+from prowler.providers.<provider>.lib.audit_info.audit_info import audit_info
+from prowler.providers.<provider>.services.<service>.<service>_service import <SERVICE>
+
+<service>_client = <SERVICE>(audit_info)
+```
+
+Due to the above import path it's not the same to patch the following objects because if you run a bunch of tests, either in parallel or not, some clients can be already instantiated by another check, hence your test exection will be using another test's service instance:
+
+- `<service>_client` imported at `<check>.py`
+- `<service>_client` initialised at `<service>_client.py`
+- `<SERVICE>` imported at `<service>_client.py`
+
+A useful read about this topic can be found in the following article: https://stackoverflow.com/questions/8658043/how-to-mock-an-import
+
+
+#### Different ways to mock the service client
+
+##### Mocking the service client at the service client level
+
+Mocking a service client using the following code ...
+
+```python title="Mocking the service_client"
+with mock.patch(
+    "prowler.providers.<provider>.lib.audit_info.audit_info.audit_info",
+    new=audit_info,
+), mock.patch(
+    "prowler.providers.aws.services.<service>.<check>.<check>.<service>_client",
+    new=<SERVICE>(audit_info),
+):
+```
+will cause that the service will be initialised twice:
+
+1. When the `<SERVICE>(audit_info)` is mocked out using `mock.patch` to have the object ready for the patching.
+2. At the `<service>_client.py` when we are patching it since the `mock.patch` needs to go to that object an initialise it, hence the `<SERVICE>(audit_info)` will be called again.
+
+Then, when we import the `<service>_client.py` at `<check>.py`, since we are mocking where the object is used, Python will use the mocked one.
+
+In the [next section](./unit-testing.md#mocking-the-service-and-the-service-client-at-the-service-client-level) you will see an improved version to mock objects.
+
+
+##### Mocking the service and the service client at the service client level
+Mocking a service client using the following code ...
+
+```python title="Mocking the service and the service_client"
+with mock.patch(
+    "prowler.providers.<provider>.lib.audit_info.audit_info.audit_info",
+    new=audit_info,
+), mock.patch(
+    "prowler.providers.aws.services.<service>.<SERVICE>",
+    return_value=<SERVICE>(audit_info),
+) as service_client, mock.patch(
+    "prowler.providers.aws.services.<service>.<service>_client.<service>_client",
+    new=service_client,
+):
+```
+will cause that the service will be initialised once, just when the `<SERVICE>(audit_info)` is mocked out using `mock.patch`.
+
+Then, at the check_level when Python tries to import the client with `from prowler.providers.<provider>.services.<service>.<service>_client`, since it is already mocked out, the execution will continue using the `service_client` without getting into the `<service>_client.py`.
+
 
 ### Services
 
