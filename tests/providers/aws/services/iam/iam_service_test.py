@@ -811,15 +811,17 @@ nTTxU4a7x1naFxzYXK1iQ1vMARKMjDb19QEJIEJKZlDK4uS7yMlf1nFS
         assert iam.users[0].inline_policies == [policy_name]
         assert iam.users[0].tags == []
 
-        assert len(iam.policies)
-        assert iam.policies[0] == Policy(
-            name=policy_name,
-            arn=user_arn,
-            version_id="v1",
-            type="Inline",
-            attached=True,
-            document=INLINE_POLICY_NOT_ADMIN,
-        )
+        # TODO: Workaround until this gets fixed https://github.com/getmoto/moto/issues/6712
+        for policy in iam.policies:
+            if policy.name == policy_name:
+                assert policy == Policy(
+                    name=policy_name,
+                    arn=user_arn,
+                    version_id="v1",
+                    type="Inline",
+                    attached=True,
+                    document=INLINE_POLICY_NOT_ADMIN,
+                )
 
     # Test IAM Group Inline Policy
     @mock_iam
@@ -840,9 +842,6 @@ nTTxU4a7x1naFxzYXK1iQ1vMARKMjDb19QEJIEJKZlDK4uS7yMlf1nFS
             PolicyDocument=dumps(INLINE_POLICY_NOT_ADMIN),
         )
 
-        # TODO: Workaround until this gets fixed https://github.com/getmoto/moto/issues/6712
-        self.__delete_moto_cached_policies__()
-
         iam_client.delete_policy
         # IAM client for this test class
         audit_info = self.set_mocked_audit_info()
@@ -855,15 +854,17 @@ nTTxU4a7x1naFxzYXK1iQ1vMARKMjDb19QEJIEJKZlDK4uS7yMlf1nFS
         assert iam.groups[0].inline_policies == [policy_name]
         assert iam.groups[0].users == []
 
-        assert len(iam.policies)
-        assert iam.policies[0] == Policy(
-            name=policy_name,
-            arn=group_arn,
-            version_id="v1",
-            type="Inline",
-            attached=True,
-            document=INLINE_POLICY_NOT_ADMIN,
-        )
+        # TODO: Workaround until this gets fixed https://github.com/getmoto/moto/issues/6712
+        for policy in iam.policies:
+            if policy.name == policy_name:
+                assert policy == Policy(
+                    name=policy_name,
+                    arn=group_arn,
+                    version_id="v1",
+                    type="Inline",
+                    attached=True,
+                    document=INLINE_POLICY_NOT_ADMIN,
+                )
 
     # Test IAM Role Inline Policy
     @mock_iam
@@ -885,9 +886,6 @@ nTTxU4a7x1naFxzYXK1iQ1vMARKMjDb19QEJIEJKZlDK4uS7yMlf1nFS
             PolicyDocument=dumps(INLINE_POLICY_NOT_ADMIN),
         )
 
-        # TODO: Workaround until this gets fixed https://github.com/getmoto/moto/issues/6712
-        self.__delete_moto_cached_policies__()
-
         # IAM client for this test class
         audit_info = self.set_mocked_audit_info()
         iam = IAM(audit_info)
@@ -901,23 +899,14 @@ nTTxU4a7x1naFxzYXK1iQ1vMARKMjDb19QEJIEJKZlDK4uS7yMlf1nFS
         assert iam.roles[0].inline_policies == [policy_name]
         assert iam.roles[0].tags == []
 
-        assert len(iam.policies)
-        assert iam.policies[0] == Policy(
-            name=policy_name,
-            arn=role_arn,
-            version_id="v1",
-            type="Inline",
-            attached=True,
-            document=INLINE_POLICY_NOT_ADMIN,
-        )
-
-    def __delete_moto_cached_policies__(self):
-        # IAM Client
-        iam_client = client("iam")
-        for policy in [
-            SECURITY_AUDIT_POLICY_ARN,
-            READ_ONLY_ACCESS_POLICY_ARN,
-            SUPPORT_SERVICE_ROLE_POLICY_ARN,
-            ADMINISTRATOR_ACCESS_POLICY_ARN,
-        ]:
-            iam_client.delete_policy(PolicyArn=policy)
+        # TODO: Workaround until this gets fixed https://github.com/getmoto/moto/issues/6712
+        for policy in iam.policies:
+            if policy.name == policy_name:
+                assert policy == Policy(
+                    name=policy_name,
+                    arn=role_arn,
+                    version_id="v1",
+                    type="Inline",
+                    attached=True,
+                    document=INLINE_POLICY_NOT_ADMIN,
+                )
