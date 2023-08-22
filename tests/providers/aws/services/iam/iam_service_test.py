@@ -31,6 +31,7 @@ READ_ONLY_ACCESS_POLICY_ARN = "arn:aws:iam::aws:policy/ReadOnlyAccess"
 SUPPORT_SERVICE_ROLE_POLICY_ARN = (
     "arn:aws:iam::aws:policy/aws-service-role/AWSSupportServiceRolePolicy"
 )
+ADMINISTRATOR_ACCESS_POLICY_ARN = "arn:aws:iam::aws:policy/AdministratorAccess"
 
 
 class Test_IAM_Service:
@@ -589,7 +590,7 @@ class Test_IAM_Service:
     def test__get_entities_attached_to_support_roles__no_roles(self):
         iam_client = client("iam")
         _ = iam_client.list_entities_for_policy(
-            PolicyArn="arn:aws:iam::aws:policy/aws-service-role/AWSSupportServiceRolePolicy",
+            PolicyArn=SUPPORT_SERVICE_ROLE_POLICY_ARN,
             EntityFilter="Role",
         )["PolicyRoles"]
 
@@ -616,11 +617,11 @@ class Test_IAM_Service:
         )
         iam_client.attach_role_policy(
             RoleName=role_name,
-            PolicyArn="arn:aws:iam::aws:policy/aws-service-role/AWSSupportServiceRolePolicy",
+            PolicyArn=SUPPORT_SERVICE_ROLE_POLICY_ARN,
         )
 
         iam_client.list_entities_for_policy(
-            PolicyArn="arn:aws:iam::aws:policy/aws-service-role/AWSSupportServiceRolePolicy",
+            PolicyArn=SUPPORT_SERVICE_ROLE_POLICY_ARN,
             EntityFilter="Role",
         )["PolicyRoles"]
 
@@ -917,5 +918,6 @@ nTTxU4a7x1naFxzYXK1iQ1vMARKMjDb19QEJIEJKZlDK4uS7yMlf1nFS
             SECURITY_AUDIT_POLICY_ARN,
             READ_ONLY_ACCESS_POLICY_ARN,
             SUPPORT_SERVICE_ROLE_POLICY_ARN,
+            ADMINISTRATOR_ACCESS_POLICY_ARN,
         ]:
             iam_client.delete_policy(PolicyArn=policy)
