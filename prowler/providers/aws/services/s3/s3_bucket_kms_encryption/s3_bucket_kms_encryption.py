@@ -12,7 +12,7 @@ class s3_bucket_kms_encryption(Check):
             report.resource_arn = bucket.arn
             report.resource_tags = bucket.tags
 
-            if bucket.encryption =='aws:kms' or bucket.encryption == 'aws:kms:dsse':
+            if bucket.encryption == "aws:kms" or bucket.encryption == "aws:kms:dsse":
                 report.status = "PASS"
                 report.status_extended = f"S3 Bucket {bucket.name} has Server Side Encryption with {bucket.encryption}."
             else:
