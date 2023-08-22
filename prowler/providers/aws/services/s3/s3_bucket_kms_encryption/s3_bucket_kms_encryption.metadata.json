@@ -1,0 +1,34 @@
+{
+  "Provider": "aws",
+  "CheckID": "s3_bucket_kms_encryption",
+  "CheckTitle": "Check if S3 buckets have KMS encryption enabled.",
+  "CheckType": [
+    "Data Protection"
+  ],
+  "ServiceName": "s3",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:s3:::bucket_name",
+  "Severity": "medium",
+  "ResourceType": "AwsS3Bucket",
+  "Description": "Check if S3 buckets have KMS encryption enabled.",
+  "Risk": "Amazon S3 KMS encryption provides a way to set the encryption behavior for an S3 bucket using a managed key. This will ensure data-at-rest is encrypted.",
+  "RelatedUrl": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/UsingKMSEncryption.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/S3/encrypted-with-kms-customer-master-keys.html",
+      "NativeIaC": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/S3/encrypted-with-kms-customer-master-keys.html",
+      "Other": "",
+      "Terraform": "https://docs.bridgecrew.io/docs/ensure-that-s3-buckets-are-encrypted-with-kms-by-default#terraform"
+    },
+    "Recommendation": {
+      "Text": "Ensure that S3 buckets have encryption at rest enabled using KMS.",
+      "Url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/UsingKMSEncryption.html"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
