@@ -654,13 +654,23 @@ class MFADevice(BaseModel):
     type: str
 
 
+class Policy(BaseModel):
+    name: str
+    arn: str
+    version_id: str
+    type: str
+    attached: bool
+    document: Optional[dict]
+    tags: Optional[list] = []
+
+
 class User(BaseModel):
     name: str
     arn: str
     mfa_devices: list[MFADevice] = []
     password_last_used: Optional[datetime]
     attached_policies: list[dict] = []
-    inline_policies: list[str] = []
+    inline_policies: list[Policy] = []
     tags: Optional[list] = []
 
 
@@ -670,7 +680,7 @@ class Role(BaseModel):
     assume_role_policy: dict
     is_service_role: bool
     attached_policies: list[dict] = []
-    inline_policies: list[str] = []
+    inline_policies: list[Policy] = []
     tags: Optional[list] = []
 
 
@@ -678,7 +688,7 @@ class Group(BaseModel):
     name: str
     arn: str
     attached_policies: list[dict] = []
-    inline_policies: list[str] = []
+    inline_policies: list[Policy] = []
     users: list[User] = []
 
 
@@ -700,13 +710,3 @@ class Certificate(BaseModel):
     id: str
     arn: str
     expiration: datetime
-
-
-class Policy(BaseModel):
-    name: str
-    arn: str
-    version_id: str
-    type: str
-    attached: bool
-    document: Optional[dict]
-    tags: Optional[list] = []
