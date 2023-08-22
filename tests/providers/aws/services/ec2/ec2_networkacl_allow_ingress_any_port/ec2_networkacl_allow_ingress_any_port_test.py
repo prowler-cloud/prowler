@@ -10,7 +10,7 @@ AWS_REGION = "us-east-1"
 AWS_ACCOUNT_NUMBER = "123456789012"
 
 
-class ec2_networkacl_allow_ingress_any_port:
+class Test_ec2_networkacl_allow_ingress_any_port:
     def set_mocked_audit_info(self):
         audit_info = AWS_Audit_Info(
             session_config=None,
@@ -64,7 +64,7 @@ class ec2_networkacl_allow_ingress_any_port:
             result = check.execute()
 
             # One default nacl per region
-            assert len(result) == 3
+            assert len(result) == 2
 
     @mock_ec2
     def test_ec2_non_default_compliant_nacl(self):
@@ -88,7 +88,7 @@ class ec2_networkacl_allow_ingress_any_port:
             result = check.execute()
 
             # One default sg per region
-            assert len(result) == 3
+            assert len(result) == 2
 
             # by default nacls are public
             assert result[0].status == "FAIL"
