@@ -377,8 +377,8 @@ class IAM(AWSService):
 
     def __list_inline_user_policies__(self):
         logger.info("IAM - List Inline User Policies...")
-        try:
-            for user in self.users:
+        for user in self.users:
+            try:
                 inline_user_policies = []
                 get_user_inline_policies_paginator = self.client.get_paginator(
                     "list_user_policies"
@@ -387,35 +387,39 @@ class IAM(AWSService):
                     UserName=user.name
                 ):
                     for policy in page["PolicyNames"]:
-                        inline_user_policies.append(policy)
-                        #Get inline policies & their policy documents here:
-                        inline_policy = self.client.get_user_policy(
-                            UserName=user.name,
-                            PolicyName=policy
+                        try:
+                            inline_user_policies.append(policy)
+                            # Get inline policies & their policy documents here
+                            inline_policy = self.client.get_user_policy(
+                                UserName=user.name, PolicyName=policy
                             )
-                        inline_user_policy_doc = inline_policy["PolicyDocument"]
-                        self.policies.append(
-                            Policy(
-                                name=policy,
-                                arn = user.arn,
-                                type = "Inline",
-                                attached = True,
-                                version_id = "v1",
-                                document = inline_user_policy_doc
+                            inline_user_policy_doc = inline_policy["PolicyDocument"]
+                            self.policies.append(
+                                Policy(
+                                    name=policy,
+                                    arn=user.arn,
+                                    type="Inline",
+                                    attached=True,
+                                    version_id="v1",
+                                    document=inline_user_policy_doc,
+                                )
                             )
-                        )
 
-                user.inline_policies = inline_user_policies
+                            user.inline_policies = inline_user_policies
+                        except Exception as error:
+                            logger.error(
+                                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                            )
 
-        except Exception as error:
-            logger.error(
-                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
+            except Exception as error:
+                logger.error(
+                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
 
     def __list_inline_group_policies__(self):
         logger.info("IAM - List Inline Group Policies...")
-        try:
-            for group in self.groups:
+        for group in self.groups:
+            try:
                 inline_group_policies = []
                 get_group_inline_policies_paginator = self.client.get_paginator(
                     "list_group_policies"
@@ -424,34 +428,38 @@ class IAM(AWSService):
                     GroupName=group.name
                 ):
                     for policy in page["PolicyNames"]:
-                        inline_group_policies.append(policy)
-                        #Get inline policies & their policy documents here:
-                        inline_policy = self.client.get_group_policy(
-                            GroupName=group.name,
-                            PolicyName=policy
+                        try:
+                            inline_group_policies.append(policy)
+                            # Get inline policies & their policy documents here:
+                            inline_policy = self.client.get_group_policy(
+                                GroupName=group.name, PolicyName=policy
                             )
-                        inline_group_policy_doc = inline_policy["PolicyDocument"]
-                        self.policies.append(
-                            Policy(
-                                name=policy,
-                                arn = group.arn,
-                                type = "Inline",
-                                attached = True,
-                                version_id = "v1",
-                                document = inline_group_policy_doc
+                            inline_group_policy_doc = inline_policy["PolicyDocument"]
+                            self.policies.append(
+                                Policy(
+                                    name=policy,
+                                    arn=group.arn,
+                                    type="Inline",
+                                    attached=True,
+                                    version_id="v1",
+                                    document=inline_group_policy_doc,
+                                )
                             )
-                        )
+                        except Exception as error:
+                            logger.error(
+                                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                            )
                 group.inline_policies = inline_group_policies
 
-        except Exception as error:
-            logger.error(
-                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
+            except Exception as error:
+                logger.error(
+                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
 
     def __list_inline_role_policies__(self):
         logger.info("IAM - List Inline Role Policies...")
-        try:
-            for role in self.roles:
+        for role in self.roles:
+            try:
                 inline_role_policies = []
                 get_role_inline_policies_paginator = self.client.get_paginator(
                     "list_role_policies"
@@ -460,29 +468,34 @@ class IAM(AWSService):
                     RoleName=role.name
                 ):
                     for policy in page["PolicyNames"]:
-                        inline_role_policies.append(policy)
-                        #Get inline policies & their policy documents here:
-                        inline_policy = self.client.get_role_policy(
-                            RoleName=role.name,
-                            PolicyName=policy
+                        try:
+                            inline_role_policies.append(policy)
+                            # Get inline policies & their policy documents here:
+                            inline_policy = self.client.get_role_policy(
+                                RoleName=role.name, PolicyName=policy
                             )
-                        inline_role_policy_doc = inline_policy["PolicyDocument"]
-                        self.policies.append(
-                            Policy(
-                                name=policy,
-                                arn = role.arn,
-                                type = "Inline",
-                                attached = True,
-                                version_id = "v1",
-                                document = inline_role_policy_doc
+                            inline_role_policy_doc = inline_policy["PolicyDocument"]
+                            self.policies.append(
+                                Policy(
+                                    name=policy,
+                                    arn=role.arn,
+                                    type="Inline",
+                                    attached=True,
+                                    version_id="v1",
+                                    document=inline_role_policy_doc,
+                                )
                             )
-                        )
+                        except Exception as error:
+                            logger.error(
+                                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                            )
+
                 role.inline_policies = inline_role_policies
 
-        except Exception as error:
-            logger.error(
-                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
+            except Exception as error:
+                logger.error(
+                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
 
     def __list_entities_role_for_policy__(self, policy_arn):
         logger.info("IAM - List Entities Role For Policy...")

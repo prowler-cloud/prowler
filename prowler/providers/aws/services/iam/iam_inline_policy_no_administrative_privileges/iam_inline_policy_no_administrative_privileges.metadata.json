@@ -13,7 +13,7 @@
   "Severity": "high",
   "ResourceType": "AwsIamPolicy",
   "Description": "Ensure inline policies that allow full \"*:*\" administrative privileges are not associated to IAM identities",
-  "Risk": "IAM policies are the means by which privileges are granted to users; groups; or roles. It is recommended and considered a standard security advice to grant least privilege—that is; granting only the permissions required to perform a task. Determine what users need to do and then craft policies for them that let the users perform only those tasks instead of allowing full administrative privileges. Providing full administrative privileges instead of restricting to the minimum set of permissions that the user is required to do exposes the resources to potentially unwanted actions.",
+  "Risk": "IAM policies are the means by which privileges are granted to users, groups or roles. It is recommended and considered a standard security advice to grant least privilege—that is; granting only the permissions required to perform a task. Determine what users need to do and then craft policies for them that let the users perform only those tasks instead of allowing full administrative privileges. Providing full administrative privileges instead of restricting to the minimum set of permissions that the user is required to do exposes the resources to potentially unwanted actions.",
   "RelatedUrl": "",
   "Remediation": {
     "Code": {
