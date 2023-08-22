@@ -445,7 +445,7 @@ class Test_iam_inline_policy_no_administrative_privileges:
         iam_client = client("iam")
         # Create IAM User
         user_name = "test_user"
-        _ = iam_client.create_role(
+        _ = iam_client.create_user(
             UserName=user_name,
         )
 
