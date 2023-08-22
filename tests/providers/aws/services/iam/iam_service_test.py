@@ -776,9 +776,7 @@ nTTxU4a7x1naFxzYXK1iQ1vMARKMjDb19QEJIEJKZlDK4uS7yMlf1nFS
         iam_client = client("iam")
         # Create IAM User
         user_name = "test_user"
-        user_arn = iam_client.create_user(
-            UserName=user_name,
-        )[
+        user_arn = iam_client.create_user(UserName=user_name,)[
             "User"
         ]["Arn"]
 
@@ -820,9 +818,7 @@ nTTxU4a7x1naFxzYXK1iQ1vMARKMjDb19QEJIEJKZlDK4uS7yMlf1nFS
         iam_client = client("iam")
         # Create IAM Group
         group_name = "test_group"
-        group_arn = iam_client.create_group(
-            GroupName=group_name,
-        )[
+        group_arn = iam_client.create_group(GroupName=group_name,)[
             "Group"
         ]["Arn"]
 
