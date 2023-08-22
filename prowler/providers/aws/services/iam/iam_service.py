@@ -405,12 +405,11 @@ class IAM(AWSService):
                                 )
                             )
 
-                            user.inline_policies = inline_user_policies
                         except Exception as error:
                             logger.error(
                                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                             )
-
+                user.inline_policies = inline_user_policies
             except Exception as error:
                 logger.error(
                     f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -654,23 +653,13 @@ class MFADevice(BaseModel):
     type: str
 
 
-class Policy(BaseModel):
-    name: str
-    arn: str
-    version_id: str
-    type: str
-    attached: bool
-    document: Optional[dict]
-    tags: Optional[list] = []
-
-
 class User(BaseModel):
     name: str
     arn: str
     mfa_devices: list[MFADevice] = []
     password_last_used: Optional[datetime]
     attached_policies: list[dict] = []
-    inline_policies: list[Policy] = []
+    inline_policies: list[str] = []
     tags: Optional[list] = []
 
 
@@ -680,7 +669,7 @@ class Role(BaseModel):
     assume_role_policy: dict
     is_service_role: bool
     attached_policies: list[dict] = []
-    inline_policies: list[Policy] = []
+    inline_policies: list[str] = []
     tags: Optional[list] = []
 
 
@@ -688,7 +677,7 @@ class Group(BaseModel):
     name: str
     arn: str
     attached_policies: list[dict] = []
-    inline_policies: list[Policy] = []
+    inline_policies: list[str] = []
     users: list[User] = []
 
 
@@ -710,3 +699,13 @@ class Certificate(BaseModel):
     id: str
     arn: str
     expiration: datetime
+
+
+class Policy(BaseModel):
+    name: str
+    arn: str
+    version_id: str
+    type: str
+    attached: bool
+    document: Optional[dict]
+    tags: Optional[list] = []

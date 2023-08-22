@@ -5,11 +5,26 @@ from freezegun import freeze_time
 from moto import mock_iam
 
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
-from prowler.providers.aws.services.iam.iam_service import IAM, is_service_role
+from prowler.providers.aws.services.iam.iam_service import IAM, Policy, is_service_role
 from prowler.providers.common.models import Audit_Metadata
 
 AWS_ACCOUNT_NUMBER = "123456789012"
 TEST_DATETIME = "2023-01-01T12:01:01+00:00"
+
+INLINE_POLICY_NOT_ADMIN = {
+    "Version": "2012-10-17",
+    "Statement": [{"Effect": "Allow", "Action": ["s3:GetObject"], "Resource": "*"}],
+}
+
+ASSUME_ROLE_POLICY_DOCUMENT = {
+    "Version": "2012-10-17",
+    "Statement": {
+        "Sid": "test",
+        "Effect": "Allow",
+        "Principal": {"AWS": f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"},
+        "Action": "sts:AssumeRole",
+    },
+}
 
 
 class Test_IAM_Service:
@@ -753,3 +768,132 @@ nTTxU4a7x1naFxzYXK1iQ1vMARKMjDb19QEJIEJKZlDK4uS7yMlf1nFS
 
         assert len(iam.saml_providers) == 1
         assert iam.saml_providers[0]["Arn"].split("/")[1] == saml_provider_name
+
+    # Test IAM User Inline Policy
+    @mock_iam
+    def test__list_inline_user_policies__(self):
+        # IAM Client
+        iam_client = client("iam")
+        # Create IAM User
+        user_name = "test_user"
+        user_arn = iam_client.create_user(
+            UserName=user_name,
+        )[
+            "User"
+        ]["Arn"]
+
+        # Put User Policy
+        policy_name = "test_not_admin_inline_policy"
+        _ = iam_client.put_user_policy(
+            UserName=user_name,
+            PolicyName=policy_name,
+            PolicyDocument=dumps(INLINE_POLICY_NOT_ADMIN),
+        )
+
+        # IAM client for this test class
+        audit_info = self.set_mocked_audit_info()
+        iam = IAM(audit_info)
+
+        assert len(iam.users) == 1
+        assert iam.users[0].name == user_name
+        assert iam.users[0].arn == user_arn
+        assert iam.users[0].mfa_devices == []
+        assert iam.users[0].password_last_used is None
+        assert iam.users[0].attached_policies == []
+        assert iam.users[0].inline_policies == [policy_name]
+        assert iam.users[0].tags == []
+
+        assert len(iam.policies)
+        assert iam.policies[0] == Policy(
+            name=policy_name,
+            arn=user_arn,
+            version_id="v1",
+            type="Inline",
+            attached=True,
+            document=INLINE_POLICY_NOT_ADMIN,
+        )
+
+    # Test IAM Group Inline Policy
+    @mock_iam
+    def test__list_inline_group_policies__(self):
+        # IAM Client
+        iam_client = client("iam")
+        # Create IAM Group
+        group_name = "test_group"
+        group_arn = iam_client.create_group(
+            GroupName=group_name,
+        )[
+            "Group"
+        ]["Arn"]
+
+        # Put User Policy
+        policy_name = "test_not_admin_inline_policy"
+        _ = iam_client.put_group_policy(
+            GroupName=group_name,
+            PolicyName=policy_name,
+            PolicyDocument=dumps(INLINE_POLICY_NOT_ADMIN),
+        )
+
+        # IAM client for this test class
+        audit_info = self.set_mocked_audit_info()
+        iam = IAM(audit_info)
+
+        assert len(iam.groups) == 1
+        assert iam.groups[0].name == group_name
+        assert iam.groups[0].arn == group_arn
+        assert iam.groups[0].attached_policies == []
+        assert iam.groups[0].inline_policies == [policy_name]
+        assert iam.groups[0].users == []
+
+        assert len(iam.policies)
+        assert iam.policies[0] == Policy(
+            name=policy_name,
+            arn=group_arn,
+            version_id="v1",
+            type="Inline",
+            attached=True,
+            document=INLINE_POLICY_NOT_ADMIN,
+        )
+
+    # Test IAM Role Inline Policy
+    @mock_iam
+    def test__list_inline_role_policies__(self):
+        # IAM Client
+        iam_client = client("iam")
+        # Create IAM Role
+        role_name = "test_role"
+        role_arn = iam_client.create_role(
+            RoleName=role_name,
+            AssumeRolePolicyDocument=dumps(ASSUME_ROLE_POLICY_DOCUMENT),
+        )["Role"]["Arn"]
+
+        # Put User Policy
+        policy_name = "test_not_admin_inline_policy"
+        _ = iam_client.put_role_policy(
+            RoleName=role_name,
+            PolicyName=policy_name,
+            PolicyDocument=dumps(INLINE_POLICY_NOT_ADMIN),
+        )
+
+        # IAM client for this test class
+        audit_info = self.set_mocked_audit_info()
+        iam = IAM(audit_info)
+
+        assert len(iam.roles) == 1
+        assert iam.roles[0].name == role_name
+        assert iam.roles[0].arn == role_arn
+        assert iam.roles[0].assume_role_policy == ASSUME_ROLE_POLICY_DOCUMENT
+        assert not iam.roles[0].is_service_role
+        assert iam.roles[0].attached_policies == []
+        assert iam.roles[0].inline_policies == [policy_name]
+        assert iam.roles[0].tags == []
+
+        assert len(iam.policies)
+        assert iam.policies[0] == Policy(
+            name=policy_name,
+            arn=role_arn,
+            version_id="v1",
+            type="Inline",
+            attached=True,
+            document=INLINE_POLICY_NOT_ADMIN,
+        )
