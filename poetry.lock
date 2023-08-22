@@ -820,6 +820,21 @@ files = [
 testing = ["pre-commit"]
 
 [[package]]
+name = "filelock"
+version = "3.12.2"
+description = "A platform independent file lock."
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "filelock-3.12.2-py3-none-any.whl", hash = "sha256:cbb791cdea2a72f23da6ac5b5269ab0a0d161e9ef0100e653b69049a7706d1ec"},
+    {file = "filelock-3.12.2.tar.gz", hash = "sha256:002740518d8aa59a26b0c76e10fb8c6e15eae825d34b6fdf670333fd7b938d81"},
+]
+
+[package.extras]
+docs = ["furo (>=2023.5.20)", "sphinx (>=7.0.1)", "sphinx-autodoc-typehints (>=1.23,!=1.23.4)"]
+testing = ["covdefaults (>=2.3)", "coverage (>=7.2.7)", "diff-cover (>=7.5)", "pytest (>=7.3.1)", "pytest-cov (>=4.1)", "pytest-mock (>=3.10)", "pytest-timeout (>=2.1)"]
+
+[[package]]
 name = "flake8"
 version = "6.1.0"
 description = "the modular source code checker: pep8 pyflakes and co"
@@ -2403,6 +2418,21 @@ socks = ["PySocks (>=1.5.6,!=1.5.7)"]
 use-chardet-on-py3 = ["chardet (>=3.0.2,<6)"]
 
 [[package]]
+name = "requests-file"
+version = "1.5.1"
+description = "File transport adapter for Requests"
+optional = false
+python-versions = "*"
+files = [
+    {file = "requests-file-1.5.1.tar.gz", hash = "sha256:07d74208d3389d01c38ab89ef403af0cfec63957d53a0081d8eca738d0247d8e"},
+    {file = "requests_file-1.5.1-py2.py3-none-any.whl", hash = "sha256:dfe5dae75c12481f68ba353183c53a65e6044c923e64c24b2209f6c7570ca953"},
+]
+
+[package.dependencies]
+requests = ">=1.0.0"
+six = "*"
+
+[[package]]
 name = "requests-oauthlib"
 version = "1.3.1"
 description = "OAuthlib authentication support for Requests."
@@ -2728,12 +2758,12 @@ testing-integration = ["build[virtualenv]", "filelock (>=3.4.0)", "jaraco.envs (
 
 [[package]]
 name = "shodan"
-version = "1.29.1"
+version = "1.30.0"
 description = "Python library and command-line utility for Shodan (https://developer.shodan.io)"
 optional = false
 python-versions = "*"
 files = [
-    {file = "shodan-1.29.1.tar.gz", hash = "sha256:e2af6254e19d2a8fa4e929738be551e25dc7aafc394732e776e7e30fa44ce339"},
+    {file = "shodan-1.30.0.tar.gz", hash = "sha256:c9617c66c47b87d4801e7080b6c769ec9a31da398defe0b047a6794927436453"},
 ]
 
 [package.dependencies]
@@ -2741,6 +2771,7 @@ click = "*"
 click-plugins = "*"
 colorama = "*"
 requests = ">=2.2.1"
+tldextract = "*"
 XlsxWriter = "*"
 
 [[package]]
@@ -2818,6 +2849,23 @@ files = [
 
 [package.extras]
 widechars = ["wcwidth"]
+
+[[package]]
+name = "tldextract"
+version = "3.4.4"
+description = "Accurately separates a URL's subdomain, domain, and public suffix, using the Public Suffix List (PSL). By default, this includes the public ICANN TLDs and their exceptions. You can optionally support the Public Suffix List's private domains as well."
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "tldextract-3.4.4-py3-none-any.whl", hash = "sha256:581e7dbefc90e7bb857bb6f768d25c811a3c5f0892ed56a9a2999ddb7b1b70c2"},
+    {file = "tldextract-3.4.4.tar.gz", hash = "sha256:5fe3210c577463545191d45ad522d3d5e78d55218ce97215e82004dcae1e1234"},
+]
+
+[package.dependencies]
+filelock = ">=3.0.8"
+idna = "*"
+requests = ">=2.1.0"
+requests-file = ">=1.4"
 
 [[package]]
 name = "toml"
@@ -3114,4 +3162,4 @@ docs = ["mkdocs", "mkdocs-material"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "9de259cfd912f33de6631e225f6f6e3a3423d832f82888816685b5f850f5c276"
+content-hash = "97d9ac4036f3d11b8315bebaa047a90b74c00acf8a5827e39a8e7fbe99ce4fbd"
