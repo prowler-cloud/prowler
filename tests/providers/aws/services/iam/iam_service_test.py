@@ -795,9 +795,6 @@ nTTxU4a7x1naFxzYXK1iQ1vMARKMjDb19QEJIEJKZlDK4uS7yMlf1nFS
             PolicyDocument=dumps(INLINE_POLICY_NOT_ADMIN),
         )
 
-        # TODO: Workaround until this gets fixed https://github.com/getmoto/moto/issues/6712
-        self.__delete_moto_cached_policies__()
-
         # IAM client for this test class
         audit_info = self.set_mocked_audit_info()
         iam = IAM(audit_info)
