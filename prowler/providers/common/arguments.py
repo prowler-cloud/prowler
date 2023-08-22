@@ -3,8 +3,11 @@ from argparse import Namespace
 from importlib import import_module
 
 from prowler.lib.logger import logger
+from prowler.providers.common.common import (
+    get_available_providers,
+    providers_prowler_lib_path,
+)
 
-providers_prowler_lib_path = "prowler.providers"
 provider_arguments_lib_path = "lib.arguments.arguments"
 validate_provider_arguments_function = "validate_arguments"
 init_provider_arguments_function = "init_parser"
@@ -13,12 +16,7 @@ init_provider_arguments_function = "init_parser"
 def init_providers_parser(self):
     """init_providers_parser calls the provider init_parser function to load all the arguments and flags. Receives a ProwlerArgumentParser object"""
     # We need to call the arguments parser for each provider
-    providers_list = import_module(f"{providers_prowler_lib_path}")
-    providers = [
-        provider
-        for provider in providers_list.__dict__
-        if not (provider.startswith("__") or provider.startswith("common"))
-    ]
+    providers = get_available_providers()
     for provider in providers:
         try:
             getattr(
@@ -45,8 +43,12 @@ def validate_provider_arguments(arguments: Namespace) -> tuple[bool, str]:
             validate_provider_arguments_function,
         )(arguments)
 
-    # If the provider does not have a validate_arguments we return (True, "")
+    # If the provider does not have a lib.arguments package we return (True, "")
     except ModuleNotFoundError:
+        return (True, "")
+
+    # If the provider does not have a validate_arguments we return (True, "")
+    except AttributeError:
         return (True, "")
 
     except Exception as error:
