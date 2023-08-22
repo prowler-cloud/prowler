@@ -1038,7 +1038,7 @@ class Test_Parser:
         assert wrapped_exit.value.code == 2
         assert (
             capsys.readouterr().err
-            == f"{prowler_default_usage_error}\nprowler: error: unrecognized arguments: -p\n"
+            == f"{prowler_default_usage_error}\nprowler: error: unrecognized arguments: --subscription-ids\n"
         )
 
     def test_parser_gcp_auth_credentials_file(self):
