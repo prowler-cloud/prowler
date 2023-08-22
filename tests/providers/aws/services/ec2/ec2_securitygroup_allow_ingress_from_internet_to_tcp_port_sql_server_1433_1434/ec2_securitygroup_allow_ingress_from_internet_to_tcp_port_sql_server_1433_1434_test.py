@@ -11,7 +11,7 @@ AWS_REGION = "us-east-1"
 AWS_ACCOUNT_NUMBER = "123456789012"
 
 
-class ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_sql_server_1433_1434:
+class Test_ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_sql_server_1433_1434:
     def set_mocked_audit_info(self):
         audit_info = AWS_Audit_Info(
             session_config=None,
