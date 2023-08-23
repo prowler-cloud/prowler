@@ -5,7 +5,7 @@ import boto3
 from mock import MagicMock
 from moto import mock_s3
 
-from prowler.config.config import csv_file_suffix, default_output_directory
+from prowler.config.config import csv_file_suffix
 from prowler.providers.aws.lib.s3.s3 import get_s3_object_path, send_to_s3_bucket
 
 AWS_ACCOUNT_ID = "123456789012"
@@ -103,11 +103,12 @@ class TestS3:
         )
 
     def test_get_s3_object_path_with_prowler(self):
+        output_directory = "/Users/admin/prowler/"
         assert (
-            get_s3_object_path(default_output_directory)
-            == default_output_directory.partition("prowler/")[-1]
+            get_s3_object_path(output_directory)
+            == output_directory.partition("prowler/")[-1]
         )
 
     def test_get_s3_object_path_without_prowler(self):
-        output_directory = "/Users/admin"
+        output_directory = "/Users/admin/"
         assert get_s3_object_path(output_directory) == output_directory
