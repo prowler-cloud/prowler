@@ -46,14 +46,12 @@ class TestS3:
             S3_BUCKET_NAME,
             audit_info.audit_session,
         )
-        print(output_directory)
-        print(client.list_objects(Bucket=S3_BUCKET_NAME))
 
         bucket_directory = get_s3_object_path(output_directory)
         object_name = (
             f"{bucket_directory}/{OUTPUT_MODE_CSV}/{filename}{csv_file_suffix}"
         )
-        print(object_name)
+
         assert (
             client.get_object(
                 Bucket=S3_BUCKET_NAME,
@@ -87,12 +85,9 @@ class TestS3:
             S3_BUCKET_NAME,
             audit_info.audit_session,
         )
-        print(output_directory)
-        print(client.list_objects(Bucket=S3_BUCKET_NAME))
 
         bucket_directory = get_s3_object_path(output_directory)
         object_name = f"{bucket_directory}/{OUTPUT_MODE_CIS_1_4_AWS}/{filename}_{OUTPUT_MODE_CIS_1_4_AWS}{csv_file_suffix}"
-        print(object_name)
 
         assert (
             client.get_object(
