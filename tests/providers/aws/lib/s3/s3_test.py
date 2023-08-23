@@ -1,12 +1,11 @@
 from os import getcwd
 
 import boto3
+from mock import MagicMock
 from moto import mock_s3
 
 from prowler.config.config import csv_file_suffix, default_output_directory
-from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.aws.lib.s3.s3 import get_s3_object_path, send_to_s3_bucket
-from prowler.providers.common.models import Audit_Metadata
 
 AWS_ACCOUNT_ID = "123456789012"
 AWS_REGION = "us-east-1"
@@ -15,36 +14,12 @@ AWS_REGION = "us-east-1"
 class TestS3:
     @mock_s3
     def test_send_to_s3_bucket(self):
+        # Mock Audit Info
+        audit_info = MagicMock()
         # Create mock session
-        session = boto3.session.Session(
-            region_name="us-east-1",
-        )
-        # Create mock audit_info
-        input_audit_info = AWS_Audit_Info(
-            session_config=None,
-            original_session=None,
-            audit_session=session,
-            audited_account=AWS_ACCOUNT_ID,
-            audited_account_arn=f"arn:aws:iam::{AWS_ACCOUNT_ID}:root",
-            audited_identity_arn="test-arn",
-            audited_user_id="test",
-            audited_partition="aws",
-            profile="default",
-            profile_region="eu-west-1",
-            credentials=None,
-            assumed_role_info=None,
-            audited_regions=["eu-west-2", "eu-west-1"],
-            organizations_metadata=None,
-            audit_resources=None,
-            mfa_enabled=False,
-            audit_metadata=Audit_Metadata(
-                services_scanned=0,
-                expected_checks=[],
-                completed_checks=0,
-                audit_progress=0,
-            ),
-        )
-        # Creat mock bucket
+        audit_info.audit_session = boto3.session.Session(region_name=AWS_REGION)
+        audit_info.audited_account = AWS_ACCOUNT_ID
+        # Create mock bucket
         bucket_name = "test_bucket"
         client = boto3.client("s3")
         client.create_bucket(Bucket=bucket_name)
@@ -52,14 +27,14 @@ class TestS3:
         fixtures_dir = "tests/lib/outputs/fixtures"
         output_directory = getcwd() + "/" + fixtures_dir
         output_mode = "csv"
-        filename = f"prowler-output-{input_audit_info.audited_account}"
+        filename = f"prowler-output-{audit_info.audited_account}"
         # Send mock csv file to mock S3 Bucket
         send_to_s3_bucket(
             filename,
             output_directory,
             output_mode,
             bucket_name,
-            input_audit_info.audit_session,
+            audit_info.audit_session,
         )
         # Check if the file has been sent by checking its content type
         assert (
@@ -72,36 +47,12 @@ class TestS3:
 
     @mock_s3
     def test_send_to_s3_bucket_compliance(self):
+        # Mock Audit Info
+        audit_info = MagicMock()
         # Create mock session
-        session = boto3.session.Session(
-            region_name="us-east-1",
-        )
-        # Create mock audit_info
-        input_audit_info = AWS_Audit_Info(
-            session_config=None,
-            original_session=None,
-            audit_session=session,
-            audited_account=AWS_ACCOUNT_ID,
-            audited_account_arn=f"arn:aws:iam::{AWS_ACCOUNT_ID}:root",
-            audited_identity_arn="test-arn",
-            audited_user_id="test",
-            audited_partition="aws",
-            profile="default",
-            profile_region="eu-west-1",
-            credentials=None,
-            assumed_role_info=None,
-            audited_regions=["eu-west-2", "eu-west-1"],
-            organizations_metadata=None,
-            audit_resources=None,
-            mfa_enabled=False,
-            audit_metadata=Audit_Metadata(
-                services_scanned=0,
-                expected_checks=[],
-                completed_checks=0,
-                audit_progress=0,
-            ),
-        )
-        # Creat mock bucket
+        audit_info.audit_session = boto3.session.Session(region_name=AWS_REGION)
+        audit_info.audited_account = AWS_ACCOUNT_ID
+        # Create mock bucket
         bucket_name = "test_bucket"
         client = boto3.client("s3")
         client.create_bucket(Bucket=bucket_name)
@@ -109,14 +60,14 @@ class TestS3:
         fixtures_dir = "tests/lib/outputs/fixtures"
         output_directory = getcwd() + "/" + fixtures_dir
         output_mode = "cis_1.4_aws"
-        filename = f"prowler-output-{input_audit_info.audited_account}"
+        filename = f"prowler-output-{audit_info.audited_account}"
         # Send mock csv file to mock S3 Bucket
         send_to_s3_bucket(
             filename,
             output_directory,
             output_mode,
             bucket_name,
-            input_audit_info.audit_session,
+            audit_info.audit_session,
         )
         # Check if the file has been sent by checking its content type
         assert (
@@ -136,36 +87,12 @@ class TestS3:
 
     @mock_s3
     def test_send_to_s3_bucket_custom_directory(self):
+        # Mock Audit Info
+        audit_info = MagicMock()
         # Create mock session
-        session = boto3.session.Session(
-            region_name="us-east-1",
-        )
-        # Create mock audit_info
-        input_audit_info = AWS_Audit_Info(
-            session_config=None,
-            original_session=None,
-            audit_session=session,
-            audited_account=AWS_ACCOUNT_ID,
-            audited_account_arn=f"arn:aws:iam::{AWS_ACCOUNT_ID}:root",
-            audited_identity_arn="test-arn",
-            audited_user_id="test",
-            audited_partition="aws",
-            profile="default",
-            profile_region="eu-west-1",
-            credentials=None,
-            assumed_role_info=None,
-            audited_regions=["eu-west-2", "eu-west-1"],
-            organizations_metadata=None,
-            audit_resources=None,
-            mfa_enabled=False,
-            audit_metadata=Audit_Metadata(
-                services_scanned=0,
-                expected_checks=[],
-                completed_checks=0,
-                audit_progress=0,
-            ),
-        )
-        # Creat mock bucket
+        audit_info.audit_session = boto3.session.Session(region_name=AWS_REGION)
+        audit_info.audited_account = AWS_ACCOUNT_ID
+        # Create mock bucket
         bucket_name = "test_bucket"
         client = boto3.client("s3")
         client.create_bucket(Bucket=bucket_name)
@@ -173,14 +100,14 @@ class TestS3:
         fixtures_dir = "fixtures"
         output_directory = f"tests/lib/outputs/{fixtures_dir}"
         output_mode = "csv"
-        filename = f"prowler-output-{input_audit_info.audited_account}"
+        filename = f"prowler-output-{audit_info.audited_account}"
         # Send mock csv file to mock S3 Bucket
         send_to_s3_bucket(
             filename,
             output_directory,
             output_mode,
             bucket_name,
-            input_audit_info.audit_session,
+            audit_info.audit_session,
         )
         # Check if the file has been sent by checking its content type
         assert (
