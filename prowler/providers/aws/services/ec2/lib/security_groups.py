@@ -106,3 +106,57 @@ def _is_cidr_public(cidr: str, any_address: bool = False) -> bool:
         return True
     if not any_address:
         return ipaddress.ip_network(cidr).is_global
+
+
+def is_changed_default_security_group(ingress_rule: Any, egress_rule: Any) -> bool:
+    """
+    Default SG ingress rule
+    {
+        "IpProtocol": "-1",
+        "IpRanges": [],
+        "Ipv6Ranges": [],
+        "PrefixListIds": [],
+        "UserIdGroupPairs": [
+            {
+                "GroupId": "sg-XXXXXX",
+                "UserId": "XXXXXXXXX"
+            }
+        ]
+    }
+
+    Default SG egress rule
+    {
+        "IpProtocol": "-1",
+        "IpRanges": [
+            {
+                "CidrIp": "0.0.0.0/0"
+            }
+        ],
+        "Ipv6Ranges": [],
+        "PrefixListIds": [],
+        "UserIdGroupPairs": []
+    }
+    """
+    default_sg_has_changed = False
+    # Check ingress rule conditions
+    if (
+        ingress_rule["IpProtocol"] != "-1"
+        or ingress_rule["IpRanges"]
+        or ingress_rule["Ipv6Ranges"]
+        or "FromPort" in ingress_rule
+        or "ToPort" in ingress_rule
+    ):
+        default_sg_has_changed = True
+    if (
+        egress_rule["IpProtocol"] != "-1"
+        or (
+            "CidrIp" in egress_rule["IpRanges"]
+            and egress_rule["IpRanges"]["CidrIp"] != "0.0.0.0/0"
+        )
+        or egress_rule["Ipv6Ranges"]
+        or "FromPort" in egress_rule
+        or "ToPort" in egress_rule
+    ):
+        default_sg_has_changed = True
+
+    return default_sg_has_changed
