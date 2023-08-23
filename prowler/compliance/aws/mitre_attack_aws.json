@@ -165,6 +165,7 @@
         "iam_aws_attached_policy_no_administrative_privileges",
         "iam_customer_attached_policy_no_administrative_privileges",
         "iam_customer_unattached_policy_no_administrative_privileges",
+        "iam_inline_policy_no_administrative_privileges",
         "iam_no_expired_server_certificates_stored",
         "iam_disable_30_days_credentials",
         "iam_no_root_access_key",
@@ -306,6 +307,7 @@
       "Checks": [
         "iam_aws_attached_policy_no_administrative_privileges",
         "iam_customer_attached_policy_no_administrative_privileges",
+        "iam_inline_policy_no_administrative_privileges",
         "iam_policy_allows_privilege_escalation",
         "iam_policy_no_full_access_to_cloudtrail",
         "iam_policy_no_full_access_to_kms"
@@ -369,7 +371,9 @@
       "TechniqueURL": "https://attack.mitre.org/techniques/T1098/",
       "Checks": [
         "config_recorder_all_regions_enabled",
+        "iam_aws_attached_policy_no_administrative_privileges",
         "iam_customer_attached_policy_no_administrative_privileges",
+        "iam_inline_policy_no_administrative_privileges",
         "iam_policy_allows_privilege_escalation",
         "iam_policy_no_full_access_to_cloudtrail",
         "iam_policy_no_full_access_to_kms",
@@ -614,6 +618,7 @@
       "Checks": [
         "iam_aws_attached_policy_no_administrative_privileges",
         "iam_customer_attached_policy_no_administrative_privileges",
+        "iam_inline_policy_no_administrative_privileges",
         "iam_policy_allows_privilege_escalation",
         "iam_policy_no_full_access_to_cloudtrail",
         "iam_policy_no_full_access_to_kms"
@@ -662,7 +667,9 @@
       "TechniqueURL": "https://attack.mitre.org/techniques/T1550/",
       "Checks": [
         "iam_administrator_access_with_mfa",
+        "iam_aws_attached_policy_no_administrative_privileges",
         "iam_customer_attached_policy_no_administrative_privileges",
+        "iam_inline_policy_no_administrative_privileges",
         "iam_policy_allows_privilege_escalation",
         "iam_policy_no_full_access_to_cloudtrail",
         "iam_policy_no_full_access_to_kms",
@@ -851,7 +858,9 @@
       "Checks": [
         "iam_no_custom_policy_permissive_role_assumption",
         "iam_policy_allows_privilege_escalation",
+        "iam_aws_attached_policy_no_administrative_privileges",
         "iam_customer_attached_policy_no_administrative_privileges",
+        "iam_inline_policy_no_administrative_privileges",
         "iam_root_hardware_mfa_enabled",
         "iam_root_mfa_enabled",
         "iam_user_hardware_mfa_enabled",
@@ -1734,6 +1743,7 @@
         "guardduty_is_enabled",
         "iam_aws_attached_policy_no_administrative_privileges",
         "iam_customer_attached_policy_no_administrative_privileges",
+        "iam_inline_policy_no_administrative_privileges",
         "iam_no_custom_policy_permissive_role_assumption",
         "iam_policy_allows_privilege_escalation",
         "iam_policy_no_full_access_to_cloudtrail",
@@ -1785,7 +1795,8 @@
         "organizations_account_part_of_organizations",
         "iam_user_mfa_enabled_console_access",
         "iam_customer_attached_policy_no_administrative_privileges",
-        "iam_aws_attached_policy_no_administrative_privileges"
+        "iam_aws_attached_policy_no_administrative_privileges",
+        "iam_inline_policy_no_administrative_privileges"
       ],
       "Attributes": [
         {
@@ -1845,6 +1856,7 @@
       "Checks": [
         "iam_customer_attached_policy_no_administrative_privileges",
         "iam_aws_attached_policy_no_administrative_privileges",
+        "iam_inline_policy_no_administrative_privileges",
         "iam_policy_allows_privilege_escalation"
       ],
       "Attributes": [
@@ -1955,6 +1967,7 @@
       "Checks": [
         "iam_customer_attached_policy_no_administrative_privileges",
         "iam_aws_attached_policy_no_administrative_privileges",
+        "iam_inline_policy_no_administrative_privileges",
         "iam_policy_allows_privilege_escalation"
       ],
       "Attributes": [
