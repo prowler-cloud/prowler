@@ -1,5 +1,5 @@
 import re
-from argparse import ArgumentError
+from argparse import ArgumentTypeError
 
 from prowler.providers.aws.lib.arn.error import (
     RoleArnParsingEmptyResource,
@@ -15,7 +15,7 @@ from prowler.providers.aws.lib.arn.models import ARN
 def arn_type(arn: str) -> bool:
     """arn_type returns a string ARN if it is valid and raises an argparse.ArgumentError if not."""
     if not is_valid_arn(arn):
-        raise ArgumentError("Invalid ARN")
+        raise ArgumentTypeError(f"Invalid ARN {arn}")
     return arn
 
 
