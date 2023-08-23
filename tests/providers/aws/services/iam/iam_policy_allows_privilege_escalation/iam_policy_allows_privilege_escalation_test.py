@@ -194,6 +194,8 @@ class Test_iam_policy_allows_privilege_escalation:
             )
             assert result[0].resource_id == policy_name
             assert result[0].resource_arn == policy_arn
+            assert result[0].region == AWS_REGION
+            assert result[0].resource_tags == []
 
     @mock_iam
     def test_iam_policy_not_allows_privilege_escalation_glue_GetDevEndpoints(self):
@@ -240,6 +242,8 @@ class Test_iam_policy_allows_privilege_escalation:
             )
             assert result[0].resource_id == policy_name
             assert result[0].resource_arn == policy_arn
+            assert result[0].region == AWS_REGION
+            assert result[0].resource_tags == []
 
     @mock_iam
     def test_iam_policy_not_allows_privilege_escalation_dynamodb_PutItem(self):
@@ -297,6 +301,8 @@ class Test_iam_policy_allows_privilege_escalation:
             )
             assert result[0].resource_id == policy_name
             assert result[0].resource_arn == policy_arn
+            assert result[0].region == AWS_REGION
+            assert result[0].resource_tags == []
 
     @mock_iam
     def test_iam_policy_allows_privilege_escalation_iam_all_and_ec2_RunInstances(
@@ -346,6 +352,8 @@ class Test_iam_policy_allows_privilege_escalation:
             assert result[0].status == "FAIL"
             assert result[0].resource_id == policy_name
             assert result[0].resource_arn == policy_arn
+            assert result[0].region == AWS_REGION
+            assert result[0].resource_tags == []
 
             assert search(
                 f"Custom Policy {policy_arn} allows privilege escalation using the following actions: ",
@@ -395,6 +403,8 @@ class Test_iam_policy_allows_privilege_escalation:
             assert result[0].status == "FAIL"
             assert result[0].resource_id == policy_name
             assert result[0].resource_arn == policy_arn
+            assert result[0].region == AWS_REGION
+            assert result[0].resource_tags == []
 
             assert search(
                 f"Custom Policy {policy_arn} allows privilege escalation using the following actions: ",
@@ -462,6 +472,8 @@ class Test_iam_policy_allows_privilege_escalation:
             assert result[0].status == "FAIL"
             assert result[0].resource_id == policy_name
             assert result[0].resource_arn == policy_arn
+            assert result[0].region == AWS_REGION
+            assert result[0].resource_tags == []
 
             assert search(
                 f"Custom Policy {policy_arn} allows privilege escalation using the following actions: ",
@@ -518,6 +530,8 @@ class Test_iam_policy_allows_privilege_escalation:
             assert result[0].status == "FAIL"
             assert result[0].resource_id == policy_name
             assert result[0].resource_arn == policy_arn
+            assert result[0].region == AWS_REGION
+            assert result[0].resource_tags == []
 
             assert search(
                 f"Custom Policy {policy_arn} allows privilege escalation using the following actions: ",
@@ -569,6 +583,8 @@ class Test_iam_policy_allows_privilege_escalation:
                 assert result[0].status == "FAIL"
                 assert result[0].resource_id == policy_name
                 assert result[0].resource_arn == policy_arn
+                assert result[0].region == AWS_REGION
+                assert result[0].resource_tags == []
 
                 assert search(
                     f"Custom Policy {policy_arn} allows privilege escalation using the following actions: ",
@@ -652,7 +668,10 @@ class Test_iam_policy_allows_privilege_escalation:
             for finding in result:
                 if finding.resource_id == policy_name_1:
                     assert finding.status == "PASS"
+                    assert finding.resource_id == policy_name_1
                     assert finding.resource_arn == policy_arn_1
+                    assert finding.region == AWS_REGION
+                    assert finding.resource_tags == []
                     assert (
                         finding.status_extended
                         == f"Custom Policy {policy_arn_1} does not allow privilege escalation."
@@ -660,8 +679,10 @@ class Test_iam_policy_allows_privilege_escalation:
 
                 if finding.resource_id == policy_name_2:
                     assert finding.status == "FAIL"
+                    assert finding.resource_id == policy_name_2
                     assert finding.resource_arn == policy_arn_2
-
+                    assert finding.region == AWS_REGION
+                    assert finding.resource_tags == []
                     assert search(
                         f"Custom Policy {policy_arn_2} allows privilege escalation using the following actions: ",
                         finding.status_extended,
@@ -747,7 +768,10 @@ class Test_iam_policy_allows_privilege_escalation:
             for finding in result:
                 if finding.resource_id == policy_name_1:
                     assert finding.status == "FAIL"
+                    assert finding.resource_id == policy_name_1
                     assert finding.resource_arn == policy_arn_1
+                    assert finding.region == AWS_REGION
+                    assert finding.resource_tags == []
 
                     assert search(
                         f"Custom Policy {policy_arn_1} allows privilege escalation using the following actions: ",
@@ -759,7 +783,10 @@ class Test_iam_policy_allows_privilege_escalation:
 
                 if finding.resource_id == policy_name_2:
                     assert finding.status == "FAIL"
+                    assert finding.resource_id == policy_name_2
                     assert finding.resource_arn == policy_arn_2
+                    assert finding.region == AWS_REGION
+                    assert finding.resource_tags == []
 
                     assert search(
                         f"Custom Policy {policy_arn_2} allows privilege escalation using the following actions: ",
@@ -822,7 +849,10 @@ class Test_iam_policy_allows_privilege_escalation:
             for finding in result:
                 if finding.resource_id == policy_name_1:
                     assert finding.status == "FAIL"
+                    assert finding.resource_id == policy_name_1
                     assert finding.resource_arn == policy_arn_1
+                    assert finding.region == AWS_REGION
+                    assert finding.resource_tags == []
 
                     assert search(
                         f"Custom Policy {policy_arn_1} allows privilege escalation using the following actions: ",
@@ -831,3 +861,61 @@ class Test_iam_policy_allows_privilege_escalation:
 
                     assert search("iam:PassRole", finding.status_extended)
                     assert search("ec2:RunInstances", finding.status_extended)
+
+    @mock_iam
+    def test_iam_policy_allows_privilege_escalation_administrator_policy(
+        self,
+    ):
+        current_audit_info = self.set_mocked_audit_info()
+        iam_client = client("iam", region_name=AWS_REGION)
+        policy_name_1 = "privileged_policy_1"
+        policy_document_1 = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Sid": "Statement01",
+                    "Effect": "Allow",
+                    "Action": ["*"],
+                    "Resource": "*",
+                }
+            ],
+        }
+
+        policy_arn_1 = iam_client.create_policy(
+            PolicyName=policy_name_1, PolicyDocument=dumps(policy_document_1)
+        )["Policy"]["Arn"]
+
+        from prowler.providers.aws.services.iam.iam_service import IAM
+
+        with mock.patch(
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=current_audit_info,
+        ), mock.patch(
+            "prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation.iam_client",
+            new=IAM(current_audit_info),
+        ):
+            # Test Check
+            from prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation import (
+                iam_policy_allows_privilege_escalation,
+            )
+
+            check = iam_policy_allows_privilege_escalation()
+            result = check.execute()
+            assert len(result) == 1
+            for finding in result:
+                if finding.resource_id == policy_name_1:
+                    assert finding.status == "FAIL"
+                    assert finding.resource_id == policy_name_1
+                    assert finding.resource_arn == policy_arn_1
+                    assert finding.region == AWS_REGION
+                    assert finding.resource_tags == []
+                    assert search(
+                        f"Custom Policy {policy_arn_1} allows privilege escalation using the following actions:",
+                        finding.status_extended,
+                    )
+                    # Since the policy is admin all the possible privilege escalation paths should be present
+                    for permissions in privilege_escalation_policies_combination:
+                        for permission in privilege_escalation_policies_combination[
+                            permissions
+                        ]:
+                            assert search(permission, finding.status_extended)

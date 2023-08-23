@@ -160,11 +160,22 @@ class iam_policy_allows_privilege_escalation(Check):
                             # Look for api:*
                             else:
                                 for permission in privileged_actions:
-                                    api = permission.split(":")[0]
-                                    api_action = permission.split(":")[1]
+                                    # Here we have to handle if the api-action is admin, so "*"
+                                    api_action = permission.split(":")
+                                    # len() == 2, so api:action
+                                    if len(api_action) == 2:
+                                        api = api_action[0]
+                                        action = api_action[1]
+                                        # Add permissions if the API is present
+                                        if action == "*":
+                                            if search(api, val):
+                                                policies_combination.add(val)
 
-                                    if api_action == "*":
-                                        if search(api, val):
+                                    # len() == 1, so *
+                                    elif len(api_action) == 1:
+                                        api = api_action[0]
+                                        # Add permissions if the API is present
+                                        if api == "*":
                                             policies_combination.add(val)
 
                     # Check all policies combinations and see if matchs with some combo key
