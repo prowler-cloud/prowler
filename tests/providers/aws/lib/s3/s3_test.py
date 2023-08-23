@@ -21,7 +21,7 @@ class TestS3:
         audit_info.audited_account = AWS_ACCOUNT_ID
         # Create mock bucket
         bucket_name = "test_bucket"
-        client = boto3.client("s3")
+        client = audit_info.audit_session.client("s3")
         client.create_bucket(Bucket=bucket_name)
         # Create mock csv output file
         fixtures_dir = "tests/lib/outputs/fixtures"
@@ -37,6 +37,7 @@ class TestS3:
             audit_info.audit_session,
         )
         # Check if the file has been sent by checking its content type
+        print(client.list_objects(Bucket=bucket_name))
         assert (
             client.get_object(
                 Bucket=bucket_name,
@@ -54,7 +55,7 @@ class TestS3:
         audit_info.audited_account = AWS_ACCOUNT_ID
         # Create mock bucket
         bucket_name = "test_bucket"
-        client = boto3.client("s3")
+        client = audit_info.audit_session.client("s3")
         client.create_bucket(Bucket=bucket_name)
         # Create mock csv output file
         fixtures_dir = "tests/lib/outputs/fixtures"
@@ -70,6 +71,7 @@ class TestS3:
             audit_info.audit_session,
         )
         # Check if the file has been sent by checking its content type
+        print(client.list_objects(Bucket=bucket_name))
         assert (
             client.get_object(
                 Bucket=bucket_name,
@@ -94,7 +96,7 @@ class TestS3:
         audit_info.audited_account = AWS_ACCOUNT_ID
         # Create mock bucket
         bucket_name = "test_bucket"
-        client = boto3.client("s3")
+        client = audit_info.audit_session.client("s3")
         client.create_bucket(Bucket=bucket_name)
         # Create mock csv output file
         fixtures_dir = "fixtures"
@@ -110,6 +112,7 @@ class TestS3:
             audit_info.audit_session,
         )
         # Check if the file has been sent by checking its content type
+        print(client.list_objects(Bucket=bucket_name))
         assert (
             client.get_object(
                 Bucket=bucket_name,
