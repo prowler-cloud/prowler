@@ -14,9 +14,9 @@ from prowler.config.config import (
     output_file_timestamp,
 )
 from prowler.lib.logger import logger
-from prowler.lib.outputs.outputs import send_to_s3_bucket
 from prowler.providers.aws.lib.arn.models import get_arn_resource_type
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
+from prowler.providers.aws.lib.s3.s3 import send_to_s3_bucket
 
 
 def quick_inventory(audit_info: AWS_Audit_Info, args):

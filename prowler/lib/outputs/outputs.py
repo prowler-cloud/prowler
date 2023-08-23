@@ -1,17 +1,8 @@
 import json
-import sys
 
 from colorama import Fore, Style
 
-from prowler.config.config import (
-    available_compliance_frameworks,
-    csv_file_suffix,
-    html_file_suffix,
-    json_asff_file_suffix,
-    json_file_suffix,
-    json_ocsf_file_suffix,
-    orange_color,
-)
+from prowler.config.config import available_compliance_frameworks, orange_color
 from prowler.lib.logger import logger
 from prowler.lib.outputs.compliance import add_manual_controls, fill_compliance
 from prowler.lib.outputs.file_descriptors import fill_file_descriptors
@@ -207,41 +198,6 @@ def set_report_color(status: str) -> str:
     else:
         raise Exception("Invalid Report Status. Must be PASS, FAIL, ERROR or WARNING")
     return color
-
-
-def send_to_s3_bucket(
-    output_filename, output_directory, output_mode, output_bucket, audit_session
-):
-    try:
-        filename = ""
-        # Get only last part of the path
-        if output_mode == "csv":
-            filename = f"{output_filename}{csv_file_suffix}"
-        elif output_mode == "json":
-            filename = f"{output_filename}{json_file_suffix}"
-        elif output_mode == "json-asff":
-            filename = f"{output_filename}{json_asff_file_suffix}"
-        elif output_mode == "json-ocsf":
-            filename = f"{output_filename}{json_ocsf_file_suffix}"
-        elif output_mode == "html":
-            filename = f"{output_filename}{html_file_suffix}"
-        else:  # Compliance output mode
-            filename = f"{output_filename}_{output_mode}{csv_file_suffix}"
-        logger.info(f"Sending outputs to S3 bucket {output_bucket}")
-        bucket_remote_dir = output_directory
-        while "prowler/" in bucket_remote_dir:  # Check if it is not a custom directory
-            bucket_remote_dir = bucket_remote_dir.partition("prowler/")[-1]
-        file_name = output_directory + "/" + filename
-        bucket_name = output_bucket
-        object_name = bucket_remote_dir + "/" + output_mode + "/" + filename
-        s3_client = audit_session.client("s3")
-        s3_client.upload_file(file_name, bucket_name, object_name)
-
-    except Exception as error:
-        logger.critical(
-            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
-        )
-        sys.exit(1)
 
 
 def extract_findings_statistics(findings: list) -> dict:
