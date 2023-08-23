@@ -274,7 +274,7 @@ class Test_VPC_Service:
             Type="network",
         )["LoadBalancers"][0]["LoadBalancerArn"]
 
-        _ = ec2_client.create_vpc_endpoint_service_configuration(
+        endpoint = ec2_client.create_vpc_endpoint_service_configuration(
             NetworkLoadBalancerArns=[lb_arn],
             TagSpecifications=[
                 {
@@ -285,12 +285,22 @@ class Test_VPC_Service:
                 },
             ],
         )
+        endpoint_id = endpoint["ServiceConfiguration"]["ServiceId"]
+        endpoint_arn = f"arn:aws:ec2:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:vpc-endpoint-service/{endpoint_id}"
+        endpoint_service = endpoint["ServiceConfiguration"]["ServiceName"]
+
         # VPC client for this test class
         audit_info = self.set_mocked_audit_info()
         vpc = VPC(audit_info)
-        assert (
-            len(vpc.vpc_endpoint_services) == 0
-        )  # Wait until this issue is fixed https://github.com/spulec/moto/issues/5605
+
+        for vpce in vpc.vpc_endpoint_services:
+            assert vpce.arn == endpoint_arn
+            assert vpce.id == endpoint_id
+            assert vpce.service == endpoint_service
+            assert vpce.owner_id == AWS_ACCOUNT_NUMBER
+            assert vpce.allowed_principals == []
+            assert vpce.region == AWS_REGION
+            assert vpce.tags == []
 
     # Test VPC Describe VPC Subnets
     @mock_ec2
