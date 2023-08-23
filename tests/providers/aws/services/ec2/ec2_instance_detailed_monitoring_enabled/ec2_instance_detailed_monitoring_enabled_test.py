@@ -126,10 +126,7 @@ class Test_ec2_instance_detailed_monitoring_enabled:
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_instance_detailed_monitoring_enabled.ec2_instance_detailed_monitoring_enabled.ec2_client",
             new=EC2(current_audit_info),
-        ) as ec2_client:
-            # Moto does not handle the Monitoring key in the instances, so we have to update it manually
-            ec2_client.instances[0].monitoring_state = "enabled"
-
+        ):
             from prowler.providers.aws.services.ec2.ec2_instance_detailed_monitoring_enabled.ec2_instance_detailed_monitoring_enabled import (
                 ec2_instance_detailed_monitoring_enabled,
             )
