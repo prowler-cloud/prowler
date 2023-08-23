@@ -42,7 +42,7 @@ class TestS3:
             S3_BUCKET_NAME,
             audit_info.audit_session,
         )
-
+        print(client.list_objects(Bucket=S3_BUCKET_NAME))
         assert (
             client.get_object(
                 Bucket=S3_BUCKET_NAME,
@@ -76,7 +76,7 @@ class TestS3:
             S3_BUCKET_NAME,
             audit_info.audit_session,
         )
-
+        print(client.list_objects(Bucket=S3_BUCKET_NAME))
         assert (
             client.get_object(
                 Bucket=S3_BUCKET_NAME,

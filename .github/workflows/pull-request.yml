@@ -61,7 +61,7 @@ jobs:
           /tmp/hadolint Dockerfile --ignore=DL3013
       - name: Test with pytest
         run: |
-          poetry run pytest -n auto --cov=./prowler --cov-report=xml tests
+          poetry run pytest -x -n auto --cov=./prowler --cov-report=xml tests
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v3
         env:
