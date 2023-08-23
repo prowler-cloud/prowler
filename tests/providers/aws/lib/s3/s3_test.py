@@ -10,106 +10,79 @@ from prowler.providers.aws.lib.s3.s3 import get_s3_object_path, send_to_s3_bucke
 AWS_ACCOUNT_ID = "123456789012"
 AWS_REGION = "us-east-1"
 
+FIXTURES_DIR = "tests/providers/aws/lib/s3/fixtures"
+S3_BUCKET_NAME = "test_bucket"
+OUTPUT_MODE_CSV = "csv"
+OUTPUT_MODE_CIS_1_4_AWS = "cis_1.4_aws"
+
 
 class TestS3:
     @mock_s3
     def test_send_to_s3_bucket(self):
         # Mock Audit Info
         audit_info = MagicMock()
+
         # Create mock session
         audit_info.audit_session = boto3.session.Session(region_name=AWS_REGION)
         audit_info.audited_account = AWS_ACCOUNT_ID
+
         # Create mock bucket
-        bucket_name = "test_bucket"
         client = audit_info.audit_session.client("s3")
-        client.create_bucket(Bucket=bucket_name)
-        # Create mock csv output file
-        fixtures_dir = "tests/lib/outputs/fixtures"
-        output_directory = getcwd() + "/" + fixtures_dir
-        output_mode = "csv"
+        client.create_bucket(Bucket=S3_BUCKET_NAME)
+
+        # Mocked CSV output file
+        output_directory = f"{getcwd()}/{FIXTURES_DIR}"
         filename = f"prowler-output-{audit_info.audited_account}"
-        # Send mock csv file to mock S3 Bucket
+
+        # Send mock CSV file to mock S3 Bucket
         send_to_s3_bucket(
             filename,
             output_directory,
-            output_mode,
-            bucket_name,
+            OUTPUT_MODE_CSV,
+            S3_BUCKET_NAME,
             audit_info.audit_session,
         )
-        object_name = (
-            fixtures_dir + "/" + output_mode + "/" + filename + csv_file_suffix
-        )
+
         assert (
-            client.list_objects(Bucket=bucket_name)["Contents"][0]["Key"] == object_name
+            client.get_object(
+                Bucket=S3_BUCKET_NAME,
+                Key=f"{FIXTURES_DIR}/{OUTPUT_MODE_CSV}/{filename}{csv_file_suffix}",
+            )["ContentType"]
+            == "binary/octet-stream"
         )
 
     @mock_s3
     def test_send_to_s3_bucket_compliance(self):
         # Mock Audit Info
         audit_info = MagicMock()
+
         # Create mock session
         audit_info.audit_session = boto3.session.Session(region_name=AWS_REGION)
         audit_info.audited_account = AWS_ACCOUNT_ID
+
         # Create mock bucket
-        bucket_name = "test_bucket"
         client = audit_info.audit_session.client("s3")
-        client.create_bucket(Bucket=bucket_name)
-        # Create mock csv output file
-        fixtures_dir = "tests/lib/outputs/fixtures"
-        output_directory = getcwd() + "/" + fixtures_dir
-        output_mode = "cis_1.4_aws"
+        client.create_bucket(Bucket=S3_BUCKET_NAME)
+
+        # Mocked CSV output file
+        output_directory = f"{getcwd()}/{FIXTURES_DIR}"
         filename = f"prowler-output-{audit_info.audited_account}"
-        # Send mock csv file to mock S3 Bucket
+
+        # Send mock CSV file to mock S3 Bucket
         send_to_s3_bucket(
             filename,
             output_directory,
-            output_mode,
-            bucket_name,
+            OUTPUT_MODE_CIS_1_4_AWS,
+            S3_BUCKET_NAME,
             audit_info.audit_session,
-        )
-        object_name = (
-            fixtures_dir
-            + "/"
-            + output_mode
-            + "/"
-            + filename
-            + "_"
-            + output_mode
-            + csv_file_suffix
-        )
-        assert (
-            client.list_objects(Bucket=bucket_name)["Contents"][0]["Key"] == object_name
         )
 
-    @mock_s3
-    def test_send_to_s3_bucket_custom_directory(self):
-        # Mock Audit Info
-        audit_info = MagicMock()
-        # Create mock session
-        audit_info.audit_session = boto3.session.Session(region_name=AWS_REGION)
-        audit_info.audited_account = AWS_ACCOUNT_ID
-        # Create mock bucket
-        bucket_name = "test_bucket"
-        client = audit_info.audit_session.client("s3")
-        client.create_bucket(Bucket=bucket_name)
-        # Create mock csv output file
-        fixtures_dir = "fixtures"
-        output_directory = f"tests/lib/outputs/{fixtures_dir}"
-        output_mode = "csv"
-        filename = f"prowler-output-{audit_info.audited_account}"
-        # Send mock csv file to mock S3 Bucket
-        send_to_s3_bucket(
-            filename,
-            output_directory,
-            output_mode,
-            bucket_name,
-            audit_info.audit_session,
-        )
-        object_name = (
-            output_directory + "/" + output_mode + "/" + filename + csv_file_suffix
-        )
         assert (
-            client.list_objects(Bucket=bucket_name)["Contents"][0]["Key"] == object_name
+            client.get_object(
+                Bucket=S3_BUCKET_NAME,
+                Key=f"{FIXTURES_DIR}/{OUTPUT_MODE_CIS_1_4_AWS}/{filename}_{OUTPUT_MODE_CIS_1_4_AWS}{csv_file_suffix}",
+            )["ContentType"]
+            == "binary/octet-stream"
         )
 
     def test_get_s3_object_path_with_prowler(self):
