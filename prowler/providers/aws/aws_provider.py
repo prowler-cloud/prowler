@@ -195,6 +195,7 @@ def get_aws_available_regions():
 def get_checks_from_input_arn(audit_resources: list, provider: str) -> set:
     """get_checks_from_input_arn gets the list of checks from the input arns"""
     checks_from_arn = set()
+    is_subservice_in_checks = False
     # Handle if there are audit resources so only their services are executed
     if audit_resources:
         services_without_subservices = ["guardduty", "kms", "s3", "elb", "efs"]
@@ -246,8 +247,10 @@ def get_checks_from_input_arn(audit_resources: list, provider: str) -> set:
             if any(sub_service in check for sub_service in sub_service_list):
                 if not (sub_service == "policy" and "password_policy" in check):
                     checks_from_arn.add(check)
-            else:
-                checks_from_arn.add(check)
+                    is_subservice_in_checks = True
+
+        if not is_subservice_in_checks:
+            checks_from_arn = checks
 
     # Return final checks list
     return sorted(checks_from_arn)
