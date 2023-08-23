@@ -646,7 +646,7 @@ class Test_Check:
         recovered_checks = get_checks_from_input_arn(audit_resources, provider)
         assert recovered_checks == expected_checks
 
-    def test_get_regions_from_audit_resources(self):
+    def test_get_regions_from_audit_resources_with_regions(self):
         audit_resources = [
             f"arn:aws:lambda:us-east-1:{AWS_ACCOUNT_NUMBER}:function:test-lambda",
             f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:policy/test",
@@ -654,9 +654,14 @@ class Test_Check:
             "arn:aws:s3:::bucket-name",
             "arn:aws:apigateway:us-east-2::/restapis/api-id/stages/stage-name",
         ]
-        expected_regions = ["us-east-1", "eu-west-1", "us-east-2"]
+        expected_regions = {"us-east-1", "eu-west-1", "us-east-2"}
         recovered_regions = get_regions_from_audit_resources(audit_resources)
         assert recovered_regions == expected_regions
+
+    def test_get_regions_from_audit_resources_without_regions(self):
+        audit_resources = ["arn:aws:s3:::bucket-name"]
+        recovered_regions = get_regions_from_audit_resources(audit_resources)
+        assert not recovered_regions
 
     # def test_parse_checks_from_compliance_framework_two(self):
     #     test_case = {

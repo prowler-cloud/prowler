@@ -256,16 +256,14 @@ def get_checks_from_input_arn(audit_resources: list, provider: str) -> set:
     return sorted(checks_from_arn)
 
 
-def get_regions_from_audit_resources(audit_resources: list) -> list:
+def get_regions_from_audit_resources(audit_resources: list) -> set:
     """get_regions_from_audit_resources gets the regions from the audit resources arns"""
-    audited_regions = []
+    audited_regions = set()
     for resource in audit_resources:
         region = resource.split(":")[3]
-        if region and region not in audited_regions:  # Check if arn has a region
-            audited_regions.append(region)
-    if audited_regions:
-        return audited_regions
-    return None
+        if region:
+            audited_regions.add(region)
+    return audited_regions
 
 
 def get_available_aws_service_regions(service: str, audit_info: AWS_Audit_Info) -> list:
