@@ -1,5 +1,3 @@
-from re import search
-
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.iam.iam_client import iam_client
 
@@ -168,7 +166,8 @@ class iam_policy_allows_privilege_escalation(Check):
                                         action = api_action[1]
                                         # Add permissions if the API is present
                                         if action == "*":
-                                            if search(api, val):
+                                            val_api = val.split(":")[0]
+                                            if api == val_api:
                                                 policies_combination.add(val)
 
                                     # len() == 1, so *

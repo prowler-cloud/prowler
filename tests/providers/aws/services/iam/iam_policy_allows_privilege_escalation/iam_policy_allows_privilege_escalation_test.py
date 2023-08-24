@@ -919,3 +919,61 @@ class Test_iam_policy_allows_privilege_escalation:
                             permissions
                         ]:
                             assert search(permission, finding.status_extended)
+
+    @mock_iam
+    def test_iam_policy_not_allows_privilege_escalation_custom_policy(
+        self,
+    ):
+        current_audit_info = self.set_mocked_audit_info()
+        iam_client = client("iam", region_name=AWS_REGION)
+        policy_name_1 = "privileged_policy_1"
+        policy_document_1 = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Sid": "",
+                    "Effect": "Allow",
+                    "Action": ["es:List*", "es:Get*", "es:Describe*"],
+                    "Resource": "*",
+                },
+                {
+                    "Sid": "",
+                    "Effect": "Allow",
+                    "Action": "es:*",
+                    "Resource": f"arn:aws:es:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:domain/test/*",
+                },
+            ],
+        }
+
+        policy_arn_1 = iam_client.create_policy(
+            PolicyName=policy_name_1, PolicyDocument=dumps(policy_document_1)
+        )["Policy"]["Arn"]
+
+        from prowler.providers.aws.services.iam.iam_service import IAM
+
+        with mock.patch(
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=current_audit_info,
+        ), mock.patch(
+            "prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation.iam_client",
+            new=IAM(current_audit_info),
+        ):
+            # Test Check
+            from prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation import (
+                iam_policy_allows_privilege_escalation,
+            )
+
+            check = iam_policy_allows_privilege_escalation()
+            result = check.execute()
+            assert len(result) == 1
+            for finding in result:
+                if finding.resource_id == policy_name_1:
+                    assert finding.status == "PASS"
+                    assert finding.resource_id == policy_name_1
+                    assert finding.resource_arn == policy_arn_1
+                    assert finding.region == AWS_REGION
+                    assert finding.resource_tags == []
+                    assert (
+                        finding.status_extended
+                        == f"Custom Policy {policy_arn_1} does not allow privilege escalation."
+                    )
