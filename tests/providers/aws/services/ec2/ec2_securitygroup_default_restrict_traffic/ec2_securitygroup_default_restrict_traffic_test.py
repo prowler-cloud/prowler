@@ -75,7 +75,7 @@ class Test_ec2_securitygroup_default_restrict_traffic:
             assert result[2].status == "PASS"
 
     @mock_ec2
-    def test_ec2_non_compliant_default_sg(self):
+    def test_ec2_non_compliant_default_sg_open_to_internet(self):
         # Create EC2 Mocked Resources
         ec2_client = client("ec2", region_name=AWS_REGION)
         ec2_client.create_vpc(CidrBlock="10.0.0.0/16")
@@ -116,7 +116,451 @@ class Test_ec2_securitygroup_default_restrict_traffic:
                     assert sg.status == "FAIL"
                     assert (
                         sg.status_extended
-                        == f"Default Security Group ({default_sg_id}) is open to the Internet."
+                        == f"Default Security Group ({default_sg_id}) rules have being changed and don't restrict all the traffic."
+                    )
+                    assert (
+                        sg.resource_arn
+                        == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:security-group/{default_sg_id}"
+                    )
+                    assert sg.resource_details == default_sg_name
+                    assert sg.resource_tags == []
+
+    @mock_ec2
+    def test_ec2_non_compliant_default_sg_more_than_one_ingress_rule(self):
+        # Create EC2 Mocked Resources
+        ec2_client = client("ec2", region_name=AWS_REGION)
+        ec2_client.create_vpc(CidrBlock="10.0.0.0/16")
+        default_sg = ec2_client.describe_security_groups(GroupNames=["default"])[
+            "SecurityGroups"
+        ][0]
+        default_sg_id = default_sg["GroupId"]
+        default_sg_name = default_sg["GroupName"]
+        ec2_client.authorize_security_group_ingress(
+            GroupId=default_sg_id,
+            IpPermissions=[
+                {"IpProtocol": "-1", "IpRanges": []},
+                {"IpProtocol": "tcp", "IpRanges": [], "FromPort": 22, "ToPort": 22},
+            ],
+        )
+
+        from prowler.providers.aws.services.ec2.ec2_service import EC2
+
+        current_audit_info = self.set_mocked_audit_info()
+
+        with mock.patch(
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=current_audit_info,
+        ), mock.patch(
+            "prowler.providers.aws.services.ec2.ec2_securitygroup_default_restrict_traffic.ec2_securitygroup_default_restrict_traffic.ec2_client",
+            new=EC2(current_audit_info),
+        ):
+            # Test Check
+            from prowler.providers.aws.services.ec2.ec2_securitygroup_default_restrict_traffic.ec2_securitygroup_default_restrict_traffic import (
+                ec2_securitygroup_default_restrict_traffic,
+            )
+
+            check = ec2_securitygroup_default_restrict_traffic()
+            result = check.execute()
+
+            # One default sg per region
+            assert len(result) == 3
+            # Search changed sg
+            for sg in result:
+                if sg.resource_id == default_sg_id:
+                    assert sg.status == "FAIL"
+                    assert (
+                        sg.status_extended
+                        == f"Default Security Group ({default_sg_id}) rules have being changed and don't restrict all the traffic."
+                    )
+                    assert (
+                        sg.resource_arn
+                        == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:security-group/{default_sg_id}"
+                    )
+                    assert sg.resource_details == default_sg_name
+                    assert sg.resource_tags == []
+
+    @mock_ec2
+    def test_ec2_non_compliant_default_sg_more_than_one_egress_rule(self):
+        # Create EC2 Mocked Resources
+        ec2_client = client("ec2", region_name=AWS_REGION)
+        ec2_client.create_vpc(CidrBlock="10.0.0.0/16")
+        default_sg = ec2_client.describe_security_groups(GroupNames=["default"])[
+            "SecurityGroups"
+        ][0]
+        default_sg_id = default_sg["GroupId"]
+        default_sg_name = default_sg["GroupName"]
+        ec2_client.authorize_security_group_egress(
+            GroupId=default_sg_id,
+            # Default rule does not need to be added since it is added when creating the sg
+            IpPermissions=[
+                {"IpProtocol": "tcp", "IpRanges": [], "FromPort": 22, "ToPort": 22}
+            ],
+        )
+
+        from prowler.providers.aws.services.ec2.ec2_service import EC2
+
+        current_audit_info = self.set_mocked_audit_info()
+
+        with mock.patch(
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=current_audit_info,
+        ), mock.patch(
+            "prowler.providers.aws.services.ec2.ec2_securitygroup_default_restrict_traffic.ec2_securitygroup_default_restrict_traffic.ec2_client",
+            new=EC2(current_audit_info),
+        ):
+            # Test Check
+            from prowler.providers.aws.services.ec2.ec2_securitygroup_default_restrict_traffic.ec2_securitygroup_default_restrict_traffic import (
+                ec2_securitygroup_default_restrict_traffic,
+            )
+
+            check = ec2_securitygroup_default_restrict_traffic()
+            result = check.execute()
+
+            # One default sg per region
+            assert len(result) == 3
+            # Search changed sg
+            for sg in result:
+                if sg.resource_id == default_sg_id:
+                    assert sg.status == "FAIL"
+                    assert (
+                        sg.status_extended
+                        == f"Default Security Group ({default_sg_id}) rules have being changed and don't restrict all the traffic."
+                    )
+                    assert (
+                        sg.resource_arn
+                        == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:security-group/{default_sg_id}"
+                    )
+                    assert sg.resource_details == default_sg_name
+                    assert sg.resource_tags == []
+
+    @mock_ec2
+    def test_ec2_non_compliant_default_sg_ingress_rule_with_ip_ranges(self):
+        # Create EC2 Mocked Resources
+        ec2_client = client("ec2", region_name=AWS_REGION)
+        ec2_client.create_vpc(CidrBlock="10.0.0.0/16")
+        default_sg = ec2_client.describe_security_groups(GroupNames=["default"])[
+            "SecurityGroups"
+        ][0]
+        default_sg_id = default_sg["GroupId"]
+        default_sg_name = default_sg["GroupName"]
+        ec2_client.authorize_security_group_ingress(
+            GroupId=default_sg_id,
+            IpPermissions=[
+                {"IpProtocol": "-1", "IpRanges": [{"CidrIp": "10.0.0.16/0"}]}
+            ],
+        )
+
+        from prowler.providers.aws.services.ec2.ec2_service import EC2
+
+        current_audit_info = self.set_mocked_audit_info()
+
+        with mock.patch(
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=current_audit_info,
+        ), mock.patch(
+            "prowler.providers.aws.services.ec2.ec2_securitygroup_default_restrict_traffic.ec2_securitygroup_default_restrict_traffic.ec2_client",
+            new=EC2(current_audit_info),
+        ):
+            # Test Check
+            from prowler.providers.aws.services.ec2.ec2_securitygroup_default_restrict_traffic.ec2_securitygroup_default_restrict_traffic import (
+                ec2_securitygroup_default_restrict_traffic,
+            )
+
+            check = ec2_securitygroup_default_restrict_traffic()
+            result = check.execute()
+
+            # One default sg per region
+            assert len(result) == 3
+            # Search changed sg
+            for sg in result:
+                if sg.resource_id == default_sg_id:
+                    assert sg.status == "FAIL"
+                    assert (
+                        sg.status_extended
+                        == f"Default Security Group ({default_sg_id}) rules have being changed and don't restrict all the traffic."
+                    )
+                    assert (
+                        sg.resource_arn
+                        == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:security-group/{default_sg_id}"
+                    )
+                    assert sg.resource_details == default_sg_name
+                    assert sg.resource_tags == []
+
+    @mock_ec2
+    def test_ec2_non_compliant_default_sg_ingress_rule_with_ip_v6_ranges(self):
+        # Create EC2 Mocked Resources
+        ec2_client = client("ec2", region_name=AWS_REGION)
+        ec2_client.create_vpc(CidrBlock="10.0.0.0/16")
+        default_sg = ec2_client.describe_security_groups(GroupNames=["default"])[
+            "SecurityGroups"
+        ][0]
+        default_sg_id = default_sg["GroupId"]
+        default_sg_name = default_sg["GroupName"]
+        ec2_client.authorize_security_group_ingress(
+            GroupId=default_sg_id,
+            IpPermissions=[
+                {
+                    "IpProtocol": "-1",
+                    "Ipv6Ranges": [
+                        {"CidrIpv6": "0000:0000:0000:0000:0000:0000:0000:0000"}
+                    ],
+                }
+            ],
+        )
+
+        from prowler.providers.aws.services.ec2.ec2_service import EC2
+
+        current_audit_info = self.set_mocked_audit_info()
+
+        with mock.patch(
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=current_audit_info,
+        ), mock.patch(
+            "prowler.providers.aws.services.ec2.ec2_securitygroup_default_restrict_traffic.ec2_securitygroup_default_restrict_traffic.ec2_client",
+            new=EC2(current_audit_info),
+        ):
+            # Test Check
+            from prowler.providers.aws.services.ec2.ec2_securitygroup_default_restrict_traffic.ec2_securitygroup_default_restrict_traffic import (
+                ec2_securitygroup_default_restrict_traffic,
+            )
+
+            check = ec2_securitygroup_default_restrict_traffic()
+            result = check.execute()
+
+            # One default sg per region
+            assert len(result) == 3
+            # Search changed sg
+            for sg in result:
+                if sg.resource_id == default_sg_id:
+                    assert sg.status == "FAIL"
+                    assert (
+                        sg.status_extended
+                        == f"Default Security Group ({default_sg_id}) rules have being changed and don't restrict all the traffic."
+                    )
+                    assert (
+                        sg.resource_arn
+                        == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:security-group/{default_sg_id}"
+                    )
+                    assert sg.resource_details == default_sg_name
+                    assert sg.resource_tags == []
+
+    @mock_ec2
+    def test_ec2_non_compliant_default_sg_ingress_rule_with_more_than_one_ip_range(
+        self,
+    ):
+        # Create EC2 Mocked Resources
+        ec2_client = client("ec2", region_name=AWS_REGION)
+        ec2_client.create_vpc(CidrBlock="10.0.0.0/16")
+        default_sg = ec2_client.describe_security_groups(GroupNames=["default"])[
+            "SecurityGroups"
+        ][0]
+        default_sg_id = default_sg["GroupId"]
+        default_sg_name = default_sg["GroupName"]
+        ec2_client.authorize_security_group_ingress(
+            GroupId=default_sg_id,
+            IpPermissions=[
+                {
+                    "IpProtocol": "-1",
+                    "IpRanges": [{"CidrIp": "0.0.0.0/0"}, {"CidrIp": "10.0.0.0/16"}],
+                }
+            ],
+        )
+
+        from prowler.providers.aws.services.ec2.ec2_service import EC2
+
+        current_audit_info = self.set_mocked_audit_info()
+
+        with mock.patch(
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=current_audit_info,
+        ), mock.patch(
+            "prowler.providers.aws.services.ec2.ec2_securitygroup_default_restrict_traffic.ec2_securitygroup_default_restrict_traffic.ec2_client",
+            new=EC2(current_audit_info),
+        ):
+            # Test Check
+            from prowler.providers.aws.services.ec2.ec2_securitygroup_default_restrict_traffic.ec2_securitygroup_default_restrict_traffic import (
+                ec2_securitygroup_default_restrict_traffic,
+            )
+
+            check = ec2_securitygroup_default_restrict_traffic()
+            result = check.execute()
+
+            # One default sg per region
+            assert len(result) == 3
+            # Search changed sg
+            for sg in result:
+                if sg.resource_id == default_sg_id:
+                    assert sg.status == "FAIL"
+                    assert (
+                        sg.status_extended
+                        == f"Default Security Group ({default_sg_id}) rules have being changed and don't restrict all the traffic."
+                    )
+                    assert (
+                        sg.resource_arn
+                        == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:security-group/{default_sg_id}"
+                    )
+                    assert sg.resource_details == default_sg_name
+                    assert sg.resource_tags == []
+
+    @mock_ec2
+    def test_ec2_non_compliant_default_sg_egress_rule_with_more_than_one_ip_range(self):
+        # Create EC2 Mocked Resources
+        ec2_client = client("ec2", region_name=AWS_REGION)
+        ec2_client.create_vpc(CidrBlock="10.0.0.0/16")
+        default_sg = ec2_client.describe_security_groups(GroupNames=["default"])[
+            "SecurityGroups"
+        ][0]
+        default_sg_id = default_sg["GroupId"]
+        default_sg_name = default_sg["GroupName"]
+        ec2_client.authorize_security_group_egress(
+            GroupId=default_sg_id,
+            IpPermissions=[
+                {
+                    "IpProtocol": "-1",
+                    "IpRanges": [{"CidrIp": "0.0.0.0/0"}, {"CidrIp": "10.0.0.0/16"}],
+                }
+            ],
+        )
+
+        from prowler.providers.aws.services.ec2.ec2_service import EC2
+
+        current_audit_info = self.set_mocked_audit_info()
+
+        with mock.patch(
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=current_audit_info,
+        ), mock.patch(
+            "prowler.providers.aws.services.ec2.ec2_securitygroup_default_restrict_traffic.ec2_securitygroup_default_restrict_traffic.ec2_client",
+            new=EC2(current_audit_info),
+        ):
+            # Test Check
+            from prowler.providers.aws.services.ec2.ec2_securitygroup_default_restrict_traffic.ec2_securitygroup_default_restrict_traffic import (
+                ec2_securitygroup_default_restrict_traffic,
+            )
+
+            check = ec2_securitygroup_default_restrict_traffic()
+            result = check.execute()
+
+            # One default sg per region
+            assert len(result) == 3
+            # Search changed sg
+            for sg in result:
+                if sg.resource_id == default_sg_id:
+                    assert sg.status == "FAIL"
+                    assert (
+                        sg.status_extended
+                        == f"Default Security Group ({default_sg_id}) rules have being changed and don't restrict all the traffic."
+                    )
+                    assert (
+                        sg.resource_arn
+                        == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:security-group/{default_sg_id}"
+                    )
+                    assert sg.resource_details == default_sg_name
+                    assert sg.resource_tags == []
+
+    @mock_ec2
+    def test_ec2_non_compliant_default_sg_ingress_rule_with_input_ports(self):
+        # Create EC2 Mocked Resources
+        ec2_client = client("ec2", region_name=AWS_REGION)
+        ec2_client.create_vpc(CidrBlock="10.0.0.0/16")
+        default_sg = ec2_client.describe_security_groups(GroupNames=["default"])[
+            "SecurityGroups"
+        ][0]
+        default_sg_id = default_sg["GroupId"]
+        default_sg_name = default_sg["GroupName"]
+        ec2_client.authorize_security_group_ingress(
+            GroupId=default_sg_id,
+            IpPermissions=[
+                {"IpProtocol": "tcp", "IpRanges": [], "FromPort": 22, "ToPort": 22}
+            ],
+        )
+
+        from prowler.providers.aws.services.ec2.ec2_service import EC2
+
+        current_audit_info = self.set_mocked_audit_info()
+
+        with mock.patch(
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=current_audit_info,
+        ), mock.patch(
+            "prowler.providers.aws.services.ec2.ec2_securitygroup_default_restrict_traffic.ec2_securitygroup_default_restrict_traffic.ec2_client",
+            new=EC2(current_audit_info),
+        ):
+            # Test Check
+            from prowler.providers.aws.services.ec2.ec2_securitygroup_default_restrict_traffic.ec2_securitygroup_default_restrict_traffic import (
+                ec2_securitygroup_default_restrict_traffic,
+            )
+
+            check = ec2_securitygroup_default_restrict_traffic()
+            result = check.execute()
+
+            # One default sg per region
+            assert len(result) == 3
+            # Search changed sg
+            for sg in result:
+                if sg.resource_id == default_sg_id:
+                    assert sg.status == "FAIL"
+                    assert (
+                        sg.status_extended
+                        == f"Default Security Group ({default_sg_id}) rules have being changed and don't restrict all the traffic."
+                    )
+                    assert (
+                        sg.resource_arn
+                        == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:security-group/{default_sg_id}"
+                    )
+                    assert sg.resource_details == default_sg_name
+                    assert sg.resource_tags == []
+
+    @mock_ec2
+    def test_ec2_non_compliant_default_sg_egress_rule_with_input_ports(self):
+        # Create EC2 Mocked Resources
+        ec2_client = client("ec2", region_name=AWS_REGION)
+        ec2_client.create_vpc(CidrBlock="10.0.0.0/16")
+        default_sg = ec2_client.describe_security_groups(GroupNames=["default"])[
+            "SecurityGroups"
+        ][0]
+        default_sg_id = default_sg["GroupId"]
+        default_sg_name = default_sg["GroupName"]
+        ec2_client.authorize_security_group_egress(
+            GroupId=default_sg_id,
+            IpPermissions=[
+                {
+                    "IpProtocol": "tcp",
+                    "IpRanges": [{"CidrIp": "0.0.0.0/0"}],
+                    "FromPort": 22,
+                    "ToPort": 22,
+                }
+            ],
+        )
+
+        from prowler.providers.aws.services.ec2.ec2_service import EC2
+
+        current_audit_info = self.set_mocked_audit_info()
+
+        with mock.patch(
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=current_audit_info,
+        ), mock.patch(
+            "prowler.providers.aws.services.ec2.ec2_securitygroup_default_restrict_traffic.ec2_securitygroup_default_restrict_traffic.ec2_client",
+            new=EC2(current_audit_info),
+        ):
+            # Test Check
+            from prowler.providers.aws.services.ec2.ec2_securitygroup_default_restrict_traffic.ec2_securitygroup_default_restrict_traffic import (
+                ec2_securitygroup_default_restrict_traffic,
+            )
+
+            check = ec2_securitygroup_default_restrict_traffic()
+            result = check.execute()
+
+            # One default sg per region
+            assert len(result) == 3
+            # Search changed sg
+            for sg in result:
+                if sg.resource_id == default_sg_id:
+                    assert sg.status == "FAIL"
+                    assert (
+                        sg.status_extended
+                        == f"Default Security Group ({default_sg_id}) rules have being changed and don't restrict all the traffic."
                     )
                     assert (
                         sg.resource_arn
@@ -137,10 +581,9 @@ class Test_ec2_securitygroup_default_restrict_traffic:
         default_sg_name = default_sg["GroupName"]
         ec2_client.authorize_security_group_ingress(
             GroupId=default_sg_id,
-            IpPermissions=[
-                {"IpProtocol": "-1", "IpRanges": [{"CidrIp": "10.11.12.13/32"}]}
-            ],
+            IpPermissions=[{"IpProtocol": "-1", "IpRanges": [], "Ipv6Ranges": []}],
         )
+        # Default egress rule exists by default
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
@@ -169,7 +612,7 @@ class Test_ec2_securitygroup_default_restrict_traffic:
                     assert sg.status == "PASS"
                     assert (
                         sg.status_extended
-                        == f"Default Security Group ({default_sg_id}) is not open to the Internet."
+                        == f"Default Security Group ({default_sg_id}) rules have not being changed and restrict all the traffic."
                     )
                     assert (
                         sg.resource_arn

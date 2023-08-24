@@ -17,22 +17,11 @@ class ec2_securitygroup_default_restrict_traffic(Check):
             report.resource_tags = security_group.tags
             # Find default security group
             if security_group.name == "default":
-                report.status = "PASS"
-                report.status_extended = f"Default Security Group ({security_group.id}) rules have not being changed and restrict all the traffic."
-                if (
-                    len(security_group.ingress_rules) > 1
-                    or len(security_group.egress_rules) > 1
-                    or (
-                        security_group.ingress_rules
-                        and security_group.egress_rules
-                        and is_changed_default_security_group(
-                            security_group.ingress_rules[0],
-                            security_group.egress_rules[0],
-                        )
-                    )
-                ):
-                    report.status = "FAIL"
-                    report.status_extended = f"Default Security Group ({security_group.id}) rules have being changed and don't restrict all the traffic."
+                report.status = "FAIL"
+                report.status_extended = f"Default Security Group ({security_group.id}) rules have being changed and don't restrict all the traffic."
+                if not is_changed_default_security_group(security_group):
+                    report.status = "PASS"
+                    report.status_extended = f"Default Security Group ({security_group.id}) rules have not being changed and restrict all the traffic."
 
                 findings.append(report)
 

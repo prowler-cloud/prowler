@@ -108,9 +108,26 @@ def _is_cidr_public(cidr: str, any_address: bool = False) -> bool:
         return ipaddress.ip_network(cidr).is_global
 
 
-def is_changed_default_security_group(ingress_rule: Any, egress_rule: Any) -> bool:
+def is_changed_default_security_group(security_group: Any) -> bool:
+    is_changed_default_security_group = True
+    if (
+        len(security_group.ingress_rules) <= 1
+        and not is_changed_default_security_group_ingress_rule(
+            security_group.ingress_rules
+        )
+    ) and (
+        len(security_group.egress_rules) == 1
+        and not is_changed_default_security_group_egress_rule(
+            security_group.egress_rules
+        )
+    ):
+        is_changed_default_security_group = False
+    return is_changed_default_security_group
+
+
+def is_changed_default_security_group_ingress_rule(ingress_rules: Any) -> bool:
     """
-    Default SG ingress rule
+    Default SG ingress rule -> It can be also an empty rule
     {
         "IpProtocol": "-1",
         "IpRanges": [],
@@ -123,7 +140,24 @@ def is_changed_default_security_group(ingress_rule: Any, egress_rule: Any) -> bo
             }
         ]
     }
+    """
+    default_sg_has_changed = False
 
+    if ingress_rules and (
+        ingress_rules[0]["IpProtocol"] != "-1"
+        or ingress_rules[0]["IpRanges"]
+        or ingress_rules[0]["Ipv6Ranges"]
+        or "FromPort" in ingress_rules
+        or "ToPort" in ingress_rules
+    ):
+        # Check ingress rule conditions
+        default_sg_has_changed = True
+
+    return default_sg_has_changed
+
+
+def is_changed_default_security_group_egress_rule(egress_rules: Any) -> bool:
+    """
     Default SG egress rule
     {
         "IpProtocol": "-1",
@@ -138,24 +172,18 @@ def is_changed_default_security_group(ingress_rule: Any, egress_rule: Any) -> bo
     }
     """
     default_sg_has_changed = False
-    # Check ingress rule conditions
+
     if (
-        ingress_rule["IpProtocol"] != "-1"
-        or ingress_rule["IpRanges"]
-        or ingress_rule["Ipv6Ranges"]
-        or "FromPort" in ingress_rule
-        or "ToPort" in ingress_rule
-    ):
-        default_sg_has_changed = True
-    if (
-        egress_rule["IpProtocol"] != "-1"
+        egress_rules[0]["IpProtocol"] != "-1"
+        or len(egress_rules[0]["IpRanges"]) > 1
+        or "CidrIp" not in egress_rules[0]["IpRanges"][0]
         or (
-            "CidrIp" in egress_rule["IpRanges"]
-            and egress_rule["IpRanges"]["CidrIp"] != "0.0.0.0/0"
+            "CidrIp" in egress_rules[0]["IpRanges"][0]
+            and egress_rules[0]["IpRanges"][0]["CidrIp"] != "0.0.0.0/0"
         )
-        or egress_rule["Ipv6Ranges"]
-        or "FromPort" in egress_rule
-        or "ToPort" in egress_rule
+        or egress_rules[0]["Ipv6Ranges"]
+        or "FromPort" in egress_rules[0]
+        or "ToPort" in egress_rules[0]
     ):
         default_sg_has_changed = True
 
