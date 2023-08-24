@@ -369,7 +369,8 @@
         "iam_password_policy_minimum_length_14",
         "iam_disable_90_days_credentials",
         "iam_aws_attached_policy_no_administrative_privileges",
-        "iam_customer_attached_policy_no_administrative_privileges"
+        "iam_customer_attached_policy_no_administrative_privileges",
+        "iam_inline_policy_no_administrative_privileges"
       ]
     },
     {

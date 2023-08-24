@@ -346,6 +346,7 @@
         "iam_aws_attached_policy_no_administrative_privileges",
         "iam_customer_attached_policy_no_administrative_privileges",
         "iam_customer_unattached_policy_no_administrative_privileges",
+        "iam_inline_policy_no_administrative_privileges",
         "opensearch_service_domains_internal_user_database_enabled"
       ]
     },
