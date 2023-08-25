@@ -5,7 +5,6 @@ from boto3 import client, session
 from moto import mock_cloudtrail, mock_s3
 
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
-from prowler.providers.aws.services.cloudtrail.cloudtrail_service import Trail
 from prowler.providers.common.models import Audit_Metadata
 
 AWS_ACCOUNT_NUMBER = "123456789012"
@@ -96,7 +95,7 @@ class Test_cloudtrail_multi_region_enabled:
 
     @mock_cloudtrail
     @mock_s3
-    def test_various_trails_no_login(self):
+    def test_various_trails_no_logging(self):
         cloudtrail_client_us_east_1 = client(
             "cloudtrail", region_name=AWS_REGION_US_EAST_1
         )
@@ -171,7 +170,7 @@ class Test_cloudtrail_multi_region_enabled:
 
     @mock_cloudtrail
     @mock_s3
-    def test_various_trails_with_and_without_login(self):
+    def test_various_trails_with_and_without_logging(self):
         cloudtrail_client_us_east_1 = client(
             "cloudtrail", region_name=AWS_REGION_US_EAST_1
         )
@@ -247,7 +246,7 @@ class Test_cloudtrail_multi_region_enabled:
 
     @mock_cloudtrail
     @mock_s3
-    def test_trail_multiregion_logging_and_single_region_not_login(self):
+    def test_trail_multiregion_logging_and_single_region_not_logging(self):
         cloudtrail_client_us_east_1 = client(
             "cloudtrail", region_name=AWS_REGION_US_EAST_1
         )
@@ -287,41 +286,11 @@ class Test_cloudtrail_multi_region_enabled:
             with mock.patch(
                 "prowler.providers.aws.services.cloudtrail.cloudtrail_multi_region_enabled.cloudtrail_multi_region_enabled.cloudtrail_client",
                 new=Cloudtrail(current_audit_info),
-            ) as cloudtrail_client:
+            ):
                 # Test Check
                 from prowler.providers.aws.services.cloudtrail.cloudtrail_multi_region_enabled.cloudtrail_multi_region_enabled import (
                     cloudtrail_multi_region_enabled,
                 )
-
-                ##############################################################################################################
-                # Only until moto issue is solved (Right now is not getting shadow us-east-1 trail status in eu-west-1 region)
-                cloudtrail_client.trails = [
-                    Trail(
-                        name=trail_name_us,
-                        is_multiregion=True,
-                        home_region=AWS_REGION_US_EAST_1,
-                        arn=trail_us["TrailARN"],
-                        region=AWS_REGION_US_EAST_1,
-                        is_logging=True,
-                    ),
-                    Trail(
-                        name=trail_name_eu,
-                        is_multiregion=False,
-                        home_region=AWS_REGION_EU_WEST_1,
-                        arn="",
-                        region=AWS_REGION_EU_WEST_1,
-                        is_logging=False,
-                    ),
-                    Trail(
-                        name=trail_name_us,
-                        is_multiregion=True,
-                        home_region=AWS_REGION_US_EAST_1,
-                        arn=trail_us["TrailARN"],
-                        region=AWS_REGION_EU_WEST_1,
-                        is_logging=True,
-                    ),
-                ]
-                ##############################################################################################################
 
                 check = cloudtrail_multi_region_enabled()
                 result = check.execute()
