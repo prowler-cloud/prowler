@@ -21,7 +21,8 @@ prowler <provider> -M csv json json-asff html -o <custom_report_directory>
 ```
 > Both flags can be used simultaneously to provide a custom directory and filename.
 ```console
-prowler <provider> -M csv json json-asff html -F <custom_report_name> -o <custom_report_directory>
+prowler <provider> -M csv json json-asff html \
+        -F <custom_report_name> -o <custom_report_directory>
 ```
 
 ## Output Formats
@@ -39,12 +40,54 @@ Hereunder is the structure for each of the supported report formats by Prowler:
 ### HTML
 ![HTML Output](../img/output-html.png)
 ### CSV
-| ASSESSMENT_START_TIME | FINDING_UNIQUE_ID | PROVIDER | PROFILE | ACCOUNT_ID | ACCOUNT_NAME | ACCOUNT_EMAIL | ACCOUNT_ARN | ACCOUNT_ORG | ACCOUNT_TAGS | REGION | CHECK_ID | CHECK_TITLE | CHECK_TYPE | STATUS | STATUS_EXTENDED | SERVICE_NAME | SUBSERVICE_NAME | SEVERITY | RESOURCE_ID | RESOURCE_ARN | RESOURCE_TYPE | RESOURCE_DETAILS | RESOURCE_TAGS | DESCRIPTION | COMPLIANCE | RISK | RELATED_URL | REMEDIATION_RECOMMENDATION_TEXT | REMEDIATION_RECOMMENDATION_URL | REMEDIATION_RECOMMENDATION_CODE_NATIVEIAC | REMEDIATION_RECOMMENDATION_CODE_TERRAFORM | REMEDIATION_RECOMMENDATION_CODE_CLI | REMEDIATION_RECOMMENDATION_CODE_OTHER | CATEGORIES | DEPENDS_ON | RELATED_TO | NOTES |
-| ------- | ----------- | ------ | -------- | ------------ | ----------- | ---------- | ---------- | --------------------- | -------------------------- | -------------- | ----------------- | ------------------------ | --------------- | ---------- | ----------------- | --------- | -------------- | ----------------- | ------------------ | --------------------- | -------------------- | ------------------- | ------------------- | -------------------- | -------------------- | -------------------- | -------------------- | -------------------- | -------------------- | -------------------- | -------------------- | -------------------- | -------------------- | -------------------- | -------------------- | -------------------- | -------------------- |
 
+The following are the columns present in the CSV format:
+
+- ASSESSMENT_START_TIME
+- FINDING_UNIQUE_ID
+- PROVIDER
+- PROFILE
+- ACCOUNT_ID
+-  ACCOUNT_NAME
+-  ACCOUNT_EMAIL
+-  ACCOUNT_ARN
+-  ACCOUNT_ORG
+-  ACCOUNT_TAGS
+-  REGION
+-  CHECK_ID
+-  CHECK_TITLE
+-  CHECK_TYPE
+-  STATUS
+-  STATUS_EXTENDED
+-  SERVICE_NAME
+-  SUBSERVICE_NAME
+-  SEVERITY
+-  RESOURCE_ID
+-  RESOURCE_ARN
+-  RESOURCE_TYPE
+-  RESOURCE_DETAILS
+-  RESOURCE_TAGS
+-  DESCRIPTION
+-  COMPLIANCE
+-  RISK
+-  RELATED_URL
+-  REMEDIATION_RECOMMENDATION_TEXT
+-  REMEDIATION_RECOMMENDATION_URL
+-  REMEDIATION_RECOMMENDATION_CODE_NATIVEIAC
+-  REMEDIATION_RECOMMENDATION_CODE_TERRAFORM
+-  REMEDIATION_RECOMMENDATION_CODE_CLI
+-  REMEDIATION_RECOMMENDATION_CODE_OTHER
+-  CATEGORIES
+-  DEPENDS_ON
+-  RELATED_TO
+-  NOTES
+
+> Since Prowler v3 the CSV column delimiter is the semicolon (`;`)
 ### JSON
 
-```
+The following code is an example output of the JSON format:
+
+```json
 [{
     "AssessmentStartTime": "2022-12-01T14:16:57.354413",
     "FindingUniqueId": "",
@@ -94,7 +137,8 @@ Hereunder is the structure for each of the supported report formats by Prowler:
             "1.20"
         ]
     }
-},{
+},
+{
     "AssessmentStartTime": "2022-12-01T14:16:57.354413",
     "FindingUniqueId": "",
     "Provider": "aws",
@@ -131,17 +175,18 @@ Hereunder is the structure for each of the supported report formats by Prowler:
     },
     "Categories": [],
     "Notes": "",
-    "Compliance: {}
+    "Compliance": {}
 }]
 ```
 
-> NOTE: Each finding is a `json` object.
+> NOTE: Each finding is a `json` object within a list. This has changed in v3 since in v2 the format used was [ndjson](http://ndjson.org/).
+
 
 ### JSON-OCSF
 
 Based on [Open Cybersecurity Schema Framework Security Finding v1.0.0-rc.3](https://schema.ocsf.io/1.0.0-rc.3/classes/security_finding?extensions=)
 
-```
+```json
 [{
     "finding": {
         "title": "Check if ACM Certificates are about to expire in specific days or less",
@@ -398,7 +443,9 @@ Based on [Open Cybersecurity Schema Framework Security Finding v1.0.0-rc.3](http
 > NOTE: Each finding is a `json` object.
 ### JSON-ASFF
 
-```
+The following code is an example output of the [JSON-ASFF](https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-findings-format-syntax.html) format:
+
+```json
 [{
     "SchemaVersion": "2018-10-08",
     "Id": "prowler-rds_instance_minor_version_upgrade_enabled-ACCOUNT_ID-eu-west-1-b1ade474a",
@@ -526,4 +573,4 @@ Based on [Open Cybersecurity Schema Framework Security Finding v1.0.0-rc.3](http
 }]
 ```
 
-> NOTE: Each finding is a `json` object.
+> NOTE: Each finding is a `json` object within a list.
