@@ -25,6 +25,7 @@ The following list includes all the AWS checks with configurable variables that 
 | `awslambda_function_using_supported_runtimes` | `obsolete_lambda_runtimes`  | Integer |
 | `organizations_scp_check_deny_regions` | `organizations_enabled_regions`  | List of Strings |
 | `organizations_delegated_administrators` |  `organizations_trusted_delegated_administrators` | List of Strings |
+| `ecr_repositories_scan_vulnerabilities_in_latest_image` | `ecr_repository_vulnerability_minimum_severity` | String |
 
 ## Azure
 
@@ -93,6 +94,13 @@ aws:
   # ]
   organizations_enabled_regions: []
   organizations_trusted_delegated_administrators: []
+
+  # AWS ECR
+  # ecr_repositories_scan_vulnerabilities_in_latest_image
+  # CRITICAL
+  # HIGH
+  # MEDIUM
+  ecr_repository_vulnerability_minimum_severity: "MEDIUM"
 
 # Azure Configuration
 azure:
