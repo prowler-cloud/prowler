@@ -1,8 +1,5 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.ec2.ec2_client import ec2_client
-from prowler.providers.aws.services.ec2.lib.security_groups import (
-    is_changed_default_security_group,
-)
 
 
 class ec2_securitygroup_default_restrict_traffic(Check):
@@ -18,10 +15,12 @@ class ec2_securitygroup_default_restrict_traffic(Check):
             # Find default security group
             if security_group.name == "default":
                 report.status = "FAIL"
-                report.status_extended = f"Default Security Group ({security_group.id}) rules have being changed and don't restrict all the traffic."
-                if not is_changed_default_security_group(security_group):
+                report.status_extended = (
+                    f"Default Security Group ({security_group.id}) rules allow traffic."
+                )
+                if not security_group.ingress_rules and not security_group.egress_rules:
                     report.status = "PASS"
-                    report.status_extended = f"Default Security Group ({security_group.id}) rules have not being changed and restrict all the traffic."
+                    report.status_extended = f"Default Security Group ({security_group.id}) rules do not allow traffic."
 
                 findings.append(report)
 
