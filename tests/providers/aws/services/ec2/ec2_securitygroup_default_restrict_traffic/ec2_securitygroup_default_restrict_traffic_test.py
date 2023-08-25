@@ -96,6 +96,8 @@ class Test_ec2_securitygroup_default_restrict_traffic:
             )
             assert result[0].resource_details == default_sg_name
             assert result[0].resource_tags == []
+            assert result[0].region == AWS_REGION
+            assert result[0].resource_id == default_sg_id
 
     @mock_ec2
     def test_ec2_non_compliant_sg_ingress_rule(self):
@@ -157,6 +159,8 @@ class Test_ec2_securitygroup_default_restrict_traffic:
             )
             assert result[0].resource_details == default_sg_name
             assert result[0].resource_tags == []
+            assert result[0].region == AWS_REGION
+            assert result[0].resource_id == default_sg_id
 
     @mock_ec2
     def test_ec2_non_compliant_sg_egress_rule(self):
@@ -200,3 +204,5 @@ class Test_ec2_securitygroup_default_restrict_traffic:
             )
             assert result[0].resource_details == default_sg_name
             assert result[0].resource_tags == []
+            assert result[0].region == AWS_REGION
+            assert result[0].resource_id == default_sg_id
