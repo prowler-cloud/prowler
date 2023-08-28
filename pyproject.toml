@@ -41,7 +41,7 @@ detect-secrets = "1.4.0"
 google-api-python-client = "2.97.0"
 google-auth-httplib2 = "^0.1.0"
 mkdocs = {version = "1.5.2", optional = true}
-mkdocs-material = {version = "9.2.1", optional = true}
+mkdocs-material = {version = "9.2.5", optional = true}
 msgraph-core = "0.2.2"
 pydantic = "1.10.12"
 python = "^3.9"
