@@ -105,6 +105,8 @@ class Test_ec2_instance_public_ip:
 
             assert len(result) == 1
             assert result[0].status == "PASS"
+            assert result[0].region == AWS_REGION
+            assert result[0].resource_tags is None
             assert search(
                 f"EC2 Instance {instance.id} does not have a Public IP.",
                 result[0].status_extended,
@@ -153,6 +155,8 @@ class Test_ec2_instance_public_ip:
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
+            assert result[0].region == AWS_REGION
+            assert result[0].resource_tags is None
             assert search(
                 f"EC2 Instance {instance.id} has a Public IP.",
                 result[0].status_extended,

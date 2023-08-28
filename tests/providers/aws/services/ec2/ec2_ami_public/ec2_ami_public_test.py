@@ -68,7 +68,7 @@ class Test_ec2_ami_public:
 
     @mock_ec2
     def test_one_private_ami(self):
-        ec2 = client("ec2", region_name="us-east-1")
+        ec2 = client("ec2", region_name=AWS_REGION)
 
         reservation = ec2.run_instances(ImageId=EXAMPLE_AMI_ID, MinCount=1, MaxCount=1)
         instance = reservation["Instances"][0]
@@ -104,10 +104,12 @@ class Test_ec2_ami_public:
                 result[0].resource_arn
                 == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:image/{image_id}"
             )
+            assert result[0].region == AWS_REGION
+            assert result[0].resource_tags == []
 
     @mock_ec2
     def test_one_public_ami(self):
-        ec2 = client("ec2", region_name="us-east-1")
+        ec2 = client("ec2", region_name=AWS_REGION)
 
         reservation = ec2.run_instances(ImageId=EXAMPLE_AMI_ID, MinCount=1, MaxCount=1)
         instance = reservation["Instances"][0]
@@ -154,3 +156,5 @@ class Test_ec2_ami_public:
                 result[0].resource_arn
                 == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:image/{image_id}"
             )
+            assert result[0].region == AWS_REGION
+            assert result[0].resource_tags == []

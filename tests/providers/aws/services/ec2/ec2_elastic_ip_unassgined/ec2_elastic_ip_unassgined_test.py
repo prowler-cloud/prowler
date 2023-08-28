@@ -96,6 +96,8 @@ class Test_ec2_elastic_ip_unassgined:
 
             assert len(results) == 1
             assert results[0].status == "FAIL"
+            assert results[0].region == AWS_REGION
+            assert results[0].resource_tags == []
             assert search(
                 "is not associated",
                 results[0].status_extended,
@@ -145,6 +147,8 @@ class Test_ec2_elastic_ip_unassgined:
 
             assert len(results) == 1
             assert results[0].status == "PASS"
+            assert results[0].region == AWS_REGION
+            assert results[0].resource_tags == []
             assert search(
                 "is associated",
                 results[0].status_extended,

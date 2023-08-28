@@ -115,6 +115,8 @@ class Test_ec2_ebs_public_snapshot:
 
             for snap in results:
                 if snap.resource_id == snapshot.id:
+                    assert snap.region == AWS_REGION
+                    assert snap.resource_tags == []
                     assert snap.status == "FAIL"
                     assert (
                         snap.status_extended
@@ -158,6 +160,8 @@ class Test_ec2_ebs_public_snapshot:
 
             for snap in results:
                 if snap.resource_id == snapshot.id:
+                    assert snap.region == AWS_REGION
+                    assert snap.resource_tags == []
                     assert snap.status == "PASS"
                     assert (
                         snap.status_extended
