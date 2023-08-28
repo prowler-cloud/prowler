@@ -39,7 +39,7 @@ def send_to_security_hub(
             else:
                 # Send finding to Security Hub
                 batch_import = security_hub_client.batch_import_findings(
-                    Findings=[finding_output.dict()]
+                    Findings=[finding_output.dict(exclude_none=True)]
                 )
                 if batch_import["FailedCount"] > 0:
                     failed_import = batch_import["FailedFindings"][0]

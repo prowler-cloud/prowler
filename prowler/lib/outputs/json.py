@@ -69,6 +69,7 @@ def fill_json_asff(finding_output, audit_info, finding, output_options):
                 Type=finding.check_metadata.ResourceType,
                 Partition=audit_info.audited_partition,
                 Region=finding.region,
+                Tags={tag['Key']: tag['Value'] for tag in finding.resource_tags} if finding.resource_tags else None,
             )
         ]
         # Iterate for each compliance framework

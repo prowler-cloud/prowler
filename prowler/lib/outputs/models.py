@@ -680,6 +680,7 @@ class Resource(BaseModel):
     Id: str
     Partition: str
     Region: str
+    Tags: dict = None
 
 
 class Compliance(BaseModel):
