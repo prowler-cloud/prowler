@@ -1,4 +1,3 @@
-from re import search
 from unittest import mock
 
 from boto3 import client, resource, session
@@ -112,9 +111,10 @@ class Test_ec2_securitygroup_from_launch_wizard:
             for sg in result:
                 if sg.resource_id == sg_id:
                     assert sg.status == "FAIL"
-                    assert search(
-                        "was created using the EC2 Launch Wizard",
-                        sg.status_extended,
+                    assert sg.region == AWS_REGION
+                    assert (
+                        sg.status_extended
+                        == f"Security group {sg_name} ({sg_id}) was created using the EC2 Launch Wizard."
                     )
                     assert (
                         sg.resource_arn
@@ -168,9 +168,10 @@ class Test_ec2_securitygroup_from_launch_wizard:
             for sg in result:
                 if sg.resource_id == default_sg_id:
                     assert sg.status == "PASS"
-                    assert search(
-                        "was not created using the EC2 Launch Wizard",
-                        sg.status_extended,
+                    assert sg.region == AWS_REGION
+                    assert (
+                        sg.status_extended
+                        == f"Security group {default_sg_name} ({default_sg_id}) was not created using the EC2 Launch Wizard."
                     )
                     assert (
                         sg.resource_arn
