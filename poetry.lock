@@ -2952,13 +2952,13 @@ socks = ["PySocks (>=1.5.6,!=1.5.7,<2.0)"]
 
 [[package]]
 name = "vulture"
-version = "2.8"
+version = "2.9.1"
 description = "Find dead code"
 optional = false
-python-versions = ">=3.6"
+python-versions = ">=3.7"
 files = [
-    {file = "vulture-2.8-py2.py3-none-any.whl", hash = "sha256:78bd44972b71d914ac382e64cacd4f56682017dcfa5929d3110ad09453796133"},
-    {file = "vulture-2.8.tar.gz", hash = "sha256:393293f183508064294b0feb4c8579e7f1f27e5bf74c9def6a3d52f38b29b599"},
+    {file = "vulture-2.9.1-py2.py3-none-any.whl", hash = "sha256:a46857014619bd4b785a506b9ddb738cd4621043558309b03a879d18f86e2d72"},
+    {file = "vulture-2.9.1.tar.gz", hash = "sha256:b6a2aa632b6fd51488a8eeac650ab4a509bb1a032e81943817a8a2e6a63a30b3"},
 ]
 
 [package.dependencies]
@@ -3163,4 +3163,4 @@ docs = ["mkdocs", "mkdocs-material"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "a3cc3cb89965a792f4ec253c97e35689d599acd4e05d49cc719bdd4ef627aac0"
+content-hash = "ee183fa9190477b20d71360380add660515759e3098919728f77f92f962ca630"
