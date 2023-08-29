@@ -102,7 +102,7 @@ def report(check_findings, output_options, audit_info):
                                 )
 
                                 json.dump(
-                                    finding_output.dict(),
+                                    finding_output.dict(exclude_none=True),
                                     file_descriptors["json-asff"],
                                     indent=4,
                                 )
