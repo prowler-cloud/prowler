@@ -63,13 +63,25 @@ def fill_json_asff(finding_output, audit_info, finding, output_options):
             if len(finding.status_extended) > 1000
             else finding.status_extended
         )
+        # Generate resource Tags
+        resource_tags = {}
+        if finding.resource_tags:
+            for tag in finding.resource_tags:
+                if 'Key' in tag and 'Value' in tag:
+                    resource_tags[tag['Key']] = tag['Value']
+                else:
+                    resource_tags.update(tag)
+            if len(resource_tags) == 0:
+                resource_tags = None
+        else:
+            resource_tags = None
         finding_output.Resources = [
             Resource(
                 Id=finding.resource_arn,
                 Type=finding.check_metadata.ResourceType,
                 Partition=audit_info.audited_partition,
                 Region=finding.region,
-                Tags={tag['Key']: tag['Value'] for tag in finding.resource_tags} if finding.resource_tags else None,
+                Tags=resource_tags,
             )
         ]
         # Iterate for each compliance framework
