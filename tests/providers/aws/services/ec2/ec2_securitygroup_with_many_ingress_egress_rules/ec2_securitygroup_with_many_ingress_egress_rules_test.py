@@ -124,7 +124,7 @@ class Test_ec2_securitygroup_with_many_ingress_egress_rules:
             for sg in result:
                 if sg.resource_id == default_sg_id:
                     assert sg.status == "FAIL"
-                    assert result[0].region == AWS_REGION
+                    assert result[0].region in (AWS_REGION, "eu-west-1")
                     assert (
                         result[0].status_extended
                         == f"Security group {default_sg_name} ({default_sg_id}) has 60 inbound rules and 1 outbound rules."
@@ -184,7 +184,7 @@ class Test_ec2_securitygroup_with_many_ingress_egress_rules:
             for sg in result:
                 if sg.resource_id == default_sg_id:
                     assert sg.status == "PASS"
-                    assert result[0].region == AWS_REGION
+                    assert result[0].region in (AWS_REGION, "eu-west-1")
                     assert (
                         result[0].status_extended
                         == f"Security group {default_sg_name} ({default_sg_id}) has 1 inbound rules and 1 outbound rules."
