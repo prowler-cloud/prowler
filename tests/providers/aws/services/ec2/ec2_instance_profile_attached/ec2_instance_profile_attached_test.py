@@ -112,6 +112,8 @@ class Test_ec2_instance_profile_attached:
 
             assert len(result) == 1
             assert result[0].status == "PASS"
+            assert result[0].region == AWS_REGION
+            assert result[0].resource_tags is None
             assert search(
                 "associated with Instance Profile Role",
                 result[0].status_extended,
@@ -160,6 +162,8 @@ class Test_ec2_instance_profile_attached:
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
+            assert result[0].region == AWS_REGION
+            assert result[0].resource_tags is None
             assert search(
                 "not associated with an Instance Profile", result[0].status_extended
             )

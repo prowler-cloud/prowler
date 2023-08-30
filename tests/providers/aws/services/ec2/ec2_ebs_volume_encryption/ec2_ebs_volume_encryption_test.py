@@ -93,6 +93,9 @@ class Test_ec2_ebs_volume_encryption:
             assert len(result) == 1
 
             assert result[0].status == "FAIL"
+            assert result[0].region == AWS_REGION
+            # Moto creates the volume with None in the tags attribute
+            assert result[0].resource_tags is None
             assert (
                 result[0].status_extended == f"EBS Snapshot {volume.id} is unencrypted."
             )
@@ -131,6 +134,9 @@ class Test_ec2_ebs_volume_encryption:
             assert len(result) == 1
 
             assert result[0].status == "PASS"
+            assert result[0].region == AWS_REGION
+            # Moto creates the volume with None in the tags attribute
+            assert result[0].resource_tags is None
             assert (
                 result[0].status_extended == f"EBS Snapshot {volume.id} is encrypted."
             )

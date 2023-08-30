@@ -103,6 +103,9 @@ class Test_ec2_instance_imdsv2_enabled:
 
             assert len(result) == 1
             assert result[0].status == "PASS"
+            assert result[0].region == AWS_REGION
+            # Moto fills instance tags with None
+            assert result[0].resource_tags is None
             assert search(
                 f"EC2 Instance {instance.id} has IMDSv2 enabled and required",
                 result[0].status_extended,
@@ -149,6 +152,9 @@ class Test_ec2_instance_imdsv2_enabled:
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
+            assert result[0].region == AWS_REGION
+            # Moto fills instance tags with None
+            assert result[0].resource_tags is None
             assert search(
                 f"EC2 Instance {instance.id} has IMDSv2 disabled or not required",
                 result[0].status_extended,

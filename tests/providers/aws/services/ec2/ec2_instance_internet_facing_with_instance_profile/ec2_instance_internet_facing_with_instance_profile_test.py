@@ -112,9 +112,10 @@ class Test_ec2_instance_internet_facing_with_instance_profile:
 
             assert len(result) == 1
             assert result[0].status == "PASS"
-            assert search(
-                f"EC2 Instance {instance.id} is not internet facing with an instance profile",
-                result[0].status_extended,
+            assert result[0].region == AWS_REGION
+            assert result[0].resource_tags is None
+            assert result[0].status_extended == (
+                f"EC2 Instance {instance.id} is not internet facing with an instance profile."
             )
             assert result[0].resource_id == instance.id
             assert (
@@ -167,6 +168,8 @@ class Test_ec2_instance_internet_facing_with_instance_profile:
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
+            assert result[0].region == AWS_REGION
+            assert result[0].resource_tags is None
             assert search(
                 "is internet-facing with Instance Profile", result[0].status_extended
             )
