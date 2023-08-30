@@ -318,6 +318,7 @@ class Test_ARN_Parsing:
         assert is_valid_arn(
             "arn:aws:lambda:eu-west-1:123456789012:function:lambda-function"
         )
+        assert is_valid_arn("arn:aws:sns:eu-west-1:123456789012:test.fifo")
         assert not is_valid_arn("arn:azure:::012345678910:user/test")
         assert not is_valid_arn("arn:aws:iam::account:user/test")
         assert not is_valid_arn("arn:aws:::012345678910:resource")
