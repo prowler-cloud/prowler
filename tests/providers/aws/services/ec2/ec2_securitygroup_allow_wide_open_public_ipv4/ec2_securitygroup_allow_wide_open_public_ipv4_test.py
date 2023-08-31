@@ -1,4 +1,3 @@
-from re import search
 from unittest import mock
 
 from boto3 import client, session
@@ -120,9 +119,10 @@ class Test_ec2_securitygroup_allow_wide_open_public_ipv4:
             for sg in result:
                 if sg.resource_id == default_sg_id:
                     assert sg.status == "PASS"
-                    assert search(
-                        "has no potential wide-open non-RFC1918 address",
-                        sg.status_extended,
+                    assert sg.region == AWS_REGION
+                    assert (
+                        sg.status_extended
+                        == f"Security group {default_sg_name} ({default_sg_id}) has no potential wide-open non-RFC1918 address."
                     )
                     assert (
                         sg.resource_arn
@@ -176,9 +176,10 @@ class Test_ec2_securitygroup_allow_wide_open_public_ipv4:
             for sg in result:
                 if sg.resource_id == default_sg_id:
                     assert sg.status == "FAIL"
-                    assert search(
-                        "has potential wide-open non-RFC1918 address",
-                        sg.status_extended,
+                    assert sg.region == AWS_REGION
+                    assert (
+                        sg.status_extended
+                        == f"Security group {default_sg_name} ({default_sg_id}) has potential wide-open non-RFC1918 address 82.122.0.0/16 in ingress rule."
                     )
                     assert (
                         sg.resource_arn
