@@ -17,10 +17,10 @@ class iam_sa_user_managed_key_rotate_90_days(Check):
                     report.resource_name = account.email
                     report.location = iam_client.region
                     report.status = "PASS"
-                    report.status_extended = f"User-managed key {key.name} for account {account.email} was rotated over the last 90 days ({last_rotated} days ago)"
+                    report.status_extended = f"User-managed key {key.name} for account {account.email} was rotated over the last 90 days ({last_rotated} days ago)."
                     if last_rotated > 90:
                         report.status = "FAIL"
-                        report.status_extended = f"User-managed key {key.name} for account {account.email} was not rotated over the last 90 days ({last_rotated} days ago)"
+                        report.status_extended = f"User-managed key {key.name} for account {account.email} was not rotated over the last 90 days ({last_rotated} days ago)."
                     findings.append(report)
 
         return findings

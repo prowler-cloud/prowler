@@ -54,7 +54,7 @@ class Test_route53_domains_transferlock_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Transfer Lock is disabled for the {domain_name} domain"
+                == f"Transfer Lock is disabled for the {domain_name} domain."
             )
 
     def test_domain_transfer_lock_enabled(self):
@@ -87,5 +87,5 @@ class Test_route53_domains_transferlock_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Transfer Lock is enabled for the {domain_name} domain"
+                == f"Transfer Lock is enabled for the {domain_name} domain."
             )

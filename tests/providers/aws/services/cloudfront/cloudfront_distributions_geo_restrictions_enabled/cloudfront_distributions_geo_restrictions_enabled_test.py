@@ -63,8 +63,9 @@ class Test_cloudfront_distributions_geo_restrictions_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"CloudFront Distribution {DISTRIBUTION_ID} has Geo restrictions disabled"
+                == f"CloudFront Distribution {DISTRIBUTION_ID} has Geo restrictions disabled."
             )
+            assert result[0].resource_tags == []
 
     def test_one_distribution_geo_restriction_enabled_whitelist(self):
         cloudfront_client = mock.MagicMock
@@ -97,8 +98,9 @@ class Test_cloudfront_distributions_geo_restrictions_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"CloudFront Distribution {DISTRIBUTION_ID} has Geo restrictions enabled"
+                == f"CloudFront Distribution {DISTRIBUTION_ID} has Geo restrictions enabled."
             )
+            assert result[0].resource_tags == []
 
     def test_one_distribution_geo_restriction_enabled_blacklist(self):
         cloudfront_client = mock.MagicMock
@@ -131,5 +133,6 @@ class Test_cloudfront_distributions_geo_restrictions_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"CloudFront Distribution {DISTRIBUTION_ID} has Geo restrictions enabled"
+                == f"CloudFront Distribution {DISTRIBUTION_ID} has Geo restrictions enabled."
             )
+            assert result[0].resource_tags == []

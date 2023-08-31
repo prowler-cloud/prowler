@@ -1,0 +1,34 @@
+{
+  "Provider": "aws",
+  "CheckID": "athena_workgroup_encryption",
+  "CheckTitle": "Ensure that encryption at rest is enabled for Amazon Athena query results stored in Amazon S3 in order to secure data and meet compliance requirements for data-at-rest encryption.",
+  "CheckType": [
+    "Software and Configuration Checks"
+  ],
+  "ServiceName": "athena",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:athena:region:account-id:workgroup/resource-id",
+  "Severity": "high",
+  "ResourceType": "WorkGroup",
+  "Description": "Ensure that encryption at rest is enabled for Amazon Athena query results stored in Amazon S3 in order to secure data and meet compliance requirements for data-at-rest encryption.",
+  "Risk": "If not enabled sensitive information at rest is not protected.",
+  "RelatedUrl": "https://docs.aws.amazon.com/athena/latest/ug/encryption.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws athena update-work-group --region <REGION> --work-group <workgroup_name> --configuration-updates ResultConfigurationUpdates={EncryptionConfiguration={EncryptionOption=SSE_S3|SSE_KMS|CSE_KMS}}",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Athena/encryption-enabled.html",
+      "Terraform": "https://docs.bridgecrew.io/docs/ensure-that-athena-workgroup-is-encrypted#terraform"
+    },
+    "Recommendation": {
+      "Text": "Enable Encryption. Use a CMK where possible. It will provide additional management and privacy benefits.",
+      "Url": "https://docs.aws.amazon.com/athena/latest/ug/encrypting-query-results-stored-in-s3.html"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

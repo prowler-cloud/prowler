@@ -1,4 +1,3 @@
-from re import search
 from unittest import mock
 
 from boto3 import client, resource, session
@@ -73,15 +72,19 @@ class Test_ec2_securitygroup_from_launch_wizard:
             assert len(result) == 3
             # All are compliant by default
             assert result[0].status == "PASS"
+            assert result[1].status == "PASS"
+            assert result[2].status == "PASS"
 
     @mock_ec2
     def test_ec2_launch_wizard_sg(self):
         # Create EC2 Mocked Resources
         ec2_client = client("ec2", region_name=AWS_REGION)
         ec2_client.create_vpc(CidrBlock="10.0.0.0/16")
-        sg_id = ec2_client.create_security_group(
-            GroupName="launch-wizard-1", Description="launch wizard sg"
-        )["GroupId"]
+        sg_name = "launch-wizard-1"
+        sg = ec2_client.create_security_group(
+            GroupName=sg_name, Description="launch wizard sg"
+        )
+        sg_id = sg["GroupId"]
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
@@ -108,23 +111,27 @@ class Test_ec2_securitygroup_from_launch_wizard:
             for sg in result:
                 if sg.resource_id == sg_id:
                     assert sg.status == "FAIL"
-                    assert search(
-                        "was created using the EC2 Launch Wizard",
-                        sg.status_extended,
+                    assert sg.region == AWS_REGION
+                    assert (
+                        sg.status_extended
+                        == f"Security group {sg_name} ({sg_id}) was created using the EC2 Launch Wizard."
                     )
                     assert (
                         sg.resource_arn
                         == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:security-group/{sg_id}"
                     )
+                    assert sg.resource_details == sg_name
 
     @mock_ec2
     def test_ec2_compliant_default_sg(self):
         # Create EC2 Mocked Resources
         ec2_client = client("ec2", region_name=AWS_REGION)
         ec2_client.create_vpc(CidrBlock="10.0.0.0/16")
-        default_sg_id = ec2_client.describe_security_groups(GroupNames=["default"])[
+        default_sg = ec2_client.describe_security_groups(GroupNames=["default"])[
             "SecurityGroups"
-        ][0]["GroupId"]
+        ][0]
+        default_sg_id = default_sg["GroupId"]
+        default_sg_name = default_sg["GroupName"]
 
         ec2 = resource("ec2", region_name=AWS_REGION)
         ec2.create_instances(
@@ -161,11 +168,14 @@ class Test_ec2_securitygroup_from_launch_wizard:
             for sg in result:
                 if sg.resource_id == default_sg_id:
                     assert sg.status == "PASS"
-                    assert search(
-                        "was not created using the EC2 Launch Wizard",
-                        sg.status_extended,
+                    assert sg.region == AWS_REGION
+                    assert (
+                        sg.status_extended
+                        == f"Security group {default_sg_name} ({default_sg_id}) was not created using the EC2 Launch Wizard."
                     )
                     assert (
                         sg.resource_arn
                         == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:security-group/{default_sg_id}"
                     )
+                    assert sg.resource_details == default_sg_name
+                    assert sg.resource_tags == []

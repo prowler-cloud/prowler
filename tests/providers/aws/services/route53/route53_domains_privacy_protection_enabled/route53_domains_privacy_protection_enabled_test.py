@@ -51,7 +51,7 @@ class Test_route53_domains_privacy_protection_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Contact information is public for the {domain_name} domain"
+                == f"Contact information is public for the {domain_name} domain."
             )
 
     def test_domain_privacy_protection_enabled(self):
@@ -79,5 +79,5 @@ class Test_route53_domains_privacy_protection_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Contact information is private for the {domain_name} domain"
+                == f"Contact information is private for the {domain_name} domain."
             )

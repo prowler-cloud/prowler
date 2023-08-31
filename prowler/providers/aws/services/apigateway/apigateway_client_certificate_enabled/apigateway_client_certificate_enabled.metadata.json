@@ -21,7 +21,7 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Enable client certificate. Mutual TLS is recommended and commonly used for business-to-business (B2B) applications. It iss used in standards such as Open Banking. API Gateway now provides integrated mutual TLS authentication at no additional cost.",
+      "Text": "Enable client certificate. Mutual TLS is recommended and commonly used for business-to-business (B2B) applications. It is used in standards such as Open Banking. API Gateway now provides integrated mutual TLS authentication at no additional cost.",
       "Url": "https://aws.amazon.com/blogs/compute/introducing-mutual-tls-authentication-for-amazon-api-gateway/"
     }
   },

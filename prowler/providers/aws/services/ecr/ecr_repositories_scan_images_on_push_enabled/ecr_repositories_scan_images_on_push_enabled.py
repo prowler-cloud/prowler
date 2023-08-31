@@ -14,12 +14,12 @@ class ecr_repositories_scan_images_on_push_enabled(Check):
                 report.resource_tags = repository.tags
                 report.status = "PASS"
                 report.status_extended = (
-                    f"ECR repository {repository.name} has scan on push enabled"
+                    f"ECR repository {repository.name} has scan on push enabled."
                 )
                 if not repository.scan_on_push:
                     report.status = "FAIL"
                     report.status_extended = (
-                        f"ECR repository {repository.name} has scan on push disabled"
+                        f"ECR repository {repository.name} has scan on push disabled."
                     )
 
                 findings.append(report)

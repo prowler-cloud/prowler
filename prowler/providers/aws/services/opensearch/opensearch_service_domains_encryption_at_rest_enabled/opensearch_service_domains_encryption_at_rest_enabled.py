@@ -15,11 +15,11 @@ class opensearch_service_domains_encryption_at_rest_enabled(Check):
             report.resource_tags = domain.tags
             report.status = "PASS"
             report.status_extended = (
-                f"Opensearch domain {domain.name} has encryption at-rest enabled"
+                f"Opensearch domain {domain.name} has encryption at-rest enabled."
             )
             if not domain.encryption_at_rest:
                 report.status = "FAIL"
-                report.status_extended = f"Opensearch domain {domain.name} does not have encryption at-rest enabled"
+                report.status_extended = f"Opensearch domain {domain.name} does not have encryption at-rest enabled."
 
             findings.append(report)
 

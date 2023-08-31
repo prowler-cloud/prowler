@@ -13,7 +13,7 @@ class accessanalyzer_enabled(Check):
             if analyzer.status == "ACTIVE":
                 report.status = "PASS"
                 report.status_extended = (
-                    f"IAM Access Analyzer {analyzer.name} is enabled"
+                    f"IAM Access Analyzer {analyzer.name} is enabled."
                 )
                 report.resource_id = analyzer.name
                 report.resource_arn = analyzer.arn
@@ -22,13 +22,14 @@ class accessanalyzer_enabled(Check):
             elif analyzer.status == "NOT_AVAILABLE":
                 report.status = "FAIL"
                 report.status_extended = (
-                    f"IAM Access Analyzer in account {analyzer.name} is not enabled"
+                    f"IAM Access Analyzer in account {analyzer.name} is not enabled."
                 )
                 report.resource_id = analyzer.name
+                report.resource_arn = analyzer.arn
             else:
                 report.status = "FAIL"
                 report.status_extended = (
-                    f"IAM Access Analyzer {analyzer.name} is not active"
+                    f"IAM Access Analyzer {analyzer.name} is not active."
                 )
                 report.resource_id = analyzer.name
                 report.resource_arn = analyzer.arn

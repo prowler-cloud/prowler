@@ -4,37 +4,14 @@ from azure.mgmt.authorization import AuthorizationManagementClient
 from azure.mgmt.authorization.v2022_04_01.models import Permission
 
 from prowler.lib.logger import logger
+from prowler.providers.azure.lib.service.service import AzureService
 
 
 ########################## IAM
-class IAM:
+class IAM(AzureService):
     def __init__(self, audit_info):
-        self.service = "iam"
-        self.credentials = audit_info.credentials
-        self.subscriptions = audit_info.identity.subscriptions
-        self.clients = self.__set_clients__(
-            audit_info.identity.subscriptions, audit_info.credentials
-        )
+        super().__init__(AuthorizationManagementClient, audit_info)
         self.roles = self.__get_roles__()
-        self.region = "azure"
-
-    def __set_clients__(self, subscriptions, credentials):
-        clients = {}
-        try:
-            for display_name, id in subscriptions.items():
-                clients.update(
-                    {
-                        display_name: AuthorizationManagementClient(
-                            credential=credentials, subscription_id=id
-                        )
-                    }
-                )
-        except Exception as error:
-            logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
-        else:
-            return clients
 
     def __get_roles__(self):
         logger.info("IAM - Getting roles...")

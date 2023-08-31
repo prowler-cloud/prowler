@@ -1,6 +1,5 @@
 from datetime import datetime, timezone
 
-from prowler.config.config import get_config_var
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.ec2.ec2_client import ec2_client
 
@@ -8,7 +7,11 @@ from prowler.providers.aws.services.ec2.ec2_client import ec2_client
 class ec2_instance_older_than_specific_days(Check):
     def execute(self):
         findings = []
-        max_ec2_instance_age_in_days = get_config_var("max_ec2_instance_age_in_days")
+
+        # max_ec2_instance_age_in_days, default: 180 days
+        max_ec2_instance_age_in_days = ec2_client.audit_config.get(
+            "max_ec2_instance_age_in_days", 180
+        )
         for instance in ec2_client.instances:
             report = Check_Report_AWS(self.metadata())
             report.region = instance.region

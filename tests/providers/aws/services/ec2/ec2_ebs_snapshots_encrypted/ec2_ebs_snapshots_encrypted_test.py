@@ -11,14 +11,14 @@ AWS_REGION = "us-east-1"
 AWS_ACCOUNT_NUMBER = "123456789012"
 
 
-def mock_generate_regional_clients(service, audit_info):
+def mock_generate_regional_clients(service, audit_info, _):
     regional_client = audit_info.audit_session.client(service, region_name=AWS_REGION)
     regional_client.region = AWS_REGION
     return {AWS_REGION: regional_client}
 
 
 @patch(
-    "prowler.providers.aws.services.ec2.ec2_service.generate_regional_clients",
+    "prowler.providers.aws.lib.service.service.generate_regional_clients",
     new=mock_generate_regional_clients,
 )
 class Test_ec2_ebs_snapshots_encrypted:
@@ -75,7 +75,7 @@ class Test_ec2_ebs_snapshots_encrypted:
             result = check.execute()
 
             # Default snapshots
-            assert len(result) == 565
+            assert len(result) == 561
 
     @mock_ec2
     def test_ec2_unencrypted_snapshot(self):
@@ -104,10 +104,12 @@ class Test_ec2_ebs_snapshots_encrypted:
             results = check.execute()
 
             # Default snapshots + 1 created
-            assert len(results) == 566
+            assert len(results) == 562
 
             for snap in results:
                 if snap.resource_id == snapshot.id:
+                    assert snap.region == AWS_REGION
+                    assert snap.resource_tags == []
                     assert snap.status == "FAIL"
                     assert (
                         snap.status_extended
@@ -147,10 +149,12 @@ class Test_ec2_ebs_snapshots_encrypted:
             results = check.execute()
 
             # Default snapshots + 1 created
-            assert len(results) == 566
+            assert len(results) == 562
 
             for snap in results:
                 if snap.resource_id == snapshot.id:
+                    assert snap.region == AWS_REGION
+                    assert snap.resource_tags == []
                     assert snap.status == "PASS"
                     assert (
                         snap.status_extended

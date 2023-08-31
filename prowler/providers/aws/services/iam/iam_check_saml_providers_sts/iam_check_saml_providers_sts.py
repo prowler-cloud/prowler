@@ -13,7 +13,9 @@ class iam_check_saml_providers_sts(Check):
                 report.resource_arn = provider["Arn"]
                 report.region = iam_client.region
                 report.status = "PASS"
-                report.status_extended = f"SAML Provider {provider_name} has been found"
+                report.status_extended = (
+                    f"SAML Provider {provider_name} has been found."
+                )
                 findings.append(report)
 
         return findings

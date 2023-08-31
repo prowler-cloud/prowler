@@ -158,6 +158,7 @@
         "iam_no_root_access_key",
         "iam_aws_attached_policy_no_administrative_privileges",
         "iam_customer_attached_policy_no_administrative_privileges",
+        "iam_inline_policy_no_administrative_privileges",
         "iam_root_hardware_mfa_enabled",
         "iam_root_mfa_enabled",
         "iam_user_mfa_enabled_console_access",

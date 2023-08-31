@@ -40,6 +40,8 @@ class Test_appstream_fleet_session_idle_disconnect_timeout:
 
         appstream_client.fleets.append(fleet1)
 
+        appstream_client.audit_config = {"max_idle_disconnect_timeout_in_seconds": 300}
+
         with mock.patch(
             "prowler.providers.aws.services.appstream.appstream_service.AppStream",
             new=appstream_client,
@@ -59,8 +61,9 @@ class Test_appstream_fleet_session_idle_disconnect_timeout:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Fleet {fleet1.name} has the session idle disconnect timeout set to more than 10 minutes"
+                == f"Fleet {fleet1.name} has the session idle disconnect timeout set to more than 10 minutes."
             )
+            assert result[0].resource_tags == []
 
     def test_one_fleet_session_idle_disconnect_timeout_less_than_10_minutes(self):
         appstream_client = mock.MagicMock
@@ -77,6 +80,8 @@ class Test_appstream_fleet_session_idle_disconnect_timeout:
         )
 
         appstream_client.fleets.append(fleet1)
+
+        appstream_client.audit_config = {"max_idle_disconnect_timeout_in_seconds": 600}
 
         with mock.patch(
             "prowler.providers.aws.services.appstream.appstream_service.AppStream",
@@ -97,8 +102,9 @@ class Test_appstream_fleet_session_idle_disconnect_timeout:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Fleet {fleet1.name} has the session idle disconnect timeout set to less than 10 minutes"
+                == f"Fleet {fleet1.name} has the session idle disconnect timeout set to less than 10 minutes."
             )
+            assert result[0].resource_tags == []
 
     def test_two_fleets_session_idle_disconnect_timeout_than_10_minutes_one_more_than_10_minutes(
         self,
@@ -129,6 +135,8 @@ class Test_appstream_fleet_session_idle_disconnect_timeout:
         appstream_client.fleets.append(fleet1)
         appstream_client.fleets.append(fleet2)
 
+        appstream_client.audit_config = {"max_idle_disconnect_timeout_in_seconds": 300}
+
         with mock.patch(
             "prowler.providers.aws.services.appstream.appstream_service.AppStream",
             new=appstream_client,
@@ -151,7 +159,7 @@ class Test_appstream_fleet_session_idle_disconnect_timeout:
                     assert result[0].status == "PASS"
                     assert (
                         result[0].status_extended
-                        == f"Fleet {fleet1.name} has the session idle disconnect timeout set to less than 10 minutes"
+                        == f"Fleet {fleet1.name} has the session idle disconnect timeout set to less than 10 minutes."
                     )
                 if res.resource_id == fleet2.name:
                     assert result[1].resource_arn == fleet2.arn
@@ -160,5 +168,6 @@ class Test_appstream_fleet_session_idle_disconnect_timeout:
                     assert result[1].status == "FAIL"
                     assert (
                         result[1].status_extended
-                        == f"Fleet {fleet2.name} has the session idle disconnect timeout set to more than 10 minutes"
+                        == f"Fleet {fleet2.name} has the session idle disconnect timeout set to more than 10 minutes."
                     )
+                    assert result[1].resource_tags == []

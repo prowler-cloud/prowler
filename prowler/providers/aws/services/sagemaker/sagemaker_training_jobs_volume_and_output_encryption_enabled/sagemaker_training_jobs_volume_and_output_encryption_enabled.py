@@ -12,12 +12,10 @@ class sagemaker_training_jobs_volume_and_output_encryption_enabled(Check):
             report.resource_arn = training_job.arn
             report.resource_tags = training_job.tags
             report.status = "PASS"
-            report.status_extended = (
-                f"Sagemaker training job {training_job.name} has KMS encryption enabled"
-            )
+            report.status_extended = f"Sagemaker training job {training_job.name} has KMS encryption enabled."
             if not training_job.volume_kms_key_id:
                 report.status = "FAIL"
-                report.status_extended = f"Sagemaker training job {training_job.name} has KMS encryption disabled"
+                report.status_extended = f"Sagemaker training job {training_job.name} has KMS encryption disabled."
 
             findings.append(report)
 

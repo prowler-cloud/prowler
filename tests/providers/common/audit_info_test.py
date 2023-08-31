@@ -1,10 +1,11 @@
 import boto3
 import botocore
-import sure  # noqa
+import pytest
 from boto3 import session
 from mock import patch
 from moto import mock_ec2, mock_resourcegroupstaggingapi
 
+from prowler.config.config import default_config_file_path
 from prowler.providers.aws.lib.audit_info.models import AWS_Assume_Role, AWS_Audit_Info
 from prowler.providers.azure.azure_provider import Azure_Provider
 from prowler.providers.azure.lib.audit_info.models import (
@@ -16,6 +17,7 @@ from prowler.providers.common.audit_info import (
     get_tagged_resources,
     set_provider_audit_info,
 )
+from prowler.providers.common.models import Audit_Metadata
 from prowler.providers.gcp.gcp_provider import GCP_Provider
 from prowler.providers.gcp.lib.audit_info.models import GCP_Audit_Info
 
@@ -28,6 +30,7 @@ mock_azure_audit_info = Azure_Audit_Info(
     identity=Azure_Identity_Info(),
     audit_metadata=None,
     audit_resources=None,
+    audit_config=None,
 )
 
 mock_set_audit_info = Audit_Info()
@@ -115,40 +118,15 @@ class Test_Set_Audit_Info:
             organizations_metadata=None,
             audit_resources=None,
             mfa_enabled=False,
+            audit_metadata=Audit_Metadata(
+                services_scanned=0,
+                expected_checks=[],
+                completed_checks=0,
+                audit_progress=0,
+            ),
         )
 
         return audit_info
-
-    @patch(
-        "prowler.providers.common.audit_info.validate_aws_credentials",
-        new=mock_validate_credentials,
-    )
-    @patch(
-        "prowler.providers.common.audit_info.print_aws_credentials",
-        new=mock_print_audit_credentials,
-    )
-    def test_set_audit_info_aws(self):
-        with patch(
-            "prowler.providers.common.audit_info.current_audit_info",
-            new=self.set_mocked_audit_info(),
-        ):
-            provider = "aws"
-            arguments = {
-                "profile": None,
-                "role": None,
-                "session_duration": None,
-                "external_id": None,
-                "regions": None,
-                "organizations_role": None,
-                "subscriptions": None,
-                "az_cli_auth": None,
-                "sp_env_auth": None,
-                "browser_auth": None,
-                "managed_entity_auth": None,
-            }
-
-            audit_info = set_provider_audit_info(provider, arguments)
-            assert isinstance(audit_info, AWS_Audit_Info)
 
     @patch(
         "prowler.providers.common.audit_info.azure_audit_info",
@@ -171,6 +149,7 @@ class Test_Set_Audit_Info:
             "sp_env_auth": None,
             "browser_auth": None,
             "managed_entity_auth": None,
+            "config_file": default_config_file_path,
         }
 
         audit_info = set_provider_audit_info(provider, arguments)
@@ -192,6 +171,7 @@ class Test_Set_Audit_Info:
             # We need to set exactly one auth method
             "credentials_file": None,
             "project_ids": ["project"],
+            "config_file": default_config_file_path,
         }
 
         audit_info = set_provider_audit_info(provider, arguments)
@@ -245,3 +225,90 @@ class Test_Set_Audit_Info:
             assert instance_id in str(
                 get_tagged_resources(["MY_TAG1=MY_VALUE1"], mock_audit_info)
             )
+
+    @patch(
+        "prowler.providers.common.audit_info.validate_aws_credentials",
+        new=mock_validate_credentials,
+    )
+    @patch(
+        "prowler.providers.common.audit_info.print_aws_credentials",
+        new=mock_print_audit_credentials,
+    )
+    def test_set_audit_info_aws(self):
+        with patch(
+            "prowler.providers.common.audit_info.current_audit_info",
+            new=self.set_mocked_audit_info(),
+        ):
+            provider = "aws"
+            arguments = {
+                "profile": None,
+                "role": None,
+                "session_duration": None,
+                "external_id": None,
+                "regions": None,
+                "organizations_role": None,
+                "config_file": default_config_file_path,
+            }
+
+            audit_info = set_provider_audit_info(provider, arguments)
+            assert isinstance(audit_info, AWS_Audit_Info)
+
+    def test_set_audit_info_aws_bad_session_duration(self):
+        with patch(
+            "prowler.providers.common.audit_info.current_audit_info",
+            new=self.set_mocked_audit_info(),
+        ):
+            provider = "aws"
+            arguments = {
+                "profile": None,
+                "role": None,
+                "session_duration": 100,
+                "external_id": None,
+                "regions": None,
+                "organizations_role": None,
+            }
+
+            with pytest.raises(SystemExit) as exception:
+                _ = set_provider_audit_info(provider, arguments)
+            # assert exception == "Value for -T option must be between 900 and 43200"
+            assert isinstance(exception, pytest.ExceptionInfo)
+
+    def test_set_audit_info_aws_session_duration_without_role(self):
+        with patch(
+            "prowler.providers.common.audit_info.current_audit_info",
+            new=self.set_mocked_audit_info(),
+        ):
+            provider = "aws"
+            arguments = {
+                "profile": None,
+                "role": None,
+                "session_duration": 1000,
+                "external_id": None,
+                "regions": None,
+                "organizations_role": None,
+            }
+
+            with pytest.raises(SystemExit) as exception:
+                _ = set_provider_audit_info(provider, arguments)
+            # assert exception == "To use -I/-T options -R option is needed"
+            assert isinstance(exception, pytest.ExceptionInfo)
+
+    def test_set_audit_info_external_id_without_role(self):
+        with patch(
+            "prowler.providers.common.audit_info.current_audit_info",
+            new=self.set_mocked_audit_info(),
+        ):
+            provider = "aws"
+            arguments = {
+                "profile": None,
+                "role": None,
+                "session_duration": 3600,
+                "external_id": "test-external-id",
+                "regions": None,
+                "organizations_role": None,
+            }
+
+            with pytest.raises(SystemExit) as exception:
+                _ = set_provider_audit_info(provider, arguments)
+            # assert exception == "To use -I/-T options -R option is needed"
+            assert isinstance(exception, pytest.ExceptionInfo)

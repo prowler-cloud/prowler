@@ -33,12 +33,12 @@ nav:
       - Reporting: tutorials/reporting.md
       - Compliance: tutorials/compliance.md
       - Quick Inventory: tutorials/quick-inventory.md
-      - Integrations: tutorials/integrations.md
+      - Slack Integration: tutorials/integrations.md
       - Configuration File: tutorials/configuration_file.md
       - Logging: tutorials/logging.md
       - Allowlist: tutorials/allowlist.md
       - Pentesting: tutorials/pentesting.md
-      - Developer Guide: tutorials/developer-guide.md
+      - Developer Guide: developer-guide/introduction.md
       - AWS:
           - Authentication: tutorials/aws/authentication.md
           - Assume Role: tutorials/aws/role-assumption.md
@@ -46,6 +46,7 @@ nav:
           - AWS Organizations: tutorials/aws/organizations.md
           - AWS Regions and Partitions: tutorials/aws/regions-and-partitions.md
           - Scan Multiple AWS Accounts: tutorials/aws/multiaccount.md
+          - Send reports to AWS S3: tutorials/aws/s3.md
           - AWS CloudShell: tutorials/aws/cloudshell.md
           - Checks v2 to v3 Mapping: tutorials/aws/v2_to_v3_checks_mapping.md
           - Tag-based Scan: tutorials/aws/tag-based-scan.md
@@ -56,7 +57,18 @@ nav:
           - Subscriptions: tutorials/azure/subscriptions.md
       - Google Cloud:
           - Authentication: tutorials/gcp/authentication.md
-  - Developer Guide: tutorials/developer-guide.md
+  - Developer Guide:
+      - Introduction: developer-guide/introduction.md
+      - Audit Info: developer-guide/audit-info.md
+      - Services: developer-guide/services.md
+      - Checks: developer-guide/checks.md
+      - Documentation: developer-guide/documentation.md
+      - Compliance: developer-guide/security-compliance-framework.md
+      - Outputs: developer-guide/outputs.md
+      - Integrations: developer-guide/integrations.md
+      - Testing:
+          - Unit Tests: developer-guide/unit-testing.md
+          - Integration Tests: developer-guide/integration-testing.md
   - Security: security.md
   - Contact Us: contact.md
   - Troubleshooting: troubleshooting.md

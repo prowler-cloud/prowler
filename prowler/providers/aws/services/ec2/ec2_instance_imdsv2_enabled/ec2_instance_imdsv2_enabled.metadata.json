@@ -21,7 +21,7 @@
       "Terraform": "https://docs.bridgecrew.io/docs/bc_aws_general_31#terraform"
     },
     "Recommendation": {
-      "Text": "If you dont need IMDS you can turn it off. Using aws-cli you can force the instance to use only IMDSv2.",
+      "Text": "If you don't need IMDS you can turn it off. Using aws-cli you can force the instance to use only IMDSv2.",
       "Url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-instance-metadata-service.html#configuring-instance-metadata-options"
     }
   },

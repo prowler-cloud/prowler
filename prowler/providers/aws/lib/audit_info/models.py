@@ -51,3 +51,4 @@ class AWS_Audit_Info:
     audit_resources: list
     organizations_metadata: AWS_Organizations_Info
     audit_metadata: Optional[Any] = None
+    audit_config: Optional[dict] = None

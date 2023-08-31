@@ -17,13 +17,13 @@ class inspector2_findings_exist(Check):
             if inspector.status == "ENABLED":
                 active_findings = 0
                 report.status = "PASS"
-                report.status_extended = "Inspector2 is enabled with no findings"
+                report.status_extended = "Inspector2 is enabled with no findings."
                 for finding in inspector.findings:
                     if finding.status == "ACTIVE":
                         active_findings += 1
                 if len(inspector.findings) > 0:
                     report.status_extended = (
-                        "Inspector2 is enabled with no active findings"
+                        "Inspector2 is enabled with no active findings."
                     )
                     if active_findings > 0:
                         report.status = "FAIL"

@@ -1,5 +1,6 @@
 import functools
 import importlib
+import json
 import os
 import re
 import shutil
@@ -207,42 +208,43 @@ def list_categories(bulk_checks_metadata: dict) -> set():
 
 def print_categories(categories: set):
     categories_num = len(categories)
-    plural_string = f"There are {Fore.YELLOW}{categories_num}{Style.RESET_ALL} available categories: \n"
-    singular_string = f"There is {Fore.YELLOW}{categories_num}{Style.RESET_ALL} available category: \n"
+    plural_string = f"\nThere are {Fore.YELLOW}{categories_num}{Style.RESET_ALL} available categories.\n"
+    singular_string = f"\nThere is {Fore.YELLOW}{categories_num}{Style.RESET_ALL} available category.\n"
 
     message = plural_string if categories_num > 1 else singular_string
-    print(message)
     for category in categories:
         print(f"- {category}")
+
+    print(message)
 
 
 def print_services(service_list: set):
     services_num = len(service_list)
-    plural_string = (
-        f"There are {Fore.YELLOW}{services_num}{Style.RESET_ALL} available services: \n"
-    )
+    plural_string = f"\nThere are {Fore.YELLOW}{services_num}{Style.RESET_ALL} available services.\n"
     singular_string = (
-        f"There is {Fore.YELLOW}{services_num}{Style.RESET_ALL} available service: \n"
+        f"\nThere is {Fore.YELLOW}{services_num}{Style.RESET_ALL} available service.\n"
     )
 
     message = plural_string if services_num > 1 else singular_string
-    print(message)
 
     for service in service_list:
         print(f"- {service}")
+
+    print(message)
 
 
 def print_compliance_frameworks(
     bulk_compliance_frameworks: dict,
 ):
     frameworks_num = len(bulk_compliance_frameworks.keys())
-    plural_string = f"There are {Fore.YELLOW}{frameworks_num}{Style.RESET_ALL} available Compliance Frameworks: \n"
-    singular_string = f"There is {Fore.YELLOW}{frameworks_num}{Style.RESET_ALL} available Compliance Framework: \n"
+    plural_string = f"\nThere are {Fore.YELLOW}{frameworks_num}{Style.RESET_ALL} available Compliance Frameworks.\n"
+    singular_string = f"\nThere is {Fore.YELLOW}{frameworks_num}{Style.RESET_ALL} available Compliance Framework.\n"
     message = plural_string if frameworks_num > 1 else singular_string
 
-    print(message)
     for framework in bulk_compliance_frameworks.keys():
-        print(f"\t- {Fore.YELLOW}{framework}{Style.RESET_ALL}")
+        print(f"- {framework}")
+
+    print(message)
 
 
 def print_compliance_requirements(
@@ -267,6 +269,15 @@ def print_compliance_requirements(
                     print(
                         f"Requirement Id: {Fore.MAGENTA}{requirement.Id}{Style.RESET_ALL}\n\t- Description: {requirement.Description}\n\t- Checks:\n{checks}"
                     )
+
+
+def list_checks_json(provider: str, check_list: set):
+    try:
+        output = {provider: check_list}
+        return json.dumps(output, indent=2, default=str)
+    except Exception as e:
+        logger.critical(f"{e.__class__.__name__}[{e.__traceback__.tb_lineno}]: {e}")
+        sys.exit(1)
 
 
 def print_checks(

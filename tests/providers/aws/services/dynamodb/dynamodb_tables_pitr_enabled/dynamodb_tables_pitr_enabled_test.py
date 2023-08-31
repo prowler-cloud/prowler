@@ -5,6 +5,7 @@ from boto3 import client, session
 from moto import mock_dynamodb
 
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
+from prowler.providers.common.models import Audit_Metadata
 
 AWS_REGION = "us-east-1"
 AWS_ACCOUNT_NUMBER = "123456789012"
@@ -32,6 +33,12 @@ class Test_dynamodb_tables_pitr_enabled:
             organizations_metadata=None,
             audit_resources=None,
             mfa_enabled=False,
+            audit_metadata=Audit_Metadata(
+                services_scanned=0,
+                expected_checks=[],
+                completed_checks=0,
+                audit_progress=0,
+            ),
         )
 
         return audit_info
@@ -101,6 +108,8 @@ class Test_dynamodb_tables_pitr_enabled:
             )
             assert result[0].resource_id == table["TableName"]
             assert result[0].resource_arn == table["TableArn"]
+            assert result[0].region == AWS_REGION
+            assert result[0].resource_tags == []
 
     @mock_dynamodb
     def test_dynamodb_table_with_pitr(self):
@@ -147,3 +156,5 @@ class Test_dynamodb_tables_pitr_enabled:
             )
             assert result[0].resource_id == table["TableName"]
             assert result[0].resource_arn == table["TableArn"]
+            assert result[0].region == AWS_REGION
+            assert result[0].resource_tags == []

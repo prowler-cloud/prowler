@@ -13,7 +13,7 @@ class elbv2_logging_enabled(Check):
             report.resource_tags = lb.tags
             report.status = "FAIL"
             report.status_extended = (
-                f"ELBv2 ALB {lb.name} has not configured access logs."
+                f"ELBv2 ALB {lb.name} does not have access logs configured."
             )
             if lb.access_logs == "true":
                 report.status = "PASS"

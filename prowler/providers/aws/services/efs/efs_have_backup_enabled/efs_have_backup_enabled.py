@@ -12,10 +12,10 @@ class efs_have_backup_enabled(Check):
             report.resource_arn = fs.arn
             report.resource_tags = fs.tags
             report.status = "PASS"
-            report.status_extended = f"EFS {fs.id} has backup enabled"
+            report.status_extended = f"EFS {fs.id} has backup enabled."
             if fs.backup_policy == "DISABLED" or fs.backup_policy == "DISABLING":
                 report.status = "FAIL"
-                report.status_extended = f"EFS {fs.id} does not have backup enabled"
+                report.status_extended = f"EFS {fs.id} does not have backup enabled."
 
             findings.append(report)
 

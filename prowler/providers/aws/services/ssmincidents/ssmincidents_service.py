@@ -1,14 +1,9 @@
-import threading
-
 from botocore.client import ClientError
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
-from prowler.providers.aws.aws_provider import (
-    generate_regional_clients,
-    get_default_region,
-)
+from prowler.providers.aws.lib.service.service import AWSService
 
 # Note:
 # This service is a bit special because it creates a resource (Replication Set) in one region, but you can list it in from any region using list_replication_sets
@@ -18,34 +13,16 @@ from prowler.providers.aws.aws_provider import (
 
 
 ################## SSMIncidents
-class SSMIncidents:
+class SSMIncidents(AWSService):
     def __init__(self, audit_info):
-        self.service = "ssm-incidents"
-        self.session = audit_info.audit_session
-        self.audited_account = audit_info.audited_account
-        self.audited_partition = audit_info.audited_partition
-        self.audited_account_arn = audit_info.audited_account_arn
-        self.audit_resources = audit_info.audit_resources
-        self.regional_clients = generate_regional_clients(self.service, audit_info)
-        self.region = get_default_region(self.service, audit_info)
+        # Call AWSService's __init__
+        super().__init__("ssm-incidents", audit_info)
         self.replication_set = []
         self.__list_replication_sets__()
         self.__get_replication_set__()
         self.response_plans = []
         self.__threading_call__(self.__list_response_plans__)
         self.__list_tags_for_resource__()
-
-    def __get_session__(self):
-        return self.session
-
-    def __threading_call__(self, call):
-        threads = []
-        for regional_client in self.regional_clients.values():
-            threads.append(threading.Thread(target=call, args=(regional_client,)))
-        for t in threads:
-            t.start()
-        for t in threads:
-            t.join()
 
     def __list_replication_sets__(self):
         logger.info("SSMIncidents - Listing Replication Sets...")
@@ -123,7 +100,7 @@ class SSMIncidents:
                         ResponsePlan(
                             arn=response_plan.get("Arn", ""),
                             region=regional_client.region,
-                            name=response_plan["Name"],
+                            name=response_plan.get("Name", ""),
                         )
                     )
         except Exception as error:

@@ -10,12 +10,12 @@ class storage_ensure_azure_services_are_trusted_to_access_is_enabled(Check):
                 report = Check_Report_Azure(self.metadata())
                 report.subscription = subscription
                 report.status = "PASS"
-                report.status_extended = f"Storage account {storage_account.name} from subscription {subscription} allows trusted Microsoft services to access this storage account"
+                report.status_extended = f"Storage account {storage_account.name} from subscription {subscription} allows trusted Microsoft services to access this storage account."
                 report.resource_name = storage_account.name
                 report.resource_id = storage_account.id
                 if "AzureServices" not in storage_account.network_rule_set.bypass:
                     report.status = "FAIL"
-                    report.status_extended = f"Storage account {storage_account.name} from subscription {subscription} does not allow trusted Microsoft services to access this storage account"
+                    report.status_extended = f"Storage account {storage_account.name} from subscription {subscription} does not allow trusted Microsoft services to access this storage account."
 
                 findings.append(report)
 

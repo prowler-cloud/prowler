@@ -10,7 +10,7 @@ AWS_REGION = "us-east-1"
 AWS_ACCOUNT_NUMBER = "123456789012"
 
 
-class ec2_networkacl_allow_ingress_any_port:
+class Test_ec2_networkacl_allow_ingress_any_port:
     def set_mocked_audit_info(self):
         audit_info = AWS_Audit_Info(
             session_config=None,
@@ -64,7 +64,7 @@ class ec2_networkacl_allow_ingress_any_port:
             result = check.execute()
 
             # One default nacl per region
-            assert len(result) == 3
+            assert len(result) == 2
 
     @mock_ec2
     def test_ec2_non_default_compliant_nacl(self):
@@ -88,10 +88,12 @@ class ec2_networkacl_allow_ingress_any_port:
             result = check.execute()
 
             # One default sg per region
-            assert len(result) == 3
+            assert len(result) == 2
 
             # by default nacls are public
             assert result[0].status == "FAIL"
+            assert result[0].region in (AWS_REGION, "eu-west-1")
+            assert result[0].resource_tags == []
             assert (
                 result[0].status_extended
                 == f"Network ACL {result[0].resource_id} has every port open to the Internet."
@@ -139,6 +141,8 @@ class ec2_networkacl_allow_ingress_any_port:
             for nacl in result:
                 if nacl.resource_id == nacl_id:
                     assert nacl.status == "FAIL"
+                    assert result[0].region in (AWS_REGION, "eu-west-1")
+                    assert result[0].resource_tags == []
                     assert (
                         nacl.status_extended
                         == f"Network ACL {nacl_id} has every port open to the Internet."
@@ -190,9 +194,11 @@ class ec2_networkacl_allow_ingress_any_port:
             for nacl in result:
                 if nacl.resource_id == nacl_id:
                     assert nacl.status == "PASS"
+                    assert result[0].region in (AWS_REGION, "eu-west-1")
+                    assert result[0].resource_tags == []
                     assert (
                         nacl.status_extended
-                        == f"Network ACL {nacl_id} has not every port open to the Internet."
+                        == f"Network ACL {nacl_id} does not have every port open to the Internet."
                     )
                     assert (
                         nacl.resource_arn

@@ -6,6 +6,7 @@ from moto import mock_dax
 from moto.core import DEFAULT_ACCOUNT_ID
 
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
+from prowler.providers.common.models import Audit_Metadata
 
 AWS_REGION = "us-east-1"
 
@@ -32,6 +33,12 @@ class Test_dynamodb_accelerator_cluster_encryption_enabled:
             organizations_metadata=None,
             audit_resources=None,
             mfa_enabled=False,
+            audit_metadata=Audit_Metadata(
+                services_scanned=0,
+                expected_checks=[],
+                completed_checks=0,
+                audit_progress=0,
+            ),
         )
 
         return audit_info
@@ -96,6 +103,8 @@ class Test_dynamodb_accelerator_cluster_encryption_enabled:
             )
             assert result[0].resource_id == cluster["ClusterName"]
             assert result[0].resource_arn == cluster["ClusterArn"]
+            assert result[0].region == AWS_REGION
+            assert result[0].resource_tags == []
 
     @mock_dax
     def test_dax_cluster_with_encryption(self):
@@ -132,3 +141,5 @@ class Test_dynamodb_accelerator_cluster_encryption_enabled:
             assert search("has encryption at rest enabled", result[0].status_extended)
             assert result[0].resource_id == cluster["ClusterName"]
             assert result[0].resource_arn == cluster["ClusterArn"]
+            assert result[0].region == AWS_REGION
+            assert result[0].resource_tags == []

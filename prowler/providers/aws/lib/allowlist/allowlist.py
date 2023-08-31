@@ -126,8 +126,8 @@ def is_allowlisted(allowlist, audited_account, check, region, resource, tags):
         # want to merge allowlisted checks from * to the other accounts check list
         if "*" in allowlist["Accounts"]:
             checks_multi_account = allowlist["Accounts"]["*"]["Checks"]
+            allowlisted_checks.update(checks_multi_account)
         # Test if it is allowlisted
-        allowlisted_checks.update(checks_multi_account)
         if is_allowlisted_in_check(
             allowlisted_checks,
             audited_account,

@@ -11,13 +11,14 @@ class directoryservice_directory_log_forwarding_enabled(Check):
             report = Check_Report_AWS(self.metadata())
             report.region = directory.region
             report.resource_id = directory.id
+            report.resource_arn = directory.arn
             report.resource_tags = directory.tags
             if directory.log_subscriptions:
                 report.status = "PASS"
-                report.status_extended = f"Directory Service {directory.id} have log forwarding to CloudWatch enabled"
+                report.status_extended = f"Directory Service {directory.id} have log forwarding to CloudWatch enabled."
             else:
                 report.status = "FAIL"
-                report.status_extended = f"Directory Service {directory.id} have log forwarding to CloudWatch disabled"
+                report.status_extended = f"Directory Service {directory.id} have log forwarding to CloudWatch disabled."
 
             findings.append(report)
 

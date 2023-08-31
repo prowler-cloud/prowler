@@ -26,7 +26,7 @@ class iam_user_no_setup_initial_access_key(Check):
                     report.resource_arn = user_record["arn"]
                     report.status = "FAIL"
                     report.status_extended = (
-                        f"User {user_record['user']} has never used access key 1"
+                        f"User {user_record['user']} has never used access key 1."
                     )
                     findings.append(report)
                 if (
@@ -40,7 +40,7 @@ class iam_user_no_setup_initial_access_key(Check):
                     report.resource_arn = user_record["arn"]
                     report.status = "FAIL"
                     report.status_extended = (
-                        f"User {user_record['user']} has never used access key 2"
+                        f"User {user_record['user']} has never used access key 2."
                     )
                     findings.append(report)
             else:
@@ -49,7 +49,7 @@ class iam_user_no_setup_initial_access_key(Check):
                 report.resource_id = user_record["user"]
                 report.resource_arn = user_record["arn"]
                 report.status = "PASS"
-                report.status_extended = f"User {user_record['user']} does not have access keys or uses the access keys configured"
+                report.status_extended = f"User {user_record['user']} does not have access keys or uses the access keys configured."
                 findings.append(report)
 
         return findings

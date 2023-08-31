@@ -26,12 +26,12 @@ class kms_key_not_publicly_accessible(Check):
                         ):
                             report.status = "FAIL"
                             report.status_extended = (
-                                f"KMS key {key.id} may be publicly accessible!"
+                                f"KMS key {key.id} may be publicly accessible."
                             )
                         elif (
                             "Principal" in statement and "AWS" in statement["Principal"]
                         ):
-                            if type(statement["Principal"]["AWS"]) == str:
+                            if isinstance(statement["Principal"]["AWS"], str):
                                 principals = [statement["Principal"]["AWS"]]
                             else:
                                 principals = statement["Principal"]["AWS"]
@@ -42,7 +42,7 @@ class kms_key_not_publicly_accessible(Check):
                                 ):
                                     report.status = "FAIL"
                                     report.status_extended = (
-                                        f"KMS key {key.id} may be publicly accessible!"
+                                        f"KMS key {key.id} may be publicly accessible."
                                     )
                 findings.append(report)
         return findings

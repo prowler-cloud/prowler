@@ -4,6 +4,7 @@ from boto3 import client, session
 from moto import mock_iam
 
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
+from prowler.providers.common.models import Audit_Metadata
 
 AWS_REGION = "us-east-1"
 AWS_ACCOUNT_NUMBER = "123456789012"
@@ -31,6 +32,12 @@ class Test_cloudwatch_cross_account_sharing_disabled:
             organizations_metadata=None,
             audit_resources=None,
             mfa_enabled=False,
+            audit_metadata=Audit_Metadata(
+                services_scanned=0,
+                expected_checks=[],
+                completed_checks=0,
+                audit_progress=0,
+            ),
         )
 
         return audit_info
@@ -70,7 +77,7 @@ class Test_cloudwatch_cross_account_sharing_disabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "CloudWatch doesn't allow cross-account sharing"
+                == "CloudWatch doesn't allow cross-account sharing."
             )
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
 

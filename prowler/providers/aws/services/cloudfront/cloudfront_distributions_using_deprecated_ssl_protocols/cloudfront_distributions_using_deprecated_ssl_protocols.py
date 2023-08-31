@@ -17,7 +17,7 @@ class cloudfront_distributions_using_deprecated_ssl_protocols(Check):
             report.resource_id = distribution.id
             report.resource_tags = distribution.tags
             report.status = "PASS"
-            report.status_extended = f"CloudFront Distribution {distribution.id} is not using a deprecated SSL protocol"
+            report.status_extended = f"CloudFront Distribution {distribution.id} is not using a deprecated SSL protocol."
 
             bad_ssl_protocol = False
             for origin in distribution.origins:
@@ -34,7 +34,7 @@ class cloudfront_distributions_using_deprecated_ssl_protocols(Check):
                             break
                 if bad_ssl_protocol:
                     report.status = "FAIL"
-                    report.status_extended = f"CloudFront Distribution {distribution.id} is using a deprecated SSL protocol"
+                    report.status_extended = f"CloudFront Distribution {distribution.id} is using a deprecated SSL protocol."
                     break
 
             findings.append(report)

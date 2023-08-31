@@ -184,7 +184,7 @@ def unroll_tags(tags: list):
     if tags and tags != [{}] and tags != [None]:
         for item in tags:
             # Check if there are tags in list
-            if type(item) == dict:
+            if isinstance(item, dict):
                 for key, value in item.items():
                     if not unrolled_items:
                         # Check the pattern of tags (Key:Value or Key:key/Value:value)
@@ -219,7 +219,7 @@ def unroll_dict(dict: dict):
     unrolled_items = ""
     separator = "|"
     for key, value in dict.items():
-        if type(value) == list:
+        if isinstance(value, list):
             value = ", ".join(value)
         if not unrolled_items:
             unrolled_items = f"{key}: {value}"
@@ -230,15 +230,15 @@ def unroll_dict(dict: dict):
 
 
 def unroll_dict_to_list(dict: dict):
-    list = []
+    dict_list = []
     for key, value in dict.items():
-        if type(value) == list:
+        if isinstance(value, list):
             value = ", ".join(value)
-            list.append(f"{key}: {value}")
+            dict_list.append(f"{key}: {value}")
         else:
-            list.append(f"{key}: {value}")
+            dict_list.append(f"{key}: {value}")
 
-    return list
+    return dict_list
 
 
 def parse_html_string(str: str):

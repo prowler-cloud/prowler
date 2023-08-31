@@ -1,15 +1,32 @@
 import uuid
 
 import pytest
+from mock import patch
 
 from prowler.lib.cli.parser import ProwlerArgumentParser
 
 prowler_command = "prowler"
 
+# capsys
+# https://docs.pytest.org/en/7.1.x/how-to/capture-stdout-stderr.html
+prowler_default_usage_error = "usage: prowler [-h] [-v] {aws,azure,gcp} ..."
+
+
+def mock_get_available_providers():
+    return ["aws", "azure", "gcp"]
+
 
 class Test_Parser:
-    # Init parser
     def setup_method(self):
+        # We need this to mock the get_available_providers function call
+        # since the importlib.import_module is not working starting from the test class
+        self.patch_get_available_providers = patch(
+            "prowler.providers.common.arguments.get_available_providers",
+            new=mock_get_available_providers,
+        )
+        self.patch_get_available_providers.start()
+
+        # Init parser
         self.parser = ProwlerArgumentParser()
 
     def test_default_parser_no_arguments_aws(self):
@@ -526,7 +543,7 @@ class Test_Parser:
         assert severity_1 in parsed.severity
         assert severity_2 in parsed.severity
 
-    def test_checks_parser_wrong_severity(self):
+    def test_checks_parser_wrong_severity(self, capsys):
         argument = "--severity"
         severity = "kk"
         command = [prowler_command, argument, severity]
@@ -591,6 +608,12 @@ class Test_Parser:
         command = [prowler_command, argument]
         parsed = self.parser.parse(command)
         assert parsed.list_checks
+
+    def test_list_checks_parser_list_checks_json(self):
+        argument = "--list-checks-json"
+        command = [prowler_command, argument]
+        parsed = self.parser.parse(command)
+        assert parsed.list_checks_json
 
     def test_list_checks_parser_list_services(self):
         argument = "--list-services"
@@ -683,22 +706,33 @@ class Test_Parser:
         parsed = self.parser.parse(command)
         assert parsed.mfa
 
-    def test_aws_parser_session_duration_short(self):
+    def test_aws_parser_session_duration_short(self, capsys):
         argument = "-T"
         duration = "900"
         command = [prowler_command, argument, duration]
-        parsed = self.parser.parse(command)
-        assert parsed.session_duration == int(duration)
+        with pytest.raises(SystemExit) as wrapped_exit:
+            _ = self.parser.parse(command)
+        assert wrapped_exit.type == SystemExit
+        assert wrapped_exit.value.code == 2
+        assert (
+            capsys.readouterr().err
+            == f"{prowler_default_usage_error}\nprowler: error: aws: To use -I/-T options -R option is needed\n"
+        )
 
-    def test_aws_parser_session_duration_long(self):
+    def test_aws_parser_session_duration_long(self, capsys):
         argument = "--session-duration"
         duration = "900"
         command = [prowler_command, argument, duration]
-        parsed = self.parser.parse(command)
-        assert parsed.session_duration == int(duration)
+        with pytest.raises(SystemExit) as wrapped_exit:
+            _ = self.parser.parse(command)
+        assert wrapped_exit.type == SystemExit
+        assert wrapped_exit.value.code == 2
+        assert (
+            capsys.readouterr().err
+            == f"{prowler_default_usage_error}\nprowler: error: aws: To use -I/-T options -R option is needed\n"
+        )
 
-    # Pending Session Duration validation during parse to test input out of range
-
+    # TODO
     def test_aws_parser_external_id_no_short(self):
         argument = "-I"
         external_id = ""
@@ -706,19 +740,31 @@ class Test_Parser:
         parsed = self.parser.parse(command)
         assert not parsed.profile
 
-    def test_aws_parser_external_id_short(self):
+    def test_aws_parser_external_id_short(self, capsys):
         argument = "-I"
         external_id = str(uuid.uuid4())
         command = [prowler_command, argument, external_id]
-        parsed = self.parser.parse(command)
-        assert parsed.external_id == external_id
+        with pytest.raises(SystemExit) as wrapped_exit:
+            _ = self.parser.parse(command)
+        assert wrapped_exit.type == SystemExit
+        assert wrapped_exit.value.code == 2
+        assert (
+            capsys.readouterr().err
+            == f"{prowler_default_usage_error}\nprowler: error: aws: To use -I/-T options -R option is needed\n"
+        )
 
-    def test_aws_parser_external_id_long(self):
+    def test_aws_parser_external_id_long(self, capsys):
         argument = "--external-id"
         external_id = str(uuid.uuid4())
         command = [prowler_command, argument, external_id]
-        parsed = self.parser.parse(command)
-        assert parsed.external_id == external_id
+        with pytest.raises(SystemExit) as wrapped_exit:
+            _ = self.parser.parse(command)
+        assert wrapped_exit.type == SystemExit
+        assert wrapped_exit.value.code == 2
+        assert (
+            capsys.readouterr().err
+            == f"{prowler_default_usage_error}\nprowler: error: aws: To use -I/-T options -R option is needed\n"
+        )
 
     def test_aws_parser_region_f(self):
         argument = "-f"
@@ -916,6 +962,20 @@ class Test_Parser:
         parsed = self.parser.parse(command)
         assert parsed.aws_retries_max_attempts == int(max_retries)
 
+    def test_aws_parser_config_file(self):
+        argument = "--config-file"
+        config_file = "./test-config.yaml"
+        command = [prowler_command, argument, config_file]
+        parsed = self.parser.parse(command)
+        assert parsed.config_file == config_file
+
+    def test_aws_parser_sts_endpoint_region(self):
+        argument = "--sts-endpoint-region"
+        sts_endpoint_region = "eu-west-1"
+        command = [prowler_command, argument, sts_endpoint_region]
+        parsed = self.parser.parse(command)
+        assert parsed.sts_endpoint_region == sts_endpoint_region
+
     def test_parser_azure_auth_sp(self):
         argument = "--sp-env-auth"
         command = [prowler_command, "azure", argument]
@@ -964,20 +1024,28 @@ class Test_Parser:
         assert parsed.subscription_ids[1] == subscription_2
 
     # Test AWS flags with Azure provider
-    def test_parser_azure_with_aws_flag(self):
+    def test_parser_azure_with_aws_flag(self, capsys):
         command = [prowler_command, "azure", "-p"]
         with pytest.raises(SystemExit) as wrapped_exit:
             _ = self.parser.parse(command)
         assert wrapped_exit.type == SystemExit
         assert wrapped_exit.value.code == 2
+        assert (
+            capsys.readouterr().err
+            == f"{prowler_default_usage_error}\nprowler: error: unrecognized arguments: -p\n"
+        )
 
     # Test Azure flags with AWS provider
-    def test_parser_aws_with_azure_flag(self):
+    def test_parser_aws_with_azure_flag(self, capsys):
         command = [prowler_command, "aws", "--subscription-ids"]
         with pytest.raises(SystemExit) as wrapped_exit:
             _ = self.parser.parse(command)
         assert wrapped_exit.type == SystemExit
         assert wrapped_exit.value.code == 2
+        assert (
+            capsys.readouterr().err
+            == f"{prowler_default_usage_error}\nprowler: error: unrecognized arguments: --subscription-ids\n"
+        )
 
     def test_parser_gcp_auth_credentials_file(self):
         argument = "--credentials-file"

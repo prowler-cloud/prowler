@@ -16,9 +16,9 @@ class iam_policy_no_full_access_to_kms(Check):
                 report.resource_id = policy.name
                 report.resource_tags = policy.tags
                 report.status = "PASS"
-                report.status_extended = f"Custom Policy {policy.name} does not allow '{critical_service}:*' privileges"
+                report.status_extended = f"Custom Policy {policy.name} does not allow '{critical_service}:*' privileges."
                 if policy.document:
-                    if type(policy.document["Statement"]) != list:
+                    if not isinstance(policy.document["Statement"], list):
                         policy_statements = [policy.document["Statement"]]
                     else:
                         policy_statements = policy.document["Statement"]
@@ -34,7 +34,7 @@ class iam_policy_no_full_access_to_kms(Check):
                             )
                         ):
                             report.status = "FAIL"
-                            report.status_extended = f"Custom Policy {policy.name} allows '{critical_service}:*' privileges"
+                            report.status_extended = f"Custom Policy {policy.name} allows '{critical_service}:*' privileges."
                             break
 
                 findings.append(report)

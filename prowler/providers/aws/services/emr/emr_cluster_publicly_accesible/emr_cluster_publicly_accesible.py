@@ -22,7 +22,7 @@ class emr_cluster_publicly_accesible(Check):
                 report.resource_tags = cluster.tags
                 report.status = "PASS"
                 report.status_extended = (
-                    f"EMR Cluster {cluster.id} is not publicly accessible"
+                    f"EMR Cluster {cluster.id} is not publicly accessible."
                 )
                 # If EMR cluster is Public, it is required to check
                 # their Security Groups for the Master,
@@ -86,6 +86,6 @@ class emr_cluster_publicly_accesible(Check):
                             else ""
                         )
 
-                    findings.append(report)
+                findings.append(report)
 
         return findings

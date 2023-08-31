@@ -4,12 +4,13 @@ from boto3 import client, session
 from moto import mock_ec2
 
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
+from prowler.providers.common.models import Audit_Metadata
 
 AWS_REGION = "us-east-1"
 AWS_ACCOUNT_NUMBER = "123456789012"
 
 
-class Test_vpc_subnet_separate_private_public:
+class Test_vpc_subnet_no_public_ip_by_default:
     def set_mocked_audit_info(self):
         audit_info = AWS_Audit_Info(
             session_config=None,
@@ -31,6 +32,12 @@ class Test_vpc_subnet_separate_private_public:
             organizations_metadata=None,
             audit_resources=None,
             mfa_enabled=False,
+            audit_metadata=Audit_Metadata(
+                services_scanned=0,
+                expected_checks=[],
+                completed_checks=0,
+                audit_progress=0,
+            ),
         )
 
         return audit_info
@@ -61,7 +68,7 @@ class Test_vpc_subnet_separate_private_public:
             new=current_audit_info,
         ):
             with mock.patch(
-                "prowler.providers.aws.services.vpc.vpc_subnet_separate_private_public.vpc_subnet_separate_private_public.vpc_client",
+                "prowler.providers.aws.services.vpc.vpc_subnet_no_public_ip_by_default.vpc_subnet_no_public_ip_by_default.vpc_client",
                 new=VPC(current_audit_info),
             ):
                 from prowler.providers.aws.services.vpc.vpc_subnet_no_public_ip_by_default.vpc_subnet_no_public_ip_by_default import (
@@ -76,7 +83,7 @@ class Test_vpc_subnet_separate_private_public:
                         assert result.status == "FAIL"
                         assert (
                             result.status_extended
-                            == f"VPC subnet {subnet_private['Subnet']['SubnetId']} assigns public IP by default"
+                            == f"VPC subnet {subnet_private['Subnet']['SubnetId']} assigns public IP by default."
                         )
 
     @mock_ec2
@@ -105,7 +112,7 @@ class Test_vpc_subnet_separate_private_public:
             new=current_audit_info,
         ):
             with mock.patch(
-                "prowler.providers.aws.services.vpc.vpc_subnet_separate_private_public.vpc_subnet_separate_private_public.vpc_client",
+                "prowler.providers.aws.services.vpc.vpc_subnet_no_public_ip_by_default.vpc_subnet_no_public_ip_by_default.vpc_client",
                 new=VPC(current_audit_info),
             ):
                 from prowler.providers.aws.services.vpc.vpc_subnet_no_public_ip_by_default.vpc_subnet_no_public_ip_by_default import (
@@ -120,5 +127,5 @@ class Test_vpc_subnet_separate_private_public:
                         assert result.status == "PASS"
                         assert (
                             result.status_extended
-                            == f"VPC subnet {subnet_private['Subnet']['SubnetId']} does NOT assign public IP by default"
+                            == f"VPC subnet {subnet_private['Subnet']['SubnetId']} does NOT assign public IP by default."
                         )

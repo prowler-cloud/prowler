@@ -14,7 +14,7 @@ class iam_role_sa_enforce_separation_of_duties(Check):
             report.location = cloudresourcemanager_client.region
             report.resource_id = project
             report.status = "PASS"
-            report.status_extended = f"Principle of separation of duties was enforced for Service-Account Related Roles in project {project}"
+            report.status_extended = f"Principle of separation of duties was enforced for Service-Account Related Roles in project {project}."
             for binding in cloudresourcemanager_client.bindings:
                 if binding.project_id == project and (
                     "roles/iam.serviceAccountUser" in binding.role
@@ -23,7 +23,7 @@ class iam_role_sa_enforce_separation_of_duties(Check):
                     non_compliant_members.extend(binding.members)
             if non_compliant_members:
                 report.status = "FAIL"
-                report.status_extended = f"Principle of separation of duties was not enforced for Service-Account Related Roles in project {project} in members {','.join(non_compliant_members)}"
+                report.status_extended = f"Principle of separation of duties was not enforced for Service-Account Related Roles in project {project} in members {','.join(non_compliant_members)}."
             findings.append(report)
 
         return findings

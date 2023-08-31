@@ -3,26 +3,19 @@ from datetime import datetime
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
-from prowler.providers.gcp.gcp_provider import generate_client
+from prowler.providers.gcp.lib.service.service import GCPService
 from prowler.providers.gcp.services.cloudresourcemanager.cloudresourcemanager_client import (
     cloudresourcemanager_client,
 )
 
 
 ################## IAM
-class IAM:
+class IAM(GCPService):
     def __init__(self, audit_info):
-        self.service = "iam"
-        self.api_version = "v1"
-        self.project_ids = audit_info.project_ids
-        self.region = "global"
-        self.client = generate_client(self.service, self.api_version, audit_info)
+        super().__init__(__class__.__name__, audit_info)
         self.service_accounts = []
         self.__get_service_accounts__()
         self.__get_service_accounts_keys__()
-
-    def __get_client__(self):
-        return self.client
 
     def __get_service_accounts__(self):
         for project_id in self.project_ids:
@@ -109,18 +102,11 @@ class ServiceAccount(BaseModel):
 
 
 ################## AccessApproval
-class AccessApproval:
+class AccessApproval(GCPService):
     def __init__(self, audit_info):
-        self.service = "accessapproval"
-        self.api_version = "v1"
-        self.project_ids = audit_info.project_ids
-        self.region = "global"
-        self.client = generate_client(self.service, self.api_version, audit_info)
+        super().__init__(__class__.__name__, audit_info)
         self.settings = {}
         self.__get_settings__()
-
-    def __get_client__(self):
-        return self.client
 
     def __get_settings__(self):
         for project_id in self.project_ids:
@@ -148,17 +134,11 @@ class Setting(BaseModel):
 
 
 ################## EssentialContacts
-class EssentialContacts:
+class EssentialContacts(GCPService):
     def __init__(self, audit_info):
-        self.service = "essentialcontacts"
-        self.api_version = "v1"
-        self.region = "global"
-        self.client = generate_client(self.service, self.api_version, audit_info)
+        super().__init__(__class__.__name__, audit_info)
         self.organizations = []
         self.__get_contacts__()
-
-    def __get_client__(self):
-        return self.client
 
     def __get_contacts__(self):
         for org in cloudresourcemanager_client.organizations:

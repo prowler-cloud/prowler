@@ -2,8 +2,11 @@ from typing import Any
 
 
 # Network ACLs
-# Check if the network acls rules has ingress public access to the check_ports using the protocol
-def check_network_acl(rules: Any, protocol: str, port: str) -> bool:
+def check_network_acl(rules: Any, protocol: str, port: int) -> bool:
+    """check_network_acl returns True if the network acls rules has ingress public access to the check_ports using the protocol, otherwise return False
+    - True --> NACL open to the internet
+    - False --> NACL closed to the internet
+    """
 
     # Spliting IPv6 from IPv4 rules
     rules_IPv6 = list(
@@ -64,7 +67,6 @@ def check_network_acl(rules: Any, protocol: str, port: str) -> bool:
                 )
             )
         ):
-
             # Exist IPv4 deny for this port and if exist IPv6 there are not IPv6 Public access here
             return False
 

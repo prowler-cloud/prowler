@@ -11,7 +11,7 @@
   "Severity": "critical",
   "ResourceType": "Other",
   "Description": "Ensure there are no EC2 AMIs set as Public.",
-  "Risk": "A shared AMI is an AMI that a developer created and made available for other developers to use. If AMIs have embebed information about the environment could pose a security risk. You use a shared AMI at your own risk. Amazon can not vouch for the integrity or security of AMIs shared by Amazon EC2 users.",
+  "Risk": "When your AMIs are publicly accessible, they are available in the Community AMIs where everyone with an AWS account can use them to launch EC2 instances. Your AMIs could contain snapshots of your applications (including their data), therefore exposing your snapshots in this manner is not advised.",
   "RelatedUrl": "",
   "Remediation": {
     "Code": {
@@ -21,8 +21,8 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "List all shared AMIs and make sure there is a business reason for them.",
-      "Url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/usingsharedamis-finding.html"
+      "Text": "We recommend your EC2 AMIs are not publicly accessible, or generally available in the Community AMIs.",
+      "Url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/cancel-sharing-an-AMI.html"
     }
   },
   "Categories": [

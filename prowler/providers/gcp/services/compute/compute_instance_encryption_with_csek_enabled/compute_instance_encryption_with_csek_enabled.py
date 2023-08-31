@@ -12,7 +12,7 @@ class compute_instance_encryption_with_csek_enabled(Check):
             report.resource_name = instance.name
             report.location = instance.zone
             report.status = "FAIL"
-            report.status_extended = f"The VM Instance {instance.name} has the following unencrypted disks: '{', '.join([i[0] for i in instance.disks_encryption if not i[1]])}'"
+            report.status_extended = f"The VM Instance {instance.name} has the following unencrypted disks: '{', '.join([i[0] for i in instance.disks_encryption if not i[1]])}'."
             if all([i[1] for i in instance.disks_encryption]):
                 report.status = "PASS"
                 report.status_extended = (

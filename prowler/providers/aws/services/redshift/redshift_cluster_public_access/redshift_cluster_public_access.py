@@ -13,11 +13,11 @@ class redshift_cluster_public_access(Check):
             report.resource_tags = cluster.tags
             report.status = "PASS"
             report.status_extended = (
-                f"Redshift Cluster {cluster.arn} is not publicly accessible"
+                f"Redshift Cluster {cluster.arn} is not publicly accessible."
             )
             if cluster.endpoint_address and cluster.public_access:
                 report.status = "FAIL"
-                report.status_extended = f"Redshift Cluster {cluster.arn} is publicly accessible at endpoint {cluster.endpoint_address}"
+                report.status_extended = f"Redshift Cluster {cluster.arn} is publicly accessible at endpoint {cluster.endpoint_address}."
 
             findings.append(report)
 

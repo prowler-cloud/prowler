@@ -2,15 +2,14 @@ from pydantic import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
+from prowler.providers.aws.lib.service.service import AWSService
 
 
 ################### GlobalAccelerator
-class GlobalAccelerator:
+class GlobalAccelerator(AWSService):
     def __init__(self, audit_info):
-        self.service = "globalaccelerator"
-        self.session = audit_info.audit_session
-        self.audited_account = audit_info.audited_account
-        self.audit_resources = audit_info.audit_resources
+        # Call AWSService's __init__
+        super().__init__(__class__.__name__, audit_info)
         self.accelerators = {}
         if audit_info.audited_partition == "aws":
             # Global Accelerator is a global service that supports endpoints in multiple AWS Regions
@@ -19,9 +18,6 @@ class GlobalAccelerator:
             self.region = "us-west-2"
             self.client = self.session.client(self.service, self.region)
             self.__list_accelerators__()
-
-    def __get_session__(self):
-        return self.session
 
     def __list_accelerators__(self):
         logger.info("GlobalAccelerator - Listing Accelerators...")

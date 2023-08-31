@@ -1,0 +1,61 @@
+# AWS Configuration
+aws:
+  # AWS EC2 Configuration
+  # aws.ec2_elastic_ip_shodan
+  shodan_api_key: null
+  # aws.ec2_securitygroup_with_many_ingress_egress_rules --> by default is 50 rules
+  max_security_group_rules: 50
+  # aws.ec2_instance_older_than_specific_days --> by default is 6 months (180 days)
+  max_ec2_instance_age_in_days: 180
+
+  # AWS VPC Configuration (vpc_endpoint_connections_trust_boundaries, vpc_endpoint_services_allowed_principals_trust_boundaries)
+  # Single account environment: No action required. The AWS account number will be automatically added by the checks.
+  # Multi account environment: Any additional trusted account number should be added as a space separated list, e.g.
+  # trusted_account_ids : ["123456789012", "098765432109", "678901234567"]
+  trusted_account_ids: []
+
+  # AWS Cloudwatch Configuration
+  # aws.cloudwatch_log_group_retention_policy_specific_days_enabled --> by default is 365 days
+  log_group_retention_days: 365
+
+  # AWS AppStream Session Configuration
+  # aws.appstream_fleet_session_idle_disconnect_timeout
+  max_idle_disconnect_timeout_in_seconds: 600 # 10 Minutes
+  # aws.appstream_fleet_session_disconnect_timeout
+  max_disconnect_timeout_in_seconds: 300 # 5 Minutes
+  # aws.appstream_fleet_maximum_session_duration
+  max_session_duration_seconds: 36000 # 10 Hours
+
+  # AWS Lambda Configuration
+  # aws.awslambda_function_using_supported_runtimes
+  obsolete_lambda_runtimes:
+    [
+      "python3.6",
+      "python2.7",
+      "nodejs4.3",
+      "nodejs4.3-edge",
+      "nodejs6.10",
+      "nodejs",
+      "nodejs8.10",
+      "nodejs10.x",
+      "dotnetcore1.0",
+      "dotnetcore2.0",
+      "dotnetcore2.1",
+      "ruby2.5",
+    ]
+
+  # AWS Organizations
+  # organizations_scp_check_deny_regions
+  # organizations_enabled_regions: [
+  #   'eu-central-1',
+  #   'eu-west-1',
+  #   "us-east-1"
+  # ]
+  organizations_enabled_regions: []
+  organizations_trusted_delegated_administrators: []
+
+# Azure Configuration
+azure:
+
+# GCP Configuration
+gcp:

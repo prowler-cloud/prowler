@@ -64,7 +64,7 @@ class Test_cloudfront_distributions_logging_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"CloudFront Distribution {DISTRIBUTION_ID} has logging enabled"
+                == f"CloudFront Distribution {DISTRIBUTION_ID} has logging enabled."
             )
 
     def test_one_distribution_logging_disabled_realtime_disabled(self):
@@ -103,8 +103,9 @@ class Test_cloudfront_distributions_logging_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"CloudFront Distribution {DISTRIBUTION_ID} has logging disabled"
+                == f"CloudFront Distribution {DISTRIBUTION_ID} has logging disabled."
             )
+            assert result[0].resource_tags == []
 
     def test_one_distribution_logging_disabled_realtime_enabled(self):
         cloudfront_client = mock.MagicMock
@@ -142,8 +143,9 @@ class Test_cloudfront_distributions_logging_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"CloudFront Distribution {DISTRIBUTION_ID} has logging enabled"
+                == f"CloudFront Distribution {DISTRIBUTION_ID} has logging enabled."
             )
+            assert result[0].resource_tags == []
 
     def test_one_distribution_logging_enabled_realtime_enabled(self):
         cloudfront_client = mock.MagicMock
@@ -181,5 +183,6 @@ class Test_cloudfront_distributions_logging_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"CloudFront Distribution {DISTRIBUTION_ID} has logging enabled"
+                == f"CloudFront Distribution {DISTRIBUTION_ID} has logging enabled."
             )
+            assert result[0].resource_tags == []

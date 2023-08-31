@@ -7,7 +7,7 @@
   ],
   "ServiceName": "s3",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "ResourceIdTemplate": "arn:partition:s3:::bucket_name",
   "Severity": "medium",
   "ResourceType": "AwsS3Bucket",
   "Description": "Check if S3 buckets have object versioning enabled",
@@ -21,7 +21,7 @@
       "Terraform": "https://docs.bridgecrew.io/docs/s3_16-enable-versioning#terraform"
     },
     "Recommendation": {
-      "Text": "Configure versioning using the Amazon console or API for buckets with sensitive information that is changing frecuently; and backup may not be enough to capture all the changes.",
+      "Text": "Configure versioning using the Amazon console or API for buckets with sensitive information that is changing frequently; and backup may not be enough to capture all the changes.",
       "Url": "https://docs.aws.amazon.com/AmazonS3/latest/dev-retired/Versioning.html"
     }
   },

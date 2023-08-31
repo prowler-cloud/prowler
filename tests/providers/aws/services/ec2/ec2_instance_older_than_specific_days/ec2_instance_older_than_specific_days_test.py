@@ -51,6 +51,7 @@ class Test_ec2_instance_older_than_specific_days:
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
         current_audit_info = self.set_mocked_audit_info()
+        current_audit_info.audit_config = {"max_ec2_instance_age_in_days": 180}
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -82,6 +83,7 @@ class Test_ec2_instance_older_than_specific_days:
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
         current_audit_info = self.set_mocked_audit_info()
+        current_audit_info.audit_config = {"max_ec2_instance_age_in_days": 180}
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -99,6 +101,8 @@ class Test_ec2_instance_older_than_specific_days:
 
             assert len(result) == 1
             assert result[0].status == "PASS"
+            assert result[0].region == AWS_REGION
+            assert result[0].resource_tags is None
             assert search(
                 f"EC2 Instance {instance.id} is not older", result[0].status_extended
             )
@@ -121,6 +125,7 @@ class Test_ec2_instance_older_than_specific_days:
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
         current_audit_info = self.set_mocked_audit_info()
+        current_audit_info.audit_config = {"max_ec2_instance_age_in_days": 180}
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -142,6 +147,8 @@ class Test_ec2_instance_older_than_specific_days:
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
+            assert result[0].region == AWS_REGION
+            assert result[0].resource_tags is None
             assert search(
                 f"EC2 Instance {instance.id} is older", result[0].status_extended
             )

@@ -19,23 +19,24 @@ class cloudtrail_logs_s3_bucket_access_logging_enabled(Check):
                 report.resource_tags = trail.tags
                 report.status = "FAIL"
                 if trail.is_multiregion:
-                    report.status_extended = f"Multiregion Trail {trail.name} S3 bucket access logging is not enabled for bucket {trail_bucket}"
+                    report.status_extended = f"Multiregion Trail {trail.name} S3 bucket access logging is not enabled for bucket {trail_bucket}."
                 else:
-                    report.status_extended = f"Single region Trail {trail.name} S3 bucket access logging is not enabled for bucket {trail_bucket}"
+                    report.status_extended = f"Single region Trail {trail.name} S3 bucket access logging is not enabled for bucket {trail_bucket}."
                 for bucket in s3_client.buckets:
                     if trail_bucket == bucket.name:
                         trail_bucket_is_in_account = True
                         if bucket.logging:
                             report.status = "PASS"
                             if trail.is_multiregion:
-                                report.status_extended = f"Multiregion trail {trail.name} S3 bucket access logging is enabled for bucket {trail_bucket}"
+                                report.status_extended = f"Multiregion trail {trail.name} S3 bucket access logging is enabled for bucket {trail_bucket}."
                             else:
-                                report.status_extended = f"Single region trail {trail.name} S3 bucket access logging is enabled for bucket {trail_bucket}"
+                                report.status_extended = f"Single region trail {trail.name} S3 bucket access logging is enabled for bucket {trail_bucket}."
                         break
 
                 # check if trail is delivering logs in a cross account bucket
                 if not trail_bucket_is_in_account:
-                    report.status_extended = f"Trail {trail.name} is delivering logs in a cross-account bucket {trail_bucket} in another account out of Prowler's permissions scope, please check it manually"
+                    report.status = "INFO"
+                    report.status_extended = f"Trail {trail.name} is delivering logs in a cross-account bucket {trail_bucket} in another account out of Prowler's permissions scope, please check it manually."
                 findings.append(report)
 
         return findings

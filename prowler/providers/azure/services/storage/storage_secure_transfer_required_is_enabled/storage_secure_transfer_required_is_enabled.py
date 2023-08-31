@@ -10,12 +10,12 @@ class storage_secure_transfer_required_is_enabled(Check):
                 report = Check_Report_Azure(self.metadata())
                 report.subscription = subscription
                 report.status = "PASS"
-                report.status_extended = f"Storage account {storage_account.name} from subscription {subscription} has secure transfer required enabled"
+                report.status_extended = f"Storage account {storage_account.name} from subscription {subscription} has secure transfer required enabled."
                 report.resource_name = storage_account.name
                 report.resource_id = storage_account.id
                 if not storage_account.enable_https_traffic_only:
                     report.status = "FAIL"
-                    report.status_extended = f"Storage account {storage_account.name} from subscription {subscription} has secure transfer required disabled"
+                    report.status_extended = f"Storage account {storage_account.name} from subscription {subscription} has secure transfer required disabled."
 
                 findings.append(report)
 

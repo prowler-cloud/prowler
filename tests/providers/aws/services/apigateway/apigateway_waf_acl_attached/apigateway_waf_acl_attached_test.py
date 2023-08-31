@@ -4,6 +4,7 @@ from boto3 import client, session
 from moto import mock_apigateway, mock_wafv2
 
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
+from prowler.providers.common.models import Audit_Metadata
 
 AWS_REGION = "us-east-1"
 AWS_ACCOUNT_NUMBER = "123456789012"
@@ -31,6 +32,12 @@ class Test_apigateway_waf_acl_attached:
             organizations_metadata=None,
             audit_resources=None,
             mfa_enabled=False,
+            audit_metadata=Audit_Metadata(
+                services_scanned=0,
+                expected_checks=[],
+                completed_checks=0,
+                audit_progress=0,
+            ),
         )
 
         return audit_info
@@ -143,6 +150,8 @@ class Test_apigateway_waf_acl_attached:
                 result[0].resource_arn
                 == f"arn:{current_audit_info.audited_partition}:apigateway:{AWS_REGION}::/restapis/{rest_api['id']}/stages/test"
             )
+            assert result[0].region == AWS_REGION
+            assert result[0].resource_tags == [None]
 
     @mock_apigateway
     def test_apigateway_one_rest_api_without_waf(self):
@@ -205,10 +214,12 @@ class Test_apigateway_waf_acl_attached:
             assert len(result) == 1
             assert (
                 result[0].status_extended
-                == f"API Gateway test-rest-api ID {rest_api['id']} in stage test has not WAF ACL attached."
+                == f"API Gateway test-rest-api ID {rest_api['id']} in stage test does not have WAF ACL attached."
             )
             assert result[0].resource_id == "test-rest-api"
             assert (
                 result[0].resource_arn
                 == f"arn:{current_audit_info.audited_partition}:apigateway:{AWS_REGION}::/restapis/{rest_api['id']}/stages/test"
             )
+            assert result[0].region == AWS_REGION
+            assert result[0].resource_tags == [None]

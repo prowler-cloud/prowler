@@ -14,9 +14,9 @@ class iam_no_custom_policy_permissive_role_assumption(Check):
                 report.resource_id = policy.name
                 report.resource_tags = policy.tags
                 report.status = "PASS"
-                report.status_extended = f"Custom Policy {policy.name} does not allow permissive STS Role assumption"
+                report.status_extended = f"Custom Policy {policy.name} does not allow permissive STS Role assumption."
                 if policy.document:
-                    if type(policy.document["Statement"]) != list:
+                    if not isinstance(policy.document["Statement"], list):
                         policy_statements = [policy.document["Statement"]]
                     else:
                         policy_statements = policy.document["Statement"]
@@ -27,7 +27,7 @@ class iam_no_custom_policy_permissive_role_assumption(Check):
                             and "Resource" in statement
                             and "*" in statement["Resource"]
                         ):
-                            if type(statement["Action"]) == list:
+                            if isinstance(statement["Action"], list):
                                 for action in statement["Action"]:
                                     if (
                                         action == "sts:AssumeRole"
@@ -35,7 +35,7 @@ class iam_no_custom_policy_permissive_role_assumption(Check):
                                         or action == "*"
                                     ):
                                         report.status = "FAIL"
-                                        report.status_extended = f"Custom Policy {policy.name} allows permissive STS Role assumption"
+                                        report.status_extended = f"Custom Policy {policy.name} allows permissive STS Role assumption."
                                         break
                             else:
                                 if (
@@ -44,7 +44,7 @@ class iam_no_custom_policy_permissive_role_assumption(Check):
                                     or statement["Action"] == "*"
                                 ):
                                     report.status = "FAIL"
-                                    report.status_extended = f"Custom Policy {policy.name} allows permissive STS Role assumption"
+                                    report.status_extended = f"Custom Policy {policy.name} allows permissive STS Role assumption."
                             break
 
                 findings.append(report)

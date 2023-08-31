@@ -40,6 +40,8 @@ class Test_codebuild_project_older_90_days:
             )
             assert result[0].resource_id == project_name
             assert result[0].resource_arn == project_arn
+            assert result[0].resource_tags == []
+            assert result[0].region == AWS_REGION
 
     def test_project_not_built(self):
         codebuild_client = mock.MagicMock
@@ -70,6 +72,8 @@ class Test_codebuild_project_older_90_days:
             assert search("has never been built", result[0].status_extended)
             assert result[0].resource_id == project_name
             assert result[0].resource_arn == project_arn
+            assert result[0].resource_tags == []
+            assert result[0].region == AWS_REGION
 
     def test_project_built_in_last_90_days(self):
         codebuild_client = mock.MagicMock
@@ -102,3 +106,5 @@ class Test_codebuild_project_older_90_days:
             )
             assert result[0].resource_id == project_name
             assert result[0].resource_arn == project_arn
+            assert result[0].resource_tags == []
+            assert result[0].region == AWS_REGION

@@ -13,11 +13,11 @@ class iam_audit_logs_enabled(Check):
             report.location = cloudresourcemanager_client.region
             report.resource_id = project.id
             report.status = "PASS"
-            report.status_extended = f"Audit Logs are enabled for project {project.id}"
+            report.status_extended = f"Audit Logs are enabled for project {project.id}."
             if not project.audit_logging:
                 report.status = "FAIL"
                 report.status_extended = (
-                    f"Audit Logs are not enabled for project {project.id}"
+                    f"Audit Logs are not enabled for project {project.id}."
                 )
             findings.append(report)
 

@@ -4,11 +4,7 @@ from operator import itemgetter
 
 from boto3 import session
 
-from prowler.config.config import (
-    json_asff_file_suffix,
-    output_file_timestamp,
-    timestamp_utc,
-)
+from prowler.config.config import json_asff_file_suffix, timestamp_utc
 from prowler.lib.logger import logger
 from prowler.lib.outputs.models import Check_Output_JSON_ASFF
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
@@ -60,16 +56,14 @@ def send_to_security_hub(
 
 # Move previous Security Hub check findings to ARCHIVED (as prowler didn't re-detect them)
 def resolve_security_hub_previous_findings(
-    output_directory: str, audit_info: AWS_Audit_Info
+    output_directory: str, output_filename: str, audit_info: AWS_Audit_Info
 ) -> list:
     """
     resolve_security_hub_previous_findings archives all the findings that does not appear in the current execution
     """
     logger.info("Checking previous findings in Security Hub to archive them.")
     # Read current findings from json-asff file
-    with open(
-        f"{output_directory}/prowler-output-{audit_info.audited_account}-{output_file_timestamp}{json_asff_file_suffix}"
-    ) as f:
+    with open(f"{output_directory}/{output_filename}{json_asff_file_suffix}") as f:
         json_asff_file = json.load(f)
 
     # Sort by region

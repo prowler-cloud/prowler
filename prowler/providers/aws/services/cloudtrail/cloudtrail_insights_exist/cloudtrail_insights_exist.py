@@ -15,13 +15,11 @@ class cloudtrail_insights_exist(Check):
                 report.resource_arn = trail.arn
                 report.resource_tags = trail.tags
                 report.status = "FAIL"
-                report.status_extended = (
-                    f"Trail {trail.name} has not insight selectors and it is logging"
-                )
+                report.status_extended = f"Trail {trail.name} does not have insight selectors and it is logging."
                 if trail.has_insight_selectors:
                     report.status = "PASS"
                     report.status_extended = (
-                        f"Trail {trail.name} has insight selectors and it is logging"
+                        f"Trail {trail.name} has insight selectors and it is logging."
                     )
                 findings.append(report)
         return findings

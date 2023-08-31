@@ -25,7 +25,8 @@ class trustedadvisor_errors_and_warnings(Check):
             report = Check_Report_AWS(self.metadata())
             report.status = "INFO"
             report.status_extended = "Amazon Web Services Premium Support Subscription is required to use this service."
-            report.resource_id = trustedadvisor_client.account
+            report.resource_id = trustedadvisor_client.audited_account
+            report.resource_arn = trustedadvisor_client.audited_account_arn
             report.region = trustedadvisor_client.region
             findings.append(report)
 

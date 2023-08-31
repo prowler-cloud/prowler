@@ -6,6 +6,7 @@ from boto3 import client, session
 from moto import mock_cloudtrail, mock_s3
 
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
+from prowler.providers.common.models import Audit_Metadata
 
 AWS_ACCOUNT_NUMBER = "123456789012"
 
@@ -32,8 +33,40 @@ class Test_cloudtrail_cloudwatch_logging_enabled:
             organizations_metadata=None,
             audit_resources=None,
             mfa_enabled=False,
+            audit_metadata=Audit_Metadata(
+                services_scanned=0,
+                expected_checks=[],
+                completed_checks=0,
+                audit_progress=0,
+            ),
         )
         return audit_info
+
+    @mock_cloudtrail
+    @mock_s3
+    def test_no_trails(self):
+        current_audit_info = self.set_mocked_audit_info()
+
+        from prowler.providers.aws.services.cloudtrail.cloudtrail_service import (
+            Cloudtrail,
+        )
+
+        with mock.patch(
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=current_audit_info,
+        ):
+            with mock.patch(
+                "prowler.providers.aws.services.cloudtrail.cloudtrail_cloudwatch_logging_enabled.cloudtrail_cloudwatch_logging_enabled.cloudtrail_client",
+                new=Cloudtrail(current_audit_info),
+            ):
+                # Test Check
+                from prowler.providers.aws.services.cloudtrail.cloudtrail_cloudwatch_logging_enabled.cloudtrail_cloudwatch_logging_enabled import (
+                    cloudtrail_cloudwatch_logging_enabled,
+                )
+
+                check = cloudtrail_cloudwatch_logging_enabled()
+                result = check.execute()
+                assert len(result) == 0
 
     @mock_cloudtrail
     @mock_s3
@@ -100,16 +133,20 @@ class Test_cloudtrail_cloudwatch_logging_enabled:
                         assert report.status == "PASS"
                         assert search(
                             report.status_extended,
-                            f"Single region trail {trail_name_us} has been logging the last 24h",
+                            f"Single region trail {trail_name_us} has been logging the last 24h.",
                         )
+                        assert report.resource_tags == []
+                        assert report.region == "us-east-1"
                     if report.resource_id == trail_name_eu:
                         assert report.resource_id == trail_name_eu
                         assert report.resource_arn == trail_eu["TrailARN"]
                         assert report.status == "FAIL"
                         assert search(
                             report.status_extended,
-                            f"Single region trail {trail_name_eu} is not logging in the last 24h",
+                            f"Single region trail {trail_name_eu} is not logging in the last 24h.",
                         )
+                        assert report.resource_tags == []
+                        assert report.region == "eu-west-1"
 
     @mock_cloudtrail
     @mock_s3
@@ -176,8 +213,9 @@ class Test_cloudtrail_cloudwatch_logging_enabled:
                         assert report.status == "PASS"
                         assert search(
                             report.status_extended,
-                            f"Multiregion trail {trail_name_us} has been logging the last 24h",
+                            f"Multiregion trail {trail_name_us} has been logging the last 24h.",
                         )
+                        assert report.resource_tags == []
                     if (
                         report.resource_id == trail_name_eu
                         and report.region == "eu-west-1"
@@ -187,8 +225,9 @@ class Test_cloudtrail_cloudwatch_logging_enabled:
                         assert report.status == "FAIL"
                         assert search(
                             report.status_extended,
-                            f"Single region trail {trail_name_eu} is not logging in the last 24h",
+                            f"Single region trail {trail_name_eu} is not logging in the last 24h.",
                         )
+                        assert report.resource_tags == []
 
     @mock_cloudtrail
     @mock_s3
@@ -253,13 +292,15 @@ class Test_cloudtrail_cloudwatch_logging_enabled:
                         assert report.status == "PASS"
                         assert (
                             report.status_extended
-                            == f"Single region trail {trail_name_us} has been logging the last 24h"
+                            == f"Single region trail {trail_name_us} has been logging the last 24h."
                         )
+                        assert report.resource_tags == []
                     if report.resource_id == trail_name_eu:
                         assert report.resource_id == trail_name_eu
                         assert report.resource_arn == trail_eu["TrailARN"]
                         assert report.status == "FAIL"
                         assert (
                             report.status_extended
-                            == f"Single region trail {trail_name_eu} is not logging in the last 24h or not configured to deliver logs"
+                            == f"Single region trail {trail_name_eu} is not logging in the last 24h or not configured to deliver logs."
                         )
+                        assert report.resource_tags == []

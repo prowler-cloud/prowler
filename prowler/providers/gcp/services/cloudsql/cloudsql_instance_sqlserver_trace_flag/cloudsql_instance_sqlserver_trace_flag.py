@@ -13,11 +13,11 @@ class cloudsql_instance_sqlserver_trace_flag(Check):
                 report.resource_name = instance.name
                 report.location = instance.region
                 report.status = "PASS"
-                report.status_extended = f"SQL Server Instance {instance.name} has '3625 (trace flag)' flag set to 'on'"
+                report.status_extended = f"SQL Server Instance {instance.name} has '3625 (trace flag)' flag set to 'on'."
                 for flag in instance.flags:
                     if flag["name"] == "3625" and flag["value"] == "off":
                         report.status = "FAIL"
-                        report.status_extended = f"SQL Server Instance {instance.name} has '3625 (trace flag)' flag set to 'off'"
+                        report.status_extended = f"SQL Server Instance {instance.name} has '3625 (trace flag)' flag set to 'off'."
                         break
                 findings.append(report)
 

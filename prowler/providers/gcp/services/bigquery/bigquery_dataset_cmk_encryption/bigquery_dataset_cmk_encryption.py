@@ -12,12 +12,10 @@ class bigquery_dataset_cmk_encryption(Check):
             report.resource_name = dataset.name
             report.location = dataset.region
             report.status = "PASS"
-            report.status_extended = (
-                f"Dataset {dataset.name} is encrypted with Customer-Managed Keys (CMKs)"
-            )
+            report.status_extended = f"Dataset {dataset.name} is encrypted with Customer-Managed Keys (CMKs)."
             if not dataset.cmk_encryption:
                 report.status = "FAIL"
-                report.status_extended = f"Dataset {dataset.name} is not encrypted with Customer-Managed Keys (CMKs)"
+                report.status_extended = f"Dataset {dataset.name} is not encrypted with Customer-Managed Keys (CMKs)."
             findings.append(report)
 
         return findings

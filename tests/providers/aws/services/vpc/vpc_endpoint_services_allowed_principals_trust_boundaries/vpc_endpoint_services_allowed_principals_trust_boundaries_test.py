@@ -6,6 +6,7 @@ from mock import patch
 from moto import mock_ec2, mock_elbv2
 
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
+from prowler.providers.common.models import Audit_Metadata
 
 AWS_REGION = "us-east-1"
 AWS_ACCOUNT_NUMBER = "123456789012"
@@ -53,19 +54,34 @@ class Test_vpc_endpoint_services_allowed_principals_trust_boundaries:
             profile_region=None,
             credentials=None,
             assumed_role_info=None,
-            audited_regions=["us-east-1", "eu-west-1"],
+            audited_regions=[AWS_REGION],
             organizations_metadata=None,
             audit_resources=None,
             mfa_enabled=False,
+            audit_metadata=Audit_Metadata(
+                services_scanned=0,
+                expected_checks=[],
+                completed_checks=0,
+                audit_progress=0,
+            ),
         )
 
         return audit_info
 
     @mock_ec2
     def test_vpc_no_endpoint_services(self):
+        # VPC Endpoint Services
+        ec2_client = client("ec2", region_name=AWS_REGION)
+        endpoint_id = ec2_client.describe_vpc_endpoint_services()["ServiceDetails"][0][
+            "ServiceId"
+        ]
+        endpoint_arn = f"arn:aws:ec2:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:vpc-endpoint-service/{endpoint_id}"
+
         from prowler.providers.aws.services.vpc.vpc_service import VPC
 
         current_audit_info = self.set_mocked_audit_info()
+        # Set config variable
+        current_audit_info.audit_config = {"trusted_account_ids": []}
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -83,7 +99,16 @@ class Test_vpc_endpoint_services_allowed_principals_trust_boundaries:
                 check = vpc_endpoint_services_allowed_principals_trust_boundaries()
                 result = check.execute()
 
-                assert len(result) == 2  # one endpoint per region
+                assert len(result) == 1  # one endpoint per region
+                assert result[0].status == "PASS"
+                assert (
+                    result[0].status_extended
+                    == f"VPC Endpoint Service {endpoint_id} has no allowed principals."
+                )
+                assert result[0].resource_id == endpoint_id
+                assert result[0].resource_arn == endpoint_arn
+                assert result[0].resource_tags is None
+                assert result[0].region == AWS_REGION
 
     @mock_ec2
     @mock_elbv2
@@ -101,21 +126,27 @@ class Test_vpc_endpoint_services_allowed_principals_trust_boundaries:
             AvailabilityZone=f"{AWS_REGION}a",
         )
         lb_name = "lb_vpce-test"
-        _ = elbv2_client.create_load_balancer(
+        lb_arn = elbv2_client.create_load_balancer(
             Name=lb_name,
             Subnets=[subnet["Subnet"]["SubnetId"]],
             Scheme="internal",
             Type="network",
         )["LoadBalancers"][0]["LoadBalancerArn"]
 
-        # Service is mocked until moto fix the issue https://github.com/spulec/moto/issues/5605
-        # service = ec2_client.create_vpc_endpoint_service_configuration(
-        #     NetworkLoadBalancerArns=[lb_arn]
-        # )
+        _ = ec2_client.create_vpc_endpoint_service_configuration(
+            NetworkLoadBalancerArns=[lb_arn]
+        )
+
+        endpoint_id = ec2_client.describe_vpc_endpoint_services()["ServiceDetails"][0][
+            "ServiceId"
+        ]
+        endpoint_arn = f"arn:aws:ec2:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:vpc-endpoint-service/{endpoint_id}"
 
         from prowler.providers.aws.services.vpc.vpc_service import VPC
 
         current_audit_info = self.set_mocked_audit_info()
+        # Set config variable
+        current_audit_info.audit_config = {"trusted_account_ids": []}
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -133,15 +164,13 @@ class Test_vpc_endpoint_services_allowed_principals_trust_boundaries:
                 check = vpc_endpoint_services_allowed_principals_trust_boundaries()
                 result = check.execute()
 
-                assert len(result) == 2  # one per region
+                assert len(result) == 1
                 assert result[0].status == "PASS"
                 assert (
                     result[0].status_extended
                     == f"VPC Endpoint Service {ec2_client.describe_vpc_endpoint_services()['ServiceDetails'][0]['ServiceId']} has no allowed principals."
                 )
-                assert (
-                    result[0].resource_id
-                    == ec2_client.describe_vpc_endpoint_services()["ServiceDetails"][0][
-                        "ServiceId"
-                    ]
-                )
+                assert result[0].resource_id == endpoint_id
+                assert result[0].resource_arn == endpoint_arn
+                assert result[0].resource_tags is None
+                assert result[0].region == AWS_REGION

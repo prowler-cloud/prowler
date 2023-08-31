@@ -13,19 +13,19 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.9"]
+        python-version: ["3.9", "3.10", "3.11"]
 
     steps:
       - uses: actions/checkout@v3
       - name: Install poetry
         run: |
-         python -m pip install --upgrade pip
-         pipx install poetry
+          python -m pip install --upgrade pip
+          pipx install poetry
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
-          cache: 'poetry'
+          cache: "poetry"
       - name: Install dependencies
         run: |
           poetry install
@@ -61,4 +61,8 @@ jobs:
           /tmp/hadolint Dockerfile --ignore=DL3013
       - name: Test with pytest
         run: |
-          poetry run pytest tests -n auto
+          poetry run pytest -n auto --cov=./prowler --cov-report=xml tests
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v3
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}

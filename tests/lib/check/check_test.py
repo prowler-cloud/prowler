@@ -12,6 +12,7 @@ from prowler.lib.check.check import (
     exclude_checks_to_run,
     exclude_services_to_run,
     list_categories,
+    list_checks_json,
     list_modules,
     list_services,
     parse_checks_from_file,
@@ -27,6 +28,7 @@ from prowler.providers.aws.aws_provider import (
     get_regions_from_audit_resources,
 )
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
+from prowler.providers.common.models import Audit_Metadata
 
 AWS_ACCOUNT_NUMBER = "123456789012"
 AWS_REGION = "us-east-1"
@@ -136,6 +138,125 @@ def mock_recover_checks_from_aws_provider_lambda_service(*_):
     ]
 
 
+def mock_recover_checks_from_aws_provider_elb_service(*_):
+    return [
+        (
+            "elb_insecure_ssl_ciphers",
+            "/root_dir/fake_path/elb/elb_insecure_ssl_ciphers",
+        ),
+        (
+            "elb_internet_facing",
+            "/root_dir/fake_path/elb/elb_internet_facing",
+        ),
+        (
+            "elb_logging_enabled",
+            "/root_dir/fake_path/elb/elb_logging_enabled",
+        ),
+    ]
+
+
+def mock_recover_checks_from_aws_provider_efs_service(*_):
+    return [
+        (
+            "efs_encryption_at_rest_enabled",
+            "/root_dir/fake_path/efs/efs_encryption_at_rest_enabled",
+        ),
+        (
+            "efs_have_backup_enabled",
+            "/root_dir/fake_path/efs/efs_have_backup_enabled",
+        ),
+        (
+            "efs_not_publicly_accessible",
+            "/root_dir/fake_path/efs/efs_not_publicly_accessible",
+        ),
+    ]
+
+
+def mock_recover_checks_from_aws_provider_iam_service(*_):
+    return [
+        (
+            "iam_customer_attached_policy_no_administrative_privileges",
+            "/root_dir/fake_path/iam/iam_customer_attached_policy_no_administrative_privileges",
+        ),
+        (
+            "iam_check_saml_providers_sts",
+            "/root_dir/fake_path/iam/iam_check_saml_providers_sts",
+        ),
+        (
+            "iam_password_policy_minimum_length_14",
+            "/root_dir/fake_path/iam/iam_password_policy_minimum_length_14",
+        ),
+    ]
+
+
+def mock_recover_checks_from_aws_provider_s3_service(*_):
+    return [
+        (
+            "s3_account_level_public_access_blocks",
+            "/root_dir/fake_path/s3/s3_account_level_public_access_blocks",
+        ),
+        (
+            "s3_bucket_acl_prohibited",
+            "/root_dir/fake_path/s3/s3_bucket_acl_prohibited",
+        ),
+        (
+            "s3_bucket_policy_public_write_access",
+            "/root_dir/fake_path/s3/s3_bucket_policy_public_write_access",
+        ),
+    ]
+
+
+def mock_recover_checks_from_aws_provider_cloudwatch_service(*_):
+    return [
+        (
+            "cloudwatch_changes_to_network_acls_alarm_configured",
+            "/root_dir/fake_path/cloudwatch/cloudwatch_changes_to_network_acls_alarm_configured",
+        ),
+        (
+            "cloudwatch_changes_to_network_gateways_alarm_configured",
+            "/root_dir/cloudwatch/cloudwatch_changes_to_network_gateways_alarm_configured",
+        ),
+        (
+            "cloudwatch_changes_to_network_route_tables_alarm_configured",
+            "/root_dir/fake_path/cloudwatch/cloudwatch_changes_to_network_route_tables_alarm_configured",
+        ),
+    ]
+
+
+def mock_recover_checks_from_aws_provider_ec2_service(*_):
+    return [
+        (
+            "ec2_securitygroup_allow_ingress_from_internet_to_any_port",
+            "/root_dir/fake_path/ec2/ec2_securitygroup_allow_ingress_from_internet_to_any_port",
+        ),
+        (
+            "ec2_networkacl_allow_ingress_any_port",
+            "/root_dir/fake_path/ec2/ec2_networkacl_allow_ingress_any_port",
+        ),
+        (
+            "ec2_ami_public",
+            "/root_dir/fake_path/ec2/ec2_ami_public",
+        ),
+    ]
+
+
+def mock_recover_checks_from_aws_provider_rds_service(*_):
+    return [
+        (
+            "rds_instance_backup_enabled",
+            "/root_dir/fake_path/rds/rds_instance_backup_enabled",
+        ),
+        (
+            "rds_instance_deletion_protection",
+            "/root_dir/fake_path/rds/rds_instance_deletion_protection",
+        ),
+        (
+            "rds_snapshots_public_access",
+            "/root_dir/fake_path/rds/rds_snapshots_public_access",
+        ),
+    ]
+
+
 class Test_Check:
     def set_mocked_audit_info(self):
         audit_info = AWS_Audit_Info(
@@ -158,6 +279,12 @@ class Test_Check:
             organizations_metadata=None,
             audit_resources=None,
             mfa_enabled=False,
+            audit_metadata=Audit_Metadata(
+                services_scanned=0,
+                expected_checks=[],
+                completed_checks=0,
+                audit_progress=0,
+            ),
         )
         return audit_info
 
@@ -375,9 +502,43 @@ class Test_Check:
 
     @patch(
         "prowler.lib.check.check.recover_checks_from_provider",
+        new=mock_recover_checks_from_aws_provider_elb_service,
+    )
+    def test_get_checks_from_input_arn_elb(self):
+        audit_resources = [
+            f"arn:aws:elasticloadbalancing:us-east-1:{AWS_ACCOUNT_NUMBER}:loadbalancer/test"
+        ]
+        provider = "aws"
+        expected_checks = [
+            "elb_insecure_ssl_ciphers",
+            "elb_internet_facing",
+            "elb_logging_enabled",
+        ]
+        recovered_checks = get_checks_from_input_arn(audit_resources, provider)
+        assert recovered_checks == expected_checks
+
+    @patch(
+        "prowler.lib.check.check.recover_checks_from_provider",
+        new=mock_recover_checks_from_aws_provider_efs_service,
+    )
+    def test_get_checks_from_input_arn_efs(self):
+        audit_resources = [
+            f"arn:aws:elasticfilesystem:us-east-1:{AWS_ACCOUNT_NUMBER}:file-system/fs-01234567"
+        ]
+        provider = "aws"
+        expected_checks = [
+            "efs_encryption_at_rest_enabled",
+            "efs_have_backup_enabled",
+            "efs_not_publicly_accessible",
+        ]
+        recovered_checks = get_checks_from_input_arn(audit_resources, provider)
+        assert recovered_checks == expected_checks
+
+    @patch(
+        "prowler.lib.check.check.recover_checks_from_provider",
         new=mock_recover_checks_from_aws_provider_lambda_service,
     )
-    def test_get_checks_from_input_arn(self):
+    def test_get_checks_from_input_arn_lambda(self):
         audit_resources = ["arn:aws:lambda:us-east-1:123456789:function:test-lambda"]
         provider = "aws"
         expected_checks = [
@@ -388,18 +549,119 @@ class Test_Check:
         recovered_checks = get_checks_from_input_arn(audit_resources, provider)
         assert recovered_checks == expected_checks
 
-    def test_get_regions_from_audit_resources(self):
+    @patch(
+        "prowler.lib.check.check.recover_checks_from_provider",
+        new=mock_recover_checks_from_aws_provider_iam_service,
+    )
+    def test_get_checks_from_input_arn_iam(self):
+        audit_resources = [f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:user/user-name"]
+        provider = "aws"
+        expected_checks = [
+            "iam_check_saml_providers_sts",
+            "iam_customer_attached_policy_no_administrative_privileges",
+            "iam_password_policy_minimum_length_14",
+        ]
+        recovered_checks = get_checks_from_input_arn(audit_resources, provider)
+        assert recovered_checks == expected_checks
+
+    @patch(
+        "prowler.lib.check.check.recover_checks_from_provider",
+        new=mock_recover_checks_from_aws_provider_s3_service,
+    )
+    def test_get_checks_from_input_arn_s3(self):
+        audit_resources = ["arn:aws:s3:::bucket-name"]
+        provider = "aws"
+        expected_checks = [
+            "s3_account_level_public_access_blocks",
+            "s3_bucket_acl_prohibited",
+            "s3_bucket_policy_public_write_access",
+        ]
+        recovered_checks = get_checks_from_input_arn(audit_resources, provider)
+        assert recovered_checks == expected_checks
+
+    @patch(
+        "prowler.lib.check.check.recover_checks_from_provider",
+        new=mock_recover_checks_from_aws_provider_cloudwatch_service,
+    )
+    def test_get_checks_from_input_arn_cloudwatch(self):
         audit_resources = [
-            "arn:aws:lambda:us-east-1:123456789:function:test-lambda",
-            "arn:aws:iam::106908755756:policy/test",
-            "arn:aws:ec2:eu-west-1:106908755756:security-group/sg-test",
+            f"arn:aws:logs:us-east-1:{AWS_ACCOUNT_NUMBER}:destination:testDestination"
         ]
-        expected_regions = [
-            "us-east-1",
-            "eu-west-1",
+        provider = "aws"
+        expected_checks = [
+            "cloudwatch_changes_to_network_acls_alarm_configured",
+            "cloudwatch_changes_to_network_gateways_alarm_configured",
+            "cloudwatch_changes_to_network_route_tables_alarm_configured",
         ]
+        recovered_checks = get_checks_from_input_arn(audit_resources, provider)
+        assert recovered_checks == expected_checks
+
+    @patch(
+        "prowler.lib.check.check.recover_checks_from_provider",
+        new=mock_recover_checks_from_aws_provider_ec2_service,
+    )
+    def test_get_checks_from_input_arn_ec2_security_group(self):
+        audit_resources = [
+            f"arn:aws:ec2:us-east-1:{AWS_ACCOUNT_NUMBER}:security-group/sg-1111111111"
+        ]
+        provider = "aws"
+        expected_checks = ["ec2_securitygroup_allow_ingress_from_internet_to_any_port"]
+        recovered_checks = get_checks_from_input_arn(audit_resources, provider)
+        assert recovered_checks == expected_checks
+
+    @patch(
+        "prowler.lib.check.check.recover_checks_from_provider",
+        new=mock_recover_checks_from_aws_provider_ec2_service,
+    )
+    def test_get_checks_from_input_arn_ec2_acl(self):
+        audit_resources = [
+            f"arn:aws:ec2:us-west-2:{AWS_ACCOUNT_NUMBER}:network-acl/acl-1"
+        ]
+        provider = "aws"
+        expected_checks = ["ec2_networkacl_allow_ingress_any_port"]
+        recovered_checks = get_checks_from_input_arn(audit_resources, provider)
+        assert recovered_checks == expected_checks
+
+    @patch(
+        "prowler.lib.check.check.recover_checks_from_provider",
+        new=mock_recover_checks_from_aws_provider_rds_service,
+    )
+    def test_get_checks_from_input_arn_rds_snapshots(self):
+        audit_resources = [
+            f"arn:aws:rds:us-east-2:{AWS_ACCOUNT_NUMBER}:snapshot:rds:snapshot-1"
+        ]
+        provider = "aws"
+        expected_checks = ["rds_snapshots_public_access"]
+        recovered_checks = get_checks_from_input_arn(audit_resources, provider)
+        assert recovered_checks == expected_checks
+
+    @patch(
+        "prowler.lib.check.check.recover_checks_from_provider",
+        new=mock_recover_checks_from_aws_provider_ec2_service,
+    )
+    def test_get_checks_from_input_arn_ec2_ami(self):
+        audit_resources = [f"arn:aws:ec2:us-west-2:{AWS_ACCOUNT_NUMBER}:image/ami-1"]
+        provider = "aws"
+        expected_checks = ["ec2_ami_public"]
+        recovered_checks = get_checks_from_input_arn(audit_resources, provider)
+        assert recovered_checks == expected_checks
+
+    def test_get_regions_from_audit_resources_with_regions(self):
+        audit_resources = [
+            f"arn:aws:lambda:us-east-1:{AWS_ACCOUNT_NUMBER}:function:test-lambda",
+            f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:policy/test",
+            f"arn:aws:ec2:eu-west-1:{AWS_ACCOUNT_NUMBER}:security-group/sg-test",
+            "arn:aws:s3:::bucket-name",
+            "arn:aws:apigateway:us-east-2::/restapis/api-id/stages/stage-name",
+        ]
+        expected_regions = {"us-east-1", "eu-west-1", "us-east-2"}
         recovered_regions = get_regions_from_audit_resources(audit_resources)
         assert recovered_regions == expected_regions
+
+    def test_get_regions_from_audit_resources_without_regions(self):
+        audit_resources = ["arn:aws:s3:::bucket-name"]
+        recovered_regions = get_regions_from_audit_resources(audit_resources)
+        assert not recovered_regions
 
     # def test_parse_checks_from_compliance_framework_two(self):
     #     test_case = {
@@ -525,3 +787,20 @@ class Test_Check:
         assert audit_metadata.services_scanned == 1
         assert audit_metadata.expected_checks == expected_checks
         assert audit_metadata.completed_checks == 1
+
+    def test_list_checks_json_aws_lambda_and_s3(self):
+        provider = "aws"
+        check_list = {
+            "awslambda_function_invoke_api_operations_cloudtrail_logging_enabled",
+            "awslambda_function_no_secrets_in_code",
+            "awslambda_function_no_secrets_in_variables",
+            "awslambda_function_not_publicly_accessible",
+            "awslambda_function_url_cors_policy",
+            "awslambda_function_url_public",
+            "awslambda_function_using_supported_runtimes",
+        }
+        checks_json = list_checks_json(provider, sorted(check_list))
+        assert (
+            checks_json
+            == '{\n  "aws": [\n    "awslambda_function_invoke_api_operations_cloudtrail_logging_enabled",\n    "awslambda_function_no_secrets_in_code",\n    "awslambda_function_no_secrets_in_variables",\n    "awslambda_function_not_publicly_accessible",\n    "awslambda_function_url_cors_policy",\n    "awslambda_function_url_public",\n    "awslambda_function_using_supported_runtimes"\n  ]\n}'
+        )

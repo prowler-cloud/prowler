@@ -12,10 +12,10 @@ class sagemaker_notebook_instance_root_access_disabled(Check):
             report.resource_arn = notebook_instance.arn
             report.resource_tags = notebook_instance.tags
             report.status = "PASS"
-            report.status_extended = f"Sagemaker notebook instance {notebook_instance.name} has root access disabled"
+            report.status_extended = f"Sagemaker notebook instance {notebook_instance.name} has root access disabled."
             if notebook_instance.root_access:
                 report.status = "FAIL"
-                report.status_extended = f"Sagemaker notebook instance {notebook_instance.name} has root access enabled"
+                report.status_extended = f"Sagemaker notebook instance {notebook_instance.name} has root access enabled."
 
             findings.append(report)
 

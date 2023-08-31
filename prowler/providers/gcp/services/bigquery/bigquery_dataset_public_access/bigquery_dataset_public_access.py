@@ -13,12 +13,12 @@ class bigquery_dataset_public_access(Check):
             report.location = dataset.region
             report.status = "PASS"
             report.status_extended = (
-                f"Dataset {dataset.name} is not publicly accessible"
+                f"Dataset {dataset.name} is not publicly accessible."
             )
             if dataset.public:
                 report.status = "FAIL"
                 report.status_extended = (
-                    f"Dataset {dataset.name} is publicly accessible!"
+                    f"Dataset {dataset.name} is publicly accessible."
                 )
             findings.append(report)
 

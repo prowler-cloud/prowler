@@ -23,12 +23,16 @@ prowler aws -R arn:aws:iam::<account_id>:role/<role_name>
 prowler aws -T/--session-duration <seconds> -I/--external-id <external_id> -R arn:aws:iam::<account_id>:role/<role_name>
 ```
 
+## STS Endpoint Region
+
+If you are using Prowler in AWS regions that are not enabled by default you need to use the argument `--sts-endpoint-region` to point the AWS STS API calls `assume-role` and `get-caller-identity` to the non-default region, e.g.: `prowler aws --sts-endpoint-region eu-south-2`.
+
 ## Role MFA
 
 If your IAM Role has MFA configured you can use `--mfa` along with  `-R`/`--role <role_arn>` and Prowler will ask you to input the following values to get a new temporary session for the IAM Role provided:
+
 - ARN of your MFA device
 - TOTP (Time-Based One-Time Password)
-
 
 ## Create Role
 

@@ -23,7 +23,9 @@
       "Url": "https://cloud.google.com/sql/docs/mysql/connection-org-policy"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "internet-exposed"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

@@ -7,6 +7,7 @@ from prowler.providers.aws.services.organizations.organizations_service import (
     Organization,
     Policy,
 )
+from prowler.providers.common.models import Audit_Metadata
 
 AWS_REGION = "us-east-1"
 AWS_ACCOUNT_NUMBER = "123456789012"
@@ -38,6 +39,12 @@ class Test_organizations_tags_policies_enabled_and_attached:
             organizations_metadata=None,
             audit_resources=None,
             mfa_enabled=False,
+            audit_metadata=Audit_Metadata(
+                services_scanned=0,
+                expected_checks=[],
+                completed_checks=0,
+                audit_progress=0,
+            ),
         )
         return audit_info
 
@@ -75,7 +82,7 @@ class Test_organizations_tags_policies_enabled_and_attached:
                 assert result[0].status == "FAIL"
                 assert (
                     result[0].status_extended
-                    == "AWS Organizations is not in-use for this AWS Account"
+                    == "AWS Organizations is not in-use for this AWS Account."
                 )
                 assert result[0].resource_id == "AWS Organization"
                 assert result[0].resource_arn == ""
@@ -126,7 +133,7 @@ class Test_organizations_tags_policies_enabled_and_attached:
                 assert result[0].status == "FAIL"
                 assert (
                     result[0].status_extended
-                    == "AWS Organization o-1234567890 has tag policies enabled but not attached"
+                    == "AWS Organization o-1234567890 has tag policies enabled but not attached."
                 )
                 assert result[0].resource_id == "o-1234567890"
                 assert (
@@ -180,7 +187,7 @@ class Test_organizations_tags_policies_enabled_and_attached:
                 assert result[0].status == "PASS"
                 assert (
                     result[0].status_extended
-                    == "AWS Organization o-1234567890 has tag policies enabled and attached to an AWS account"
+                    == "AWS Organization o-1234567890 has tag policies enabled and attached to an AWS account."
                 )
                 assert result[0].resource_id == "o-1234567890"
                 assert (

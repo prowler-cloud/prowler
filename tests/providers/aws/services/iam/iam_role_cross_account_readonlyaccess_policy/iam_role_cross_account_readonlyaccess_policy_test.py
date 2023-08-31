@@ -6,6 +6,7 @@ from moto import mock_iam
 
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.aws.services.iam.iam_service import Role
+from prowler.providers.common.models import Audit_Metadata
 
 AWS_REGION = "us-east-1"
 AWS_ACCOUNT_ID = "123456789012"
@@ -33,6 +34,12 @@ class Test_iam_role_cross_account_readonlyaccess_policy:
             organizations_metadata=None,
             audit_resources=None,
             mfa_enabled=False,
+            audit_metadata=Audit_Metadata(
+                services_scanned=0,
+                expected_checks=[],
+                completed_checks=0,
+                audit_progress=0,
+            ),
         )
 
         return audit_info
@@ -97,7 +104,7 @@ class Test_iam_role_cross_account_readonlyaccess_policy:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "IAM Role test has not ReadOnlyAccess policy"
+                == "IAM Role test does not have ReadOnlyAccess policy."
             )
             assert result[0].resource_id == "test"
             assert result[0].resource_arn == response["Role"]["Arn"]
@@ -146,7 +153,7 @@ class Test_iam_role_cross_account_readonlyaccess_policy:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "IAM Role test has read-only access but is not cross account"
+                == "IAM Role test has read-only access but is not cross account."
             )
             assert result[0].resource_id == "test"
             assert result[0].resource_arn == response["Role"]["Arn"]
@@ -195,7 +202,7 @@ class Test_iam_role_cross_account_readonlyaccess_policy:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "IAM Role test gives cross account read-only access!"
+                == "IAM Role test gives cross account read-only access."
             )
             assert result[0].resource_id == "test"
             assert result[0].resource_arn == response["Role"]["Arn"]
@@ -244,7 +251,7 @@ class Test_iam_role_cross_account_readonlyaccess_policy:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "IAM Role test gives cross account read-only access!"
+                == "IAM Role test gives cross account read-only access."
             )
             assert result[0].resource_id == "test"
             assert result[0].resource_arn == response["Role"]["Arn"]
@@ -272,11 +279,13 @@ class Test_iam_role_cross_account_readonlyaccess_policy:
             )
         )
 
+        current_audit_info = self.set_mocked_audit_info()
+
         with mock.patch(
-            "prowler.providers.aws.services.iam.iam_service.IAM",
-            new=iam_client,
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=current_audit_info,
         ), mock.patch(
-            "prowler.providers.aws.services.iam.iam_client.iam_client",
+            "prowler.providers.aws.services.iam.iam_role_cross_account_readonlyaccess_policy.iam_role_cross_account_readonlyaccess_policy.iam_client",
             new=iam_client,
         ):
             # Test Check

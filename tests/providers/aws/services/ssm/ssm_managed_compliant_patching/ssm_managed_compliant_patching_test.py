@@ -58,7 +58,7 @@ class Test_ssm_managed_compliant_patching:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"EC2 managed instance {instance_id} is compliant"
+                == f"EC2 managed instance {instance_id} is compliant."
             )
 
     def test_compliance_resources_non_compliant(self):
@@ -91,5 +91,5 @@ class Test_ssm_managed_compliant_patching:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"EC2 managed instance {instance_id} is non-compliant"
+                == f"EC2 managed instance {instance_id} is non-compliant."
             )

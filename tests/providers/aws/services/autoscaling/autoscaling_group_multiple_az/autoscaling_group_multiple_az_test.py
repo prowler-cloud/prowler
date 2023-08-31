@@ -4,6 +4,7 @@ from boto3 import client, session
 from moto import mock_autoscaling
 
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
+from prowler.providers.common.models import Audit_Metadata
 
 AWS_REGION = "us-east-1"
 AWS_ACCOUNT_NUMBER = "123456789012"
@@ -31,6 +32,12 @@ class Test_autoscaling_group_multiple_az:
             organizations_metadata=None,
             audit_resources=None,
             mfa_enabled=False,
+            audit_metadata=Audit_Metadata(
+                services_scanned=0,
+                expected_checks=[],
+                completed_checks=0,
+                audit_progress=0,
+            ),
         )
 
         return audit_info
@@ -73,14 +80,19 @@ class Test_autoscaling_group_multiple_az:
             KeyName="the_keys",
             SecurityGroups=["default", "default2"],
         )
+        autoscaling_group_name = "my-autoscaling-group"
         autoscaling_client.create_auto_scaling_group(
-            AutoScalingGroupName="my-autoscaling-group",
+            AutoScalingGroupName=autoscaling_group_name,
             LaunchConfigurationName="test",
             MinSize=0,
             MaxSize=0,
             DesiredCapacity=0,
             AvailabilityZones=["us-east-1a", "us-east-1b"],
         )
+
+        autoscaling_group_arn = autoscaling_client.describe_auto_scaling_groups(
+            AutoScalingGroupNames=[autoscaling_group_name]
+        )["AutoScalingGroups"][0]["AutoScalingGroupARN"]
 
         from prowler.providers.aws.services.autoscaling.autoscaling_service import (
             AutoScaling,
@@ -107,9 +119,11 @@ class Test_autoscaling_group_multiple_az:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "Autoscaling group my-autoscaling-group has multiple availability zones."
+                == f"Autoscaling group {autoscaling_group_name} has multiple availability zones."
             )
-            assert result[0].resource_id == "my-autoscaling-group"
+            assert result[0].resource_id == autoscaling_group_name
+            assert result[0].resource_arn == autoscaling_group_arn
+            assert result[0].region == AWS_REGION
             assert result[0].resource_tags == []
 
     @mock_autoscaling
@@ -122,14 +136,19 @@ class Test_autoscaling_group_multiple_az:
             KeyName="the_keys",
             SecurityGroups=["default", "default2"],
         )
+        autoscaling_group_name = "my-autoscaling-group"
         autoscaling_client.create_auto_scaling_group(
-            AutoScalingGroupName="my-autoscaling-group",
+            AutoScalingGroupName=autoscaling_group_name,
             LaunchConfigurationName="test",
             MinSize=0,
             MaxSize=0,
             DesiredCapacity=0,
             AvailabilityZones=["us-east-1a"],
         )
+
+        autoscaling_group_arn = autoscaling_client.describe_auto_scaling_groups(
+            AutoScalingGroupNames=[autoscaling_group_name]
+        )["AutoScalingGroups"][0]["AutoScalingGroupARN"]
 
         from prowler.providers.aws.services.autoscaling.autoscaling_service import (
             AutoScaling,
@@ -156,10 +175,11 @@ class Test_autoscaling_group_multiple_az:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "Autoscaling group my-autoscaling-group has only one availability zones."
+                == f"Autoscaling group {autoscaling_group_name} has only one availability zones."
             )
-            assert result[0].resource_id == "my-autoscaling-group"
+            assert result[0].resource_id == autoscaling_group_name
             assert result[0].resource_tags == []
+            assert result[0].resource_arn == autoscaling_group_arn
 
     @mock_autoscaling
     def test_groups_witd_and_without(self):
@@ -171,6 +191,7 @@ class Test_autoscaling_group_multiple_az:
             KeyName="the_keys",
             SecurityGroups=["default", "default2"],
         )
+        autoscaling_group_name_1 = "asg-multiple"
         autoscaling_client.create_auto_scaling_group(
             AutoScalingGroupName="asg-multiple",
             LaunchConfigurationName="test",
@@ -179,6 +200,11 @@ class Test_autoscaling_group_multiple_az:
             DesiredCapacity=0,
             AvailabilityZones=["us-east-1a", "us-east-1b"],
         )
+        autoscaling_group_arn_1 = autoscaling_client.describe_auto_scaling_groups(
+            AutoScalingGroupNames=[autoscaling_group_name_1]
+        )["AutoScalingGroups"][0]["AutoScalingGroupARN"]
+
+        autoscaling_group_name_2 = "asg-single"
         autoscaling_client.create_auto_scaling_group(
             AutoScalingGroupName="asg-single",
             LaunchConfigurationName="test",
@@ -187,6 +213,9 @@ class Test_autoscaling_group_multiple_az:
             DesiredCapacity=0,
             AvailabilityZones=["us-east-1a"],
         )
+        autoscaling_group_arn_2 = autoscaling_client.describe_auto_scaling_groups(
+            AutoScalingGroupNames=[autoscaling_group_name_2]
+        )["AutoScalingGroups"][0]["AutoScalingGroupARN"]
 
         from prowler.providers.aws.services.autoscaling.autoscaling_service import (
             AutoScaling,
@@ -211,17 +240,21 @@ class Test_autoscaling_group_multiple_az:
 
             assert len(result) == 2
             for check in result:
-                if check.resource_id == "asg-multiple":
+                if check.resource_id == autoscaling_group_name_1:
                     assert check.status == "PASS"
                     assert (
                         check.status_extended
-                        == "Autoscaling group asg-multiple has multiple availability zones."
+                        == f"Autoscaling group {autoscaling_group_name_1} has multiple availability zones."
                     )
+                    assert check.resource_arn == autoscaling_group_arn_1
                     assert check.resource_tags == []
-                if check.resource_id == "asg-single":
+                    assert check.region == AWS_REGION
+                if check.resource_id == autoscaling_group_name_2:
                     assert check.status == "FAIL"
                     assert (
                         check.status_extended
-                        == "Autoscaling group asg-single has only one availability zones."
+                        == f"Autoscaling group {autoscaling_group_name_2} has only one availability zones."
                     )
                     assert check.resource_tags == []
+                    assert check.resource_arn == autoscaling_group_arn_2
+                    assert check.region == AWS_REGION

@@ -3,7 +3,7 @@ import sys
 from botocore.config import Config
 from colorama import Fore, Style
 
-from prowler.config.config import boto3_user_agent_extra
+from prowler.config.config import load_and_validate_config_file
 from prowler.lib.logger import logger
 from prowler.providers.aws.aws_provider import (
     AWS_Provider,
@@ -81,15 +81,8 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
         input_session_duration = arguments.get("session_duration")
         input_external_id = arguments.get("external_id")
 
-        # Since the range(i,j) goes from i to j-1 we have to j+1
-        if input_session_duration and input_session_duration not in range(900, 43201):
-            raise Exception("Value for -T option must be between 900 and 43200")
-
-        if (
-            input_session_duration and input_session_duration != 3600
-        ) or input_external_id:
-            if not input_role:
-                raise Exception("To use -I/-T options -R option is needed")
+        # STS Endpoint Region
+        sts_endpoint_region = arguments.get("sts_endpoint_region")
 
         # MFA Configuration (false by default)
         input_mfa = arguments.get("mfa")
@@ -111,7 +104,6 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
                     "max_attempts": aws_retries_max_attempts,
                     "mode": "standard",
                 },
-                user_agent_extra=boto3_user_agent_extra,
             )
             # Merge the new configuration
             new_boto3_config = current_audit_info.session_config.merge(config)
@@ -128,7 +120,7 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
         logger.info("Validating credentials ...")
         # Verificate if we have valid credentials
         caller_identity = validate_aws_credentials(
-            current_audit_info.original_session, input_regions
+            current_audit_info.original_session, input_regions, sts_endpoint_region
         )
 
         logger.info("Credentials validated")
@@ -142,38 +134,6 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
             caller_identity["Arn"]
         ).partition
         current_audit_info.audited_account_arn = f"arn:{current_audit_info.audited_partition}:iam::{current_audit_info.audited_account}:root"
-
-        logger.info("Checking if organizations role assumption is needed ...")
-        if organizations_role_arn:
-            current_audit_info.assumed_role_info.role_arn = organizations_role_arn
-            current_audit_info.assumed_role_info.session_duration = (
-                input_session_duration
-            )
-            current_audit_info.assumed_role_info.external_id = input_external_id
-            current_audit_info.assumed_role_info.mfa_enabled = input_mfa
-
-            # Check if role arn is valid
-            try:
-                # this returns the arn already parsed into a dict to be used when it is needed to access its fields
-                role_arn_parsed = parse_iam_credentials_arn(
-                    current_audit_info.assumed_role_info.role_arn
-                )
-
-            except Exception as error:
-                logger.critical(f"{error.__class__.__name__} -- {error}")
-                sys.exit(1)
-
-            else:
-                logger.info(
-                    f"Getting organizations metadata for account {organizations_role_arn}"
-                )
-                assumed_credentials = assume_role(
-                    aws_provider.aws_session, aws_provider.role_info
-                )
-                current_audit_info.organizations_metadata = get_organizations_metadata(
-                    current_audit_info.audited_account, assumed_credentials
-                )
-                logger.info("Organizations metadata retrieved")
 
         logger.info("Checking if role assumption is needed ...")
         if input_role:
@@ -201,7 +161,9 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
                 )
                 # Assume the role
                 assumed_role_response = assume_role(
-                    aws_provider.aws_session, aws_provider.role_info
+                    aws_provider.aws_session,
+                    aws_provider.role_info,
+                    sts_endpoint_region,
                 )
                 logger.info("Role assumed")
                 # Set the info needed to create a session with an assumed role
@@ -229,6 +191,40 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
         else:
             logger.info("Audit session is the original one")
             current_audit_info.audit_session = current_audit_info.original_session
+
+        logger.info("Checking if organizations role assumption is needed ...")
+        if organizations_role_arn:
+            current_audit_info.assumed_role_info.role_arn = organizations_role_arn
+            current_audit_info.assumed_role_info.session_duration = (
+                input_session_duration
+            )
+            current_audit_info.assumed_role_info.external_id = input_external_id
+            current_audit_info.assumed_role_info.mfa_enabled = input_mfa
+
+            # Check if role arn is valid
+            try:
+                # this returns the arn already parsed into a dict to be used when it is needed to access its fields
+                role_arn_parsed = parse_iam_credentials_arn(
+                    current_audit_info.assumed_role_info.role_arn
+                )
+
+            except Exception as error:
+                logger.critical(f"{error.__class__.__name__} -- {error}")
+                sys.exit(1)
+
+            else:
+                logger.info(
+                    f"Getting organizations metadata for account {organizations_role_arn}"
+                )
+                assumed_credentials = assume_role(
+                    aws_provider.aws_session,
+                    aws_provider.role_info,
+                    sts_endpoint_region,
+                )
+                current_audit_info.organizations_metadata = get_organizations_metadata(
+                    current_audit_info.audited_account, assumed_credentials
+                )
+                logger.info("Organizations metadata retrieved")
 
         # Setting default region of session
         if current_audit_info.audit_session.region_name:
@@ -292,7 +288,7 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
             )
         if (not browser_auth and tenant_id) or (browser_auth and not tenant_id):
             raise Exception(
-                "Azure Tenant ID is required only for browser authentication mode"
+                "Azure Tenant ID (--tenant-id) is required only for browser authentication mode"
             )
 
         azure_provider = Azure_Provider(
@@ -345,6 +341,11 @@ def set_provider_audit_info(provider: str, arguments: dict):
     try:
         provider_set_audit_info = f"set_{provider}_audit_info"
         provider_audit_info = getattr(Audit_Info(), provider_set_audit_info)(arguments)
+
+        # Set the audit configuration from the config file
+        provider_audit_info.audit_config = load_and_validate_config_file(
+            provider, arguments["config_file"]
+        )
     except Exception as error:
         logger.critical(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

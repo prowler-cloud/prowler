@@ -9,6 +9,7 @@ from prowler.providers.azure.lib.audit_info.audit_info import (
     Azure_Audit_Info,
     Azure_Identity_Info,
 )
+from prowler.providers.common.models import Audit_Metadata
 from prowler.providers.common.outputs import (
     Aws_Output_Options,
     Azure_Output_Options,
@@ -21,14 +22,6 @@ AWS_ACCOUNT_NUMBER = "012345678912"
 DATETIME = "20230101120000"
 
 
-def mock_change_config_var(*_):
-    pass
-
-
-@patch(
-    "prowler.providers.common.outputs.change_config_var",
-    new=mock_change_config_var,
-)
 @patch("prowler.providers.common.outputs.output_file_timestamp", new=DATETIME)
 class Test_Common_Output_Options:
     # Mocked Azure Audit Info
@@ -38,6 +31,7 @@ class Test_Common_Output_Options:
             identity=Azure_Identity_Info(),
             audit_metadata=None,
             audit_resources=None,
+            audit_config=None,
         )
         return audit_info
 
@@ -49,6 +43,7 @@ class Test_Common_Output_Options:
             project_ids=["test-project1", "test-project2"],
             audit_resources=None,
             audit_metadata=None,
+            audit_config=None,
         )
         return audit_info
 
@@ -74,6 +69,12 @@ class Test_Common_Output_Options:
             organizations_metadata=None,
             audit_resources=None,
             mfa_enabled=False,
+            audit_metadata=Audit_Metadata(
+                services_scanned=0,
+                expected_checks=[],
+                completed_checks=0,
+                audit_progress=0,
+            ),
         )
         return audit_info
 

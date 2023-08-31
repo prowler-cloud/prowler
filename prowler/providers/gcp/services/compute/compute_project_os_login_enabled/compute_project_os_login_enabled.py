@@ -11,11 +11,11 @@ class compute_project_os_login_enabled(Check):
             report.resource_id = project.id
             report.location = "global"
             report.status = "PASS"
-            report.status_extended = f"Project {project.id} has OS Login enabled"
+            report.status_extended = f"Project {project.id} has OS Login enabled."
             if not project.enable_oslogin:
                 report.status = "FAIL"
                 report.status_extended = (
-                    f"Project {project.id} does not have OS Login enabled"
+                    f"Project {project.id} does not have OS Login enabled."
                 )
             findings.append(report)
 

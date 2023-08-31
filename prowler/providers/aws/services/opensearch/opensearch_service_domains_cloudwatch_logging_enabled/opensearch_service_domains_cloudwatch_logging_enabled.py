@@ -14,7 +14,7 @@ class opensearch_service_domains_cloudwatch_logging_enabled(Check):
             report.resource_arn = domain.arn
             report.resource_tags = domain.tags
             report.status = "FAIL"
-            report.status_extended = f"Opensearch domain {domain.name} SEARCH_SLOW_LOGS and INDEX_SLOW_LOGS disabled"
+            report.status_extended = f"Opensearch domain {domain.name} SEARCH_SLOW_LOGS and INDEX_SLOW_LOGS disabled."
             has_SEARCH_SLOW_LOGS = False
             has_INDEX_SLOW_LOGS = False
             for logging_item in domain.logging:
@@ -25,13 +25,13 @@ class opensearch_service_domains_cloudwatch_logging_enabled(Check):
 
             if has_SEARCH_SLOW_LOGS and has_INDEX_SLOW_LOGS:
                 report.status = "PASS"
-                report.status_extended = f"Opensearch domain {domain.name} SEARCH_SLOW_LOGS and INDEX_SLOW_LOGS enabled"
+                report.status_extended = f"Opensearch domain {domain.name} SEARCH_SLOW_LOGS and INDEX_SLOW_LOGS enabled."
             elif not has_SEARCH_SLOW_LOGS and has_INDEX_SLOW_LOGS:
                 report.status = "FAIL"
-                report.status_extended = f"Opensearch domain {domain.name} INDEX_SLOW_LOGS enabled but SEARCH_SLOW_LOGS disabled"
+                report.status_extended = f"Opensearch domain {domain.name} INDEX_SLOW_LOGS enabled but SEARCH_SLOW_LOGS disabled."
             elif not has_INDEX_SLOW_LOGS and has_SEARCH_SLOW_LOGS:
                 report.status = "FAIL"
-                report.status_extended = f"Opensearch domain {domain.name} SEARCH_SLOW_LOGS enabled but INDEX_SLOW_LOGS disabled"
+                report.status_extended = f"Opensearch domain {domain.name} SEARCH_SLOW_LOGS enabled but INDEX_SLOW_LOGS disabled."
 
             findings.append(report)
 

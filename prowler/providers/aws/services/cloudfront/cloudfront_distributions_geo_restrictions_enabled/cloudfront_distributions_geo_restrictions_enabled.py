@@ -18,10 +18,10 @@ class cloudfront_distributions_geo_restrictions_enabled(Check):
             report.resource_tags = distribution.tags
             if distribution.geo_restriction_type == GeoRestrictionType.none:
                 report.status = "FAIL"
-                report.status_extended = f"CloudFront Distribution {distribution.id} has Geo restrictions disabled"
+                report.status_extended = f"CloudFront Distribution {distribution.id} has Geo restrictions disabled."
             else:
                 report.status = "PASS"
-                report.status_extended = f"CloudFront Distribution {distribution.id} has Geo restrictions enabled"
+                report.status_extended = f"CloudFront Distribution {distribution.id} has Geo restrictions enabled."
 
             findings.append(report)
 

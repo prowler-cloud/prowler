@@ -58,7 +58,7 @@ allow_all_entry_ingress_IPv6 = {
 class Test_Network_Acls_IPv4_Only:
     def test_check_IPv4_only_ingress_port_default_entries_deny(self):
         check_port = 22
-        tcp_protocol = "-1"
+        any_protocol = "-1"
         entries = []
 
         # Default IPv4 Ingress Deny
@@ -67,11 +67,11 @@ class Test_Network_Acls_IPv4_Only:
         # Default IPv4 Egress Deny
         entries.append(default_deny_entry_egress_IPv4)
 
-        assert not check_network_acl(entries, tcp_protocol, check_port)
+        assert not check_network_acl(entries, any_protocol, check_port)
 
     def test_check_IPv4_only_ingress_port_with_allow_port(self):
         check_port = 22
-        tcp_protocol = "-1"
+        any_protocol = "-1"
 
         entries = []
 
@@ -86,17 +86,17 @@ class Test_Network_Acls_IPv4_Only:
                 "CidrBlock": "0.0.0.0/0",
                 "Egress": False,
                 "NetworkAclId": "acl-072d520d07e1c1471",
-                "Protocol": tcp_protocol,
+                "Protocol": any_protocol,
                 "RuleAction": "allow",
                 "RuleNumber": 100,
             }
         )
 
-        assert check_network_acl(entries, tcp_protocol, check_port)
+        assert check_network_acl(entries, any_protocol, check_port)
 
     def test_check_IPv4_only_ingress_port_with_deny_port(self):
         check_port = 22
-        tcp_protocol = "-1"
+        any_protocol = "-1"
 
         entries = []
 
@@ -111,7 +111,7 @@ class Test_Network_Acls_IPv4_Only:
                 "CidrBlock": "0.0.0.0/0",
                 "Egress": False,
                 "NetworkAclId": "acl-072d520d07e1c1471",
-                "Protocol": tcp_protocol,
+                "Protocol": any_protocol,
                 "RuleAction": "deny",
                 "RuleNumber": 100,
             }
@@ -120,7 +120,7 @@ class Test_Network_Acls_IPv4_Only:
         # Allow All IPv4
         entries.append(allow_all_entry_ingress_IPv4)
 
-        assert not check_network_acl(entries, tcp_protocol, check_port)
+        assert not check_network_acl(entries, any_protocol, check_port)
 
     def test_check_IPv4_only_ingress_port_with_deny_port_in_range(self):
         check_port = 22
@@ -186,7 +186,7 @@ class Test_Network_Acls_IPv4_Only:
 
     def test_check_IPv4_only_ingress_port_with_deny_port_order_incorrect(self):
         check_port = 22
-        tcp_protocol = "-1"
+        any_protocol = "-1"
 
         entries = []
         # Default IPv4 Ingress Deny
@@ -200,7 +200,7 @@ class Test_Network_Acls_IPv4_Only:
                 "CidrBlock": "0.0.0.0/0",
                 "Egress": False,
                 "NetworkAclId": "acl-072d520d07e1c1471",
-                "Protocol": tcp_protocol,
+                "Protocol": any_protocol,
                 "RuleAction": "deny",
                 "RuleNumber": 102,
             }
@@ -211,18 +211,17 @@ class Test_Network_Acls_IPv4_Only:
                 "CidrBlock": "0.0.0.0/0",
                 "Egress": False,
                 "NetworkAclId": "acl-072d520d07e1c1471",
-                "Protocol": tcp_protocol,
+                "Protocol": any_protocol,
                 "RuleAction": "allow",
                 "RuleNumber": 101,
             }
         )
 
-        assert check_network_acl(entries, tcp_protocol, check_port)
+        assert check_network_acl(entries, any_protocol, check_port)
 
     def test_check_IPv4_only_ingress_port_with_deny_port_order_correct(self):
-
         check_port = 22
-        tcp_protocol = "-1"
+        any_protocol = "-1"
 
         entries = []
         # Default IPv4 Ingress Deny
@@ -236,7 +235,7 @@ class Test_Network_Acls_IPv4_Only:
                 "CidrBlock": "0.0.0.0/0",
                 "Egress": False,
                 "NetworkAclId": "acl-072d520d07e1c1471",
-                "Protocol": tcp_protocol,
+                "Protocol": any_protocol,
                 "RuleAction": "deny",
                 "RuleNumber": 101,
             }
@@ -247,17 +246,17 @@ class Test_Network_Acls_IPv4_Only:
                 "CidrBlock": "0.0.0.0/0",
                 "Egress": False,
                 "NetworkAclId": "acl-072d520d07e1c1471",
-                "Protocol": tcp_protocol,
+                "Protocol": any_protocol,
                 "RuleAction": "allow",
                 "RuleNumber": 102,
             }
         )
 
-        assert not check_network_acl(entries, tcp_protocol, check_port)
+        assert not check_network_acl(entries, any_protocol, check_port)
 
     def test_check_IPv4_only_ingress_port_with_allow_port_but_egress(self):
         check_port = 22
-        tcp_protocol = "-1"
+        any_protocol = "-1"
 
         entries = []
 
@@ -272,19 +271,19 @@ class Test_Network_Acls_IPv4_Only:
                 "CidrBlock": "0.0.0.0/0",
                 "Egress": True,
                 "NetworkAclId": "acl-072d520d07e1c1471",
-                "Protocol": tcp_protocol,
+                "Protocol": any_protocol,
                 "RuleAction": "allow",
                 "RuleNumber": 100,
             }
         )
 
-        assert not check_network_acl(entries, tcp_protocol, check_port)
+        assert not check_network_acl(entries, any_protocol, check_port)
 
 
 class Test_Network_Acls_IPv4_IPv6:
     def test_check_IPv4_IPv6_ingress_port_default_entries_deny_both(self):
         check_port = 22
-        tcp_protocol = "-1"
+        any_protocol = "-1"
         entries = []
 
         # Default IPv4 Ingress Deny
@@ -299,11 +298,11 @@ class Test_Network_Acls_IPv4_IPv6:
         # Default IPv6 Egress Deny
         entries.append(default_deny_entry_egress_IPv6)
 
-        assert not check_network_acl(entries, tcp_protocol, check_port)
+        assert not check_network_acl(entries, any_protocol, check_port)
 
     def test_check_IPv4_IPv6_ingress_port_with_allow_port_IPv4(self):
         check_port = 22
-        tcp_protocol = "-1"
+        any_protocol = "-1"
 
         entries = []
 
@@ -324,17 +323,17 @@ class Test_Network_Acls_IPv4_IPv6:
                 "CidrBlock": "0.0.0.0/0",
                 "Egress": False,
                 "NetworkAclId": "acl-072d520d07e1c1471",
-                "Protocol": tcp_protocol,
+                "Protocol": any_protocol,
                 "RuleAction": "allow",
                 "RuleNumber": 100,
             }
         )
 
-        assert check_network_acl(entries, tcp_protocol, check_port)
+        assert check_network_acl(entries, any_protocol, check_port)
 
     def test_check_IPv4_IPv6_ingress_port_with_allow_port_IPV6(self):
         check_port = 22
-        tcp_protocol = "-1"
+        any_protocol = "-1"
 
         entries = []
 
@@ -355,17 +354,17 @@ class Test_Network_Acls_IPv4_IPv6:
                 "Ipv6CidrBlock": "::/0",
                 "Egress": False,
                 "NetworkAclId": "acl-072d520d07e1c1471",
-                "Protocol": tcp_protocol,
+                "Protocol": any_protocol,
                 "RuleAction": "allow",
                 "RuleNumber": 100,
             }
         )
 
-        assert check_network_acl(entries, tcp_protocol, check_port)
+        assert check_network_acl(entries, any_protocol, check_port)
 
     def test_check_IPv4_IPv6_ingress_port_with_allow_port_both(self):
         check_port = 22
-        tcp_protocol = "-1"
+        any_protocol = "-1"
 
         entries = []
 
@@ -386,7 +385,7 @@ class Test_Network_Acls_IPv4_IPv6:
                 "Ipv6CidrBlock": "::/0",
                 "Egress": False,
                 "NetworkAclId": "acl-072d520d07e1c1471",
-                "Protocol": tcp_protocol,
+                "Protocol": any_protocol,
                 "RuleAction": "allow",
                 "RuleNumber": 100,
             }
@@ -397,17 +396,17 @@ class Test_Network_Acls_IPv4_IPv6:
                 "CidrBlock": "0.0.0.0/0",
                 "Egress": False,
                 "NetworkAclId": "acl-072d520d07e1c1471",
-                "Protocol": tcp_protocol,
+                "Protocol": any_protocol,
                 "RuleAction": "allow",
                 "RuleNumber": 101,
             }
         )
 
-        assert check_network_acl(entries, tcp_protocol, check_port)
+        assert check_network_acl(entries, any_protocol, check_port)
 
     def test_check_IPv4_IPv6_ingress_port_with_deny_port_IPv4(self):
         check_port = 22
-        tcp_protocol = "-1"
+        any_protocol = "-1"
 
         entries = []
 
@@ -428,7 +427,7 @@ class Test_Network_Acls_IPv4_IPv6:
                 "CidrBlock": "0.0.0.0/0",
                 "Egress": False,
                 "NetworkAclId": "acl-072d520d07e1c1471",
-                "Protocol": tcp_protocol,
+                "Protocol": any_protocol,
                 "RuleAction": "deny",
                 "RuleNumber": 100,
             }
@@ -440,11 +439,11 @@ class Test_Network_Acls_IPv4_IPv6:
         # Allow All IPv6
         entries.append(allow_all_entry_ingress_IPv6)
 
-        assert check_network_acl(entries, tcp_protocol, check_port)
+        assert check_network_acl(entries, any_protocol, check_port)
 
     def test_check_IPv4_IPv6_ingress_port_with_deny_port_IPv6(self):
         check_port = 22
-        tcp_protocol = "-1"
+        any_protocol = "-1"
 
         entries = []
 
@@ -465,7 +464,7 @@ class Test_Network_Acls_IPv4_IPv6:
                 "Ipv6CidrBlock": "::/0",
                 "Egress": False,
                 "NetworkAclId": "acl-072d520d07e1c1471",
-                "Protocol": tcp_protocol,
+                "Protocol": any_protocol,
                 "RuleAction": "deny",
                 "RuleNumber": 100,
             }
@@ -477,11 +476,11 @@ class Test_Network_Acls_IPv4_IPv6:
         # Allow All IPv6
         entries.append(allow_all_entry_ingress_IPv6)
 
-        assert check_network_acl(entries, tcp_protocol, check_port)
+        assert check_network_acl(entries, any_protocol, check_port)
 
     def test_check_IPv4_IPv6_ingress_port_with_deny_port_both(self):
         check_port = 22
-        tcp_protocol = "-1"
+        any_protocol = "-1"
 
         entries = []
 
@@ -502,7 +501,7 @@ class Test_Network_Acls_IPv4_IPv6:
                 "CidrBlock": "0.0.0.0/0",
                 "Egress": False,
                 "NetworkAclId": "acl-072d520d07e1c1471",
-                "Protocol": tcp_protocol,
+                "Protocol": any_protocol,
                 "RuleAction": "deny",
                 "RuleNumber": 100,
             }
@@ -513,7 +512,7 @@ class Test_Network_Acls_IPv4_IPv6:
                 "Ipv6CidrBlock": "::/0",
                 "Egress": False,
                 "NetworkAclId": "acl-072d520d07e1c1471",
-                "Protocol": tcp_protocol,
+                "Protocol": any_protocol,
                 "RuleAction": "deny",
                 "RuleNumber": 101,
             }
@@ -525,7 +524,7 @@ class Test_Network_Acls_IPv4_IPv6:
         # Allow All IPv6
         entries.append(allow_all_entry_ingress_IPv6)
 
-        assert not check_network_acl(entries, tcp_protocol, check_port)
+        assert not check_network_acl(entries, any_protocol, check_port)
 
     def test_check_IPv4_IPv6_ingress_port_with_deny_port_in_range_IPv4(self):
         check_port = 22
@@ -793,7 +792,7 @@ class Test_Network_Acls_IPv4_IPv6:
 
     def test_check_IPv4_IPv6_ingress_port_with_deny_port_order_incorrect_IPv4(self):
         check_port = 22
-        tcp_protocol = "-1"
+        any_protocol = "-1"
 
         entries = []
         # Default IPv4 Ingress Deny
@@ -813,7 +812,7 @@ class Test_Network_Acls_IPv4_IPv6:
                 "CidrBlock": "0.0.0.0/0",
                 "Egress": False,
                 "NetworkAclId": "acl-072d520d07e1c1471",
-                "Protocol": tcp_protocol,
+                "Protocol": any_protocol,
                 "RuleAction": "deny",
                 "RuleNumber": 102,
             }
@@ -824,17 +823,17 @@ class Test_Network_Acls_IPv4_IPv6:
                 "CidrBlock": "0.0.0.0/0",
                 "Egress": False,
                 "NetworkAclId": "acl-072d520d07e1c1471",
-                "Protocol": tcp_protocol,
+                "Protocol": any_protocol,
                 "RuleAction": "allow",
                 "RuleNumber": 101,
             }
         )
 
-        assert check_network_acl(entries, tcp_protocol, check_port)
+        assert check_network_acl(entries, any_protocol, check_port)
 
     def test_check_IPv4_IPv6_ingress_port_with_deny_port_order_incorrect_IPv6(self):
         check_port = 22
-        tcp_protocol = "-1"
+        any_protocol = "-1"
 
         entries = []
         # Default IPv4 Ingress Deny
@@ -854,7 +853,7 @@ class Test_Network_Acls_IPv4_IPv6:
                 "Ipv6CidrBlock": "::/0",
                 "Egress": False,
                 "NetworkAclId": "acl-072d520d07e1c1471",
-                "Protocol": tcp_protocol,
+                "Protocol": any_protocol,
                 "RuleAction": "deny",
                 "RuleNumber": 102,
             }
@@ -865,17 +864,17 @@ class Test_Network_Acls_IPv4_IPv6:
                 "Ipv6CidrBlock": "::/0",
                 "Egress": False,
                 "NetworkAclId": "acl-072d520d07e1c1471",
-                "Protocol": tcp_protocol,
+                "Protocol": any_protocol,
                 "RuleAction": "allow",
                 "RuleNumber": 101,
             }
         )
 
-        assert check_network_acl(entries, tcp_protocol, check_port)
+        assert check_network_acl(entries, any_protocol, check_port)
 
     def test_check_IPv4_IPv6_ingress_port_with_deny_port_order_incorrect_both(self):
         check_port = 22
-        tcp_protocol = "-1"
+        any_protocol = "-1"
 
         entries = []
         # Default IPv4 Ingress Deny
@@ -895,7 +894,7 @@ class Test_Network_Acls_IPv4_IPv6:
                 "Ipv6CidrBlock": "::/0",
                 "Egress": False,
                 "NetworkAclId": "acl-072d520d07e1c1471",
-                "Protocol": tcp_protocol,
+                "Protocol": any_protocol,
                 "RuleAction": "deny",
                 "RuleNumber": 102,
             }
@@ -906,7 +905,7 @@ class Test_Network_Acls_IPv4_IPv6:
                 "Ipv6CidrBlock": "::/0",
                 "Egress": False,
                 "NetworkAclId": "acl-072d520d07e1c1471",
-                "Protocol": tcp_protocol,
+                "Protocol": any_protocol,
                 "RuleAction": "allow",
                 "RuleNumber": 101,
             }
@@ -917,7 +916,7 @@ class Test_Network_Acls_IPv4_IPv6:
                 "CidrBlock": "0.0.0.0/0",
                 "Egress": False,
                 "NetworkAclId": "acl-072d520d07e1c1471",
-                "Protocol": tcp_protocol,
+                "Protocol": any_protocol,
                 "RuleAction": "deny",
                 "RuleNumber": 202,
             }
@@ -928,18 +927,17 @@ class Test_Network_Acls_IPv4_IPv6:
                 "CidrBlock": "0.0.0.0/0",
                 "Egress": False,
                 "NetworkAclId": "acl-072d520d07e1c1471",
-                "Protocol": tcp_protocol,
+                "Protocol": any_protocol,
                 "RuleAction": "allow",
                 "RuleNumber": 201,
             }
         )
 
-        assert check_network_acl(entries, tcp_protocol, check_port)
+        assert check_network_acl(entries, any_protocol, check_port)
 
     def test_check_IPv4_IPv6_ingress_port_with_deny_port_order_correct_IPv4(self):
-
         check_port = 22
-        tcp_protocol = "-1"
+        any_protocol = "-1"
 
         entries = []
         # Default IPv4 Ingress Deny
@@ -959,7 +957,7 @@ class Test_Network_Acls_IPv4_IPv6:
                 "CidrBlock": "0.0.0.0/0",
                 "Egress": False,
                 "NetworkAclId": "acl-072d520d07e1c1471",
-                "Protocol": tcp_protocol,
+                "Protocol": any_protocol,
                 "RuleAction": "deny",
                 "RuleNumber": 101,
             }
@@ -970,18 +968,17 @@ class Test_Network_Acls_IPv4_IPv6:
                 "CidrBlock": "0.0.0.0/0",
                 "Egress": False,
                 "NetworkAclId": "acl-072d520d07e1c1471",
-                "Protocol": tcp_protocol,
+                "Protocol": any_protocol,
                 "RuleAction": "allow",
                 "RuleNumber": 102,
             }
         )
 
-        assert not check_network_acl(entries, tcp_protocol, check_port)
+        assert not check_network_acl(entries, any_protocol, check_port)
 
     def test_check_IPv4_IPv6_ingress_port_with_deny_port_order_correct_IPv6(self):
-
         check_port = 22
-        tcp_protocol = "-1"
+        any_protocol = "-1"
 
         entries = []
         # Default IPv4 Ingress Deny
@@ -1001,7 +998,7 @@ class Test_Network_Acls_IPv4_IPv6:
                 "Ipv6CidrBlock": "::/0",
                 "Egress": False,
                 "NetworkAclId": "acl-072d520d07e1c1471",
-                "Protocol": tcp_protocol,
+                "Protocol": any_protocol,
                 "RuleAction": "deny",
                 "RuleNumber": 101,
             }
@@ -1012,18 +1009,17 @@ class Test_Network_Acls_IPv4_IPv6:
                 "Ipv6CidrBlock": "::/0",
                 "Egress": False,
                 "NetworkAclId": "acl-072d520d07e1c1471",
-                "Protocol": tcp_protocol,
+                "Protocol": any_protocol,
                 "RuleAction": "allow",
                 "RuleNumber": 102,
             }
         )
 
-        assert not check_network_acl(entries, tcp_protocol, check_port)
+        assert not check_network_acl(entries, any_protocol, check_port)
 
     def test_check_IPv4_IPv6_ingress_port_with_deny_port_order_correct_both(self):
-
         check_port = 22
-        tcp_protocol = "-1"
+        any_protocol = "-1"
 
         entries = []
         # Default IPv4 Ingress Deny
@@ -1043,7 +1039,7 @@ class Test_Network_Acls_IPv4_IPv6:
                 "Ipv6CidrBlock": "::/0",
                 "Egress": False,
                 "NetworkAclId": "acl-072d520d07e1c1471",
-                "Protocol": tcp_protocol,
+                "Protocol": any_protocol,
                 "RuleAction": "deny",
                 "RuleNumber": 101,
             }
@@ -1054,7 +1050,7 @@ class Test_Network_Acls_IPv4_IPv6:
                 "Ipv6CidrBlock": "::/0",
                 "Egress": False,
                 "NetworkAclId": "acl-072d520d07e1c1471",
-                "Protocol": tcp_protocol,
+                "Protocol": any_protocol,
                 "RuleAction": "allow",
                 "RuleNumber": 102,
             }
@@ -1065,7 +1061,7 @@ class Test_Network_Acls_IPv4_IPv6:
                 "CidrBlock": "0.0.0.0/0",
                 "Egress": False,
                 "NetworkAclId": "acl-072d520d07e1c1471",
-                "Protocol": tcp_protocol,
+                "Protocol": any_protocol,
                 "RuleAction": "deny",
                 "RuleNumber": 201,
             }
@@ -1076,16 +1072,16 @@ class Test_Network_Acls_IPv4_IPv6:
                 "CidrBlock": "0.0.0.0/0",
                 "Egress": False,
                 "NetworkAclId": "acl-072d520d07e1c1471",
-                "Protocol": tcp_protocol,
+                "Protocol": any_protocol,
                 "RuleAction": "allow",
                 "RuleNumber": 202,
             }
         )
-        assert not check_network_acl(entries, tcp_protocol, check_port)
+        assert not check_network_acl(entries, any_protocol, check_port)
 
     def test_check_IPv4_IPv6_ingress_port_with_allow_port_but_egress_IPv4(self):
         check_port = 22
-        tcp_protocol = "-1"
+        any_protocol = "-1"
 
         entries = []
 
@@ -1106,17 +1102,17 @@ class Test_Network_Acls_IPv4_IPv6:
                 "CidrBlock": "0.0.0.0/0",
                 "Egress": True,
                 "NetworkAclId": "acl-072d520d07e1c1471",
-                "Protocol": tcp_protocol,
+                "Protocol": any_protocol,
                 "RuleAction": "allow",
                 "RuleNumber": 100,
             }
         )
 
-        assert not check_network_acl(entries, tcp_protocol, check_port)
+        assert not check_network_acl(entries, any_protocol, check_port)
 
     def test_check_IPv4_IPv6_ingress_port_with_allow_port_but_egress_IPv6(self):
         check_port = 22
-        tcp_protocol = "-1"
+        any_protocol = "-1"
 
         entries = []
 
@@ -1137,17 +1133,17 @@ class Test_Network_Acls_IPv4_IPv6:
                 "Ipv6CidrBlock": "::/0",
                 "Egress": True,
                 "NetworkAclId": "acl-072d520d07e1c1471",
-                "Protocol": tcp_protocol,
+                "Protocol": any_protocol,
                 "RuleAction": "allow",
                 "RuleNumber": 100,
             }
         )
 
-        assert not check_network_acl(entries, tcp_protocol, check_port)
+        assert not check_network_acl(entries, any_protocol, check_port)
 
     def test_check_IPv4_IPv6_ingress_port_with_allow_port_but_egress_both(self):
         check_port = 22
-        tcp_protocol = "-1"
+        any_protocol = "-1"
 
         entries = []
 
@@ -1168,7 +1164,7 @@ class Test_Network_Acls_IPv4_IPv6:
                 "Ipv6CidrBlock": "::/0",
                 "Egress": True,
                 "NetworkAclId": "acl-072d520d07e1c1471",
-                "Protocol": tcp_protocol,
+                "Protocol": any_protocol,
                 "RuleAction": "allow",
                 "RuleNumber": 100,
             }
@@ -1179,10 +1175,10 @@ class Test_Network_Acls_IPv4_IPv6:
                 "CidrBlock": "0.0.0.0/0",
                 "Egress": True,
                 "NetworkAclId": "acl-072d520d07e1c1471",
-                "Protocol": tcp_protocol,
+                "Protocol": any_protocol,
                 "RuleAction": "allow",
                 "RuleNumber": 101,
             }
         )
 
-        assert not check_network_acl(entries, tcp_protocol, check_port)
+        assert not check_network_acl(entries, any_protocol, check_port)

@@ -13,13 +13,13 @@ class codebuild_project_user_controlled_buildspec(Check):
             report.resource_id = project.name
             report.resource_arn = project.arn
             report.status = "PASS"
-            report.status_extended = f"CodeBuild project {project.name} does not use an user controlled buildspec"
+            report.status_extended = f"CodeBuild project {project.name} does not use an user controlled buildspec."
             if project.buildspec:
                 if search(r".*\.yaml$", project.buildspec) or search(
                     r".*\.yml$", project.buildspec
                 ):
                     report.status = "FAIL"
-                    report.status_extended = f"CodeBuild project {project.name} uses an user controlled buildspec"
+                    report.status_extended = f"CodeBuild project {project.name} uses an user controlled buildspec."
 
             findings.append(report)
 

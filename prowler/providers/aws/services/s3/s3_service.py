@@ -7,20 +7,15 @@ from pydantic import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
-from prowler.providers.aws.aws_provider import generate_regional_clients
+from prowler.providers.aws.lib.service.service import AWSService
 
 
 ################## S3
-class S3:
+class S3(AWSService):
     def __init__(self, audit_info):
-        self.service = "s3"
-        self.session = audit_info.audit_session
-        self.client = self.session.client(self.service)
-        self.audited_account = audit_info.audited_account
-        self.audit_resources = audit_info.audit_resources
-        self.audited_partition = audit_info.audited_partition
-        self.audited_account_arn = audit_info.audited_account_arn
-        self.regional_clients = generate_regional_clients(self.service, audit_info)
+        # Call AWSService's __init__
+        super().__init__(__class__.__name__, audit_info)
+
         self.buckets = self.__list_buckets__(audit_info)
         self.__threading_call__(self.__get_bucket_versioning__)
         self.__threading_call__(self.__get_bucket_logging__)
@@ -32,9 +27,7 @@ class S3:
         self.__threading_call__(self.__get_object_lock_configuration__)
         self.__threading_call__(self.__get_bucket_tagging__)
 
-    def __get_session__(self):
-        return self.session
-
+    # In the S3 service we override the "__threading_call__" method because we spawn a process per bucket instead of per region
     def __threading_call__(self, call):
         threads = []
         for bucket in self.buckets:
@@ -291,8 +284,19 @@ class S3:
             regional_client.get_object_lock_configuration(Bucket=bucket.name)
             bucket.object_lock = True
         except Exception as error:
-            if "ObjectLockConfigurationNotFoundError" in str(error):
+            if (
+                "ObjectLockConfigurationNotFoundError" in str(error)
+                or error.response["Error"]["Code"] == "NoSuchBucket"
+            ):
                 bucket.object_lock = False
+                if regional_client:
+                    logger.warning(
+                        f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
+                else:
+                    logger.warning(
+                        f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
             else:
                 if regional_client:
                     logger.error(
@@ -334,21 +338,11 @@ class S3:
 
 
 ################## S3Control
-class S3Control:
+class S3Control(AWSService):
     def __init__(self, audit_info):
-        self.service = "s3control"
-        self.session = audit_info.audit_session
-        self.audited_account = audit_info.audited_account
-        global_client = generate_regional_clients(
-            self.service, audit_info, global_service=True
-        )
-        if global_client:
-            self.client = list(global_client.values())[0]
-            self.region = self.client.region
-            self.account_public_access_block = self.__get_public_access_block__()
-
-    def __get_session__(self):
-        return self.session
+        # Call AWSService's __init__
+        super().__init__(__class__.__name__, audit_info, global_service=True)
+        self.account_public_access_block = self.__get_public_access_block__()
 
     def __get_public_access_block__(self):
         logger.info("S3 - Get account public access block...")

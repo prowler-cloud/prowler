@@ -3,16 +3,13 @@ from typing import Optional
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
-from prowler.providers.gcp.gcp_provider import generate_client
+from prowler.providers.gcp.lib.service.service import GCPService
 
 
 ################## CloudStorage
-class CloudStorage:
+class CloudStorage(GCPService):
     def __init__(self, audit_info):
-        self.service = "storage"
-        self.api_version = "v1"
-        self.project_ids = audit_info.project_ids
-        self.client = generate_client(self.service, self.api_version, audit_info)
+        super().__init__("storage", audit_info)
         self.buckets = []
         self.__get_buckets__()
 

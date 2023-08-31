@@ -13,11 +13,11 @@ class cloudsql_instance_sqlserver_cross_db_ownership_chaining_flag(Check):
                 report.resource_name = instance.name
                 report.location = instance.region
                 report.status = "PASS"
-                report.status_extended = f"SQL Server Instance {instance.name} has 'cross db ownership' flag set to 'off'"
+                report.status_extended = f"SQL Server Instance {instance.name} has 'cross db ownership' flag set to 'off'."
                 for flag in instance.flags:
                     if flag["name"] == "cross db ownership" and flag["value"] == "on":
                         report.status = "FAIL"
-                        report.status_extended = f"SQL Server Instance {instance.name} has not 'cross db ownership' flag set to 'off'"
+                        report.status_extended = f"SQL Server Instance {instance.name} does not have 'cross db ownership' flag set to 'off'."
                         break
                 findings.append(report)
 

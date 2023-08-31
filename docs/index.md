@@ -10,9 +10,9 @@
 For **Prowler v2 Documentation**, please go [here](https://github.com/prowler-cloud/prowler/tree/2.12.0) to the branch and its README.md.
 
 - You are currently in the **Getting Started** section where you can find general information and requirements to help you start with the tool.
-- In the [Tutorials](tutorials/overview) section you will see how to take advantage of all the features in Prowler.
-- In the [Contact Us](contact) section you can find how to reach us out in case of technical issues.
-- In the [About](about) section you will find more information about the Prowler team and license.
+- In the [Tutorials](./tutorials/misc.md) section you will see how to take advantage of all the features in Prowler.
+- In the [Contact Us](./contact.md) section you can find how to reach us out in case of technical issues.
+- In the [About](./about.md) section you will find more information about the Prowler team and license.
 
 ## About Prowler
 
@@ -201,7 +201,7 @@ To run Prowler, you will need to specify the provider (e.g aws, gcp or azure):
 prowler <provider>
 ```
 ![Prowler Execution](img/short-display.png)
-> Running the `prowler` command without options will use your environment variable credentials, see [Requirements](getting-started/requirements/) section to review the credentials settings.
+> Running the `prowler` command without options will use your environment variable credentials, see [Requirements](./getting-started/requirements.md) section to review the credentials settings.
 
 If you miss the former output you can use `--verbose` but Prowler v3 is smoking fast, so you won't see much ;)
 
@@ -237,7 +237,7 @@ prowler azure --excluded-services defender iam
 prowler gcp --excluded-services kms
 ```
 
-More options and executions methods that will save your time in [Miscelaneous](tutorials/misc.md).
+More options and executions methods that will save your time in [Miscellaneous](tutorials/misc.md).
 
 You can always use `-h`/`--help` to access to the usage information and all the possible options:
 
@@ -268,7 +268,7 @@ prowler azure --sp-env-auth
 prowler azure --az-cli-auth
 
 # To use browser authentication
-prowler azure --browser-auth
+prowler azure --browser-auth --tenant-id "XXXXXXXX"
 
 # To use managed identity auth
 prowler azure --managed-identity-auth

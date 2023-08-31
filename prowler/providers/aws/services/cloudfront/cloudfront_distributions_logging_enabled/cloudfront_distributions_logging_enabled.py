@@ -19,12 +19,12 @@ class cloudfront_distributions_logging_enabled(Check):
             ):
                 report.status = "PASS"
                 report.status_extended = (
-                    f"CloudFront Distribution {distribution.id} has logging enabled"
+                    f"CloudFront Distribution {distribution.id} has logging enabled."
                 )
             else:
                 report.status = "FAIL"
                 report.status_extended = (
-                    f"CloudFront Distribution {distribution.id} has logging disabled"
+                    f"CloudFront Distribution {distribution.id} has logging disabled."
                 )
             findings.append(report)
 

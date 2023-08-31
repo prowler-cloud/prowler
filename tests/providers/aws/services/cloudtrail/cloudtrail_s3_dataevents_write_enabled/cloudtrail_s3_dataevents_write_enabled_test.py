@@ -5,8 +5,10 @@ from boto3 import client, session
 from moto import mock_cloudtrail, mock_s3
 
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
+from prowler.providers.common.models import Audit_Metadata
 
 AWS_ACCOUNT_NUMBER = "123456789012"
+AWS_REGION = "us-east-1"
 
 
 class Test_cloudtrail_s3_dataevents_write_enabled:
@@ -27,18 +29,24 @@ class Test_cloudtrail_s3_dataevents_write_enabled:
             profile_region=None,
             credentials=None,
             assumed_role_info=None,
-            audited_regions=["us-east-1"],
+            audited_regions=[AWS_REGION],
             organizations_metadata=None,
             audit_resources=None,
             mfa_enabled=False,
+            audit_metadata=Audit_Metadata(
+                services_scanned=0,
+                expected_checks=[],
+                completed_checks=0,
+                audit_progress=0,
+            ),
         )
         return audit_info
 
     @mock_cloudtrail
     @mock_s3
     def test_trail_without_data_events(self):
-        cloudtrail_client_us_east_1 = client("cloudtrail", region_name="us-east-1")
-        s3_client_us_east_1 = client("s3", region_name="us-east-1")
+        cloudtrail_client_us_east_1 = client("cloudtrail", region_name=AWS_REGION)
+        s3_client_us_east_1 = client("s3", region_name=AWS_REGION)
         trail_name_us = "trail_test_us"
         bucket_name_us = "bucket_test_us"
         s3_client_us_east_1.create_bucket(Bucket=bucket_name_us)
@@ -78,12 +86,14 @@ class Test_cloudtrail_s3_dataevents_write_enabled:
                 assert (
                     result[0].resource_arn == f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
                 )
+                assert result[0].resource_tags == []
+                assert result[0].region == AWS_REGION
 
     @mock_cloudtrail
     @mock_s3
     def test_trail_without_s3_data_events(self):
-        cloudtrail_client_us_east_1 = client("cloudtrail", region_name="us-east-1")
-        s3_client_us_east_1 = client("s3", region_name="us-east-1")
+        cloudtrail_client_us_east_1 = client("cloudtrail", region_name=AWS_REGION)
+        s3_client_us_east_1 = client("s3", region_name=AWS_REGION)
         trail_name_us = "trail_test_us"
         bucket_name_us = "bucket_test_us"
         s3_client_us_east_1.create_bucket(Bucket=bucket_name_us)
@@ -134,12 +144,14 @@ class Test_cloudtrail_s3_dataevents_write_enabled:
                 assert (
                     result[0].resource_arn == f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
                 )
+                assert result[0].resource_tags == []
+                assert result[0].region == AWS_REGION
 
     @mock_cloudtrail
     @mock_s3
     def test_trail_with_s3_data_events(self):
-        cloudtrail_client_us_east_1 = client("cloudtrail", region_name="us-east-1")
-        s3_client_us_east_1 = client("s3", region_name="us-east-1")
+        cloudtrail_client_us_east_1 = client("cloudtrail", region_name=AWS_REGION)
+        s3_client_us_east_1 = client("s3", region_name=AWS_REGION)
         trail_name_us = "trail_test_us"
         bucket_name_us = "bucket_test_us"
         s3_client_us_east_1.create_bucket(Bucket=bucket_name_us)
@@ -189,12 +201,14 @@ class Test_cloudtrail_s3_dataevents_write_enabled:
                 )
                 assert result[0].resource_id == trail_name_us
                 assert result[0].resource_arn == trail_us["TrailARN"]
+                assert result[0].resource_tags == []
+                assert result[0].region == AWS_REGION
 
     @mock_cloudtrail
     @mock_s3
     def test_trail_with_s3_advanced_data_events(self):
-        cloudtrail_client_us_east_1 = client("cloudtrail", region_name="us-east-1")
-        s3_client_us_east_1 = client("s3", region_name="us-east-1")
+        cloudtrail_client_us_east_1 = client("cloudtrail", region_name=AWS_REGION)
+        s3_client_us_east_1 = client("s3", region_name=AWS_REGION)
         trail_name_us = "trail_test_us"
         bucket_name_us = "bucket_test_us"
         s3_client_us_east_1.create_bucket(Bucket=bucket_name_us)
@@ -243,3 +257,5 @@ class Test_cloudtrail_s3_dataevents_write_enabled:
                 )
                 assert result[0].resource_id == trail_name_us
                 assert result[0].resource_arn == trail_us["TrailARN"]
+                assert result[0].resource_tags == []
+                assert result[0].region == AWS_REGION

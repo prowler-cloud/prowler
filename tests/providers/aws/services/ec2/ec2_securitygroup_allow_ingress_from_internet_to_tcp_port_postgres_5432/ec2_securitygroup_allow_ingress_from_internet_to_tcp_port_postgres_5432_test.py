@@ -1,4 +1,3 @@
-from re import search
 from unittest import mock
 
 from boto3 import client, session
@@ -74,15 +73,19 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_54
             assert len(result) == 3
             # All are compliant by default
             assert result[0].status == "PASS"
+            assert result[1].status == "PASS"
+            assert result[2].status == "PASS"
 
     @mock_ec2
     def test_ec2_non_compliant_default_sg(self):
         # Create EC2 Mocked Resources
         ec2_client = client("ec2", region_name=AWS_REGION)
         ec2_client.create_vpc(CidrBlock="10.0.0.0/16")
-        default_sg_id = ec2_client.describe_security_groups(GroupNames=["default"])[
+        default_sg = ec2_client.describe_security_groups(GroupNames=["default"])[
             "SecurityGroups"
-        ][0]["GroupId"]
+        ][0]
+        default_sg_id = default_sg["GroupId"]
+        default_sg_name = default_sg["GroupName"]
         ec2_client.authorize_security_group_ingress(
             GroupId=default_sg_id,
             IpPermissions=[
@@ -122,23 +125,28 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_54
             for sg in result:
                 if sg.resource_id == default_sg_id:
                     assert sg.status == "FAIL"
-                    assert search(
-                        "has Postgres port 5432 open to the Internet",
-                        sg.status_extended,
+                    assert sg.region == AWS_REGION
+                    assert (
+                        sg.status_extended
+                        == f"Security group {default_sg_name} ({default_sg_id}) has Postgres port 5432 open to the Internet."
                     )
                     assert (
                         sg.resource_arn
                         == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:security-group/{default_sg_id}"
                     )
+                    assert sg.resource_details == default_sg_name
+                    assert sg.resource_tags == []
 
     @mock_ec2
     def test_ec2_compliant_default_sg(self):
         # Create EC2 Mocked Resources
         ec2_client = client("ec2", region_name=AWS_REGION)
         ec2_client.create_vpc(CidrBlock="10.0.0.0/16")
-        default_sg_id = ec2_client.describe_security_groups(GroupNames=["default"])[
+        default_sg = ec2_client.describe_security_groups(GroupNames=["default"])[
             "SecurityGroups"
-        ][0]["GroupId"]
+        ][0]
+        default_sg_id = default_sg["GroupId"]
+        default_sg_name = default_sg["GroupName"]
         ec2_client.authorize_security_group_ingress(
             GroupId=default_sg_id,
             IpPermissions=[
@@ -178,11 +186,80 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_54
             for sg in result:
                 if sg.resource_id == default_sg_id:
                     assert sg.status == "PASS"
-                    assert search(
-                        "has not Postgres port 5432 open to the Internet",
-                        sg.status_extended,
+                    assert sg.region == AWS_REGION
+                    assert (
+                        sg.status_extended
+                        == f"Security group {default_sg_name} ({default_sg_id}) does not have Postgres port 5432 open to the Internet."
                     )
                     assert (
                         sg.resource_arn
                         == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:security-group/{default_sg_id}"
                     )
+                    assert sg.resource_details == default_sg_name
+                    assert sg.resource_tags == []
+
+    @mock_ec2
+    def test_ec2_compliant_default_sg_ipv4_and_ipv6(self):
+        # Create EC2 Mocked Resources
+        ec2_client = client("ec2", region_name=AWS_REGION)
+        ec2_client.create_vpc(CidrBlock="10.0.0.0/16")
+        default_sg = ec2_client.describe_security_groups(GroupNames=["default"])[
+            "SecurityGroups"
+        ][0]
+        default_sg_id = default_sg["GroupId"]
+        default_sg_name = default_sg["GroupName"]
+        ec2_client.authorize_security_group_ingress(
+            GroupId=default_sg_id,
+            IpPermissions=[
+                {
+                    "IpProtocol": "tcp",
+                    "FromPort": 5432,
+                    "ToPort": 5432,
+                    "IpRanges": [{"CidrIp": "10.0.0.0/16"}],
+                    "Ipv6Ranges": [
+                        {
+                            "CidrIpv6": "cafe:cafe:cafe:cafe::/64",
+                        },
+                    ],
+                },
+            ],
+        )
+
+        from prowler.providers.aws.services.ec2.ec2_service import EC2
+
+        current_audit_info = self.set_mocked_audit_info()
+
+        with mock.patch(
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=current_audit_info,
+        ), mock.patch(
+            "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432.ec2_client",
+            new=EC2(current_audit_info),
+        ):
+            # Test Check
+            from prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432 import (
+                ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432,
+            )
+
+            check = (
+                ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432()
+            )
+            result = check.execute()
+
+            # One default sg per region
+            assert len(result) == 3
+            # Search changed sg
+            for sg in result:
+                if sg.resource_id == default_sg_id:
+                    assert sg.status == "PASS"
+                    assert sg.region == AWS_REGION
+                    assert (
+                        sg.status_extended
+                        == f"Security group {default_sg_name} ({default_sg_id}) does not have Postgres port 5432 open to the Internet."
+                    )
+                    assert (
+                        sg.resource_arn
+                        == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:security-group/{default_sg_id}"
+                    )
+                    assert sg.resource_details == default_sg_name
+                    assert sg.resource_tags == []

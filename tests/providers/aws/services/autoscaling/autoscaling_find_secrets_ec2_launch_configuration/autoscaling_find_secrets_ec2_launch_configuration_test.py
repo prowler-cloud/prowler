@@ -4,6 +4,7 @@ from boto3 import client, session
 from moto import mock_autoscaling
 
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
+from prowler.providers.common.models import Audit_Metadata
 
 AWS_REGION = "us-east-1"
 AWS_ACCOUNT_NUMBER = "123456789012"
@@ -31,6 +32,12 @@ class Test_autoscaling_find_secrets_ec2_launch_configuration:
             organizations_metadata=None,
             audit_resources=None,
             mfa_enabled=False,
+            audit_metadata=Audit_Metadata(
+                services_scanned=0,
+                expected_checks=[],
+                completed_checks=0,
+                audit_progress=0,
+            ),
         )
 
         return audit_info
@@ -66,15 +73,19 @@ class Test_autoscaling_find_secrets_ec2_launch_configuration:
     @mock_autoscaling
     def test_one_autoscaling_with_no_secrets(self):
         # Include launch_configurations to check
+        launch_configuration_name = "tester"
         autoscaling_client = client("autoscaling", region_name=AWS_REGION)
         autoscaling_client.create_launch_configuration(
-            LaunchConfigurationName="tester",
+            LaunchConfigurationName=launch_configuration_name,
             ImageId="ami-12c6146b",
             InstanceType="t1.micro",
             KeyName="the_keys",
             SecurityGroups=["default", "default2"],
             UserData="This is some user_data",
         )
+        launch_configuration_arn = autoscaling_client.describe_launch_configurations(
+            LaunchConfigurationNames=[launch_configuration_name]
+        )["LaunchConfigurations"][0]["LaunchConfigurationARN"]
 
         from prowler.providers.aws.services.autoscaling.autoscaling_service import (
             AutoScaling,
@@ -100,22 +111,28 @@ class Test_autoscaling_find_secrets_ec2_launch_configuration:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "No secrets found in autoscaling tester User Data."
+                == f"No secrets found in autoscaling {launch_configuration_name} User Data."
             )
-            assert result[0].resource_id == "tester"
+            assert result[0].resource_id == launch_configuration_name
+            assert result[0].resource_arn == launch_configuration_arn
+            assert result[0].region == AWS_REGION
 
     @mock_autoscaling
     def test_one_autoscaling_with_secrets(self):
         # Include launch_configurations to check
+        launch_configuration_name = "tester"
         autoscaling_client = client("autoscaling", region_name=AWS_REGION)
         autoscaling_client.create_launch_configuration(
-            LaunchConfigurationName="tester",
+            LaunchConfigurationName=launch_configuration_name,
             ImageId="ami-12c6146b",
             InstanceType="t1.micro",
             KeyName="the_keys",
             SecurityGroups=["default", "default2"],
             UserData="DB_PASSWORD=foobar123",
         )
+        launch_configuration_arn = autoscaling_client.describe_launch_configurations(
+            LaunchConfigurationNames=[launch_configuration_name]
+        )["LaunchConfigurations"][0]["LaunchConfigurationARN"]
 
         from prowler.providers.aws.services.autoscaling.autoscaling_service import (
             AutoScaling,
@@ -141,9 +158,11 @@ class Test_autoscaling_find_secrets_ec2_launch_configuration:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "Potential secret found in autoscaling tester User Data."
+                == f"Potential secret found in autoscaling {launch_configuration_name} User Data."
             )
-            assert result[0].resource_id == "tester"
+            assert result[0].resource_id == launch_configuration_name
+            assert result[0].resource_arn == launch_configuration_arn
+            assert result[0].region == AWS_REGION
 
     @mock_autoscaling
     def test_one_autoscaling_file_with_secrets(self):
@@ -153,6 +172,7 @@ class Test_autoscaling_find_secrets_ec2_launch_configuration:
             "r",
         )
         secrets = f.read()
+        launch_configuration_name = "tester"
         autoscaling_client = client("autoscaling", region_name=AWS_REGION)
         autoscaling_client.create_launch_configuration(
             LaunchConfigurationName="tester",
@@ -162,6 +182,9 @@ class Test_autoscaling_find_secrets_ec2_launch_configuration:
             SecurityGroups=["default", "default2"],
             UserData=secrets,
         )
+        launch_configuration_arn = autoscaling_client.describe_launch_configurations(
+            LaunchConfigurationNames=[launch_configuration_name]
+        )["LaunchConfigurations"][0]["LaunchConfigurationARN"]
 
         from prowler.providers.aws.services.autoscaling.autoscaling_service import (
             AutoScaling,
@@ -187,21 +210,27 @@ class Test_autoscaling_find_secrets_ec2_launch_configuration:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "Potential secret found in autoscaling tester User Data."
+                == f"Potential secret found in autoscaling {launch_configuration_name} User Data."
             )
-            assert result[0].resource_id == "tester"
+            assert result[0].resource_id == launch_configuration_name
+            assert result[0].resource_arn == launch_configuration_arn
+            assert result[0].region == AWS_REGION
 
     @mock_autoscaling
     def test_one_launch_configurations_without_user_data(self):
         # Include launch_configurations to check
+        launch_configuration_name = "tester"
         autoscaling_client = client("autoscaling", region_name=AWS_REGION)
         autoscaling_client.create_launch_configuration(
-            LaunchConfigurationName="tester",
+            LaunchConfigurationName=launch_configuration_name,
             ImageId="ami-12c6146b",
             InstanceType="t1.micro",
             KeyName="the_keys",
             SecurityGroups=["default", "default2"],
         )
+        launch_configuration_arn = autoscaling_client.describe_launch_configurations(
+            LaunchConfigurationNames=[launch_configuration_name]
+        )["LaunchConfigurations"][0]["LaunchConfigurationARN"]
 
         from prowler.providers.aws.services.autoscaling.autoscaling_service import (
             AutoScaling,
@@ -227,6 +256,8 @@ class Test_autoscaling_find_secrets_ec2_launch_configuration:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "No secrets found in autoscaling tester since User Data is empty."
+                == f"No secrets found in autoscaling {launch_configuration_name} since User Data is empty."
             )
-            assert result[0].resource_id == "tester"
+            assert result[0].resource_id == launch_configuration_name
+            assert result[0].resource_arn == launch_configuration_arn
+            assert result[0].region == AWS_REGION

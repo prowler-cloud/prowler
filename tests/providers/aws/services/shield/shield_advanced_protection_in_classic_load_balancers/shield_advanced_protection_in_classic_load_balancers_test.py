@@ -6,6 +6,7 @@ from moto.core import DEFAULT_ACCOUNT_ID
 
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.aws.services.shield.shield_service import Protection
+from prowler.providers.common.models import Audit_Metadata
 
 AWS_REGION = "eu-west-1"
 
@@ -33,6 +34,12 @@ class Test_shield_advanced_protection_in_classic_load_balancers:
             organizations_metadata=None,
             audit_resources=None,
             mfa_enabled=False,
+            audit_metadata=Audit_Metadata(
+                services_scanned=0,
+                expected_checks=[],
+                completed_checks=0,
+                audit_progress=0,
+            ),
         )
         return audit_info
 
@@ -130,7 +137,7 @@ class Test_shield_advanced_protection_in_classic_load_balancers:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"ELB {elb_name} is protected by AWS Shield Advanced"
+                == f"ELB {elb_name} is protected by AWS Shield Advanced."
             )
 
     @mock_elb
@@ -189,7 +196,7 @@ class Test_shield_advanced_protection_in_classic_load_balancers:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"ELB {elb_name} is not protected by AWS Shield Advanced"
+                == f"ELB {elb_name} is not protected by AWS Shield Advanced."
             )
 
     @mock_elb

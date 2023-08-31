@@ -6,4 +6,5 @@ gcp_audit_info = GCP_Audit_Info(
     project_ids=[],
     audit_resources=None,
     audit_metadata=None,
+    audit_config=None,
 )

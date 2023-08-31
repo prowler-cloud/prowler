@@ -27,7 +27,19 @@ test_policy_restricted_condition = {
             "Principal": {"AWS": "*"},
             "Action": ["sns:Publish"],
             "Resource": f"arn:aws:sns:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:{topic_name}",
-            "Condition": {"StringEquals": {"sns:Protocol": "https"}},
+            "Condition": {"StringEquals": {"aws:SourceAccount": AWS_ACCOUNT_NUMBER}},
+        }
+    ]
+}
+
+test_policy_restricted_default_condition = {
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Principal": {"AWS": "*"},
+            "Action": ["sns:Publish"],
+            "Resource": f"arn:aws:sns:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:{topic_name}",
+            "Condition": {"StringEquals": {"aws:SourceOwner": AWS_ACCOUNT_NUMBER}},
         }
     ]
 }
@@ -85,7 +97,7 @@ class Test_sns_topics_not_publicly_accessible:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"SNS topic {topic_name} is not publicly accesible"
+                == f"SNS topic {topic_name} is not publicly accesible."
             )
             assert result[0].resource_id == topic_name
             assert result[0].resource_arn == topic_arn
@@ -112,7 +124,7 @@ class Test_sns_topics_not_publicly_accessible:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"SNS topic {topic_name} is not publicly accesible"
+                == f"SNS topic {topic_name} is not publicly accesible."
             )
             assert result[0].resource_id == topic_name
             assert result[0].resource_arn == topic_arn
@@ -121,6 +133,7 @@ class Test_sns_topics_not_publicly_accessible:
 
     def test_topic_public_with_condition(self):
         sns_client = mock.MagicMock
+        sns_client.audited_account = AWS_ACCOUNT_NUMBER
         sns_client.topics = []
         sns_client.topics.append(
             Topic(
@@ -144,7 +157,40 @@ class Test_sns_topics_not_publicly_accessible:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"SNS topic {topic_name} is publicly accesible but has a Condition that could filter it"
+                == f"SNS topic {topic_name} is not public because its policy only allows access from the same account."
+            )
+            assert result[0].resource_id == topic_name
+            assert result[0].resource_arn == topic_arn
+            assert result[0].region == AWS_REGION
+            assert result[0].resource_tags == []
+
+    def test_topic_public_with_default_condition(self):
+        sns_client = mock.MagicMock
+        sns_client.audited_account = AWS_ACCOUNT_NUMBER
+        sns_client.topics = []
+        sns_client.topics.append(
+            Topic(
+                arn=topic_arn,
+                name=topic_name,
+                policy=test_policy_restricted_default_condition,
+                region=AWS_REGION,
+            )
+        )
+        with mock.patch(
+            "prowler.providers.aws.services.sns.sns_service.SNS",
+            sns_client,
+        ):
+            from prowler.providers.aws.services.sns.sns_topics_not_publicly_accessible.sns_topics_not_publicly_accessible import (
+                sns_topics_not_publicly_accessible,
+            )
+
+            check = sns_topics_not_publicly_accessible()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert (
+                result[0].status_extended
+                == f"SNS topic {topic_name} is not public because its policy only allows access from the same account."
             )
             assert result[0].resource_id == topic_name
             assert result[0].resource_arn == topic_arn
@@ -176,7 +222,7 @@ class Test_sns_topics_not_publicly_accessible:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"SNS topic {topic_name} is publicly accesible"
+                == f"SNS topic {topic_name} is public because its policy allows public access."
             )
             assert result[0].resource_id == topic_name
             assert result[0].resource_arn == topic_arn

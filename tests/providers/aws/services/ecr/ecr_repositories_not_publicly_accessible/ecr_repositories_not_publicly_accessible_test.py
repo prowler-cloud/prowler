@@ -109,7 +109,7 @@ class Test_ecr_repositories_not_publicly_accessible:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Repository {repository_name} is not publicly accesible"
+                == f"Repository {repository_name} is not publicly accesible."
             )
             assert result[0].resource_id == repository_name
             assert result[0].resource_arn == repository_arn
@@ -149,7 +149,7 @@ class Test_ecr_repositories_not_publicly_accessible:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Repository {repository_name} policy may allow anonymous users to perform actions (Principal: '*')"
+                == f"Repository {repository_name} policy may allow anonymous users to perform actions (Principal: '*')."
             )
             assert result[0].resource_id == repository_name
             assert result[0].resource_arn == repository_arn

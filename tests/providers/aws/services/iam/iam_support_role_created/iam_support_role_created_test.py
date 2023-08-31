@@ -6,6 +6,7 @@ from boto3 import client, session
 from moto import mock_iam
 
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
+from prowler.providers.common.models import Audit_Metadata
 
 AWS_ACCOUNT_NUMBER = "123456789012"
 
@@ -32,6 +33,12 @@ class Test_iam_support_role_created:
             organizations_metadata=None,
             audit_resources=None,
             mfa_enabled=False,
+            audit_metadata=Audit_Metadata(
+                services_scanned=0,
+                expected_checks=[],
+                completed_checks=0,
+                audit_progress=0,
+            ),
         )
 
         return audit_info
@@ -76,7 +83,7 @@ class Test_iam_support_role_created:
             result = check.execute()
             assert result[0].status == "PASS"
             assert search(
-                f"Support policy attached to role {role_name}",
+                f"Support policy attached to role {role_name}.",
                 result[0].status_extended,
             )
             assert result[0].resource_id == "AWSSupportServiceRolePolicy"
@@ -106,7 +113,7 @@ class Test_iam_support_role_created:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "Support policy is not attached to any role"
+                == "Support policy is not attached to any role."
             )
             assert result[0].resource_id == "AWSSupportServiceRolePolicy"
             assert (

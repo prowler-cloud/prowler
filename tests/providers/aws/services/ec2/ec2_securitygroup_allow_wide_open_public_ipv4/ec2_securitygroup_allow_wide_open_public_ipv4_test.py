@@ -1,4 +1,3 @@
-from re import search
 from unittest import mock
 
 from boto3 import client, session
@@ -72,15 +71,19 @@ class Test_ec2_securitygroup_allow_wide_open_public_ipv4:
             assert len(result) == 3
             # All are compliant by default
             assert result[0].status == "PASS"
+            assert result[1].status == "PASS"
+            assert result[2].status == "PASS"
 
     @mock_ec2
     def test_ec2_default_sg_with_RFC1918_address(self):
         # Create EC2 Mocked Resources
         ec2_client = client("ec2", region_name=AWS_REGION)
         ec2_client.create_vpc(CidrBlock="10.0.0.0/16")
-        default_sg_id = ec2_client.describe_security_groups(GroupNames=["default"])[
+        default_sg = ec2_client.describe_security_groups(GroupNames=["default"])[
             "SecurityGroups"
-        ][0]["GroupId"]
+        ][0]
+        default_sg_id = default_sg["GroupId"]
+        default_sg_name = default_sg["GroupName"]
         ec2_client.authorize_security_group_ingress(
             GroupId=default_sg_id,
             IpPermissions=[
@@ -116,23 +119,28 @@ class Test_ec2_securitygroup_allow_wide_open_public_ipv4:
             for sg in result:
                 if sg.resource_id == default_sg_id:
                     assert sg.status == "PASS"
-                    assert search(
-                        "has no potential wide-open non-RFC1918 address",
-                        sg.status_extended,
+                    assert sg.region == AWS_REGION
+                    assert (
+                        sg.status_extended
+                        == f"Security group {default_sg_name} ({default_sg_id}) has no potential wide-open non-RFC1918 address."
                     )
                     assert (
                         sg.resource_arn
                         == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:security-group/{default_sg_id}"
                     )
+                    assert sg.resource_details == default_sg_name
+                    assert sg.resource_tags == []
 
     @mock_ec2
     def test_ec2_default_sg_with_non_RFC1918_address(self):
         # Create EC2 Mocked Resources
         ec2_client = client("ec2", region_name=AWS_REGION)
         ec2_client.create_vpc(CidrBlock="10.0.0.0/16")
-        default_sg_id = ec2_client.describe_security_groups(GroupNames=["default"])[
+        default_sg = ec2_client.describe_security_groups(GroupNames=["default"])[
             "SecurityGroups"
-        ][0]["GroupId"]
+        ][0]
+        default_sg_id = default_sg["GroupId"]
+        default_sg_name = default_sg["GroupName"]
         ec2_client.authorize_security_group_ingress(
             GroupId=default_sg_id,
             IpPermissions=[
@@ -168,11 +176,14 @@ class Test_ec2_securitygroup_allow_wide_open_public_ipv4:
             for sg in result:
                 if sg.resource_id == default_sg_id:
                     assert sg.status == "FAIL"
-                    assert search(
-                        "has potential wide-open non-RFC1918 address",
-                        sg.status_extended,
+                    assert sg.region == AWS_REGION
+                    assert (
+                        sg.status_extended
+                        == f"Security group {default_sg_name} ({default_sg_id}) has potential wide-open non-RFC1918 address 82.122.0.0/16 in ingress rule."
                     )
                     assert (
                         sg.resource_arn
                         == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:security-group/{default_sg_id}"
                     )
+                    assert sg.resource_details == default_sg_name
+                    assert sg.resource_tags == []

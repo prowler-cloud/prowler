@@ -10,6 +10,7 @@ from prowler.config.config import aws_services_json_file
 from prowler.lib.check.check import list_modules, recover_checks_from_service
 from prowler.lib.logger import logger
 from prowler.lib.utils.utils import open_file, parse_json_file
+from prowler.providers.aws.config import AWS_STS_GLOBAL_ENDPOINT_REGION
 from prowler.providers.aws.lib.audit_info.models import AWS_Assume_Role, AWS_Audit_Info
 
 
@@ -105,7 +106,11 @@ class AWS_Provider:
         return refreshed_credentials
 
 
-def assume_role(session: session.Session, assumed_role_info: AWS_Assume_Role) -> dict:
+def assume_role(
+    session: session.Session,
+    assumed_role_info: AWS_Assume_Role,
+    sts_endpoint_region: str = None,
+) -> dict:
     try:
         assume_role_arguments = {
             "RoleArn": assumed_role_info.role_arn,
@@ -113,6 +118,7 @@ def assume_role(session: session.Session, assumed_role_info: AWS_Assume_Role) ->
             "DurationSeconds": assumed_role_info.session_duration,
         }
 
+        # Set the info to assume the role from the partition, account and role name
         if assumed_role_info.external_id:
             assume_role_arguments["ExternalId"] = assumed_role_info.external_id
 
@@ -121,8 +127,11 @@ def assume_role(session: session.Session, assumed_role_info: AWS_Assume_Role) ->
             assume_role_arguments["SerialNumber"] = mfa_ARN
             assume_role_arguments["TokenCode"] = mfa_TOTP
 
-        # set the info to assume the role from the partition, account and role name
-        sts_client = session.client("sts")
+        # Set the STS Endpoint Region
+        if sts_endpoint_region is None:
+            sts_endpoint_region = AWS_STS_GLOBAL_ENDPOINT_REGION
+
+        sts_client = session.client("sts", sts_endpoint_region)
         assumed_credentials = sts_client.assume_role(**assume_role_arguments)
     except Exception as error:
         logger.critical(
@@ -186,6 +195,7 @@ def get_aws_available_regions():
 def get_checks_from_input_arn(audit_resources: list, provider: str) -> set:
     """get_checks_from_input_arn gets the list of checks from the input arns"""
     checks_from_arn = set()
+    is_subservice_in_checks = False
     # Handle if there are audit resources so only their services are executed
     if audit_resources:
         services_without_subservices = ["guardduty", "kms", "s3", "elb", "efs"]
@@ -237,21 +247,23 @@ def get_checks_from_input_arn(audit_resources: list, provider: str) -> set:
             if any(sub_service in check for sub_service in sub_service_list):
                 if not (sub_service == "policy" and "password_policy" in check):
                     checks_from_arn.add(check)
+                    is_subservice_in_checks = True
+
+        if not is_subservice_in_checks:
+            checks_from_arn = checks
 
     # Return final checks list
     return sorted(checks_from_arn)
 
 
-def get_regions_from_audit_resources(audit_resources: list) -> list:
+def get_regions_from_audit_resources(audit_resources: list) -> set:
     """get_regions_from_audit_resources gets the regions from the audit resources arns"""
-    audited_regions = []
+    audited_regions = set()
     for resource in audit_resources:
         region = resource.split(":")[3]
-        if region and region not in audited_regions:  # Check if arn has a region
-            audited_regions.append(region)
-    if audited_regions:
-        return audited_regions
-    return None
+        if region:
+            audited_regions.add(region)
+    return audited_regions
 
 
 def get_available_aws_service_regions(service: str, audit_info: AWS_Audit_Info) -> list:

@@ -1,5 +1,5 @@
 import os
-from os import getcwd, path, remove
+from os import path, remove
 from unittest import mock
 
 import boto3
@@ -7,7 +7,6 @@ import botocore
 import pytest
 from colorama import Fore
 from mock import patch
-from moto import mock_s3
 
 from prowler.config.config import (
     csv_file_suffix,
@@ -58,17 +57,15 @@ from prowler.lib.outputs.models import (
     parse_html_string,
     parse_json_tags,
     unroll_dict,
+    unroll_dict_to_list,
     unroll_list,
     unroll_tags,
 )
-from prowler.lib.outputs.outputs import (
-    extract_findings_statistics,
-    send_to_s3_bucket,
-    set_report_color,
-)
+from prowler.lib.outputs.outputs import extract_findings_statistics, set_report_color
 from prowler.lib.utils.utils import hash_sha512, open_file
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.aws.lib.security_hub.security_hub import send_to_security_hub
+from prowler.providers.common.models import Audit_Metadata
 
 AWS_ACCOUNT_ID = "123456789012"
 
@@ -116,6 +113,12 @@ class Test_Outputs:
             organizations_metadata=None,
             audit_resources=None,
             mfa_enabled=False,
+            audit_metadata=Audit_Metadata(
+                services_scanned=0,
+                expected_checks=[],
+                completed_checks=0,
+                audit_progress=0,
+            ),
         )
         test_output_modes = [
             ["csv"],
@@ -310,6 +313,17 @@ class Test_Outputs:
             == "CISA: your-systems-3, your-data-1, your-data-2 | CIS-1.4: 2.1.1 | CIS-1.5: 2.1.1 | GDPR: article_32 | AWS-Foundational-Security-Best-Practices: s3 | HIPAA: 164_308_a_1_ii_b, 164_308_a_4_ii_a, 164_312_a_2_iv, 164_312_c_1, 164_312_c_2, 164_312_e_2_ii | GxP-21-CFR-Part-11: 11.10-c, 11.30 | GxP-EU-Annex-11: 7.1-data-storage-damage-protection | NIST-800-171-Revision-2: 3_3_8, 3_5_10, 3_13_11, 3_13_16 | NIST-800-53-Revision-4: sc_28 | NIST-800-53-Revision-5: au_9_3, cm_6_a, cm_9_b, cp_9_d, cp_9_8, pm_11_b, sc_8_3, sc_8_4, sc_13_a, sc_16_1, sc_28_1, si_19_4 | ENS-RD2022: mp.si.2.aws.s3.1 | NIST-CSF-1.1: ds_1 | RBI-Cyber-Security-Framework: annex_i_1_3 | FFIEC: d3-pc-am-b-12 | PCI-3.2.1: s3 | FedRamp-Moderate-Revision-4: sc-13, sc-28 | FedRAMP-Low-Revision-4: sc-13"
         )
 
+    def test_unroll_dict_to_list(self):
+        dict_A = {"A": "B"}
+        list_A = ["A: B"]
+
+        assert unroll_dict_to_list(dict_A) == list_A
+
+        dict_B = {"A": ["B", "C"]}
+        list_B = ["A: B, C"]
+
+        assert unroll_dict_to_list(dict_B) == list_B
+
     def test_parse_html_string(self):
         string = "CISA: your-systems-3, your-data-1, your-data-2 | CIS-1.4: 2.1.1 | CIS-1.5: 2.1.1 | GDPR: article_32 | AWS-Foundational-Security-Best-Practices: s3 | HIPAA: 164_308_a_1_ii_b, 164_308_a_4_ii_a, 164_312_a_2_iv, 164_312_c_1, 164_312_c_2, 164_312_e_2_ii | GxP-21-CFR-Part-11: 11.10-c, 11.30 | GxP-EU-Annex-11: 7.1-data-storage-damage-protection | NIST-800-171-Revision-2: 3_3_8, 3_5_10, 3_13_11, 3_13_16 | NIST-800-53-Revision-4: sc_28 | NIST-800-53-Revision-5: au_9_3, cm_6_a, cm_9_b, cp_9_d, cp_9_8, pm_11_b, sc_8_3, sc_8_4, sc_13_a, sc_16_1, sc_28_1, si_19_4 | ENS-RD2022: mp.si.2.aws.s3.1 | NIST-CSF-1.1: ds_1 | RBI-Cyber-Security-Framework: annex_i_1_3 | FFIEC: d3-pc-am-b-12 | PCI-3.2.1: s3 | FedRamp-Moderate-Revision-4: sc-13, sc-28 | FedRAMP-Low-Revision-4: sc-13"
         assert (
@@ -374,7 +388,7 @@ class Test_Outputs:
 
     # def test_fill_json(self):
     #     input_audit_info = AWS_Audit_Info(
-    session_config = (None,)
+    #         session_config = None,
     #         original_session=None,
     #         audit_session=None,
     #         audited_account=AWS_ACCOUNT_ID,
@@ -436,6 +450,12 @@ class Test_Outputs:
             organizations_metadata=None,
             audit_resources=None,
             mfa_enabled=False,
+            audit_metadata=Audit_Metadata(
+                services_scanned=0,
+                expected_checks=[],
+                completed_checks=0,
+                audit_progress=0,
+            ),
         )
         finding = Check_Report(
             load_check_metadata(
@@ -507,6 +527,12 @@ class Test_Outputs:
             organizations_metadata=None,
             audit_resources=None,
             mfa_enabled=False,
+            audit_metadata=Audit_Metadata(
+                services_scanned=0,
+                expected_checks=[],
+                completed_checks=0,
+                audit_progress=0,
+            ),
         )
         finding = Check_Report(
             load_check_metadata(
@@ -592,6 +618,12 @@ class Test_Outputs:
             organizations_metadata=None,
             audit_resources=None,
             mfa_enabled=False,
+            audit_metadata=Audit_Metadata(
+                services_scanned=0,
+                expected_checks=[],
+                completed_checks=0,
+                audit_progress=0,
+            ),
         )
         finding = Check_Report(
             load_check_metadata(
@@ -677,6 +709,12 @@ class Test_Outputs:
             organizations_metadata=None,
             audit_resources=None,
             mfa_enabled=False,
+            audit_metadata=Audit_Metadata(
+                services_scanned=0,
+                expected_checks=[],
+                completed_checks=0,
+                audit_progress=0,
+            ),
         )
         with patch(
             "prowler.lib.outputs.json.get_check_compliance",
@@ -953,6 +991,12 @@ class Test_Outputs:
             organizations_metadata=None,
             audit_resources=None,
             mfa_enabled=False,
+            audit_metadata=Audit_Metadata(
+                services_scanned=0,
+                expected_checks=[],
+                completed_checks=0,
+                audit_progress=0,
+            ),
         )
         finding = Check_Report(
             load_check_metadata(
@@ -1056,171 +1100,6 @@ class Test_Outputs:
         output_options = mock.MagicMock()
         assert fill_json_ocsf(input_audit_info, finding, output_options) == expected
 
-    @mock_s3
-    def test_send_to_s3_bucket(self):
-        # Create mock session
-        session = boto3.session.Session(
-            region_name="us-east-1",
-        )
-        # Create mock audit_info
-        input_audit_info = AWS_Audit_Info(
-            session_config=None,
-            original_session=None,
-            audit_session=session,
-            audited_account=AWS_ACCOUNT_ID,
-            audited_account_arn=f"arn:aws:iam::{AWS_ACCOUNT_ID}:root",
-            audited_identity_arn="test-arn",
-            audited_user_id="test",
-            audited_partition="aws",
-            profile="default",
-            profile_region="eu-west-1",
-            credentials=None,
-            assumed_role_info=None,
-            audited_regions=["eu-west-2", "eu-west-1"],
-            organizations_metadata=None,
-            audit_resources=None,
-            mfa_enabled=False,
-        )
-        # Creat mock bucket
-        bucket_name = "test_bucket"
-        client = boto3.client("s3")
-        client.create_bucket(Bucket=bucket_name)
-        # Create mock csv output file
-        fixtures_dir = "tests/lib/outputs/fixtures"
-        output_directory = getcwd() + "/" + fixtures_dir
-        output_mode = "csv"
-        filename = f"prowler-output-{input_audit_info.audited_account}"
-        # Send mock csv file to mock S3 Bucket
-        send_to_s3_bucket(
-            filename,
-            output_directory,
-            output_mode,
-            bucket_name,
-            input_audit_info.audit_session,
-        )
-        # Check if the file has been sent by checking its content type
-        assert (
-            client.get_object(
-                Bucket=bucket_name,
-                Key=fixtures_dir + "/" + output_mode + "/" + filename + csv_file_suffix,
-            )["ContentType"]
-            == "binary/octet-stream"
-        )
-
-    @mock_s3
-    def test_send_to_s3_bucket_compliance(self):
-        # Create mock session
-        session = boto3.session.Session(
-            region_name="us-east-1",
-        )
-        # Create mock audit_info
-        input_audit_info = AWS_Audit_Info(
-            session_config=None,
-            original_session=None,
-            audit_session=session,
-            audited_account=AWS_ACCOUNT_ID,
-            audited_account_arn=f"arn:aws:iam::{AWS_ACCOUNT_ID}:root",
-            audited_identity_arn="test-arn",
-            audited_user_id="test",
-            audited_partition="aws",
-            profile="default",
-            profile_region="eu-west-1",
-            credentials=None,
-            assumed_role_info=None,
-            audited_regions=["eu-west-2", "eu-west-1"],
-            organizations_metadata=None,
-            audit_resources=None,
-            mfa_enabled=False,
-        )
-        # Creat mock bucket
-        bucket_name = "test_bucket"
-        client = boto3.client("s3")
-        client.create_bucket(Bucket=bucket_name)
-        # Create mock csv output file
-        fixtures_dir = "tests/lib/outputs/fixtures"
-        output_directory = getcwd() + "/" + fixtures_dir
-        output_mode = "cis_1.4_aws"
-        filename = f"prowler-output-{input_audit_info.audited_account}"
-        # Send mock csv file to mock S3 Bucket
-        send_to_s3_bucket(
-            filename,
-            output_directory,
-            output_mode,
-            bucket_name,
-            input_audit_info.audit_session,
-        )
-        # Check if the file has been sent by checking its content type
-        assert (
-            client.get_object(
-                Bucket=bucket_name,
-                Key=fixtures_dir
-                + "/"
-                + output_mode
-                + "/"
-                + filename
-                + "_"
-                + output_mode
-                + csv_file_suffix,
-            )["ContentType"]
-            == "binary/octet-stream"
-        )
-
-    @mock_s3
-    def test_send_to_s3_bucket_custom_directory(self):
-        # Create mock session
-        session = boto3.session.Session(
-            region_name="us-east-1",
-        )
-        # Create mock audit_info
-        input_audit_info = AWS_Audit_Info(
-            session_config=None,
-            original_session=None,
-            audit_session=session,
-            audited_account=AWS_ACCOUNT_ID,
-            audited_account_arn=f"arn:aws:iam::{AWS_ACCOUNT_ID}:root",
-            audited_identity_arn="test-arn",
-            audited_user_id="test",
-            audited_partition="aws",
-            profile="default",
-            profile_region="eu-west-1",
-            credentials=None,
-            assumed_role_info=None,
-            audited_regions=["eu-west-2", "eu-west-1"],
-            organizations_metadata=None,
-            audit_resources=None,
-            mfa_enabled=False,
-        )
-        # Creat mock bucket
-        bucket_name = "test_bucket"
-        client = boto3.client("s3")
-        client.create_bucket(Bucket=bucket_name)
-        # Create mock csv output file
-        fixtures_dir = "fixtures"
-        output_directory = f"tests/lib/outputs/{fixtures_dir}"
-        output_mode = "csv"
-        filename = f"prowler-output-{input_audit_info.audited_account}"
-        # Send mock csv file to mock S3 Bucket
-        send_to_s3_bucket(
-            filename,
-            output_directory,
-            output_mode,
-            bucket_name,
-            input_audit_info.audit_session,
-        )
-        # Check if the file has been sent by checking its content type
-        assert (
-            client.get_object(
-                Bucket=bucket_name,
-                Key=output_directory
-                + "/"
-                + output_mode
-                + "/"
-                + filename
-                + csv_file_suffix,
-            )["ContentType"]
-            == "binary/octet-stream"
-        )
-
     def test_extract_findings_statistics_different_resources(self):
         finding_1 = mock.MagicMock()
         finding_1.status = "PASS"
@@ -1298,6 +1177,12 @@ class Test_Outputs:
             organizations_metadata=None,
             audit_resources=None,
             mfa_enabled=False,
+            audit_metadata=Audit_Metadata(
+                services_scanned=0,
+                expected_checks=[],
+                completed_checks=0,
+                audit_progress=0,
+            ),
         )
         finding = Check_Report(
             load_check_metadata(

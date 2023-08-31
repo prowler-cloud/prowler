@@ -2,12 +2,19 @@
 
 ##@ Testing
 test:   ## Test with pytest
-	pytest -n auto -vvv -s -x
+	rm -rf .coverage && \
+	pytest -n auto -vvv -s --cov=./prowler --cov-report=xml tests
 
 coverage: ## Show Test Coverage
 	coverage run --skip-covered -m pytest -v && \
 	coverage report -m && \
-	rm -rf .coverage
+	rm -rf .coverage && \
+	coverage report -m
+
+coverage-html: ## Show Test Coverage
+	rm -rf ./htmlcov && \
+	coverage html && \
+	open htmlcov/index.html
 
 ##@ Linting
 format: ## Format Code

@@ -571,6 +571,7 @@
         "iam_password_policy_reuse_24",
         "iam_aws_attached_policy_no_administrative_privileges",
         "iam_customer_attached_policy_no_administrative_privileges",
+        "iam_inline_policy_no_administrative_privileges",
         "iam_no_root_access_key",
         "iam_rotate_access_key_90_days",
         "iam_disable_90_days_credentials",
@@ -627,6 +628,7 @@
       "Checks": [
         "iam_aws_attached_policy_no_administrative_privileges",
         "iam_customer_attached_policy_no_administrative_privileges",
+        "iam_inline_policy_no_administrative_privileges",
         "iam_no_root_access_key",
         "iam_disable_90_days_credentials"
       ]
@@ -1080,6 +1082,7 @@
         "ec2_ebs_public_snapshot",
         "iam_aws_attached_policy_no_administrative_privileges",
         "iam_customer_attached_policy_no_administrative_privileges",
+        "iam_inline_policy_no_administrative_privileges",
         "iam_no_root_access_key",
         "awslambda_function_url_public",
         "rds_snapshots_public_access",

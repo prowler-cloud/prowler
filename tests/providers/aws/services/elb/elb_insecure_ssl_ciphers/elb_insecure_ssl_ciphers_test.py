@@ -5,6 +5,7 @@ from boto3 import client, resource, session
 from moto import mock_ec2, mock_elb
 
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
+from prowler.providers.common.models import Audit_Metadata
 
 AWS_REGION = "eu-west-1"
 AWS_ACCOUNT_NUMBER = "123456789012"
@@ -32,6 +33,12 @@ class Test_elb_insecure_ssl_ciphers:
             organizations_metadata=None,
             audit_resources=None,
             mfa_enabled=False,
+            audit_metadata=Audit_Metadata(
+                services_scanned=0,
+                expected_checks=[],
+                completed_checks=0,
+                audit_progress=0,
+            ),
         )
 
         return audit_info
@@ -104,7 +111,7 @@ class Test_elb_insecure_ssl_ciphers:
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert search(
-                "has not insecure SSL protocols or ciphers",
+                "does not have insecure SSL protocols or ciphers",
                 result[0].status_extended,
             )
             assert result[0].resource_id == "my-lb"

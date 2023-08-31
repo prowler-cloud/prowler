@@ -1,4 +1,3 @@
-import threading
 from datetime import datetime
 from enum import Enum
 from typing import Optional, Union
@@ -8,17 +7,14 @@ from pydantic import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
-from prowler.providers.aws.aws_provider import generate_regional_clients
+from prowler.providers.aws.lib.service.service import AWSService
 
 
 ################## DirectoryService
-class DirectoryService:
+class DirectoryService(AWSService):
     def __init__(self, audit_info):
-        self.service = "ds"
-        self.session = audit_info.audit_session
-        self.audited_account = audit_info.audited_account
-        self.audit_resources = audit_info.audit_resources
-        self.regional_clients = generate_regional_clients(self.service, audit_info)
+        # Call AWSService's __init__
+        super().__init__("ds", audit_info)
         self.directories = {}
         self.__threading_call__(self.__describe_directories__)
         self.__threading_call__(self.__list_log_subscriptions__)
@@ -26,18 +22,6 @@ class DirectoryService:
         self.__threading_call__(self.__list_certificates__)
         self.__threading_call__(self.__get_snapshot_limits__)
         self.__list_tags_for_resource__()
-
-    def __get_session__(self):
-        return self.session
-
-    def __threading_call__(self, call):
-        threads = []
-        for regional_client in self.regional_clients.values():
-            threads.append(threading.Thread(target=call, args=(regional_client,)))
-        for t in threads:
-            t.start()
-        for t in threads:
-            t.join()
 
     def __describe_directories__(self, regional_client):
         logger.info("DirectoryService - Describing Directories...")
@@ -53,16 +37,19 @@ class DirectoryService:
                         )
                     ):
                         directory_id = directory["DirectoryId"]
+                        directory_arn = f"arn:{self.audited_partition}:ds:{regional_client.region}:{self.audited_account}:directory/{directory_id}"
                         directory_name = directory["Name"]
                         directory_type = directory["Type"]
                         # Radius Configuration
                         radius_authentication_protocol = (
-                            directory["RadiusSettings"]["AuthenticationProtocol"]
+                            AuthenticationProtocol(
+                                directory["RadiusSettings"]["AuthenticationProtocol"]
+                            )
                             if "RadiusSettings" in directory
                             else None
                         )
                         radius_status = (
-                            directory["RadiusStatus"]
+                            RadiusStatus(directory["RadiusStatus"])
                             if "RadiusStatus" in directory
                             else None
                         )
@@ -70,6 +57,7 @@ class DirectoryService:
                         self.directories[directory_id] = Directory(
                             name=directory_name,
                             id=directory_id,
+                            arn=directory_arn,
                             type=directory_type,
                             region=regional_client.region,
                             radius_settings=RadiusSettings(
@@ -311,6 +299,7 @@ class DirectoryType(Enum):
 class Directory(BaseModel):
     name: str
     id: str
+    arn: str
     type: DirectoryType
     log_subscriptions: list[LogSubscriptions] = []
     event_topics: list[EventTopics] = []

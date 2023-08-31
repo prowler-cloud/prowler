@@ -13,11 +13,13 @@ class iam_account_access_approval_enabled(Check):
             report.resource_id = project_id
             report.location = accessapproval_client.region
             report.status = "PASS"
-            report.status_extended = f"Project {project_id} has Access Approval enabled"
+            report.status_extended = (
+                f"Project {project_id} has Access Approval enabled."
+            )
             if project_id not in accessapproval_client.settings:
                 report.status = "FAIL"
                 report.status_extended = (
-                    f"Project {project_id} does not have Access Approval enabled"
+                    f"Project {project_id} does not have Access Approval enabled."
                 )
             findings.append(report)
 

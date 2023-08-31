@@ -8,8 +8,10 @@ from moto.core import DEFAULT_ACCOUNT_ID
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.aws.services.cloudfront.cloudfront_service import (
     CloudFront,
+    GeoRestrictionType,
     ViewerProtocolPolicy,
 )
+from prowler.providers.common.models import Audit_Metadata
 
 # Mock Test Region
 AWS_REGION = "eu-west-1"
@@ -176,6 +178,12 @@ class Test_CloudFront_Service:
             organizations_metadata=None,
             audit_resources=None,
             mfa_enabled=False,
+            audit_metadata=Audit_Metadata(
+                services_scanned=0,
+                expected_checks=[],
+                completed_checks=0,
+                audit_progress=0,
+            ),
         )
         return audit_info
 
@@ -236,7 +244,7 @@ class Test_CloudFront_Service:
         )
         assert (
             cloudfront.distributions[cloudfront_distribution_id].geo_restriction_type
-            == "blacklist"
+            == GeoRestrictionType.blacklist
         )
         assert (
             cloudfront.distributions[cloudfront_distribution_id].web_acl_id

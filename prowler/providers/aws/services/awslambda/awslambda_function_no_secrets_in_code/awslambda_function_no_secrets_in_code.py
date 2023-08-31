@@ -21,7 +21,7 @@ class awslambda_function_no_secrets_in_code(Check):
 
                 report.status = "PASS"
                 report.status_extended = (
-                    f"No secrets found in Lambda function {function.name} code"
+                    f"No secrets found in Lambda function {function.name} code."
                 )
                 with tempfile.TemporaryDirectory() as tmp_dir_name:
                     function.code.code_zip.extractall(tmp_dir_name)
@@ -55,11 +55,11 @@ class awslambda_function_no_secrets_in_code(Check):
                     if secrets_findings:
                         final_output_string = "; ".join(secrets_findings)
                         report.status = "FAIL"
-                        # report.status_extended = f"Potential {'secrets' if len(secrets_findings)>1 else 'secret'} found in Lambda function {function.name} code. {final_output_string}"
+                        # report.status_extended = f"Potential {'secrets' if len(secrets_findings)>1 else 'secret'} found in Lambda function {function.name} code. {final_output_string}."
                         if len(secrets_findings) > 1:
-                            report.status_extended = f"Potential secrets found in Lambda function {function.name} code -> {final_output_string}"
+                            report.status_extended = f"Potential secrets found in Lambda function {function.name} code -> {final_output_string}."
                         else:
-                            report.status_extended = f"Potential secret found in Lambda function {function.name} code -> {final_output_string}"
+                            report.status_extended = f"Potential secret found in Lambda function {function.name} code -> {final_output_string}."
                         # break // Don't break as there may be additional findings
 
                 findings.append(report)

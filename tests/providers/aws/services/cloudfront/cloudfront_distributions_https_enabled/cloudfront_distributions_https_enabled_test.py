@@ -68,8 +68,9 @@ class Test_cloudfront_distributions_https_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"CloudFront Distribution {DISTRIBUTION_ID} viewers can use HTTP or HTTPS"
+                == f"CloudFront Distribution {DISTRIBUTION_ID} viewers can use HTTP or HTTPS."
             )
+            assert result[0].resource_tags == []
 
     def test_one_distribution_https_redirect(self):
         cloudfront_client = mock.MagicMock
@@ -106,8 +107,9 @@ class Test_cloudfront_distributions_https_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"CloudFront Distribution {DISTRIBUTION_ID} has redirect to HTTPS"
+                == f"CloudFront Distribution {DISTRIBUTION_ID} has redirect to HTTPS."
             )
+            assert result[0].resource_tags == []
 
     def test_one_distribution_https_only(self):
         cloudfront_client = mock.MagicMock
@@ -144,5 +146,6 @@ class Test_cloudfront_distributions_https_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"CloudFront Distribution {DISTRIBUTION_ID} has HTTPS only"
+                == f"CloudFront Distribution {DISTRIBUTION_ID} has HTTPS only."
             )
+            assert result[0].resource_tags == []

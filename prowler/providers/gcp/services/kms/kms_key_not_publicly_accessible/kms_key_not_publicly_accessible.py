@@ -17,7 +17,7 @@ class kms_key_not_publicly_accessible(Check):
                 if member == "allUsers" or member == "allAuthenticatedUsers":
                     report.status = "FAIL"
                     report.status_extended = (
-                        f"Key {key.name} may be publicly accessible!"
+                        f"Key {key.name} may be publicly accessible."
                     )
             findings.append(report)
 

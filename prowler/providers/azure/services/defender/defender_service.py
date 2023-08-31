@@ -4,36 +4,15 @@ from azure.mgmt.security import SecurityCenter
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
+from prowler.providers.azure.lib.service.service import AzureService
 
 
 ########################## Defender
-class Defender:
+class Defender(AzureService):
     def __init__(self, audit_info):
-        self.service = "defender"
-        self.credentials = audit_info.credentials
-        self.subscriptions = audit_info.identity.subscriptions
-        self.clients = self.__set_clients__(
-            audit_info.identity.subscriptions, audit_info.credentials
-        )
-        self.pricings = self.__get_pricings__()
+        super().__init__(SecurityCenter, audit_info)
 
-    def __set_clients__(self, subscriptions, credentials):
-        clients = {}
-        try:
-            for display_name, id in subscriptions.items():
-                clients.update(
-                    {
-                        display_name: SecurityCenter(
-                            credential=credentials, subscription_id=id
-                        )
-                    }
-                )
-        except Exception as error:
-            logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
-        else:
-            return clients
+        self.pricings = self.__get_pricings__()
 
     def __get_pricings__(self):
         logger.info("Defender - Getting pricings...")

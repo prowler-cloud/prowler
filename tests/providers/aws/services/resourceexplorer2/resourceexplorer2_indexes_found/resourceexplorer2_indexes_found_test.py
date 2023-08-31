@@ -6,6 +6,7 @@ from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.aws.services.resourceexplorer2.resourceexplorer2_service import (
     Indexes,
 )
+from prowler.providers.common.models import Audit_Metadata
 
 AWS_ACCOUNT_NUMBER = "123456789012"
 AWS_REGION = "us-east-1"
@@ -35,6 +36,12 @@ class Test_resourceexplorer2_indexes_found:
             organizations_metadata=None,
             audit_resources=None,
             mfa_enabled=False,
+            audit_metadata=Audit_Metadata(
+                services_scanned=0,
+                expected_checks=[],
+                completed_checks=0,
+                audit_progress=0,
+            ),
         )
         return audit_info
 
@@ -61,7 +68,7 @@ class Test_resourceexplorer2_indexes_found:
             # Assertions
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert result[0].status_extended == "No Resource Explorer Indexes found"
+            assert result[0].status_extended == "No Resource Explorer Indexes found."
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
             assert result[0].resource_arn == f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
             assert result[0].region == AWS_REGION
@@ -91,7 +98,7 @@ class Test_resourceexplorer2_indexes_found:
             # Assertions
             assert len(result) == 1
             assert result[0].status == "PASS"
-            assert result[0].status_extended == "Resource Explorer Indexes found: 1"
+            assert result[0].status_extended == "Resource Explorer Indexes found: 1."
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
             assert result[0].resource_arn == INDEX_ARN
             assert result[0].region == AWS_REGION

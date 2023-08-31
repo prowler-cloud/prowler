@@ -12,9 +12,7 @@ class compute_instance_serial_ports_in_use(Check):
             report.resource_name = instance.name
             report.location = instance.zone
             report.status = "PASS"
-            report.status_extended = (
-                f"VM Instance {instance.name} has Enable Connecting to Serial Ports off"
-            )
+            report.status_extended = f"VM Instance {instance.name} has Enable Connecting to Serial Ports off."
             if instance.metadata.get("items"):
                 for item in instance.metadata["items"]:
                     if item["key"] == "serial-port-enable" and item["value"] in [
@@ -22,7 +20,7 @@ class compute_instance_serial_ports_in_use(Check):
                         "true",
                     ]:
                         report.status = "FAIL"
-                        report.status_extended = f"VM Instance {instance.name} has Enable Connecting to Serial Ports set to on"
+                        report.status_extended = f"VM Instance {instance.name} has Enable Connecting to Serial Ports set to on."
                         break
             findings.append(report)
 

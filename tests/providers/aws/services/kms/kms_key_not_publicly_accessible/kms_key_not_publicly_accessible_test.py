@@ -5,6 +5,7 @@ from boto3 import client, session
 from moto import mock_kms
 
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
+from prowler.providers.common.models import Audit_Metadata
 
 AWS_REGION = "us-east-1"
 AWS_ACCOUNT_NUMBER = "123456789012"
@@ -32,6 +33,12 @@ class Test_kms_key_not_publicly_accessible:
             organizations_metadata=None,
             audit_resources=None,
             mfa_enabled=False,
+            audit_metadata=Audit_Metadata(
+                services_scanned=0,
+                expected_checks=[],
+                completed_checks=0,
+                audit_progress=0,
+            ),
         )
 
         return audit_info
@@ -140,7 +147,7 @@ class Test_kms_key_not_publicly_accessible:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"KMS key {key['KeyId']} may be publicly accessible!"
+                == f"KMS key {key['KeyId']} may be publicly accessible."
             )
             assert result[0].resource_id == key["KeyId"]
             assert result[0].resource_arn == key["Arn"]

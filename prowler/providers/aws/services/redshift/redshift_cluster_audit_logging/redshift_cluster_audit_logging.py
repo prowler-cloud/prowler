@@ -13,12 +13,12 @@ class redshift_cluster_audit_logging(Check):
             report.resource_tags = cluster.tags
             report.status = "PASS"
             report.status_extended = (
-                f"Redshift Cluster {cluster.arn} has audit logging enabled"
+                f"Redshift Cluster {cluster.arn} has audit logging enabled."
             )
             if not cluster.logging_enabled:
                 report.status = "FAIL"
                 report.status_extended = (
-                    f"Redshift Cluster {cluster.arn} has audit logging disabled"
+                    f"Redshift Cluster {cluster.arn} has audit logging disabled."
                 )
 
             findings.append(report)

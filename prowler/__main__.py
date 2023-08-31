@@ -12,6 +12,7 @@ from prowler.lib.check.check import (
     exclude_services_to_run,
     execute_checks,
     list_categories,
+    list_checks_json,
     list_services,
     parse_checks_from_folder,
     print_categories,
@@ -28,9 +29,10 @@ from prowler.lib.logger import logger, set_logging_config
 from prowler.lib.outputs.compliance import display_compliance_table
 from prowler.lib.outputs.html import add_html_footer, fill_html_overview_statistics
 from prowler.lib.outputs.json import close_json
-from prowler.lib.outputs.outputs import extract_findings_statistics, send_to_s3_bucket
+from prowler.lib.outputs.outputs import extract_findings_statistics
 from prowler.lib.outputs.slack import send_slack_message
 from prowler.lib.outputs.summary_table import display_summary_table
+from prowler.providers.aws.lib.s3.s3 import send_to_s3_bucket
 from prowler.providers.aws.lib.security_hub.security_hub import (
     resolve_security_hub_previous_findings,
 )
@@ -113,6 +115,11 @@ def prowler():
         provider,
     )
 
+    # if --list-checks-json, dump a json file and exit
+    if args.list_checks_json:
+        print(list_checks_json(provider, sorted(checks_to_execute)))
+        sys.exit()
+
     # If -l/--list-checks passed as argument, print checks to execute and quit
     if args.list_checks:
         print_checks(provider, sorted(checks_to_execute), bulk_checks_metadata)
@@ -138,7 +145,8 @@ def prowler():
     # Once the audit_info is set and we have the eventual checks based on the resource identifier,
     # it is time to check what Prowler's checks are going to be executed
     if audit_info.audit_resources:
-        checks_to_execute = set_provider_execution_parameters(provider, audit_info)
+        checks_from_resources = set_provider_execution_parameters(provider, audit_info)
+        checks_to_execute = checks_to_execute.intersection(checks_from_resources)
 
     # Sort final check list
     checks_to_execute = sorted(checks_to_execute)
@@ -219,7 +227,11 @@ def prowler():
 
     # Resolve previous fails of Security Hub
     if provider == "aws" and args.security_hub and not args.skip_sh_update:
-        resolve_security_hub_previous_findings(args.output_directory, audit_info)
+        resolve_security_hub_previous_findings(
+            audit_output_options.output_directory,
+            audit_output_options.output_filename,
+            audit_info,
+        )
 
     # Display summary table
     if not args.only_logs:

@@ -1,4 +1,7 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
+from prowler.providers.aws.lib.policy_condition_parser.policy_condition_parser import (
+    is_account_only_allowed_in_condition,
+)
 from prowler.providers.aws.services.iam.iam_client import iam_client
 
 
@@ -14,7 +17,7 @@ class iam_role_cross_service_confused_deputy_prevention(Check):
                 report.resource_id = role.name
                 report.resource_tags = role.tags
                 report.status = "FAIL"
-                report.status_extended = f"IAM Service Role {role.name} does not prevent against a cross-service confused deputy attack"
+                report.status_extended = f"IAM Service Role {role.name} does not prevent against a cross-service confused deputy attack."
                 for statement in role.assume_role_policy["Statement"]:
                     if (
                         statement["Effect"] == "Allow"
@@ -27,50 +30,12 @@ class iam_role_cross_service_confused_deputy_prevention(Check):
                         and "Service" in statement["Principal"]
                         # Check to see if the appropriate condition statements have been implemented
                         and "Condition" in statement
-                        and (
-                            (
-                                "StringEquals" in statement["Condition"]
-                                and "aws:SourceAccount"
-                                in statement["Condition"]["StringEquals"]
-                                and iam_client.account
-                                in str(
-                                    statement["Condition"]["StringEquals"][
-                                        "aws:SourceAccount"
-                                    ]
-                                )
-                            )
-                            or (
-                                "StringLike" in statement["Condition"]
-                                and "aws:SourceAccount"
-                                in statement["Condition"]["StringLike"]
-                                and iam_client.account
-                                in str(
-                                    statement["Condition"]["StringLike"][
-                                        "aws:SourceAccount"
-                                    ]
-                                )
-                            )
-                            or (
-                                "ArnEquals" in statement["Condition"]
-                                and "aws:SourceArn"
-                                in statement["Condition"]["ArnEquals"]
-                                and iam_client.account
-                                in str(
-                                    statement["Condition"]["ArnEquals"]["aws:SourceArn"]
-                                )
-                            )
-                            or (
-                                "ArnLike" in statement["Condition"]
-                                and "aws:SourceArn" in statement["Condition"]["ArnLike"]
-                                and iam_client.account
-                                in str(
-                                    statement["Condition"]["ArnLike"]["aws:SourceArn"]
-                                )
-                            )
+                        and is_account_only_allowed_in_condition(
+                            statement["Condition"], iam_client.audited_account
                         )
                     ):
                         report.status = "PASS"
-                        report.status_extended = f"IAM Service Role {role.name} prevents against a cross-service confused deputy attack"
+                        report.status_extended = f"IAM Service Role {role.name} prevents against a cross-service confused deputy attack."
                         break
 
                 findings.append(report)
