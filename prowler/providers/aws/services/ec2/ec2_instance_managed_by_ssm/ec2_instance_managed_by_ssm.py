@@ -12,18 +12,16 @@ class ec2_instance_managed_by_ssm(Check):
                 report.region = instance.region
                 report.resource_arn = instance.arn
                 report.resource_tags = instance.tags
+                report.status = "PASS"
+                report.status_extended = (
+                    f"EC2 Instance {instance.id} is managed by Systems Manager."
+                )
+                report.resource_id = instance.id
                 if not ssm_client.managed_instances.get(instance.id):
                     report.status = "FAIL"
                     report.status_extended = (
                         f"EC2 Instance {instance.id} is not managed by Systems Manager."
                     )
-                    report.resource_id = instance.id
-                else:
-                    report.status = "PASS"
-                    report.status_extended = (
-                        f"EC2 Instance {instance.id} is managed by Systems Manager."
-                    )
-                    report.resource_id = instance.id
                 findings.append(report)
 
         return findings
