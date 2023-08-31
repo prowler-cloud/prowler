@@ -230,6 +230,26 @@ class Test_policy_condition_parser:
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
+    def test_condition_parser_string_equals_aws_SourceArn_str(self):
+        condition_statement = {
+            "StringEquals": {
+                "aws:SourceArn": f"arn:aws:cloudtrail:*:{TRUSTED_AWS_ACCOUNT_NUMBER}:trail/*"
+            }
+        }
+        assert is_account_only_allowed_in_condition(
+            condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
+        )
+
+    def test_condition_parser_string_equals_aws_SourceArn_str_not_valid(self):
+        condition_statement = {
+            "StringEquals": {
+                "aws:SourceArn": f"arn:aws:cloudtrail:*:{NON_TRUSTED_AWS_ACCOUNT_NUMBER}:trail/*"
+            }
+        }
+        assert not is_account_only_allowed_in_condition(
+            condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
+        )
+
     def test_condition_parser_string_like_aws_PrincipalAccount_list(self):
         condition_statement = {
             "StringLike": {"aws:PrincipalAccount": [TRUSTED_AWS_ACCOUNT_NUMBER]}

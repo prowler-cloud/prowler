@@ -25,6 +25,7 @@ def is_account_only_allowed_in_condition(
             "s3:resourceaccount",
             "aws:principalaccount",
             "aws:resourceaccount",
+            "aws:sourcearn",
         ],
         "StringLike": [
             "aws:sourceaccount",
