@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta, timezone
 from re import search
 from unittest import mock
 
@@ -27,7 +28,9 @@ class Test_apikeys_key_rotated_in_90_days:
         key = Key(
             name="test",
             id="123",
-            creation_time="2023-06-01T11:21:41.627509Z",
+            creation_time=(datetime.now(timezone.utc) - timedelta(30)).strftime(
+                "%Y-%m-%dT%H:%M:%S.%f%z"
+            ),
             restrictions={},
             project_id=GCP_PROJECT_ID,
         )
@@ -62,7 +65,9 @@ class Test_apikeys_key_rotated_in_90_days:
         key = Key(
             name="test",
             id="123",
-            creation_time="2022-06-05T11:21:41.627509Z",
+            creation_time=(datetime.now(timezone.utc) - timedelta(100)).strftime(
+                "%Y-%m-%dT%H:%M:%S.%f%z"
+            ),
             restrictions={},
             project_id=GCP_PROJECT_ID,
         )
