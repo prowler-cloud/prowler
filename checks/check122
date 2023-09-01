@@ -32,7 +32,7 @@ check122(){
     for policy in $LIST_CUSTOM_POLICIES; do
       POLICY_ARN=$(awk 'BEGIN{FS=OFS=","}{NF--; print}' <<< "${policy}")
       POLICY_VERSION=$(awk -F ',' '{print $(NF)}' <<< "${policy}")
-      POLICY_WITH_FULL=$($AWSCLI iam get-policy-version --output text --policy-arn $POLICY_ARN --version-id $POLICY_VERSION --query "[PolicyVersion.Document.Statement] | [] | [?Action!=null] | [?Effect == 'Allow' && Resource == '*' && Action == '*']" $PROFILE_OPT --region $REGION)
+      POLICY_WITH_FULL=$($AWSCLI iam get-policy-version --output text --policy-arn $POLICY_ARN --version-id $POLICY_VERSION --query "[PolicyVersion.Document.Statement] | [] | [?Action!=null] | [?Effect == 'Allow' && Resource == '*' && contains(Action, '*')]" $PROFILE_OPT --region $REGION)
       if [[ $POLICY_WITH_FULL ]]; then
         POLICIES_ALLOW_LIST="$POLICIES_ALLOW_LIST $POLICY_ARN"
       else
