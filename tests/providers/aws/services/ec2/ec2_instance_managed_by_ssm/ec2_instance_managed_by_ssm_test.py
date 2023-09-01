@@ -136,7 +136,10 @@ class Test_ec2_instance_managed_by_ssm_test:
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             new=current_audit_info,
         ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_instance_managed_by_ssm.ec2_instance_managed_by_ssm.ssm_client",
+            "prowler.providers.aws.services.ssm.ssm_service.SSM",
+            new=ssm_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.ssm.ssm_client.ssm_client",
             new=ssm_client,
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_instance_managed_by_ssm.ec2_instance_managed_by_ssm.ec2_client",
