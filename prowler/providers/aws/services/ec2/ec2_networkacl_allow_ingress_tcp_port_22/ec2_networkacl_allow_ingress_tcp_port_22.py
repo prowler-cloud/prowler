@@ -13,15 +13,13 @@ class ec2_networkacl_allow_ingress_tcp_port_22(Check):
             report.region = network_acl.region
             report.resource_arn = network_acl.arn
             report.resource_tags = network_acl.tags
+            report.status = "PASS"
+            report.status_extended = f"Network ACL {network_acl.id} does not have SSH port 22 open to the Internet."
+            report.resource_id = network_acl.id
             # If some entry allows it, that ACL is not securely configured
-            if not check_network_acl(network_acl.entries, tcp_protocol, check_port):
-                report.status = "PASS"
-                report.status_extended = f"Network ACL {network_acl.id} does not have SSH port 22 open to the Internet."
-                report.resource_id = network_acl.id
-            else:
+            if check_network_acl(network_acl.entries, tcp_protocol, check_port):
                 report.status = "FAIL"
                 report.status_extended = f"Network ACL {network_acl.id} has SSH port 22 open to the Internet."
-                report.resource_id = network_acl.id
             findings.append(report)
 
         return findings
