@@ -18,6 +18,7 @@ from prowler.lib.outputs.models import (
     generate_csv_fields,
     unroll_list,
 )
+from prowler.lib.utils.utils import outputs_unix_timestamp
 
 
 def add_manual_controls(output_options, audit_info, file_descriptors):
@@ -67,7 +68,9 @@ def fill_compliance(output_options, finding, audit_info, file_descriptors):
                             Description=compliance.Description,
                             AccountId=audit_info.audited_account,
                             Region=finding.region,
-                            AssessmentDate=timestamp.isoformat(),
+                            AssessmentDate=outputs_unix_timestamp(
+                                output_options.unix_timestamp, timestamp
+                            ),
                             Requirements_Id=requirement_id,
                             Requirements_Description=requirement_description,
                             Requirements_Attributes_IdGrupoControl=attribute.IdGrupoControl,
@@ -105,7 +108,9 @@ def fill_compliance(output_options, finding, audit_info, file_descriptors):
                                     Description=compliance.Description,
                                     AccountId=audit_info.audited_account,
                                     Region=finding.region,
-                                    AssessmentDate=timestamp.isoformat(),
+                                    AssessmentDate=outputs_unix_timestamp(
+                                        output_options.unix_timestamp, timestamp
+                                    ),
                                     Requirements_Id=requirement_id,
                                     Requirements_Description=requirement_description,
                                     Requirements_Attributes_Section=attribute.Section,
@@ -132,7 +137,9 @@ def fill_compliance(output_options, finding, audit_info, file_descriptors):
                                     Description=compliance.Description,
                                     ProjectId=finding.project_id,
                                     Location=finding.location,
-                                    AssessmentDate=timestamp.isoformat(),
+                                    AssessmentDate=outputs_unix_timestamp(
+                                        output_options.unix_timestamp, timestamp
+                                    ),
                                     Requirements_Id=requirement_id,
                                     Requirements_Description=requirement_description,
                                     Requirements_Attributes_Section=attribute.Section,
@@ -176,7 +183,9 @@ def fill_compliance(output_options, finding, audit_info, file_descriptors):
                                 Description=compliance.Description,
                                 AccountId=audit_info.audited_account,
                                 Region=finding.region,
-                                AssessmentDate=timestamp.isoformat(),
+                                AssessmentDate=outputs_unix_timestamp(
+                                    output_options.unix_timestamp, timestamp
+                                ),
                                 Requirements_Id=requirement_id,
                                 Requirements_Description=requirement_description,
                                 Requirements_Attributes_Name=attribute.Name,
@@ -221,7 +230,9 @@ def fill_compliance(output_options, finding, audit_info, file_descriptors):
                                 Description=compliance.Description,
                                 AccountId=audit_info.audited_account,
                                 Region=finding.region,
-                                AssessmentDate=timestamp.isoformat(),
+                                AssessmentDate=outputs_unix_timestamp(
+                                    output_options.unix_timestamp, timestamp
+                                ),
                                 Requirements_Id=requirement_id,
                                 Requirements_Name=requirement_name,
                                 Requirements_Description=requirement_description,
@@ -268,7 +279,9 @@ def fill_compliance(output_options, finding, audit_info, file_descriptors):
                             Description=compliance.Description,
                             AccountId=audit_info.audited_account,
                             Region=finding.region,
-                            AssessmentDate=timestamp.isoformat(),
+                            AssessmentDate=outputs_unix_timestamp(
+                                output_options.unix_timestamp, timestamp
+                            ),
                             Requirements_Id=requirement_id,
                             Requirements_Description=requirement_description,
                             Requirements_Name=requirement_name,
@@ -308,7 +321,9 @@ def fill_compliance(output_options, finding, audit_info, file_descriptors):
                                 Description=compliance.Description,
                                 AccountId=audit_info.audited_account,
                                 Region=finding.region,
-                                AssessmentDate=timestamp.isoformat(),
+                                AssessmentDate=outputs_unix_timestamp(
+                                    output_options.unix_timestamp, timestamp
+                                ),
                                 Requirements_Id=requirement_id,
                                 Requirements_Description=requirement_description,
                                 Requirements_Attributes_Section=attribute.Section,
