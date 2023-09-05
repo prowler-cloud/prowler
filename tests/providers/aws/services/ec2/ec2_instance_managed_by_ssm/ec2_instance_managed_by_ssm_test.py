@@ -50,9 +50,18 @@ class Test_ec2_instance_managed_by_ssm_test:
 
         current_audit_info = self.set_mocked_audit_info()
 
+        ssm_client = mock.MagicMock
+        ssm_client.managed_instances = {}
+
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             new=current_audit_info,
+        ), mock.patch(
+            "prowler.providers.aws.services.ssm.ssm_service.SSM",
+            new=ssm_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.ssm.ssm_client.ssm_client",
+            new=ssm_client,
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_instance_managed_by_ssm.ec2_instance_managed_by_ssm.ec2_client",
             new=EC2(current_audit_info),
@@ -80,6 +89,9 @@ class Test_ec2_instance_managed_by_ssm_test:
             UserData="This is some user_data",
         )[0]
 
+        ssm_client = mock.MagicMock
+        ssm_client.managed_instances = {}
+
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
         current_audit_info = self.set_mocked_audit_info()
@@ -87,6 +99,12 @@ class Test_ec2_instance_managed_by_ssm_test:
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             new=current_audit_info,
+        ), mock.patch(
+            "prowler.providers.aws.services.ssm.ssm_service.SSM",
+            new=ssm_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.ssm.ssm_client.ssm_client",
+            new=ssm_client,
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_instance_managed_by_ssm.ec2_instance_managed_by_ssm.ec2_client",
             new=EC2(current_audit_info),
