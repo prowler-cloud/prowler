@@ -67,8 +67,8 @@ def fill_json_asff(finding_output, audit_info, finding, output_options):
         resource_tags = {}
         if finding.resource_tags:
             for tag in finding.resource_tags:
-                if 'Key' in tag and 'Value' in tag:
-                    resource_tags[tag['Key']] = tag['Value']
+                if "Key" in tag and "Value" in tag:
+                    resource_tags[tag["Key"]] = tag["Value"]
                 else:
                     resource_tags.update(tag)
             if len(resource_tags) == 0:
