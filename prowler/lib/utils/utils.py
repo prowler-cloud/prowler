@@ -2,10 +2,12 @@ import json
 import os
 import sys
 import tempfile
+from datetime import datetime
 from hashlib import sha512
 from io import TextIOWrapper
 from ipaddress import ip_address
 from os.path import exists
+from time import mktime
 from typing import Any
 
 from detect_secrets import SecretsCollection
@@ -88,3 +90,11 @@ def validate_ip_address(ip_string):
         return True
     except ValueError:
         return False
+
+
+def outputs_unix_timestamp(is_unix_timestamp: bool, timestamp: datetime):
+    if is_unix_timestamp:
+        timestamp = mktime(timestamp.timetuple())
+    else:
+        timestamp = timestamp.isoformat()
+    return timestamp
