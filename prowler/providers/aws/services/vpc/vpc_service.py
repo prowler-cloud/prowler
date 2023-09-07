@@ -280,7 +280,7 @@ class VPC(AWSService):
                                 id=subnet["SubnetId"],
                                 default=subnet["DefaultForAz"],
                                 vpc_id=subnet["VpcId"],
-                                cidr_block=subnet["CidrBlock"],
+                                cidr_block=subnet.get("CidrBlock"),
                                 region=regional_client.region,
                                 availability_zone=subnet["AvailabilityZone"],
                                 public=public,
@@ -308,7 +308,7 @@ class VpcSubnet(BaseModel):
     id: str
     default: bool
     vpc_id: str
-    cidr_block: str
+    cidr_block: Optional[str]
     availability_zone: str
     public: bool
     nat_gateway: bool
