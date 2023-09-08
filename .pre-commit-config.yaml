@@ -75,6 +75,7 @@ repos:
         name: pylint
         entry: bash -c 'pylint --disable=W,C,R,E -j 0 -rn -sn prowler/'
         language: system
+        files: '.*\.py'
 
       - id: trufflehog
         name: TruffleHog
@@ -89,12 +90,14 @@ repos:
         name: pytest-check
         entry: bash -c 'pytest tests -n auto'
         language: system
+        files: '.*\.py'
 
       - id: bandit
         name: bandit
         description: "Bandit is a tool for finding common security issues in Python code"
         entry: bash -c 'bandit -q -lll -x '*_test.py,./contrib/' -r .'
         language: system
+        files: '.*\.py'
 
       - id: safety
         name: safety
@@ -107,3 +110,4 @@ repos:
         description: "Vulture finds unused code in Python programs."
         entry: bash -c 'vulture --exclude "contrib" --min-confidence 100 .'
         language: system
+        files: '.*\.py'
