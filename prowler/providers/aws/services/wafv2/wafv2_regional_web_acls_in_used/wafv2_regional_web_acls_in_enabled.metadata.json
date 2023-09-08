@@ -1,0 +1,28 @@
+{
+    "Provider": "aws",
+    "CheckID": "wafv2_regional_web_acls_in_used",
+    "CheckTitle": "Check if AWS WAFv2 Regional Web ACLs Have Logging Enabled",
+    "CheckType": [
+      "configuration"
+    ],
+    "ServiceName": "wafv2",
+    "ResourceType": "AwsWafv2WebAcl",
+    "Severity": "medium",
+    "Description": "Check if AWS WAFv2 regional Web ACLs have logging enabled.",
+    "Risk": "Enabling AWS WAFv2 logging helps monitor and analyze traffic patterns for enhanced security.",
+    "Remediation": {
+      "Code": {
+        "CLI": "aws wafv2 update-web-acl-logging-configuration --scope REGIONAL --web-acl-arn arn:partition:wafv2:region:account-id:webacl/webacl-id --logging-configuration '{\"LogDestinationConfigs\": [\"arn:partition:logs:region:account-id:log-group:log-group-name\"]}'",
+        "Terraform": "resource \"aws_wafv2_web_acl\" \"example\" {\n  # ... other configuration ...\n\n  logging_configuration {\n    log_destination_configs {\n      log_destination_type = \"CLOUDWATCH_LOGS\"\n      log_destination = \"arn:partition:logs:region:account-id:log-group:log-group-name\"\n    }\n  }\n}"
+      },
+      "Recommendation": {
+        "Text": "Enable AWS WAFv2 logging for your Web ACLs to monitor and analyze traffic patterns effectively.",
+        "Url": "https://docs.aws.amazon.com/waf/latest/developerguide/logging.html"
+      }
+    },
+    "Categories": ["configuration"],
+    "DependsOn": [],
+    "RelatedTo": [],
+    "Notes": ""
+  }
+  
