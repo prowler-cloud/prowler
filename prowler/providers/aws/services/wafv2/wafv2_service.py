@@ -21,6 +21,12 @@ class WAFv2(AWSService):
                 if not self.audit_resources or (
                     is_resource_filtered(wafv2["ARN"], self.audit_resources)
                 ):
+                    logging_enabled = regional_client.get_logging_configuration(
+                        ResourceArn=wafv2["ARN"]
+                    )
+                    logging_enabled = WebAclv2.get("LoggingConfiguration", {}).get("LogDestinationConfigs", [])
+                    logging_enabled = bool(logging_enabled)
+
                     self.web_acls.append(
                         WebAclv2(
                             arn=wafv2["ARN"],
@@ -28,6 +34,9 @@ class WAFv2(AWSService):
                             id=wafv2["Id"],
                             albs=[],
                             region=regional_client.region,
+                            logging_enabled=wafv2["LoggingConfiguration"]["LogDestinationConfigs"],
+                            cloudwatch_metrics_enabled=wafv2["CloudWatchMetricsEnabled"],
+                            sampling_request_enabled=wafv2["SamplingRequestEnabled"], 
                         )
                     )
         except Exception as error:
@@ -40,6 +49,7 @@ class WAFv2(AWSService):
         try:
             for acl in self.web_acls:
                 if acl.region == regional_client.region:
+                    acl.web_acls_in_used = bool(acl.albs)
                     for resource in regional_client.list_resources_for_web_acl(
                         WebACLArn=acl.arn, ResourceType="APPLICATION_LOAD_BALANCER"
                     )["ResourceArns"]:
@@ -57,3 +67,6 @@ class WebAclv2(BaseModel):
     id: str
     albs: list[str]
     region: str
+    logging_enabled: bool 
+    cloudwatch_metrics_enabled: bool
+    sampling_request_enabled: bool
