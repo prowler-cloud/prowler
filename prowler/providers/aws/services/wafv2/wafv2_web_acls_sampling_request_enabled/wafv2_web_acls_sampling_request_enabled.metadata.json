@@ -1,0 +1,28 @@
+{
+    "Provider": "aws",
+    "CheckID": "wafv2_web_acl_sampling_enabled",
+    "CheckTitle": "Check if AWS WAF Web ACLs Have Sampling Enabled",
+    "CheckType": [
+      "Monitoring"
+    ],
+    "ServiceName": "waf",
+    "ResourceType": "AwsWafWebAcl",
+    "Severity": "medium",
+    "Description": "Check if AWS WAF Web ACLs have sampling enabled.",
+    "Risk": "Enabling sampling for AWS WAF Web ACLs helps monitor and analyze traffic patterns for enhanced security.",
+    "Remediation": {
+      "Code": {
+        "CLI": "aws waf update-sampling-rate --web-acl-id webacl-id --sampling-rate 100%",
+        "Terraform": "resource \"aws_waf_web_acl\" \"example\" {\n  # ... other configuration ...\n\n  sampling_rate = 100\n}"
+      },
+      "Recommendation": {
+        "Text": "Enable sampling for your AWS WAF Web ACLs to monitor traffic patterns effectively.",
+        "Url": "https://docs.aws.amazon.com/waf/latest/developerguide/monitoring-cloudwatch.html"
+      }
+    },
+    "Categories": ["monitoring"],
+    "DependsOn": [],
+    "RelatedTo": [],
+    "Notes": ""
+  }
+  
