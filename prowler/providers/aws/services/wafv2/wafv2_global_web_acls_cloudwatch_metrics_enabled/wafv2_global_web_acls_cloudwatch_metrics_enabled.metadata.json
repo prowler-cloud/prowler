@@ -1,0 +1,28 @@
+{
+    "Provider": "aws",
+    "CheckID": "wafv2_global_web_acls_cloudwatch_metrics_enabled",
+    "CheckTitle": "Check if AWS WAFv2 Global Web ACLs Have CloudWatch Metrics Enabled",
+    "CheckType": [
+      "Monitoring"
+    ],
+    "ServiceName": "wafv2",
+    "ResourceType": "AwsWafv2WebAcl",
+    "Severity": "medium",
+    "Description": "Check if AWS WAFv2 Global Web ACLs have CloudWatch metrics enabled.",
+    "Risk": "Enabling CloudWatch metrics for AWS WAFv2 Global Web ACLs helps monitor and analyze traffic patterns for enhanced security.",
+    "Remediation": {
+      "Code": {
+        "CLI": "aws wafv2 update-web-acl --scope GLOBAL --web-acl-arn arn:partition:wafv2:region:account-id:global/webacl/webacl-id --default-action '{\"Allow\": {\"Count\": true, \"Action\": \"wafv2-count\"}}'",
+        "Terraform": "resource \"aws_wafv2_web_acl\" \"example\" {\n  scope = \"REGIONAL\"\n  # ... other configuration ...\n\n  default_action {\n    allow {\n      count = true\n      action = \"wafv2-count\"\n    }\n  }\n}"
+      },
+      "Recommendation": {
+        "Text": "Enable CloudWatch metrics for your AWS WAFv2 Global Web ACLs to monitor traffic patterns effectively.",
+        "Url": "https://docs.aws.amazon.com/waf/latest/developerguide/monitoring-cloudwatch.html"
+      }
+    },
+    "Categories": ["monitoring"],
+    "DependsOn": [],
+    "RelatedTo": [],
+    "Notes": ""
+  }
+  
