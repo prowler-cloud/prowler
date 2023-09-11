@@ -103,8 +103,8 @@ class Test_iam_role_administratoraccess_policy:
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert (
-                    result[0].status_extended
-                    == "IAM Role test does not have AdministratorAccess policy."
+                result[0].status_extended
+                == "IAM Role test does not have AdministratorAccess policy."
             )
             assert result[0].resource_id == "test"
             assert result[0].resource_arn == response["Role"]["Arn"]
@@ -152,8 +152,8 @@ class Test_iam_role_administratoraccess_policy:
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert (
-                    result[0].status_extended
-                    == "IAM Role test does not have AdministratorAccess policy."
+                result[0].status_extended
+                == "IAM Role test does not have AdministratorAccess policy."
             )
             assert result[0].resource_id == "test"
             assert result[0].resource_arn == response["Role"]["Arn"]
@@ -201,8 +201,8 @@ class Test_iam_role_administratoraccess_policy:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert (
-                    result[0].status_extended
-                    == "IAM Role test has AdministratorAccess policy attached."
+                result[0].status_extended
+                == "IAM Role test has AdministratorAccess policy attached."
             )
             assert result[0].resource_id == "test"
             assert result[0].resource_arn == response["Role"]["Arn"]
@@ -250,8 +250,8 @@ class Test_iam_role_administratoraccess_policy:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert (
-                    result[0].status_extended
-                    == "IAM Role test has AdministratorAccess policy attached."
+                result[0].status_extended
+                == "IAM Role test has AdministratorAccess policy attached."
             )
             assert result[0].resource_id == "test"
             assert result[0].resource_arn == response["Role"]["Arn"]
