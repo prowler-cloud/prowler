@@ -39,6 +39,7 @@ class Provider_Output_Options:
     verbose: str
     output_filename: str
     only_logs: bool
+    unix_timestamp: bool
 
     def __init__(self, arguments, allowlist_file, bulk_checks_metadata):
         self.is_quiet = arguments.quiet
@@ -48,6 +49,7 @@ class Provider_Output_Options:
         self.bulk_checks_metadata = bulk_checks_metadata
         self.allowlist_file = allowlist_file
         self.only_logs = arguments.only_logs
+        self.unix_timestamp = arguments.unix_timestamp
         # Check output directory, if it is not created -> create it
         if arguments.output_directory:
             if not isdir(arguments.output_directory):

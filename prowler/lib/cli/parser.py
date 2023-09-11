@@ -159,6 +159,12 @@ Detailed documentation at https://docs.prowler.cloud
             action="store_true",
             help="Send a summary of the execution with a Slack APP in your channel. Environment variables SLACK_API_TOKEN and SLACK_CHANNEL_ID are required (see more in https://docs.prowler.cloud/en/latest/tutorials/integrations/#slack).",
         )
+        common_outputs_parser.add_argument(
+            "--unix-timestamp",
+            action="store_true",
+            default=False,
+            help="Set the output timestamp format as unix timestamps instead of iso format timestamps (default mode).",
+        )
 
     def __init_logging_parser__(self):
         # Logging Options

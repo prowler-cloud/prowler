@@ -24,6 +24,8 @@ prowler <provider> -M csv json json-asff html -o <custom_report_directory>
 prowler <provider> -M csv json json-asff html \
         -F <custom_report_name> -o <custom_report_directory>
 ```
+## Output timestamp format
+By default, the timestamp format of the output files is ISO 8601. This can be changed with the flag `--unix-timestamp` generating the timestamp fields in pure unix timestamp format.
 
 ## Output Formats
 
