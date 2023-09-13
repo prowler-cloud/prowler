@@ -186,7 +186,7 @@ class EC2(AWSService):
                                 id=snapshot["SnapshotId"],
                                 arn=arn,
                                 region=regional_client.region,
-                                encrypted=snapshot["Encrypted"],
+                                encrypted=snapshot.get("Encrypted", False),
                                 tags=snapshot.get("Tags"),
                             )
                         )
