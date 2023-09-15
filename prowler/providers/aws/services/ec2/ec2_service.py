@@ -175,21 +175,18 @@ class EC2(AWSService):
             describe_snapshots_paginator = regional_client.get_paginator(
                 "describe_snapshots"
             )
-            encrypted = False
             for page in describe_snapshots_paginator.paginate(OwnerIds=["self"]):
                 for snapshot in page["Snapshots"]:
                     arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:snapshot/{snapshot['SnapshotId']}"
                     if not self.audit_resources or (
                         is_resource_filtered(arn, self.audit_resources)
                     ):
-                        if snapshot["Encrypted"]:
-                            encrypted = True
                         self.snapshots.append(
                             Snapshot(
                                 id=snapshot["SnapshotId"],
                                 arn=arn,
                                 region=regional_client.region,
-                                encrypted=encrypted,
+                                encrypted=snapshot.get("Encrypted", False),
                                 tags=snapshot.get("Tags"),
                             )
                         )
@@ -199,7 +196,7 @@ class EC2(AWSService):
             )
 
     def __get_snapshot_public__(self):
-        logger.info("EC2 - Gettting snapshots encryption...")
+        logger.info("EC2 - Getting snapshot volume attribute permissions...")
         for snapshot in self.snapshots:
             try:
                 regional_client = self.regional_clients[snapshot.region]
@@ -279,7 +276,7 @@ class EC2(AWSService):
             )
 
     def __get_instance_user_data__(self):
-        logger.info("EC2 - Gettting instance user data...")
+        logger.info("EC2 - Getting instance user data...")
         for instance in self.instances:
             try:
                 regional_client = self.regional_clients[instance.region]
