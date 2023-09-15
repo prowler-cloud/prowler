@@ -26,6 +26,8 @@ class cloudtrail_s3_dataevents_write_enabled(Check):
                             if "AWS::S3::Object" == resource["Type"] and (
                                 f"arn:{cloudtrail_client.audited_partition}:s3"
                                 in resource["Values"]
+                                or f"arn:{cloudtrail_client.audited_partition}:s3:::"
+                                in resource["Values"]
                                 or f"arn:{cloudtrail_client.audited_partition}:s3:::*/*"
                                 in resource["Values"]
                             ):
