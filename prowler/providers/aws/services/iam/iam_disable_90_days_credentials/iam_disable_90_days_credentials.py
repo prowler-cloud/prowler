@@ -38,17 +38,15 @@ class iam_disable_90_days_credentials(Check):
             findings.append(report)
 
         for user in iam_client.credential_report:
-            report = Check_Report_AWS(self.metadata())
-            report.region = iam_client.region
-            report.resource_id = user["user"]
-            report.resource_arn = user["arn"]
             if (
                 user["access_key_1_active"] != "true"
                 and user["access_key_2_active"] != "true"
             ):
-                report.status = "PASS"
-                report.status_extended = (
-                    f"User {user['user']} does not have access keys."
+                self.add_finding(
+                    user=user,
+                    status="PASS",
+                    status_extended=f"User {user['user']} does not have access keys.",
+                    findings=findings,
                 )
             else:
                 old_access_keys = False
@@ -63,8 +61,12 @@ class iam_disable_90_days_credentials(Check):
                         )
                         if access_key_1_last_used_date.days > maximum_expiration_days:
                             old_access_keys = True
-                            report.status = "FAIL"
-                            report.status_extended = f"User {user['user']} has not used access key 1 in the last {maximum_expiration_days} days ({access_key_1_last_used_date.days} days)."
+                            self.add_finding(
+                                user=user,
+                                status="FAIL",
+                                status_extended=f"User {user['user']} has not used access key 1 in the last {maximum_expiration_days} days ({access_key_1_last_used_date.days} days).",
+                                findings=findings,
+                            )
 
                 if user["access_key_2_active"] == "true":
                     if user["access_key_2_last_used_date"] != "N/A":
@@ -77,12 +79,28 @@ class iam_disable_90_days_credentials(Check):
                         )
                         if access_key_2_last_used_date.days > maximum_expiration_days:
                             old_access_keys = True
-                            report.status = "FAIL"
-                            report.status_extended = f"User {user['user']} has not used access key 2 in the last {maximum_expiration_days} days ({access_key_2_last_used_date.days} days)."
+                            self.add_finding(
+                                user=user,
+                                status="FAIL",
+                                status_extended=f"User {user['user']} has not used access key 2 in the last {maximum_expiration_days} days ({access_key_2_last_used_date.days} days).",
+                                findings=findings,
+                            )
 
                 if not old_access_keys:
-                    report.status = "PASS"
-                    report.status_extended = f"User {user['user']} does not have unused access keys for {maximum_expiration_days} days."
-            findings.append(report)
+                    self.add_finding(
+                        user=user,
+                        status="PASS",
+                        status_extended=f"User {user['user']} does not have unused access keys for {maximum_expiration_days} days.",
+                        findings=findings,
+                    )
 
         return findings
+
+    def add_finding(self, user, status, status_extended, findings):
+        report = Check_Report_AWS(self.metadata())
+        report.region = iam_client.region
+        report.resource_id = user["user"]
+        report.resource_arn = user["arn"]
+        report.status = status
+        report.status_extended = status_extended
+        findings.append(report)
