@@ -268,3 +268,56 @@ class Test_iam_disable_90_days_credentials_test:
                 )
                 assert result[-1].resource_id == user
                 assert result[-1].resource_arn == arn
+
+    @mock_iam
+    def test_user_both_access_keys_not_used(self):
+        credentials_last_rotated = (
+            datetime.datetime.now() - datetime.timedelta(days=100)
+        ).strftime("%Y-%m-%dT%H:%M:%S+00:00")
+        iam_client = client("iam")
+        user = "test-user"
+        arn = iam_client.create_user(UserName=user)["User"]["Arn"]
+
+        from prowler.providers.aws.services.iam.iam_service import IAM
+
+        audit_info = self.set_mocked_audit_info()
+
+        with mock.patch(
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=audit_info,
+        ):
+            with mock.patch(
+                "prowler.providers.aws.services.iam.iam_disable_90_days_credentials.iam_disable_90_days_credentials.iam_client",
+                new=IAM(audit_info),
+            ) as service_client:
+                from prowler.providers.aws.services.iam.iam_disable_90_days_credentials.iam_disable_90_days_credentials import (
+                    iam_disable_90_days_credentials,
+                )
+
+                service_client.credential_report[0]["access_key_1_active"] = "true"
+                service_client.credential_report[0][
+                    "access_key_1_last_used_date"
+                ] = credentials_last_rotated
+
+                service_client.credential_report[0]["access_key_2_active"] = "true"
+                service_client.credential_report[0][
+                    "access_key_2_last_used_date"
+                ] = credentials_last_rotated
+
+                check = iam_disable_90_days_credentials()
+                result = check.execute()
+                assert result[-1].status == "FAIL"
+                assert (
+                    result[-1].status_extended
+                    == f"User {user} has not used access key 2 in the last 90 days (100 days)."
+                )
+                assert result[-1].resource_id == user
+                assert result[-1].resource_arn == arn
+
+                assert result[-2].status == "FAIL"
+                assert (
+                    result[-2].status_extended
+                    == f"User {user} has not used access key 1 in the last 90 days (100 days)."
+                )
+                assert result[-2].resource_id == user
+                assert result[-2].resource_arn == arn
