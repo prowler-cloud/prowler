@@ -20,7 +20,7 @@ class iam_rotate_access_key_90_days(Check):
                     user=user,
                     status="PASS",
                     status_extended=f"User {user['user']} does not have access keys.",
-                    findings=findings
+                    findings=findings,
                 )
             else:
                 old_access_keys = False
@@ -41,7 +41,7 @@ class iam_rotate_access_key_90_days(Check):
                             user=user,
                             status="FAIL",
                             status_extended=f"User {user['user']} has not rotated access key 1 in over 90 days ({access_key_1_last_rotated.days} days).",
-                            findings=findings
+                            findings=findings,
                         )
                 if (
                     user["access_key_2_last_rotated"] != "N/A"
@@ -60,14 +60,14 @@ class iam_rotate_access_key_90_days(Check):
                             user=user,
                             status="FAIL",
                             status_extended=f"User {user['user']} has not rotated access key 2 in over 90 days ({access_key_2_last_rotated.days} days).",
-                            findings=findings
+                            findings=findings,
                         )
                 if not old_access_keys:
                     self.add_finding(
                         user=user,
                         status="PASS",
                         status_extended=f"User {user['user']} does not have access keys older than 90 days.",
-                        findings=findings
+                        findings=findings,
                     )
 
         return findings

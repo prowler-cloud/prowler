@@ -46,7 +46,7 @@ class iam_disable_90_days_credentials(Check):
                     user=user,
                     status="PASS",
                     status_extended=f"User {user['user']} does not have access keys.",
-                    findings=findings
+                    findings=findings,
                 )
             else:
                 old_access_keys = False
@@ -65,7 +65,7 @@ class iam_disable_90_days_credentials(Check):
                                 user=user,
                                 status="FAIL",
                                 status_extended=f"User {user['user']} has not used access key 1 in the last {maximum_expiration_days} days ({access_key_1_last_used_date.days} days).",
-                                findings=findings
+                                findings=findings,
                             )
 
                 if user["access_key_2_active"] == "true":
@@ -83,7 +83,7 @@ class iam_disable_90_days_credentials(Check):
                                 user=user,
                                 status="FAIL",
                                 status_extended=f"User {user['user']} has not used access key 2 in the last {maximum_expiration_days} days ({access_key_2_last_used_date.days} days).",
-                                findings=findings
+                                findings=findings,
                             )
 
                 if not old_access_keys:
@@ -91,7 +91,7 @@ class iam_disable_90_days_credentials(Check):
                         user=user,
                         status="PASS",
                         status_extended=f"User {user['user']} does not have unused access keys for {maximum_expiration_days} days.",
-                        findings=findings
+                        findings=findings,
                     )
 
         return findings
