@@ -15,7 +15,7 @@ env_var_name_with_secrets = "DB_PASSWORD"
 env_var_value_with_secrets = "pass-12343"
 
 
-class Test_ecs_task_definitions_no_environment_secrets:
+class Test_ecs_task_definitions_public_ip:
     def test_no_task_definitions(self):
         ecs_client = mock.MagicMock
         ecs_client.task_definitions = []
@@ -24,15 +24,15 @@ class Test_ecs_task_definitions_no_environment_secrets:
             "prowler.providers.aws.services.ecs.ecs_service.ECS",
             ecs_client,
         ):
-            from prowler.providers.aws.services.ecs.ecs_task_definitions_no_environment_secrets.ecs_task_definitions_no_environment_secrets import (
-                ecs_task_definitions_no_environment_secrets,
+            from prowler.providers.aws.services.ecs.ecs_task_definitions_public_ip.ecs_task_definitions_public_ip import (
+                ecs_task_definitions_public_ip,
             )
 
-            check = ecs_task_definitions_no_environment_secrets()
+            check = ecs_task_definitions_public_ip()
             result = check.execute()
             assert len(result) == 0
 
-    def test_container_env_var_no_secrets(self):
+    def test_task_definition_with_public_ip(self):
         ecs_client = mock.MagicMock
         ecs_client.task_definitions = []
         ecs_client.task_definitions.append(
@@ -46,7 +46,7 @@ class Test_ecs_task_definitions_no_environment_secrets:
                         name=env_var_name_no_secrets, value=env_var_value_no_secrets
                     )
                 ],
-                network_mode="",
+                network_mode="awsvpc",
             )
         )
 
@@ -54,17 +54,17 @@ class Test_ecs_task_definitions_no_environment_secrets:
             "prowler.providers.aws.services.ecs.ecs_service.ECS",
             ecs_client,
         ):
-            from prowler.providers.aws.services.ecs.ecs_task_definitions_no_environment_secrets.ecs_task_definitions_no_environment_secrets import (
-                ecs_task_definitions_no_environment_secrets,
+            from prowler.providers.aws.services.ecs.ecs_task_definitions_public_ip.ecs_task_definitions_public_ip import (
+                ecs_task_definitions_public_ip,
             )
 
-            check = ecs_task_definitions_no_environment_secrets()
+            check = ecs_task_definitions_public_ip()
             result = check.execute()
             assert len(result) == 1
-            assert result[0].status == "PASS"
+            assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"No secrets found in variables of ECS task definition {task_name} with revision {task_revision}."
+                == f"{task_name} with \"awsvpc\" network mode in use, that implies a public IP assign to the running task."
             )
             assert result[0].resource_id == f"{task_name}:1"
             assert (
@@ -72,7 +72,7 @@ class Test_ecs_task_definitions_no_environment_secrets:
                 == f"arn:aws:ecs:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:task-definition/{task_name}:{task_revision}"
             )
 
-    def test_container_env_var_with_secrets(self):
+    def test_task_definition_without_public_ip(self):
         ecs_client = mock.MagicMock
         ecs_client.task_definitions = []
         ecs_client.task_definitions.append(
@@ -86,7 +86,7 @@ class Test_ecs_task_definitions_no_environment_secrets:
                         name=env_var_name_with_secrets, value=env_var_value_with_secrets
                     )
                 ],
-                network_mode=""
+                network_mode="test",
             )
         )
 
@@ -94,17 +94,17 @@ class Test_ecs_task_definitions_no_environment_secrets:
             "prowler.providers.aws.services.ecs.ecs_service.ECS",
             ecs_client,
         ):
-            from prowler.providers.aws.services.ecs.ecs_task_definitions_no_environment_secrets.ecs_task_definitions_no_environment_secrets import (
-                ecs_task_definitions_no_environment_secrets,
+            from prowler.providers.aws.services.ecs.ecs_task_definitions_public_ip.ecs_task_definitions_public_ip import (
+                ecs_task_definitions_public_ip,
             )
 
-            check = ecs_task_definitions_no_environment_secrets()
+            check = ecs_task_definitions_public_ip()
             result = check.execute()
             assert len(result) == 1
-            assert result[0].status == "FAIL"
+            assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Potential secret found in variables of ECS task definition {task_name} with revision {task_revision} -> Secret Keyword on line 2."
+                == f"{task_name} with no \"awsvpc\" network mode in use, that implies a public IP assign to the running task."
             )
             assert result[0].resource_id == f"{task_name}:1"
             assert (
