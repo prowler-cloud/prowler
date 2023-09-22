@@ -185,23 +185,29 @@ class DirectoryService(AWSService):
                 # Snapshot limits can be fetched only for VPC or Microsoft AD directories.
                 if (
                     directory.region == regional_client.region
-                    and directory.type != DirectoryType.ADConnector
+                    and directory.type == DirectoryType.MicrosoftAD
                 ):
-                    get_snapshot_limits_parameters = {"DirectoryId": directory.id}
-                    snapshot_limit = regional_client.get_snapshot_limits(
-                        **get_snapshot_limits_parameters
-                    )
-                    self.directories[directory.id].snapshots_limits = SnapshotLimit(
-                        manual_snapshots_current_count=snapshot_limit["SnapshotLimits"][
-                            "ManualSnapshotsCurrentCount"
-                        ],
-                        manual_snapshots_limit=snapshot_limit["SnapshotLimits"][
-                            "ManualSnapshotsLimit"
-                        ],
-                        manual_snapshots_limit_reached=snapshot_limit["SnapshotLimits"][
-                            "ManualSnapshotsLimitReached"
-                        ],
-                    )
+                    try:
+                        get_snapshot_limits_parameters = {"DirectoryId": directory.id}
+                        snapshot_limit = regional_client.get_snapshot_limits(
+                            **get_snapshot_limits_parameters
+                        )
+                        self.directories[directory.id].snapshots_limits = SnapshotLimit(
+                            manual_snapshots_current_count=snapshot_limit[
+                                "SnapshotLimits"
+                            ]["ManualSnapshotsCurrentCount"],
+                            manual_snapshots_limit=snapshot_limit["SnapshotLimits"][
+                                "ManualSnapshotsLimit"
+                            ],
+                            manual_snapshots_limit_reached=snapshot_limit[
+                                "SnapshotLimits"
+                            ]["ManualSnapshotsLimitReached"],
+                        )
+                    except Exception as error:
+                        logger.error(
+                            f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
+
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
