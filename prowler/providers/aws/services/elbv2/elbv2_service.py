@@ -55,30 +55,43 @@ class ELBv2(AWSService):
         logger.info("ELBv2 - Describing listeners...")
         try:
             for lb in self.loadbalancersv2:
-                if lb.region == regional_client.region:
-                    describe_elbv2_paginator = regional_client.get_paginator(
-                        "describe_listeners"
+                try:
+                    if lb.region == regional_client.region:
+                        describe_elbv2_paginator = regional_client.get_paginator(
+                            "describe_listeners"
+                        )
+                        for page in describe_elbv2_paginator.paginate(
+                            LoadBalancerArn=lb.arn
+                        ):
+                            for listener in page["Listeners"]:
+                                port = 0
+                                if "Port" in listener:
+                                    port = listener["Port"]
+
+                                listener_obj = Listenerv2(
+                                    region=regional_client.region,
+                                    arn=listener["ListenerArn"],
+                                    port=port,
+                                    ssl_policy=listener.get("SslPolicy"),
+                                    rules=[],
+                                )
+                                if "Protocol" in listener:
+                                    listener_obj.protocol = listener["Protocol"]
+
+                                lb.listeners.append(listener_obj)
+                except ClientError as error:
+                    if error.response["Error"]["Code"] == "LoadBalancerNotFound":
+                        logger.warning(
+                            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
+                    else:
+                        logger.error(
+                            f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
+                except Exception as error:
+                    logger.error(
+                        f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
-                    for page in describe_elbv2_paginator.paginate(
-                        LoadBalancerArn=lb.arn
-                    ):
-                        for listener in page["Listeners"]:
-                            port = 0
-                            if "Port" in listener:
-                                port = listener["Port"]
-
-                            listener_obj = Listenerv2(
-                                region=regional_client.region,
-                                arn=listener["ListenerArn"],
-                                port=port,
-                                ssl_policy=listener.get("SslPolicy"),
-                                rules=[],
-                            )
-                            if "Protocol" in listener:
-                                listener_obj.protocol = listener["Protocol"]
-
-                            lb.listeners.append(listener_obj)
-
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
