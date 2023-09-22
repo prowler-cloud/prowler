@@ -26,7 +26,7 @@ class Test_eks_control_plane_endpoint_access_restricted:
             result = check.execute()
             assert len(result) == 0
 
-    def test_control_plane_private(self):
+    def test_control_plane_access_private(self):
         eks_client = mock.MagicMock
         eks_client.clusters = []
         eks_client.clusters.append(
@@ -59,6 +59,8 @@ class Test_eks_control_plane_endpoint_access_restricted:
             )
             assert result[0].resource_id == cluster_name
             assert result[0].resource_arn == cluster_arn
+            assert result[0].resource_tags == []
+            assert result[0].region == AWS_REGION
 
     def test_control_plane_access_restricted(self):
         eks_client = mock.MagicMock
@@ -93,8 +95,10 @@ class Test_eks_control_plane_endpoint_access_restricted:
             )
             assert result[0].resource_id == cluster_name
             assert result[0].resource_arn == cluster_arn
+            assert result[0].resource_tags == []
+            assert result[0].region == AWS_REGION
 
-    def test_control_plane_not_restricted(self):
+    def test_control_plane_public(self):
         eks_client = mock.MagicMock
         eks_client.clusters = []
         eks_client.clusters.append(
@@ -127,3 +131,41 @@ class Test_eks_control_plane_endpoint_access_restricted:
             )
             assert result[0].resource_id == cluster_name
             assert result[0].resource_arn == cluster_arn
+            assert result[0].resource_tags == []
+            assert result[0].region == AWS_REGION
+
+    def test_control_plane_public_and_private(self):
+        eks_client = mock.MagicMock
+        eks_client.clusters = []
+        eks_client.clusters.append(
+            EKSCluster(
+                name=cluster_name,
+                arn=cluster_arn,
+                region=AWS_REGION,
+                logging=None,
+                endpoint_public_access=True,
+                endpoint_private_access=True,
+                public_access_cidrs=["123.123.123.123/32", "0.0.0.0/0"],
+            )
+        )
+
+        with mock.patch(
+            "prowler.providers.aws.services.eks.eks_service.EKS",
+            eks_client,
+        ):
+            from prowler.providers.aws.services.eks.eks_control_plane_endpoint_access_restricted.eks_control_plane_endpoint_access_restricted import (
+                eks_control_plane_endpoint_access_restricted,
+            )
+
+            check = eks_control_plane_endpoint_access_restricted()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert search(
+                "Cluster control plane access is not restricted for EKS cluster",
+                result[0].status_extended,
+            )
+            assert result[0].resource_id == cluster_name
+            assert result[0].resource_arn == cluster_arn
+            assert result[0].resource_tags == []
+            assert result[0].region == AWS_REGION
