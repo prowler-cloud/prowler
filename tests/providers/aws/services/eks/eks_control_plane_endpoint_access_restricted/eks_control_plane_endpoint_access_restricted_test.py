@@ -59,6 +59,8 @@ class Test_eks_control_plane_endpoint_access_restricted:
             )
             assert result[0].resource_id == cluster_name
             assert result[0].resource_arn == cluster_arn
+            assert result[0].resource_tags == []
+            assert result[0].region == AWS_REGION
 
     def test_control_plane_access_restricted(self):
         eks_client = mock.MagicMock
@@ -93,6 +95,8 @@ class Test_eks_control_plane_endpoint_access_restricted:
             )
             assert result[0].resource_id == cluster_name
             assert result[0].resource_arn == cluster_arn
+            assert result[0].resource_tags == []
+            assert result[0].region == AWS_REGION
 
     def test_control_plane_public(self):
         eks_client = mock.MagicMock
@@ -127,6 +131,8 @@ class Test_eks_control_plane_endpoint_access_restricted:
             )
             assert result[0].resource_id == cluster_name
             assert result[0].resource_arn == cluster_arn
+            assert result[0].resource_tags == []
+            assert result[0].region == AWS_REGION
 
     def test_control_plane_public_and_private(self):
         eks_client = mock.MagicMock
@@ -161,3 +167,5 @@ class Test_eks_control_plane_endpoint_access_restricted:
             )
             assert result[0].resource_id == cluster_name
             assert result[0].resource_arn == cluster_arn
+            assert result[0].resource_tags == []
+            assert result[0].region == AWS_REGION
