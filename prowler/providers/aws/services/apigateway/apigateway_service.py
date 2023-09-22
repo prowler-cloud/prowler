@@ -33,7 +33,7 @@ class APIGateway(AWSService):
                                 id=apigw["id"],
                                 arn=arn,
                                 region=regional_client.region,
-                                name=apigw["name"],
+                                name=apigw.get("name", ""),
                                 tags=[apigw.get("tags")],
                             )
                         )
