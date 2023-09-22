@@ -94,7 +94,7 @@ def validate_ip_address(ip_string):
 
 def outputs_unix_timestamp(is_unix_timestamp: bool, timestamp: datetime):
     if is_unix_timestamp:
-        timestamp = mktime(timestamp.timetuple())
+        timestamp = int(mktime(timestamp.timetuple()))
     else:
         timestamp = timestamp.isoformat()
     return timestamp
