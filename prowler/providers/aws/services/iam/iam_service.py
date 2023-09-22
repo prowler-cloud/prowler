@@ -84,6 +84,10 @@ class IAM(AWSService):
         self.saml_providers = self.__list_saml_providers__()
         self.server_certificates = self.__list_server_certificates__()
         self.__list_tags_for_resource__()
+        self.access_keys_metadata = []
+        self.__get_access_keys_metadata__()
+        self.last_accessed_services = []
+        self.__get_last_accessed_services__()
 
     def __get_client__(self):
         return self.client
@@ -660,6 +664,27 @@ class IAM(AWSService):
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+
+    def __get_last_accessed_services__(self):
+        for user in self.users:
+            details = self.client.generate_service_last_accessed_details(Arn=user.arn)
+            response = self.client.get_service_last_accessed_details(
+                JobId=details["JobId"]
+            )
+            while response["JobStatus"] == "IN_PROGRESS":
+                response = self.client.get_service_last_accessed_details(
+                    JobId=details["JobId"]
+                )
+            self.last_accessed_services.append(
+                {"user": user, "services": response["ServicesLastAccessed"]}
+            )
+
+    def __get_access_keys_metadata__(self):
+        for user in self.users:
+            paginator = self.client.get_paginator("list_access_keys")
+            self.access_keys_metadata.append({"user": user, "access_keys_metadata": []})
+            for response in paginator.paginate(UserName=user.name):
+                self.access_keys_metadata[-1]["access_keys_metadata"].append(response)
 
 
 class MFADevice(BaseModel):
