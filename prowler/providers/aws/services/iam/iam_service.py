@@ -398,6 +398,7 @@ class IAM(AWSService):
                                 Policy(
                                     name=policy,
                                     arn=user.arn,
+                                    entity=user.name,
                                     type="Inline",
                                     attached=True,
                                     version_id="v1",
@@ -438,6 +439,7 @@ class IAM(AWSService):
                                 Policy(
                                     name=policy,
                                     arn=group.arn,
+                                    entity=group.name,
                                     type="Inline",
                                     attached=True,
                                     version_id="v1",
@@ -478,6 +480,7 @@ class IAM(AWSService):
                                 Policy(
                                     name=policy,
                                     arn=role.arn,
+                                    entity=role.name,
                                     type="Inline",
                                     attached=True,
                                     version_id="v1",
@@ -536,6 +539,7 @@ class IAM(AWSService):
                             Policy(
                                 name=policy["PolicyName"],
                                 arn=policy["Arn"],
+                                entity=policy["PolicyId"],
                                 version_id=policy["DefaultVersionId"],
                                 type="Custom" if scope == "Local" else "AWS",
                                 attached=True
@@ -714,6 +718,7 @@ class Certificate(BaseModel):
 class Policy(BaseModel):
     name: str
     arn: str
+    entity: str
     version_id: str
     type: str
     attached: bool
