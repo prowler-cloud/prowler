@@ -1,7 +1,7 @@
 from unittest import mock
 
 from boto3 import client, session
-from moto import mock_neptune, mock_ec2
+from moto import mock_ec2, mock_neptune
 
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.common.models import Audit_Metadata
@@ -52,10 +52,12 @@ class Test_neptune_uses_a_public_subnet:
             new=current_audit_info,
         ), mock.patch(
             "prowler.providers.aws.services.neptune.neptune_uses_a_public_subnet.neptune_uses_a_public_subnet.neptune_client",
-            new=Neptune(current_audit_info)
+            new=Neptune(current_audit_info),
         ):
             # Test Check
-            from prowler.providers.aws.services.neptune.neptune_uses_a_public_subnet.neptune_uses_a_public_subnet import neptune_uses_a_public_subnet
+            from prowler.providers.aws.services.neptune.neptune_uses_a_public_subnet.neptune_uses_a_public_subnet import (
+                neptune_uses_a_public_subnet,
+            )
 
             check = neptune_uses_a_public_subnet()
             result = check.execute()
@@ -67,17 +69,11 @@ class Test_neptune_uses_a_public_subnet:
     def test_cluster_with_both_public_and_private_subnets(self):
         # Create Neptune Mocked Resources
         neptune_client = client("neptune", region_name=AWS_REGION)
-        cluster = neptune_client.create_db_cluster(
-            DBClusterIdentifier="test",
-            Engine="neptune"
-        )
+        neptune_client.create_db_cluster(DBClusterIdentifier="test", Engine="neptune")
         ec2_client = client("ec2", region_name=AWS_REGION)
-        vpc = ec2_client.create_vpc(
-            CidrBlock="10.0.0.0/16"
-        )
+        vpc = ec2_client.create_vpc(CidrBlock="10.0.0.0/16")
         subnet_private = ec2_client.create_subnet(
-            VpcId=vpc["Vpc"]["VpcId"],
-            CidrBlock="10.0.1.0/24"
+            VpcId=vpc["Vpc"]["VpcId"], CidrBlock="10.0.1.0/24"
         )
         route_table_private = ec2_client.create_route_table(
             VpcId=vpc["Vpc"]["VpcId"],
@@ -91,8 +87,7 @@ class Test_neptune_uses_a_public_subnet:
             SubnetId=subnet_private["Subnet"]["SubnetId"],
         )
         subnet_public = ec2_client.create_subnet(
-            VpcId=vpc["Vpc"]["VpcId"],
-            CidrBlock="10.0.2.0/24"
+            VpcId=vpc["Vpc"]["VpcId"], CidrBlock="10.0.2.0/24"
         )
         route_table_public = ec2_client.create_route_table(
             VpcId=vpc["Vpc"]["VpcId"],
@@ -107,10 +102,13 @@ class Test_neptune_uses_a_public_subnet:
             RouteTableId=route_table_public["RouteTable"]["RouteTableId"],
             SubnetId=subnet_public["Subnet"]["SubnetId"],
         )
-        subnet_group = neptune_client.create_db_subnet_group(
+        neptune_client.create_db_subnet_group(
             DBSubnetGroupName="default",
             DBSubnetGroupDescription="test",
-            SubnetIds=[subnet_private["Subnet"]["SubnetId"], subnet_public["Subnet"]["SubnetId"]]
+            SubnetIds=[
+                subnet_private["Subnet"]["SubnetId"],
+                subnet_public["Subnet"]["SubnetId"],
+            ],
         )
 
         from prowler.providers.aws.services.neptune.neptune_service import Neptune
@@ -122,10 +120,12 @@ class Test_neptune_uses_a_public_subnet:
             new=current_audit_info,
         ), mock.patch(
             "prowler.providers.aws.services.neptune.neptune_uses_a_public_subnet.neptune_uses_a_public_subnet.neptune_client",
-            new=Neptune(current_audit_info)
+            new=Neptune(current_audit_info),
         ):
             # Test Check
-            from prowler.providers.aws.services.neptune.neptune_uses_a_public_subnet.neptune_uses_a_public_subnet import neptune_uses_a_public_subnet
+            from prowler.providers.aws.services.neptune.neptune_uses_a_public_subnet.neptune_uses_a_public_subnet import (
+                neptune_uses_a_public_subnet,
+            )
 
             check = neptune_uses_a_public_subnet()
             result = check.execute()
@@ -138,17 +138,11 @@ class Test_neptune_uses_a_public_subnet:
     def test_cluster_with_public_subnets(self):
         # Create Neptune Mocked Resources
         neptune_client = client("neptune", region_name=AWS_REGION)
-        cluster = neptune_client.create_db_cluster(
-            DBClusterIdentifier="test",
-            Engine="neptune"
-        )
+        neptune_client.create_db_cluster(DBClusterIdentifier="test", Engine="neptune")
         ec2_client = client("ec2", region_name=AWS_REGION)
-        vpc = ec2_client.create_vpc(
-            CidrBlock="10.0.0.0/16"
-        )
+        vpc = ec2_client.create_vpc(CidrBlock="10.0.0.0/16")
         subnet_public1 = ec2_client.create_subnet(
-            VpcId=vpc["Vpc"]["VpcId"],
-            CidrBlock="10.0.1.0/24"
+            VpcId=vpc["Vpc"]["VpcId"], CidrBlock="10.0.1.0/24"
         )
         route_table_public1 = ec2_client.create_route_table(
             VpcId=vpc["Vpc"]["VpcId"],
@@ -164,8 +158,7 @@ class Test_neptune_uses_a_public_subnet:
             SubnetId=subnet_public1["Subnet"]["SubnetId"],
         )
         subnet_public2 = ec2_client.create_subnet(
-            VpcId=vpc["Vpc"]["VpcId"],
-            CidrBlock="10.0.2.0/24"
+            VpcId=vpc["Vpc"]["VpcId"], CidrBlock="10.0.2.0/24"
         )
         route_table_public2 = ec2_client.create_route_table(
             VpcId=vpc["Vpc"]["VpcId"],
@@ -180,10 +173,13 @@ class Test_neptune_uses_a_public_subnet:
             RouteTableId=route_table_public2["RouteTable"]["RouteTableId"],
             SubnetId=subnet_public2["Subnet"]["SubnetId"],
         )
-        subnet_group = neptune_client.create_db_subnet_group(
+        neptune_client.create_db_subnet_group(
             DBSubnetGroupName="default",
             DBSubnetGroupDescription="test",
-            SubnetIds=[subnet_public1["Subnet"]["SubnetId"], subnet_public2["Subnet"]["SubnetId"]]
+            SubnetIds=[
+                subnet_public1["Subnet"]["SubnetId"],
+                subnet_public2["Subnet"]["SubnetId"],
+            ],
         )
 
         from prowler.providers.aws.services.neptune.neptune_service import Neptune
@@ -195,10 +191,12 @@ class Test_neptune_uses_a_public_subnet:
             new=current_audit_info,
         ), mock.patch(
             "prowler.providers.aws.services.neptune.neptune_uses_a_public_subnet.neptune_uses_a_public_subnet.neptune_client",
-            new=Neptune(current_audit_info)
+            new=Neptune(current_audit_info),
         ):
             # Test Check
-            from prowler.providers.aws.services.neptune.neptune_uses_a_public_subnet.neptune_uses_a_public_subnet import neptune_uses_a_public_subnet
+            from prowler.providers.aws.services.neptune.neptune_uses_a_public_subnet.neptune_uses_a_public_subnet import (
+                neptune_uses_a_public_subnet,
+            )
 
             check = neptune_uses_a_public_subnet()
             result = check.execute()
@@ -211,17 +209,11 @@ class Test_neptune_uses_a_public_subnet:
     def test_cluster_with_private_subnets(self):
         # Create Neptune Mocked Resources
         neptune_client = client("neptune", region_name=AWS_REGION)
-        cluster = neptune_client.create_db_cluster(
-            DBClusterIdentifier="test",
-            Engine="neptune"
-        )
+        neptune_client.create_db_cluster(DBClusterIdentifier="test", Engine="neptune")
         ec2_client = client("ec2", region_name=AWS_REGION)
-        vpc = ec2_client.create_vpc(
-            CidrBlock="10.0.0.0/16"
-        )
+        vpc = ec2_client.create_vpc(CidrBlock="10.0.0.0/16")
         subnet_private1 = ec2_client.create_subnet(
-            VpcId=vpc["Vpc"]["VpcId"],
-            CidrBlock="10.0.1.0/24"
+            VpcId=vpc["Vpc"]["VpcId"], CidrBlock="10.0.1.0/24"
         )
         route_table_private1 = ec2_client.create_route_table(
             VpcId=vpc["Vpc"]["VpcId"],
@@ -235,8 +227,7 @@ class Test_neptune_uses_a_public_subnet:
             SubnetId=subnet_private1["Subnet"]["SubnetId"],
         )
         subnet_private2 = ec2_client.create_subnet(
-            VpcId=vpc["Vpc"]["VpcId"],
-            CidrBlock="10.0.2.0/24"
+            VpcId=vpc["Vpc"]["VpcId"], CidrBlock="10.0.2.0/24"
         )
         route_table_private2 = ec2_client.create_route_table(
             VpcId=vpc["Vpc"]["VpcId"],
@@ -249,10 +240,13 @@ class Test_neptune_uses_a_public_subnet:
             RouteTableId=route_table_private2["RouteTable"]["RouteTableId"],
             SubnetId=subnet_private2["Subnet"]["SubnetId"],
         )
-        subnet_group = neptune_client.create_db_subnet_group(
+        neptune_client.create_db_subnet_group(
             DBSubnetGroupName="default",
             DBSubnetGroupDescription="test",
-            SubnetIds=[subnet_private1["Subnet"]["SubnetId"], subnet_private2["Subnet"]["SubnetId"]]
+            SubnetIds=[
+                subnet_private1["Subnet"]["SubnetId"],
+                subnet_private2["Subnet"]["SubnetId"],
+            ],
         )
 
         from prowler.providers.aws.services.neptune.neptune_service import Neptune
@@ -264,14 +258,15 @@ class Test_neptune_uses_a_public_subnet:
             new=current_audit_info,
         ), mock.patch(
             "prowler.providers.aws.services.neptune.neptune_uses_a_public_subnet.neptune_uses_a_public_subnet.neptune_client",
-            new=Neptune(current_audit_info)
+            new=Neptune(current_audit_info),
         ):
             # Test Check
-            from prowler.providers.aws.services.neptune.neptune_uses_a_public_subnet.neptune_uses_a_public_subnet import neptune_uses_a_public_subnet
+            from prowler.providers.aws.services.neptune.neptune_uses_a_public_subnet.neptune_uses_a_public_subnet import (
+                neptune_uses_a_public_subnet,
+            )
 
             check = neptune_uses_a_public_subnet()
             result = check.execute()
 
             assert len(result) == 1
             assert result[0].status == "PASS"
-

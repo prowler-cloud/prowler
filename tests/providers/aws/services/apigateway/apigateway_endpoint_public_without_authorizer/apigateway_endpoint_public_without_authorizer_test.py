@@ -129,9 +129,7 @@ class Test_apigateway_endpoint_public_without_authorizer:
             },
         )
         apigateway_client.create_authorizer(
-        restApiId=rest_api["id"],
-        name="test-rest-api-with-authorizer",
-        type="TOKEN"
+            restApiId=rest_api["id"], name="test-rest-api-with-authorizer", type="TOKEN"
         )
         from prowler.providers.aws.services.apigateway.apigateway_service import (
             APIGateway,
@@ -230,9 +228,7 @@ class Test_apigateway_endpoint_public_without_authorizer:
             },
         )
         apigateway_client.create_authorizer(
-            restApiId=rest_api["id"],
-            name="test-rest-api-with-authorizer",
-            type="TOKEN"
+            restApiId=rest_api["id"], name="test-rest-api-with-authorizer", type="TOKEN"
         )
         from prowler.providers.aws.services.apigateway.apigateway_service import (
             APIGateway,

@@ -4,7 +4,6 @@ from prowler.lib.logger import logger
 from prowler.providers.aws.lib.service.service import AWSService
 
 
-
 ################## NetworkFirewall
 class Neptune(AWSService):
     def __init__(self, audit_info):
@@ -17,12 +16,16 @@ class Neptune(AWSService):
         logger.info("Neptune - Describing DB Clusters...")
         try:
             for cluster in self.client.describe_db_clusters()["DBClusters"]:
-                self.clusters.append(Cluster(
-                    arn=cluster["DBClusterArn"],
-                    name=cluster["DBClusterIdentifier"],
-                    id=cluster["DbClusterResourceId"],
-                    subnet_group=self.client.describe_db_subnet_groups(DBSubnetGroupName=cluster["DBSubnetGroup"])["DBSubnetGroups"]
-                ))
+                self.clusters.append(
+                    Cluster(
+                        arn=cluster["DBClusterArn"],
+                        name=cluster["DBClusterIdentifier"],
+                        id=cluster["DbClusterResourceId"],
+                        subnet_group=self.client.describe_db_subnet_groups(
+                            DBSubnetGroupName=cluster["DBSubnetGroup"]
+                        )["DBSubnetGroups"],
+                    )
+                )
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
