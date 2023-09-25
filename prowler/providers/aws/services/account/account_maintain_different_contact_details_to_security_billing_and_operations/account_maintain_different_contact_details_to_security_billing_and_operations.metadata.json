@@ -15,7 +15,7 @@
   "RelatedUrl": "",
   "Remediation": {
     "Code": {
-      "CLI": "No command available.",
+      "CLI": "",
       "NativeIaC": "",
       "Other": "https://docs.bridgecrew.io/docs/iam_18-maintain-contact-details#aws-console",
       "Terraform": ""
