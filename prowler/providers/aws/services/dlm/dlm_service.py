@@ -4,7 +4,7 @@ from prowler.lib.logger import logger
 from prowler.providers.aws.aws_provider import generate_regional_clients
 
 
-################## Config
+################## Data Lifecycle Manager
 class Dlm:
     def __init__(self, audit_info):
         self.service = "dlm"
