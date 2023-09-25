@@ -1,7 +1,6 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.account.account_client import account_client
 
-# This check has no findings since it is manual
 
 
 class account_maintain_different_contact_details_to_security_billing_and_operations(
