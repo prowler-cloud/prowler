@@ -12,7 +12,6 @@ class Support(AWSService):
         super().__init__(__class__.__name__, audit_info)
         self.support_services = []
         self.__threading_call__(self.__describe_services__)
-        print(self.support_services)
 
     def __describe_services__(self, regional_client):
         logger.info("Support - Describing Services...")
