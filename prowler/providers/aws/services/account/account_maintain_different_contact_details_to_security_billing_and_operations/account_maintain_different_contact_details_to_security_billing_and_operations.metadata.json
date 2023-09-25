@@ -1,7 +1,7 @@
 {
   "Provider": "aws",
   "CheckID": "account_maintain_different_contact_details_to_security_billing_and_operations",
-  "CheckTitle": "Maintain current contact details.",
+  "CheckTitle": "Maintain different contact details to security, billing and operations.",
   "CheckType": [
     "IAM"
   ],
