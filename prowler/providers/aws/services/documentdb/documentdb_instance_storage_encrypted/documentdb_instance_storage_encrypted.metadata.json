@@ -15,7 +15,7 @@
     "Code": {
       "CLI": "aws docdb create-db-cluster --db-cluster-identifier <db_cluster_id> --port 27017 --engine docdb --master-username <yourMasterUsername> --master-user-password <yourMasterPassword> --storage-encrypted",
       "NativeIaC": "",
-      "Other": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/DocumentDB/encryption-enabled.html",
       "Terraform": "https://docs.bridgecrew.io/docs/bc_aws_general_28#terraform"
     },
     "Recommendation": {
