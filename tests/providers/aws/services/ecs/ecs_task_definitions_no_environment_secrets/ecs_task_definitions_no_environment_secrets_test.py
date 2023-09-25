@@ -86,7 +86,7 @@ class Test_ecs_task_definitions_no_environment_secrets:
                         name=env_var_name_with_secrets, value=env_var_value_with_secrets
                     )
                 ],
-                network_mode=""
+                network_mode="",
             )
         )
 

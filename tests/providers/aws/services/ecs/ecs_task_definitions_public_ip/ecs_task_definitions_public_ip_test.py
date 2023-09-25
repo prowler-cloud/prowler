@@ -64,7 +64,7 @@ class Test_ecs_task_definitions_public_ip:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"{task_name} with \"awsvpc\" network mode in use, that implies a public IP assign to the running task."
+                == f'{task_name} with "awsvpc" network mode in use, that implies a public IP assign to the running task.'
             )
             assert result[0].resource_id == f"{task_name}:1"
             assert (
@@ -104,7 +104,7 @@ class Test_ecs_task_definitions_public_ip:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"{task_name} with no \"awsvpc\" network mode in use, that implies a public IP assign to the running task."
+                == f'{task_name} with no "awsvpc" network mode in use, that implies a public IP assign to the running task.'
             )
             assert result[0].resource_id == f"{task_name}:1"
             assert (
