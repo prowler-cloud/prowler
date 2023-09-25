@@ -8,14 +8,10 @@ from prowler.providers.aws.aws_provider import generate_regional_clients
 
 
 ################## DocumentDB
-class DocumentDB:
+class DocumentDB(AWSService):
     def __init__(self, audit_info):
-        self.service = "docdb"
-        self.session = audit_info.audit_session
-        self.audited_account = audit_info.audited_account
-        self.audit_resources = audit_info.audit_resources
-        self.audited_partition = audit_info.audited_partition
-        self.regional_clients = generate_regional_clients(self.service, audit_info)
+        # Call AWSService's __init__
+        super().__init__("docdb", audit_info)
         self.db_instances = []
         self.__threading_call__(self.__describe_db_instances__)
 
