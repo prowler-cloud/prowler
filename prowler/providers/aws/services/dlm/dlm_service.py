@@ -5,15 +5,10 @@ from prowler.providers.aws.aws_provider import generate_regional_clients
 
 
 ################## Data Lifecycle Manager
-class Dlm:
+class DLM(AWSService):
     def __init__(self, audit_info):
-        self.service = "dlm"
-        self.session = audit_info.audit_session
-        self.audited_account = audit_info.audited_account
-        self.audited_partition = audit_info.audited_partition
-        self.audited_account_arn = audit_info.audited_account_arn
-        self.audit_resources = audit_info.audit_resources
-        self.regional_clients = generate_regional_clients(self.service, audit_info)
+        # Call AWSService's __init__
+        super().__init__(__class__.__name__, audit_info)
         self.lifecycle_policies = []
         self.__threading_call__(self.__get_lifecycle_policies__)
 
