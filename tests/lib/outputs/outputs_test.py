@@ -1167,9 +1167,9 @@ class Test_Outputs:
                 provider="aws",
                 project_uid="",
             ),
-            time=mktime(timestamp.timetuple()),
+            time=int(mktime(timestamp.timetuple())),
             metadata=Metadata(
-                original_time=mktime(timestamp.timetuple()),
+                original_time=int(mktime(timestamp.timetuple())),
                 profiles=["default"],
                 product=Product(
                     language="en",
