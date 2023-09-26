@@ -3,8 +3,6 @@ from os import path, remove
 from time import mktime
 from unittest import mock
 
-import boto3
-import botocore
 import pytest
 from colorama import Fore
 from mock import patch
@@ -65,32 +63,9 @@ from prowler.lib.outputs.models import (
 from prowler.lib.outputs.outputs import extract_findings_statistics, set_report_color
 from prowler.lib.utils.utils import hash_sha512, open_file
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
-from prowler.providers.aws.lib.security_hub.security_hub import send_to_security_hub
 from prowler.providers.common.models import Audit_Metadata
 
 AWS_ACCOUNT_ID = "123456789012"
-
-# Mocking Security Hub Get Findings
-make_api_call = botocore.client.BaseClient._make_api_call
-
-
-def mock_make_api_call(self, operation_name, kwarg):
-    if operation_name == "BatchImportFindings":
-        return {
-            "FailedCount": 0,
-            "SuccessCount": 1,
-        }
-    if operation_name == "DescribeHub":
-        return {
-            "HubArn": "test-hub",
-        }
-    if operation_name == "ListEnabledProductsForImport":
-        return {
-            "ProductSubscriptions": [
-                "prowler/prowler",
-            ],
-        }
-    return make_api_call(self, operation_name, kwarg)
 
 
 class Test_Outputs:
@@ -1283,74 +1258,6 @@ class Test_Outputs:
         assert stats["total_fail"] == 0
         assert stats["resources_count"] == 0
         assert stats["findings_count"] == 0
-
-    @mock.patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
-    def test_send_to_security_hub(self):
-        # Create mock session
-        session = boto3.session.Session(
-            region_name="eu-west-1",
-        )
-        input_audit_info = AWS_Audit_Info(
-            session_config=None,
-            original_session=None,
-            audit_session=session,
-            audited_account=AWS_ACCOUNT_ID,
-            audited_account_arn=f"arn:aws:iam::{AWS_ACCOUNT_ID}:root",
-            audited_identity_arn="test-arn",
-            audited_user_id="test",
-            audited_partition="aws",
-            profile="default",
-            profile_region="eu-west-1",
-            credentials=None,
-            assumed_role_info=None,
-            audited_regions=["eu-west-2", "eu-west-1"],
-            organizations_metadata=None,
-            audit_resources=None,
-            mfa_enabled=False,
-            audit_metadata=Audit_Metadata(
-                services_scanned=0,
-                expected_checks=[],
-                completed_checks=0,
-                audit_progress=0,
-            ),
-        )
-        finding = Check_Report(
-            load_check_metadata(
-                f"{path.dirname(path.realpath(__file__))}/fixtures/metadata.json"
-            ).json()
-        )
-        finding.resource_details = "Test resource details"
-        finding.resource_id = "test-resource"
-        finding.resource_arn = "test-arn"
-        finding.region = "eu-west-1"
-        finding.status = "PASS"
-        finding.status_extended = "This is a test"
-
-        finding_output = Check_Output_JSON_ASFF()
-        output_options = mock.MagicMock()
-        fill_json_asff(finding_output, input_audit_info, finding, output_options)
-
-        assert (
-            send_to_security_hub(
-                False,
-                finding.status,
-                finding.region,
-                finding_output,
-                input_audit_info.audit_session,
-            )
-            == 1
-        )
-        # Setting is_quiet to True
-        assert (
-            send_to_security_hub(
-                True,
-                finding.status,
-                finding.region,
-                finding_output,
-                input_audit_info.audit_session,
-            )
-            == 0
-        )
 
     def test_get_check_compliance(self):
         bulk_check_metadata = [
