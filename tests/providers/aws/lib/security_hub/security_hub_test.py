@@ -16,12 +16,6 @@ from prowler.providers.aws.lib.security_hub.security_hub import (
 )
 from prowler.providers.common.models import Audit_Metadata
 
-# from prowler.lib.outputs.json import fill_json_asff
-# from prowler.lib.outputs.models import Check_Output_JSON_ASFF
-
-
-# from prowler.providers.common.models import Audit_Metadata
-
 AWS_ACCOUNT_ID = "123456789012"
 AWS_REGION_1 = "eu-west-1"
 AWS_REGION_2 = "eu-west-2"
