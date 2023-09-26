@@ -263,12 +263,12 @@ def prowler():
             print(
                 f"{Style.BRIGHT}\nArchiving previous findings in AWS Security Hub...{Style.RESET_ALL}"
             )
-            findings_sarchived_in_security_hub = resolve_security_hub_previous_findings(
+            findings_archived_in_security_hub = resolve_security_hub_previous_findings(
                 security_hub_findings_per_region,
                 audit_info,
             )
             print(
-                f"{Style.BRIGHT}\n{findings_sarchived_in_security_hub} findings archived in AWS Security Hub!{Style.RESET_ALL}"
+                f"{Style.BRIGHT}\n{findings_archived_in_security_hub} findings archived in AWS Security Hub!{Style.RESET_ALL}"
             )
 
     # Display summary table
