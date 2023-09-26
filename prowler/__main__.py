@@ -34,7 +34,10 @@ from prowler.lib.outputs.slack import send_slack_message
 from prowler.lib.outputs.summary_table import display_summary_table
 from prowler.providers.aws.lib.s3.s3 import send_to_s3_bucket
 from prowler.providers.aws.lib.security_hub.security_hub import (
+    batch_send_to_security_hub,
+    prepare_security_hub_findings,
     resolve_security_hub_previous_findings,
+    verify_security_hub_integration_enabled_per_region,
 )
 from prowler.providers.common.allowlist import set_provider_allowlist
 from prowler.providers.common.audit_info import (
@@ -225,13 +228,33 @@ def prowler():
                     bucket_session,
                 )
 
-    # Resolve previous fails of Security Hub
-    if provider == "aws" and args.security_hub and not args.skip_sh_update:
-        resolve_security_hub_previous_findings(
-            audit_output_options.output_directory,
-            audit_output_options.output_filename,
-            audit_info,
+    # AWS Security Hub Integration
+    if provider == "aws" and args.security_hub:
+        # Verify where AWS Security Hub is enabled
+        aws_security_enabled_regions = []
+        for region in audit_info.audited_regions:
+            # Save the regions where AWS Security Hub is enabled
+            if verify_security_hub_integration_enabled_per_region(
+                region, audit_info.audit_session
+            ):
+                aws_security_enabled_regions.append(region)
+
+        # Prepare the findings to be sent to Security Hub
+        security_hub_findings_per_region = prepare_security_hub_findings(
+            findings, audit_info, audit_output_options, aws_security_enabled_regions
         )
+
+        # Send the findings to Security Hub
+        batch_send_to_security_hub(
+            security_hub_findings_per_region, audit_info.audit_session
+        )
+
+        # Resolve previous fails of Security Hub
+        if not args.skip_sh_update:
+            resolve_security_hub_previous_findings(
+                security_hub_findings_per_region,
+                audit_info,
+            )
 
     # Display summary table
     if not args.only_logs:
