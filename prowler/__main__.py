@@ -238,7 +238,7 @@ def prowler():
         )
         # Verify where AWS Security Hub is enabled
         aws_security_enabled_regions = []
-        shub_regions = (
+        security_hub_regions = (
             get_available_aws_service_regions("securityhub", audit_info)
             if not audit_info.audited_regions
             else audit_info.audited_regions
