@@ -243,7 +243,7 @@ def prowler():
             if not audit_info.audited_regions
             else audit_info.audited_regions
         )
-        for region in shub_regions:
+        for region in security_hub_regions:
             # Save the regions where AWS Security Hub is enabled
             if verify_security_hub_integration_enabled_per_region(
                 region, audit_info.audit_session
