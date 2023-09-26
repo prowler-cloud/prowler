@@ -4,7 +4,7 @@
 import os
 import sys
 
-from colorama import Style
+from colorama import Fore, Style
 
 from prowler.lib.banner import print_banner
 from prowler.lib.check.check import (
@@ -233,7 +233,7 @@ def prowler():
     # AWS Security Hub Integration
     if provider == "aws" and args.security_hub:
         print(
-            f"{Style.BRIGHT}\nSending findings to AWS Security Hub...{Style.RESET_ALL}"
+            f"{Style.BRIGHT}\nSending findings to AWS Security Hub, please wait...{Style.RESET_ALL}"
         )
         # Verify where AWS Security Hub is enabled
         aws_security_enabled_regions = []
@@ -255,20 +255,20 @@ def prowler():
         )
 
         print(
-            f"{Style.BRIGHT}\n{findings_sent_to_security_hub} findings sent to AWS Security Hub!{Style.RESET_ALL}"
+            f"{Style.BRIGHT}{Fore.GREEN}\n{findings_sent_to_security_hub} findings sent to AWS Security Hub!{Style.RESET_ALL}"
         )
 
         # Resolve previous fails of Security Hub
         if not args.skip_sh_update:
             print(
-                f"{Style.BRIGHT}\nArchiving previous findings in AWS Security Hub...{Style.RESET_ALL}"
+                f"{Style.BRIGHT}\nArchiving previous findings in AWS Security Hub, please wait...{Style.RESET_ALL}"
             )
             findings_archived_in_security_hub = resolve_security_hub_previous_findings(
                 security_hub_findings_per_region,
                 audit_info,
             )
             print(
-                f"{Style.BRIGHT}\n{findings_archived_in_security_hub} findings archived in AWS Security Hub!{Style.RESET_ALL}"
+                f"{Style.BRIGHT}{Fore.GREEN}\n{findings_archived_in_security_hub} findings archived in AWS Security Hub!{Style.RESET_ALL}"
             )
 
     # Display summary table
