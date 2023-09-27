@@ -41,7 +41,10 @@ class s3_bucket_policy_public_write_access(Check):
                     if (
                         statement["Effect"] == "Allow"
                         and "Condition" not in statement
-                        and "*" in str(statement["Principal"])
+                        and (
+                            "Principal" in statement
+                            and "*" in str(statement["Principal"])
+                        )
                         and (
                             "s3:PutObject" in statement["Action"]
                             or "*" in statement["Action"]
