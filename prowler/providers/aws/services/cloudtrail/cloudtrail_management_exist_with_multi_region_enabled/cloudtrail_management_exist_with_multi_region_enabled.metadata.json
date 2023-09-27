@@ -15,10 +15,10 @@
   "RelatedUrl": "",
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "aws cloudtrail update-trail --name <trail_name> --is-multi-region-trail",
       "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "Other": "https://docs.bridgecrew.io/docs/logging_14",
+      "Terraform": "https://docs.bridgecrew.io/docs/logging_14#terraform"
     },
     "Recommendation": {
       "Text": "Enable CloudTrail logging management events in All Regions",
