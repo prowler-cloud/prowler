@@ -1,7 +1,7 @@
 {
   "Provider": "aws",
-  "CheckID": "dlm_ebs_snapshot_policy_exists",
-  "CheckTitle": "Ensure EBS snapshot policies are defined.",
+  "CheckID": "dlm_ebs_lifecycle_policy_exists",
+  "CheckTitle": "Ensure EBS lifecycle policies are defined.",
   "CheckType": [
     "Logging and Monitoring"
   ],
@@ -10,7 +10,7 @@
   "ResourceIdTemplate": "",
   "Severity": "low",
   "ResourceType": "Other",
-  "Description": "Ensure EBS snapshot policies are defined.",
+  "Description": "Ensure EBS lifecycle policies are defined.",
   "Risk": "",
   "RelatedUrl": "",
   "Remediation": {
