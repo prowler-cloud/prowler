@@ -112,16 +112,3 @@ prowler <provider> --list-categories
 ```console
 prowler  <provider> --categories
 ```
-
-## AWS
-
-### Scan specific AWS Region
-Prowler can scan specific region(s) with:
-```console
-prowler <provider> -f/--filter-region eu-west-1 us-east-1
-```
-### Use AWS Profile
-Prowler can use your custom AWS Profile with:
-```console
-prowler <provider> -p/--profile <profile_name>
-```
