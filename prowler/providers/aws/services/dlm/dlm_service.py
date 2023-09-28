@@ -1,7 +1,7 @@
 import threading
 
 from prowler.lib.logger import logger
-from prowler.providers.aws.aws_provider import generate_regional_clients
+from prowler.providers.aws.lib.service.service import AWSService
 
 
 ################## Data Lifecycle Manager
