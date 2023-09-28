@@ -1,3 +1,5 @@
+from os import path
+from pathlib import Path
 from unittest import mock
 
 from boto3 import resource, session
@@ -9,6 +11,9 @@ from prowler.providers.common.models import Audit_Metadata
 AWS_REGION = "us-east-1"
 EXAMPLE_AMI_ID = "ami-12c6146b"
 AWS_ACCOUNT_NUMBER = "123456789012"
+
+ACTUAL_DIRECTORY = Path(path.dirname(path.realpath(__file__)))
+FIXTURES_DIR_NAME = "fixtures"
 
 
 class Test_ec2_instance_secrets_user_data:
@@ -154,7 +159,7 @@ class Test_ec2_instance_secrets_user_data:
     def test_one_ec2_file_with_secrets(self):
         # Include launch_configurations to check
         f = open(
-            "prowler/providers/aws/services/ec2/ec2_instance_secrets_user_data/fixtures/fixture",
+            f"{ACTUAL_DIRECTORY}/{FIXTURES_DIR_NAME}/fixture",
             "r",
         )
         secrets = f.read()
@@ -238,7 +243,7 @@ class Test_ec2_instance_secrets_user_data:
     def test_one_ec2_file_with_secrets_gzip(self):
         # Include launch_configurations to check
         f = open(
-            "tests/providers/aws/services/ec2/ec2_instance_secrets_user_data/fixtures/fixture.gz",
+            f"{ACTUAL_DIRECTORY}/{FIXTURES_DIR_NAME}/fixture.gz",
             "rb",
         )
         secrets = f.read()

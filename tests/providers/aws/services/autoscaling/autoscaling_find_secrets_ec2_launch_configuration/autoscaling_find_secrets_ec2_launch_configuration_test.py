@@ -1,3 +1,5 @@
+from os import path
+from pathlib import Path
 from unittest import mock
 
 from boto3 import client, session
@@ -8,6 +10,9 @@ from prowler.providers.common.models import Audit_Metadata
 
 AWS_REGION = "us-east-1"
 AWS_ACCOUNT_NUMBER = "123456789012"
+
+ACTUAL_DIRECTORY = Path(path.dirname(path.realpath(__file__)))
+FIXTURES_DIR_NAME = "fixtures"
 
 
 class Test_autoscaling_find_secrets_ec2_launch_configuration:
@@ -168,7 +173,7 @@ class Test_autoscaling_find_secrets_ec2_launch_configuration:
     def test_one_autoscaling_file_with_secrets(self):
         # Include launch_configurations to check
         f = open(
-            "tests/providers/aws/services/autoscaling/autoscaling_find_secrets_ec2_launch_configuration/fixtures/fixture",
+            f"{ACTUAL_DIRECTORY}/{FIXTURES_DIR_NAME}/fixture",
             "r",
         )
         secrets = f.read()
@@ -266,9 +271,10 @@ class Test_autoscaling_find_secrets_ec2_launch_configuration:
     def test_one_autoscaling_file_with_secrets_gzip(self):
         # Include launch_configurations to check
         f = open(
-            "tests/providers/aws/services/autoscaling/autoscaling_find_secrets_ec2_launch_configuration/fixtures/fixture.gz",
+            f"{ACTUAL_DIRECTORY}/{FIXTURES_DIR_NAME}/fixture.gz",
             "rb",
         )
+
         secrets = f.read()
         launch_configuration_name = "tester"
         autoscaling_client = client("autoscaling", region_name=AWS_REGION)
