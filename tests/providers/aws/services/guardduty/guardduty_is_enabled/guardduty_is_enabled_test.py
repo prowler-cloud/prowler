@@ -4,13 +4,12 @@ from uuid import uuid4
 
 from prowler.providers.aws.services.guardduty.guardduty_service import Detector
 
-AWS_REGION = "eu-west-1"
-AWS_ACCOUNT_NUMBER = "123456789012"
+AWS_REGION = "us-east-1"
+AWS_ACCOUNT_ID = "123456789012"
+AWS_ACCOUNT_ARN = f"arn:aws:iam::{AWS_ACCOUNT_ID}:root"
 
 detector_id = str(uuid4())
-detector_arn = (
-    f"arn:aws:guardduty:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:detector/{detector_id}"
-)
+detector_arn = f"arn:aws:guardduty:{AWS_REGION}:{AWS_ACCOUNT_ID}:detector/{detector_id}"
 
 
 class Test_guardduty_is_enabled:
@@ -19,11 +18,12 @@ class Test_guardduty_is_enabled:
         guardduty_client.detectors = []
         guardduty_client.detectors.append(
             Detector(
-                id="",
+                id=AWS_ACCOUNT_ID,
                 region=AWS_REGION,
-                arn="",
+                arn=AWS_ACCOUNT_ARN,
             )
         )
+        guardduty_client.audited_account_arn = AWS_ACCOUNT_ARN
         with mock.patch(
             "prowler.providers.aws.services.guardduty.guardduty_service.GuardDuty",
             guardduty_client,
@@ -37,8 +37,9 @@ class Test_guardduty_is_enabled:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert search("is not enabled", result[0].status_extended)
-            assert result[0].resource_id == ""
-            assert result[0].resource_arn == ""
+            assert result[0].resource_id == AWS_ACCOUNT_ID
+            assert result[0].resource_arn == AWS_ACCOUNT_ARN
+            assert result[0].region == AWS_REGION
 
     def test_guardduty_enabled(self):
         guardduty_client = mock.MagicMock
@@ -66,6 +67,7 @@ class Test_guardduty_is_enabled:
             assert search("enabled", result[0].status_extended)
             assert result[0].resource_id == detector_id
             assert result[0].resource_arn == detector_arn
+            assert result[0].region == AWS_REGION
 
     def test_guardduty_configured_but_suspended(self):
         guardduty_client = mock.MagicMock
@@ -93,6 +95,7 @@ class Test_guardduty_is_enabled:
             assert search("configured but suspended", result[0].status_extended)
             assert result[0].resource_id == detector_id
             assert result[0].resource_arn == detector_arn
+            assert result[0].region == AWS_REGION
 
     def test_guardduty_not_configured(self):
         guardduty_client = mock.MagicMock
@@ -119,3 +122,4 @@ class Test_guardduty_is_enabled:
             assert search("not configured", result[0].status_extended)
             assert result[0].resource_id == detector_id
             assert result[0].resource_arn == detector_arn
+            assert result[0].region == AWS_REGION
