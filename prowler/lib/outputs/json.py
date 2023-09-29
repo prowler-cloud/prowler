@@ -63,18 +63,7 @@ def fill_json_asff(finding_output, audit_info, finding, output_options):
             if len(finding.status_extended) > 1000
             else finding.status_extended
         )
-        # Generate resource Tags
-        resource_tags = {}
-        if finding.resource_tags:
-            for tag in finding.resource_tags:
-                if "Key" in tag and "Value" in tag:
-                    resource_tags[tag["Key"]] = tag["Value"]
-                else:
-                    resource_tags.update(tag)
-            if len(resource_tags) == 0:
-                resource_tags = None
-        else:
-            resource_tags = None
+        resource_tags = generate_json_asff_resource_tags(finding.resource_tags)
         finding_output.Resources = [
             Resource(
                 Id=finding.resource_arn,
@@ -132,6 +121,21 @@ def generate_json_asff_status(status: str) -> str:
         json_asff_status = "NOT_AVAILABLE"
 
     return json_asff_status
+
+
+def generate_json_asff_resource_tags(tags):
+    resource_tags = {}
+    if tags:
+        for tag in tags:
+            if "Key" in tag and "Value" in tag:
+                resource_tags[tag["Key"]] = tag["Value"]
+            else:
+                resource_tags.update(tag)
+        if len(resource_tags) == 0:
+            return None
+    else:
+        return None
+    return resource_tags
 
 
 def fill_json_ocsf(audit_info, finding, output_options) -> Check_Output_JSON_OCSF:
