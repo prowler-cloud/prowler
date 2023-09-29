@@ -1,4 +1,3 @@
-from re import search
 from unittest import mock
 
 from boto3 import client, session
@@ -126,9 +125,10 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_sql_server_
             for sg in result:
                 if sg.resource_id == default_sg_id:
                     assert sg.status == "FAIL"
-                    assert search(
-                        "has Microsoft SQL Server ports 1433 and 1434 open to the Internet",
-                        sg.status_extended,
+                    assert sg.region == AWS_REGION
+                    assert (
+                        sg.status_extended
+                        == f"Security group {default_sg_name} ({default_sg_id}) has Microsoft SQL Server ports 1433 and 1434 open to the Internet."
                     )
                     assert (
                         sg.resource_arn
@@ -186,9 +186,10 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_sql_server_
             for sg in result:
                 if sg.resource_id == default_sg_id:
                     assert sg.status == "PASS"
-                    assert search(
-                        "does not have Microsoft SQL Server ports 1433 and 1434 open to the Internet",
-                        sg.status_extended,
+                    assert sg.region == AWS_REGION
+                    assert (
+                        sg.status_extended
+                        == f"Security group {default_sg_name} ({default_sg_id}) does not have Microsoft SQL Server ports 1433 and 1434 open to the Internet."
                     )
                     assert (
                         sg.resource_arn

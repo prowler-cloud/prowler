@@ -30,7 +30,7 @@ from prowler.lib.outputs.models import (
     get_check_compliance,
     unroll_dict_to_list,
 )
-from prowler.lib.utils.utils import hash_sha512, open_file
+from prowler.lib.utils.utils import hash_sha512, open_file, outputs_unix_timestamp
 
 
 def fill_json_asff(finding_output, audit_info, finding, output_options):
@@ -237,7 +237,9 @@ def fill_json_ocsf(audit_info, finding, output_options) -> Check_Output_JSON_OCS
                     name=finding.check_metadata.CheckID,
                 )
             ),
-            original_time=timestamp.isoformat(),
+            original_time=outputs_unix_timestamp(
+                output_options.unix_timestamp, timestamp
+            ),
             profiles=[audit_info.profile]
             if hasattr(audit_info, "organizations_metadata")
             else [],
@@ -262,7 +264,7 @@ def fill_json_ocsf(audit_info, finding, output_options) -> Check_Output_JSON_OCS
             status_id=generate_json_ocsf_status_id(finding.status),
             compliance=compliance,
             cloud=cloud,
-            time=timestamp.isoformat(),
+            time=outputs_unix_timestamp(output_options.unix_timestamp, timestamp),
             metadata=metadata,
         )
         return finding_output

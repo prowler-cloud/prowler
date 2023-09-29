@@ -58,6 +58,8 @@ class Test_eks_endpoints_not_publicly_accessible:
             )
             assert result[0].resource_id == cluster_name
             assert result[0].resource_arn == cluster_arn
+            assert result[0].resource_tags == []
+            assert result[0].region == AWS_REGION
 
     def test_endpoint_not_public_access(self):
         eks_client = mock.MagicMock
@@ -91,3 +93,5 @@ class Test_eks_endpoints_not_publicly_accessible:
             )
             assert result[0].resource_id == cluster_name
             assert result[0].resource_arn == cluster_arn
+            assert result[0].resource_tags == []
+            assert result[0].region == AWS_REGION

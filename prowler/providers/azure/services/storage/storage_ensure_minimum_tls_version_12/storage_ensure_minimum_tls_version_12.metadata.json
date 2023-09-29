@@ -19,7 +19,7 @@
       "Terraform": "https://docs.bridgecrew.io/docs/bc_azr_storage_2#terraform"
     },
     "Recommendation": {
-      "Text": "Ensure that all your Microsoft Azure Storage accounts are using the latest available version of the TLS protoco",
+      "Text": "Ensure that all your Microsoft Azure Storage accounts are using the latest available version of the TLS protocol.",
       "Url": ""
     }
   },

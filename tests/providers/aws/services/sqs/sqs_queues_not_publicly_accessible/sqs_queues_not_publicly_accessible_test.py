@@ -38,7 +38,7 @@ test_public_policy = {
     ],
 }
 
-test_public_policy_with_condition_not_valid = {
+test_public_policy_with_condition_same_account_not_valid = {
     "Version": "2012-10-17",
     "Id": "Queue1_Policy_UUID",
     "Statement": [
@@ -56,7 +56,7 @@ test_public_policy_with_condition_not_valid = {
     ],
 }
 
-test_public_policy_with_condition = {
+test_public_policy_with_condition_same_account = {
     "Version": "2012-10-17",
     "Id": "Queue1_Policy_UUID",
     "Statement": [
@@ -66,7 +66,24 @@ test_public_policy_with_condition = {
             "Principal": "*",
             "Action": "sqs:ReceiveMessage",
             "Resource": topic_arn,
-            "Condition": {"StringEquals": {"aws:SourceAccount": "123456789012"}},
+            "Condition": {
+                "StringEquals": {"aws:SourceAccount": f"{AWS_ACCOUNT_NUMBER}"}
+            },
+        }
+    ],
+}
+
+test_public_policy_with_condition_diff_account = {
+    "Version": "2012-10-17",
+    "Id": "Queue1_Policy_UUID",
+    "Statement": [
+        {
+            "Sid": "Queue1_AnonymousAccess_ReceiveMessage",
+            "Effect": "Allow",
+            "Principal": "*",
+            "Action": "sqs:ReceiveMessage",
+            "Resource": topic_arn,
+            "Condition": {"StringEquals": {"aws:SourceAccount": "111122223333"}},
         }
     ],
 }
@@ -114,6 +131,8 @@ class Test_sqs_queues_not_publicly_accessible:
             assert search("is not public", result[0].status_extended)
             assert result[0].resource_id == queue_id
             assert result[0].resource_arn == "arn_test"
+            assert result[0].resource_tags == []
+            assert result[0].region == AWS_REGION
 
     def test_queues_public(self):
         sqs_client = mock.MagicMock
@@ -144,6 +163,8 @@ class Test_sqs_queues_not_publicly_accessible:
             )
             assert result[0].resource_id == queue_id
             assert result[0].resource_arn == "arn_test"
+            assert result[0].resource_tags == []
+            assert result[0].region == AWS_REGION
 
     def test_queues_public_with_condition_not_valid(self):
         sqs_client = mock.MagicMock
@@ -153,7 +174,7 @@ class Test_sqs_queues_not_publicly_accessible:
             Queue(
                 id=queue_id,
                 region=AWS_REGION,
-                policy=test_public_policy_with_condition_not_valid,
+                policy=test_public_policy_with_condition_same_account_not_valid,
                 arn="arn_test",
             )
         )
@@ -175,6 +196,8 @@ class Test_sqs_queues_not_publicly_accessible:
             )
             assert result[0].resource_id == queue_id
             assert result[0].resource_arn == "arn_test"
+            assert result[0].resource_tags == []
+            assert result[0].region == AWS_REGION
 
     def test_queues_public_with_condition_valid(self):
         sqs_client = mock.MagicMock
@@ -184,7 +207,7 @@ class Test_sqs_queues_not_publicly_accessible:
             Queue(
                 id=queue_id,
                 region=AWS_REGION,
-                policy=test_public_policy_with_condition,
+                policy=test_public_policy_with_condition_same_account,
                 arn="arn_test",
             )
         )
@@ -206,3 +229,38 @@ class Test_sqs_queues_not_publicly_accessible:
             )
             assert result[0].resource_id == queue_id
             assert result[0].resource_arn == "arn_test"
+            assert result[0].resource_tags == []
+            assert result[0].region == AWS_REGION
+
+    def test_queues_public_with_condition_invalid_other_account(self):
+        sqs_client = mock.MagicMock
+        sqs_client.queues = []
+        sqs_client.audited_account = AWS_ACCOUNT_NUMBER
+        sqs_client.queues.append(
+            Queue(
+                id=queue_id,
+                region=AWS_REGION,
+                policy=test_public_policy_with_condition_diff_account,
+                arn="arn_test",
+            )
+        )
+        with mock.patch(
+            "prowler.providers.aws.services.sqs.sqs_service.SQS",
+            sqs_client,
+        ):
+            from prowler.providers.aws.services.sqs.sqs_queues_not_publicly_accessible.sqs_queues_not_publicly_accessible import (
+                sqs_queues_not_publicly_accessible,
+            )
+
+            check = sqs_queues_not_publicly_accessible()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert (
+                result[0].status_extended
+                == f"SQS queue {queue_id} is public because its policy allows public access, and the condition does not limit access to resources within the same account."
+            )
+            assert result[0].resource_id == queue_id
+            assert result[0].resource_arn == "arn_test"
+            assert result[0].resource_tags == []
+            assert result[0].region == AWS_REGION

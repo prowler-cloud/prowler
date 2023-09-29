@@ -11,10 +11,9 @@ class ec2_ebs_volume_encryption(Check):
             report.resource_id = volume.id
             report.resource_arn = volume.arn
             report.resource_tags = volume.tags
-            if volume.encrypted:
-                report.status = "PASS"
-                report.status_extended = f"EBS Snapshot {volume.id} is encrypted."
-            else:
+            report.status = "PASS"
+            report.status_extended = f"EBS Snapshot {volume.id} is encrypted."
+            if not volume.encrypted:
                 report.status = "FAIL"
                 report.status_extended = f"EBS Snapshot {volume.id} is unencrypted."
             findings.append(report)

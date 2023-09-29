@@ -10,16 +10,14 @@ class ec2_ebs_public_snapshot(Check):
             report.region = snapshot.region
             report.resource_arn = snapshot.arn
             report.resource_tags = snapshot.tags
-            if not snapshot.public:
-                report.status = "PASS"
-                report.status_extended = f"EBS Snapshot {snapshot.id} is not Public."
-                report.resource_id = snapshot.id
-            else:
+            report.status = "PASS"
+            report.status_extended = f"EBS Snapshot {snapshot.id} is not Public."
+            report.resource_id = snapshot.id
+            if snapshot.public:
                 report.status = "FAIL"
                 report.status_extended = (
                     f"EBS Snapshot {snapshot.id} is currently Public."
                 )
-                report.resource_id = snapshot.id
             findings.append(report)
 
         return findings

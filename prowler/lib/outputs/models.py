@@ -9,6 +9,7 @@ from pydantic import BaseModel
 from prowler.config.config import prowler_version, timestamp
 from prowler.lib.check.models import Remediation
 from prowler.lib.logger import logger
+from prowler.lib.utils.utils import outputs_unix_timestamp
 from prowler.providers.aws.lib.audit_info.models import AWS_Organizations_Info
 
 
@@ -47,7 +48,7 @@ def generate_provider_output_csv(
         finding_output_model = f"{provider.capitalize()}_Check_Output_{mode.upper()}"
         output_model = getattr(importlib.import_module(__name__), finding_output_model)
         # Fill common data among providers
-        data = fill_common_data_csv(finding)
+        data = fill_common_data_csv(finding, output_options.unix_timestamp)
 
         if provider == "azure":
             data["resource_id"] = finding.resource_id
@@ -120,9 +121,9 @@ def generate_provider_output_csv(
         return csv_writer, finding_output
 
 
-def fill_common_data_csv(finding: dict) -> dict:
+def fill_common_data_csv(finding: dict, unix_timestamp: bool) -> dict:
     data = {
-        "assessment_start_time": timestamp.isoformat(),
+        "assessment_start_time": outputs_unix_timestamp(unix_timestamp, timestamp),
         "finding_unique_id": "",
         "provider": finding.check_metadata.Provider,
         "check_id": finding.check_metadata.CheckID,
@@ -360,7 +361,9 @@ def generate_provider_output_json(
         # Instantiate the class for the cloud provider
         finding_output = output_model(**finding.check_metadata.dict())
         # Fill common fields
-        finding_output.AssessmentStartTime = timestamp.isoformat()
+        finding_output.AssessmentStartTime = outputs_unix_timestamp(
+            output_options.unix_timestamp, timestamp
+        )
         finding_output.Status = finding.status
         finding_output.StatusExtended = finding.status_extended
         finding_output.ResourceDetails = finding.resource_details
@@ -691,7 +694,7 @@ class Compliance(BaseModel):
 
 class Check_Output_JSON_ASFF(BaseModel):
     """
-    Check_Output_JSON_ASFF generates a finding's output in JSON ASFF format.
+    Check_Output_JSON_ASFF generates a finding's output in JSON ASFF format: https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-findings-format-syntax.html
     """
 
     SchemaVersion: str = "2018-10-08"

@@ -1,4 +1,3 @@
-from re import search
 from unittest import mock
 
 from boto3 import client, session
@@ -74,9 +73,12 @@ class Test_ec2_ebs_default_encryption:
             for result in results:
                 if result.region == AWS_REGION:
                     assert result.status == "PASS"
-                    assert search(
-                        "EBS Default Encryption is activated",
-                        result.status_extended,
+                    assert (
+                        result.status_extended == "EBS Default Encryption is activated."
+                    )
+                    assert result.resource_id == AWS_ACCOUNT_NUMBER
+                    assert (
+                        result.resource_arn == f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
                     )
 
     @mock_ec2
@@ -103,7 +105,8 @@ class Test_ec2_ebs_default_encryption:
             # One result per region
             assert len(result) == 2
             assert result[0].status == "FAIL"
-            assert search(
-                "EBS Default Encryption is not activated",
-                result[0].status_extended,
+            assert (
+                result[0].status_extended == "EBS Default Encryption is not activated."
             )
+            assert result[0].resource_id == AWS_ACCOUNT_NUMBER
+            assert result[0].resource_arn == f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"

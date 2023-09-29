@@ -91,6 +91,7 @@ class Test_Common_Output_Options:
         arguments.security_hub = True
         arguments.shodan = "test-api-key"
         arguments.only_logs = False
+        arguments.unix_timestamp = False
 
         audit_info = self.set_mocked_aws_audit_info()
         allowlist_file = ""
@@ -119,6 +120,7 @@ class Test_Common_Output_Options:
         arguments.verbose = True
         arguments.output_filename = "output_test_filename"
         arguments.only_logs = False
+        arguments.unix_timestamp = False
 
         audit_info = self.set_mocked_gcp_audit_info()
         allowlist_file = ""
@@ -147,6 +149,7 @@ class Test_Common_Output_Options:
         arguments.security_hub = True
         arguments.shodan = "test-api-key"
         arguments.only_logs = False
+        arguments.unix_timestamp = False
 
         # Mock AWS Audit Info
         audit_info = self.set_mocked_aws_audit_info()
@@ -179,6 +182,7 @@ class Test_Common_Output_Options:
         arguments.output_directory = "output_test_directory"
         arguments.verbose = True
         arguments.only_logs = False
+        arguments.unix_timestamp = False
 
         # Mock Azure Audit Info
         audit_info = self.set_mocked_azure_audit_info()
@@ -215,6 +219,7 @@ class Test_Common_Output_Options:
         arguments.output_directory = "output_test_directory"
         arguments.verbose = True
         arguments.only_logs = False
+        arguments.unix_timestamp = False
 
         # Mock Azure Audit Info
         audit_info = self.set_mocked_azure_audit_info()

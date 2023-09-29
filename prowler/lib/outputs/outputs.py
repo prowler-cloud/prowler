@@ -16,7 +16,6 @@ from prowler.lib.outputs.models import (
 )
 from prowler.providers.aws.lib.allowlist.allowlist import is_allowlisted
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
-from prowler.providers.aws.lib.security_hub.security_hub import send_to_security_hub
 from prowler.providers.azure.lib.audit_info.models import Azure_Audit_Info
 
 
@@ -93,6 +92,7 @@ def report(check_findings, output_options, audit_info):
                                 audit_info,
                                 file_descriptors,
                             )
+
                         # AWS specific outputs
                         if finding.check_metadata.Provider == "aws":
                             if "json-asff" in file_descriptors:
@@ -107,19 +107,6 @@ def report(check_findings, output_options, audit_info):
                                     indent=4,
                                 )
                                 file_descriptors["json-asff"].write(",")
-
-                            # Check if it is needed to send findings to security hub
-                            if (
-                                output_options.security_hub_enabled
-                                and finding.status != "INFO"
-                            ):
-                                send_to_security_hub(
-                                    output_options.is_quiet,
-                                    finding.status,
-                                    finding.region,
-                                    finding_output,
-                                    audit_info.audit_session,
-                                )
 
                         # Common outputs
                         if "html" in file_descriptors:

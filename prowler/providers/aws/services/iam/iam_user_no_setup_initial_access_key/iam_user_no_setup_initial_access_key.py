@@ -20,36 +20,38 @@ class iam_user_no_setup_initial_access_key(Check):
                     and user_record["access_key_1_last_used_date"] == "N/A"
                     and user_record["password_enabled"] == "true"
                 ):
-                    report = Check_Report_AWS(self.metadata())
-                    report.region = iam_client.region
-                    report.resource_id = user_record["user"]
-                    report.resource_arn = user_record["arn"]
-                    report.status = "FAIL"
-                    report.status_extended = (
-                        f"User {user_record['user']} has never used access key 1."
+                    self.add_finding(
+                        user=user_record,
+                        status="FAIL",
+                        status_extended=f"User {user_record['user']} has never used access key 1.",
+                        findings=findings,
                     )
-                    findings.append(report)
                 if (
                     user_record["access_key_2_active"] == "true"
                     and user_record["access_key_2_last_used_date"] == "N/A"
                     and user_record["password_enabled"] == "true"
                 ):
-                    report = Check_Report_AWS(self.metadata())
-                    report.region = iam_client.region
-                    report.resource_id = user_record["user"]
-                    report.resource_arn = user_record["arn"]
-                    report.status = "FAIL"
-                    report.status_extended = (
-                        f"User {user_record['user']} has never used access key 2."
+                    self.add_finding(
+                        user=user_record,
+                        status="FAIL",
+                        status_extended=f"User {user_record['user']} has never used access key 2.",
+                        findings=findings,
                     )
-                    findings.append(report)
             else:
-                report = Check_Report_AWS(self.metadata())
-                report.region = iam_client.region
-                report.resource_id = user_record["user"]
-                report.resource_arn = user_record["arn"]
-                report.status = "PASS"
-                report.status_extended = f"User {user_record['user']} does not have access keys or uses the access keys configured."
-                findings.append(report)
+                self.add_finding(
+                    user=user_record,
+                    status="PASS",
+                    status_extended=f"User {user_record['user']} does not have access keys or uses the access keys configured.",
+                    findings=findings,
+                )
 
         return findings
+
+    def add_finding(self, user, status, status_extended, findings):
+        report = Check_Report_AWS(self.metadata())
+        report.region = iam_client.region
+        report.resource_id = user["user"]
+        report.resource_arn = user["arn"]
+        report.status = status
+        report.status_extended = status_extended
+        findings.append(report)

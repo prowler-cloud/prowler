@@ -58,7 +58,7 @@ For the AWS provider we have ways to test a Prowler check based on the following
     - Service test with `@mock_<service>` and `mock_make_api_call`
     - Checks tests with `@mock_<service>` and `mock_make_api_call`
 
-In the following section we are going to explain all of the above scenarios with examples based on if the [Moto](https://github.com/getmoto/moto) library covers the AWS API calls made by the service. You can check the covered API calls [here](https://github.com/getmoto/moto/blob/master/IMPLEMENTATION_COVERAGE.md).
+In the following section we are going to explain all of the above scenarios with examples. The main difference between those scenarios comes from if the [Moto](https://github.com/getmoto/moto) library covers the AWS API calls made by the service. You can check the covered API calls [here](https://github.com/getmoto/moto/blob/master/IMPLEMENTATION_COVERAGE.md).
 
 An important point for the AWS testing is that in each check we MUST have a unique `audit_info` which is the key object during the AWS execution to isolate the test execution.
 
@@ -112,7 +112,7 @@ This section is going to be divided based on the API coverage of the [Moto](http
 
 #### API calls covered
 
-If the [Moto](https://github.com/getmoto/moto) library covers the API calls we want to test we can use the `@mock_<service>` decorator which will mocked out all the API calls made to AWS keeping the state within the code decorated, in this case the test function.
+If the [Moto](https://github.com/getmoto/moto) library covers the API calls we want to test, we can use the `@mock_<service>` decorator. This will mocked out all the API calls made to AWS keeping the state within the code decorated, in this case the test function.
 
 ```python
 # We need to import the unittest.mock to allow us to patch some objects
@@ -193,7 +193,7 @@ class Test_iam_password_policy_uppercase:
 
 #### API calls not covered
 
-If the IAM service for the check's we want to test is not covered by Moto we have to inject the objects in the service client using [MagicMock](https://docs.python.org/3/library/unittest.mock.html#unittest.mock.MagicMock) because we cannot instantiate the service since it will make real calls to the AWS APIs.
+If the IAM service for the check's we want to test is not covered by Moto, we have to inject the objects in the service client using [MagicMock](https://docs.python.org/3/library/unittest.mock.html#unittest.mock.MagicMock). As we have pointed above, we cannot instantiate the service since it will make real calls to the AWS APIs.
 
 > The following example uses the IAM GetAccountPasswordPolicy which is covered by Moto but this is only for demonstration purposes.
 
@@ -236,7 +236,7 @@ class Test_iam_password_policy_uppercase:
     # between checks
     current_audit_info = self.set_mocked_audit_info()
 
-    # In this scenario we have to mock also the IAM service and the iam_client from the check to enforce that the iam_client used is the one created within this check because patch != import, and if you execute tests in parallel some objects can be already initialised hence the check won't be isolated.
+    # In this scenario we have to mock also the IAM service and the iam_client from the check to enforce    # that the iam_client used is the one created within this check because patch != import, and if you     # execute tests in parallel some objects can be already initialised hence the check won't be isolated.
     # In this case we don't use the Moto decorator, we use the mocked IAM client for both objects
     with mock.patch(
         "prowler.providers.aws.services.iam.iam_service.IAM",
@@ -268,6 +268,8 @@ class Test_iam_password_policy_uppercase:
         assert result[0].resource_tags == []
         assert result[0].region == AWS_REGION
 ```
+
+As it can be seen in the above scenarios, the check execution should always be into the context of mocked/patched objects. This way we ensure it reviews only the objects created under the scope the test.
 
 #### API calls partially covered
 
@@ -363,7 +365,7 @@ from prowler.providers.<provider>.services.<service>.<service>_service import <S
 <service>_client = <SERVICE>(audit_info)
 ```
 
-Due to the above import path it's not the same to patch the following objects because if you run a bunch of tests, either in parallel or not, some clients can be already instantiated by another check, hence your test exection will be using another test's service instance:
+Due to the above import path it's not the same to patch the following objects because if you run a bunch of tests, either in parallel or not, some clients can be already instantiated by another check, hence your test execution will be using another test's service instance:
 
 - `<service>_client` imported at `<check>.py`
 - `<service>_client` initialised at `<service>_client.py`
@@ -406,7 +408,7 @@ with mock.patch(
     new=audit_info,
 ), mock.patch(
     "prowler.providers.aws.services.<service>.<SERVICE>",
-    return_value=<SERVICE>(audit_info),
+    new=<SERVICE>(audit_info),
 ) as service_client, mock.patch(
     "prowler.providers.aws.services.<service>.<service>_client.<service>_client",
     new=service_client,

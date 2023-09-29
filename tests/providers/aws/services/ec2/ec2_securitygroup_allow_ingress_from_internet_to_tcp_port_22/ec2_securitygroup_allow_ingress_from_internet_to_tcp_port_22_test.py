@@ -122,6 +122,11 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22:
             for sg in result:
                 if sg.resource_id == default_sg_id:
                     assert sg.status == "FAIL"
+                    assert sg.region == AWS_REGION
+                    assert (
+                        sg.status_extended
+                        == f"Security group {default_sg_name} ({default_sg_id}) has SSH port 22 open to the Internet."
+                    )
                     assert search(
                         "has SSH port 22 open to the Internet",
                         sg.status_extended,
@@ -180,9 +185,10 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22:
             for sg in result:
                 if sg.resource_id == default_sg_id:
                     assert sg.status == "PASS"
-                    assert search(
-                        "does not have SSH port 22 open to the Internet",
-                        sg.status_extended,
+                    assert sg.region == AWS_REGION
+                    assert (
+                        sg.status_extended
+                        == f"Security group {default_sg_name} ({default_sg_id}) does not have SSH port 22 open to the Internet."
                     )
                     assert (
                         sg.resource_arn

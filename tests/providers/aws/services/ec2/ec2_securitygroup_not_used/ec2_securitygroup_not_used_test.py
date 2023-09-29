@@ -105,9 +105,10 @@ class Test_ec2_securitygroup_not_used:
             # One custom sg
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert search(
-                "it is not being used",
-                result[0].status_extended,
+            assert result[0].region == AWS_REGION
+            assert (
+                result[0].status_extended
+                == f"Security group {sg_name} ({sg.id}) it is not being used."
             )
             assert (
                 result[0].resource_arn
@@ -152,6 +153,11 @@ class Test_ec2_securitygroup_not_used:
             # One custom sg
             assert len(result) == 1
             assert result[0].status == "PASS"
+            assert result[0].region == AWS_REGION
+            assert (
+                result[0].status_extended
+                == f"Security group {sg_name} ({sg.id}) it is being used."
+            )
             assert search(
                 "it is being used",
                 result[0].status_extended,

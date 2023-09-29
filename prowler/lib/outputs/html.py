@@ -345,7 +345,7 @@ def get_aws_html_assessment_summary(audit_info):
             elif not audit_info.audited_regions:
                 audited_regions = "All Regions"
             else:
-                audited_regions = audit_info.audited_regions
+                audited_regions = ", ".join(audit_info.audited_regions)
             return (
                 """
             <div class="col-md-2">
