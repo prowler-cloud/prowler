@@ -108,7 +108,7 @@ All the checks MUST fill the `report.status` and `report.status_extended` with t
     - MUST include the service audited with the resource and a brief explanation of the result generated, e.g.: `EC2 AMI ami-0123456789 is not public.`
 
 ### Resource ID, Name and ARN
-All the hecks must fill the `report.resource_id` and `report.resource_arn` with the following criteria:
+All the checks MUST fill the `report.resource_id` and `report.resource_arn` with the following criteria:
 
 - AWS
     - Resource ID -- `report.resource_id`
