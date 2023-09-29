@@ -28,6 +28,7 @@ from prowler.lib.outputs.json import (
     fill_json_asff,
     fill_json_ocsf,
     generate_json_asff_status,
+    generate_json_asff_resource_tags,
     generate_json_ocsf_severity_id,
     generate_json_ocsf_status,
     generate_json_ocsf_status_id,
@@ -1348,6 +1349,17 @@ class Test_Outputs:
         assert generate_json_asff_status("FAIL") == "FAILED"
         assert generate_json_asff_status("WARNING") == "WARNING"
         assert generate_json_asff_status("SOMETHING ELSE") == "NOT_AVAILABLE"
+
+    def test_generate_json_asff_resource_tags(self):
+        assert generate_json_asff_resource_tags(None) is None
+        assert generate_json_asff_resource_tags([]) is None
+        assert generate_json_asff_resource_tags([{}]) is None
+        assert generate_json_asff_resource_tags([{"key1": "value1"}]) == {
+            "key1": "value1"
+        }
+        assert generate_json_asff_resource_tags(
+            [{"Key": "key1", "Value": "value1"}]
+        ) == {"key1": "value1"}
 
     def test_generate_json_ocsf_status(self):
         assert generate_json_ocsf_status("PASS") == "Success"
