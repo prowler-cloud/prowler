@@ -40,7 +40,6 @@ def prepare_security_hub_findings(
         )
 
         # Include that finding within their region in the JSON format
-
         security_hub_findings_per_region[region].append(
             finding_json_asff.dict(exclude_none=True)
         )
