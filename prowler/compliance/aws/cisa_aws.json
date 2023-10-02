@@ -19,7 +19,7 @@
         "ec2_instance_managed_by_ssm",
         "ec2_instance_older_than_specific_days",
         "ssm_managed_compliant_patching",
-        "ec2_elastic_ip_unassgined"
+        "ec2_elastic_ip_unassigned"
       ]
     },
     {
@@ -148,7 +148,7 @@
         }
       ],
       "Checks": [
-        "ec2_elastic_ip_unassgined",
+        "ec2_elastic_ip_unassigned",
         "vpc_flow_logs_enabled"
       ]
     },

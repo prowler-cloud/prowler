@@ -2,7 +2,7 @@ from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.ec2.ec2_client import ec2_client
 
 
-class ec2_elastic_ip_unassgined(Check):
+class ec2_elastic_ip_unassigned(Check):
     def execute(self):
         findings = []
         for eip in ec2_client.elastic_ips:
