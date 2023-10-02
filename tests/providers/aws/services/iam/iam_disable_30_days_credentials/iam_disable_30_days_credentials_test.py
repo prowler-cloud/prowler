@@ -80,6 +80,15 @@ class Test_iam_disable_30_days_credentials_test:
                 )
                 assert result[0].resource_id == user
                 assert result[0].resource_arn == arn
+                assert result[0].region == AWS_REGION
+                assert result[1].status == "PASS"
+                assert search(
+                    f"User {user} does not have access keys.",
+                    result[1].status_extended,
+                )
+                assert result[1].resource_id == user
+                assert result[1].resource_arn == arn
+                assert result[1].region == AWS_REGION
 
     @mock_iam
     def test_iam_user_not_logged_30_days(self):
@@ -109,6 +118,7 @@ class Test_iam_disable_30_days_credentials_test:
                 service_client.users[0].password_last_used = password_last_used
                 check = iam_disable_30_days_credentials()
                 result = check.execute()
+                assert len(result) == 2
                 assert result[0].status == "FAIL"
                 assert search(
                     f"User {user} has not logged in to the console in the past 30 days.",
@@ -116,6 +126,15 @@ class Test_iam_disable_30_days_credentials_test:
                 )
                 assert result[0].resource_id == user
                 assert result[0].resource_arn == arn
+                assert result[0].region == AWS_REGION
+                assert result[1].status == "PASS"
+                assert search(
+                    f"User {user} does not have access keys.",
+                    result[1].status_extended,
+                )
+                assert result[1].resource_id == user
+                assert result[1].resource_arn == arn
+                assert result[1].region == AWS_REGION
 
     @mock_iam
     def test_iam_user_not_logged(self):
@@ -143,6 +162,7 @@ class Test_iam_disable_30_days_credentials_test:
                 # raise Exception
                 check = iam_disable_30_days_credentials()
                 result = check.execute()
+                assert len(result) == 2
                 assert result[0].status == "PASS"
                 assert search(
                     f"User {user} does not have a console password or is unused.",
@@ -150,6 +170,15 @@ class Test_iam_disable_30_days_credentials_test:
                 )
                 assert result[0].resource_id == user
                 assert result[0].resource_arn == arn
+                assert result[0].region == AWS_REGION
+                assert result[1].status == "PASS"
+                assert search(
+                    f"User {user} does not have access keys.",
+                    result[1].status_extended,
+                )
+                assert result[1].resource_id == user
+                assert result[1].resource_arn == arn
+                assert result[1].region == AWS_REGION
 
     @mock_iam
     def test_user_no_access_keys(self):
@@ -182,6 +211,14 @@ class Test_iam_disable_30_days_credentials_test:
 
                 check = iam_disable_30_days_credentials()
                 result = check.execute()
+                assert result[0].status == "PASS"
+                assert (
+                    result[0].status_extended
+                    == f"User {user} does not have a console password or is unused."
+                )
+                assert result[0].resource_id == user
+                assert result[0].resource_arn == arn
+                assert result[0].region == AWS_REGION
                 assert result[-1].status == "PASS"
                 assert (
                     result[-1].status_extended
@@ -189,6 +226,7 @@ class Test_iam_disable_30_days_credentials_test:
                 )
                 assert result[-1].resource_id == user
                 assert result[-1].resource_arn == arn
+                assert result[-1].region == AWS_REGION
 
     @mock_iam
     def test_user_access_key_1_not_used(self):
@@ -222,6 +260,15 @@ class Test_iam_disable_30_days_credentials_test:
 
                 check = iam_disable_30_days_credentials()
                 result = check.execute()
+                assert len(result) == 2
+                assert result[0].status == "PASS"
+                assert (
+                    result[0].status_extended
+                    == f"User {user} does not have a console password or is unused."
+                )
+                assert result[0].resource_id == user
+                assert result[0].resource_arn == arn
+                assert result[0].region == AWS_REGION
                 assert result[-1].status == "FAIL"
                 assert (
                     result[-1].status_extended
@@ -229,6 +276,7 @@ class Test_iam_disable_30_days_credentials_test:
                 )
                 assert result[-1].resource_id == user
                 assert result[-1].resource_arn == arn
+                assert result[-1].region == AWS_REGION
 
     @mock_iam
     def test_user_access_key_2_not_used(self):
@@ -262,6 +310,15 @@ class Test_iam_disable_30_days_credentials_test:
 
                 check = iam_disable_30_days_credentials()
                 result = check.execute()
+                assert len(result) == 2
+                assert result[0].status == "PASS"
+                assert (
+                    result[0].status_extended
+                    == f"User {user} does not have a console password or is unused."
+                )
+                assert result[0].resource_id == user
+                assert result[0].resource_arn == arn
+                assert result[0].region == AWS_REGION
                 assert result[-1].status == "FAIL"
                 assert (
                     result[-1].status_extended
@@ -269,6 +326,7 @@ class Test_iam_disable_30_days_credentials_test:
                 )
                 assert result[-1].resource_id == user
                 assert result[-1].resource_arn == arn
+                assert result[-1].region == AWS_REGION
 
     @mock_iam
     def test_user_both_access_keys_not_used(self):
@@ -307,6 +365,15 @@ class Test_iam_disable_30_days_credentials_test:
 
                 check = iam_disable_30_days_credentials()
                 result = check.execute()
+                assert len(result) == 3
+                assert result[0].status == "PASS"
+                assert (
+                    result[0].status_extended
+                    == f"User {user} does not have a console password or is unused."
+                )
+                assert result[0].resource_id == user
+                assert result[0].resource_arn == arn
+                assert result[0].region == AWS_REGION
                 assert result[-1].status == "FAIL"
                 assert (
                     result[-1].status_extended
@@ -314,6 +381,7 @@ class Test_iam_disable_30_days_credentials_test:
                 )
                 assert result[-1].resource_id == user
                 assert result[-1].resource_arn == arn
+                assert result[-1].region == AWS_REGION
 
                 assert result[-2].status == "FAIL"
                 assert (
@@ -322,3 +390,59 @@ class Test_iam_disable_30_days_credentials_test:
                 )
                 assert result[-2].resource_id == user
                 assert result[-2].resource_arn == arn
+                assert result[-2].region == AWS_REGION
+
+    @mock_iam
+    def test_user_both_access_keys_used(self):
+        credentials_last_rotated = (
+            datetime.datetime.now() - datetime.timedelta(days=10)
+        ).strftime("%Y-%m-%dT%H:%M:%S+00:00")
+        iam_client = client("iam")
+        user = "test-user"
+        arn = iam_client.create_user(UserName=user)["User"]["Arn"]
+
+        from prowler.providers.aws.services.iam.iam_service import IAM
+
+        audit_info = self.set_mocked_audit_info()
+
+        with mock.patch(
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=audit_info,
+        ):
+            with mock.patch(
+                "prowler.providers.aws.services.iam.iam_disable_30_days_credentials.iam_disable_30_days_credentials.iam_client",
+                new=IAM(audit_info),
+            ) as service_client:
+                from prowler.providers.aws.services.iam.iam_disable_30_days_credentials.iam_disable_30_days_credentials import (
+                    iam_disable_30_days_credentials,
+                )
+
+                service_client.credential_report[0]["access_key_1_active"] = "true"
+                service_client.credential_report[0][
+                    "access_key_1_last_used_date"
+                ] = credentials_last_rotated
+
+                service_client.credential_report[0]["access_key_2_active"] = "true"
+                service_client.credential_report[0][
+                    "access_key_2_last_used_date"
+                ] = credentials_last_rotated
+
+                check = iam_disable_30_days_credentials()
+                result = check.execute()
+                assert len(result) == 2
+                assert result[0].status == "PASS"
+                assert (
+                    result[0].status_extended
+                    == f"User {user} does not have a console password or is unused."
+                )
+                assert result[0].resource_id == user
+                assert result[0].resource_arn == arn
+                assert result[0].region == AWS_REGION
+                assert result[1].status == "PASS"
+                assert (
+                    result[1].status_extended
+                    == f"User {user} does not have unused access keys for 30 days."
+                )
+                assert result[1].resource_id == user
+                assert result[1].resource_arn == arn
+                assert result[1].region == AWS_REGION

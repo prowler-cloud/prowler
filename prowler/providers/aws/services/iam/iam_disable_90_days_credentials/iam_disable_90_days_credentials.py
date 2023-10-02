@@ -93,11 +93,12 @@ class iam_disable_90_days_credentials(Check):
                             findings.append(report)
 
                 if not old_access_keys:
-                    self.add_finding(
-                        user=user,
-                        status="PASS",
-                        status_extended=f"User {user['user']} does not have unused access keys for {maximum_expiration_days} days.",
-                        findings=findings,
-                    )
+                    report = Check_Report_AWS(self.metadata())
+                    report.region = iam_client.region
+                    report.resource_id = user["user"]
+                    report.resource_arn = user["arn"]
+                    report.status = "PASS"
+                    report.status_extended = f"User {user['user']} does not have unused access keys for {maximum_expiration_days} days."
+                    findings.append(report)
 
         return findings
