@@ -179,6 +179,10 @@ def remove_custom_checks_module(input_folder: str, provider: str):
                 prowler_module = f"{prowler_dir[0]}/providers/{provider}/services/{check_service}/{check.name}"
                 if os.path.exists(prowler_module):
                     shutil.rmtree(prowler_module)
+                # test if the service only had the loaded custom checks to delete the folder
+                prowler_service_module = prowler_module.rsplit("/", 1)[0]
+                if not os.listdir(prowler_service_module):
+                    shutil.rmtree(prowler_service_module)
                 # If S3 URI, remove the downloaded folders
                 if s3_uri and os.path.exists(input_folder):
                     shutil.rmtree(input_folder)
