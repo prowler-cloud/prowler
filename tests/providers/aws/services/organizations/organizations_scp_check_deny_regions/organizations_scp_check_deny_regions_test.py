@@ -11,6 +11,8 @@ from prowler.providers.aws.services.organizations.organizations_service import (
 from prowler.providers.common.models import Audit_Metadata
 
 AWS_REGION = "us-east-1"
+AWS_ACCOUNT_ID = "123456789012"
+AWS_ACCOUNT_ARN = f"arn:aws:iam::{AWS_ACCOUNT_ID}:root"
 
 
 def scp_restrict_regions_with_deny():
@@ -27,8 +29,8 @@ class Test_organizations_scp_check_deny_regions:
                 profile_name=None,
                 botocore_session=None,
             ),
-            audited_account=None,
-            audited_account_arn=None,
+            audited_account=AWS_ACCOUNT_ID,
+            audited_account_arn=f"arn:aws:iam::{AWS_ACCOUNT_ID}:root",
             audited_user_id=None,
             audited_partition="aws",
             audited_identity_arn=None,
@@ -76,7 +78,7 @@ class Test_organizations_scp_check_deny_regions:
                     result[0].status_extended,
                 )
                 assert result[0].resource_id == "AWS Organization"
-                assert result[0].resource_arn == ""
+                assert result[0].resource_arn == AWS_ACCOUNT_ARN
                 assert result[0].region == AWS_REGION
 
     @mock_organizations

@@ -93,7 +93,7 @@ class Redshift(AWSService):
 
 class Cluster(BaseModel):
     id: str
-    arn: str = ""
+    arn: str
     region: str
     public_access: bool = None
     endpoint_address: str = None

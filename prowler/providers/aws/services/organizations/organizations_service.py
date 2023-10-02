@@ -49,7 +49,7 @@ class Organizations(AWSService):
                 ):
                     self.organizations.append(
                         Organization(
-                            arn="",
+                            arn=self.audited_account_arn,
                             id="AWS Organization",
                             status="NOT_AVAILABLE",
                             master_id="",
@@ -77,7 +77,7 @@ class Organizations(AWSService):
                     # is filtered
                     self.organizations.append(
                         Organization(
-                            arn="",
+                            arn=self.audited_account_arn,
                             id="AWS Organization",
                             status="NOT_AVAILABLE",
                             master_id="",
