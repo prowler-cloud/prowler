@@ -17,7 +17,7 @@ MOCK_PROWLER_VERSION = "3.3.0"
 MOCK_OLD_PROWLER_VERSION = "0.0.0"
 
 
-def mock_prowler_get_latest_release(_):
+def mock_prowler_get_latest_release(_, **kwargs):
     """Mock requests.get() to get the Prowler latest release"""
     response = Response()
     response._content = b'[{"name":"3.3.0"}]'
