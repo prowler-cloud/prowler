@@ -39,7 +39,11 @@ class GuardDuty(AWSService):
                         )
             if not detectors:
                 self.detectors.append(
-                    Detector(id="", arn="", region=regional_client.region)
+                    Detector(
+                        id=self.audited_account,
+                        arn=self.audited_account_arn,
+                        region=regional_client.region,
+                    )
                 )
         except Exception as error:
             logger.error(

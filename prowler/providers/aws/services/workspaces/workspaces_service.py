@@ -68,7 +68,7 @@ class WorkSpaces(AWSService):
 
 class WorkSpace(BaseModel):
     id: str
-    arn: str = ""
+    arn: str
     region: str
     user_volume_encryption_enabled: bool = None
     root_volume_encryption_enabled: bool = None

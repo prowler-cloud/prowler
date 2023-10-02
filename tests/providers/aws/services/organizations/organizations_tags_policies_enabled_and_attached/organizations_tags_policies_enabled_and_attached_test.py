@@ -10,7 +10,8 @@ from prowler.providers.aws.services.organizations.organizations_service import (
 from prowler.providers.common.models import Audit_Metadata
 
 AWS_REGION = "us-east-1"
-AWS_ACCOUNT_NUMBER = "123456789012"
+AWS_ACCOUNT_ID = "123456789012"
+AWS_ACCOUNT_ARN = f"arn:aws:iam::{AWS_ACCOUNT_ID}:root"
 # Moto: NotImplementedError: The TAG_POLICY policy type has not been implemented
 # Needs to Mock manually
 
@@ -26,8 +27,8 @@ class Test_organizations_tags_policies_enabled_and_attached:
                 botocore_session=None,
                 region_name=AWS_REGION,
             ),
-            audited_account=AWS_ACCOUNT_NUMBER,
-            audited_account_arn=f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root",
+            audited_account=AWS_ACCOUNT_ID,
+            audited_account_arn=AWS_ACCOUNT_ARN,
             audited_user_id=None,
             audited_partition="aws",
             audited_identity_arn=None,
@@ -53,7 +54,7 @@ class Test_organizations_tags_policies_enabled_and_attached:
         organizations_client.region = AWS_REGION
         organizations_client.organizations = [
             Organization(
-                arn="",
+                arn=AWS_ACCOUNT_ARN,
                 id="AWS Organization",
                 status="NOT_AVAILABLE",
                 master_id="",
@@ -85,7 +86,7 @@ class Test_organizations_tags_policies_enabled_and_attached:
                     == "AWS Organizations is not in-use for this AWS Account."
                 )
                 assert result[0].resource_id == "AWS Organization"
-                assert result[0].resource_arn == ""
+                assert result[0].resource_arn == AWS_ACCOUNT_ARN
                 assert result[0].region == AWS_REGION
 
     def test_organization_with_tag_policies_not_attached(self):
