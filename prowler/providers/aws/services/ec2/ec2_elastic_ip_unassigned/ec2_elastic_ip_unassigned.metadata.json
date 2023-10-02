@@ -1,6 +1,6 @@
 {
   "Provider": "aws",
-  "CheckID": "ec2_elastic_ip_unassgined",
+  "CheckID": "ec2_elastic_ip_unassigned",
   "CheckTitle": "Check if there is any unassigned Elastic IP.",
   "CheckType": [
     "Infrastructure Security"

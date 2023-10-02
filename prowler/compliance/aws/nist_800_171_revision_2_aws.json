@@ -425,7 +425,7 @@
         "ec2_instance_older_than_specific_days",
         "elbv2_deletion_protection",
         "ssm_managed_compliant_patching",
-        "ec2_elastic_ip_unassgined",
+        "ec2_elastic_ip_unassigned",
         "ec2_networkacl_allow_ingress_any_port"
       ]
     },

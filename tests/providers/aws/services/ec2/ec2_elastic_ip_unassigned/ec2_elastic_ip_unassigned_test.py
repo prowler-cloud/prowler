@@ -12,7 +12,7 @@ EXAMPLE_AMI_ID = "ami-12c6146b"
 AWS_ACCOUNT_NUMBER = "123456789012"
 
 
-class Test_ec2_elastic_ip_unassgined:
+class Test_ec2_elastic_ip_unassigned:
     def set_mocked_audit_info(self):
         audit_info = AWS_Audit_Info(
             session_config=None,
@@ -54,15 +54,15 @@ class Test_ec2_elastic_ip_unassgined:
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             new=current_audit_info,
         ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_elastic_ip_unassgined.ec2_elastic_ip_unassgined.ec2_client",
+            "prowler.providers.aws.services.ec2.ec2_elastic_ip_unassigned.ec2_elastic_ip_unassigned.ec2_client",
             new=EC2(current_audit_info),
         ):
             # Test Check
-            from prowler.providers.aws.services.ec2.ec2_elastic_ip_unassgined.ec2_elastic_ip_unassgined import (
-                ec2_elastic_ip_unassgined,
+            from prowler.providers.aws.services.ec2.ec2_elastic_ip_unassigned.ec2_elastic_ip_unassigned import (
+                ec2_elastic_ip_unassigned,
             )
 
-            check = ec2_elastic_ip_unassgined()
+            check = ec2_elastic_ip_unassigned()
             result = check.execute()
 
             assert len(result) == 0
@@ -83,15 +83,15 @@ class Test_ec2_elastic_ip_unassgined:
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             new=current_audit_info,
         ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_elastic_ip_unassgined.ec2_elastic_ip_unassgined.ec2_client",
+            "prowler.providers.aws.services.ec2.ec2_elastic_ip_unassigned.ec2_elastic_ip_unassigned.ec2_client",
             new=EC2(current_audit_info),
         ):
             # Test Check
-            from prowler.providers.aws.services.ec2.ec2_elastic_ip_unassgined.ec2_elastic_ip_unassgined import (
-                ec2_elastic_ip_unassgined,
+            from prowler.providers.aws.services.ec2.ec2_elastic_ip_unassigned.ec2_elastic_ip_unassigned import (
+                ec2_elastic_ip_unassigned,
             )
 
-            check = ec2_elastic_ip_unassgined()
+            check = ec2_elastic_ip_unassigned()
             results = check.execute()
 
             assert len(results) == 1
@@ -134,15 +134,15 @@ class Test_ec2_elastic_ip_unassgined:
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             new=current_audit_info,
         ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_elastic_ip_unassgined.ec2_elastic_ip_unassgined.ec2_client",
+            "prowler.providers.aws.services.ec2.ec2_elastic_ip_unassigned.ec2_elastic_ip_unassigned.ec2_client",
             new=EC2(current_audit_info),
         ):
             # Test Check
-            from prowler.providers.aws.services.ec2.ec2_elastic_ip_unassgined.ec2_elastic_ip_unassgined import (
-                ec2_elastic_ip_unassgined,
+            from prowler.providers.aws.services.ec2.ec2_elastic_ip_unassigned.ec2_elastic_ip_unassigned import (
+                ec2_elastic_ip_unassigned,
             )
 
-            check = ec2_elastic_ip_unassgined()
+            check = ec2_elastic_ip_unassigned()
             results = check.execute()
 
             assert len(results) == 1
