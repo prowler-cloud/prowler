@@ -103,7 +103,10 @@ class VPC(AWSService):
                         if (
                             route["Origin"] != "CreateRouteTable"
                         ):  # avoid default route table
-                            if "DestinationCidrBlock" in route:
+                            if (
+                                "DestinationCidrBlock" in route
+                                and "VpcPeeringConnectionId" in route
+                            ):
                                 destination_cidrs.append(route["DestinationCidrBlock"])
                     conn.route_tables.append(
                         Route(
