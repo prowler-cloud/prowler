@@ -124,18 +124,23 @@ def generate_json_asff_status(status: str) -> str:
 
 
 def generate_json_asff_resource_tags(tags):
-    resource_tags = {}
-    if tags:
-        for tag in tags:
-            if "Key" in tag and "Value" in tag:
-                resource_tags[tag["Key"]] = tag["Value"]
-            else:
-                resource_tags.update(tag)
-        if len(resource_tags) == 0:
+    try:
+        resource_tags = {}
+        if tags and tags != [None]:
+            for tag in tags:
+                if "Key" in tag and "Value" in tag:
+                    resource_tags[tag["Key"]] = tag["Value"]
+                else:
+                    resource_tags.update(tag)
+            if len(resource_tags) == 0:
+                return None
+        else:
             return None
-    else:
-        return None
-    return resource_tags
+        return resource_tags
+    except Exception as error:
+        logger.error(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+        )
 
 
 def fill_json_ocsf(audit_info, finding, output_options) -> Check_Output_JSON_OCSF:
