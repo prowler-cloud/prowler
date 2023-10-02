@@ -67,7 +67,7 @@ class iam_disable_30_days_credentials(Check):
                             old_access_keys = True
                             report = Check_Report_AWS(self.metadata())
                             report.region = iam_client.region
-                            report.resource_id = user["user"]
+                            report.resource_id = user["user"] + "/AccessKey1"
                             report.resource_arn = user["arn"]
                             report.status = "FAIL"
                             report.status_extended = f"User {user['user']} has not used access key 1 in the last {maximum_expiration_days} days ({access_key_1_last_used_date.days} days)."
@@ -86,7 +86,7 @@ class iam_disable_30_days_credentials(Check):
                             old_access_keys = True
                             report = Check_Report_AWS(self.metadata())
                             report.region = iam_client.region
-                            report.resource_id = user["user"]
+                            report.resource_id = user["user"] + "/AccessKey2"
                             report.resource_arn = user["arn"]
                             report.status = "FAIL"
                             report.status_extended = f"User {user['user']} has not used access key 2 in the last {maximum_expiration_days} days ({access_key_2_last_used_date.days} days)."
