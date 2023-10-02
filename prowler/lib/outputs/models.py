@@ -683,6 +683,7 @@ class Resource(BaseModel):
     Id: str
     Partition: str
     Region: str
+    Tags: Optional[dict]
 
 
 class Compliance(BaseModel):
