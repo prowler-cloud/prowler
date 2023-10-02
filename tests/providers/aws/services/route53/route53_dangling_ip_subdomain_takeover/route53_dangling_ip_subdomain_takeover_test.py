@@ -165,7 +165,10 @@ class Test_route53_dangling_ip_subdomain_takeover:
                         "is not a dangling IP",
                         result[0].status_extended,
                     )
-                    assert result[0].resource_id == zone_id.replace("/hostedzone/", "")
+                    assert (
+                        result[0].resource_id
+                        == zone_id.replace("/hostedzone/", "") + "/192.168.1.1"
+                    )
                     assert (
                         result[0].resource_arn
                         == f"arn:{audit_info.audited_partition}:route53:::hostedzone/{zone_id.replace('/hostedzone/','')}"
@@ -226,7 +229,10 @@ class Test_route53_dangling_ip_subdomain_takeover:
                         "does not belong to AWS and it is not a dangling IP",
                         result[0].status_extended,
                     )
-                    assert result[0].resource_id == zone_id.replace("/hostedzone/", "")
+                    assert (
+                        result[0].resource_id
+                        == zone_id.replace("/hostedzone/", "") + "/17.5.7.3"
+                    )
                     assert (
                         result[0].resource_arn
                         == f"arn:{audit_info.audited_partition}:route53:::hostedzone/{zone_id.replace('/hostedzone/','')}"
@@ -287,7 +293,10 @@ class Test_route53_dangling_ip_subdomain_takeover:
                         "is a dangling IP",
                         result[0].status_extended,
                     )
-                    assert result[0].resource_id == zone_id.replace("/hostedzone/", "")
+                    assert (
+                        result[0].resource_id
+                        == zone_id.replace("/hostedzone/", "") + "/54.152.12.70"
+                    )
                     assert (
                         result[0].resource_arn
                         == f"arn:{audit_info.audited_partition}:route53:::hostedzone/{zone_id.replace('/hostedzone/','')}"
@@ -351,7 +360,10 @@ class Test_route53_dangling_ip_subdomain_takeover:
                         "is not a dangling IP",
                         result[0].status_extended,
                     )
-                    assert result[0].resource_id == zone_id.replace("/hostedzone/", "")
+                    assert (
+                        result[0].resource_id
+                        == zone_id.replace("/hostedzone/", "") + "/17.5.7.3"
+                    )
                     assert (
                         result[0].resource_arn
                         == f"arn:{audit_info.audited_partition}:route53:::hostedzone/{zone_id.replace('/hostedzone/','')}"
@@ -421,7 +433,10 @@ class Test_route53_dangling_ip_subdomain_takeover:
                         "is not a dangling IP",
                         result[0].status_extended,
                     )
-                    assert result[0].resource_id == zone_id.replace("/hostedzone/", "")
+                    assert (
+                        result[0].resource_id
+                        == zone_id.replace("/hostedzone/", "") + "/17.5.7.3"
+                    )
                     assert (
                         result[0].resource_arn
                         == f"arn:{audit_info.audited_partition}:route53:::hostedzone/{zone_id.replace('/hostedzone/','')}"
