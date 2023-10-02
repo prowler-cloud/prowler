@@ -9,7 +9,7 @@
   "Severity": "medium",
   "ResourceType": "SQLServer",
   "Description": "Ensure that there is an audit policy configured",
-  "Risk": "Audit policies are used to store logs associated to the SLQ server (for instance, successful/unsuccesful log in attempts). These logs may be useful to detect anomalies or to perform an investigation in case a security incident is detected",
+  "Risk": "Audit policies are used to store logs associated to the SQL server (for instance, successful/unsuccesful log in attempts). These logs may be useful to detect anomalies or to perform an investigation in case a security incident is detected",
   "RelatedUrl": "https://docs.microsoft.com/en-us/azure/sql-database/sql-database-auditing",
   "Remediation": {
     "Code": {
