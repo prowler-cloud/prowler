@@ -84,7 +84,7 @@ checks_v3_to_v2_mapping = {
     "ec2_ebs_snapshots_encrypted": "extra740",
     "ec2_ebs_volume_encryption": "extra729",
     "ec2_elastic_ip_shodan": "extra7102",
-    "ec2_elastic_ip_unassgined": "extra7146",
+    "ec2_elastic_ip_unassigned": "extra7146",
     "ec2_instance_imdsv2_enabled": "extra786",
     "ec2_instance_internet_facing_with_instance_profile": "extra770",
     "ec2_instance_managed_by_ssm": "extra7124",
