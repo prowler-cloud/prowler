@@ -10,23 +10,24 @@ class acm_certificates_transparency_logs_enabled(Check):
             report.region = certificate.region
             if certificate.type == "IMPORTED":
                 report.status = "PASS"
-                report.status_extended = (
-                    f"ACM Certificate for {certificate.name} is imported."
-                )
-                report.resource_id = certificate.name
+                report.status_extended = f"ACM Certificate {certificate.id} for {certificate.name} is imported."
+                report.resource_id = certificate.id
+                report.resource_details = certificate.name
                 report.resource_arn = certificate.arn
                 report.resource_tags = certificate.tags
             else:
                 if not certificate.transparency_logging:
                     report.status = "FAIL"
-                    report.status_extended = f"ACM Certificate for {certificate.name} has Certificate Transparency logging disabled."
-                    report.resource_id = certificate.name
+                    report.status_extended = f"ACM Certificate {certificate.id} for {certificate.name} has Certificate Transparency logging disabled."
+                    report.resource_id = certificate.id
+                    report.resource_details = certificate.name
                     report.resource_arn = certificate.arn
                     report.resource_tags = certificate.tags
                 else:
                     report.status = "PASS"
-                    report.status_extended = f"ACM Certificate for {certificate.name} has Certificate Transparency logging enabled."
-                    report.resource_id = certificate.name
+                    report.status_extended = f"ACM Certificate {certificate.id} for {certificate.name} has Certificate Transparency logging enabled."
+                    report.resource_id = certificate.id
+                    report.resource_details = certificate.name
                     report.resource_arn = certificate.arn
                     report.resource_tags = certificate.tags
             findings.append(report)
