@@ -1,5 +1,4 @@
 import datetime
-from re import search
 from unittest import mock
 
 from boto3 import client, session
@@ -73,18 +72,19 @@ class Test_iam_disable_30_days_credentials_test:
                 service_client.users[0].password_last_used = password_last_used
                 check = iam_disable_30_days_credentials()
                 result = check.execute()
+                assert len(result) == 2
                 assert result[0].status == "PASS"
-                assert search(
-                    f"User {user} has logged in to the console in the past 30 days.",
-                    result[0].status_extended,
+                assert (
+                    result[0].status_extended
+                    == f"User {user} has logged in to the console in the past 30 days."
                 )
                 assert result[0].resource_id == user
                 assert result[0].resource_arn == arn
                 assert result[0].region == AWS_REGION
                 assert result[1].status == "PASS"
-                assert search(
-                    f"User {user} does not have access keys.",
-                    result[1].status_extended,
+                assert (
+                    result[1].status_extended
+                    == f"User {user} does not have access keys."
                 )
                 assert result[1].resource_id == user
                 assert result[1].resource_arn == arn
@@ -120,17 +120,17 @@ class Test_iam_disable_30_days_credentials_test:
                 result = check.execute()
                 assert len(result) == 2
                 assert result[0].status == "FAIL"
-                assert search(
-                    f"User {user} has not logged in to the console in the past 30 days.",
-                    result[0].status_extended,
+                assert (
+                    result[0].status_extended
+                    == f"User {user} has not logged in to the console in the past 30 days."
                 )
                 assert result[0].resource_id == user
                 assert result[0].resource_arn == arn
                 assert result[0].region == AWS_REGION
                 assert result[1].status == "PASS"
-                assert search(
-                    f"User {user} does not have access keys.",
-                    result[1].status_extended,
+                assert (
+                    result[1].status_extended
+                    == f"User {user} does not have access keys."
                 )
                 assert result[1].resource_id == user
                 assert result[1].resource_arn == arn
@@ -164,17 +164,17 @@ class Test_iam_disable_30_days_credentials_test:
                 result = check.execute()
                 assert len(result) == 2
                 assert result[0].status == "PASS"
-                assert search(
-                    f"User {user} does not have a console password or is unused.",
-                    result[0].status_extended,
+                assert (
+                    result[0].status_extended
+                    == f"User {user} does not have a console password or is unused."
                 )
                 assert result[0].resource_id == user
                 assert result[0].resource_arn == arn
                 assert result[0].region == AWS_REGION
                 assert result[1].status == "PASS"
-                assert search(
-                    f"User {user} does not have access keys.",
-                    result[1].status_extended,
+                assert (
+                    result[1].status_extended
+                    == f"User {user} does not have access keys."
                 )
                 assert result[1].resource_id == user
                 assert result[1].resource_arn == arn
@@ -211,6 +211,7 @@ class Test_iam_disable_30_days_credentials_test:
 
                 check = iam_disable_30_days_credentials()
                 result = check.execute()
+                assert len(result) == 2
                 assert result[0].status == "PASS"
                 assert (
                     result[0].status_extended
@@ -219,14 +220,14 @@ class Test_iam_disable_30_days_credentials_test:
                 assert result[0].resource_id == user
                 assert result[0].resource_arn == arn
                 assert result[0].region == AWS_REGION
-                assert result[-1].status == "PASS"
+                assert result[1].status == "PASS"
                 assert (
-                    result[-1].status_extended
+                    result[1].status_extended
                     == f"User {user} does not have access keys."
                 )
-                assert result[-1].resource_id == user
-                assert result[-1].resource_arn == arn
-                assert result[-1].region == AWS_REGION
+                assert result[1].resource_id == user
+                assert result[1].resource_arn == arn
+                assert result[1].region == AWS_REGION
 
     @mock_iam
     def test_user_access_key_1_not_used(self):
@@ -269,9 +270,9 @@ class Test_iam_disable_30_days_credentials_test:
                 assert result[0].resource_id == user
                 assert result[0].resource_arn == arn
                 assert result[0].region == AWS_REGION
-                assert result[-1].status == "FAIL"
+                assert result[1].status == "FAIL"
                 assert (
-                    result[-1].status_extended
+                    result[1].status_extended
                     == f"User {user} has not used access key 1 in the last 30 days (100 days)."
                 )
                 assert result[-1].resource_id == user + "/AccessKey1"
@@ -319,9 +320,9 @@ class Test_iam_disable_30_days_credentials_test:
                 assert result[0].resource_id == user
                 assert result[0].resource_arn == arn
                 assert result[0].region == AWS_REGION
-                assert result[-1].status == "FAIL"
+                assert result[1].status == "FAIL"
                 assert (
-                    result[-1].status_extended
+                    result[1].status_extended
                     == f"User {user} has not used access key 2 in the last 30 days (100 days)."
                 )
                 assert result[-1].resource_id == user + "/AccessKey2"
@@ -374,19 +375,19 @@ class Test_iam_disable_30_days_credentials_test:
                 assert result[0].resource_id == user
                 assert result[0].resource_arn == arn
                 assert result[0].region == AWS_REGION
-                assert result[-1].status == "FAIL"
+                assert result[1].status == "FAIL"
                 assert (
-                    result[-1].status_extended
-                    == f"User {user} has not used access key 2 in the last 30 days (100 days)."
+                    result[1].status_extended
+                    == f"User {user} has not used access key 1 in the last 30 days (100 days)."
                 )
                 assert result[-1].resource_id == user + "/AccessKey2"
                 assert result[-1].resource_arn == arn
                 assert result[-1].region == AWS_REGION
 
-                assert result[-2].status == "FAIL"
+                assert result[2].status == "FAIL"
                 assert (
-                    result[-2].status_extended
-                    == f"User {user} has not used access key 1 in the last 30 days (100 days)."
+                    result[2].status_extended
+                    == f"User {user} has not used access key 2 in the last 30 days (100 days)."
                 )
                 assert result[-2].resource_id == user + "/AccessKey1"
                 assert result[-2].resource_arn == arn
