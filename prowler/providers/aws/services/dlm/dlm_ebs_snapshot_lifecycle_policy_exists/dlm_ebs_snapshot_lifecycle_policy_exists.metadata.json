@@ -1,0 +1,34 @@
+{
+  "Provider": "aws",
+  "CheckID": "dlm_ebs_snapshot_lifecycle_policy_exists",
+  "CheckTitle": "Ensure EBS Snapshot lifecycle policies are defined.",
+  "CheckType": [
+    "Data Protection"
+  ],
+  "ServiceName": "dlm",
+  "SubServiceName": "ebs",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Other",
+  "Description": "Ensure EBS Snapshot lifecycle policies are defined.",
+  "Risk": "",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws dlm create-lifecycle-policy --region <region> --execution-role-arn <execution-role-arn> --description <decription> --state ENABLED --policy-details file://<policy filenanem>.json",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "",
+      "Url": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/DLM/ebs-snapshot-automation.html"
+    }
+  },
+  "Categories": [
+    "forensics-ready"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
