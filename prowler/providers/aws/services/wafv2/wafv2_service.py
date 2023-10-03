@@ -13,6 +13,7 @@ class WAFv2(AWSService):
         self.web_acls = []
         self.__threading_call__(self.__list_web_acls__)
         self.__threading_call__(self.__list_resources_for_web_acl__)
+        self.__threading_call__(self.__get_logging_configuration__)
 
     def __list_web_acls__(self, regional_client):
         logger.info("WAFv2 - Listing Regional Web ACLs...")
@@ -21,13 +22,6 @@ class WAFv2(AWSService):
                 if not self.audit_resources or (
                     is_resource_filtered(wafv2["ARN"], self.audit_resources)
                 ):
-                    logging_enabled = regional_client.get_logging_configuration(
-                        ResourceArn=wafv2["ARN"]
-                    )
-                    logging_enabled = WebAclv2.get("LoggingConfiguration", {}).get(
-                        "LogDestinationConfigs", []
-                    )
-                    logging_enabled = bool(logging_enabled)
 
                     self.web_acls.append(
                         WebAclv2(
@@ -36,14 +30,23 @@ class WAFv2(AWSService):
                             id=wafv2["Id"],
                             albs=[],
                             region=regional_client.region,
-                            logging_enabled=wafv2["LoggingConfiguration"][
-                                "LogDestinationConfigs"
-                            ],
-                            cloudwatch_metrics_enabled=wafv2[
-                                "CloudWatchMetricsEnabled"
-                            ],
-                            sampling_request_enabled=wafv2["SamplingRequestEnabled"],
                         )
+                    )
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def __get_logging_configuration__(self, regional_client):
+        logger.info("WAFv2 - Get Logging Configuration...")
+        try:
+            for acl in self.web_acls:
+                if acl.region == regional_client.region:
+                    logging_enabled = regional_client.get_logging_configuration(
+                        ResourceArn=acl.arn
+                    )
+                    acl.logging_enabled = bool(
+                        logging_enabled["LoggingConfiguration"]["LogDestinationConfigs"]
                     )
         except Exception as error:
             logger.error(
@@ -55,7 +58,6 @@ class WAFv2(AWSService):
         try:
             for acl in self.web_acls:
                 if acl.region == regional_client.region:
-                    acl.web_acls_in_used = bool(acl.albs)
                     for resource in regional_client.list_resources_for_web_acl(
                         WebACLArn=acl.arn, ResourceType="APPLICATION_LOAD_BALANCER"
                     )["ResourceArns"]:
@@ -73,6 +75,4 @@ class WebAclv2(BaseModel):
     id: str
     albs: list[str]
     region: str
-    logging_enabled: bool
-    cloudwatch_metrics_enabled: bool
-    sampling_request_enabled: bool
+    logging_enabled: bool = False
