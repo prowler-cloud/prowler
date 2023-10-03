@@ -134,11 +134,13 @@ def parse_checks_from_folder(audit_info, input_folder: str, provider: str) -> in
         ):
             bucket = input_folder.split("/")[2]
             key = ("/").join(input_folder.split("/")[3:])
-            s3_reource = audit_info.audit_session.resource("s3")
-            bucket = s3_reource.Bucket(bucket)
+            s3_resource = audit_info.audit_session.resource("s3")
+            bucket = s3_resource.Bucket(bucket)
             for obj in bucket.objects.filter(Prefix=key):
                 if not os.path.exists(os.path.dirname(obj.key)):
                     os.makedirs(os.path.dirname(obj.key))
+                if obj.key[-1] == "/":
+                    continue
                 bucket.download_file(obj.key, obj.key)
             input_folder = key
         # Import custom checks by moving the checks folders to the corresponding services
