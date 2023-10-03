@@ -128,7 +128,7 @@ class Test_iam_inline_policy_no_administrative_privileges:
             assert len(results) == 1
             assert results[0].region == AWS_REGION
             assert results[0].resource_arn == group_arn
-            assert results[0].resource_id == group_name
+            assert results[0].resource_id == f"{group_name}/{policy_name}"
             assert results[0].resource_tags == []
             assert results[0].status == "FAIL"
             assert (
@@ -172,7 +172,7 @@ class Test_iam_inline_policy_no_administrative_privileges:
             assert len(results) == 1
             assert results[0].region == AWS_REGION
             assert results[0].resource_arn == group_arn
-            assert results[0].resource_id == group_name
+            assert results[0].resource_id == f"{group_name}/{policy_name}"
             assert results[0].resource_tags == []
             assert results[0].status == "PASS"
             assert (
@@ -316,7 +316,7 @@ class Test_iam_inline_policy_no_administrative_privileges:
             assert len(results) == 1
             assert results[0].region == AWS_REGION
             assert results[0].resource_arn == role_arn
-            assert results[0].resource_id == role_name
+            assert results[0].resource_id == f"{role_name}/{policy_name}"
             assert results[0].resource_tags == []
             assert results[0].status == "FAIL"
             assert (
@@ -363,7 +363,7 @@ class Test_iam_inline_policy_no_administrative_privileges:
             assert len(results) == 1
             assert results[0].region == AWS_REGION
             assert results[0].resource_arn == role_arn
-            assert results[0].resource_id == role_name
+            assert results[0].resource_id == f"{role_name}/{policy_name}"
             assert results[0].resource_tags == []
             assert results[0].status == "PASS"
             assert (
@@ -507,7 +507,7 @@ class Test_iam_inline_policy_no_administrative_privileges:
             assert len(results) == 1
             assert results[0].region == AWS_REGION
             assert results[0].resource_arn == user_arn
-            assert results[0].resource_id == user_name
+            assert results[0].resource_id == f"{user_name}/{policy_name}"
             assert results[0].resource_tags == []
             assert results[0].status == "FAIL"
             assert (
@@ -553,7 +553,7 @@ class Test_iam_inline_policy_no_administrative_privileges:
             assert len(results) == 1
             assert results[0].region == AWS_REGION
             assert results[0].resource_arn == user_arn
-            assert results[0].resource_id == user_name
+            assert results[0].resource_id == f"{user_name}/{policy_name}"
             assert results[0].resource_tags == []
             assert results[0].status == "PASS"
             assert (
