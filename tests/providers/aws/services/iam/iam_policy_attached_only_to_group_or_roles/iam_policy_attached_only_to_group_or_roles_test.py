@@ -83,7 +83,7 @@ class Test_iam_policy_attached_only_to_group_or_roles:
                 == f"User {user} has the policy {policy_name} attached."
             )
             assert result[0].region == AWS_REGION
-            assert result[0].resource_id == user
+            assert result[0].resource_id == f"{user}/{policy_name}"
             assert (
                 result[0].resource_arn
                 == f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:user/{user}"
@@ -133,7 +133,7 @@ class Test_iam_policy_attached_only_to_group_or_roles:
                 == f"User {user} has the policy {policyName} attached."
             )
             assert result[0].region == AWS_REGION
-            assert result[0].resource_id == user
+            assert result[0].resource_id == f"{user}/{policyName}"
 
             assert result[0].status == "FAIL"
             assert (
@@ -141,7 +141,7 @@ class Test_iam_policy_attached_only_to_group_or_roles:
                 == f"User {user} has the policy {policyName} attached."
             )
             assert result[0].region == AWS_REGION
-            assert result[0].resource_id == user
+            assert result[0].resource_id == f"{user}/{policyName}"
             assert (
                 result[0].resource_arn
                 == f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:user/{user}"
@@ -186,7 +186,7 @@ class Test_iam_policy_attached_only_to_group_or_roles:
                 == f"User {user} has the inline policy {policyName} attached."
             )
             assert result[0].region == AWS_REGION
-            assert result[0].resource_id == user
+            assert result[0].resource_id == f"{user}/{policyName}"
             assert (
                 result[0].resource_arn
                 == f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:user/{user}"
