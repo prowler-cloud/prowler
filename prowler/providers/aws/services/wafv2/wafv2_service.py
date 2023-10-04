@@ -22,7 +22,6 @@ class WAFv2(AWSService):
                 if not self.audit_resources or (
                     is_resource_filtered(wafv2["ARN"], self.audit_resources)
                 ):
-
                     self.web_acls.append(
                         WebAclv2(
                             arn=wafv2["ARN"],
@@ -39,34 +38,34 @@ class WAFv2(AWSService):
 
     def __get_logging_configuration__(self, regional_client):
         logger.info("WAFv2 - Get Logging Configuration...")
-        try:
-            for acl in self.web_acls:
-                if acl.region == regional_client.region:
+        for acl in self.web_acls:
+            if acl.region == regional_client.region:
+                try:
                     logging_enabled = regional_client.get_logging_configuration(
                         ResourceArn=acl.arn
                     )
                     acl.logging_enabled = bool(
                         logging_enabled["LoggingConfiguration"]["LogDestinationConfigs"]
                     )
-        except Exception as error:
-            logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
+                except Exception as error:
+                    logger.error(
+                        f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
 
     def __list_resources_for_web_acl__(self, regional_client):
         logger.info("WAFv2 - Describing resources...")
-        try:
-            for acl in self.web_acls:
-                if acl.region == regional_client.region:
+        for acl in self.web_acls:
+            if acl.region == regional_client.region:
+                try:
                     for resource in regional_client.list_resources_for_web_acl(
                         WebACLArn=acl.arn, ResourceType="APPLICATION_LOAD_BALANCER"
                     )["ResourceArns"]:
                         acl.albs.append(resource)
 
-        except Exception as error:
-            logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
+                except Exception as error:
+                    logger.error(
+                        f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
 
 
 class WebAclv2(BaseModel):
