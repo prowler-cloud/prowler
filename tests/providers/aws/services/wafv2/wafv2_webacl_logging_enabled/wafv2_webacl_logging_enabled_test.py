@@ -7,7 +7,6 @@ from prowler.providers.aws.services.wafv2.wafv2_service import WebAclv2
 AWS_REGION = "eu-west-1"
 AWS_ACCOUNT_NUMBER = "123456789012"
 
-detector_id = str(uuid4())
 
 
 class Test_wafv2_webacl_logging_enabled:

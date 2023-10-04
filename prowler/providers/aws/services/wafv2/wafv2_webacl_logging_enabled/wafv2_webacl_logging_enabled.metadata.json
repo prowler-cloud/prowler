@@ -1,7 +1,7 @@
 {
   "Provider": "aws",
   "CheckID": "wafv2_webacl_logging_enabled",
-  "CheckTitle": "Check if AWS WAFv2 logging is enabled",
+  "CheckTitle": "Check if AWS WAFv2 WebACL logging is enabled",
   "CheckType": [
     "Logging and Monitoring"
   ],
@@ -12,7 +12,7 @@
   "ResourceType": "AwsWafv2WebAcl",
   "Description": "Check if AWS WAFv2 logging is enabled",
   "Risk": "Enabling AWS WAFv2 logging helps monitor and analyze traffic patterns for enhanced security.",
-  "RelatedUrl": "",
+  "RelatedUrl": "https://docs.aws.amazon.com/waf/latest/developerguide/logging.html",
   "Remediation": {
     "Code": {
       "CLI": "aws wafv2 update-web-acl-logging-configuration --scope REGIONAL --web-acl-arn arn:partition:wafv2:region:account-id:webacl/webacl-id --logging-configuration '{\"LogDestinationConfigs\": [\"arn:partition:logs:region:account-id:log-group:log-group-name\"]}'",
