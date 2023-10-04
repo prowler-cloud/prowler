@@ -1,0 +1,34 @@
+{
+  "Provider": "aws",
+  "CheckID": "wafv2_webacl_logging_enabled",
+  "CheckTitle": "Check if AWS WAFv2 WebACL logging is enabled",
+  "CheckType": [
+    "Logging and Monitoring"
+  ],
+  "ServiceName": "wafv2",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:wafv2:region:account-id:webacl/webacl-id",
+  "Severity": "medium",
+  "ResourceType": "AwsWafv2WebAcl",
+  "Description": "Check if AWS WAFv2 logging is enabled",
+  "Risk": "Enabling AWS WAFv2 logging helps monitor and analyze traffic patterns for enhanced security.",
+  "RelatedUrl": "https://docs.aws.amazon.com/waf/latest/developerguide/logging.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws wafv2 update-web-acl-logging-configuration --scope REGIONAL --web-acl-arn arn:partition:wafv2:region:account-id:webacl/webacl-id --logging-configuration '{\"LogDestinationConfigs\": [\"arn:partition:logs:region:account-id:log-group:log-group-name\"]}'",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/WAF/enable-web-acls-logging.html",
+      "Terraform": "https://docs.bridgecrew.io/docs/bc_aws_logging_33#terraform"
+    },
+    "Recommendation": {
+      "Text": "Enable AWS WAFv2 logging for your Web ACLs to monitor and analyze traffic patterns effectively.",
+      "Url": "https://docs.aws.amazon.com/waf/latest/developerguide/logging.html"
+    }
+  },
+  "Categories": [
+    "logging"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
