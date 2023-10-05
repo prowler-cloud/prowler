@@ -11,9 +11,12 @@ SECURITY_HUB_MAX_BATCH = 100
 
 
 def prepare_security_hub_findings(
-    findings: [], audit_info, output_options, enabled_regions: []
+    findings: [], audit_info: AWS_Audit_Info, output_options, enabled_regions: []
 ) -> dict:
     security_hub_findings_per_region = {}
+    # Create a key per region
+    for region in audit_info.audited_regions:
+        security_hub_findings_per_region[region] = []
     for finding in findings:
         # We don't send the INFO findings to AWS Security Hub
         if finding.status == "INFO":
@@ -29,10 +32,6 @@ def prepare_security_hub_findings(
 
         # Get the finding region
         region = finding.region
-
-        # Check if the security_hub_findings_per_region has the region, if not we have to create it
-        if region not in security_hub_findings_per_region:
-            security_hub_findings_per_region[region] = []
 
         # Format the finding in the JSON ASFF format
         finding_json_asff = fill_json_asff(
@@ -117,9 +116,10 @@ def resolve_security_hub_previous_findings(
     resolve_security_hub_previous_findings archives all the findings that does not appear in the current execution
     """
     logger.info("Checking previous findings in Security Hub to archive them.")
-
-    for region, current_findings in security_hub_findings_per_region.items():
+    success_count = 0
+    for region in security_hub_findings_per_region.keys():
         try:
+            current_findings = security_hub_findings_per_region[region]
             # Get current findings IDs
             current_findings_ids = []
             for finding in current_findings:
@@ -151,14 +151,14 @@ def resolve_security_hub_previous_findings(
             logger.info(f"Archiving {len(findings_to_archive)} findings.")
 
             # Send archive findings to SHub
-            success_count = __send_findings_to_security_hub__(
+            success_count += __send_findings_to_security_hub__(
                 findings_to_archive, region, security_hub_client
             )
-            return success_count
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__} -- [{error.__traceback__.tb_lineno}]:{error} in region {region}"
             )
+    return success_count
 
 
 def __send_findings_to_security_hub__(
