@@ -1,6 +1,6 @@
 {
   "Provider": "aws",
-  "CheckID": "support_plan_subscribed",
+  "CheckID": "trustedadvisor_support_plan_subscribed",
   "CheckTitle": "Check if a Premium support plan is subscribed",
   "CheckType": [],
   "ServiceName": "support",
