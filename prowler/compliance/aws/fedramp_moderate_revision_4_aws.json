@@ -29,7 +29,8 @@
         "iam_rotate_access_key_90_days",
         "iam_user_mfa_enabled_console_access",
         "iam_user_mfa_enabled_console_access",
-        "iam_disable_90_days_credentials",
+        "iam_user_accesskey_unused",
+        "iam_user_console_access_unused",
         "securityhub_enabled"
       ]
     },
@@ -103,7 +104,8 @@
         "iam_rotate_access_key_90_days",
         "iam_user_mfa_enabled_console_access",
         "iam_user_mfa_enabled_console_access",
-        "iam_disable_90_days_credentials"
+        "iam_user_accesskey_unused",
+        "iam_user_console_access_unused"
       ]
     },
     {
@@ -156,7 +158,8 @@
         "iam_rotate_access_key_90_days",
         "iam_user_mfa_enabled_console_access",
         "iam_user_mfa_enabled_console_access",
-        "iam_disable_90_days_credentials"
+        "iam_user_accesskey_unused",
+        "iam_user_console_access_unused"
       ]
     },
     {
@@ -173,7 +176,8 @@
       ],
       "Checks": [
         "iam_password_policy_minimum_length_14",
-        "iam_disable_90_days_credentials"
+        "iam_user_accesskey_unused",
+        "iam_user_console_access_unused"
       ]
     },
     {
@@ -197,7 +201,8 @@
         "iam_customer_attached_policy_no_administrative_privileges",
         "iam_inline_policy_no_administrative_privileges",
         "iam_no_root_access_key",
-        "iam_disable_90_days_credentials",
+        "iam_user_accesskey_unused",
+        "iam_user_console_access_unused",
         "awslambda_function_not_publicly_accessible",
         "awslambda_function_url_public",
         "rds_instance_no_public_access",
@@ -259,7 +264,8 @@
         "iam_customer_attached_policy_no_administrative_privileges",
         "iam_inline_policy_no_administrative_privileges",
         "iam_no_root_access_key",
-        "iam_disable_90_days_credentials"
+        "iam_user_accesskey_unused",
+        "iam_user_console_access_unused"
       ]
     },
     {
@@ -301,7 +307,8 @@
         "iam_customer_attached_policy_no_administrative_privileges",
         "iam_inline_policy_no_administrative_privileges",
         "iam_no_root_access_key",
-        "iam_disable_90_days_credentials",
+        "iam_user_accesskey_unused",
+        "iam_user_console_access_unused",
         "awslambda_function_not_publicly_accessible",
         "awslambda_function_url_public",
         "rds_instance_no_public_access",
