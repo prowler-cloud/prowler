@@ -426,7 +426,7 @@ class Snapshot(BaseModel):
     encrypted: bool
     public: bool = False
     tags: Optional[list] = []
-    volume: str
+    volume: Optional[str]
 
 
 class Volume(BaseModel):
