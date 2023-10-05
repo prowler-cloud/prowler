@@ -41,7 +41,7 @@ class Test_iam_user_accesskey_unused_test:
                 completed_checks=0,
                 audit_progress=0,
             ),
-            audit_config={"max_unused_access_keys_days": 30},
+            audit_config={"max_unused_access_keys_days": 45},
         )
         return audit_info
 
@@ -122,7 +122,7 @@ class Test_iam_user_accesskey_unused_test:
                 assert result[0].status == "FAIL"
                 assert (
                     result[0].status_extended
-                    == f"User {user} has not used access key 1 in the last 30 days (100 days)."
+                    == f"User {user} has not used access key 1 in the last 45 days (100 days)."
                 )
                 assert result[0].resource_id == user + "/AccessKey1"
                 assert result[0].resource_arn == arn
@@ -164,7 +164,7 @@ class Test_iam_user_accesskey_unused_test:
                 assert result[0].status == "FAIL"
                 assert (
                     result[0].status_extended
-                    == f"User {user} has not used access key 2 in the last 30 days (100 days)."
+                    == f"User {user} has not used access key 2 in the last 45 days (100 days)."
                 )
                 assert result[0].resource_id == user + "/AccessKey2"
                 assert result[0].resource_arn == arn
@@ -211,7 +211,7 @@ class Test_iam_user_accesskey_unused_test:
                 assert result[0].status == "FAIL"
                 assert (
                     result[0].status_extended
-                    == f"User {user} has not used access key 1 in the last 30 days (100 days)."
+                    == f"User {user} has not used access key 1 in the last 45 days (100 days)."
                 )
                 assert result[0].resource_id == user + "/AccessKey1"
                 assert result[0].resource_arn == arn
@@ -220,7 +220,7 @@ class Test_iam_user_accesskey_unused_test:
                 assert result[1].status == "FAIL"
                 assert (
                     result[1].status_extended
-                    == f"User {user} has not used access key 2 in the last 30 days (100 days)."
+                    == f"User {user} has not used access key 2 in the last 45 days (100 days)."
                 )
                 assert result[1].resource_id == user + "/AccessKey2"
                 assert result[1].resource_arn == arn
@@ -267,7 +267,7 @@ class Test_iam_user_accesskey_unused_test:
                 assert result[0].status == "PASS"
                 assert (
                     result[0].status_extended
-                    == f"User {user} does not have unused access keys for 30 days."
+                    == f"User {user} does not have unused access keys for 45 days."
                 )
                 assert result[0].resource_id == user
                 assert result[0].resource_arn == arn

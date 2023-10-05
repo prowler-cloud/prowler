@@ -7,7 +7,7 @@ from moto import mock_iam
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.common.models import Audit_Metadata
 
-AWS_ACCOUNT_NUMBER = "123306789012"
+AWS_ACCOUNT_NUMBER = "123456789012"
 AWS_REGION = "us-east-1"
 
 
@@ -41,12 +41,12 @@ class Test_iam_user_console_access_unused_test:
                 completed_checks=0,
                 audit_progress=0,
             ),
-            audit_config={"max_console_access_days": 30},
+            audit_config={"max_console_access_days": 45},
         )
         return audit_info
 
     @mock_iam
-    def test_iam_user_logged_30_days(self):
+    def test_iam_user_logged_45_days(self):
         password_last_used = (
             datetime.datetime.now() - datetime.timedelta(days=2)
         ).strftime("%Y-%m-%d %H:%M:%S+00:00")
@@ -77,14 +77,14 @@ class Test_iam_user_console_access_unused_test:
                 assert result[0].status == "PASS"
                 assert (
                     result[0].status_extended
-                    == f"User {user} has logged in to the console in the past 30 days (2 days)."
+                    == f"User {user} has logged in to the console in the past 45 days (2 days)."
                 )
                 assert result[0].resource_id == user
                 assert result[0].resource_arn == arn
                 assert result[0].region == AWS_REGION
 
     @mock_iam
-    def test_iam_user_not_logged_30_days(self):
+    def test_iam_user_not_logged_45_days(self):
         password_last_used = (
             datetime.datetime.now() - datetime.timedelta(days=60)
         ).strftime("%Y-%m-%d %H:%M:%S+00:00")
@@ -115,7 +115,7 @@ class Test_iam_user_console_access_unused_test:
                 assert result[0].status == "FAIL"
                 assert (
                     result[0].status_extended
-                    == f"User {user} has not logged in to the console in the past 30 days (60 days)."
+                    == f"User {user} has not logged in to the console in the past 45 days (60 days)."
                 )
                 assert result[0].resource_id == user
                 assert result[0].resource_arn == arn
