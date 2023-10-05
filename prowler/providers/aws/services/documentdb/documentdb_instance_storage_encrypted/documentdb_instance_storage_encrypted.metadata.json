@@ -2,10 +2,12 @@
   "Provider": "aws",
   "CheckID": "documentdb_instance_storage_encrypted",
   "CheckTitle": "Check if DocumentDB instances storage is encrypted.",
-  "CheckType": [],
+  "CheckType": [
+    "Data Protection"
+  ],
   "ServiceName": "documentdb",
   "SubServiceName": "",
-  "ResourceIdTemplate": "",
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
   "ResourceType": "AwsDocDbInstance",
   "Description": "Check if DocumentDB instances storage is encrypted.",

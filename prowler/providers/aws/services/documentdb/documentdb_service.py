@@ -1,10 +1,9 @@
-import threading
 from typing import Optional
 
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
-from prowler.providers.aws.aws_provider import generate_regional_clients
+from prowler.providers.aws.lib.service.service import AWSService
 
 
 ################## DocumentDB
@@ -14,7 +13,6 @@ class DocumentDB(AWSService):
         super().__init__("docdb", audit_info)
         self.db_instances = []
         self.__threading_call__(self.__describe_db_instances__)
-
 
     def __describe_db_instances__(self, regional_client):
         logger.info("RDS - Describe Instances...")
