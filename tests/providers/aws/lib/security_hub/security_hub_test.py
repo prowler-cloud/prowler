@@ -159,7 +159,8 @@ class Test_SecurityHub:
                         }
                     },
                 }
-            ]
+            ],
+            AWS_REGION_2: [],
         }
 
     def test_prepare_security_hub_findings_quiet_INFO_finding(self):
@@ -168,15 +169,12 @@ class Test_SecurityHub:
         findings = [self.generate_finding("INFO", AWS_REGION_1)]
         audit_info = self.set_mocked_audit_info()
 
-        assert (
-            prepare_security_hub_findings(
-                findings,
-                audit_info,
-                output_options,
-                enabled_regions,
-            )
-            == {}
-        )
+        assert prepare_security_hub_findings(
+            findings,
+            audit_info,
+            output_options,
+            enabled_regions,
+        ) == {AWS_REGION_1: [], AWS_REGION_2: []}
 
     def test_prepare_security_hub_findings_disabled_region(self):
         enabled_regions = [AWS_REGION_1]
@@ -184,15 +182,12 @@ class Test_SecurityHub:
         findings = [self.generate_finding("PASS", AWS_REGION_2)]
         audit_info = self.set_mocked_audit_info()
 
-        assert (
-            prepare_security_hub_findings(
-                findings,
-                audit_info,
-                output_options,
-                enabled_regions,
-            )
-            == {}
-        )
+        assert prepare_security_hub_findings(
+            findings,
+            audit_info,
+            output_options,
+            enabled_regions,
+        ) == {AWS_REGION_1: [], AWS_REGION_2: []}
 
     def test_prepare_security_hub_findings_quiet(self):
         enabled_regions = [AWS_REGION_1]
@@ -200,15 +195,12 @@ class Test_SecurityHub:
         findings = [self.generate_finding("PASS", AWS_REGION_1)]
         audit_info = self.set_mocked_audit_info()
 
-        assert (
-            prepare_security_hub_findings(
-                findings,
-                audit_info,
-                output_options,
-                enabled_regions,
-            )
-            == {}
-        )
+        assert prepare_security_hub_findings(
+            findings,
+            audit_info,
+            output_options,
+            enabled_regions,
+        ) == {AWS_REGION_1: [], AWS_REGION_2: []}
 
     @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
     def test_batch_send_to_security_hub_one_finding(self):
