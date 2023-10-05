@@ -12,7 +12,7 @@
   "ResourceType": "AwsDocDbInstance",
   "Description": "Check if DocumentDB instances storage is encrypted.",
   "Risk": "If not enabled sensitive information at rest is not protected.",
-  "RelatedUrl": "",
+  "RelatedUrl": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/DocumentDB/encryption-enabled.html",
   "Remediation": {
     "Code": {
       "CLI": "aws docdb create-db-cluster --db-cluster-identifier <db_cluster_id> --port 27017 --engine docdb --master-username <yourMasterUsername> --master-user-password <yourMasterPassword> --storage-encrypted",
@@ -22,7 +22,7 @@
     },
     "Recommendation": {
       "Text": "Enable Encryption. Use a CMK where possible. It will provide additional management and privacy benefits.",
-      "Url": ""
+      "Url": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/DocumentDB/encryption-enabled.html"
     }
   },
   "Categories": [],
