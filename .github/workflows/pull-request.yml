@@ -4,9 +4,15 @@ on:
   push:
     branches:
       - "master"
+    paths:
+      - '**.py'
+      - './Dockerfile'
   pull_request:
     branches:
       - "master"
+    paths:
+      - '**.py'
+      - './Dockerfile'
 
 jobs:
   build:
