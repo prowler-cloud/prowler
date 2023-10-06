@@ -122,7 +122,7 @@ class Test_SecurityHub:
             AWS_REGION_1: [
                 {
                     "SchemaVersion": "2018-10-08",
-                    "Id": f"prowler-iam_disable_30_days_credentials-{AWS_ACCOUNT_ID}-{AWS_REGION_1}-ee26b0dd4",
+                    "Id": f"prowler-iam_user_accesskey_unused-{AWS_ACCOUNT_ID}-{AWS_REGION_1}-ee26b0dd4",
                     "ProductArn": f"arn:aws:securityhub:{AWS_REGION_1}::product/prowler/prowler",
                     "RecordState": "ACTIVE",
                     "ProductFields": {
@@ -130,14 +130,14 @@ class Test_SecurityHub:
                         "ProviderVersion": "3.9.0",
                         "ProwlerResourceName": "test",
                     },
-                    "GeneratorId": "prowler-iam_disable_30_days_credentials",
+                    "GeneratorId": "prowler-iam_user_accesskey_unused",
                     "AwsAccountId": f"{AWS_ACCOUNT_ID}",
                     "Types": ["Software and Configuration Checks"],
                     "FirstObservedAt": timestamp_utc.strftime("%Y-%m-%dT%H:%M:%SZ"),
                     "UpdatedAt": timestamp_utc.strftime("%Y-%m-%dT%H:%M:%SZ"),
                     "CreatedAt": timestamp_utc.strftime("%Y-%m-%dT%H:%M:%SZ"),
                     "Severity": {"Label": "LOW"},
-                    "Title": "Ensure credentials unused for 30 days or greater are disabled",
+                    "Title": "Ensure Access Keys unused are disabled",
                     "Description": "test",
                     "Resources": [
                         {

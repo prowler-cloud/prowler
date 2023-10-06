@@ -591,7 +591,8 @@
         "iam_rotate_access_key_90_days",
         "iam_user_mfa_enabled_console_access",
         "iam_user_mfa_enabled_console_access",
-        "iam_disable_90_days_credentials"
+        "iam_user_accesskey_unused",
+        "iam_user_console_access_unused"
       ]
     },
     {

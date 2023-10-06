@@ -29,7 +29,8 @@
         "iam_no_root_access_key",
         "iam_user_mfa_enabled_console_access",
         "iam_user_mfa_enabled_console_access",
-        "iam_disable_90_days_credentials",
+        "iam_user_accesskey_unused",
+        "iam_user_console_access_unused",
         "awslambda_function_not_publicly_accessible",
         "awslambda_function_url_public",
         "rds_instance_no_public_access",
@@ -70,7 +71,8 @@
         "iam_no_root_access_key",
         "iam_user_mfa_enabled_console_access",
         "iam_user_mfa_enabled_console_access",
-        "iam_disable_90_days_credentials",
+        "iam_user_accesskey_unused",
+        "iam_user_console_access_unused",
         "awslambda_function_not_publicly_accessible",
         "awslambda_function_url_public",
         "rds_instance_no_public_access",
@@ -133,7 +135,8 @@
         "iam_customer_attached_policy_no_administrative_privileges",
         "iam_inline_policy_no_administrative_privileges",
         "iam_no_root_access_key",
-        "iam_disable_90_days_credentials"
+        "iam_user_accesskey_unused",
+        "iam_user_console_access_unused"
       ]
     },
     {
@@ -152,7 +155,8 @@
         "iam_customer_attached_policy_no_administrative_privileges",
         "iam_inline_policy_no_administrative_privileges",
         "iam_no_root_access_key",
-        "iam_disable_90_days_credentials"
+        "iam_user_accesskey_unused",
+        "iam_user_console_access_unused"
       ]
     },
     {
@@ -574,7 +578,8 @@
       "Checks": [
         "iam_password_policy_reuse_24",
         "iam_password_policy_expires_passwords_within_90_days_or_less",
-        "iam_disable_90_days_credentials"
+        "iam_user_accesskey_unused",
+        "iam_user_console_access_unused"
       ]
     },
     {
@@ -596,7 +601,8 @@
         "iam_password_policy_uppercase",
         "iam_password_policy_reuse_24",
         "iam_password_policy_expires_passwords_within_90_days_or_less",
-        "iam_disable_90_days_credentials"
+        "iam_user_accesskey_unused",
+        "iam_user_console_access_unused"
       ]
     },
     {
@@ -613,7 +619,8 @@
       "Checks": [
         "iam_password_policy_reuse_24",
         "iam_password_policy_expires_passwords_within_90_days_or_less",
-        "iam_disable_90_days_credentials"
+        "iam_user_accesskey_unused",
+        "iam_user_console_access_unused"
       ]
     },
     {

@@ -3,8 +3,8 @@
     "cat1",
     "cat2"
   ],
-  "CheckID": "iam_disable_30_days_credentials",
-  "CheckTitle": "Ensure credentials unused for 30 days or greater are disabled",
+  "CheckID": "iam_user_accesskey_unused",
+  "CheckTitle": "Ensure Access Keys unused are disabled",
   "CheckType": [
     "Software and Configuration Checks"
   ],
@@ -25,7 +25,7 @@
     "othercheck1",
     "othercheck2"
   ],
-  "Description": "Ensure credentials unused for 30 days or greater are disabled",
+  "Description": "Ensure Access Keys unused are disabled",
   "Notes": "additional information",
   "Provider": "aws",
   "RelatedTo": [
