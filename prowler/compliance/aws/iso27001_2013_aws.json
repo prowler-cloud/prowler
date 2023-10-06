@@ -866,7 +866,8 @@
         }
       ],
       "Checks": [
-        "iam_disable_90_days_credentials"
+        "iam_user_accesskey_unused",
+        "iam_user_console_access_unused"
       ]
     },
     {
@@ -1042,7 +1043,8 @@
         }
       ],
       "Checks": [
-        "iam_disable_90_days_credentials"
+        "iam_user_accesskey_unused",
+        "iam_user_console_access_unused"
       ]
     },
     {
@@ -1250,7 +1252,8 @@
         }
       ],
       "Checks": [
-        "iam_disable_90_days_credentials"
+        "iam_user_accesskey_unused",
+        "iam_user_console_access_unused"
       ]
     },
     {

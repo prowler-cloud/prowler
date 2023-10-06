@@ -1,7 +1,7 @@
 {
   "Provider": "aws",
-  "CheckID": "iam_disable_45_days_credentials",
-  "CheckTitle": "Ensure credentials unused for 45 days or greater are disabled",
+  "CheckID": "iam_user_console_access_unused",
+  "CheckTitle": "Ensure unused user console access are disabled",
   "CheckType": [
     "Software and Configuration Checks"
   ],
@@ -10,7 +10,7 @@
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
   "ResourceType": "AwsIamUser",
-  "Description": "Ensure credentials unused for 45 days or greater are disabled",
+  "Description": "Ensure unused user console access are disabled",
   "Risk": "To increase the security of your AWS account; remove IAM user credentials (that is; passwords and access keys) that are not needed. For example; when users leave your organization or no longer need AWS access.",
   "RelatedUrl": "",
   "Remediation": {

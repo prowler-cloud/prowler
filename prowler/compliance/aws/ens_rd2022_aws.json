@@ -306,7 +306,8 @@
         }
       ],
       "Checks": [
-        "iam_disable_90_days_credentials",
+        "iam_user_accesskey_unused",
+        "iam_user_console_access_unused",
         "iam_rotate_access_key_90_days"
       ]
     },
@@ -332,7 +333,8 @@
       ],
       "Checks": [
         "iam_password_policy_expires_passwords_within_90_days_or_less",
-        "iam_disable_90_days_credentials",
+        "iam_user_accesskey_unused",
+        "iam_user_console_access_unused",
         "iam_rotate_access_key_90_days"
       ]
     },
@@ -485,8 +487,8 @@
         }
       ],
       "Checks": [
-        "iam_disable_30_days_credentials",
-        "iam_disable_90_days_credentials"
+        "iam_user_accesskey_unused",
+        "iam_user_console_access_unused"
       ]
     },
     {

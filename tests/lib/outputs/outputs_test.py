@@ -27,8 +27,8 @@ from prowler.lib.outputs.file_descriptors import fill_file_descriptors
 from prowler.lib.outputs.json import (
     fill_json_asff,
     fill_json_ocsf,
-    generate_json_asff_status,
     generate_json_asff_resource_tags,
+    generate_json_asff_status,
     generate_json_ocsf_severity_id,
     generate_json_ocsf_status,
     generate_json_ocsf_status_id,
@@ -989,8 +989,8 @@ class Test_Outputs:
 
         expected = Check_Output_JSON_OCSF(
             finding=Finding(
-                title="Ensure credentials unused for 30 days or greater are disabled",
-                desc="Ensure credentials unused for 30 days or greater are disabled",
+                title="Ensure Access Keys unused are disabled",
+                desc="Ensure Access Keys unused are disabled",
                 supporting_data={
                     "Risk": "Risk associated.",
                     "Notes": "additional information",
@@ -1007,7 +1007,7 @@ class Test_Outputs:
                 ),
                 types=["Software and Configuration Checks"],
                 src_url="https://serviceofficialsiteorpageforthissubject",
-                uid="prowler-aws-iam_disable_30_days_credentials-123456789012-eu-west-1-test-resource",
+                uid="prowler-aws-iam_user_accesskey_unused-123456789012-eu-west-1-test-resource",
                 related_events=[
                     "othercheck1",
                     "othercheck2",
@@ -1050,8 +1050,8 @@ class Test_Outputs:
                     version=prowler_version,
                     vendor_name="Prowler/ProwlerPro",
                     feature=Feature(
-                        name="iam_disable_30_days_credentials",
-                        uid="iam_disable_30_days_credentials",
+                        name="iam_user_accesskey_unused",
+                        uid="iam_user_accesskey_unused",
                         version=prowler_version,
                     ),
                 ),
@@ -1117,8 +1117,8 @@ class Test_Outputs:
 
         expected = Check_Output_JSON_OCSF(
             finding=Finding(
-                title="Ensure credentials unused for 30 days or greater are disabled",
-                desc="Ensure credentials unused for 30 days or greater are disabled",
+                title="Ensure Access Keys unused are disabled",
+                desc="Ensure Access Keys unused are disabled",
                 supporting_data={
                     "Risk": "Risk associated.",
                     "Notes": "additional information",
@@ -1135,7 +1135,7 @@ class Test_Outputs:
                 ),
                 types=["Software and Configuration Checks"],
                 src_url="https://serviceofficialsiteorpageforthissubject",
-                uid="prowler-aws-iam_disable_30_days_credentials-123456789012-eu-west-1-test-resource",
+                uid="prowler-aws-iam_user_accesskey_unused-123456789012-eu-west-1-test-resource",
                 related_events=[
                     "othercheck1",
                     "othercheck2",
@@ -1178,8 +1178,8 @@ class Test_Outputs:
                     version=prowler_version,
                     vendor_name="Prowler/ProwlerPro",
                     feature=Feature(
-                        name="iam_disable_30_days_credentials",
-                        uid="iam_disable_30_days_credentials",
+                        name="iam_user_accesskey_unused",
+                        uid="iam_user_accesskey_unused",
                         version=prowler_version,
                     ),
                 ),
@@ -1333,10 +1333,10 @@ class Test_Outputs:
         output_options = mock.MagicMock()
         output_options.bulk_checks_metadata = {}
         output_options.bulk_checks_metadata[
-            "iam_disable_30_days_credentials"
+            "iam_user_accesskey_unused"
         ] = mock.MagicMock()
         output_options.bulk_checks_metadata[
-            "iam_disable_30_days_credentials"
+            "iam_user_accesskey_unused"
         ].Compliance = bulk_check_metadata
 
         assert get_check_compliance(finding, "aws", output_options) == {

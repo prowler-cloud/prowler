@@ -49,7 +49,8 @@
         "iam_aws_attached_policy_no_administrative_privileges",
         "iam_customer_attached_policy_no_administrative_privileges",
         "iam_inline_policy_no_administrative_privileges",
-        "iam_disable_90_days_credentials"
+        "iam_user_accesskey_unused",
+        "iam_user_console_access_unused"
       ]
     },
     {

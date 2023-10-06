@@ -295,8 +295,8 @@ class Test_Check:
                     "metadata_path": f"{os.path.dirname(os.path.realpath(__file__))}/fixtures/metadata.json",
                 },
                 "expected": {
-                    "CheckID": "iam_disable_30_days_credentials",
-                    "CheckTitle": "Ensure credentials unused for 30 days or greater are disabled",
+                    "CheckID": "iam_user_accesskey_unused",
+                    "CheckTitle": "Ensure Access Keys unused are disabled",
                     "ServiceName": "iam",
                     "Severity": "low",
                 },
@@ -398,22 +398,22 @@ class Test_Check:
             {
                 "input": {
                     "checks_to_run": {
-                        "iam_disable_30_days_credentials",
-                        "iam_disable_90_days_credentials",
+                        "iam_user_console_access_unused",
+                        "iam_user_accesskey_unused",
                     },
                     "excluded_services": {"ec2"},
                     "provider": "aws",
                 },
                 "expected": {
-                    "iam_disable_30_days_credentials",
-                    "iam_disable_90_days_credentials",
+                    "iam_user_console_access_unused",
+                    "iam_user_accesskey_unused",
                 },
             },
             {
                 "input": {
                     "checks_to_run": {
-                        "iam_disable_30_days_credentials",
-                        "iam_disable_90_days_credentials",
+                        "iam_user_console_access_unused",
+                        "iam_user_accesskey_unused",
                     },
                     "excluded_services": {"iam"},
                     "provider": "aws",
