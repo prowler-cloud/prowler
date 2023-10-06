@@ -3,11 +3,12 @@ import datetime
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.iam.iam_client import iam_client
 
-maximum_expiration_days = iam_client.audit_config.get("max_console_access_days")
-
 
 class iam_user_console_access_unused(Check):
     def execute(self) -> Check_Report_AWS:
+        maximum_expiration_days = iam_client.audit_config.get(
+            "max_console_access_days", 45
+        )
         findings = []
         for user in iam_client.users:
             report = Check_Report_AWS(self.metadata())
