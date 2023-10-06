@@ -295,8 +295,8 @@ class Test_Check:
                     "metadata_path": f"{os.path.dirname(os.path.realpath(__file__))}/fixtures/metadata.json",
                 },
                 "expected": {
-                    "CheckID": "iam_user_console_access_unused",
-                    "CheckTitle": "Ensure credentials unused for 30 days or greater are disabled",
+                    "CheckID": "iam_user_accesskey_unused",
+                    "CheckTitle": "Ensure Access Keys unused are disabled",
                     "ServiceName": "iam",
                     "Severity": "low",
                 },

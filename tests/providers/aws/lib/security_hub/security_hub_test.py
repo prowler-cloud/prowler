@@ -137,7 +137,7 @@ class Test_SecurityHub:
                     "UpdatedAt": timestamp_utc.strftime("%Y-%m-%dT%H:%M:%SZ"),
                     "CreatedAt": timestamp_utc.strftime("%Y-%m-%dT%H:%M:%SZ"),
                     "Severity": {"Label": "LOW"},
-                    "Title": "Ensure credentials unused for 30 days or greater are disabled",
+                    "Title": "Ensure Access Keys unused are disabled",
                     "Description": "test",
                     "Resources": [
                         {

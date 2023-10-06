@@ -989,8 +989,8 @@ class Test_Outputs:
 
         expected = Check_Output_JSON_OCSF(
             finding=Finding(
-                title="Ensure credentials unused for 30 days or greater are disabled",
-                desc="Ensure credentials unused for 30 days or greater are disabled",
+                title="Ensure Access Keys unused are disabled",
+                desc="Ensure Access Keys unused are disabled",
                 supporting_data={
                     "Risk": "Risk associated.",
                     "Notes": "additional information",
@@ -1117,8 +1117,8 @@ class Test_Outputs:
 
         expected = Check_Output_JSON_OCSF(
             finding=Finding(
-                title="Ensure credentials unused for 30 days or greater are disabled",
-                desc="Ensure credentials unused for 30 days or greater are disabled",
+                title="Ensure Access Keys unused are disabled",
+                desc="Ensure Access Keys unused are disabled",
                 supporting_data={
                     "Risk": "Risk associated.",
                     "Notes": "additional information",
