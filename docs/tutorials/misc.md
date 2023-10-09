@@ -14,6 +14,11 @@ Prowler can only display the failed findings:
 ```console
 prowler <provider> -q/--quiet
 ```
+## Disable Exit Code 3
+Prowler does not trigger exit code 3 with failed checks:
+```console
+prowler <provider> -z/--ignore-exit-code-3
+```
 ## Hide Prowler Banner
 Prowler can run without showing its banner:
 ```console
