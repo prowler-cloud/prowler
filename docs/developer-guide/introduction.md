@@ -42,6 +42,18 @@ Before we merge any of your pull requests we pass checks to the code, we use the
 
 You can see all dependencies in file `pyproject.toml`.
 
+## Pull Request Checklist
+
+If you create or review a PR in https://github.com/prowler-cloud/prowler please follow this checklist:
+
+- [ ] Make sure you've read the Prowler Developer Guide at https://docs.prowler.cloud/en/latest/developer-guide/introduction/
+- [ ] Are we following the style guide, hence installed all the linters and formatters? Please check https://docs.prowler.cloud/en/latest/developer-guide/introduction/#contributing-with-your-code-or-fixes-to-prowler
+- [ ] Are we increasing/decreasing the test coverage? Please, review if we need to include/modify tests for the new code.
+- [ ] Are we modifying outputs? Please review it carefully.
+- [ ] Do we need to modify the Prowler documentation to reflect the changes introduced?
+- [ ] Are we introducing possible breaking changes? Are we modifying a core feature?
+
+
 ## Want some swag as appreciation for your contribution?
 
 If you are like us and you love swag, we are happy to thank you for your contribution with some laptop stickers or whatever other swag we may have at that time. Please, tell us more details and your pull request link in our [Slack workspace here](https://join.slack.com/t/prowler-workspace/shared_invite/zt-1hix76xsl-2uq222JIXrC7Q8It~9ZNog). You can also reach out to Toni de la Fuente on Twitter [here](https://twitter.com/ToniBlyx), his DMs are open.
