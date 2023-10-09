@@ -20,7 +20,16 @@ class DocumentDB(AWSService):
             describe_db_instances_paginator = regional_client.get_paginator(
                 "describe_db_instances"
             )
-            for page in describe_db_instances_paginator.paginate():
+            for page in describe_db_instances_paginator.paginate(
+                Filters=[
+                    {
+                        "Name": "engine",
+                        "Values": [
+                            "docdb",
+                        ],
+                    },
+                ],
+            ):
                 for instance in page["DBInstances"]:
                     self.db_instances.append(
                         DBInstance(
