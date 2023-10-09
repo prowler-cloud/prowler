@@ -15,7 +15,7 @@
   "RelatedUrl": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/DLM/ebs-snapshot-automation.html",
   "Remediation": {
     "Code": {
-      "CLI": "aws dlm create-lifecycle-policy --region <region> --execution-role-arn <execution-role-arn> --description <decription> --state ENABLED --policy-details file://<policy filenanem>.json",
+      "CLI": "aws dlm create-lifecycle-policy --region <region> --execution-role-arn <execution-role-arn> --description <description> --state ENABLED --policy-details file://<policy filename>.json",
       "NativeIaC": "",
       "Other": "",
       "Terraform": ""
