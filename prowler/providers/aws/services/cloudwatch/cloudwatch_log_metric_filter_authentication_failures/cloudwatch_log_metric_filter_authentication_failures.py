@@ -30,7 +30,7 @@ class cloudwatch_log_metric_filter_authentication_failures(Check):
         # 2. Describe metric filters for previous log groups
         for metric_filter in logs_client.metric_filters:
             if metric_filter.log_group in log_groups:
-                if re.search(pattern, metric_filter.pattern):
+                if re.search(pattern, metric_filter.pattern, flags=re.DOTALL):
                     report.resource_id = metric_filter.log_group
                     report.resource_arn = metric_filter.arn
                     report.region = metric_filter.region
