@@ -12,7 +12,7 @@ class documentdb_instance_storage_encrypted(Check):
             report.region = db_instance.region
             report.resource_id = db_instance.id
             report.resource_tags = db_instance.tags
-            report.resource_arn = documentdb_client.audited_account_arn
+            report.resource_arn = db_instance.arn
             if db_instance.encrypted:
                 report.status = "PASS"
                 report.status_extended = (

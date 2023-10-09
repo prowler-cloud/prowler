@@ -25,6 +25,7 @@ class DocumentDB(AWSService):
                     self.db_instances.append(
                         DBInstance(
                             id=instance["DBInstanceIdentifier"],
+                            arn=instance["DBInstanceArn"],
                             endpoint=instance.get("Endpoint"),
                             engine=instance["Engine"],
                             engine_version=instance["EngineVersion"],
@@ -56,6 +57,7 @@ class DocumentDB(AWSService):
 
 class DBInstance(BaseModel):
     id: str
+    arn: str
     endpoint: Optional[dict]
     engine: str
     engine_version: str
