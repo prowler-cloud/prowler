@@ -15,6 +15,7 @@ class Athena(AWSService):
         self.workgroups = {}
         self.__threading_call__(self.__list_workgroups__)
         self.__get_workgroups__()
+        self.__list_query_executions__()
         self.__list_tags_for_resource__()
 
     def __list_workgroups__(self, regional_client):
@@ -30,6 +31,7 @@ class Athena(AWSService):
                     self.workgroups[workgroup_arn] = WorkGroup(
                         arn=workgroup_arn,
                         name=workgroup_name,
+                        state=workgroup["State"],
                         region=regional_client.region,
                     )
 
@@ -79,6 +81,23 @@ class Athena(AWSService):
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def __list_query_executions__(self):
+        logger.info("Athena - Listing Queries...")
+        try:
+            for workgroup in self.workgroups.values():
+                queries = (
+                    self.regional_clients[workgroup.region]
+                    .list_query_executions(WorkGroup=workgroup.name)
+                    .get("QueryExecutionIds", [])
+                )
+                if queries:
+                    workgroup.queries = True
+
+        except Exception as error:
+            logger.error(
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
     def __list_tags_for_resource__(self):
         logger.info("Athena - Listing Tags...")
         try:
@@ -101,9 +120,11 @@ class EncryptionConfiguration(BaseModel):
 class WorkGroup(BaseModel):
     arn: str
     name: str
+    state: str
     encryption_configuration: EncryptionConfiguration = EncryptionConfiguration(
         encryption_option="", encrypted=False
     )
     enforce_workgroup_configuration: bool = False
+    queries: bool = False
     region: str
     tags: Optional[list] = []

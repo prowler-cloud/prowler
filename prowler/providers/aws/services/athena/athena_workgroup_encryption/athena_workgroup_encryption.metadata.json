@@ -8,7 +8,7 @@
   "ServiceName": "athena",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:athena:region:account-id:workgroup/resource-id",
-  "Severity": "high",
+  "Severity": "medium",
   "ResourceType": "WorkGroup",
   "Description": "Ensure that encryption at rest is enabled for Amazon Athena query results stored in Amazon S3 in order to secure data and meet compliance requirements for data-at-rest encryption.",
   "Risk": "If not enabled sensitive information at rest is not protected.",

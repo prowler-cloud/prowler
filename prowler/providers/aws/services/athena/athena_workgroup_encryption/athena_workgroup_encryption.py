@@ -9,19 +9,21 @@ class athena_workgroup_encryption(Check):
         """Execute the athena_workgroup_encryption check"""
         findings = []
         for workgroup in athena_client.workgroups.values():
-            report = Check_Report_AWS(self.metadata())
-            report.region = workgroup.region
-            report.resource_id = workgroup.name
-            report.resource_arn = workgroup.arn
-            report.resource_tags = workgroup.tags
+            # Only check for enabled and used workgroups (has recent queries)
+            if workgroup.state == "ENABLED" and workgroup.queries:
+                report = Check_Report_AWS(self.metadata())
+                report.region = workgroup.region
+                report.resource_id = workgroup.name
+                report.resource_arn = workgroup.arn
+                report.resource_tags = workgroup.tags
 
-            if workgroup.encryption_configuration.encrypted:
-                report.status = "PASS"
-                report.status_extended = f"Athena WorkGroup {workgroup.name} encrypts the query results using {workgroup.encryption_configuration.encryption_option}."
-            else:
-                report.status = "FAIL"
-                report.status_extended = f"Athena WorkGroup {workgroup.name} does not encrypt the query results."
+                if workgroup.encryption_configuration.encrypted:
+                    report.status = "PASS"
+                    report.status_extended = f"Athena WorkGroup {workgroup.name} encrypts the query results using {workgroup.encryption_configuration.encryption_option}."
+                else:
+                    report.status = "FAIL"
+                    report.status_extended = f"Athena WorkGroup {workgroup.name} does not encrypt the query results."
 
-            findings.append(report)
+                findings.append(report)
 
         return findings

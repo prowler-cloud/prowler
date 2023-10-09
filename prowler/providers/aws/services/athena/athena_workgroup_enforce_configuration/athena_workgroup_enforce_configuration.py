@@ -9,19 +9,21 @@ class athena_workgroup_enforce_configuration(Check):
         """Execute the athena_workgroup_enforce_configuration check"""
         findings = []
         for workgroup in athena_client.workgroups.values():
-            report = Check_Report_AWS(self.metadata())
-            report.region = workgroup.region
-            report.resource_id = workgroup.name
-            report.resource_arn = workgroup.arn
-            report.resource_tags = workgroup.tags
+            # Only check for enabled and used workgroups (has recent queries)
+            if workgroup.state == "ENABLED" and workgroup.queries:
+                report = Check_Report_AWS(self.metadata())
+                report.region = workgroup.region
+                report.resource_id = workgroup.name
+                report.resource_arn = workgroup.arn
+                report.resource_tags = workgroup.tags
 
-            if workgroup.enforce_workgroup_configuration:
-                report.status = "PASS"
-                report.status_extended = f"Athena WorkGroup {workgroup.name} enforces the workgroup configuration, so it cannot be overridden by the client-side settings."
-            else:
-                report.status = "FAIL"
-                report.status_extended = f"Athena WorkGroup {workgroup.name} does not enforce the workgroup configuration, so it can be overridden by the client-side settings."
+                if workgroup.enforce_workgroup_configuration:
+                    report.status = "PASS"
+                    report.status_extended = f"Athena WorkGroup {workgroup.name} enforces the workgroup configuration, so it cannot be overridden by the client-side settings."
+                else:
+                    report.status = "FAIL"
+                    report.status_extended = f"Athena WorkGroup {workgroup.name} does not enforce the workgroup configuration, so it can be overridden by the client-side settings."
 
-            findings.append(report)
+                findings.append(report)
 
         return findings
