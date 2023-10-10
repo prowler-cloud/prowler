@@ -396,11 +396,16 @@ class EC2(AWSService):
     def __get_ebs_encryption_by_default__(self, regional_client):
         logger.info("EC2 - Get EBS Encryption By Default...")
         try:
+            volumes_in_region = False
+            for volume in self.volumes:
+                if volume.region == regional_client.region:
+                    volumes_in_region = True
             self.ebs_encryption_by_default.append(
                 EbsEncryptionByDefault(
                     status=regional_client.get_ebs_encryption_by_default()[
                         "EbsEncryptionByDefault"
                     ],
+                    volumes=volumes_in_region,
                     region=regional_client.region,
                 )
             )
@@ -499,4 +504,5 @@ class Image(BaseModel):
 
 class EbsEncryptionByDefault(BaseModel):
     status: bool
+    volumes: bool
     region: str
