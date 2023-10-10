@@ -20,6 +20,8 @@ from prowler.providers.aws.services.iam.iam_client import iam_client
 class iam_policy_allows_privilege_escalation(Check):
     def execute(self) -> Check_Report_AWS:
         privilege_escalation_policies_combination = {
+            "OverPermissiveIAM": {"iam:*"},
+            "IAMPut": {"iam:Put*"},
             "CreatePolicyVersion": {"iam:CreatePolicyVersion"},
             "SetDefaultPolicyVersion": {"iam:SetDefaultPolicyVersion"},
             "iam:PassRole": {"iam:PassRole"},
