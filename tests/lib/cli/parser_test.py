@@ -75,6 +75,7 @@ class Test_Parser:
         assert not parsed.shodan
         assert not parsed.allowlist_file
         assert not parsed.resource_tags
+        assert not parsed.reduce_noise
 
     def test_default_parser_no_arguments_azure(self):
         provider = "azure"
@@ -969,6 +970,12 @@ class Test_Parser:
         command = [prowler_command, argument, max_retries]
         parsed = self.parser.parse(command)
         assert parsed.aws_retries_max_attempts == int(max_retries)
+
+    def test_aws_parser_reduce_noise(self):
+        argument = "--reduce-noise"
+        command = [prowler_command, argument]
+        parsed = self.parser.parse(command)
+        assert parsed.reduce_noise
 
     def test_aws_parser_config_file(self):
         argument = "--config-file"

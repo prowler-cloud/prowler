@@ -10,7 +10,9 @@ class athena_workgroup_encryption(Check):
         findings = []
         for workgroup in athena_client.workgroups.values():
             # Only check for enabled and used workgroups (has recent queries)
-            if workgroup.state == "ENABLED" and workgroup.queries:
+            if (
+                workgroup.state == "ENABLED" and workgroup.queries
+            ) or not athena_client.audit_info.reduce_noise:
                 report = Check_Report_AWS(self.metadata())
                 report.region = workgroup.region
                 report.resource_id = workgroup.name

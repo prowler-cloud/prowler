@@ -109,6 +109,9 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
             new_boto3_config = current_audit_info.session_config.merge(config)
             current_audit_info.session_config = new_boto3_config
 
+        # Set reduction noise argument
+        current_audit_info.reduce_noise = arguments.get("reduce_noise")
+
         # Setting session
         current_audit_info.profile = input_profile
         current_audit_info.audited_regions = input_regions

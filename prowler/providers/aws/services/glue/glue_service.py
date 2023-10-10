@@ -166,6 +166,10 @@ class Glue(AWSService):
             settings = regional_client.get_data_catalog_encryption_settings()[
                 "DataCatalogEncryptionSettings"
             ]
+            tables_in_region = False
+            for table in self.tables:
+                if table.region == regional_client.region:
+                    tables_in_region = True
             self.catalog_encryption_settings.append(
                 CatalogEncryptionSetting(
                     mode=settings["EncryptionAtRest"]["CatalogEncryptionMode"],
@@ -177,6 +181,7 @@ class Glue(AWSService):
                         "AwsKmsKeyId"
                     ),
                     region=regional_client.region,
+                    tables=tables_in_region,
                 )
             )
         except Exception as error:
@@ -206,6 +211,7 @@ class CatalogEncryptionSetting(BaseModel):
     kms_id: Optional[str]
     password_encryption: bool
     password_kms_id: Optional[str]
+    tables: bool
     region: str
 
 
