@@ -4,7 +4,7 @@ import botocore
 from boto3 import session
 from mock import MagicMock, patch
 
-from prowler.config.config import timestamp_utc
+from prowler.config.config import prowler_version, timestamp_utc
 from prowler.lib.check.models import Check_Report, load_check_metadata
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 
@@ -127,7 +127,7 @@ class Test_SecurityHub:
                     "RecordState": "ACTIVE",
                     "ProductFields": {
                         "ProviderName": "Prowler",
-                        "ProviderVersion": "3.9.0",
+                        "ProviderVersion": prowler_version,
                         "ProwlerResourceName": "test",
                     },
                     "GeneratorId": "prowler-iam_user_accesskey_unused",
