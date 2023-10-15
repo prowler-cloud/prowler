@@ -11,9 +11,10 @@ class account_maintain_different_contact_details_to_security_billing_and_operati
         report.resource_id = account_client.audited_account
         report.resource_arn = account_client.audited_account_arn
 
+        contacts_list = account_client.contacts.get_contacts_list()
         if all(
-            [contact is not None for contact in account_client.contacts]
-            and len(set(account_client.contacts)) == len(account_client.contacts)
+            [contact is not None for contact in contacts_list]
+            and len(set(contacts_list)) == len(contacts_list)
         ):
             report.status = "PASS"
             report.status_extended = "SECURITY, BILLING and OPERATIONS contacts found and they are different between each other and between ROOT contact."
