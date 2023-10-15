@@ -12,7 +12,7 @@
   "ResourceType": "AwsCloudTrailTrail",
   "Description": "Ensure CloudTrail logging management events in All Regions",
   "Risk": "AWS CloudTrail enables governance, compliance, operational auditing, and risk auditing of your AWS account. To meet FTR requirements, you must have management events enabled for all AWS accounts and in all regions and aggregate these logs into an Amazon Simple Storage Service (Amazon S3) bucket owned by a separate AWS account.",
-  "RelatedUrl": "",
+  "RelatedUrl": "https://docs.bridgecrew.io/docs/logging_14",
   "Remediation": {
     "Code": {
       "CLI": "aws cloudtrail update-trail --name <trail_name> --is-multi-region-trail",
