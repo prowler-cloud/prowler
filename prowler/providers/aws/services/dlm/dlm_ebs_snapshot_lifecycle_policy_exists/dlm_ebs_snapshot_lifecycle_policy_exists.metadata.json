@@ -7,7 +7,7 @@
   ],
   "ServiceName": "dlm",
   "SubServiceName": "ebs",
-  "ResourceIdTemplate": "",
+  "ResourceIdTemplate": "arn:aws:iam::account-id:resource-id",
   "Severity": "medium",
   "ResourceType": "Other",
   "Description": "Ensure EBS Snapshot lifecycle policies are defined.",
