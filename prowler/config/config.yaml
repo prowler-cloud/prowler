@@ -61,6 +61,9 @@ aws:
   # MEDIUM
   ecr_repository_vulnerability_minimum_severity: "MEDIUM"
 
+  # AWS Trusted Advisor configs
+  verify_premium_support_plans: False
+
 # Azure Configuration
 azure:
 
