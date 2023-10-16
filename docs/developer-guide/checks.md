@@ -107,6 +107,13 @@ All the checks MUST fill the `report.status` and `report.status_extended` with t
     - MUST end in a dot `.`
     - MUST include the service audited with the resource and a brief explanation of the result generated, e.g.: `EC2 AMI ami-0123456789 is not public.`
 
+### Check Region
+
+All the checks MUST fill the `report.region` with the following criteria:
+
+- If the audited resource is regional use the `region` attribute within the resource object.
+- If the audited resource is global use the `service_client.region` within the service client object.
+
 ### Resource ID, Name and ARN
 All the checks MUST fill the `report.resource_id` and `report.resource_arn` with the following criteria:
 
