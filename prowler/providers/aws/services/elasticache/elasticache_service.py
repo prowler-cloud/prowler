@@ -4,6 +4,7 @@ from pydantic import BaseModel, typing
 
 from prowler.lib.logger import logger
 from prowler.providers.aws.lib.service.service import AWSService
+from prowler.providers.aws.services.vpc.vpc_client import vpc_client
 
 
 ################################ ECS
@@ -43,9 +44,9 @@ class Elasticache(AWSService):
             public_subnets = []
             for subnets in instance.subnet_group:
                 for subnet in subnets["Subnets"]:
-                    if self.vpc_subnets[subnet["SubnetIdentifier"]].public:
+                    if vpc_client.vpc_subnets[subnet["SubnetIdentifier"]].public:
                         public_subnets.append(
-                            self.vpc_subnets[subnet["SubnetIdentifier"]].id
+                            vpc_client.vpc_subnets[subnet["SubnetIdentifier"]].id
                         )
             instance.public_subnets = public_subnets
 

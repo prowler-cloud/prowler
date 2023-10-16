@@ -2,7 +2,6 @@ from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.elasticache.elasticache_client import (
     elasticache_client,
 )
-from prowler.providers.aws.services.vpc.vpc_client import vpc_client
 
 
 class elasticache_using_public_subnets(Check):
