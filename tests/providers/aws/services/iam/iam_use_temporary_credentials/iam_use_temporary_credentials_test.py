@@ -1,6 +1,6 @@
 from unittest import mock
 
-from prowler.providers.aws.services.iam.iam_service import User
+from prowler.providers.aws.services.iam.iam_service import IAM, User
 
 AWS_REGION = "us-east-1"
 AWS_ACCOUNT_NUMBER = "123456789012"
@@ -25,6 +25,11 @@ class Test_iam_use_temporary_credentials:
                 "services": [{"ServiceNamespace": "ec2"}],
             }
         ]
+        iam_client.user_temporary_credentials_usage = []
+        iam_client.__get_user_temporaty_credentials_usage__ = (
+            IAM.__get_user_temporaty_credentials_usage__
+        )
+        iam_client.__get_user_temporaty_credentials_usage__(iam_client)
 
         with mock.patch(
             "prowler.providers.aws.services.iam.iam_service.IAM", iam_client
@@ -56,6 +61,11 @@ class Test_iam_use_temporary_credentials:
                 "services": [{"ServiceNamespace": "iam"}],
             }
         ]
+        iam_client.user_temporary_credentials_usage = []
+        iam_client.__get_user_temporaty_credentials_usage__ = (
+            IAM.__get_user_temporaty_credentials_usage__
+        )
+        iam_client.__get_user_temporaty_credentials_usage__(iam_client)
 
         with mock.patch(
             "prowler.providers.aws.services.iam.iam_service.IAM", iam_client
@@ -87,6 +97,11 @@ class Test_iam_use_temporary_credentials:
                 "services": [{"ServiceNamespace": "sts"}],
             }
         ]
+        iam_client.user_temporary_credentials_usage = []
+        iam_client.__get_user_temporaty_credentials_usage__ = (
+            IAM.__get_user_temporaty_credentials_usage__
+        )
+        iam_client.__get_user_temporaty_credentials_usage__(iam_client)
 
         with mock.patch(
             "prowler.providers.aws.services.iam.iam_service.IAM", iam_client
@@ -118,6 +133,11 @@ class Test_iam_use_temporary_credentials:
                 "services": [{"ServiceNamespace": "iam"}, {"ServiceNamespace": "sts"}],
             }
         ]
+        iam_client.user_temporary_credentials_usage = []
+        iam_client.__get_user_temporaty_credentials_usage__ = (
+            IAM.__get_user_temporaty_credentials_usage__
+        )
+        iam_client.__get_user_temporaty_credentials_usage__(iam_client)
 
         with mock.patch(
             "prowler.providers.aws.services.iam.iam_service.IAM", iam_client
@@ -149,6 +169,11 @@ class Test_iam_use_temporary_credentials:
                 "services": [{"ServiceNamespace": "iam"}, {"ServiceNamespace": "ec2"}],
             }
         ]
+        iam_client.user_temporary_credentials_usage = []
+        iam_client.__get_user_temporaty_credentials_usage__ = (
+            IAM.__get_user_temporaty_credentials_usage__
+        )
+        iam_client.__get_user_temporaty_credentials_usage__(iam_client)
 
         with mock.patch(
             "prowler.providers.aws.services.iam.iam_service.IAM", iam_client
@@ -180,6 +205,11 @@ class Test_iam_use_temporary_credentials:
                 "services": [{"ServiceNamespace": "sts"}, {"ServiceNamespace": "ec2"}],
             }
         ]
+        iam_client.user_temporary_credentials_usage = []
+        iam_client.__get_user_temporaty_credentials_usage__ = (
+            IAM.__get_user_temporaty_credentials_usage__
+        )
+        iam_client.__get_user_temporaty_credentials_usage__(iam_client)
 
         with mock.patch(
             "prowler.providers.aws.services.iam.iam_service.IAM", iam_client
@@ -213,6 +243,11 @@ class Test_iam_use_temporary_credentials:
                 ],
             }
         ]
+        iam_client.user_temporary_credentials_usage = []
+        iam_client.__get_user_temporaty_credentials_usage__ = (
+            IAM.__get_user_temporaty_credentials_usage__
+        )
+        iam_client.__get_user_temporaty_credentials_usage__(iam_client)
 
         with mock.patch(
             "prowler.providers.aws.services.iam.iam_service.IAM", iam_client

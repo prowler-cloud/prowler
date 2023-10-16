@@ -88,6 +88,8 @@ class IAM(AWSService):
         self.__get_access_keys_metadata__()
         self.last_accessed_services = []
         self.__get_last_accessed_services__()
+        self.user_temporary_credentials_usage = []
+        self.__get_user_temporaty_credentials_usage__()
 
     def __get_client__(self):
         return self.client
@@ -666,25 +668,82 @@ class IAM(AWSService):
             )
 
     def __get_last_accessed_services__(self):
-        for user in self.users:
-            details = self.client.generate_service_last_accessed_details(Arn=user.arn)
-            response = self.client.get_service_last_accessed_details(
-                JobId=details["JobId"]
-            )
-            while response["JobStatus"] == "IN_PROGRESS":
-                response = self.client.get_service_last_accessed_details(
-                    JobId=details["JobId"]
-                )
-            self.last_accessed_services.append(
-                {"user": user, "services": response["ServicesLastAccessed"]}
+        try:
+            for user in self.users:
+                try:
+                    details = self.client.generate_service_last_accessed_details(
+                        Arn=user.arn
+                    )
+                    response = self.client.get_service_last_accessed_details(
+                        JobId=details["JobId"]
+                    )
+                    while response["JobStatus"] == "IN_PROGRESS":
+                        response = self.client.get_service_last_accessed_details(
+                            JobId=details["JobId"]
+                        )
+                    self.last_accessed_services.append(
+                        {"user": user, "services": response["ServicesLastAccessed"]}
+                    )
+                except ClientError as error:
+                    logger.error(
+                        f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
+        except Exception as error:
+            logger.error(
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
     def __get_access_keys_metadata__(self):
-        for user in self.users:
-            paginator = self.client.get_paginator("list_access_keys")
-            self.access_keys_metadata.append({"user": user, "access_keys_metadata": []})
-            for response in paginator.paginate(UserName=user.name):
-                self.access_keys_metadata[-1]["access_keys_metadata"].append(response)
+        try:
+            for user in self.users:
+                try:
+                    paginator = self.client.get_paginator("list_access_keys")
+                    self.access_keys_metadata.append(
+                        {"user": user, "access_keys_metadata": []}
+                    )
+                    for response in paginator.paginate(UserName=user.name):
+                        self.access_keys_metadata[-1]["access_keys_metadata"].append(
+                            response
+                        )
+                except ClientError as error:
+                    logger.error(
+                        f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
+        except Exception as error:
+            logger.error(
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def __get_user_temporaty_credentials_usage__(self):
+        temporary_credentials_usage = False
+        for idx, last_accessed_services in enumerate(self.last_accessed_services):
+            temporary_credentials_usage = not (
+                len(
+                    [
+                        service
+                        for service in last_accessed_services["services"]
+                        if service["ServiceNamespace"] not in ["iam", "sts"]
+                    ]
+                )
+                > 0
+                and len(
+                    [
+                        akm
+                        for akm in self.access_keys_metadata[idx][
+                            "access_keys_metadata"
+                        ]
+                        if len(akm["AccessKeyMetadata"]) > 0
+                    ]
+                )
+                > 0
+            )
+
+            self.user_temporary_credentials_usage.append(
+                {
+                    **last_accessed_services,
+                    "temporary_credentials_usage": temporary_credentials_usage,
+                }
+            )
 
 
 class MFADevice(BaseModel):
