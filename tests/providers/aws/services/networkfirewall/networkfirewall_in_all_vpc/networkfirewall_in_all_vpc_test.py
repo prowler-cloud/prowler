@@ -102,6 +102,7 @@ class Test_networkfirewall_in_all_vpc:
         vpc_client.vpcs = {
             VPC_ID_PROTECTED: VPCs(
                 id=VPC_ID_PROTECTED,
+                name="",
                 default=False,
                 cidr_block="192.168.0.0/16",
                 flow_log=False,
@@ -111,6 +112,7 @@ class Test_networkfirewall_in_all_vpc:
                     VpcSubnet(
                         id="subnet-123456789",
                         arn="arn_test",
+                        name="",
                         default=False,
                         vpc_id=VPC_ID_PROTECTED,
                         cidr_block="192.168.0.0/24",
@@ -168,6 +170,7 @@ class Test_networkfirewall_in_all_vpc:
         vpc_client.vpcs = {
             VPC_ID_UNPROTECTED: VPCs(
                 id=VPC_ID_UNPROTECTED,
+                name="",
                 default=False,
                 cidr_block="192.168.0.0/16",
                 flow_log=False,
@@ -177,6 +180,7 @@ class Test_networkfirewall_in_all_vpc:
                     VpcSubnet(
                         id="subnet-123456789",
                         arn="arn_test",
+                        name="",
                         default=False,
                         vpc_id=VPC_ID_UNPROTECTED,
                         cidr_block="192.168.0.0/24",
@@ -244,6 +248,7 @@ class Test_networkfirewall_in_all_vpc:
         vpc_client.vpcs = {
             VPC_ID_UNPROTECTED: VPCs(
                 id=VPC_ID_UNPROTECTED,
+                name="",
                 default=False,
                 cidr_block="192.168.0.0/16",
                 flow_log=False,
@@ -253,6 +258,7 @@ class Test_networkfirewall_in_all_vpc:
                     VpcSubnet(
                         id="subnet-123456789",
                         arn="arn_test",
+                        name="",
                         default=False,
                         vpc_id=VPC_ID_UNPROTECTED,
                         cidr_block="192.168.0.0/24",
@@ -268,6 +274,7 @@ class Test_networkfirewall_in_all_vpc:
             ),
             VPC_ID_PROTECTED: VPCs(
                 id=VPC_ID_PROTECTED,
+                name="",
                 default=False,
                 cidr_block="192.168.0.0/16",
                 flow_log=False,
@@ -277,6 +284,7 @@ class Test_networkfirewall_in_all_vpc:
                     VpcSubnet(
                         id="subnet-123456789",
                         arn="arn_test",
+                        name="",
                         default=False,
                         vpc_id=VPC_ID_PROTECTED,
                         cidr_block="192.168.0.0/24",
