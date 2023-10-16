@@ -1935,6 +1935,7 @@
     "codecatalyst": {
       "regions": {
         "aws": [
+          "eu-west-1",
           "us-west-2"
         ],
         "aws-cn": [],
@@ -10232,6 +10233,7 @@
     "wickr": {
       "regions": {
         "aws": [
+          "ap-southeast-2",
           "ca-central-1",
           "eu-west-2",
           "us-east-1"
