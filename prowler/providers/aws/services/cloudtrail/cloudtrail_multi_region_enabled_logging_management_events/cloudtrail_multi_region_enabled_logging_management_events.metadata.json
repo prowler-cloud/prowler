@@ -1,6 +1,6 @@
 {
   "Provider": "aws",
-  "CheckID": "cloudtrail_management_exist_with_multi_region_enabled",
+  "CheckID": "cloudtrail_multi_region_enabled_logging_management_events",
   "CheckTitle": "Ensure CloudTrail logging management events in All Regions",
   "CheckType": [
     "CIS AWS Foundations Benchmark"

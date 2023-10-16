@@ -23,7 +23,7 @@ class cloudtrail_multi_region_enabled(Check):
                             )
                         else:
                             report.status_extended = f"Trail {trail.name} is not multiregion and it is logging."
-                        # Since there exists a logging trail in that region there is no point in checking the reamaining trails
+                        # Since there exists a logging trail in that region there is no point in checking the remaining trails
                         # Store the finding and exit the loop
                         findings.append(report)
                         break

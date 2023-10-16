@@ -93,7 +93,7 @@ class Cloudtrail(AWSService):
                 for region, client in self.regional_clients.items():
                     if trail.region == region and trail.name:
                         data_events = client.get_event_selectors(TrailName=trail.arn)
-                        # check if key exists and array associated to that key is not empty
+                        # EventSelectors
                         if (
                             "EventSelectors" in data_events
                             and data_events["EventSelectors"]
@@ -103,7 +103,7 @@ class Cloudtrail(AWSService):
                                     is_advanced=False, event_selector=event
                                 )
                                 trail.data_events.append(event_selector)
-                        # check if key exists and array associated to that key is not empty
+                        # AdvancedEventSelectors
                         elif (
                             "AdvancedEventSelectors" in data_events
                             and data_events["AdvancedEventSelectors"]
