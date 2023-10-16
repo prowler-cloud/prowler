@@ -14,14 +14,10 @@ class vpc_subnet_no_public_ip_by_default(Check):
                 report.resource_arn = subnet.arn
                 if subnet.mapPublicIpOnLaunch:
                     report.status = "FAIL"
-                    report.status_extended = (
-                        f"VPC subnet {subnet.id} assigns public IP by default."
-                    )
+                    report.status_extended = f"VPC subnet {subnet.name if subnet.name else subnet.id} assigns public IP by default."
                 else:
                     report.status = "PASS"
-                    report.status_extended = (
-                        f"VPC subnet {subnet.id} does NOT assign public IP by default."
-                    )
+                    report.status_extended = f"VPC subnet {subnet.name if subnet.name else subnet.id} does NOT assign public IP by default."
                 findings.append(report)
 
         return findings

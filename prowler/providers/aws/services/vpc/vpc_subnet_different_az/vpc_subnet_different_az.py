@@ -10,7 +10,9 @@ class vpc_subnet_different_az(Check):
             report.region = vpc.region
             report.resource_tags = vpc.tags
             report.status = "FAIL"
-            report.status_extended = f"VPC {vpc.id} has no subnets."
+            report.status_extended = (
+                f"VPC {vpc.name if vpc.name else vpc.id} has no subnets."
+            )
             report.resource_id = vpc.id
             report.resource_arn = vpc.arn
             if vpc.subnets:
@@ -21,12 +23,10 @@ class vpc_subnet_different_az(Check):
                         and subnet.availability_zone != availability_zone
                     ):
                         report.status = "PASS"
-                        report.status_extended = f"VPC {vpc.id} has subnets in more than one availability zone."
+                        report.status_extended = f"VPC {vpc.name if vpc.name else vpc.id} has subnets in more than one availability zone."
                         break
                     availability_zone = subnet.availability_zone
-                    report.status_extended = (
-                        f"VPC {vpc.id} has only subnets in {availability_zone}."
-                    )
+                    report.status_extended = f"VPC {vpc.name if vpc.name else vpc.id} has only subnets in {availability_zone}."
 
             findings.append(report)
 
