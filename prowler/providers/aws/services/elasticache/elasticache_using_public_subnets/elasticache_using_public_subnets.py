@@ -16,7 +16,6 @@ class elasticache_using_public_subnets(Check):
             report.status = "PASS"
             report.status_extended = "Cluster isn't using public subnets."
             public_subnets = []
-            # print(instance.subnet_group)
             for subnets in instance.subnet_group:
                 for subnet in subnets["Subnets"]:
                     if vpc_subnets[subnet["SubnetIdentifier"]].public:
