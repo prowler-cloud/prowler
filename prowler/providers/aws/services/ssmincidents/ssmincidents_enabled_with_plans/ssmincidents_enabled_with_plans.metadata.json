@@ -6,7 +6,7 @@
   "ServiceName": "ssm",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:aws:ssm:region:account-id:document/document-name",
-  "Severity": "medium",
+  "Severity": "low",
   "ResourceType": "Other",
   "Description": "Ensure SSM Incidents is enabled with response plans.",
   "Risk": "Not having SSM Incidents enabled can increase the risk of delayed detection and response to security incidents, unauthorized access, limited visibility into incidents and vulnerabilities",

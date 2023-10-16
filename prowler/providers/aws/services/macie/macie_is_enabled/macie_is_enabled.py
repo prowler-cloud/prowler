@@ -1,5 +1,6 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.macie.macie_client import macie_client
+from prowler.providers.aws.services.s3.s3_client import s3_client
 
 
 class macie_is_enabled(Check):
@@ -13,12 +14,14 @@ class macie_is_enabled(Check):
             if session.status == "ENABLED":
                 report.status = "PASS"
                 report.status_extended = "Macie is enabled."
-            elif session.status == "PAUSED":
-                report.status = "FAIL"
-                report.status_extended = "Macie is currently in a SUSPENDED state."
-            else:
-                report.status = "FAIL"
-                report.status_extended = "Macie is not enabled."
-            findings.append(report)
+                findings.append(report)
+            elif s3_client.buckets or not s3_client.audit_info.reduce_noise:
+                if session.status == "PAUSED":
+                    report.status = "FAIL"
+                    report.status_extended = "Macie is currently in a SUSPENDED state."
+                else:
+                    report.status = "FAIL"
+                    report.status_extended = "Macie is not enabled."
+                findings.append(report)
 
         return findings
