@@ -1,6 +1,6 @@
 {
   "Provider": "aws",
-  "CheckID": "neptune_uses_a_public_subnet",
+  "CheckID": "neptune_cluster_with_public_subnet",
   "CheckTitle": "Ensure Neptune is not using a public subnet",
   "CheckType": [],
   "ServiceName": "network",

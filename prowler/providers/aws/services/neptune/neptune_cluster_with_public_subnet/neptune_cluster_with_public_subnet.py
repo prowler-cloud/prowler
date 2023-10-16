@@ -2,7 +2,7 @@ from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.neptune.neptune_client import neptune_client
 
 
-class neptune_uses_a_public_subnet(Check):
+class neptune_cluster_with_public_subnet(Check):
     def execute(self):
         findings = []
         for cluster in neptune_client.clusters:
