@@ -15,8 +15,11 @@ class vpc_endpoint_connections_trust_boundaries(Check):
         # Always include the same account as trusted
         trusted_account_ids.append(vpc_client.audited_account)
         for endpoint in vpc_client.vpc_endpoints:
-            # Check VPC endpoint policy
-            if endpoint.policy_document:
+            # Check VPC endpoint policy and  avoid "com.amazonaws.vpce" endpoints since the policy cannot be modified
+            if (
+                endpoint.policy_document
+                and "com.amazonaws.vpce." not in endpoint.service_name
+            ):
                 access_from_trusted_accounts = True
                 for statement in endpoint.policy_document["Statement"]:
                     # If one policy allows access from a non-trusted account

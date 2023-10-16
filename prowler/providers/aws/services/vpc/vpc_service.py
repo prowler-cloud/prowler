@@ -163,6 +163,7 @@ class VPC(AWSService):
                                 arn=arn,
                                 id=endpoint["VpcEndpointId"],
                                 vpc_id=endpoint["VpcId"],
+                                service_name=endpoint["ServiceName"],
                                 state=endpoint["State"],
                                 policy_document=endpoint_policy,
                                 owner_id=endpoint["OwnerId"],
@@ -352,6 +353,7 @@ class VpcEndpoint(BaseModel):
     arn: str
     id: str
     vpc_id: str
+    service_name: str
     state: str
     policy_document: Optional[dict]
     owner_id: str
