@@ -1,3 +1,5 @@
+from typing import Optional
+
 from pydantic import BaseModel, typing
 
 from prowler.lib.logger import logger
@@ -11,6 +13,7 @@ class Elasticache(AWSService):
         super().__init__(__class__.__name__, audit_info)
         self.elasticache_instances = []
         self.__describe_cache_clusters__()
+        self.__get_public_subnets__()
 
     def __describe_cache_clusters__(self):
         logger.info("ECS - Describing Cache Clusters...")
@@ -35,6 +38,17 @@ class Elasticache(AWSService):
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def __get_public_subnets__(self):
+        for instance in self.elasticache_instances:
+            public_subnets = []
+            for subnets in instance.subnet_group:
+                for subnet in subnets["Subnets"]:
+                    if self.vpc_subnets[subnet["SubnetIdentifier"]].public:
+                        public_subnets.append(
+                            self.vpc_subnets[subnet["SubnetIdentifier"]].id
+                        )
+            instance.public_subnets = public_subnets
+
 
 class ElastiCacheInstance(BaseModel):
     cache_cluster_id: str
@@ -44,3 +58,4 @@ class ElastiCacheInstance(BaseModel):
     engine_version: str
     availability_zone: str
     subnet_group: typing.Any
+    public_subnets: Optional[list] = []

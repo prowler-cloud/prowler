@@ -8,25 +8,15 @@ from prowler.providers.aws.services.vpc.vpc_client import vpc_client
 class elasticache_using_public_subnets(Check):
     def execute(self):
         findings = []
-        vpc_subnets = vpc_client.vpc_subnets
         for instance in elasticache_client.elasticache_instances:
             report = Check_Report_AWS(self.metadata())
             report.resource_id = instance.cache_cluster_id
             report.resource_arn = instance.arn
             report.status = "PASS"
             report.status_extended = "Cluster isn't using public subnets."
-            public_subnets = []
-            for subnets in instance.subnet_group:
-                for subnet in subnets["Subnets"]:
-                    if vpc_subnets[subnet["SubnetIdentifier"]].public:
-                        public_subnets.append(
-                            vpc_subnets[subnet["SubnetIdentifier"]].id
-                        )
-            if len(public_subnets) > 0:
+            if len(instance.public_subnets) > 0:
                 report.status = "FAIL"
-                report.status_extended = (
-                    f"Cluster is using {', '.join(public_subnets)} public subnets."
-                )
+                report.status_extended = f"Cluster is using {', '.join(instance.public_subnets)} public subnets."
             findings.append(report)
 
         return findings
