@@ -1,6 +1,7 @@
 from json import loads
 from typing import Optional
 
+from botocore.exceptions import ClientError
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
@@ -72,11 +73,21 @@ class SQS(AWSService):
         logger.info("SQS - List Tags...")
         try:
             for queue in self.queues:
-                regional_client = self.regional_clients[queue.region]
-                response = regional_client.list_queue_tags(QueueUrl=queue.id).get(
-                    "Tags"
-                )
-                queue.tags = [response]
+                try:
+                    regional_client = self.regional_clients[queue.region]
+                    response = regional_client.list_queue_tags(QueueUrl=queue.id).get(
+                        "Tags"
+                    )
+                    queue.tags = [response]
+                except ClientError as error:
+                    if (
+                        error.response["Error"]["Code"]
+                        == "AWS.SimpleQueueService.NonExistentQueue"
+                    ):
+                        logger.warning(
+                            f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
+
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
