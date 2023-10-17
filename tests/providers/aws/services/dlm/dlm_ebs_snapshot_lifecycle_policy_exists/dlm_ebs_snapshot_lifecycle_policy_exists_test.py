@@ -78,6 +78,7 @@ class Test_dlm_ebs_snapshot_lifecycle_policy_exists:
             result = check.execute()
             assert len(result) == 0
 
+    @mock_ec2
     def test_one_ebs_snapshot_and_dlm_lifecycle_policy(self):
         # Generate EC2 Client
         ec2_client = client("ec2", region_name=AWS_REGION)
@@ -114,8 +115,6 @@ class Test_dlm_ebs_snapshot_lifecycle_policy_exists:
                 )
             }
         }
-
-        # from prowler.providers.aws.services.ec2.ec2_service import EC2
 
         audit_info = self.set_mocked_audit_info()
 
