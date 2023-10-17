@@ -7,12 +7,10 @@ class dlm_ebs_snapshot_lifecycle_policy_exists(Check):
     def execute(self):
         findings = []
         for region in dlm_client.lifecycle_policies:
-            snapshots_in_region = False
-            for snapshot in ec2_client.snapshots:
-                if snapshot.region == region:
-                    snapshots_in_region = True
-                    break
-            if snapshots_in_region:
+            if (
+                region in ec2_client.regions_with_snapshots
+                and ec2_client.regions_with_snapshots[region]
+            ):
                 report = Check_Report_AWS(self.metadata())
                 report.status = "FAIL"
                 report.status_extended = "No EBS Snapshot lifecycle policies found."
