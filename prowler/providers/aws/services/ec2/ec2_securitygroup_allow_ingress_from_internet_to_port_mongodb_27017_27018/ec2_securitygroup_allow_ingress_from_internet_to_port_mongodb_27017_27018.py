@@ -10,7 +10,7 @@ class ec2_securitygroup_allow_ingress_from_internet_to_port_mongodb_27017_27018(
         check_ports = [27017, 27018]
         for security_group in ec2_client.security_groups:
             if (
-                not ec2_client.audit_info.reduce_noise
+                not ec2_client.audit_info.ignore_unused_services
                 or vpc_client.vpcs[security_group.vpc_id].in_use
             ):
                 report = Check_Report_AWS(self.metadata())

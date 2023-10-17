@@ -37,5 +37,5 @@ current_audit_info = AWS_Audit_Info(
     organizations_metadata=None,
     audit_metadata=None,
     audit_config=None,
-    reduce_noise=False,
+    ignore_unused_services=False,
 )

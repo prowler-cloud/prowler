@@ -5,7 +5,7 @@
 Prowler allows you to ignore noisy findings in services that are not used (do not have resources) so you can reduce noise in Prowler's reports.
 
 ```console
-prowler <provider> --reduce-noise
+prowler <provider> --ignore-unused-services
 ```
 
 ## Checks with noise reduction

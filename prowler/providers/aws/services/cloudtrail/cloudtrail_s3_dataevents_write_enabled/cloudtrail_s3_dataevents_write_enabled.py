@@ -50,7 +50,7 @@ class cloudtrail_s3_dataevents_write_enabled(Check):
                             report.status_extended = f"Trail {trail.name} from home region {trail.home_region} has an advanced data event selector to record all S3 object-level API operations."
                             findings.append(report)
         if not findings and (
-            s3_client.buckets or not cloudtrail_client.audit_info.reduce_noise
+            s3_client.buckets or not cloudtrail_client.audit_info.ignore_unused_services
         ):
             report = Check_Report_AWS(self.metadata())
             report.region = cloudtrail_client.region

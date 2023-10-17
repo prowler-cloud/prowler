@@ -110,7 +110,9 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
             current_audit_info.session_config = new_boto3_config
 
         # Set reduction noise argument
-        current_audit_info.reduce_noise = arguments.get("reduce_noise")
+        current_audit_info.ignore_unused_services = arguments.get(
+            "ignore_unused_services"
+        )
 
         # Setting session
         current_audit_info.profile = input_profile

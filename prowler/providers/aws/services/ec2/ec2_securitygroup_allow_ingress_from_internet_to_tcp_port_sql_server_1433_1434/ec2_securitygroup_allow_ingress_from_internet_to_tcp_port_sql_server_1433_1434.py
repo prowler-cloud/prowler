@@ -12,7 +12,7 @@ class ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_sql_server_1433_
         check_ports = [1433, 1434]
         for security_group in ec2_client.security_groups:
             if (
-                not ec2_client.audit_info.reduce_noise
+                not ec2_client.audit_info.ignore_unused_services
                 or vpc_client.vpcs[security_group.vpc_id].in_use
             ):
                 report = Check_Report_AWS(self.metadata())

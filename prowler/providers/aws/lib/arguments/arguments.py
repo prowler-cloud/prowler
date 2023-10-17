@@ -156,7 +156,7 @@ def init_parser(self):
     # Noise Reduction
     noise_reduction_subparser = aws_parser.add_argument_group("Noise Reduction")
     noise_reduction_subparser.add_argument(
-        "--reduce-noise",
+        "--ignore-unused-services",
         action="store_true",
         help="Reduce noise by ignoring findings in unused services",
     )

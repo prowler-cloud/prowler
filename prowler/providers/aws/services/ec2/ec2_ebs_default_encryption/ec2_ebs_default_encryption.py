@@ -14,7 +14,10 @@ class ec2_ebs_default_encryption(Check):
                 report.status = "PASS"
                 report.status_extended = "EBS Default Encryption is activated."
                 findings.append(report)
-            elif not ec2_client.audit_info.reduce_noise or ebs_encryption.volumes:
+            elif (
+                not ec2_client.audit_info.ignore_unused_services
+                or ebs_encryption.volumes
+            ):
                 report.status = "FAIL"
                 report.status_extended = "EBS Default Encryption is not activated."
                 findings.append(report)

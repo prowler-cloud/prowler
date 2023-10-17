@@ -21,7 +21,7 @@ class macie_is_enabled(Check):
                     if bucket.region == session.region:
                         buckets_in_region = True
                         break
-                if buckets_in_region or not s3_client.audit_info.reduce_noise:
+                if buckets_in_region or not s3_client.audit_info.ignore_unused_services:
                     if session.status == "PAUSED":
                         report.status = "FAIL"
                         report.status_extended = (

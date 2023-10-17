@@ -9,7 +9,7 @@ class networkfirewall_in_all_vpc(Check):
     def execute(self):
         findings = []
         for vpc in vpc_client.vpcs.values():
-            if not vpc_client.audit_info.reduce_noise or vpc.in_use:
+            if not vpc_client.audit_info.ignore_unused_services or vpc.in_use:
                 report = Check_Report_AWS(self.metadata())
                 report.region = vpc.region
                 report.resource_id = vpc.id

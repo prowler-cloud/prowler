@@ -7,7 +7,7 @@ class glue_data_catalogs_connection_passwords_encryption_enabled(Check):
         findings = []
         for encryption in glue_client.catalog_encryption_settings:
             # Check only if there are Glue Tables
-            if encryption.tables or not glue_client.audit_info.reduce_noise:
+            if encryption.tables or not glue_client.audit_info.ignore_unused_services:
                 report = Check_Report_AWS(self.metadata())
                 report.resource_id = glue_client.audited_account
                 report.resource_arn = glue_client.audited_account_arn

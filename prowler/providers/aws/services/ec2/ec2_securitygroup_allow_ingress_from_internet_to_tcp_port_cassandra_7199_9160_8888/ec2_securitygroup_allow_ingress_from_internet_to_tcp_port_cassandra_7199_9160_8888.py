@@ -12,7 +12,7 @@ class ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_cassandra_7199_9
         check_ports = [7199, 9160, 8888]
         for security_group in ec2_client.security_groups:
             if (
-                not ec2_client.audit_info.reduce_noise
+                not ec2_client.audit_info.ignore_unused_services
                 or vpc_client.vpcs[security_group.vpc_id].in_use
             ):
                 report = Check_Report_AWS(self.metadata())

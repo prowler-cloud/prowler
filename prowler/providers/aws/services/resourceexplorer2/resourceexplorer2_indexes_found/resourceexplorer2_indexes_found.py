@@ -15,7 +15,7 @@ class resourceexplorer2_indexes_found(Check):
             report.status = "PASS"
             report.status_extended = f"Resource Explorer Indexes found: {len(resource_explorer_2_client.indexes)}."
             findings.append(report)
-        elif not resource_explorer_2_client.audit_info.reduce_noise:
+        elif not resource_explorer_2_client.audit_info.ignore_unused_services:
             report = Check_Report_AWS(self.metadata())
             report.status = "FAIL"
             report.status_extended = "AWS Resource Explorer is not enabled."

@@ -41,7 +41,7 @@ class inspector2_findings_exist(Check):
                 for instance in ec2_client.instances:
                     if instance == inspector.region:
                         ec2_in_region = True
-                if not inspector2_client.audit_info.reduce_noise or (
+                if not inspector2_client.audit_info.ignore_unused_services or (
                     funtions_in_region
                     or ecr_client.registries[inspector.region].repositories
                     or ec2_in_region
