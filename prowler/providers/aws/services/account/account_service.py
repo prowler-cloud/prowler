@@ -80,9 +80,9 @@ class Account(AWSService):
                 logger.warning(
                     f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
-                return Contact(
-                    type=contact_type,
-                )
+            return Contact(
+                type=contact_type,
+            )
 
         except Exception as error:
             logger.error(
