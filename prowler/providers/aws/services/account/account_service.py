@@ -2,6 +2,7 @@
 from typing import Optional
 from venv import logger
 
+from botocore.client import ClientError
 from pydantic import BaseModel
 
 from prowler.providers.aws.lib.service.service import AWSService
@@ -69,14 +70,24 @@ class Account(AWSService):
                 name=account_contact.get("Name"),
                 phone_number=account_contact.get("PhoneNumber"),
             )
-        except Exception as error:
+
+        except ClientError as error:
             if (
-                not error.response["message"]
+                error.response["Error"]["Code"] == "ResourceNotFoundException"
+                and error.response["message"]
                 == "No contact of the inputted alternate contact type found."
             ):
-                logger.error(
+                logger.warning(
                     f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
+                return Contact(
+                    type=contact_type,
+                )
+
+        except Exception as error:
+            logger.error(
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
             return Contact(
                 type=contact_type,
             )
