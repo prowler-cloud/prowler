@@ -70,9 +70,13 @@ class Account(AWSService):
                 phone_number=account_contact.get("PhoneNumber"),
             )
         except Exception as error:
-            logger.error(
-                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
+            if (
+                not error.response["message"]
+                == "No contact of the inputted alternate contact type found."
+            ):
+                logger.error(
+                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
             return Contact(
                 type=contact_type,
             )
