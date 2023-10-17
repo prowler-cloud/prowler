@@ -192,8 +192,9 @@ class EC2(AWSService):
                                 volume=snapshot["VolumeId"],
                             )
                         )
-                        if self.volumes_with_snapshots.get(snapshot["VolumeId"], True):
-                            self.volumes_with_snapshots[snapshot["VolumeId"]] = True
+                        # Store that the volume has at least one snapshot
+                        self.volumes_with_snapshots[snapshot["VolumeId"]] = True
+
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
