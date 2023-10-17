@@ -63,7 +63,7 @@ aws:
 
   # AWS Trusted Advisor
   # trustedadvisor_premium_support_plan_subscribed
-  verify_premium_support_plans: False
+  verify_premium_support_plans: True
 
 # Azure Configuration
 azure:

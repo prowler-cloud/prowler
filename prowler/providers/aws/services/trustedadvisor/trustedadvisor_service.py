@@ -92,7 +92,7 @@ class TrustedAdvisor(AWSService):
             self.client.describe_services()
             # If the above call succeeds the account has a Business,
             # Enterprise On-Ramp, or Enterprise Support plan.
-            self.premium_support_enabled.enabled = True
+            self.premium_support.enabled = True
 
         except ClientError as error:
             if (

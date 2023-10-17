@@ -7,17 +7,19 @@ from prowler.providers.aws.services.trustedadvisor.trustedadvisor_client import 
 class trustedadvisor_premium_support_plan_subscribed(Check):
     def execute(self):
         findings = []
-        if trustedadvisor_client.audit_config.get(
-            "verify_premium_support_plans", False
-        ):
+        if trustedadvisor_client.audit_config.get("verify_premium_support_plans", True):
             report = Check_Report_AWS(self.metadata())
             report.status = "FAIL"
-            report.status_extended = "Premium support plan isn't subscribed."
+            report.status_extended = (
+                "Amazon Web Services Premium Support Plan isn't subscribed."
+            )
             report.region = trustedadvisor_client.region
             report.resource_id = trustedadvisor_client.audited_account
             report.resource_arn = trustedadvisor_client.audited_account_arn
             if trustedadvisor_client.premium_support.enabled:
                 report.status = "PASS"
-                report.status_extended = "Premium support plan is subscribed."
+                report.status_extended = (
+                    "Amazon Web Services Premium Support Plan is subscribed."
+                )
             findings.append(report)
         return findings
