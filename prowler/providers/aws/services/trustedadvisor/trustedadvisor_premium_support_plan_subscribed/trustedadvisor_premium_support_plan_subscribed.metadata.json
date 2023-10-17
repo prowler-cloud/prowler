@@ -1,21 +1,21 @@
 {
   "Provider": "aws",
-  "CheckID": "trustedadvisor_support_plan_subscribed",
+  "CheckID": "trustedadvisor_premium_support_plan_subscribed",
   "CheckTitle": "Check if a Premium support plan is subscribed",
   "CheckType": [],
   "ServiceName": "support",
   "SubServiceName": "",
-  "ResourceIdTemplate": "",
+  "ResourceIdTemplate": "arn:aws:iam::AWS_ACCOUNT_NUMBER:root",
   "Severity": "low",
   "ResourceType": "",
   "Description": "Check if a Premium support plan is subscribed.",
   "Risk": "Ensure that the appropriate support level is enabled for the necessary AWS accounts. For example, if an AWS account is being used to host production systems and environments, it is highly recommended that the minimum AWS Support Plan should be Business.",
-  "RelatedUrl": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/Support/support-plan.html",
+  "RelatedUrl": "https://aws.amazon.com/premiumsupport/plans/",
   "Remediation": {
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/Support/support-plan.html",
       "Terraform": ""
     },
     "Recommendation": {
