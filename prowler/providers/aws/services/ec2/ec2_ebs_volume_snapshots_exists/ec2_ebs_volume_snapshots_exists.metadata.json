@@ -1,0 +1,34 @@
+{
+  "Provider": "aws",
+  "CheckID": "ec2_ebs_volume_snapshots_exists",
+  "CheckTitle": "Check if EBS snapshots exists.",
+  "CheckType": [
+    "Data Protection"
+  ],
+  "ServiceName": "ec2",
+  "SubServiceName": "snapshot",
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "Severity": "medium",
+  "ResourceType": "AwsEc2Snapshot",
+  "Description": "Check if EBS snapshots exists.",
+  "Risk": "Ensure that your EBS volumes (available or in-use) have recent snapshots (taken weekly) available for point-in-time recovery for a better, more reliable data backup strategy.",
+  "RelatedUrl": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSSnapshots.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws ec2 --region <REGION> create-snapshot --volume-id <VOLUME-ID>",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/EBS/ebs-volumes-recent-snapshots.html",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Creating point-in-time EBS snapshots periodically will allow you to handle efficiently your data recovery process in the event of a failure, to save your data before shutting down an EC2 instance, to back up data for geographical expansion and to maintain your disaster recovery stack up to date.",
+      "Url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSSnapshots.html"
+    }
+  },
+  "Categories": [
+    "forensics-ready"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
