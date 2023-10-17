@@ -137,6 +137,7 @@ class EC2(AWSService):
                                 ingress_rules=sg["IpPermissions"],
                                 egress_rules=sg["IpPermissionsEgress"],
                                 public_ports=all_public_ports,
+                                vpc_id=sg["VpcId"],
                                 tags=sg.get("Tags"),
                             )
                         )
@@ -458,6 +459,7 @@ class SecurityGroup(BaseModel):
     arn: str
     region: str
     id: str
+    vpc_id: str
     public_ports: bool
     network_interfaces: list[str] = []
     ingress_rules: list[dict]

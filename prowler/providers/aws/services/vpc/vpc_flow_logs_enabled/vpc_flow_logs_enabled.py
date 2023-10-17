@@ -6,21 +6,18 @@ class vpc_flow_logs_enabled(Check):
     def execute(self):
         findings = []
         for vpc in vpc_client.vpcs.values():
-            report = Check_Report_AWS(self.metadata())
-            report.region = vpc.region
-            report.resource_tags = vpc.tags
-            report.resource_id = vpc.id
-            report.resource_arn = vpc.arn
-            report.status = "FAIL"
-            report.status_extended = (
-                f"VPC {vpc.name if vpc.name else vpc.id} Flow logs are disabled."
-            )
-            if vpc.flow_log:
-                report.status = "PASS"
-                report.status_extended = (
-                    f"VPC {vpc.name if vpc.name else vpc.id} Flow logs are enabled."
-                )
+            if not vpc_client.audit_info.reduce_noise or vpc.in_use:
+                report = Check_Report_AWS(self.metadata())
+                report.region = vpc.region
+                report.resource_tags = vpc.tags
+                report.resource_id = vpc.id
+                report.resource_arn = vpc.arn
+                report.status = "FAIL"
+                report.status_extended = f"VPC {vpc.id} Flow logs are disabled."
+                if vpc.flow_log:
+                    report.status = "PASS"
+                    report.status_extended = f"VPC {vpc.id} Flow logs are enabled."
 
-            findings.append(report)
+                findings.append(report)
 
         return findings

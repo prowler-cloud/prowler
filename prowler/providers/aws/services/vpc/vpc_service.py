@@ -25,6 +25,7 @@ class VPC(AWSService):
         self.__describe_flow_logs__()
         self.__describe_peering_route_tables__()
         self.__describe_vpc_endpoint_service_permissions__()
+        self.__describe_network_interfaces__()
         self.vpc_subnets = {}
         self.__threading_call__(self.__describe_vpc_subnets__)
 
@@ -142,6 +143,29 @@ class VPC(AWSService):
                 )["FlowLogs"]
                 if flow_logs:
                     vpc.flow_log = True
+
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
+            )
+
+    def __describe_network_interfaces__(self):
+        logger.info("VPC - Describing flow logs...")
+        try:
+            for vpc in self.vpcs.values():
+                regional_client = self.regional_clients[vpc.region]
+                enis = regional_client.describe_network_interfaces(
+                    Filters=[
+                        {
+                            "Name": "vpc-id",
+                            "Values": [
+                                vpc.id,
+                            ],
+                        },
+                    ]
+                )["NetworkInterfaces"]
+                if enis:
+                    vpc.in_use = True
 
         except Exception as error:
             logger.error(
@@ -337,6 +361,7 @@ class VPCs(BaseModel):
     id: str
     name: str
     default: bool
+    in_use: bool = False
     cidr_block: str
     flow_log: bool = False
     region: str
