@@ -23,7 +23,7 @@ def mock_generate_regional_clients(service, audit_info, _):
     "prowler.providers.aws.lib.service.service.generate_regional_clients",
     new=mock_generate_regional_clients,
 )
-class Test_ec2_ebs_snapshots_exists:
+class Test_ec2_ebs_volume_snapshots_exists:
     def set_mocked_audit_info(self):
         audit_info = AWS_Audit_Info(
             session_config=None,
