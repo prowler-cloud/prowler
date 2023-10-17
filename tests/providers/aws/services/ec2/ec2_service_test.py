@@ -253,18 +253,20 @@ class Test_EC2_Service:
                 },
             ],
         )["SnapshotId"]
+        snapshot_arn = (
+            f"arn:aws:ec2:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:snapshot/{snapshot_id}"
+        )
         # EC2 client for this test class
         audit_info = self.set_mocked_audit_info()
         ec2 = EC2(audit_info)
 
         assert snapshot_id in str(ec2.snapshots)
+        assert ec2.volumes_with_snapshots[volume_id] is True
+
         for snapshot in ec2.snapshots:
             if snapshot.id == snapshot_id:
                 assert re.match(r"snap-[0-9a-z]{8}", snapshot.id)
-                assert (
-                    snapshot.arn
-                    == f"arn:{audit_info.audited_partition}:ec2:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:snapshot/{snapshot.id}"
-                )
+                assert snapshot.arn == snapshot_arn
                 assert snapshot.region == AWS_REGION
                 assert snapshot.tags == [
                     {"Key": "test", "Value": "test"},

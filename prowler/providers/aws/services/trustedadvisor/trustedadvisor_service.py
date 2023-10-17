@@ -13,7 +13,7 @@ class TrustedAdvisor(AWSService):
         # Call AWSService's __init__
         super().__init__("support", audit_info)
         self.checks = []
-        self.enabled = True
+        self.premium_support = PremiumSupport(enabled=False)
         # Support API is not available in China Partition
         # But only in us-east-1 or us-gov-west-1 https://docs.aws.amazon.com/general/latest/gr/awssupport.html
         if audit_info.audited_partition != "aws-cn":
@@ -26,8 +26,10 @@ class TrustedAdvisor(AWSService):
                 self.service, region_name=support_region
             )
             self.client.region = support_region
-            self.__describe_trusted_advisor_checks__()
-            self.__describe_trusted_advisor_check_result__()
+            self.__describe_services__()
+            if self.premium_support.enabled:
+                self.__describe_trusted_advisor_checks__()
+                self.__describe_trusted_advisor_check_result__()
 
     def __describe_trusted_advisor_checks__(self):
         logger.info("TrustedAdvisor - Describing Checks...")
@@ -43,8 +45,14 @@ class TrustedAdvisor(AWSService):
                     )
                 )
         except ClientError as error:
-            if error.response["Error"]["Code"] == "SubscriptionRequiredException":
-                self.enabled = False
+            if (
+                error.response["Error"]["Code"] == "SubscriptionRequiredException"
+                and error.response["Error"]["Message"]
+                == "Amazon Web Services Premium Support Subscription is required to use this service."
+            ):
+                logger.warning(
+                    f"{self.client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
             else:
                 logger.error(
                     f"{self.client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -78,9 +86,40 @@ class TrustedAdvisor(AWSService):
                 f"{self.client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def __describe_services__(self):
+        logger.info("Support - Describing Services...")
+        try:
+            self.client.describe_services()
+            # If the above call succeeds the account has a Business,
+            # Enterprise On-Ramp, or Enterprise Support plan.
+            self.premium_support.enabled = True
+
+        except ClientError as error:
+            if (
+                error.response["Error"]["Code"] == "SubscriptionRequiredException"
+                and error.response["Error"]["Message"]
+                == "Amazon Web Services Premium Support Subscription is required to use this service."
+            ):
+                logger.warning(
+                    f"{self.region} --"
+                    f" {error.__class__.__name__}[{error.__traceback__.tb_lineno}]:"
+                    f" {error}"
+                )
+
+        except Exception as error:
+            logger.error(
+                f"{self.region} --"
+                f" {error.__class__.__name__}[{error.__traceback__.tb_lineno}]:"
+                f" {error}"
+            )
+
 
 class Check(BaseModel):
     id: str
     name: str
     status: Optional[str]
     region: str
+
+
+class PremiumSupport(BaseModel):
+    enabled: bool

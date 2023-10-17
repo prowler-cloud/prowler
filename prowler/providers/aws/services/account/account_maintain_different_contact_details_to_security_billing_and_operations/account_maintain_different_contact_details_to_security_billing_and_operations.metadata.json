@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "account_maintain_different_contact_details_to_security_billing_and_operations",
+  "CheckTitle": "Maintain different contact details to security, billing and operations.",
+  "CheckType": [
+    "IAM"
+  ],
+  "ServiceName": "account",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:access-recorder:region:account-id:recorder/resource-id",
+  "Severity": "medium",
+  "ResourceType": "Other",
+  "Description": "Maintain different contact details to security, billing and operations.",
+  "Risk": "Ensure contact email and telephone details for AWS accounts are current and map to more than one individual in your organization. An AWS account supports a number of contact details; and AWS will use these to contact the account owner if activity judged to be in breach of Acceptable Use Policy. If an AWS account is observed to be behaving in a prohibited or suspicious manner; AWS will attempt to contact the account owner by email and phone using the contact details listed. If this is unsuccessful and the account behavior needs urgent mitigation; proactive measures may be taken; including throttling of traffic between the account exhibiting suspicious behavior and the AWS API endpoints and the Internet. This will result in impaired service to and from the account in question.",
+  "RelatedUrl": "https://docs.aws.amazon.com/accounts/latest/reference/manage-acct-update-contact.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "https://docs.bridgecrew.io/docs/iam_18-maintain-contact-details#aws-console",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Using the Billing and Cost Management console complete contact details.",
+      "Url": "https://docs.aws.amazon.com/accounts/latest/reference/manage-acct-update-contact.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

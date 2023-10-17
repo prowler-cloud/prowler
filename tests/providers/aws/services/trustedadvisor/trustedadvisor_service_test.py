@@ -19,6 +19,21 @@ make_api_call = botocore.client.BaseClient._make_api_call
 def mock_make_api_call(self, operation_name, kwarg):
     if operation_name == "DescribeTrustedAdvisorCheckResult":
         return {}
+    if operation_name == "DescribeServices":
+        return {
+            "services": [
+                {
+                    "code": "amazon-marketplace",
+                    "name": "Marketplace",
+                    "categories": [
+                        {
+                            "code": "general-marketplace-seller-inquiry",
+                            "name": "General Marketplace Seller Inquiry",
+                        },
+                    ],
+                }
+            ]
+        }
     return make_api_call(self, operation_name, kwarg)
 
 
@@ -78,5 +93,6 @@ class Test_TrustedAdvisor_Service:
     def test__describe_trusted_advisor_checks__(self):
         audit_info = self.set_mocked_audit_info()
         trustedadvisor = TrustedAdvisor(audit_info)
+        assert trustedadvisor.premium_support.enabled
         assert len(trustedadvisor.checks) == 104  # Default checks
         assert trustedadvisor.checks[0].region == AWS_REGION

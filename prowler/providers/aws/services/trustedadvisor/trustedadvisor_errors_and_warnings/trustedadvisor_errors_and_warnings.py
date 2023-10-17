@@ -7,7 +7,7 @@ from prowler.providers.aws.services.trustedadvisor.trustedadvisor_client import 
 class trustedadvisor_errors_and_warnings(Check):
     def execute(self):
         findings = []
-        if trustedadvisor_client.enabled:
+        if trustedadvisor_client.premium_support.enabled:
             if trustedadvisor_client.checks:
                 for check in trustedadvisor_client.checks:
                     if (
