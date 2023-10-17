@@ -158,7 +158,7 @@ def init_parser(self):
     noise_reduction_subparser.add_argument(
         "--reduce-noise",
         action="store_true",
-        help="Reduce noise by avoiding failed findings in unused services",
+        help="Reduce noise by ignoring findings in unused services",
     )
 
 
