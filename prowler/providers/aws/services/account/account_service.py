@@ -74,7 +74,7 @@ class Account(AWSService):
         except ClientError as error:
             if (
                 error.response["Error"]["Code"] == "ResourceNotFoundException"
-                and error.response["message"]
+                and error.response["Error"]["Message"]
                 == "No contact of the inputted alternate contact type found."
             ):
                 logger.warning(
