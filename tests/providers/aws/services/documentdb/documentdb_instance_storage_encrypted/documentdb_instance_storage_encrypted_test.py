@@ -15,7 +15,7 @@ DOC_DB_ENGINE_VERSION = "5.0.0"
 class Test_documentdb_instance_storage_encrypted:
     def test_documentdb_no_instances(self):
         documentdb_client = mock.MagicMock
-        documentdb_client.db_instances = []
+        documentdb_client.db_instances = {}
 
         with mock.patch(
             "prowler.providers.aws.services.documentdb.documentdb_service.DocumentDB",
@@ -31,8 +31,8 @@ class Test_documentdb_instance_storage_encrypted:
 
     def test_documentdb_instance_not_encrypted(self):
         documentdb_client = mock.MagicMock
-        documentdb_client.db_instances = [
-            Instance(
+        documentdb_client.db_instances = {
+            DOC_DB_INSTANCE_ARN: Instance(
                 id=DOC_DB_INSTANCE_NAME,
                 arn=DOC_DB_INSTANCE_ARN,
                 engine="docdb",
@@ -43,7 +43,7 @@ class Test_documentdb_instance_storage_encrypted:
                 auto_minor_version_upgrade=False,
                 region=AWS_REGION,
             )
-        ]
+        }
 
         with mock.patch(
             "prowler.providers.aws.services.documentdb.documentdb_service.DocumentDB",
@@ -67,8 +67,8 @@ class Test_documentdb_instance_storage_encrypted:
 
     def test_documentdb_instance_with_encryption(self):
         documentdb_client = mock.MagicMock
-        documentdb_client.db_instances = [
-            Instance(
+        documentdb_client.db_instances = {
+            DOC_DB_INSTANCE_ARN: Instance(
                 id=DOC_DB_INSTANCE_NAME,
                 arn=DOC_DB_INSTANCE_ARN,
                 engine="docdb",
@@ -79,8 +79,7 @@ class Test_documentdb_instance_storage_encrypted:
                 auto_minor_version_upgrade=False,
                 region=AWS_REGION,
             )
-        ]
-
+        }
         with mock.patch(
             "prowler.providers.aws.services.documentdb.documentdb_service.DocumentDB",
             new=documentdb_client,
