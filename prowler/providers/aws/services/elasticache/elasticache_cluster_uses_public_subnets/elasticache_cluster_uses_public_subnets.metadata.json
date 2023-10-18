@@ -23,7 +23,9 @@
       "Url": "https://docs.aws.amazon.com/AmazonElastiCache/latest/red-ug/VPCs.html"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "internet-exposed"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
