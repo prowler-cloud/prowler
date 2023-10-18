@@ -34,7 +34,6 @@ class ECS(AWSService):
                                 revision=task_definition.split(":")[-1],
                                 region=regional_client.region,
                                 environment_variables=[],
-                                network_mode="",
                             )
                         )
         except Exception as error:
@@ -86,4 +85,4 @@ class TaskDefinition(BaseModel):
     region: str
     environment_variables: list[ContainerEnvVariable]
     tags: Optional[list] = []
-    network_mode: str
+    network_mode: Optional[str]
