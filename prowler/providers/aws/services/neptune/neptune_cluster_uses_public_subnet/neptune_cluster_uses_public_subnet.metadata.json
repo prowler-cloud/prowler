@@ -4,13 +4,13 @@
   "CheckTitle": "Ensure Neptune Cluster is not using a public subnet",
   "CheckType": [],
   "ServiceName": "neptune",
-  "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:rds:region:account-id:cluster:cluster-id",
+  "SubServiceName": "cluster",
+  "ResourceIdTemplate": "arn:aws:rds:<region>:<account>:cluster:<resource_name>",
   "Severity": "medium",
   "ResourceType": "AWSNeptuneDBCluster",
   "Description": "Ensure Neptune Cluster is not using a public subnet",
-  "Risk": "",
-  "RelatedUrl": "",
+  "Risk": "There is a risk of exposing sensitive data if Neptune Cluster uses a public subnet.",
+  "RelatedUrl": "https://docs.aws.amazon.com/neptune/latest/userguide/Instances.NeptuneInVPC.html",
   "Remediation": {
     "Code": {
       "CLI": "",
@@ -19,8 +19,8 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "",
-      "Url": ""
+      "Text": "To ensure your Neptune cluster is not using a public subnet, follow the recommended remediation steps based on your preferred method.",
+      "Url": "https://docs.aws.amazon.com/neptune/latest/userguide/Instances.NeptuneInVPC.html#Instances.NeptuneInVPC.VPCs"
     }
   },
   "Categories": [],
