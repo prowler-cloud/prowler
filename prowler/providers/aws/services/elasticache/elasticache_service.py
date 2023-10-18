@@ -1,62 +1,89 @@
 from typing import Optional
 
-from pydantic import BaseModel, typing
+from pydantic import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.providers.aws.lib.service.service import AWSService
-from prowler.providers.aws.services.vpc.vpc_client import vpc_client
 
 
-################################ ECS
+################################ Elasticache
 class Elasticache(AWSService):
     def __init__(self, audit_info):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, audit_info)
-        self.elasticache_instances = []
-        self.__describe_cache_clusters__()
-        self.__get_public_subnets__()
+        self.clusters = {}
+        self.__threading_call__(self.__describe_cache_clusters__)
+        self.__threading_call__(self.__describe_cache_subnet_groups__)
+        self.__list_tags_for_resource__()
 
-    def __describe_cache_clusters__(self):
-        logger.info("ECS - Describing Cache Clusters...")
+    def __describe_cache_clusters__(self, regional_client):
+        logger.info("Elasticache - Describing Cache Clusters...")
         try:
-            cache_clusters = self.client.describe_cache_clusters()["CacheClusters"]
-            for cache_cluster in cache_clusters:
-                self.elasticache_instances.append(
-                    ElastiCacheInstance(
-                        cache_cluster_id=cache_cluster["CacheClusterId"],
-                        arn=cache_cluster["ARN"],
-                        cache_node_type=cache_cluster["CacheNodeType"],
-                        engine=cache_cluster["Engine"],
-                        engine_version=cache_cluster["EngineVersion"],
-                        availability_zone=cache_cluster["PreferredAvailabilityZone"],
-                        subnet_group=self.client.describe_cache_subnet_groups(
-                            CacheSubnetGroupName=cache_cluster["CacheSubnetGroupName"]
-                        )["CacheSubnetGroups"],
-                    )
+            for cache_cluster in regional_client.describe_cache_clusters()[
+                "CacheClusters"
+            ]:
+                cluster_arn = cache_cluster["ARN"]
+                self.clusters[cluster_arn] = Cluster(
+                    id=cache_cluster["CacheClusterId"],
+                    arn=cluster_arn,
+                    region=regional_client.region,
+                    cache_subnet_group_id=cache_cluster["CacheSubnetGroupName"],
                 )
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def __describe_cache_subnet_groups__(self, regional_client):
+        logger.info("Elasticache - Describing Cache Subnet Groups...")
+        try:
+            for cluster in self.clusters.values():
+                if cluster.region == regional_client.region:
+                    try:
+                        subnets = []
+                        cache_subnet_groups = (
+                            regional_client.describe_cache_subnet_groups(
+                                CacheSubnetGroupName=cluster.cache_subnet_group_id
+                            )["CacheSubnetGroups"]
+                        )
+                        for subnet_group in cache_subnet_groups:
+                            for subnet in subnet_group["Subnets"]:
+                                subnets.append(subnet["SubnetIdentifier"])
+
+                        cluster.subnets = subnets
+                    except Exception as error:
+                        logger.error(
+                            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __get_public_subnets__(self):
-        for instance in self.elasticache_instances:
-            public_subnets = []
-            for subnets in instance.subnet_group:
-                for subnet in subnets["Subnets"]:
-                    if vpc_client.vpc_subnets[subnet["SubnetIdentifier"]].public:
-                        public_subnets.append(
-                            vpc_client.vpc_subnets[subnet["SubnetIdentifier"]].id
-                        )
-            instance.public_subnets = public_subnets
+    def __list_tags_for_resource__(self):
+        logger.info("Elasticache - Listing Tags...")
+        try:
+            for cluster in self.clusters.values():
+                try:
+                    regional_client = self.regional_clients[cluster.region]
+                    cluster.tags = regional_client.list_tags_for_resource(
+                        ResourceName=cluster.arn
+                    )["TagList"]
+
+                except Exception as error:
+                    logger.error(
+                        f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
 
 
-class ElastiCacheInstance(BaseModel):
-    cache_cluster_id: str
+class Cluster(BaseModel):
+    id: str
     arn: str
-    cache_node_type: str
-    engine: str
-    engine_version: str
-    availability_zone: str
-    subnet_group: typing.Any
-    public_subnets: Optional[list] = []
+    region: str
+    cache_subnet_group_id: str
+    subnets: Optional[list]
+    tags: Optional[dict]
