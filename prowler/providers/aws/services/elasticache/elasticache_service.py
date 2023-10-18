@@ -7,7 +7,7 @@ from prowler.providers.aws.lib.service.service import AWSService
 
 
 ################################ Elasticache
-class Elasticache(AWSService):
+class ElastiCache(AWSService):
     def __init__(self, audit_info):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, audit_info)
@@ -86,4 +86,4 @@ class Cluster(BaseModel):
     region: str
     cache_subnet_group_id: str
     subnets: Optional[list]
-    tags: Optional[dict]
+    tags: Optional[list]

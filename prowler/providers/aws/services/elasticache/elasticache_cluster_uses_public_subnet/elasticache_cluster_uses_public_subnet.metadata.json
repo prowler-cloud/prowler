@@ -1,6 +1,6 @@
 {
   "Provider": "aws",
-  "CheckID": "elasticache_cluster_uses_public_subnets",
+  "CheckID": "elasticache_cluster_uses_public_subnet",
   "CheckTitle": "Ensure Elasticache Cluster is not using a public subnet",
   "CheckType": [],
   "ServiceName": "elasticache",
