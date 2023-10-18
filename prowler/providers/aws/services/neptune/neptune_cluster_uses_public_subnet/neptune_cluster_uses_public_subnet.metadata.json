@@ -3,7 +3,7 @@
   "CheckID": "neptune_cluster_uses_public_subnet",
   "CheckTitle": "Ensure Neptune Cluster is not using a public subnet",
   "CheckType": [],
-  "ServiceName": "network",
+  "ServiceName": "neptune",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:rds:region:account-id:cluster:cluster-id",
   "Severity": "medium",
