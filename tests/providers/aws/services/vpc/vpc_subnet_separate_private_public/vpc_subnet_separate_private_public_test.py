@@ -46,7 +46,16 @@ class Test_vpc_subnet_separate_private_public:
     def test_vpc_subnet_only_private(self):
         ec2_client = client("ec2", region_name=AWS_REGION)
         vpc = ec2_client.create_vpc(
-            CidrBlock="172.28.7.0/24", InstanceTenancy="default"
+            CidrBlock="172.28.7.0/24",
+            InstanceTenancy="default",
+            TagSpecifications=[
+                {
+                    "ResourceType": "vpc",
+                    "Tags": [
+                        {"Key": "Name", "Value": "vpc_name"},
+                    ],
+                },
+            ],
         )
         # VPC Private
         subnet_private = ec2_client.create_subnet(
@@ -92,10 +101,12 @@ class Test_vpc_subnet_separate_private_public:
                         assert result.status == "FAIL"
                         assert (
                             result.status_extended
-                            == f"VPC {vpc['Vpc']['VpcId']} has only private subnets."
+                            == "VPC vpc_name has only private subnets."
                         )
                         assert result.resource_id == vpc["Vpc"]["VpcId"]
-                        assert result.resource_tags == []
+                        assert result.resource_tags == [
+                            {"Key": "Name", "Value": "vpc_name"}
+                        ]
                         assert result.region == AWS_REGION
                 if not found:
                     assert False

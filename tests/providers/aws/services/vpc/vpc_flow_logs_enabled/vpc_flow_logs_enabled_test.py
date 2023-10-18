@@ -71,7 +71,17 @@ class Test_vpc_flow_logs_enabled:
         # Create VPC Mocked Resources
         ec2_client = client("ec2", region_name=AWS_REGION)
 
-        vpc = ec2_client.create_vpc(CidrBlock="10.0.0.0/16")["Vpc"]
+        vpc = ec2_client.create_vpc(
+            CidrBlock="10.0.0.0/16",
+            TagSpecifications=[
+                {
+                    "ResourceType": "vpc",
+                    "Tags": [
+                        {"Key": "Name", "Value": "vpc_name"},
+                    ],
+                },
+            ],
+        )["Vpc"]
 
         ec2_client.create_flow_logs(
             ResourceType="VPC",
@@ -106,8 +116,7 @@ class Test_vpc_flow_logs_enabled:
                 if result.resource_id == vpc["VpcId"]:
                     assert result.status == "PASS"
                     assert (
-                        result.status_extended
-                        == f"VPC {vpc['VpcId']} Flow logs are enabled."
+                        result.status_extended == "VPC vpc_name Flow logs are enabled."
                     )
                     assert result.resource_id == vpc["VpcId"]
 

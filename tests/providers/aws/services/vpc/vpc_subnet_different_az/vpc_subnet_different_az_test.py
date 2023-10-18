@@ -46,7 +46,16 @@ class Test_vpc_subnet_different_az:
     def test_vpc_subnet_different_az(self):
         ec2_client = client("ec2", region_name=AWS_REGION)
         vpc = ec2_client.create_vpc(
-            CidrBlock="172.28.7.0/24", InstanceTenancy="default"
+            CidrBlock="172.28.7.0/24",
+            InstanceTenancy="default",
+            TagSpecifications=[
+                {
+                    "ResourceType": "vpc",
+                    "Tags": [
+                        {"Key": "Name", "Value": "vpc_name"},
+                    ],
+                },
+            ],
         )
         # VPC AZ 1
         ec2_client.create_subnet(
@@ -88,10 +97,12 @@ class Test_vpc_subnet_different_az:
                         assert result.status == "PASS"
                         assert (
                             result.status_extended
-                            == f"VPC {vpc['Vpc']['VpcId']} has subnets in more than one availability zone."
+                            == "VPC vpc_name has subnets in more than one availability zone."
                         )
                         assert result.resource_id == vpc["Vpc"]["VpcId"]
-                        assert result.resource_tags == []
+                        assert result.resource_tags == [
+                            {"Key": "Name", "Value": "vpc_name"}
+                        ]
                         assert result.region == AWS_REGION
                 if not found:
                     assert False
