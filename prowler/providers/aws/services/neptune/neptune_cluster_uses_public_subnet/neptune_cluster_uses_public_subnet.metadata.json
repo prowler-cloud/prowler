@@ -1,11 +1,11 @@
 {
   "Provider": "aws",
-  "CheckID": "neptune_cluster_with_public_subnet",
+  "CheckID": "neptune_cluster_uses_public_subnet",
   "CheckTitle": "Ensure Neptune Cluster is not using a public subnet",
   "CheckType": [],
   "ServiceName": "network",
   "SubServiceName": "",
-  "ResourceIdTemplate": "",
+  "ResourceIdTemplate": "arn:partition:rds:region:account-id:cluster:cluster-id",
   "Severity": "medium",
   "ResourceType": "AWSNeptuneDBCluster",
   "Description": "Ensure Neptune Cluster is not using a public subnet",

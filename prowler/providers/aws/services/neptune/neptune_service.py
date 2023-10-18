@@ -4,61 +4,95 @@ from pydantic import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.providers.aws.lib.service.service import AWSService
-from prowler.providers.aws.services.vpc.vpc_client import vpc_client
 
 
-################## NetworkFirewall
+################## Neptune
 class Neptune(AWSService):
     def __init__(self, audit_info):
         # Call AWSService's __init__
-        super().__init__(__class__.__name__, audit_info)
-        self.clusters = []
-        self.__describe_clusters__()
-        self.__get_public_subnets__()
+        self.service_name = "neptune"
+        super().__init__(self.service_name, audit_info)
+        self.clusters = {}
+        self.__threading_call__(self.__describe_clusters__)
+        self.__threading_call__(self.__describe_db_subnet_groups__)
+        self.__list_tags_for_resource__()
 
-    def __describe_clusters__(self):
+    def __describe_clusters__(self, regional_client):
         logger.info("Neptune - Describing DB Clusters...")
         try:
-            for cluster in self.client.describe_db_clusters(
+            for cluster in regional_client.describe_db_clusters(
                 Filters=[
                     {
                         "Name": "engine",
                         "Values": [
-                            "neptune",
+                            self.service_name,
                         ],
                     },
                 ],
             )["DBClusters"]:
-                self.clusters.append(
-                    Cluster(
-                        arn=cluster["DBClusterArn"],
-                        name=cluster["DBClusterIdentifier"],
-                        id=cluster["DbClusterResourceId"],
-                        subnet_group=self.client.describe_db_subnet_groups(
-                            DBSubnetGroupName=cluster["DBSubnetGroup"]
-                        )["DBSubnetGroups"],
-                    )
+                cluster_arn = cluster["DBClusterArn"]
+                self.clusters[cluster_arn] = Cluster(
+                    arn=cluster_arn,
+                    name=cluster["DBClusterIdentifier"],
+                    id=cluster["DbClusterResourceId"],
+                    db_subnet_group_id=cluster["DBSubnetGroup"],
+                    region=regional_client.region,
                 )
+
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __get_public_subnets__(self):
-        for cluster in self.clusters:
-            public_subnets = []
-            for subnets in cluster.subnet_group:
-                for subnet in subnets["Subnets"]:
-                    if vpc_client.vpc_subnets[subnet["SubnetIdentifier"]].public:
-                        public_subnets.append(
-                            vpc_client.vpc_subnets[subnet["SubnetIdentifier"]].id
+    def __describe_db_subnet_groups__(self, regional_client):
+        logger.info("Neptune - Describing DB Subnet Groups...")
+        try:
+            for cluster in self.clusters.values():
+                if cluster.region == regional_client.region:
+                    try:
+                        subnets = []
+                        db_subnet_groups = regional_client.describe_db_subnet_groups(
+                            DBSubnetGroupName=cluster.db_subnet_group_id
+                        )["DBSubnetGroups"]
+                        for subnet_group in db_subnet_groups:
+                            for subnet in subnet_group["Subnets"]:
+                                subnets.append(subnet["SubnetIdentifier"])
+
+                        cluster.subnets = subnets
+                    except Exception as error:
+                        logger.error(
+                            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                         )
-            cluster.public_subnets = public_subnets
+
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def __list_tags_for_resource__(self):
+        logger.info("Neptune - Listing Tags...")
+        try:
+            for cluster in self.clusters.values():
+                try:
+                    regional_client = self.regional_clients[cluster.region]
+                    cluster.tags = regional_client.list_tags_for_resource(
+                        ResourceName=cluster.arn
+                    )["TagList"]
+                except Exception as error:
+                    logger.error(
+                        f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
 
 
 class Cluster(BaseModel):
     arn: str
     name: str
     id: str
-    subnet_group: list
-    public_subnets: Optional[list] = []
+    region: str
+    db_subnet_group_id: str
+    subnets: Optional[list]
+    tags: Optional[list]
