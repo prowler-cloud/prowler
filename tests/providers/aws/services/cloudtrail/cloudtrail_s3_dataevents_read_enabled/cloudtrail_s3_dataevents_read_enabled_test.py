@@ -89,6 +89,8 @@ class Test_cloudtrail_s3_dataevents_read_enabled:
                 assert result[0].resource_tags == []
                 assert result[0].region == AWS_REGION
 
+    @mock_cloudtrail
+    @mock_s3
     def test_trail_without_data_events_ignoring(self):
 
         from prowler.providers.aws.services.cloudtrail.cloudtrail_service import (

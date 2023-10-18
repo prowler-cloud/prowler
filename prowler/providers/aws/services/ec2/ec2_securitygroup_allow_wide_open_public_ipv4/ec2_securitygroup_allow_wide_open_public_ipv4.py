@@ -10,9 +10,10 @@ class ec2_securitygroup_allow_wide_open_public_ipv4(Check):
         findings = []
         cidr_treshold = 24
         for security_group in ec2_client.security_groups:
-            if (
-                not ec2_client.audit_info.ignore_unused_services
-                or vpc_client.vpcs[security_group.vpc_id].in_use
+            # Check if ignoring flag is set and if the VPC and the SG is in use
+            if not ec2_client.audit_info.ignore_unused_services or (
+                vpc_client.vpcs[security_group.vpc_id].in_use
+                and len(security_group.network_interfaces) == 0
             ):
                 report = Check_Report_AWS(self.metadata())
                 report.region = security_group.region
