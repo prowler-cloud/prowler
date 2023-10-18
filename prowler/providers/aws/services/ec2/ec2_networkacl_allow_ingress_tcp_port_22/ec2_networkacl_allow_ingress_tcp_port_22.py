@@ -21,7 +21,7 @@ class ec2_networkacl_allow_ingress_tcp_port_22(Check):
                     report.resource_arn = network_acl.arn
                     report.resource_tags = network_acl.tags
                     report.status = "FAIL"
-                    report.status_extended = f"Network ACL {network_acl.id} has SSH port 22 open to the Internet."
+                    report.status_extended = f"Network ACL {network_acl.name if network_acl.name else network_acl.id} has SSH port 22 open to the Internet."
                     findings.append(report)
                 else:
                     report = Check_Report_AWS(self.metadata())
@@ -30,7 +30,7 @@ class ec2_networkacl_allow_ingress_tcp_port_22(Check):
                     report.resource_arn = network_acl.arn
                     report.resource_tags = network_acl.tags
                     report.status = "PASS"
-                    report.status_extended = f"Network ACL {network_acl.id} does not have SSH port 22 open to the Internet."
+                    report.status_extended = f"Network ACL {network_acl.name if network_acl.name else network_acl.id} does not have SSH port 22 open to the Internet."
                     findings.append(report)
 
         return findings

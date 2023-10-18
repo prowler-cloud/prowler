@@ -13,10 +13,14 @@ class vpc_flow_logs_enabled(Check):
                 report.resource_id = vpc.id
                 report.resource_arn = vpc.arn
                 report.status = "FAIL"
-                report.status_extended = f"VPC {vpc.id} Flow logs are disabled."
+                report.status_extended = (
+                    f"VPC {vpc.name if vpc.name else vpc.id} Flow logs are disabled."
+                )
                 if vpc.flow_log:
                     report.status = "PASS"
-                    report.status_extended = f"VPC {vpc.id} Flow logs are enabled."
+                    report.status_extended = (
+                        f"VPC {vpc.name if vpc.name else vpc.id} Flow logs are enabled."
+                    )
 
                 findings.append(report)
 
