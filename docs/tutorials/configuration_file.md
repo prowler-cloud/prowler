@@ -11,21 +11,24 @@ Also you can input a custom configuration file using the `--config-file` argumen
 ### Configurable Checks
 The following list includes all the AWS checks with configurable variables that can be changed in the configuration yaml file:
 
-| Check Name  | Value  | Type  |
-|---|---|---|
-| `ec2_elastic_ip_shodan`  | `shodan_api_key`  | String |
-| `ec2_securitygroup_with_many_ingress_egress_rules`  | `max_security_group_rules`  | Integer |
-| `ec2_instance_older_than_specific_days` | `max_ec2_instance_age_in_days`  | Integer |
-| `vpc_endpoint_connections_trust_boundaries`  | `trusted_account_ids`  | List of Strings |
-| `vpc_endpoint_services_allowed_principals_trust_boundaries`  | `trusted_account_ids`  | List of Strings |
-| `cloudwatch_log_group_retention_policy_specific_days_enabled` | `log_group_retention_days` | Integer |
-| `appstream_fleet_session_idle_disconnect_timeout`  | `max_idle_disconnect_timeout_in_seconds`  | Integer |
-| `appstream_fleet_session_disconnect_timeout`  |  `max_disconnect_timeout_in_seconds` | Integer |
-| `appstream_fleet_maximum_session_duration`  | `max_session_duration_seconds`  | Integer |
-| `awslambda_function_using_supported_runtimes` | `obsolete_lambda_runtimes`  | Integer |
-| `organizations_scp_check_deny_regions` | `organizations_enabled_regions`  | List of Strings |
-| `organizations_delegated_administrators` |  `organizations_trusted_delegated_administrators` | List of Strings |
-| `ecr_repositories_scan_vulnerabilities_in_latest_image` | `ecr_repository_vulnerability_minimum_severity` | String |
+| Check Name                                                    | Value                                            | Type            |
+|---------------------------------------------------------------|--------------------------------------------------|-----------------|
+| `iam_user_accesskey_unused`                                   | `max_unused_access_keys_days`                    | Integer         |
+| `iam_user_console_access_unused`                              | `max_console_access_days`                        | Integer         |
+| `ec2_elastic_ip_shodan`                                       | `shodan_api_key`                                 | String          |
+| `ec2_securitygroup_with_many_ingress_egress_rules`            | `max_security_group_rules`                       | Integer         |
+| `ec2_instance_older_than_specific_days`                       | `max_ec2_instance_age_in_days`                   | Integer         |
+| `vpc_endpoint_connections_trust_boundaries`                   | `trusted_account_ids`                            | List of Strings |
+| `vpc_endpoint_services_allowed_principals_trust_boundaries`   | `trusted_account_ids`                            | List of Strings |
+| `cloudwatch_log_group_retention_policy_specific_days_enabled` | `log_group_retention_days`                       | Integer         |
+| `appstream_fleet_session_idle_disconnect_timeout`             | `max_idle_disconnect_timeout_in_seconds`         | Integer         |
+| `appstream_fleet_session_disconnect_timeout`                  | `max_disconnect_timeout_in_seconds`              | Integer         |
+| `appstream_fleet_maximum_session_duration`                    | `max_session_duration_seconds`                   | Integer         |
+| `awslambda_function_using_supported_runtimes`                 | `obsolete_lambda_runtimes`                       | Integer         |
+| `organizations_scp_check_deny_regions`                        | `organizations_enabled_regions`                  | List of Strings |
+| `organizations_delegated_administrators`                      | `organizations_trusted_delegated_administrators` | List of Strings |
+| `ecr_repositories_scan_vulnerabilities_in_latest_image`       | `ecr_repository_vulnerability_minimum_severity`  | String          |
+| `trustedadvisor_premium_support_plan_subscribed`              | `verify_premium_support_plans`                   | Boolean         |
 
 ## Azure
 
