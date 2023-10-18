@@ -60,10 +60,10 @@ class Test_macie_is_enabled:
             )
         ]
         with mock.patch(
-            "prowler.providers.aws.services.macie.macie_is_enabled.macie_is_enabled.macie_client",
+            "prowler.providers.aws.services.macie.macie_service.Macie",
             new=macie_client,
         ), mock.patch(
-            "prowler.providers.aws.services.macie.macie_is_enabled.macie_is_enabled.s3_client",
+            "prowler.providers.aws.services.s3.s3_service.S3",
             new=s3_client,
         ):
             # Test Check
@@ -93,10 +93,10 @@ class Test_macie_is_enabled:
             )
         ]
         with mock.patch(
-            "prowler.providers.aws.services.macie.macie_is_enabled.macie_is_enabled.macie_client",
+            "prowler.providers.aws.services.macie.macie_service.Macie",
             new=macie_client,
         ), mock.patch(
-            "prowler.providers.aws.services.macie.macie_is_enabled.macie_is_enabled.s3_client",
+            "prowler.providers.aws.services.s3.s3_service.S3",
             new=s3_client,
         ):
             # Test Check
@@ -116,6 +116,7 @@ class Test_macie_is_enabled:
         macie_client = mock.MagicMock
         s3_client = mock.MagicMock
         s3_client.audit_info = self.set_mocked_audit_info()
+        s3_client.buckets = []
         macie_client.audit_info = self.set_mocked_audit_info()
         macie_client.audited_account = AWS_ACCOUNT_NUMBER
         macie_client.audited_account_arn = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
@@ -128,10 +129,10 @@ class Test_macie_is_enabled:
 
         macie_client.audit_info.ignore_unused_services = True
         with mock.patch(
-            "prowler.providers.aws.services.macie.macie_is_enabled.macie_is_enabled.macie_client",
+            "prowler.providers.aws.services.macie.macie_service.Macie",
             new=macie_client,
         ), mock.patch(
-            "prowler.providers.aws.services.macie.macie_is_enabled.macie_is_enabled.s3_client",
+            "prowler.providers.aws.services.s3.s3_service.S3",
             new=s3_client,
         ):
 
@@ -160,10 +161,10 @@ class Test_macie_is_enabled:
         ]
 
         with mock.patch(
-            "prowler.providers.aws.services.macie.macie_is_enabled.macie_is_enabled.macie_client",
+            "prowler.providers.aws.services.macie.macie_service.Macie",
             new=macie_client,
         ), mock.patch(
-            "prowler.providers.aws.services.macie.macie_is_enabled.macie_is_enabled.s3_client",
+            "prowler.providers.aws.services.s3.s3_service.S3",
             new=s3_client,
         ):
 
