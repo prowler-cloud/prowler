@@ -1,7 +1,7 @@
 {
   "Provider": "aws",
   "CheckID": "apigateway_endpoint_public_without_authorizer",
-  "CheckTitle": "Check if API Gateway endpoint without an authorizer is public or private.",
+  "CheckTitle": "Check if API Gateway public endpoint has an authorizer configured.",
   "CheckType": [
     "Infrastructure Security"
   ],
@@ -10,9 +10,9 @@
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
   "ResourceType": "AwsApiGatewayRestApi",
-  "Description": "Check if API Gateway endpoint without an authorizer is public or private.",
+  "Description": "Check if API Gateway public endpoint has an authorizer configured.",
   "Risk": "If accessible from internet without restrictions opens up attack / abuse surface for any malicious user.",
-  "RelatedUrl": "",
+  "RelatedUrl": "https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-api-endpoint-types.html",
   "Remediation": {
     "Code": {
       "CLI": "",
@@ -21,8 +21,8 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Verify that any public Api Gateway is protected and audited. Detective controls for common risks should be implemented.",
-      "Url": "https://d1.awsstatic.com/whitepapers/api-gateway-security.pdf?svrd_sip6"
+      "Text": "Verify that any public API Gateway is protected and audited. Detective controls for common risks should be implemented.",
+      "Url": "https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-api-endpoint-types.html"
     }
   },
   "Categories": [
