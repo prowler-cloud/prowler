@@ -16,7 +16,7 @@ class apigateway_endpoint_public_without_authorizer(Check):
             if rest_api.public_endpoint and not rest_api.authorizer:
                 report.status = "FAIL"
                 report.status_extended = f"API Gateway {rest_api.name} ID {rest_api.id} is internet accesible without an authorizer."
-            else:
+            elif rest_api.public_endpoint and rest_api.authorizer:
                 report.status = "PASS"
                 report.status_extended = f"API Gateway {rest_api.name} ID {rest_api.id} is {'internet accesible with an authorizer' if rest_api.public_endpoint else 'private'}."
             findings.append(report)

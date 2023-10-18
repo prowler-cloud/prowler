@@ -1,7 +1,7 @@
 {
   "Provider": "aws",
-  "CheckID": "elasticache_using_public_subnets",
-  "CheckTitle": "",
+  "CheckID": "elasticache_cluster_uses_public_subnets",
+  "CheckTitle": "Ensure Elasticache Cluster is not using a public subnet",
   "CheckType": [
     "Protect",
     "Secure development"
@@ -10,8 +10,8 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
-  "ResourceType": "",
-  "Description": "",
+  "ResourceType": "AWSElastiCacheCacheCluster",
+  "Description": "Ensure Elasticache Cluster is not using a public subnet",
   "Risk": "",
   "RelatedUrl": "",
   "Remediation": {

@@ -13,7 +13,7 @@ AWS_REGION = "us-east-1"
 AWS_ACCOUNT_NUMBER = "123456789012"
 
 
-class Test_elasticache_using_public_subnets:
+class Test_elasticache_cluster_uses_public_subnets:
     def set_mocked_audit_info(self):
         audit_info = AWS_Audit_Info(
             session_config=None,
@@ -56,15 +56,15 @@ class Test_elasticache_using_public_subnets:
     #         "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
     #         new=current_audit_info,
     #     ), mock.patch(
-    #         "prowler.providers.aws.services.elasticache.elasticache_using_public_subnets.elasticache_using_public_subnets.elasticache_client",
+    #         "prowler.providers.aws.services.elasticache.elasticache_cluster_uses_public_subnets.elasticache_cluster_uses_public_subnets.elasticache_client",
     #         new=Elasticache(current_audit_info),
     #     ):
     #         # Test Check
-    #         from prowler.providers.aws.services.elasticache.elasticache_using_public_subnets.elasticache_using_public_subnets import (
-    #             elasticache_using_public_subnets,
+    #         from prowler.providers.aws.services.elasticache.elasticache_cluster_uses_public_subnets.elasticache_cluster_uses_public_subnets import (
+    #             elasticache_cluster_uses_public_subnets,
     #         )
 
-    #         check = elasticache_using_public_subnets()
+    #         check = elasticache_cluster_uses_public_subnets()
     #         result = check.execute()
 
     #         assert len(result) == 0
@@ -127,12 +127,12 @@ class Test_elasticache_using_public_subnets:
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             new=current_audit_info,
         ), mock.patch(
-            "prowler.providers.aws.services.elasticache.elasticache_using_public_subnets.elasticache_using_public_subnets.elasticache_client",
+            "prowler.providers.aws.services.elasticache.elasticache_cluster_uses_public_subnets.elasticache_cluster_uses_public_subnets.elasticache_client",
             new=Elasticache(current_audit_info),
         ):
             # Mock needed due to lack of support for "create_cache_subnet_group" on moto.
             with mock.patch(
-                "prowler.providers.aws.services.elasticache.elasticache_using_public_subnets.elasticache_using_public_subnets.elasticache_client.elasticache_instances",
+                "prowler.providers.aws.services.elasticache.elasticache_cluster_uses_public_subnets.elasticache_cluster_uses_public_subnets.elasticache_client.elasticache_instances",
                 new=[
                     ElastiCacheInstance(
                         cache_cluster_id=cluster["CacheCluster"]["CacheClusterId"],
@@ -167,11 +167,11 @@ class Test_elasticache_using_public_subnets:
             ):
                 print(dir(elasticache_client))
                 # Test Check
-                from prowler.providers.aws.services.elasticache.elasticache_using_public_subnets.elasticache_using_public_subnets import (
-                    elasticache_using_public_subnets,
+                from prowler.providers.aws.services.elasticache.elasticache_cluster_uses_public_subnets.elasticache_cluster_uses_public_subnets import (
+                    elasticache_cluster_uses_public_subnets,
                 )
 
-                check = elasticache_using_public_subnets()
+                check = elasticache_cluster_uses_public_subnets()
                 result = check.execute()
 
                 assert len(result) == 1
@@ -236,12 +236,12 @@ class Test_elasticache_using_public_subnets:
     #         "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
     #         new=current_audit_info,
     #     ), mock.patch(
-    #         "prowler.providers.aws.services.elasticache.elasticache_using_public_subnets.elasticache_using_public_subnets.elasticache_client",
+    #         "prowler.providers.aws.services.elasticache.elasticache_cluster_uses_public_subnets.elasticache_cluster_uses_public_subnets.elasticache_client",
     #         new=Elasticache(current_audit_info),
     #     ):
     #         # Mock needed due to lack of support for "create_cache_subnet_group" on moto.
     #         with mock.patch(
-    #             "prowler.providers.aws.services.elasticache.elasticache_using_public_subnets.elasticache_using_public_subnets.elasticache_client.elasticache_instances",
+    #             "prowler.providers.aws.services.elasticache.elasticache_cluster_uses_public_subnets.elasticache_cluster_uses_public_subnets.elasticache_client.elasticache_instances",
     #             new=[
     #                 ElastiCacheInstance(
     #                     cache_cluster_id=cluster["CacheCluster"]["CacheClusterId"],
@@ -275,11 +275,11 @@ class Test_elasticache_using_public_subnets:
     #             ],
     #         ):
     #             # Test Check
-    #             from prowler.providers.aws.services.elasticache.elasticache_using_public_subnets.elasticache_using_public_subnets import (
-    #                 elasticache_using_public_subnets,
+    #             from prowler.providers.aws.services.elasticache.elasticache_cluster_uses_public_subnets.elasticache_cluster_uses_public_subnets import (
+    #                 elasticache_cluster_uses_public_subnets,
     #             )
 
-    #             check = elasticache_using_public_subnets()
+    #             check = elasticache_cluster_uses_public_subnets()
     #             result = check.execute()
 
     #             assert len(result) == 1
@@ -340,12 +340,12 @@ class Test_elasticache_using_public_subnets:
     #         "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
     #         new=current_audit_info,
     #     ), mock.patch(
-    #         "prowler.providers.aws.services.elasticache.elasticache_using_public_subnets.elasticache_using_public_subnets.elasticache_client",
+    #         "prowler.providers.aws.services.elasticache.elasticache_cluster_uses_public_subnets.elasticache_cluster_uses_public_subnets.elasticache_client",
     #         new=Elasticache(current_audit_info),
     #     ):
     #         # Mock needed due to lack of support for "create_cache_subnet_group" on moto.
     #         with mock.patch(
-    #             "prowler.providers.aws.services.elasticache.elasticache_using_public_subnets.elasticache_using_public_subnets.elasticache_client.elasticache_instances",
+    #             "prowler.providers.aws.services.elasticache.elasticache_cluster_uses_public_subnets.elasticache_cluster_uses_public_subnets.elasticache_client.elasticache_instances",
     #             new=[
     #                 ElastiCacheInstance(
     #                     cache_cluster_id=cluster["CacheCluster"]["CacheClusterId"],
@@ -379,11 +379,11 @@ class Test_elasticache_using_public_subnets:
     #             ],
     #         ):
     #             # Test Check
-    #             from prowler.providers.aws.services.elasticache.elasticache_using_public_subnets.elasticache_using_public_subnets import (
-    #                 elasticache_using_public_subnets,
+    #             from prowler.providers.aws.services.elasticache.elasticache_cluster_uses_public_subnets.elasticache_cluster_uses_public_subnets import (
+    #                 elasticache_cluster_uses_public_subnets,
     #             )
 
-    #             check = elasticache_using_public_subnets()
+    #             check = elasticache_cluster_uses_public_subnets()
     #             result = check.execute()
 
     #             assert len(result) == 1

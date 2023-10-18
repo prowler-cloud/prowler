@@ -1,7 +1,7 @@
 {
   "Provider": "aws",
   "CheckID": "ecs_task_definitions_public_ip",
-  "CheckTitle": "",
+  "CheckTitle": "Ensure ECS Task definitions does not have a Public IP",
   "CheckType": [
     "Protect",
     "Secure development"
@@ -10,8 +10,8 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
-  "ResourceType": "",
-  "Description": "",
+  "ResourceType": "AWSECSTaskDefinition",
+  "Description": "Ensure ECS Task definitions does not have a Public IP",
   "Risk": "",
   "RelatedUrl": "",
   "Remediation": {

@@ -4,7 +4,7 @@ from prowler.providers.aws.services.elasticache.elasticache_client import (
 )
 
 
-class elasticache_using_public_subnets(Check):
+class elasticache_cluster_uses_public_subnets(Check):
     def execute(self):
         findings = []
         for instance in elasticache_client.elasticache_instances:
