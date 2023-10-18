@@ -52,6 +52,14 @@ class Test_vpc_subnet_no_public_ip_by_default:
             VpcId=vpc["Vpc"]["VpcId"],
             CidrBlock="172.28.7.192/26",
             AvailabilityZone=f"{AWS_REGION}a",
+            TagSpecifications=[
+                {
+                    "ResourceType": "subnet",
+                    "Tags": [
+                        {"Key": "Name", "Value": "subnet_name"},
+                    ],
+                },
+            ],
         )
 
         ec2_client.modify_subnet_attribute(
@@ -83,7 +91,7 @@ class Test_vpc_subnet_no_public_ip_by_default:
                         assert result.status == "FAIL"
                         assert (
                             result.status_extended
-                            == f"VPC subnet {subnet_private['Subnet']['SubnetId']} assigns public IP by default."
+                            == "VPC subnet subnet_name assigns public IP by default."
                         )
 
     @mock_ec2

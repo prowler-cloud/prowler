@@ -38,9 +38,14 @@ class VPC(AWSService):
                     if not self.audit_resources or (
                         is_resource_filtered(arn, self.audit_resources)
                     ):
+                        vpc_name = ""
+                        for tag in vpc.get("Tags", []):
+                            if tag["Key"] == "Name":
+                                vpc_name = tag["Value"]
                         self.vpcs[vpc["VpcId"]] = VPCs(
                             arn=arn,
                             id=vpc["VpcId"],
+                            name=vpc_name,
                             default=vpc["IsDefault"],
                             cidr_block=vpc["CidrBlock"],
                             region=regional_client.region,
@@ -278,10 +283,15 @@ class VPC(AWSService):
                                     public = True
                                 if "NatGatewayId" in route:
                                     nat_gateway = True
+                            subnet_name = ""
+                            for tag in subnet.get("Tags", []):
+                                if tag["Key"] == "Name":
+                                    subnet_name = tag["Value"]
                             # Add it to to list of vpc_subnets and to the VPC object
                             object = VpcSubnet(
                                 arn=subnet["SubnetArn"],
                                 id=subnet["SubnetId"],
+                                name=subnet_name,
                                 default=subnet["DefaultForAz"],
                                 vpc_id=subnet["VpcId"],
                                 cidr_block=subnet.get("CidrBlock"),
@@ -310,6 +320,7 @@ class VPC(AWSService):
 class VpcSubnet(BaseModel):
     arn: str
     id: str
+    name: str
     default: bool
     vpc_id: str
     cidr_block: Optional[str]
@@ -324,6 +335,7 @@ class VpcSubnet(BaseModel):
 class VPCs(BaseModel):
     arn: str
     id: str
+    name: str
     default: bool
     cidr_block: str
     flow_log: bool = False

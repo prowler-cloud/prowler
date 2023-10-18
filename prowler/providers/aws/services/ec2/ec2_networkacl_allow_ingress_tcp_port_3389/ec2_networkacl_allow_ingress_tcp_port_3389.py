@@ -14,12 +14,12 @@ class ec2_networkacl_allow_ingress_tcp_port_3389(Check):
             report.resource_arn = network_acl.arn
             report.resource_tags = network_acl.tags
             report.status = "PASS"
-            report.status_extended = f"Network ACL {network_acl.id} does not have Microsoft RDP port 3389 open to the Internet."
+            report.status_extended = f"Network ACL {network_acl.name if network_acl.name else network_acl.id} does not have Microsoft RDP port 3389 open to the Internet."
             report.resource_id = network_acl.id
             # If some entry allows it, that ACL is not securely configured
             if check_network_acl(network_acl.entries, tcp_protocol, check_port):
                 report.status = "FAIL"
-                report.status_extended = f"Network ACL {network_acl.id} has Microsoft RDP port 3389 open to the Internet."
+                report.status_extended = f"Network ACL {network_acl.name if network_acl.name else network_acl.id} has Microsoft RDP port 3389 open to the Internet."
             findings.append(report)
 
         return findings

@@ -157,10 +157,15 @@ class EC2(AWSService):
                     if not self.audit_resources or (
                         is_resource_filtered(arn, self.audit_resources)
                     ):
+                        nacl_name = ""
+                        for tag in nacl.get("Tags", []):
+                            if tag["Key"] == "Name":
+                                nacl_name = tag["Value"]
                         self.network_acls.append(
                             NetworkACL(
                                 id=nacl["NetworkAclId"],
                                 arn=arn,
+                                name=nacl_name,
                                 region=regional_client.region,
                                 entries=nacl["Entries"],
                                 tags=nacl.get("Tags"),
@@ -458,6 +463,7 @@ class SecurityGroup(BaseModel):
 class NetworkACL(BaseModel):
     id: str
     arn: str
+    name: str
     region: str
     entries: list[dict]
     tags: Optional[list] = []
