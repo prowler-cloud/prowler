@@ -14,6 +14,7 @@ class s3_account_level_public_access_blocks(Check):
         ):
             report.status = "PASS"
             report.status_extended = f"Block Public Access is configured for the account {s3control_client.audited_account}."
+            report.region = s3control_client.region
             report.resource_id = s3control_client.audited_account
             report.resource_arn = s3control_client.audited_account_arn
             findings.append(report)

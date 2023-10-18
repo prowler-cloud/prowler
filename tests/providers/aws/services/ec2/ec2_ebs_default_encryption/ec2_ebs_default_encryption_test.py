@@ -110,3 +110,28 @@ class Test_ec2_ebs_default_encryption:
             )
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
             assert result[0].resource_arn == f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
+
+    @mock_ec2
+    def test_ec2_ebs_encryption_disabled_ignored(self):
+        from prowler.providers.aws.services.ec2.ec2_service import EC2
+
+        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info.ignore_unused_services = True
+
+        with mock.patch(
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=current_audit_info,
+        ), mock.patch(
+            "prowler.providers.aws.services.ec2.ec2_ebs_default_encryption.ec2_ebs_default_encryption.ec2_client",
+            new=EC2(current_audit_info),
+        ):
+            # Test Check
+            from prowler.providers.aws.services.ec2.ec2_ebs_default_encryption.ec2_ebs_default_encryption import (
+                ec2_ebs_default_encryption,
+            )
+
+            check = ec2_ebs_default_encryption()
+            result = check.execute()
+
+            # One result per region
+            assert len(result) == 0

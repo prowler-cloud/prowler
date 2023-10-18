@@ -42,11 +42,13 @@ class Test_resourceexplorer2_indexes_found:
                 completed_checks=0,
                 audit_progress=0,
             ),
+            ignore_unused_services=False,
         )
         return audit_info
 
     def test_no_indexes_found(self):
         resourceexplorer2_client = mock.MagicMock
+        resourceexplorer2_client.audit_info = self.set_mocked_audit_info()
         resourceexplorer2_client.indexes = []
         resourceexplorer2_client.audited_account = AWS_ACCOUNT_NUMBER
         resourceexplorer2_client.audited_account_arn = (
@@ -68,13 +70,39 @@ class Test_resourceexplorer2_indexes_found:
             # Assertions
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert result[0].status_extended == "No Resource Explorer Indexes found."
+            assert result[0].status_extended == "AWS Resource Explorer is not enabled."
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
             assert result[0].resource_arn == f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
             assert result[0].region == AWS_REGION
 
+    def test_no_indexes_found_ignoring(self):
+        resourceexplorer2_client = mock.MagicMock
+        resourceexplorer2_client.audit_info = self.set_mocked_audit_info()
+        resourceexplorer2_client.audit_info.ignore_unused_services = True
+        resourceexplorer2_client.indexes = []
+        resourceexplorer2_client.audited_account = AWS_ACCOUNT_NUMBER
+        resourceexplorer2_client.audited_account_arn = (
+            f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
+        )
+        resourceexplorer2_client.region = AWS_REGION
+        with mock.patch(
+            "prowler.providers.aws.services.resourceexplorer2.resourceexplorer2_service.ResourceExplorer2",
+            new=resourceexplorer2_client,
+        ):
+            # Test Check
+            from prowler.providers.aws.services.resourceexplorer2.resourceexplorer2_indexes_found.resourceexplorer2_indexes_found import (
+                resourceexplorer2_indexes_found,
+            )
+
+            check = resourceexplorer2_indexes_found()
+            result = check.execute()
+
+            # Assertions
+            assert len(result) == 0
+
     def test_one_index_found(self):
         resourceexplorer2_client = mock.MagicMock
+        resourceexplorer2_client.audit_info = self.set_mocked_audit_info()
         resourceexplorer2_client.indexes = [
             Indexes(arn=INDEX_ARN, region=INDEX_REGION, type="LOCAL")
         ]
