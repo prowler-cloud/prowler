@@ -103,7 +103,10 @@ class VPC(AWSService):
                         if (
                             route["Origin"] != "CreateRouteTable"
                         ):  # avoid default route table
-                            if "DestinationCidrBlock" in route:
+                            if (
+                                "DestinationCidrBlock" in route
+                                and "VpcPeeringConnectionId" in route
+                            ):
                                 destination_cidrs.append(route["DestinationCidrBlock"])
                     conn.route_tables.append(
                         Route(
@@ -160,6 +163,7 @@ class VPC(AWSService):
                                 arn=arn,
                                 id=endpoint["VpcEndpointId"],
                                 vpc_id=endpoint["VpcId"],
+                                service_name=endpoint["ServiceName"],
                                 state=endpoint["State"],
                                 policy_document=endpoint_policy,
                                 owner_id=endpoint["OwnerId"],
@@ -280,7 +284,7 @@ class VPC(AWSService):
                                 id=subnet["SubnetId"],
                                 default=subnet["DefaultForAz"],
                                 vpc_id=subnet["VpcId"],
-                                cidr_block=subnet["CidrBlock"],
+                                cidr_block=subnet.get("CidrBlock"),
                                 region=regional_client.region,
                                 availability_zone=subnet["AvailabilityZone"],
                                 public=public,
@@ -308,7 +312,7 @@ class VpcSubnet(BaseModel):
     id: str
     default: bool
     vpc_id: str
-    cidr_block: str
+    cidr_block: Optional[str]
     availability_zone: str
     public: bool
     nat_gateway: bool
@@ -349,6 +353,7 @@ class VpcEndpoint(BaseModel):
     arn: str
     id: str
     vpc_id: str
+    service_name: str
     state: str
     policy_document: Optional[dict]
     owner_id: str

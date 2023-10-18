@@ -14,7 +14,7 @@ class iam_policy_attached_only_to_group_or_roles(Check):
                             report.region = iam_client.region
                             report.status = "FAIL"
                             report.status_extended = f"User {user.name} has the policy {policy['PolicyName']} attached."
-                            report.resource_id = user.name
+                            report.resource_id = f"{user.name}/{policy['PolicyName']}"
                             report.resource_arn = user.arn
                             findings.append(report)
                     if user.inline_policies:
@@ -23,7 +23,7 @@ class iam_policy_attached_only_to_group_or_roles(Check):
                             report.region = iam_client.region
                             report.status = "FAIL"
                             report.status_extended = f"User {user.name} has the inline policy {policy} attached."
-                            report.resource_id = user.name
+                            report.resource_id = f"{user.name}/{policy}"
                             report.resource_arn = user.arn
                             findings.append(report)
 

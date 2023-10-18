@@ -134,11 +134,13 @@ def parse_checks_from_folder(audit_info, input_folder: str, provider: str) -> in
         ):
             bucket = input_folder.split("/")[2]
             key = ("/").join(input_folder.split("/")[3:])
-            s3_reource = audit_info.audit_session.resource("s3")
-            bucket = s3_reource.Bucket(bucket)
+            s3_resource = audit_info.audit_session.resource("s3")
+            bucket = s3_resource.Bucket(bucket)
             for obj in bucket.objects.filter(Prefix=key):
                 if not os.path.exists(os.path.dirname(obj.key)):
                     os.makedirs(os.path.dirname(obj.key))
+                if obj.key[-1] == "/":
+                    continue
                 bucket.download_file(obj.key, obj.key)
             input_folder = key
         # Import custom checks by moving the checks folders to the corresponding services
@@ -179,6 +181,10 @@ def remove_custom_checks_module(input_folder: str, provider: str):
                 prowler_module = f"{prowler_dir[0]}/providers/{provider}/services/{check_service}/{check.name}"
                 if os.path.exists(prowler_module):
                     shutil.rmtree(prowler_module)
+                # test if the service only had the loaded custom checks to delete the folder
+                prowler_service_module = prowler_module.rsplit("/", 1)[0]
+                if not os.listdir(prowler_service_module):
+                    shutil.rmtree(prowler_service_module)
                 # If S3 URI, remove the downloaded folders
                 if s3_uri and os.path.exists(input_folder):
                     shutil.rmtree(input_folder)

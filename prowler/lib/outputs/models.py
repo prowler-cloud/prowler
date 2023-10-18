@@ -683,6 +683,7 @@ class Resource(BaseModel):
     Id: str
     Partition: str
     Region: str
+    Tags: Optional[dict]
 
 
 class Compliance(BaseModel):
@@ -693,7 +694,7 @@ class Compliance(BaseModel):
 
 class Check_Output_JSON_ASFF(BaseModel):
     """
-    Check_Output_JSON_ASFF generates a finding's output in JSON ASFF format.
+    Check_Output_JSON_ASFF generates a finding's output in JSON ASFF format: https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-findings-format-syntax.html
     """
 
     SchemaVersion: str = "2018-10-08"

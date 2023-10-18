@@ -98,7 +98,7 @@
       "Checks": [
         "ec2_ebs_public_snapshot",
         "ec2_securitygroup_default_restrict_traffic",
-        "ec2_elastic_ip_unassgined",
+        "ec2_elastic_ip_unassigned",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_3389",
         "vpc_flow_logs_enabled"
@@ -162,7 +162,8 @@
         "iam_root_hardware_mfa_enabled",
         "iam_root_mfa_enabled",
         "iam_user_mfa_enabled_console_access",
-        "iam_disable_90_days_credentials",
+        "iam_user_accesskey_unused",
+        "iam_user_console_access_unused",
         "iam_password_policy_minimum_length_14",
         "iam_password_policy_lowercase",
         "iam_password_policy_number",

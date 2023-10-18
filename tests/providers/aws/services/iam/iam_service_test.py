@@ -818,6 +818,7 @@ nTTxU4a7x1naFxzYXK1iQ1vMARKMjDb19QEJIEJKZlDK4uS7yMlf1nFS
                     type="Inline",
                     attached=True,
                     document=INLINE_POLICY_NOT_ADMIN,
+                    entity=user_name,
                 )
 
     # Test IAM Group Inline Policy
@@ -861,6 +862,7 @@ nTTxU4a7x1naFxzYXK1iQ1vMARKMjDb19QEJIEJKZlDK4uS7yMlf1nFS
                     type="Inline",
                     attached=True,
                     document=INLINE_POLICY_NOT_ADMIN,
+                    entity=group_name,
                 )
 
     # Test IAM Role Inline Policy
@@ -906,4 +908,5 @@ nTTxU4a7x1naFxzYXK1iQ1vMARKMjDb19QEJIEJKZlDK4uS7yMlf1nFS
                     type="Inline",
                     attached=True,
                     document=INLINE_POLICY_NOT_ADMIN,
+                    entity=role_name,
                 )

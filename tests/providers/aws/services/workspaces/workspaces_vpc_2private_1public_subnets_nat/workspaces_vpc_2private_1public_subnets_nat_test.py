@@ -11,7 +11,10 @@ from prowler.providers.common.models import Audit_Metadata
 
 AWS_REGION = "eu-west-1"
 AWS_ACCOUNT_NUMBER = "123456789012"
-workspace_id = str(uuid4())
+WORKSPACE_ID = str(uuid4())
+WORKSPACE_ARN = (
+    f"arn:aws:workspaces:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:workspace/{WORKSPACE_ID}"
+)
 
 
 class Test_workspaces_vpc_2private_1public_subnets_nat:
@@ -73,7 +76,8 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
         workspaces_client.workspaces = []
         workspaces_client.workspaces.append(
             WorkSpace(
-                id=workspace_id,
+                id=WORKSPACE_ID,
+                arn=WORKSPACE_ARN,
                 region=AWS_REGION,
                 user_volume_encryption_enabled=True,
                 root_volume_encryption_enabled=True,
@@ -104,10 +108,11 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
                     assert result[0].status == "FAIL"
                     assert (
                         result[0].status_extended
-                        == f"Workspace {workspace_id} is not in a private subnet or its VPC does not have 1 public subnet and 2 private subnets with a NAT Gateway attached."
+                        == f"Workspace {WORKSPACE_ID} is not in a private subnet or its VPC does not have 1 public subnet and 2 private subnets with a NAT Gateway attached."
                     )
-                    assert result[0].resource_id == workspace_id
-                    assert result[0].resource_arn == ""
+                    assert result[0].resource_id == WORKSPACE_ID
+                    assert result[0].resource_arn == WORKSPACE_ARN
+                    assert result[0].region == AWS_REGION
 
     @mock_ec2
     def test_workspaces_vpc_one_private_subnet(self):
@@ -138,7 +143,8 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
         workspaces_client.workspaces = []
         workspaces_client.workspaces.append(
             WorkSpace(
-                id=workspace_id,
+                id=WORKSPACE_ID,
+                arn=WORKSPACE_ARN,
                 region=AWS_REGION,
                 user_volume_encryption_enabled=True,
                 root_volume_encryption_enabled=True,
@@ -170,10 +176,11 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
                     assert result[0].status == "FAIL"
                     assert (
                         result[0].status_extended
-                        == f"Workspace {workspace_id} is not in a private subnet or its VPC does not have 1 public subnet and 2 private subnets with a NAT Gateway attached."
+                        == f"Workspace {WORKSPACE_ID} is not in a private subnet or its VPC does not have 1 public subnet and 2 private subnets with a NAT Gateway attached."
                     )
-                    assert result[0].resource_id == workspace_id
-                    assert result[0].resource_arn == ""
+                    assert result[0].resource_id == WORKSPACE_ID
+                    assert result[0].resource_arn == WORKSPACE_ARN
+                    assert result[0].region == AWS_REGION
 
     @mock_ec2
     def test_workspaces_vpc_two_private_subnet(self):
@@ -221,7 +228,8 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
         workspaces_client.workspaces = []
         workspaces_client.workspaces.append(
             WorkSpace(
-                id=workspace_id,
+                id=WORKSPACE_ID,
+                arn=WORKSPACE_ARN,
                 region=AWS_REGION,
                 user_volume_encryption_enabled=True,
                 root_volume_encryption_enabled=True,
@@ -253,10 +261,11 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
                     assert result[0].status == "FAIL"
                     assert (
                         result[0].status_extended
-                        == f"Workspace {workspace_id} is not in a private subnet or its VPC does not have 1 public subnet and 2 private subnets with a NAT Gateway attached."
+                        == f"Workspace {WORKSPACE_ID} is not in a private subnet or its VPC does not have 1 public subnet and 2 private subnets with a NAT Gateway attached."
                     )
-                    assert result[0].resource_id == workspace_id
-                    assert result[0].resource_arn == ""
+                    assert result[0].resource_id == WORKSPACE_ID
+                    assert result[0].resource_arn == WORKSPACE_ARN
+                    assert result[0].region == AWS_REGION
 
     @mock_ec2
     def test_workspaces_vpc_two_private_subnet_one_public(self):
@@ -323,7 +332,8 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
         workspaces_client.workspaces = []
         workspaces_client.workspaces.append(
             WorkSpace(
-                id=workspace_id,
+                id=WORKSPACE_ID,
+                arn=WORKSPACE_ARN,
                 region=AWS_REGION,
                 user_volume_encryption_enabled=True,
                 root_volume_encryption_enabled=True,
@@ -355,10 +365,11 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
                     assert result[0].status == "FAIL"
                     assert (
                         result[0].status_extended
-                        == f"Workspace {workspace_id} is not in a private subnet or its VPC does not have 1 public subnet and 2 private subnets with a NAT Gateway attached."
+                        == f"Workspace {WORKSPACE_ID} is not in a private subnet or its VPC does not have 1 public subnet and 2 private subnets with a NAT Gateway attached."
                     )
-                    assert result[0].resource_id == workspace_id
-                    assert result[0].resource_arn == ""
+                    assert result[0].resource_id == WORKSPACE_ID
+                    assert result[0].resource_arn == WORKSPACE_ARN
+                    assert result[0].region == AWS_REGION
 
     @mock_ec2
     def test_workspaces_vpc_two_private_subnet_one_public_and_nat(self):
@@ -433,7 +444,8 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
         workspaces_client.workspaces = []
         workspaces_client.workspaces.append(
             WorkSpace(
-                id=workspace_id,
+                id=WORKSPACE_ID,
+                arn=WORKSPACE_ARN,
                 region=AWS_REGION,
                 user_volume_encryption_enabled=True,
                 root_volume_encryption_enabled=True,
@@ -465,7 +477,8 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
                     assert result[0].status == "PASS"
                     assert (
                         result[0].status_extended
-                        == f"Workspace {workspace_id} is in a private subnet within a VPC which has 1 public subnet 2 private subnets with a NAT Gateway attached."
+                        == f"Workspace {WORKSPACE_ID} is in a private subnet within a VPC which has 1 public subnet 2 private subnets with a NAT Gateway attached."
                     )
-                    assert result[0].resource_id == workspace_id
-                    assert result[0].resource_arn == ""
+                    assert result[0].resource_id == WORKSPACE_ID
+                    assert result[0].resource_arn == WORKSPACE_ARN
+                    assert result[0].region == AWS_REGION

@@ -14,6 +14,11 @@ Prowler can only display the failed findings:
 ```console
 prowler <provider> -q/--quiet
 ```
+## Disable Exit Code 3
+Prowler does not trigger exit code 3 with failed checks:
+```console
+prowler <provider> -z/--ignore-exit-code-3
+```
 ## Hide Prowler Banner
 Prowler can run without showing its banner:
 ```console
@@ -111,17 +116,4 @@ prowler <provider> --list-categories
 - Execute specific category(s):
 ```console
 prowler  <provider> --categories
-```
-
-## AWS
-
-### Scan specific AWS Region
-Prowler can scan specific region(s) with:
-```console
-prowler <provider> -f/--filter-region eu-west-1 us-east-1
-```
-### Use AWS Profile
-Prowler can use your custom AWS Profile with:
-```console
-prowler <provider> -p/--profile <profile_name>
 ```

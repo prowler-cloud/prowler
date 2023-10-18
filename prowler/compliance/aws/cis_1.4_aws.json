@@ -71,7 +71,8 @@
       "Id": "1.12",
       "Description": "Ensure credentials unused for 45 days or greater are disabled",
       "Checks": [
-        "iam_disable_45_days_credentials"
+        "iam_user_accesskey_unused",
+        "iam_user_console_access_unused"
       ],
       "Attributes": [
         {

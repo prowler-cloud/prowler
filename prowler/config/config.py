@@ -11,7 +11,7 @@ from prowler.lib.logger import logger
 
 timestamp = datetime.today()
 timestamp_utc = datetime.now(timezone.utc).replace(tzinfo=timezone.utc)
-prowler_version = "3.9.0"
+prowler_version = "3.10.0"
 html_logo_url = "https://github.com/prowler-cloud/prowler/"
 html_logo_img = "https://user-images.githubusercontent.com/3985464/113734260-7ba06900-96fb-11eb-82bc-d4f68a1e2710.png"
 square_logo_img = "https://user-images.githubusercontent.com/38561120/235905862-9ece5bd7-9aa3-4e48-807a-3a9035eb8bfb.png"
@@ -64,17 +64,16 @@ def check_current_version():
     try:
         prowler_version_string = f"Prowler {prowler_version}"
         release_response = requests.get(
-            "https://api.github.com/repos/prowler-cloud/prowler/tags"
+            "https://api.github.com/repos/prowler-cloud/prowler/tags", timeout=1
         )
         latest_version = release_response.json()[0]["name"]
         if latest_version != prowler_version:
             return f"{prowler_version_string} (latest is {latest_version}, upgrade for the latest features)"
         else:
             return f"{prowler_version_string} (it is the latest version, yay!)"
-    except Exception as error:
-        logger.error(
-            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
-        )
+    except requests.RequestException:
+        return f"{prowler_version_string}"
+    except Exception:
         return f"{prowler_version_string}"
 
 

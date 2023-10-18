@@ -9,6 +9,9 @@ from prowler.providers.common.models import Audit_Metadata
 
 AWS_REGION = "eu-west-1"
 AWS_ACCOUNT_NUMBER = "123456789012"
+elb_arn = (
+    f"arn:aws:elasticloadbalancing:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:loadbalancer/my-lb"
+)
 
 
 class Test_elb_insecure_ssl_ciphers:
@@ -115,6 +118,7 @@ class Test_elb_insecure_ssl_ciphers:
                 result[0].status_extended,
             )
             assert result[0].resource_id == "my-lb"
+            assert result[0].resource_arn == elb_arn
 
     @mock_ec2
     @mock_elb
@@ -160,3 +164,4 @@ class Test_elb_insecure_ssl_ciphers:
                 result[0].status_extended,
             )
             assert result[0].resource_id == "my-lb"
+            assert result[0].resource_arn == elb_arn

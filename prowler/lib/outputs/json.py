@@ -63,12 +63,14 @@ def fill_json_asff(finding_output, audit_info, finding, output_options):
             if len(finding.status_extended) > 1000
             else finding.status_extended
         )
+        resource_tags = generate_json_asff_resource_tags(finding.resource_tags)
         finding_output.Resources = [
             Resource(
                 Id=finding.resource_arn,
                 Type=finding.check_metadata.ResourceType,
                 Partition=audit_info.audited_partition,
                 Region=finding.region,
+                Tags=resource_tags,
             )
         ]
         # Iterate for each compliance framework
@@ -119,6 +121,26 @@ def generate_json_asff_status(status: str) -> str:
         json_asff_status = "NOT_AVAILABLE"
 
     return json_asff_status
+
+
+def generate_json_asff_resource_tags(tags):
+    try:
+        resource_tags = {}
+        if tags and tags != [None]:
+            for tag in tags:
+                if "Key" in tag and "Value" in tag:
+                    resource_tags[tag["Key"]] = tag["Value"]
+                else:
+                    resource_tags.update(tag)
+            if len(resource_tags) == 0:
+                return None
+        else:
+            return None
+        return resource_tags
+    except Exception as error:
+        logger.error(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+        )
 
 
 def fill_json_ocsf(audit_info, finding, output_options) -> Check_Output_JSON_OCSF:

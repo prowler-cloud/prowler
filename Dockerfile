@@ -1,9 +1,10 @@
-FROM python:3.9-alpine
+FROM python:3.11-alpine
 
 LABEL maintainer="https://github.com/prowler-cloud/prowler"
 
 # Update system dependencies
-RUN apk --no-cache upgrade && apk --no-cache add curl=8.2.1-r0
+#hadolint ignore=DL3018
+RUN apk --no-cache upgrade && apk --no-cache add curl
 
 # Create nonroot user
 RUN mkdir -p /home/prowler && \

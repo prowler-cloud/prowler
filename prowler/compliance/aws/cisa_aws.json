@@ -19,7 +19,7 @@
         "ec2_instance_managed_by_ssm",
         "ec2_instance_older_than_specific_days",
         "ssm_managed_compliant_patching",
-        "ec2_elastic_ip_unassgined"
+        "ec2_elastic_ip_unassigned"
       ]
     },
     {
@@ -97,7 +97,8 @@
         "iam_rotate_access_key_90_days",
         "iam_user_mfa_enabled_console_access",
         "iam_user_mfa_enabled_console_access",
-        "iam_disable_90_days_credentials",
+        "iam_user_accesskey_unused",
+        "iam_user_console_access_unused",
         "kms_cmk_rotation_enabled",
         "awslambda_function_not_publicly_accessible",
         "awslambda_function_not_publicly_accessible",
@@ -148,7 +149,7 @@
         }
       ],
       "Checks": [
-        "ec2_elastic_ip_unassgined",
+        "ec2_elastic_ip_unassigned",
         "vpc_flow_logs_enabled"
       ]
     },

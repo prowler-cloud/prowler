@@ -25,7 +25,7 @@ class SecurityHub(AWSService):
                 if e.response["Error"]["Code"] == "InvalidAccessException":
                     self.securityhubs.append(
                         SecurityHubHub(
-                            arn="",
+                            arn=self.audited_account_arn,
                             id="Security Hub",
                             status="NOT_AVAILABLE",
                             standards="",
@@ -71,7 +71,7 @@ class SecurityHub(AWSService):
                     # SecurityHub is filtered
                     self.securityhubs.append(
                         SecurityHubHub(
-                            arn="",
+                            arn=self.audited_account_arn,
                             id="Security Hub",
                             status="NOT_AVAILABLE",
                             standards="",

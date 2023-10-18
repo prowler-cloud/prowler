@@ -25,7 +25,7 @@ class route53_dangling_ip_subdomain_takeover(Check):
                     # Check if record is an IP Address
                     if validate_ip_address(record):
                         report = Check_Report_AWS(self.metadata())
-                        report.resource_id = record_set.hosted_zone_id
+                        report.resource_id = f"{record_set.hosted_zone_id}/{record}"
                         report.resource_arn = route53_client.hosted_zones[
                             record_set.hosted_zone_id
                         ].arn

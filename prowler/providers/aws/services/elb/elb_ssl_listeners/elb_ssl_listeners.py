@@ -10,6 +10,7 @@ class elb_ssl_listeners(Check):
             report = Check_Report_AWS(self.metadata())
             report.region = lb.region
             report.resource_id = lb.name
+            report.resource_arn = lb.arn
             report.resource_tags = lb.tags
             report.status = "PASS"
             report.status_extended = f"ELB {lb.name} has HTTPS listeners only."

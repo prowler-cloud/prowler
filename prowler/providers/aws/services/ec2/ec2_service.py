@@ -23,6 +23,8 @@ class EC2(AWSService):
         self.network_acls = []
         self.__threading_call__(self.__describe_network_acls__)
         self.snapshots = []
+        self.volumes_with_snapshots = {}
+        self.regions_with_snapshots = {}
         self.__threading_call__(self.__describe_snapshots__)
         self.__get_snapshot_public__()
         self.network_interfaces = []
@@ -172,34 +174,39 @@ class EC2(AWSService):
     def __describe_snapshots__(self, regional_client):
         logger.info("EC2 - Describing Snapshots...")
         try:
+            snapshots_in_region = False
             describe_snapshots_paginator = regional_client.get_paginator(
                 "describe_snapshots"
             )
-            encrypted = False
             for page in describe_snapshots_paginator.paginate(OwnerIds=["self"]):
                 for snapshot in page["Snapshots"]:
                     arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:snapshot/{snapshot['SnapshotId']}"
                     if not self.audit_resources or (
                         is_resource_filtered(arn, self.audit_resources)
                     ):
-                        if snapshot["Encrypted"]:
-                            encrypted = True
+                        if snapshots_in_region is False:
+                            snapshots_in_region = True
                         self.snapshots.append(
                             Snapshot(
                                 id=snapshot["SnapshotId"],
                                 arn=arn,
                                 region=regional_client.region,
-                                encrypted=encrypted,
+                                encrypted=snapshot.get("Encrypted", False),
                                 tags=snapshot.get("Tags"),
+                                volume=snapshot["VolumeId"],
                             )
                         )
+                        # Store that the volume has at least one snapshot
+                        self.volumes_with_snapshots[snapshot["VolumeId"]] = True
+            # Store that the region has at least one snapshot
+            self.regions_with_snapshots[regional_client.region] = snapshots_in_region
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
     def __get_snapshot_public__(self):
-        logger.info("EC2 - Gettting snapshots encryption...")
+        logger.info("EC2 - Getting snapshot volume attribute permissions...")
         for snapshot in self.snapshots:
             try:
                 regional_client = self.regional_clients[snapshot.region]
@@ -279,7 +286,7 @@ class EC2(AWSService):
             )
 
     def __get_instance_user_data__(self):
-        logger.info("EC2 - Gettting instance user data...")
+        logger.info("EC2 - Getting instance user data...")
         for instance in self.instances:
             try:
                 regional_client = self.regional_clients[instance.region]
@@ -425,6 +432,7 @@ class Snapshot(BaseModel):
     encrypted: bool
     public: bool = False
     tags: Optional[list] = []
+    volume: Optional[str]
 
 
 class Volume(BaseModel):

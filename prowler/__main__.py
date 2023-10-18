@@ -4,6 +4,8 @@
 import os
 import sys
 
+from colorama import Fore, Style
+
 from prowler.lib.banner import print_banner
 from prowler.lib.check.check import (
     bulk_load_checks_metadata,
@@ -32,9 +34,13 @@ from prowler.lib.outputs.json import close_json
 from prowler.lib.outputs.outputs import extract_findings_statistics
 from prowler.lib.outputs.slack import send_slack_message
 from prowler.lib.outputs.summary_table import display_summary_table
+from prowler.providers.aws.aws_provider import get_available_aws_service_regions
 from prowler.providers.aws.lib.s3.s3 import send_to_s3_bucket
 from prowler.providers.aws.lib.security_hub.security_hub import (
+    batch_send_to_security_hub,
+    prepare_security_hub_findings,
     resolve_security_hub_previous_findings,
+    verify_security_hub_integration_enabled_per_region,
 )
 from prowler.providers.common.allowlist import set_provider_allowlist
 from prowler.providers.common.audit_info import (
@@ -225,13 +231,51 @@ def prowler():
                     bucket_session,
                 )
 
-    # Resolve previous fails of Security Hub
-    if provider == "aws" and args.security_hub and not args.skip_sh_update:
-        resolve_security_hub_previous_findings(
-            audit_output_options.output_directory,
-            audit_output_options.output_filename,
-            audit_info,
+    # AWS Security Hub Integration
+    if provider == "aws" and args.security_hub:
+        print(
+            f"{Style.BRIGHT}\nSending findings to AWS Security Hub, please wait...{Style.RESET_ALL}"
         )
+        # Verify where AWS Security Hub is enabled
+        aws_security_enabled_regions = []
+        security_hub_regions = (
+            get_available_aws_service_regions("securityhub", audit_info)
+            if not audit_info.audited_regions
+            else audit_info.audited_regions
+        )
+        for region in security_hub_regions:
+            # Save the regions where AWS Security Hub is enabled
+            if verify_security_hub_integration_enabled_per_region(
+                region, audit_info.audit_session
+            ):
+                aws_security_enabled_regions.append(region)
+
+        # Prepare the findings to be sent to Security Hub
+        security_hub_findings_per_region = prepare_security_hub_findings(
+            findings, audit_info, audit_output_options, aws_security_enabled_regions
+        )
+
+        # Send the findings to Security Hub
+        findings_sent_to_security_hub = batch_send_to_security_hub(
+            security_hub_findings_per_region, audit_info.audit_session
+        )
+
+        print(
+            f"{Style.BRIGHT}{Fore.GREEN}\n{findings_sent_to_security_hub} findings sent to AWS Security Hub!{Style.RESET_ALL}"
+        )
+
+        # Resolve previous fails of Security Hub
+        if not args.skip_sh_update:
+            print(
+                f"{Style.BRIGHT}\nArchiving previous findings in AWS Security Hub, please wait...{Style.RESET_ALL}"
+            )
+            findings_archived_in_security_hub = resolve_security_hub_previous_findings(
+                security_hub_findings_per_region,
+                audit_info,
+            )
+            print(
+                f"{Style.BRIGHT}{Fore.GREEN}\n{findings_archived_in_security_hub} findings archived in AWS Security Hub!{Style.RESET_ALL}"
+            )
 
     # Display summary table
     if not args.only_logs:
