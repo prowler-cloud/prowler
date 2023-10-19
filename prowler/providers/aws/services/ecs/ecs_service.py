@@ -64,6 +64,9 @@ class ECS(AWSService):
                                 )
                             )
                 task_definition.tags = response.get("tags")
+                task_definition.network_mode = response["taskDefinition"].get(
+                    "networkMode"
+                )
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -82,3 +85,4 @@ class TaskDefinition(BaseModel):
     region: str
     environment_variables: list[ContainerEnvVariable]
     tags: Optional[list] = []
+    network_mode: Optional[str]
