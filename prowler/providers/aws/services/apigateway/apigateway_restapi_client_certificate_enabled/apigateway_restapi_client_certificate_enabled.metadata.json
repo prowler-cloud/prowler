@@ -1,6 +1,6 @@
 {
   "Provider": "aws",
-  "CheckID": "apigateway_client_certificate_enabled",
+  "CheckID": "apigateway_restapi_client_certificate_enabled",
   "CheckTitle": "Check if API Gateway Stage has client certificate enabled to access your backend endpoint.",
   "CheckType": [
     "Data Protection"

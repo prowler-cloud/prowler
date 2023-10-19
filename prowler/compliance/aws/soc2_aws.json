@@ -447,7 +447,7 @@
         "vpc_flow_logs_enabled",
         "ec2_instance_imdsv2_enabled",
         "guardduty_is_enabled",
-        "apigateway_logging_enabled",
+        "apigateway_restapi_logging_enabled",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22"
       ]
     },
@@ -468,7 +468,7 @@
         "cloudtrail_log_file_validation_enabled",
         "cloudtrail_cloudwatch_logging_enabled",
         "guardduty_is_enabled",
-        "apigateway_logging_enabled",
+        "apigateway_restapi_logging_enabled",
         "rds_instance_integration_cloudwatch_logs",
         "securityhub_enabled",
         "cloudwatch_changes_to_network_acls_alarm_configured",
@@ -599,7 +599,7 @@
         }
       ],
       "Checks": [
-        "apigateway_logging_enabled",
+        "apigateway_restapi_logging_enabled",
         "cloudtrail_multi_region_enabled",
         "cloudtrail_multi_region_enabled",
         "cloudtrail_cloudwatch_logging_enabled",

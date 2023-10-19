@@ -51,9 +51,9 @@
         }
       ],
       "Checks": [
-        "apigateway_client_certificate_enabled",
-        "apigateway_logging_enabled",
-        "apigateway_waf_acl_attached",
+        "apigateway_restapi_client_certificate_enabled",
+        "apigateway_restapi_logging_enabled",
+        "apigateway_restapi_waf_acl_attached",
         "cloudtrail_multi_region_enabled",
         "cloudtrail_s3_dataevents_read_enabled",
         "cloudtrail_s3_dataevents_write_enabled",
@@ -250,8 +250,8 @@
       ],
       "Checks": [
         "acm_certificates_expiration_check",
-        "apigateway_client_certificate_enabled",
-        "apigateway_logging_enabled",
+        "apigateway_restapi_client_certificate_enabled",
+        "apigateway_restapi_logging_enabled",
         "efs_have_backup_enabled",
         "cloudtrail_multi_region_enabled",
         "cloudtrail_s3_dataevents_read_enabled",
