@@ -84,12 +84,12 @@ class IAM(AWSService):
         self.saml_providers = self.__list_saml_providers__()
         self.server_certificates = self.__list_server_certificates__()
         self.__list_tags_for_resource__()
-        self.access_keys_metadata = []
+        self.access_keys_metadata = {}
         self.__get_access_keys_metadata__()
-        self.last_accessed_services = []
+        self.last_accessed_services = {}
         self.__get_last_accessed_services__()
-        self.user_temporary_credentials_usage = []
-        self.__get_user_temporaty_credentials_usage__()
+        self.user_temporary_credentials_usage = {}
+        self.__get_user_temporary_credentials_usage__()
 
     def __get_client__(self):
         return self.client
@@ -678,6 +678,7 @@ class IAM(AWSService):
             )
 
     def __get_last_accessed_services__(self):
+        logger.info("IAM - Getting Last Accessed Services ...")
         try:
             for user in self.users:
                 try:
@@ -691,9 +692,10 @@ class IAM(AWSService):
                         response = self.client.get_service_last_accessed_details(
                             JobId=details["JobId"]
                         )
-                    self.last_accessed_services.append(
-                        {"user": user, "services": response["ServicesLastAccessed"]}
-                    )
+                    self.last_accessed_services[(user.name, user.arn)] = response[
+                        "ServicesLastAccessed"
+                    ]
+
                 except ClientError as error:
                     logger.error(
                         f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -704,17 +706,16 @@ class IAM(AWSService):
             )
 
     def __get_access_keys_metadata__(self):
+        logger.info("IAM - Getting Access Keys Metadata ...")
         try:
             for user in self.users:
                 try:
                     paginator = self.client.get_paginator("list_access_keys")
-                    self.access_keys_metadata.append(
-                        {"user": user, "access_keys_metadata": []}
-                    )
+                    self.access_keys_metadata[(user.name, user.arn)] = []
                     for response in paginator.paginate(UserName=user.name):
-                        self.access_keys_metadata[-1]["access_keys_metadata"].append(
-                            response
-                        )
+                        self.access_keys_metadata[(user.name, user.arn)] = response[
+                            "AccessKeyMetadata"
+                        ]
                 except ClientError as error:
                     logger.error(
                         f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -724,35 +725,37 @@ class IAM(AWSService):
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __get_user_temporaty_credentials_usage__(self):
-        temporary_credentials_usage = False
-        for idx, last_accessed_services in enumerate(self.last_accessed_services):
-            temporary_credentials_usage = not (
-                len(
+    def __get_user_temporary_credentials_usage__(self):
+        logger.info("IAM - Getting User Temporary Credentials Usage ...")
+        try:
+            temporary_credentials_usage = False
+            for (
+                user_data,
+                last_accessed_services,
+            ) in self.last_accessed_services.items():
+                # Get AWS services number used more than IAM and STS
+                services_accessed = len(
                     [
                         service
-                        for service in last_accessed_services["services"]
+                        for service in last_accessed_services
                         if service["ServiceNamespace"] not in ["iam", "sts"]
                     ]
                 )
-                > 0
-                and len(
-                    [
-                        akm
-                        for akm in self.access_keys_metadata[idx][
-                            "access_keys_metadata"
-                        ]
-                        if len(akm["AccessKeyMetadata"]) > 0
-                    ]
-                )
-                > 0
-            )
+                # Get IAM user access keys number
+                access_keys_number = len(self.access_keys_metadata[user_data])
 
-            self.user_temporary_credentials_usage.append(
-                {
-                    **last_accessed_services,
-                    "temporary_credentials_usage": temporary_credentials_usage,
-                }
+                # If the user has access keys and uses more services than IAM and STS store True, otherwise False
+                temporary_credentials_usage = (
+                    services_accessed > 0 and access_keys_number > 0
+                )
+
+                self.user_temporary_credentials_usage[
+                    user_data
+                ] = temporary_credentials_usage
+
+        except Exception as error:
+            logger.error(
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
 

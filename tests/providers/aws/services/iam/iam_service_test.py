@@ -1,7 +1,10 @@
 from json import dumps
+from uuid import uuid4
 
+import botocore
 from boto3 import client, session
 from freezegun import freeze_time
+from mock import patch
 from moto import mock_iam
 
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
@@ -33,7 +36,46 @@ SUPPORT_SERVICE_ROLE_POLICY_ARN = (
 )
 ADMINISTRATOR_ACCESS_POLICY_ARN = "arn:aws:iam::aws:policy/AdministratorAccess"
 
+# Mocking Access Analyzer Calls
+make_api_call = botocore.client.BaseClient._make_api_call
 
+
+IAM_LAST_ACCESSED_SERVICES = [
+    {
+        "ServiceName": "AWS EC2",
+        "ServiceNamespace": "ec2",
+        "TotalAuthenticatedEntities": 1,
+    },
+    {
+        "ServiceName": "AWS Identity and Access Management",
+        "ServiceNamespace": "iam",
+        "TotalAuthenticatedEntities": 0,
+    },
+]
+
+
+def mock_make_api_call(self, operation_name, kwargs):
+    """
+    As you can see the operation_name has the list_analyzers snake_case form but
+    we are using the ListAnalyzers form.
+    Rationale -> https://github.com/boto/botocore/blob/develop/botocore/client.py#L810:L816
+    We have to mock every AWS API call using Boto3
+    """
+    if operation_name == "GenerateServiceLastAccessedDetails":
+        return {"JobId": str(uuid4())}
+    if operation_name == "GetServiceLastAccessedDetails":
+        return {
+            "JobStatus": "COMPLETED",
+            "JobType": "SERVICE_LEVEL",
+            "JobCreationDate": "2023-10-19T06:11:11.449000+00:00",
+            "ServicesLastAccessed": IAM_LAST_ACCESSED_SERVICES,
+        }
+
+    return make_api_call(self, operation_name, kwargs)
+
+
+# Patch every AWS call using Boto3
+@patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
 class Test_IAM_Service:
     # Mocked Audit Info
     def set_mocked_audit_info(self):
@@ -910,3 +952,41 @@ nTTxU4a7x1naFxzYXK1iQ1vMARKMjDb19QEJIEJKZlDK4uS7yMlf1nFS
                     document=INLINE_POLICY_NOT_ADMIN,
                     entity=role_name,
                 )
+
+    # Test IAM List Attached Group Policies
+    @mock_iam
+    def test__get_user_temporary_credentials_usage__(self):
+        # Generate IAM Client
+        iam_client = client("iam")
+        # Generate IAM user
+        username = "test-user"
+        user = iam_client.create_user(
+            UserName=username,
+        )
+        user_arn = user["User"]["Arn"]
+        # Create Access Key
+        access_key = iam_client.create_access_key(UserName="test-user")
+        access_key_id = access_key["AccessKey"]["AccessKeyId"]
+        # IAM client for this test class
+        audit_info = self.set_mocked_audit_info()
+        iam = IAM(audit_info)
+
+        assert len(iam.users) == 1
+
+        assert len(iam.access_keys_metadata) == 1
+        assert iam.access_keys_metadata[(username, user_arn)]
+
+        assert iam.access_keys_metadata[(username, user_arn)][0]["UserName"] == username
+        assert (
+            iam.access_keys_metadata[(username, user_arn)][0]["AccessKeyId"]
+            == access_key_id
+        )
+        assert iam.access_keys_metadata[(username, user_arn)][0]["Status"] == "Active"
+        assert iam.access_keys_metadata[(username, user_arn)][0]["CreateDate"]
+
+        assert (
+            iam.last_accessed_services[(username, user_arn)]
+            == IAM_LAST_ACCESSED_SERVICES
+        )
+
+        assert iam.user_temporary_credentials_usage[(username, user_arn)] is False
