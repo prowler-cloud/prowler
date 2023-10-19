@@ -101,6 +101,7 @@ class Test_elasticache_cluster_uses_public_subnet:
         vpc_client.vpc_subnets = {}
         vpc_client.vpc_subnets[SUBNET_1] = VpcSubnet(
             id=SUBNET_1,
+            name=SUBNET_1,
             arn="arn_test",
             default=False,
             vpc_id=VPC_ID,
@@ -114,6 +115,7 @@ class Test_elasticache_cluster_uses_public_subnet:
         )
         vpc_client.vpc_subnets[SUBNET_2] = VpcSubnet(
             id=SUBNET_2,
+            name=SUBNET_1,
             arn="arn_test",
             default=False,
             vpc_id=VPC_ID,
@@ -173,6 +175,7 @@ class Test_elasticache_cluster_uses_public_subnet:
         vpc_client.vpc_subnets = {}
         vpc_client.vpc_subnets[SUBNET_1] = VpcSubnet(
             id=SUBNET_1,
+            name=SUBNET_1,
             arn="arn_test",
             default=False,
             vpc_id=VPC_ID,
@@ -186,6 +189,7 @@ class Test_elasticache_cluster_uses_public_subnet:
         )
         vpc_client.vpc_subnets[SUBNET_2] = VpcSubnet(
             id=SUBNET_2,
+            name=SUBNET_1,
             arn="arn_test",
             default=False,
             vpc_id=VPC_ID,

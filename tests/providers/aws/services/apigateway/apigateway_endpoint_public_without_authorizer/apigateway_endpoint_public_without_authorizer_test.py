@@ -56,11 +56,8 @@ class Test_apigateway_endpoint_public_without_authorizer:
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             new=current_audit_info,
         ), mock.patch(
-            "prowler.providers.aws.services.apigateway.apigateway_service.APIGateway",
-            return_value=APIGateway(current_audit_info),
-        ) as apigateway_client, mock.patch(
-            "prowler.providers.aws.services.apigateway.apigateway_client.apigateway_client",
-            new=apigateway_client(),
+            "prowler.providers.aws.services.apigateway.apigateway_endpoint_public_without_authorizer.apigateway_endpoint_public_without_authorizer.apigateway_client",
+            new=APIGateway(current_audit_info),
         ):
             # Test Check
             from prowler.providers.aws.services.apigateway.apigateway_endpoint_public_without_authorizer.apigateway_endpoint_public_without_authorizer import (
@@ -95,11 +92,8 @@ class Test_apigateway_endpoint_public_without_authorizer:
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             new=current_audit_info,
         ), mock.patch(
-            "prowler.providers.aws.services.apigateway.apigateway_service.APIGateway",
-            return_value=APIGateway(current_audit_info),
-        ) as apigateway_client, mock.patch(
-            "prowler.providers.aws.services.apigateway.apigateway_client.apigateway_client",
-            new=apigateway_client(),
+            "prowler.providers.aws.services.apigateway.apigateway_endpoint_public_without_authorizer.apigateway_endpoint_public_without_authorizer.apigateway_client",
+            new=APIGateway(current_audit_info),
         ):
             # Test Check
             from prowler.providers.aws.services.apigateway.apigateway_endpoint_public_without_authorizer.apigateway_endpoint_public_without_authorizer import (
@@ -149,11 +143,8 @@ class Test_apigateway_endpoint_public_without_authorizer:
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             new=current_audit_info,
         ), mock.patch(
-            "prowler.providers.aws.services.apigateway.apigateway_service.APIGateway",
-            return_value=APIGateway(current_audit_info),
-        ) as apigateway_client, mock.patch(
-            "prowler.providers.aws.services.apigateway.apigateway_client.apigateway_client",
-            new=apigateway_client(),
+            "prowler.providers.aws.services.apigateway.apigateway_endpoint_public_without_authorizer.apigateway_endpoint_public_without_authorizer.apigateway_client",
+            new=APIGateway(current_audit_info),
         ):
             # Test Check
             from prowler.providers.aws.services.apigateway.apigateway_endpoint_public_without_authorizer.apigateway_endpoint_public_without_authorizer import (

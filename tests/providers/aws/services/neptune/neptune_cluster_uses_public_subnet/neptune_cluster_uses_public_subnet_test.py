@@ -89,6 +89,7 @@ class Test_neptune_cluster_uses_public_subnet:
         vpc_client.vpc_subnets[SUBNET_1] = VpcSubnet(
             id=SUBNET_1,
             arn="arn_test",
+            name=SUBNET_1,
             default=False,
             vpc_id=VPC_ID,
             cidr_block="192.168.0.0/24",
@@ -102,6 +103,7 @@ class Test_neptune_cluster_uses_public_subnet:
         vpc_client.vpc_subnets[SUBNET_2] = VpcSubnet(
             id=SUBNET_2,
             arn="arn_test",
+            name=SUBNET_1,
             default=False,
             vpc_id=VPC_ID,
             cidr_block="192.168.0.1/24",
@@ -171,6 +173,7 @@ class Test_neptune_cluster_uses_public_subnet:
         vpc_client.vpc_subnets[SUBNET_1] = VpcSubnet(
             id=SUBNET_1,
             arn="arn_test",
+            name=SUBNET_1,
             default=False,
             vpc_id=VPC_ID,
             cidr_block="192.168.0.0/24",
@@ -184,6 +187,7 @@ class Test_neptune_cluster_uses_public_subnet:
         vpc_client.vpc_subnets[SUBNET_2] = VpcSubnet(
             id=SUBNET_2,
             arn="arn_test",
+            name=SUBNET_1,
             default=False,
             vpc_id=VPC_ID,
             cidr_block="192.168.0.1/24",
