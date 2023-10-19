@@ -2,7 +2,7 @@ from re import search
 from unittest import mock
 
 from boto3 import client, resource, session
-from moto import mock_ec2
+from moto import mock_ec2, mock_iam, mock_lambda
 
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.common.models import Audit_Metadata
@@ -130,6 +130,84 @@ class Test_ec2_securitygroup_not_used:
         )
         subnet = ec2.create_subnet(VpcId=vpc_id, CidrBlock="10.0.0.0/18")
         subnet.create_network_interface(Groups=[sg.id])
+
+        from prowler.providers.aws.services.ec2.ec2_service import EC2
+
+        current_audit_info = self.set_mocked_audit_info()
+
+        with mock.patch(
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=current_audit_info,
+        ), mock.patch(
+            "prowler.providers.aws.services.ec2.ec2_securitygroup_not_used.ec2_securitygroup_not_used.ec2_client",
+            new=EC2(current_audit_info),
+        ):
+            # Test Check
+            from prowler.providers.aws.services.ec2.ec2_securitygroup_not_used.ec2_securitygroup_not_used import (
+                ec2_securitygroup_not_used,
+            )
+
+            check = ec2_securitygroup_not_used()
+            result = check.execute()
+
+            # One custom sg
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert result[0].region == AWS_REGION
+            assert (
+                result[0].status_extended
+                == f"Security group {sg_name} ({sg.id}) it is being used."
+            )
+            assert search(
+                "it is being used",
+                result[0].status_extended,
+            )
+            assert (
+                result[0].resource_arn
+                == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:security-group/{sg.id}"
+            )
+            assert result[0].resource_id == sg.id
+            assert result[0].resource_details == sg_name
+            assert result[0].resource_tags == []
+
+    @mock_ec2
+    @mock_lambda
+    @mock_iam
+    def test_ec2_used_default_sg_by_lambda(self):
+        # Create EC2 Mocked Resources
+        ec2 = resource("ec2", AWS_REGION)
+        ec2_client = client("ec2", region_name=AWS_REGION)
+        vpc_id = ec2_client.create_vpc(CidrBlock="10.0.0.0/16")["Vpc"]["VpcId"]
+        sg_name = "test-sg"
+        sg = ec2.create_security_group(
+            GroupName=sg_name, Description="test", VpcId=vpc_id
+        )
+        subnet = ec2.create_subnet(VpcId=vpc_id, CidrBlock="10.0.0.0/18")
+        subnet.create_network_interface(Groups=[sg.id])
+        iam_client = client("iam", region_name=AWS_REGION)
+        iam_role = iam_client.create_role(
+            RoleName="my-role",
+            AssumeRolePolicyDocument="some policy",
+            Path="/my-path/",
+        )["Role"]["Arn"]
+        lambda_client = client("lambda", AWS_REGION)
+        lambda_client.create_function(
+            FunctionName="test-function",
+            Runtime="python3.11",
+            Role=iam_role,
+            Handler="lambda_function.lambda_handler",
+            Code={
+                "ImageUri": f"{AWS_ACCOUNT_NUMBER}.dkr.ecr.us-east-1.amazonaws.com/testlambdaecr:prod"
+            },
+            Description="test lambda function",
+            Timeout=3,
+            MemorySize=128,
+            Publish=True,
+            VpcConfig={
+                "SecurityGroupIds": [sg.id],
+                "SubnetIds": [subnet.id],
+            },
+        )
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
