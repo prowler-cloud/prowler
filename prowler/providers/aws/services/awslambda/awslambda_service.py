@@ -50,6 +50,9 @@ class Lambda(AWSService):
                         self.functions[lambda_arn] = Function(
                             name=lambda_name,
                             arn=lambda_arn,
+                            security_groups=function.get("VpcConfig", {}).get(
+                                "SecurityGroupIds", []
+                            ),
                             region=regional_client.region,
                         )
                         if "Runtime" in function:
@@ -183,6 +186,7 @@ class URLConfig(BaseModel):
 class Function(BaseModel):
     name: str
     arn: str
+    security_groups: list
     runtime: Optional[str]
     environment: dict = None
     region: str

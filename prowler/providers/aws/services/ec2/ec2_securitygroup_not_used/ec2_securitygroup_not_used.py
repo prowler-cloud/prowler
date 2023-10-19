@@ -1,4 +1,5 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
+from prowler.providers.aws.services.awslambda.awslambda_client import awslambda_client
 from prowler.providers.aws.services.ec2.ec2_client import ec2_client
 
 
@@ -16,7 +17,11 @@ class ec2_securitygroup_not_used(Check):
                 report.resource_tags = security_group.tags
                 report.status = "PASS"
                 report.status_extended = f"Security group {security_group.name} ({security_group.id}) it is being used."
-                if len(security_group.network_interfaces) == 0:
+                sg_in_lambda = False
+                for function in awslambda_client.functions.values():
+                    if security_group.id in function.security_groups:
+                        sg_in_lambda = True
+                if len(security_group.network_interfaces) == 0 and not sg_in_lambda:
                     report.status = "FAIL"
                     report.status_extended = f"Security group {security_group.name} ({security_group.id}) it is not being used."
 
