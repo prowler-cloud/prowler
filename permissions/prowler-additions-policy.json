@@ -10,6 +10,7 @@
         "cloudtrail:GetInsightSelectors",
         "codeartifact:List*",
         "codebuild:BatchGet*",
+        "dlm:Get*",
         "drs:Describe*",
         "ds:Get*",
         "ds:Describe*",
