@@ -62,7 +62,12 @@ class Test_neptune_cluster_uses_public_subnet:
     @mock_neptune
     @mock_ec2
     def test_neptune_no_clusters(self):
+        # Mock VPC Service
+        vpc_client = MagicMock
+        vpc_client.vpc_subnets = {}
+
         audit_info = self.set_mocked_audit_info()
+
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             new=audit_info,
@@ -72,6 +77,12 @@ class Test_neptune_cluster_uses_public_subnet:
         ) as neptune_client, mock.patch(
             "prowler.providers.aws.services.neptune.neptune_client.neptune_client",
             neptune_client(),
+        ), mock.patch(
+            "prowler.providers.aws.services.vpc.vpc_service.VPC",
+            new=vpc_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.vpc.vpc_client.vpc_client",
+            new=vpc_client,
         ):
             from prowler.providers.aws.services.neptune.neptune_cluster_uses_public_subnet.neptune_cluster_uses_public_subnet import (
                 neptune_cluster_uses_public_subnet,
@@ -103,7 +114,7 @@ class Test_neptune_cluster_uses_public_subnet:
         vpc_client.vpc_subnets[SUBNET_2] = VpcSubnet(
             id=SUBNET_2,
             arn="arn_test",
-            name=SUBNET_1,
+            name=SUBNET_2,
             default=False,
             vpc_id=VPC_ID,
             cidr_block="192.168.0.1/24",
@@ -147,6 +158,9 @@ class Test_neptune_cluster_uses_public_subnet:
         ), mock.patch(
             "prowler.providers.aws.services.vpc.vpc_service.VPC",
             new=vpc_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.vpc.vpc_client.vpc_client",
+            new=vpc_client,
         ):
             from prowler.providers.aws.services.neptune.neptune_cluster_uses_public_subnet.neptune_cluster_uses_public_subnet import (
                 neptune_cluster_uses_public_subnet,
@@ -187,7 +201,7 @@ class Test_neptune_cluster_uses_public_subnet:
         vpc_client.vpc_subnets[SUBNET_2] = VpcSubnet(
             id=SUBNET_2,
             arn="arn_test",
-            name=SUBNET_1,
+            name=SUBNET_2,
             default=False,
             vpc_id=VPC_ID,
             cidr_block="192.168.0.1/24",
@@ -230,6 +244,9 @@ class Test_neptune_cluster_uses_public_subnet:
             new=neptune_client(),
         ), mock.patch(
             "prowler.providers.aws.services.vpc.vpc_service.VPC",
+            new=vpc_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.vpc.vpc_client.vpc_client",
             new=vpc_client,
         ):
             from prowler.providers.aws.services.neptune.neptune_cluster_uses_public_subnet.neptune_cluster_uses_public_subnet import (

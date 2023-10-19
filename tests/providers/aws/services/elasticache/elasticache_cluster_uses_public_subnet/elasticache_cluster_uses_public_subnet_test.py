@@ -62,6 +62,10 @@ class Test_elasticache_cluster_uses_public_subnet:
 
     @mock_ec2
     def test_elasticache_no_clusters(self):
+        # Mock VPC Service
+        vpc_client = MagicMock
+        vpc_client.vpc_subnets = {}
+
         # Mock ElastiCache Service
         elasticache_service = MagicMock
         elasticache_service.clusters = {}
@@ -72,6 +76,12 @@ class Test_elasticache_cluster_uses_public_subnet:
         ), mock.patch(
             "prowler.providers.aws.services.elasticache.elasticache_service.ElastiCache",
             new=elasticache_service,
+        ), mock.patch(
+            "prowler.providers.aws.services.vpc.vpc_service.VPC",
+            new=vpc_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.vpc.vpc_client.vpc_client",
+            new=vpc_client,
         ):
             from prowler.providers.aws.services.elasticache.elasticache_cluster_uses_public_subnet.elasticache_cluster_uses_public_subnet import (
                 elasticache_cluster_uses_public_subnet,
@@ -115,7 +125,7 @@ class Test_elasticache_cluster_uses_public_subnet:
         )
         vpc_client.vpc_subnets[SUBNET_2] = VpcSubnet(
             id=SUBNET_2,
-            name=SUBNET_1,
+            name=SUBNET_2,
             arn="arn_test",
             default=False,
             vpc_id=VPC_ID,
@@ -136,6 +146,9 @@ class Test_elasticache_cluster_uses_public_subnet:
             new=elasticache_service,
         ), mock.patch(
             "prowler.providers.aws.services.vpc.vpc_service.VPC",
+            new=vpc_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.vpc.vpc_client.vpc_client",
             new=vpc_client,
         ):
             from prowler.providers.aws.services.elasticache.elasticache_cluster_uses_public_subnet.elasticache_cluster_uses_public_subnet import (
@@ -189,7 +202,7 @@ class Test_elasticache_cluster_uses_public_subnet:
         )
         vpc_client.vpc_subnets[SUBNET_2] = VpcSubnet(
             id=SUBNET_2,
-            name=SUBNET_1,
+            name=SUBNET_2,
             arn="arn_test",
             default=False,
             vpc_id=VPC_ID,
@@ -210,6 +223,9 @@ class Test_elasticache_cluster_uses_public_subnet:
             new=elasticache_service,
         ), mock.patch(
             "prowler.providers.aws.services.vpc.vpc_service.VPC",
+            new=vpc_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.vpc.vpc_client.vpc_client",
             new=vpc_client,
         ):
             from prowler.providers.aws.services.elasticache.elasticache_cluster_uses_public_subnet.elasticache_cluster_uses_public_subnet import (
