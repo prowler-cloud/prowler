@@ -13,21 +13,12 @@ from typing import Any
 from alive_progress import alive_bar
 from colorama import Fore, Style
 
+import prowler
 from prowler.config.config import orange_color
 from prowler.lib.check.compliance_models import load_compliance_framework
 from prowler.lib.check.models import Check, load_check_metadata
 from prowler.lib.logger import logger
-
-try:
-    lib = os.environ["PROWLER_REPORT_LIB_PATH"]
-    outputs_module = importlib.import_module(lib)
-    report = getattr(outputs_module, "report")
-except KeyError:
-    from prowler.lib.outputs.outputs import report
-except Exception:
-    sys.exit(1)
-
-import prowler
+from prowler.lib.outputs.outputs import report
 from prowler.lib.utils.utils import open_file, parse_json_file
 from prowler.providers.common.models import Audit_Metadata
 from prowler.providers.common.outputs import Provider_Output_Options
@@ -565,6 +556,17 @@ def execute(
 
     # Report the check's findings
     report(check_findings, audit_output_options, audit_info)
+
+    if os.environ.get("PROWLER_REPORT_LIB_PATH"):
+        try:
+            logger.info("Using custom report interface ...")
+            lib = os.environ["PROWLER_REPORT_LIB_PATH"]
+            outputs_module = importlib.import_module(lib)
+            curstom_report_interface = getattr(outputs_module, "report")
+
+            curstom_report_interface(check_findings, audit_output_options, audit_info)
+        except Exception:
+            sys.exit(1)
 
     return check_findings
 
