@@ -100,6 +100,7 @@ class Test_awslambda_function_invoke_api_operations_cloudtrail_logging_enabled:
         lambda_client.functions = {
             function_name: Function(
                 name=function_name,
+                security_groups=[],
                 arn=function_arn,
                 region=AWS_REGION,
                 runtime=function_runtime,
@@ -164,6 +165,7 @@ class Test_awslambda_function_invoke_api_operations_cloudtrail_logging_enabled:
         lambda_client.functions = {
             function_name: Function(
                 name=function_name,
+                security_groups=[],
                 arn=function_arn,
                 region=AWS_REGION,
                 runtime=function_runtime,
@@ -240,6 +242,7 @@ class Test_awslambda_function_invoke_api_operations_cloudtrail_logging_enabled:
         lambda_client.functions = {
             function_name: Function(
                 name=function_name,
+                security_groups=[],
                 arn=function_arn,
                 region=AWS_REGION,
                 runtime=function_runtime,
@@ -317,6 +320,7 @@ class Test_awslambda_function_invoke_api_operations_cloudtrail_logging_enabled:
         lambda_client.functions = {
             function_name: Function(
                 name=function_name,
+                security_groups=[],
                 arn=function_arn,
                 region=AWS_REGION,
                 runtime=function_runtime,
