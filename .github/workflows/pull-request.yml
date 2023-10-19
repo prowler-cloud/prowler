@@ -25,6 +25,7 @@ jobs:
             .github/**
             README.md
             docs/**
+            permissions/**
       - name: Install poetry
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
         run: |
