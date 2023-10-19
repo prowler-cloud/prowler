@@ -45,11 +45,13 @@ class Test_ec2_securitygroup_not_used:
         return audit_info
 
     @mock_ec2
+    @mock_lambda
     def test_ec2_default_sgs(self):
         # Create EC2 Mocked Resources
         ec2_client = client("ec2", region_name=AWS_REGION)
         ec2_client.create_vpc(CidrBlock="10.0.0.0/16")
 
+        from prowler.providers.aws.services.awslambda.awslambda_service import Lambda
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
         current_audit_info = self.set_mocked_audit_info()
@@ -60,6 +62,9 @@ class Test_ec2_securitygroup_not_used:
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_securitygroup_not_used.ec2_securitygroup_not_used.ec2_client",
             new=EC2(current_audit_info),
+        ), mock.patch(
+            "prowler.providers.aws.services.awslambda.awslambda_service.Lambda",
+            new=Lambda(current_audit_info),
         ):
             # Test Check
             from prowler.providers.aws.services.ec2.ec2_securitygroup_not_used.ec2_securitygroup_not_used import (
@@ -73,6 +78,7 @@ class Test_ec2_securitygroup_not_used:
             assert len(result) == 0
 
     @mock_ec2
+    @mock_lambda
     def test_ec2_unused_sg(self):
         # Create EC2 Mocked Resources
         ec2 = resource("ec2", AWS_REGION)
@@ -83,6 +89,7 @@ class Test_ec2_securitygroup_not_used:
             GroupName=sg_name, Description="test", VpcId=vpc_id
         )
 
+        from prowler.providers.aws.services.awslambda.awslambda_service import Lambda
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
         current_audit_info = self.set_mocked_audit_info()
@@ -93,6 +100,9 @@ class Test_ec2_securitygroup_not_used:
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_securitygroup_not_used.ec2_securitygroup_not_used.ec2_client",
             new=EC2(current_audit_info),
+        ), mock.patch(
+            "prowler.providers.aws.services.awslambda.awslambda_service.Lambda",
+            new=Lambda(current_audit_info),
         ):
             # Test Check
             from prowler.providers.aws.services.ec2.ec2_securitygroup_not_used.ec2_securitygroup_not_used import (
@@ -119,6 +129,7 @@ class Test_ec2_securitygroup_not_used:
             assert result[0].resource_tags == []
 
     @mock_ec2
+    @mock_lambda
     def test_ec2_used_default_sg(self):
         # Create EC2 Mocked Resources
         ec2 = resource("ec2", AWS_REGION)
@@ -131,6 +142,7 @@ class Test_ec2_securitygroup_not_used:
         subnet = ec2.create_subnet(VpcId=vpc_id, CidrBlock="10.0.0.0/18")
         subnet.create_network_interface(Groups=[sg.id])
 
+        from prowler.providers.aws.services.awslambda.awslambda_service import Lambda
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
         current_audit_info = self.set_mocked_audit_info()
@@ -141,6 +153,9 @@ class Test_ec2_securitygroup_not_used:
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_securitygroup_not_used.ec2_securitygroup_not_used.ec2_client",
             new=EC2(current_audit_info),
+        ), mock.patch(
+            "prowler.providers.aws.services.awslambda.awslambda_service.Lambda",
+            new=Lambda(current_audit_info),
         ):
             # Test Check
             from prowler.providers.aws.services.ec2.ec2_securitygroup_not_used.ec2_securitygroup_not_used import (
@@ -209,6 +224,7 @@ class Test_ec2_securitygroup_not_used:
             },
         )
 
+        from prowler.providers.aws.services.awslambda.awslambda_service import Lambda
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
         current_audit_info = self.set_mocked_audit_info()
@@ -219,6 +235,9 @@ class Test_ec2_securitygroup_not_used:
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_securitygroup_not_used.ec2_securitygroup_not_used.ec2_client",
             new=EC2(current_audit_info),
+        ), mock.patch(
+            "prowler.providers.aws.services.awslambda.awslambda_service.Lambda",
+            new=Lambda(current_audit_info),
         ):
             # Test Check
             from prowler.providers.aws.services.ec2.ec2_securitygroup_not_used.ec2_securitygroup_not_used import (
