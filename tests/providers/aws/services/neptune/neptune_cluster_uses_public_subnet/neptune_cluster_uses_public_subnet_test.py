@@ -72,16 +72,10 @@ class Test_neptune_cluster_uses_public_subnet:
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             new=audit_info,
         ), mock.patch(
-            "prowler.providers.aws.services.neptune.neptune_service.Neptune",
-            return_value=Neptune(audit_info),
-        ) as neptune_client, mock.patch(
-            "prowler.providers.aws.services.neptune.neptune_client.neptune_client",
-            neptune_client(),
+            "prowler.providers.aws.services.neptune.neptune_cluster_uses_public_subnet.neptune_cluster_uses_public_subnet.neptune_client",
+            new=Neptune(audit_info),
         ), mock.patch(
-            "prowler.providers.aws.services.vpc.vpc_service.VPC",
-            new=vpc_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.vpc.vpc_client.vpc_client",
+            "prowler.providers.aws.services.neptune.neptune_cluster_uses_public_subnet.neptune_cluster_uses_public_subnet.vpc_client",
             new=vpc_client,
         ):
             from prowler.providers.aws.services.neptune.neptune_cluster_uses_public_subnet.neptune_cluster_uses_public_subnet import (
@@ -150,16 +144,10 @@ class Test_neptune_cluster_uses_public_subnet:
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             new=audit_info,
         ), mock.patch(
-            "prowler.providers.aws.services.neptune.neptune_service.Neptune",
-            return_value=Neptune(audit_info),
-        ) as neptune_client, mock.patch(
-            "prowler.providers.aws.services.neptune.neptune_client.neptune_client",
-            new=neptune_client(),
+            "prowler.providers.aws.services.neptune.neptune_cluster_uses_public_subnet.neptune_cluster_uses_public_subnet.neptune_client",
+            new=Neptune(audit_info),
         ), mock.patch(
-            "prowler.providers.aws.services.vpc.vpc_service.VPC",
-            new=vpc_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.vpc.vpc_client.vpc_client",
+            "prowler.providers.aws.services.neptune.neptune_cluster_uses_public_subnet.neptune_cluster_uses_public_subnet.vpc_client",
             new=vpc_client,
         ):
             from prowler.providers.aws.services.neptune.neptune_cluster_uses_public_subnet.neptune_cluster_uses_public_subnet import (
@@ -237,16 +225,10 @@ class Test_neptune_cluster_uses_public_subnet:
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             new=audit_info,
         ), mock.patch(
-            "prowler.providers.aws.services.neptune.neptune_service.Neptune",
-            return_value=Neptune(audit_info),
-        ) as neptune_client, mock.patch(
-            "prowler.providers.aws.services.neptune.neptune_client.neptune_client",
-            new=neptune_client(),
+            "prowler.providers.aws.services.neptune.neptune_cluster_uses_public_subnet.neptune_cluster_uses_public_subnet.neptune_client",
+            new=Neptune(audit_info),
         ), mock.patch(
-            "prowler.providers.aws.services.vpc.vpc_service.VPC",
-            new=vpc_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.vpc.vpc_client.vpc_client",
+            "prowler.providers.aws.services.neptune.neptune_cluster_uses_public_subnet.neptune_cluster_uses_public_subnet.vpc_client",
             new=vpc_client,
         ):
             from prowler.providers.aws.services.neptune.neptune_cluster_uses_public_subnet.neptune_cluster_uses_public_subnet import (
