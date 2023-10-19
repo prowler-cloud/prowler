@@ -60,6 +60,7 @@ Resources:
                 - 'appstream:List*'
                 - 'codeartifact:List*'
                 - 'codebuild:BatchGet*'
+                - 'dlm:Get*'
                 - 'ds:Get*'
                 - 'ds:Describe*'
                 - 'ds:List*'
