@@ -3,6 +3,7 @@ from typing import Optional
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
+from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
 
@@ -34,18 +35,21 @@ class DocumentDB(AWSService):
             ):
                 for instance in page["DBInstances"]:
                     instance_arn = instance["DBInstanceArn"]
-                    self.db_instances[instance_arn] = Instance(
-                        id=instance["DBInstanceIdentifier"],
-                        arn=instance["DBInstanceArn"],
-                        engine=instance["Engine"],
-                        engine_version=instance["EngineVersion"],
-                        status=instance["DBInstanceStatus"],
-                        public=instance["PubliclyAccessible"],
-                        encrypted=instance["StorageEncrypted"],
-                        cluster_id=instance.get("DBClusterIdentifier"),
-                        region=regional_client.region,
-                        tags=instance.get("TagList", []),
-                    )
+                    if not self.audit_resources or (
+                        is_resource_filtered(instance_arn, self.audit_resources)
+                    ):
+                        self.db_instances[instance_arn] = Instance(
+                            id=instance["DBInstanceIdentifier"],
+                            arn=instance["DBInstanceArn"],
+                            engine=instance["Engine"],
+                            engine_version=instance["EngineVersion"],
+                            status=instance["DBInstanceStatus"],
+                            public=instance["PubliclyAccessible"],
+                            encrypted=instance["StorageEncrypted"],
+                            cluster_id=instance.get("DBClusterIdentifier"),
+                            region=regional_client.region,
+                            tags=instance.get("TagList", []),
+                        )
 
         except Exception as error:
             logger.error(

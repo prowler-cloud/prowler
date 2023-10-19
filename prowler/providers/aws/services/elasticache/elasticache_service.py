@@ -3,6 +3,7 @@ from typing import Optional
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
+from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
 
@@ -23,12 +24,15 @@ class ElastiCache(AWSService):
                 "CacheClusters"
             ]:
                 cluster_arn = cache_cluster["ARN"]
-                self.clusters[cluster_arn] = Cluster(
-                    id=cache_cluster["CacheClusterId"],
-                    arn=cluster_arn,
-                    region=regional_client.region,
-                    cache_subnet_group_id=cache_cluster["CacheSubnetGroupName"],
-                )
+                if not self.audit_resources or (
+                    is_resource_filtered(cluster_arn, self.audit_resources)
+                ):
+                    self.clusters[cluster_arn] = Cluster(
+                        id=cache_cluster["CacheClusterId"],
+                        arn=cluster_arn,
+                        region=regional_client.region,
+                        cache_subnet_group_id=cache_cluster["CacheSubnetGroupName"],
+                    )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

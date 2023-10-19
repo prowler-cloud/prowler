@@ -3,6 +3,7 @@ from typing import Optional
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
+from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
 
@@ -31,13 +32,16 @@ class Neptune(AWSService):
                 ],
             )["DBClusters"]:
                 cluster_arn = cluster["DBClusterArn"]
-                self.clusters[cluster_arn] = Cluster(
-                    arn=cluster_arn,
-                    name=cluster["DBClusterIdentifier"],
-                    id=cluster["DbClusterResourceId"],
-                    db_subnet_group_id=cluster["DBSubnetGroup"],
-                    region=regional_client.region,
-                )
+                if not self.audit_resources or (
+                    is_resource_filtered(cluster_arn, self.audit_resources)
+                ):
+                    self.clusters[cluster_arn] = Cluster(
+                        arn=cluster_arn,
+                        name=cluster["DBClusterIdentifier"],
+                        id=cluster["DbClusterResourceId"],
+                        db_subnet_group_id=cluster["DBSubnetGroup"],
+                        region=regional_client.region,
+                    )
 
         except Exception as error:
             logger.error(
