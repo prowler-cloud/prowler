@@ -3,8 +3,10 @@ from unittest import mock
 from moto.core import DEFAULT_ACCOUNT_ID
 
 from prowler.providers.aws.services.awslambda.awslambda_service import Function
-
-AWS_REGION = "us-east-1"
+from tests.providers.aws.audit_info_utils import (
+    AWS_REGION_US_EAST_1,
+    set_mocked_aws_audit_info,
+)
 
 
 class Test_awslambda_function_using_supported_runtimes:
@@ -13,7 +15,10 @@ class Test_awslambda_function_using_supported_runtimes:
         lambda_client.functions = {}
 
         with mock.patch(
-            "prowler.providers.aws.services.awslambda.awslambda_service.Lambda",
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            set_mocked_aws_audit_info(),
+        ), mock.patch(
+            "prowler.providers.aws.services.awslambda.awslambda_function_using_supported_runtimes.awslambda_function_using_supported_runtimes.awslambda_client",
             new=lambda_client,
         ):
             # Test Check
@@ -30,15 +35,13 @@ class Test_awslambda_function_using_supported_runtimes:
         lambda_client = mock.MagicMock
         function_name = "test-lambda"
         function_runtime = "nodejs4.3"
-        function_arn = (
-            f"arn:aws:lambda:{AWS_REGION}:{DEFAULT_ACCOUNT_ID}:function/{function_name}"
-        )
+        function_arn = f"arn:aws:lambda:{AWS_REGION_US_EAST_1}:{DEFAULT_ACCOUNT_ID}:function/{function_name}"
         lambda_client.functions = {
             "function_name": Function(
                 name=function_name,
                 security_groups=[],
                 arn=function_arn,
-                region=AWS_REGION,
+                region=AWS_REGION_US_EAST_1,
                 runtime=function_runtime,
             )
         }
@@ -62,7 +65,10 @@ class Test_awslambda_function_using_supported_runtimes:
         }
 
         with mock.patch(
-            "prowler.providers.aws.services.awslambda.awslambda_service.Lambda",
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            set_mocked_aws_audit_info(),
+        ), mock.patch(
+            "prowler.providers.aws.services.awslambda.awslambda_function_using_supported_runtimes.awslambda_function_using_supported_runtimes.awslambda_client",
             new=lambda_client,
         ):
             # Test Check
@@ -74,7 +80,7 @@ class Test_awslambda_function_using_supported_runtimes:
             result = check.execute()
 
             assert len(result) == 1
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_id == function_name
             assert result[0].resource_arn == function_arn
             assert result[0].status == "FAIL"
@@ -88,15 +94,13 @@ class Test_awslambda_function_using_supported_runtimes:
         lambda_client = mock.MagicMock
         function_name = "test-lambda"
         function_runtime = "python3.9"
-        function_arn = (
-            f"arn:aws:lambda:{AWS_REGION}:{DEFAULT_ACCOUNT_ID}:function/{function_name}"
-        )
+        function_arn = f"arn:aws:lambda:{AWS_REGION_US_EAST_1}:{DEFAULT_ACCOUNT_ID}:function/{function_name}"
         lambda_client.functions = {
             "function_name": Function(
                 name=function_name,
                 security_groups=[],
                 arn=function_arn,
-                region=AWS_REGION,
+                region=AWS_REGION_US_EAST_1,
                 runtime=function_runtime,
             )
         }
@@ -120,7 +124,10 @@ class Test_awslambda_function_using_supported_runtimes:
         }
 
         with mock.patch(
-            "prowler.providers.aws.services.awslambda.awslambda_service.Lambda",
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            set_mocked_aws_audit_info(),
+        ), mock.patch(
+            "prowler.providers.aws.services.awslambda.awslambda_function_using_supported_runtimes.awslambda_function_using_supported_runtimes.awslambda_client",
             new=lambda_client,
         ):
             # Test Check
@@ -132,7 +139,7 @@ class Test_awslambda_function_using_supported_runtimes:
             result = check.execute()
 
             assert len(result) == 1
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_id == function_name
             assert result[0].resource_arn == function_arn
             assert result[0].status == "PASS"
@@ -145,15 +152,13 @@ class Test_awslambda_function_using_supported_runtimes:
     def test_function_no_runtime(self):
         lambda_client = mock.MagicMock
         function_name = "test-lambda"
-        function_arn = (
-            f"arn:aws:lambda:{AWS_REGION}:{DEFAULT_ACCOUNT_ID}:function/{function_name}"
-        )
+        function_arn = f"arn:aws:lambda:{AWS_REGION_US_EAST_1}:{DEFAULT_ACCOUNT_ID}:function/{function_name}"
         lambda_client.functions = {
             "function_name": Function(
                 name=function_name,
                 security_groups=[],
                 arn=function_arn,
-                region=AWS_REGION,
+                region=AWS_REGION_US_EAST_1,
             )
         }
 
@@ -176,7 +181,10 @@ class Test_awslambda_function_using_supported_runtimes:
         }
 
         with mock.patch(
-            "prowler.providers.aws.services.awslambda.awslambda_service.Lambda",
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            set_mocked_aws_audit_info(),
+        ), mock.patch(
+            "prowler.providers.aws.services.awslambda.awslambda_function_using_supported_runtimes.awslambda_function_using_supported_runtimes.awslambda_client",
             new=lambda_client,
         ):
             # Test Check

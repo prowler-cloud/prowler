@@ -3,8 +3,10 @@ from unittest import mock
 from moto.core import DEFAULT_ACCOUNT_ID
 
 from prowler.providers.aws.services.awslambda.awslambda_service import Function
-
-AWS_REGION = "us-east-1"
+from tests.providers.aws.audit_info_utils import (
+    AWS_REGION_US_EAST_1,
+    set_mocked_aws_audit_info,
+)
 
 
 class Test_awslambda_function_not_publicly_accessible:
@@ -13,7 +15,10 @@ class Test_awslambda_function_not_publicly_accessible:
         lambda_client.functions = {}
 
         with mock.patch(
-            "prowler.providers.aws.services.awslambda.awslambda_service.Lambda",
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            set_mocked_aws_audit_info(),
+        ), mock.patch(
+            "prowler.providers.aws.services.awslambda.awslambda_function_not_publicly_accessible.awslambda_function_not_publicly_accessible.awslambda_client",
             new=lambda_client,
         ):
             # Test Check
@@ -30,9 +35,7 @@ class Test_awslambda_function_not_publicly_accessible:
         lambda_client = mock.MagicMock
         function_name = "test-lambda"
         function_runtime = "nodejs4.3"
-        function_arn = (
-            f"arn:aws:lambda:{AWS_REGION}:{DEFAULT_ACCOUNT_ID}:function/{function_name}"
-        )
+        function_arn = f"arn:aws:lambda:{AWS_REGION_US_EAST_1}:{DEFAULT_ACCOUNT_ID}:function/{function_name}"
         lambda_policy = {
             "Version": "2012-10-17",
             "Statement": [
@@ -53,14 +56,17 @@ class Test_awslambda_function_not_publicly_accessible:
                 name=function_name,
                 security_groups=[],
                 arn=function_arn,
-                region=AWS_REGION,
+                region=AWS_REGION_US_EAST_1,
                 runtime=function_runtime,
                 policy=lambda_policy,
             )
         }
 
         with mock.patch(
-            "prowler.providers.aws.services.awslambda.awslambda_service.Lambda",
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            set_mocked_aws_audit_info(),
+        ), mock.patch(
+            "prowler.providers.aws.services.awslambda.awslambda_function_not_publicly_accessible.awslambda_function_not_publicly_accessible.awslambda_client",
             new=lambda_client,
         ):
             # Test Check
@@ -72,7 +78,7 @@ class Test_awslambda_function_not_publicly_accessible:
             result = check.execute()
 
             assert len(result) == 1
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_id == function_name
             assert result[0].resource_arn == function_arn
             assert result[0].status == "FAIL"
@@ -86,9 +92,7 @@ class Test_awslambda_function_not_publicly_accessible:
         lambda_client = mock.MagicMock
         function_name = "test-lambda"
         function_runtime = "nodejs4.3"
-        function_arn = (
-            f"arn:aws:lambda:{AWS_REGION}:{DEFAULT_ACCOUNT_ID}:function/{function_name}"
-        )
+        function_arn = f"arn:aws:lambda:{AWS_REGION_US_EAST_1}:{DEFAULT_ACCOUNT_ID}:function/{function_name}"
         lambda_policy = {
             "Version": "2012-10-17",
             "Statement": [
@@ -109,14 +113,17 @@ class Test_awslambda_function_not_publicly_accessible:
                 name=function_name,
                 security_groups=[],
                 arn=function_arn,
-                region=AWS_REGION,
+                region=AWS_REGION_US_EAST_1,
                 runtime=function_runtime,
                 policy=lambda_policy,
             )
         }
 
         with mock.patch(
-            "prowler.providers.aws.services.awslambda.awslambda_service.Lambda",
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            set_mocked_aws_audit_info(),
+        ), mock.patch(
+            "prowler.providers.aws.services.awslambda.awslambda_function_not_publicly_accessible.awslambda_function_not_publicly_accessible.awslambda_client",
             new=lambda_client,
         ):
             # Test Check
@@ -128,7 +135,7 @@ class Test_awslambda_function_not_publicly_accessible:
             result = check.execute()
 
             assert len(result) == 1
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_id == function_name
             assert result[0].resource_arn == function_arn
             assert result[0].status == "PASS"
@@ -142,9 +149,7 @@ class Test_awslambda_function_not_publicly_accessible:
         lambda_client = mock.MagicMock
         function_name = "test-lambda"
         function_runtime = "nodejs4.3"
-        function_arn = (
-            f"arn:aws:lambda:{AWS_REGION}:{DEFAULT_ACCOUNT_ID}:function/{function_name}"
-        )
+        function_arn = f"arn:aws:lambda:{AWS_REGION_US_EAST_1}:{DEFAULT_ACCOUNT_ID}:function/{function_name}"
         lambda_policy = {
             "Version": "2012-10-17",
             "Statement": [
@@ -165,14 +170,17 @@ class Test_awslambda_function_not_publicly_accessible:
                 name=function_name,
                 security_groups=[],
                 arn=function_arn,
-                region=AWS_REGION,
+                region=AWS_REGION_US_EAST_1,
                 runtime=function_runtime,
                 policy=lambda_policy,
             )
         }
 
         with mock.patch(
-            "prowler.providers.aws.services.awslambda.awslambda_service.Lambda",
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            set_mocked_aws_audit_info(),
+        ), mock.patch(
+            "prowler.providers.aws.services.awslambda.awslambda_function_not_publicly_accessible.awslambda_function_not_publicly_accessible.awslambda_client",
             new=lambda_client,
         ):
             # Test Check
@@ -184,7 +192,7 @@ class Test_awslambda_function_not_publicly_accessible:
             result = check.execute()
 
             assert len(result) == 1
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_id == function_name
             assert result[0].resource_arn == function_arn
             assert result[0].status == "FAIL"
