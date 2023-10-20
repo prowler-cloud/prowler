@@ -1,14 +1,14 @@
-# Noise Reduction
+# Ignore Unused Services
 
 > Currently only available on the AWS provider.
 
-Prowler allows you to ignore noisy findings in services that are not used (do not have resources) so you can reduce noise in Prowler's reports.
+Prowler allows you to ignore unused services findings, so you can reduce the number of findings in Prowler's reports.
 
 ```console
 prowler <provider> --ignore-unused-services
 ```
 
-## Services with noise reduction
+## Services that can be ignored
 ### AWS
 #### Athena
 When you create an AWS Account, Athena will create a default primary workgroup for you.
@@ -45,7 +45,7 @@ It is a best practice to encrypt both metadata and connection passwords in AWS G
   - glue_data_catalogs_metadata_encryption_enabled
 
 #### Inspector
-Amazon Inspector is a vulnerability discovery service that automates continuous scanning for security vulnerabilities within your Amazon EC2, Amazon ECR, and AWS Lambda environments. Prowler recommends to enable it and resolve all the Inspector's findings. With the noise reduction, Prowler will only notify you if there are any Lambda functions, EC2 instances or ECR repositories in the region where Amazon inspector should be enabled.
+Amazon Inspector is a vulnerability discovery service that automates continuous scanning for security vulnerabilities within your Amazon EC2, Amazon ECR, and AWS Lambda environments. Prowler recommends to enable it and resolve all the Inspector's findings. Ignoring the unused services, Prowler will only notify you if there are any Lambda functions, EC2 instances or ECR repositories in the region where Amazon inspector should be enabled.
 
   - inspector2_findings_exist
 

@@ -18,20 +18,19 @@ class accessanalyzer_enabled(Check):
                 report.status_extended = (
                     f"IAM Access Analyzer {analyzer.name} is enabled."
                 )
-                findings.append(report)
 
             elif analyzer.status == "NOT_AVAILABLE":
                 report.status = "FAIL"
                 report.status_extended = (
                     f"IAM Access Analyzer in account {analyzer.name} is not enabled."
                 )
-                findings.append(report)
 
             else:
                 report.status = "FAIL"
                 report.status_extended = (
                     f"IAM Access Analyzer {analyzer.name} is not active."
                 )
-                findings.append(report)
+
+            findings.append(report)
 
         return findings

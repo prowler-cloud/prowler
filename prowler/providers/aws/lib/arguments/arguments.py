@@ -153,12 +153,14 @@ def init_parser(self):
         help="Set the maximum attemps for the Boto3 standard retrier config (Default: 3)",
     )
 
-    # Noise Reduction
-    noise_reduction_subparser = aws_parser.add_argument_group("Noise Reduction")
-    noise_reduction_subparser.add_argument(
+    # Ignore Unused Services
+    ignore_unused_services_subparser = aws_parser.add_argument_group(
+        "Ignore Unused Services"
+    )
+    ignore_unused_services_subparser.add_argument(
         "--ignore-unused-services",
         action="store_true",
-        help="Reduce noise by ignoring findings in unused services",
+        help="Ignore findings in unused services",
     )
 
 

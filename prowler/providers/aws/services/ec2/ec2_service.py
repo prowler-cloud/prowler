@@ -116,7 +116,7 @@ class EC2(AWSService):
                     if not self.audit_resources or (
                         is_resource_filtered(arn, self.audit_resources)
                     ):
-                        # check if sg has public access to all ports to reduce noise
+                        # check if sg has public access to all ports
                         all_public_ports = False
                         for ingress_rule in sg["IpPermissions"]:
                             if (

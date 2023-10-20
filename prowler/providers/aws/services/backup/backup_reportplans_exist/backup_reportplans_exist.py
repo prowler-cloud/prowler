@@ -5,7 +5,7 @@ from prowler.providers.aws.services.backup.backup_client import backup_client
 class backup_reportplans_exist(Check):
     def execute(self):
         findings = []
-        # We only check report plans if backup plans exist, reducing noise
+        # We only check report plans if backup plans exist
         if backup_client.backup_plans:
             report = Check_Report_AWS(self.metadata())
             report.status = "FAIL"
