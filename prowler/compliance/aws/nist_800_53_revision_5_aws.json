@@ -1022,7 +1022,7 @@
         }
       ],
       "Checks": [
-        "apigateway_client_certificate_enabled",
+        "apigateway_restapi_client_certificate_enabled",
         "elb_ssl_listeners",
         "opensearch_service_domains_node_to_node_encryption_enabled",
         "s3_bucket_secure_transport_policy"
@@ -1041,7 +1041,7 @@
         }
       ],
       "Checks": [
-        "apigateway_waf_acl_attached",
+        "apigateway_restapi_waf_acl_attached",
         "ec2_ebs_public_snapshot",
         "ec2_instance_public_ip",
         "elbv2_waf_acl_attached",
@@ -1074,7 +1074,7 @@
         }
       ],
       "Checks": [
-        "apigateway_client_certificate_enabled",
+        "apigateway_restapi_client_certificate_enabled",
         "elb_ssl_listeners",
         "opensearch_service_domains_node_to_node_encryption_enabled",
         "s3_bucket_secure_transport_policy"
@@ -1093,7 +1093,7 @@
         }
       ],
       "Checks": [
-        "apigateway_logging_enabled",
+        "apigateway_restapi_logging_enabled",
         "cloudtrail_multi_region_enabled",
         "cloudtrail_s3_dataevents_read_enabled",
         "cloudtrail_s3_dataevents_write_enabled",
@@ -1404,7 +1404,7 @@
         }
       ],
       "Checks": [
-        "apigateway_client_certificate_enabled",
+        "apigateway_restapi_client_certificate_enabled",
         "elb_ssl_listeners",
         "s3_bucket_secure_transport_policy"
       ]
@@ -1547,7 +1547,7 @@
         }
       ],
       "Checks": [
-        "apigateway_client_certificate_enabled",
+        "apigateway_restapi_client_certificate_enabled",
         "elb_ssl_listeners",
         "opensearch_service_domains_node_to_node_encryption_enabled",
         "s3_bucket_secure_transport_policy"
@@ -1566,7 +1566,7 @@
         }
       ],
       "Checks": [
-        "apigateway_logging_enabled",
+        "apigateway_restapi_logging_enabled",
         "cloudtrail_multi_region_enabled",
         "cloudtrail_s3_dataevents_read_enabled",
         "cloudtrail_s3_dataevents_write_enabled",
@@ -1610,7 +1610,7 @@
         }
       ],
       "Checks": [
-        "apigateway_logging_enabled",
+        "apigateway_restapi_logging_enabled",
         "cloudtrail_multi_region_enabled",
         "cloudtrail_s3_dataevents_read_enabled",
         "cloudtrail_s3_dataevents_write_enabled",
@@ -1637,7 +1637,7 @@
         }
       ],
       "Checks": [
-        "apigateway_logging_enabled",
+        "apigateway_restapi_logging_enabled",
         "cloudtrail_multi_region_enabled",
         "cloudtrail_s3_dataevents_read_enabled",
         "cloudtrail_s3_dataevents_write_enabled",
@@ -1664,7 +1664,7 @@
         }
       ],
       "Checks": [
-        "apigateway_logging_enabled",
+        "apigateway_restapi_logging_enabled",
         "cloudtrail_multi_region_enabled",
         "cloudtrail_s3_dataevents_read_enabled",
         "cloudtrail_s3_dataevents_write_enabled",
@@ -1691,7 +1691,7 @@
         }
       ],
       "Checks": [
-        "apigateway_logging_enabled",
+        "apigateway_restapi_logging_enabled",
         "cloudtrail_multi_region_enabled",
         "cloudtrail_s3_dataevents_read_enabled",
         "cloudtrail_s3_dataevents_write_enabled",
@@ -1718,7 +1718,7 @@
         }
       ],
       "Checks": [
-        "apigateway_logging_enabled",
+        "apigateway_restapi_logging_enabled",
         "cloudtrail_multi_region_enabled",
         "cloudtrail_s3_dataevents_read_enabled",
         "cloudtrail_s3_dataevents_write_enabled",
@@ -1745,7 +1745,7 @@
         }
       ],
       "Checks": [
-        "apigateway_logging_enabled",
+        "apigateway_restapi_logging_enabled",
         "cloudtrail_multi_region_enabled",
         "cloudtrail_s3_dataevents_read_enabled",
         "cloudtrail_s3_dataevents_write_enabled",
@@ -1809,7 +1809,7 @@
         }
       ],
       "Checks": [
-        "apigateway_logging_enabled",
+        "apigateway_restapi_logging_enabled",
         "cloudtrail_multi_region_enabled",
         "cloudtrail_s3_dataevents_read_enabled",
         "cloudtrail_s3_dataevents_write_enabled",
@@ -1837,7 +1837,7 @@
         }
       ],
       "Checks": [
-        "apigateway_logging_enabled",
+        "apigateway_restapi_logging_enabled",
         "cloudtrail_multi_region_enabled",
         "cloudtrail_s3_dataevents_read_enabled",
         "cloudtrail_s3_dataevents_write_enabled",
@@ -1887,7 +1887,7 @@
         }
       ],
       "Checks": [
-        "apigateway_logging_enabled",
+        "apigateway_restapi_logging_enabled",
         "cloudtrail_multi_region_enabled",
         "cloudtrail_s3_dataevents_read_enabled",
         "cloudtrail_s3_dataevents_write_enabled",
@@ -1915,7 +1915,7 @@
         }
       ],
       "Checks": [
-        "apigateway_logging_enabled",
+        "apigateway_restapi_logging_enabled",
         "cloudtrail_multi_region_enabled",
         "cloudtrail_s3_dataevents_read_enabled",
         "cloudtrail_s3_dataevents_write_enabled",
@@ -1959,7 +1959,7 @@
         }
       ],
       "Checks": [
-        "apigateway_logging_enabled",
+        "apigateway_restapi_logging_enabled",
         "cloudtrail_multi_region_enabled",
         "cloudtrail_s3_dataevents_read_enabled",
         "cloudtrail_s3_dataevents_write_enabled",
@@ -2018,7 +2018,7 @@
         }
       ],
       "Checks": [
-        "apigateway_client_certificate_enabled",
+        "apigateway_restapi_client_certificate_enabled",
         "cloudtrail_kms_encryption_enabled",
         "dynamodb_tables_kms_cmk_encryption_enabled",
         "ec2_ebs_volume_encryption",
@@ -2065,7 +2065,7 @@
         }
       ],
       "Checks": [
-        "apigateway_logging_enabled",
+        "apigateway_restapi_logging_enabled",
         "cloudtrail_multi_region_enabled",
         "cloudtrail_s3_dataevents_read_enabled",
         "cloudtrail_s3_dataevents_write_enabled",
@@ -2124,7 +2124,7 @@
         }
       ],
       "Checks": [
-        "apigateway_logging_enabled",
+        "apigateway_restapi_logging_enabled",
         "cloudtrail_multi_region_enabled",
         "cloudtrail_s3_dataevents_read_enabled",
         "cloudtrail_s3_dataevents_write_enabled",
@@ -2151,7 +2151,7 @@
         }
       ],
       "Checks": [
-        "apigateway_logging_enabled",
+        "apigateway_restapi_logging_enabled",
         "cloudtrail_multi_region_enabled",
         "cloudtrail_s3_dataevents_read_enabled",
         "cloudtrail_s3_dataevents_write_enabled",
@@ -2178,7 +2178,7 @@
         }
       ],
       "Checks": [
-        "apigateway_logging_enabled",
+        "apigateway_restapi_logging_enabled",
         "cloudtrail_multi_region_enabled",
         "cloudtrail_s3_dataevents_read_enabled",
         "cloudtrail_s3_dataevents_write_enabled",
@@ -2206,7 +2206,7 @@
         }
       ],
       "Checks": [
-        "apigateway_logging_enabled",
+        "apigateway_restapi_logging_enabled",
         "cloudtrail_multi_region_enabled",
         "cloudtrail_s3_dataevents_read_enabled",
         "cloudtrail_s3_dataevents_write_enabled",
@@ -2234,7 +2234,7 @@
         }
       ],
       "Checks": [
-        "apigateway_logging_enabled",
+        "apigateway_restapi_logging_enabled",
         "cloudtrail_multi_region_enabled",
         "cloudtrail_s3_dataevents_read_enabled",
         "cloudtrail_s3_dataevents_write_enabled",
@@ -2269,7 +2269,7 @@
         }
       ],
       "Checks": [
-        "apigateway_logging_enabled",
+        "apigateway_restapi_logging_enabled",
         "cloudtrail_multi_region_enabled",
         "cloudtrail_s3_dataevents_read_enabled",
         "cloudtrail_s3_dataevents_write_enabled",
@@ -2296,7 +2296,7 @@
         }
       ],
       "Checks": [
-        "apigateway_logging_enabled",
+        "apigateway_restapi_logging_enabled",
         "cloudtrail_multi_region_enabled",
         "cloudtrail_s3_dataevents_read_enabled",
         "cloudtrail_s3_dataevents_write_enabled",
@@ -2331,7 +2331,7 @@
         }
       ],
       "Checks": [
-        "apigateway_logging_enabled",
+        "apigateway_restapi_logging_enabled",
         "cloudtrail_multi_region_enabled",
         "cloudtrail_s3_dataevents_read_enabled",
         "cloudtrail_s3_dataevents_write_enabled",
@@ -2366,7 +2366,7 @@
         }
       ],
       "Checks": [
-        "apigateway_logging_enabled",
+        "apigateway_restapi_logging_enabled",
         "cloudtrail_multi_region_enabled",
         "cloudtrail_s3_dataevents_read_enabled",
         "cloudtrail_s3_dataevents_write_enabled",
@@ -2466,7 +2466,7 @@
         }
       ],
       "Checks": [
-        "apigateway_logging_enabled",
+        "apigateway_restapi_logging_enabled",
         "cloudtrail_multi_region_enabled",
         "cloudtrail_s3_dataevents_read_enabled",
         "cloudtrail_s3_dataevents_write_enabled",
@@ -2519,7 +2519,7 @@
         }
       ],
       "Checks": [
-        "apigateway_client_certificate_enabled",
+        "apigateway_restapi_client_certificate_enabled",
         "elb_ssl_listeners",
         "opensearch_service_domains_node_to_node_encryption_enabled",
         "s3_bucket_secure_transport_policy"
@@ -2725,7 +2725,7 @@
         }
       ],
       "Checks": [
-        "apigateway_logging_enabled",
+        "apigateway_restapi_logging_enabled",
         "cloudtrail_multi_region_enabled",
         "cloudtrail_s3_dataevents_read_enabled",
         "cloudtrail_s3_dataevents_write_enabled",
@@ -3609,7 +3609,7 @@
       ],
       "Checks": [
         "cloudtrail_multi_region_enabled",
-        "apigateway_logging_enabled",
+        "apigateway_restapi_logging_enabled",
         "cloudtrail_cloudwatch_logging_enabled",
         "cloudtrail_multi_region_enabled",
         "cloudtrail_s3_dataevents_read_enabled",
@@ -3795,7 +3795,7 @@
         }
       ],
       "Checks": [
-        "apigateway_client_certificate_enabled",
+        "apigateway_restapi_client_certificate_enabled",
         "elb_ssl_listeners",
         "s3_bucket_secure_transport_policy"
       ]
@@ -3980,7 +3980,7 @@
         }
       ],
       "Checks": [
-        "apigateway_logging_enabled",
+        "apigateway_restapi_logging_enabled",
         "cloudtrail_multi_region_enabled",
         "cloudtrail_s3_dataevents_read_enabled",
         "cloudtrail_s3_dataevents_write_enabled",
@@ -4093,7 +4093,7 @@
         }
       ],
       "Checks": [
-        "apigateway_logging_enabled",
+        "apigateway_restapi_logging_enabled",
         "cloudtrail_multi_region_enabled",
         "cloudtrail_s3_dataevents_read_enabled",
         "cloudtrail_s3_dataevents_write_enabled",
@@ -4128,7 +4128,7 @@
         }
       ],
       "Checks": [
-        "apigateway_logging_enabled",
+        "apigateway_restapi_logging_enabled",
         "cloudtrail_multi_region_enabled",
         "cloudtrail_s3_dataevents_read_enabled",
         "cloudtrail_s3_dataevents_write_enabled",
@@ -4178,7 +4178,7 @@
         }
       ],
       "Checks": [
-        "apigateway_client_certificate_enabled",
+        "apigateway_restapi_client_certificate_enabled",
         "cloudtrail_log_file_validation_enabled",
         "elb_ssl_listeners",
         "opensearch_service_domains_node_to_node_encryption_enabled",
@@ -4214,7 +4214,7 @@
         }
       ],
       "Checks": [
-        "apigateway_logging_enabled",
+        "apigateway_restapi_logging_enabled",
         "cloudtrail_multi_region_enabled",
         "cloudtrail_s3_dataevents_read_enabled",
         "cloudtrail_s3_dataevents_write_enabled",
@@ -4658,7 +4658,7 @@
         }
       ],
       "Checks": [
-        "apigateway_client_certificate_enabled",
+        "apigateway_restapi_client_certificate_enabled",
         "elb_ssl_listeners",
         "opensearch_service_domains_node_to_node_encryption_enabled",
         "s3_bucket_secure_transport_policy"
@@ -4678,7 +4678,7 @@
         }
       ],
       "Checks": [
-        "apigateway_client_certificate_enabled",
+        "apigateway_restapi_client_certificate_enabled",
         "elb_ssl_listeners",
         "opensearch_service_domains_node_to_node_encryption_enabled",
         "s3_bucket_secure_transport_policy"
@@ -4697,7 +4697,7 @@
         }
       ],
       "Checks": [
-        "apigateway_client_certificate_enabled",
+        "apigateway_restapi_client_certificate_enabled",
         "elb_ssl_listeners",
         "s3_bucket_secure_transport_policy",
         "ec2_securitygroup_default_restrict_traffic",
@@ -4779,7 +4779,7 @@
         }
       ],
       "Checks": [
-        "apigateway_logging_enabled",
+        "apigateway_restapi_logging_enabled",
         "cloudtrail_multi_region_enabled",
         "cloudtrail_s3_dataevents_read_enabled",
         "cloudtrail_s3_dataevents_write_enabled",
@@ -5205,7 +5205,7 @@
         }
       ],
       "Checks": [
-        "apigateway_client_certificate_enabled",
+        "apigateway_restapi_client_certificate_enabled",
         "elb_ssl_listeners",
         "opensearch_service_domains_node_to_node_encryption_enabled",
         "s3_bucket_secure_transport_policy"
@@ -5224,7 +5224,7 @@
         }
       ],
       "Checks": [
-        "apigateway_client_certificate_enabled",
+        "apigateway_restapi_client_certificate_enabled",
         "elbv2_insecure_ssl_ciphers",
         "elb_ssl_listeners",
         "opensearch_service_domains_node_to_node_encryption_enabled",
@@ -5244,7 +5244,7 @@
         }
       ],
       "Checks": [
-        "apigateway_client_certificate_enabled",
+        "apigateway_restapi_client_certificate_enabled",
         "elb_ssl_listeners",
         "opensearch_service_domains_node_to_node_encryption_enabled",
         "s3_bucket_secure_transport_policy"
@@ -5263,7 +5263,7 @@
         }
       ],
       "Checks": [
-        "apigateway_client_certificate_enabled",
+        "apigateway_restapi_client_certificate_enabled",
         "cloudtrail_kms_encryption_enabled",
         "dynamodb_tables_kms_cmk_encryption_enabled",
         "ec2_ebs_volume_encryption",
@@ -5296,7 +5296,7 @@
         }
       ],
       "Checks": [
-        "apigateway_client_certificate_enabled",
+        "apigateway_restapi_client_certificate_enabled",
         "cloudtrail_kms_encryption_enabled",
         "dynamodb_tables_kms_cmk_encryption_enabled",
         "ec2_ebs_volume_encryption",
@@ -5329,7 +5329,7 @@
         }
       ],
       "Checks": [
-        "apigateway_client_certificate_enabled",
+        "apigateway_restapi_client_certificate_enabled",
         "elb_ssl_listeners",
         "opensearch_service_domains_node_to_node_encryption_enabled",
         "s3_bucket_secure_transport_policy"
@@ -5395,7 +5395,7 @@
         }
       ],
       "Checks": [
-        "apigateway_client_certificate_enabled",
+        "apigateway_restapi_client_certificate_enabled",
         "cloudtrail_kms_encryption_enabled",
         "dynamodb_tables_kms_cmk_encryption_enabled",
         "ec2_ebs_volume_encryption",
@@ -5463,7 +5463,7 @@
         }
       ],
       "Checks": [
-        "apigateway_client_certificate_enabled",
+        "apigateway_restapi_client_certificate_enabled",
         "elb_ssl_listeners",
         "opensearch_service_domains_node_to_node_encryption_enabled",
         "s3_bucket_secure_transport_policy"
@@ -5656,7 +5656,7 @@
         }
       ],
       "Checks": [
-        "apigateway_client_certificate_enabled",
+        "apigateway_restapi_client_certificate_enabled",
         "cloudtrail_log_file_validation_enabled",
         "elb_ssl_listeners",
         "opensearch_service_domains_node_to_node_encryption_enabled",
@@ -6103,7 +6103,7 @@
         }
       ],
       "Checks": [
-        "apigateway_logging_enabled",
+        "apigateway_restapi_logging_enabled",
         "cloudtrail_multi_region_enabled",
         "cloudtrail_s3_dataevents_read_enabled",
         "cloudtrail_s3_dataevents_write_enabled",
@@ -6275,7 +6275,7 @@
       ],
       "Checks": [
         "cloudtrail_multi_region_enabled",
-        "apigateway_logging_enabled",
+        "apigateway_restapi_logging_enabled",
         "cloudtrail_cloudwatch_logging_enabled",
         "cloudtrail_multi_region_enabled",
         "cloudtrail_s3_dataevents_read_enabled",

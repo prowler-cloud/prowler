@@ -4,7 +4,7 @@ from prowler.providers.aws.services.apigateway.apigateway_client import (
 )
 
 
-class apigateway_endpoint_public_without_authorizer(Check):
+class apigateway_restapi_public_with_authorizer(Check):
     def execute(self):
         findings = []
         for rest_api in apigateway_client.rest_apis:

@@ -30,7 +30,7 @@
       ],
       "Checks": [
         "acm_certificates_expiration_check",
-        "apigateway_client_certificate_enabled",
+        "apigateway_restapi_client_certificate_enabled",
         "cloudtrail_kms_encryption_enabled",
         "dynamodb_tables_kms_cmk_encryption_enabled",
         "ec2_ebs_volume_encryption",
@@ -76,7 +76,7 @@
         }
       ],
       "Checks": [
-        "apigateway_waf_acl_attached",
+        "apigateway_restapi_waf_acl_attached",
         "elbv2_waf_acl_attached",
         "ec2_securitygroup_default_restrict_traffic",
         "ec2_networkacl_allow_ingress_any_port",
@@ -159,7 +159,7 @@
         }
       ],
       "Checks": [
-        "apigateway_logging_enabled",
+        "apigateway_restapi_logging_enabled",
         "cloudtrail_multi_region_enabled",
         "cloudtrail_s3_dataevents_read_enabled",
         "cloudtrail_s3_dataevents_write_enabled",

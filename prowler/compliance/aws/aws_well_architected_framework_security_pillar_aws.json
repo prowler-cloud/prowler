@@ -477,7 +477,7 @@
         "s3_bucket_policy_public_write_access",
         "sagemaker_notebook_instance_without_direct_internet_access_configured",
         "appstream_fleet_default_internet_access_disabled",
-        "apigateway_endpoint_public",
+        "apigateway_restapi_public",
         "awslambda_function_url_cors_policy",
         "awslambda_function_url_public",
         "cloudtrail_logs_s3_bucket_is_not_publicly_accessible",
@@ -536,7 +536,7 @@
         }
       ],
       "Checks": [
-        "apigateway_logging_enabled",
+        "apigateway_restapi_logging_enabled",
         "opensearch_service_domains_audit_logging_enabled",
         "cloudtrail_cloudwatch_logging_enabled",
         "cloudtrail_s3_dataevents_read_enabled",
@@ -661,7 +661,7 @@
       "Checks": [
         "opensearch_service_domains_not_publicly_accessible",
         "awslambda_function_not_publicly_accessible",
-        "apigateway_waf_acl_attached",
+        "apigateway_restapi_waf_acl_attached",
         "cloudfront_distributions_using_waf",
         "eks_control_plane_endpoint_access_restricted",
         "sagemaker_models_network_isolation_enabled",
@@ -693,7 +693,7 @@
         "ec2_ebs_public_snapshot",
         "ec2_networkacl_allow_ingress_tcp_port_22",
         "sagemaker_notebook_instance_without_direct_internet_access_configured",
-        "apigateway_authorizers_enabled",
+        "apigateway_restapi_authorizers_enabled",
         "apigatewayv2_authorizers_enabled",
         "s3_bucket_acl_prohibited",
         "s3_bucket_no_mfa_delete"
@@ -770,7 +770,7 @@
       "Checks": [
         "guardduty_is_enabled",
         "vpc_flow_logs_enabled",
-        "apigateway_authorizers_enabled"
+        "apigateway_restapi_authorizers_enabled"
       ]
     },
     {
@@ -1137,7 +1137,7 @@
       "Checks": [
         "opensearch_service_domains_node_to_node_encryption_enabled",
         "opensearch_service_domains_https_communications_enforced",
-        "apigateway_client_certificate_enabled",
+        "apigateway_restapi_client_certificate_enabled",
         "cloudfront_distributions_field_level_encryption_enabled",
         "cloudfront_distributions_https_enabled",
         "cloudfront_distributions_using_deprecated_ssl_protocols",

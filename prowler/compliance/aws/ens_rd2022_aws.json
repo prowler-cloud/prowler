@@ -2622,7 +2622,7 @@
         }
       ],
       "Checks": [
-        "apigateway_waf_acl_attached"
+        "apigateway_restapi_waf_acl_attached"
       ]
     },
     {

@@ -10,7 +10,7 @@ AWS_REGION = "us-east-1"
 AWS_ACCOUNT_NUMBER = "123456789012"
 
 
-class Test_apigateway_waf_acl_attached:
+class Test_apigateway_restapi_waf_acl_attached:
     def set_mocked_audit_info(self):
         audit_info = AWS_Audit_Info(
             session_config=None,
@@ -54,15 +54,15 @@ class Test_apigateway_waf_acl_attached:
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             new=current_audit_info,
         ), mock.patch(
-            "prowler.providers.aws.services.apigateway.apigateway_waf_acl_attached.apigateway_waf_acl_attached.apigateway_client",
+            "prowler.providers.aws.services.apigateway.apigateway_restapi_waf_acl_attached.apigateway_restapi_waf_acl_attached.apigateway_client",
             new=APIGateway(current_audit_info),
         ):
             # Test Check
-            from prowler.providers.aws.services.apigateway.apigateway_waf_acl_attached.apigateway_waf_acl_attached import (
-                apigateway_waf_acl_attached,
+            from prowler.providers.aws.services.apigateway.apigateway_restapi_waf_acl_attached.apigateway_restapi_waf_acl_attached import (
+                apigateway_restapi_waf_acl_attached,
             )
 
-            check = apigateway_waf_acl_attached()
+            check = apigateway_restapi_waf_acl_attached()
             result = check.execute()
 
             assert len(result) == 0
@@ -128,15 +128,15 @@ class Test_apigateway_waf_acl_attached:
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             new=current_audit_info,
         ), mock.patch(
-            "prowler.providers.aws.services.apigateway.apigateway_waf_acl_attached.apigateway_waf_acl_attached.apigateway_client",
+            "prowler.providers.aws.services.apigateway.apigateway_restapi_waf_acl_attached.apigateway_restapi_waf_acl_attached.apigateway_client",
             new=APIGateway(current_audit_info),
         ):
             # Test Check
-            from prowler.providers.aws.services.apigateway.apigateway_waf_acl_attached.apigateway_waf_acl_attached import (
-                apigateway_waf_acl_attached,
+            from prowler.providers.aws.services.apigateway.apigateway_restapi_waf_acl_attached.apigateway_restapi_waf_acl_attached import (
+                apigateway_restapi_waf_acl_attached,
             )
 
-            check = apigateway_waf_acl_attached()
+            check = apigateway_restapi_waf_acl_attached()
             result = check.execute()
 
             assert result[0].status == "PASS"
@@ -199,15 +199,15 @@ class Test_apigateway_waf_acl_attached:
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             new=current_audit_info,
         ), mock.patch(
-            "prowler.providers.aws.services.apigateway.apigateway_waf_acl_attached.apigateway_waf_acl_attached.apigateway_client",
+            "prowler.providers.aws.services.apigateway.apigateway_restapi_waf_acl_attached.apigateway_restapi_waf_acl_attached.apigateway_client",
             new=APIGateway(current_audit_info),
         ):
             # Test Check
-            from prowler.providers.aws.services.apigateway.apigateway_waf_acl_attached.apigateway_waf_acl_attached import (
-                apigateway_waf_acl_attached,
+            from prowler.providers.aws.services.apigateway.apigateway_restapi_waf_acl_attached.apigateway_restapi_waf_acl_attached import (
+                apigateway_restapi_waf_acl_attached,
             )
 
-            check = apigateway_waf_acl_attached()
+            check = apigateway_restapi_waf_acl_attached()
             result = check.execute()
 
             assert result[0].status == "FAIL"

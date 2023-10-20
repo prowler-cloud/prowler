@@ -44,7 +44,7 @@
         }
       ],
       "Checks": [
-        "apigateway_logging_enabled",
+        "apigateway_restapi_logging_enabled",
         "apigatewayv2_access_logging_enabled",
         "awslambda_function_invoke_api_operations_cloudtrail_logging_enabled",
         "cloudtrail_cloudwatch_logging_enabled",

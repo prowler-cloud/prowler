@@ -11,7 +11,7 @@ AWS_REGION = "us-east-1"
 AWS_ACCOUNT_NUMBER = "123456789012"
 
 
-class Test_apigateway_client_certificate_enabled:
+class Test_apigateway_restapi_client_certificate_enabled:
     def set_mocked_audit_info(self):
         audit_info = AWS_Audit_Info(
             session_config=None,
@@ -61,15 +61,15 @@ class Test_apigateway_client_certificate_enabled:
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             new=current_audit_info,
         ), mock.patch(
-            "prowler.providers.aws.services.apigateway.apigateway_client_certificate_enabled.apigateway_client_certificate_enabled.apigateway_client",
+            "prowler.providers.aws.services.apigateway.apigateway_restapi_client_certificate_enabled.apigateway_restapi_client_certificate_enabled.apigateway_client",
             new=APIGateway(current_audit_info),
         ):
             # Test Check
-            from prowler.providers.aws.services.apigateway.apigateway_client_certificate_enabled.apigateway_client_certificate_enabled import (
-                apigateway_client_certificate_enabled,
+            from prowler.providers.aws.services.apigateway.apigateway_restapi_client_certificate_enabled.apigateway_restapi_client_certificate_enabled import (
+                apigateway_restapi_client_certificate_enabled,
             )
 
-            check = apigateway_client_certificate_enabled()
+            check = apigateway_restapi_client_certificate_enabled()
             result = check.execute()
 
             assert len(result) == 0
@@ -119,15 +119,15 @@ class Test_apigateway_client_certificate_enabled:
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             new=current_audit_info,
         ), mock.patch(
-            "prowler.providers.aws.services.apigateway.apigateway_client_certificate_enabled.apigateway_client_certificate_enabled.apigateway_client",
+            "prowler.providers.aws.services.apigateway.apigateway_restapi_client_certificate_enabled.apigateway_restapi_client_certificate_enabled.apigateway_client",
             new=APIGateway(current_audit_info),
         ):
             # Test Check
-            from prowler.providers.aws.services.apigateway.apigateway_client_certificate_enabled.apigateway_client_certificate_enabled import (
-                apigateway_client_certificate_enabled,
+            from prowler.providers.aws.services.apigateway.apigateway_restapi_client_certificate_enabled.apigateway_restapi_client_certificate_enabled import (
+                apigateway_restapi_client_certificate_enabled,
             )
 
-            check = apigateway_client_certificate_enabled()
+            check = apigateway_restapi_client_certificate_enabled()
             result = check.execute()
 
             assert len(result) == 1
@@ -162,12 +162,12 @@ class Test_apigateway_client_certificate_enabled:
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             new=current_audit_info,
         ), mock.patch(
-            "prowler.providers.aws.services.apigateway.apigateway_client_certificate_enabled.apigateway_client_certificate_enabled.apigateway_client",
+            "prowler.providers.aws.services.apigateway.apigateway_restapi_client_certificate_enabled.apigateway_restapi_client_certificate_enabled.apigateway_client",
             new=APIGateway(current_audit_info),
         ) as service_client:
             # Test Check
-            from prowler.providers.aws.services.apigateway.apigateway_client_certificate_enabled.apigateway_client_certificate_enabled import (
-                apigateway_client_certificate_enabled,
+            from prowler.providers.aws.services.apigateway.apigateway_restapi_client_certificate_enabled.apigateway_restapi_client_certificate_enabled import (
+                apigateway_restapi_client_certificate_enabled,
             )
 
             service_client.rest_apis[0].stages.append(
@@ -180,7 +180,7 @@ class Test_apigateway_client_certificate_enabled:
                 )
             )
 
-            check = apigateway_client_certificate_enabled()
+            check = apigateway_restapi_client_certificate_enabled()
             result = check.execute()
 
             assert len(result) == 1
