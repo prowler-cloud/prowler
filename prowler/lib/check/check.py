@@ -562,9 +562,9 @@ def execute(
             logger.info("Using custom report interface ...")
             lib = os.environ["PROWLER_REPORT_LIB_PATH"]
             outputs_module = importlib.import_module(lib)
-            curstom_report_interface = getattr(outputs_module, "report")
+            custom_report_interface = getattr(outputs_module, "report")
 
-            curstom_report_interface(check_findings, audit_output_options, audit_info)
+            custom_report_interface(check_findings, audit_output_options, audit_info)
         except Exception:
             sys.exit(1)
 
