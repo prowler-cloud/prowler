@@ -2,6 +2,7 @@
 # The allowlist below ensures that warnings instead of errors are reported for the affected resources.
 # https://docs.aws.amazon.com/controltower/latest/userguide/how-control-tower-works.html
 ###########################  CONTROL TOWER ALLOWLIST  ###########################
+### The following file includes all resources created by AWS Control Tower ###
 Allowlist:
   Accounts:
     "*":
