@@ -131,7 +131,11 @@ def assume_role(
         if sts_endpoint_region is None:
             sts_endpoint_region = AWS_STS_GLOBAL_ENDPOINT_REGION
 
-        sts_client = session.client("sts", sts_endpoint_region)
+        sts_client = session.client(
+            "sts",
+            sts_endpoint_region,
+            endpoint_url=f"https://sts.{sts_endpoint_region}.amazonaws.com",
+        )
         assumed_credentials = sts_client.assume_role(**assume_role_arguments)
     except Exception as error:
         logger.critical(

@@ -29,7 +29,9 @@ def validate_aws_credentials(
             # Get the first region passed to the -f/--region
             aws_region = input_regions[0]
 
-        validate_credentials_client = session.client("sts", aws_region)
+        validate_credentials_client = session.client(
+            "sts", aws_region, endpoint_url=f"https://sts.{aws_region}.amazonaws.com"
+        )
         caller_identity = validate_credentials_client.get_caller_identity()
         # Include the region where the caller_identity has validated the credentials
         caller_identity["region"] = aws_region
