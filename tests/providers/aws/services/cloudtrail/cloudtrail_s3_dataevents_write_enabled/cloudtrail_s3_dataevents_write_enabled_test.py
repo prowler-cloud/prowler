@@ -208,6 +208,54 @@ class Test_cloudtrail_s3_dataevents_write_enabled:
 
     @mock_cloudtrail
     @mock_s3
+    def test_trail_without_s3_data_events_ignoring_with_buckets(self):
+
+        s3_client_us_east_1 = client("s3", region_name=AWS_REGION)
+        bucket_name_us = "bucket_test_us"
+        s3_client_us_east_1.create_bucket(Bucket=bucket_name_us)
+        from prowler.providers.aws.services.cloudtrail.cloudtrail_service import (
+            Cloudtrail,
+        )
+
+        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info.ignore_unused_services = True
+
+        with mock.patch(
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=current_audit_info,
+        ):
+            with mock.patch(
+                "prowler.providers.aws.services.cloudtrail.cloudtrail_s3_dataevents_write_enabled.cloudtrail_s3_dataevents_write_enabled.cloudtrail_client",
+                new=Cloudtrail(current_audit_info),
+            ):
+                with mock.patch(
+                    "prowler.providers.aws.services.cloudtrail.cloudtrail_s3_dataevents_write_enabled.cloudtrail_s3_dataevents_write_enabled.s3_client",
+                    new=S3(current_audit_info),
+                ):
+                    # Test Check
+                    from prowler.providers.aws.services.cloudtrail.cloudtrail_s3_dataevents_write_enabled.cloudtrail_s3_dataevents_write_enabled import (
+                        cloudtrail_s3_dataevents_write_enabled,
+                    )
+
+                    check = cloudtrail_s3_dataevents_write_enabled()
+                    result = check.execute()
+
+                    assert len(result) == 1
+                    assert result[0].status == "FAIL"
+                    assert (
+                        result[0].status_extended
+                        == "No CloudTrail trails have a data event to record all S3 object-level API operations."
+                    )
+                    assert result[0].resource_id == AWS_ACCOUNT_NUMBER
+                    assert (
+                        result[0].resource_arn
+                        == f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
+                    )
+                    assert result[0].resource_tags == []
+                    assert result[0].region == AWS_REGION
+
+    @mock_cloudtrail
+    @mock_s3
     def test_trail_with_s3_data_events(self):
         cloudtrail_client_us_east_1 = client("cloudtrail", region_name=AWS_REGION)
         s3_client_us_east_1 = client("s3", region_name=AWS_REGION)

@@ -129,6 +129,42 @@ class Test_glue_data_catalogs_metadata_encryption_enabled:
 
             assert len(result) == 0
 
+    def test_glue_catalog_unencrypted_ignoring_with_tables(self):
+        glue_client = mock.MagicMock
+        glue_client.audit_info = self.set_mocked_audit_info()
+        glue_client.catalog_encryption_settings = [
+            CatalogEncryptionSetting(
+                mode="DISABLED",
+                tables=True,
+                kms_id=None,
+                region=AWS_REGION,
+                password_encryption=False,
+                password_kms_id=None,
+            )
+        ]
+        glue_client.audited_account = "12345678912"
+        glue_client.audit_info.ignore_unused_services = True
+
+        with mock.patch(
+            "prowler.providers.aws.services.glue.glue_service.Glue",
+            glue_client,
+        ):
+            # Test Check
+            from prowler.providers.aws.services.glue.glue_data_catalogs_metadata_encryption_enabled.glue_data_catalogs_metadata_encryption_enabled import (
+                glue_data_catalogs_metadata_encryption_enabled,
+            )
+
+            check = glue_data_catalogs_metadata_encryption_enabled()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert search(
+                "Glue data catalog settings have metadata encryption disabled",
+                result[0].status_extended,
+            )
+            assert result[0].resource_id == "12345678912"
+
     def test_glue_catalog_encrypted(self):
         glue_client = mock.MagicMock
         glue_client.audit_info = self.set_mocked_audit_info()
