@@ -1,4 +1,3 @@
-from re import search
 from unittest import mock
 
 from boto3 import client, session
@@ -78,9 +77,9 @@ class Test_cloudtrail_s3_dataevents_read_enabled:
 
                 assert len(result) == 1
                 assert result[0].status == "FAIL"
-                assert search(
-                    "No CloudTrail trails have a data event to record all S3 object-level API operations.",
-                    result[0].status_extended,
+                assert (
+                    result[0].status_extended
+                    == "No CloudTrail trails have a data event to record all S3 object-level API operations."
                 )
                 assert result[0].resource_id == AWS_ACCOUNT_NUMBER
                 assert (
@@ -92,7 +91,6 @@ class Test_cloudtrail_s3_dataevents_read_enabled:
     @mock_cloudtrail
     @mock_s3
     def test_trail_without_data_events_ignoring(self):
-
         from prowler.providers.aws.services.cloudtrail.cloudtrail_service import (
             Cloudtrail,
         )
@@ -166,9 +164,9 @@ class Test_cloudtrail_s3_dataevents_read_enabled:
 
                 assert len(result) == 1
                 assert result[0].status == "FAIL"
-                assert search(
-                    "No CloudTrail trails have a data event to record all S3 object-level API operations.",
-                    result[0].status_extended,
+                assert (
+                    result[0].status_extended
+                    == "No CloudTrail trails have a data event to record all S3 object-level API operations."
                 )
                 assert result[0].resource_id == AWS_ACCOUNT_NUMBER
                 assert (
@@ -225,9 +223,9 @@ class Test_cloudtrail_s3_dataevents_read_enabled:
 
                 assert len(result) == 1
                 assert result[0].status == "PASS"
-                assert search(
-                    "has a classic data event selector to record all S3 object-level API operations.",
-                    result[0].status_extended,
+                assert (
+                    result[0].status_extended
+                    == f"Trail {trail_name_us} from home region {AWS_REGION} has a classic data event selector to record all S3 object-level API operations."
                 )
                 assert result[0].resource_id == trail_name_us
                 assert result[0].resource_arn == trail_us["TrailARN"]
@@ -282,9 +280,9 @@ class Test_cloudtrail_s3_dataevents_read_enabled:
 
                 assert len(result) == 1
                 assert result[0].status == "PASS"
-                assert search(
-                    "has an advanced data event selector to record all S3 object-level API operations.",
-                    result[0].status_extended,
+                assert (
+                    result[0].status_extended
+                    == f"Trail {trail_name_us} from home region {AWS_REGION} has an advanced data event selector to record all S3 object-level API operations."
                 )
                 assert result[0].resource_id == trail_name_us
                 assert result[0].resource_arn == trail_us["TrailARN"]
@@ -345,9 +343,9 @@ class Test_cloudtrail_s3_dataevents_read_enabled:
 
                 assert len(result) == 1
                 assert result[0].status == "PASS"
-                assert search(
-                    "has a classic data event selector to record all S3 object-level API operations.",
-                    result[0].status_extended,
+                assert (
+                    result[0].status_extended
+                    == f"Trail {trail_name_us} from home region {AWS_REGION} has a classic data event selector to record all S3 object-level API operations."
                 )
                 assert result[0].resource_id == trail_name_us
                 assert result[0].resource_arn == trail_us["TrailARN"]

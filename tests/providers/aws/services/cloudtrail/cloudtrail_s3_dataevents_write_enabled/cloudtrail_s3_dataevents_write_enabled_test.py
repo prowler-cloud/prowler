@@ -1,4 +1,3 @@
-from re import search
 from unittest import mock
 
 from boto3 import client, session
@@ -76,6 +75,7 @@ class Test_cloudtrail_s3_dataevents_write_enabled:
                 check = cloudtrail_s3_dataevents_write_enabled()
                 result = check.execute()
 
+<<<<<<< HEAD
                 assert len(result) == 1
                 assert result[0].status == "FAIL"
                 assert search(
@@ -88,6 +88,21 @@ class Test_cloudtrail_s3_dataevents_write_enabled:
                 )
                 assert result[0].resource_tags == []
                 assert result[0].region == AWS_REGION
+=======
+                    assert len(result) == 1
+                    assert result[0].status == "FAIL"
+                    assert (
+                        result[0].status_extended
+                        == "No CloudTrail trails have a data event to record all S3 object-level API operations."
+                    )
+                    assert result[0].resource_id == AWS_ACCOUNT_NUMBER
+                    assert (
+                        result[0].resource_arn
+                        == f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
+                    )
+                    assert result[0].resource_tags == []
+                    assert result[0].region == AWS_REGION
+>>>>>>> 021fdeec (resolve comments)
 
     @mock_cloudtrail
     @mock_s3
@@ -134,6 +149,7 @@ class Test_cloudtrail_s3_dataevents_write_enabled:
                 check = cloudtrail_s3_dataevents_write_enabled()
                 result = check.execute()
 
+<<<<<<< HEAD
                 assert len(result) == 1
                 assert result[0].status == "FAIL"
                 assert search(
@@ -146,6 +162,21 @@ class Test_cloudtrail_s3_dataevents_write_enabled:
                 )
                 assert result[0].resource_tags == []
                 assert result[0].region == AWS_REGION
+=======
+                    assert len(result) == 1
+                    assert result[0].status == "FAIL"
+                    assert (
+                        result[0].status_extended
+                        == "No CloudTrail trails have a data event to record all S3 object-level API operations."
+                    )
+                    assert result[0].resource_id == AWS_ACCOUNT_NUMBER
+                    assert (
+                        result[0].resource_arn
+                        == f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
+                    )
+                    assert result[0].resource_tags == []
+                    assert result[0].region == AWS_REGION
+>>>>>>> 021fdeec (resolve comments)
 
     @mock_cloudtrail
     @mock_s3
@@ -221,6 +252,7 @@ class Test_cloudtrail_s3_dataevents_write_enabled:
                 check = cloudtrail_s3_dataevents_write_enabled()
                 result = check.execute()
 
+<<<<<<< HEAD
                 assert len(result) == 1
                 assert result[0].status == "PASS"
                 assert search(
@@ -231,6 +263,18 @@ class Test_cloudtrail_s3_dataevents_write_enabled:
                 assert result[0].resource_arn == trail_us["TrailARN"]
                 assert result[0].resource_tags == []
                 assert result[0].region == AWS_REGION
+=======
+                    assert len(result) == 1
+                    assert result[0].status == "PASS"
+                    assert (
+                        result[0].status_extended
+                        == f"Trail {trail_name_us} from home region {AWS_REGION} has a classic data event selector to record all S3 object-level API operations."
+                    )
+                    assert result[0].resource_id == trail_name_us
+                    assert result[0].resource_arn == trail_us["TrailARN"]
+                    assert result[0].resource_tags == []
+                    assert result[0].region == AWS_REGION
+>>>>>>> 021fdeec (resolve comments)
 
     @mock_cloudtrail
     @mock_s3
@@ -277,6 +321,7 @@ class Test_cloudtrail_s3_dataevents_write_enabled:
                 check = cloudtrail_s3_dataevents_write_enabled()
                 result = check.execute()
 
+<<<<<<< HEAD
                 assert len(result) == 1
                 assert result[0].status == "PASS"
                 assert search(
@@ -287,6 +332,18 @@ class Test_cloudtrail_s3_dataevents_write_enabled:
                 assert result[0].resource_arn == trail_us["TrailARN"]
                 assert result[0].resource_tags == []
                 assert result[0].region == AWS_REGION
+=======
+                    assert len(result) == 1
+                    assert result[0].status == "PASS"
+                    assert (
+                        result[0].status_extended
+                        == f"Trail {trail_name_us} from home region {AWS_REGION} has an advanced data event selector to record all S3 object-level API operations."
+                    )
+                    assert result[0].resource_id == trail_name_us
+                    assert result[0].resource_arn == trail_us["TrailARN"]
+                    assert result[0].resource_tags == []
+                    assert result[0].region == AWS_REGION
+>>>>>>> 021fdeec (resolve comments)
 
     @mock_cloudtrail
     @mock_s3
@@ -340,6 +397,7 @@ class Test_cloudtrail_s3_dataevents_write_enabled:
                 check = cloudtrail_s3_dataevents_write_enabled()
                 result = check.execute()
 
+<<<<<<< HEAD
                 assert len(result) == 1
                 assert result[0].status == "PASS"
                 assert search(
@@ -350,3 +408,15 @@ class Test_cloudtrail_s3_dataevents_write_enabled:
                 assert result[0].resource_arn == trail_us["TrailARN"]
                 assert result[0].resource_tags == []
                 assert result[0].region == AWS_REGION
+=======
+                    assert len(result) == 1
+                    assert result[0].status == "PASS"
+                    assert (
+                        result[0].status_extended
+                        == f"Trail {trail_name_us} from home region {AWS_REGION} has a classic data event selector to record all S3 object-level API operations."
+                    )
+                    assert result[0].resource_id == trail_name_us
+                    assert result[0].resource_arn == trail_us["TrailARN"]
+                    assert result[0].resource_tags == []
+                    assert result[0].region == AWS_REGION
+>>>>>>> 021fdeec (resolve comments)

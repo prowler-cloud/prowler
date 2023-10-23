@@ -35,22 +35,27 @@ class VPC(AWSService):
             describe_vpcs_paginator = regional_client.get_paginator("describe_vpcs")
             for page in describe_vpcs_paginator.paginate():
                 for vpc in page["Vpcs"]:
-                    arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:vpc/{vpc['VpcId']}"
-                    if not self.audit_resources or (
-                        is_resource_filtered(arn, self.audit_resources)
-                    ):
-                        vpc_name = ""
-                        for tag in vpc.get("Tags", []):
-                            if tag["Key"] == "Name":
-                                vpc_name = tag["Value"]
-                        self.vpcs[vpc["VpcId"]] = VPCs(
-                            arn=arn,
-                            id=vpc["VpcId"],
-                            name=vpc_name,
-                            default=vpc["IsDefault"],
-                            cidr_block=vpc["CidrBlock"],
-                            region=regional_client.region,
-                            tags=vpc.get("Tags"),
+                    try:
+                        arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:vpc/{vpc['VpcId']}"
+                        if not self.audit_resources or (
+                            is_resource_filtered(arn, self.audit_resources)
+                        ):
+                            vpc_name = ""
+                            for tag in vpc.get("Tags", []):
+                                if tag["Key"] == "Name":
+                                    vpc_name = tag["Value"]
+                            self.vpcs[vpc["VpcId"]] = VPCs(
+                                arn=arn,
+                                id=vpc["VpcId"],
+                                name=vpc_name,
+                                default=vpc["IsDefault"],
+                                cidr_block=vpc["CidrBlock"],
+                                region=regional_client.region,
+                                tags=vpc.get("Tags"),
+                            )
+                    except Exception as error:
+                        logger.error(
+                            f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                         )
         except Exception as error:
             logger.error(
@@ -69,21 +74,28 @@ class VPC(AWSService):
                     if not self.audit_resources or (
                         is_resource_filtered(arn, self.audit_resources)
                     ):
-                        conn["AccepterVpcInfo"]["CidrBlock"] = None
-                        self.vpc_peering_connections.append(
-                            VpcPeeringConnection(
-                                arn=arn,
-                                id=conn["VpcPeeringConnectionId"],
-                                accepter_vpc=conn["AccepterVpcInfo"]["VpcId"],
-                                accepter_cidr=conn["AccepterVpcInfo"].get("CidrBlock"),
-                                requester_vpc=conn["RequesterVpcInfo"]["VpcId"],
-                                requester_cidr=conn["RequesterVpcInfo"].get(
-                                    "CidrBlock"
-                                ),
-                                region=regional_client.region,
-                                tags=conn.get("Tags"),
+                        try:
+                            conn["AccepterVpcInfo"]["CidrBlock"] = None
+                            self.vpc_peering_connections.append(
+                                VpcPeeringConnection(
+                                    arn=arn,
+                                    id=conn["VpcPeeringConnectionId"],
+                                    accepter_vpc=conn["AccepterVpcInfo"]["VpcId"],
+                                    accepter_cidr=conn["AccepterVpcInfo"].get(
+                                        "CidrBlock"
+                                    ),
+                                    requester_vpc=conn["RequesterVpcInfo"]["VpcId"],
+                                    requester_cidr=conn["RequesterVpcInfo"].get(
+                                        "CidrBlock"
+                                    ),
+                                    region=regional_client.region,
+                                    tags=conn.get("Tags"),
+                                )
                             )
-                        )
+                        except Exception as error:
+                            logger.error(
+                                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                            )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -104,23 +116,29 @@ class VPC(AWSService):
                         },
                     ]
                 )["RouteTables"]:
-                    destination_cidrs = []
-                    for route in route_table["Routes"]:
-                        if (
-                            route["Origin"] != "CreateRouteTable"
-                        ):  # avoid default route table
+                    try:
+                        destination_cidrs = []
+                        for route in route_table["Routes"]:
                             if (
-                                "DestinationCidrBlock" in route
-                                and "VpcPeeringConnectionId" in route
-                            ):
-                                destination_cidrs.append(route["DestinationCidrBlock"])
-                    conn.route_tables.append(
-                        Route(
-                            id=route_table["RouteTableId"],
-                            destination_cidrs=destination_cidrs,
+                                route["Origin"] != "CreateRouteTable"
+                            ):  # avoid default route table
+                                if (
+                                    "DestinationCidrBlock" in route
+                                    and "VpcPeeringConnectionId" in route
+                                ):
+                                    destination_cidrs.append(
+                                        route["DestinationCidrBlock"]
+                                    )
+                        conn.route_tables.append(
+                            Route(
+                                id=route_table["RouteTableId"],
+                                destination_cidrs=destination_cidrs,
+                            )
                         )
-                    )
-
+                    except Exception as error:
+                        logger.error(
+                            f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
@@ -130,20 +148,24 @@ class VPC(AWSService):
         logger.info("VPC - Describing flow logs...")
         try:
             for vpc in self.vpcs.values():
-                regional_client = self.regional_clients[vpc.region]
-                flow_logs = regional_client.describe_flow_logs(
-                    Filters=[
-                        {
-                            "Name": "resource-id",
-                            "Values": [
-                                vpc.id,
-                            ],
-                        },
-                    ]
-                )["FlowLogs"]
-                if flow_logs:
-                    vpc.flow_log = True
-
+                try:
+                    regional_client = self.regional_clients[vpc.region]
+                    flow_logs = regional_client.describe_flow_logs(
+                        Filters=[
+                            {
+                                "Name": "resource-id",
+                                "Values": [
+                                    vpc.id,
+                                ],
+                            },
+                        ]
+                    )["FlowLogs"]
+                    if flow_logs:
+                        vpc.flow_log = True
+                except Exception as error:
+                    logger.error(
+                        f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
@@ -153,20 +175,24 @@ class VPC(AWSService):
         logger.info("VPC - Describing flow logs...")
         try:
             for vpc in self.vpcs.values():
-                regional_client = self.regional_clients[vpc.region]
-                enis = regional_client.describe_network_interfaces(
-                    Filters=[
-                        {
-                            "Name": "vpc-id",
-                            "Values": [
-                                vpc.id,
-                            ],
-                        },
-                    ]
-                )["NetworkInterfaces"]
-                if enis:
-                    vpc.in_use = True
-
+                try:
+                    regional_client = self.regional_clients[vpc.region]
+                    enis = regional_client.describe_network_interfaces(
+                        Filters=[
+                            {
+                                "Name": "vpc-id",
+                                "Values": [
+                                    vpc.id,
+                                ],
+                            },
+                        ]
+                    )["NetworkInterfaces"]
+                    if enis:
+                        vpc.in_use = True
+                except Exception as error:
+                    logger.error(
+                        f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
@@ -180,25 +206,30 @@ class VPC(AWSService):
             )
             for page in describe_vpc_endpoints_paginator.paginate():
                 for endpoint in page["VpcEndpoints"]:
-                    arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:vpc-endpoint/{endpoint['VpcEndpointId']}"
-                    if not self.audit_resources or (
-                        is_resource_filtered(arn, self.audit_resources)
-                    ):
-                        endpoint_policy = None
-                        if endpoint.get("PolicyDocument"):
-                            endpoint_policy = json.loads(endpoint["PolicyDocument"])
-                        self.vpc_endpoints.append(
-                            VpcEndpoint(
-                                arn=arn,
-                                id=endpoint["VpcEndpointId"],
-                                vpc_id=endpoint["VpcId"],
-                                service_name=endpoint["ServiceName"],
-                                state=endpoint["State"],
-                                policy_document=endpoint_policy,
-                                owner_id=endpoint["OwnerId"],
-                                region=regional_client.region,
-                                tags=endpoint.get("Tags"),
+                    try:
+                        arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:vpc-endpoint/{endpoint['VpcEndpointId']}"
+                        if not self.audit_resources or (
+                            is_resource_filtered(arn, self.audit_resources)
+                        ):
+                            endpoint_policy = None
+                            if endpoint.get("PolicyDocument"):
+                                endpoint_policy = json.loads(endpoint["PolicyDocument"])
+                            self.vpc_endpoints.append(
+                                VpcEndpoint(
+                                    arn=arn,
+                                    id=endpoint["VpcEndpointId"],
+                                    vpc_id=endpoint["VpcId"],
+                                    service_name=endpoint["ServiceName"],
+                                    state=endpoint["State"],
+                                    policy_document=endpoint_policy,
+                                    owner_id=endpoint["OwnerId"],
+                                    region=regional_client.region,
+                                    tags=endpoint.get("Tags"),
+                                )
                             )
+                    except Exception as error:
+                        logger.error(
+                            f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                         )
         except Exception as error:
             logger.error(
@@ -213,21 +244,26 @@ class VPC(AWSService):
             )
             for page in describe_vpc_endpoint_services_paginator.paginate():
                 for endpoint in page["ServiceDetails"]:
-                    if endpoint["Owner"] != "amazon":
-                        arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:vpc-endpoint-service/{endpoint['ServiceId']}"
-                        if not self.audit_resources or (
-                            is_resource_filtered(arn, self.audit_resources)
-                        ):
-                            self.vpc_endpoint_services.append(
-                                VpcEndpointService(
-                                    arn=arn,
-                                    id=endpoint["ServiceId"],
-                                    service=endpoint["ServiceName"],
-                                    owner_id=endpoint["Owner"],
-                                    region=regional_client.region,
-                                    tags=endpoint.get("Tags"),
+                    try:
+                        if endpoint["Owner"] != "amazon":
+                            arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:vpc-endpoint-service/{endpoint['ServiceId']}"
+                            if not self.audit_resources or (
+                                is_resource_filtered(arn, self.audit_resources)
+                            ):
+                                self.vpc_endpoint_services.append(
+                                    VpcEndpointService(
+                                        arn=arn,
+                                        id=endpoint["ServiceId"],
+                                        service=endpoint["ServiceName"],
+                                        owner_id=endpoint["Owner"],
+                                        region=regional_client.region,
+                                        tags=endpoint.get("Tags"),
+                                    )
                                 )
-                            )
+                    except Exception as error:
+                        logger.error(
+                            f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
