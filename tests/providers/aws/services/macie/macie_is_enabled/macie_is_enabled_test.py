@@ -118,6 +118,7 @@ class Test_macie_is_enabled:
         s3_client = mock.MagicMock
         s3_client.audit_info = self.set_mocked_audit_info()
         s3_client.buckets = []
+        s3_client.regions_with_buckets = []
         macie_client.audit_info = self.set_mocked_audit_info()
         macie_client.audited_account = AWS_ACCOUNT_NUMBER
         macie_client.audited_account_arn = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"

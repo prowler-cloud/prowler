@@ -9,7 +9,6 @@ class ec2_networkacl_allow_ingress_any_port(Check):
         tcp_protocol = "-1"
         check_port = 0
         for network_acl in ec2_client.network_acls:
-            print(network_acl)
             if (
                 not ec2_client.audit_info.ignore_unused_services
                 or network_acl.region in ec2_client.regions_with_sgs
