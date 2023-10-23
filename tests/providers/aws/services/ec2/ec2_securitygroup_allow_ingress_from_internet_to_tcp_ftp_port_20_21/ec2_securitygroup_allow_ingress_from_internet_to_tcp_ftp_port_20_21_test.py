@@ -59,6 +59,9 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_tcp_ftp_port_20_21:
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_ftp_port_20_21.ec2_securitygroup_allow_ingress_from_internet_to_tcp_ftp_port_20_21.ec2_client",
             new=EC2(current_audit_info),
+        ), mock.patch(
+            "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_ftp_port_20_21.ec2_securitygroup_allow_ingress_from_internet_to_tcp_ftp_port_20_21.vpc_client",
+            new=VPC(current_audit_info),
         ):
             # Test Check
             from prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_ftp_port_20_21.ec2_securitygroup_allow_ingress_from_internet_to_tcp_ftp_port_20_21 import (
@@ -109,6 +112,9 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_tcp_ftp_port_20_21:
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_ftp_port_20_21.ec2_securitygroup_allow_ingress_from_internet_to_tcp_ftp_port_20_21.ec2_client",
             new=EC2(current_audit_info),
+        ), mock.patch(
+            "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_ftp_port_20_21.ec2_securitygroup_allow_ingress_from_internet_to_tcp_ftp_port_20_21.vpc_client",
+            new=VPC(current_audit_info),
         ):
             # Test Check
             from prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_ftp_port_20_21.ec2_securitygroup_allow_ingress_from_internet_to_tcp_ftp_port_20_21 import (
@@ -170,6 +176,9 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_tcp_ftp_port_20_21:
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_ftp_port_20_21.ec2_securitygroup_allow_ingress_from_internet_to_tcp_ftp_port_20_21.ec2_client",
             new=EC2(current_audit_info),
+        ), mock.patch(
+            "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_ftp_port_20_21.ec2_securitygroup_allow_ingress_from_internet_to_tcp_ftp_port_20_21.vpc_client",
+            new=VPC(current_audit_info),
         ):
             # Test Check
             from prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_ftp_port_20_21.ec2_securitygroup_allow_ingress_from_internet_to_tcp_ftp_port_20_21 import (
@@ -216,6 +225,9 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_tcp_ftp_port_20_21:
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_ftp_port_20_21.ec2_securitygroup_allow_ingress_from_internet_to_tcp_ftp_port_20_21.ec2_client",
             new=EC2(current_audit_info),
+        ), mock.patch(
+            "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_ftp_port_20_21.ec2_securitygroup_allow_ingress_from_internet_to_tcp_ftp_port_20_21.vpc_client",
+            new=VPC(current_audit_info),
         ):
             # Test Check
             from prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_ftp_port_20_21.ec2_securitygroup_allow_ingress_from_internet_to_tcp_ftp_port_20_21 import (

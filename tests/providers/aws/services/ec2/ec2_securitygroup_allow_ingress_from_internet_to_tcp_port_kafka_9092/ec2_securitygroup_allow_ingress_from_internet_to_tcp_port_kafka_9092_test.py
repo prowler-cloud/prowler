@@ -57,10 +57,10 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_kafka_9092:
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             new=current_audit_info,
         ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_elasticsearch_kibana_9200_9300_5601.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_elasticsearch_kibana_9200_9300_5601.ec2_client",
+            "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_kafka_9092.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_kafka_9092.ec2_client",
             new=EC2(current_audit_info),
         ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_elasticsearch_kibana_9200_9300_5601.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_elasticsearch_kibana_9200_9300_5601.vpc_client",
+            "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_kafka_9092.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_kafka_9092.vpc_client",
             new=VPC(current_audit_info),
         ):
             # Test Check
@@ -110,10 +110,10 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_kafka_9092:
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             new=current_audit_info,
         ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_elasticsearch_kibana_9200_9300_5601.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_elasticsearch_kibana_9200_9300_5601.ec2_client",
+            "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_kafka_9092.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_kafka_9092.ec2_client",
             new=EC2(current_audit_info),
         ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_elasticsearch_kibana_9200_9300_5601.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_elasticsearch_kibana_9200_9300_5601.vpc_client",
+            "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_kafka_9092.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_kafka_9092.vpc_client",
             new=VPC(current_audit_info),
         ):
             # Test Check
@@ -174,10 +174,10 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_kafka_9092:
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             new=current_audit_info,
         ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_elasticsearch_kibana_9200_9300_5601.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_elasticsearch_kibana_9200_9300_5601.ec2_client",
+            "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_kafka_9092.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_kafka_9092.ec2_client",
             new=EC2(current_audit_info),
         ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_elasticsearch_kibana_9200_9300_5601.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_elasticsearch_kibana_9200_9300_5601.vpc_client",
+            "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_kafka_9092.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_kafka_9092.vpc_client",
             new=VPC(current_audit_info),
         ):
             # Test Check
@@ -223,10 +223,10 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_kafka_9092:
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             new=current_audit_info,
         ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_elasticsearch_kibana_9200_9300_5601.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_elasticsearch_kibana_9200_9300_5601.ec2_client",
+            "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_kafka_9092.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_kafka_9092.ec2_client",
             new=EC2(current_audit_info),
         ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_elasticsearch_kibana_9200_9300_5601.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_elasticsearch_kibana_9200_9300_5601.vpc_client",
+            "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_kafka_9092.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_kafka_9092.vpc_client",
             new=VPC(current_audit_info),
         ):
             # Test Check
