@@ -16,13 +16,10 @@ class macie_is_enabled(Check):
                 report.status_extended = "Macie is enabled."
                 findings.append(report)
             else:
-                if s3_client.audit_info.ignore_unused_services:
-                    buckets_in_region = False
-                    for bucket in s3_client.buckets:
-                        if bucket.region == session.region:
-                            buckets_in_region = True
-                            break
-                if not s3_client.audit_info.ignore_unused_services or buckets_in_region:
+                if (
+                    not macie_client.audit_info.ignore_unused_services
+                    or session.region in s3_client.regions_with_buckets
+                ):
                     if session.status == "PAUSED":
                         report.status = "FAIL"
                         report.status_extended = (
