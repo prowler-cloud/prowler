@@ -9,13 +9,10 @@ class ec2_networkacl_allow_ingress_any_port(Check):
         tcp_protocol = "-1"
         check_port = 0
         for network_acl in ec2_client.network_acls:
-            if ec2_client.audit_info.ignore_unused_services:
-                sg_in_region = False
-                for sg in ec2_client.security_groups:
-                    if sg.region == network_acl.region and sg.name != "default":
-                        sg_in_region = True
-                        break
-            if not ec2_client.audit_info.ignore_unused_services or sg_in_region:
+            if (
+                not ec2_client.audit_info.ignore_unused_services
+                or network_acl.region in ec2_client.regions_with_sgs
+            ):
                 # If some entry allows it, that ACL is not securely configured
                 if check_network_acl(network_acl.entries, tcp_protocol, check_port):
                     report = Check_Report_AWS(self.metadata())

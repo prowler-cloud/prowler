@@ -19,6 +19,7 @@ class EC2(AWSService):
         self.__threading_call__(self.__describe_instances__)
         self.__get_instance_user_data__()
         self.security_groups = []
+        self.regions_with_sgs = []
         self.__threading_call__(self.__describe_security_groups__)
         self.network_acls = []
         self.__threading_call__(self.__describe_network_acls__)
@@ -141,6 +142,8 @@ class EC2(AWSService):
                                 tags=sg.get("Tags"),
                             )
                         )
+                        if sg["GroupName"] != "default":
+                            self.regions_with_sgs.append(regional_client.region)
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
