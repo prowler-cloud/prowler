@@ -4,6 +4,7 @@ from boto3 import client, resource, session
 from moto import mock_ec2
 
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
+from prowler.providers.aws.services.vpc.vpc_service import VPC
 from prowler.providers.common.models import Audit_Metadata
 
 AWS_REGION = "us-east-1"
@@ -58,6 +59,9 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_cassandra_7
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_cassandra_7199_9160_8888.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_cassandra_7199_9160_8888.ec2_client",
             new=EC2(current_audit_info),
+        ), mock.patch(
+            "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_cassandra_7199_9160_8888.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_cassandra_7199_9160_8888.vpc_client",
+            new=VPC(current_audit_info),
         ):
             # Test Check
             from prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_cassandra_7199_9160_8888.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_cassandra_7199_9160_8888 import (
@@ -108,6 +112,9 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_cassandra_7
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_cassandra_7199_9160_8888.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_cassandra_7199_9160_8888.ec2_client",
             new=EC2(current_audit_info),
+        ), mock.patch(
+            "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_cassandra_7199_9160_8888.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_cassandra_7199_9160_8888.vpc_client",
+            new=VPC(current_audit_info),
         ):
             # Test Check
             from prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_cassandra_7199_9160_8888.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_cassandra_7199_9160_8888 import (
@@ -169,6 +176,9 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_cassandra_7
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_cassandra_7199_9160_8888.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_cassandra_7199_9160_8888.ec2_client",
             new=EC2(current_audit_info),
+        ), mock.patch(
+            "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_cassandra_7199_9160_8888.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_cassandra_7199_9160_8888.vpc_client",
+            new=VPC(current_audit_info),
         ):
             # Test Check
             from prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_cassandra_7199_9160_8888.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_cassandra_7199_9160_8888 import (
@@ -215,6 +225,9 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_cassandra_7
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_cassandra_7199_9160_8888.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_cassandra_7199_9160_8888.ec2_client",
             new=EC2(current_audit_info),
+        ), mock.patch(
+            "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_cassandra_7199_9160_8888.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_cassandra_7199_9160_8888.vpc_client",
+            new=VPC(current_audit_info),
         ):
             # Test Check
             from prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_cassandra_7199_9160_8888.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_cassandra_7199_9160_8888 import (
@@ -252,6 +265,9 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_cassandra_7
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_cassandra_7199_9160_8888.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_cassandra_7199_9160_8888.ec2_client",
             new=EC2(current_audit_info),
+        ), mock.patch(
+            "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_cassandra_7199_9160_8888.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_cassandra_7199_9160_8888.vpc_client",
+            new=VPC(current_audit_info),
         ):
             # Test Check
             from prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_cassandra_7199_9160_8888.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_cassandra_7199_9160_8888 import (
