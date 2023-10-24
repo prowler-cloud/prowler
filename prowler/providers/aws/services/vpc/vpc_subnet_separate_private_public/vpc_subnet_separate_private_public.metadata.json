@@ -1,7 +1,7 @@
 {
   "Provider": "aws",
   "CheckID": "vpc_subnet_separate_private_public",
-  "CheckTitle": "Ensure all vpc has public and private subnets defined",
+  "CheckTitle": "Ensure all VPC has public and private subnets defined",
   "CheckType": [
     "Infrastructure Security"
   ],
@@ -10,7 +10,7 @@
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
   "ResourceType": "AwsEc2Vpc",
-  "Description": "Ensure all vpc has public and private subnets defined",
+  "Description": "Ensure all VPC has public and private subnets defined",
   "Risk": "",
   "RelatedUrl": "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Scenario2.html",
   "Remediation": {
@@ -21,7 +21,7 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Ensure all vpc has public and private subnets defined",
+      "Text": "Ensure all VPC has public and private subnets defined",
       "Url": "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Scenario2.html"
     }
   },

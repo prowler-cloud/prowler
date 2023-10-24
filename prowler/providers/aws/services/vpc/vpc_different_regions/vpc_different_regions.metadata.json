@@ -1,7 +1,7 @@
 {
   "Provider": "aws",
   "CheckID": "vpc_different_regions",
-  "CheckTitle": "Ensure there are vpcs in more than one region",
+  "CheckTitle": "Ensure there are VPCs in more than one region",
   "CheckType": [
     "Infrastructure Security"
   ],
@@ -10,7 +10,7 @@
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
   "ResourceType": "AwsEc2Vpc",
-  "Description": "Ensure there are vpcs in more than one region",
+  "Description": "Ensure there are VPCs in more than one region",
   "Risk": "",
   "RelatedUrl": "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Scenario2.html",
   "Remediation": {
@@ -21,7 +21,7 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Ensure there are vpcs in more than one region",
+      "Text": "Ensure there are VPCs in more than one region",
       "Url": "https://docs.aws.amazon.com/vpc/latest/userguide/vpc-example-private-subnets-nat.html"
     }
   },

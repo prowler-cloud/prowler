@@ -1,7 +1,7 @@
 {
   "Provider": "aws",
   "CheckID": "vpc_subnet_different_az",
-  "CheckTitle": "Ensure all vpc has subnets in more than one availability zone",
+  "CheckTitle": "Ensure all VPC has subnets in more than one availability zone",
   "CheckType": [
     "Infrastructure Security"
   ],
@@ -10,7 +10,7 @@
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
   "ResourceType": "AwsEc2Vpc",
-  "Description": "Ensure all vpc has subnets in more than one availability zone",
+  "Description": "Ensure all VPC has subnets in more than one availability zone",
   "Risk": "",
   "RelatedUrl": "https://docs.aws.amazon.com/vpc/latest/userguide/configure-subnets.html",
   "Remediation": {
@@ -21,7 +21,7 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Ensure all vpc has subnets in more than one availability zone",
+      "Text": "Ensure all VPC has subnets in more than one availability zone",
       "Url": "https://docs.aws.amazon.com/vpc/latest/userguide/configure-subnets.html"
     }
   },
