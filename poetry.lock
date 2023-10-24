@@ -1123,20 +1123,20 @@ format = ["fqdn", "idna", "isoduration", "jsonpointer (>1.13)", "rfc3339-validat
 format-nongpl = ["fqdn", "idna", "isoduration", "jsonpointer (>1.13)", "rfc3339-validator", "rfc3986-validator (>0.1.0)", "uri-template", "webcolors (>=1.11)"]
 
 [[package]]
-name = "jsonschema-spec"
-version = "0.2.3"
+name = "jsonschema-path"
+version = "0.3.1"
 description = "JSONSchema Spec with object-oriented paths"
 optional = false
 python-versions = ">=3.8.0,<4.0.0"
 files = [
-    {file = "jsonschema_spec-0.2.3-py3-none-any.whl", hash = "sha256:ee005ddeca73229560ac2b8f1849590929c4b2cd17a932b229b03566e517f2a6"},
-    {file = "jsonschema_spec-0.2.3.tar.gz", hash = "sha256:e01b8b100f0676177b0b39027a5cab7e7a16ce4316a3d0d15e576293d954fafc"},
+    {file = "jsonschema_path-0.3.1-py3-none-any.whl", hash = "sha256:06f01b1848a28963f49a17730e11204d252aa6ff5db4ef84ec77e5ac93cfa831"},
+    {file = "jsonschema_path-0.3.1.tar.gz", hash = "sha256:07ea584b5c9b41a614b4d011c5575955676f48d0abbfd93d9ea8e933018d716d"},
 ]
 
 [package.dependencies]
 pathable = ">=0.4.1,<0.5.0"
 PyYAML = ">=5.1"
-referencing = ">=0.28.0,<0.30.0"
+referencing = ">=0.28.0,<0.31.0"
 requests = ">=2.31.0,<3.0.0"
 
 [[package]]
@@ -1582,18 +1582,18 @@ rfc3339-validator = "*"
 
 [[package]]
 name = "openapi-spec-validator"
-version = "0.6.0"
+version = "0.7.1"
 description = "OpenAPI 2.0 (aka Swagger) and OpenAPI 3 spec validator"
 optional = false
 python-versions = ">=3.8.0,<4.0.0"
 files = [
-    {file = "openapi_spec_validator-0.6.0-py3-none-any.whl", hash = "sha256:675f1a3c0d0d8eff9116694acde88bcd4613a95bf5240270724d9d78c78f26d6"},
-    {file = "openapi_spec_validator-0.6.0.tar.gz", hash = "sha256:68c4c212c88ef14c6b1a591b895bf742c455783c7ebba2507abd7dbc1365a616"},
+    {file = "openapi_spec_validator-0.7.1-py3-none-any.whl", hash = "sha256:3c81825043f24ccbcd2f4b149b11e8231abce5ba84f37065e14ec947d8f4e959"},
+    {file = "openapi_spec_validator-0.7.1.tar.gz", hash = "sha256:8577b85a8268685da6f8aa30990b83b7960d4d1117e901d451b5d572605e5ec7"},
 ]
 
 [package.dependencies]
 jsonschema = ">=4.18.0,<5.0.0"
-jsonschema-spec = ">=0.2.3,<0.3.0"
+jsonschema-path = ">=0.3.1,<0.4.0"
 lazy-object-proxy = ">=1.7.1,<2.0.0"
 openapi-schema-validator = ">=0.6.0,<0.7.0"
 
@@ -2889,4 +2889,4 @@ docs = ["mkdocs", "mkdocs-material"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "517d4627506a795e60cfcdad226108b997bc27ca0d72f390d31e3d370d356fb6"
+content-hash = "955e9e2ada14c72ba2d2e17670998015773ccdaf4d8ae15f2dc53ff8729347af"
