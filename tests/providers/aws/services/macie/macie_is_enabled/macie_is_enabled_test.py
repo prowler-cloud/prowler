@@ -1,6 +1,7 @@
 from unittest import mock
 
 from boto3 import session
+from moto import mock_s3
 
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.aws.services.macie.macie_service import Session
@@ -47,10 +48,14 @@ class Test_macie_is_enabled:
         )
         return audit_info
 
+    @mock_s3
     def test_macie_disabled(self):
-        macie_client = mock.MagicMock
         s3_client = mock.MagicMock
         s3_client.audit_info = self.set_mocked_audit_info()
+        s3_client.buckets = []
+        s3_client.regions_with_buckets = []
+
+        macie_client = mock.MagicMock
         macie_client.audit_info = self.set_mocked_audit_info()
         macie_client.audited_account = AWS_ACCOUNT_NUMBER
         macie_client.audited_account_arn = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
@@ -65,32 +70,34 @@ class Test_macie_is_enabled:
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             new=current_audit_info,
+        ), mock.patch(
+            "prowler.providers.aws.services.macie.macie_is_enabled.macie_is_enabled.macie_client",
+            new=macie_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.macie.macie_is_enabled.macie_is_enabled.s3_client",
+            new=s3_client,
         ):
-            with mock.patch(
-                "prowler.providers.aws.services.macie.macie_is_enabled.macie_is_enabled.macie_client",
-                new=macie_client,
-            ):
-                with mock.patch(
-                    "prowler.providers.aws.services.macie.macie_is_enabled.macie_is_enabled.s3_client",
-                    new=s3_client,
-                ):
-                    # Test Check
-                    from prowler.providers.aws.services.macie.macie_is_enabled.macie_is_enabled import (
-                        macie_is_enabled,
-                    )
+            # Test Check
+            from prowler.providers.aws.services.macie.macie_is_enabled.macie_is_enabled import (
+                macie_is_enabled,
+            )
 
-                    check = macie_is_enabled()
-                    result = check.execute()
+            check = macie_is_enabled()
+            result = check.execute()
 
-                    assert len(result) == 1
-                    assert result[0].status == "FAIL"
-                    assert result[0].status_extended == "Macie is not enabled."
-                    assert result[0].resource_id == AWS_ACCOUNT_NUMBER
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert result[0].status_extended == "Macie is not enabled."
+            assert result[0].resource_id == AWS_ACCOUNT_NUMBER
 
+    @mock_s3
     def test_macie_enabled(self):
-        macie_client = mock.MagicMock
         s3_client = mock.MagicMock
         s3_client.audit_info = self.set_mocked_audit_info()
+        s3_client.buckets = []
+        s3_client.regions_with_buckets = []
+
+        macie_client = mock.MagicMock
         macie_client.audit_info = self.set_mocked_audit_info()
         macie_client.audited_account = AWS_ACCOUNT_NUMBER
         macie_client.audited_account_arn = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
@@ -105,34 +112,34 @@ class Test_macie_is_enabled:
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             new=current_audit_info,
+        ), mock.patch(
+            "prowler.providers.aws.services.macie.macie_is_enabled.macie_is_enabled.macie_client",
+            new=macie_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.macie.macie_is_enabled.macie_is_enabled.s3_client",
+            new=s3_client,
         ):
-            with mock.patch(
-                "prowler.providers.aws.services.macie.macie_is_enabled.macie_is_enabled.macie_client",
-                new=macie_client,
-            ):
-                with mock.patch(
-                    "prowler.providers.aws.services.macie.macie_is_enabled.macie_is_enabled.s3_client",
-                    new=s3_client,
-                ):
-                    # Test Check
-                    from prowler.providers.aws.services.macie.macie_is_enabled.macie_is_enabled import (
-                        macie_is_enabled,
-                    )
+            # Test Check
+            from prowler.providers.aws.services.macie.macie_is_enabled.macie_is_enabled import (
+                macie_is_enabled,
+            )
 
-                    check = macie_is_enabled()
-                    result = check.execute()
+            check = macie_is_enabled()
+            result = check.execute()
 
-                    assert len(result) == 1
-                    assert result[0].status == "PASS"
-                    assert result[0].status_extended == "Macie is enabled."
-                    assert result[0].resource_id == AWS_ACCOUNT_NUMBER
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert result[0].status_extended == "Macie is enabled."
+            assert result[0].resource_id == AWS_ACCOUNT_NUMBER
 
+    @mock_s3
     def test_macie_suspended_ignored(self):
-        macie_client = mock.MagicMock
         s3_client = mock.MagicMock
         s3_client.audit_info = self.set_mocked_audit_info()
         s3_client.buckets = []
         s3_client.regions_with_buckets = []
+
+        macie_client = mock.MagicMock
         macie_client.audit_info = self.set_mocked_audit_info()
         macie_client.audited_account = AWS_ACCOUNT_NUMBER
         macie_client.audited_account_arn = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
@@ -149,28 +156,25 @@ class Test_macie_is_enabled:
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             new=current_audit_info,
+        ), mock.patch(
+            "prowler.providers.aws.services.macie.macie_is_enabled.macie_is_enabled.macie_client",
+            new=macie_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.macie.macie_is_enabled.macie_is_enabled.s3_client",
+            new=s3_client,
         ):
-            with mock.patch(
-                "prowler.providers.aws.services.macie.macie_is_enabled.macie_is_enabled.macie_client",
-                new=macie_client,
-            ):
-                with mock.patch(
-                    "prowler.providers.aws.services.macie.macie_is_enabled.macie_is_enabled.s3_client",
-                    new=s3_client,
-                ):
+            # Test Check
+            from prowler.providers.aws.services.macie.macie_is_enabled.macie_is_enabled import (
+                macie_is_enabled,
+            )
 
-                    # Test Check
-                    from prowler.providers.aws.services.macie.macie_is_enabled.macie_is_enabled import (
-                        macie_is_enabled,
-                    )
+            check = macie_is_enabled()
+            result = check.execute()
 
-                    check = macie_is_enabled()
-                    result = check.execute()
+            assert len(result) == 0
 
-                    assert len(result) == 0
-
+    @mock_s3
     def test_macie_suspended_ignored_with_buckets(self):
-        macie_client = mock.MagicMock
         s3_client = mock.MagicMock
         s3_client.regions_with_buckets = [AWS_REGION]
         s3_client.audit_info = self.set_mocked_audit_info()
@@ -181,6 +185,8 @@ class Test_macie_is_enabled:
                 region=AWS_REGION,
             )
         ]
+
+        macie_client = mock.MagicMock
         macie_client.audit_info = self.set_mocked_audit_info()
         macie_client.audited_account = AWS_ACCOUNT_NUMBER
         macie_client.audited_account_arn = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
@@ -197,36 +203,34 @@ class Test_macie_is_enabled:
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             new=current_audit_info,
+        ), mock.patch(
+            "prowler.providers.aws.services.macie.macie_is_enabled.macie_is_enabled.macie_client",
+            new=macie_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.macie.macie_is_enabled.macie_is_enabled.s3_client",
+            new=s3_client,
         ):
-            with mock.patch(
-                "prowler.providers.aws.services.macie.macie_is_enabled.macie_is_enabled.macie_client",
-                new=macie_client,
-            ):
-                with mock.patch(
-                    "prowler.providers.aws.services.macie.macie_is_enabled.macie_is_enabled.s3_client",
-                    new=s3_client,
-                ):
+            # Test Check
+            from prowler.providers.aws.services.macie.macie_is_enabled.macie_is_enabled import (
+                macie_is_enabled,
+            )
 
-                    # Test Check
-                    from prowler.providers.aws.services.macie.macie_is_enabled.macie_is_enabled import (
-                        macie_is_enabled,
-                    )
+            check = macie_is_enabled()
+            result = check.execute()
 
-                    check = macie_is_enabled()
-                    result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert (
+                result[0].status_extended == "Macie is currently in a SUSPENDED state."
+            )
+            assert result[0].resource_id == AWS_ACCOUNT_NUMBER
 
-                    assert len(result) == 1
-                    assert result[0].status == "FAIL"
-                    assert (
-                        result[0].status_extended
-                        == "Macie is currently in a SUSPENDED state."
-                    )
-                    assert result[0].resource_id == AWS_ACCOUNT_NUMBER
-
+    @mock_s3
     def test_macie_suspended(self):
-        macie_client = mock.MagicMock
         s3_client = mock.MagicMock
         s3_client.audit_info = self.set_mocked_audit_info()
+
+        macie_client = mock.MagicMock
         macie_client.audit_info = self.set_mocked_audit_info()
         macie_client.audited_account = AWS_ACCOUNT_NUMBER
         macie_client.audited_account_arn = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
@@ -241,28 +245,24 @@ class Test_macie_is_enabled:
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             new=current_audit_info,
+        ), mock.patch(
+            "prowler.providers.aws.services.macie.macie_is_enabled.macie_is_enabled.macie_client",
+            new=macie_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.macie.macie_is_enabled.macie_is_enabled.s3_client",
+            new=s3_client,
         ):
-            with mock.patch(
-                "prowler.providers.aws.services.macie.macie_is_enabled.macie_is_enabled.macie_client",
-                new=macie_client,
-            ):
-                with mock.patch(
-                    "prowler.providers.aws.services.macie.macie_is_enabled.macie_is_enabled.s3_client",
-                    new=s3_client,
-                ):
+            # Test Check
+            from prowler.providers.aws.services.macie.macie_is_enabled.macie_is_enabled import (
+                macie_is_enabled,
+            )
 
-                    # Test Check
-                    from prowler.providers.aws.services.macie.macie_is_enabled.macie_is_enabled import (
-                        macie_is_enabled,
-                    )
+            check = macie_is_enabled()
+            result = check.execute()
 
-                    check = macie_is_enabled()
-                    result = check.execute()
-
-                    assert len(result) == 1
-                    assert result[0].status == "FAIL"
-                    assert (
-                        result[0].status_extended
-                        == "Macie is currently in a SUSPENDED state."
-                    )
-                    assert result[0].resource_id == AWS_ACCOUNT_NUMBER
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert (
+                result[0].status_extended == "Macie is currently in a SUSPENDED state."
+            )
+            assert result[0].resource_id == AWS_ACCOUNT_NUMBER
