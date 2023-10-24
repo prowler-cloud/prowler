@@ -1,11 +1,15 @@
 from re import search
 from unittest import mock
 
+from boto3 import session
+
+from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.aws.services.ecr.ecr_service import (
     Registry,
     Repository,
     ScanningRule,
 )
+from prowler.providers.common.models import Audit_Metadata
 
 # Mock Test Region
 AWS_REGION = "eu-west-1"
@@ -17,12 +21,45 @@ repository_arn = (
 
 
 class Test_ecr_registry_scan_images_on_push_enabled:
+    def set_mocked_audit_info(self):
+        audit_info = AWS_Audit_Info(
+            session_config=None,
+            original_session=None,
+            audit_session=session.Session(
+                profile_name=None,
+                botocore_session=None,
+            ),
+            audited_account=None,
+            audited_account_arn=None,
+            audited_user_id=None,
+            audited_partition="aws",
+            audited_identity_arn=None,
+            profile=None,
+            profile_region=None,
+            credentials=None,
+            assumed_role_info=None,
+            audited_regions=None,
+            organizations_metadata=None,
+            audit_resources=None,
+            mfa_enabled=False,
+            audit_metadata=Audit_Metadata(
+                services_scanned=0,
+                expected_checks=[],
+                completed_checks=0,
+                audit_progress=0,
+            ),
+        )
+        return audit_info
+
     def test_no_registries(self):
         ecr_client = mock.MagicMock
         ecr_client.registries = {}
 
         with mock.patch(
-            "prowler.providers.aws.services.ecr.ecr_service.ECR",
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            self.set_mocked_audit_info(),
+        ), mock.patch(
+            "prowler.providers.aws.services.ecr.ecr_registry_scan_images_on_push_enabled.ecr_registry_scan_images_on_push_enabled.ecr_client",
             ecr_client,
         ):
             from prowler.providers.aws.services.ecr.ecr_registry_scan_images_on_push_enabled.ecr_registry_scan_images_on_push_enabled import (
@@ -45,7 +82,10 @@ class Test_ecr_registry_scan_images_on_push_enabled:
         )
 
         with mock.patch(
-            "prowler.providers.aws.services.ecr.ecr_service.ECR",
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            self.set_mocked_audit_info(),
+        ), mock.patch(
+            "prowler.providers.aws.services.ecr.ecr_registry_scan_images_on_push_enabled.ecr_registry_scan_images_on_push_enabled.ecr_client",
             ecr_client,
         ):
             from prowler.providers.aws.services.ecr.ecr_registry_scan_images_on_push_enabled.ecr_registry_scan_images_on_push_enabled import (
@@ -83,7 +123,10 @@ class Test_ecr_registry_scan_images_on_push_enabled:
         )
 
         with mock.patch(
-            "prowler.providers.aws.services.ecr.ecr_service.ECR",
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            self.set_mocked_audit_info(),
+        ), mock.patch(
+            "prowler.providers.aws.services.ecr.ecr_registry_scan_images_on_push_enabled.ecr_registry_scan_images_on_push_enabled.ecr_client",
             ecr_client,
         ):
             from prowler.providers.aws.services.ecr.ecr_registry_scan_images_on_push_enabled.ecr_registry_scan_images_on_push_enabled import (
@@ -125,7 +168,10 @@ class Test_ecr_registry_scan_images_on_push_enabled:
         )
 
         with mock.patch(
-            "prowler.providers.aws.services.ecr.ecr_service.ECR",
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            self.set_mocked_audit_info(),
+        ), mock.patch(
+            "prowler.providers.aws.services.ecr.ecr_registry_scan_images_on_push_enabled.ecr_registry_scan_images_on_push_enabled.ecr_client",
             ecr_client,
         ):
             from prowler.providers.aws.services.ecr.ecr_registry_scan_images_on_push_enabled.ecr_registry_scan_images_on_push_enabled import (
@@ -165,7 +211,10 @@ class Test_ecr_registry_scan_images_on_push_enabled:
         )
 
         with mock.patch(
-            "prowler.providers.aws.services.ecr.ecr_service.ECR",
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            self.set_mocked_audit_info(),
+        ), mock.patch(
+            "prowler.providers.aws.services.ecr.ecr_registry_scan_images_on_push_enabled.ecr_registry_scan_images_on_push_enabled.ecr_client",
             ecr_client,
         ):
             from prowler.providers.aws.services.ecr.ecr_registry_scan_images_on_push_enabled.ecr_registry_scan_images_on_push_enabled import (

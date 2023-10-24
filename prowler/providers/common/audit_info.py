@@ -109,6 +109,11 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
             new_boto3_config = current_audit_info.session_config.merge(config)
             current_audit_info.session_config = new_boto3_config
 
+        # Set ignore unused services argument
+        current_audit_info.ignore_unused_services = arguments.get(
+            "ignore_unused_services"
+        )
+
         # Setting session
         current_audit_info.profile = input_profile
         current_audit_info.audited_regions = input_regions

@@ -52,3 +52,4 @@ class AWS_Audit_Info:
     organizations_metadata: AWS_Organizations_Info
     audit_metadata: Optional[Any] = None
     audit_config: Optional[dict] = None
+    ignore_unused_services: bool = False

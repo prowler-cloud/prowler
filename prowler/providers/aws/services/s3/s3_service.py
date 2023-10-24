@@ -15,7 +15,7 @@ class S3(AWSService):
     def __init__(self, audit_info):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, audit_info)
-
+        self.regions_with_buckets = []
         self.buckets = self.__list_buckets__(audit_info)
         self.__threading_call__(self.__get_bucket_versioning__)
         self.__threading_call__(self.__get_bucket_logging__)
@@ -55,6 +55,7 @@ class S3(AWSService):
                 if not self.audit_resources or (
                     is_resource_filtered(arn, self.audit_resources)
                 ):
+                    self.regions_with_buckets.append(bucket_region)
                     # Check if there are filter regions
                     if audit_info.audited_regions:
                         if bucket_region in audit_info.audited_regions:

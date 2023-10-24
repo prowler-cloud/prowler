@@ -1,6 +1,6 @@
 from unittest import mock
 
-from boto3 import client, session
+from boto3 import client, resource, session
 from moto import mock_ec2
 
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
@@ -155,3 +155,70 @@ class Test_vpc_flow_logs_enabled:
                         == f"VPC {vpc['VpcId']} Flow logs are disabled."
                     )
                     assert result.resource_id == vpc["VpcId"]
+
+    @mock_ec2
+    def test_vpc_without_flow_logs_ignoring(self):
+        from prowler.providers.aws.services.vpc.vpc_service import VPC
+
+        # Create VPC Mocked Resources
+        ec2_client = client("ec2", region_name=AWS_REGION)
+
+        ec2_client.create_vpc(CidrBlock="10.0.0.0/16")["Vpc"]
+
+        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info.ignore_unused_services = True
+
+        with mock.patch(
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=current_audit_info,
+        ), mock.patch(
+            "prowler.providers.aws.services.vpc.vpc_flow_logs_enabled.vpc_flow_logs_enabled.vpc_client",
+            new=VPC(current_audit_info),
+        ):
+            # Test Check
+            from prowler.providers.aws.services.vpc.vpc_flow_logs_enabled.vpc_flow_logs_enabled import (
+                vpc_flow_logs_enabled,
+            )
+
+            check = vpc_flow_logs_enabled()
+            result = check.execute()
+
+            assert len(result) == 0
+
+    @mock_ec2
+    def test_vpc_without_flow_logs_ignoring_in_use(self):
+        from prowler.providers.aws.services.vpc.vpc_service import VPC
+
+        # Create VPC Mocked Resources
+        ec2 = resource("ec2", region_name=AWS_REGION)
+
+        vpc = ec2.create_vpc(CidrBlock="10.0.0.0/16")
+        subnet = ec2.create_subnet(VpcId=vpc.id, CidrBlock="10.0.0.0/18")
+        ec2.create_network_interface(SubnetId=subnet.id)
+        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info.ignore_unused_services = True
+
+        with mock.patch(
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=current_audit_info,
+        ), mock.patch(
+            "prowler.providers.aws.services.vpc.vpc_flow_logs_enabled.vpc_flow_logs_enabled.vpc_client",
+            new=VPC(current_audit_info),
+        ):
+            # Test Check
+            from prowler.providers.aws.services.vpc.vpc_flow_logs_enabled.vpc_flow_logs_enabled import (
+                vpc_flow_logs_enabled,
+            )
+
+            check = vpc_flow_logs_enabled()
+            result = check.execute()
+
+            # Search created VPC among default ones
+            for result in result:
+                if result.resource_id == vpc.id:
+                    assert result.status == "FAIL"
+                    assert (
+                        result.status_extended
+                        == f"VPC {vpc.id} Flow logs are disabled."
+                    )
+                    assert result.resource_id == vpc.id

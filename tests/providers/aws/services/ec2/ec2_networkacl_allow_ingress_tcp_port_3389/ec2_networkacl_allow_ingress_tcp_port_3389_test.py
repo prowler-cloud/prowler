@@ -206,3 +206,97 @@ class Test_ec2_networkacl_allow_ingress_tcp_port_3389:
                         nacl.resource_arn
                         == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:network-acl/{nacl_id}"
                     )
+
+    @mock_ec2
+    def test_ec2_non_compliant_nacl_ignoring(self):
+        # Create EC2 Mocked Resources
+        ec2_client = client("ec2", region_name=AWS_REGION)
+        vpc_id = ec2_client.create_vpc(CidrBlock="10.0.0.0/16")["Vpc"]["VpcId"]
+        nacl_id = ec2_client.create_network_acl(VpcId=vpc_id)["NetworkAcl"][
+            "NetworkAclId"
+        ]
+        ec2_client.create_network_acl_entry(
+            NetworkAclId=nacl_id,
+            RuleNumber=100,
+            Protocol="-1",
+            RuleAction="allow",
+            Egress=False,
+            CidrBlock="0.0.0.0/0",
+        )
+
+        from prowler.providers.aws.services.ec2.ec2_service import EC2
+
+        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info.ignore_unused_services = True
+
+        with mock.patch(
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=current_audit_info,
+        ), mock.patch(
+            "prowler.providers.aws.services.ec2.ec2_networkacl_allow_ingress_tcp_port_3389.ec2_networkacl_allow_ingress_tcp_port_3389.ec2_client",
+            new=EC2(current_audit_info),
+        ):
+            # Test Check
+            from prowler.providers.aws.services.ec2.ec2_networkacl_allow_ingress_tcp_port_3389.ec2_networkacl_allow_ingress_tcp_port_3389 import (
+                ec2_networkacl_allow_ingress_tcp_port_3389,
+            )
+
+            check = ec2_networkacl_allow_ingress_tcp_port_3389()
+            result = check.execute()
+
+            assert len(result) == 0
+
+    @mock_ec2
+    def test_ec2_non_compliant_nacl_ignoring_with_sgs(self):
+        # Create EC2 Mocked Resources
+        ec2_client = client("ec2", region_name=AWS_REGION)
+        vpc_id = ec2_client.create_vpc(CidrBlock="10.0.0.0/16")["Vpc"]["VpcId"]
+        nacl_id = ec2_client.create_network_acl(VpcId=vpc_id)["NetworkAcl"][
+            "NetworkAclId"
+        ]
+        ec2_client.create_network_acl_entry(
+            NetworkAclId=nacl_id,
+            RuleNumber=100,
+            Protocol="-1",
+            RuleAction="allow",
+            Egress=False,
+            CidrBlock="0.0.0.0/0",
+        )
+        ec2_client.create_security_group(GroupName="sg", Description="test")
+
+        from prowler.providers.aws.services.ec2.ec2_service import EC2
+
+        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info.ignore_unused_services = True
+
+        with mock.patch(
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=current_audit_info,
+        ), mock.patch(
+            "prowler.providers.aws.services.ec2.ec2_networkacl_allow_ingress_tcp_port_3389.ec2_networkacl_allow_ingress_tcp_port_3389.ec2_client",
+            new=EC2(current_audit_info),
+        ):
+            # Test Check
+            from prowler.providers.aws.services.ec2.ec2_networkacl_allow_ingress_tcp_port_3389.ec2_networkacl_allow_ingress_tcp_port_3389 import (
+                ec2_networkacl_allow_ingress_tcp_port_3389,
+            )
+
+            check = ec2_networkacl_allow_ingress_tcp_port_3389()
+            result = check.execute()
+
+            # One default sg per region + default of new VPC + new NACL
+            assert len(result) == 3
+            # Search changed sg
+            for nacl in result:
+                if nacl.resource_id == nacl_id:
+                    assert nacl.status == "FAIL"
+                    assert result[0].region in (AWS_REGION, "eu-west-1")
+                    assert result[0].resource_tags == []
+                    assert (
+                        nacl.status_extended
+                        == f"Network ACL {nacl_id} has Microsoft RDP port 3389 open to the Internet."
+                    )
+                    assert (
+                        nacl.resource_arn
+                        == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:network-acl/{nacl_id}"
+                    )

@@ -28,21 +28,6 @@ class accessanalyzer_enabled_without_findings(Check):
                         report.resource_id = analyzer.name
                         report.resource_arn = analyzer.arn
                         report.resource_tags = analyzer.tags
-            elif analyzer.status == "NOT_AVAILABLE":
-                report.status = "FAIL"
-                report.status_extended = (
-                    f"IAM Access Analyzer in account {analyzer.name} is not enabled."
-                )
-                report.resource_id = analyzer.name
-                report.resource_arn = analyzer.arn
-            else:
-                report.status = "FAIL"
-                report.status_extended = (
-                    f"IAM Access Analyzer {analyzer.name} is not active."
-                )
-                report.resource_id = analyzer.name
-                report.resource_arn = analyzer.arn
-                report.resource_tags = analyzer.tags
-            findings.append(report)
+                findings.append(report)
 
         return findings

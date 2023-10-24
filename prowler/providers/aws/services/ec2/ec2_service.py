@@ -19,6 +19,7 @@ class EC2(AWSService):
         self.__threading_call__(self.__describe_instances__)
         self.__get_instance_user_data__()
         self.security_groups = []
+        self.regions_with_sgs = []
         self.__threading_call__(self.__describe_security_groups__)
         self.network_acls = []
         self.__threading_call__(self.__describe_network_acls__)
@@ -116,7 +117,7 @@ class EC2(AWSService):
                     if not self.audit_resources or (
                         is_resource_filtered(arn, self.audit_resources)
                     ):
-                        # check if sg has public access to all ports to reduce noise
+                        # check if sg has public access to all ports
                         all_public_ports = False
                         for ingress_rule in sg["IpPermissions"]:
                             if (
@@ -137,9 +138,12 @@ class EC2(AWSService):
                                 ingress_rules=sg["IpPermissions"],
                                 egress_rules=sg["IpPermissionsEgress"],
                                 public_ports=all_public_ports,
+                                vpc_id=sg["VpcId"],
                                 tags=sg.get("Tags"),
                             )
                         )
+                        if sg["GroupName"] != "default":
+                            self.regions_with_sgs.append(regional_client.region)
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -396,11 +400,16 @@ class EC2(AWSService):
     def __get_ebs_encryption_by_default__(self, regional_client):
         logger.info("EC2 - Get EBS Encryption By Default...")
         try:
+            volumes_in_region = False
+            for volume in self.volumes:
+                if volume.region == regional_client.region:
+                    volumes_in_region = True
             self.ebs_encryption_by_default.append(
                 EbsEncryptionByDefault(
                     status=regional_client.get_ebs_encryption_by_default()[
                         "EbsEncryptionByDefault"
                     ],
+                    volumes=volumes_in_region,
                     region=regional_client.region,
                 )
             )
@@ -453,6 +462,7 @@ class SecurityGroup(BaseModel):
     arn: str
     region: str
     id: str
+    vpc_id: str
     public_ports: bool
     network_interfaces: list[str] = []
     ingress_rules: list[dict]
@@ -499,4 +509,5 @@ class Image(BaseModel):
 
 class EbsEncryptionByDefault(BaseModel):
     status: bool
+    volumes: bool
     region: str

@@ -1,9 +1,10 @@
 from unittest import mock
 
-from boto3 import client, session
+from boto3 import client, resource, session
 from moto import mock_ec2
 
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
+from prowler.providers.aws.services.vpc.vpc_service import VPC
 from prowler.providers.common.models import Audit_Metadata
 
 AWS_REGION = "us-east-1"
@@ -60,6 +61,9 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_any_port:
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_any_port.ec2_securitygroup_allow_ingress_from_internet_to_any_port.ec2_client",
             new=EC2(current_audit_info),
+        ), mock.patch(
+            "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_any_port.ec2_securitygroup_allow_ingress_from_internet_to_any_port.vpc_client",
+            new=VPC(current_audit_info),
         ):
             # Test Check
             from prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_any_port.ec2_securitygroup_allow_ingress_from_internet_to_any_port import (
@@ -106,6 +110,9 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_any_port:
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_any_port.ec2_securitygroup_allow_ingress_from_internet_to_any_port.ec2_client",
             new=EC2(current_audit_info),
+        ), mock.patch(
+            "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_any_port.ec2_securitygroup_allow_ingress_from_internet_to_any_port.vpc_client",
+            new=VPC(current_audit_info),
         ):
             # Test Check
             from prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_any_port.ec2_securitygroup_allow_ingress_from_internet_to_any_port import (
@@ -163,6 +170,9 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_any_port:
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_any_port.ec2_securitygroup_allow_ingress_from_internet_to_any_port.ec2_client",
             new=EC2(current_audit_info),
+        ), mock.patch(
+            "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_any_port.ec2_securitygroup_allow_ingress_from_internet_to_any_port.vpc_client",
+            new=VPC(current_audit_info),
         ):
             # Test Check
             from prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_any_port.ec2_securitygroup_allow_ingress_from_internet_to_any_port import (
@@ -225,6 +235,9 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_any_port:
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_any_port.ec2_securitygroup_allow_ingress_from_internet_to_any_port.ec2_client",
             new=EC2(current_audit_info),
+        ), mock.patch(
+            "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_any_port.ec2_securitygroup_allow_ingress_from_internet_to_any_port.vpc_client",
+            new=VPC(current_audit_info),
         ):
             # Test Check
             from prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_any_port.ec2_securitygroup_allow_ingress_from_internet_to_any_port import (
@@ -251,3 +264,74 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_any_port:
                     )
                     assert sg.resource_details == default_sg_name
                     assert sg.resource_tags == []
+
+    @mock_ec2
+    def test_ec2_default_sgs_ignoring(self):
+        # Create EC2 Mocked Resources
+        ec2_client = client("ec2", region_name=AWS_REGION)
+        ec2_client.create_vpc(CidrBlock="10.0.0.0/16")
+
+        from prowler.providers.aws.services.ec2.ec2_service import EC2
+
+        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info.ignore_unused_services = True
+
+        with mock.patch(
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=current_audit_info,
+        ), mock.patch(
+            "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_any_port.ec2_securitygroup_allow_ingress_from_internet_to_any_port.ec2_client",
+            new=EC2(current_audit_info),
+        ), mock.patch(
+            "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_any_port.ec2_securitygroup_allow_ingress_from_internet_to_any_port.vpc_client",
+            new=VPC(current_audit_info),
+        ):
+            # Test Check
+            from prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_any_port.ec2_securitygroup_allow_ingress_from_internet_to_any_port import (
+                ec2_securitygroup_allow_ingress_from_internet_to_any_port,
+            )
+
+            check = ec2_securitygroup_allow_ingress_from_internet_to_any_port()
+            result = check.execute()
+
+            assert len(result) == 0
+
+    @mock_ec2
+    def test_ec2_default_sgs_ignoring_vpc_in_use(self):
+        # Create EC2 Mocked Resources
+        ec2 = resource("ec2", region_name=AWS_REGION)
+        vpc = ec2.create_vpc(CidrBlock="10.0.0.0/16")
+        subnet = ec2.create_subnet(VpcId=vpc.id, CidrBlock="10.0.0.0/18")
+        ec2.create_network_interface(SubnetId=subnet.id)
+        ec2_client = client("ec2", region_name=AWS_REGION)
+        default_sg = ec2_client.describe_security_groups(GroupNames=["default"])[
+            "SecurityGroups"
+        ][0]
+        default_sg["GroupId"]
+        default_sg["GroupName"]
+        from prowler.providers.aws.services.ec2.ec2_service import EC2
+
+        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info.ignore_unused_services = True
+
+        with mock.patch(
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=current_audit_info,
+        ), mock.patch(
+            "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_any_port.ec2_securitygroup_allow_ingress_from_internet_to_any_port.ec2_client",
+            new=EC2(current_audit_info),
+        ), mock.patch(
+            "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_any_port.ec2_securitygroup_allow_ingress_from_internet_to_any_port.vpc_client",
+            new=VPC(current_audit_info),
+        ):
+            # Test Check
+            from prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_any_port.ec2_securitygroup_allow_ingress_from_internet_to_any_port import (
+                ec2_securitygroup_allow_ingress_from_internet_to_any_port,
+            )
+
+            check = ec2_securitygroup_allow_ingress_from_internet_to_any_port()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert result[0].region == AWS_REGION

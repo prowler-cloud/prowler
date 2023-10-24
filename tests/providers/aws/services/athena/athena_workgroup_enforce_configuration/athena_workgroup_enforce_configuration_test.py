@@ -78,6 +78,29 @@ class Test_athena_workgroup_enforce_configuration:
             assert result[0].resource_tags == []
 
     @mock_athena
+    def test_primary_workgroup_configuration_not_enforced_ignoring(self):
+        from prowler.providers.aws.services.athena.athena_service import Athena
+
+        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info.ignore_unused_services = True
+
+        with mock.patch(
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=current_audit_info,
+        ), mock.patch(
+            "prowler.providers.aws.services.athena.athena_workgroup_enforce_configuration.athena_workgroup_enforce_configuration.athena_client",
+            new=Athena(current_audit_info),
+        ):
+            from prowler.providers.aws.services.athena.athena_workgroup_enforce_configuration.athena_workgroup_enforce_configuration import (
+                athena_workgroup_enforce_configuration,
+            )
+
+            check = athena_workgroup_enforce_configuration()
+            result = check.execute()
+
+            assert len(result) == 0
+
+    @mock_athena
     # We mock the get_work_group to return a workgroup not enforcing configuration
     @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
     def test_primary_workgroup_configuration_enforced(self):

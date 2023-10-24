@@ -56,18 +56,9 @@ class Test_accessanalyzer_enabled_without_findings:
             check = accessanalyzer_enabled_without_findings()
             result = check.execute()
 
-            assert len(result) == 1
-            assert result[0].status == "FAIL"
-            assert (
-                result[0].status_extended
-                == f"IAM Access Analyzer in account {AWS_ACCOUNT_NUMBER} is not enabled."
-            )
-            assert result[0].resource_id == AWS_ACCOUNT_NUMBER
-            assert result[0].resource_arn == AWS_ACCOUNT_ARN
-            assert result[0].region == AWS_REGION_1
-            assert result[0].resource_tags == []
+            assert len(result) == 0
 
-    def test_two_analyzers(self):
+    def test_two_analyzers_but_one_with_findings(self):
         accessanalyzer_client = mock.MagicMock
         accessanalyzer_client.analyzers = [
             Analyzer(
@@ -112,27 +103,17 @@ class Test_accessanalyzer_enabled_without_findings:
             check = accessanalyzer_enabled_without_findings()
             result = check.execute()
 
-            assert len(result) == 2
+            assert len(result) == 1
 
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"IAM Access Analyzer in account {AWS_ACCOUNT_NUMBER} is not enabled."
-            )
-            assert result[0].resource_id == AWS_ACCOUNT_NUMBER
-            assert result[0].resource_arn == AWS_ACCOUNT_ARN
-            assert result[0].region == AWS_REGION_1
-            assert result[0].resource_tags == []
-
-            assert result[1].status == "FAIL"
-            assert (
-                result[1].status_extended
                 == f"IAM Access Analyzer {ACCESS_ANALYZER_NAME} has 1 active findings."
             )
-            assert result[1].resource_id == ACCESS_ANALYZER_NAME
-            assert result[1].resource_arn == ACCESS_ANALYZER_ARN
-            assert result[1].region == AWS_REGION_2
-            assert result[1].resource_tags == []
+            assert result[0].resource_id == ACCESS_ANALYZER_NAME
+            assert result[0].resource_arn == ACCESS_ANALYZER_ARN
+            assert result[0].region == AWS_REGION_2
+            assert result[0].resource_tags == []
 
     def test_one_active_analyzer_without_findings(self):
         accessanalyzer_client = mock.MagicMock
@@ -171,7 +152,7 @@ class Test_accessanalyzer_enabled_without_findings:
             assert result[0].region == AWS_REGION_2
             assert result[0].resource_tags == []
 
-    def test_one_active_analyzer_not_active(self):
+    def test_one_active_analyzer_not_active_without_findings(self):
         accessanalyzer_client = mock.MagicMock
         accessanalyzer_client.analyzers = [
             Analyzer(
@@ -197,16 +178,7 @@ class Test_accessanalyzer_enabled_without_findings:
             check = accessanalyzer_enabled_without_findings()
             result = check.execute()
 
-            assert len(result) == 1
-            assert result[0].status == "FAIL"
-            assert (
-                result[0].status_extended
-                == f"IAM Access Analyzer in account {AWS_ACCOUNT_NUMBER} is not enabled."
-            )
-            assert result[0].resource_id == AWS_ACCOUNT_NUMBER
-            assert result[0].resource_arn == AWS_ACCOUNT_ARN
-            assert result[0].region == AWS_REGION_1
-            assert result[0].resource_tags == []
+            assert len(result) == 0
 
     def test_analyzer_finding_without_status(self):
         accessanalyzer_client = mock.MagicMock

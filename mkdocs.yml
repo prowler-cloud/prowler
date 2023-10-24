@@ -37,6 +37,7 @@ nav:
       - Configuration File: tutorials/configuration_file.md
       - Logging: tutorials/logging.md
       - Allowlist: tutorials/allowlist.md
+      - Ignore Unused Services: tutorials/ignore-unused-services.md
       - Pentesting: tutorials/pentesting.md
       - Developer Guide: developer-guide/introduction.md
       - AWS:

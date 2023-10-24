@@ -153,6 +153,16 @@ def init_parser(self):
         help="Set the maximum attemps for the Boto3 standard retrier config (Default: 3)",
     )
 
+    # Ignore Unused Services
+    ignore_unused_services_subparser = aws_parser.add_argument_group(
+        "Ignore Unused Services"
+    )
+    ignore_unused_services_subparser.add_argument(
+        "--ignore-unused-services",
+        action="store_true",
+        help="Ignore findings in unused services",
+    )
+
 
 def validate_session_duration(duration):
     """validate_session_duration validates that the AWS STS Assume Role Session Duration is between 900 and 43200 seconds."""
