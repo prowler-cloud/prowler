@@ -72,13 +72,3 @@ Allowlist:
               - "test"
             Tags:
               - "environment=prod"   # Will ignore every resource except in account 123456789012 except the ones containing the string "test" and tag environment=prod
-
-
-
-# EXAMPLE: CONTROL TOWER (to migrate)
-# When using Control Tower, guardrails prevent access to certain protected resources. The allowlist
-# below ensures that warnings instead of errors are reported for the affected resources.
-#extra734:aws-controltower-logs-[[:digit:]]+-[[:alpha:]\-]+
-#extra734:aws-controltower-s3-access-logs-[[:digit:]]+-[[:alpha:]\-]+
-#extra764:aws-controltower-logs-[[:digit:]]+-[[:alpha:]\-]+
-#extra764:aws-controltower-s3-access-logs-[[:digit:]]+-[[:alpha:]\-]+
