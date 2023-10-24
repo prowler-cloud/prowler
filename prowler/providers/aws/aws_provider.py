@@ -12,6 +12,7 @@ from prowler.lib.logger import logger
 from prowler.lib.utils.utils import open_file, parse_json_file
 from prowler.providers.aws.config import AWS_STS_GLOBAL_ENDPOINT_REGION
 from prowler.providers.aws.lib.audit_info.models import AWS_Assume_Role, AWS_Audit_Info
+from prowler.providers.aws.lib.credentials.credentials import create_sts_session
 
 
 ################## AWS PROVIDER
@@ -131,11 +132,7 @@ def assume_role(
         if sts_endpoint_region is None:
             sts_endpoint_region = AWS_STS_GLOBAL_ENDPOINT_REGION
 
-        sts_client = session.client(
-            "sts",
-            sts_endpoint_region,
-            endpoint_url=f"https://sts.{sts_endpoint_region}.amazonaws.com",
-        )
+        sts_client = create_sts_session(session, sts_endpoint_region)
         assumed_credentials = sts_client.assume_role(**assume_role_arguments)
     except Exception as error:
         logger.critical(

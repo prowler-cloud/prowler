@@ -6,7 +6,10 @@ from mock import patch
 from moto import mock_iam, mock_sts
 
 from prowler.providers.aws.lib.arn.arn import parse_iam_credentials_arn
-from prowler.providers.aws.lib.credentials.credentials import validate_aws_credentials
+from prowler.providers.aws.lib.credentials.credentials import (
+    create_sts_session,
+    validate_aws_credentials,
+)
 
 AWS_ACCOUNT_NUMBER = "123456789012"
 
@@ -446,3 +449,75 @@ class Test_AWS_Credentials:
         assert caller_identity_arn.resource_type == "user"
         assert re.match("[0-9a-zA-Z]{20}", get_caller_identity["UserId"])
         assert get_caller_identity["Account"] == AWS_ACCOUNT_NUMBER
+
+    @mock_iam
+    @mock_sts
+    def test_create_sts_session(self):
+        aws_region = "eu-west-1"
+        # Create a mock IAM user
+        iam_client = boto3.client("iam", region_name=aws_region)
+        iam_user = iam_client.create_user(UserName="test-user")["User"]
+        # Create a mock IAM access keys
+        access_key = iam_client.create_access_key(UserName=iam_user["UserName"])[
+            "AccessKey"
+        ]
+        access_key_id = access_key["AccessKeyId"]
+        secret_access_key = access_key["SecretAccessKey"]
+        # Create AWS session to validate
+        session = boto3.session.Session(
+            aws_access_key_id=access_key_id,
+            aws_secret_access_key=secret_access_key,
+            region_name=aws_region,
+        )
+        sts_client = create_sts_session(session, aws_region)
+
+        assert sts_client._endpoint._endpoint_prefix == "sts"
+        assert sts_client._endpoint.host == f"https://sts.{aws_region}.amazonaws.com"
+
+    @mock_iam
+    @mock_sts
+    def test_create_sts_session_gov_cloud(self):
+        aws_region = "us-gov-east-1"
+        # Create a mock IAM user
+        iam_client = boto3.client("iam", region_name=aws_region)
+        iam_user = iam_client.create_user(UserName="test-user")["User"]
+        # Create a mock IAM access keys
+        access_key = iam_client.create_access_key(UserName=iam_user["UserName"])[
+            "AccessKey"
+        ]
+        access_key_id = access_key["AccessKeyId"]
+        secret_access_key = access_key["SecretAccessKey"]
+        # Create AWS session to validate
+        session = boto3.session.Session(
+            aws_access_key_id=access_key_id,
+            aws_secret_access_key=secret_access_key,
+            region_name=aws_region,
+        )
+        sts_client = create_sts_session(session, aws_region)
+
+        assert sts_client._endpoint._endpoint_prefix == "sts"
+        assert sts_client._endpoint.host == f"https://sts.{aws_region}.amazonaws.com"
+
+    @mock_iam
+    @mock_sts
+    def test_create_sts_session_china(self):
+        aws_region = "cn-north-1"
+        # Create a mock IAM user
+        iam_client = boto3.client("iam", region_name=aws_region)
+        iam_user = iam_client.create_user(UserName="test-user")["User"]
+        # Create a mock IAM access keys
+        access_key = iam_client.create_access_key(UserName=iam_user["UserName"])[
+            "AccessKey"
+        ]
+        access_key_id = access_key["AccessKeyId"]
+        secret_access_key = access_key["SecretAccessKey"]
+        # Create AWS session to validate
+        session = boto3.session.Session(
+            aws_access_key_id=access_key_id,
+            aws_secret_access_key=secret_access_key,
+            region_name=aws_region,
+        )
+        sts_client = create_sts_session(session, aws_region)
+
+        assert sts_client._endpoint._endpoint_prefix == "sts"
+        assert sts_client._endpoint.host == f"https://sts.{aws_region}.amazonaws.com"
