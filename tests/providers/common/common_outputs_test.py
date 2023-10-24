@@ -1,4 +1,5 @@
 from argparse import Namespace
+from os import rmdir
 
 from boto3 import session
 from mock import patch
@@ -109,6 +110,9 @@ class Test_Common_Output_Options:
         assert output_options.verbose
         assert output_options.output_filename == arguments.output_filename
 
+        # Delete testing directory
+        rmdir(arguments.output_directory)
+
     def test_set_provider_output_options_gcp(self):
         #  Set the cloud provider
         provider = "gcp"
@@ -136,6 +140,9 @@ class Test_Common_Output_Options:
         assert output_options.bulk_checks_metadata == {}
         assert output_options.verbose
         assert output_options.output_filename == arguments.output_filename
+
+        # Delete testing directory
+        rmdir(arguments.output_directory)
 
     def test_set_provider_output_options_aws_no_output_filename(self):
         #  Set the cloud provider
@@ -171,6 +178,9 @@ class Test_Common_Output_Options:
             output_options.output_filename
             == f"prowler-output-{AWS_ACCOUNT_NUMBER}-{DATETIME}"
         )
+
+        # Delete testing directory
+        rmdir(arguments.output_directory)
 
     def test_set_provider_output_options_azure_domain(self):
         #  Set the cloud provider
@@ -209,6 +219,9 @@ class Test_Common_Output_Options:
             == f"prowler-output-{audit_info.identity.domain}-{DATETIME}"
         )
 
+        # Delete testing directory
+        rmdir(arguments.output_directory)
+
     def test_set_provider_output_options_azure_tenant_ids(self):
         #  Set the cloud provider
         provider = "azure"
@@ -246,6 +259,9 @@ class Test_Common_Output_Options:
             output_options.output_filename
             == f"prowler-output-{'-'.join(tenants)}-{DATETIME}"
         )
+
+        # Delete testing directory
+        rmdir(arguments.output_directory)
 
     def test_azure_get_assessment_summary(self):
         # Mock Azure Audit Info
