@@ -240,6 +240,7 @@ class Test_networkfirewall_in_all_vpc:
         networkfirewall_client.region = AWS_REGION
         networkfirewall_client.network_firewalls = []
         vpc_client = mock.MagicMock
+        vpc_client.audit_info = self.set_mocked_audit_info()
         vpc_client.region = AWS_REGION
         vpc_client.vpcs = {
             VPC_ID_UNPROTECTED: VPCs(
