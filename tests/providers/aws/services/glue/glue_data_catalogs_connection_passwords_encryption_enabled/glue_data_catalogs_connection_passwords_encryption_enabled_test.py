@@ -1,4 +1,3 @@
-from re import search
 from unittest import mock
 
 from boto3 import session
@@ -93,11 +92,12 @@ class Test_glue_data_catalogs_connection_passwords_encryption_enabled:
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert search(
-                "Glue data catalog connection password is not encrypted",
-                result[0].status_extended,
+            assert (
+                result[0].status_extended
+                == "Glue data catalog connection password is not encrypted."
             )
             assert result[0].resource_id == "12345678912"
+            assert result[0].region == AWS_REGION
 
     def test_glue_catalog_password_unencrypted_ignoring(self):
         glue_client = mock.MagicMock
@@ -157,11 +157,12 @@ class Test_glue_data_catalogs_connection_passwords_encryption_enabled:
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert search(
-                "Glue data catalog connection password is not encrypted",
-                result[0].status_extended,
+            assert (
+                result[0].status_extended
+                == "Glue data catalog connection password is not encrypted."
             )
             assert result[0].resource_id == "12345678912"
+            assert result[0].region == AWS_REGION
 
     def test_glue_catalog_encrypted(self):
         glue_client = mock.MagicMock
@@ -191,8 +192,9 @@ class Test_glue_data_catalogs_connection_passwords_encryption_enabled:
 
             assert len(result) == 1
             assert result[0].status == "PASS"
-            assert search(
-                "Glue data catalog connection password is encrypted",
-                result[0].status_extended,
+            assert (
+                result[0].status_extended
+                == "Glue data catalog connection password is encrypted with KMS key kms-key."
             )
             assert result[0].resource_id == "12345678912"
+            assert result[0].region == AWS_REGION

@@ -69,7 +69,7 @@ class Test_glue_data_catalogs_metadata_encryption_enabled:
         glue_client.audit_info = self.set_mocked_audit_info()
         glue_client.catalog_encryption_settings = [
             CatalogEncryptionSetting(
-                mode="DISABLED",
+                mode="disabled.",
                 tables=False,
                 kms_id=None,
                 region=AWS_REGION,
@@ -93,18 +93,19 @@ class Test_glue_data_catalogs_metadata_encryption_enabled:
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert search(
-                "Glue data catalog settings have metadata encryption disabled",
-                result[0].status_extended,
+            assert (
+                result[0].status_extended
+                == "Glue data catalog settings have metadata encryption disabled."
             )
             assert result[0].resource_id == "12345678912"
+            assert result[0].region == AWS_REGION
 
     def test_glue_catalog_unencrypted_ignoring(self):
         glue_client = mock.MagicMock
         glue_client.audit_info = self.set_mocked_audit_info()
         glue_client.catalog_encryption_settings = [
             CatalogEncryptionSetting(
-                mode="DISABLED",
+                mode="disabled.",
                 tables=False,
                 kms_id=None,
                 region=AWS_REGION,
@@ -134,7 +135,7 @@ class Test_glue_data_catalogs_metadata_encryption_enabled:
         glue_client.audit_info = self.set_mocked_audit_info()
         glue_client.catalog_encryption_settings = [
             CatalogEncryptionSetting(
-                mode="DISABLED",
+                mode="disabled.",
                 tables=True,
                 kms_id=None,
                 region=AWS_REGION,
@@ -160,10 +161,11 @@ class Test_glue_data_catalogs_metadata_encryption_enabled:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert search(
-                "Glue data catalog settings have metadata encryption disabled",
+                "Glue data catalog settings have metadata encryption disabled.",
                 result[0].status_extended,
             )
             assert result[0].resource_id == "12345678912"
+            assert result[0].region == AWS_REGION
 
     def test_glue_catalog_encrypted(self):
         glue_client = mock.MagicMock
@@ -194,8 +196,9 @@ class Test_glue_data_catalogs_metadata_encryption_enabled:
 
             assert len(result) == 1
             assert result[0].status == "PASS"
-            assert search(
-                "Glue data catalog settings have metadata encryption enabled",
-                result[0].status_extended,
+            assert (
+                result[0].status_extended
+                == "Glue data catalog settings have metadata encryption enabled with KMS key kms-key."
             )
             assert result[0].resource_id == "12345678912"
+            assert result[0].region == AWS_REGION
