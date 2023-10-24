@@ -58,35 +58,37 @@ class Test_s3_account_level_public_access_blocks:
                 "RestrictPublicBuckets": True,
             },
         )
-        from prowler.providers.aws.services.s3.s3_service import S3Control
+        from prowler.providers.aws.services.s3.s3_service import S3, S3Control
 
         audit_info = self.set_mocked_audit_info()
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             new=audit_info,
+        ), mock.patch(
+            "prowler.providers.aws.services.s3.s3_account_level_public_access_blocks.s3_account_level_public_access_blocks.s3_client",
+            new=S3(audit_info),
+        ), mock.patch(
+            "prowler.providers.aws.services.s3.s3_account_level_public_access_blocks.s3_account_level_public_access_blocks.s3control_client",
+            new=S3Control(audit_info),
         ):
-            with mock.patch(
-                "prowler.providers.aws.services.s3.s3_account_level_public_access_blocks.s3_account_level_public_access_blocks.s3control_client",
-                new=S3Control(audit_info),
-            ):
-                # Test Check
-                from prowler.providers.aws.services.s3.s3_account_level_public_access_blocks.s3_account_level_public_access_blocks import (
-                    s3_account_level_public_access_blocks,
-                )
+            # Test Check
+            from prowler.providers.aws.services.s3.s3_account_level_public_access_blocks.s3_account_level_public_access_blocks import (
+                s3_account_level_public_access_blocks,
+            )
 
-                check = s3_account_level_public_access_blocks()
-                result = check.execute()
+            check = s3_account_level_public_access_blocks()
+            result = check.execute()
 
-                assert len(result) == 1
-                assert result[0].status == "PASS"
-                assert (
-                    result[0].status_extended
-                    == f"Block Public Access is configured for the account {AWS_ACCOUNT_NUMBER}."
-                )
-                assert result[0].resource_id == AWS_ACCOUNT_NUMBER
-                assert result[0].resource_arn == AWS_ACCOUNT_ARN
-                assert result[0].region == AWS_REGION
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert (
+                result[0].status_extended
+                == f"Block Public Access is configured for the account {AWS_ACCOUNT_NUMBER}."
+            )
+            assert result[0].resource_id == AWS_ACCOUNT_NUMBER
+            assert result[0].resource_arn == AWS_ACCOUNT_ARN
+            assert result[0].region == AWS_REGION
 
     @mock_s3
     @mock_s3control
@@ -102,35 +104,37 @@ class Test_s3_account_level_public_access_blocks:
                 "RestrictPublicBuckets": False,
             },
         )
-        from prowler.providers.aws.services.s3.s3_service import S3Control
+        from prowler.providers.aws.services.s3.s3_service import S3, S3Control
 
         audit_info = self.set_mocked_audit_info()
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             new=audit_info,
+        ), mock.patch(
+            "prowler.providers.aws.services.s3.s3_account_level_public_access_blocks.s3_account_level_public_access_blocks.s3_client",
+            new=S3(audit_info),
+        ), mock.patch(
+            "prowler.providers.aws.services.s3.s3_account_level_public_access_blocks.s3_account_level_public_access_blocks.s3control_client",
+            new=S3Control(audit_info),
         ):
-            with mock.patch(
-                "prowler.providers.aws.services.s3.s3_account_level_public_access_blocks.s3_account_level_public_access_blocks.s3control_client",
-                new=S3Control(audit_info),
-            ):
-                # Test Check
-                from prowler.providers.aws.services.s3.s3_account_level_public_access_blocks.s3_account_level_public_access_blocks import (
-                    s3_account_level_public_access_blocks,
-                )
+            # Test Check
+            from prowler.providers.aws.services.s3.s3_account_level_public_access_blocks.s3_account_level_public_access_blocks import (
+                s3_account_level_public_access_blocks,
+            )
 
-                check = s3_account_level_public_access_blocks()
-                result = check.execute()
+            check = s3_account_level_public_access_blocks()
+            result = check.execute()
 
-                assert len(result) == 1
-                assert result[0].status == "FAIL"
-                assert (
-                    result[0].status_extended
-                    == f"Block Public Access is not configured for the account {AWS_ACCOUNT_NUMBER}."
-                )
-                assert result[0].resource_id == AWS_ACCOUNT_NUMBER
-                assert result[0].resource_arn == AWS_ACCOUNT_ARN
-                assert result[0].region == AWS_REGION
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert (
+                result[0].status_extended
+                == f"Block Public Access is not configured for the account {AWS_ACCOUNT_NUMBER}."
+            )
+            assert result[0].resource_id == AWS_ACCOUNT_NUMBER
+            assert result[0].resource_arn == AWS_ACCOUNT_ARN
+            assert result[0].region == AWS_REGION
 
     @mock_s3
     @mock_s3control
@@ -146,7 +150,7 @@ class Test_s3_account_level_public_access_blocks:
                 "RestrictPublicBuckets": False,
             },
         )
-        from prowler.providers.aws.services.s3.s3_service import S3Control
+        from prowler.providers.aws.services.s3.s3_service import S3, S3Control
 
         audit_info = self.set_mocked_audit_info()
         audit_info.ignore_unused_services = True
@@ -154,17 +158,19 @@ class Test_s3_account_level_public_access_blocks:
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             new=audit_info,
+        ), mock.patch(
+            "prowler.providers.aws.services.s3.s3_account_level_public_access_blocks.s3_account_level_public_access_blocks.s3_client",
+            new=S3(audit_info),
+        ), mock.patch(
+            "prowler.providers.aws.services.s3.s3_account_level_public_access_blocks.s3_account_level_public_access_blocks.s3control_client",
+            new=S3Control(audit_info),
         ):
-            with mock.patch(
-                "prowler.providers.aws.services.s3.s3_account_level_public_access_blocks.s3_account_level_public_access_blocks.s3control_client",
-                new=S3Control(audit_info),
-            ):
-                # Test Check
-                from prowler.providers.aws.services.s3.s3_account_level_public_access_blocks.s3_account_level_public_access_blocks import (
-                    s3_account_level_public_access_blocks,
-                )
+            # Test Check
+            from prowler.providers.aws.services.s3.s3_account_level_public_access_blocks.s3_account_level_public_access_blocks import (
+                s3_account_level_public_access_blocks,
+            )
 
-                check = s3_account_level_public_access_blocks()
-                result = check.execute()
+            check = s3_account_level_public_access_blocks()
+            result = check.execute()
 
-                assert len(result) == 0
+            assert len(result) == 0

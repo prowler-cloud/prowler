@@ -440,9 +440,11 @@ class Test_networkfirewall_in_all_vpc:
                 flow_log=False,
                 region=AWS_REGION,
                 arn="arn_test",
+                name="vpc_name",
                 subnets=[
                     VpcSubnet(
                         id="subnet-123456789",
+                        name="",
                         arn="arn_test",
                         default=False,
                         vpc_id=VPC_ID_UNPROTECTED,
