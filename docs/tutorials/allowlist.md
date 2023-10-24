@@ -82,7 +82,12 @@ You can use `-w`/`--allowlist-file` with the path of your allowlist yaml file, b
                 Tags:
                   - "environment=prod"   # Will ignore every resource except in account 123456789012 except the ones containing the string "test" and tag environment=prod
 
-
+## AWS Control Tower Allowlist
+When using Control Tower, guardrails prevent access to certain protected resources. Prowler has an allowlist that ensures that warnings instead of errors are reported for all resources created by AWS Control Tower when setting up a landing zone.
+You can execute Prowler with the AWS Control Tower allowlist using the following command:
+```sh
+prowler aws --allowlist prowler/config/aws_controltower_allowlist.yaml
+```
 ## Supported Allowlist Locations
 
 The allowlisting flag supports the following locations:
