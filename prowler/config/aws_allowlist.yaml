@@ -1,11 +1,9 @@
-# When using Control Tower, guardrails prevent access to certain protected resources.
-# The allowlist below ensures that warnings instead of errors are reported for the affected resources.
-# https://docs.aws.amazon.com/controltower/latest/userguide/how-control-tower-works.html
-###########################  CONTROL TOWER ALLOWLIST  ###########################
-### The following file includes all resources created by AWS Control Tower ###
 Allowlist:
   Accounts:
     "*":
+      ########################### AWS CONTROL TOWER ###########################
+      ### The following entries includes all resources created by AWS Control Tower when setting up a landing zone ###
+      # https://docs.aws.amazon.com/controltower/latest/userguide/how-control-tower-works.html #
       Checks:
         "cloudwatch_log_group_*":
           Regions:
