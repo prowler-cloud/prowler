@@ -29,6 +29,8 @@ If you are using Prowler in AWS regions that are not enabled by default you need
 
 > Since v3.11.0, Prowler uses a regional token in STS sessions so it can scan all AWS regions without needing the `--sts-endpoint-region` argument.
 
+> Make sure that you have enabled the AWS Region you want to scan in BOTH AWS Accounts (assumed role account and account from which you assume the role).
+
 ## Role MFA
 
 If your IAM Role has MFA configured you can use `--mfa` along with  `-R`/`--role <role_arn>` and Prowler will ask you to input the following values to get a new temporary session for the IAM Role provided:
