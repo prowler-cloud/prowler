@@ -4,7 +4,7 @@ from prowler.providers.aws.services.apigatewayv2.apigatewayv2_client import (
 )
 
 
-class apigatewayv2_authorizers_enabled(Check):
+class apigatewayv2_api_authorizers_enabled(Check):
     def execute(self):
         findings = []
         for api in apigatewayv2_client.apis:
