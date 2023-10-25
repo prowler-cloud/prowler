@@ -27,6 +27,8 @@ prowler aws -T/--session-duration <seconds> -I/--external-id <external_id> -R ar
 
 If you are using Prowler in AWS regions that are not enabled by default you need to use the argument `--sts-endpoint-region` to point the AWS STS API calls `assume-role` and `get-caller-identity` to the non-default region, e.g.: `prowler aws --sts-endpoint-region eu-south-2`.
 
+> Since v3.11.0, Prowler uses a regional token in STS sessions so it can scan all AWS regions without needing the `--sts-endpoint-region` argument.
+
 ## Role MFA
 
 If your IAM Role has MFA configured you can use `--mfa` along with  `-R`/`--role <role_arn>` and Prowler will ask you to input the following values to get a new temporary session for the IAM Role provided:
