@@ -12,9 +12,7 @@ from prowler.lib.outputs.models import (
     Check_Output_JSON_ASFF,
     generate_provider_output_csv,
     generate_provider_output_json,
-    unroll_tags,
 )
-from prowler.providers.aws.lib.allowlist.allowlist import is_allowlisted
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.azure.lib.audit_info.models import Azure_Audit_Info
 
@@ -56,17 +54,6 @@ def report(check_findings, output_options, audit_info):
 
         if check_findings:
             for finding in check_findings:
-                # Check if finding is allowlisted
-                if output_options.allowlist_file:
-                    if is_allowlisted(
-                        output_options.allowlist_file,
-                        audit_info.audited_account,
-                        finding.check_metadata.CheckID,
-                        finding.region,
-                        finding.resource_id,
-                        unroll_tags(finding.resource_tags),
-                    ):
-                        finding.status = "WARNING"
                 # Print findings by stdout
                 color = set_report_color(finding.status)
                 stdout_report(

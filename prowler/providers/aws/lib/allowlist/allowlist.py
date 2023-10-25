@@ -1,11 +1,13 @@
 import re
 import sys
+from typing import Any
 
 import yaml
 from boto3.dynamodb.conditions import Attr
 from schema import Optional, Schema
 
 from prowler.lib.logger import logger
+from prowler.lib.outputs.models import unroll_tags
 
 allowlist_schema = Schema(
     {
@@ -113,7 +115,29 @@ def parse_allowlist_file(audit_info, allowlist_file):
         sys.exit(1)
 
 
-def is_allowlisted(allowlist, audited_account, check, region, resource, tags):
+def allowlist_findings(
+    allowlist: dict,
+    audited_account: str,
+    check_findings: [Any],
+):
+    # Check if finding is allowlisted
+    if allowlist:
+        for finding in check_findings:
+            if is_allowlisted(
+                allowlist,
+                audited_account,
+                finding.check_metadata.CheckID,
+                finding.region,
+                finding.resource_id,
+                unroll_tags(finding.resource_tags),
+            ):
+                finding.status = "WARNING"
+    return check_findings
+
+
+def is_allowlisted(
+    allowlist: dict, audited_account: str, check: str, region: str, resource: str, tags
+):
     try:
         allowlisted_checks = {}
         # By default is not allowlisted
