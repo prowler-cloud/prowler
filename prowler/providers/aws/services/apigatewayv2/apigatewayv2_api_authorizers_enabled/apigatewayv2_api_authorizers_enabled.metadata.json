@@ -1,12 +1,12 @@
 {
   "Provider": "aws",
-  "CheckID": "apigatewayv2_authorizers_enabled",
+  "CheckID": "apigatewayv2_api_authorizers_enabled",
   "CheckTitle": "Checks if API Gateway V2 has configured authorizers.",
   "CheckType": [
     "Logging and Monitoring"
   ],
   "ServiceName": "apigateway",
-  "SubServiceName": "api",
+  "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
   "ResourceType": "AwsApiGatewayV2Api",

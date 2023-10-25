@@ -39,7 +39,7 @@ def mock_make_api_call(self, operation_name, kwarg):
 
 
 @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
-class Test_apigatewayv2_access_logging_enabled:
+class Test_apigatewayv2_api_access_logging_enabled:
     def set_mocked_audit_info(self):
         audit_info = AWS_Audit_Info(
             session_config=None,
@@ -83,15 +83,15 @@ class Test_apigatewayv2_access_logging_enabled:
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             new=current_audit_info,
         ), mock.patch(
-            "prowler.providers.aws.services.apigatewayv2.apigatewayv2_access_logging_enabled.apigatewayv2_access_logging_enabled.apigatewayv2_client",
+            "prowler.providers.aws.services.apigatewayv2.apigatewayv2_api_access_logging_enabled.apigatewayv2_api_access_logging_enabled.apigatewayv2_client",
             new=ApiGatewayV2(current_audit_info),
         ):
             # Test Check
-            from prowler.providers.aws.services.apigatewayv2.apigatewayv2_access_logging_enabled.apigatewayv2_access_logging_enabled import (
-                apigatewayv2_access_logging_enabled,
+            from prowler.providers.aws.services.apigatewayv2.apigatewayv2_api_access_logging_enabled.apigatewayv2_api_access_logging_enabled import (
+                apigatewayv2_api_access_logging_enabled,
             )
 
-            check = apigatewayv2_access_logging_enabled()
+            check = apigatewayv2_api_access_logging_enabled()
             result = check.execute()
 
             assert len(result) == 0
@@ -113,15 +113,15 @@ class Test_apigatewayv2_access_logging_enabled:
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             new=current_audit_info,
         ), mock.patch(
-            "prowler.providers.aws.services.apigatewayv2.apigatewayv2_access_logging_enabled.apigatewayv2_access_logging_enabled.apigatewayv2_client",
+            "prowler.providers.aws.services.apigatewayv2.apigatewayv2_api_access_logging_enabled.apigatewayv2_api_access_logging_enabled.apigatewayv2_client",
             new=ApiGatewayV2(current_audit_info),
         ):
             # Test Check
-            from prowler.providers.aws.services.apigatewayv2.apigatewayv2_access_logging_enabled.apigatewayv2_access_logging_enabled import (
-                apigatewayv2_access_logging_enabled,
+            from prowler.providers.aws.services.apigatewayv2.apigatewayv2_api_access_logging_enabled.apigatewayv2_api_access_logging_enabled import (
+                apigatewayv2_api_access_logging_enabled,
             )
 
-            check = apigatewayv2_access_logging_enabled()
+            check = apigatewayv2_api_access_logging_enabled()
             result = check.execute()
 
             assert result[0].status == "PASS"

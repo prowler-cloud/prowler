@@ -1,12 +1,12 @@
 {
   "Provider": "aws",
-  "CheckID": "apigatewayv2_access_logging_enabled",
+  "CheckID": "apigatewayv2_api_access_logging_enabled",
   "CheckTitle": "Ensure API Gateway V2 has Access Logging enabled.",
   "CheckType": [
     "IAM"
   ],
   "ServiceName": "apigateway",
-  "SubServiceName": "rest_api",
+  "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
   "ResourceType": "AwsApiGatewayV2Api",

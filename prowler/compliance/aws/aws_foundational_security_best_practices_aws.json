@@ -49,8 +49,8 @@
         "apigateway_restapi_logging_enabled",
         "apigateway_restapi_client_certificate_enabled",
         "apigateway_restapi_waf_acl_attached",
-        "apigatewayv2_authorizers_enabled",
-        "apigatewayv2_access_logging_enabled"
+        "apigatewayv2_api_authorizers_enabled",
+        "apigatewayv2_api_access_logging_enabled"
       ]
     },
     {

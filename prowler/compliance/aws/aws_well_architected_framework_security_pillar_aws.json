@@ -542,7 +542,7 @@
         "cloudtrail_s3_dataevents_read_enabled",
         "cloudtrail_s3_dataevents_write_enabled",
         "acm_certificates_transparency_logs_enabled",
-        "apigatewayv2_access_logging_enabled",
+        "apigatewayv2_api_access_logging_enabled",
         "awslambda_function_invoke_api_operations_cloudtrail_logging_enabled",
         "cloudfront_distributions_logging_enabled",
         "cloudtrail_cloudwatch_logging_enabled",
@@ -694,7 +694,7 @@
         "ec2_networkacl_allow_ingress_tcp_port_22",
         "sagemaker_notebook_instance_without_direct_internet_access_configured",
         "apigateway_restapi_authorizers_enabled",
-        "apigatewayv2_authorizers_enabled",
+        "apigatewayv2_api_authorizers_enabled",
         "s3_bucket_acl_prohibited",
         "s3_bucket_no_mfa_delete"
       ]
