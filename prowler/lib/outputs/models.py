@@ -67,7 +67,7 @@ def generate_provider_output_csv(
             data["resource_id"] = finding.resource_id
             data["resource_name"] = finding.resource_name
             data["project_id"] = finding.project_id
-            data["location"] = finding.location
+            data["location"] = finding.location.lower()
             data[
                 "finding_unique_id"
             ] = f"prowler-{provider}-{finding.check_metadata.CheckID}-{finding.project_id}-{finding.resource_id}"
@@ -380,7 +380,7 @@ def generate_provider_output_json(
 
         if provider == "gcp":
             finding_output.ProjectId = finding.project_id
-            finding_output.Location = finding.location
+            finding_output.Location = finding.location.lower()
             finding_output.ResourceId = finding.resource_id
             finding_output.ResourceName = finding.resource_name
             finding_output.FindingUniqueId = f"prowler-{provider}-{finding.check_metadata.CheckID}-{finding.project_id}-{finding.resource_id}"

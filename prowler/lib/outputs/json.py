@@ -188,7 +188,7 @@ def fill_json_ocsf(audit_info, finding, output_options) -> Check_Output_JSON_OCS
             finding_uid = f"prowler-{finding.check_metadata.Provider}-{finding.check_metadata.CheckID}-{finding.subscription}-{finding.resource_id}"
         elif finding.check_metadata.Provider == "gcp":
             project_uid = finding.project_id
-            resource_region = finding.location
+            resource_region = finding.location.lower()
             resource_name = finding.resource_name
             resource_uid = finding.resource_id
             finding_uid = f"prowler-{finding.check_metadata.Provider}-{finding.check_metadata.CheckID}-{finding.project_id}-{finding.resource_id}"

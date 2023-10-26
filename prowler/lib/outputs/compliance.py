@@ -136,7 +136,7 @@ def fill_compliance(output_options, finding, audit_info, file_descriptors):
                                     Provider=finding.check_metadata.Provider,
                                     Description=compliance.Description,
                                     ProjectId=finding.project_id,
-                                    Location=finding.location,
+                                    Location=finding.location.lower(),
                                     AssessmentDate=outputs_unix_timestamp(
                                         output_options.unix_timestamp, timestamp
                                     ),
