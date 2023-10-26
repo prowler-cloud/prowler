@@ -181,7 +181,7 @@ def fill_html(file_descriptor, finding, output_options):
                     <td>{finding.status}</td>
                     <td>{finding.check_metadata.Severity}</td>
                     <td>{finding.check_metadata.ServiceName}</td>
-                    <td>{finding.location if isinstance(finding, Check_Report_GCP) else finding.region if isinstance(finding, Check_Report_AWS) else ""}</td>
+                    <td>{finding.location.lower() if isinstance(finding, Check_Report_GCP) else finding.region if isinstance(finding, Check_Report_AWS) else ""}</td>
                     <td>{finding.check_metadata.CheckID.replace("_", "<wbr>_")}</td>
                     <td>{finding.check_metadata.CheckTitle}</td>
                     <td>{finding.resource_id.replace("<", "&lt;").replace(">", "&gt;").replace("_", "<wbr>_")}</td>
