@@ -1,3 +1,5 @@
+from colorama import Fore, Style
+
 from prowler.lib.check.check import (
     parse_checks_from_compliance_framework,
     parse_checks_from_file,
@@ -84,5 +86,8 @@ def load_checks_to_execute(
                 # Remove input check name and add the real one
                 checks_to_execute.remove(input_check)
                 checks_to_execute.add(check)
+                print(
+                    f"\nUsing alias {Fore.YELLOW}{input_check}{Style.RESET_ALL} for check {Fore.YELLOW}{check}{Style.RESET_ALL}...\n"
+                )
 
     return checks_to_execute
