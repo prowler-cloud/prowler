@@ -2,6 +2,9 @@
   "Provider": "aws",
   "CheckID": "apigatewayv2_api_authorizers_enabled",
   "CheckTitle": "Checks if API Gateway V2 has configured authorizers.",
+  "CheckAlias": [
+    "apigatewayv2_authorizers_enabled"
+  ],
   "CheckType": [
     "Logging and Monitoring"
   ],

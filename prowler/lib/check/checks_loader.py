@@ -77,4 +77,12 @@ def load_checks_to_execute(
                 check_name = check_info[0]
                 checks_to_execute.add(check_name)
 
+    # Verify if any input check is an alias of another check
+    for input_check in checks_to_execute:
+        for check, metadata in bulk_checks_metadata.items():
+            if input_check in metadata.CheckAlias:
+                # Remove input check name and add the real one
+                checks_to_execute.remove(input_check)
+                checks_to_execute.add(check)
+
     return checks_to_execute
