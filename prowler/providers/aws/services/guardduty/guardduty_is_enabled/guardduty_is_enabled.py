@@ -27,6 +27,14 @@ class guardduty_is_enabled(Check):
                     f"GuardDuty detector {detector.id} configured but suspended."
                 )
 
+            if report.status == "FAIL" and (
+                guardduty_client.audit_config.get(
+                    "allowlist_non_default_regions", False
+                )
+                and not detector.region == guardduty_client.region
+            ):
+                report.status = "WARNING"
+
             findings.append(report)
 
         return findings

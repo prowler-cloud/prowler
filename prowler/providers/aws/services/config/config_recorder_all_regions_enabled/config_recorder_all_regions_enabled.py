@@ -35,6 +35,12 @@ class config_recorder_all_regions_enabled(Check):
                     report.status_extended = (
                         f"AWS Config recorder {recorder.name} is disabled."
                     )
+            if report.status == "FAIL" and (
+                config_client.audit_config.get("allowlist_non_default_regions", False)
+                and not recorder.region == config_client.region
+            ):
+                report.status = "WARNING"
+
             findings.append(report)
 
         return findings
