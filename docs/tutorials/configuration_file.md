@@ -29,6 +29,10 @@ The following list includes all the AWS checks with configurable variables that 
 | `organizations_delegated_administrators`                      | `organizations_trusted_delegated_administrators` | List of Strings |
 | `ecr_repositories_scan_vulnerabilities_in_latest_image`       | `ecr_repository_vulnerability_minimum_severity`  | String          |
 | `trustedadvisor_premium_support_plan_subscribed`              | `verify_premium_support_plans`                   | Boolean         |
+| `config_recorder_all_regions_enabled`                         | `allowlist_non_default_regions`                  | Boolean         |
+| `drs_job_exist`                                               | `allowlist_non_default_regions`                  | Boolean         |
+| `guardduty_is_enabled`                                        | `allowlist_non_default_regions`                  | Boolean         |
+| `securityhub_enabled`                                         | `allowlist_non_default_regions`                  | Boolean         |
 
 ## Azure
 
@@ -44,6 +48,17 @@ The following list includes all the AWS checks with configurable variables that 
 ```yaml title="config.yaml"
 # AWS Configuration
 aws:
+
+  # AWS Global Configuration
+  # aws.allowlist_non_default_regions --> Allowlist Failed Findings in non-default regions for GuardDuty, SecurityHub, DRS and Config
+  allowlist_non_default_regions: False
+
+  # AWS IAM Configuration
+  # aws.iam_user_accesskey_unused --> CIS recommends 45 days
+  max_unused_access_keys_days: 45
+  # aws.iam_user_console_access_unused --> CIS recommends 45 days
+  max_console_access_days: 45
+
   # AWS EC2 Configuration
   # aws.ec2_elastic_ip_shodan
   shodan_api_key: null
@@ -104,6 +119,10 @@ aws:
   # HIGH
   # MEDIUM
   ecr_repository_vulnerability_minimum_severity: "MEDIUM"
+
+  # AWS Trusted Advisor
+  # trustedadvisor_premium_support_plan_subscribed
+  verify_premium_support_plans: True
 
 # Azure Configuration
 azure:
