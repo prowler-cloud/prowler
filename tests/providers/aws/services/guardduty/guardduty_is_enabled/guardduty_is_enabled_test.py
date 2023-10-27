@@ -123,3 +123,34 @@ class Test_guardduty_is_enabled:
             assert result[0].resource_id == detector_id
             assert result[0].resource_arn == detector_arn
             assert result[0].region == AWS_REGION
+
+    def test_guardduty_not_configured_allowlisted(self):
+        guardduty_client = mock.MagicMock
+        guardduty_client.audit_config = {"allowlist_non_default_regions": True}
+        guardduty_client.detectors = []
+        guardduty_client.detectors.append(
+            Detector(
+                id=detector_id,
+                arn=detector_arn,
+                region=AWS_REGION,
+            )
+        )
+        with mock.patch(
+            "prowler.providers.aws.services.guardduty.guardduty_service.GuardDuty",
+            guardduty_client,
+        ):
+            from prowler.providers.aws.services.guardduty.guardduty_is_enabled.guardduty_is_enabled import (
+                guardduty_is_enabled,
+            )
+
+            check = guardduty_is_enabled()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "WARNING"
+            assert (
+                result[0].status_extended
+                == f"GuardDuty detector {detector_id} not configured."
+            )
+            assert result[0].resource_id == detector_id
+            assert result[0].resource_arn == detector_arn
+            assert result[0].region == AWS_REGION
