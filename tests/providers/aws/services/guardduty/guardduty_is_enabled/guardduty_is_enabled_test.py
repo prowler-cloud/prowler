@@ -15,6 +15,7 @@ detector_arn = f"arn:aws:guardduty:{AWS_REGION}:{AWS_ACCOUNT_ID}:detector/{detec
 class Test_guardduty_is_enabled:
     def test_no_detectors(self):
         guardduty_client = mock.MagicMock
+        guardduty_client.region = AWS_REGION
         guardduty_client.detectors = []
         guardduty_client.detectors.append(
             Detector(
@@ -71,6 +72,7 @@ class Test_guardduty_is_enabled:
 
     def test_guardduty_configured_but_suspended(self):
         guardduty_client = mock.MagicMock
+        guardduty_client.region = AWS_REGION
         guardduty_client.detectors = []
         guardduty_client.detectors.append(
             Detector(
@@ -100,6 +102,7 @@ class Test_guardduty_is_enabled:
     def test_guardduty_not_configured(self):
         guardduty_client = mock.MagicMock
         guardduty_client.detectors = []
+        guardduty_client.region = AWS_REGION
         guardduty_client.detectors.append(
             Detector(
                 id=detector_id,
@@ -127,6 +130,7 @@ class Test_guardduty_is_enabled:
     def test_guardduty_not_configured_allowlisted(self):
         guardduty_client = mock.MagicMock
         guardduty_client.audit_config = {"allowlist_non_default_regions": True}
+        guardduty_client.region = "eu-south-2"
         guardduty_client.detectors = []
         guardduty_client.detectors.append(
             Detector(

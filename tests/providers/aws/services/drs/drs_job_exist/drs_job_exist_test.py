@@ -125,7 +125,7 @@ class Test_drs_job_exist:
         drs_client.audit_config = {"allowlist_non_default_regions": True}
         drs_client.audited_account = AWS_ACCOUNT_NUMBER
         drs_client.audited_account_arn = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
-        drs_client.region = AWS_REGION
+        drs_client.region = "eu-west-2"
         drs_client.drs_services = [
             DRSservice(
                 id="DRS",
