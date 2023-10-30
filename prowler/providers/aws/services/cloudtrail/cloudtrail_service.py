@@ -120,7 +120,7 @@ class Cloudtrail(AWSService):
             )
 
     def __get_insight_selectors__(self):
-        logger.info("Cloudtrail - Getting trail insihgt selectors...")
+        logger.info("Cloudtrail - Getting trail insight selectors...")
 
         try:
             for trail in self.trails:
