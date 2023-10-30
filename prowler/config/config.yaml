@@ -2,8 +2,19 @@
 aws:
 
   # AWS Global Configuration
-  # aws.allowlist_non_default_regions --> Allowlist Failed Findings in non-default regions for GuardDuty, SecurityHub, DRS and Config
+  # aws.allowlist_non_default_regions --> Set to True to allowlist failed findings in non-default regions for GuardDuty, SecurityHub, DRS and Config
   allowlist_non_default_regions: False
+  # If you want to allowlist/mute failed findings only in specific regions, create a file with the following syntax and run it with `prowler aws -w allowlist.yaml`:
+  # Allowlist:
+  #  Accounts:
+  #   "*":
+  #     Checks:
+  #       "*":
+  #         Regions:
+  #           - "ap-southeast-1"
+  #           - "ap-southeast-2"
+  #         Resources:
+  #           - "*"
 
   # AWS IAM Configuration
   # aws.iam_user_accesskey_unused --> CIS recommends 45 days
