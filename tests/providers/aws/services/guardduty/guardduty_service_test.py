@@ -121,6 +121,14 @@ class Test_GuardDuty_Service:
 
         assert len(guardduty.detectors) == 1
         assert guardduty.detectors[0].id == response["DetectorId"]
+        assert (
+            guardduty.detectors[0].arn
+            == f"arn:aws:guardduty:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:detector/{response['DetectorId']}"
+        )
+        assert guardduty.detectors[0].enabled_in_account
+        assert len(guardduty.detectors[0].findings) == 1
+        assert guardduty.detectors[0].member_accounts == ["123456789012"]
+        assert guardduty.detectors[0].administrator_account == "123456789013"
         assert guardduty.detectors[0].region == AWS_REGION
         assert guardduty.detectors[0].tags == [{"test": "test"}]
 
@@ -135,8 +143,16 @@ class Test_GuardDuty_Service:
 
         assert len(guardduty.detectors) == 1
         assert guardduty.detectors[0].id == response["DetectorId"]
+        assert (
+            guardduty.detectors[0].arn
+            == f"arn:aws:guardduty:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:detector/{response['DetectorId']}"
+        )
+        assert guardduty.detectors[0].enabled_in_account
+        assert len(guardduty.detectors[0].findings) == 1
+        assert guardduty.detectors[0].member_accounts == ["123456789012"]
+        assert guardduty.detectors[0].administrator_account == "123456789013"
         assert guardduty.detectors[0].region == AWS_REGION
-        assert guardduty.detectors[0].status
+        assert guardduty.detectors[0].tags == [{"test": "test"}]
 
     @mock_guardduty
     # Test GuardDuty session
@@ -149,9 +165,16 @@ class Test_GuardDuty_Service:
 
         assert len(guardduty.detectors) == 1
         assert guardduty.detectors[0].id == response["DetectorId"]
-        assert guardduty.detectors[0].region == AWS_REGION
-        assert guardduty.detectors[0].status
+        assert (
+            guardduty.detectors[0].arn
+            == f"arn:aws:guardduty:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:detector/{response['DetectorId']}"
+        )
+        assert guardduty.detectors[0].enabled_in_account
         assert len(guardduty.detectors[0].findings) == 1
+        assert guardduty.detectors[0].member_accounts == ["123456789012"]
+        assert guardduty.detectors[0].administrator_account == "123456789013"
+        assert guardduty.detectors[0].region == AWS_REGION
+        assert guardduty.detectors[0].tags == [{"test": "test"}]
 
     @mock_guardduty
     def test__list_members__(self):
@@ -163,9 +186,16 @@ class Test_GuardDuty_Service:
 
         assert len(guardduty.detectors) == 1
         assert guardduty.detectors[0].id == response["DetectorId"]
+        assert (
+            guardduty.detectors[0].arn
+            == f"arn:aws:guardduty:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:detector/{response['DetectorId']}"
+        )
+        assert guardduty.detectors[0].enabled_in_account
+        assert len(guardduty.detectors[0].findings) == 1
+        assert guardduty.detectors[0].member_accounts == ["123456789012"]
+        assert guardduty.detectors[0].administrator_account == "123456789013"
         assert guardduty.detectors[0].region == AWS_REGION
-        assert guardduty.detectors[0].status
-        assert len(guardduty.detectors[0].member_accounts) == 1
+        assert guardduty.detectors[0].tags == [{"test": "test"}]
 
     @mock_guardduty
     # Test GuardDuty session
@@ -178,6 +208,13 @@ class Test_GuardDuty_Service:
 
         assert len(guardduty.detectors) == 1
         assert guardduty.detectors[0].id == response["DetectorId"]
+        assert (
+            guardduty.detectors[0].arn
+            == f"arn:aws:guardduty:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:detector/{response['DetectorId']}"
+        )
+        assert guardduty.detectors[0].enabled_in_account
+        assert len(guardduty.detectors[0].findings) == 1
+        assert guardduty.detectors[0].member_accounts == ["123456789012"]
+        assert guardduty.detectors[0].administrator_account == "123456789013"
         assert guardduty.detectors[0].region == AWS_REGION
-        assert guardduty.detectors[0].status
-        assert guardduty.detectors[0].administrator_account == AWS_ACCOUNT_NUMBER_ADMIN
+        assert guardduty.detectors[0].tags == [{"test": "test"}]
