@@ -1,8 +1,10 @@
 import yaml
 from boto3 import resource, session
+from mock import MagicMock
 from moto import mock_dynamodb, mock_s3
 
 from prowler.providers.aws.lib.allowlist.allowlist import (
+    allowlist_findings,
     is_allowlisted,
     is_allowlisted_in_check,
     is_allowlisted_in_region,
@@ -158,7 +160,41 @@ class Test_Allowlist:
             )["Accounts"]["*"]["Checks"]["*"]["Tags"]
         )
 
-    # Allowlist checks
+    # Allowlist tests
+
+    def test_allowlist_findings(self):
+        # Allowlist example
+        allowlist = {
+            "Accounts": {
+                "*": {
+                    "Checks": {
+                        "check_test": {
+                            "Regions": [AWS_REGION, "eu-west-1"],
+                            "Resources": ["prowler", "^test", "prowler-pro"],
+                        }
+                    }
+                }
+            }
+        }
+
+        # Check Findings
+        check_findings = []
+        finding_1 = MagicMock
+        finding_1.check_metadata = MagicMock
+        finding_1.check_metadata.CheckID = "check_test"
+        finding_1.status = "FAIL"
+        finding_1.region = AWS_REGION
+        finding_1.resource_id = "prowler"
+        finding_1.resource_tags = []
+
+        check_findings.append(finding_1)
+
+        allowlisted_findings = allowlist_findings(
+            allowlist, AWS_ACCOUNT_NUMBER, check_findings
+        )
+        assert len(allowlisted_findings) == 1
+        assert allowlisted_findings[0].status == "WARNING"
+
     def test_is_allowlisted(self):
         # Allowlist example
         allowlist = {
