@@ -12,6 +12,7 @@ AWS_ACCOUNT_ARN = f"arn:aws:iam::{AWS_ACCOUNT_ID}:root"
 class Test_securityhub_enabled:
     def test_securityhub_hub_inactive(self):
         securityhub_client = mock.MagicMock
+        securityhub_client.region = AWS_REGION
         securityhub_client.securityhubs = [
             SecurityHubHub(
                 arn=AWS_ACCOUNT_ARN,
@@ -114,6 +115,7 @@ class Test_securityhub_enabled:
 
     def test_securityhub_hub_active_without_integrations_or_standards(self):
         securityhub_client = mock.MagicMock
+        securityhub_client.region = AWS_REGION
         securityhub_client.securityhubs = [
             SecurityHubHub(
                 arn="arn:aws:securityhub:us-east-1:0123456789012:hub/default",
@@ -147,3 +149,41 @@ class Test_securityhub_enabled:
                 == "arn:aws:securityhub:us-east-1:0123456789012:hub/default"
             )
             assert result[0].region == AWS_REGION
+
+    def test_securityhub_hub_active_without_integrations_or_standards_allowlisted(self):
+        securityhub_client = mock.MagicMock
+        securityhub_client.audit_config = {"allowlist_non_default_regions": True}
+        securityhub_client.region = AWS_REGION
+        securityhub_client.securityhubs = [
+            SecurityHubHub(
+                arn="arn:aws:securityhub:us-east-1:0123456789012:hub/default",
+                id="default",
+                status="ACTIVE",
+                standards="",
+                integrations="",
+                region="eu-south-2",
+            )
+        ]
+        with mock.patch(
+            "prowler.providers.aws.services.securityhub.securityhub_service.SecurityHub",
+            new=securityhub_client,
+        ):
+            # Test Check
+            from prowler.providers.aws.services.securityhub.securityhub_enabled.securityhub_enabled import (
+                securityhub_enabled,
+            )
+
+            check = securityhub_enabled()
+            result = check.execute()
+
+            assert result[0].status == "WARNING"
+            assert (
+                result[0].status_extended
+                == "Security Hub is enabled but without any standard or integration."
+            )
+            assert result[0].resource_id == "default"
+            assert (
+                result[0].resource_arn
+                == "arn:aws:securityhub:us-east-1:0123456789012:hub/default"
+            )
+            assert result[0].region == "eu-south-2"

@@ -1,5 +1,10 @@
 # AWS Configuration
 aws:
+
+  # AWS Global Configuration
+  # aws.allowlist_non_default_regions --> Allowlist Failed Findings in non-default regions for GuardDuty, SecurityHub, DRS and Config
+  allowlist_non_default_regions: False
+
   # AWS IAM Configuration
   # aws.iam_user_accesskey_unused --> CIS recommends 45 days
   max_unused_access_keys_days: 45

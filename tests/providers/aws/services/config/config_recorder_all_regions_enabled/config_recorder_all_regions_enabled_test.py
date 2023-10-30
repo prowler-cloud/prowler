@@ -39,6 +39,7 @@ class Test_config_recorder_all_regions_enabled:
                 completed_checks=0,
                 audit_progress=0,
             ),
+            audit_config={},
         )
 
         return audit_info
@@ -159,3 +160,54 @@ class Test_config_recorder_all_regions_enabled:
                     assert recorder.resource_id == "default"
                     assert recorder.resource_arn == AWS_ACCOUNT_ARN
                     assert recorder.region == AWS_REGION
+
+    @mock_config
+    def test_config_one_recorder_disabled_allowlisted(self):
+        # Create Config Mocked Resources
+        config_client = client("config", region_name=AWS_REGION)
+        # Create Config Recorder
+        config_client.put_configuration_recorder(
+            ConfigurationRecorder={"name": AWS_ACCOUNT_NUMBER, "roleARN": "somearn"}
+        )
+        from prowler.providers.aws.services.config.config_service import Config
+
+        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info.profile_region = "eu-south-2"
+        current_audit_info.audited_regions = ["eu-south-2", AWS_REGION]
+        current_audit_info.audit_config = {"allowlist_non_default_regions": True}
+
+        with mock.patch(
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=current_audit_info,
+        ), mock.patch(
+            "prowler.providers.aws.services.config.config_recorder_all_regions_enabled.config_recorder_all_regions_enabled.config_client",
+            new=Config(current_audit_info),
+        ):
+            # Test Check
+            from prowler.providers.aws.services.config.config_recorder_all_regions_enabled.config_recorder_all_regions_enabled import (
+                config_recorder_all_regions_enabled,
+            )
+
+            check = config_recorder_all_regions_enabled()
+            result = check.execute()
+            assert len(result) == 2
+            # Search for the recorder just created
+            for recorder in result:
+                if recorder.region == AWS_REGION:
+                    assert recorder.status == "WARNING"
+                    assert (
+                        recorder.status_extended
+                        == f"AWS Config recorder {AWS_ACCOUNT_NUMBER} is disabled."
+                    )
+                    assert recorder.resource_id == AWS_ACCOUNT_NUMBER
+                    assert recorder.resource_arn == AWS_ACCOUNT_ARN
+                    assert recorder.region == AWS_REGION
+                else:
+                    assert recorder.status == "FAIL"
+                    assert (
+                        recorder.status_extended
+                        == f"AWS Config recorder {AWS_ACCOUNT_NUMBER} is disabled."
+                    )
+                    assert recorder.resource_id == AWS_ACCOUNT_NUMBER
+                    assert recorder.resource_arn == AWS_ACCOUNT_ARN
+                    assert recorder.region == "eu-south-2"

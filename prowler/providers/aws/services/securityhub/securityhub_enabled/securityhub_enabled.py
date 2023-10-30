@@ -10,6 +10,8 @@ class securityhub_enabled(Check):
         for securityhub in securityhub_client.securityhubs:
             report = Check_Report_AWS(self.metadata())
             report.region = securityhub.region
+            report.resource_id = securityhub.id
+            report.resource_arn = securityhub.arn
             if securityhub.status == "ACTIVE":
                 report.status = "PASS"
                 if securityhub.standards:
@@ -22,8 +24,15 @@ class securityhub_enabled(Check):
             else:
                 report.status = "FAIL"
                 report.status_extended = "Security Hub is not enabled."
-            report.resource_id = securityhub.id
-            report.resource_arn = securityhub.arn
+
+            if report.status == "FAIL" and (
+                securityhub_client.audit_config.get(
+                    "allowlist_non_default_regions", False
+                )
+                and not securityhub.region == securityhub_client.region
+            ):
+                report.status = "WARNING"
+
             findings.append(report)
 
         return findings
