@@ -1,4 +1,3 @@
-from re import search
 from unittest import mock
 from uuid import uuid4
 
@@ -8,11 +7,11 @@ AWS_REGION = "us-east-1"
 AWS_ACCOUNT_ID = "123456789012"
 AWS_ACCOUNT_ARN = f"arn:aws:iam::{AWS_ACCOUNT_ID}:root"
 
-detector_id = str(uuid4())
-detector_arn = f"arn:aws:guardduty:{AWS_REGION}:{AWS_ACCOUNT_ID}:detector/{detector_id}"
+DETECTOR_ID = str(uuid4())
+DETECTOR_ARN = f"arn:aws:guardduty:{AWS_REGION}:{AWS_ACCOUNT_ID}:detector/{DETECTOR_ID}"
 
 
-class Test_guardduty_is_enabled:
+class Test_:
     def test_no_detectors(self):
         guardduty_client = mock.MagicMock
         guardduty_client.detectors = []
@@ -21,6 +20,7 @@ class Test_guardduty_is_enabled:
                 id=AWS_ACCOUNT_ID,
                 region=AWS_REGION,
                 arn=AWS_ACCOUNT_ARN,
+                enabled_in_account=False,
             )
         )
         guardduty_client.audited_account_arn = AWS_ACCOUNT_ARN
@@ -36,7 +36,7 @@ class Test_guardduty_is_enabled:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert search("is not enabled", result[0].status_extended)
+            assert result[0].status_extended == "GuardDuty is not enabled."
             assert result[0].resource_id == AWS_ACCOUNT_ID
             assert result[0].resource_arn == AWS_ACCOUNT_ARN
             assert result[0].region == AWS_REGION
@@ -46,9 +46,9 @@ class Test_guardduty_is_enabled:
         guardduty_client.detectors = []
         guardduty_client.detectors.append(
             Detector(
-                id=detector_id,
+                id=DETECTOR_ID,
                 region=AWS_REGION,
-                arn=detector_arn,
+                arn=DETECTOR_ARN,
                 status=True,
             )
         )
@@ -64,9 +64,12 @@ class Test_guardduty_is_enabled:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
-            assert search("enabled", result[0].status_extended)
-            assert result[0].resource_id == detector_id
-            assert result[0].resource_arn == detector_arn
+            assert (
+                result[0].status_extended
+                == f"GuardDuty detector {DETECTOR_ID} enabled."
+            )
+            assert result[0].resource_id == DETECTOR_ID
+            assert result[0].resource_arn == DETECTOR_ARN
             assert result[0].region == AWS_REGION
 
     def test_guardduty_configured_but_suspended(self):
@@ -74,8 +77,8 @@ class Test_guardduty_is_enabled:
         guardduty_client.detectors = []
         guardduty_client.detectors.append(
             Detector(
-                id=detector_id,
-                arn=detector_arn,
+                id=DETECTOR_ID,
+                arn=DETECTOR_ARN,
                 region=AWS_REGION,
                 status=False,
             )
@@ -92,9 +95,12 @@ class Test_guardduty_is_enabled:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert search("configured but suspended", result[0].status_extended)
-            assert result[0].resource_id == detector_id
-            assert result[0].resource_arn == detector_arn
+            assert (
+                result[0].status_extended
+                == f"GuardDuty detector {DETECTOR_ID} configured but suspended."
+            )
+            assert result[0].resource_id == DETECTOR_ID
+            assert result[0].resource_arn == DETECTOR_ARN
             assert result[0].region == AWS_REGION
 
     def test_guardduty_not_configured(self):
@@ -102,8 +108,8 @@ class Test_guardduty_is_enabled:
         guardduty_client.detectors = []
         guardduty_client.detectors.append(
             Detector(
-                id=detector_id,
-                arn=detector_arn,
+                id=DETECTOR_ID,
+                arn=DETECTOR_ARN,
                 region=AWS_REGION,
             )
         )
@@ -119,7 +125,10 @@ class Test_guardduty_is_enabled:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert search("not configured", result[0].status_extended)
-            assert result[0].resource_id == detector_id
-            assert result[0].resource_arn == detector_arn
+            assert (
+                result[0].status_extended
+                == f"GuardDuty detector {DETECTOR_ID} not configured."
+            )
+            assert result[0].resource_id == DETECTOR_ID
+            assert result[0].resource_arn == DETECTOR_ARN
             assert result[0].region == AWS_REGION

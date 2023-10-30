@@ -43,6 +43,7 @@ class GuardDuty(AWSService):
                         id=self.audited_account,
                         arn=self.audited_account_arn,
                         region=regional_client.region,
+                        enabled_in_account=False,
                     )
                 )
         except Exception as error:
@@ -54,15 +55,21 @@ class GuardDuty(AWSService):
         logger.info("GuardDuty - getting detector info...")
         try:
             for detector in self.detectors:
-                if detector.id:
-                    regional_client = self.regional_clients[detector.region]
-                    detector_info = regional_client.get_detector(DetectorId=detector.id)
-                    if (
-                        "Status" in detector_info
-                        and detector_info["Status"] == "ENABLED"
-                    ):
-                        detector.status = True
-
+                try:
+                    if detector.id and detector.enabled_in_account:
+                        regional_client = self.regional_clients[detector.region]
+                        detector_info = regional_client.get_detector(
+                            DetectorId=detector.id
+                        )
+                        if (
+                            "Status" in detector_info
+                            and detector_info["Status"] == "ENABLED"
+                        ):
+                            detector.status = True
+                except Exception as error:
+                    logger.error(
+                        f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
+                    )
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
@@ -72,7 +79,7 @@ class GuardDuty(AWSService):
         logger.info("GuardDuty - getting administrator account...")
         try:
             for detector in self.detectors:
-                if detector.id:
+                if detector.id and detector.enabled_in_account:
                     try:
                         regional_client = self.regional_clients[detector.region]
                         detector_administrator = (
@@ -102,7 +109,7 @@ class GuardDuty(AWSService):
         logger.info("GuardDuty - listing members...")
         try:
             for detector in self.detectors:
-                if detector.id:
+                if detector.id and detector.enabled_in_account:
                     try:
                         regional_client = self.regional_clients[detector.region]
                         list_members_paginator = regional_client.get_paginator(
@@ -127,7 +134,7 @@ class GuardDuty(AWSService):
         logger.info("GuardDuty - listing findings...")
         try:
             for detector in self.detectors:
-                if detector.id:
+                if detector.id and detector.enabled_in_account:
                     regional_client = self.regional_clients[detector.region]
                     list_findings_paginator = regional_client.get_paginator(
                         "list_findings"
@@ -161,7 +168,7 @@ class GuardDuty(AWSService):
         logger.info("Guardduty - List Tags...")
         try:
             for detector in self.detectors:
-                if detector.arn:
+                if detector.arn and detector.enabled_in_account:
                     regional_client = self.regional_clients[detector.region]
                     response = regional_client.list_tags_for_resource(
                         ResourceArn=detector.arn
@@ -177,6 +184,7 @@ class Detector(BaseModel):
     id: str
     arn: str
     region: str
+    enabled_in_account: bool = True
     status: bool = None
     findings: list = []
     member_accounts: list = []
