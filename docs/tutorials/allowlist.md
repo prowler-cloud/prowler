@@ -82,6 +82,20 @@ You can use `-w`/`--allowlist-file` with the path of your allowlist yaml file, b
                 Tags:
                   - "environment=prod"   # Will ignore every resource except in account 123456789012 except the ones containing the string "test" and tag environment=prod
 
+## Allowlist specific regions
+If you want to allowlist/mute failed findings only in specific regions, create a file with the following syntax and run it with `prowler aws -w allowlist.yaml`:
+
+    Allowlist:
+      Accounts:
+      "*":
+        Checks:
+          "*":
+            Regions:
+              - "ap-southeast-1"
+              - "ap-southeast-2"
+            Resources:
+              - "*"
+
 ## Default AWS Allowlist
 Prowler provides you a Default AWS Allowlist with the AWS Resources that should be allowlisted such as all resources created by AWS Control Tower when setting up a landing zone.
 You can execute Prowler with this allowlist using the following command:
