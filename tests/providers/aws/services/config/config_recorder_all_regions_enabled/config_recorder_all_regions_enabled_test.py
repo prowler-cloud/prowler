@@ -167,7 +167,7 @@ class Test_config_recorder_all_regions_enabled:
         config_client = client("config", region_name=AWS_REGION)
         # Create Config Recorder
         config_client.put_configuration_recorder(
-            ConfigurationRecorder={"name": "default", "roleARN": "somearn"}
+            ConfigurationRecorder={"name": AWS_ACCOUNT_NUMBER, "roleARN": "somearn"}
         )
         from prowler.providers.aws.services.config.config_service import Config
 
@@ -197,8 +197,17 @@ class Test_config_recorder_all_regions_enabled:
                     assert recorder.status == "WARNING"
                     assert (
                         recorder.status_extended
-                        == "AWS Config recorder default is disabled."
+                        == f"AWS Config recorder {AWS_ACCOUNT_NUMBER} is disabled."
                     )
-                    assert recorder.resource_id == "default"
+                    assert recorder.resource_id == AWS_ACCOUNT_NUMBER
                     assert recorder.resource_arn == AWS_ACCOUNT_ARN
                     assert recorder.region == AWS_REGION
+                else:
+                    assert recorder.status == "FAIL"
+                    assert (
+                        recorder.status_extended
+                        == f"AWS Config recorder {AWS_ACCOUNT_NUMBER} is disabled."
+                    )
+                    assert recorder.resource_id == AWS_ACCOUNT_NUMBER
+                    assert recorder.resource_arn == AWS_ACCOUNT_ARN
+                    assert recorder.region == "eu-south-2"
