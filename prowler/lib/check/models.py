@@ -2,7 +2,6 @@ import os
 import sys
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Optional
 
 from pydantic import BaseModel, ValidationError
 
@@ -39,7 +38,7 @@ class Check_Metadata_Model(BaseModel):
     CheckID: str
     CheckTitle: str
     CheckType: list[str]
-    CheckAlias: Optional[list[str]] = []
+    CheckAlias: list[str] = []
     ServiceName: str
     SubServiceName: str
     ResourceIdTemplate: str
