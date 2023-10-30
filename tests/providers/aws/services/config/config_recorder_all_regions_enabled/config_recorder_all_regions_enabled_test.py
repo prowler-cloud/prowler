@@ -39,6 +39,7 @@ class Test_config_recorder_all_regions_enabled:
                 completed_checks=0,
                 audit_progress=0,
             ),
+            audit_config={},
         )
 
         return audit_info
@@ -171,7 +172,8 @@ class Test_config_recorder_all_regions_enabled:
         from prowler.providers.aws.services.config.config_service import Config
 
         current_audit_info = self.set_mocked_audit_info()
-        current_audit_info.audited_regions = [AWS_REGION]
+        current_audit_info.profile_region = "eu-south-2"
+        current_audit_info.audited_regions = ["eu-south-2", AWS_REGION]
         current_audit_info.audit_config = {"allowlist_non_default_regions": True}
 
         with mock.patch(
@@ -188,10 +190,10 @@ class Test_config_recorder_all_regions_enabled:
 
             check = config_recorder_all_regions_enabled()
             result = check.execute()
-            assert len(result) == 1
+            assert len(result) == 2
             # Search for the recorder just created
             for recorder in result:
-                if recorder.resource_id:
+                if recorder.region == AWS_REGION:
                     assert recorder.status == "WARNING"
                     assert (
                         recorder.status_extended
