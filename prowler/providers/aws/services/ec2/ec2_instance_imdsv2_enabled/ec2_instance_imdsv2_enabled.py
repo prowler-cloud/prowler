@@ -24,6 +24,13 @@ class ec2_instance_imdsv2_enabled(Check):
                     report.status_extended = (
                         f"EC2 Instance {instance.id} has IMDSv2 enabled and required."
                     )
+                elif (
+                    instance.http_endpoint == "disabled"
+                ):
+                    report.status = "PASS"
+                    report.status_extended = (
+                        f"EC2 Instance {instance.id} has metadata service disabled."
+                    )
 
                 findings.append(report)
 
