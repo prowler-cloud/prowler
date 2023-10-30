@@ -102,8 +102,8 @@ class Test_guardduty_is_enabled:
         guardduty_client.detectors = []
         guardduty_client.detectors.append(
             Detector(
-                id=detector_id,
-                arn=detector_arn,
+                id=DETECTOR_ID,
+                arn=DETECTOR_ARN,
                 region=AWS_REGION,
             )
         )
@@ -118,8 +118,11 @@ class Test_guardduty_is_enabled:
             check = guardduty_is_enabled()
             result = check.execute()
             assert len(result) == 1
-            assert result[0].status == "FAIL"
-            assert search("not configured", result[0].status_extended)
-            assert result[0].resource_id == detector_id
-            assert result[0].resource_arn == detector_arn
+            assert result[0].status == "WARNING"
+            assert (
+                result[0].status_extended
+                == f"GuardDuty detector {DETECTOR_ID} not configured."
+            )
+            assert result[0].resource_id == DETECTOR_ID
+            assert result[0].resource_arn == DETECTOR_ARN
             assert result[0].region == AWS_REGION
