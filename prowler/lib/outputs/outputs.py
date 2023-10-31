@@ -33,26 +33,26 @@ def stdout_report(finding, color, verbose, is_quiet):
 
 def report(check_findings, output_options, audit_info):
     try:
-        # TO-DO Generic Function
-        if isinstance(audit_info, AWS_Audit_Info):
-            check_findings.sort(key=lambda x: x.region)
-
-        if isinstance(audit_info, Azure_Audit_Info):
-            check_findings.sort(key=lambda x: x.subscription)
-
-        # Generate the required output files
         file_descriptors = {}
-        if output_options.output_modes:
-            # if isinstance(audit_info, AWS_Audit_Info):
-            # We have to create the required output files
-            file_descriptors = fill_file_descriptors(
-                output_options.output_modes,
-                output_options.output_directory,
-                output_options.output_filename,
-                audit_info,
-            )
-
         if check_findings:
+            # TO-DO Generic Function
+            if isinstance(audit_info, AWS_Audit_Info):
+                check_findings.sort(key=lambda x: x.region)
+
+            if isinstance(audit_info, Azure_Audit_Info):
+                check_findings.sort(key=lambda x: x.subscription)
+
+            # Generate the required output files
+            if output_options.output_modes:
+                # if isinstance(audit_info, AWS_Audit_Info):
+                # We have to create the required output files
+                file_descriptors = fill_file_descriptors(
+                    output_options.output_modes,
+                    output_options.output_directory,
+                    output_options.output_filename,
+                    audit_info,
+                )
+
             for finding in check_findings:
                 # Print findings by stdout
                 color = set_report_color(finding.status)
