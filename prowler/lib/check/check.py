@@ -552,9 +552,12 @@ def execute(
     )
 
     # Allowlist findings
-    check_findings = allowlist_findings(
-        audit_output_options.allowlist_file, audit_info.audited_account, check_findings
-    )
+    if audit_output_options.allowlist_file:
+        check_findings = allowlist_findings(
+            audit_output_options.allowlist_file,
+            audit_info.audited_account,
+            check_findings,
+        )
 
     # Report the check's findings
     report(check_findings, audit_output_options, audit_info)
