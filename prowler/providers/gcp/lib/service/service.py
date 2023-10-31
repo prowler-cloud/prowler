@@ -2,6 +2,7 @@ import threading
 
 import google_auth_httplib2
 import httplib2
+from colorama import Fore, Style
 from googleapiclient import discovery
 
 from prowler.lib.logger import logger
@@ -57,8 +58,8 @@ class GCPService:
                 if response.get("state") != "DISABLED":
                     project_ids.append(project_id)
                 else:
-                    logger.error(
-                        f"{self.service} API has not been used in project {project_id} before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/dataproc.googleapis.com/overview?project={project_id} then retry."
+                    print(
+                        f"\n{Fore.YELLOW}{self.service} API {Style.RESET_ALL}has not been used in project {project_id} before or it is disabled.\nEnable it by visiting https://console.developers.google.com/apis/api/dataproc.googleapis.com/overview?project={project_id} then retry."
                     )
             except Exception as error:
                 logger.error(
