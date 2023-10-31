@@ -1,3 +1,5 @@
+from re import compile
+
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.vpc.vpc_client import vpc_client
 
@@ -21,7 +23,14 @@ class vpc_endpoint_services_allowed_principals_trust_boundaries(Check):
                 findings.append(report)
             else:
                 for principal in service.allowed_principals:
-                    account_id = principal.split(":")[4]
+                    # Account ID can be an ARN or just a 12-digit string
+                    pattern = compile(r"^[0-9]{12}$")
+                    match = pattern.match(principal)
+                    if not match:
+                        account_id = principal.split(":")[4]
+                    else:
+                        account_id = match.string
+
                     report = Check_Report_AWS(self.metadata())
                     report.region = service.region
                     if (
