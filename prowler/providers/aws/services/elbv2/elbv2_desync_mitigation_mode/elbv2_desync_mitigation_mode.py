@@ -14,12 +14,12 @@ class elbv2_desync_mitigation_mode(Check):
                 report.resource_tags = lb.tags
                 report.status = "PASS"
                 report.status_extended = f"ELBv2 ALB {lb.name} is configured with correct desync mitigation mode."
-                if lb.desync_mitigation_mode == "monitor":
+                if lb.desync_mitigation_mode != "strictest":
                     if lb.drop_invalid_header_fields == "false":
                         report.status = "FAIL"
-                        report.status_extended = f"ELBv2 ALB {lb.name} does not have desync mitigation mode set as defensive or strictest and is not dropping invalid header fields."
+                        report.status_extended = f"ELBv2 ALB {lb.name} does not have desync mitigation mode set as strictest and is not dropping invalid header fields."
                     elif lb.drop_invalid_header_fields == "true":
-                        report.status_extended = f"ELBv2 ALB {lb.name} does not have desync mitigation mode set as defensive or strictest but is dropping invalid header fields."
+                        report.status_extended = f"ELBv2 ALB {lb.name} does not have desync mitigation mode set as strictest but is dropping invalid header fields."
                 findings.append(report)
 
         return findings
