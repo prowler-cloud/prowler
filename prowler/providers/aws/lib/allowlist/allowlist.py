@@ -121,17 +121,16 @@ def allowlist_findings(
     check_findings: [Any],
 ):
     # Check if finding is allowlisted
-    if allowlist:
-        for finding in check_findings:
-            if is_allowlisted(
-                allowlist,
-                audited_account,
-                finding.check_metadata.CheckID,
-                finding.region,
-                finding.resource_id,
-                unroll_tags(finding.resource_tags),
-            ):
-                finding.status = "WARNING"
+    for finding in check_findings:
+        if is_allowlisted(
+            allowlist,
+            audited_account,
+            finding.check_metadata.CheckID,
+            finding.region,
+            finding.resource_id,
+            unroll_tags(finding.resource_tags),
+        ):
+            finding.status = "WARNING"
     return check_findings
 
 
