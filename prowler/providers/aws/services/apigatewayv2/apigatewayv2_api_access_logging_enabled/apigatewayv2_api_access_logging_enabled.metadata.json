@@ -2,7 +2,7 @@
   "Provider": "aws",
   "CheckID": "apigatewayv2_api_access_logging_enabled",
   "CheckTitle": "Ensure API Gateway V2 has Access Logging enabled.",
-  "CheckAlias": [
+  "CheckAliases": [
     "apigatewayv2_access_logging_enabled"
   ],
   "CheckType": [

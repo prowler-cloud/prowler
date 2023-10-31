@@ -2,7 +2,7 @@
   "Provider": "aws",
   "CheckID": "apigateway_restapi_waf_acl_attached",
   "CheckTitle": "Check if API Gateway Stage has a WAF ACL attached.",
-  "CheckAlias": [
+  "CheckAliases": [
     "apigateway_waf_acl_attached"
   ],
   "CheckType": [

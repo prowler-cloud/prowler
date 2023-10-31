@@ -82,7 +82,7 @@ def load_checks_to_execute(
     # Get Check Aliases mapping
     check_aliases = {}
     for check, metadata in bulk_checks_metadata.items():
-        for alias in metadata.CheckAlias:
+        for alias in metadata.CheckAliases:
             check_aliases[alias] = check
 
     # Verify if any input check is an alias of another check

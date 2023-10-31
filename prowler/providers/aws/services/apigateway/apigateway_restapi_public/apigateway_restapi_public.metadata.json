@@ -2,7 +2,7 @@
   "Provider": "aws",
   "CheckID": "apigateway_restapi_public",
   "CheckTitle": "Check if API Gateway endpoint is public or private.",
-  "CheckAlias": [
+  "CheckAliases": [
     "apigateway_public"
   ],
   "CheckType": [

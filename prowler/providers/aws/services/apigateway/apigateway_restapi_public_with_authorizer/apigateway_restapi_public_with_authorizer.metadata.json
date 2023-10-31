@@ -2,7 +2,7 @@
   "Provider": "aws",
   "CheckID": "apigateway_restapi_public_with_authorizer",
   "CheckTitle": "Check if API Gateway public endpoint has an authorizer configured.",
-  "CheckAlias": [
+  "CheckAliases": [
     "apigateway_public_with_authorizer"
   ],
   "CheckType": [
