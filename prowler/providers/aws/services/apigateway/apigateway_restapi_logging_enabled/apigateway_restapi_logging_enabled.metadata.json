@@ -2,6 +2,9 @@
   "Provider": "aws",
   "CheckID": "apigateway_restapi_logging_enabled",
   "CheckTitle": "Check if API Gateway Stage has logging enabled.",
+  "CheckAliases": [
+    "apigateway_logging_enabled"
+  ],
   "CheckType": [
     "Logging and Monitoring"
   ],

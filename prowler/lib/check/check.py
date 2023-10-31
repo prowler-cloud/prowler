@@ -289,10 +289,9 @@ def print_checks(
                 f"[{bulk_checks_metadata[check].CheckID}] {bulk_checks_metadata[check].CheckTitle} - {Fore.MAGENTA}{bulk_checks_metadata[check].ServiceName} {Fore.YELLOW}[{bulk_checks_metadata[check].Severity}]{Style.RESET_ALL}"
             )
         except KeyError as error:
-            logger.critical(
+            logger.error(
                 f"Check {error} was not found for the {provider.upper()} provider"
             )
-            sys.exit(1)
 
     checks_num = len(check_list)
     plural_string = (
@@ -365,7 +364,7 @@ def list_compliance_modules():
     """
     list_compliance_modules returns the available compliance frameworks and returns their path
     """
-    # This module path requires the full path includig "prowler."
+    # This module path requires the full path including "prowler."
     module_path = "prowler.compliance"
     return walk_packages(
         importlib.import_module(module_path).__path__,
@@ -375,7 +374,7 @@ def list_compliance_modules():
 
 # List all available modules in the selected provider and service
 def list_modules(provider: str, service: str):
-    # This module path requires the full path includig "prowler."
+    # This module path requires the full path including "prowler."
     module_path = f"prowler.providers.{provider}.services"
     if service:
         module_path += f".{service}"
@@ -467,10 +466,9 @@ def execute_checks(
 
             # If check does not exists in the provider or is from another provider
             except ModuleNotFoundError:
-                logger.critical(
+                logger.error(
                     f"Check '{check_name}' was not found for the {provider.upper()} provider"
                 )
-                sys.exit(1)
             except Exception as error:
                 logger.error(
                     f"{check_name} - {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -510,19 +508,17 @@ def execute_checks(
                         checks_executed,
                     )
                     all_findings.extend(check_findings)
-                    bar()
 
                 # If check does not exists in the provider or is from another provider
                 except ModuleNotFoundError:
-                    logger.critical(
+                    logger.error(
                         f"Check '{check_name}' was not found for the {provider.upper()} provider"
                     )
-                    bar.title = f"-> {Fore.RED}Scan was aborted!{Style.RESET_ALL}"
-                    sys.exit(1)
                 except Exception as error:
                     logger.error(
                         f"{check_name} - {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
+                bar()
             bar.title = f"-> {Fore.GREEN}Scan completed!{Style.RESET_ALL}"
     return all_findings
 

@@ -2,6 +2,9 @@
   "Provider": "aws",
   "CheckID": "apigateway_restapi_authorizers_enabled",
   "CheckTitle": "Check if API Gateway has configured authorizers.",
+  "CheckAliases": [
+    "apigateway_authorizers_enabled"
+  ],
   "CheckType": [
     "IAM"
   ],

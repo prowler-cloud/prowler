@@ -1,3 +1,5 @@
+from colorama import Fore, Style
+
 from prowler.lib.check.check import (
     parse_checks_from_compliance_framework,
     parse_checks_from_file,
@@ -76,5 +78,24 @@ def load_checks_to_execute(
                 # Format: "providers.{provider}.services.{service}.{check_name}.{check_name}"
                 check_name = check_info[0]
                 checks_to_execute.add(check_name)
+
+    # Get Check Aliases mapping
+    check_aliases = {}
+    for check, metadata in bulk_checks_metadata.items():
+        for alias in metadata.CheckAliases:
+            check_aliases[alias] = check
+
+    # Verify if any input check is an alias of another check
+    for input_check in checks_to_execute:
+        if (
+            input_check in check_aliases
+            and check_aliases[input_check] not in checks_to_execute
+        ):
+            # Remove input check name and add the real one
+            checks_to_execute.remove(input_check)
+            checks_to_execute.add(check_aliases[input_check])
+            print(
+                f"\nUsing alias {Fore.YELLOW}{input_check}{Style.RESET_ALL} for check {Fore.YELLOW}{check_aliases[input_check]}{Style.RESET_ALL}...\n"
+            )
 
     return checks_to_execute
