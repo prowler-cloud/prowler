@@ -47,16 +47,6 @@ You can use `-w`/`--allowlist-file` with the path of your allowlist yaml file, b
                 - "ci-logs"           # Will ignore bucket "ci-logs" AND ALSO bucket "ci-logs-replica" in specified check and regions
                 - "logs"              # Will ignore EVERY BUCKET containing the string "logs" in specified check and regions
                 - ".+-logs"           # Will ignore all buckets containing the terms ci-logs, qa-logs, etc. in specified check and regions
-            "*":
-              Regions:
-                - "*"
-              Resources:
-                - "*"
-              Tags:
-                - "environment=dev"    # Will ignore every resource containing the tag 'environment=dev' in every account and region
-
-        "*":
-          Checks:
             "ecs_task_definitions_no_environment_secrets":
               Regions:
                 - "*"
@@ -68,6 +58,13 @@ You can use `-w`/`--allowlist-file` with the path of your allowlist yaml file, b
                 Regions:
                   - "eu-west-1"
                   - "eu-south-2"        # Will ignore every resource in check ecs_task_definitions_no_environment_secrets except the ones in account 0123456789012 located in eu-south-2 or eu-west-1
+            "*":
+              Regions:
+                - "*"
+              Resources:
+                - "*"
+              Tags:
+                - "environment=dev"    # Will ignore every resource containing the tag 'environment=dev' in every account and region
 
         "123456789012":
           Checks:
