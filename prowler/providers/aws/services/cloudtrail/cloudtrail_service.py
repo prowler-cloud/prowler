@@ -53,7 +53,7 @@ class Cloudtrail(AWSService):
                             kms_key=kms_key_id,
                             log_group_arn=log_group_arn,
                             data_events=[],
-                            has_insight_selectors=trail["HasInsightSelectors"],
+                            has_insight_selectors=trail.get("HasInsightSelectors"),
                         )
                     )
             if trails_count == 0:
