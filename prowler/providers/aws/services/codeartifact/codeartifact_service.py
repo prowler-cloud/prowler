@@ -148,8 +148,6 @@ class CodeArtifact(AWSService):
                             )
                     # Save all the packages information
                     self.repositories[repository].packages = packages
-                    if self.repositories[repository].name == "cfn":
-                        print(packages)
 
             except ClientError as error:
                 if error.response["Error"]["Code"] == "ResourceNotFoundException":
