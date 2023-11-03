@@ -34,6 +34,7 @@ from prowler.lib.outputs.json import close_json
 from prowler.lib.outputs.outputs import extract_findings_statistics
 from prowler.lib.outputs.slack import send_slack_message
 from prowler.lib.outputs.summary_table import display_summary_table
+from prowler.lib.utils.utils import clean_local_output_directories
 from prowler.providers.aws.aws_provider import get_available_aws_service_regions
 from prowler.providers.aws.lib.s3.s3 import send_to_s3_bucket
 from prowler.providers.aws.lib.security_hub.security_hub import (
@@ -300,6 +301,9 @@ def prowler():
     # If custom checks were passed, remove the modules
     if checks_folder:
         remove_custom_checks_module(checks_folder, provider)
+
+    # clean local directories
+    clean_local_output_directories(args)
 
     # If there are failed findings exit code 3, except if -z is input
     if not args.ignore_exit_code_3 and stats["total_fail"] > 0:
