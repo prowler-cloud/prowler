@@ -44,9 +44,9 @@ class S3(AWSService):
             list_buckets = self.client.list_buckets()
             for bucket in list_buckets["Buckets"]:
                 try:
-                    bucket_region = self.client.get_bucket_location(Bucket=bucket["Name"])[
-                        "LocationConstraint"
-                    ]
+                    bucket_region = self.client.get_bucket_location(
+                        Bucket=bucket["Name"]
+                    )["LocationConstraint"]
                     if bucket_region == "EU":  # If EU, bucket_region is eu-west-1
                         bucket_region = "eu-west-1"
                     if not bucket_region:  # If None, bucket_region is us-east-1
@@ -62,12 +62,16 @@ class S3(AWSService):
                             if bucket_region in audit_info.audited_regions:
                                 buckets.append(
                                     Bucket(
-                                        name=bucket["Name"], arn=arn, region=bucket_region
+                                        name=bucket["Name"],
+                                        arn=arn,
+                                        region=bucket_region,
                                     )
                                 )
                         else:
                             buckets.append(
-                                Bucket(name=bucket["Name"], arn=arn, region=bucket_region)
+                                Bucket(
+                                    name=bucket["Name"], arn=arn, region=bucket_region
+                                )
                             )
                 except ClientError as error:
                     if error.response["Error"]["Code"] == "NoSuchBucket":
