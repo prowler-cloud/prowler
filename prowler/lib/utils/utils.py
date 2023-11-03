@@ -7,13 +7,11 @@ from hashlib import sha512
 from io import TextIOWrapper
 from ipaddress import ip_address
 from os.path import exists
-from shutil import rmtree
 from time import mktime
 
 from detect_secrets import SecretsCollection
 from detect_secrets.settings import default_settings
 
-from prowler.config.config import default_output_directory
 from prowler.lib.logger import logger
 
 
@@ -104,10 +102,3 @@ def outputs_unix_timestamp(is_unix_timestamp: bool, timestamp: datetime):
     else:
         timestamp = timestamp.isoformat()
     return timestamp
-
-
-def clean_local_output_directories(args: dict):
-    """clean_local_output_directories deletes local custom dirs when output is sent to remote provider storage"""
-    if args.provider == "aws" and (args.output_bucket or args.output_bucket_no_assume):
-        if args.output_directory != default_output_directory:
-            rmtree(args.output_directory)
