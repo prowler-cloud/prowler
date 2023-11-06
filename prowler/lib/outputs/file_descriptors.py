@@ -123,7 +123,7 @@ def fill_file_descriptors(output_modes, output_directory, output_filename, audit
 
                 elif isinstance(audit_info, GCP_Audit_Info):
                     if output_mode == "cis_2.0_gcp":
-                        filename = f"{output_directory}/{output_filename}_cis_2.0_gcp{csv_file_suffix}"
+                        filename = f"{output_directory}/compliance/{output_filename}_cis_2.0_gcp{csv_file_suffix}"
                         file_descriptor = initialize_file_descriptor(
                             filename, output_mode, audit_info, Check_Output_CSV_GCP_CIS
                         )
@@ -138,7 +138,7 @@ def fill_file_descriptors(output_modes, output_directory, output_filename, audit
                         file_descriptors.update({output_mode: file_descriptor})
 
                     elif output_mode == "ens_rd2022_aws":
-                        filename = f"{output_directory}/{output_filename}_ens_rd2022_aws{csv_file_suffix}"
+                        filename = f"{output_directory}/compliance/{output_filename}_ens_rd2022_aws{csv_file_suffix}"
                         file_descriptor = initialize_file_descriptor(
                             filename,
                             output_mode,
@@ -148,14 +148,14 @@ def fill_file_descriptors(output_modes, output_directory, output_filename, audit
                         file_descriptors.update({output_mode: file_descriptor})
 
                     elif output_mode == "cis_1.5_aws":
-                        filename = f"{output_directory}/{output_filename}_cis_1.5_aws{csv_file_suffix}"
+                        filename = f"{output_directory}/compliance/{output_filename}_cis_1.5_aws{csv_file_suffix}"
                         file_descriptor = initialize_file_descriptor(
                             filename, output_mode, audit_info, Check_Output_CSV_AWS_CIS
                         )
                         file_descriptors.update({output_mode: file_descriptor})
 
                     elif output_mode == "cis_1.4_aws":
-                        filename = f"{output_directory}/{output_filename}_cis_1.4_aws{csv_file_suffix}"
+                        filename = f"{output_directory}/compliance/{output_filename}_cis_1.4_aws{csv_file_suffix}"
                         file_descriptor = initialize_file_descriptor(
                             filename, output_mode, audit_info, Check_Output_CSV_AWS_CIS
                         )
@@ -165,7 +165,7 @@ def fill_file_descriptors(output_modes, output_directory, output_filename, audit
                         output_mode
                         == "aws_well_architected_framework_security_pillar_aws"
                     ):
-                        filename = f"{output_directory}/{output_filename}_aws_well_architected_framework_security_pillar_aws{csv_file_suffix}"
+                        filename = f"{output_directory}/compliance/{output_filename}_aws_well_architected_framework_security_pillar_aws{csv_file_suffix}"
                         file_descriptor = initialize_file_descriptor(
                             filename,
                             output_mode,
@@ -178,7 +178,7 @@ def fill_file_descriptors(output_modes, output_directory, output_filename, audit
                         output_mode
                         == "aws_well_architected_framework_reliability_pillar_aws"
                     ):
-                        filename = f"{output_directory}/{output_filename}_aws_well_architected_framework_reliability_pillar_aws{csv_file_suffix}"
+                        filename = f"{output_directory}/compliance/{output_filename}_aws_well_architected_framework_reliability_pillar_aws{csv_file_suffix}"
                         file_descriptor = initialize_file_descriptor(
                             filename,
                             output_mode,
@@ -188,7 +188,7 @@ def fill_file_descriptors(output_modes, output_directory, output_filename, audit
                         file_descriptors.update({output_mode: file_descriptor})
 
                     elif output_mode == "iso27001_2013_aws":
-                        filename = f"{output_directory}/{output_filename}_iso27001_2013_aws{csv_file_suffix}"
+                        filename = f"{output_directory}/compliance/{output_filename}_iso27001_2013_aws{csv_file_suffix}"
                         file_descriptor = initialize_file_descriptor(
                             filename,
                             output_mode,
@@ -198,7 +198,7 @@ def fill_file_descriptors(output_modes, output_directory, output_filename, audit
                         file_descriptors.update({output_mode: file_descriptor})
 
                     elif output_mode == "mitre_attack_aws":
-                        filename = f"{output_directory}/{output_filename}_mitre_attack_aws{csv_file_suffix}"
+                        filename = f"{output_directory}/compliance/{output_filename}_mitre_attack_aws{csv_file_suffix}"
                         file_descriptor = initialize_file_descriptor(
                             filename,
                             output_mode,
@@ -209,14 +209,26 @@ def fill_file_descriptors(output_modes, output_directory, output_filename, audit
 
                     else:
                         # Generic Compliance framework
-                        filename = f"{output_directory}/{output_filename}_{output_mode}{csv_file_suffix}"
-                        file_descriptor = initialize_file_descriptor(
-                            filename,
-                            output_mode,
-                            audit_info,
-                            Check_Output_CSV_Generic_Compliance,
-                        )
-                        file_descriptors.update({output_mode: file_descriptor})
+                        if (
+                            isinstance(audit_info, AWS_Audit_Info)
+                            and "aws" in output_mode
+                            or (
+                                isinstance(audit_info, Azure_Audit_Info)
+                                and "azure" in output_mode
+                            )
+                            or (
+                                isinstance(audit_info, GCP_Audit_Info)
+                                and "gcp" in output_mode
+                            )
+                        ):
+                            filename = f"{output_directory}/compliance/{output_filename}_{output_mode}{csv_file_suffix}"
+                            file_descriptor = initialize_file_descriptor(
+                                filename,
+                                output_mode,
+                                audit_info,
+                                Check_Output_CSV_Generic_Compliance,
+                            )
+                            file_descriptors.update({output_mode: file_descriptor})
 
     except Exception as error:
         logger.error(

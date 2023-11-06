@@ -21,7 +21,9 @@ from prowler.lib.outputs.models import (
 from prowler.lib.utils.utils import outputs_unix_timestamp
 
 
-def add_manual_controls(output_options, audit_info, file_descriptors):
+def add_manual_controls(
+    output_options, audit_info, file_descriptors, input_compliance_frameworks
+):
     try:
         # Check if MANUAL control was already added to output
         if "manual_check" in output_options.bulk_checks_metadata:
@@ -36,7 +38,11 @@ def add_manual_controls(output_options, audit_info, file_descriptors):
             manual_finding.location = ""
             manual_finding.project_id = ""
             fill_compliance(
-                output_options, manual_finding, audit_info, file_descriptors
+                output_options,
+                manual_finding,
+                audit_info,
+                file_descriptors,
+                input_compliance_frameworks,
             )
             del output_options.bulk_checks_metadata["manual_check"]
     except Exception as error:
@@ -45,20 +51,40 @@ def add_manual_controls(output_options, audit_info, file_descriptors):
         )
 
 
-def fill_compliance(output_options, finding, audit_info, file_descriptors):
+def fill_compliance(
+    output_options, finding, audit_info, file_descriptors, input_compliance_frameworks
+):
     try:
-        # We have to retrieve all the check's compliance requirements
-        check_compliance = output_options.bulk_checks_metadata[
+        # We have to retrieve all the check's compliance requirements and get the ones matching with the input ones
+        check_compliances = []
+        for compliance in output_options.bulk_checks_metadata[
             finding.check_metadata.CheckID
-        ].Compliance
-        for compliance in check_compliance:
+        ].Compliance:
+            compliance_name = ""
+            if compliance.Version:
+                compliance_name = (
+                    compliance.Framework.lower()
+                    + "_"
+                    + compliance.Version.lower()
+                    + "_"
+                    + compliance.Provider.lower()
+                )
+            else:
+                compliance_name = (
+                    compliance.Framework.lower() + "_" + compliance.Provider.lower()
+                )
+            if compliance_name.replace("-", "_") in input_compliance_frameworks:
+                check_compliances.append(compliance)
+        for compliance in check_compliances:
             csv_header = compliance_row = compliance_output = None
-            if (
-                compliance.Framework == "ENS"
-                and compliance.Version == "RD2022"
-                and "ens_rd2022_aws" in output_options.output_modes
-            ):
+            if compliance.Framework == "ENS" and compliance.Version == "RD2022":
                 compliance_output = "ens_rd2022_aws"
+                csv_header = generate_csv_fields(Check_Output_CSV_ENS_RD2022)
+                csv_writer = DictWriter(
+                    file_descriptors[compliance_output],
+                    fieldnames=csv_header,
+                    delimiter=";",
+                )
                 for requirement in compliance.Requirements:
                     requirement_description = requirement.Description
                     requirement_id = requirement.Id
@@ -88,16 +114,14 @@ def fill_compliance(output_options, finding, audit_info, file_descriptors):
                             CheckId=finding.check_metadata.CheckID,
                         )
 
-                csv_header = generate_csv_fields(Check_Output_CSV_ENS_RD2022)
+                        csv_writer.writerow(compliance_row.__dict__)
 
-            elif compliance.Framework == "CIS" and "cis_" in str(
-                output_options.output_modes
-            ):
+            elif compliance.Framework == "CIS":
                 compliance_output = (
                     "cis_" + compliance.Version + "_" + compliance.Provider.lower()
                 )
                 # Only with the version of CIS that was selected
-                if compliance_output in str(output_options.output_modes):
+                if compliance_output in str(input_compliance_frameworks):
                     for requirement in compliance.Requirements:
                         requirement_description = requirement.Description
                         requirement_id = requirement.Id
@@ -161,6 +185,12 @@ def fill_compliance(output_options, finding, audit_info, file_descriptors):
                                 csv_header = generate_csv_fields(
                                     Check_Output_CSV_GCP_CIS
                                 )
+                            csv_writer = DictWriter(
+                                file_descriptors[compliance_output],
+                                fieldnames=csv_header,
+                                delimiter=";",
+                            )
+                            csv_writer.writerow(compliance_row.__dict__)
 
             elif (
                 "AWS-Well-Architected-Framework" in compliance.Framework
@@ -171,41 +201,43 @@ def fill_compliance(output_options, finding, audit_info, file_descriptors):
                     compliance_output += "_" + compliance.Version
                 if compliance.Provider != "":
                     compliance_output += "_" + compliance.Provider
-
                 compliance_output = compliance_output.lower().replace("-", "_")
-                if compliance_output in output_options.output_modes:
-                    for requirement in compliance.Requirements:
-                        requirement_description = requirement.Description
-                        requirement_id = requirement.Id
-                        for attribute in requirement.Attributes:
-                            compliance_row = Check_Output_CSV_AWS_Well_Architected(
-                                Provider=finding.check_metadata.Provider,
-                                Description=compliance.Description,
-                                AccountId=audit_info.audited_account,
-                                Region=finding.region,
-                                AssessmentDate=outputs_unix_timestamp(
-                                    output_options.unix_timestamp, timestamp
-                                ),
-                                Requirements_Id=requirement_id,
-                                Requirements_Description=requirement_description,
-                                Requirements_Attributes_Name=attribute.Name,
-                                Requirements_Attributes_WellArchitectedQuestionId=attribute.WellArchitectedQuestionId,
-                                Requirements_Attributes_WellArchitectedPracticeId=attribute.WellArchitectedPracticeId,
-                                Requirements_Attributes_Section=attribute.Section,
-                                Requirements_Attributes_SubSection=attribute.SubSection,
-                                Requirements_Attributes_LevelOfRisk=attribute.LevelOfRisk,
-                                Requirements_Attributes_AssessmentMethod=attribute.AssessmentMethod,
-                                Requirements_Attributes_Description=attribute.Description,
-                                Requirements_Attributes_ImplementationGuidanceUrl=attribute.ImplementationGuidanceUrl,
-                                Status=finding.status,
-                                StatusExtended=finding.status_extended,
-                                ResourceId=finding.resource_id,
-                                CheckId=finding.check_metadata.CheckID,
-                            )
+                csv_header = generate_csv_fields(Check_Output_CSV_AWS_Well_Architected)
+                csv_writer = DictWriter(
+                    file_descriptors[compliance_output],
+                    fieldnames=csv_header,
+                    delimiter=";",
+                )
+                for requirement in compliance.Requirements:
+                    requirement_description = requirement.Description
+                    requirement_id = requirement.Id
+                    for attribute in requirement.Attributes:
+                        compliance_row = Check_Output_CSV_AWS_Well_Architected(
+                            Provider=finding.check_metadata.Provider,
+                            Description=compliance.Description,
+                            AccountId=audit_info.audited_account,
+                            Region=finding.region,
+                            AssessmentDate=outputs_unix_timestamp(
+                                output_options.unix_timestamp, timestamp
+                            ),
+                            Requirements_Id=requirement_id,
+                            Requirements_Description=requirement_description,
+                            Requirements_Attributes_Name=attribute.Name,
+                            Requirements_Attributes_WellArchitectedQuestionId=attribute.WellArchitectedQuestionId,
+                            Requirements_Attributes_WellArchitectedPracticeId=attribute.WellArchitectedPracticeId,
+                            Requirements_Attributes_Section=attribute.Section,
+                            Requirements_Attributes_SubSection=attribute.SubSection,
+                            Requirements_Attributes_LevelOfRisk=attribute.LevelOfRisk,
+                            Requirements_Attributes_AssessmentMethod=attribute.AssessmentMethod,
+                            Requirements_Attributes_Description=attribute.Description,
+                            Requirements_Attributes_ImplementationGuidanceUrl=attribute.ImplementationGuidanceUrl,
+                            Status=finding.status,
+                            StatusExtended=finding.status_extended,
+                            ResourceId=finding.resource_id,
+                            CheckId=finding.check_metadata.CheckID,
+                        )
 
-                    csv_header = generate_csv_fields(
-                        Check_Output_CSV_AWS_Well_Architected
-                    )
+                        csv_writer.writerow(compliance_row.__dict__)
 
             elif (
                 compliance.Framework == "ISO27001"
@@ -219,34 +251,39 @@ def fill_compliance(output_options, finding, audit_info, file_descriptors):
                     compliance_output += "_" + compliance.Provider
 
                 compliance_output = compliance_output.lower().replace("-", "_")
-                if compliance_output in output_options.output_modes:
-                    for requirement in compliance.Requirements:
-                        requirement_description = requirement.Description
-                        requirement_id = requirement.Id
-                        requirement_name = requirement.Name
-                        for attribute in requirement.Attributes:
-                            compliance_row = Check_Output_CSV_AWS_ISO27001_2013(
-                                Provider=finding.check_metadata.Provider,
-                                Description=compliance.Description,
-                                AccountId=audit_info.audited_account,
-                                Region=finding.region,
-                                AssessmentDate=outputs_unix_timestamp(
-                                    output_options.unix_timestamp, timestamp
-                                ),
-                                Requirements_Id=requirement_id,
-                                Requirements_Name=requirement_name,
-                                Requirements_Description=requirement_description,
-                                Requirements_Attributes_Category=attribute.Category,
-                                Requirements_Attributes_Objetive_ID=attribute.Objetive_ID,
-                                Requirements_Attributes_Objetive_Name=attribute.Objetive_Name,
-                                Requirements_Attributes_Check_Summary=attribute.Check_Summary,
-                                Status=finding.status,
-                                StatusExtended=finding.status_extended,
-                                ResourceId=finding.resource_id,
-                                CheckId=finding.check_metadata.CheckID,
-                            )
+                csv_header = generate_csv_fields(Check_Output_CSV_AWS_ISO27001_2013)
+                csv_writer = DictWriter(
+                    file_descriptors[compliance_output],
+                    fieldnames=csv_header,
+                    delimiter=";",
+                )
+                for requirement in compliance.Requirements:
+                    requirement_description = requirement.Description
+                    requirement_id = requirement.Id
+                    requirement_name = requirement.Name
+                    for attribute in requirement.Attributes:
+                        compliance_row = Check_Output_CSV_AWS_ISO27001_2013(
+                            Provider=finding.check_metadata.Provider,
+                            Description=compliance.Description,
+                            AccountId=audit_info.audited_account,
+                            Region=finding.region,
+                            AssessmentDate=outputs_unix_timestamp(
+                                output_options.unix_timestamp, timestamp
+                            ),
+                            Requirements_Id=requirement_id,
+                            Requirements_Name=requirement_name,
+                            Requirements_Description=requirement_description,
+                            Requirements_Attributes_Category=attribute.Category,
+                            Requirements_Attributes_Objetive_ID=attribute.Objetive_ID,
+                            Requirements_Attributes_Objetive_Name=attribute.Objetive_Name,
+                            Requirements_Attributes_Check_Summary=attribute.Check_Summary,
+                            Status=finding.status,
+                            StatusExtended=finding.status_extended,
+                            ResourceId=finding.resource_id,
+                            CheckId=finding.check_metadata.CheckID,
+                        )
 
-                    csv_header = generate_csv_fields(Check_Output_CSV_AWS_ISO27001_2013)
+                        csv_writer.writerow(compliance_row.__dict__)
 
             elif (
                 compliance.Framework == "MITRE-ATTACK"
@@ -260,48 +297,53 @@ def fill_compliance(output_options, finding, audit_info, file_descriptors):
                     compliance_output += "_" + compliance.Provider
 
                 compliance_output = compliance_output.lower().replace("-", "_")
-                if compliance_output in output_options.output_modes:
-                    for requirement in compliance.Requirements:
-                        requirement_description = requirement.Description
-                        requirement_id = requirement.Id
-                        requirement_name = requirement.Name
-                        attributes_aws_services = ""
-                        attributes_categories = ""
-                        attributes_values = ""
-                        attributes_comments = ""
-                        for attribute in requirement.Attributes:
-                            attributes_aws_services += attribute.AWSService + "\n"
-                            attributes_categories += attribute.Category + "\n"
-                            attributes_values += attribute.Value + "\n"
-                            attributes_comments += attribute.Comment + "\n"
-                        compliance_row = Check_Output_MITRE_ATTACK(
-                            Provider=finding.check_metadata.Provider,
-                            Description=compliance.Description,
-                            AccountId=audit_info.audited_account,
-                            Region=finding.region,
-                            AssessmentDate=outputs_unix_timestamp(
-                                output_options.unix_timestamp, timestamp
-                            ),
-                            Requirements_Id=requirement_id,
-                            Requirements_Description=requirement_description,
-                            Requirements_Name=requirement_name,
-                            Requirements_Tactics=unroll_list(requirement.Tactics),
-                            Requirements_SubTechniques=unroll_list(
-                                requirement.SubTechniques
-                            ),
-                            Requirements_Platforms=unroll_list(requirement.Platforms),
-                            Requirements_TechniqueURL=requirement.TechniqueURL,
-                            Requirements_Attributes_AWSServices=attributes_aws_services,
-                            Requirements_Attributes_Categories=attributes_categories,
-                            Requirements_Attributes_Values=attributes_values,
-                            Requirements_Attributes_Comments=attributes_comments,
-                            Status=finding.status,
-                            StatusExtended=finding.status_extended,
-                            ResourceId=finding.resource_id,
-                            CheckId=finding.check_metadata.CheckID,
-                        )
+                csv_header = generate_csv_fields(Check_Output_MITRE_ATTACK)
+                csv_writer = DictWriter(
+                    file_descriptors[compliance_output],
+                    fieldnames=csv_header,
+                    delimiter=";",
+                )
+                for requirement in compliance.Requirements:
+                    requirement_description = requirement.Description
+                    requirement_id = requirement.Id
+                    requirement_name = requirement.Name
+                    attributes_aws_services = ""
+                    attributes_categories = ""
+                    attributes_values = ""
+                    attributes_comments = ""
+                    for attribute in requirement.Attributes:
+                        attributes_aws_services += attribute.AWSService + "\n"
+                        attributes_categories += attribute.Category + "\n"
+                        attributes_values += attribute.Value + "\n"
+                        attributes_comments += attribute.Comment + "\n"
+                    compliance_row = Check_Output_MITRE_ATTACK(
+                        Provider=finding.check_metadata.Provider,
+                        Description=compliance.Description,
+                        AccountId=audit_info.audited_account,
+                        Region=finding.region,
+                        AssessmentDate=outputs_unix_timestamp(
+                            output_options.unix_timestamp, timestamp
+                        ),
+                        Requirements_Id=requirement_id,
+                        Requirements_Description=requirement_description,
+                        Requirements_Name=requirement_name,
+                        Requirements_Tactics=unroll_list(requirement.Tactics),
+                        Requirements_SubTechniques=unroll_list(
+                            requirement.SubTechniques
+                        ),
+                        Requirements_Platforms=unroll_list(requirement.Platforms),
+                        Requirements_TechniqueURL=requirement.TechniqueURL,
+                        Requirements_Attributes_AWSServices=attributes_aws_services,
+                        Requirements_Attributes_Categories=attributes_categories,
+                        Requirements_Attributes_Values=attributes_values,
+                        Requirements_Attributes_Comments=attributes_comments,
+                        Status=finding.status,
+                        StatusExtended=finding.status_extended,
+                        ResourceId=finding.resource_id,
+                        CheckId=finding.check_metadata.CheckID,
+                    )
 
-                    csv_header = generate_csv_fields(Check_Output_MITRE_ATTACK)
+                    csv_writer.writerow(compliance_row.__dict__)
 
             else:
                 compliance_output = compliance.Framework
@@ -311,43 +353,38 @@ def fill_compliance(output_options, finding, audit_info, file_descriptors):
                     compliance_output += "_" + compliance.Provider
 
                 compliance_output = compliance_output.lower().replace("-", "_")
-                if compliance_output in output_options.output_modes:
-                    for requirement in compliance.Requirements:
-                        requirement_description = requirement.Description
-                        requirement_id = requirement.Id
-                        for attribute in requirement.Attributes:
-                            compliance_row = Check_Output_CSV_Generic_Compliance(
-                                Provider=finding.check_metadata.Provider,
-                                Description=compliance.Description,
-                                AccountId=audit_info.audited_account,
-                                Region=finding.region,
-                                AssessmentDate=outputs_unix_timestamp(
-                                    output_options.unix_timestamp, timestamp
-                                ),
-                                Requirements_Id=requirement_id,
-                                Requirements_Description=requirement_description,
-                                Requirements_Attributes_Section=attribute.Section,
-                                Requirements_Attributes_SubSection=attribute.SubSection,
-                                Requirements_Attributes_SubGroup=attribute.SubGroup,
-                                Requirements_Attributes_Service=attribute.Service,
-                                Requirements_Attributes_Soc_Type=attribute.Soc_Type,
-                                Status=finding.status,
-                                StatusExtended=finding.status_extended,
-                                ResourceId=finding.resource_id,
-                                CheckId=finding.check_metadata.CheckID,
-                            )
-
-                    csv_header = generate_csv_fields(
-                        Check_Output_CSV_Generic_Compliance
-                    )
-
-            if compliance_row:
+                csv_header = generate_csv_fields(Check_Output_CSV_Generic_Compliance)
                 csv_writer = DictWriter(
                     file_descriptors[compliance_output],
                     fieldnames=csv_header,
                     delimiter=";",
                 )
-                csv_writer.writerow(compliance_row.__dict__)
+                for requirement in compliance.Requirements:
+                    requirement_description = requirement.Description
+                    requirement_id = requirement.Id
+                    for attribute in requirement.Attributes:
+                        compliance_row = Check_Output_CSV_Generic_Compliance(
+                            Provider=finding.check_metadata.Provider,
+                            Description=compliance.Description,
+                            AccountId=audit_info.audited_account,
+                            Region=finding.region,
+                            AssessmentDate=outputs_unix_timestamp(
+                                output_options.unix_timestamp, timestamp
+                            ),
+                            Requirements_Id=requirement_id,
+                            Requirements_Description=requirement_description,
+                            Requirements_Attributes_Section=attribute.Section,
+                            Requirements_Attributes_SubSection=attribute.SubSection,
+                            Requirements_Attributes_SubGroup=attribute.SubGroup,
+                            Requirements_Attributes_Service=attribute.Service,
+                            Requirements_Attributes_Soc_Type=attribute.Soc_Type,
+                            Status=finding.status,
+                            StatusExtended=finding.status_extended,
+                            ResourceId=finding.resource_id,
+                            CheckId=finding.check_metadata.CheckID,
+                        )
+                        csv_writer.writerow(compliance_row.__dict__)
+
     except Exception as error:
         logger.error(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -360,6 +397,7 @@ def display_compliance_table(
     compliance_framework: str,
     output_filename: str,
     output_directory: str,
+    compliance_overview: bool,
 ):
     try:
         if "ens_rd2022_aws" == compliance_framework:
@@ -448,21 +486,24 @@ def display_compliance_table(
                     ]
                 ]
                 print(tabulate(overview_table, tablefmt="rounded_grid"))
-                print(
-                    f"\nResultados de {Fore.YELLOW}{compliance_fm} {compliance_version} - {compliance_provider}{Style.RESET_ALL}:"
-                )
-                print(
-                    tabulate(
-                        ens_compliance_table, headers="keys", tablefmt="rounded_grid"
+                if not compliance_overview:
+                    print(
+                        f"\nResultados de {Fore.YELLOW}{compliance_fm} {compliance_version} - {compliance_provider}{Style.RESET_ALL}:"
                     )
-                )
-                print(
-                    f"{Style.BRIGHT}* Solo aparece el Marco/Categoria que contiene resultados.{Style.RESET_ALL}"
-                )
-                print(f"\nResultados detallados de {compliance_fm} en:")
-                print(
-                    f" - CSV: {output_directory}/{output_filename}_{compliance_framework}.csv\n"
-                )
+                    print(
+                        tabulate(
+                            ens_compliance_table,
+                            headers="keys",
+                            tablefmt="rounded_grid",
+                        )
+                    )
+                    print(
+                        f"{Style.BRIGHT}* Solo aparece el Marco/Categoria que contiene resultados.{Style.RESET_ALL}"
+                    )
+                    print(f"\nResultados detallados de {compliance_fm} en:")
+                    print(
+                        f" - CSV: {output_directory}/compliance/{output_filename}_{compliance_framework}.csv\n"
+                    )
         elif "cis_" in compliance_framework:
             sections = {}
             cis_compliance_table = {
@@ -543,21 +584,24 @@ def display_compliance_table(
                     ]
                 ]
                 print(tabulate(overview_table, tablefmt="rounded_grid"))
-                print(
-                    f"\nFramework {Fore.YELLOW}{compliance_fm}-{compliance_version}{Style.RESET_ALL} Results:"
-                )
-                print(
-                    tabulate(
-                        cis_compliance_table, headers="keys", tablefmt="rounded_grid"
+                if not compliance_overview:
+                    print(
+                        f"\nFramework {Fore.YELLOW}{compliance_fm}-{compliance_version}{Style.RESET_ALL} Results:"
                     )
-                )
-                print(
-                    f"{Style.BRIGHT}* Only sections containing results appear.{Style.RESET_ALL}"
-                )
-                print(f"\nDetailed results of {compliance_fm} are in:")
-                print(
-                    f" - CSV: {output_directory}/{output_filename}_{compliance_framework}.csv\n"
-                )
+                    print(
+                        tabulate(
+                            cis_compliance_table,
+                            headers="keys",
+                            tablefmt="rounded_grid",
+                        )
+                    )
+                    print(
+                        f"{Style.BRIGHT}* Only sections containing results appear.{Style.RESET_ALL}"
+                    )
+                    print(f"\nDetailed results of {compliance_fm} are in:")
+                    print(
+                        f" - CSV: {output_directory}/compliance/{output_filename}_{compliance_framework}.csv\n"
+                    )
         elif "mitre_attack" in compliance_framework:
             tactics = {}
             mitre_compliance_table = {
@@ -614,26 +658,62 @@ def display_compliance_table(
                     ]
                 ]
                 print(tabulate(overview_table, tablefmt="rounded_grid"))
-                print(
-                    f"\nFramework {Fore.YELLOW}{compliance_fm}{Style.RESET_ALL} Results:"
-                )
-                print(
-                    tabulate(
-                        mitre_compliance_table, headers="keys", tablefmt="rounded_grid"
+                if not compliance_overview:
+                    print(
+                        f"\nFramework {Fore.YELLOW}{compliance_fm}{Style.RESET_ALL} Results:"
                     )
-                )
-                print(
-                    f"{Style.BRIGHT}* Only sections containing results appear.{Style.RESET_ALL}"
-                )
-                print(f"\nDetailed results of {compliance_fm} are in:")
-                print(
-                    f" - CSV: {output_directory}/{output_filename}_{compliance_framework}.csv\n"
-                )
+                    print(
+                        tabulate(
+                            mitre_compliance_table,
+                            headers="keys",
+                            tablefmt="rounded_grid",
+                        )
+                    )
+                    print(
+                        f"{Style.BRIGHT}* Only sections containing results appear.{Style.RESET_ALL}"
+                    )
+                    print(f"\nDetailed results of {compliance_fm} are in:")
+                    print(
+                        f" - CSV: {output_directory}/compliance/{output_filename}_{compliance_framework}.csv\n"
+                    )
         else:
-            print(f"\nDetailed results of {compliance_framework.upper()} are in:")
-            print(
-                f" - CSV: {output_directory}/{output_filename}_{compliance_framework}.csv\n"
-            )
+            pass_count = fail_count = 0
+            for finding in findings:
+                check = bulk_checks_metadata[finding.check_metadata.CheckID]
+                check_compliances = check.Compliance
+                for compliance in check_compliances:
+                    if (
+                        compliance.Framework.upper()
+                        in compliance_framework.upper().replace("_", "-")
+                        and compliance.Version in compliance_framework.upper()
+                        and compliance.Provider in compliance_framework.upper()
+                    ):
+                        for requirement in compliance.Requirements:
+                            for attribute in requirement.Attributes:
+                                if finding.status == "FAIL":
+                                    fail_count += 1
+                                elif finding.status == "PASS":
+                                    pass_count += 1
+            if fail_count + pass_count < 1:
+                print(
+                    f"\n {Style.BRIGHT}There are no resources for {Fore.YELLOW}{compliance_framework.upper()}{Style.RESET_ALL}.\n"
+                )
+            else:
+                print(
+                    f"\nCompliance Status of {Fore.YELLOW}{compliance_framework.upper()}{Style.RESET_ALL} Framework:"
+                )
+                overview_table = [
+                    [
+                        f"{Fore.RED}{round(fail_count/(fail_count+pass_count)*100, 2)}% ({fail_count}) FAIL{Style.RESET_ALL}",
+                        f"{Fore.GREEN}{round(pass_count/(fail_count+pass_count)*100, 2)}% ({pass_count}) PASS{Style.RESET_ALL}",
+                    ]
+                ]
+                print(tabulate(overview_table, tablefmt="rounded_grid"))
+            if not compliance_overview:
+                print(f"\nDetailed results of {compliance_framework.upper()} are in:")
+                print(
+                    f" - CSV: {output_directory}/compliance/{output_filename}_{compliance_framework}.csv\n"
+                )
     except Exception as error:
         logger.critical(
             f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
