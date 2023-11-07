@@ -14,6 +14,10 @@ def clean_provider_local_output_directories(args):
         # import provider cleaning function
         provider_clean_function = f"clean_{args.provider}_local_output_directories"
         getattr(importlib.import_module(__name__), provider_clean_function)(args)
+    except AttributeError as attribute_exception:
+        logger.info(
+            f"Cleaning local output directories not initialized for provider {args.provider}: {attribute_exception}"
+        )
     except Exception as error:
         logger.critical(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
