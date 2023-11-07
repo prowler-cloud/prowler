@@ -1282,3 +1282,76 @@ class Test_policy_condition_parser:
         assert not is_account_only_allowed_in_condition(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
+
+    def test_condition_parser_two_lists_unrestrictive(self):
+        condition_statement = {
+            "StringLike": {
+                "AWS:ResourceAccount": [
+                    TRUSTED_AWS_ACCOUNT_NUMBER,
+                    NON_TRUSTED_AWS_ACCOUNT_NUMBER, 
+                ]
+            },
+            "ArnLike": {
+                "AWS:SourceArn": [
+                    f"arn:aws:cloudtrail:*:{TRUSTED_AWS_ACCOUNT_NUMBER}:trail/*",
+                    f"arn:aws:cloudtrail:*:{NON_TRUSTED_AWS_ACCOUNT_NUMBER}:trail/*",
+                ]
+            },
+        }
+        assert not is_account_only_allowed_in_condition(
+            condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
+        )
+
+    def test_condition_parser_two_lists_both_restrictive(self):
+        condition_statement = {
+            "StringLike": {
+                "AWS:ResourceAccount": [
+                    TRUSTED_AWS_ACCOUNT_NUMBER,
+                ]
+            },
+            "ArnLike": {
+                "AWS:SourceArn": [
+                    f"arn:aws:cloudtrail:*:{TRUSTED_AWS_ACCOUNT_NUMBER}:trail/*",
+                ]
+            },
+        }
+        assert is_account_only_allowed_in_condition(
+            condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
+        )
+
+    def test_condition_parser_two_lists_first_restrictive(self):
+        condition_statement = {
+            "StringLike": {
+                "AWS:ResourceAccount": [
+                    TRUSTED_AWS_ACCOUNT_NUMBER,
+                ]
+            },
+            "ArnLike": {
+                "AWS:SourceArn": [
+                    f"arn:aws:cloudtrail:*:{TRUSTED_AWS_ACCOUNT_NUMBER}:trail/*",
+                    f"arn:aws:cloudtrail:*:{NON_TRUSTED_AWS_ACCOUNT_NUMBER}:trail/*",
+                ]
+            },
+
+        }
+        assert is_account_only_allowed_in_condition(
+            condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
+        )
+
+    def test_condition_parser_two_lists_second_restrictive(self):
+        condition_statement = {
+            "StringLike": {
+                "AWS:ResourceAccount": [
+                    TRUSTED_AWS_ACCOUNT_NUMBER,
+                    NON_TRUSTED_AWS_ACCOUNT_NUMBER, 
+                ]
+            },
+            "ArnLike": {
+                "AWS:SourceArn": [
+                    f"arn:aws:cloudtrail:*:{TRUSTED_AWS_ACCOUNT_NUMBER}:trail/*",
+                ]
+            },
+        }
+        assert is_account_only_allowed_in_condition(
+            condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
+        )

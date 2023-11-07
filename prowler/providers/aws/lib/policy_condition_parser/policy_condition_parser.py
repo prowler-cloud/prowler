@@ -56,11 +56,13 @@ def is_account_only_allowed_in_condition(
                     ):
                         # if there is an arn/account without the source account -> we do not consider it safe
                         # here by default we assume is true and look for false entries
-                        is_condition_valid = True
+                        is_condition_key_restrictive = True
                         for item in condition_statement[condition_operator][value]:
                             if source_account not in item:
-                                is_condition_valid = False
+                                is_condition_key_restrictive = False
                                 break
+                        if is_condition_key_restrictive:
+                            is_condition_valid = True
 
                     # value is a string
                     elif isinstance(
