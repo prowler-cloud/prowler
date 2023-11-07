@@ -1288,7 +1288,7 @@ class Test_policy_condition_parser:
             "StringLike": {
                 "AWS:ResourceAccount": [
                     TRUSTED_AWS_ACCOUNT_NUMBER,
-                    NON_TRUSTED_AWS_ACCOUNT_NUMBER, 
+                    NON_TRUSTED_AWS_ACCOUNT_NUMBER,
                 ]
             },
             "ArnLike": {
@@ -1332,7 +1332,6 @@ class Test_policy_condition_parser:
                     f"arn:aws:cloudtrail:*:{NON_TRUSTED_AWS_ACCOUNT_NUMBER}:trail/*",
                 ]
             },
-
         }
         assert is_account_only_allowed_in_condition(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
@@ -1343,7 +1342,7 @@ class Test_policy_condition_parser:
             "StringLike": {
                 "AWS:ResourceAccount": [
                     TRUSTED_AWS_ACCOUNT_NUMBER,
-                    NON_TRUSTED_AWS_ACCOUNT_NUMBER, 
+                    NON_TRUSTED_AWS_ACCOUNT_NUMBER,
                 ]
             },
             "ArnLike": {
