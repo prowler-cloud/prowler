@@ -61,6 +61,7 @@ def is_account_only_allowed_in_condition(
                             if source_account not in item:
                                 is_condition_key_restrictive = False
                                 break
+
                         if is_condition_key_restrictive:
                             is_condition_valid = True
 
