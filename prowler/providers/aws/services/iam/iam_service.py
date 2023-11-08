@@ -718,10 +718,11 @@ class IAM(AWSService):
         try:
             for policy in self.policies:
                 try:
-                    response = self.client.list_policy_tags(PolicyArn=policy.arn)[
-                        "Tags"
-                    ]
-                    policy.tags = response
+                    if policy.type != "Inline":
+                        response = self.client.list_policy_tags(PolicyArn=policy.arn)[
+                            "Tags"
+                        ]
+                        policy.tags = response
                 except ClientError as error:
                     if error.response["Error"]["Code"] == "NoSuchEntity":
                         policy.tags = []
