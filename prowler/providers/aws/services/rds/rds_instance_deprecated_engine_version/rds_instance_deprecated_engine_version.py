@@ -13,9 +13,14 @@ class rds_instance_deprecated_engine_version(Check):
             report.resource_arn = db_instance.arn
             report.resource_tags = db_instance.tags
             report.status_extended = f"RDS instance {db_instance.id} is using a deprecated engine {db_instance.engine} with version {db_instance.engine_version}."
-
             if (
-                db_instance.engine_version
+                hasattr(
+                    rds_client.db_engines.get(db_instance.region, {}).get(
+                        db_instance.engine, {}
+                    ),
+                    "engine_versions",
+                )
+                and db_instance.engine_version
                 in rds_client.db_engines[db_instance.region][
                     db_instance.engine
                 ].engine_versions
