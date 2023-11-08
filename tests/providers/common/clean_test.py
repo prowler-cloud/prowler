@@ -1,9 +1,9 @@
 import importlib
+import logging
 import tempfile
 from argparse import Namespace
 from os import path
 
-import pytest
 from mock import patch
 
 from prowler.providers.common.clean import clean_provider_local_output_directories
@@ -30,14 +30,15 @@ class Test_Common_Clean:
         args.provider = "azure"
         return args
 
-    def test_clean_provider_local_output_directories_non_initialized(self):
+    def test_clean_provider_local_output_directories_non_initialized(self, caplog):
         provider = "azure"
         input_args = self.set_provider_input_args(provider)
-
-        with pytest.raises(SystemExit) as exception:
-            _ = clean_provider_local_output_directories(input_args)
-
-        assert isinstance(exception, pytest.ExceptionInfo)
+        caplog.set_level(logging.INFO)
+        clean_provider_local_output_directories(input_args)
+        assert (
+            f"Cleaning local output directories not initialized for provider {provider}:"
+            in caplog.text
+        )
 
     def test_clean_aws_local_output_directories_non_default_dir_output_bucket(self):
         provider = "aws"
