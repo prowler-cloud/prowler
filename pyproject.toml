@@ -43,6 +43,7 @@ google-auth-httplib2 = "^0.1.0"
 mkdocs = {version = "1.5.3", optional = true}
 mkdocs-material = {version = "9.4.8", optional = true}
 msgraph-core = "0.2.2"
+msrestazure = "^0.6.4"
 pydantic = "1.10.13"
 python = "^3.9"
 schema = "0.7.5"

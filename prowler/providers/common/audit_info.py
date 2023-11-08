@@ -26,7 +26,10 @@ from prowler.providers.aws.lib.resource_api_tagging.resource_api_tagging import 
 )
 from prowler.providers.azure.azure_provider import Azure_Provider
 from prowler.providers.azure.lib.audit_info.audit_info import azure_audit_info
-from prowler.providers.azure.lib.audit_info.models import Azure_Audit_Info
+from prowler.providers.azure.lib.audit_info.models import (
+    Azure_Audit_Info,
+    Azure_Region_Config,
+)
 from prowler.providers.gcp.gcp_provider import GCP_Provider
 from prowler.providers.gcp.lib.audit_info.audit_info import gcp_audit_info
 from prowler.providers.gcp.lib.audit_info.models import GCP_Audit_Info
@@ -63,7 +66,7 @@ GCP Account: {Fore.YELLOW}[{profile}]{Style.RESET_ALL}  GCP Project IDs: {Fore.Y
         report = f"""
 This report is being generated using the identity below:
 
-Azure Tenant IDs: {Fore.YELLOW}[{" ".join(audit_info.identity.tenant_ids)}]{Style.RESET_ALL} Azure Tenant Domain: {Fore.YELLOW}[{audit_info.identity.domain}]{Style.RESET_ALL}
+Azure Tenant IDs: {Fore.YELLOW}[{" ".join(audit_info.identity.tenant_ids)}]{Style.RESET_ALL} Azure Tenant Domain: {Fore.YELLOW}[{audit_info.identity.domain}]{Style.RESET_ALL} Azure Region: {Fore.YELLOW}[{audit_info.azure_region_config.name}]{Style.RESET_ALL}
 Azure Subscriptions: {Fore.YELLOW}{printed_subscriptions}{Style.RESET_ALL}
 Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RESET_ALL} Azure Identity ID: {Fore.YELLOW}[{audit_info.identity.identity_id}]{Style.RESET_ALL}
 """
@@ -282,6 +285,10 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
         browser_auth = arguments.get("browser_auth")
         managed_entity_auth = arguments.get("managed_entity_auth")
         tenant_id = arguments.get("tenant_id")
+
+        logger.info("Checking if region is different than default one")
+        region = arguments.get("azure_region")
+
         if (
             not az_cli_auth
             and not sp_env_auth
@@ -303,9 +310,17 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
             managed_entity_auth,
             subscription_ids,
             tenant_id,
+            region,
         )
         azure_audit_info.credentials = azure_provider.get_credentials()
         azure_audit_info.identity = azure_provider.get_identity()
+        region_config = azure_provider.get_region_config()
+        azure_audit_info.azure_region_config = Azure_Region_Config(
+            name=region,
+            authority=region_config["authority"],
+            base_url=region_config["base_url"],
+            credential_scopes=region_config["credential_scopes"],
+        )
 
         if not arguments.get("only_logs"):
             self.print_azure_credentials(azure_audit_info)
