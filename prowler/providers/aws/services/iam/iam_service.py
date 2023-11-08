@@ -371,7 +371,7 @@ class IAM(AWSService):
 
                     role.attached_policies = attached_role_policies
                 except ClientError as error:
-                    if error.response["Error"]["Code"] == "NoSuchEntityException":
+                    if error.response["Error"]["Code"] == "NoSuchEntity":
                         logger.warning(
                             f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                         )
@@ -639,7 +639,7 @@ class IAM(AWSService):
                     response = self.client.list_role_tags(RoleName=role.name)["Tags"]
                     role.tags = response
                 except ClientError as error:
-                    if error.response["Error"]["Code"] == "NoSuchEntityException":
+                    if error.response["Error"]["Code"] == "NoSuchEntity":
                         role.tags = []
 
         except Exception as error:
@@ -653,7 +653,7 @@ class IAM(AWSService):
                     response = self.client.list_user_tags(UserName=user.name)["Tags"]
                     user.tags = response
                 except ClientError as error:
-                    if error.response["Error"]["Code"] == "NoSuchEntityException":
+                    if error.response["Error"]["Code"] == "NoSuchEntity":
                         user.tags = []
 
         except Exception as error:
@@ -669,7 +669,7 @@ class IAM(AWSService):
                     ]
                     policy.tags = response
                 except ClientError as error:
-                    if error.response["Error"]["Code"] == "NoSuchEntityException":
+                    if error.response["Error"]["Code"] == "NoSuchEntity":
                         policy.tags = []
 
         except Exception as error:
@@ -697,7 +697,7 @@ class IAM(AWSService):
                     ]
 
                 except ClientError as error:
-                    logger.error(
+                    logger.warning(
                         f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
         except Exception as error:
@@ -717,7 +717,7 @@ class IAM(AWSService):
                             "AccessKeyMetadata"
                         ]
                 except ClientError as error:
-                    logger.error(
+                    logger.warning(
                         f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
         except Exception as error:
