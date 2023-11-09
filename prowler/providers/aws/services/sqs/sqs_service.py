@@ -23,7 +23,11 @@ class SQS(AWSService):
         logger.info("SQS - describing queues...")
         try:
             list_queues_paginator = regional_client.get_paginator("list_queues")
-            for page in list_queues_paginator.paginate():
+            # The SQS API uses nonstandard pagination
+            # you must specify a PageSize if there are more than 1000 queues
+            for page in list_queues_paginator.paginate(
+                PaginationConfig={"PageSize": 1000}
+            ):
                 if "QueueUrls" in page:
                     for queue in page["QueueUrls"]:
                         # the queue name is the last path segment of the url
