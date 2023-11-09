@@ -110,6 +110,10 @@ class Test_SQS_Service:
         sqs = SQS(audit_info)
         assert len(sqs.queues) == 1
         assert sqs.queues[0].id == queue["QueueUrl"]
+        assert sqs.queues[0].name == test_queue
+        assert sqs.queues[0].name == sqs.queues[0].arn.split(":")[-1]
+        assert sqs.queues[0].name == sqs.queues[0].id.split("/")[-1]
+        assert sqs.queues[0].arn == test_queue_arn
         assert sqs.queues[0].region == AWS_REGION
         assert sqs.queues[0].tags == [{"test": "test"}]
 

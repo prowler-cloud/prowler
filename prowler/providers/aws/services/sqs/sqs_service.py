@@ -26,13 +26,16 @@ class SQS(AWSService):
             for page in list_queues_paginator.paginate():
                 if "QueueUrls" in page:
                     for queue in page["QueueUrls"]:
-                        arn = f"arn:{self.audited_partition}:sqs:{regional_client.region}:{self.audited_account}:{queue}"
+                        # the queue name is the last path segment of the url
+                        queue_name = queue.split("/")[-1]
+                        arn = f"arn:{self.audited_partition}:sqs:{regional_client.region}:{self.audited_account}:{queue_name}"
                         if not self.audit_resources or (
                             is_resource_filtered(arn, self.audit_resources)
                         ):
                             self.queues.append(
                                 Queue(
                                     arn=arn,
+                                    name=queue_name,
                                     id=queue,
                                     region=regional_client.region,
                                 )
@@ -122,6 +125,7 @@ class SQS(AWSService):
 
 class Queue(BaseModel):
     id: str
+    name: str
     arn: str
     region: str
     policy: dict = None
