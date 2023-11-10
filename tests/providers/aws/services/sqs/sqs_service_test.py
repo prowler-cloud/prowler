@@ -110,8 +110,24 @@ class Test_SQS_Service:
         sqs = SQS(audit_info)
         assert len(sqs.queues) == 1
         assert sqs.queues[0].id == queue["QueueUrl"]
+        assert sqs.queues[0].name == test_queue
+        assert sqs.queues[0].name == sqs.queues[0].arn.split(":")[-1]
+        assert sqs.queues[0].name == sqs.queues[0].id.split("/")[-1]
+        assert sqs.queues[0].arn == test_queue_arn
         assert sqs.queues[0].region == AWS_REGION
         assert sqs.queues[0].tags == [{"test": "test"}]
+
+    # moto does not properly mock this and is hardcoded to return 1000 queues
+    # so this test currently always fails
+    # @mock_sqs
+    # # Test SQS list queues for over 1000 queues
+    # def test__list_queues__pagination_over_a_thousand(self):
+    #     sqs_client = client("sqs", region_name=AWS_REGION)
+    #     for i in range(0,1050):
+    #         sqs_client.create_queue(QueueName=f"{test_queue}-{i}", tags={"test": "test"})
+    #     audit_info = self.set_mocked_audit_info()
+    #     sqs = SQS(audit_info)
+    #     assert len(sqs.queues) > 1000
 
     @mock_sqs
     # Test SQS list queues
