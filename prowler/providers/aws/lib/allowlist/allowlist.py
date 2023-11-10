@@ -135,7 +135,12 @@ def allowlist_findings(
 
 
 def is_allowlisted(
-    allowlist: dict, audited_account: str, check: str, region: str, resource: str, tags
+    allowlist: dict,
+    audited_account: str,
+    check: str,
+    finding_region: str,
+    finding_resource: str,
+    finding_tags,
 ):
     try:
         allowlisted_checks = {}
@@ -150,15 +155,15 @@ def is_allowlisted(
         if "*" in allowlist["Accounts"]:
             checks_multi_account = allowlist["Accounts"]["*"]["Checks"]
             allowlisted_checks.update(checks_multi_account)
+
         # Test if it is allowlisted
         if is_allowlisted_in_check(
             allowlisted_checks,
             audited_account,
-            audited_account,
             check,
-            region,
-            resource,
-            tags,
+            finding_region,
+            finding_resource,
+            finding_tags,
         ):
             is_finding_allowlisted = True
 
@@ -171,23 +176,29 @@ def is_allowlisted(
 
 
 def is_allowlisted_in_check(
-    allowlisted_checks, audited_account, account, check, region, resource, tags
+    allowlisted_checks,
+    audited_account,
+    check,
+    finding_region,
+    finding_resource,
+    finding_tags,
 ):
     try:
         # Default value is not allowlisted
         is_check_allowlisted = False
+
         for allowlisted_check, allowlisted_check_info in allowlisted_checks.items():
             # map lambda to awslambda
             allowlisted_check = re.sub("^lambda", "awslambda", allowlisted_check)
-            # extract the exceptions
+
+            # Check if the finding is excepted
             exceptions = allowlisted_check_info.get("Exceptions")
-            # Check if there are exceptions
             if is_excepted(
                 exceptions,
                 audited_account,
-                region,
-                resource,
-                tags,
+                finding_region,
+                finding_resource,
+                finding_tags,
             ):
                 # Break loop and return default value since is excepted
                 break
@@ -201,13 +212,27 @@ def is_allowlisted_in_check(
                 or check == allowlisted_check
                 or re.search(allowlisted_check, check)
             ):
-                if is_allowlisted_in_region(
-                    allowlisted_regions,
-                    allowlisted_resources,
-                    allowlisted_tags,
-                    region,
-                    resource,
-                    tags,
+                allowlisted_in_check = True
+                allowlisted_in_region = is_allowlisted_in_region(
+                    allowlisted_regions, finding_region
+                )
+                allowlisted_in_resource = is_allowlisted_in_resource(
+                    allowlisted_resources, finding_resource
+                )
+                allowlisted_in_tags = is_allowlisted_in_tags(
+                    allowlisted_tags, finding_tags
+                )
+
+                # For a finding to be allowlisted requires the following set to True:
+                # - allowlisted_in_check -> True
+                # - allowlisted_in_region -> True
+                # - allowlisted_in_tags -> True or allowlisted_in_resource -> True
+                # - excepted -> False
+
+                if (
+                    allowlisted_in_check
+                    and allowlisted_in_region
+                    and (allowlisted_in_tags or allowlisted_in_resource)
                 ):
                     is_check_allowlisted = True
 
@@ -220,25 +245,11 @@ def is_allowlisted_in_check(
 
 
 def is_allowlisted_in_region(
-    allowlist_regions, allowlist_resources, allowlisted_tags, region, resource, tags
+    allowlisted_regions,
+    finding_region,
 ):
     try:
-        # By default is not allowlisted
-        is_region_allowlisted = False
-        # If there is a *, it affects to all regions
-        if "*" in allowlist_regions or region in allowlist_regions:
-            for elem in allowlist_resources:
-                if is_allowlisted_in_tags(
-                    allowlisted_tags,
-                    elem,
-                    resource,
-                    tags,
-                ):
-                    is_region_allowlisted = True
-                    # if we find the element there is no point in continuing with the loop
-                    break
-
-            return is_region_allowlisted
+        return __is_item_matched__(allowlisted_regions, finding_region)
     except Exception as error:
         logger.critical(
             f"{error.__class__.__name__} -- {error}[{error.__traceback__.tb_lineno}]"
@@ -246,25 +257,9 @@ def is_allowlisted_in_region(
         sys.exit(1)
 
 
-def is_allowlisted_in_tags(allowlisted_tags, elem, resource, tags):
+def is_allowlisted_in_tags(allowlisted_tags, finding_tags):
     try:
-        # By default is not allowlisted
-        is_tag_allowlisted = False
-        # Check if it is an *
-        if elem == "*":
-            elem = ".*"
-        # Check if there are allowlisted tags
-        if allowlisted_tags:
-            for allowlisted_tag in allowlisted_tags:
-                if re.search(allowlisted_tag, tags):
-                    is_tag_allowlisted = True
-                    break
-
-        else:
-            if re.search(elem, resource):
-                is_tag_allowlisted = True
-
-        return is_tag_allowlisted
+        return __is_item_matched__(allowlisted_tags, finding_tags)
     except Exception as error:
         logger.critical(
             f"{error.__class__.__name__} -- {error}[{error.__traceback__.tb_lineno}]"
@@ -272,7 +267,25 @@ def is_allowlisted_in_tags(allowlisted_tags, elem, resource, tags):
         sys.exit(1)
 
 
-def is_excepted(exceptions, audited_account, region, resource, tags):
+def is_allowlisted_in_resource(allowlisted_resources, finding_resource):
+    try:
+        return __is_item_matched__(allowlisted_resources, finding_resource)
+
+    except Exception as error:
+        logger.critical(
+            f"{error.__class__.__name__} -- {error}[{error.__traceback__.tb_lineno}]"
+        )
+        sys.exit(1)
+
+
+def is_excepted(
+    exceptions,
+    audited_account,
+    finding_region,
+    finding_resource,
+    finding_tags,
+):
+    """is_excepted returns True if the account, region, resource and tags are excepted"""
     try:
         excepted = False
         is_account_excepted = False
@@ -281,37 +294,48 @@ def is_excepted(exceptions, audited_account, region, resource, tags):
         is_tag_excepted = False
         if exceptions:
             excepted_accounts = exceptions.get("Accounts", [])
+            is_account_excepted = __is_item_matched__(
+                excepted_accounts, audited_account
+            )
+
             excepted_regions = exceptions.get("Regions", [])
+            is_region_excepted = __is_item_matched__(excepted_regions, finding_region)
+
             excepted_resources = exceptions.get("Resources", [])
+            is_resource_excepted = __is_item_matched__(
+                excepted_resources, finding_resource
+            )
+
             excepted_tags = exceptions.get("Tags", [])
-            if exceptions:
-                if audited_account in excepted_accounts:
-                    is_account_excepted = True
-                if region in excepted_regions:
-                    is_region_excepted = True
-                for excepted_resource in excepted_resources:
-                    if re.search(excepted_resource, resource):
-                        is_resource_excepted = True
-                for tag in excepted_tags:
-                    if tag in tags:
-                        is_tag_excepted = True
-                if (
-                    (
-                        (excepted_accounts and is_account_excepted)
-                        or not excepted_accounts
-                    )
-                    and (
-                        (excepted_regions and is_region_excepted)
-                        or not excepted_regions
-                    )
-                    and (
-                        (excepted_resources and is_resource_excepted)
-                        or not excepted_resources
-                    )
-                    and ((excepted_tags and is_tag_excepted) or not excepted_tags)
-                ):
-                    excepted = True
+            is_tag_excepted = __is_item_matched__(excepted_tags, finding_tags)
+
+            if (
+                is_account_excepted
+                and is_region_excepted
+                and is_resource_excepted
+                and is_tag_excepted
+            ):
+                excepted = True
         return excepted
+    except Exception as error:
+        logger.critical(
+            f"{error.__class__.__name__} -- {error}[{error.__traceback__.tb_lineno}]"
+        )
+        sys.exit(1)
+
+
+def __is_item_matched__(matched_items, finding_items):
+    """__is_item_matched__ return True if any of the matched_items are present in the finding_items, otherwise returns False."""
+    try:
+        is_item_matched = False
+        if matched_items and (finding_items or finding_items == ""):
+            for item in matched_items:
+                if item == "*":
+                    item = ".*"
+                if re.search(item, finding_items):
+                    is_item_matched = True
+                    break
+        return is_item_matched
     except Exception as error:
         logger.critical(
             f"{error.__class__.__name__} -- {error}[{error.__traceback__.tb_lineno}]"
