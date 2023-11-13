@@ -24,12 +24,7 @@ class Azure_Provider:
         logger.info("Instantiating Azure Provider ...")
         self.region_config = self.__set_region_config__(region)
         self.credentials = self.__set_credentials__(
-            az_cli_auth,
-            sp_env_auth,
-            browser_auth,
-            managed_entity_auth,
-            tenant_id,
-            region,
+            az_cli_auth, sp_env_auth, browser_auth, managed_entity_auth, tenant_id
         )
         self.identity = self.__set_identity_info__(
             self.credentials,
@@ -44,13 +39,7 @@ class Azure_Provider:
         return get_regions_config(region)
 
     def __set_credentials__(
-        self,
-        az_cli_auth,
-        sp_env_auth,
-        browser_auth,
-        managed_entity_auth,
-        tenant_id,
-        region,
+        self, az_cli_auth, sp_env_auth, browser_auth, managed_entity_auth, tenant_id
     ):
         # Browser auth creds cannot be set with DefaultAzureCredentials()
         if not browser_auth:
