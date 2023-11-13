@@ -160,7 +160,11 @@ class Azure_Provider:
             logger.info(
                 "Trying to subscriptions and tenant ids to populate identity structure ..."
             )
-            subscriptions_client = SubscriptionClient(credential=credentials)
+            subscriptions_client = SubscriptionClient(
+                credential=credentials,
+                base_url=self.region_config["base_url"],
+                credential_scopes=self.region_config["credential_scopes"],
+            )
             if not subscription_ids:
                 logger.info("Scanning all the Azure subscriptions...")
                 for subscription in subscriptions_client.subscriptions.list():
