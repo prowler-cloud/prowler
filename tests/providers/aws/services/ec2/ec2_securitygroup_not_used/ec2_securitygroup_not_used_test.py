@@ -262,19 +262,19 @@ class Test_ec2_securitygroup_not_used:
         )
 
         ec2_client.authorize_security_group_ingress(
-        GroupId=sg.id,
-        IpPermissions=[
-            {
-                'IpProtocol': '-1',
-                'UserIdGroupPairs': [
-                    {
-                        'GroupId': sg1.id,
-                        'Description': 'Allow traffic from source SG'
-                    }
-                ]
-            }
-        ]
-    )
+            GroupId=sg.id,
+            IpPermissions=[
+                {
+                    "IpProtocol": "-1",
+                    "UserIdGroupPairs": [
+                        {
+                            "GroupId": sg1.id,
+                            "Description": "Allow traffic from source SG",
+                        }
+                    ],
+                }
+            ],
+        )
 
         from prowler.providers.aws.services.awslambda.awslambda_service import Lambda
         from prowler.providers.aws.services.ec2.ec2_service import EC2
