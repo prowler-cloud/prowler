@@ -473,11 +473,11 @@ def display_compliance_table(
                 )
             if fail_count + pass_count < 0:
                 print(
-                    f"\n {Style.BRIGHT}There are no resources for {Fore.YELLOW}{compliance_fm} {compliance_version} - {compliance_provider}{Style.RESET_ALL}.\n"
+                    f"\n {Style.BRIGHT}There are no resources for {Fore.YELLOW}{compliance_fm}_{compliance_version}_{compliance_provider}{Style.RESET_ALL}.\n"
                 )
             else:
                 print(
-                    f"\nEstado de Cumplimiento de {Fore.YELLOW}{compliance_fm} {compliance_version} - {compliance_provider}{Style.RESET_ALL}:"
+                    f"\nEstado de Cumplimiento de {Fore.YELLOW}{compliance_fm}_{compliance_version}_{compliance_provider}{Style.RESET_ALL}:"
                 )
                 overview_table = [
                     [
@@ -488,7 +488,7 @@ def display_compliance_table(
                 print(tabulate(overview_table, tablefmt="rounded_grid"))
                 if not compliance_overview:
                     print(
-                        f"\nResultados de {Fore.YELLOW}{compliance_fm} {compliance_version} - {compliance_provider}{Style.RESET_ALL}:"
+                        f"\nResultados de {Fore.YELLOW}{compliance_fm}_{compliance_version}_{compliance_provider}{Style.RESET_ALL}:"
                     )
                     print(
                         tabulate(
@@ -571,11 +571,11 @@ def display_compliance_table(
                     )
             if fail_count + pass_count < 1:
                 print(
-                    f"\n {Style.BRIGHT}There are no resources for {Fore.YELLOW}{compliance_fm}-{compliance_version}{Style.RESET_ALL}.\n"
+                    f"\n {Style.BRIGHT}There are no resources for {Fore.YELLOW}{compliance_fm}_{compliance_version}{Style.RESET_ALL}.\n"
                 )
             else:
                 print(
-                    f"\nCompliance Status of {Fore.YELLOW}{compliance_fm}-{compliance_version}{Style.RESET_ALL} Framework:"
+                    f"\nCompliance Status of {Fore.YELLOW}{compliance_fm}_{compliance_version}{Style.RESET_ALL} Framework:"
                 )
                 overview_table = [
                     [
@@ -586,7 +586,7 @@ def display_compliance_table(
                 print(tabulate(overview_table, tablefmt="rounded_grid"))
                 if not compliance_overview:
                     print(
-                        f"\nFramework {Fore.YELLOW}{compliance_fm}-{compliance_version}{Style.RESET_ALL} Results:"
+                        f"\nFramework {Fore.YELLOW}{compliance_fm}_{compliance_version}{Style.RESET_ALL} Results:"
                     )
                     print(
                         tabulate(

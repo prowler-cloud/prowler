@@ -295,7 +295,7 @@ def prowler():
             if not compliance_framework:
                 compliance_overview = True
                 compliance_framework = get_available_compliance_frameworks(provider)
-            for compliance in compliance_framework:
+            for compliance in sorted(compliance_framework):
                 # Display compliance table
                 display_compliance_table(
                     findings,
