@@ -220,7 +220,7 @@ Detailed documentation at https://docs.prowler.cloud
         group.add_argument(
             "-s", "--services", nargs="+", help="List of services to be executed."
         )
-        group.add_argument(
+        common_checks_parser.add_argument(
             "--severity",
             nargs="+",
             help="List of severities to be executed [informational, low, medium, high, critical]",
