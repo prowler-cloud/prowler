@@ -70,7 +70,9 @@ def check_current_version():
         if latest_version != prowler_version:
             return f"{prowler_version_string} (latest is {latest_version}, upgrade for the latest features)"
         else:
-            return f"{prowler_version_string} (You are running the latest version, yay!)"
+            return (
+                f"{prowler_version_string} (You are running the latest version, yay!)"
+            )
     except requests.RequestException:
         return f"{prowler_version_string}"
     except Exception:
