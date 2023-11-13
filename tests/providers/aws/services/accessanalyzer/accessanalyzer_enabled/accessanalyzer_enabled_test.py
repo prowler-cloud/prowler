@@ -33,6 +33,7 @@ class Test_accessanalyzer_enabled:
     def test_one_analyzer_not_available(self):
         # Include analyzers to check
         accessanalyzer_client = mock.MagicMock
+        accessanalyzer_client.region = AWS_REGION_1
         accessanalyzer_client.analyzers = [
             Analyzer(
                 arn=AWS_ACCOUNT_ARN,
@@ -104,6 +105,7 @@ class Test_accessanalyzer_enabled:
 
     def test_two_analyzers(self):
         accessanalyzer_client = mock.MagicMock
+        accessanalyzer_client.region = AWS_REGION_1
         accessanalyzer_client.analyzers = [
             Analyzer(
                 arn=AWS_ACCOUNT_ARN,
