@@ -48,6 +48,10 @@ from prowler.providers.common.audit_info import (
     set_provider_execution_parameters,
 )
 from prowler.providers.common.clean import clean_provider_local_output_directories
+from prowler.providers.common.custom_checks_metadata import (
+    set_provider_custom_checks_metadata,
+    update_checks_metadata,
+)
 from prowler.providers.common.outputs import set_provider_output_options
 from prowler.providers.common.quick_inventory import run_provider_quick_inventory
 
@@ -108,6 +112,14 @@ def prowler():
             bulk_compliance_frameworks, args.list_compliance_requirements
         )
         sys.exit()
+
+    if args.custom_checks_metadata_file:
+        custom_checks_metadata_file = set_provider_custom_checks_metadata(
+            provider, args
+        )
+        bulk_checks_metadata = update_checks_metadata(
+            bulk_checks_metadata, custom_checks_metadata_file
+        )
 
     # Load checks to execute
     checks_to_execute = load_checks_to_execute(

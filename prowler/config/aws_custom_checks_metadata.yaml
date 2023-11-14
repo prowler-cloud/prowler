@@ -1,0 +1,7 @@
+CustomChecksMetadata:
+      Checks:
+        "s3_bucket_level_public_access_block":
+          Severity:
+            - "high"
+          RelatedUrl:
+            - "https://myinternaldocumentation.sample/docs"
