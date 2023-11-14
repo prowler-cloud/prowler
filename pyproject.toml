@@ -25,7 +25,7 @@ readme = "README.md"
 version = "3.11.1"
 
 [tool.poetry.dependencies]
-alive-progress = "3.1.4"
+alive-progress = "3.1.5"
 awsipranges = "0.3.3"
 azure-identity = "1.15.0"
 azure-mgmt-authorization = "4.0.0"
