@@ -67,7 +67,7 @@ pylint = "3.0.2"
 pytest = "7.4.3"
 pytest-cov = "4.1.0"
 pytest-randomly = "3.15.0"
-pytest-xdist = "3.3.1"
+pytest-xdist = "3.4.0"
 safety = "2.3.5"
 vulture = "2.10"
 
