@@ -112,8 +112,10 @@ def prowler():
             bulk_compliance_frameworks, args.list_compliance_requirements
         )
         sys.exit()
-
-    if args.custom_checks_metadata_file:
+    if (
+        hasattr(args, "custom_checks_metadata_file")
+        and args.custom_checks_metadata_file
+    ):
         custom_checks_metadata_file = set_provider_custom_checks_metadata(
             provider, args
         )

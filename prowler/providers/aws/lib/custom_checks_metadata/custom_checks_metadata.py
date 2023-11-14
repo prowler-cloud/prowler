@@ -9,7 +9,7 @@ custom_checks_metadata_schema = Schema(
     {
         "Checks": {
             str: {
-                "Severity": [str],
+                "Severity": str,
                 Optional("RelatedUrl"): [str],
             }
         }
