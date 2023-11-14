@@ -3,7 +3,7 @@
 Microsoft provides clouds for compliance with regional laws, which are available for your use.
 By default, Prowler uses `AzureCloud` cloud which is the comercial one. (you can list all the available with `az cloud list --output table`).
 
-At the time of writing this doc the available clouds from different regions are:
+At the time of writing this documentation the available Azure Clouds from different regions are the following:
 - AzureCloud
 - AzureChinaCloud
 - AzureUSGovernment
