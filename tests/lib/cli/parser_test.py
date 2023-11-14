@@ -504,6 +504,18 @@ class Test_Parser:
         assert service_1 in parsed.services
         assert service_2 in parsed.services
 
+    def test_checks_parser_services_with_severity(self):
+        argument1 = "--services"
+        service_1 = "iam"
+        argument2 = "--severity"
+        severity = "low"
+        command = [prowler_command, argument1, service_1, argument2, severity]
+        parsed = self.parser.parse(command)
+        assert len(parsed.services) == 1
+        assert service_1 in parsed.services
+        assert len(parsed.severity) == 1
+        assert severity in parsed.severity
+
     def test_checks_parser_informational_severity(self):
         argument = "--severity"
         severity = "informational"
