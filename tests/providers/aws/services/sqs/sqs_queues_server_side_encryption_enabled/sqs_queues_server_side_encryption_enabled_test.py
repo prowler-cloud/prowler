@@ -8,8 +8,11 @@ AWS_REGION = "eu-west-1"
 AWS_ACCOUNT_NUMBER = "123456789012"
 
 test_kms_key_id = str(uuid4())
-queue_id = str(uuid4())
-topic_arn = f"arn:aws:sqs:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:{queue_id}"
+test_queue_name = str(uuid4())
+test_queue_url = (
+    f"https://sqs.{AWS_REGION}.amazonaws.com/{AWS_ACCOUNT_NUMBER}/{test_queue_name}"
+)
+test_queue_arn = f"arn:aws:sqs:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:{test_queue_name}"
 
 
 class Test_sqs_queues_server_side_encryption_enabled:
@@ -33,10 +36,11 @@ class Test_sqs_queues_server_side_encryption_enabled:
         sqs_client.queues = []
         sqs_client.queues.append(
             Queue(
-                id=queue_id,
+                id=test_queue_url,
+                name=test_queue_name,
                 region=AWS_REGION,
                 kms_key_id=test_kms_key_id,
-                arn="arn_test",
+                arn=test_queue_arn,
             )
         )
         with mock.patch(
@@ -52,17 +56,18 @@ class Test_sqs_queues_server_side_encryption_enabled:
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert search("is using Server Side Encryption", result[0].status_extended)
-            assert result[0].resource_id == queue_id
-            assert result[0].resource_arn == "arn_test"
+            assert result[0].resource_id == test_queue_url
+            assert result[0].resource_arn == test_queue_arn
 
     def test_queues_no_encryption(self):
         sqs_client = mock.MagicMock
         sqs_client.queues = []
         sqs_client.queues.append(
             Queue(
-                id=queue_id,
+                id=test_queue_url,
+                name=test_queue_name,
                 region=AWS_REGION,
-                arn="arn_test",
+                arn=test_queue_arn,
             )
         )
         with mock.patch(
@@ -80,5 +85,5 @@ class Test_sqs_queues_server_side_encryption_enabled:
             assert search(
                 "is not using Server Side Encryption", result[0].status_extended
             )
-            assert result[0].resource_id == queue_id
-            assert result[0].resource_arn == "arn_test"
+            assert result[0].resource_id == test_queue_url
+            assert result[0].resource_arn == test_queue_arn
