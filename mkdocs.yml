@@ -56,6 +56,7 @@ nav:
           - Boto3 Configuration: tutorials/aws/boto3-configuration.md
       - Azure:
           - Authentication: tutorials/azure/authentication.md
+          - Non default clouds: tutorials/azure/use-non-default-cloud.md
           - Subscriptions: tutorials/azure/subscriptions.md
       - Google Cloud:
           - Authentication: tutorials/gcp/authentication.md
