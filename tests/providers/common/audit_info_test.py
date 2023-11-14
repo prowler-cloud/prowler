@@ -134,8 +134,8 @@ class Test_Set_Audit_Info:
         "prowler.providers.common.audit_info.azure_audit_info",
         new=mock_azure_audit_info,
     )
-    @patch.object(Azure_Provider, "__set_credentials__", new=mock_set_azure_credentials)
-    @patch.object(Azure_Provider, "__set_identity_info__", new=mock_set_identity_info)
+    @patch.object(Azure_Provider, "__get_credentials__", new=mock_set_azure_credentials)
+    @patch.object(Azure_Provider, "__get_identity_info__", new=mock_set_identity_info)
     def test_set_audit_info_azure(self):
         provider = "azure"
         arguments = {
