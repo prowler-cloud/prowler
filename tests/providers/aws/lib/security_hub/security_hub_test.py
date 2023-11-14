@@ -87,7 +87,9 @@ class Test_SecurityHub:
         enabled_regions = [AWS_REGION_EU_WEST_1]
         output_options = self.set_mocked_output_options(is_quiet=False)
         findings = [self.generate_finding("PASS", AWS_REGION_EU_WEST_1)]
-        audit_info = set_mocked_aws_audit_info()
+        audit_info = set_mocked_aws_audit_info(
+            audited_regions=[AWS_REGION_EU_WEST_1, AWS_REGION_EU_WEST_2]
+        )
 
         assert prepare_security_hub_findings(
             findings,
@@ -142,7 +144,9 @@ class Test_SecurityHub:
         enabled_regions = [AWS_REGION_EU_WEST_1]
         output_options = self.set_mocked_output_options(is_quiet=False)
         findings = [self.generate_finding("INFO", AWS_REGION_EU_WEST_1)]
-        audit_info = set_mocked_aws_audit_info()
+        audit_info = set_mocked_aws_audit_info(
+            audited_regions=[AWS_REGION_EU_WEST_1, AWS_REGION_EU_WEST_2]
+        )
 
         assert prepare_security_hub_findings(
             findings,
@@ -155,7 +159,9 @@ class Test_SecurityHub:
         enabled_regions = [AWS_REGION_EU_WEST_1]
         output_options = self.set_mocked_output_options(is_quiet=False)
         findings = [self.generate_finding("PASS", AWS_REGION_EU_WEST_2)]
-        audit_info = set_mocked_aws_audit_info()
+        audit_info = set_mocked_aws_audit_info(
+            audited_regions=[AWS_REGION_EU_WEST_1, AWS_REGION_EU_WEST_2]
+        )
 
         assert prepare_security_hub_findings(
             findings,
@@ -168,7 +174,9 @@ class Test_SecurityHub:
         enabled_regions = [AWS_REGION_EU_WEST_1]
         output_options = self.set_mocked_output_options(is_quiet=True)
         findings = [self.generate_finding("PASS", AWS_REGION_EU_WEST_1)]
-        audit_info = set_mocked_aws_audit_info()
+        audit_info = set_mocked_aws_audit_info(
+            audited_regions=[AWS_REGION_EU_WEST_1, AWS_REGION_EU_WEST_2]
+        )
 
         assert prepare_security_hub_findings(
             findings,
@@ -182,7 +190,9 @@ class Test_SecurityHub:
         enabled_regions = [AWS_REGION_EU_WEST_1]
         output_options = self.set_mocked_output_options(is_quiet=False)
         findings = [self.generate_finding("PASS", AWS_REGION_EU_WEST_1)]
-        audit_info = set_mocked_aws_audit_info()
+        audit_info = set_mocked_aws_audit_info(
+            audited_regions=[AWS_REGION_EU_WEST_1, AWS_REGION_EU_WEST_2]
+        )
         session = self.set_mocked_session(AWS_REGION_EU_WEST_1)
 
         security_hub_findings = prepare_security_hub_findings(
