@@ -189,7 +189,11 @@ def prowler():
     findings = []
     if len(checks_to_execute):
         findings = execute_checks(
-            checks_to_execute, provider, audit_info, audit_output_options
+            checks_to_execute,
+            provider,
+            audit_info,
+            audit_output_options,
+            custom_checks_metadata_file["Checks"],
         )
     else:
         logger.error(

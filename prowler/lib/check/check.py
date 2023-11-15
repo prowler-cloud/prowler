@@ -416,6 +416,7 @@ def execute_checks(
     provider: str,
     audit_info: Any,
     audit_output_options: Provider_Output_Options,
+    custom_checks_metadata: Any,
 ) -> list:
     # List to store all the check's findings
     all_findings = []
@@ -461,6 +462,7 @@ def execute_checks(
                     audit_info,
                     services_executed,
                     checks_executed,
+                    custom_checks_metadata,
                 )
                 all_findings.extend(check_findings)
 
@@ -506,6 +508,7 @@ def execute_checks(
                         audit_info,
                         services_executed,
                         checks_executed,
+                        custom_checks_metadata,
                     )
                     all_findings.extend(check_findings)
 
@@ -523,6 +526,12 @@ def execute_checks(
     return all_findings
 
 
+def update_check_metadata(check: Check, custom_checks_metadata: Any):
+    if custom_checks_metadata.get(check.CheckID):
+        check.Severity = custom_checks_metadata[check.CheckID]["Severity"]
+    return check
+
+
 def execute(
     service: str,
     check_name: str,
@@ -531,6 +540,7 @@ def execute(
     audit_info: Any,
     services_executed: set,
     checks_executed: set,
+    custom_checks_metadata: Any,
 ):
     # Import check module
     check_module_path = (
@@ -540,6 +550,8 @@ def execute(
     # Recover functions from check
     check_to_execute = getattr(lib, check_name)
     c = check_to_execute()
+
+    c = update_check_metadata(c, custom_checks_metadata)
 
     # Run check
     check_findings = run_check(c, audit_output_options)
