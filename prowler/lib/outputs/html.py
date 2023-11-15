@@ -173,7 +173,7 @@ def fill_html(file_descriptor, finding, output_options):
             row_class = "table-info"
         elif finding.status == "FAIL":
             row_class = "table-danger"
-        elif finding.status == "WARNING":
+        elif finding.status == "MUTED":
             row_class = "table-warning"
         file_descriptor.write(
             f"""

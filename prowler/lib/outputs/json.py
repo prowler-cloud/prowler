@@ -115,8 +115,8 @@ def generate_json_asff_status(status: str) -> str:
         json_asff_status = "PASSED"
     elif status == "FAIL":
         json_asff_status = "FAILED"
-    elif status == "WARNING":
-        json_asff_status = "WARNING"
+    elif status == "MUTED":
+        json_asff_status = "MUTED"
     else:
         json_asff_status = "NOT_AVAILABLE"
 
@@ -289,7 +289,7 @@ def generate_json_ocsf_status(status: str):
         json_ocsf_status = "Success"
     elif status == "FAIL":
         json_ocsf_status = "Failure"
-    elif status == "WARNING":
+    elif status == "MUTED":
         json_ocsf_status = "Other"
     else:
         json_ocsf_status = "Unknown"
@@ -303,7 +303,7 @@ def generate_json_ocsf_status_id(status: str):
         json_ocsf_status_id = 1
     elif status == "FAIL":
         json_ocsf_status_id = 2
-    elif status == "WARNING":
+    elif status == "MUTED":
         json_ocsf_status_id = 99
     else:
         json_ocsf_status_id = 0

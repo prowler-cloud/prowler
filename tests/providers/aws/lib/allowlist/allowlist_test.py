@@ -3,7 +3,8 @@ from boto3 import resource, session
 from mock import MagicMock
 from moto import mock_dynamodb, mock_s3
 
-from prowler.providers.aws.lib.allowlist.allowlist import (
+from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
+from prowler.providers.aws.lib.mutelist.mutelist import (
     allowlist_findings,
     is_allowlisted,
     is_allowlisted_in_check,
@@ -12,7 +13,6 @@ from prowler.providers.aws.lib.allowlist.allowlist import (
     is_excepted,
     parse_allowlist_file,
 )
-from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.common.models import Audit_Metadata
 
 AWS_ACCOUNT_NUMBER = "123456789012"

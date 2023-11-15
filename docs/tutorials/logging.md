@@ -8,7 +8,7 @@ There are different log levels depending on the logging information that is desi
 
 - **DEBUG**: It will show low-level logs from Python.
 - **INFO**: It will show all the API calls that are being invoked by the provider.
-- **WARNING**: It will show all resources that are being **allowlisted**.
+- **WARNING**: It will show all resources that are being **muted**.
 - **ERROR**: It will show any errors, e.g., not authorized actions.
 - **CRITICAL**: The default log level. If a critical log appears, it will **exit** Prowler’s execution.
 

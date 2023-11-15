@@ -1,11 +1,11 @@
-# Allowlisting
+# Mute Listing
 Sometimes you may find resources that are intentionally configured in a certain way that may be a bad practice but it is all right with it, for example an AWS S3 Bucket open to the internet hosting a web site, or an AWS Security Group with an open port needed in your use case.
 
-Allowlist option works along with other options and adds a `WARNING` instead of `INFO`, `PASS` or `FAIL` to any output format.
+Mute List option works along with other options and adds a `WARNING` instead of `INFO`, `PASS` or `FAIL` to any output format.
 
-You can use `-w`/`--allowlist-file` with the path of your allowlist yaml file, but first, let's review the syntax.
+You can use `-w`/`--mutelist-file` with the path of your mutelist yaml file, but first, let's review the syntax.
 
-## Allowlist Yaml File Syntax
+## Mute List Yaml File Syntax
 
     ### Account, Check and/or Region can be * to apply for all the cases.
     ### Resources and tags are lists that can have either Regex or Keywords.
@@ -13,7 +13,7 @@ You can use `-w`/`--allowlist-file` with the path of your allowlist yaml file, b
     ### Use an alternation Regex to match one of multiple tags with "ORed" logic.
     ### For each check you can except Accounts, Regions, Resources and/or Tags.
     ###########################  ALLOWLIST EXAMPLE  ###########################
-    Allowlist:
+    Mute List:
       Accounts:
         "123456789012":
           Checks:
@@ -79,10 +79,10 @@ You can use `-w`/`--allowlist-file` with the path of your allowlist yaml file, b
                 Tags:
                   - "environment=prod"   # Will ignore every resource except in account 123456789012 except the ones containing the string "test" and tag environment=prod
 
-## Allowlist specific regions
-If you want to allowlist/mute failed findings only in specific regions, create a file with the following syntax and run it with `prowler aws -w allowlist.yaml`:
+## Mute specific regions
+If you want to mute failed findings only in specific regions, create a file with the following syntax and run it with `prowler aws -w mutelist.yaml`:
 
-    Allowlist:
+    Mute List:
       Accounts:
       "*":
         Checks:
@@ -93,50 +93,50 @@ If you want to allowlist/mute failed findings only in specific regions, create a
             Resources:
               - "*"
 
-## Default AWS Allowlist
-Prowler provides you a Default AWS Allowlist with the AWS Resources that should be allowlisted such as all resources created by AWS Control Tower when setting up a landing zone.
-You can execute Prowler with this allowlist using the following command:
+## Default AWS Mute List
+Prowler provides you a Default AWS Mute List with the AWS Resources that should be muted such as all resources created by AWS Control Tower when setting up a landing zone.
+You can execute Prowler with this mutelist using the following command:
 ```sh
-prowler aws --allowlist prowler/config/aws_allowlist.yaml
+prowler aws --mutelist prowler/config/aws_mutelist.yaml
 ```
-## Supported Allowlist Locations
+## Supported Mute List Locations
 
-The allowlisting flag supports the following locations:
+The mutelisting flag supports the following locations:
 
 ### Local file
-You will need to pass the local path where your Allowlist YAML file is located:
+You will need to pass the local path where your Mute List YAML file is located:
 ```
-prowler <provider> -w allowlist.yaml
+prowler <provider> -w mutelist.yaml
 ```
 ### AWS S3 URI
-You will need to pass the S3 URI where your Allowlist YAML file was uploaded to your bucket:
+You will need to pass the S3 URI where your Mute List YAML file was uploaded to your bucket:
 ```
-prowler aws -w s3://<bucket>/<prefix>/allowlist.yaml
+prowler aws -w s3://<bucket>/<prefix>/mutelist.yaml
 ```
-> Make sure that the used AWS credentials have s3:GetObject permissions in the S3 path where the allowlist file is located.
+> Make sure that the used AWS credentials have s3:GetObject permissions in the S3 path where the mutelist file is located.
 
 ### AWS DynamoDB Table ARN
 
-You will need to pass the DynamoDB Allowlist Table ARN:
+You will need to pass the DynamoDB Mute List Table ARN:
 
 ```
 prowler aws -w arn:aws:dynamodb:<region_name>:<account_id>:table/<table_name>
 ```
 
 1. The DynamoDB Table must have the following String keys:
-<img src="../img/allowlist-keys.png"/>
+<img src="../img/mutelist-keys.png"/>
 
-- The Allowlist Table must have the following columns:
-    - Accounts (String): This field can contain either an Account ID or an `*` (which applies to all the accounts that use this table as an allowlist).
+- The Mute List Table must have the following columns:
+    - Accounts (String): This field can contain either an Account ID or an `*` (which applies to all the accounts that use this table as an mutelist).
     - Checks (String): This field can contain either a Prowler Check Name or an `*` (which applies to all the scanned checks).
-    - Regions (List): This field contains a list of regions where this allowlist rule is applied (it can also contains an `*` to apply all scanned regions).
-    - Resources (List): This field contains a list of regex expressions that applies to the resources that are wanted to be allowlisted.
-    - Tags (List): -Optional- This field contains a list of tuples in the form of 'key=value' that applies to the resources tags that are wanted to be allowlisted.
-    - Exceptions (Map): -Optional- This field contains a map of lists of accounts/regions/resources/tags that are wanted to be excepted in the allowlist.
+    - Regions (List): This field contains a list of regions where this mutelist rule is applied (it can also contains an `*` to apply all scanned regions).
+    - Resources (List): This field contains a list of regex expressions that applies to the resources that are wanted to be muted.
+    - Tags (List): -Optional- This field contains a list of tuples in the form of 'key=value' that applies to the resources tags that are wanted to be muted.
+    - Exceptions (Map): -Optional- This field contains a map of lists of accounts/regions/resources/tags that are wanted to be excepted in the mutelist.
 
-The following example will allowlist all resources in all accounts for the EC2 checks in the regions `eu-west-1` and `us-east-1` with the tags `environment=dev` and `environment=prod`, except the resources containing the string `test` in the account `012345678912` and region `eu-west-1` with the tag `environment=prod`:
+The following example will mute all resources in all accounts for the EC2 checks in the regions `eu-west-1` and `us-east-1` with the tags `environment=dev` and `environment=prod`, except the resources containing the string `test` in the account `012345678912` and region `eu-west-1` with the tag `environment=prod`:
 
-<img src="../img/allowlist-row.png"/>
+<img src="../img/mutelist-row.png"/>
 
 > Make sure that the used AWS credentials have `dynamodb:PartiQLSelect` permissions in the table.
 
@@ -160,14 +160,14 @@ Make sure that the credentials that Prowler uses can invoke the Lambda Function:
         Resource: arn:aws:lambda:REGION:ACCOUNT_ID:function:FUNCTION_NAME
 ```
 
-The Lambda Function can then generate an Allowlist dynamically. Here is the code an example Python Lambda Function that
-generates an Allowlist:
+The Lambda Function can then generate an Mute List dynamically. Here is the code an example Python Lambda Function that
+generates an Mute List:
 
 ```
 def handler(event, context):
   checks = {}
   checks["vpc_flow_logs_enabled"] = { "Regions": [ "*" ], "Resources": [ "" ], Optional("Tags"): [ "key:value" ] }
 
-  al = { "Allowlist": { "Accounts": { "*": { "Checks": checks } } } }
+  al = { "Mute List": { "Accounts": { "*": { "Checks": checks } } } }
   return al
 ```
