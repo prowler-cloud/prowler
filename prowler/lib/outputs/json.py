@@ -250,7 +250,7 @@ def fill_json_ocsf(audit_info, finding, output_options) -> Check_Output_JSON_OCS
             original_time=outputs_unix_timestamp(
                 output_options.unix_timestamp, timestamp
             ),
-            profiles=[profile] if hasattr(audit_info, "organizations_metadata") else [],
+            profiles=[profile],
         )
         compliance = Compliance_OCSF(
             status=generate_json_ocsf_status(finding.status),
