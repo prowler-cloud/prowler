@@ -334,7 +334,7 @@ class Test_Common_Output_Options:
                             <b>AWS Account:</b> {audit_info.audited_account}
                         </li>
                         <li class="list-group-item">
-                            <b>AWS-CLI Profile:</b> {audit_info.profile}
+                            <b>AWS-CLI Profile:</b> default
                         </li>
                         <li class="list-group-item">
                             <b>Audited Regions:</b> All Regions
