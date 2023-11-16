@@ -35,7 +35,7 @@ def update_checks_metadata(bulk_checks_metadata, custom_checks_metadata):
         # Update checks metadata from CustomChecksMetadata file
         for check, custom_metadata in custom_checks_metadata["Checks"].items():
             check_metadata = bulk_checks_metadata.get(check)
-            if check:
+            if check_metadata:
                 bulk_checks_metadata[check] = update_check_metadata(
                     check_metadata, custom_metadata
                 )
