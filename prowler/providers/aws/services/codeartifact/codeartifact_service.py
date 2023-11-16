@@ -86,7 +86,9 @@ class CodeArtifact(AWSService):
                             if package_namespace:
                                 latest_version_information = (
                                     regional_client.list_package_versions(
-                                        domain=self.repositories[repository].domain_name,
+                                        domain=self.repositories[
+                                            repository
+                                        ].domain_name,
                                         domainOwner=self.repositories[
                                             repository
                                         ].domain_owner,
@@ -100,7 +102,9 @@ class CodeArtifact(AWSService):
                             else:
                                 latest_version_information = (
                                     regional_client.list_package_versions(
-                                        domain=self.repositories[repository].domain_name,
+                                        domain=self.repositories[
+                                            repository
+                                        ].domain_name,
                                         domainOwner=self.repositories[
                                             repository
                                         ].domain_owner,
