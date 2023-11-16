@@ -155,6 +155,7 @@ def fill_json_ocsf(audit_info, finding, output_options) -> Check_Output_JSON_OCS
         aws_org_uid = ""
         account = None
         org = None
+        profile = audit_info.profile if audit_info.profile is not None else "default"
         if (
             hasattr(audit_info, "organizations_metadata")
             and audit_info.organizations_metadata
@@ -249,9 +250,7 @@ def fill_json_ocsf(audit_info, finding, output_options) -> Check_Output_JSON_OCS
             original_time=outputs_unix_timestamp(
                 output_options.unix_timestamp, timestamp
             ),
-            profiles=[audit_info.profile]
-            if hasattr(audit_info, "organizations_metadata")
-            else [],
+            profiles=[profile] if hasattr(audit_info, "organizations_metadata") else [],
         )
         compliance = Compliance_OCSF(
             status=generate_json_ocsf_status(finding.status),
