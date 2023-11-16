@@ -16,6 +16,7 @@ from colorama import Fore, Style
 import prowler
 from prowler.config.config import orange_color
 from prowler.lib.check.compliance_models import load_compliance_framework
+from prowler.lib.check.custom_checks_metadata import update_check_metadata
 from prowler.lib.check.models import Check, load_check_metadata
 from prowler.lib.logger import logger
 from prowler.lib.outputs.outputs import report
@@ -526,12 +527,6 @@ def execute_checks(
     return all_findings
 
 
-def update_check_metadata(check: Check, custom_checks_metadata: Any):
-    if custom_checks_metadata.get(check.CheckID):
-        check.Severity = custom_checks_metadata[check.CheckID]["Severity"]
-    return check
-
-
 def execute(
     service: str,
     check_name: str,
@@ -551,7 +546,9 @@ def execute(
     check_to_execute = getattr(lib, check_name)
     c = check_to_execute()
 
-    c = update_check_metadata(c, custom_checks_metadata)
+    # Update check metadata to reflect that in the outputs
+    if custom_checks_metadata["Checks"][c.CheckID]:
+        c = update_check_metadata(c, custom_checks_metadata["Checks"][c.CheckID])
 
     # Run check
     check_findings = run_check(c, audit_output_options)

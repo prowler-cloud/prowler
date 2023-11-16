@@ -127,16 +127,6 @@ def init_parser(self):
         help="Path for allowlist yaml file. See example prowler/config/aws_allowlist.yaml for reference and format. It also accepts AWS DynamoDB Table or Lambda ARNs or S3 URIs, see more in https://docs.prowler.cloud/en/latest/tutorials/allowlist/",
     )
 
-    # CustomChecksMetadata
-    custom_checks_metadata_subparser = aws_parser.add_argument_group(
-        "CustomChecksMetadata"
-    )
-    custom_checks_metadata_subparser.add_argument(
-        "--custom-checks-metadata-file",
-        nargs="?",
-        default=None,
-        help="Path for CustomChecksMetadata yaml file. See example prowler/config/aws_custom_checks_metadata.yaml for reference and format. It also accepts AWS DynamoDB Table or Lambda ARNs or S3 URIs, see more in https://docs.prowler.cloud/en/latest/tutorials/custom-checks-metadata/",
-    )
     # Based Scans
     aws_based_scans_subparser = aws_parser.add_argument_group("AWS Based Scans")
     aws_based_scans_parser = aws_based_scans_subparser.add_mutually_exclusive_group()

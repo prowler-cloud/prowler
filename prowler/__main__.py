@@ -26,6 +26,10 @@ from prowler.lib.check.check import (
 )
 from prowler.lib.check.checks_loader import load_checks_to_execute
 from prowler.lib.check.compliance import update_checks_metadata_with_compliance
+from prowler.lib.check.custom_checks_metadata import (
+    parse_custom_checks_metadata_file,
+    update_checks_metadata,
+)
 from prowler.lib.cli.parser import ProwlerArgumentParser
 from prowler.lib.logger import logger, set_logging_config
 from prowler.lib.outputs.compliance import display_compliance_table
@@ -48,10 +52,6 @@ from prowler.providers.common.audit_info import (
     set_provider_execution_parameters,
 )
 from prowler.providers.common.clean import clean_provider_local_output_directories
-from prowler.providers.common.custom_checks_metadata import (
-    set_provider_custom_checks_metadata,
-    update_checks_metadata,
-)
 from prowler.providers.common.outputs import set_provider_output_options
 from prowler.providers.common.quick_inventory import run_provider_quick_inventory
 
@@ -101,9 +101,18 @@ def prowler():
 
     bulk_compliance_frameworks = bulk_load_compliance_frameworks(provider)
     # Complete checks metadata with the compliance framework specification
-    update_checks_metadata_with_compliance(
+    bulk_checks_metadata = update_checks_metadata_with_compliance(
         bulk_compliance_frameworks, bulk_checks_metadata
     )
+    # Update checks metadata if the --custom-checks-metadata-file is present
+    if args.custom_checks_metadata_file:
+        custom_checks_metadata = parse_custom_checks_metadata_file(
+            provider, args.custom_checks_metadata_file
+        )
+        bulk_checks_metadata = update_checks_metadata(
+            bulk_checks_metadata, custom_checks_metadata
+        )
+
     if args.list_compliance:
         print_compliance_frameworks(bulk_compliance_frameworks)
         sys.exit()
@@ -112,16 +121,6 @@ def prowler():
             bulk_compliance_frameworks, args.list_compliance_requirements
         )
         sys.exit()
-    if (
-        hasattr(args, "custom_checks_metadata_file")
-        and args.custom_checks_metadata_file
-    ):
-        custom_checks_metadata_file = set_provider_custom_checks_metadata(
-            provider, args
-        )
-        bulk_checks_metadata = update_checks_metadata(
-            bulk_checks_metadata, custom_checks_metadata_file
-        )
 
     # Load checks to execute
     checks_to_execute = load_checks_to_execute(
@@ -193,7 +192,7 @@ def prowler():
             provider,
             audit_info,
             audit_output_options,
-            custom_checks_metadata_file["Checks"],
+            custom_checks_metadata,
         )
     else:
         logger.error(
