@@ -297,5 +297,5 @@ Detailed documentation at https://docs.prowler.cloud
             "--custom-checks-metadata-file",
             nargs="?",
             default=None,
-            help="Path for the custom checks metadata YAML file. See example prowler/config/custom_checks_metadata.yaml for reference and format. See more in https://docs.prowler.cloud/en/latest/tutorials/custom-checks-metadata/",
+            help="Path for the custom checks metadata YAML file. See example prowler/config/custom_checks_metadata_example.yaml for reference and format. See more in https://docs.prowler.cloud/en/latest/tutorials/custom-checks-metadata/",
         )
