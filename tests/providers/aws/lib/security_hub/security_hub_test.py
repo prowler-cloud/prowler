@@ -15,6 +15,7 @@ from prowler.providers.aws.lib.security_hub.security_hub import (
 )
 from tests.providers.aws.audit_info_utils import (
     AWS_ACCOUNT_NUMBER,
+    AWS_COMMERCIAL_PARTITION,
     AWS_REGION_EU_WEST_1,
     AWS_REGION_EU_WEST_2,
     set_mocked_aws_audit_info,
@@ -80,7 +81,7 @@ class Test_SecurityHub:
     def test_verify_security_hub_integration_enabled_per_region(self):
         session = self.set_mocked_session(AWS_REGION_EU_WEST_1)
         assert verify_security_hub_integration_enabled_per_region(
-            AWS_REGION_EU_WEST_1, session, AWS_ACCOUNT_NUMBER
+            AWS_COMMERCIAL_PARTITION, AWS_REGION_EU_WEST_1, session, AWS_ACCOUNT_NUMBER
         )
 
     def test_prepare_security_hub_findings_enabled_region_not_quiet(self):
