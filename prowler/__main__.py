@@ -72,6 +72,7 @@ def prowler():
     checks_folder = args.checks_folder
     severities = args.severity
     compliance_framework = args.compliance
+    custom_checks_metadata_file = args.custom_checks_metadata_file
 
     if not args.no_banner:
         print_banner(args)
@@ -105,9 +106,10 @@ def prowler():
         bulk_compliance_frameworks, bulk_checks_metadata
     )
     # Update checks metadata if the --custom-checks-metadata-file is present
-    if args.custom_checks_metadata_file:
+    custom_checks_metadata = None
+    if custom_checks_metadata_file:
         custom_checks_metadata = parse_custom_checks_metadata_file(
-            provider, args.custom_checks_metadata_file
+            provider, custom_checks_metadata_file
         )
         bulk_checks_metadata = update_checks_metadata(
             bulk_checks_metadata, custom_checks_metadata

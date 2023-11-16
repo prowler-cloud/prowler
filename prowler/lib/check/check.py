@@ -547,7 +547,7 @@ def execute(
     c = check_to_execute()
 
     # Update check metadata to reflect that in the outputs
-    if custom_checks_metadata["Checks"][c.CheckID]:
+    if custom_checks_metadata and custom_checks_metadata["Checks"][c.CheckID]:
         c = update_check_metadata(c, custom_checks_metadata["Checks"][c.CheckID])
 
     # Run check
