@@ -49,6 +49,7 @@ def prepare_security_hub_findings(
 
 
 def verify_security_hub_integration_enabled_per_region(
+    partition: str,
     region: str,
     session: session.Session,
     aws_account_number: str,
@@ -65,7 +66,7 @@ def verify_security_hub_integration_enabled_per_region(
         security_hub_client.describe_hub()
 
         # Check if Prowler integration is enabled in Security Hub
-        security_hub_prowler_integration_arn = f"arn:aws:securityhub:{region}:{aws_account_number}:product-subscription/{SECURITY_HUB_INTEGRATION_NAME}"
+        security_hub_prowler_integration_arn = f"arn:{partition}:securityhub:{region}:{aws_account_number}:product-subscription/{SECURITY_HUB_INTEGRATION_NAME}"
         if security_hub_prowler_integration_arn not in str(
             security_hub_client.list_enabled_products_for_import()
         ):
