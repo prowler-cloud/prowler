@@ -47,7 +47,6 @@ def parse_custom_checks_metadata_file(provider: str, parse_custom_checks_metadat
 
 def update_checks_metadata(bulk_checks_metadata, custom_checks_metadata):
     try:
-        print(bulk_checks_metadata.get("s3_bucket_level_public_access_block"))
         # Update checks metadata from CustomChecksMetadata file
         for check, custom_metadata in custom_checks_metadata["Checks"].items():
             check_metadata = bulk_checks_metadata.get(check)
