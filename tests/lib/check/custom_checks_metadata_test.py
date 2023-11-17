@@ -149,3 +149,14 @@ class TestCustomChecksMetadata:
             check_metadata_updated.Severity
             == S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_SEVERITY
         )
+
+    def test_update_check_metadata_none_custom_metadata(self):
+        custom_checks_metadata = None
+
+        check_metadata_updated = update_check_metadata(
+            S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_METADATA, custom_checks_metadata
+        )
+        assert (
+            check_metadata_updated.Severity
+            == S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_SEVERITY
+        )
