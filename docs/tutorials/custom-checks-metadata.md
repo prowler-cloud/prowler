@@ -14,7 +14,7 @@ The list of supported check's metadata fields that can be override are listed as
 
 ## File Syntax
 
-The following is the YAML format for the custom checks metadata file:
+This feature is available for all the providers supported in Prowler since the metadata format is common between all the providers. The following is the YAML format for the custom checks metadata file:
 ```yaml title="custom_checks_metadata.yaml"
 CustomChecksMetadata:
   aws:
@@ -23,24 +23,13 @@ CustomChecksMetadata:
         Severity: high
       s3_bucket_no_mfa_delete:
         Severity: high
-```
-
-
-## Handling Multiple Providers
-
-This feature is available for all the providers supported in Prowler since the metadata format is common between all the providers.
-
-```yaml title="custom_checks_metadata.yaml"
-CustomChecksMetadata:
-  aws:
+  azure:
     Checks:
-      s3_bucket_level_public_access_block:
-        Severity: high
-      s3_bucket_no_mfa_delete:
-        Severity: high
-azure:
+      storage_infrastructure_encryption_is_enabled:
+        Severity: medium
+  gcp:
     Checks:
-      storage_ensure_minimum_tls_version_12:
+      compute_instance_public_ip:
         Severity: critical
 ```
 
