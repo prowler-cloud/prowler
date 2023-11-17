@@ -11,6 +11,7 @@ from prowler.providers.azure.azure_provider import Azure_Provider
 from prowler.providers.azure.lib.audit_info.models import (
     Azure_Audit_Info,
     Azure_Identity_Info,
+    Azure_Region_Config,
 )
 from prowler.providers.common.audit_info import (
     Audit_Info,
@@ -31,6 +32,7 @@ mock_azure_audit_info = Azure_Audit_Info(
     audit_metadata=None,
     audit_resources=None,
     audit_config=None,
+    azure_region_config=Azure_Region_Config(),
 )
 
 mock_set_audit_info = Audit_Info()
@@ -132,8 +134,8 @@ class Test_Set_Audit_Info:
         "prowler.providers.common.audit_info.azure_audit_info",
         new=mock_azure_audit_info,
     )
-    @patch.object(Azure_Provider, "__set_credentials__", new=mock_set_azure_credentials)
-    @patch.object(Azure_Provider, "__set_identity_info__", new=mock_set_identity_info)
+    @patch.object(Azure_Provider, "__get_credentials__", new=mock_set_azure_credentials)
+    @patch.object(Azure_Provider, "__get_identity_info__", new=mock_set_identity_info)
     def test_set_audit_info_azure(self):
         provider = "azure"
         arguments = {
@@ -150,6 +152,7 @@ class Test_Set_Audit_Info:
             "browser_auth": None,
             "managed_entity_auth": None,
             "config_file": default_config_file_path,
+            "azure_region": "AzureCloud",
         }
 
         audit_info = set_provider_audit_info(provider, arguments)

@@ -7,6 +7,7 @@ from msgraph.core import GraphClient
 
 from prowler.lib.logger import logger
 from prowler.providers.azure.lib.audit_info.models import Azure_Identity_Info
+from prowler.providers.azure.lib.regions.regions import get_regions_config
 
 
 class Azure_Provider:
@@ -18,12 +19,14 @@ class Azure_Provider:
         managed_entity_auth: bool,
         subscription_ids: list,
         tenant_id: str,
+        region: str,
     ):
         logger.info("Instantiating Azure Provider ...")
-        self.credentials = self.__set_credentials__(
+        self.region_config = self.__get_region_config__(region)
+        self.credentials = self.__get_credentials__(
             az_cli_auth, sp_env_auth, browser_auth, managed_entity_auth, tenant_id
         )
-        self.identity = self.__set_identity_info__(
+        self.identity = self.__get_identity_info__(
             self.credentials,
             az_cli_auth,
             sp_env_auth,
@@ -32,7 +35,10 @@ class Azure_Provider:
             subscription_ids,
         )
 
-    def __set_credentials__(
+    def __get_region_config__(self, region):
+        return get_regions_config(region)
+
+    def __get_credentials__(
         self, az_cli_auth, sp_env_auth, browser_auth, managed_entity_auth, tenant_id
     ):
         # Browser auth creds cannot be set with DefaultAzureCredentials()
@@ -52,6 +58,8 @@ class Azure_Provider:
                     exclude_shared_token_cache_credential=True,
                     # Azure Auth using PowerShell is not supported
                     exclude_powershell_credential=True,
+                    # set Authority of a Microsoft Entra endpoint
+                    authority=self.region_config["authority"],
                 )
             except Exception as error:
                 logger.critical("Failed to retrieve azure credentials")
@@ -61,7 +69,6 @@ class Azure_Provider:
                 sys.exit(1)
         else:
             try:
-                print(tenant_id)
                 credentials = InteractiveBrowserCredential(tenant_id=tenant_id)
             except Exception as error:
                 logger.critical("Failed to retrieve azure credentials")
@@ -83,7 +90,7 @@ class Azure_Provider:
                 )
                 sys.exit(1)
 
-    def __set_identity_info__(
+    def __get_identity_info__(
         self,
         credentials,
         az_cli_auth,
@@ -153,7 +160,11 @@ class Azure_Provider:
             logger.info(
                 "Trying to subscriptions and tenant ids to populate identity structure ..."
             )
-            subscriptions_client = SubscriptionClient(credential=credentials)
+            subscriptions_client = SubscriptionClient(
+                credential=credentials,
+                base_url=self.region_config["base_url"],
+                credential_scopes=self.region_config["credential_scopes"],
+            )
             if not subscription_ids:
                 logger.info("Scanning all the Azure subscriptions...")
                 for subscription in subscriptions_client.subscriptions.list():
@@ -195,3 +206,6 @@ class Azure_Provider:
 
     def get_identity(self):
         return self.identity
+
+    def get_region_config(self):
+        return self.region_config
