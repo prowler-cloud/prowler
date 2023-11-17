@@ -1,27 +1,42 @@
 import sys
 
 import yaml
-from schema import Schema
+from jsonschema import validate
 
 from prowler.lib.logger import logger
 
 valid_severities = ["critical", "high", "medium", "low", "informational"]
-custom_checks_metadata_schema = Schema(
-    {
+custom_checks_metadata_schema = {
+    "type": "object",
+    "properties": {
         "Checks": {
-            str: {
-                "Severity": str,
-            }
+            "type": "object",
+            "patternProperties": {
+                ".*": {
+                    "type": "object",
+                    "properties": {
+                        "Severity": {
+                            "type": "string",
+                            "enum": valid_severities,
+                        }
+                    },
+                    "required": ["Severity"],
+                    "additionalProperties": False,
+                }
+            },
+            "additionalProperties": False,
         }
-    }
-)
+    },
+    "required": ["Checks"],
+    "additionalProperties": False,
+}
 
 
 def parse_custom_checks_metadata_file(provider: str, parse_custom_checks_metadata_file):
     try:
         with open(parse_custom_checks_metadata_file) as f:
             custom_checks_metadata = yaml.safe_load(f)["CustomChecksMetadata"][provider]
-            custom_checks_metadata_schema.validate(custom_checks_metadata)
+            validate(custom_checks_metadata, schema=custom_checks_metadata_schema)
         return custom_checks_metadata
     except Exception as error:
         logger.critical(
@@ -32,6 +47,7 @@ def parse_custom_checks_metadata_file(provider: str, parse_custom_checks_metadat
 
 def update_checks_metadata(bulk_checks_metadata, custom_checks_metadata):
     try:
+        print(bulk_checks_metadata.get("s3_bucket_level_public_access_block"))
         # Update checks metadata from CustomChecksMetadata file
         for check, custom_metadata in custom_checks_metadata["Checks"].items():
             check_metadata = bulk_checks_metadata.get(check)
@@ -49,5 +65,9 @@ def update_checks_metadata(bulk_checks_metadata, custom_checks_metadata):
 
 def update_check_metadata(check_metadata, custom_metadata):
     for attribute in custom_metadata:
-        setattr(check_metadata, attribute, custom_metadata[attribute])
-    return check_metadata
+        try:
+            setattr(check_metadata, attribute, custom_metadata[attribute])
+        except ValueError:
+            pass
+        finally:
+            return check_metadata

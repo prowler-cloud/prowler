@@ -1,7 +1,5 @@
 CustomChecksMetadata:
   aws:
-    Checks:
+    Check:
       s3_bucket_level_public_access_block:
-        Severity: high
-      s3_bucket_no_mfa_delete:
         Severity: high
