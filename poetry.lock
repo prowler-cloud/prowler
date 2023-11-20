@@ -2161,8 +2161,7 @@ astroid = ">=3.0.1,<=3.1.0-dev0"
 colorama = {version = ">=0.4.5", markers = "sys_platform == \"win32\""}
 dill = [
     {version = ">=0.2", markers = "python_version < \"3.11\""},
-    {version = ">=0.3.7", markers = "python_version >= \"3.12\""},
-    {version = ">=0.3.6", markers = "python_version >= \"3.11\" and python_version < \"3.12\""},
+    {version = ">=0.3.6", markers = "python_version >= \"3.11\""},
 ]
 isort = ">=4.2.5,<6"
 mccabe = ">=0.6,<0.8"
@@ -3311,5 +3310,5 @@ docs = ["mkdocs", "mkdocs-material"]
 
 [metadata]
 lock-version = "2.0"
-python-versions = "^3.9"
-content-hash = "7fbd1e3cf6f1b5c096257aaa865de5537a4907eb25805178905d40d18630eae2"
+python-versions = ">=3.9,<3.12"
+content-hash = "1742196fe277edd4bf11421972fc7e84c1a7af513b6db8562209c5881ccb3d7a"
