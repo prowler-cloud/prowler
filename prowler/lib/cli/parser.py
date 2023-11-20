@@ -49,6 +49,7 @@ Detailed documentation at https://docs.prowler.cloud
         self.__init_exclude_checks_parser__()
         self.__init_list_checks_parser__()
         self.__init_config_parser__()
+        self.__init_custom_checks_metadata_parser__()
 
         # Init Providers Arguments
         init_providers_parser(self)
@@ -285,4 +286,16 @@ Detailed documentation at https://docs.prowler.cloud
             nargs="?",
             default=default_config_file_path,
             help="Set configuration file path",
+        )
+
+    def __init_custom_checks_metadata_parser__(self):
+        # CustomChecksMetadata
+        custom_checks_metadata_subparser = (
+            self.common_providers_parser.add_argument_group("Custom Checks Metadata")
+        )
+        custom_checks_metadata_subparser.add_argument(
+            "--custom-checks-metadata-file",
+            nargs="?",
+            default=None,
+            help="Path for the custom checks metadata YAML file. See example prowler/config/custom_checks_metadata_example.yaml for reference and format. See more in https://docs.prowler.cloud/en/latest/tutorials/custom-checks-metadata/",
         )
