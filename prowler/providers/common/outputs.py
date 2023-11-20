@@ -29,6 +29,18 @@ def set_provider_output_options(
         return provider_output_options
 
 
+def get_provider_output_model(audit_info_class_name):
+    # from AWS_Audit_Info -> AWS -> aws -> Aws
+    output_provider = audit_info_class_name.split("_", 1)[0].lower().capitalize()
+    output_provider_model_name = f"{output_provider}_Check_Output_CSV"
+    output_provider_models_path = "prowler.lib.outputs.models"
+    output_provider_model = getattr(
+        importlib.import_module(output_provider_models_path), output_provider_model_name
+    )
+
+    return output_provider_model
+
+
 @dataclass
 class Provider_Output_Options:
     is_quiet: bool
