@@ -27,12 +27,6 @@ def init_parser(self):
         # Pending ARN validation
     )
     aws_auth_subparser.add_argument(
-        "--sts-endpoint-region",
-        nargs="?",
-        default=None,
-        help="Specify the AWS STS endpoint region to use. Read more at https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_temp_enable-regions.html",
-    )
-    aws_auth_subparser.add_argument(
         "--mfa",
         action="store_true",
         help="IAM entity enforces MFA so you need to input the MFA ARN and the TOTP",
