@@ -52,6 +52,7 @@ from prowler.providers.common.audit_info import (
     set_provider_execution_parameters,
 )
 from prowler.providers.common.clean import clean_provider_local_output_directories
+from prowler.providers.common.common import set_provider
 from prowler.providers.common.outputs import set_provider_output_options
 from prowler.providers.common.quick_inventory import run_provider_quick_inventory
 
@@ -146,9 +147,11 @@ def prowler():
     if args.list_checks:
         print_checks(provider, sorted(checks_to_execute), bulk_checks_metadata)
         sys.exit()
-
-    # Set the audit info based on the selected provider
-    audit_info = set_provider_audit_info(provider, args.__dict__)
+    if args.provider != "azure":
+        # Set the audit info based on the selected provider
+        audit_info = set_provider_audit_info(provider, args.__dict__)
+    else:
+        set_provider(args)
 
     # Import custom checks from folder
     if checks_folder:
