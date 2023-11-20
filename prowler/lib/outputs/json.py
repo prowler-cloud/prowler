@@ -31,6 +31,7 @@ from prowler.lib.outputs.models import (
     unroll_dict_to_list,
 )
 from prowler.lib.utils.utils import hash_sha512, open_file, outputs_unix_timestamp
+from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 
 
 def fill_json_asff(finding_output, audit_info, finding, output_options):
@@ -155,7 +156,11 @@ def fill_json_ocsf(audit_info, finding, output_options) -> Check_Output_JSON_OCS
         aws_org_uid = ""
         account = None
         org = None
-        profile = audit_info.profile if audit_info.profile is not None else "default"
+        profile = ""
+        if isinstance(audit_info, AWS_Audit_Info):
+            profile = (
+                audit_info.profile if audit_info.profile is not None else "default"
+            )
         if (
             hasattr(audit_info, "organizations_metadata")
             and audit_info.organizations_metadata
