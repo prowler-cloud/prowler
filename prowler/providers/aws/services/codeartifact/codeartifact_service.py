@@ -63,7 +63,7 @@ class CodeArtifact(AWSService):
                     list_packages_parameters = {
                         "domain": self.repositories[repository].domain_name,
                         "domainOwner": self.repositories[repository].domain_owner,
-                        "repository": repository,
+                        "repository": self.repositories[repository].name,
                     }
                     packages = []
                     for page in list_packages_paginator.paginate(
@@ -83,18 +83,37 @@ class CodeArtifact(AWSService):
                                 ]
                             )
                             # Get Latest Package Version
-                            latest_version_information = (
-                                regional_client.list_package_versions(
-                                    domain=self.repositories[repository].domain_name,
-                                    domainOwner=self.repositories[
-                                        repository
-                                    ].domain_owner,
-                                    repository=repository,
-                                    format=package_format,
-                                    package=package_name,
-                                    sortBy="PUBLISHED_TIME",
+                            if package_namespace:
+                                latest_version_information = (
+                                    regional_client.list_package_versions(
+                                        domain=self.repositories[
+                                            repository
+                                        ].domain_name,
+                                        domainOwner=self.repositories[
+                                            repository
+                                        ].domain_owner,
+                                        repository=self.repositories[repository].name,
+                                        format=package_format,
+                                        namespace=package_namespace,
+                                        package=package_name,
+                                        sortBy="PUBLISHED_TIME",
+                                    )
                                 )
-                            )
+                            else:
+                                latest_version_information = (
+                                    regional_client.list_package_versions(
+                                        domain=self.repositories[
+                                            repository
+                                        ].domain_name,
+                                        domainOwner=self.repositories[
+                                            repository
+                                        ].domain_owner,
+                                        repository=self.repositories[repository].name,
+                                        format=package_format,
+                                        package=package_name,
+                                        sortBy="PUBLISHED_TIME",
+                                    )
+                                )
                             latest_version = ""
                             latest_origin_type = "UNKNOWN"
                             latest_status = "Published"
