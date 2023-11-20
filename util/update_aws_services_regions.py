@@ -48,6 +48,10 @@ for page in get_parameters_by_path_paginator.paginate(
 logging.info("Updating subservices and the services not present in the original matrix")
 # macie2 --> macie
 regions_by_service["services"]["macie2"] = regions_by_service["services"]["macie"]
+# cognito --> cognito-idp
+regions_by_service["services"]["cognito"] = regions_by_service["services"][
+    "cognito-idp"
+]
 # opensearch --> es
 regions_by_service["services"]["opensearch"] = regions_by_service["services"]["es"]
 # elbv2 --> elb
