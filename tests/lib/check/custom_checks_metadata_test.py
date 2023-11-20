@@ -24,41 +24,43 @@ GCP_PROVIDER = "gcp"
 
 S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME = "s3_bucket_level_public_access_block"
 S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_SEVERITY = "medium"
-S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_METADATA = Check_Metadata_Model(
-    Provider="aws",
-    CheckID=S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME,
-    CheckTitle="Check S3 Bucket Level Public Access Block.",
-    CheckType=["Data Protection"],
-    CheckAliases=[],
-    ServiceName="s3",
-    SubServiceName="",
-    ResourceIdTemplate="arn:partition:s3:::bucket_name",
-    Severity=S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_SEVERITY,
-    ResourceType="AwsS3Bucket",
-    Description="Check S3 Bucket Level Public Access Block.",
-    Risk="Public access policies may be applied to sensitive data buckets.",
-    RelatedUrl="https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html",
-    Remediation=Remediation(
-        Code=Code(
-            NativeIaC="",
-            Terraform="https://docs.bridgecrew.io/docs/bc_aws_s3_20#terraform",
-            CLI="aws s3api put-public-access-block --region <REGION_NAME> --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true --bucket <BUCKET_NAME>",
-            Other="https://github.com/cloudmatos/matos/tree/master/remediations/aws/s3/s3/block-public-access",
-        ),
-        Recommendation=Recommendation(
-            Text="You can enable Public Access Block at the bucket level to prevent the exposure of your data stored in S3.",
-            Url="https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html",
-        ),
-    ),
-    Categories=[],
-    DependsOn=[],
-    RelatedTo=[],
-    Notes="",
-    Compliance=[],
-)
 
 
 class TestCustomChecksMetadata:
+    def get_custom_check_metadata(self):
+        return Check_Metadata_Model(
+            Provider="aws",
+            CheckID=S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME,
+            CheckTitle="Check S3 Bucket Level Public Access Block.",
+            CheckType=["Data Protection"],
+            CheckAliases=[],
+            ServiceName="s3",
+            SubServiceName="",
+            ResourceIdTemplate="arn:partition:s3:::bucket_name",
+            Severity=S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_SEVERITY,
+            ResourceType="AwsS3Bucket",
+            Description="Check S3 Bucket Level Public Access Block.",
+            Risk="Public access policies may be applied to sensitive data buckets.",
+            RelatedUrl="https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html",
+            Remediation=Remediation(
+                Code=Code(
+                    NativeIaC="",
+                    Terraform="https://docs.bridgecrew.io/docs/bc_aws_s3_20#terraform",
+                    CLI="aws s3api put-public-access-block --region <REGION_NAME> --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true --bucket <BUCKET_NAME>",
+                    Other="https://github.com/cloudmatos/matos/tree/master/remediations/aws/s3/s3/block-public-access",
+                ),
+                Recommendation=Recommendation(
+                    Text="You can enable Public Access Block at the bucket level to prevent the exposure of your data stored in S3.",
+                    Url="https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html",
+                ),
+            ),
+            Categories=[],
+            DependsOn=[],
+            RelatedTo=[],
+            Notes="",
+            Compliance=[],
+        )
+
     def test_parse_custom_checks_metadata_file_for_aws(self):
         assert parse_custom_checks_metadata_file(
             AWS_PROVIDER, CUSTOM_CHECKS_METADATA_FIXTURE_FILE
@@ -93,7 +95,7 @@ class TestCustomChecksMetadata:
     def test_update_checks_metadata(self):
         updated_severity = "high"
         bulk_checks_metadata = {
-            S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME: S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_METADATA,
+            S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME: self.get_custom_check_metadata(),
         }
         custom_checks_metadata = {
             "Checks": {
@@ -111,7 +113,7 @@ class TestCustomChecksMetadata:
 
     def test_update_checks_metadata_not_present_field(self):
         bulk_checks_metadata = {
-            S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME: S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_METADATA,
+            S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME: self.get_custom_check_metadata(),
         }
         custom_checks_metadata = {
             "Checks": {
@@ -135,7 +137,7 @@ class TestCustomChecksMetadata:
         custom_checks_metadata = {"Severity": updated_severity}
 
         check_metadata_updated = update_check_metadata(
-            S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_METADATA, custom_checks_metadata
+            self.get_custom_check_metadata(), custom_checks_metadata
         )
         assert check_metadata_updated.Severity == updated_severity
 
@@ -143,7 +145,7 @@ class TestCustomChecksMetadata:
         custom_checks_metadata = {"RandomField": "random_value"}
 
         check_metadata_updated = update_check_metadata(
-            S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_METADATA, custom_checks_metadata
+            self.get_custom_check_metadata(), custom_checks_metadata
         )
         assert (
             check_metadata_updated.Severity
@@ -154,7 +156,7 @@ class TestCustomChecksMetadata:
         custom_checks_metadata = None
 
         check_metadata_updated = update_check_metadata(
-            S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_METADATA, custom_checks_metadata
+            self.get_custom_check_metadata(), custom_checks_metadata
         )
         assert (
             check_metadata_updated.Severity
