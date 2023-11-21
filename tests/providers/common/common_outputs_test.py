@@ -16,6 +16,7 @@ from prowler.providers.common.outputs import (
     Aws_Output_Options,
     Azure_Output_Options,
     Gcp_Output_Options,
+    get_provider_output_model,
     set_provider_output_options,
 )
 from prowler.providers.gcp.lib.audit_info.models import GCP_Audit_Info
@@ -393,3 +394,16 @@ class Test_Common_Output_Options:
             </div>
             """
         )
+
+    def test_get_provider_output_model(self):
+        audit_info_class_names = [
+            "AWS_Audit_Info",
+            "GCP_Audit_Info",
+            "Azure_Audit_Info",
+        ]
+        for class_name in audit_info_class_names:
+            provider_prefix = class_name.split("_", 1)[0].lower().capitalize()
+            assert (
+                get_provider_output_model(class_name).__name__
+                == f"{provider_prefix}_Check_Output_CSV"
+            )
