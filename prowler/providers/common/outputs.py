@@ -30,6 +30,9 @@ def set_provider_output_options(
 
 
 def get_provider_output_model(audit_info_class_name):
+    """
+    get_provider_output_model returns the model _Check_Output_CSV for each provider
+    """
     # from AWS_Audit_Info -> AWS -> aws -> Aws
     output_provider = audit_info_class_name.split("_", 1)[0].lower().capitalize()
     output_provider_model_name = f"{output_provider}_Check_Output_CSV"
