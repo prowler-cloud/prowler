@@ -1,6 +1,8 @@
 from importlib import import_module
 from typing import Any
 
+from prowler.providers.azure.azure_provider_new import AzureProvider
+
 providers_prowler_lib_path = "prowler.providers"
 
 # SHARED PROVIDER OBJECT ACROSS ALL PROWLER CODE
@@ -25,3 +27,9 @@ def get_available_providers() -> list[str]:
         if not (provider.startswith("__") or provider.startswith("common"))
     ]
     return providers
+
+
+def set_global_provider_object(arguments):
+    global global_provider
+    # make here dynamic import
+    global_provider = AzureProvider(arguments)

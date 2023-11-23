@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 
 
 class CloudProvider(ABC):
+    audit_resources: list = None
     is_quiet: bool
     output_modes: list
     output_directory: str
@@ -20,9 +21,9 @@ class CloudProvider(ABC):
     def print_credentials(self):
         pass
 
-    @abstractmethod
-    def create_outputs(self):
-        pass
+    # @abstractmethod
+    # def create_outputs(self):
+    #     pass
 
     def validate_arguments(self):
         pass
