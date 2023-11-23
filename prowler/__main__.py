@@ -147,12 +147,10 @@ def prowler():
     if args.list_checks:
         print_checks(provider, sorted(checks_to_execute), bulk_checks_metadata)
         sys.exit()
-    if args.provider != "azure":
-        # Set the audit info based on the selected provider
-        audit_info = set_provider_audit_info(provider, args.__dict__)
-    else:
-        audit_info = set_provider_audit_info(provider, args.__dict__)
-        set_global_provider_object(args)
+
+    # Set the audit info based on the selected provider
+    audit_info = set_provider_audit_info(provider, args.__dict__)
+    set_global_provider_object(args)
 
     # Import custom checks from folder
     if checks_folder:

@@ -6,16 +6,16 @@ class AzureService:
     def __init__(
         self,
         service: str,
-        audit_info: AzureProvider,
+        provider: AzureProvider,
     ):
         self.clients = self.__set_clients__(
-            audit_info.identity.subscriptions,
-            audit_info.session,
+            provider.identity.subscriptions,
+            provider.session,
             service,
-            audit_info.region_config,
+            provider.region_config,
         )
 
-        self.subscriptions = audit_info.identity.subscriptions
+        self.subscriptions = provider.identity.subscriptions
 
     def __set_clients__(self, subscriptions, session, service, region_config):
         clients = {}

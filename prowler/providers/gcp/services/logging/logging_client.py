@@ -1,4 +1,4 @@
-from prowler.providers.gcp.lib.audit_info.audit_info import gcp_audit_info
+from prowler.providers.common.common import global_provider
 from prowler.providers.gcp.services.logging.logging_service import Logging
 
-logging_client = Logging(gcp_audit_info)
+logging_client = Logging(global_provider)
