@@ -295,13 +295,15 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
             and not browser_auth
             and not managed_entity_auth
         ):
-            raise Exception(
+            logger.critical(
                 "Azure provider requires at least one authentication method set: [--az-cli-auth | --sp-env-auth | --browser-auth | --managed-identity-auth]"
             )
+            sys.exit(1)
         if (not browser_auth and tenant_id) or (browser_auth and not tenant_id):
-            raise Exception(
+            logger.critical(
                 "Azure Tenant ID (--tenant-id) is required only for browser authentication mode"
             )
+            sys.exit(1)
 
         azure_provider = Azure_Provider(
             az_cli_auth,
