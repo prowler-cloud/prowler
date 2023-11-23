@@ -4,9 +4,9 @@ import google_auth_httplib2
 import httplib2
 from colorama import Fore, Style
 from googleapiclient import discovery
+from googleapiclient.discovery import Resource
 
 from prowler.lib.logger import logger
-from prowler.providers.gcp.gcp_provider import generate_client
 from prowler.providers.gcp.lib.audit_info.models import GCP_Audit_Info
 
 
@@ -66,3 +66,16 @@ class GCPService:
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         return project_ids
+
+
+def generate_client(
+    service: str,
+    api_version: str,
+    audit_info: GCP_Audit_Info,
+) -> Resource:
+    try:
+        return discovery.build(service, api_version, credentials=audit_info.credentials)
+    except Exception as error:
+        logger.error(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+        )
