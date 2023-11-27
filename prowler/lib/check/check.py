@@ -107,14 +107,19 @@ def exclude_services_to_run(
 
 # Load checks from checklist.json
 def parse_checks_from_file(input_file: str, provider: str) -> set:
-    checks_to_execute = set()
-    with open_file(input_file) as f:
-        json_file = parse_json_file(f)
+    try:
+        checks_to_execute = set()
+        with open_file(input_file) as f:
+            json_file = parse_json_file(f)
 
-    for check_name in json_file[provider]:
-        checks_to_execute.add(check_name)
+        for check_name in json_file[provider]:
+            checks_to_execute.add(check_name)
 
-    return checks_to_execute
+        return checks_to_execute
+    except Exception as error:
+        logger.error(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+        )
 
 
 # Load checks from custom folder
@@ -608,21 +613,26 @@ def update_audit_metadata(
 
 
 def recover_checks_from_service(service_list: list, provider: str) -> list:
-    checks = set()
-    service_list = [
-        "awslambda" if service == "lambda" else service for service in service_list
-    ]
-    for service in service_list:
-        modules = recover_checks_from_provider(provider, service)
-        if not modules:
-            logger.error(f"Service '{service}' does not have checks.")
+    try:
+        checks = set()
+        service_list = [
+            "awslambda" if service == "lambda" else service for service in service_list
+        ]
+        for service in service_list:
+            modules = recover_checks_from_provider(provider, service)
+            if not modules:
+                logger.error(f"Service '{service}' does not have checks.")
 
-        else:
-            for check_module in modules:
-                # Recover check name and module name from import path
-                # Format: "providers.{provider}.services.{service}.{check_name}.{check_name}"
-                check_name = check_module[0].split(".")[-1]
-                # If the service is present in the group list passed as parameters
-                # if service_name in group_list: checks_from_arn.add(check_name)
-                checks.add(check_name)
-    return checks
+            else:
+                for check_module in modules:
+                    # Recover check name and module name from import path
+                    # Format: "providers.{provider}.services.{service}.{check_name}.{check_name}"
+                    check_name = check_module[0].split(".")[-1]
+                    # If the service is present in the group list passed as parameters
+                    # if service_name in group_list: checks_from_arn.add(check_name)
+                    checks.add(check_name)
+        return checks
+    except Exception as error:
+        logger.error(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+        )

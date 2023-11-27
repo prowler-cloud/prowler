@@ -22,8 +22,34 @@ def load_checks_to_execute(
     categories: set,
     provider: str,
 ) -> set:
-    """Generate the list of checks to execute based on the cloud provider and input arguments specified"""
+    """Generate the list of checks to execute based on the cloud provider and the input arguments given"""
+
+    # Local subsets
     checks_to_execute = set()
+    check_aliases = {}
+    check_severities = {
+        "critical": [],
+        "high": [],
+        "medium": [],
+        "low": [],
+        "informational": [],
+    }
+    check_categories = {}
+
+    # First, loop over the bulk_checks_metadata to extract the needed subsets
+    for check, metadata in bulk_checks_metadata.items():
+        # Aliases
+        for alias in metadata.CheckAliases:
+            check_aliases[alias] = check
+
+        # Severities
+        check_severities[metadata.Severity].append(check)
+
+        # Categories
+        for category in metadata.Categories:
+            if category not in check_categories:
+                check_categories[category] = []
+            check_categories[category].append(check)
 
     # Handle if there are checks passed using -c/--checks
     if check_list:
@@ -32,10 +58,9 @@ def load_checks_to_execute(
 
     # Handle if there are some severities passed using --severity
     elif severities:
-        for check in bulk_checks_metadata:
-            # Check check's severity
-            if bulk_checks_metadata[check].Severity in severities:
-                checks_to_execute.add(check)
+        for severity in severities:
+            checks_to_execute.add(check_severities[severity])
+
         if service_list:
             checks_to_execute = (
                 recover_checks_from_service(service_list, provider) & checks_to_execute
@@ -63,11 +88,8 @@ def load_checks_to_execute(
 
     # Handle if there are categories passed using --categories
     elif categories:
-        for cat in categories:
-            for check in bulk_checks_metadata:
-                # Check check's categories
-                if cat in bulk_checks_metadata[check].Categories:
-                    checks_to_execute.add(check)
+        for category in categories:
+            checks_to_execute.add(check_categories[category])
 
     # If there are no checks passed as argument
     else:
@@ -83,12 +105,18 @@ def load_checks_to_execute(
                 check_name = check_info[0]
                 checks_to_execute.add(check_name)
 
-    # Get Check Aliases mapping
-    check_aliases = {}
-    for check, metadata in bulk_checks_metadata.items():
-        for alias in metadata.CheckAliases:
-            check_aliases[alias] = check
+    # Check Aliases
+    checks_to_execute = update_checks_to_execute_with_aliases(
+        checks_to_execute, check_aliases
+    )
 
+    return checks_to_execute
+
+
+def update_checks_to_execute_with_aliases(
+    checks_to_execute: set, check_aliases: dict
+) -> set:
+    """update_checks_to_execute_with_aliases returns the checks_to_execute updated using the check aliases."""
     # Verify if any input check is an alias of another check
     for input_check in checks_to_execute:
         if (
@@ -101,5 +129,4 @@ def load_checks_to_execute(
             print(
                 f"\nUsing alias {Fore.YELLOW}{input_check}{Style.RESET_ALL} for check {Fore.YELLOW}{check_aliases[input_check]}{Style.RESET_ALL}...\n"
             )
-
-    return checks_to_execute
+        return checks_to_execute
