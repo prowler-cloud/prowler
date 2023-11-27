@@ -43,7 +43,8 @@ def load_checks_to_execute(
             check_aliases[alias] = check
 
         # Severities
-        check_severities[metadata.Severity].append(check)
+        if metadata.Severity:
+            check_severities[metadata.Severity].append(check)
 
         # Categories
         for category in metadata.Categories:

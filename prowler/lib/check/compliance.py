@@ -60,7 +60,7 @@ def update_checks_metadata_with_compliance(
                 "ServiceName": "",
                 "SubServiceName": "",
                 "ResourceIdTemplate": "",
-                "Severity": "informational",
+                "Severity": "",
                 "ResourceType": "",
                 "Description": "",
                 "Risk": "",
