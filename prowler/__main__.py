@@ -28,7 +28,10 @@ from prowler.lib.check.custom_checks_metadata import (
     parse_custom_checks_metadata_file,
     update_checks_metadata,
 )
+<<<<<<< HEAD
 from prowler.lib.check.managers import ExecutionManager
+=======
+>>>>>>> 856afb396 (chore(update): rebase from master (#3067))
 from prowler.lib.cli.parser import ProwlerArgumentParser
 from prowler.lib.logger import logger, set_logging_config
 from prowler.lib.outputs.compliance import display_compliance_table
@@ -51,6 +54,7 @@ from prowler.providers.common.audit_info import (
     set_provider_audit_info,
     set_provider_execution_parameters,
 )
+from prowler.providers.common.clean import clean_provider_local_output_directories
 from prowler.providers.common.outputs import set_provider_output_options
 from prowler.providers.common.quick_inventory import run_provider_quick_inventory
 
@@ -191,7 +195,11 @@ def prowler():
     findings = []
 
     if len(checks_to_execute):
+<<<<<<< HEAD
         execution_manager = ExecutionManager(
+=======
+        findings = execute_checks(
+>>>>>>> 856afb396 (chore(update): rebase from master (#3067))
             checks_to_execute,
             provider,
             audit_info,
@@ -326,6 +334,9 @@ def prowler():
     # If custom checks were passed, remove the modules
     if checks_folder:
         remove_custom_checks_module(checks_folder, provider)
+
+    # clean local directories
+    clean_provider_local_output_directories(args)
 
     # If there are failed findings exit code 3, except if -z is input
     if not args.ignore_exit_code_3 and stats["total_fail"] > 0:

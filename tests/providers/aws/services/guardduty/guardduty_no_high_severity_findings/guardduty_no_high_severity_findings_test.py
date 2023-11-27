@@ -80,6 +80,29 @@ class Test_guardduty_no_high_severity_findings:
             result = check.execute()
             assert len(result) == 0
 
+    def test_not_enabled_account_detector(self):
+        guardduty_client = mock.MagicMock
+        guardduty_client.detectors = []
+        guardduty_client.detectors.append(
+            Detector(
+                id=AWS_ACCOUNT_NUMBER,
+                arn=DETECTOR_ARN,
+                region=AWS_REGION,
+                enabled_in_account=False,
+            )
+        )
+        with mock.patch(
+            "prowler.providers.aws.services.guardduty.guardduty_service.GuardDuty",
+            guardduty_client,
+        ):
+            from prowler.providers.aws.services.guardduty.guardduty_no_high_severity_findings.guardduty_no_high_severity_findings import (
+                guardduty_no_high_severity_findings,
+            )
+
+            check = guardduty_no_high_severity_findings()
+            result = check.execute()
+            assert len(result) == 0
+
     def test_high_findings(self):
         guardduty_client = mock.MagicMock
         guardduty_client.detectors = []

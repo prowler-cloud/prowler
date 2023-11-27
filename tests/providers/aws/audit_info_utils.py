@@ -6,6 +6,7 @@ from prowler.providers.common.models import Audit_Metadata
 # Root AWS Account
 AWS_ACCOUNT_NUMBER = "123456789012"
 AWS_ACCOUNT_ARN = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
+AWS_COMMERCIAL_PARTITION = "aws"
 
 # Commercial Regions
 AWS_REGION_US_EAST_1 = "us-east-1"
