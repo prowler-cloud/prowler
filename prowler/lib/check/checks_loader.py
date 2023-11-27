@@ -84,8 +84,10 @@ def load_checks_to_execute(
             checks_to_execute = parse_checks_from_compliance_framework(
                 compliance_frameworks, bulk_compliance_frameworks
             )
-        except Exception as e:
-            logger.error(f"{e.__class__.__name__}[{e.__traceback__.tb_lineno}] -- {e}")
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+            )
 
     # Handle if there are categories passed using --categories
     elif categories:
@@ -97,8 +99,10 @@ def load_checks_to_execute(
         try:
             # Get all check modules to run with the specific provider
             checks = recover_checks_from_provider(provider)
-        except Exception as e:
-            logger.error(f"{e.__class__.__name__}[{e.__traceback__.tb_lineno}] -- {e}")
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+            )
         else:
             for check_info in checks:
                 # Recover check name from import path (last part)
