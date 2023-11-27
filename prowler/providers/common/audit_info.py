@@ -30,6 +30,7 @@ from prowler.providers.azure.lib.audit_info.models import (
     Azure_Audit_Info,
     Azure_Region_Config,
 )
+from prowler.providers.azure.lib.exception.exception import AzureException
 from prowler.providers.gcp.gcp_provider import GCP_Provider
 from prowler.providers.gcp.lib.audit_info.audit_info import gcp_audit_info
 from prowler.providers.gcp.lib.audit_info.models import GCP_Audit_Info
@@ -295,15 +296,13 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
             and not browser_auth
             and not managed_entity_auth
         ):
-            logger.critical(
+            raise AzureException(
                 "Azure provider requires at least one authentication method set: [--az-cli-auth | --sp-env-auth | --browser-auth | --managed-identity-auth]"
             )
-            sys.exit(1)
         if (not browser_auth and tenant_id) or (browser_auth and not tenant_id):
-            logger.critical(
+            raise AzureException(
                 "Azure Tenant ID (--tenant-id) is required only for browser authentication mode"
             )
-            sys.exit(1)
 
         azure_provider = Azure_Provider(
             az_cli_auth,

@@ -13,6 +13,7 @@ from prowler.providers.azure.lib.audit_info.models import (
     Azure_Identity_Info,
     Azure_Region_Config,
 )
+from prowler.providers.azure.lib.exception.exception import AzureException
 from prowler.providers.common.audit_info import (
     Audit_Info,
     get_tagged_resources,
@@ -157,6 +158,103 @@ class Test_Set_Audit_Info:
 
         audit_info = set_provider_audit_info(provider, arguments)
         assert isinstance(audit_info, Azure_Audit_Info)
+
+    @patch(
+        "prowler.providers.common.audit_info.azure_audit_info",
+        new=mock_azure_audit_info,
+    )
+    @patch.object(Azure_Provider, "__get_credentials__", new=mock_set_azure_credentials)
+    @patch.object(Azure_Provider, "__get_identity_info__", new=mock_set_identity_info)
+    def test_set_azure_audit_info_not_auth_methods(self):
+        arguments = {
+            "profile": None,
+            "role": None,
+            "session_duration": None,
+            "external_id": None,
+            "regions": None,
+            "organizations_role": None,
+            "subscriptions": None,
+            # We need to set exactly one auth method
+            "az_cli_auth": None,
+            "sp_env_auth": None,
+            "browser_auth": None,
+            "managed_entity_auth": None,
+            "config_file": default_config_file_path,
+            "azure_region": "AzureCloud",
+        }
+
+        with pytest.raises(AzureException) as exception:
+            _ = Audit_Info().set_azure_audit_info(arguments)
+        assert exception.type == AzureException
+        assert (
+            exception.value.args[0]
+            == "Azure provider requires at least one authentication method set: [--az-cli-auth | --sp-env-auth | --browser-auth | --managed-identity-auth]"
+        )
+
+    @patch(
+        "prowler.providers.common.audit_info.azure_audit_info",
+        new=mock_azure_audit_info,
+    )
+    @patch.object(Azure_Provider, "__get_credentials__", new=mock_set_azure_credentials)
+    @patch.object(Azure_Provider, "__get_identity_info__", new=mock_set_identity_info)
+    def test_set_azure_audit_info_browser_auth_but_not_tenant_id(self):
+        arguments = {
+            "profile": None,
+            "role": None,
+            "session_duration": None,
+            "external_id": None,
+            "regions": None,
+            "organizations_role": None,
+            "subscriptions": None,
+            # We need to set exactly one auth method
+            "az_cli_auth": None,
+            "sp_env_auth": None,
+            "browser_auth": True,
+            "managed_entity_auth": None,
+            "config_file": default_config_file_path,
+            "azure_region": "AzureCloud",
+        }
+
+        with pytest.raises(AzureException) as exception:
+            _ = Audit_Info().set_azure_audit_info(arguments)
+        assert exception.type == AzureException
+        assert (
+            exception.value.args[0]
+            == "Azure Tenant ID (--tenant-id) is required only for browser authentication mode"
+        )
+
+    @patch(
+        "prowler.providers.common.audit_info.azure_audit_info",
+        new=mock_azure_audit_info,
+    )
+    @patch.object(Azure_Provider, "__get_credentials__", new=mock_set_azure_credentials)
+    @patch.object(Azure_Provider, "__get_identity_info__", new=mock_set_identity_info)
+    def test_set_azure_audit_info_tenant_id_but_no_browser_auth(self):
+        arguments = {
+            "profile": None,
+            "role": None,
+            "session_duration": None,
+            "external_id": None,
+            "regions": None,
+            "organizations_role": None,
+            "subscriptions": None,
+            # We need to set exactly one auth method
+            "az_cli_auth": True,
+            "sp_env_auth": None,
+            "browser_auth": None,
+            "managed_entity_auth": None,
+            "config_file": default_config_file_path,
+            "azure_region": "AzureCloud",
+            "tenant_id": "test-tenant-id",
+        }
+
+        with pytest.raises(AzureException) as exception:
+            _ = Audit_Info().set_azure_audit_info(arguments)
+        assert exception.type == AzureException
+        assert (
+            exception.value.args[0]
+            == "Azure Tenant ID (--tenant-id) is required only for browser authentication mode"
+        )
 
     @patch.object(GCP_Provider, "__set_credentials__", new=mock_set_gcp_credentials)
     @patch.object(GCP_Provider, "get_project_ids", new=mock_get_project_ids)
