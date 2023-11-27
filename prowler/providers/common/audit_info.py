@@ -322,8 +322,9 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
             credential_scopes=region_config["credential_scopes"],
         )
 
-        if not arguments.get("only_logs"):
-            self.print_azure_credentials(azure_audit_info)
+        # this logic is being processed in general provider
+        # if not arguments.get("only_logs"):
+        #     self.print_azure_credentials(azure_audit_info)
 
         return azure_audit_info
 
@@ -348,8 +349,9 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
             gcp_audit_info.project_ids,
         ) = gcp_provider.get_credentials()
 
-        if not arguments.get("only_logs"):
-            self.print_gcp_credentials(gcp_audit_info)
+        # this logic is being processed in general provider
+        # if not arguments.get("only_logs"):
+        #     self.print_gcp_credentials(gcp_audit_info)
 
         return gcp_audit_info
 

@@ -48,8 +48,8 @@ class GcpProvider(CloudProvider):
             # If not projects were input, all accessible projects are scanned by default
             self.project_ids = accessible_projects
 
-        if not arguments.get("only_logs"):
-            self.print_gcp_credentials()
+        if not arguments.only_logs:
+            self.print_credentials()
 
     def setup_session(self, credentials_file):
         try:
@@ -75,10 +75,10 @@ class GcpProvider(CloudProvider):
     def print_credentials(self):
         # Beautify audited profile, set "default" if there is no profile set
         try:
-            getattr(self.credentials, "_service_account_email")
+            getattr(self.session, "_service_account_email")
             profile = (
-                self.credentials._service_account_email
-                if self.credentials._service_account_email is not None
+                self.session._service_account_email
+                if self.session._service_account_email is not None
                 else "default"
             )
         except AttributeError:
@@ -96,7 +96,7 @@ GCP Account: {Fore.YELLOW}[{profile}]{Style.RESET_ALL}  GCP Project IDs: {Fore.Y
             project_ids = []
 
             service = discovery.build(
-                "cloudresourcemanager", "v1", credentials=self.credentials
+                "cloudresourcemanager", "v1", credentials=self.session
             )
 
             request = service.projects().list()

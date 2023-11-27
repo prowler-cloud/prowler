@@ -22,7 +22,7 @@ class GCPService:
         # We receive the service using __class__.__name__ or the service name in lowercase
         # e.g.: APIKeys --> we need a lowercase string, so service.lower()
         self.service = service.lower() if not service.islower() else service
-        self.credentials = provider.credentials
+        self.credentials = provider.session
         self.api_version = api_version
         self.default_project_id = provider.default_project_id
         self.region = region
