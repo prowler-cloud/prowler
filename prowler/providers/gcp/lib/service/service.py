@@ -3,6 +3,7 @@ import threading
 import google_auth_httplib2
 import httplib2
 from colorama import Fore, Style
+from google.oauth2.credentials import Credentials
 from googleapiclient import discovery
 from googleapiclient.discovery import Resource
 
@@ -25,7 +26,9 @@ class GCPService:
         self.api_version = api_version
         self.default_project_id = audit_info.default_project_id
         self.region = region
-        self.client = generate_client(service, api_version, audit_info)
+        self.client = self.__generate_client__(
+            service, api_version, audit_info.credentials
+        )
         # Only project ids that have their API enabled will be scanned
         self.project_ids = self.__is_api_active__(audit_info.project_ids)
 
@@ -67,15 +70,15 @@ class GCPService:
                 )
         return project_ids
 
-
-def generate_client(
-    service: str,
-    api_version: str,
-    audit_info: GCP_Audit_Info,
-) -> Resource:
-    try:
-        return discovery.build(service, api_version, credentials=audit_info.credentials)
-    except Exception as error:
-        logger.error(
-            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-        )
+    def __generate_client__(
+        self,
+        service: str,
+        api_version: str,
+        credentials: Credentials,
+    ) -> Resource:
+        try:
+            return discovery.build(service, api_version, credentials=credentials)
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
