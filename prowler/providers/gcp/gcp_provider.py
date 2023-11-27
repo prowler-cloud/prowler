@@ -3,10 +3,8 @@ import sys
 
 from google import auth
 from googleapiclient import discovery
-from googleapiclient.discovery import Resource
 
 from prowler.lib.logger import logger
-from prowler.providers.gcp.lib.audit_info.models import GCP_Audit_Info
 
 
 class GCP_Provider:
@@ -92,16 +90,3 @@ class GCP_Provider:
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
             return []
-
-
-def generate_client(
-    service: str,
-    api_version: str,
-    audit_info: GCP_Audit_Info,
-) -> Resource:
-    try:
-        return discovery.build(service, api_version, credentials=audit_info.credentials)
-    except Exception as error:
-        logger.error(
-            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-        )

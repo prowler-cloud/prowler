@@ -22,8 +22,4 @@ Prowler will follow the same credentials search as [Google authentication librar
 2. [User credentials set up by using the Google Cloud CLI](https://cloud.google.com/docs/authentication/application-default-credentials#personal)
 3. [The attached service account, returned by the metadata server](https://cloud.google.com/docs/authentication/application-default-credentials#attached-sa)
 
-Those credentials must be associated to a user or service account with proper permissions to do all checks. To make sure, add the following roles to the member associated with the credentials:
-
-  - Viewer
-  - Security Reviewer
-  - Stackdriver Account Viewer
+Those credentials must be associated to a user or service account with proper permissions to do all checks. To make sure, add the `Viewer` role to the member associated with the credentials.

@@ -9,12 +9,14 @@ from prowler.providers.aws.lib.audit_info.audit_info import AWS_Audit_Info
 from prowler.providers.azure.lib.audit_info.audit_info import (
     Azure_Audit_Info,
     Azure_Identity_Info,
+    Azure_Region_Config,
 )
 from prowler.providers.common.models import Audit_Metadata
 from prowler.providers.common.outputs import (
     Aws_Output_Options,
     Azure_Output_Options,
     Gcp_Output_Options,
+    get_provider_output_model,
     set_provider_output_options,
 )
 from prowler.providers.gcp.lib.audit_info.models import GCP_Audit_Info
@@ -33,6 +35,7 @@ class Test_Common_Output_Options:
             audit_metadata=None,
             audit_resources=None,
             audit_config=None,
+            azure_region_config=Azure_Region_Config(),
         )
         return audit_info
 
@@ -332,7 +335,7 @@ class Test_Common_Output_Options:
                             <b>AWS Account:</b> {audit_info.audited_account}
                         </li>
                         <li class="list-group-item">
-                            <b>AWS-CLI Profile:</b> {audit_info.profile}
+                            <b>AWS-CLI Profile:</b> default
                         </li>
                         <li class="list-group-item">
                             <b>Audited Regions:</b> All Regions
@@ -391,3 +394,16 @@ class Test_Common_Output_Options:
             </div>
             """
         )
+
+    def test_get_provider_output_model(self):
+        audit_info_class_names = [
+            "AWS_Audit_Info",
+            "GCP_Audit_Info",
+            "Azure_Audit_Info",
+        ]
+        for class_name in audit_info_class_names:
+            provider_prefix = class_name.split("_", 1)[0].lower().capitalize()
+            assert (
+                get_provider_output_model(class_name).__name__
+                == f"{provider_prefix}_Check_Output_CSV"
+            )
