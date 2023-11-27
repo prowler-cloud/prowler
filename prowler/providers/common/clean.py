@@ -26,7 +26,7 @@ def clean_provider_local_output_directories(args):
 
 
 def clean_aws_local_output_directories(args):
-    """clean_aws_local_output_directories deletes the output files generated locally in custom directories when output is sent to a remote storage provider for the AWS"""
+    """clean_aws_local_output_directories deletes the output files generated locally in custom directories when output is sent to a remote storage provider for AWS"""
     if args.output_bucket or args.output_bucket_no_assume:
         if args.output_directory != default_output_directory:
             rmtree(args.output_directory)
