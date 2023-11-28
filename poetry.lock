@@ -2921,13 +2921,13 @@ files = [
 
 [[package]]
 name = "slack-sdk"
-version = "3.24.0"
+version = "3.26.0"
 description = "The Slack API Platform SDK for Python"
 optional = false
 python-versions = ">=3.6.0"
 files = [
-    {file = "slack_sdk-3.24.0-py2.py3-none-any.whl", hash = "sha256:cae64f0177a53d34cca59cc691d4535edd18929843a936b97cea421db9e4fbfe"},
-    {file = "slack_sdk-3.24.0.tar.gz", hash = "sha256:741ea5381e65f4407d24ed81203912cbd6bfe807a6704b1d3c5ad346c86000b6"},
+    {file = "slack_sdk-3.26.0-py2.py3-none-any.whl", hash = "sha256:b84c2d93163166eb682e290c19334683c2d0f0cb4a5479c809706b44038fdda1"},
+    {file = "slack_sdk-3.26.0.tar.gz", hash = "sha256:147946f388ce73b17c377b823759fcb39c0eca7444ca0a942dc12a3940a4f44f"},
 ]
 
 [package.extras]
@@ -3312,4 +3312,4 @@ docs = ["mkdocs", "mkdocs-material"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.12"
-content-hash = "02ca3c174b4224b5a107d745995504bdcb2a0507cd34285dec5f6979870b6448"
+content-hash = "c29538d280f8785b897bf233105de72a6c53c66b1789130e8f389a4ff83f7140"
