@@ -107,6 +107,7 @@ def exclude_services_to_run(
 
 # Load checks from checklist.json
 def parse_checks_from_file(input_file: str, provider: str) -> set:
+    """parse_checks_from_file returns a set of checks read from the given file"""
     try:
         checks_to_execute = set()
         with open_file(input_file) as f:
@@ -315,7 +316,7 @@ def print_checks(
 def parse_checks_from_compliance_framework(
     compliance_frameworks: list, bulk_compliance_frameworks: dict
 ) -> list:
-    """Parse checks from compliance frameworks specification"""
+    """parse_checks_from_compliance_framework returns a set of checks from the given compliance_frameworks"""
     checks_to_execute = set()
     try:
         for framework in compliance_frameworks:
@@ -612,7 +613,12 @@ def update_audit_metadata(
         )
 
 
-def recover_checks_from_service(service_list: list, provider: str) -> list:
+def recover_checks_from_service(service_list: list, provider: str) -> set:
+    """
+    Recover all checks from the selected provider and service
+
+    Returns a set of checks from the given services
+    """
     try:
         checks = set()
         service_list = [
