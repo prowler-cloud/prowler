@@ -166,6 +166,12 @@ Detailed documentation at https://docs.prowler.cloud
             default=False,
             help="Set the output timestamp format as unix timestamps instead of iso format timestamps (default mode).",
         )
+        common_outputs_parser.add_argument(
+            "--clean-local-output-directories",
+            action="store_true",
+            default=False,
+            help="Deletes local output directories when output reports are sent to external entities (i.e. S3 bucket)",
+        )
 
     def __init_logging_parser__(self):
         # Logging Options

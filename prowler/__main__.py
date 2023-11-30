@@ -325,7 +325,8 @@ def prowler():
         remove_custom_checks_module(checks_folder, provider)
 
     # clean local directories
-    clean_provider_local_output_directories(args)
+    if args.clean_local_output_directories:
+        clean_provider_local_output_directories(args)
 
     # If there are failed findings exit code 3, except if -z is input
     if not args.ignore_exit_code_3 and stats["total_fail"] > 0:

@@ -78,6 +78,7 @@ class Test_Parser:
         assert not parsed.allowlist_file
         assert not parsed.resource_tags
         assert not parsed.ignore_unused_services
+        assert not parsed.clean_local_output_directories
 
     def test_default_parser_no_arguments_azure(self):
         provider = "azure"
@@ -297,6 +298,11 @@ class Test_Parser:
         command = [prowler_command, "--unix-timestamp"]
         parsed = self.parser.parse(command)
         assert parsed.unix_timestamp
+
+    def test_root_parser_clean_local_output_directories(self):
+        command = [prowler_command, "--clean-local-output-directories"]
+        parsed = self.parser.parse(command)
+        assert parsed.clean_local_output_directories
 
     def test_logging_parser_only_logs_set(self):
         command = [prowler_command, "--only-logs"]
