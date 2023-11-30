@@ -625,15 +625,15 @@ def recover_checks_from_service(service_list: list, provider: str) -> set:
             "awslambda" if service == "lambda" else service for service in service_list
         ]
         for service in service_list:
-            modules = recover_checks_from_provider(provider, service)
-            if not modules:
+            service_checks = recover_checks_from_provider(provider, service)
+            if not service_checks:
                 logger.error(f"Service '{service}' does not have checks.")
 
             else:
-                for check_module in modules:
+                for check in service_checks:
                     # Recover check name and module name from import path
                     # Format: "providers.{provider}.services.{service}.{check_name}.{check_name}"
-                    check_name = check_module[0].split(".")[-1]
+                    check_name = check[0].split(".")[-1]
                     # If the service is present in the group list passed as parameters
                     # if service_name in group_list: checks_from_arn.add(check_name)
                     checks.add(check_name)
