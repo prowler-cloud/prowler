@@ -3,7 +3,7 @@ import pathlib
 from importlib.machinery import FileFinder
 from pkgutil import ModuleInfo
 
-from boto3 import client, session
+from boto3 import client
 from fixtures.bulk_checks_metadata import test_bulk_checks_metadata
 from mock import patch
 from moto import mock_s3
@@ -27,8 +27,7 @@ from prowler.providers.aws.aws_provider import (
     get_checks_from_input_arn,
     get_regions_from_audit_resources,
 )
-from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
-from prowler.providers.common.models import Audit_Metadata
+from tests.providers.aws.audit_info_utils import set_mocked_aws_audit_info
 
 AWS_ACCOUNT_NUMBER = "123456789012"
 AWS_REGION = "us-east-1"
@@ -258,36 +257,6 @@ def mock_recover_checks_from_aws_provider_rds_service(*_):
 
 
 class Test_Check:
-    def set_mocked_audit_info(self):
-        audit_info = AWS_Audit_Info(
-            session_config=None,
-            original_session=None,
-            audit_session=session.Session(
-                profile_name=None,
-                botocore_session=None,
-            ),
-            audited_account=AWS_ACCOUNT_NUMBER,
-            audited_account_arn=f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root",
-            audited_user_id=None,
-            audited_partition="aws",
-            audited_identity_arn=None,
-            profile=None,
-            profile_region=None,
-            credentials=None,
-            assumed_role_info=None,
-            audited_regions=None,
-            organizations_metadata=None,
-            audit_resources=None,
-            mfa_enabled=False,
-            audit_metadata=Audit_Metadata(
-                services_scanned=0,
-                expected_checks=[],
-                completed_checks=0,
-                audit_progress=0,
-            ),
-        )
-        return audit_info
-
     def test_load_check_metadata(self):
         test_cases = [
             {
@@ -363,7 +332,7 @@ class Test_Check:
             provider = test["input"]["provider"]
             assert (
                 parse_checks_from_folder(
-                    self.set_mocked_audit_info(), check_folder, provider
+                    set_mocked_aws_audit_info(), check_folder, provider
                 )
                 == test["expected"]
             )
