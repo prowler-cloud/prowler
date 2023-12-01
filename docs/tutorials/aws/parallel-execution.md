@@ -1,3 +1,4 @@
+# Parallel Execution
 
 The strategy used here will be to execute prowler once per service. You can modify this approach as per your requirements.
 
