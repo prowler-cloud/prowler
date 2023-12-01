@@ -7,6 +7,7 @@ from prowler.config.config import (
     check_current_version,
     default_config_file_path,
     default_output_directory,
+    valid_severities,
 )
 from prowler.providers.common.arguments import (
     init_providers_parser,
@@ -224,8 +225,8 @@ Detailed documentation at https://docs.prowler.cloud
         common_checks_parser.add_argument(
             "--severity",
             nargs="+",
-            help="List of severities to be executed [informational, low, medium, high, critical]",
-            choices=["informational", "low", "medium", "high", "critical"],
+            help=f"List of severities to be executed {valid_severities}",
+            choices=valid_severities,
         )
         group.add_argument(
             "--compliance",
