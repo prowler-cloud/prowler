@@ -1,5 +1,6 @@
 from colorama import Fore, Style
 
+from prowler.config.config import valid_severities
 from prowler.lib.check.check import (
     parse_checks_from_compliance_framework,
     parse_checks_from_file,
@@ -10,7 +11,6 @@ from prowler.lib.logger import logger
 
 
 # Generate the list of checks to execute
-# PENDING Test for this function
 def load_checks_to_execute(
     bulk_checks_metadata: dict,
     bulk_compliance_frameworks: dict,
@@ -27,13 +27,7 @@ def load_checks_to_execute(
         # Local subsets
         checks_to_execute = set()
         check_aliases = {}
-        check_severities = {
-            "critical": [],
-            "high": [],
-            "medium": [],
-            "low": [],
-            "informational": [],
-        }
+        check_severities = {key: [] for key in valid_severities}
         check_categories = {}
 
         # First, loop over the bulk_checks_metadata to extract the needed subsets
