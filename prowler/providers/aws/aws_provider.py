@@ -157,13 +157,17 @@ def generate_regional_clients(
     try:
         regional_clients = {}
         service_regions = get_available_aws_service_regions(service, audit_info)
+
         # Check if it is global service to gather only one region
         if global_service:
             if service_regions:
                 if audit_info.profile_region in service_regions:
                     service_regions = [audit_info.profile_region]
                 service_regions = service_regions[:1]
-        for region in service_regions:
+
+        enabled_regions = get_aws_enabled_regions(service, service_regions, audit_info)
+
+        for region in enabled_regions:
             regional_client = audit_info.audit_session.client(
                 service, region_name=region, config=audit_info.session_config
             )
@@ -174,6 +178,24 @@ def generate_regional_clients(
         logger.error(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
         )
+
+
+def get_aws_enabled_regions(
+    service: str, service_regions: set, audit_info: AWS_Audit_Info
+) -> set:
+    """get_aws_enabled_regions returns a set of enabled AWS regions"""
+
+    # EC2 Client to check enabled regions
+    default_region = get_default_region(service, audit_info)
+    ec2_client = audit_info.audit_session.client("ec2", region_name=default_region)
+
+    enabled_regions = set()
+    for region in ec2_client.describe_regions(RegionNames=list(service_regions)).get(
+        "Regions", []
+    ):
+        enabled_regions.add(region.get("RegionName"))
+
+    return service_regions.intersection(enabled_regions)
 
 
 def get_aws_available_regions():
@@ -267,17 +289,19 @@ def get_regions_from_audit_resources(audit_resources: list) -> set:
     return audited_regions
 
 
-def get_available_aws_service_regions(service: str, audit_info: AWS_Audit_Info) -> list:
+def get_available_aws_service_regions(service: str, audit_info: AWS_Audit_Info) -> set:
     # Get json locally
     actual_directory = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))
     with open_file(f"{actual_directory}/{aws_services_json_file}") as f:
         data = parse_json_file(f)
     # Check if it is a subservice
-    json_regions = data["services"][service]["regions"][audit_info.audited_partition]
-    if audit_info.audited_regions:  # Check for input aws audit_info.audited_regions
-        regions = list(
-            set(json_regions).intersection(audit_info.audited_regions)
-        )  # Get common regions between input and json
+    json_regions = set(
+        data["services"][service]["regions"][audit_info.audited_partition]
+    )
+    # Check for input aws audit_info.audited_regions
+    if audit_info.audited_regions:
+        # Get common regions between input and json
+        regions = json_regions.intersection(audit_info.audited_regions)
     else:  # Get all regions from json of the service and partition
         regions = json_regions
     return regions
