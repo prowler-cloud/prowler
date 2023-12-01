@@ -4,11 +4,11 @@ The strategy used here will be to execute prowler once per service. You can modi
 
 This can help for really large accounts, but please be aware of AWS API rate limits:
 
-1. Service-Specific Limits: Each AWS service has its own rate limits. For instance, Amazon EC2 might have different rate limits for launching instances versus making API calls to describe instances.
-2. API Rate Limits: Most of the rate limits in AWS are applied at the API level. Each API call to an AWS service counts towards the rate limit for that service.
-3. Throttling Responses: When you exceed the rate limit for a service, AWS responds with a throttling error. In AWS SDKs, these are typically represented as ThrottlingException or RateLimitExceeded errors.
+1. **Service-Specific Limits**: Each AWS service has its own rate limits. For instance, Amazon EC2 might have different rate limits for launching instances versus making API calls to describe instances.
+2. **API Rate Limits**: Most of the rate limits in AWS are applied at the API level. Each API call to an AWS service counts towards the rate limit for that service.
+3. **Throttling Responses**: When you exceed the rate limit for a service, AWS responds with a throttling error. In AWS SDKs, these are typically represented as ThrottlingException or RateLimitExceeded errors.
 
-For information on Prowler's retrier configuration please refer to this [page](https://docs.prowler.cloud/en/latest/tutorials/aws/boto3-configuration/)
+For information on Prowler's retrier configuration please refer to this [page](https://docs.prowler.cloud/en/latest/tutorials/aws/boto3-configuration/).
 
 ## Linux
 
@@ -36,7 +36,7 @@ MAX_PROCESSES=5
 while read service; do
     echo "$(date '+%Y-%m-%d %H:%M:%S'): Starting job for service: $service"
 
-    # Run the command in the background and capture its PID
+    # Run the command in the background
     (prowler -p "$profile" -s "$service" -F "$account_id-$service" --ignore-unused-services --only-logs; echo "$(date '+%Y-%m-%d %H:%M:%S') - $service has completed") &
 
     # Check if we have reached the maximum number of processes
@@ -50,9 +50,8 @@ done < services
 wait
 echo "All jobs completed"
 ```
-Execute the script: `bash parallel-prowler.sh`
 
-Your output will be in the `output/` folder that is in the same directory from which you executed the script.
+Output will be stored in the `output/` folder that is in the same directory from which you executed the script.
 
 ## Windows
 
@@ -122,4 +121,4 @@ foreach ($remainingJob in $remainingCompletedJobs) {
 Write-Host "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') - All jobs completed"
 ```
 
-Outputs will be stored in `C:\Users\YOUR-USER\Documents\output`
+Output will be stored in `C:\Users\YOUR-USER\Documents\output\`
