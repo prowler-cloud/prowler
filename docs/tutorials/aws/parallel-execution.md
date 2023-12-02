@@ -124,3 +124,11 @@ Write-Host "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') - All jobs completed"
 ```
 
 Output will be stored in `C:\Users\YOUR-USER\Documents\output\`
+
+## TODO: Additional Improvements
+
+Some services need to instantiate another service to perform a check. For instance, `cloudwatch` will instantiate Prowler's `iam` service to perform the `cloudwatch_cross_account_sharing_disabled` check. When the `iam` service is instantiated, it will perform the `__init__` function, and pull all the information required for that service. This provides an opportunity for an improvement so that the `iam` services (or any other cross-service references) isn't repeatedily instantiated by grouping dependant services together. A complete mapping between these services still needs to be further investigated, but these are the cross-references that have been noted: 
+
+* inspector2 needs lambda and ec2
+* cloudwatch needs iam
+* dlm needs ec2
