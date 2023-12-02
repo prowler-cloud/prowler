@@ -20,7 +20,9 @@ Generate a list of services that Prowler supports, and populate this info into a
 prowler aws --list-services | awk -F"- " '{print $2}' | sed '/^$/d' > services
 ```
 
-Create a new PowerShell script file (`parallel-prowler.sh`) and add the following contents. Update the `$profile` variable to the AWS CLI profile you want to run prowler with.
+Make any modifications for services you would like to skip scanning by modifying this file.
+
+Then create a new PowerShell script file (`parallel-prowler.sh`) and add the following contents. Update the `$profile` variable to the AWS CLI profile you want to run prowler with.
 
 ```bash
 #!/bin/bash
@@ -71,7 +73,9 @@ prowler aws --list-services | ForEach-Object {
 } | Set-Content -Path "services"
 ```
 
-Create a new PowerShell script file (`parallel-prowler.ps1`) and add the following contents. Update the `$profile` variable to the AWS CLI profile you want to run prowler with.
+Make any modifications for services you would like to skip scanning by modifying this file.
+
+Then create a new PowerShell script file (`parallel-prowler.ps1`) and add the following contents. Update the `$profile` variable to the AWS CLI profile you want to run prowler with.
 
 Change any parameters you would like when calling prowler in the `Start-Job -ScriptBlock` section. Note that you need to keep the `--only-logs` parameter, else some encoding issue occurs when trying to render the progress-bar and prowler won't successfully execute.
 
