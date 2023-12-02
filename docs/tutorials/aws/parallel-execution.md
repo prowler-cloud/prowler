@@ -10,6 +10,8 @@ This can help for really large accounts, but please be aware of AWS API rate lim
 
 For information on Prowler's retrier configuration please refer to this [page](https://docs.prowler.cloud/en/latest/tutorials/aws/boto3-configuration/).
 
+You might need to increase the `--aws-retries-max-attempts` parameter from the default value of 3. The retrier follows an exponential backoff strategy.
+
 ## Linux
 
 Generate a list of services that Prowler supports, and populate this info into a file:
@@ -91,7 +93,7 @@ $jobs = @()
 foreach ($service in $services) {
     # Start the command as a job
     $job = Start-Job -ScriptBlock {
-        prowler -p ${using:profile} -s ${using:service} -F "${using:account_id}-${using:service}" --ignore-unused-services --only-logs | Out-Null
+        prowler -p ${using:profile} -s ${using:service} -F "${using:account_id}-${using:service}" --ignore-unused-services --only-logs
 	      $endTimestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
         Write-Output "${endTimestamp} - $using:service has completed"
     }
