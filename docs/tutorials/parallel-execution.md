@@ -133,6 +133,8 @@ Output will be stored in `C:\Users\YOUR-USER\Documents\output\`
 
 Guidance is provided for the CSV file format. From the ouput directory, execute either the following Bash or PowerShell script. The script will collect the output from the CSV files, only include the header from the first file, and then output the result as CombinedCSV.csv in the current working directory.
 
+There is no logic implemented in terms of which CSV files it will combine. If you have additional CSV files from other actions, such as running a quick inventory, you will need to move that out of the current (or any nested) directory, or move the output you want to combine into its own folder and run the script from there.
+
 ```bash
 #!/bin/bash
 
