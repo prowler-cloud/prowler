@@ -162,8 +162,9 @@ def generate_regional_clients(
         if global_service:
             if service_regions:
                 if audit_info.profile_region in service_regions:
-                    service_regions = [audit_info.profile_region]
-                service_regions = service_regions[:1]
+                    service_regions = {audit_info.profile_region}
+                else:
+                    service_regions = {service_regions.pop()}
 
         # Get the regions enabled for the account and get the intersection with the service available regions
         enabled_regions = service_regions.intersection(audit_info.enabled_regions)
