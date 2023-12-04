@@ -15,15 +15,15 @@ class compute_firewall_rdp_access_from_the_internet_allowed(Check):
             report.status_extended = f"Firewall {firewall.name} does not expose port 3389 (RDP) to the internet."
             opened_port = False
             for rule in firewall.allowed_rules:
-                if rule["IPProtocol"] == "all":
+                if rule.I_p_protocol == "all":
                     opened_port = True
                     break
-                elif rule["IPProtocol"] == "tcp":
-                    if rule.get("ports") is None:
+                elif rule.I_p_protocol == "tcp":
+                    if not hasattr(rule, "ports"):
                         opened_port = True
                         break
                     else:
-                        for port in rule["ports"]:
+                        for port in rule.ports:
                             if port.find("-") != -1:
                                 lower, higher = port.split("-")
                                 if int(lower) <= 3389 and int(higher) >= 3389:
