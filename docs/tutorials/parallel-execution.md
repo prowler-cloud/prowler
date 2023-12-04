@@ -129,6 +129,53 @@ Write-Host "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') - All jobs completed"
 
 Output will be stored in `C:\Users\YOUR-USER\Documents\output\`
 
+## Combining the output files
+
+Guidance is provided for the CSV file format. From the ouput directory, execute either the following Bash or PowerShell script. The script will collect the output from the CSV files, only include the header from the first file, and then output the result as CombinedCSV.csv in the current working directory.
+
+```bash
+#!/bin/bash
+
+# Initialize a variable to indicate the first file
+firstFile=true
+
+# Find all CSV files and loop through them
+find . -name "*.csv" -print0 | while IFS= read -r -d '' file; do
+    if [ "$firstFile" = true ]; then
+        # For the first file, keep the header
+        cat "$file" > CombinedCSV.csv
+        firstFile=false
+    else
+        # For subsequent files, skip the header
+        tail -n +2 "$file" >> CombinedCSV.csv
+    fi
+done
+```
+
+```powershell
+# Get all CSV files from current directory and its subdirectories
+$csvFiles = Get-ChildItem -Recurse -Filter "*.csv"
+
+# Initialize a variable to track if it's the first file
+$firstFile = $true
+
+# Loop through each CSV file
+foreach ($file in $csvFiles) {
+    if ($firstFile) {
+        # For the first file, keep the header and change the flag
+        $combinedCsv = Import-Csv -Path $file.FullName
+        $firstFile = $false
+    } else {
+        # For subsequent files, skip the header
+        $tempCsv = Import-Csv -Path $file.FullName
+        $combinedCsv += $tempCsv | Select-Object * -Skip 1
+    }
+}
+
+# Export the combined data to a new CSV file
+$combinedCsv | Export-Csv -Path "CombinedCSV.csv" -NoTypeInformation
+```
+
 ## TODO: Additional Improvements
 
 Some services need to instantiate another service to perform a check. For instance, `cloudwatch` will instantiate Prowler's `iam` service to perform the `cloudwatch_cross_account_sharing_disabled` check. When the `iam` service is instantiated, it will perform the `__init__` function, and pull all the information required for that service. This provides an opportunity for an improvement in the above script to group related services together so that the `iam` services (or any other cross-service references) isn't repeatedily instantiated by grouping dependant services together. A complete mapping between these services still needs to be further investigated, but these are the cross-references that have been noted:
