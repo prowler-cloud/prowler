@@ -38,4 +38,5 @@ current_audit_info = AWS_Audit_Info(
     audit_metadata=None,
     audit_config=None,
     ignore_unused_services=False,
+    enabled_regions=set(),
 )

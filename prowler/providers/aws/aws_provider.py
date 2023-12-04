@@ -165,7 +165,8 @@ def generate_regional_clients(
                     service_regions = [audit_info.profile_region]
                 service_regions = service_regions[:1]
 
-        enabled_regions = get_aws_enabled_regions(service, service_regions, audit_info)
+        # Get the regions enabled for the account and get the intersection with the service available regions
+        enabled_regions = service_regions.intersection(audit_info.enabled_regions)
 
         for region in enabled_regions:
             regional_client = audit_info.audit_session.client(
@@ -181,21 +182,20 @@ def generate_regional_clients(
         )
 
 
-def get_aws_enabled_regions(
-    service: str, service_regions: set, audit_info: AWS_Audit_Info
-) -> set:
+def get_aws_enabled_regions(audit_info: AWS_Audit_Info) -> set:
     """get_aws_enabled_regions returns a set of enabled AWS regions"""
 
     # EC2 Client to check enabled regions
+    service = "ec2"
     default_region = get_default_region(service, audit_info)
-    ec2_client = audit_info.audit_session.client("ec2", region_name=default_region)
+    ec2_client = audit_info.audit_session.client(service, region_name=default_region)
 
     enabled_regions = set()
     # With AllRegions=False we only get the enabled regions for the account
     for region in ec2_client.describe_regions(AllRegions=False).get("Regions", []):
         enabled_regions.add(region.get("RegionName"))
 
-    return service_regions.intersection(enabled_regions)
+    return enabled_regions
 
 
 def get_aws_available_regions():

@@ -8,6 +8,7 @@ from prowler.lib.logger import logger
 from prowler.providers.aws.aws_provider import (
     AWS_Provider,
     assume_role,
+    get_aws_enabled_regions,
     get_checks_from_input_arn,
     get_regions_from_audit_resources,
 )
@@ -256,6 +257,9 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
         # Parse Input Resource ARNs
         if arguments.get("resource_arn"):
             current_audit_info.audit_resources = arguments.get("resource_arn")
+
+        # Get Enabled Regions
+        current_audit_info.enabled_regions = get_aws_enabled_regions(current_audit_info)
 
         return current_audit_info
 
