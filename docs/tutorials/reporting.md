@@ -43,7 +43,7 @@ Hereunder is the structure for each of the supported report formats by Prowler:
 ![HTML Output](../img/output-html.png)
 ### CSV
 
-CSV format has a set of common columns for all the providers, and then provider specific columns:
+CSV format has a set of common columns for all the providers, and then provider specific columns.  
 The common columns are the following:
 
 - ASSESSMENT_START_TIME
