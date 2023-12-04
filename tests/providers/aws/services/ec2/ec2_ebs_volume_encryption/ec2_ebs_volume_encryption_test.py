@@ -8,9 +8,6 @@ from tests.providers.aws.audit_info_utils import (
     set_mocked_aws_audit_info,
 )
 
-AWS_REGION = "us-east-1"
-AWS_ACCOUNT_NUMBER = "123456789012"
-
 
 class Test_ec2_ebs_volume_encryption:
     @mock_ec2
@@ -39,8 +36,8 @@ class Test_ec2_ebs_volume_encryption:
     @mock_ec2
     def test_ec2_unencrypted_volume(self):
         # Create EC2 Mocked Resources
-        ec2 = resource("ec2", region_name=AWS_REGION)
-        volume = ec2.create_volume(Size=80, AvailabilityZone=f"{AWS_REGION}a")
+        ec2 = resource("ec2", region_name=AWS_REGION_EU_WEST_1)
+        volume = ec2.create_volume(Size=80, AvailabilityZone=f"{AWS_REGION_EU_WEST_1}a")
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
@@ -64,7 +61,7 @@ class Test_ec2_ebs_volume_encryption:
             assert len(result) == 1
 
             assert result[0].status == "FAIL"
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1
             # Moto creates the volume with None in the tags attribute
             assert result[0].resource_tags is None
             assert (
@@ -72,15 +69,15 @@ class Test_ec2_ebs_volume_encryption:
             )
             assert (
                 result[0].resource_arn
-                == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:volume/{volume.id}"
+                == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION_EU_WEST_1}:{current_audit_info.audited_account}:volume/{volume.id}"
             )
 
     @mock_ec2
     def test_ec2_encrypted_volume(self):
         # Create EC2 Mocked Resources
-        ec2 = resource("ec2", region_name=AWS_REGION)
+        ec2 = resource("ec2", region_name=AWS_REGION_EU_WEST_1)
         volume = ec2.create_volume(
-            Size=80, AvailabilityZone=f"{AWS_REGION}a", Encrypted=True
+            Size=80, AvailabilityZone=f"{AWS_REGION_EU_WEST_1}a", Encrypted=True
         )
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
@@ -105,7 +102,7 @@ class Test_ec2_ebs_volume_encryption:
             assert len(result) == 1
 
             assert result[0].status == "PASS"
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1
             # Moto creates the volume with None in the tags attribute
             assert result[0].resource_tags is None
             assert (
@@ -113,5 +110,5 @@ class Test_ec2_ebs_volume_encryption:
             )
             assert (
                 result[0].resource_arn
-                == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:volume/{volume.id}"
+                == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION_EU_WEST_1}:{current_audit_info.audited_account}:volume/{volume.id}"
             )

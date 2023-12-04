@@ -1,52 +1,18 @@
 from unittest import mock
 from uuid import uuid4
 
-from boto3 import resource, session
+from boto3 import resource
 from moto import mock_ec2
 from moto.core import DEFAULT_ACCOUNT_ID
 
-from prowler.providers.aws.lib.audit_info.audit_info import AWS_Audit_Info
 from prowler.providers.aws.services.emr.emr_service import Cluster, ClusterStatus, Node
-from prowler.providers.common.models import Audit_Metadata
 from tests.providers.aws.audit_info_utils import (
     AWS_REGION_EU_WEST_1,
     set_mocked_aws_audit_info,
 )
 
-AWS_REGION = "eu-west-1"
-
 
 class Test_emr_cluster_publicly_accesible:
-    def set_mocked_audit_info(self):
-        audit_info = AWS_Audit_Info(
-            session_config=None,
-            original_session=None,
-            audit_session=session.Session(
-                profile_name=None,
-                botocore_session=None,
-            ),
-            audited_account=None,
-            audited_account_arn=None,
-            audited_user_id=None,
-            audited_partition="aws",
-            audited_identity_arn=None,
-            profile=None,
-            profile_region=None,
-            credentials=None,
-            assumed_role_info=None,
-            audited_regions=None,
-            organizations_metadata=None,
-            audit_resources=None,
-            mfa_enabled=False,
-            audit_metadata=Audit_Metadata(
-                services_scanned=0,
-                expected_checks=[],
-                completed_checks=0,
-                audit_progress=0,
-            ),
-        )
-        return audit_info
-
     def test_no_clusters(self):
         # EMR Client
         emr_client = mock.MagicMock
@@ -74,7 +40,7 @@ class Test_emr_cluster_publicly_accesible:
     @mock_ec2
     def test_clusters_master_public_sg(self):
         # EC2 Client
-        ec2 = resource("ec2", AWS_REGION)
+        ec2 = resource("ec2", AWS_REGION_EU_WEST_1)
         # Create Security Group
         master_security_group = ec2.create_security_group(
             GroupName=str(uuid4()), Description="test-decurity-group"
@@ -90,14 +56,14 @@ class Test_emr_cluster_publicly_accesible:
         emr_client = mock.MagicMock
         cluster_name = "test-cluster"
         cluster_id = "j-XWO1UKVCC6FCV"
-        cluster_arn = f"arn:aws:elasticmapreduce:{AWS_REGION}:{DEFAULT_ACCOUNT_ID}:cluster/{cluster_name}"
+        cluster_arn = f"arn:aws:elasticmapreduce:{AWS_REGION_EU_WEST_1}:{DEFAULT_ACCOUNT_ID}:cluster/{cluster_name}"
         emr_client.clusters = {
             "test-cluster": Cluster(
                 id=cluster_id,
                 arn=cluster_arn,
                 name=cluster_name,
                 status=ClusterStatus.RUNNING,
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
                 master_public_dns_name="test.amazonaws.com",
                 public=True,
                 master=Node(
@@ -130,7 +96,7 @@ class Test_emr_cluster_publicly_accesible:
             result = check.execute()
 
             assert len(result) == 1
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1
             assert result[0].resource_id == cluster_id
             assert result[0].resource_arn == cluster_arn
             assert result[0].status == "FAIL"
@@ -142,7 +108,7 @@ class Test_emr_cluster_publicly_accesible:
     @mock_ec2
     def test_clusters_master_private_sg(self):
         # EC2 Client
-        ec2 = resource("ec2", AWS_REGION)
+        ec2 = resource("ec2", AWS_REGION_EU_WEST_1)
         # Create Security Group
         master_security_group = ec2.create_security_group(
             GroupName=str(uuid4()), Description="test-decurity-group"
@@ -158,14 +124,14 @@ class Test_emr_cluster_publicly_accesible:
         emr_client = mock.MagicMock
         cluster_name = "test-cluster"
         cluster_id = "j-XWO1UKVCC6FCV"
-        cluster_arn = f"arn:aws:elasticmapreduce:{AWS_REGION}:{DEFAULT_ACCOUNT_ID}:cluster/{cluster_name}"
+        cluster_arn = f"arn:aws:elasticmapreduce:{AWS_REGION_EU_WEST_1}:{DEFAULT_ACCOUNT_ID}:cluster/{cluster_name}"
         emr_client.clusters = {
             "test-cluster": Cluster(
                 id=cluster_id,
                 arn=cluster_arn,
                 name=cluster_name,
                 status=ClusterStatus.RUNNING,
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
                 master_public_dns_name="test.amazonaws.com",
                 public=True,
                 master=Node(
@@ -196,7 +162,7 @@ class Test_emr_cluster_publicly_accesible:
             result = check.execute()
 
             assert len(result) == 1
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1
             assert result[0].resource_id == cluster_id
             assert result[0].resource_arn == cluster_arn
             assert result[0].status == "PASS"
@@ -208,7 +174,7 @@ class Test_emr_cluster_publicly_accesible:
     @mock_ec2
     def test_clusters_master_private_slave_public_sg(self):
         # EC2 Client
-        ec2 = resource("ec2", AWS_REGION)
+        ec2 = resource("ec2", AWS_REGION_EU_WEST_1)
         # Create Master Security Group
         master_security_group = ec2.create_security_group(
             GroupName=str(uuid4()), Description="test-decurity-group"
@@ -235,14 +201,14 @@ class Test_emr_cluster_publicly_accesible:
         emr_client = mock.MagicMock
         cluster_name = "test-cluster"
         cluster_id = "j-XWO1UKVCC6FCV"
-        cluster_arn = f"arn:aws:elasticmapreduce:{AWS_REGION}:{DEFAULT_ACCOUNT_ID}:cluster/{cluster_name}"
+        cluster_arn = f"arn:aws:elasticmapreduce:{AWS_REGION_EU_WEST_1}:{DEFAULT_ACCOUNT_ID}:cluster/{cluster_name}"
         emr_client.clusters = {
             "test-cluster": Cluster(
                 id=cluster_id,
                 arn=cluster_arn,
                 name=cluster_name,
                 status=ClusterStatus.RUNNING,
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
                 master_public_dns_name="test.amazonaws.com",
                 public=True,
                 master=Node(
@@ -279,7 +245,7 @@ class Test_emr_cluster_publicly_accesible:
             result = check.execute()
 
             assert len(result) == 1
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1
             assert result[0].resource_id == cluster_id
             assert result[0].resource_arn == cluster_arn
             assert result[0].status == "FAIL"
@@ -291,7 +257,7 @@ class Test_emr_cluster_publicly_accesible:
     @mock_ec2
     def test_clusters_master_public_slave_private_two_sg(self):
         # EC2 Client
-        ec2 = resource("ec2", AWS_REGION)
+        ec2 = resource("ec2", AWS_REGION_EU_WEST_1)
         # Create Master Security Group
         master_security_group = ec2.create_security_group(
             GroupName=str(uuid4()), Description="test-decurity-group"
@@ -318,14 +284,14 @@ class Test_emr_cluster_publicly_accesible:
         emr_client = mock.MagicMock
         cluster_name = "test-cluster"
         cluster_id = "j-XWO1UKVCC6FCV"
-        cluster_arn = f"arn:aws:elasticmapreduce:{AWS_REGION}:{DEFAULT_ACCOUNT_ID}:cluster/{cluster_name}"
+        cluster_arn = f"arn:aws:elasticmapreduce:{AWS_REGION_EU_WEST_1}:{DEFAULT_ACCOUNT_ID}:cluster/{cluster_name}"
         emr_client.clusters = {
             "test-cluster": Cluster(
                 id=cluster_id,
                 arn=cluster_arn,
                 name=cluster_name,
                 status=ClusterStatus.RUNNING,
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
                 master_public_dns_name="test.amazonaws.com",
                 public=True,
                 master=Node(
@@ -365,7 +331,7 @@ class Test_emr_cluster_publicly_accesible:
             result = check.execute()
 
             assert len(result) == 1
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1
             assert result[0].resource_id == cluster_id
             assert result[0].resource_arn == cluster_arn
             assert result[0].status == "FAIL"
@@ -377,7 +343,7 @@ class Test_emr_cluster_publicly_accesible:
     @mock_ec2
     def test_clusters_master_private_slave_public_sg_none_additional_sgs(self):
         # EC2 Client
-        ec2 = resource("ec2", AWS_REGION)
+        ec2 = resource("ec2", AWS_REGION_EU_WEST_1)
         # Create Master Security Group
         master_security_group = ec2.create_security_group(
             GroupName=str(uuid4()), Description="test-decurity-group"
@@ -404,14 +370,14 @@ class Test_emr_cluster_publicly_accesible:
         emr_client = mock.MagicMock
         cluster_name = "test-cluster"
         cluster_id = "j-XWO1UKVCC6FCV"
-        cluster_arn = f"arn:aws:elasticmapreduce:{AWS_REGION}:{DEFAULT_ACCOUNT_ID}:cluster/{cluster_name}"
+        cluster_arn = f"arn:aws:elasticmapreduce:{AWS_REGION_EU_WEST_1}:{DEFAULT_ACCOUNT_ID}:cluster/{cluster_name}"
         emr_client.clusters = {
             "test-cluster": Cluster(
                 id=cluster_id,
                 arn=cluster_arn,
                 name=cluster_name,
                 status=ClusterStatus.RUNNING,
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
                 master_public_dns_name="test.amazonaws.com",
                 public=True,
                 master=Node(
@@ -448,7 +414,7 @@ class Test_emr_cluster_publicly_accesible:
             result = check.execute()
 
             assert len(result) == 1
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1
             assert result[0].resource_id == cluster_id
             assert result[0].resource_arn == cluster_arn
             assert result[0].status == "FAIL"

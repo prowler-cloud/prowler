@@ -9,9 +9,7 @@ from tests.providers.aws.audit_info_utils import (
     set_mocked_aws_audit_info,
 )
 
-AWS_REGION = "us-east-1"
 EXAMPLE_AMI_ID = "ami-12c6146b"
-AWS_ACCOUNT_NUMBER = "123456789012"
 
 
 class Test_ec2_elastic_ip_unassigned:
@@ -41,7 +39,7 @@ class Test_ec2_elastic_ip_unassigned:
     @mock_ec2
     def test_eip_unassociated(self):
         # Create EC2 Mocked Resources
-        ec2_client = client("ec2", region_name=AWS_REGION)
+        ec2_client = client("ec2", region_name=AWS_REGION_EU_WEST_1)
         allocation_id = ec2_client.allocate_address(
             Domain="vpc", Address="127.38.43.222"
         )["AllocationId"]
@@ -67,7 +65,7 @@ class Test_ec2_elastic_ip_unassigned:
 
             assert len(results) == 1
             assert results[0].status == "FAIL"
-            assert results[0].region == AWS_REGION
+            assert results[0].region == AWS_REGION_EU_WEST_1
             assert results[0].resource_tags == []
             assert search(
                 "is not associated",
@@ -75,14 +73,14 @@ class Test_ec2_elastic_ip_unassigned:
             )
             assert (
                 results[0].resource_arn
-                == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:eip-allocation/{allocation_id}"
+                == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION_EU_WEST_1}:{current_audit_info.audited_account}:eip-allocation/{allocation_id}"
             )
 
     @mock_ec2
     def test_eip_associated(self):
         # Create EC2 Mocked Resources
-        ec2_client = client("ec2", region_name=AWS_REGION)
-        ec2_resource = resource("ec2", region_name=AWS_REGION)
+        ec2_client = client("ec2", region_name=AWS_REGION_EU_WEST_1)
+        ec2_resource = resource("ec2", region_name=AWS_REGION_EU_WEST_1)
 
         reservation = ec2_client.run_instances(
             ImageId=EXAMPLE_AMI_ID, MinCount=1, MaxCount=1
@@ -118,7 +116,7 @@ class Test_ec2_elastic_ip_unassigned:
 
             assert len(results) == 1
             assert results[0].status == "PASS"
-            assert results[0].region == AWS_REGION
+            assert results[0].region == AWS_REGION_EU_WEST_1
             assert results[0].resource_tags == []
             assert search(
                 "is associated",
@@ -126,5 +124,5 @@ class Test_ec2_elastic_ip_unassigned:
             )
             assert (
                 results[0].resource_arn
-                == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:eip-allocation/{eip.allocation_id}"
+                == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION_EU_WEST_1}:{current_audit_info.audited_account}:eip-allocation/{eip.allocation_id}"
             )

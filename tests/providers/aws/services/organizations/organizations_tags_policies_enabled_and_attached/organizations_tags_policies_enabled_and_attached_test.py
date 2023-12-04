@@ -1,60 +1,24 @@
 from unittest import mock
 
-from boto3 import session
-
-from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.aws.services.organizations.organizations_service import (
     Organization,
     Policy,
 )
-from prowler.providers.common.models import Audit_Metadata
 from tests.providers.aws.audit_info_utils import (
+    AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_WEST_1,
     set_mocked_aws_audit_info,
 )
 
-AWS_REGION = "us-east-1"
-AWS_ACCOUNT_ID = "123456789012"
-AWS_ACCOUNT_ARN = f"arn:aws:iam::{AWS_ACCOUNT_ID}:root"
+AWS_ACCOUNT_ARN = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
 # Moto: NotImplementedError: The TAG_POLICY policy type has not been implemented
 # Needs to Mock manually
 
 
 class Test_organizations_tags_policies_enabled_and_attached:
-    def set_mocked_audit_info(self):
-        audit_info = AWS_Audit_Info(
-            session_config=None,
-            original_session=None,
-            audit_session=session.Session(
-                profile_name=None,
-                botocore_session=None,
-                region_name=AWS_REGION,
-            ),
-            audited_account=AWS_ACCOUNT_ID,
-            audited_account_arn=AWS_ACCOUNT_ARN,
-            audited_user_id=None,
-            audited_partition="aws",
-            audited_identity_arn=None,
-            profile=None,
-            profile_region=AWS_REGION,
-            credentials=None,
-            assumed_role_info=None,
-            audited_regions=None,
-            organizations_metadata=None,
-            audit_resources=None,
-            mfa_enabled=False,
-            audit_metadata=Audit_Metadata(
-                services_scanned=0,
-                expected_checks=[],
-                completed_checks=0,
-                audit_progress=0,
-            ),
-        )
-        return audit_info
-
     def test_organization_no_organization(self):
         organizations_client = mock.MagicMock
-        organizations_client.region = AWS_REGION
+        organizations_client.region = AWS_REGION_EU_WEST_1
         organizations_client.organizations = [
             Organization(
                 arn=AWS_ACCOUNT_ARN,
@@ -90,11 +54,11 @@ class Test_organizations_tags_policies_enabled_and_attached:
                 )
                 assert result[0].resource_id == "AWS Organization"
                 assert result[0].resource_arn == AWS_ACCOUNT_ARN
-                assert result[0].region == AWS_REGION
+                assert result[0].region == AWS_REGION_EU_WEST_1
 
     def test_organization_with_tag_policies_not_attached(self):
         organizations_client = mock.MagicMock
-        organizations_client.region = AWS_REGION
+        organizations_client.region = AWS_REGION_EU_WEST_1
         organizations_client.organizations = [
             Organization(
                 id="o-1234567890",
@@ -144,11 +108,11 @@ class Test_organizations_tags_policies_enabled_and_attached:
                     result[0].resource_arn
                     == "arn:aws:organizations::1234567890:organization/o-1234567890"
                 )
-                assert result[0].region == AWS_REGION
+                assert result[0].region == AWS_REGION_EU_WEST_1
 
     def test_organization_with_tag_policies_attached(self):
         organizations_client = mock.MagicMock
-        organizations_client.region = AWS_REGION
+        organizations_client.region = AWS_REGION_EU_WEST_1
         organizations_client.organizations = [
             Organization(
                 id="o-1234567890",
@@ -198,4 +162,4 @@ class Test_organizations_tags_policies_enabled_and_attached:
                     result[0].resource_arn
                     == "arn:aws:organizations::1234567890:organization/o-1234567890"
                 )
-                assert result[0].region == AWS_REGION
+                assert result[0].region == AWS_REGION_EU_WEST_1

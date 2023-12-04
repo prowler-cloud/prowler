@@ -10,8 +10,6 @@ from tests.providers.aws.audit_info_utils import (
     set_mocked_aws_audit_info,
 )
 
-AWS_ACCOUNT_NUMBER = "123456789012"
-
 
 class Test_iam_support_role_created:
     @mock_iam

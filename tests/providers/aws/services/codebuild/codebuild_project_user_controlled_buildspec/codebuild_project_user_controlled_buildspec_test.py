@@ -2,16 +2,17 @@ from re import search
 from unittest import mock
 
 from prowler.providers.aws.services.codebuild.codebuild_service import Project
-
-AWS_REGION = "eu-west-1"
-AWS_ACCOUNT_NUMBER = "123456789012"
+from tests.providers.aws.audit_info_utils import (
+    AWS_ACCOUNT_NUMBER,
+    AWS_REGION_EU_WEST_1,
+)
 
 
 class Test_codebuild_project_user_controlled_buildspec:
     def test_project_not_buildspec(self):
         codebuild_client = mock.MagicMock
         project_name = "test-project"
-        project_arn = f"arn:aws:codebuild:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:project/{project_name}"
+        project_arn = f"arn:aws:codebuild:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:project/{project_name}"
         codebuild_client.projects = [
             Project(
                 name=project_name,
@@ -41,12 +42,12 @@ class Test_codebuild_project_user_controlled_buildspec:
             assert result[0].resource_id == project_name
             assert result[0].resource_arn == project_arn
             assert result[0].resource_tags == []
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1
 
     def test_project_buildspec_not_yaml(self):
         codebuild_client = mock.MagicMock
         project_name = "test-project"
-        project_arn = f"arn:aws:codebuild:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:project/{project_name}"
+        project_arn = f"arn:aws:codebuild:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:project/{project_name}"
         codebuild_client.projects = [
             Project(
                 name=project_name,
@@ -76,12 +77,12 @@ class Test_codebuild_project_user_controlled_buildspec:
             assert result[0].resource_id == project_name
             assert result[0].resource_arn == project_arn
             assert result[0].resource_tags == []
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1
 
     def test_project_valid_buildspec(self):
         codebuild_client = mock.MagicMock
         project_name = "test-project"
-        project_arn = f"arn:aws:codebuild:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:project/{project_name}"
+        project_arn = f"arn:aws:codebuild:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:project/{project_name}"
         codebuild_client.projects = [
             Project(
                 name=project_name,
@@ -110,12 +111,12 @@ class Test_codebuild_project_user_controlled_buildspec:
             assert result[0].resource_id == project_name
             assert result[0].resource_arn == project_arn
             assert result[0].resource_tags == []
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1
 
     def test_project_invalid_buildspec_without_extension(self):
         codebuild_client = mock.MagicMock
         project_name = "test-project"
-        project_arn = f"arn:aws:codebuild:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:project/{project_name}"
+        project_arn = f"arn:aws:codebuild:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:project/{project_name}"
         codebuild_client.projects = [
             Project(
                 name=project_name,
@@ -145,4 +146,4 @@ class Test_codebuild_project_user_controlled_buildspec:
             assert result[0].resource_id == project_name
             assert result[0].resource_arn == project_arn
             assert result[0].resource_tags == []
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1

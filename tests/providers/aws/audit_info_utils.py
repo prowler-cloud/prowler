@@ -17,6 +17,7 @@ def set_mocked_aws_audit_info(
     audited_account: str = AWS_ACCOUNT_NUMBER,
     audited_account_arn: str = AWS_ACCOUNT_ARN,
     expected_checks: [str] = [],
+    audit_config: dict = {},
 ):
     audit_info = AWS_Audit_Info(
         session_config=None,
@@ -30,6 +31,7 @@ def set_mocked_aws_audit_info(
         audited_user_id=None,
         audited_partition=AWS_COMMERCIAL_PARTITION,
         audited_identity_arn=None,
+        audit_config=audit_config,
         profile=None,
         profile_region=None,
         credentials=None,

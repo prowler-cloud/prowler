@@ -8,9 +8,6 @@ from tests.providers.aws.audit_info_utils import (
     set_mocked_aws_audit_info,
 )
 
-AWS_REGION = "us-east-1"
-AWS_ACCOUNT_NUMBER = "123456789012"
-
 
 class Test_kms_cmk_are_used:
     @mock_kms
@@ -39,7 +36,7 @@ class Test_kms_cmk_are_used:
     @mock_kms
     def test_kms_cmk_are_used(self):
         # Generate KMS Client
-        kms_client = client("kms", region_name=AWS_REGION)
+        kms_client = client("kms", region_name=AWS_REGION_EU_WEST_1)
         # Create enabled KMS key
         key = kms_client.create_key()["KeyMetadata"]
 
@@ -71,7 +68,7 @@ class Test_kms_cmk_are_used:
     @mock_kms
     def test_kms_key_with_deletion(self):
         # Generate KMS Client
-        kms_client = client("kms", region_name=AWS_REGION)
+        kms_client = client("kms", region_name=AWS_REGION_EU_WEST_1)
         # Creaty KMS key with deletion
         key = kms_client.create_key()["KeyMetadata"]
         kms_client.schedule_key_deletion(KeyId=key["KeyId"])
@@ -107,7 +104,7 @@ class Test_kms_cmk_are_used:
     @mock_kms
     def test_kms_disabled_key(self):
         # Generate KMS Client
-        kms_client = client("kms", region_name=AWS_REGION)
+        kms_client = client("kms", region_name=AWS_REGION_EU_WEST_1)
         # Creaty KMS key with deletion
         key = kms_client.create_key()["KeyMetadata"]
         kms_client.disable_key(KeyId=key["KeyId"])

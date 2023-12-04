@@ -6,8 +6,7 @@ from prowler.providers.aws.services.ssm.ssm_service import (
     ComplianceResource,
     ResourceStatus,
 )
-
-AWS_REGION = "eu-west-1"
+from tests.providers.aws.audit_info_utils import AWS_REGION_EU_WEST_1
 
 
 class Test_ssm_managed_compliant_patching:
@@ -35,7 +34,7 @@ class Test_ssm_managed_compliant_patching:
         ssm_client.compliance_resources = {
             instance_id: ComplianceResource(
                 id="i-1234567890abcdef0",
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
                 status=ResourceStatus.COMPLIANT,
             )
         }
@@ -53,7 +52,7 @@ class Test_ssm_managed_compliant_patching:
             result = check.execute()
 
             assert len(result) == 1
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1
             assert result[0].resource_id == instance_id
             assert result[0].status == "PASS"
             assert (
@@ -68,7 +67,7 @@ class Test_ssm_managed_compliant_patching:
         ssm_client.compliance_resources = {
             instance_id: ComplianceResource(
                 id="i-1234567890abcdef0",
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
                 status=ResourceStatus.NON_COMPLIANT,
             )
         }
@@ -86,7 +85,7 @@ class Test_ssm_managed_compliant_patching:
             result = check.execute()
 
             assert len(result) == 1
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1
             assert result[0].resource_id == instance_id
             assert result[0].status == "FAIL"
             assert (

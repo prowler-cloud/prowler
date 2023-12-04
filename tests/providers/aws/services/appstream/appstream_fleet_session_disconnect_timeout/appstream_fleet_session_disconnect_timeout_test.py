@@ -1,9 +1,7 @@
 from unittest import mock
 
 from prowler.providers.aws.services.appstream.appstream_service import Fleet
-
-# Mock Test Region
-AWS_REGION = "eu-west-1"
+from tests.providers.aws.audit_info_utils import AWS_REGION_EU_WEST_1
 
 
 class Test_appstream_fleet_session_disconnect_timeout:
@@ -35,7 +33,7 @@ class Test_appstream_fleet_session_disconnect_timeout:
             disconnect_timeout_in_seconds=1 * 60 * 60,
             idle_disconnect_timeout_in_seconds=900,
             enable_default_internet_access=True,
-            region=AWS_REGION,
+            region=AWS_REGION_EU_WEST_1,
         )
 
         appstream_client.fleets.append(fleet1)
@@ -75,7 +73,7 @@ class Test_appstream_fleet_session_disconnect_timeout:
             disconnect_timeout_in_seconds=4 * 60,
             idle_disconnect_timeout_in_seconds=900,
             enable_default_internet_access=True,
-            region=AWS_REGION,
+            region=AWS_REGION_EU_WEST_1,
         )
 
         appstream_client.fleets.append(fleet1)
@@ -118,7 +116,7 @@ class Test_appstream_fleet_session_disconnect_timeout:
             disconnect_timeout_in_seconds=1 * 60 * 60,
             idle_disconnect_timeout_in_seconds=900,
             enable_default_internet_access=True,
-            region=AWS_REGION,
+            region=AWS_REGION_EU_WEST_1,
         )
         fleet2 = Fleet(
             arn="arn",
@@ -128,7 +126,7 @@ class Test_appstream_fleet_session_disconnect_timeout:
             disconnect_timeout_in_seconds=3 * 60,
             idle_disconnect_timeout_in_seconds=900,
             enable_default_internet_access=False,
-            region=AWS_REGION,
+            region=AWS_REGION_EU_WEST_1,
         )
 
         appstream_client.fleets.append(fleet1)

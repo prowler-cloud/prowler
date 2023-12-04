@@ -2,10 +2,10 @@ from re import search
 from unittest import mock
 
 from prowler.providers.aws.services.efs.efs_service import FileSystem
-
-# Mock Test Region
-AWS_REGION = "eu-west-1"
-AWS_ACCOUNT_NUMBER = "123456789012"
+from tests.providers.aws.audit_info_utils import (
+    AWS_ACCOUNT_NUMBER,
+    AWS_REGION_EU_WEST_1,
+)
 
 file_system_id = "fs-c7a0456e"
 
@@ -36,12 +36,12 @@ filesystem_invalid_policy = {
 class Test_efs_not_publicly_accessible:
     def test_efs_valid_policy(self):
         efs_client = mock.MagicMock
-        efs_arn = f"arn:aws:elasticfilesystem:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:file-system/{file_system_id}"
+        efs_arn = f"arn:aws:elasticfilesystem:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:file-system/{file_system_id}"
         efs_client.filesystems = [
             FileSystem(
                 id=file_system_id,
                 arn=efs_arn,
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
                 policy=filesystem_policy,
                 backup_policy=None,
                 encrypted=True,
@@ -68,13 +68,13 @@ class Test_efs_not_publicly_accessible:
 
     def test_efs_invalid_policy(self):
         efs_client = mock.MagicMock
-        efs_arn = f"arn:aws:elasticfilesystem:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:file-system/{file_system_id}"
+        efs_arn = f"arn:aws:elasticfilesystem:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:file-system/{file_system_id}"
 
         efs_client.filesystems = [
             FileSystem(
                 id=file_system_id,
                 arn=efs_arn,
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
                 policy=filesystem_invalid_policy,
                 backup_policy=None,
                 encrypted=True,
@@ -101,12 +101,12 @@ class Test_efs_not_publicly_accessible:
 
     def test_efs_no_policy(self):
         efs_client = mock.MagicMock
-        efs_arn = f"arn:aws:elasticfilesystem:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:file-system/{file_system_id}"
+        efs_arn = f"arn:aws:elasticfilesystem:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:file-system/{file_system_id}"
         efs_client.filesystems = [
             FileSystem(
                 id=file_system_id,
                 arn=efs_arn,
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
                 policy=None,
                 backup_policy=None,
                 encrypted=True,

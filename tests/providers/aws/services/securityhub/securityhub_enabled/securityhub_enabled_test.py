@@ -3,16 +3,18 @@ from unittest import mock
 from prowler.providers.aws.services.securityhub.securityhub_service import (
     SecurityHubHub,
 )
+from tests.providers.aws.audit_info_utils import (
+    AWS_ACCOUNT_NUMBER,
+    AWS_REGION_EU_WEST_1,
+)
 
-AWS_REGION = "eu-west-1"
-AWS_ACCOUNT_ID = "123456789012"
-AWS_ACCOUNT_ARN = f"arn:aws:iam::{AWS_ACCOUNT_ID}:root"
+AWS_ACCOUNT_ARN = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
 
 
 class Test_securityhub_enabled:
     def test_securityhub_hub_inactive(self):
         securityhub_client = mock.MagicMock
-        securityhub_client.region = AWS_REGION
+        securityhub_client.region = AWS_REGION_EU_WEST_1
         securityhub_client.securityhubs = [
             SecurityHubHub(
                 arn=AWS_ACCOUNT_ARN,
@@ -20,7 +22,7 @@ class Test_securityhub_enabled:
                 status="NOT_AVAILABLE",
                 standards="",
                 integrations="",
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
             )
         ]
         with mock.patch(
@@ -39,7 +41,7 @@ class Test_securityhub_enabled:
             assert result[0].status_extended == "Security Hub is not enabled."
             assert result[0].resource_id == "Security Hub"
             assert result[0].resource_arn == AWS_ACCOUNT_ARN
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1
 
     def test_securityhub_hub_active_with_standards(self):
         securityhub_client = mock.MagicMock
@@ -75,7 +77,7 @@ class Test_securityhub_enabled:
                 result[0].resource_arn
                 == "arn:aws:securityhub:us-east-1:0123456789012:hub/default"
             )
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1
 
     def test_securityhub_hub_active_with_integrations(self):
         securityhub_client = mock.MagicMock
@@ -111,11 +113,11 @@ class Test_securityhub_enabled:
                 result[0].resource_arn
                 == "arn:aws:securityhub:us-east-1:0123456789012:hub/default"
             )
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1
 
     def test_securityhub_hub_active_without_integrations_or_standards(self):
         securityhub_client = mock.MagicMock
-        securityhub_client.region = AWS_REGION
+        securityhub_client.region = AWS_REGION_EU_WEST_1
         securityhub_client.securityhubs = [
             SecurityHubHub(
                 arn="arn:aws:securityhub:us-east-1:0123456789012:hub/default",
@@ -148,12 +150,12 @@ class Test_securityhub_enabled:
                 result[0].resource_arn
                 == "arn:aws:securityhub:us-east-1:0123456789012:hub/default"
             )
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1
 
     def test_securityhub_hub_active_without_integrations_or_standards_allowlisted(self):
         securityhub_client = mock.MagicMock
         securityhub_client.audit_config = {"allowlist_non_default_regions": True}
-        securityhub_client.region = AWS_REGION
+        securityhub_client.region = AWS_REGION_EU_WEST_1
         securityhub_client.securityhubs = [
             SecurityHubHub(
                 arn="arn:aws:securityhub:us-east-1:0123456789012:hub/default",

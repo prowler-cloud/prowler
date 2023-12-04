@@ -9,9 +9,6 @@ from tests.providers.aws.audit_info_utils import (
     set_mocked_aws_audit_info,
 )
 
-AWS_REGION = "eu-west-1"
-AWS_ACCOUNT_NUMBER = "123456789012"
-
 
 class Test_elbv2_deletion_protection:
     @mock_elbv2
@@ -38,18 +35,22 @@ class Test_elbv2_deletion_protection:
     @mock_ec2
     @mock_elbv2
     def test_elbv2_without_deletion_protection(self):
-        conn = client("elbv2", region_name=AWS_REGION)
-        ec2 = resource("ec2", region_name=AWS_REGION)
+        conn = client("elbv2", region_name=AWS_REGION_EU_WEST_1)
+        ec2 = resource("ec2", region_name=AWS_REGION_EU_WEST_1)
 
         security_group = ec2.create_security_group(
             GroupName="a-security-group", Description="First One"
         )
         vpc = ec2.create_vpc(CidrBlock="172.28.7.0/24", InstanceTenancy="default")
         subnet1 = ec2.create_subnet(
-            VpcId=vpc.id, CidrBlock="172.28.7.192/26", AvailabilityZone=f"{AWS_REGION}a"
+            VpcId=vpc.id,
+            CidrBlock="172.28.7.192/26",
+            AvailabilityZone=f"{AWS_REGION_EU_WEST_1}a",
         )
         subnet2 = ec2.create_subnet(
-            VpcId=vpc.id, CidrBlock="172.28.7.0/26", AvailabilityZone=f"{AWS_REGION}b"
+            VpcId=vpc.id,
+            CidrBlock="172.28.7.0/26",
+            AvailabilityZone=f"{AWS_REGION_EU_WEST_1}b",
         )
 
         lb = conn.create_load_balancer(
@@ -95,18 +96,22 @@ class Test_elbv2_deletion_protection:
     @mock_ec2
     @mock_elbv2
     def test_elbv2_with_deletion_protection(self):
-        conn = client("elbv2", region_name=AWS_REGION)
-        ec2 = resource("ec2", region_name=AWS_REGION)
+        conn = client("elbv2", region_name=AWS_REGION_EU_WEST_1)
+        ec2 = resource("ec2", region_name=AWS_REGION_EU_WEST_1)
 
         security_group = ec2.create_security_group(
             GroupName="a-security-group", Description="First One"
         )
         vpc = ec2.create_vpc(CidrBlock="172.28.7.0/24", InstanceTenancy="default")
         subnet1 = ec2.create_subnet(
-            VpcId=vpc.id, CidrBlock="172.28.7.192/26", AvailabilityZone=f"{AWS_REGION}a"
+            VpcId=vpc.id,
+            CidrBlock="172.28.7.192/26",
+            AvailabilityZone=f"{AWS_REGION_EU_WEST_1}a",
         )
         subnet2 = ec2.create_subnet(
-            VpcId=vpc.id, CidrBlock="172.28.7.0/26", AvailabilityZone=f"{AWS_REGION}b"
+            VpcId=vpc.id,
+            CidrBlock="172.28.7.0/26",
+            AvailabilityZone=f"{AWS_REGION_EU_WEST_1}b",
         )
 
         lb = conn.create_load_balancer(

@@ -10,15 +10,11 @@ from tests.providers.aws.audit_info_utils import (
     set_mocked_aws_audit_info,
 )
 
-# Mock Test Region
-AWS_REGION = "eu-west-1"
-AWS_ACCOUNT_NUMBER = "123456789012"
-
 # Mocking Access Analyzer Calls
 make_api_call = botocore.client.BaseClient._make_api_call
 
 TEST_VAULT_ARN = (
-    f"arn:aws:glacier:{AWS_REGION}:{DEFAULT_ACCOUNT_ID}:vaults/examplevault"
+    f"arn:aws:glacier:{AWS_REGION_EU_WEST_1}:{DEFAULT_ACCOUNT_ID}:vaults/examplevault"
 )
 vault_json_policy = {
     "Version": "2012-10-17",
@@ -66,9 +62,11 @@ def mock_make_api_call(self, operation_name, kwarg):
 
 # Mock generate_regional_clients()
 def mock_generate_regional_clients(service, audit_info, _):
-    regional_client = audit_info.audit_session.client(service, region_name=AWS_REGION)
-    regional_client.region = AWS_REGION
-    return {AWS_REGION: regional_client}
+    regional_client = audit_info.audit_session.client(
+        service, region_name=AWS_REGION_EU_WEST_1
+    )
+    regional_client.region = AWS_REGION_EU_WEST_1
+    return {AWS_REGION_EU_WEST_1: regional_client}
 
 
 # Patch every AWS call using Boto3 and generate_regional_clients to have 1 client
@@ -81,7 +79,10 @@ class Test_Glacier_Service:
     # Test Glacier Client
     def test__get_client__(self):
         glacier = Glacier(set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1]))
-        assert glacier.regional_clients[AWS_REGION].__class__.__name__ == "Glacier"
+        assert (
+            glacier.regional_clients[AWS_REGION_EU_WEST_1].__class__.__name__
+            == "Glacier"
+        )
 
     # Test Glacier Session
     def test__get_session__(self):
@@ -102,9 +103,9 @@ class Test_Glacier_Service:
         assert glacier.vaults[TEST_VAULT_ARN].name == vault_name
         assert (
             glacier.vaults[TEST_VAULT_ARN].arn
-            == f"arn:aws:glacier:{AWS_REGION}:{DEFAULT_ACCOUNT_ID}:vaults/examplevault"
+            == f"arn:aws:glacier:{AWS_REGION_EU_WEST_1}:{DEFAULT_ACCOUNT_ID}:vaults/examplevault"
         )
-        assert glacier.vaults[TEST_VAULT_ARN].region == AWS_REGION
+        assert glacier.vaults[TEST_VAULT_ARN].region == AWS_REGION_EU_WEST_1
         assert glacier.vaults[TEST_VAULT_ARN].tags == [{"test": "test"}]
 
     def test__get_vault_access_policy__(self):
@@ -116,7 +117,7 @@ class Test_Glacier_Service:
         assert glacier.vaults[TEST_VAULT_ARN].name == vault_name
         assert (
             glacier.vaults[TEST_VAULT_ARN].arn
-            == f"arn:aws:glacier:{AWS_REGION}:{DEFAULT_ACCOUNT_ID}:vaults/examplevault"
+            == f"arn:aws:glacier:{AWS_REGION_EU_WEST_1}:{DEFAULT_ACCOUNT_ID}:vaults/examplevault"
         )
-        assert glacier.vaults[TEST_VAULT_ARN].region == AWS_REGION
+        assert glacier.vaults[TEST_VAULT_ARN].region == AWS_REGION_EU_WEST_1
         assert glacier.vaults[TEST_VAULT_ARN].access_policy == vault_json_policy

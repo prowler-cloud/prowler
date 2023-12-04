@@ -2,19 +2,15 @@ from unittest.mock import patch
 from uuid import uuid4
 
 import botocore
-from boto3 import client, session
+from boto3 import client
 from moto import mock_redshift
 
-from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.aws.services.redshift.redshift_service import Redshift
-from prowler.providers.common.models import Audit_Metadata
 from tests.providers.aws.audit_info_utils import (
+    AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_WEST_1,
     set_mocked_aws_audit_info,
 )
-
-AWS_ACCOUNT_NUMBER = "123456789012"
-AWS_REGION = "eu-west-1"
 
 topic_name = "test-topic"
 test_policy = {
@@ -23,7 +19,7 @@ test_policy = {
             "Effect": "Allow",
             "Principal": {"AWS": f"{AWS_ACCOUNT_NUMBER}"},
             "Action": ["redshift:Publish"],
-            "Resource": f"arn:aws:redshift:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:{topic_name}",
+            "Resource": f"arn:aws:redshift:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:{topic_name}",
         }
     ]
 }
@@ -51,9 +47,11 @@ def mock_make_api_call(self, operation_name, kwarg):
 
 
 def mock_generate_regional_clients(service, audit_info, _):
-    regional_client = audit_info.audit_session.client(service, region_name=AWS_REGION)
-    regional_client.region = AWS_REGION
-    return {AWS_REGION: regional_client}
+    regional_client = audit_info.audit_session.client(
+        service, region_name=AWS_REGION_EU_WEST_1
+    )
+    regional_client.region = AWS_REGION_EU_WEST_1
+    return {AWS_REGION_EU_WEST_1: regional_client}
 
 
 @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
@@ -62,36 +60,6 @@ def mock_generate_regional_clients(service, audit_info, _):
     new=mock_generate_regional_clients,
 )
 class Test_Redshift_Service:
-    def set_mocked_audit_info(self):
-        audit_info = AWS_Audit_Info(
-            session_config=None,
-            original_session=None,
-            audit_session=session.Session(
-                profile_name=None,
-                botocore_session=None,
-            ),
-            audited_account=AWS_ACCOUNT_NUMBER,
-            audited_account_arn=f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root",
-            audited_user_id=None,
-            audited_partition="aws",
-            audited_identity_arn=None,
-            profile=None,
-            profile_region=None,
-            credentials=None,
-            assumed_role_info=None,
-            audited_regions=None,
-            organizations_metadata=None,
-            audit_resources=None,
-            mfa_enabled=False,
-            audit_metadata=Audit_Metadata(
-                services_scanned=0,
-                expected_checks=[],
-                completed_checks=0,
-                audit_progress=0,
-            ),
-        )
-        return audit_info
-
     # Test Redshift Service
     def test_service(self):
         audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
@@ -113,7 +81,7 @@ class Test_Redshift_Service:
 
     @mock_redshift
     def test_describe_clusters(self):
-        redshift_client = client("redshift", region_name=AWS_REGION)
+        redshift_client = client("redshift", region_name=AWS_REGION_EU_WEST_1)
         response = redshift_client.create_cluster(
             DBName="test",
             ClusterIdentifier=cluster_id,
@@ -131,7 +99,7 @@ class Test_Redshift_Service:
 
         assert len(redshift.clusters) == 1
         assert redshift.clusters[0].id == cluster_id
-        assert redshift.clusters[0].region == AWS_REGION
+        assert redshift.clusters[0].region == AWS_REGION_EU_WEST_1
         assert redshift.clusters[0].public_access
         assert (
             redshift.clusters[0].endpoint_address
@@ -147,7 +115,7 @@ class Test_Redshift_Service:
 
     @mock_redshift
     def test_describe_logging_status(self):
-        redshift_client = client("redshift", region_name=AWS_REGION)
+        redshift_client = client("redshift", region_name=AWS_REGION_EU_WEST_1)
         response = redshift_client.create_cluster(
             DBName="test",
             ClusterIdentifier=cluster_id,
@@ -162,7 +130,7 @@ class Test_Redshift_Service:
 
         assert len(redshift.clusters) == 1
         assert redshift.clusters[0].id == cluster_id
-        assert redshift.clusters[0].region == AWS_REGION
+        assert redshift.clusters[0].region == AWS_REGION_EU_WEST_1
         assert redshift.clusters[0].public_access
         assert (
             redshift.clusters[0].endpoint_address
@@ -177,7 +145,7 @@ class Test_Redshift_Service:
 
     @mock_redshift
     def test_describe_describe_cluster_snapshot(self):
-        redshift_client = client("redshift", region_name=AWS_REGION)
+        redshift_client = client("redshift", region_name=AWS_REGION_EU_WEST_1)
         response = redshift_client.create_cluster(
             DBName="test",
             ClusterIdentifier=cluster_id,
@@ -192,7 +160,7 @@ class Test_Redshift_Service:
 
         assert len(redshift.clusters) == 1
         assert redshift.clusters[0].id == cluster_id
-        assert redshift.clusters[0].region == AWS_REGION
+        assert redshift.clusters[0].region == AWS_REGION_EU_WEST_1
         assert redshift.clusters[0].public_access
         assert (
             redshift.clusters[0].endpoint_address

@@ -1,9 +1,7 @@
 from unittest import mock
 
 from prowler.providers.aws.services.cloudformation.cloudformation_service import Stack
-
-# Mock Test Region
-AWS_REGION = "eu-west-1"
+from tests.providers.aws.audit_info_utils import AWS_REGION_EU_WEST_1
 
 
 class Test_cloudformation_stacks_termination_protection_enabled:
@@ -32,7 +30,7 @@ class Test_cloudformation_stacks_termination_protection_enabled:
                 arn="arn:aws:cloudformation:eu-west-1:123456789012:stack/Test-Stack/796c8d26-b390-41d7-a23c-0702c4e78b60",
                 name=stack_name,
                 outputs=[],
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
             )
         ]
         cloudformation_client.stacks[0].enable_termination_protection = True
@@ -59,7 +57,7 @@ class Test_cloudformation_stacks_termination_protection_enabled:
                 result[0].resource_arn
                 == "arn:aws:cloudformation:eu-west-1:123456789012:stack/Test-Stack/796c8d26-b390-41d7-a23c-0702c4e78b60"
             )
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1
             assert result[0].resource_tags == []
 
     def test_stack_termination_protection_disabled(self):
@@ -70,7 +68,7 @@ class Test_cloudformation_stacks_termination_protection_enabled:
                 arn="arn:aws:cloudformation:eu-west-1:123456789012:stack/Test-Stack/796c8d26-b390-41d7-a23c-0702c4e78b60",
                 name=stack_name,
                 outputs=[],
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
             )
         ]
         cloudformation_client.stacks[0].enable_termination_protection = False
@@ -97,5 +95,5 @@ class Test_cloudformation_stacks_termination_protection_enabled:
                 result[0].resource_arn
                 == "arn:aws:cloudformation:eu-west-1:123456789012:stack/Test-Stack/796c8d26-b390-41d7-a23c-0702c4e78b60"
             )
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1
             assert result[0].resource_tags == []

@@ -10,9 +10,6 @@ from tests.providers.aws.audit_info_utils import (
     set_mocked_aws_audit_info,
 )
 
-AWS_REGION = "us-east-1"
-AWS_ACCOUNT_NUMBER = "123456789012"
-
 
 class Test_cloudwatch_log_group_no_secrets_in_logs:
     def test_cloudwatch_no_log_groups(self):
@@ -50,7 +47,7 @@ class Test_cloudwatch_log_group_no_secrets_in_logs:
     @mock_logs
     def test_cloudwatch_log_group_without_secrets(self):
         # Generate Logs Client
-        logs_client = client("logs", region_name=AWS_REGION)
+        logs_client = client("logs", region_name=AWS_REGION_EU_WEST_1)
         # Request Logs group
         logs_client.create_log_group(logGroupName="test")
         logs_client.create_log_stream(logGroupName="test", logStreamName="test stream")
@@ -101,7 +98,7 @@ class Test_cloudwatch_log_group_no_secrets_in_logs:
     @mock_logs
     def test_cloudwatch_log_group_with_secrets(self):
         # Generate Logs Client
-        logs_client = client("logs", region_name=AWS_REGION)
+        logs_client = client("logs", region_name=AWS_REGION_EU_WEST_1)
         # Request Logs group
         logs_client.create_log_group(logGroupName="test")
         logs_client.create_log_stream(logGroupName="test", logStreamName="test stream")

@@ -1,20 +1,18 @@
 import botocore
-from boto3 import client, session
+from boto3 import client
 from mock import patch
 from moto import mock_neptune
 
-from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.aws.services.neptune.neptune_service import Cluster, Neptune
-from prowler.providers.common.models import Audit_Metadata
 from tests.providers.aws.audit_info_utils import (
+    AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_WEST_1,
     set_mocked_aws_audit_info,
 )
 
-AWS_ACCOUNT_NUMBER = "123456789012"
 AWS_ACCOUNT_ARN = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
 
-AWS_REGION = "us-east-1"
+
 AWS_REGION_AZ1 = "us-east-1a"
 AWS_REGION_AZ2 = "us-east-b"
 
@@ -61,7 +59,7 @@ def mock_make_api_call(self, operation_name, kwargs):
                             "SubnetStatus": "Active",
                         },
                     ],
-                    "DBSubnetGroupArn": f"arn:aws:rds:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:subgrp:{SUBNET_GROUP_NAME}",
+                    "DBSubnetGroupArn": f"arn:aws:rds:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:subgrp:{SUBNET_GROUP_NAME}",
                 }
             ]
         }
@@ -72,9 +70,11 @@ def mock_make_api_call(self, operation_name, kwargs):
 
 
 def mock_generate_regional_clients(service, audit_info, _):
-    regional_client = audit_info.audit_session.client(service, region_name=AWS_REGION)
-    regional_client.region = AWS_REGION
-    return {AWS_REGION: regional_client}
+    regional_client = audit_info.audit_session.client(
+        service, region_name=AWS_REGION_EU_WEST_1
+    )
+    regional_client.region = AWS_REGION_EU_WEST_1
+    return {AWS_REGION_EU_WEST_1: regional_client}
 
 
 @patch(
@@ -84,36 +84,6 @@ def mock_generate_regional_clients(service, audit_info, _):
 # Patch every AWS call using Boto3
 @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
 class Test_Neptune_Service:
-    def set_mocked_audit_info(self):
-        audit_info = AWS_Audit_Info(
-            session_config=None,
-            original_session=None,
-            audit_session=session.Session(
-                profile_name=None,
-                botocore_session=None,
-            ),
-            audited_account=AWS_ACCOUNT_NUMBER,
-            audited_account_arn=AWS_ACCOUNT_ARN,
-            audited_user_id=None,
-            audited_partition="aws",
-            audited_identity_arn=None,
-            profile=None,
-            profile_region=None,
-            credentials=None,
-            assumed_role_info=None,
-            audited_regions=None,
-            organizations_metadata=None,
-            audit_resources=None,
-            mfa_enabled=False,
-            audit_metadata=Audit_Metadata(
-                services_scanned=0,
-                expected_checks=[],
-                completed_checks=0,
-                audit_progress=0,
-            ),
-        )
-        return audit_info
-
     # Test Neptune Service
     @mock_neptune
     def test_service(self):
@@ -146,7 +116,7 @@ class Test_Neptune_Service:
     @mock_neptune
     def test_describe_db_clusters(self):
         # Neptune client
-        neptune_client = client("neptune", region_name=AWS_REGION)
+        neptune_client = client("neptune", region_name=AWS_REGION_EU_WEST_1)
         # Create Neptune Cluster
         cluster = neptune_client.create_db_cluster(
             AvailabilityZones=[AWS_REGION_AZ1, AWS_REGION_AZ2],
@@ -173,7 +143,7 @@ class Test_Neptune_Service:
             arn=cluster_arn,
             name=NEPTUNE_CLUSTER_NAME,
             id=cluster_id,
-            region=AWS_REGION,
+            region=AWS_REGION_EU_WEST_1,
             db_subnet_group_id=SUBNET_GROUP_NAME,
             subnets=[SUBNET_1, SUBNET_2],
             tags=NEPTUNE_CLUSTER_TAGS,

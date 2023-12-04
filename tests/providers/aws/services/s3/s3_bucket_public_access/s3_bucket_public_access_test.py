@@ -1,53 +1,19 @@
 from re import search
 from unittest import mock
 
-from boto3 import client, session
+from boto3 import client
 from moto import mock_s3, mock_s3control
 
-from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
-from prowler.providers.common.models import Audit_Metadata
 from tests.providers.aws.audit_info_utils import (
+    AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_WEST_1,
     set_mocked_aws_audit_info,
 )
 
-AWS_ACCOUNT_NUMBER = "123456789012"
 AWS_ACCOUNT_ARN = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
-AWS_REGION = "us-east-1"
 
 
 class Test_s3_bucket_public_access:
-    def set_mocked_audit_info(self):
-        audit_info = AWS_Audit_Info(
-            session_config=None,
-            original_session=None,
-            audit_session=session.Session(
-                profile_name=None,
-                botocore_session=None,
-                region_name=AWS_REGION,
-            ),
-            audited_account=AWS_ACCOUNT_NUMBER,
-            audited_account_arn=AWS_ACCOUNT_ARN,
-            audited_user_id=None,
-            audited_partition="aws",
-            audited_identity_arn=None,
-            profile=None,
-            profile_region=AWS_REGION,
-            credentials=None,
-            assumed_role_info=None,
-            audited_regions=None,
-            organizations_metadata=None,
-            audit_resources=None,
-            mfa_enabled=False,
-            audit_metadata=Audit_Metadata(
-                services_scanned=0,
-                expected_checks=[],
-                completed_checks=0,
-                audit_progress=0,
-            ),
-        )
-        return audit_info
-
     @mock_s3
     @mock_s3control
     def test_no_buckets(self):
@@ -81,7 +47,7 @@ class Test_s3_bucket_public_access:
     @mock_s3control
     def test_bucket_account_public_block_without_buckets(self):
         # Generate S3Control Client
-        s3control_client = client("s3control", region_name=AWS_REGION)
+        s3control_client = client("s3control", region_name=AWS_REGION_EU_WEST_1)
         s3control_client.put_public_access_block(
             AccountId=AWS_ACCOUNT_NUMBER,
             PublicAccessBlockConfiguration={
@@ -123,16 +89,16 @@ class Test_s3_bucket_public_access:
                     )
                     assert result[0].resource_id == AWS_ACCOUNT_NUMBER
                     assert result[0].resource_arn == AWS_ACCOUNT_ARN
-                    assert result[0].region == AWS_REGION
+                    assert result[0].region == AWS_REGION_EU_WEST_1
 
     @mock_s3
     @mock_s3control
     def test_bucket_account_public_block(self):
-        s3_client = client("s3", region_name=AWS_REGION)
+        s3_client = client("s3", region_name=AWS_REGION_EU_WEST_1)
         bucket_name_us = "bucket_test_us"
         s3_client.create_bucket(Bucket=bucket_name_us)
         # Generate S3Control Client
-        s3control_client = client("s3control", region_name=AWS_REGION)
+        s3control_client = client("s3control", region_name=AWS_REGION_EU_WEST_1)
         s3control_client.put_public_access_block(
             AccountId=AWS_ACCOUNT_NUMBER,
             PublicAccessBlockConfiguration={
@@ -174,16 +140,16 @@ class Test_s3_bucket_public_access:
                     )
                     assert result[0].resource_id == AWS_ACCOUNT_NUMBER
                     assert result[0].resource_arn == AWS_ACCOUNT_ARN
-                    assert result[0].region == AWS_REGION
+                    assert result[0].region == AWS_REGION_EU_WEST_1
 
     @mock_s3
     @mock_s3control
     def test_bucket_public_block(self):
-        s3_client = client("s3", region_name=AWS_REGION)
+        s3_client = client("s3", region_name=AWS_REGION_EU_WEST_1)
         bucket_name_us = "bucket_test_us"
         s3_client.create_bucket(Bucket=bucket_name_us)
         # Generate S3Control Client
-        s3control_client = client("s3control", region_name=AWS_REGION)
+        s3control_client = client("s3control", region_name=AWS_REGION_EU_WEST_1)
         s3control_client.put_public_access_block(
             AccountId=AWS_ACCOUNT_NUMBER,
             PublicAccessBlockConfiguration={
@@ -237,17 +203,17 @@ class Test_s3_bucket_public_access:
                         result[0].resource_arn
                         == f"arn:{audit_info.audited_partition}:s3:::{bucket_name_us}"
                     )
-                    assert result[0].region == AWS_REGION
+                    assert result[0].region == AWS_REGION_EU_WEST_1
 
     @mock_s3
     @mock_s3control
     def test_bucket_public_ACL(self):
-        s3_client = client("s3", region_name=AWS_REGION)
+        s3_client = client("s3", region_name=AWS_REGION_EU_WEST_1)
         bucket_name_us = "bucket_test_us"
         s3_client.create_bucket(Bucket=bucket_name_us)
         bucket_owner = s3_client.get_bucket_acl(Bucket=bucket_name_us)["Owner"]
         # Generate S3Control Client
-        s3control_client = client("s3control", region_name=AWS_REGION)
+        s3control_client = client("s3control", region_name=AWS_REGION_EU_WEST_1)
         s3control_client.put_public_access_block(
             AccountId=AWS_ACCOUNT_NUMBER,
             PublicAccessBlockConfiguration={
@@ -316,16 +282,16 @@ class Test_s3_bucket_public_access:
                         result[0].resource_arn
                         == f"arn:{audit_info.audited_partition}:s3:::{bucket_name_us}"
                     )
-                    assert result[0].region == AWS_REGION
+                    assert result[0].region == AWS_REGION_EU_WEST_1
 
     @mock_s3
     @mock_s3control
     def test_bucket_public_policy(self):
-        s3_client = client("s3", region_name=AWS_REGION)
+        s3_client = client("s3", region_name=AWS_REGION_EU_WEST_1)
         bucket_name_us = "bucket_test_us"
         s3_client.create_bucket(Bucket=bucket_name_us)
         # Generate S3Control Client
-        s3control_client = client("s3control", region_name=AWS_REGION)
+        s3control_client = client("s3control", region_name=AWS_REGION_EU_WEST_1)
         s3control_client.put_public_access_block(
             AccountId=AWS_ACCOUNT_NUMBER,
             PublicAccessBlockConfiguration={
@@ -384,12 +350,12 @@ class Test_s3_bucket_public_access:
                         result[0].resource_arn
                         == f"arn:{audit_info.audited_partition}:s3:::{bucket_name_us}"
                     )
-                    assert result[0].region == AWS_REGION
+                    assert result[0].region == AWS_REGION_EU_WEST_1
 
     @mock_s3
     @mock_s3control
     def test_bucket_not_public(self):
-        s3_client = client("s3", region_name=AWS_REGION)
+        s3_client = client("s3", region_name=AWS_REGION_EU_WEST_1)
         bucket_name_us = "bucket_test_us"
         s3_client.create_bucket(Bucket=bucket_name_us)
         s3_client.put_public_access_block(
@@ -436,12 +402,12 @@ class Test_s3_bucket_public_access:
                         result[0].resource_arn
                         == f"arn:{audit_info.audited_partition}:s3:::{bucket_name_us}"
                     )
-                    assert result[0].region == AWS_REGION
+                    assert result[0].region == AWS_REGION_EU_WEST_1
 
     @mock_s3
     @mock_s3control
     def test_bucket_can_not_retrieve_public_access_block(self):
-        s3_client = client("s3", region_name=AWS_REGION)
+        s3_client = client("s3", region_name=AWS_REGION_EU_WEST_1)
         bucket_name_us = "bucket_test_us"
         s3_client.create_bucket(Bucket=bucket_name_us)
         s3_client.put_public_access_block(

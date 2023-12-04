@@ -4,9 +4,11 @@ from prowler.providers.aws.services.ecs.ecs_service import (
     ContainerEnvVariable,
     TaskDefinition,
 )
+from tests.providers.aws.audit_info_utils import (
+    AWS_ACCOUNT_NUMBER,
+    AWS_REGION_EU_WEST_1,
+)
 
-AWS_REGION = "eu-west-1"
-AWS_ACCOUNT_NUMBER = "123456789012"
 task_name = "test-task"
 task_revision = "1"
 env_var_name_no_secrets = "host"
@@ -38,9 +40,9 @@ class Test_ecs_task_definitions_no_environment_secrets:
         ecs_client.task_definitions.append(
             TaskDefinition(
                 name=task_name,
-                arn=f"arn:aws:ecs:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:task-definition/{task_name}:{task_revision}",
+                arn=f"arn:aws:ecs:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:task-definition/{task_name}:{task_revision}",
                 revision="1",
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
                 environment_variables=[
                     ContainerEnvVariable(
                         name=env_var_name_no_secrets, value=env_var_value_no_secrets
@@ -68,7 +70,7 @@ class Test_ecs_task_definitions_no_environment_secrets:
             assert result[0].resource_id == f"{task_name}:1"
             assert (
                 result[0].resource_arn
-                == f"arn:aws:ecs:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:task-definition/{task_name}:{task_revision}"
+                == f"arn:aws:ecs:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:task-definition/{task_name}:{task_revision}"
             )
 
     def test_container_env_var_with_secrets(self):
@@ -77,9 +79,9 @@ class Test_ecs_task_definitions_no_environment_secrets:
         ecs_client.task_definitions.append(
             TaskDefinition(
                 name=task_name,
-                arn=f"arn:aws:ecs:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:task-definition/{task_name}:{task_revision}",
+                arn=f"arn:aws:ecs:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:task-definition/{task_name}:{task_revision}",
                 revision="1",
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
                 environment_variables=[
                     ContainerEnvVariable(
                         name=env_var_name_with_secrets, value=env_var_value_with_secrets
@@ -107,5 +109,5 @@ class Test_ecs_task_definitions_no_environment_secrets:
             assert result[0].resource_id == f"{task_name}:1"
             assert (
                 result[0].resource_arn
-                == f"arn:aws:ecs:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:task-definition/{task_name}:{task_revision}"
+                == f"arn:aws:ecs:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:task-definition/{task_name}:{task_revision}"
             )

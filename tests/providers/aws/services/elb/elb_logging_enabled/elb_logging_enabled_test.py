@@ -5,15 +5,12 @@ from boto3 import client, resource
 from moto import mock_ec2, mock_elb
 
 from tests.providers.aws.audit_info_utils import (
+    AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_WEST_1,
     set_mocked_aws_audit_info,
 )
 
-AWS_REGION = "eu-west-1"
-AWS_ACCOUNT_NUMBER = "123456789012"
-elb_arn = (
-    f"arn:aws:elasticloadbalancing:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:loadbalancer/my-lb"
-)
+elb_arn = f"arn:aws:elasticloadbalancing:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:loadbalancer/my-lb"
 
 
 class Test_elb_logging_enabled:
@@ -41,8 +38,8 @@ class Test_elb_logging_enabled:
     @mock_ec2
     @mock_elb
     def test_elb_without_access_log(self):
-        elb = client("elb", region_name=AWS_REGION)
-        ec2 = resource("ec2", region_name=AWS_REGION)
+        elb = client("elb", region_name=AWS_REGION_EU_WEST_1)
+        ec2 = resource("ec2", region_name=AWS_REGION_EU_WEST_1)
 
         security_group = ec2.create_security_group(
             GroupName="sg01", Description="Test security group sg01"
@@ -54,7 +51,7 @@ class Test_elb_logging_enabled:
                 {"Protocol": "tcp", "LoadBalancerPort": 80, "InstancePort": 8080},
                 {"Protocol": "http", "LoadBalancerPort": 81, "InstancePort": 9000},
             ],
-            AvailabilityZones=[f"{AWS_REGION}a"],
+            AvailabilityZones=[f"{AWS_REGION_EU_WEST_1}a"],
             Scheme="internal",
             SecurityGroups=[security_group.id],
         )
@@ -87,8 +84,8 @@ class Test_elb_logging_enabled:
     @mock_ec2
     @mock_elb
     def test_elb_with_deletion_protection(self):
-        elb = client("elb", region_name=AWS_REGION)
-        ec2 = resource("ec2", region_name=AWS_REGION)
+        elb = client("elb", region_name=AWS_REGION_EU_WEST_1)
+        ec2 = resource("ec2", region_name=AWS_REGION_EU_WEST_1)
 
         security_group = ec2.create_security_group(
             GroupName="sg01", Description="Test security group sg01"
@@ -100,7 +97,7 @@ class Test_elb_logging_enabled:
                 {"Protocol": "tcp", "LoadBalancerPort": 80, "InstancePort": 8080},
                 {"Protocol": "http", "LoadBalancerPort": 81, "InstancePort": 9000},
             ],
-            AvailabilityZones=[f"{AWS_REGION}a"],
+            AvailabilityZones=[f"{AWS_REGION_EU_WEST_1}a"],
             Scheme="internal",
             SecurityGroups=[security_group.id],
         )

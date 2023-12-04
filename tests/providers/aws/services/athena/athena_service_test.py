@@ -86,7 +86,7 @@ class Test_Athena_Service:
         # Athena client
         # This API call is not implemented by Moto
         # athena_client = audit_info.audit_session.client(
-        #     "athena", region_name=AWS_REGION
+        #     "athena", region_name=AWS_REGION_EU_WEST_1
         # )
         # athena_client.update_work_group(
         #     WorkGroup=default_workgroup_name,

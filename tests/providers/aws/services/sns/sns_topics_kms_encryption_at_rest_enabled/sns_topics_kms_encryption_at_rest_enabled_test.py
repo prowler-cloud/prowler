@@ -3,13 +3,14 @@ from unittest import mock
 from uuid import uuid4
 
 from prowler.providers.aws.services.sns.sns_service import Topic
-
-AWS_REGION = "eu-west-1"
-AWS_ACCOUNT_NUMBER = "123456789012"
+from tests.providers.aws.audit_info_utils import (
+    AWS_ACCOUNT_NUMBER,
+    AWS_REGION_EU_WEST_1,
+)
 
 kms_key_id = str(uuid4())
 topic_name = "test-topic"
-topic_arn = f"arn:aws:sns:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:{topic_name}"
+topic_arn = f"arn:aws:sns:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:{topic_name}"
 
 
 class Test_sns_topics_kms_encryption_at_rest_enabled:
@@ -36,7 +37,7 @@ class Test_sns_topics_kms_encryption_at_rest_enabled:
                 arn=topic_arn,
                 name=topic_name,
                 kms_master_key_id=kms_key_id,
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
             )
         )
         with mock.patch(
@@ -59,7 +60,7 @@ class Test_sns_topics_kms_encryption_at_rest_enabled:
         sns_client = mock.MagicMock
         sns_client.topics = []
         sns_client.topics.append(
-            Topic(arn=topic_arn, name=topic_name, region=AWS_REGION)
+            Topic(arn=topic_arn, name=topic_name, region=AWS_REGION_EU_WEST_1)
         )
         with mock.patch(
             "prowler.providers.aws.services.sns.sns_service.SNS",

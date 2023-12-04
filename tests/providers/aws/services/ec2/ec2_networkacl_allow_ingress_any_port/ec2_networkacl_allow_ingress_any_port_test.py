@@ -8,9 +8,6 @@ from tests.providers.aws.audit_info_utils import (
     set_mocked_aws_audit_info,
 )
 
-AWS_REGION = "us-east-1"
-AWS_ACCOUNT_NUMBER = "123456789012"
-
 
 class Test_ec2_networkacl_allow_ingress_any_port:
     @mock_ec2
@@ -63,7 +60,7 @@ class Test_ec2_networkacl_allow_ingress_any_port:
 
             # by default nacls are public
             assert result[0].status == "FAIL"
-            assert result[0].region in (AWS_REGION, "eu-west-1")
+            assert result[0].region in (AWS_REGION_EU_WEST_1, "eu-west-1")
             assert result[0].resource_tags == []
             assert (
                 result[0].status_extended
@@ -73,7 +70,7 @@ class Test_ec2_networkacl_allow_ingress_any_port:
     @mock_ec2
     def test_ec2_non_compliant_nacl(self):
         # Create EC2 Mocked Resources
-        ec2_client = client("ec2", region_name=AWS_REGION)
+        ec2_client = client("ec2", region_name=AWS_REGION_EU_WEST_1)
         vpc_id = ec2_client.create_vpc(CidrBlock="10.0.0.0/16")["Vpc"]["VpcId"]
         nacl_id = ec2_client.create_network_acl(VpcId=vpc_id)["NetworkAcl"][
             "NetworkAclId"
@@ -112,7 +109,7 @@ class Test_ec2_networkacl_allow_ingress_any_port:
             for nacl in result:
                 if nacl.resource_id == nacl_id:
                     assert nacl.status == "FAIL"
-                    assert result[0].region in (AWS_REGION, "eu-west-1")
+                    assert result[0].region in (AWS_REGION_EU_WEST_1, "eu-west-1")
                     assert result[0].resource_tags == []
                     assert (
                         nacl.status_extended
@@ -120,13 +117,13 @@ class Test_ec2_networkacl_allow_ingress_any_port:
                     )
                     assert (
                         nacl.resource_arn
-                        == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:network-acl/{nacl_id}"
+                        == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION_EU_WEST_1}:{current_audit_info.audited_account}:network-acl/{nacl_id}"
                     )
 
     @mock_ec2
     def test_ec2_compliant_nacl(self):
         # Create EC2 Mocked Resources
-        ec2_client = client("ec2", region_name=AWS_REGION)
+        ec2_client = client("ec2", region_name=AWS_REGION_EU_WEST_1)
         vpc_id = ec2_client.create_vpc(CidrBlock="10.0.0.0/16")["Vpc"]["VpcId"]
         nacl_id = ec2_client.create_network_acl(VpcId=vpc_id)["NetworkAcl"][
             "NetworkAclId"
@@ -165,7 +162,7 @@ class Test_ec2_networkacl_allow_ingress_any_port:
             for nacl in result:
                 if nacl.resource_id == nacl_id:
                     assert nacl.status == "PASS"
-                    assert result[0].region in (AWS_REGION, "eu-west-1")
+                    assert result[0].region in (AWS_REGION_EU_WEST_1, "eu-west-1")
                     assert result[0].resource_tags == []
                     assert (
                         nacl.status_extended
@@ -173,13 +170,13 @@ class Test_ec2_networkacl_allow_ingress_any_port:
                     )
                     assert (
                         nacl.resource_arn
-                        == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:network-acl/{nacl_id}"
+                        == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION_EU_WEST_1}:{current_audit_info.audited_account}:network-acl/{nacl_id}"
                     )
 
     @mock_ec2
     def test_ec2_non_compliant_nacl_ignoring(self):
         # Create EC2 Mocked Resources
-        ec2_client = client("ec2", region_name=AWS_REGION)
+        ec2_client = client("ec2", region_name=AWS_REGION_EU_WEST_1)
         vpc_id = ec2_client.create_vpc(CidrBlock="10.0.0.0/16")["Vpc"]["VpcId"]
         nacl_id = ec2_client.create_network_acl(VpcId=vpc_id)["NetworkAcl"][
             "NetworkAclId"
@@ -218,7 +215,7 @@ class Test_ec2_networkacl_allow_ingress_any_port:
     @mock_ec2
     def test_ec2_non_compliant_nacl_ignoring_with_sgs(self):
         # Create EC2 Mocked Resources
-        ec2_client = client("ec2", region_name=AWS_REGION)
+        ec2_client = client("ec2", region_name=AWS_REGION_EU_WEST_1)
         vpc_id = ec2_client.create_vpc(CidrBlock="10.0.0.0/16")["Vpc"]["VpcId"]
         nacl_id = ec2_client.create_network_acl(VpcId=vpc_id)["NetworkAcl"][
             "NetworkAclId"
@@ -259,7 +256,7 @@ class Test_ec2_networkacl_allow_ingress_any_port:
             for nacl in result:
                 if nacl.resource_id == nacl_id:
                     assert nacl.status == "FAIL"
-                    assert result[0].region in (AWS_REGION, "eu-west-1")
+                    assert result[0].region in (AWS_REGION_EU_WEST_1, "eu-west-1")
                     assert result[0].resource_tags == []
                     assert (
                         nacl.status_extended
@@ -267,5 +264,5 @@ class Test_ec2_networkacl_allow_ingress_any_port:
                     )
                     assert (
                         nacl.resource_arn
-                        == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:network-acl/{nacl_id}"
+                        == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION_EU_WEST_1}:{current_audit_info.audited_account}:network-acl/{nacl_id}"
                     )

@@ -1,51 +1,17 @@
 import json
 
-from boto3 import client, resource, session
+from boto3 import client, resource
 from moto import mock_ec2, mock_elbv2
 
-from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.aws.services.vpc.vpc_service import VPC, Route
-from prowler.providers.common.models import Audit_Metadata
 from tests.providers.aws.audit_info_utils import (
+    AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_WEST_1,
     set_mocked_aws_audit_info,
 )
 
-AWS_ACCOUNT_NUMBER = "123456789012"
-AWS_REGION = "us-east-1"
-
 
 class Test_VPC_Service:
-    def set_mocked_audit_info(self):
-        audit_info = AWS_Audit_Info(
-            session_config=None,
-            original_session=None,
-            audit_session=session.Session(
-                profile_name=None,
-                botocore_session=None,
-            ),
-            audited_account=AWS_ACCOUNT_NUMBER,
-            audited_account_arn=f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root",
-            audited_user_id=None,
-            audited_partition="aws",
-            audited_identity_arn=None,
-            profile=None,
-            profile_region=None,
-            credentials=None,
-            assumed_role_info=None,
-            audited_regions=["eu-west-1", "us-east-1"],
-            organizations_metadata=None,
-            audit_resources=None,
-            mfa_enabled=False,
-            audit_metadata=Audit_Metadata(
-                services_scanned=0,
-                expected_checks=[],
-                completed_checks=0,
-                audit_progress=0,
-            ),
-        )
-        return audit_info
-
     # Test VPC Service
     @mock_ec2
     def test_service(self):
@@ -83,7 +49,7 @@ class Test_VPC_Service:
     @mock_ec2
     def test__describe_vpcs__(self):
         # Generate VPC Client
-        ec2_client = client("ec2", region_name=AWS_REGION)
+        ec2_client = client("ec2", region_name=AWS_REGION_EU_WEST_1)
         # Create VPC
         vpc = ec2_client.create_vpc(
             CidrBlock="10.0.0.0/16",
@@ -112,7 +78,7 @@ class Test_VPC_Service:
     @mock_ec2
     def test__describe_flow_logs__(self):
         # Generate VPC Client
-        ec2_client = client("ec2", region_name=AWS_REGION)
+        ec2_client = client("ec2", region_name=AWS_REGION_EU_WEST_1)
         new_vpc = ec2_client.create_vpc(CidrBlock="10.0.0.0/16")["Vpc"]
         # Create VPC Flow log
         ec2_client.create_flow_logs(
@@ -137,7 +103,7 @@ class Test_VPC_Service:
     @mock_ec2
     def test__describe_vpc_peering_connections__(self):
         # Generate VPC Client
-        ec2_client = client("ec2", region_name=AWS_REGION)
+        ec2_client = client("ec2", region_name=AWS_REGION_EU_WEST_1)
         # Create VPCs peers
         vpc = ec2_client.create_vpc(CidrBlock="10.0.0.0/16")
         peer_vpc = ec2_client.create_vpc(CidrBlock="11.0.0.0/16")
@@ -171,8 +137,8 @@ class Test_VPC_Service:
     @mock_ec2
     def test__describe_route_tables__(self):
         # Generate VPC Client
-        ec2_client = client("ec2", region_name=AWS_REGION)
-        _ = resource("ec2", region_name=AWS_REGION)
+        ec2_client = client("ec2", region_name=AWS_REGION_EU_WEST_1)
+        _ = resource("ec2", region_name=AWS_REGION_EU_WEST_1)
 
         # Create VPCs peers as well as a route
         vpc = ec2_client.create_vpc(CidrBlock="10.0.0.0/16")
@@ -213,7 +179,7 @@ class Test_VPC_Service:
     @mock_ec2
     def test__describe_vpc_endpoints__(self):
         # Generate VPC Client
-        ec2_client = client("ec2", region_name=AWS_REGION)
+        ec2_client = client("ec2", region_name=AWS_REGION_EU_WEST_1)
         # Create VPC endpoint
         vpc = ec2_client.create_vpc(CidrBlock="10.0.0.0/16")["Vpc"]
 
@@ -258,8 +224,8 @@ class Test_VPC_Service:
     @mock_elbv2
     def test__describe_vpc_endpoint_services__(self):
         # Generate VPC Client
-        ec2_client = client("ec2", region_name=AWS_REGION)
-        elbv2_client = client("elbv2", region_name=AWS_REGION)
+        ec2_client = client("ec2", region_name=AWS_REGION_EU_WEST_1)
+        elbv2_client = client("elbv2", region_name=AWS_REGION_EU_WEST_1)
 
         vpc = ec2_client.create_vpc(
             CidrBlock="172.28.7.0/24", InstanceTenancy="default"
@@ -267,7 +233,7 @@ class Test_VPC_Service:
         subnet = ec2_client.create_subnet(
             VpcId=vpc["Vpc"]["VpcId"],
             CidrBlock="172.28.7.192/26",
-            AvailabilityZone=f"{AWS_REGION}a",
+            AvailabilityZone=f"{AWS_REGION_EU_WEST_1}a",
         )
         lb_name = "lb_vpce-test"
         lb_arn = elbv2_client.create_load_balancer(
@@ -289,7 +255,7 @@ class Test_VPC_Service:
             ],
         )
         endpoint_id = endpoint["ServiceConfiguration"]["ServiceId"]
-        endpoint_arn = f"arn:aws:ec2:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:vpc-endpoint-service/{endpoint_id}"
+        endpoint_arn = f"arn:aws:ec2:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:vpc-endpoint-service/{endpoint_id}"
         endpoint_service = endpoint["ServiceConfiguration"]["ServiceName"]
 
         # VPC client for this test class
@@ -302,14 +268,14 @@ class Test_VPC_Service:
             assert vpce.service == endpoint_service
             assert vpce.owner_id == AWS_ACCOUNT_NUMBER
             assert vpce.allowed_principals == []
-            assert vpce.region == AWS_REGION
+            assert vpce.region == AWS_REGION_EU_WEST_1
             assert vpce.tags == []
 
     # Test VPC Describe VPC Subnets
     @mock_ec2
     def test__describe_vpc_subnets__(self):
         # Generate VPC Client
-        ec2_client = client("ec2", region_name=AWS_REGION)
+        ec2_client = client("ec2", region_name=AWS_REGION_EU_WEST_1)
         # Create VPC
         vpc = ec2_client.create_vpc(
             CidrBlock="172.28.7.0/24", InstanceTenancy="default"
@@ -317,7 +283,7 @@ class Test_VPC_Service:
         subnet = ec2_client.create_subnet(
             VpcId=vpc["Vpc"]["VpcId"],
             CidrBlock="172.28.7.192/26",
-            AvailabilityZone=f"{AWS_REGION}a",
+            AvailabilityZone=f"{AWS_REGION_EU_WEST_1}a",
         )
         # VPC client for this test class
         audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
@@ -331,8 +297,8 @@ class Test_VPC_Service:
                 assert vpc.subnets[0].default is False
                 assert vpc.subnets[0].vpc_id == vpc.id
                 assert vpc.subnets[0].cidr_block == "172.28.7.192/26"
-                assert vpc.subnets[0].availability_zone == f"{AWS_REGION}a"
+                assert vpc.subnets[0].availability_zone == f"{AWS_REGION_EU_WEST_1}a"
                 assert vpc.subnets[0].public is False
                 assert vpc.subnets[0].nat_gateway is False
-                assert vpc.subnets[0].region == AWS_REGION
+                assert vpc.subnets[0].region == AWS_REGION_EU_WEST_1
                 assert vpc.subnets[0].tags is None

@@ -8,9 +8,6 @@ from tests.providers.aws.audit_info_utils import (
     set_mocked_aws_audit_info,
 )
 
-AWS_REGION = "us-east-1"
-AWS_ACCOUNT_NUMBER = "123456789012"
-
 
 class Test_kms_cmk_rotation_enabled:
     @mock_kms
@@ -39,7 +36,7 @@ class Test_kms_cmk_rotation_enabled:
     @mock_kms
     def test_kms_cmk_rotation_enabled(self):
         # Generate KMS Client
-        kms_client = client("kms", region_name=AWS_REGION)
+        kms_client = client("kms", region_name=AWS_REGION_EU_WEST_1)
         # Creaty KMS key with rotation
         key = kms_client.create_key()["KeyMetadata"]
         kms_client.enable_key_rotation(KeyId=key["KeyId"])
@@ -75,7 +72,7 @@ class Test_kms_cmk_rotation_enabled:
     @mock_kms
     def test_kms_cmk_rotation_disabled(self):
         # Generate KMS Client
-        kms_client = client("kms", region_name=AWS_REGION)
+        kms_client = client("kms", region_name=AWS_REGION_EU_WEST_1)
         # Creaty KMS key without rotation
         key = kms_client.create_key()["KeyMetadata"]
 

@@ -5,9 +5,10 @@ from uuid import uuid4
 from prowler.providers.aws.services.wellarchitected.wellarchitected_service import (
     Workload,
 )
-
-AWS_REGION = "eu-west-1"
-AWS_ACCOUNT_NUMBER = "123456789012"
+from tests.providers.aws.audit_info_utils import (
+    AWS_ACCOUNT_NUMBER,
+    AWS_REGION_EU_WEST_1,
+)
 
 workload_id = str(uuid4())
 
@@ -37,12 +38,12 @@ class Test_wellarchitected_workload_no_high_or_medium_risks:
         wellarchitected_client.workloads.append(
             Workload(
                 id=workload_id,
-                arn=f"arn:aws:wellarchitected:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:workload/{workload_id}",
+                arn=f"arn:aws:wellarchitected:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:workload/{workload_id}",
                 name="test",
                 lenses=["wellarchitected", "serverless", "softwareasaservice"],
                 improvement_status="NOT_APPLICABLE",
                 risks={},
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
             )
         )
         with mock.patch(
@@ -66,7 +67,7 @@ class Test_wellarchitected_workload_no_high_or_medium_risks:
             assert result[0].resource_id == workload_id
             assert (
                 result[0].resource_arn
-                == f"arn:aws:wellarchitected:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:workload/{workload_id}"
+                == f"arn:aws:wellarchitected:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:workload/{workload_id}"
             )
 
     def test_wellarchitected_no_high_medium_risks(self):
@@ -75,7 +76,7 @@ class Test_wellarchitected_workload_no_high_or_medium_risks:
         wellarchitected_client.workloads.append(
             Workload(
                 id=workload_id,
-                arn=f"arn:aws:wellarchitected:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:workload/{workload_id}",
+                arn=f"arn:aws:wellarchitected:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:workload/{workload_id}",
                 name="test",
                 lenses=["wellarchitected", "serverless", "softwareasaservice"],
                 improvement_status="NOT_APPLICABLE",
@@ -83,7 +84,7 @@ class Test_wellarchitected_workload_no_high_or_medium_risks:
                     "UNANSWERED": 56,
                     "NOT_APPLICABLE": 4,
                 },
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
             )
         )
         with mock.patch(
@@ -107,7 +108,7 @@ class Test_wellarchitected_workload_no_high_or_medium_risks:
             assert result[0].resource_id == workload_id
             assert (
                 result[0].resource_arn
-                == f"arn:aws:wellarchitected:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:workload/{workload_id}"
+                == f"arn:aws:wellarchitected:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:workload/{workload_id}"
             )
 
     def test_wellarchitected_with_high_medium_risks(self):
@@ -116,7 +117,7 @@ class Test_wellarchitected_workload_no_high_or_medium_risks:
         wellarchitected_client.workloads.append(
             Workload(
                 id=workload_id,
-                arn=f"arn:aws:wellarchitected:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:workload/{workload_id}",
+                arn=f"arn:aws:wellarchitected:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:workload/{workload_id}",
                 name="test",
                 lenses=["wellarchitected", "serverless", "softwareasaservice"],
                 improvement_status="NOT_APPLICABLE",
@@ -126,7 +127,7 @@ class Test_wellarchitected_workload_no_high_or_medium_risks:
                     "HIGH": 10,
                     "MEDIUM": 20,
                 },
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
             )
         )
         with mock.patch(
@@ -150,5 +151,5 @@ class Test_wellarchitected_workload_no_high_or_medium_risks:
             assert result[0].resource_id == workload_id
             assert (
                 result[0].resource_arn
-                == f"arn:aws:wellarchitected:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:workload/{workload_id}"
+                == f"arn:aws:wellarchitected:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:workload/{workload_id}"
             )

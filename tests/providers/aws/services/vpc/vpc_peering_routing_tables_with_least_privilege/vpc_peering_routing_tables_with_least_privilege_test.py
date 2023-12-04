@@ -8,9 +8,6 @@ from tests.providers.aws.audit_info_utils import (
     set_mocked_aws_audit_info,
 )
 
-AWS_REGION = "us-east-1"
-AWS_ACCOUNT_NUMBER = "123456789012"
-
 
 class Test_vpc_peering_routing_tables_with_least_privilege:
     @mock_ec2
@@ -40,8 +37,8 @@ class Test_vpc_peering_routing_tables_with_least_privilege:
     @mock_ec2
     def test_vpc_comply_peering_connection_(self):
         # Create VPC Mocked Resources
-        ec2_client = client("ec2", region_name=AWS_REGION)
-        ec2_resource = resource("ec2", region_name=AWS_REGION)
+        ec2_client = client("ec2", region_name=AWS_REGION_EU_WEST_1)
+        ec2_resource = resource("ec2", region_name=AWS_REGION_EU_WEST_1)
 
         # Create VPCs peers as well as a comply route
         vpc = ec2_client.create_vpc(CidrBlock="10.0.0.0/16")
@@ -102,13 +99,13 @@ class Test_vpc_peering_routing_tables_with_least_privilege:
                     == f"VPC Peering Connection {vpc_pcx_id} comply with least privilege access."
                 )
                 assert result[0].resource_id == vpc_pcx_id
-                assert result[0].region == AWS_REGION
+                assert result[0].region == AWS_REGION_EU_WEST_1
 
     @mock_ec2
     def test_vpc_comply_peering_connection_edge_case(self):
         # Create VPC Mocked Resources
-        ec2_client = client("ec2", region_name=AWS_REGION)
-        ec2_resource = resource("ec2", region_name=AWS_REGION)
+        ec2_client = client("ec2", region_name=AWS_REGION_EU_WEST_1)
+        ec2_resource = resource("ec2", region_name=AWS_REGION_EU_WEST_1)
 
         # Create VPCs peers as well as a comply route
         vpc = ec2_client.create_vpc(CidrBlock="10.0.0.0/16")
@@ -167,13 +164,13 @@ class Test_vpc_peering_routing_tables_with_least_privilege:
                     == f"VPC Peering Connection {vpc_pcx_id} comply with least privilege access."
                 )
                 assert result[0].resource_id == vpc_pcx_id
-                assert result[0].region == AWS_REGION
+                assert result[0].region == AWS_REGION_EU_WEST_1
 
     @mock_ec2
     def test_vpc_not_comply_peering_connection_(self):
         # Create VPC Mocked Resources
-        ec2_client = client("ec2", region_name=AWS_REGION)
-        ec2_resource = resource("ec2", region_name=AWS_REGION)
+        ec2_client = client("ec2", region_name=AWS_REGION_EU_WEST_1)
+        ec2_resource = resource("ec2", region_name=AWS_REGION_EU_WEST_1)
 
         # Create VPCs peers as well as a comply route
         vpc = ec2_client.create_vpc(CidrBlock="10.0.0.0/16")
@@ -234,4 +231,4 @@ class Test_vpc_peering_routing_tables_with_least_privilege:
                     == f"VPC Peering Connection {vpc_pcx_id} does not comply with least privilege access since it accepts whole VPCs CIDR in its route tables."
                 )
                 assert result[0].resource_id == vpc_pcx_id
-                assert result[0].region == AWS_REGION
+                assert result[0].region == AWS_REGION_EU_WEST_1

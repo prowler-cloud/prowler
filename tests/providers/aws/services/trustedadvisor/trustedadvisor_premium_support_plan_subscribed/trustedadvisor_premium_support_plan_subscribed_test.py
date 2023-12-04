@@ -3,9 +3,11 @@ from unittest import mock
 from prowler.providers.aws.services.trustedadvisor.trustedadvisor_service import (
     PremiumSupport,
 )
+from tests.providers.aws.audit_info_utils import (
+    AWS_ACCOUNT_NUMBER,
+    AWS_REGION_EU_WEST_1,
+)
 
-AWS_REGION = "eu-west-1"
-AWS_ACCOUNT_NUMBER = "123456789012"
 AWS_ACCOUNT_ARN = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
 
 
@@ -16,7 +18,7 @@ class Test_trustedadvisor_premium_support_plan_subscribed:
         trustedadvisor_client.premium_support = PremiumSupport(enabled=False)
         trustedadvisor_client.audited_account = AWS_ACCOUNT_NUMBER
         trustedadvisor_client.audited_account_arn = AWS_ACCOUNT_ARN
-        trustedadvisor_client.region = AWS_REGION
+        trustedadvisor_client.region = AWS_REGION_EU_WEST_1
 
         # Set verify_premium_support_plans config
         trustedadvisor_client.audit_config = {"verify_premium_support_plans": True}
@@ -37,7 +39,7 @@ class Test_trustedadvisor_premium_support_plan_subscribed:
                 result[0].status_extended
                 == "Amazon Web Services Premium Support Plan isn't subscribed."
             )
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
             assert result[0].resource_arn == AWS_ACCOUNT_ARN
 
@@ -47,7 +49,7 @@ class Test_trustedadvisor_premium_support_plan_subscribed:
         trustedadvisor_client.premium_support = PremiumSupport(enabled=True)
         trustedadvisor_client.audited_account = AWS_ACCOUNT_NUMBER
         trustedadvisor_client.audited_account_arn = AWS_ACCOUNT_ARN
-        trustedadvisor_client.region = AWS_REGION
+        trustedadvisor_client.region = AWS_REGION_EU_WEST_1
 
         # Set verify_premium_support_plans config
         trustedadvisor_client.audit_config = {"verify_premium_support_plans": True}
@@ -68,6 +70,6 @@ class Test_trustedadvisor_premium_support_plan_subscribed:
                 result[0].status_extended
                 == "Amazon Web Services Premium Support Plan is subscribed."
             )
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
             assert result[0].resource_arn == AWS_ACCOUNT_ARN

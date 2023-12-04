@@ -3,8 +3,7 @@ from unittest import mock
 from moto.core import DEFAULT_ACCOUNT_ID
 
 from prowler.providers.aws.services.glacier.glacier_service import Vault
-
-AWS_REGION = "eu-west-1"
+from tests.providers.aws.audit_info_utils import AWS_REGION_EU_WEST_1
 
 
 class Test_glacier_vaults_policy_public_access:
@@ -28,15 +27,13 @@ class Test_glacier_vaults_policy_public_access:
     def test_vault_no_policy(self):
         glacier_client = mock.MagicMock
         vault_name = "test-vault"
-        vault_arn = (
-            f"arn:aws:glacier:{AWS_REGION}:{DEFAULT_ACCOUNT_ID}:vaults/examplevault"
-        )
+        vault_arn = f"arn:aws:glacier:{AWS_REGION_EU_WEST_1}:{DEFAULT_ACCOUNT_ID}:vaults/examplevault"
         glacier_client.vaults = {
             vault_name: Vault(
                 name=vault_name,
                 arn=vault_arn,
                 access_policy={},
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
             )
         }
         with mock.patch(
@@ -52,7 +49,7 @@ class Test_glacier_vaults_policy_public_access:
             result = check.execute()
 
             assert len(result) == 1
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1
             assert result[0].resource_id == vault_name
             assert result[0].resource_arn == vault_arn
             assert result[0].status == "PASS"
@@ -64,9 +61,7 @@ class Test_glacier_vaults_policy_public_access:
     def test_vault_policy_pricipal_aws_list_asterisk(self):
         glacier_client = mock.MagicMock
         vault_name = "test-vault"
-        vault_arn = (
-            f"arn:aws:glacier:{AWS_REGION}:{DEFAULT_ACCOUNT_ID}:vaults/examplevault"
-        )
+        vault_arn = f"arn:aws:glacier:{AWS_REGION_EU_WEST_1}:{DEFAULT_ACCOUNT_ID}:vaults/examplevault"
         glacier_client.vaults = {
             vault_name: Vault(
                 name=vault_name,
@@ -85,12 +80,12 @@ class Test_glacier_vaults_policy_public_access:
                                 "glacier:CompleteMultipartUpload",
                             ],
                             "Resource": [
-                                f"arn:aws:glacier:{AWS_REGION}:{DEFAULT_ACCOUNT_ID}:vaults/examplevault"
+                                f"arn:aws:glacier:{AWS_REGION_EU_WEST_1}:{DEFAULT_ACCOUNT_ID}:vaults/examplevault"
                             ],
                         }
                     ],
                 },
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
             )
         }
         with mock.patch(
@@ -106,7 +101,7 @@ class Test_glacier_vaults_policy_public_access:
             result = check.execute()
 
             assert len(result) == 1
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1
             assert result[0].resource_id == vault_name
             assert result[0].resource_arn == vault_arn
             assert result[0].status == "FAIL"
@@ -118,9 +113,7 @@ class Test_glacier_vaults_policy_public_access:
     def test_vault_policy_pricipal_asterisk(self):
         glacier_client = mock.MagicMock
         vault_name = "test-vault"
-        vault_arn = (
-            f"arn:aws:glacier:{AWS_REGION}:{DEFAULT_ACCOUNT_ID}:vaults/examplevault"
-        )
+        vault_arn = f"arn:aws:glacier:{AWS_REGION_EU_WEST_1}:{DEFAULT_ACCOUNT_ID}:vaults/examplevault"
         glacier_client.vaults = {
             vault_name: Vault(
                 name=vault_name,
@@ -139,12 +132,12 @@ class Test_glacier_vaults_policy_public_access:
                                 "glacier:CompleteMultipartUpload",
                             ],
                             "Resource": [
-                                f"arn:aws:glacier:{AWS_REGION}:{DEFAULT_ACCOUNT_ID}:vaults/examplevault"
+                                f"arn:aws:glacier:{AWS_REGION_EU_WEST_1}:{DEFAULT_ACCOUNT_ID}:vaults/examplevault"
                             ],
                         }
                     ],
                 },
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
             )
         }
         with mock.patch(
@@ -160,7 +153,7 @@ class Test_glacier_vaults_policy_public_access:
             result = check.execute()
 
             assert len(result) == 1
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1
             assert result[0].resource_id == vault_name
             assert result[0].resource_arn == vault_arn
             assert result[0].status == "FAIL"
@@ -172,9 +165,7 @@ class Test_glacier_vaults_policy_public_access:
     def test_vault_policy_pricipal_canonical_user_asterisk(self):
         glacier_client = mock.MagicMock
         vault_name = "test-vault"
-        vault_arn = (
-            f"arn:aws:glacier:{AWS_REGION}:{DEFAULT_ACCOUNT_ID}:vaults/examplevault"
-        )
+        vault_arn = f"arn:aws:glacier:{AWS_REGION_EU_WEST_1}:{DEFAULT_ACCOUNT_ID}:vaults/examplevault"
         glacier_client.vaults = {
             vault_name: Vault(
                 name=vault_name,
@@ -193,12 +184,12 @@ class Test_glacier_vaults_policy_public_access:
                                 "glacier:CompleteMultipartUpload",
                             ],
                             "Resource": [
-                                f"arn:aws:glacier:{AWS_REGION}:{DEFAULT_ACCOUNT_ID}:vaults/examplevault"
+                                f"arn:aws:glacier:{AWS_REGION_EU_WEST_1}:{DEFAULT_ACCOUNT_ID}:vaults/examplevault"
                             ],
                         }
                     ],
                 },
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
             )
         }
         with mock.patch(
@@ -214,7 +205,7 @@ class Test_glacier_vaults_policy_public_access:
             result = check.execute()
 
             assert len(result) == 1
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1
             assert result[0].resource_id == vault_name
             assert result[0].resource_arn == vault_arn
             assert result[0].status == "FAIL"
@@ -226,9 +217,7 @@ class Test_glacier_vaults_policy_public_access:
     def test_vault_policy_private(self):
         glacier_client = mock.MagicMock
         vault_name = "test-vault"
-        vault_arn = (
-            f"arn:aws:glacier:{AWS_REGION}:{DEFAULT_ACCOUNT_ID}:vaults/examplevault"
-        )
+        vault_arn = f"arn:aws:glacier:{AWS_REGION_EU_WEST_1}:{DEFAULT_ACCOUNT_ID}:vaults/examplevault"
         glacier_client.vaults = {
             vault_name: Vault(
                 name=vault_name,
@@ -251,12 +240,12 @@ class Test_glacier_vaults_policy_public_access:
                                 "glacier:CompleteMultipartUpload",
                             ],
                             "Resource": [
-                                f"arn:aws:glacier:{AWS_REGION}:{DEFAULT_ACCOUNT_ID}:vaults/examplevault"
+                                f"arn:aws:glacier:{AWS_REGION_EU_WEST_1}:{DEFAULT_ACCOUNT_ID}:vaults/examplevault"
                             ],
                         }
                     ],
                 },
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
             )
         }
         with mock.patch(
@@ -272,7 +261,7 @@ class Test_glacier_vaults_policy_public_access:
             result = check.execute()
 
             assert len(result) == 1
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1
             assert result[0].resource_id == vault_name
             assert result[0].resource_arn == vault_arn
             assert result[0].status == "PASS"

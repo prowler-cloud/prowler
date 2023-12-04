@@ -1,24 +1,18 @@
 from unittest.mock import patch
 
 import botocore
-from boto3 import client, session
+from boto3 import client
 from moto import mock_cloudfront
-from moto.core import DEFAULT_ACCOUNT_ID
 
-from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.aws.services.cloudfront.cloudfront_service import (
     CloudFront,
     GeoRestrictionType,
     ViewerProtocolPolicy,
 )
-from prowler.providers.common.models import Audit_Metadata
 from tests.providers.aws.audit_info_utils import (
     AWS_REGION_EU_WEST_1,
     set_mocked_aws_audit_info,
 )
-
-# Mock Test Region
-AWS_REGION = "eu-west-1"
 
 
 def example_distribution_config(ref):
@@ -159,37 +153,6 @@ def mock_make_api_call(self, operation_name, kwarg):
 # Patch every AWS call using Boto3
 @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
 class Test_CloudFront_Service:
-    def set_mocked_audit_info(self):
-        audit_info = AWS_Audit_Info(
-            session_config=None,
-            original_session=None,
-            audit_session=session.Session(
-                profile_name=None,
-                botocore_session=None,
-                region_name=AWS_REGION,
-            ),
-            audited_account=DEFAULT_ACCOUNT_ID,
-            audited_account_arn=f"arn:aws:iam::{DEFAULT_ACCOUNT_ID}:root",
-            audited_user_id=None,
-            audited_partition="aws",
-            audited_identity_arn=None,
-            profile=None,
-            profile_region=AWS_REGION,
-            credentials=None,
-            assumed_role_info=None,
-            audited_regions=None,
-            organizations_metadata=None,
-            audit_resources=None,
-            mfa_enabled=False,
-            audit_metadata=Audit_Metadata(
-                services_scanned=0,
-                expected_checks=[],
-                completed_checks=0,
-                audit_progress=0,
-            ),
-        )
-        return audit_info
-
     # Test CloudFront Client
     @mock_cloudfront
     def test__get_client__(self):

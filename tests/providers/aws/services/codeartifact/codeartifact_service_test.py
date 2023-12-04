@@ -14,17 +14,10 @@ from tests.providers.aws.audit_info_utils import (
     set_mocked_aws_audit_info,
 )
 
-# Mock Test Region
-AWS_REGION = "eu-west-1"
-AWS_ACCOUNT_NUMBER = "123456789012"
-
-
 # Mocking Access Analyzer Calls
 make_api_call = botocore.client.BaseClient._make_api_call
 
-TEST_REPOSITORY_ARN = (
-    f"arn:aws:codebuild:{AWS_REGION}:{DEFAULT_ACCOUNT_ID}:repository/test-repository"
-)
+TEST_REPOSITORY_ARN = f"arn:aws:codebuild:{AWS_REGION_EU_WEST_1}:{DEFAULT_ACCOUNT_ID}:repository/test-repository"
 
 
 def mock_make_api_call(self, operation_name, kwarg):
@@ -93,9 +86,11 @@ def mock_make_api_call(self, operation_name, kwarg):
 
 # Mock generate_regional_clients()
 def mock_generate_regional_clients(service, audit_info, _):
-    regional_client = audit_info.audit_session.client(service, region_name=AWS_REGION)
-    regional_client.region = AWS_REGION
-    return {AWS_REGION: regional_client}
+    regional_client = audit_info.audit_session.client(
+        service, region_name=AWS_REGION_EU_WEST_1
+    )
+    regional_client.region = AWS_REGION_EU_WEST_1
+    return {AWS_REGION_EU_WEST_1: regional_client}
 
 
 # Patch every AWS call using Boto3 and generate_regional_clients to have 1 client
@@ -109,7 +104,7 @@ class Test_CodeArtifact_Service:
     def test__get_client__(self):
         codeartifact = CodeArtifact(set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1]))
         assert (
-            codeartifact.regional_clients[AWS_REGION].__class__.__name__
+            codeartifact.regional_clients[AWS_REGION_EU_WEST_1].__class__.__name__
             == "CodeArtifact"
         )
 
@@ -130,11 +125,11 @@ class Test_CodeArtifact_Service:
         assert len(codeartifact.repositories) == 1
         assert codeartifact.repositories
         assert codeartifact.repositories[
-            f"arn:aws:codebuild:{AWS_REGION}:{DEFAULT_ACCOUNT_ID}:repository/test-repository"
+            f"arn:aws:codebuild:{AWS_REGION_EU_WEST_1}:{DEFAULT_ACCOUNT_ID}:repository/test-repository"
         ]
         assert codeartifact.repositories[TEST_REPOSITORY_ARN].name == "test-repository"
         assert codeartifact.repositories[
-            f"arn:aws:codebuild:{AWS_REGION}:{DEFAULT_ACCOUNT_ID}:repository/test-repository"
+            f"arn:aws:codebuild:{AWS_REGION_EU_WEST_1}:{DEFAULT_ACCOUNT_ID}:repository/test-repository"
         ].tags == [
             {"key": "test", "value": "test"},
         ]
@@ -146,10 +141,13 @@ class Test_CodeArtifact_Service:
             codeartifact.repositories[TEST_REPOSITORY_ARN].domain_owner
             == DEFAULT_ACCOUNT_ID
         )
-        assert codeartifact.repositories[TEST_REPOSITORY_ARN].region == AWS_REGION
+        assert (
+            codeartifact.repositories[TEST_REPOSITORY_ARN].region
+            == AWS_REGION_EU_WEST_1
+        )
 
         assert codeartifact.repositories[
-            f"arn:aws:codebuild:{AWS_REGION}:{DEFAULT_ACCOUNT_ID}:repository/test-repository"
+            f"arn:aws:codebuild:{AWS_REGION_EU_WEST_1}:{DEFAULT_ACCOUNT_ID}:repository/test-repository"
         ].packages
         assert len(codeartifact.repositories[TEST_REPOSITORY_ARN].packages) == 1
         assert (

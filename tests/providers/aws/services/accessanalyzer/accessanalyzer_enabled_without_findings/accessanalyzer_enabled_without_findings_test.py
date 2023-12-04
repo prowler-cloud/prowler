@@ -4,13 +4,15 @@ from prowler.providers.aws.services.accessanalyzer.accessanalyzer_service import
     Analyzer,
     Finding,
 )
+from tests.providers.aws.audit_info_utils import (
+    AWS_ACCOUNT_ARN,
+    AWS_ACCOUNT_NUMBER,
+    AWS_REGION_EU_WEST_1,
+    AWS_REGION_EU_WEST_2,
+)
 
-AWS_REGION_1 = "eu-west-1"
-AWS_REGION_2 = "eu-west-2"
-AWS_ACCOUNT_NUMBER = "123456789012"
-AWS_ACCOUNT_ARN = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
 ACCESS_ANALYZER_NAME = "test-analyzer"
-ACCESS_ANALYZER_ARN = f"arn:aws:access-analyzer:{AWS_REGION_2}:{AWS_ACCOUNT_NUMBER}:analyzer/{ACCESS_ANALYZER_NAME}"
+ACCESS_ANALYZER_ARN = f"arn:aws:access-analyzer:{AWS_REGION_EU_WEST_2}:{AWS_ACCOUNT_NUMBER}:analyzer/{ACCESS_ANALYZER_NAME}"
 
 
 class Test_accessanalyzer_enabled_without_findings:
@@ -42,7 +44,7 @@ class Test_accessanalyzer_enabled_without_findings:
                 tags=[],
                 type="",
                 fidings=[],
-                region=AWS_REGION_1,
+                region=AWS_REGION_EU_WEST_1,
             )
         ]
         with mock.patch(
@@ -68,7 +70,7 @@ class Test_accessanalyzer_enabled_without_findings:
                 tags=[],
                 fidings=[],
                 type="",
-                region=AWS_REGION_1,
+                region=AWS_REGION_EU_WEST_1,
             ),
             Analyzer(
                 arn=ACCESS_ANALYZER_ARN,
@@ -86,7 +88,7 @@ class Test_accessanalyzer_enabled_without_findings:
                 ],
                 tags=[],
                 type="",
-                region=AWS_REGION_2,
+                region=AWS_REGION_EU_WEST_2,
             ),
         ]
 
@@ -112,7 +114,7 @@ class Test_accessanalyzer_enabled_without_findings:
             )
             assert result[0].resource_id == ACCESS_ANALYZER_NAME
             assert result[0].resource_arn == ACCESS_ANALYZER_ARN
-            assert result[0].region == AWS_REGION_2
+            assert result[0].region == AWS_REGION_EU_WEST_2
             assert result[0].resource_tags == []
 
     def test_one_active_analyzer_without_findings(self):
@@ -125,7 +127,7 @@ class Test_accessanalyzer_enabled_without_findings:
                 tags=[],
                 fidings=[],
                 type="",
-                region=AWS_REGION_2,
+                region=AWS_REGION_EU_WEST_2,
             )
         ]
 
@@ -149,7 +151,7 @@ class Test_accessanalyzer_enabled_without_findings:
             )
             assert result[0].resource_id == ACCESS_ANALYZER_NAME
             assert result[0].resource_arn == ACCESS_ANALYZER_ARN
-            assert result[0].region == AWS_REGION_2
+            assert result[0].region == AWS_REGION_EU_WEST_2
             assert result[0].resource_tags == []
 
     def test_one_active_analyzer_not_active_without_findings(self):
@@ -162,7 +164,7 @@ class Test_accessanalyzer_enabled_without_findings:
                 tags=[],
                 fidings=[],
                 type="",
-                region=AWS_REGION_1,
+                region=AWS_REGION_EU_WEST_1,
             ),
         ]
         # Patch AccessAnalyzer Client
@@ -195,7 +197,7 @@ class Test_accessanalyzer_enabled_without_findings:
                 ],
                 tags=[],
                 type="",
-                region=AWS_REGION_1,
+                region=AWS_REGION_EU_WEST_1,
             ),
         ]
 
@@ -220,5 +222,5 @@ class Test_accessanalyzer_enabled_without_findings:
             )
             assert result[0].resource_id == ACCESS_ANALYZER_NAME
             assert result[0].resource_arn == ACCESS_ANALYZER_ARN
-            assert result[0].region == AWS_REGION_1
+            assert result[0].region == AWS_REGION_EU_WEST_1
             assert result[0].resource_tags == []

@@ -8,9 +8,7 @@ from tests.providers.aws.audit_info_utils import (
     set_mocked_aws_audit_info,
 )
 
-AWS_REGION = "us-east-1"
 EXAMPLE_AMI_ID = "ami-12c6146b"
-AWS_ACCOUNT_NUMBER = "123456789012"
 
 
 class Test_ec2_ami_public:
@@ -39,7 +37,7 @@ class Test_ec2_ami_public:
 
     @mock_ec2
     def test_one_private_ami(self):
-        ec2 = client("ec2", region_name=AWS_REGION)
+        ec2 = client("ec2", region_name=AWS_REGION_EU_WEST_1)
 
         reservation = ec2.run_instances(ImageId=EXAMPLE_AMI_ID, MinCount=1, MaxCount=1)
         instance = reservation["Instances"][0]
@@ -73,14 +71,14 @@ class Test_ec2_ami_public:
             assert result[0].resource_id == image_id
             assert (
                 result[0].resource_arn
-                == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:image/{image_id}"
+                == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION_EU_WEST_1}:{current_audit_info.audited_account}:image/{image_id}"
             )
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1
             assert result[0].resource_tags == []
 
     @mock_ec2
     def test_one_public_ami(self):
-        ec2 = client("ec2", region_name=AWS_REGION)
+        ec2 = client("ec2", region_name=AWS_REGION_EU_WEST_1)
 
         reservation = ec2.run_instances(ImageId=EXAMPLE_AMI_ID, MinCount=1, MaxCount=1)
         instance = reservation["Instances"][0]
@@ -125,7 +123,7 @@ class Test_ec2_ami_public:
             assert result[0].resource_id == image_id
             assert (
                 result[0].resource_arn
-                == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:image/{image_id}"
+                == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION_EU_WEST_1}:{current_audit_info.audited_account}:image/{image_id}"
             )
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1
             assert result[0].resource_tags == []

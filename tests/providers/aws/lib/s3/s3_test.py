@@ -7,9 +7,10 @@ from moto import mock_s3
 
 from prowler.config.config import csv_file_suffix
 from prowler.providers.aws.lib.s3.s3 import get_s3_object_path, send_to_s3_bucket
-
-AWS_ACCOUNT_ID = "123456789012"
-AWS_REGION = "us-east-1"
+from tests.providers.aws.audit_info_utils import (
+    AWS_ACCOUNT_NUMBER,
+    AWS_REGION_EU_WEST_1,
+)
 
 ACTUAL_DIRECTORY = Path(path.dirname(path.realpath(__file__)))
 FIXTURES_DIR_NAME = "fixtures"
@@ -27,8 +28,10 @@ class TestS3:
         audit_info = MagicMock()
 
         # Create mock session
-        audit_info.audit_session = boto3.session.Session(region_name=AWS_REGION)
-        audit_info.audited_account = AWS_ACCOUNT_ID
+        audit_info.audit_session = boto3.session.Session(
+            region_name=AWS_REGION_EU_WEST_1
+        )
+        audit_info.audited_account = AWS_ACCOUNT_NUMBER
 
         # Create mock bucket
         client = audit_info.audit_session.client("s3")
@@ -66,8 +69,10 @@ class TestS3:
         audit_info = MagicMock()
 
         # Create mock session
-        audit_info.audit_session = boto3.session.Session(region_name=AWS_REGION)
-        audit_info.audited_account = AWS_ACCOUNT_ID
+        audit_info.audit_session = boto3.session.Session(
+            region_name=AWS_REGION_EU_WEST_1
+        )
+        audit_info.audited_account = AWS_ACCOUNT_NUMBER
 
         # Create mock bucket
         client = audit_info.audit_session.client("s3")

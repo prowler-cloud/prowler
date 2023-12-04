@@ -1,16 +1,18 @@
 from unittest import mock
 
 from prowler.providers.aws.services.account.account_service import Contact
+from tests.providers.aws.audit_info_utils import (
+    AWS_ACCOUNT_NUMBER,
+    AWS_REGION_EU_WEST_1,
+)
 
-AWS_ACCOUNT_NUMBER = "123456789012"
 AWS_ACCOUNT_ARN = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
-AWS_REGION = "us-east-1"
 
 
 class Test_account_maintain_different_contact_details_to_security_billing_and_operations:
     def test_contacts_not_configured_or_equal(self):
         account_client = mock.MagicMock
-        account_client.region = AWS_REGION
+        account_client.region = AWS_REGION_EU_WEST_1
         account_client.audited_account = AWS_ACCOUNT_NUMBER
         account_client.audited_account_arn = AWS_ACCOUNT_ARN
 
@@ -49,13 +51,13 @@ class Test_account_maintain_different_contact_details_to_security_billing_and_op
                 result[0].status_extended
                 == "SECURITY, BILLING and OPERATIONS contacts not found or they are not different between each other and between ROOT contact."
             )
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
             assert result[0].resource_arn == AWS_ACCOUNT_ARN
 
     def test_contacts_diffent(self):
         account_client = mock.MagicMock
-        account_client.region = AWS_REGION
+        account_client.region = AWS_REGION_EU_WEST_1
         account_client.audited_account = AWS_ACCOUNT_NUMBER
         account_client.audited_account_arn = AWS_ACCOUNT_ARN
 
@@ -98,6 +100,6 @@ class Test_account_maintain_different_contact_details_to_security_billing_and_op
                 result[0].status_extended
                 == "SECURITY, BILLING and OPERATIONS contacts found and they are different between each other and between ROOT contact."
             )
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
             assert result[0].resource_arn == AWS_ACCOUNT_ARN

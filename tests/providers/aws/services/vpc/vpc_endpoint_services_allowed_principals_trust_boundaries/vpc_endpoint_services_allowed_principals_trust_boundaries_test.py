@@ -4,12 +4,12 @@ from boto3 import client
 from moto import mock_ec2, mock_elbv2
 
 from tests.providers.aws.audit_info_utils import (
+    AWS_ACCOUNT_ARN,
+    AWS_ACCOUNT_NUMBER,
     AWS_REGION_US_EAST_1,
     set_mocked_aws_audit_info,
 )
 
-AWS_ACCOUNT_NUMBER = "123456789012"
-AWS_ACCOUNT_ARN = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
 AWS_ACCOUNT_NUMBER_2 = "111122223333"
 AWS_ACCOUNT_ARN_2 = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER_2}:root"
 

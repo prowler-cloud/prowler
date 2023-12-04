@@ -9,14 +9,13 @@ from tests.providers.aws.audit_info_utils import (
     set_mocked_aws_audit_info,
 )
 
-AWS_REGION = "us-east-1"
-AWS_ACCOUNT_NUMBER = "123456789012"
-
 
 def mock_generate_regional_clients(service, audit_info, _):
-    regional_client = audit_info.audit_session.client(service, region_name=AWS_REGION)
-    regional_client.region = AWS_REGION
-    return {AWS_REGION: regional_client}
+    regional_client = audit_info.audit_session.client(
+        service, region_name=AWS_REGION_EU_WEST_1
+    )
+    regional_client.region = AWS_REGION_EU_WEST_1
+    return {AWS_REGION_EU_WEST_1: regional_client}
 
 
 @patch(
@@ -51,8 +50,8 @@ class Test_ec2_ebs_snapshots_encrypted:
     @mock_ec2
     def test_ec2_unencrypted_snapshot(self):
         # Create EC2 Mocked Resources
-        ec2 = resource("ec2", region_name=AWS_REGION)
-        volume = ec2.create_volume(Size=80, AvailabilityZone=f"{AWS_REGION}a")
+        ec2 = resource("ec2", region_name=AWS_REGION_EU_WEST_1)
+        volume = ec2.create_volume(Size=80, AvailabilityZone=f"{AWS_REGION_EU_WEST_1}a")
         snapshot = volume.create_snapshot(Description="testsnap")
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
@@ -79,7 +78,7 @@ class Test_ec2_ebs_snapshots_encrypted:
 
             for snap in results:
                 if snap.resource_id == snapshot.id:
-                    assert snap.region == AWS_REGION
+                    assert snap.region == AWS_REGION_EU_WEST_1
                     assert snap.resource_tags == []
                     assert snap.status == "FAIL"
                     assert (
@@ -88,15 +87,15 @@ class Test_ec2_ebs_snapshots_encrypted:
                     )
                     assert (
                         snap.resource_arn
-                        == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:snapshot/{snapshot.id}"
+                        == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION_EU_WEST_1}:{current_audit_info.audited_account}:snapshot/{snapshot.id}"
                     )
 
     @mock_ec2
     def test_ec2_encrypted_snapshot(self):
         # Create EC2 Mocked Resources
-        ec2 = resource("ec2", region_name=AWS_REGION)
+        ec2 = resource("ec2", region_name=AWS_REGION_EU_WEST_1)
         snapshot = volume = ec2.create_volume(
-            Size=80, AvailabilityZone=f"{AWS_REGION}a", Encrypted=True
+            Size=80, AvailabilityZone=f"{AWS_REGION_EU_WEST_1}a", Encrypted=True
         )
         snapshot = volume.create_snapshot(Description="testsnap")
 
@@ -124,7 +123,7 @@ class Test_ec2_ebs_snapshots_encrypted:
 
             for snap in results:
                 if snap.resource_id == snapshot.id:
-                    assert snap.region == AWS_REGION
+                    assert snap.region == AWS_REGION_EU_WEST_1
                     assert snap.resource_tags == []
                     assert snap.status == "PASS"
                     assert (
@@ -133,5 +132,5 @@ class Test_ec2_ebs_snapshots_encrypted:
                     )
                     assert (
                         snap.resource_arn
-                        == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:snapshot/{snapshot.id}"
+                        == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION_EU_WEST_1}:{current_audit_info.audited_account}:snapshot/{snapshot.id}"
                     )

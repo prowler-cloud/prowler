@@ -1,10 +1,12 @@
 from unittest import mock
 
 from prowler.providers.aws.services.drs.drs_service import DRSservice, Job
+from tests.providers.aws.audit_info_utils import (
+    AWS_ACCOUNT_NUMBER,
+    AWS_REGION_EU_WEST_1,
+)
 
-AWS_REGION = "eu-west-1"
 JOB_ARN = "arn:aws:drs:eu-west-1:123456789012:job/12345678901234567890123456789012"
-AWS_ACCOUNT_NUMBER = "123456789012"
 
 
 class Test_drs_job_exist:
@@ -12,18 +14,18 @@ class Test_drs_job_exist:
         drs_client = mock.MagicMock
         drs_client.audited_account = AWS_ACCOUNT_NUMBER
         drs_client.audited_account_arn = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
-        drs_client.region = AWS_REGION
+        drs_client.region = AWS_REGION_EU_WEST_1
         drs_client.drs_services = [
             DRSservice(
                 id="DRS",
                 status="ENABLED",
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
                 jobs=[
                     Job(
                         arn=JOB_ARN,
                         id="12345678901234567890123456789012",
                         status="COMPLETED",
-                        region=AWS_REGION,
+                        region=AWS_REGION_EU_WEST_1,
                         tags=[{"Key": "Name", "Value": "test"}],
                     )
                 ],
@@ -48,19 +50,19 @@ class Test_drs_job_exist:
             )
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
             assert result[0].resource_arn == f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1
             assert result[0].resource_tags == []
 
     def test_drs_no_jobs(self):
         drs_client = mock.MagicMock
         drs_client.audited_account = AWS_ACCOUNT_NUMBER
         drs_client.audited_account_arn = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
-        drs_client.region = AWS_REGION
+        drs_client.region = AWS_REGION_EU_WEST_1
         drs_client.drs_services = [
             DRSservice(
                 id="DRS",
                 status="ENABLED",
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
                 jobs=[],
             )
         ]
@@ -84,19 +86,19 @@ class Test_drs_job_exist:
             )
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
             assert result[0].resource_arn == f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1
             assert result[0].resource_tags == []
 
     def test_drs_disabled(self):
         drs_client = mock.MagicMock
         drs_client.audited_account = AWS_ACCOUNT_NUMBER
         drs_client.audited_account_arn = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
-        drs_client.region = AWS_REGION
+        drs_client.region = AWS_REGION_EU_WEST_1
         drs_client.drs_services = [
             DRSservice(
                 id="DRS",
                 status="DISABLED",
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
                 jobs=[],
             )
         ]
@@ -117,7 +119,7 @@ class Test_drs_job_exist:
             assert result[0].status_extended == "DRS is not enabled for this region."
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
             assert result[0].resource_arn == f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1
             assert result[0].resource_tags == []
 
     def test_drs_disabled_allowlisted(self):
@@ -130,7 +132,7 @@ class Test_drs_job_exist:
             DRSservice(
                 id="DRS",
                 status="DISABLED",
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
                 jobs=[],
             )
         ]
@@ -151,5 +153,5 @@ class Test_drs_job_exist:
             assert result[0].status_extended == "DRS is not enabled for this region."
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
             assert result[0].resource_arn == f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1
             assert result[0].resource_tags == []

@@ -2,9 +2,11 @@ import uuid
 from unittest import mock
 
 from prowler.providers.aws.services.acm.acm_service import Certificate
+from tests.providers.aws.audit_info_utils import (
+    AWS_ACCOUNT_NUMBER,
+    AWS_REGION_EU_WEST_1,
+)
 
-AWS_REGION = "us-east-1"
-AWS_ACCOUNT_NUMBER = "123456789012"
 DAYS_TO_EXPIRE_THRESHOLD = 7
 
 
@@ -29,7 +31,7 @@ class Test_acm_certificates_expiration_check:
 
     def test_acm_certificate_expirated(self):
         certificate_id = str(uuid.uuid4())
-        certificate_arn = f"arn:aws:acm:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:certificate/{certificate_id}"
+        certificate_arn = f"arn:aws:acm:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:certificate/{certificate_id}"
         certificate_name = "test-certificate.com"
         certificate_type = "AMAZON_ISSUED"
 
@@ -42,7 +44,7 @@ class Test_acm_certificates_expiration_check:
                 type=certificate_type,
                 expiration_days=5,
                 transparency_logging=True,
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
             )
         ]
 
@@ -66,12 +68,12 @@ class Test_acm_certificates_expiration_check:
             )
             assert result[0].resource_id == certificate_id
             assert result[0].resource_arn == certificate_arn
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1
             assert result[0].resource_tags == []
 
     def test_acm_certificate_not_expirated(self):
         certificate_id = str(uuid.uuid4())
-        certificate_arn = f"arn:aws:acm:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:certificate/{certificate_id}"
+        certificate_arn = f"arn:aws:acm:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:certificate/{certificate_id}"
         certificate_name = "test-certificate.com"
         certificate_type = "AMAZON_ISSUED"
         expiration_days = 365
@@ -85,7 +87,7 @@ class Test_acm_certificates_expiration_check:
                 type=certificate_type,
                 expiration_days=expiration_days,
                 transparency_logging=True,
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
             )
         ]
 
@@ -109,5 +111,5 @@ class Test_acm_certificates_expiration_check:
             )
             assert result[0].resource_id == certificate_id
             assert result[0].resource_arn == certificate_arn
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1
             assert result[0].resource_tags == []

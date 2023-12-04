@@ -3,13 +3,15 @@ from unittest import mock
 from prowler.providers.aws.services.accessanalyzer.accessanalyzer_service import (
     Analyzer,
 )
+from tests.providers.aws.audit_info_utils import (
+    AWS_ACCOUNT_ARN,
+    AWS_ACCOUNT_NUMBER,
+    AWS_REGION_EU_WEST_1,
+    AWS_REGION_EU_WEST_2,
+)
 
-AWS_REGION_1 = "eu-west-1"
-AWS_REGION_2 = "eu-west-2"
-AWS_ACCOUNT_NUMBER = "123456789012"
-AWS_ACCOUNT_ARN = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
 ACCESS_ANALYZER_NAME = "test-analyzer"
-ACCESS_ANALYZER_ARN = f"arn:aws:access-analyzer:{AWS_REGION_2}:{AWS_ACCOUNT_NUMBER}:analyzer/{ACCESS_ANALYZER_NAME}"
+ACCESS_ANALYZER_ARN = f"arn:aws:access-analyzer:{AWS_REGION_EU_WEST_2}:{AWS_ACCOUNT_NUMBER}:analyzer/{ACCESS_ANALYZER_NAME}"
 
 
 class Test_accessanalyzer_enabled:
@@ -33,7 +35,7 @@ class Test_accessanalyzer_enabled:
     def test_one_analyzer_not_available(self):
         # Include analyzers to check
         accessanalyzer_client = mock.MagicMock
-        accessanalyzer_client.region = AWS_REGION_1
+        accessanalyzer_client.region = AWS_REGION_EU_WEST_1
         accessanalyzer_client.analyzers = [
             Analyzer(
                 arn=AWS_ACCOUNT_ARN,
@@ -41,7 +43,7 @@ class Test_accessanalyzer_enabled:
                 status="NOT_AVAILABLE",
                 tags=[],
                 type="",
-                region=AWS_REGION_1,
+                region=AWS_REGION_EU_WEST_1,
             )
         ]
         with mock.patch(
@@ -63,13 +65,13 @@ class Test_accessanalyzer_enabled:
             )
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
             assert result[0].resource_arn == AWS_ACCOUNT_ARN
-            assert result[0].region == AWS_REGION_1
+            assert result[0].region == AWS_REGION_EU_WEST_1
             assert result[0].resource_tags == []
 
     def test_one_analyzer_not_available_allowlisted(self):
         # Include analyzers to check
         accessanalyzer_client = mock.MagicMock
-        accessanalyzer_client.region = AWS_REGION_2
+        accessanalyzer_client.region = AWS_REGION_EU_WEST_2
         accessanalyzer_client.audit_config = {"allowlist_non_default_regions": True}
         accessanalyzer_client.analyzers = [
             Analyzer(
@@ -78,7 +80,7 @@ class Test_accessanalyzer_enabled:
                 status="NOT_AVAILABLE",
                 tags=[],
                 type="",
-                region=AWS_REGION_1,
+                region=AWS_REGION_EU_WEST_1,
             )
         ]
         with mock.patch(
@@ -100,12 +102,12 @@ class Test_accessanalyzer_enabled:
             )
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
             assert result[0].resource_arn == AWS_ACCOUNT_ARN
-            assert result[0].region == AWS_REGION_1
+            assert result[0].region == AWS_REGION_EU_WEST_1
             assert result[0].resource_tags == []
 
     def test_two_analyzers(self):
         accessanalyzer_client = mock.MagicMock
-        accessanalyzer_client.region = AWS_REGION_1
+        accessanalyzer_client.region = AWS_REGION_EU_WEST_1
         accessanalyzer_client.analyzers = [
             Analyzer(
                 arn=AWS_ACCOUNT_ARN,
@@ -113,7 +115,7 @@ class Test_accessanalyzer_enabled:
                 status="NOT_AVAILABLE",
                 tags=[],
                 type="",
-                region=AWS_REGION_1,
+                region=AWS_REGION_EU_WEST_1,
             ),
             Analyzer(
                 arn=ACCESS_ANALYZER_ARN,
@@ -121,7 +123,7 @@ class Test_accessanalyzer_enabled:
                 status="ACTIVE",
                 tags=[],
                 type="",
-                region=AWS_REGION_2,
+                region=AWS_REGION_EU_WEST_2,
             ),
         ]
 
@@ -148,7 +150,7 @@ class Test_accessanalyzer_enabled:
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
             assert result[0].resource_arn == AWS_ACCOUNT_ARN
             assert result[0].resource_tags == []
-            assert result[0].region == AWS_REGION_1
+            assert result[0].region == AWS_REGION_EU_WEST_1
 
             assert result[1].status == "PASS"
             assert (
@@ -158,7 +160,7 @@ class Test_accessanalyzer_enabled:
             assert result[1].resource_id == ACCESS_ANALYZER_NAME
             assert result[1].resource_arn == ACCESS_ANALYZER_ARN
             assert result[1].resource_tags == []
-            assert result[1].region == AWS_REGION_2
+            assert result[1].region == AWS_REGION_EU_WEST_2
 
     def test_one_active_analyzer(self):
         accessanalyzer_client = mock.MagicMock
@@ -169,7 +171,7 @@ class Test_accessanalyzer_enabled:
                 status="ACTIVE",
                 tags=[],
                 type="",
-                region=AWS_REGION_2,
+                region=AWS_REGION_EU_WEST_2,
             )
         ]
 
@@ -195,4 +197,4 @@ class Test_accessanalyzer_enabled:
             assert result[0].resource_id == ACCESS_ANALYZER_NAME
             assert result[0].resource_arn == ACCESS_ANALYZER_ARN
             assert result[0].resource_tags == []
-            assert result[0].region == AWS_REGION_2
+            assert result[0].region == AWS_REGION_EU_WEST_2

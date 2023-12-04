@@ -4,12 +4,10 @@ from boto3 import client
 from moto import mock_iam
 
 from tests.providers.aws.audit_info_utils import (
+    AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_WEST_1,
     set_mocked_aws_audit_info,
 )
-
-AWS_REGION = "us-east-1"
-AWS_ACCOUNT_NUMBER = "123456789012"
 
 
 class Test_cloudwatch_cross_account_sharing_disabled:
@@ -55,7 +53,7 @@ class Test_cloudwatch_cross_account_sharing_disabled:
     @mock_iam
     def test_cloudwatch_log_group_with_cross_account_role(self):
         # Generate Logs Client
-        iam_client = client("iam", region_name=AWS_REGION)
+        iam_client = client("iam", region_name=AWS_REGION_EU_WEST_1)
         # Request Logs group
         iam_client.create_role(
             RoleName="CloudWatch-CrossAccountSharingRole", AssumeRolePolicyDocument="{}"

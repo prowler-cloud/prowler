@@ -1,49 +1,14 @@
-from boto3 import client, resource, session
+from boto3 import client, resource
 from moto import mock_ec2, mock_elbv2
 
-from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.aws.services.elbv2.elbv2_service import ELBv2
-from prowler.providers.common.models import Audit_Metadata
 from tests.providers.aws.audit_info_utils import (
     AWS_REGION_EU_WEST_1,
     set_mocked_aws_audit_info,
 )
 
-AWS_ACCOUNT_NUMBER = "123456789012"
-AWS_REGION = "us-east-1"
-
 
 class Test_ELBv2_Service:
-    def set_mocked_audit_info(self):
-        audit_info = AWS_Audit_Info(
-            session_config=None,
-            original_session=None,
-            audit_session=session.Session(
-                profile_name=None,
-                botocore_session=None,
-            ),
-            audited_account=AWS_ACCOUNT_NUMBER,
-            audited_account_arn=f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root",
-            audited_user_id=None,
-            audited_partition="aws",
-            audited_identity_arn=None,
-            profile=None,
-            profile_region=None,
-            credentials=None,
-            assumed_role_info=None,
-            audited_regions=None,
-            organizations_metadata=None,
-            audit_resources=None,
-            mfa_enabled=False,
-            audit_metadata=Audit_Metadata(
-                services_scanned=0,
-                expected_checks=[],
-                completed_checks=0,
-                audit_progress=0,
-            ),
-        )
-        return audit_info
-
     # Test ELBv2 Service
     @mock_elbv2
     def test_service(self):
@@ -73,18 +38,22 @@ class Test_ELBv2_Service:
     @mock_ec2
     @mock_elbv2
     def test__describe_load_balancers__(self):
-        conn = client("elbv2", region_name=AWS_REGION)
-        ec2 = resource("ec2", region_name=AWS_REGION)
+        conn = client("elbv2", region_name=AWS_REGION_EU_WEST_1)
+        ec2 = resource("ec2", region_name=AWS_REGION_EU_WEST_1)
 
         security_group = ec2.create_security_group(
             GroupName="a-security-group", Description="First One"
         )
         vpc = ec2.create_vpc(CidrBlock="172.28.7.0/24", InstanceTenancy="default")
         subnet1 = ec2.create_subnet(
-            VpcId=vpc.id, CidrBlock="172.28.7.192/26", AvailabilityZone=f"{AWS_REGION}a"
+            VpcId=vpc.id,
+            CidrBlock="172.28.7.192/26",
+            AvailabilityZone=f"{AWS_REGION_EU_WEST_1}a",
         )
         subnet2 = ec2.create_subnet(
-            VpcId=vpc.id, CidrBlock="172.28.7.0/26", AvailabilityZone=f"{AWS_REGION}b"
+            VpcId=vpc.id,
+            CidrBlock="172.28.7.0/26",
+            AvailabilityZone=f"{AWS_REGION_EU_WEST_1}b",
         )
 
         lb = conn.create_load_balancer(
@@ -98,7 +67,7 @@ class Test_ELBv2_Service:
         elbv2 = ELBv2(audit_info)
         assert len(elbv2.loadbalancersv2) == 1
         assert elbv2.loadbalancersv2[0].name == "my-lb"
-        assert elbv2.loadbalancersv2[0].region == AWS_REGION
+        assert elbv2.loadbalancersv2[0].region == AWS_REGION_EU_WEST_1
         assert elbv2.loadbalancersv2[0].scheme == "internal"
         assert elbv2.loadbalancersv2[0].arn == lb["LoadBalancerArn"]
 
@@ -106,18 +75,22 @@ class Test_ELBv2_Service:
     @mock_ec2
     @mock_elbv2
     def test__describe_listeners__(self):
-        conn = client("elbv2", region_name=AWS_REGION)
-        ec2 = resource("ec2", region_name=AWS_REGION)
+        conn = client("elbv2", region_name=AWS_REGION_EU_WEST_1)
+        ec2 = resource("ec2", region_name=AWS_REGION_EU_WEST_1)
 
         security_group = ec2.create_security_group(
             GroupName="a-security-group", Description="First One"
         )
         vpc = ec2.create_vpc(CidrBlock="172.28.7.0/24", InstanceTenancy="default")
         subnet1 = ec2.create_subnet(
-            VpcId=vpc.id, CidrBlock="172.28.7.192/26", AvailabilityZone=f"{AWS_REGION}a"
+            VpcId=vpc.id,
+            CidrBlock="172.28.7.192/26",
+            AvailabilityZone=f"{AWS_REGION_EU_WEST_1}a",
         )
         subnet2 = ec2.create_subnet(
-            VpcId=vpc.id, CidrBlock="172.28.7.0/26", AvailabilityZone=f"{AWS_REGION}b"
+            VpcId=vpc.id,
+            CidrBlock="172.28.7.0/26",
+            AvailabilityZone=f"{AWS_REGION_EU_WEST_1}b",
         )
 
         lb = conn.create_load_balancer(
@@ -153,18 +126,22 @@ class Test_ELBv2_Service:
     @mock_ec2
     @mock_elbv2
     def test__describe_load_balancer_attributes__(self):
-        conn = client("elbv2", region_name=AWS_REGION)
-        ec2 = resource("ec2", region_name=AWS_REGION)
+        conn = client("elbv2", region_name=AWS_REGION_EU_WEST_1)
+        ec2 = resource("ec2", region_name=AWS_REGION_EU_WEST_1)
 
         security_group = ec2.create_security_group(
             GroupName="a-security-group", Description="First One"
         )
         vpc = ec2.create_vpc(CidrBlock="172.28.7.0/24", InstanceTenancy="default")
         subnet1 = ec2.create_subnet(
-            VpcId=vpc.id, CidrBlock="172.28.7.192/26", AvailabilityZone=f"{AWS_REGION}a"
+            VpcId=vpc.id,
+            CidrBlock="172.28.7.192/26",
+            AvailabilityZone=f"{AWS_REGION_EU_WEST_1}a",
         )
         subnet2 = ec2.create_subnet(
-            VpcId=vpc.id, CidrBlock="172.28.7.0/26", AvailabilityZone=f"{AWS_REGION}b"
+            VpcId=vpc.id,
+            CidrBlock="172.28.7.0/26",
+            AvailabilityZone=f"{AWS_REGION_EU_WEST_1}b",
         )
 
         lb = conn.create_load_balancer(
@@ -199,18 +176,22 @@ class Test_ELBv2_Service:
     @mock_ec2
     @mock_elbv2
     def test__describe_rules__(self):
-        conn = client("elbv2", region_name=AWS_REGION)
-        ec2 = resource("ec2", region_name=AWS_REGION)
+        conn = client("elbv2", region_name=AWS_REGION_EU_WEST_1)
+        ec2 = resource("ec2", region_name=AWS_REGION_EU_WEST_1)
 
         security_group = ec2.create_security_group(
             GroupName="a-security-group", Description="First One"
         )
         vpc = ec2.create_vpc(CidrBlock="172.28.7.0/24", InstanceTenancy="default")
         subnet1 = ec2.create_subnet(
-            VpcId=vpc.id, CidrBlock="172.28.7.192/26", AvailabilityZone=f"{AWS_REGION}a"
+            VpcId=vpc.id,
+            CidrBlock="172.28.7.192/26",
+            AvailabilityZone=f"{AWS_REGION_EU_WEST_1}a",
         )
         subnet2 = ec2.create_subnet(
-            VpcId=vpc.id, CidrBlock="172.28.7.0/26", AvailabilityZone=f"{AWS_REGION}b"
+            VpcId=vpc.id,
+            CidrBlock="172.28.7.0/26",
+            AvailabilityZone=f"{AWS_REGION_EU_WEST_1}b",
         )
 
         lb = conn.create_load_balancer(

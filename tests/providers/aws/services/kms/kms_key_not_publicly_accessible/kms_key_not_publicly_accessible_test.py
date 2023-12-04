@@ -9,9 +9,6 @@ from tests.providers.aws.audit_info_utils import (
     set_mocked_aws_audit_info,
 )
 
-AWS_REGION = "us-east-1"
-AWS_ACCOUNT_NUMBER = "123456789012"
-
 
 class Test_kms_key_not_publicly_accessible:
     @mock_kms
@@ -40,7 +37,7 @@ class Test_kms_key_not_publicly_accessible:
     @mock_kms
     def test_kms_key_not_publicly_accessible(self):
         # Generate KMS Client
-        kms_client = client("kms", region_name=AWS_REGION)
+        kms_client = client("kms", region_name=AWS_REGION_EU_WEST_1)
         # Creaty KMS key without policy
         key = kms_client.create_key()["KeyMetadata"]
 
@@ -75,7 +72,7 @@ class Test_kms_key_not_publicly_accessible:
     @mock_kms
     def test_kms_key_public_accessible(self):
         # Generate KMS Client
-        kms_client = client("kms", region_name=AWS_REGION)
+        kms_client = client("kms", region_name=AWS_REGION_EU_WEST_1)
         # Creaty KMS key with public policy
         key = kms_client.create_key(
             Policy=json.dumps(
@@ -126,7 +123,7 @@ class Test_kms_key_not_publicly_accessible:
     @mock_kms
     def test_kms_key_empty_principal(self):
         # Generate KMS Client
-        kms_client = client("kms", region_name=AWS_REGION)
+        kms_client = client("kms", region_name=AWS_REGION_EU_WEST_1)
         # Creaty KMS key with public policy
         key = kms_client.create_key(
             Policy=json.dumps(

@@ -5,15 +5,10 @@ from moto import mock_s3
 from prowler.providers.aws.services.macie.macie_service import Session
 from prowler.providers.aws.services.s3.s3_service import Bucket
 from tests.providers.aws.audit_info_utils import (
+    AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_WEST_1,
     set_mocked_aws_audit_info,
 )
-
-AWS_ACCOUNT_NUMBER = "123456789012"
-
-
-AWS_REGION = "us-east-1"
-AWS_ACCOUNT_NUMBER = "123456789012"
 
 
 class Test_macie_is_enabled:
@@ -145,13 +140,13 @@ class Test_macie_is_enabled:
     @mock_s3
     def test_macie_suspended_ignored_with_buckets(self):
         s3_client = mock.MagicMock
-        s3_client.regions_with_buckets = [AWS_REGION]
+        s3_client.regions_with_buckets = [AWS_REGION_EU_WEST_1]
         s3_client.audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         s3_client.buckets = [
             Bucket(
                 name="test",
                 arn="test-arn",
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
             )
         ]
 
@@ -162,7 +157,7 @@ class Test_macie_is_enabled:
         macie_client.sessions = [
             Session(
                 status="PAUSED",
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
             )
         ]
 

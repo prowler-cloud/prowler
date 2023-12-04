@@ -5,12 +5,11 @@ from boto3 import client
 from moto import mock_ec2
 
 from tests.providers.aws.audit_info_utils import (
+    AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_WEST_1,
     set_mocked_aws_audit_info,
 )
 
-AWS_REGION = "us-east-1"
-AWS_ACCOUNT_NUMBER = "123456789012"
 TRUSTED_AWS_ACCOUNT_NUMBER = "111122223333"
 NON_TRUSTED_AWS_ACCOUNT_NUMBER = "000011112222"
 
@@ -45,7 +44,7 @@ class Test_vpc_endpoint_connections_trust_boundaries:
     @mock_ec2
     def test_vpc_aws_endpoint(self):
         # Create VPC Mocked Resources
-        ec2_client = client("ec2", region_name=AWS_REGION)
+        ec2_client = client("ec2", region_name=AWS_REGION_EU_WEST_1)
 
         vpc = ec2_client.create_vpc(CidrBlock="10.0.0.0/16")["Vpc"]
 
@@ -84,7 +83,7 @@ class Test_vpc_endpoint_connections_trust_boundaries:
     @mock_ec2
     def test_vpc_endpoint_with_full_access(self):
         # Create VPC Mocked Resources
-        ec2_client = client("ec2", region_name=AWS_REGION)
+        ec2_client = client("ec2", region_name=AWS_REGION_EU_WEST_1)
 
         vpc = ec2_client.create_vpc(CidrBlock="10.0.0.0/16")["Vpc"]
 
@@ -140,12 +139,12 @@ class Test_vpc_endpoint_connections_trust_boundaries:
                     result[0].resource_id
                     == vpc_endpoint["VpcEndpoint"]["VpcEndpointId"]
                 )
-                assert result[0].region == AWS_REGION
+                assert result[0].region == AWS_REGION_EU_WEST_1
 
     @mock_ec2
     def test_vpc_endpoint_with_trusted_account_arn(self):
         # Create VPC Mocked Resources
-        ec2_client = client("ec2", region_name=AWS_REGION)
+        ec2_client = client("ec2", region_name=AWS_REGION_EU_WEST_1)
 
         vpc = ec2_client.create_vpc(CidrBlock="10.0.0.0/16")["Vpc"]
 
@@ -202,12 +201,12 @@ class Test_vpc_endpoint_connections_trust_boundaries:
                     result[0].resource_id
                     == vpc_endpoint["VpcEndpoint"]["VpcEndpointId"]
                 )
-                assert result[0].region == AWS_REGION
+                assert result[0].region == AWS_REGION_EU_WEST_1
 
     @mock_ec2
     def test_vpc_endpoint_with_trusted_account_id(self):
         # Create VPC Mocked Resources
-        ec2_client = client("ec2", region_name=AWS_REGION)
+        ec2_client = client("ec2", region_name=AWS_REGION_EU_WEST_1)
 
         vpc = ec2_client.create_vpc(CidrBlock="10.0.0.0/16")["Vpc"]
 
@@ -262,12 +261,12 @@ class Test_vpc_endpoint_connections_trust_boundaries:
                     result[0].resource_id
                     == vpc_endpoint["VpcEndpoint"]["VpcEndpointId"]
                 )
-                assert result[0].region == AWS_REGION
+                assert result[0].region == AWS_REGION_EU_WEST_1
 
     @mock_ec2
     def test_vpc_endpoint_with_untrusted_account(self):
         # Create VPC Mocked Resources
-        ec2_client = client("ec2", region_name=AWS_REGION)
+        ec2_client = client("ec2", region_name=AWS_REGION_EU_WEST_1)
 
         vpc = ec2_client.create_vpc(CidrBlock="10.0.0.0/16")["Vpc"]
 
@@ -329,7 +328,7 @@ class Test_vpc_endpoint_connections_trust_boundaries:
     @mock_ec2
     def test_vpc_endpoint_with_config_trusted_account_with_arn(self):
         # Create VPC Mocked Resources
-        ec2_client = client("ec2", region_name=AWS_REGION)
+        ec2_client = client("ec2", region_name=AWS_REGION_EU_WEST_1)
 
         vpc = ec2_client.create_vpc(CidrBlock="10.0.0.0/16")["Vpc"]
 
@@ -389,12 +388,12 @@ class Test_vpc_endpoint_connections_trust_boundaries:
                     result[0].resource_id
                     == vpc_endpoint["VpcEndpoint"]["VpcEndpointId"]
                 )
-                assert result[0].region == AWS_REGION
+                assert result[0].region == AWS_REGION_EU_WEST_1
 
     @mock_ec2
     def test_vpc_endpoint_with_config_trusted_account(self):
         # Create VPC Mocked Resources
-        ec2_client = client("ec2", region_name=AWS_REGION)
+        ec2_client = client("ec2", region_name=AWS_REGION_EU_WEST_1)
 
         vpc = ec2_client.create_vpc(CidrBlock="10.0.0.0/16")["Vpc"]
 
@@ -452,12 +451,12 @@ class Test_vpc_endpoint_connections_trust_boundaries:
                     result[0].resource_id
                     == vpc_endpoint["VpcEndpoint"]["VpcEndpointId"]
                 )
-                assert result[0].region == AWS_REGION
+                assert result[0].region == AWS_REGION_EU_WEST_1
 
     @mock_ec2
     def test_vpc_endpoint_with_two_account_ids_one_trusted_one_not(self):
         # Create VPC Mocked Resources
-        ec2_client = client("ec2", region_name=AWS_REGION)
+        ec2_client = client("ec2", region_name=AWS_REGION_EU_WEST_1)
 
         vpc = ec2_client.create_vpc(CidrBlock="10.0.0.0/16")["Vpc"]
 
@@ -517,12 +516,12 @@ class Test_vpc_endpoint_connections_trust_boundaries:
                     result[0].resource_id
                     == vpc_endpoint["VpcEndpoint"]["VpcEndpointId"]
                 )
-                assert result[0].region == AWS_REGION
+                assert result[0].region == AWS_REGION_EU_WEST_1
 
     @mock_ec2
     def test_vpc_endpoint_with_aws_principal_all(self):
         # Create VPC Mocked Resources
-        ec2_client = client("ec2", region_name=AWS_REGION)
+        ec2_client = client("ec2", region_name=AWS_REGION_EU_WEST_1)
 
         vpc = ec2_client.create_vpc(CidrBlock="10.0.0.0/16")["Vpc"]
 
@@ -577,14 +576,14 @@ class Test_vpc_endpoint_connections_trust_boundaries:
                     result[0].resource_id
                     == vpc_endpoint["VpcEndpoint"]["VpcEndpointId"]
                 )
-                assert result[0].region == AWS_REGION
+                assert result[0].region == AWS_REGION_EU_WEST_1
 
     @mock_ec2
     def test_vpc_endpoint_with_aws_principal_all_but_restricted_condition_with_SourceAccount(
         self,
     ):
         # Create VPC Mocked Resources
-        ec2_client = client("ec2", region_name=AWS_REGION)
+        ec2_client = client("ec2", region_name=AWS_REGION_EU_WEST_1)
 
         vpc = ec2_client.create_vpc(CidrBlock="10.0.0.0/16")["Vpc"]
 
@@ -644,14 +643,14 @@ class Test_vpc_endpoint_connections_trust_boundaries:
                     result[0].resource_id
                     == vpc_endpoint["VpcEndpoint"]["VpcEndpointId"]
                 )
-                assert result[0].region == AWS_REGION
+                assert result[0].region == AWS_REGION_EU_WEST_1
 
     @mock_ec2
     def test_vpc_endpoint_with_aws_principal_all_but_restricted_condition_with_PrincipalAccount(
         self,
     ):
         # Create VPC Mocked Resources
-        ec2_client = client("ec2", region_name=AWS_REGION)
+        ec2_client = client("ec2", region_name=AWS_REGION_EU_WEST_1)
 
         vpc = ec2_client.create_vpc(CidrBlock="10.0.0.0/16")["Vpc"]
 
@@ -711,4 +710,4 @@ class Test_vpc_endpoint_connections_trust_boundaries:
                     result[0].resource_id
                     == vpc_endpoint["VpcEndpoint"]["VpcEndpointId"]
                 )
-                assert result[0].region == AWS_REGION
+                assert result[0].region == AWS_REGION_EU_WEST_1

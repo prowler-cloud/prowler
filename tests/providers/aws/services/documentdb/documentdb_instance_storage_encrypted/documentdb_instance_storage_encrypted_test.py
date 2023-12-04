@@ -1,13 +1,14 @@
 from unittest import mock
 
 from prowler.providers.aws.services.documentdb.documentdb_service import Instance
-
-AWS_ACCOUNT_NUMBER = "123456789012"
-AWS_REGION = "us-east-1"
+from tests.providers.aws.audit_info_utils import (
+    AWS_ACCOUNT_NUMBER,
+    AWS_REGION_EU_WEST_1,
+)
 
 DOC_DB_INSTANCE_NAME = "test-db"
 DOC_DB_INSTANCE_ARN = (
-    f"arn:aws:rds:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:db:{DOC_DB_INSTANCE_NAME}"
+    f"arn:aws:rds:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:db:{DOC_DB_INSTANCE_NAME}"
 )
 DOC_DB_ENGINE_VERSION = "5.0.0"
 
@@ -41,7 +42,7 @@ class Test_documentdb_instance_storage_encrypted:
                 public=False,
                 encrypted=False,
                 auto_minor_version_upgrade=False,
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
             )
         }
 
@@ -61,7 +62,7 @@ class Test_documentdb_instance_storage_encrypted:
                 result[0].status_extended
                 == f"DocumentDB Instance {DOC_DB_INSTANCE_NAME} is not encrypted."
             )
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1
             assert result[0].resource_id == DOC_DB_INSTANCE_NAME
             assert result[0].resource_arn == DOC_DB_INSTANCE_ARN
 
@@ -77,7 +78,7 @@ class Test_documentdb_instance_storage_encrypted:
                 public=False,
                 encrypted=True,
                 auto_minor_version_upgrade=False,
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
             )
         }
         with mock.patch(
@@ -95,6 +96,6 @@ class Test_documentdb_instance_storage_encrypted:
                 result[0].status_extended
                 == f"DocumentDB Instance {DOC_DB_INSTANCE_NAME} is encrypted."
             )
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1
             assert result[0].resource_id == DOC_DB_INSTANCE_NAME
             assert result[0].resource_arn == DOC_DB_INSTANCE_ARN

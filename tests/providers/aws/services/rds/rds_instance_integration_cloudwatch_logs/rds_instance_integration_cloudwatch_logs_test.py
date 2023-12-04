@@ -6,12 +6,10 @@ from boto3 import client
 from moto import mock_rds
 
 from tests.providers.aws.audit_info_utils import (
+    AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_WEST_1,
     set_mocked_aws_audit_info,
 )
-
-AWS_ACCOUNT_NUMBER = "123456789012"
-AWS_REGION = "us-east-1"
 
 make_api_call = botocore.client.BaseClient._make_api_call
 
@@ -59,7 +57,7 @@ class Test_rds_instance_integration_cloudwatch_logs:
 
     @mock_rds
     def test_rds_instance_no_logs(self):
-        conn = client("rds", region_name=AWS_REGION)
+        conn = client("rds", region_name=AWS_REGION_EU_WEST_1)
         conn.create_db_instance(
             DBInstanceIdentifier="db-master-1",
             AllocatedStorage=10,
@@ -95,16 +93,16 @@ class Test_rds_instance_integration_cloudwatch_logs:
                     result[0].status_extended,
                 )
                 assert result[0].resource_id == "db-master-1"
-                assert result[0].region == AWS_REGION
+                assert result[0].region == AWS_REGION_EU_WEST_1
                 assert (
                     result[0].resource_arn
-                    == f"arn:aws:rds:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:db:db-master-1"
+                    == f"arn:aws:rds:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:db:db-master-1"
                 )
                 assert result[0].resource_tags == []
 
     @mock_rds
     def test_rds_instance_with_logs(self):
-        conn = client("rds", region_name=AWS_REGION)
+        conn = client("rds", region_name=AWS_REGION_EU_WEST_1)
         conn.create_db_instance(
             DBInstanceIdentifier="db-master-1",
             AllocatedStorage=10,
@@ -141,9 +139,9 @@ class Test_rds_instance_integration_cloudwatch_logs:
                     result[0].status_extended,
                 )
                 assert result[0].resource_id == "db-master-1"
-                assert result[0].region == AWS_REGION
+                assert result[0].region == AWS_REGION_EU_WEST_1
                 assert (
                     result[0].resource_arn
-                    == f"arn:aws:rds:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:db:db-master-1"
+                    == f"arn:aws:rds:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:db:db-master-1"
                 )
                 assert result[0].resource_tags == []

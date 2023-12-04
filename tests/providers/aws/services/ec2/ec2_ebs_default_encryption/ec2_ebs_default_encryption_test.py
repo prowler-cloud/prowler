@@ -4,20 +4,19 @@ from boto3 import client, resource
 from moto import mock_ec2
 
 from tests.providers.aws.audit_info_utils import (
+    AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_WEST_1,
     set_mocked_aws_audit_info,
 )
 
-AWS_REGION = "us-east-1"
 EXAMPLE_AMI_ID = "ami-12c6146b"
-AWS_ACCOUNT_NUMBER = "123456789012"
 
 
 class Test_ec2_ebs_default_encryption:
     @mock_ec2
     def test_ec2_ebs_encryption_enabled(self):
         # Create EC2 Mocked Resources
-        ec2_client = client("ec2", region_name=AWS_REGION)
+        ec2_client = client("ec2", region_name=AWS_REGION_EU_WEST_1)
         ec2_client.enable_ebs_encryption_by_default()
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
@@ -42,7 +41,7 @@ class Test_ec2_ebs_default_encryption:
             # One result per region
             assert len(results) == 2
             for result in results:
-                if result.region == AWS_REGION:
+                if result.region == AWS_REGION_EU_WEST_1:
                     assert result.status == "PASS"
                     assert (
                         result.status_extended == "EBS Default Encryption is activated."
@@ -110,8 +109,8 @@ class Test_ec2_ebs_default_encryption:
     @mock_ec2
     def test_ec2_ebs_encryption_disabled_ignoring_with_volumes(self):
         # Create EC2 Mocked Resources
-        ec2 = resource("ec2", region_name=AWS_REGION)
-        ec2.create_volume(Size=36, AvailabilityZone=f"{AWS_REGION}a")
+        ec2 = resource("ec2", region_name=AWS_REGION_EU_WEST_1)
+        ec2.create_volume(Size=36, AvailabilityZone=f"{AWS_REGION_EU_WEST_1}a")
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
         current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
@@ -134,7 +133,7 @@ class Test_ec2_ebs_default_encryption:
 
             # One result per region
             assert len(result) == 1
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended == "EBS Default Encryption is not activated."

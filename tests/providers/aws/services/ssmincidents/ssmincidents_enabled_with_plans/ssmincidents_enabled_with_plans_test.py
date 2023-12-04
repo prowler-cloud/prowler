@@ -4,11 +4,13 @@ from prowler.providers.aws.services.ssmincidents.ssmincidents_service import (
     ReplicationSet,
     ResponsePlan,
 )
+from tests.providers.aws.audit_info_utils import (
+    AWS_ACCOUNT_NUMBER,
+    AWS_REGION_EU_WEST_1,
+)
 
-AWS_REGION = "us-east-1"
 REPLICATION_SET_ARN = "arn:aws:ssm-incidents::111122223333:replication-set/40bd98f0-4110-2dee-b35e-b87006f9e172"
 RESPONSE_PLAN_ARN = "arn:aws:ssm-incidents::111122223333:response-plan/example-response"
-AWS_ACCOUNT_NUMBER = "123456789012"
 
 
 class Test_ssmincidents_enabled_with_plans:
@@ -18,7 +20,7 @@ class Test_ssmincidents_enabled_with_plans:
         ssmincidents_client.audited_account_arn = (
             f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
         )
-        ssmincidents_client.region = AWS_REGION
+        ssmincidents_client.region = AWS_REGION_EU_WEST_1
         ssmincidents_client.replication_set = []
         with mock.patch(
             "prowler.providers.aws.services.ssmincidents.ssmincidents_service.SSMIncidents",
@@ -39,7 +41,7 @@ class Test_ssmincidents_enabled_with_plans:
             )
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
             assert result[0].resource_arn == f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1
 
     def test_ssmincidents_replicationset_not_active(self):
         ssmincidents_client = mock.MagicMock
@@ -47,7 +49,7 @@ class Test_ssmincidents_enabled_with_plans:
         ssmincidents_client.audited_account_arn = (
             f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
         )
-        ssmincidents_client.region = AWS_REGION
+        ssmincidents_client.region = AWS_REGION_EU_WEST_1
         ssmincidents_client.replication_set = [
             ReplicationSet(arn=REPLICATION_SET_ARN, status="CREATING")
         ]
@@ -71,7 +73,7 @@ class Test_ssmincidents_enabled_with_plans:
             )
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
             assert result[0].resource_arn == REPLICATION_SET_ARN
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1
 
     def test_ssmincidents_replicationset_active_no_plans(self):
         ssmincidents_client = mock.MagicMock
@@ -79,7 +81,7 @@ class Test_ssmincidents_enabled_with_plans:
         ssmincidents_client.audited_account_arn = (
             f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
         )
-        ssmincidents_client.region = AWS_REGION
+        ssmincidents_client.region = AWS_REGION_EU_WEST_1
         ssmincidents_client.replication_set = [
             ReplicationSet(arn=REPLICATION_SET_ARN, status="ACTIVE")
         ]
@@ -104,7 +106,7 @@ class Test_ssmincidents_enabled_with_plans:
             )
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
             assert result[0].resource_arn == REPLICATION_SET_ARN
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1
 
     def test_ssmincidents_replicationset_active_with_plans(self):
         ssmincidents_client = mock.MagicMock
@@ -112,12 +114,14 @@ class Test_ssmincidents_enabled_with_plans:
         ssmincidents_client.audited_account_arn = (
             f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
         )
-        ssmincidents_client.region = AWS_REGION
+        ssmincidents_client.region = AWS_REGION_EU_WEST_1
         ssmincidents_client.replication_set = [
             ReplicationSet(arn=REPLICATION_SET_ARN, status="ACTIVE")
         ]
         ssmincidents_client.response_plans = [
-            ResponsePlan(arn=RESPONSE_PLAN_ARN, name="test", region=AWS_REGION)
+            ResponsePlan(
+                arn=RESPONSE_PLAN_ARN, name="test", region=AWS_REGION_EU_WEST_1
+            )
         ]
         with mock.patch(
             "prowler.providers.aws.services.ssmincidents.ssmincidents_service.SSMIncidents",
@@ -139,4 +143,4 @@ class Test_ssmincidents_enabled_with_plans:
             )
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
             assert result[0].resource_arn == REPLICATION_SET_ARN
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1

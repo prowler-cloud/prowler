@@ -8,9 +8,6 @@ from tests.providers.aws.audit_info_utils import (
     set_mocked_aws_audit_info,
 )
 
-AWS_ACCOUNT_NUMBER = "123456789012"
-AWS_REGION = "us-east-1"
-
 
 class Test_iam_check_saml_providers_sts:
     @mock_iam

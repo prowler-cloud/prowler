@@ -9,9 +9,6 @@ from tests.providers.aws.audit_info_utils import (
     set_mocked_aws_audit_info,
 )
 
-AWS_REGION = "us-east-1"
-AWS_ACCOUNT_NUMBER = "123456789012"
-
 
 class Test_cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled:
     @mock_logs
@@ -74,8 +71,8 @@ class Test_cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_c
     @mock_cloudwatch
     @mock_s3
     def test_cloudwatch_trail_no_log_group(self):
-        cloudtrail_client = client("cloudtrail", region_name=AWS_REGION)
-        s3_client = client("s3", region_name=AWS_REGION)
+        cloudtrail_client = client("cloudtrail", region_name=AWS_REGION_EU_WEST_1)
+        s3_client = client("s3", region_name=AWS_REGION_EU_WEST_1)
         s3_client.create_bucket(Bucket="test")
         cloudtrail_client.create_trail(Name="test_trail", S3BucketName="test")
 
@@ -135,15 +132,15 @@ class Test_cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_c
     @mock_cloudwatch
     @mock_s3
     def test_cloudwatch_trail_with_log_group(self):
-        cloudtrail_client = client("cloudtrail", region_name=AWS_REGION)
-        logs_client = client("logs", region_name=AWS_REGION)
-        s3_client = client("s3", region_name=AWS_REGION)
+        cloudtrail_client = client("cloudtrail", region_name=AWS_REGION_EU_WEST_1)
+        logs_client = client("logs", region_name=AWS_REGION_EU_WEST_1)
+        s3_client = client("s3", region_name=AWS_REGION_EU_WEST_1)
         s3_client.create_bucket(Bucket="test")
         logs_client.create_log_group(logGroupName="/log-group/test")
         cloudtrail_client.create_trail(
             Name="test_trail",
             S3BucketName="test",
-            CloudWatchLogsLogGroupArn=f"arn:aws:logs:{AWS_REGION}:{DEFAULT_ACCOUNT_ID}:log-group:/log-group/test:*",
+            CloudWatchLogsLogGroupArn=f"arn:aws:logs:{AWS_REGION_EU_WEST_1}:{DEFAULT_ACCOUNT_ID}:log-group:/log-group/test:*",
         )
 
         from prowler.providers.aws.services.cloudtrail.cloudtrail_service import (
@@ -202,15 +199,15 @@ class Test_cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_c
     @mock_cloudwatch
     @mock_s3
     def test_cloudwatch_trail_with_log_group_with_metric(self):
-        cloudtrail_client = client("cloudtrail", region_name=AWS_REGION)
-        logs_client = client("logs", region_name=AWS_REGION)
-        s3_client = client("s3", region_name=AWS_REGION)
+        cloudtrail_client = client("cloudtrail", region_name=AWS_REGION_EU_WEST_1)
+        logs_client = client("logs", region_name=AWS_REGION_EU_WEST_1)
+        s3_client = client("s3", region_name=AWS_REGION_EU_WEST_1)
         s3_client.create_bucket(Bucket="test")
         logs_client.create_log_group(logGroupName="/log-group/test")
         cloudtrail_client.create_trail(
             Name="test_trail",
             S3BucketName="test",
-            CloudWatchLogsLogGroupArn=f"arn:aws:logs:{AWS_REGION}:{DEFAULT_ACCOUNT_ID}:log-group:/log-group/test:*",
+            CloudWatchLogsLogGroupArn=f"arn:aws:logs:{AWS_REGION_EU_WEST_1}:{DEFAULT_ACCOUNT_ID}:log-group:/log-group/test:*",
         )
         logs_client.put_metric_filter(
             logGroupName="/log-group/test",
@@ -281,16 +278,16 @@ class Test_cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_c
     @mock_cloudwatch
     @mock_s3
     def test_cloudwatch_trail_with_log_group_with_metric_and_alarm(self):
-        cloudtrail_client = client("cloudtrail", region_name=AWS_REGION)
-        cloudwatch_client = client("cloudwatch", region_name=AWS_REGION)
-        logs_client = client("logs", region_name=AWS_REGION)
-        s3_client = client("s3", region_name=AWS_REGION)
+        cloudtrail_client = client("cloudtrail", region_name=AWS_REGION_EU_WEST_1)
+        cloudwatch_client = client("cloudwatch", region_name=AWS_REGION_EU_WEST_1)
+        logs_client = client("logs", region_name=AWS_REGION_EU_WEST_1)
+        s3_client = client("s3", region_name=AWS_REGION_EU_WEST_1)
         s3_client.create_bucket(Bucket="test")
         logs_client.create_log_group(logGroupName="/log-group/test")
         cloudtrail_client.create_trail(
             Name="test_trail",
             S3BucketName="test",
-            CloudWatchLogsLogGroupArn=f"arn:aws:logs:{AWS_REGION}:{DEFAULT_ACCOUNT_ID}:log-group:/log-group/test:*",
+            CloudWatchLogsLogGroupArn=f"arn:aws:logs:{AWS_REGION_EU_WEST_1}:{DEFAULT_ACCOUNT_ID}:log-group:/log-group/test:*",
         )
         logs_client.put_metric_filter(
             logGroupName="/log-group/test",
@@ -372,16 +369,16 @@ class Test_cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_c
     @mock_cloudwatch
     @mock_s3
     def test_cloudwatch_trail_with_log_group_with_metric_and_alarm_with_quotes(self):
-        cloudtrail_client = client("cloudtrail", region_name=AWS_REGION)
-        cloudwatch_client = client("cloudwatch", region_name=AWS_REGION)
-        logs_client = client("logs", region_name=AWS_REGION)
-        s3_client = client("s3", region_name=AWS_REGION)
+        cloudtrail_client = client("cloudtrail", region_name=AWS_REGION_EU_WEST_1)
+        cloudwatch_client = client("cloudwatch", region_name=AWS_REGION_EU_WEST_1)
+        logs_client = client("logs", region_name=AWS_REGION_EU_WEST_1)
+        s3_client = client("s3", region_name=AWS_REGION_EU_WEST_1)
         s3_client.create_bucket(Bucket="test")
         logs_client.create_log_group(logGroupName="/log-group/test")
         cloudtrail_client.create_trail(
             Name="test_trail",
             S3BucketName="test",
-            CloudWatchLogsLogGroupArn=f"arn:aws:logs:{AWS_REGION}:{DEFAULT_ACCOUNT_ID}:log-group:/log-group/test:*",
+            CloudWatchLogsLogGroupArn=f"arn:aws:logs:{AWS_REGION_EU_WEST_1}:{DEFAULT_ACCOUNT_ID}:log-group:/log-group/test:*",
         )
         logs_client.put_metric_filter(
             logGroupName="/log-group/test",
@@ -463,16 +460,16 @@ class Test_cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_c
     @mock_cloudwatch
     @mock_s3
     def test_cloudwatch_trail_with_log_group_with_metric_and_alarm_with_newlines(self):
-        cloudtrail_client = client("cloudtrail", region_name=AWS_REGION)
-        cloudwatch_client = client("cloudwatch", region_name=AWS_REGION)
-        logs_client = client("logs", region_name=AWS_REGION)
-        s3_client = client("s3", region_name=AWS_REGION)
+        cloudtrail_client = client("cloudtrail", region_name=AWS_REGION_EU_WEST_1)
+        cloudwatch_client = client("cloudwatch", region_name=AWS_REGION_EU_WEST_1)
+        logs_client = client("logs", region_name=AWS_REGION_EU_WEST_1)
+        s3_client = client("s3", region_name=AWS_REGION_EU_WEST_1)
         s3_client.create_bucket(Bucket="test")
         logs_client.create_log_group(logGroupName="/log-group/test")
         cloudtrail_client.create_trail(
             Name="test_trail",
             S3BucketName="test",
-            CloudWatchLogsLogGroupArn=f"arn:aws:logs:{AWS_REGION}:{DEFAULT_ACCOUNT_ID}:log-group:/log-group/test:*",
+            CloudWatchLogsLogGroupArn=f"arn:aws:logs:{AWS_REGION_EU_WEST_1}:{DEFAULT_ACCOUNT_ID}:log-group:/log-group/test:*",
         )
         logs_client.put_metric_filter(
             logGroupName="/log-group/test",

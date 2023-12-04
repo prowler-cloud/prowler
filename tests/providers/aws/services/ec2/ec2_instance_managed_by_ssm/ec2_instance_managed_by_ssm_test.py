@@ -5,13 +5,12 @@ from moto import mock_ec2
 
 from prowler.providers.aws.services.ssm.ssm_service import ManagedInstance
 from tests.providers.aws.audit_info_utils import (
+    AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_WEST_1,
     set_mocked_aws_audit_info,
 )
 
-AWS_REGION = "us-east-1"
 EXAMPLE_AMI_ID = "ami-12c6146b"
-AWS_ACCOUNT_NUMBER = "123456789012"
 
 
 class Test_ec2_instance_managed_by_ssm_test:
@@ -52,7 +51,7 @@ class Test_ec2_instance_managed_by_ssm_test:
         ssm_client = mock.MagicMock
         ssm_client.managed_instances = {}
 
-        ec2 = resource("ec2", region_name=AWS_REGION)
+        ec2 = resource("ec2", region_name=AWS_REGION_EU_WEST_1)
         instance = ec2.create_instances(
             ImageId=EXAMPLE_AMI_ID,
             MinCount=1,
@@ -90,7 +89,7 @@ class Test_ec2_instance_managed_by_ssm_test:
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1
             assert result[0].resource_tags is None
             assert (
                 result[0].status_extended
@@ -100,7 +99,7 @@ class Test_ec2_instance_managed_by_ssm_test:
 
     @mock_ec2
     def test_ec2_instance_managed_by_ssm_compliance_instance(self):
-        ec2 = resource("ec2", region_name=AWS_REGION)
+        ec2 = resource("ec2", region_name=AWS_REGION_EU_WEST_1)
         instance = ec2.create_instances(
             ImageId=EXAMPLE_AMI_ID,
             MinCount=1,
@@ -111,9 +110,9 @@ class Test_ec2_instance_managed_by_ssm_test:
         ssm_client = mock.MagicMock
         ssm_client.managed_instances = {
             instance.id: ManagedInstance(
-                arn=f"arn:aws:ec2:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:instance/{instance.id}",
+                arn=f"arn:aws:ec2:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:instance/{instance.id}",
                 id=instance.id,
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
             )
         }
 
@@ -144,7 +143,7 @@ class Test_ec2_instance_managed_by_ssm_test:
 
             assert len(result) == 1
             assert result[0].status == "PASS"
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1
             assert result[0].resource_tags is None
             assert (
                 result[0].status_extended

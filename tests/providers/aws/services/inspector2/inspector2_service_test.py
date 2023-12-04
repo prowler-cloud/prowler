@@ -5,12 +5,11 @@ import botocore
 
 from prowler.providers.aws.services.inspector2.inspector2_service import Inspector2
 from tests.providers.aws.audit_info_utils import (
+    AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_WEST_1,
     set_mocked_aws_audit_info,
 )
 
-AWS_REGION = "us-east-1"
-AWS_ACCOUNT_ID = "123456789012"
 FINDING_ARN = (
     "arn:aws:inspector2:us-east-1:123456789012:finding/0e436649379db5f327e3cf5bb4421d76"
 )
@@ -25,7 +24,7 @@ def mock_make_api_call(self, operation_name, kwargs):
         return {
             "accounts": [
                 {
-                    "accountId": AWS_ACCOUNT_ID,
+                    "accountId": AWS_ACCOUNT_NUMBER,
                     "resourceState": {
                         "ec2": {
                             "errorCode": "ALREADY_ENABLED",
@@ -55,7 +54,7 @@ def mock_make_api_call(self, operation_name, kwargs):
         return {
             "findings": [
                 {
-                    "awsAccountId": AWS_ACCOUNT_ID,
+                    "awsAccountId": AWS_ACCOUNT_NUMBER,
                     "findingArn": FINDING_ARN,
                     "description": "Finding Description",
                     "severity": "MEDIUM",
@@ -71,9 +70,11 @@ def mock_make_api_call(self, operation_name, kwargs):
 
 
 def mock_generate_regional_clients(service, audit_info, _):
-    regional_client = audit_info.audit_session.client(service, region_name=AWS_REGION)
-    regional_client.region = AWS_REGION
-    return {AWS_REGION: regional_client}
+    regional_client = audit_info.audit_session.client(
+        service, region_name=AWS_REGION_EU_WEST_1
+    )
+    regional_client.region = AWS_REGION_EU_WEST_1
+    return {AWS_REGION_EU_WEST_1: regional_client}
 
 
 # Patch every AWS call using Boto3 and generate_regional_clients to have 1 client
@@ -87,7 +88,8 @@ class Test_Inspector2_Service:
         audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         inspector2 = Inspector2(audit_info)
         assert (
-            inspector2.regional_clients[AWS_REGION].__class__.__name__ == "Inspector2"
+            inspector2.regional_clients[AWS_REGION_EU_WEST_1].__class__.__name__
+            == "Inspector2"
         )
 
     def test__get_service__(self):
@@ -99,8 +101,8 @@ class Test_Inspector2_Service:
         audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         inspector2 = Inspector2(audit_info)
         assert len(inspector2.inspectors) == 1
-        assert inspector2.inspectors[0].id == AWS_ACCOUNT_ID
-        assert inspector2.inspectors[0].region == AWS_REGION
+        assert inspector2.inspectors[0].id == AWS_ACCOUNT_NUMBER
+        assert inspector2.inspectors[0].region == AWS_REGION_EU_WEST_1
         assert inspector2.inspectors[0].status == "ENABLED"
 
     def test__list_findings__(self):
@@ -108,7 +110,7 @@ class Test_Inspector2_Service:
         inspector2 = Inspector2(audit_info)
         assert len(inspector2.inspectors[0].findings) == 1
         assert inspector2.inspectors[0].findings[0].arn == FINDING_ARN
-        assert inspector2.inspectors[0].findings[0].region == AWS_REGION
+        assert inspector2.inspectors[0].findings[0].region == AWS_REGION_EU_WEST_1
         assert inspector2.inspectors[0].findings[0].severity == "MEDIUM"
         assert inspector2.inspectors[0].findings[0].status == "ACTIVE"
         assert (

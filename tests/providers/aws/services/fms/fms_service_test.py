@@ -2,18 +2,15 @@ from datetime import datetime
 from unittest.mock import patch
 
 import botocore
-from boto3 import session
 
-from prowler.providers.aws.lib.audit_info.audit_info import AWS_Audit_Info
 from prowler.providers.aws.services.fms.fms_service import FMS
-from prowler.providers.common.models import Audit_Metadata
 from tests.providers.aws.audit_info_utils import (
     AWS_REGION_EU_WEST_1,
     set_mocked_aws_audit_info,
 )
 
 # Mock Test Region
-AWS_REGION = "us-east-1"
+
 POLICY_ARN = "arn:aws:fms:us-east-1:123456789012:policy/MyFMSManagedPolicy"
 POLICY_ID = "12345678-1234-1234-1234-123456789012"
 POLICY_NAME = "MyFMSManagedPolicy"
@@ -69,36 +66,6 @@ def mock_make_api_call(self, operation_name, kwargs):
 # Patch every AWS call using Boto3
 @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
 class Test_FMS_Service:
-    def set_mocked_audit_info(self):
-        audit_info = AWS_Audit_Info(
-            session_config=None,
-            original_session=None,
-            audit_session=session.Session(
-                profile_name=None,
-                botocore_session=None,
-            ),
-            audited_account=None,
-            audited_account_arn=None,
-            audited_user_id=None,
-            audited_partition="aws",
-            audited_identity_arn=None,
-            profile=None,
-            profile_region=None,
-            credentials=None,
-            assumed_role_info=None,
-            audited_regions=None,
-            organizations_metadata=None,
-            audit_resources=None,
-            mfa_enabled=False,
-            audit_metadata=Audit_Metadata(
-                services_scanned=0,
-                expected_checks=[],
-                completed_checks=0,
-                audit_progress=0,
-            ),
-        )
-        return audit_info
-
     def test__get_client__(self):
         audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         fms = FMS(audit_info)

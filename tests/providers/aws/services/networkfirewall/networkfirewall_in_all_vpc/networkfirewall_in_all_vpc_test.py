@@ -9,8 +9,6 @@ from tests.providers.aws.audit_info_utils import (
     set_mocked_aws_audit_info,
 )
 
-AWS_REGION = "us-east-1"
-AWS_ACCOUNT_NUMBER = "123456789012"
 FIREWALL_ARN = "arn:aws:network-firewall:us-east-1:123456789012:firewall/my-firewall"
 FIREWALL_NAME = "my-firewall"
 VPC_ID_PROTECTED = "vpc-12345678901234567"
@@ -24,11 +22,11 @@ class Test_networkfirewall_in_all_vpc:
         networkfirewall_client.audit_info = set_mocked_aws_audit_info(
             [AWS_REGION_EU_WEST_1]
         )
-        networkfirewall_client.region = AWS_REGION
+        networkfirewall_client.region = AWS_REGION_EU_WEST_1
         networkfirewall_client.network_firewalls = []
         vpc_client = mock.MagicMock
         vpc_client.audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
-        vpc_client.region = AWS_REGION
+        vpc_client.region = AWS_REGION_EU_WEST_1
         vpc_client.vpcs = {}
 
         audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
@@ -60,12 +58,12 @@ class Test_networkfirewall_in_all_vpc:
         networkfirewall_client.audit_info = set_mocked_aws_audit_info(
             [AWS_REGION_EU_WEST_1]
         )
-        networkfirewall_client.region = AWS_REGION
+        networkfirewall_client.region = AWS_REGION_EU_WEST_1
         networkfirewall_client.network_firewalls = [
             Firewall(
                 arn=FIREWALL_ARN,
                 name=FIREWALL_NAME,
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
                 policy_arn=POLICY_ARN,
                 vpc_id=VPC_ID_PROTECTED,
                 tags=[],
@@ -74,7 +72,7 @@ class Test_networkfirewall_in_all_vpc:
         ]
         vpc_client = mock.MagicMock
         vpc_client.audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
-        vpc_client.region = AWS_REGION
+        vpc_client.region = AWS_REGION_EU_WEST_1
         vpc_client.vpcs = {
             VPC_ID_PROTECTED: VPCs(
                 id=VPC_ID_PROTECTED,
@@ -82,7 +80,7 @@ class Test_networkfirewall_in_all_vpc:
                 default=False,
                 cidr_block="192.168.0.0/16",
                 flow_log=False,
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
                 arn="arn_test",
                 subnets=[
                     VpcSubnet(
@@ -95,7 +93,7 @@ class Test_networkfirewall_in_all_vpc:
                         availability_zone="us-east-1a",
                         public=False,
                         nat_gateway=False,
-                        region=AWS_REGION,
+                        region=AWS_REGION_EU_WEST_1,
                         tags=[],
                         mapPublicIpOnLaunch=False,
                     )
@@ -132,7 +130,7 @@ class Test_networkfirewall_in_all_vpc:
                         result[0].status_extended
                         == f"VPC {VPC_ID_PROTECTED} has Network Firewall enabled."
                     )
-                    assert result[0].region == AWS_REGION
+                    assert result[0].region == AWS_REGION_EU_WEST_1
                     assert result[0].resource_id == VPC_ID_PROTECTED
                     assert result[0].resource_tags == []
                     assert result[0].resource_arn == "arn_test"
@@ -142,11 +140,11 @@ class Test_networkfirewall_in_all_vpc:
         networkfirewall_client.audit_info = set_mocked_aws_audit_info(
             [AWS_REGION_EU_WEST_1]
         )
-        networkfirewall_client.region = AWS_REGION
+        networkfirewall_client.region = AWS_REGION_EU_WEST_1
         networkfirewall_client.network_firewalls = []
         vpc_client = mock.MagicMock
         vpc_client.audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
-        vpc_client.region = AWS_REGION
+        vpc_client.region = AWS_REGION_EU_WEST_1
         vpc_client.vpcs = {
             VPC_ID_UNPROTECTED: VPCs(
                 id=VPC_ID_UNPROTECTED,
@@ -154,7 +152,7 @@ class Test_networkfirewall_in_all_vpc:
                 default=False,
                 cidr_block="192.168.0.0/16",
                 flow_log=False,
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
                 arn="arn_test",
                 subnets=[
                     VpcSubnet(
@@ -167,7 +165,7 @@ class Test_networkfirewall_in_all_vpc:
                         availability_zone="us-east-1a",
                         public=False,
                         nat_gateway=False,
-                        region=AWS_REGION,
+                        region=AWS_REGION_EU_WEST_1,
                         tags=[],
                         mapPublicIpOnLaunch=False,
                     )
@@ -204,7 +202,7 @@ class Test_networkfirewall_in_all_vpc:
                         result[0].status_extended
                         == f"VPC {VPC_ID_UNPROTECTED} does not have Network Firewall enabled."
                     )
-                    assert result[0].region == AWS_REGION
+                    assert result[0].region == AWS_REGION_EU_WEST_1
                     assert result[0].resource_id == VPC_ID_UNPROTECTED
                     assert result[0].resource_tags == []
                     assert result[0].resource_arn == "arn_test"
@@ -214,12 +212,12 @@ class Test_networkfirewall_in_all_vpc:
         networkfirewall_client.audit_info = set_mocked_aws_audit_info(
             [AWS_REGION_EU_WEST_1]
         )
-        networkfirewall_client.region = AWS_REGION
+        networkfirewall_client.region = AWS_REGION_EU_WEST_1
         networkfirewall_client.network_firewalls = []
 
         vpc_client = mock.MagicMock
         vpc_client.audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
-        vpc_client.region = AWS_REGION
+        vpc_client.region = AWS_REGION_EU_WEST_1
         vpc_client.vpcs = {
             VPC_ID_UNPROTECTED: VPCs(
                 id=VPC_ID_UNPROTECTED,
@@ -227,7 +225,7 @@ class Test_networkfirewall_in_all_vpc:
                 default=False,
                 cidr_block="192.168.0.0/16",
                 flow_log=False,
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
                 arn="arn_test",
                 subnets=[
                     VpcSubnet(
@@ -240,7 +238,7 @@ class Test_networkfirewall_in_all_vpc:
                         availability_zone="us-east-1a",
                         public=False,
                         nat_gateway=False,
-                        region=AWS_REGION,
+                        region=AWS_REGION_EU_WEST_1,
                         tags=[],
                         mapPublicIpOnLaunch=False,
                     )
@@ -277,7 +275,7 @@ class Test_networkfirewall_in_all_vpc:
                         result[0].status_extended
                         == "VPC vpc_name does not have Network Firewall enabled."
                     )
-                    assert result[0].region == AWS_REGION
+                    assert result[0].region == AWS_REGION_EU_WEST_1
                     assert result[0].resource_id == VPC_ID_UNPROTECTED
                     assert result[0].resource_tags == []
                     assert result[0].resource_arn == "arn_test"
@@ -287,12 +285,12 @@ class Test_networkfirewall_in_all_vpc:
         networkfirewall_client.audit_info = set_mocked_aws_audit_info(
             [AWS_REGION_EU_WEST_1]
         )
-        networkfirewall_client.region = AWS_REGION
+        networkfirewall_client.region = AWS_REGION_EU_WEST_1
         networkfirewall_client.network_firewalls = [
             Firewall(
                 arn=FIREWALL_ARN,
                 name=FIREWALL_NAME,
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
                 policy_arn=POLICY_ARN,
                 vpc_id=VPC_ID_PROTECTED,
                 tags=[],
@@ -301,7 +299,7 @@ class Test_networkfirewall_in_all_vpc:
         ]
         vpc_client = mock.MagicMock
         vpc_client.audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
-        vpc_client.region = AWS_REGION
+        vpc_client.region = AWS_REGION_EU_WEST_1
         vpc_client.vpcs = {
             VPC_ID_UNPROTECTED: VPCs(
                 id=VPC_ID_UNPROTECTED,
@@ -309,7 +307,7 @@ class Test_networkfirewall_in_all_vpc:
                 default=False,
                 cidr_block="192.168.0.0/16",
                 flow_log=False,
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
                 arn="arn_test",
                 subnets=[
                     VpcSubnet(
@@ -322,7 +320,7 @@ class Test_networkfirewall_in_all_vpc:
                         availability_zone="us-east-1a",
                         public=False,
                         nat_gateway=False,
-                        region=AWS_REGION,
+                        region=AWS_REGION_EU_WEST_1,
                         tags=[],
                         mapPublicIpOnLaunch=False,
                     )
@@ -335,7 +333,7 @@ class Test_networkfirewall_in_all_vpc:
                 default=False,
                 cidr_block="192.168.0.0/16",
                 flow_log=False,
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
                 arn="arn_test",
                 subnets=[
                     VpcSubnet(
@@ -348,7 +346,7 @@ class Test_networkfirewall_in_all_vpc:
                         availability_zone="us-east-1a",
                         public=False,
                         nat_gateway=False,
-                        region=AWS_REGION,
+                        region=AWS_REGION_EU_WEST_1,
                         tags=[],
                         mapPublicIpOnLaunch=False,
                     )
@@ -387,7 +385,7 @@ class Test_networkfirewall_in_all_vpc:
                                 r.status_extended
                                 == f"VPC {VPC_ID_PROTECTED} has Network Firewall enabled."
                             )
-                            assert r.region == AWS_REGION
+                            assert r.region == AWS_REGION_EU_WEST_1
                             assert r.resource_id == VPC_ID_PROTECTED
                             assert r.resource_tags == []
                             assert r.resource_arn == "arn_test"
@@ -397,7 +395,7 @@ class Test_networkfirewall_in_all_vpc:
                                 r.status_extended
                                 == f"VPC {VPC_ID_UNPROTECTED} does not have Network Firewall enabled."
                             )
-                            assert r.region == AWS_REGION
+                            assert r.region == AWS_REGION_EU_WEST_1
                             assert r.resource_id == VPC_ID_UNPROTECTED
                             assert r.resource_tags == []
                             assert r.resource_arn == "arn_test"
@@ -407,18 +405,18 @@ class Test_networkfirewall_in_all_vpc:
         networkfirewall_client.audit_info = set_mocked_aws_audit_info(
             [AWS_REGION_EU_WEST_1]
         )
-        networkfirewall_client.region = AWS_REGION
+        networkfirewall_client.region = AWS_REGION_EU_WEST_1
         networkfirewall_client.network_firewalls = []
         vpc_client = mock.MagicMock
         vpc_client.audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
-        vpc_client.region = AWS_REGION
+        vpc_client.region = AWS_REGION_EU_WEST_1
         vpc_client.vpcs = {
             VPC_ID_UNPROTECTED: VPCs(
                 id=VPC_ID_UNPROTECTED,
                 default=False,
                 cidr_block="192.168.0.0/16",
                 flow_log=False,
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
                 arn="arn_test",
                 name="vpc_name",
                 subnets=[
@@ -432,7 +430,7 @@ class Test_networkfirewall_in_all_vpc:
                         availability_zone="us-east-1a",
                         public=False,
                         nat_gateway=False,
-                        region=AWS_REGION,
+                        region=AWS_REGION_EU_WEST_1,
                         tags=[],
                         mapPublicIpOnLaunch=False,
                     )
@@ -471,11 +469,11 @@ class Test_networkfirewall_in_all_vpc:
         networkfirewall_client.audit_info = set_mocked_aws_audit_info(
             [AWS_REGION_EU_WEST_1]
         )
-        networkfirewall_client.region = AWS_REGION
+        networkfirewall_client.region = AWS_REGION_EU_WEST_1
         networkfirewall_client.network_firewalls = []
         vpc_client = mock.MagicMock
         vpc_client.audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
-        vpc_client.region = AWS_REGION
+        vpc_client.region = AWS_REGION_EU_WEST_1
         vpc_client.vpcs = {
             VPC_ID_UNPROTECTED: VPCs(
                 id=VPC_ID_UNPROTECTED,
@@ -483,7 +481,7 @@ class Test_networkfirewall_in_all_vpc:
                 default=False,
                 cidr_block="192.168.0.0/16",
                 flow_log=False,
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
                 arn="arn_test",
                 in_use=True,
                 subnets=[
@@ -497,7 +495,7 @@ class Test_networkfirewall_in_all_vpc:
                         availability_zone="us-east-1a",
                         public=False,
                         nat_gateway=False,
-                        region=AWS_REGION,
+                        region=AWS_REGION_EU_WEST_1,
                         tags=[],
                         mapPublicIpOnLaunch=False,
                     )
@@ -535,7 +533,7 @@ class Test_networkfirewall_in_all_vpc:
                         result[0].status_extended
                         == "VPC vpc_name does not have Network Firewall enabled."
                     )
-                    assert result[0].region == AWS_REGION
+                    assert result[0].region == AWS_REGION_EU_WEST_1
                     assert result[0].resource_id == VPC_ID_UNPROTECTED
                     assert result[0].resource_tags == []
                     assert result[0].resource_arn == "arn_test"

@@ -4,9 +4,11 @@ from prowler.providers.aws.services.trustedadvisor.trustedadvisor_service import
     Check,
     PremiumSupport,
 )
+from tests.providers.aws.audit_info_utils import (
+    AWS_ACCOUNT_NUMBER,
+    AWS_REGION_EU_WEST_1,
+)
 
-AWS_REGION = "eu-west-1"
-AWS_ACCOUNT_NUMBER = "123456789012"
 AWS_ACCOUNT_ARN = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
 
 CHECK_NAME = "test-check"
@@ -19,7 +21,7 @@ class Test_trustedadvisor_errors_and_warnings:
         trustedadvisor_client.premium_support = PremiumSupport(enabled=False)
         trustedadvisor_client.audited_account = AWS_ACCOUNT_NUMBER
         trustedadvisor_client.audited_account_arn = AWS_ACCOUNT_ARN
-        trustedadvisor_client.region = AWS_REGION
+        trustedadvisor_client.region = AWS_REGION_EU_WEST_1
         with mock.patch(
             "prowler.providers.aws.services.trustedadvisor.trustedadvisor_service.TrustedAdvisor",
             trustedadvisor_client,
@@ -36,7 +38,7 @@ class Test_trustedadvisor_errors_and_warnings:
                 result[0].status_extended
                 == "Amazon Web Services Premium Support Subscription is required to use this service."
             )
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
             assert result[0].resource_arn == AWS_ACCOUNT_ARN
 
@@ -50,7 +52,7 @@ class Test_trustedadvisor_errors_and_warnings:
             Check(
                 id=CHECK_NAME,
                 name=CHECK_NAME,
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
                 status="ok",
             )
         )
@@ -71,7 +73,7 @@ class Test_trustedadvisor_errors_and_warnings:
                 == f"Trusted Advisor check {CHECK_NAME} is in state ok."
             )
             assert result[0].resource_id == CHECK_NAME
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1
 
     def test_trustedadvisor_error_check(self):
         trustedadvisor_client = mock.MagicMock
@@ -83,7 +85,7 @@ class Test_trustedadvisor_errors_and_warnings:
             Check(
                 id=CHECK_NAME,
                 name=CHECK_NAME,
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
                 status="error",
             )
         )
@@ -104,7 +106,7 @@ class Test_trustedadvisor_errors_and_warnings:
                 == f"Trusted Advisor check {CHECK_NAME} is in state error."
             )
             assert result[0].resource_id == CHECK_NAME
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1
 
     def test_trustedadvisor_not_available_check(self):
         trustedadvisor_client = mock.MagicMock
@@ -116,7 +118,7 @@ class Test_trustedadvisor_errors_and_warnings:
             Check(
                 id=CHECK_NAME,
                 name=CHECK_NAME,
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
                 status="not_available",
             )
         )

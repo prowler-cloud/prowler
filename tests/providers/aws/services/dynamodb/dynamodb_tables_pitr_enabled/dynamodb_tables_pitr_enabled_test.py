@@ -9,9 +9,6 @@ from tests.providers.aws.audit_info_utils import (
     set_mocked_aws_audit_info,
 )
 
-AWS_REGION = "us-east-1"
-AWS_ACCOUNT_NUMBER = "123456789012"
-
 
 class Test_dynamodb_tables_pitr_enabled:
     @mock_dynamodb
@@ -39,7 +36,7 @@ class Test_dynamodb_tables_pitr_enabled:
 
     @mock_dynamodb
     def test_dynamodb_table_no_pitr(self):
-        dynamodb_client = client("dynamodb", region_name=AWS_REGION)
+        dynamodb_client = client("dynamodb", region_name=AWS_REGION_EU_WEST_1)
         table = dynamodb_client.create_table(
             TableName="test1",
             AttributeDefinitions=[
@@ -79,12 +76,12 @@ class Test_dynamodb_tables_pitr_enabled:
             )
             assert result[0].resource_id == table["TableName"]
             assert result[0].resource_arn == table["TableArn"]
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1
             assert result[0].resource_tags == []
 
     @mock_dynamodb
     def test_dynamodb_table_with_pitr(self):
-        dynamodb_client = client("dynamodb", region_name=AWS_REGION)
+        dynamodb_client = client("dynamodb", region_name=AWS_REGION_EU_WEST_1)
         table = dynamodb_client.create_table(
             TableName="test1",
             AttributeDefinitions=[
@@ -127,5 +124,5 @@ class Test_dynamodb_tables_pitr_enabled:
             )
             assert result[0].resource_id == table["TableName"]
             assert result[0].resource_arn == table["TableArn"]
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1
             assert result[0].resource_tags == []

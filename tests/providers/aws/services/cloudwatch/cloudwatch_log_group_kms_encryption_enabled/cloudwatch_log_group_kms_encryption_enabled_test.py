@@ -8,9 +8,6 @@ from tests.providers.aws.audit_info_utils import (
     set_mocked_aws_audit_info,
 )
 
-AWS_REGION = "us-east-1"
-AWS_ACCOUNT_NUMBER = "123456789012"
-
 
 class Test_cloudwatch_log_group_kms_encryption_enabled:
     def test_cloudwatch_no_log_groups(self):
@@ -48,7 +45,7 @@ class Test_cloudwatch_log_group_kms_encryption_enabled:
     @mock_logs
     def test_cloudwatch_log_group_without_kms_key(self):
         # Generate Logs Client
-        logs_client = client("logs", region_name=AWS_REGION)
+        logs_client = client("logs", region_name=AWS_REGION_EU_WEST_1)
         # Request Logs group
         logs_client.create_log_group(
             logGroupName="test",
@@ -94,7 +91,7 @@ class Test_cloudwatch_log_group_kms_encryption_enabled:
     @mock_logs
     def test_cloudwatch_log_group_with_kms_key(self):
         # Generate Logs Client
-        logs_client = client("logs", region_name=AWS_REGION)
+        logs_client = client("logs", region_name=AWS_REGION_EU_WEST_1)
         # Request Logs group
         logs_client.create_log_group(logGroupName="test", kmsKeyId="test_kms_id")
 

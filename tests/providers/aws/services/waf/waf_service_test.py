@@ -1,18 +1,12 @@
 from unittest.mock import patch
 
 import botocore
-from boto3 import session
 
-from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.aws.services.waf.waf_service import WAF
-from prowler.providers.common.models import Audit_Metadata
 from tests.providers.aws.audit_info_utils import (
     AWS_REGION_EU_WEST_1,
     set_mocked_aws_audit_info,
 )
-
-AWS_ACCOUNT_NUMBER = "123456789012"
-AWS_REGION = "us-east-1"
 
 # Mocking WAF-Regional Calls
 make_api_call = botocore.client.BaseClient._make_api_call
@@ -38,9 +32,11 @@ def mock_make_api_call(self, operation_name, kwarg):
 
 # Mock generate_regional_clients()
 def mock_generate_regional_clients(service, audit_info, _):
-    regional_client = audit_info.audit_session.client(service, region_name=AWS_REGION)
-    regional_client.region = AWS_REGION
-    return {AWS_REGION: regional_client}
+    regional_client = audit_info.audit_session.client(
+        service, region_name=AWS_REGION_EU_WEST_1
+    )
+    regional_client.region = AWS_REGION_EU_WEST_1
+    return {AWS_REGION_EU_WEST_1: regional_client}
 
 
 # Patch every AWS call using Boto3 and generate_regional_clients to have 1 client
@@ -50,36 +46,6 @@ def mock_generate_regional_clients(service, audit_info, _):
     new=mock_generate_regional_clients,
 )
 class Test_WAF_Service:
-    def set_mocked_audit_info(self):
-        audit_info = AWS_Audit_Info(
-            session_config=None,
-            original_session=None,
-            audit_session=session.Session(
-                profile_name=None,
-                botocore_session=None,
-            ),
-            audited_account=AWS_ACCOUNT_NUMBER,
-            audited_account_arn=f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root",
-            audited_user_id=None,
-            audited_partition="aws",
-            audited_identity_arn=None,
-            profile=None,
-            profile_region=None,
-            credentials=None,
-            assumed_role_info=None,
-            audited_regions=None,
-            organizations_metadata=None,
-            audit_resources=None,
-            mfa_enabled=False,
-            audit_metadata=Audit_Metadata(
-                services_scanned=0,
-                expected_checks=[],
-                completed_checks=0,
-                audit_progress=0,
-            ),
-        )
-        return audit_info
-
     # Test WAF Service
     def test_service(self):
         # WAF client for this test class
@@ -109,7 +75,7 @@ class Test_WAF_Service:
         waf = WAF(audit_info)
         assert len(waf.web_acls) == 1
         assert waf.web_acls[0].name == "my-web-acl"
-        assert waf.web_acls[0].region == AWS_REGION
+        assert waf.web_acls[0].region == AWS_REGION_EU_WEST_1
         assert waf.web_acls[0].id == "my-web-acl-id"
 
     # Test WAF Describe Web ACLs Resources

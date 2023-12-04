@@ -9,9 +9,7 @@ from tests.providers.aws.audit_info_utils import (
     set_mocked_aws_audit_info,
 )
 
-AWS_REGION = "us-east-1"
 EXAMPLE_AMI_ID = "ami-12c6146b"
-AWS_ACCOUNT_NUMBER = "123456789012"
 
 
 class Test_ec2_instance_imdsv2_enabled:
@@ -40,7 +38,7 @@ class Test_ec2_instance_imdsv2_enabled:
 
     @mock_ec2
     def test_one_compliant_ec2(self):
-        ec2 = resource("ec2", region_name=AWS_REGION)
+        ec2 = resource("ec2", region_name=AWS_REGION_EU_WEST_1)
         instance = ec2.create_instances(
             ImageId=EXAMPLE_AMI_ID,
             MinCount=1,
@@ -74,7 +72,7 @@ class Test_ec2_instance_imdsv2_enabled:
 
             assert len(result) == 1
             assert result[0].status == "PASS"
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1
             # Moto fills instance tags with None
             assert result[0].resource_tags is None
             assert search(
@@ -84,12 +82,12 @@ class Test_ec2_instance_imdsv2_enabled:
             assert result[0].resource_id == instance.id
             assert (
                 result[0].resource_arn
-                == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:instance/{instance.id}"
+                == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION_EU_WEST_1}:{current_audit_info.audited_account}:instance/{instance.id}"
             )
 
     @mock_ec2
     def test_one_uncompliant_ec2_metadata_server_disabled(self):
-        ec2 = resource("ec2", region_name=AWS_REGION)
+        ec2 = resource("ec2", region_name=AWS_REGION_EU_WEST_1)
         instance = ec2.create_instances(
             ImageId=EXAMPLE_AMI_ID,
             MinCount=1,
@@ -123,7 +121,7 @@ class Test_ec2_instance_imdsv2_enabled:
 
             assert len(result) == 1
             assert result[0].status == "PASS"
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1
             # Moto fills instance tags with None
             assert result[0].resource_tags is None
             assert (
@@ -133,12 +131,12 @@ class Test_ec2_instance_imdsv2_enabled:
             assert result[0].resource_id == instance.id
             assert (
                 result[0].resource_arn
-                == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:instance/{instance.id}"
+                == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION_EU_WEST_1}:{current_audit_info.audited_account}:instance/{instance.id}"
             )
 
     @mock_ec2
     def test_one_uncompliant_ec2_metadata_server_enabled(self):
-        ec2 = resource("ec2", region_name=AWS_REGION)
+        ec2 = resource("ec2", region_name=AWS_REGION_EU_WEST_1)
         instance = ec2.create_instances(
             ImageId=EXAMPLE_AMI_ID,
             MinCount=1,
@@ -172,7 +170,7 @@ class Test_ec2_instance_imdsv2_enabled:
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1
             # Moto fills instance tags with None
             assert result[0].resource_tags is None
             assert (
@@ -182,5 +180,5 @@ class Test_ec2_instance_imdsv2_enabled:
             assert result[0].resource_id == instance.id
             assert (
                 result[0].resource_arn
-                == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:instance/{instance.id}"
+                == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION_EU_WEST_1}:{current_audit_info.audited_account}:instance/{instance.id}"
             )

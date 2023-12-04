@@ -15,14 +15,10 @@ from prowler.providers.aws.services.directoryservice.directoryservice_service im
     RadiusStatus,
 )
 from tests.providers.aws.audit_info_utils import (
+    AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_WEST_1,
     set_mocked_aws_audit_info,
 )
-
-# Mock Test Region
-AWS_REGION = "eu-west-1"
-AWS_ACCOUNT_NUMBER = "123456789012"
-
 
 # Mocking Access Analyzer Calls
 make_api_call = botocore.client.BaseClient._make_api_call
@@ -70,7 +66,7 @@ def mock_make_api_call(self, operation_name, kwarg):
                 {
                     "DirectoryId": "d-12345a1b2",
                     "TopicName": "test-topic",
-                    "TopicArn": f"arn:aws:sns:{AWS_REGION}:{DEFAULT_ACCOUNT_ID}:test-topic",
+                    "TopicArn": f"arn:aws:sns:{AWS_REGION_EU_WEST_1}:{DEFAULT_ACCOUNT_ID}:test-topic",
                     "CreatedDateTime": datetime(2022, 1, 1),
                     "Status": "Registered",
                 },
@@ -108,9 +104,11 @@ def mock_make_api_call(self, operation_name, kwarg):
 
 # Mock generate_regional_clients()
 def mock_generate_regional_clients(service, audit_info, _):
-    regional_client = audit_info.audit_session.client(service, region_name=AWS_REGION)
-    regional_client.region = AWS_REGION
-    return {AWS_REGION: regional_client}
+    regional_client = audit_info.audit_session.client(
+        service, region_name=AWS_REGION_EU_WEST_1
+    )
+    regional_client.region = AWS_REGION_EU_WEST_1
+    return {AWS_REGION_EU_WEST_1: regional_client}
 
 
 # Patch every AWS call using Boto3 and generate_regional_clients to have 1 client
@@ -127,7 +125,7 @@ class Test_DirectoryService_Service:
             set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         )
         assert (
-            directoryservice.regional_clients[AWS_REGION].__class__.__name__
+            directoryservice.regional_clients[AWS_REGION_EU_WEST_1].__class__.__name__
             == "DirectoryService"
         )
 
@@ -158,14 +156,16 @@ class Test_DirectoryService_Service:
         assert directoryservice.directories["d-12345a1b2"].id == "d-12345a1b2"
         assert (
             directoryservice.directories["d-12345a1b2"].arn
-            == f"arn:aws:ds:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:directory/d-12345a1b2"
+            == f"arn:aws:ds:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:directory/d-12345a1b2"
         )
         assert (
             directoryservice.directories["d-12345a1b2"].type
             == DirectoryType.MicrosoftAD
         )
         assert directoryservice.directories["d-12345a1b2"].name == "test-directory"
-        assert directoryservice.directories["d-12345a1b2"].region == AWS_REGION
+        assert (
+            directoryservice.directories["d-12345a1b2"].region == AWS_REGION_EU_WEST_1
+        )
         assert directoryservice.directories["d-12345a1b2"].tags == [
             {"Key": "string", "Value": "string"},
         ]
@@ -200,7 +200,7 @@ class Test_DirectoryService_Service:
         )
         assert (
             directoryservice.directories["d-12345a1b2"].event_topics[0].topic_arn
-            == f"arn:aws:sns:{AWS_REGION}:{DEFAULT_ACCOUNT_ID}:test-topic"
+            == f"arn:aws:sns:{AWS_REGION_EU_WEST_1}:{DEFAULT_ACCOUNT_ID}:test-topic"
         )
         assert (
             directoryservice.directories["d-12345a1b2"].event_topics[0].status

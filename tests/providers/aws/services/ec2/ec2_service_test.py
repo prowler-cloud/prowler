@@ -3,63 +3,33 @@ import re
 from base64 import b64decode
 from datetime import datetime
 
-from boto3 import client, resource, session
+from boto3 import client, resource
 from dateutil.tz import tzutc
 from freezegun import freeze_time
 from moto import mock_ec2
 
-from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.aws.services.ec2.ec2_service import EC2
-from prowler.providers.common.models import Audit_Metadata
 from tests.providers.aws.audit_info_utils import (
+    AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_WEST_1,
     set_mocked_aws_audit_info,
 )
 
-AWS_ACCOUNT_NUMBER = "123456789012"
-AWS_REGION = "us-east-1"
 EXAMPLE_AMI_ID = "ami-12c6146b"
 MOCK_DATETIME = datetime(2023, 1, 4, 7, 27, 30, tzinfo=tzutc())
 
 
 class Test_EC2_Service:
-    def set_mocked_audit_info(self):
-        audit_info = AWS_Audit_Info(
-            session_config=None,
-            original_session=None,
-            audit_session=session.Session(
-                profile_name=None,
-                botocore_session=None,
-            ),
-            audited_account=AWS_ACCOUNT_NUMBER,
-            audited_account_arn=f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root",
-            audited_user_id=None,
-            audited_partition="aws",
-            audited_identity_arn=None,
-            profile=None,
-            profile_region=None,
-            credentials=None,
-            assumed_role_info=None,
-            audited_regions=["eu-west-1", "us-east-1"],
-            organizations_metadata=None,
-            audit_resources=None,
-            mfa_enabled=False,
-            audit_metadata=Audit_Metadata(
-                services_scanned=0,
-                expected_checks=[
-                    "ec2_securitygroup_allow_ingress_from_internet_to_any_port"
-                ],
-                completed_checks=0,
-                audit_progress=0,
-            ),
-        )
-        return audit_info
-
     # Test EC2 Service
     @mock_ec2
     def test_service(self):
         # EC2 client for this test class
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
+        audit_info = set_mocked_aws_audit_info(
+            [AWS_REGION_EU_WEST_1],
+            expected_checks=[
+                "ec2_securitygroup_allow_ingress_from_internet_to_any_port"
+            ],
+        )
         ec2 = EC2(audit_info)
         assert ec2.service == "ec2"
 
@@ -67,7 +37,12 @@ class Test_EC2_Service:
     @mock_ec2
     def test_client(self):
         # EC2 client for this test class
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
+        audit_info = set_mocked_aws_audit_info(
+            [AWS_REGION_EU_WEST_1],
+            expected_checks=[
+                "ec2_securitygroup_allow_ingress_from_internet_to_any_port"
+            ],
+        )
         ec2 = EC2(audit_info)
         for regional_client in ec2.regional_clients.values():
             assert regional_client.__class__.__name__ == "EC2"
@@ -76,7 +51,12 @@ class Test_EC2_Service:
     @mock_ec2
     def test__get_session__(self):
         # EC2 client for this test class
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
+        audit_info = set_mocked_aws_audit_info(
+            [AWS_REGION_EU_WEST_1],
+            expected_checks=[
+                "ec2_securitygroup_allow_ingress_from_internet_to_any_port"
+            ],
+        )
         ec2 = EC2(audit_info)
         assert ec2.session.__class__.__name__ == "Session"
 
@@ -84,7 +64,12 @@ class Test_EC2_Service:
     @mock_ec2
     def test_audited_account(self):
         # EC2 client for this test class
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
+        audit_info = set_mocked_aws_audit_info(
+            [AWS_REGION_EU_WEST_1],
+            expected_checks=[
+                "ec2_securitygroup_allow_ingress_from_internet_to_any_port"
+            ],
+        )
         ec2 = EC2(audit_info)
         assert ec2.audited_account == AWS_ACCOUNT_NUMBER
 
@@ -93,8 +78,8 @@ class Test_EC2_Service:
     @freeze_time(MOCK_DATETIME)
     def test__describe_instances__(self):
         # Generate EC2 Client
-        ec2_resource = resource("ec2", region_name=AWS_REGION)
-        ec2_client = client("ec2", region_name=AWS_REGION)
+        ec2_resource = resource("ec2", region_name=AWS_REGION_EU_WEST_1)
+        ec2_client = client("ec2", region_name=AWS_REGION_EU_WEST_1)
         # Get AMI image
         image_response = ec2_client.describe_images()
         image_id = image_response["Images"][0]["ImageId"]
@@ -105,13 +90,18 @@ class Test_EC2_Service:
             ImageId=image_id,
         )
         # EC2 client for this test class
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
+        audit_info = set_mocked_aws_audit_info(
+            [AWS_REGION_EU_WEST_1],
+            expected_checks=[
+                "ec2_securitygroup_allow_ingress_from_internet_to_any_port"
+            ],
+        )
         ec2 = EC2(audit_info)
         assert len(ec2.instances) == 1
         assert re.match(r"i-[0-9a-z]{17}", ec2.instances[0].id)
         assert (
             ec2.instances[0].arn
-            == f"arn:{audit_info.audited_partition}:ec2:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:instance/{ec2.instances[0].id}"
+            == f"arn:{audit_info.audited_partition}:ec2:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:instance/{ec2.instances[0].id}"
         )
         assert ec2.instances[0].type == "m1.small"
         assert ec2.instances[0].state == "running"
@@ -136,7 +126,7 @@ class Test_EC2_Service:
     @mock_ec2
     def test__describe_security_groups__(self):
         # Generate EC2 Client
-        ec2_client = client("ec2", region_name=AWS_REGION)
+        ec2_client = client("ec2", region_name=AWS_REGION_EU_WEST_1)
         # Create EC2 Security Group
         sg_id = ec2_client.create_security_group(
             Description="test-description",
@@ -160,7 +150,12 @@ class Test_EC2_Service:
             ],
         )
         # EC2 client for this test class
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
+        audit_info = set_mocked_aws_audit_info(
+            [AWS_REGION_EU_WEST_1],
+            expected_checks=[
+                "ec2_securitygroup_allow_ingress_from_internet_to_any_port"
+            ],
+        )
         ec2 = EC2(audit_info)
 
         assert sg_id in str(ec2.security_groups)
@@ -169,10 +164,10 @@ class Test_EC2_Service:
                 assert security_group.name == "test-security-group"
                 assert (
                     security_group.arn
-                    == f"arn:{audit_info.audited_partition}:ec2:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:security-group/{security_group.id}"
+                    == f"arn:{audit_info.audited_partition}:ec2:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:security-group/{security_group.id}"
                 )
                 assert re.match(r"sg-[0-9a-z]{17}", security_group.id)
-                assert security_group.region == AWS_REGION
+                assert security_group.region == AWS_REGION_EU_WEST_1
                 assert security_group.network_interfaces == []
                 assert security_group.ingress_rules == [
                     {
@@ -201,8 +196,8 @@ class Test_EC2_Service:
     @mock_ec2
     def test__describe_network_acls__(self):
         # Generate EC2 Client
-        ec2_client = client("ec2", region_name=AWS_REGION)
-        ec2_resource = resource("ec2", region_name=AWS_REGION)
+        ec2_client = client("ec2", region_name=AWS_REGION_EU_WEST_1)
+        ec2_resource = resource("ec2", region_name=AWS_REGION_EU_WEST_1)
         # Create EC2 VPC and SG
         vpc_id = ec2_client.create_vpc(CidrBlock="10.0.0.0/16")["Vpc"]["VpcId"]
         nacl_id = ec2_resource.create_network_acl(
@@ -217,7 +212,12 @@ class Test_EC2_Service:
             ],
         ).id
         # EC2 client for this test class
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
+        audit_info = set_mocked_aws_audit_info(
+            [AWS_REGION_EU_WEST_1],
+            expected_checks=[
+                "ec2_securitygroup_allow_ingress_from_internet_to_any_port"
+            ],
+        )
         ec2 = EC2(audit_info)
 
         assert nacl_id in str(ec2.network_acls)
@@ -226,7 +226,7 @@ class Test_EC2_Service:
                 assert re.match(r"acl-[0-9a-z]{8}", acl.id)
                 assert (
                     acl.arn
-                    == f"arn:{audit_info.audited_partition}:ec2:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:network-acl/{acl.id}"
+                    == f"arn:{audit_info.audited_partition}:ec2:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:network-acl/{acl.id}"
                 )
                 assert acl.entries == []
                 assert acl.tags == [
@@ -237,8 +237,8 @@ class Test_EC2_Service:
     @mock_ec2
     def test__describe_snapshots__(self):
         # Generate EC2 Client
-        ec2_client = client("ec2", region_name=AWS_REGION)
-        ec2_resource = resource("ec2", region_name=AWS_REGION)
+        ec2_client = client("ec2", region_name=AWS_REGION_EU_WEST_1)
+        ec2_resource = resource("ec2", region_name=AWS_REGION_EU_WEST_1)
         # Create EC2 Volume and Snapshot
         volume_id = ec2_resource.create_volume(
             AvailabilityZone="us-east-1a",
@@ -256,11 +256,14 @@ class Test_EC2_Service:
                 },
             ],
         )["SnapshotId"]
-        snapshot_arn = (
-            f"arn:aws:ec2:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:snapshot/{snapshot_id}"
-        )
+        snapshot_arn = f"arn:aws:ec2:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:snapshot/{snapshot_id}"
         # EC2 client for this test class
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
+        audit_info = set_mocked_aws_audit_info(
+            [AWS_REGION_EU_WEST_1],
+            expected_checks=[
+                "ec2_securitygroup_allow_ingress_from_internet_to_any_port"
+            ],
+        )
         ec2 = EC2(audit_info)
 
         assert snapshot_id in str(ec2.snapshots)
@@ -270,7 +273,7 @@ class Test_EC2_Service:
             if snapshot.id == snapshot_id:
                 assert re.match(r"snap-[0-9a-z]{8}", snapshot.id)
                 assert snapshot.arn == snapshot_arn
-                assert snapshot.region == AWS_REGION
+                assert snapshot.region == AWS_REGION_EU_WEST_1
                 assert snapshot.tags == [
                     {"Key": "test", "Value": "test"},
                 ]
@@ -281,8 +284,8 @@ class Test_EC2_Service:
     @mock_ec2
     def test__get_snapshot_public__(self):
         # Generate EC2 Client
-        ec2_client = client("ec2", region_name=AWS_REGION)
-        ec2_resource = resource("ec2", region_name=AWS_REGION)
+        ec2_client = client("ec2", region_name=AWS_REGION_EU_WEST_1)
+        ec2_resource = resource("ec2", region_name=AWS_REGION_EU_WEST_1)
         # Create EC2 Volume and Snapshot
         volume_id = ec2_resource.create_volume(
             AvailabilityZone="us-east-1a",
@@ -301,7 +304,12 @@ class Test_EC2_Service:
             SnapshotId=snapshot_id,
         )
         # EC2 client for this test class
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
+        audit_info = set_mocked_aws_audit_info(
+            [AWS_REGION_EU_WEST_1],
+            expected_checks=[
+                "ec2_securitygroup_allow_ingress_from_internet_to_any_port"
+            ],
+        )
         ec2 = EC2(audit_info)
 
         assert snapshot_id in str(ec2.snapshots)
@@ -310,9 +318,9 @@ class Test_EC2_Service:
                 assert re.match(r"snap-[0-9a-z]{8}", snapshot.id)
                 assert (
                     snapshot.arn
-                    == f"arn:{audit_info.audited_partition}:ec2:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:snapshot/{snapshot.id}"
+                    == f"arn:{audit_info.audited_partition}:ec2:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:snapshot/{snapshot.id}"
                 )
-                assert snapshot.region == AWS_REGION
+                assert snapshot.region == AWS_REGION_EU_WEST_1
                 assert not snapshot.encrypted
                 assert snapshot.public
 
@@ -320,7 +328,7 @@ class Test_EC2_Service:
     @mock_ec2
     def test__get_instance_user_data__(self):
         user_data = "This is some user_data"
-        ec2 = resource("ec2", region_name=AWS_REGION)
+        ec2 = resource("ec2", region_name=AWS_REGION_EU_WEST_1)
         ec2.create_instances(
             ImageId=EXAMPLE_AMI_ID,
             MinCount=1,
@@ -328,30 +336,40 @@ class Test_EC2_Service:
             UserData="This is some user_data",
         )
         # EC2 client for this test class
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
+        audit_info = set_mocked_aws_audit_info(
+            [AWS_REGION_EU_WEST_1],
+            expected_checks=[
+                "ec2_securitygroup_allow_ingress_from_internet_to_any_port"
+            ],
+        )
         ec2 = EC2(audit_info)
         assert user_data == b64decode(ec2.instances[0].user_data).decode("utf-8")
 
     # Test EC2 Get EBS Encryption by default
     @mock_ec2
     def test__get_ebs_encryption_by_default__(self):
-        ec2_client = client("ec2", region_name=AWS_REGION)
+        ec2_client = client("ec2", region_name=AWS_REGION_EU_WEST_1)
         ec2_client.enable_ebs_encryption_by_default()
         # EC2 client for this test class
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
+        audit_info = set_mocked_aws_audit_info(
+            [AWS_REGION_EU_WEST_1],
+            expected_checks=[
+                "ec2_securitygroup_allow_ingress_from_internet_to_any_port"
+            ],
+        )
         ec2 = EC2(audit_info)
 
         # One result per region
         assert len(ec2.ebs_encryption_by_default) == 2
         for result in ec2.ebs_encryption_by_default:
-            if result.region == AWS_REGION:
+            if result.region == AWS_REGION_EU_WEST_1:
                 assert result.status
 
     # Test EC2 Describe Addresses
     @mock_ec2
     def test__describe_addresses__(self):
         # Generate EC2 Client
-        ec2_client = client("ec2", region_name=AWS_REGION)
+        ec2_client = client("ec2", region_name=AWS_REGION_EU_WEST_1)
         allocation_id = ec2_client.allocate_address(
             Domain="vpc",
             Address="127.38.43.222",
@@ -365,12 +383,17 @@ class Test_EC2_Service:
             ],
         )["AllocationId"]
         # EC2 client for this test class
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
+        audit_info = set_mocked_aws_audit_info(
+            [AWS_REGION_EU_WEST_1],
+            expected_checks=[
+                "ec2_securitygroup_allow_ingress_from_internet_to_any_port"
+            ],
+        )
         ec2 = EC2(audit_info)
         assert "127.38.43.222" in str(ec2.elastic_ips)
         assert (
             ec2.elastic_ips[0].arn
-            == f"arn:aws:ec2:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:eip-allocation/{allocation_id}"
+            == f"arn:aws:ec2:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:eip-allocation/{allocation_id}"
         )
         assert ec2.elastic_ips[0].tags == [
             {"Key": "test", "Value": "test"},
@@ -380,8 +403,8 @@ class Test_EC2_Service:
     @mock_ec2
     def test__describe_sg_network_interfaces__(self):
         # Generate EC2 Client
-        ec2_client = client("ec2", region_name=AWS_REGION)
-        ec2_resource = resource("ec2", region_name=AWS_REGION)
+        ec2_client = client("ec2", region_name=AWS_REGION_EU_WEST_1)
+        ec2_resource = resource("ec2", region_name=AWS_REGION_EU_WEST_1)
         # Create VPC, Subnet, SecurityGroup and Network Interface
         vpc = ec2_resource.create_vpc(CidrBlock="10.0.0.0/16")
         subnet = ec2_resource.create_subnet(VpcId=vpc.id, CidrBlock="10.0.0.0/18")
@@ -394,7 +417,12 @@ class Test_EC2_Service:
         )
 
         # EC2 client for this test class
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
+        audit_info = set_mocked_aws_audit_info(
+            [AWS_REGION_EU_WEST_1],
+            expected_checks=[
+                "ec2_securitygroup_allow_ingress_from_internet_to_any_port"
+            ],
+        )
         ec2 = EC2(audit_info)
 
         assert sg.id in str(ec2.security_groups)
@@ -403,10 +431,10 @@ class Test_EC2_Service:
                 assert security_group.name == "test-securitygroup"
                 assert (
                     security_group.arn
-                    == f"arn:{audit_info.audited_partition}:ec2:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:security-group/{security_group.id}"
+                    == f"arn:{audit_info.audited_partition}:ec2:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:security-group/{security_group.id}"
                 )
                 assert re.match(r"sg-[0-9a-z]{17}", security_group.id)
-                assert security_group.region == AWS_REGION
+                assert security_group.region == AWS_REGION_EU_WEST_1
                 assert eni_id in security_group.network_interfaces
                 assert security_group.ingress_rules == []
                 assert security_group.egress_rules == [
@@ -422,8 +450,8 @@ class Test_EC2_Service:
     @mock_ec2
     def test__describe_public_network_interfaces__(self):
         # Generate EC2 Client
-        ec2_client = client("ec2", region_name=AWS_REGION)
-        ec2_resource = resource("ec2", region_name=AWS_REGION)
+        ec2_client = client("ec2", region_name=AWS_REGION_EU_WEST_1)
+        ec2_resource = resource("ec2", region_name=AWS_REGION_EU_WEST_1)
         # Create VPC, Subnet, SecurityGroup and Network Interface
         vpc = ec2_resource.create_vpc(CidrBlock="10.0.0.0/16")
         subnet = ec2_resource.create_subnet(VpcId=vpc.id, CidrBlock="10.0.0.0/18")
@@ -445,7 +473,12 @@ class Test_EC2_Service:
         )
 
         # EC2 client for this test class
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
+        audit_info = set_mocked_aws_audit_info(
+            [AWS_REGION_EU_WEST_1],
+            expected_checks=[
+                "ec2_securitygroup_allow_ingress_from_internet_to_any_port"
+            ],
+        )
         ec2 = EC2(audit_info)
 
         assert len(ec2.network_interfaces) == 1
@@ -454,7 +487,7 @@ class Test_EC2_Service:
         assert ec2.network_interfaces[0].type == eni.interface_type
         assert ec2.network_interfaces[0].subnet_id == subnet.id
         assert ec2.network_interfaces[0].vpc_id == vpc.id
-        assert ec2.network_interfaces[0].region == AWS_REGION
+        assert ec2.network_interfaces[0].region == AWS_REGION_EU_WEST_1
         assert ec2.network_interfaces[0].tags == [
             {"Key": "string", "Value": "string"},
         ]
@@ -463,8 +496,8 @@ class Test_EC2_Service:
     @mock_ec2
     def test__describe_images__(self):
         # Generate EC2 Client
-        ec2_client = client("ec2", region_name=AWS_REGION)
-        ec2_resource = resource("ec2", region_name=AWS_REGION)
+        ec2_client = client("ec2", region_name=AWS_REGION_EU_WEST_1)
+        ec2_resource = resource("ec2", region_name=AWS_REGION_EU_WEST_1)
         # Create AMI
         tag_specifications = [
             {
@@ -489,7 +522,12 @@ class Test_EC2_Service:
         )["ImageId"]
 
         # EC2 client for this test class
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
+        audit_info = set_mocked_aws_audit_info(
+            [AWS_REGION_EU_WEST_1],
+            expected_checks=[
+                "ec2_securitygroup_allow_ingress_from_internet_to_any_port"
+            ],
+        )
         ec2 = EC2(audit_info)
 
         assert len(ec2.images) == 1
@@ -497,10 +535,10 @@ class Test_EC2_Service:
         assert re.match(r"ami-[0-9a-z]{8}", ec2.images[0].id)
         assert (
             ec2.images[0].arn
-            == f"arn:{audit_info.audited_partition}:ec2:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:image/{ec2.images[0].id}"
+            == f"arn:{audit_info.audited_partition}:ec2:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:image/{ec2.images[0].id}"
         )
         assert not ec2.images[0].public
-        assert ec2.images[0].region == AWS_REGION
+        assert ec2.images[0].region == AWS_REGION_EU_WEST_1
         assert ec2.images[0].tags == [
             {
                 "Key": "Base_AMI_Name",
@@ -513,10 +551,10 @@ class Test_EC2_Service:
     @mock_ec2
     def test__describe_volumes__(self):
         # Generate EC2 Client
-        ec2_client = client("ec2", region_name=AWS_REGION)
+        ec2_client = client("ec2", region_name=AWS_REGION_EU_WEST_1)
         # Create Volume
         volume_id = ec2_client.create_volume(
-            AvailabilityZone=AWS_REGION,
+            AvailabilityZone=AWS_REGION_EU_WEST_1,
             Encrypted=False,
             Size=40,
             TagSpecifications=[
@@ -530,7 +568,12 @@ class Test_EC2_Service:
         )["VolumeId"]
 
         # EC2 client for this test class
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
+        audit_info = set_mocked_aws_audit_info(
+            [AWS_REGION_EU_WEST_1],
+            expected_checks=[
+                "ec2_securitygroup_allow_ingress_from_internet_to_any_port"
+            ],
+        )
         ec2 = EC2(audit_info)
 
         assert len(ec2.volumes) == 1
@@ -538,9 +581,9 @@ class Test_EC2_Service:
         assert re.match(r"vol-[0-9a-z]{8}", ec2.volumes[0].id)
         assert (
             ec2.volumes[0].arn
-            == f"arn:{audit_info.audited_partition}:ec2:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:volume/{ec2.volumes[0].id}"
+            == f"arn:{audit_info.audited_partition}:ec2:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:volume/{ec2.volumes[0].id}"
         )
-        assert ec2.volumes[0].region == AWS_REGION
+        assert ec2.volumes[0].region == AWS_REGION_EU_WEST_1
         assert not ec2.volumes[0].encrypted
         assert ec2.volumes[0].tags == [
             {"Key": "test", "Value": "test"},

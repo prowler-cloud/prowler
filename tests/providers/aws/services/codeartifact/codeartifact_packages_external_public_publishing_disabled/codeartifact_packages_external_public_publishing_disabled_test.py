@@ -13,8 +13,7 @@ from prowler.providers.aws.services.codeartifact.codeartifact_service import (
     Restrictions,
     RestrictionValues,
 )
-
-AWS_REGION = "eu-west-1"
+from tests.providers.aws.audit_info_utils import AWS_REGION_EU_WEST_1
 
 
 class Test_codeartifact_packages_external_public_publishing_disabled:
@@ -43,7 +42,7 @@ class Test_codeartifact_packages_external_public_publishing_disabled:
                 arn="",
                 domain_name="",
                 domain_owner="",
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
                 packages=[],
             )
         }
@@ -65,14 +64,14 @@ class Test_codeartifact_packages_external_public_publishing_disabled:
         codeartifact_client = mock.MagicMock
         package_name = "test-package"
         package_namespace = "test-namespace"
-        repository_arn = f"arn:aws:codebuild:{AWS_REGION}:{DEFAULT_ACCOUNT_ID}:repository/test-repository"
+        repository_arn = f"arn:aws:codebuild:{AWS_REGION_EU_WEST_1}:{DEFAULT_ACCOUNT_ID}:repository/test-repository"
         codeartifact_client.repositories = {
             "test-repository": Repository(
                 name="test-repository",
                 arn=repository_arn,
                 domain_name="",
                 domain_owner="",
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
                 packages=[
                     Package(
                         name=package_name,
@@ -108,7 +107,7 @@ class Test_codeartifact_packages_external_public_publishing_disabled:
             result = check.execute()
 
             assert len(result) == 1
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1
             assert result[0].resource_id == "test-package"
             assert (
                 result[0].resource_arn
@@ -125,14 +124,14 @@ class Test_codeartifact_packages_external_public_publishing_disabled:
         codeartifact_client = mock.MagicMock
         package_name = "test-package"
         package_namespace = "test-namespace"
-        repository_arn = f"arn:aws:codebuild:{AWS_REGION}:{DEFAULT_ACCOUNT_ID}:repository/test-repository"
+        repository_arn = f"arn:aws:codebuild:{AWS_REGION_EU_WEST_1}:{DEFAULT_ACCOUNT_ID}:repository/test-repository"
         codeartifact_client.repositories = {
             "test-repository": Repository(
                 name="test-repository",
                 arn=repository_arn,
                 domain_name="",
                 domain_owner="",
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
                 packages=[
                     Package(
                         name=package_name,
@@ -168,7 +167,7 @@ class Test_codeartifact_packages_external_public_publishing_disabled:
             result = check.execute()
 
             assert len(result) == 1
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1
             assert result[0].resource_id == "test-package"
             assert (
                 result[0].resource_arn

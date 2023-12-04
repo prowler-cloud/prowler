@@ -9,9 +9,7 @@ from tests.providers.aws.audit_info_utils import (
     set_mocked_aws_audit_info,
 )
 
-AWS_REGION = "us-east-1"
 EXAMPLE_AMI_ID = "ami-12c6146b"
-AWS_ACCOUNT_NUMBER = "123456789012"
 
 
 class Test_ec2_instance_public_ip:
@@ -40,7 +38,7 @@ class Test_ec2_instance_public_ip:
 
     @mock_ec2
     def test_one_compliant_ec2(self):
-        ec2 = resource("ec2", region_name=AWS_REGION)
+        ec2 = resource("ec2", region_name=AWS_REGION_EU_WEST_1)
         vpc = ec2.create_vpc(CidrBlock="10.0.0.0/16")
         subnet = ec2.create_subnet(VpcId=vpc.id, CidrBlock="10.0.0.0/18")
         instance = ec2.create_instances(
@@ -76,7 +74,7 @@ class Test_ec2_instance_public_ip:
 
             assert len(result) == 1
             assert result[0].status == "PASS"
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1
             assert result[0].resource_tags is None
             assert search(
                 f"EC2 Instance {instance.id} does not have a Public IP.",
@@ -85,12 +83,12 @@ class Test_ec2_instance_public_ip:
             assert result[0].resource_id == instance.id
             assert (
                 result[0].resource_arn
-                == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:instance/{instance.id}"
+                == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION_EU_WEST_1}:{current_audit_info.audited_account}:instance/{instance.id}"
             )
 
     @mock_ec2
     def test_one_ec2_with_public_ip(self):
-        ec2 = resource("ec2", region_name=AWS_REGION)
+        ec2 = resource("ec2", region_name=AWS_REGION_EU_WEST_1)
         vpc = ec2.create_vpc(CidrBlock="10.0.0.0/16")
         subnet = ec2.create_subnet(VpcId=vpc.id, CidrBlock="10.0.0.0/18")
         instance = ec2.create_instances(
@@ -126,7 +124,7 @@ class Test_ec2_instance_public_ip:
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1
             assert result[0].resource_tags is None
             assert search(
                 f"EC2 Instance {instance.id} has a Public IP.",
@@ -135,5 +133,5 @@ class Test_ec2_instance_public_ip:
             assert result[0].resource_id == instance.id
             assert (
                 result[0].resource_arn
-                == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:instance/{instance.id}"
+                == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION_EU_WEST_1}:{current_audit_info.audited_account}:instance/{instance.id}"
             )

@@ -8,21 +8,18 @@ from tests.providers.aws.audit_info_utils import (
     set_mocked_aws_audit_info,
 )
 
-AWS_REGION = "us-east-1"
-AWS_ACCOUNT_NUMBER = "123456789012"
-
 
 class Test_vpc_subnet_no_public_ip_by_default:
     @mock_ec2
     def test_vpc_with_map_ip_on_launch(self):
-        ec2_client = client("ec2", region_name=AWS_REGION)
+        ec2_client = client("ec2", region_name=AWS_REGION_EU_WEST_1)
         vpc = ec2_client.create_vpc(
             CidrBlock="172.28.7.0/24", InstanceTenancy="default"
         )
         subnet_private = ec2_client.create_subnet(
             VpcId=vpc["Vpc"]["VpcId"],
             CidrBlock="172.28.7.192/26",
-            AvailabilityZone=f"{AWS_REGION}a",
+            AvailabilityZone=f"{AWS_REGION_EU_WEST_1}a",
             TagSpecifications=[
                 {
                     "ResourceType": "subnet",
@@ -67,14 +64,14 @@ class Test_vpc_subnet_no_public_ip_by_default:
 
     @mock_ec2
     def test_vpc_without_map_ip_on_launch(self):
-        ec2_client = client("ec2", region_name=AWS_REGION)
+        ec2_client = client("ec2", region_name=AWS_REGION_EU_WEST_1)
         vpc = ec2_client.create_vpc(
             CidrBlock="172.28.7.0/24", InstanceTenancy="default"
         )
         subnet_private = ec2_client.create_subnet(
             VpcId=vpc["Vpc"]["VpcId"],
             CidrBlock="172.28.7.192/26",
-            AvailabilityZone=f"{AWS_REGION}a",
+            AvailabilityZone=f"{AWS_REGION_EU_WEST_1}a",
         )
 
         ec2_client.modify_subnet_attribute(

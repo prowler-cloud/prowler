@@ -1,52 +1,16 @@
 import datetime
 from unittest import mock
 
-from boto3 import client, session
+from boto3 import client
 from moto import mock_iam
 
-from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
-from prowler.providers.common.models import Audit_Metadata
 from tests.providers.aws.audit_info_utils import (
     AWS_REGION_EU_WEST_1,
     set_mocked_aws_audit_info,
 )
 
-AWS_ACCOUNT_NUMBER = "123456789012"
-AWS_REGION = "us-east-1"
-
 
 class Test_iam_rotate_access_key_90_days_test:
-    def set_mocked_audit_info(self):
-        audit_info = AWS_Audit_Info(
-            session_config=None,
-            original_session=None,
-            audit_session=session.Session(
-                profile_name=None,
-                botocore_session=None,
-            ),
-            audited_account=AWS_ACCOUNT_NUMBER,
-            audited_account_arn=f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root",
-            audited_user_id=None,
-            audited_partition="aws",
-            audited_identity_arn=None,
-            profile=None,
-            profile_region=AWS_REGION,
-            credentials=None,
-            assumed_role_info=None,
-            audited_regions=["us-east-1", "eu-west-1"],
-            organizations_metadata=None,
-            audit_resources=None,
-            mfa_enabled=False,
-            audit_metadata=Audit_Metadata(
-                services_scanned=0,
-                expected_checks=[],
-                completed_checks=0,
-                audit_progress=0,
-            ),
-        )
-
-        return audit_info
-
     @mock_iam
     def test_user_no_access_keys(self):
         iam_client = client("iam")
@@ -80,7 +44,7 @@ class Test_iam_rotate_access_key_90_days_test:
             )
             assert result[0].resource_id == user
             assert result[0].resource_arn == arn
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1
 
     @mock_iam
     def test_user_access_key_1_not_rotated(self):
@@ -121,7 +85,7 @@ class Test_iam_rotate_access_key_90_days_test:
             )
             assert result[0].resource_id == user
             assert result[0].resource_arn == arn
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1
 
     @mock_iam
     def test_user_access_key_2_not_rotated(self):
@@ -162,7 +126,7 @@ class Test_iam_rotate_access_key_90_days_test:
             )
             assert result[0].resource_id == user
             assert result[0].resource_arn == arn
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1
 
     @mock_iam
     def test_user_both_access_keys_not_rotated(self):
@@ -208,7 +172,7 @@ class Test_iam_rotate_access_key_90_days_test:
             )
             assert result[0].resource_id == user
             assert result[0].resource_arn == arn
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1
             assert result[1].status == "FAIL"
             assert (
                 result[1].status_extended
@@ -216,7 +180,7 @@ class Test_iam_rotate_access_key_90_days_test:
             )
             assert result[1].resource_id == user
             assert result[1].resource_arn == arn
-            assert result[1].region == AWS_REGION
+            assert result[1].region == AWS_REGION_EU_WEST_1
 
     @mock_iam
     def test_user_both_access_keys_rotated(self):
@@ -263,4 +227,4 @@ class Test_iam_rotate_access_key_90_days_test:
                 )
                 assert result[0].resource_id == user
                 assert result[0].resource_arn == arn
-                assert result[0].region == AWS_REGION
+                assert result[0].region == AWS_REGION_EU_WEST_1

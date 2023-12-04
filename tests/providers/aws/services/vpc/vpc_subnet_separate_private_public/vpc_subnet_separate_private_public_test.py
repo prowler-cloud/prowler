@@ -8,14 +8,11 @@ from tests.providers.aws.audit_info_utils import (
     set_mocked_aws_audit_info,
 )
 
-AWS_REGION = "us-east-1"
-AWS_ACCOUNT_NUMBER = "123456789012"
-
 
 class Test_vpc_subnet_separate_private_public:
     @mock_ec2
     def test_vpc_subnet_only_private(self):
-        ec2_client = client("ec2", region_name=AWS_REGION)
+        ec2_client = client("ec2", region_name=AWS_REGION_EU_WEST_1)
         vpc = ec2_client.create_vpc(
             CidrBlock="172.28.7.0/24",
             InstanceTenancy="default",
@@ -32,7 +29,7 @@ class Test_vpc_subnet_separate_private_public:
         subnet_private = ec2_client.create_subnet(
             VpcId=vpc["Vpc"]["VpcId"],
             CidrBlock="172.28.7.192/26",
-            AvailabilityZone=f"{AWS_REGION}a",
+            AvailabilityZone=f"{AWS_REGION_EU_WEST_1}a",
         )
         route_table_private = ec2_client.create_route_table(
             VpcId=vpc["Vpc"]["VpcId"],
@@ -78,13 +75,13 @@ class Test_vpc_subnet_separate_private_public:
                         assert result.resource_tags == [
                             {"Key": "Name", "Value": "vpc_name"}
                         ]
-                        assert result.region == AWS_REGION
+                        assert result.region == AWS_REGION_EU_WEST_1
                 if not found:
                     assert False
 
     @mock_ec2
     def test_vpc_subnet_only_public(self):
-        ec2_client = client("ec2", region_name=AWS_REGION)
+        ec2_client = client("ec2", region_name=AWS_REGION_EU_WEST_1)
         vpc = ec2_client.create_vpc(
             CidrBlock="172.28.7.0/24", InstanceTenancy="default"
         )
@@ -92,7 +89,7 @@ class Test_vpc_subnet_separate_private_public:
         subnet_public = ec2_client.create_subnet(
             VpcId=vpc["Vpc"]["VpcId"],
             CidrBlock="172.28.7.192/26",
-            AvailabilityZone=f"{AWS_REGION}a",
+            AvailabilityZone=f"{AWS_REGION_EU_WEST_1}a",
         )
         route_table_public = ec2_client.create_route_table(
             VpcId=vpc["Vpc"]["VpcId"],
@@ -138,13 +135,13 @@ class Test_vpc_subnet_separate_private_public:
                         )
                         assert result.resource_id == vpc["Vpc"]["VpcId"]
                         assert result.resource_tags == []
-                        assert result.region == AWS_REGION
+                        assert result.region == AWS_REGION_EU_WEST_1
                 if not found:
                     assert False
 
     @mock_ec2
     def test_vpc_subnet_private_and_public(self):
-        ec2_client = client("ec2", region_name=AWS_REGION)
+        ec2_client = client("ec2", region_name=AWS_REGION_EU_WEST_1)
         vpc = ec2_client.create_vpc(
             CidrBlock="172.28.7.0/24", InstanceTenancy="default"
         )
@@ -152,7 +149,7 @@ class Test_vpc_subnet_separate_private_public:
         subnet_private = ec2_client.create_subnet(
             VpcId=vpc["Vpc"]["VpcId"],
             CidrBlock="172.28.7.192/26",
-            AvailabilityZone=f"{AWS_REGION}a",
+            AvailabilityZone=f"{AWS_REGION_EU_WEST_1}a",
         )
         route_table_private = ec2_client.create_route_table(
             VpcId=vpc["Vpc"]["VpcId"],
@@ -169,7 +166,7 @@ class Test_vpc_subnet_separate_private_public:
         subnet_public = ec2_client.create_subnet(
             VpcId=vpc["Vpc"]["VpcId"],
             CidrBlock="172.28.7.0/26",
-            AvailabilityZone=f"{AWS_REGION}a",
+            AvailabilityZone=f"{AWS_REGION_EU_WEST_1}a",
         )
         route_table_public = ec2_client.create_route_table(
             VpcId=vpc["Vpc"]["VpcId"],
@@ -215,6 +212,6 @@ class Test_vpc_subnet_separate_private_public:
                         )
                         assert result.resource_id == vpc["Vpc"]["VpcId"]
                         assert result.resource_tags == []
-                        assert result.region == AWS_REGION
+                        assert result.region == AWS_REGION_EU_WEST_1
                 if not found:
                     assert False

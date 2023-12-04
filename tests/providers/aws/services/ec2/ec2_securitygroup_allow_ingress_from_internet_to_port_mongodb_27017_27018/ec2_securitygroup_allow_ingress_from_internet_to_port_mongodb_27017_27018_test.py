@@ -9,15 +9,12 @@ from tests.providers.aws.audit_info_utils import (
     set_mocked_aws_audit_info,
 )
 
-AWS_REGION = "us-east-1"
-AWS_ACCOUNT_NUMBER = "123456789012"
-
 
 class Test_ec2_securitygroup_allow_ingress_from_internet_to_port_mongodb_27017_27018:
     @mock_ec2
     def test_ec2_default_sgs(self):
         # Create EC2 Mocked Resources
-        ec2_client = client("ec2", region_name=AWS_REGION)
+        ec2_client = client("ec2", region_name=AWS_REGION_EU_WEST_1)
         ec2_client.create_vpc(CidrBlock="10.0.0.0/16")
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
@@ -54,7 +51,7 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_port_mongodb_27017_2
     @mock_ec2
     def test_ec2_non_compliant_default_sg(self):
         # Create EC2 Mocked Resources
-        ec2_client = client("ec2", region_name=AWS_REGION)
+        ec2_client = client("ec2", region_name=AWS_REGION_EU_WEST_1)
         ec2_client.create_vpc(CidrBlock="10.0.0.0/16")
         default_sg = ec2_client.describe_security_groups(GroupNames=["default"])[
             "SecurityGroups"
@@ -103,14 +100,14 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_port_mongodb_27017_2
             for sg in result:
                 if sg.resource_id == default_sg_id:
                     assert sg.status == "FAIL"
-                    assert sg.region == AWS_REGION
+                    assert sg.region == AWS_REGION_EU_WEST_1
                     assert (
                         sg.status_extended
                         == f"Security group {default_sg_name} ({default_sg_id}) has MongoDB ports 27017 and 27018 open to the Internet."
                     )
                     assert (
                         sg.resource_arn
-                        == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:security-group/{default_sg_id}"
+                        == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION_EU_WEST_1}:{current_audit_info.audited_account}:security-group/{default_sg_id}"
                     )
                     assert sg.resource_details == default_sg_name
                     assert sg.resource_tags == []
@@ -118,7 +115,7 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_port_mongodb_27017_2
     @mock_ec2
     def test_ec2_compliant_default_sg(self):
         # Create EC2 Mocked Resources
-        ec2_client = client("ec2", region_name=AWS_REGION)
+        ec2_client = client("ec2", region_name=AWS_REGION_EU_WEST_1)
         ec2_client.create_vpc(CidrBlock="10.0.0.0/16")
         default_sg = ec2_client.describe_security_groups(GroupNames=["default"])[
             "SecurityGroups"
@@ -167,14 +164,14 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_port_mongodb_27017_2
             for sg in result:
                 if sg.resource_id == default_sg_id:
                     assert sg.status == "PASS"
-                    assert sg.region == AWS_REGION
+                    assert sg.region == AWS_REGION_EU_WEST_1
                     assert (
                         sg.status_extended
                         == f"Security group {default_sg_name} ({default_sg_id}) does not have MongoDB ports 27017 and 27018 open to the Internet."
                     )
                     assert (
                         sg.resource_arn
-                        == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:security-group/{default_sg_id}"
+                        == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION_EU_WEST_1}:{current_audit_info.audited_account}:security-group/{default_sg_id}"
                     )
                     assert sg.resource_details == default_sg_name
                     assert sg.resource_tags == []
@@ -182,7 +179,7 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_port_mongodb_27017_2
     @mock_ec2
     def test_ec2_default_sgs_ignoring(self):
         # Create EC2 Mocked Resources
-        ec2_client = client("ec2", region_name=AWS_REGION)
+        ec2_client = client("ec2", region_name=AWS_REGION_EU_WEST_1)
         ec2_client.create_vpc(CidrBlock="10.0.0.0/16")
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
@@ -215,11 +212,11 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_port_mongodb_27017_2
     @mock_ec2
     def test_ec2_default_sgs_ignoring_vpc_in_use(self):
         # Create EC2 Mocked Resources
-        ec2 = resource("ec2", region_name=AWS_REGION)
+        ec2 = resource("ec2", region_name=AWS_REGION_EU_WEST_1)
         vpc = ec2.create_vpc(CidrBlock="10.0.0.0/16")
         subnet = ec2.create_subnet(VpcId=vpc.id, CidrBlock="10.0.0.0/18")
         ec2.create_network_interface(SubnetId=subnet.id)
-        ec2_client = client("ec2", region_name=AWS_REGION)
+        ec2_client = client("ec2", region_name=AWS_REGION_EU_WEST_1)
         default_sg = ec2_client.describe_security_groups(GroupNames=["default"])[
             "SecurityGroups"
         ][0]
@@ -252,4 +249,4 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_port_mongodb_27017_2
 
             assert len(result) == 1
             assert result[0].status == "PASS"
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1

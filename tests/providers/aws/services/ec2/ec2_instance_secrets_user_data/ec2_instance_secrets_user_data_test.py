@@ -10,9 +10,8 @@ from tests.providers.aws.audit_info_utils import (
     set_mocked_aws_audit_info,
 )
 
-AWS_REGION = "us-east-1"
 EXAMPLE_AMI_ID = "ami-12c6146b"
-AWS_ACCOUNT_NUMBER = "123456789012"
+
 
 ACTUAL_DIRECTORY = Path(path.dirname(path.realpath(__file__)))
 FIXTURES_DIR_NAME = "fixtures"
@@ -44,7 +43,7 @@ class Test_ec2_instance_secrets_user_data:
 
     @mock_ec2
     def test_one_ec2_with_no_secrets(self):
-        ec2 = resource("ec2", region_name=AWS_REGION)
+        ec2 = resource("ec2", region_name=AWS_REGION_EU_WEST_1)
         instance = ec2.create_instances(
             ImageId=EXAMPLE_AMI_ID,
             MinCount=1,
@@ -79,14 +78,14 @@ class Test_ec2_instance_secrets_user_data:
             assert result[0].resource_id == instance.id
             assert (
                 result[0].resource_arn
-                == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:instance/{instance.id}"
+                == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION_EU_WEST_1}:{current_audit_info.audited_account}:instance/{instance.id}"
             )
             assert result[0].resource_tags is None
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1
 
     @mock_ec2
     def test_one_ec2_with_secrets(self):
-        ec2 = resource("ec2", region_name=AWS_REGION)
+        ec2 = resource("ec2", region_name=AWS_REGION_EU_WEST_1)
         instance = ec2.create_instances(
             ImageId=EXAMPLE_AMI_ID,
             MinCount=1,
@@ -121,10 +120,10 @@ class Test_ec2_instance_secrets_user_data:
             assert result[0].resource_id == instance.id
             assert (
                 result[0].resource_arn
-                == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:instance/{instance.id}"
+                == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION_EU_WEST_1}:{current_audit_info.audited_account}:instance/{instance.id}"
             )
             assert result[0].resource_tags is None
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1
 
     @mock_ec2
     def test_one_ec2_file_with_secrets(self):
@@ -134,7 +133,7 @@ class Test_ec2_instance_secrets_user_data:
             "r",
         )
         secrets = f.read()
-        ec2 = resource("ec2", region_name=AWS_REGION)
+        ec2 = resource("ec2", region_name=AWS_REGION_EU_WEST_1)
         instance = ec2.create_instances(
             ImageId=EXAMPLE_AMI_ID, MinCount=1, MaxCount=1, UserData=secrets
         )[0]
@@ -166,14 +165,14 @@ class Test_ec2_instance_secrets_user_data:
             assert result[0].resource_id == instance.id
             assert (
                 result[0].resource_arn
-                == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:instance/{instance.id}"
+                == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION_EU_WEST_1}:{current_audit_info.audited_account}:instance/{instance.id}"
             )
             assert result[0].resource_tags is None
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1
 
     @mock_ec2
     def test_one_launch_configurations_without_user_data(self):
-        ec2 = resource("ec2", region_name=AWS_REGION)
+        ec2 = resource("ec2", region_name=AWS_REGION_EU_WEST_1)
         instance = ec2.create_instances(
             ImageId=EXAMPLE_AMI_ID, MinCount=1, MaxCount=1, UserData=""
         )[0]
@@ -205,10 +204,10 @@ class Test_ec2_instance_secrets_user_data:
             assert result[0].resource_id == instance.id
             assert (
                 result[0].resource_arn
-                == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:instance/{instance.id}"
+                == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION_EU_WEST_1}:{current_audit_info.audited_account}:instance/{instance.id}"
             )
             assert result[0].resource_tags is None
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1
 
     @mock_ec2
     def test_one_ec2_file_with_secrets_gzip(self):
@@ -218,7 +217,7 @@ class Test_ec2_instance_secrets_user_data:
             "rb",
         )
         secrets = f.read()
-        ec2 = resource("ec2", region_name=AWS_REGION)
+        ec2 = resource("ec2", region_name=AWS_REGION_EU_WEST_1)
         instance = ec2.create_instances(
             ImageId=EXAMPLE_AMI_ID, MinCount=1, MaxCount=1, UserData=secrets
         )[0]
@@ -250,7 +249,7 @@ class Test_ec2_instance_secrets_user_data:
             assert result[0].resource_id == instance.id
             assert (
                 result[0].resource_arn
-                == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:instance/{instance.id}"
+                == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION_EU_WEST_1}:{current_audit_info.audited_account}:instance/{instance.id}"
             )
             assert result[0].resource_tags is None
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1

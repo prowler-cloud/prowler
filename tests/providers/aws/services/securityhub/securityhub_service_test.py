@@ -8,9 +8,6 @@ from tests.providers.aws.audit_info_utils import (
     set_mocked_aws_audit_info,
 )
 
-# Mock Test Region
-AWS_REGION = "eu-west-1"
-AWS_ACCOUNT_NUMBER = "123456789012"
 # Mocking Access Analyzer Calls
 make_api_call = botocore.client.BaseClient._make_api_call
 
@@ -48,9 +45,11 @@ def mock_make_api_call(self, operation_name, kwarg):
 
 # Mock generate_regional_clients()
 def mock_generate_regional_clients(service, audit_info, _):
-    regional_client = audit_info.audit_session.client(service, region_name=AWS_REGION)
-    regional_client.region = AWS_REGION
-    return {AWS_REGION: regional_client}
+    regional_client = audit_info.audit_session.client(
+        service, region_name=AWS_REGION_EU_WEST_1
+    )
+    regional_client.region = AWS_REGION_EU_WEST_1
+    return {AWS_REGION_EU_WEST_1: regional_client}
 
 
 # Patch every AWS call using Boto3 and generate_regional_clients to have 1 client
@@ -64,7 +63,7 @@ class Test_SecurityHub_Service:
     def test__get_client__(self):
         security_hub = SecurityHub(set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1]))
         assert (
-            security_hub.regional_clients[AWS_REGION].__class__.__name__
+            security_hub.regional_clients[AWS_REGION_EU_WEST_1].__class__.__name__
             == "SecurityHub"
         )
 

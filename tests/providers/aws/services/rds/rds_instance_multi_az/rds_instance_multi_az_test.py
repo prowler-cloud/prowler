@@ -7,12 +7,10 @@ from moto import mock_rds
 
 from prowler.providers.aws.services.rds.rds_service import DBCluster, DBInstance
 from tests.providers.aws.audit_info_utils import (
+    AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_WEST_1,
     set_mocked_aws_audit_info,
 )
-
-AWS_ACCOUNT_NUMBER = "123456789012"
-AWS_REGION = "us-east-1"
 
 make_api_call = botocore.client.BaseClient._make_api_call
 
@@ -60,7 +58,7 @@ class Test_rds_instance_multi_az:
 
     @mock_rds
     def test_rds_instance_no_multi_az(self):
-        conn = client("rds", region_name=AWS_REGION)
+        conn = client("rds", region_name=AWS_REGION_EU_WEST_1)
         conn.create_db_instance(
             DBInstanceIdentifier="db-master-1",
             AllocatedStorage=10,
@@ -95,16 +93,16 @@ class Test_rds_instance_multi_az:
                     result[0].status_extended,
                 )
                 assert result[0].resource_id == "db-master-1"
-                assert result[0].region == AWS_REGION
+                assert result[0].region == AWS_REGION_EU_WEST_1
                 assert (
                     result[0].resource_arn
-                    == f"arn:aws:rds:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:db:db-master-1"
+                    == f"arn:aws:rds:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:db:db-master-1"
                 )
                 assert result[0].resource_tags == []
 
     @mock_rds
     def test_rds_instance_multi_az(self):
-        conn = client("rds", region_name=AWS_REGION)
+        conn = client("rds", region_name=AWS_REGION_EU_WEST_1)
         conn.create_db_instance(
             DBInstanceIdentifier="db-master-1",
             AllocatedStorage=10,
@@ -141,18 +139,16 @@ class Test_rds_instance_multi_az:
                     result[0].status_extended,
                 )
                 assert result[0].resource_id == "db-master-1"
-                assert result[0].region == AWS_REGION
+                assert result[0].region == AWS_REGION_EU_WEST_1
                 assert (
                     result[0].resource_arn
-                    == f"arn:aws:rds:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:db:db-master-1"
+                    == f"arn:aws:rds:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:db:db-master-1"
                 )
                 assert result[0].resource_tags == []
 
     def test_rds_instance_in_cluster_multi_az(self):
         rds_client = mock.MagicMock
-        cluster_arn = (
-            f"arn:aws:rds:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:cluster:test-cluster"
-        )
+        cluster_arn = f"arn:aws:rds:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:cluster:test-cluster"
         rds_client.db_clusters = {
             cluster_arn: DBCluster(
                 id="test-cluster",
@@ -168,14 +164,14 @@ class Test_rds_instance_multi_az:
                 deletion_protection=False,
                 parameter_group="",
                 multi_az=True,
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
                 tags=[],
             )
         }
         rds_client.db_instances = [
             DBInstance(
                 id="test-instance",
-                arn=f"arn:aws:rds:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:db:test-instance",
+                arn=f"arn:aws:rds:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:db:test-instance",
                 endpoint="",
                 engine="aurora",
                 engine_version="1.0.0",
@@ -190,7 +186,7 @@ class Test_rds_instance_multi_az:
                 multi_az=False,
                 cluster_id="test-cluster",
                 cluster_arn=cluster_arn,
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
                 tags=[],
             )
         ]
@@ -220,18 +216,16 @@ class Test_rds_instance_multi_az:
                     result[0].status_extended,
                 )
                 assert result[0].resource_id == "test-instance"
-                assert result[0].region == AWS_REGION
+                assert result[0].region == AWS_REGION_EU_WEST_1
                 assert (
                     result[0].resource_arn
-                    == f"arn:aws:rds:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:db:test-instance"
+                    == f"arn:aws:rds:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:db:test-instance"
                 )
                 assert result[0].resource_tags == []
 
     def test_rds_instance_in_cluster_without_multi_az(self):
         rds_client = mock.MagicMock
-        cluster_arn = (
-            f"arn:aws:rds:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:cluster:test-cluster"
-        )
+        cluster_arn = f"arn:aws:rds:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:cluster:test-cluster"
         rds_client.db_clusters = {
             cluster_arn: DBCluster(
                 id="test-cluster",
@@ -247,14 +241,14 @@ class Test_rds_instance_multi_az:
                 deletion_protection=False,
                 parameter_group="",
                 multi_az=False,
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
                 tags=[],
             )
         }
         rds_client.db_instances = [
             DBInstance(
                 id="test-instance",
-                arn=f"arn:aws:rds:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:db:test-instance",
+                arn=f"arn:aws:rds:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:db:test-instance",
                 endpoint="",
                 engine="aurora",
                 engine_version="1.0.0",
@@ -269,7 +263,7 @@ class Test_rds_instance_multi_az:
                 multi_az=False,
                 cluster_id="test-cluster",
                 cluster_arn=cluster_arn,
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
                 tags=[],
             )
         ]
@@ -299,9 +293,9 @@ class Test_rds_instance_multi_az:
                     result[0].status_extended,
                 )
                 assert result[0].resource_id == "test-instance"
-                assert result[0].region == AWS_REGION
+                assert result[0].region == AWS_REGION_EU_WEST_1
                 assert (
                     result[0].resource_arn
-                    == f"arn:aws:rds:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:db:test-instance"
+                    == f"arn:aws:rds:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:db:test-instance"
                 )
                 assert result[0].resource_tags == []

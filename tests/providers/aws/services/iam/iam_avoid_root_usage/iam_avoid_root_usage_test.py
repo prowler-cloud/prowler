@@ -10,9 +10,6 @@ from tests.providers.aws.audit_info_utils import (
     set_mocked_aws_audit_info,
 )
 
-AWS_ACCOUNT_NUMBER = "123456789012"
-AWS_REGION = "us-east-1"
-
 
 class Test_iam_avoid_root_usage:
     @mock_iam

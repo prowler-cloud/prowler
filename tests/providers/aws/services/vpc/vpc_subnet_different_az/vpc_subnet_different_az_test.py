@@ -8,14 +8,11 @@ from tests.providers.aws.audit_info_utils import (
     set_mocked_aws_audit_info,
 )
 
-AWS_REGION = "us-east-1"
-AWS_ACCOUNT_NUMBER = "123456789012"
-
 
 class Test_vpc_subnet_different_az:
     @mock_ec2
     def test_vpc_subnet_different_az(self):
-        ec2_client = client("ec2", region_name=AWS_REGION)
+        ec2_client = client("ec2", region_name=AWS_REGION_EU_WEST_1)
         vpc = ec2_client.create_vpc(
             CidrBlock="172.28.7.0/24",
             InstanceTenancy="default",
@@ -32,14 +29,14 @@ class Test_vpc_subnet_different_az:
         ec2_client.create_subnet(
             VpcId=vpc["Vpc"]["VpcId"],
             CidrBlock="172.28.7.192/26",
-            AvailabilityZone=f"{AWS_REGION}a",
+            AvailabilityZone=f"{AWS_REGION_EU_WEST_1}a",
         )
 
         # VPC AZ 2
         ec2_client.create_subnet(
             VpcId=vpc["Vpc"]["VpcId"],
             CidrBlock="172.28.7.0/26",
-            AvailabilityZone=f"{AWS_REGION}b",
+            AvailabilityZone=f"{AWS_REGION_EU_WEST_1}b",
         )
 
         from prowler.providers.aws.services.vpc.vpc_service import VPC
@@ -74,13 +71,13 @@ class Test_vpc_subnet_different_az:
                         assert result.resource_tags == [
                             {"Key": "Name", "Value": "vpc_name"}
                         ]
-                        assert result.region == AWS_REGION
+                        assert result.region == AWS_REGION_EU_WEST_1
                 if not found:
                     assert False
 
     @mock_ec2
     def test_vpc_subnet_same_az(self):
-        ec2_client = client("ec2", region_name=AWS_REGION)
+        ec2_client = client("ec2", region_name=AWS_REGION_EU_WEST_1)
         vpc = ec2_client.create_vpc(
             CidrBlock="172.28.7.0/24", InstanceTenancy="default"
         )
@@ -88,14 +85,14 @@ class Test_vpc_subnet_different_az:
         ec2_client.create_subnet(
             VpcId=vpc["Vpc"]["VpcId"],
             CidrBlock="172.28.7.192/26",
-            AvailabilityZone=f"{AWS_REGION}a",
+            AvailabilityZone=f"{AWS_REGION_EU_WEST_1}a",
         )
 
         # VPC AZ 2
         ec2_client.create_subnet(
             VpcId=vpc["Vpc"]["VpcId"],
             CidrBlock="172.28.7.0/26",
-            AvailabilityZone=f"{AWS_REGION}a",
+            AvailabilityZone=f"{AWS_REGION_EU_WEST_1}a",
         )
 
         from prowler.providers.aws.services.vpc.vpc_service import VPC
@@ -124,17 +121,17 @@ class Test_vpc_subnet_different_az:
                         assert result.status == "FAIL"
                         assert (
                             result.status_extended
-                            == f"VPC {vpc['Vpc']['VpcId']} has only subnets in {AWS_REGION}a."
+                            == f"VPC {vpc['Vpc']['VpcId']} has only subnets in {AWS_REGION_EU_WEST_1}a."
                         )
                         assert result.resource_id == vpc["Vpc"]["VpcId"]
                         assert result.resource_tags == []
-                        assert result.region == AWS_REGION
+                        assert result.region == AWS_REGION_EU_WEST_1
                 if not found:
                     assert False
 
     @mock_ec2
     def test_vpc_no_subnets(self):
-        ec2_client = client("ec2", region_name=AWS_REGION)
+        ec2_client = client("ec2", region_name=AWS_REGION_EU_WEST_1)
         vpc = ec2_client.create_vpc(
             CidrBlock="172.28.7.0/24", InstanceTenancy="default"
         )
@@ -169,6 +166,6 @@ class Test_vpc_subnet_different_az:
                         )
                         assert result.resource_id == vpc["Vpc"]["VpcId"]
                         assert result.resource_tags == []
-                        assert result.region == AWS_REGION
+                        assert result.region == AWS_REGION_EU_WEST_1
                 if not found:
                     assert False

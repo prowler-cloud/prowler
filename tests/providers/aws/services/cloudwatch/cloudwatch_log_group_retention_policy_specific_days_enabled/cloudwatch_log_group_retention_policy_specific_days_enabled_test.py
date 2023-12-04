@@ -4,12 +4,10 @@ from boto3 import client
 from moto import mock_logs
 
 from tests.providers.aws.audit_info_utils import (
+    AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_WEST_1,
     set_mocked_aws_audit_info,
 )
-
-AWS_REGION = "us-east-1"
-AWS_ACCOUNT_NUMBER = "123456789012"
 
 
 class Test_cloudwatch_log_group_retention_policy_specific_days_enabled:
@@ -49,7 +47,7 @@ class Test_cloudwatch_log_group_retention_policy_specific_days_enabled:
     @mock_logs
     def test_cloudwatch_log_group_without_retention_days_never_expires(self):
         # Generate Logs Client
-        logs_client = client("logs", region_name=AWS_REGION)
+        logs_client = client("logs", region_name=AWS_REGION_EU_WEST_1)
         # Request Logs group
         logs_client.create_log_group(
             logGroupName="test",
@@ -93,14 +91,14 @@ class Test_cloudwatch_log_group_retention_policy_specific_days_enabled:
             assert result[0].resource_id == "test"
             assert (
                 result[0].resource_arn
-                == f"arn:aws:logs:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:log-group:test"
+                == f"arn:aws:logs:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:log-group:test"
             )
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1
 
     @mock_logs
     def test_cloudwatch_log_group_with_compliant_retention_days(self):
         # Generate Logs Client
-        logs_client = client("logs", region_name=AWS_REGION)
+        logs_client = client("logs", region_name=AWS_REGION_EU_WEST_1)
         # Request Logs group
         logs_client.create_log_group(
             logGroupName="test",
@@ -145,14 +143,14 @@ class Test_cloudwatch_log_group_retention_policy_specific_days_enabled:
             assert result[0].resource_id == "test"
             assert (
                 result[0].resource_arn
-                == f"arn:aws:logs:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:log-group:test"
+                == f"arn:aws:logs:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:log-group:test"
             )
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1
 
     @mock_logs
     def test_cloudwatch_log_group_with_no_compliant_retention_days(self):
         # Generate Logs Client
-        logs_client = client("logs", region_name=AWS_REGION)
+        logs_client = client("logs", region_name=AWS_REGION_EU_WEST_1)
         # Request Logs group
         logs_client.create_log_group(
             logGroupName="test",
@@ -197,6 +195,6 @@ class Test_cloudwatch_log_group_retention_policy_specific_days_enabled:
             assert result[0].resource_id == "test"
             assert (
                 result[0].resource_arn
-                == f"arn:aws:logs:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:log-group:test"
+                == f"arn:aws:logs:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:log-group:test"
             )
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1

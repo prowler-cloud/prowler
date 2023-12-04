@@ -9,9 +9,7 @@ from tests.providers.aws.audit_info_utils import (
     set_mocked_aws_audit_info,
 )
 
-AWS_REGION = "us-east-1"
 EXAMPLE_AMI_ID = "ami-12c6146b"
-AWS_ACCOUNT_NUMBER = "123456789012"
 
 
 class Test_ec2_instance_internet_facing_with_instance_profile:
@@ -46,7 +44,7 @@ class Test_ec2_instance_internet_facing_with_instance_profile:
         _ = iam.create_instance_profile(
             InstanceProfileName=profile_name,
         )
-        ec2 = resource("ec2", region_name=AWS_REGION)
+        ec2 = resource("ec2", region_name=AWS_REGION_EU_WEST_1)
         vpc = ec2.create_vpc(CidrBlock="10.0.0.0/16")
         subnet = ec2.create_subnet(VpcId=vpc.id, CidrBlock="10.0.0.0/18")
         instance = ec2.create_instances(
@@ -83,7 +81,7 @@ class Test_ec2_instance_internet_facing_with_instance_profile:
 
             assert len(result) == 1
             assert result[0].status == "PASS"
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1
             assert result[0].resource_tags is None
             assert result[0].status_extended == (
                 f"EC2 Instance {instance.id} is not internet facing with an instance profile."
@@ -91,7 +89,7 @@ class Test_ec2_instance_internet_facing_with_instance_profile:
             assert result[0].resource_id == instance.id
             assert (
                 result[0].resource_arn
-                == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:instance/{instance.id}"
+                == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION_EU_WEST_1}:{current_audit_info.audited_account}:instance/{instance.id}"
             )
 
     @mock_iam
@@ -102,7 +100,7 @@ class Test_ec2_instance_internet_facing_with_instance_profile:
         _ = iam.create_instance_profile(
             InstanceProfileName=profile_name,
         )
-        ec2 = resource("ec2", region_name=AWS_REGION)
+        ec2 = resource("ec2", region_name=AWS_REGION_EU_WEST_1)
         vpc = ec2.create_vpc(CidrBlock="10.0.0.0/16")
         subnet = ec2.create_subnet(VpcId=vpc.id, CidrBlock="10.0.0.0/18")
         instance = ec2.create_instances(
@@ -139,7 +137,7 @@ class Test_ec2_instance_internet_facing_with_instance_profile:
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1
             assert result[0].resource_tags is None
             assert search(
                 "is internet-facing with Instance Profile", result[0].status_extended
@@ -147,5 +145,5 @@ class Test_ec2_instance_internet_facing_with_instance_profile:
             assert result[0].resource_id == instance.id
             assert (
                 result[0].resource_arn
-                == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:instance/{instance.id}"
+                == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION_EU_WEST_1}:{current_audit_info.audited_account}:instance/{instance.id}"
             )

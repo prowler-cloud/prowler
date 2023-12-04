@@ -129,7 +129,7 @@ class Test_ACM_Service:
     # @mock_acm
     def test__list_and_describe_certificates__(self):
         # Generate ACM Client
-        # acm_client = client("acm", region_name=AWS_REGION)
+        # acm_client = client("acm", region_name=AWS_REGION_EU_WEST_1)
         # Request ACM certificate
         # certificate = acm_client.request_certificate(
         #     DomainName="test.com",
@@ -150,7 +150,7 @@ class Test_ACM_Service:
     # @mock_acm
     def test__list_tags_for_certificate__(self):
         # Generate ACM Client
-        # acm_client = client("acm", region_name=AWS_REGION)
+        # acm_client = client("acm", region_name=AWS_REGION_EU_WEST_1)
         # Request ACM certificate
         # certificate = acm_client.request_certificate(
         #     DomainName="test.com",

@@ -287,7 +287,7 @@ class Test_ARN_Parsing:
         assert error._excinfo[0] == RoleArnParsingServiceNotIAMnorSTS
 
     def test_iam_credentials_arn_parsing_raising_RoleArnParsingInvalidAccountID(self):
-        input_arn = "arn:aws:iam::AWS_ACCOUNT_ID:user/prowler"
+        input_arn = "arn:aws:iam::AWS_ACCOUNT_NUMBER:user/prowler"
         with raises(RoleArnParsingInvalidAccountID) as error:
             parse_iam_credentials_arn(input_arn)
 

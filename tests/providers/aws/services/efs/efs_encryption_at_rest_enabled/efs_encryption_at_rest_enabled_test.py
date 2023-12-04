@@ -2,10 +2,10 @@ from re import search
 from unittest import mock
 
 from prowler.providers.aws.services.efs.efs_service import FileSystem
-
-# Mock Test Region
-AWS_REGION = "eu-west-1"
-AWS_ACCOUNT_NUMBER = "123456789012"
+from tests.providers.aws.audit_info_utils import (
+    AWS_ACCOUNT_NUMBER,
+    AWS_REGION_EU_WEST_1,
+)
 
 file_system_id = "fs-c7a0456e"
 
@@ -15,12 +15,12 @@ backup_valid_policy_status = "ENABLED"
 class Test_efs_encryption_at_rest_enabled:
     def test_efs_encryption_enabled(self):
         efs_client = mock.MagicMock
-        efs_arn = f"arn:aws:elasticfilesystem:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:file-system/{file_system_id}"
+        efs_arn = f"arn:aws:elasticfilesystem:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:file-system/{file_system_id}"
         efs_client.filesystems = [
             FileSystem(
                 id=file_system_id,
                 arn=efs_arn,
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
                 policy=None,
                 backup_policy=backup_valid_policy_status,
                 encrypted=True,
@@ -44,12 +44,12 @@ class Test_efs_encryption_at_rest_enabled:
 
     def test_efs_encryption_disabled(self):
         efs_client = mock.MagicMock
-        efs_arn = f"arn:aws:elasticfilesystem:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:file-system/{file_system_id}"
+        efs_arn = f"arn:aws:elasticfilesystem:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:file-system/{file_system_id}"
         efs_client.filesystems = [
             FileSystem(
                 id=file_system_id,
                 arn=efs_arn,
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
                 policy=None,
                 backup_policy=backup_valid_policy_status,
                 encrypted=False,
