@@ -41,6 +41,7 @@ nav:
       - Custom Metadata: tutorials/custom-checks-metadata.md
       - Ignore Unused Services: tutorials/ignore-unused-services.md
       - Pentesting: tutorials/pentesting.md
+      - Parallel Execution: tutorials/parallel-execution.md
       - Developer Guide: developer-guide/introduction.md
       - AWS:
           - Authentication: tutorials/aws/authentication.md
