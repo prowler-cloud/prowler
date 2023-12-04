@@ -9,6 +9,10 @@ from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.aws.services.cloudtrail.cloudtrail_service import Cloudtrail
 from prowler.providers.aws.services.s3.s3_service import S3
 from prowler.providers.common.models import Audit_Metadata
+from tests.providers.aws.audit_info_utils import (
+    AWS_REGION_EU_WEST_1,
+    set_mocked_aws_audit_info,
+)
 
 AWS_ACCOUNT_NUMBER = "123456789012"
 
@@ -49,7 +53,7 @@ class Test_cloudtrail_bucket_requires_mfa_delete:
 
     @mock_cloudtrail
     def test_no_trails(self):
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -70,7 +74,7 @@ class Test_cloudtrail_bucket_requires_mfa_delete:
     @mock_cloudtrail
     @mock_s3
     def test_trails_with_no_mfa_bucket(self):
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         cloudtrail_client_us_east_1 = client("cloudtrail", region_name="us-east-1")
         s3_client_us_east_1 = client("s3", region_name="us-east-1")
@@ -131,7 +135,7 @@ class Test_cloudtrail_bucket_requires_mfa_delete:
         new=mock_make_api_call_getbucketversioning_mfadelete_enabled,
     )
     def test_trails_with_mfa_bucket(self):
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         cloudtrail_client_us_east_1 = client("cloudtrail", region_name="us-east-1")
         s3_client_us_east_1 = client("s3", region_name="us-east-1")
@@ -175,7 +179,7 @@ class Test_cloudtrail_bucket_requires_mfa_delete:
     @mock_cloudtrail
     @mock_s3
     def test_trails_with_no_mfa_bucket_cross(self):
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         cloudtrail_client_us_east_1 = client("cloudtrail", region_name="us-east-1")
         s3_client_us_east_1 = client("s3", region_name="us-east-1")
@@ -228,7 +232,7 @@ class Test_cloudtrail_bucket_requires_mfa_delete:
         new=mock_make_api_call_getbucketversioning_mfadelete_enabled,
     )
     def test_trails_with_mfa_bucket_cross(self):
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         cloudtrail_client_us_east_1 = client("cloudtrail", region_name="us-east-1")
         s3_client_us_east_1 = client("s3", region_name="us-east-1")

@@ -6,6 +6,10 @@ from moto import mock_iam
 
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.common.models import Audit_Metadata
+from tests.providers.aws.audit_info_utils import (
+    AWS_REGION_EU_WEST_1,
+    set_mocked_aws_audit_info,
+)
 
 AWS_ACCOUNT_NUMBER = "123456789012"
 AWS_REGION = "us-east-1"
@@ -73,7 +77,7 @@ class Test_iam_inline_policy_no_administrative_privileges:
         _ = iam_client.create_group(GroupName=group_name)
 
         # Audit Info
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         from prowler.providers.aws.services.iam.iam_service import IAM
 
@@ -108,7 +112,7 @@ class Test_iam_inline_policy_no_administrative_privileges:
             PolicyDocument=dumps(INLINE_POLICY_ADMIN),
         )
         # Audit Info
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         from prowler.providers.aws.services.iam.iam_service import IAM
 
@@ -152,7 +156,7 @@ class Test_iam_inline_policy_no_administrative_privileges:
             PolicyDocument=dumps(INLINE_POLICY_NOT_ADMIN),
         )
         # Audit Info
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         from prowler.providers.aws.services.iam.iam_service import IAM
 
@@ -204,7 +208,7 @@ class Test_iam_inline_policy_no_administrative_privileges:
             PolicyDocument=dumps(INLINE_POLICY_ADMIN),
         )
         # Audit Info
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         from prowler.providers.aws.services.iam.iam_service import IAM
 
@@ -258,7 +262,7 @@ class Test_iam_inline_policy_no_administrative_privileges:
         )
 
         # Audit Info
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         from prowler.providers.aws.services.iam.iam_service import IAM
 
@@ -296,7 +300,7 @@ class Test_iam_inline_policy_no_administrative_privileges:
             PolicyDocument=dumps(INLINE_POLICY_ADMIN),
         )
         # Audit Info
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         from prowler.providers.aws.services.iam.iam_service import IAM
 
@@ -343,7 +347,7 @@ class Test_iam_inline_policy_no_administrative_privileges:
             PolicyDocument=dumps(INLINE_POLICY_NOT_ADMIN),
         )
         # Audit Info
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         from prowler.providers.aws.services.iam.iam_service import IAM
 
@@ -397,7 +401,7 @@ class Test_iam_inline_policy_no_administrative_privileges:
             PolicyDocument=dumps(INLINE_POLICY_ADMIN),
         )
         # Audit Info
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         from prowler.providers.aws.services.iam.iam_service import IAM
 
@@ -450,7 +454,7 @@ class Test_iam_inline_policy_no_administrative_privileges:
         )
 
         # Audit Info
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         from prowler.providers.aws.services.iam.iam_service import IAM
 
@@ -487,7 +491,7 @@ class Test_iam_inline_policy_no_administrative_privileges:
             PolicyDocument=dumps(INLINE_POLICY_ADMIN),
         )
         # Audit Info
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         from prowler.providers.aws.services.iam.iam_service import IAM
 
@@ -533,7 +537,7 @@ class Test_iam_inline_policy_no_administrative_privileges:
             PolicyDocument=dumps(INLINE_POLICY_NOT_ADMIN),
         )
         # Audit Info
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         from prowler.providers.aws.services.iam.iam_service import IAM
 
@@ -586,7 +590,7 @@ class Test_iam_inline_policy_no_administrative_privileges:
             PolicyDocument=dumps(INLINE_POLICY_ADMIN),
         )
         # Audit Info
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         from prowler.providers.aws.services.iam.iam_service import IAM
 

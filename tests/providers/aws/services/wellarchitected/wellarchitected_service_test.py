@@ -9,6 +9,10 @@ from prowler.providers.aws.services.wellarchitected.wellarchitected_service impo
     WellArchitected,
 )
 from prowler.providers.common.models import Audit_Metadata
+from tests.providers.aws.audit_info_utils import (
+    AWS_REGION_EU_WEST_1,
+    set_mocked_aws_audit_info,
+)
 
 AWS_ACCOUNT_NUMBER = "123456789012"
 AWS_REGION = "eu-west-1"
@@ -54,7 +58,6 @@ def mock_generate_regional_clients(service, audit_info, _):
     new=mock_generate_regional_clients,
 )
 class Test_WellArchitected_Service:
-    # Mocked Audit Info
     def set_mocked_audit_info(self):
         audit_info = AWS_Audit_Info(
             session_config=None,
@@ -87,26 +90,26 @@ class Test_WellArchitected_Service:
 
     # Test WellArchitected Service
     def test_service(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         wellarchitected = WellArchitected(audit_info)
         assert wellarchitected.service == "wellarchitected"
 
     # Test WellArchitected client
     def test_client(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         wellarchitected = WellArchitected(audit_info)
         for reg_client in wellarchitected.regional_clients.values():
             assert reg_client.__class__.__name__ == "WellArchitected"
 
     # Test WellArchitected session
     def test__get_session__(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         wellarchitected = WellArchitected(audit_info)
         assert wellarchitected.session.__class__.__name__ == "Session"
 
     # Test WellArchitected list workloads
     def test__list_workloads__(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         wellarchitected = WellArchitected(audit_info)
         assert len(wellarchitected.workloads) == 1
         assert wellarchitected.workloads[0].id == workload_id

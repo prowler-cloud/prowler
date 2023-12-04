@@ -8,6 +8,10 @@ from prowler.providers.aws.services.elasticache.elasticache_service import (
     ElastiCache,
 )
 from prowler.providers.common.models import Audit_Metadata
+from tests.providers.aws.audit_info_utils import (
+    AWS_REGION_EU_WEST_1,
+    set_mocked_aws_audit_info,
+)
 
 AWS_ACCOUNT_NUMBER = "123456789012"
 AWS_ACCOUNT_ARN = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
@@ -95,7 +99,6 @@ def mock_generate_regional_clients(service, audit_info, _):
 # Patch every AWS call using Boto3
 @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
 class Test_ElastiCache_Service:
-    # Mocked Audit Info
     def set_mocked_audit_info(self):
         audit_info = AWS_Audit_Info(
             session_config=None,
@@ -128,31 +131,31 @@ class Test_ElastiCache_Service:
 
     # Test ElastiCache Service
     def test_service(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         elasticache = ElastiCache(audit_info)
         assert elasticache.service == "elasticache"
 
     # Test ElastiCache Client]
     def test_client(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         elasticache = ElastiCache(audit_info)
         assert elasticache.client.__class__.__name__ == "ElastiCache"
 
     # Test ElastiCache Session
     def test__get_session__(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         elasticache = ElastiCache(audit_info)
         assert elasticache.session.__class__.__name__ == "Session"
 
     # Test ElastiCache Session
     def test_audited_account(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         elasticache = ElastiCache(audit_info)
         assert elasticache.audited_account == AWS_ACCOUNT_NUMBER
 
     # Test ElastiCache Clusters
     def test_describe_cache_clusters(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         elasticache = ElastiCache(audit_info)
 
         assert len(elasticache.clusters) == 1

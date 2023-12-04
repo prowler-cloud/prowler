@@ -11,6 +11,10 @@ from moto import mock_ec2
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.aws.services.ec2.ec2_service import EC2
 from prowler.providers.common.models import Audit_Metadata
+from tests.providers.aws.audit_info_utils import (
+    AWS_REGION_EU_WEST_1,
+    set_mocked_aws_audit_info,
+)
 
 AWS_ACCOUNT_NUMBER = "123456789012"
 AWS_REGION = "us-east-1"
@@ -19,7 +23,6 @@ MOCK_DATETIME = datetime(2023, 1, 4, 7, 27, 30, tzinfo=tzutc())
 
 
 class Test_EC2_Service:
-    # Mocked Audit Info
     def set_mocked_audit_info(self):
         audit_info = AWS_Audit_Info(
             session_config=None,
@@ -56,7 +59,7 @@ class Test_EC2_Service:
     @mock_ec2
     def test_service(self):
         # EC2 client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         ec2 = EC2(audit_info)
         assert ec2.service == "ec2"
 
@@ -64,7 +67,7 @@ class Test_EC2_Service:
     @mock_ec2
     def test_client(self):
         # EC2 client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         ec2 = EC2(audit_info)
         for regional_client in ec2.regional_clients.values():
             assert regional_client.__class__.__name__ == "EC2"
@@ -73,7 +76,7 @@ class Test_EC2_Service:
     @mock_ec2
     def test__get_session__(self):
         # EC2 client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         ec2 = EC2(audit_info)
         assert ec2.session.__class__.__name__ == "Session"
 
@@ -81,7 +84,7 @@ class Test_EC2_Service:
     @mock_ec2
     def test_audited_account(self):
         # EC2 client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         ec2 = EC2(audit_info)
         assert ec2.audited_account == AWS_ACCOUNT_NUMBER
 
@@ -102,7 +105,7 @@ class Test_EC2_Service:
             ImageId=image_id,
         )
         # EC2 client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         ec2 = EC2(audit_info)
         assert len(ec2.instances) == 1
         assert re.match(r"i-[0-9a-z]{17}", ec2.instances[0].id)
@@ -157,7 +160,7 @@ class Test_EC2_Service:
             ],
         )
         # EC2 client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         ec2 = EC2(audit_info)
 
         assert sg_id in str(ec2.security_groups)
@@ -214,7 +217,7 @@ class Test_EC2_Service:
             ],
         ).id
         # EC2 client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         ec2 = EC2(audit_info)
 
         assert nacl_id in str(ec2.network_acls)
@@ -257,7 +260,7 @@ class Test_EC2_Service:
             f"arn:aws:ec2:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:snapshot/{snapshot_id}"
         )
         # EC2 client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         ec2 = EC2(audit_info)
 
         assert snapshot_id in str(ec2.snapshots)
@@ -298,7 +301,7 @@ class Test_EC2_Service:
             SnapshotId=snapshot_id,
         )
         # EC2 client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         ec2 = EC2(audit_info)
 
         assert snapshot_id in str(ec2.snapshots)
@@ -325,7 +328,7 @@ class Test_EC2_Service:
             UserData="This is some user_data",
         )
         # EC2 client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         ec2 = EC2(audit_info)
         assert user_data == b64decode(ec2.instances[0].user_data).decode("utf-8")
 
@@ -335,7 +338,7 @@ class Test_EC2_Service:
         ec2_client = client("ec2", region_name=AWS_REGION)
         ec2_client.enable_ebs_encryption_by_default()
         # EC2 client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         ec2 = EC2(audit_info)
 
         # One result per region
@@ -362,7 +365,7 @@ class Test_EC2_Service:
             ],
         )["AllocationId"]
         # EC2 client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         ec2 = EC2(audit_info)
         assert "127.38.43.222" in str(ec2.elastic_ips)
         assert (
@@ -391,7 +394,7 @@ class Test_EC2_Service:
         )
 
         # EC2 client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         ec2 = EC2(audit_info)
 
         assert sg.id in str(ec2.security_groups)
@@ -442,7 +445,7 @@ class Test_EC2_Service:
         )
 
         # EC2 client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         ec2 = EC2(audit_info)
 
         assert len(ec2.network_interfaces) == 1
@@ -486,7 +489,7 @@ class Test_EC2_Service:
         )["ImageId"]
 
         # EC2 client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         ec2 = EC2(audit_info)
 
         assert len(ec2.images) == 1
@@ -527,7 +530,7 @@ class Test_EC2_Service:
         )["VolumeId"]
 
         # EC2 client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         ec2 = EC2(audit_info)
 
         assert len(ec2.volumes) == 1

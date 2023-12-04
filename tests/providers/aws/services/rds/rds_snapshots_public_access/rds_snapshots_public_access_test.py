@@ -7,6 +7,10 @@ from moto import mock_rds
 
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.common.models import Audit_Metadata
+from tests.providers.aws.audit_info_utils import (
+    AWS_REGION_EU_WEST_1,
+    set_mocked_aws_audit_info,
+)
 
 AWS_ACCOUNT_NUMBER = "123456789012"
 AWS_REGION = "us-east-1"
@@ -39,7 +43,6 @@ def mock_make_api_call(self, operation_name, kwarg):
 
 
 class Test_rds_snapshots_public_access:
-    # Mocked Audit Info
     def set_mocked_audit_info(self):
         audit_info = AWS_Audit_Info(
             session_config=None,
@@ -76,7 +79,7 @@ class Test_rds_snapshots_public_access:
     def test_rds_no_snapshots(self):
         from prowler.providers.aws.services.rds.rds_service import RDS
 
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -114,7 +117,7 @@ class Test_rds_snapshots_public_access:
 
         from prowler.providers.aws.services.rds.rds_service import RDS
 
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -158,7 +161,7 @@ class Test_rds_snapshots_public_access:
 
         from prowler.providers.aws.services.rds.rds_service import RDS
 
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -209,7 +212,7 @@ class Test_rds_snapshots_public_access:
         )
         from prowler.providers.aws.services.rds.rds_service import RDS
 
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -259,7 +262,7 @@ class Test_rds_snapshots_public_access:
         )
         from prowler.providers.aws.services.rds.rds_service import RDS
 
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",

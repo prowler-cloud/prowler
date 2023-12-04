@@ -8,6 +8,10 @@ from moto.core import DEFAULT_ACCOUNT_ID
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.aws.services.shield.shield_service import Protection
 from prowler.providers.common.models import Audit_Metadata
+from tests.providers.aws.audit_info_utils import (
+    AWS_REGION_EU_WEST_1,
+    set_mocked_aws_audit_info,
+)
 
 AWS_REGION = "eu-west-1"
 
@@ -25,7 +29,6 @@ def mock_generate_regional_clients(service, audit_info, _):
     new=mock_generate_regional_clients,
 )
 class Test_shield_advanced_protection_in_associated_elastic_ips:
-    # Mocked Audit Info
     def set_mocked_audit_info(self):
         audit_info = AWS_Audit_Info(
             session_config=None,
@@ -69,10 +72,10 @@ class Test_shield_advanced_protection_in_associated_elastic_ips:
             new=shield_client,
         ), mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=self.set_mocked_audit_info(),
+            new=set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1]),
         ), mock.patch(
             "prowler.providers.aws.services.shield.shield_advanced_protection_in_associated_elastic_ips.shield_advanced_protection_in_associated_elastic_ips.ec2_client",
-            new=EC2(self.set_mocked_audit_info()),
+            new=EC2(set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])),
         ):
             # Test Check
             from prowler.providers.aws.services.shield.shield_advanced_protection_in_associated_elastic_ips.shield_advanced_protection_in_associated_elastic_ips import (
@@ -114,10 +117,10 @@ class Test_shield_advanced_protection_in_associated_elastic_ips:
             new=shield_client,
         ), mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=self.set_mocked_audit_info(),
+            new=set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1]),
         ), mock.patch(
             "prowler.providers.aws.services.shield.shield_advanced_protection_in_associated_elastic_ips.shield_advanced_protection_in_associated_elastic_ips.ec2_client",
-            new=EC2(self.set_mocked_audit_info()),
+            new=EC2(set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])),
         ):
             # Test Check
             from prowler.providers.aws.services.shield.shield_advanced_protection_in_associated_elastic_ips.shield_advanced_protection_in_associated_elastic_ips import (
@@ -158,10 +161,10 @@ class Test_shield_advanced_protection_in_associated_elastic_ips:
             new=shield_client,
         ), mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=self.set_mocked_audit_info(),
+            new=set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1]),
         ), mock.patch(
             "prowler.providers.aws.services.shield.shield_advanced_protection_in_associated_elastic_ips.shield_advanced_protection_in_associated_elastic_ips.ec2_client",
-            new=EC2(self.set_mocked_audit_info()),
+            new=EC2(set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])),
         ):
             # Test Check
             from prowler.providers.aws.services.shield.shield_advanced_protection_in_associated_elastic_ips.shield_advanced_protection_in_associated_elastic_ips import (
@@ -202,10 +205,10 @@ class Test_shield_advanced_protection_in_associated_elastic_ips:
             new=shield_client,
         ), mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=self.set_mocked_audit_info(),
+            new=set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1]),
         ), mock.patch(
             "prowler.providers.aws.services.shield.shield_advanced_protection_in_associated_elastic_ips.shield_advanced_protection_in_associated_elastic_ips.ec2_client",
-            new=EC2(self.set_mocked_audit_info()),
+            new=EC2(set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])),
         ):
             # Test Check
             from prowler.providers.aws.services.shield.shield_advanced_protection_in_associated_elastic_ips.shield_advanced_protection_in_associated_elastic_ips import (

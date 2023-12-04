@@ -9,6 +9,10 @@ from prowler.providers.aws.services.organizations.organizations_service import (
     Organizations,
 )
 from prowler.providers.common.models import Audit_Metadata
+from tests.providers.aws.audit_info_utils import (
+    AWS_REGION_EU_WEST_1,
+    set_mocked_aws_audit_info,
+)
 
 AWS_REGION = "eu-west-1"
 
@@ -18,7 +22,6 @@ def scp_restrict_regions_with_deny():
 
 
 class Test_Organizations_Service:
-    # Mocked Audit Info
     def set_mocked_audit_info(self):
         audit_info = AWS_Audit_Info(
             session_config=None,
@@ -52,7 +55,7 @@ class Test_Organizations_Service:
 
     @mock_organizations
     def test_service(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         organizations = Organizations(audit_info)
         assert organizations.service == "organizations"
 
@@ -62,7 +65,7 @@ class Test_Organizations_Service:
         conn = client("organizations", region_name=AWS_REGION)
         response = conn.create_organization()
         # Mock
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         organizations = Organizations(audit_info)
         # Tests
         assert len(organizations.organizations) == 1
@@ -87,7 +90,7 @@ class Test_Organizations_Service:
             Type="SERVICE_CONTROL_POLICY",
         )
         # Mock
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         organizations = Organizations(audit_info)
         # Tests
         for policy in organizations.policies:

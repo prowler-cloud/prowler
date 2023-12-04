@@ -4,12 +4,15 @@ from moto import mock_cloudtrail, mock_s3
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.aws.services.cloudtrail.cloudtrail_service import Cloudtrail
 from prowler.providers.common.models import Audit_Metadata
+from tests.providers.aws.audit_info_utils import (
+    AWS_REGION_EU_WEST_1,
+    set_mocked_aws_audit_info,
+)
 
 AWS_ACCOUNT_NUMBER = "123456789012"
 
 
 class Test_Cloudtrail_Service:
-    # Mocked Audit Info
     def set_mocked_audit_info(self):
         audit_info = AWS_Audit_Info(
             session_config=None,
@@ -43,14 +46,14 @@ class Test_Cloudtrail_Service:
     # Test Cloudtrail Service
     @mock_cloudtrail
     def test_service(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         cloudtrail = Cloudtrail(audit_info)
         assert cloudtrail.service == "cloudtrail"
 
     # Test Cloudtrail client
     @mock_cloudtrail
     def test_client(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         cloudtrail = Cloudtrail(audit_info)
         for regional_client in cloudtrail.regional_clients.values():
             assert regional_client.__class__.__name__ == "CloudTrail"
@@ -58,14 +61,14 @@ class Test_Cloudtrail_Service:
     # Test Cloudtrail session
     @mock_cloudtrail
     def test__get_session__(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         cloudtrail = Cloudtrail(audit_info)
         assert cloudtrail.session.__class__.__name__ == "Session"
 
     # Test Cloudtrail Session
     @mock_cloudtrail
     def test_audited_account(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         cloudtrail = Cloudtrail(audit_info)
         assert cloudtrail.audited_account == AWS_ACCOUNT_NUMBER
 
@@ -101,7 +104,7 @@ class Test_Cloudtrail_Service:
                 {"Key": "test", "Value": "test"},
             ],
         )
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         cloudtrail = Cloudtrail(audit_info)
         assert len(cloudtrail.trails) == 2
         for trail in cloudtrail.trails:
@@ -149,7 +152,7 @@ class Test_Cloudtrail_Service:
         cloudtrail_client_eu_west_1.create_trail(
             Name=trail_name_eu, S3BucketName=bucket_name_eu, IsMultiRegionTrail=False
         )
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         cloudtrail = Cloudtrail(audit_info)
         assert len(cloudtrail.trails) == len(audit_info.audited_regions)
         for trail in cloudtrail.trails:
@@ -190,7 +193,7 @@ class Test_Cloudtrail_Service:
                 }
             ],
         )["EventSelectors"]
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         cloudtrail = Cloudtrail(audit_info)
         assert len(cloudtrail.trails) == len(audit_info.audited_regions)
         for trail in cloudtrail.trails:
@@ -235,7 +238,7 @@ class Test_Cloudtrail_Service:
                 },
             ],
         )["AdvancedEventSelectors"]
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         cloudtrail = Cloudtrail(audit_info)
         assert len(cloudtrail.trails) == len(audit_info.audited_regions)
         for trail in cloudtrail.trails:

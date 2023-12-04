@@ -4,13 +4,16 @@ from moto import mock_config
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.aws.services.config.config_service import Config
 from prowler.providers.common.models import Audit_Metadata
+from tests.providers.aws.audit_info_utils import (
+    AWS_REGION_EU_WEST_1,
+    set_mocked_aws_audit_info,
+)
 
 AWS_ACCOUNT_NUMBER = "123456789012"
 AWS_REGION = "us-east-1"
 
 
 class Test_Config_Service:
-    # Mocked Audit Info
     def set_mocked_audit_info(self):
         audit_info = AWS_Audit_Info(
             session_config=None,
@@ -45,7 +48,7 @@ class Test_Config_Service:
     @mock_config
     def test_service(self):
         # Config client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         config = Config(audit_info)
         assert config.service == "config"
 
@@ -53,7 +56,7 @@ class Test_Config_Service:
     @mock_config
     def test_client(self):
         # Config client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         config = Config(audit_info)
         for regional_client in config.regional_clients.values():
             assert regional_client.__class__.__name__ == "ConfigService"
@@ -62,7 +65,7 @@ class Test_Config_Service:
     @mock_config
     def test__get_session__(self):
         # Config client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         config = Config(audit_info)
         assert config.session.__class__.__name__ == "Session"
 
@@ -70,7 +73,7 @@ class Test_Config_Service:
     @mock_config
     def test_audited_account(self):
         # Config client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         config = Config(audit_info)
         assert config.audited_account == AWS_ACCOUNT_NUMBER
 
@@ -89,7 +92,7 @@ class Test_Config_Service:
         )
         config_client.start_configuration_recorder(ConfigurationRecorderName="default")
         # Config client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         config = Config(audit_info)
         # One recorder per region
         assert len(config.recorders) == 2

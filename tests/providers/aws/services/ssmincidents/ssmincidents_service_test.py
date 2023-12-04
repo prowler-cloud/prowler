@@ -9,6 +9,10 @@ from prowler.providers.aws.services.ssmincidents.ssmincidents_service import (
     SSMIncidents,
 )
 from prowler.providers.common.models import Audit_Metadata
+from tests.providers.aws.audit_info_utils import (
+    AWS_REGION_EU_WEST_1,
+    set_mocked_aws_audit_info,
+)
 
 # Mock Test Region
 AWS_REGION = "us-east-1"
@@ -68,7 +72,6 @@ def mock_generate_regional_clients(service, audit_info, _):
     new=mock_generate_regional_clients,
 )
 class Test_SSMIncidents_Service:
-    # Mocked Audit Info
     def set_mocked_audit_info(self):
         audit_info = AWS_Audit_Info(
             session_config=None,
@@ -100,7 +103,7 @@ class Test_SSMIncidents_Service:
         return audit_info
 
     def test__get_client__(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         ssmincidents = SSMIncidents(audit_info)
         assert (
             ssmincidents.regional_clients[AWS_REGION].__class__.__name__
@@ -108,17 +111,17 @@ class Test_SSMIncidents_Service:
         )
 
     def test__get_service__(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         ssmincidents = SSMIncidents(audit_info)
         assert ssmincidents.service == "ssm-incidents"
 
     def test__list_replication_sets__(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         ssmincidents = SSMIncidents(audit_info)
         assert len(ssmincidents.replication_set) == 1
 
     def test__get_replication_set__(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         ssmincidents = SSMIncidents(audit_info)
         assert ssmincidents.replication_set[0].arn == REPLICATION_SET_ARN
         assert ssmincidents.replication_set[0].status == "ACTIVE"
@@ -128,7 +131,7 @@ class Test_SSMIncidents_Service:
             assert region.sse_kms_id == "DefaultKey"
 
     def test__list_response_plans__(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         ssmincidents = SSMIncidents(audit_info)
         assert len(ssmincidents.response_plans) == 1
         assert ssmincidents.response_plans[0].arn == RESPONSE_PLAN_ARN
@@ -137,7 +140,7 @@ class Test_SSMIncidents_Service:
         assert ssmincidents.response_plans[0].tags == {"tag_test": "tag_value"}
 
     def test__list_tags_for_resource__(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         ssmincidents = SSMIncidents(audit_info)
         assert len(ssmincidents.response_plans) == 1
         assert ssmincidents.response_plans[0].tags == {"tag_test": "tag_value"}

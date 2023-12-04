@@ -6,6 +6,10 @@ from moto import mock_iam
 
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.common.models import Audit_Metadata
+from tests.providers.aws.audit_info_utils import (
+    AWS_REGION_EU_WEST_1,
+    set_mocked_aws_audit_info,
+)
 
 AWS_ACCOUNT_NUMBER = "123456789012"
 AWS_REGION = "eu-west-1"
@@ -61,7 +65,7 @@ class Test_iam_policy_attached_only_to_group_or_roles:
         )["Policy"]["Arn"]
         iam_client.attach_user_policy(UserName=user, PolicyArn=policyArn)
 
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
@@ -110,7 +114,7 @@ class Test_iam_policy_attached_only_to_group_or_roles:
         )["Policy"]["Arn"]
         iam_client.attach_user_policy(UserName=user, PolicyArn=policyArn)
 
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
@@ -164,7 +168,7 @@ class Test_iam_policy_attached_only_to_group_or_roles:
             UserName=user, PolicyName=policyName, PolicyDocument=dumps(policyDocument)
         )
 
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
@@ -199,7 +203,7 @@ class Test_iam_policy_attached_only_to_group_or_roles:
         user = "test_no_policies"
         iam_client.create_user(UserName=user)
 
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(

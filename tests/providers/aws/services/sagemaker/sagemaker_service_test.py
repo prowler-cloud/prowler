@@ -7,6 +7,10 @@ from boto3 import session
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.aws.services.sagemaker.sagemaker_service import SageMaker
 from prowler.providers.common.models import Audit_Metadata
+from tests.providers.aws.audit_info_utils import (
+    AWS_REGION_EU_WEST_1,
+    set_mocked_aws_audit_info,
+)
 
 AWS_ACCOUNT_NUMBER = "123456789012"
 AWS_REGION = "eu-west-1"
@@ -105,7 +109,6 @@ def mock_generate_regional_clients(service, audit_info, _):
     new=mock_generate_regional_clients,
 )
 class Test_SageMaker_Service:
-    # Mocked Audit Info
     def set_mocked_audit_info(self):
         audit_info = AWS_Audit_Info(
             session_config=None,
@@ -138,26 +141,26 @@ class Test_SageMaker_Service:
 
     # Test SageMaker Service
     def test_service(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         sagemaker = SageMaker(audit_info)
         assert sagemaker.service == "sagemaker"
 
     # Test SageMaker client
     def test_client(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         sagemaker = SageMaker(audit_info)
         for reg_client in sagemaker.regional_clients.values():
             assert reg_client.__class__.__name__ == "SageMaker"
 
     # Test SageMaker session
     def test__get_session__(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         sagemaker = SageMaker(audit_info)
         assert sagemaker.session.__class__.__name__ == "Session"
 
     # Test SageMaker list notebook instances
     def test_list_notebook_instances(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         sagemaker = SageMaker(audit_info)
         assert len(sagemaker.sagemaker_notebook_instances) == 1
         assert sagemaker.sagemaker_notebook_instances[0].name == test_notebook_instance
@@ -169,7 +172,7 @@ class Test_SageMaker_Service:
 
     # Test SageMaker list models
     def test_list_models(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         sagemaker = SageMaker(audit_info)
         assert len(sagemaker.sagemaker_models) == 1
         assert sagemaker.sagemaker_models[0].name == test_model
@@ -181,7 +184,7 @@ class Test_SageMaker_Service:
 
     # Test SageMaker list training jobs
     def test_list_training_jobs(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         sagemaker = SageMaker(audit_info)
         assert len(sagemaker.sagemaker_training_jobs) == 1
         assert sagemaker.sagemaker_training_jobs[0].name == test_training_job
@@ -193,7 +196,7 @@ class Test_SageMaker_Service:
 
     # Test SageMaker describe notebook instance
     def test_describe_notebook_instance(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         sagemaker = SageMaker(audit_info)
         assert len(sagemaker.sagemaker_notebook_instances) == 1
         assert sagemaker.sagemaker_notebook_instances[0].root_access
@@ -203,7 +206,7 @@ class Test_SageMaker_Service:
 
     # Test SageMaker describe model
     def test_describe_model(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         sagemaker = SageMaker(audit_info)
         assert len(sagemaker.sagemaker_models) == 1
         assert sagemaker.sagemaker_models[0].network_isolation
@@ -211,7 +214,7 @@ class Test_SageMaker_Service:
 
     # Test SageMaker describe training jobs
     def test_describe_training_jobs(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         sagemaker = SageMaker(audit_info)
         assert len(sagemaker.sagemaker_training_jobs) == 1
         assert sagemaker.sagemaker_training_jobs[0].container_traffic_encryption

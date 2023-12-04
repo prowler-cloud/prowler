@@ -5,6 +5,10 @@ from moto import mock_s3, mock_s3control
 
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.common.models import Audit_Metadata
+from tests.providers.aws.audit_info_utils import (
+    AWS_REGION_EU_WEST_1,
+    set_mocked_aws_audit_info,
+)
 
 AWS_ACCOUNT_NUMBER = "123456789012"
 AWS_ACCOUNT_ARN = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
@@ -12,7 +16,6 @@ AWS_REGION = "us-east-1"
 
 
 class Test_s3_bucket_policy_public_write_access:
-    # Mocked Audit Info
     def set_mocked_audit_info(self):
         audit_info = AWS_Audit_Info(
             session_config=None,
@@ -53,7 +56,7 @@ class Test_s3_bucket_policy_public_write_access:
 
         from prowler.providers.aws.services.s3.s3_service import S3
 
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -112,7 +115,7 @@ class Test_s3_bucket_policy_public_write_access:
 
         from prowler.providers.aws.services.s3.s3_service import S3, S3Control
 
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -184,7 +187,7 @@ class Test_s3_bucket_policy_public_write_access:
 
         from prowler.providers.aws.services.s3.s3_service import S3, S3Control
 
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -248,7 +251,7 @@ class Test_s3_bucket_policy_public_write_access:
 
         from prowler.providers.aws.services.s3.s3_service import S3, S3Control
 
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -311,7 +314,7 @@ class Test_s3_bucket_policy_public_write_access:
 
         from prowler.providers.aws.services.s3.s3_service import S3, S3Control
 
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",

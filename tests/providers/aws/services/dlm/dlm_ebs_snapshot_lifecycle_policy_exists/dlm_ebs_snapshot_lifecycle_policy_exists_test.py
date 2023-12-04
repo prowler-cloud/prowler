@@ -6,6 +6,10 @@ from moto import mock_ec2
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.aws.services.dlm.dlm_service import LifecyclePolicy
 from prowler.providers.common.models import Audit_Metadata
+from tests.providers.aws.audit_info_utils import (
+    AWS_REGION_EU_WEST_1,
+    set_mocked_aws_audit_info,
+)
 
 AWS_ACCOUNT_NUMBER = "123456789012"
 AWS_ACCOUNT_ARN = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
@@ -53,7 +57,7 @@ class Test_dlm_ebs_snapshot_lifecycle_policy_exists:
         dlm_client.audited_account_arn = AWS_ACCOUNT_ARN
         dlm_client.lifecycle_policies = {}
 
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
@@ -116,7 +120,7 @@ class Test_dlm_ebs_snapshot_lifecycle_policy_exists:
             }
         }
 
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
@@ -174,7 +178,7 @@ class Test_dlm_ebs_snapshot_lifecycle_policy_exists:
 
         # from prowler.providers.aws.services.ec2.ec2_service import EC2
 
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
@@ -215,7 +219,7 @@ class Test_dlm_ebs_snapshot_lifecycle_policy_exists:
 
         # from prowler.providers.aws.services.ec2.ec2_service import EC2
 
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 

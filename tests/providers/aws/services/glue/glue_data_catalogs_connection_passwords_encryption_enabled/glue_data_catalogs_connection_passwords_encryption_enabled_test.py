@@ -5,13 +5,16 @@ from boto3 import session
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.aws.services.glue.glue_service import CatalogEncryptionSetting
 from prowler.providers.common.models import Audit_Metadata
+from tests.providers.aws.audit_info_utils import (
+    AWS_REGION_EU_WEST_1,
+    set_mocked_aws_audit_info,
+)
 
 AWS_ACCOUNT_NUMBER = "123456789012"
 AWS_REGION = "us-east-1"
 
 
 class Test_glue_data_catalogs_connection_passwords_encryption_enabled:
-    # Mocked Audit Info
     def set_mocked_audit_info(self):
         audit_info = AWS_Audit_Info(
             session_config=None,
@@ -46,7 +49,7 @@ class Test_glue_data_catalogs_connection_passwords_encryption_enabled:
 
     def test_glue_no_settings(self):
         glue_client = mock.MagicMock
-        glue_client.audit_info = self.set_mocked_audit_info()
+        glue_client.audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         glue_client.catalog_encryption_settings = []
 
         with mock.patch(
@@ -65,7 +68,7 @@ class Test_glue_data_catalogs_connection_passwords_encryption_enabled:
 
     def test_glue_catalog_password_unencrypted(self):
         glue_client = mock.MagicMock
-        glue_client.audit_info = self.set_mocked_audit_info()
+        glue_client.audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         glue_client.catalog_encryption_settings = [
             CatalogEncryptionSetting(
                 mode="DISABLED",
@@ -101,7 +104,7 @@ class Test_glue_data_catalogs_connection_passwords_encryption_enabled:
 
     def test_glue_catalog_password_unencrypted_ignoring(self):
         glue_client = mock.MagicMock
-        glue_client.audit_info = self.set_mocked_audit_info()
+        glue_client.audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         glue_client.catalog_encryption_settings = [
             CatalogEncryptionSetting(
                 mode="DISABLED",
@@ -130,7 +133,7 @@ class Test_glue_data_catalogs_connection_passwords_encryption_enabled:
 
     def test_glue_catalog_password_unencrypted_ignoring_with_tables(self):
         glue_client = mock.MagicMock
-        glue_client.audit_info = self.set_mocked_audit_info()
+        glue_client.audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         glue_client.catalog_encryption_settings = [
             CatalogEncryptionSetting(
                 mode="DISABLED",
@@ -166,7 +169,7 @@ class Test_glue_data_catalogs_connection_passwords_encryption_enabled:
 
     def test_glue_catalog_encrypted(self):
         glue_client = mock.MagicMock
-        glue_client.audit_info = self.set_mocked_audit_info()
+        glue_client.audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         glue_client.catalog_encryption_settings = [
             CatalogEncryptionSetting(
                 mode="DISABLED",

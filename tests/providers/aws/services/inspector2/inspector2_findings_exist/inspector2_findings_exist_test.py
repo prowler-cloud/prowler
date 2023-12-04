@@ -9,6 +9,10 @@ from prowler.providers.aws.services.inspector2.inspector2_service import (
     InspectorFinding,
 )
 from prowler.providers.common.models import Audit_Metadata
+from tests.providers.aws.audit_info_utils import (
+    AWS_REGION_EU_WEST_1,
+    set_mocked_aws_audit_info,
+)
 
 AWS_REGION = "us-east-1"
 AWS_ACCOUNT_ID = "123456789012"
@@ -54,10 +58,10 @@ class Test_inspector2_findings_exist:
         awslambda_client = mock.MagicMock
         ecr_client = mock.MagicMock
         ec2_client = mock.MagicMock
-        ec2_client.audit_info = self.set_mocked_audit_info()
-        ecr_client.audit_info = self.set_mocked_audit_info()
-        awslambda_client.audit_info = self.set_mocked_audit_info()
-        inspector2_client.audit_info = self.set_mocked_audit_info()
+        ec2_client.audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
+        ecr_client.audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
+        awslambda_client.audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
+        inspector2_client.audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         inspector2_client.audited_account = AWS_ACCOUNT_ID
         inspector2_client.audited_account_arn = f"arn:aws:iam::{AWS_ACCOUNT_ID}:root"
         inspector2_client.region = AWS_REGION
@@ -66,7 +70,7 @@ class Test_inspector2_findings_exist:
                 id=AWS_ACCOUNT_ID, status="DISABLED", region=AWS_REGION, findings=[]
             )
         ]
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -115,10 +119,10 @@ class Test_inspector2_findings_exist:
         awslambda_client = mock.MagicMock
         ecr_client = mock.MagicMock
         ec2_client = mock.MagicMock
-        ec2_client.audit_info = self.set_mocked_audit_info()
-        ecr_client.audit_info = self.set_mocked_audit_info()
-        awslambda_client.audit_info = self.set_mocked_audit_info()
-        inspector2_client.audit_info = self.set_mocked_audit_info()
+        ec2_client.audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
+        ecr_client.audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
+        awslambda_client.audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
+        inspector2_client.audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         inspector2_client.audited_account = AWS_ACCOUNT_ID
         inspector2_client.audited_account_arn = f"arn:aws:iam::{AWS_ACCOUNT_ID}:root"
         inspector2_client.region = AWS_REGION
@@ -127,7 +131,7 @@ class Test_inspector2_findings_exist:
                 id=AWS_ACCOUNT_ID, status="ENABLED", region=AWS_REGION, findings=[]
             )
         ]
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -176,10 +180,10 @@ class Test_inspector2_findings_exist:
         awslambda_client = mock.MagicMock
         ecr_client = mock.MagicMock
         ec2_client = mock.MagicMock
-        ec2_client.audit_info = self.set_mocked_audit_info()
-        ecr_client.audit_info = self.set_mocked_audit_info()
-        awslambda_client.audit_info = self.set_mocked_audit_info()
-        inspector2_client.audit_info = self.set_mocked_audit_info()
+        ec2_client.audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
+        ecr_client.audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
+        awslambda_client.audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
+        inspector2_client.audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         inspector2_client.audited_account = AWS_ACCOUNT_ID
         inspector2_client.audited_account_arn = f"arn:aws:iam::{AWS_ACCOUNT_ID}:root"
         inspector2_client.region = AWS_REGION
@@ -199,7 +203,7 @@ class Test_inspector2_findings_exist:
                 ],
             )
         ]
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -248,10 +252,10 @@ class Test_inspector2_findings_exist:
         awslambda_client = mock.MagicMock
         ecr_client = mock.MagicMock
         ec2_client = mock.MagicMock
-        ec2_client.audit_info = self.set_mocked_audit_info()
-        ecr_client.audit_info = self.set_mocked_audit_info()
-        awslambda_client.audit_info = self.set_mocked_audit_info()
-        inspector2_client.audit_info = self.set_mocked_audit_info()
+        ec2_client.audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
+        ecr_client.audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
+        awslambda_client.audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
+        inspector2_client.audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         inspector2_client.audited_account = AWS_ACCOUNT_ID
         inspector2_client.audited_account_arn = f"arn:aws:iam::{AWS_ACCOUNT_ID}:root"
         inspector2_client.region = AWS_REGION
@@ -271,7 +275,7 @@ class Test_inspector2_findings_exist:
                 ],
             )
         ]
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -320,10 +324,10 @@ class Test_inspector2_findings_exist:
         awslambda_client = mock.MagicMock
         ecr_client = mock.MagicMock
         ec2_client = mock.MagicMock
-        ec2_client.audit_info = self.set_mocked_audit_info()
-        ecr_client.audit_info = self.set_mocked_audit_info()
-        awslambda_client.audit_info = self.set_mocked_audit_info()
-        inspector2_client.audit_info = self.set_mocked_audit_info()
+        ec2_client.audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
+        ecr_client.audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
+        awslambda_client.audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
+        inspector2_client.audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         inspector2_client.audited_account = AWS_ACCOUNT_ID
         inspector2_client.audited_account_arn = f"arn:aws:iam::{AWS_ACCOUNT_ID}:root"
         inspector2_client.region = AWS_REGION
@@ -350,7 +354,7 @@ class Test_inspector2_findings_exist:
                 ],
             )
         ]
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -404,10 +408,10 @@ class Test_inspector2_findings_exist:
         ecr_client.registries[AWS_REGION].repositories = []
         ec2_client = mock.MagicMock
         ec2_client.instances = []
-        ec2_client.audit_info = self.set_mocked_audit_info()
-        ecr_client.audit_info = self.set_mocked_audit_info()
-        awslambda_client.audit_info = self.set_mocked_audit_info()
-        inspector2_client.audit_info = self.set_mocked_audit_info()
+        ec2_client.audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
+        ecr_client.audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
+        awslambda_client.audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
+        inspector2_client.audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         inspector2_client.audit_info.ignore_unused_services = True
         inspector2_client.audited_account = AWS_ACCOUNT_ID
         inspector2_client.audited_account_arn = f"arn:aws:iam::{AWS_ACCOUNT_ID}:root"
@@ -417,7 +421,7 @@ class Test_inspector2_findings_exist:
                 id=AWS_ACCOUNT_ID, status="DISABLED", region=AWS_REGION, findings=[]
             )
         ]
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -487,10 +491,10 @@ class Test_inspector2_findings_exist:
         ]
         ec2_client = mock.MagicMock
         ec2_client.instances = []
-        ec2_client.audit_info = self.set_mocked_audit_info()
-        ecr_client.audit_info = self.set_mocked_audit_info()
-        awslambda_client.audit_info = self.set_mocked_audit_info()
-        inspector2_client.audit_info = self.set_mocked_audit_info()
+        ec2_client.audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
+        ecr_client.audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
+        awslambda_client.audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
+        inspector2_client.audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         inspector2_client.audit_info.ignore_unused_services = True
         inspector2_client.audited_account = AWS_ACCOUNT_ID
         inspector2_client.audited_account_arn = f"arn:aws:iam::{AWS_ACCOUNT_ID}:root"
@@ -500,7 +504,7 @@ class Test_inspector2_findings_exist:
                 id=AWS_ACCOUNT_ID, status="DISABLED", region=AWS_REGION, findings=[]
             )
         ]
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",

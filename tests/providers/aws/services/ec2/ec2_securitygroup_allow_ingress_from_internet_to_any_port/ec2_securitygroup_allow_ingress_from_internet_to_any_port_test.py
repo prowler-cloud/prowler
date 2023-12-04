@@ -6,6 +6,10 @@ from moto import mock_ec2
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.aws.services.vpc.vpc_service import VPC
 from prowler.providers.common.models import Audit_Metadata
+from tests.providers.aws.audit_info_utils import (
+    AWS_REGION_EU_WEST_1,
+    set_mocked_aws_audit_info,
+)
 
 AWS_REGION = "us-east-1"
 AWS_ACCOUNT_NUMBER = "123456789012"
@@ -53,7 +57,7 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_any_port:
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -102,7 +106,7 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_any_port:
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -162,7 +166,7 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_any_port:
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -227,7 +231,7 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_any_port:
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -273,7 +277,7 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_any_port:
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         current_audit_info.ignore_unused_services = True
 
         with mock.patch(
@@ -311,7 +315,7 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_any_port:
         default_sg["GroupName"]
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         current_audit_info.ignore_unused_services = True
 
         with mock.patch(

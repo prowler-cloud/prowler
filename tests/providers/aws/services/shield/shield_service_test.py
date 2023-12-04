@@ -6,6 +6,10 @@ from moto.core import DEFAULT_ACCOUNT_ID
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.aws.services.shield.shield_service import Shield
 from prowler.providers.common.models import Audit_Metadata
+from tests.providers.aws.audit_info_utils import (
+    AWS_REGION_EU_WEST_1,
+    set_mocked_aws_audit_info,
+)
 
 # Mock Test Region
 AWS_REGION = "eu-west-1"
@@ -35,7 +39,6 @@ def mock_make_api_call(self, operation_name, kwarg):
 # Patch every AWS call using Boto3 and generate_regional_clients to have 1 client
 @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
 class Test_Shield_Service:
-    # Mocked Audit Info
     def set_mocked_audit_info(self):
         audit_info = AWS_Audit_Info(
             session_config=None,
@@ -69,33 +72,33 @@ class Test_Shield_Service:
     # Test Shield Service
     def test_service(self):
         # Shield client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         shield = Shield(audit_info)
         assert shield.service == "shield"
 
     # Test Shield Client
     def test_client(self):
         # Shield client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         shield = Shield(audit_info)
         assert shield.client.__class__.__name__ == "Shield"
 
     # Test Shield Session
     def test__get_session__(self):
         # Shield client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         shield = Shield(audit_info)
         assert shield.session.__class__.__name__ == "Session"
 
     def test__get_subscription_state__(self):
         # Shield client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         shield = Shield(audit_info)
         assert shield.enabled
 
     def test__list_protections__(self):
         # Shield client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         shield = Shield(audit_info)
         protection_id = "a1b2c3d4-5678-90ab-cdef-EXAMPLE11111"
         protection_name = "Protection for CloudFront distribution"

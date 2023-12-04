@@ -9,6 +9,10 @@ from prowler.providers.aws.services.organizations.organizations_service import (
     Organizations,
 )
 from prowler.providers.common.models import Audit_Metadata
+from tests.providers.aws.audit_info_utils import (
+    AWS_REGION_EU_WEST_1,
+    set_mocked_aws_audit_info,
+)
 
 AWS_REGION = "us-east-1"
 AWS_ACCOUNT_ID = "123456789012"
@@ -20,7 +24,6 @@ def scp_restrict_regions_with_deny():
 
 
 class Test_organizations_scp_check_deny_regions:
-    # Mocked Audit Info
     def set_mocked_audit_info(self):
         audit_info = AWS_Audit_Info(
             session_config=None,
@@ -53,7 +56,7 @@ class Test_organizations_scp_check_deny_regions:
 
     @mock_organizations
     def test_no_organization(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         audit_info.audit_config = {"organizations_enabled_regions": [AWS_REGION]}
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -83,7 +86,7 @@ class Test_organizations_scp_check_deny_regions:
 
     @mock_organizations
     def test_organization_without_scp_deny_regions(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         audit_info.audit_config = {"organizations_enabled_regions": [AWS_REGION]}
 
         # Create Organization
@@ -118,7 +121,7 @@ class Test_organizations_scp_check_deny_regions:
 
     @mock_organizations
     def test_organization_with_scp_deny_regions_valid(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         # Create Organization
         conn = client("organizations", region_name=AWS_REGION)
@@ -162,7 +165,7 @@ class Test_organizations_scp_check_deny_regions:
 
     @mock_organizations
     def test_organization_with_scp_deny_regions_not_valid(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         # Create Organization
         conn = client("organizations", region_name=AWS_REGION)

@@ -7,6 +7,10 @@ from boto3 import session
 from prowler.providers.aws.lib.audit_info.audit_info import AWS_Audit_Info
 from prowler.providers.aws.services.drs.drs_service import DRS
 from prowler.providers.common.models import Audit_Metadata
+from tests.providers.aws.audit_info_utils import (
+    AWS_REGION_EU_WEST_1,
+    set_mocked_aws_audit_info,
+)
 
 # Mock Test Region
 AWS_REGION = "us-east-1"
@@ -56,7 +60,6 @@ def mock_generate_regional_clients(service, audit_info, _):
     new=mock_generate_regional_clients,
 )
 class Test_DRS_Service:
-    # Mocked Audit Info
     def set_mocked_audit_info(self):
         audit_info = AWS_Audit_Info(
             session_config=None,
@@ -88,17 +91,17 @@ class Test_DRS_Service:
         return audit_info
 
     def test__get_client__(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         drs = DRS(audit_info)
         assert drs.regional_clients[AWS_REGION].__class__.__name__ == "drs"
 
     def test__get_service__(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         drs = DRS(audit_info)
         assert drs.service == "drs"
 
     def test__describe_jobs__(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         drs = DRS(audit_info)
         assert len(drs.drs_services) == 1
         assert drs.drs_services[0].id == "DRS"

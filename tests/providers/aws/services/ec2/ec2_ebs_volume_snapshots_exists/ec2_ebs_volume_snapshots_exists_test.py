@@ -6,6 +6,10 @@ from moto import mock_ec2
 
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.common.models import Audit_Metadata
+from tests.providers.aws.audit_info_utils import (
+    AWS_REGION_EU_WEST_1,
+    set_mocked_aws_audit_info,
+)
 
 AWS_REGION = "us-east-1"
 AWS_REGION_AZ = "us-east-1a"
@@ -59,7 +63,7 @@ class Test_ec2_ebs_volume_snapshots_exists:
     def test_no_volumes(self):
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -85,7 +89,7 @@ class Test_ec2_ebs_volume_snapshots_exists:
         volume_arn = f"arn:aws:ec2:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:volume/{volume.id}"
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -123,7 +127,7 @@ class Test_ec2_ebs_volume_snapshots_exists:
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -169,7 +173,7 @@ class Test_ec2_ebs_volume_snapshots_exists:
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",

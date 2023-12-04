@@ -8,6 +8,10 @@ from prowler.providers.aws.services.resourceexplorer2.resourceexplorer2_service 
     ResourceExplorer2,
 )
 from prowler.providers.common.models import Audit_Metadata
+from tests.providers.aws.audit_info_utils import (
+    AWS_REGION_EU_WEST_1,
+    set_mocked_aws_audit_info,
+)
 
 AWS_ACCOUNT_NUMBER = "123456789012"
 AWS_REGION = "eu-west-1"
@@ -43,7 +47,6 @@ def mock_generate_regional_clients(service, audit_info, _):
     new=mock_generate_regional_clients,
 )
 class Test_ResourceExplorer2_Service:
-    # Mocked Audit Info
     def set_mocked_audit_info(self):
         audit_info = AWS_Audit_Info(
             session_config=None,
@@ -75,7 +78,7 @@ class Test_ResourceExplorer2_Service:
         return audit_info
 
     def test__get_client__(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         resourceeplorer2 = ResourceExplorer2(audit_info)
         assert (
             resourceeplorer2.regional_clients[AWS_REGION].__class__.__name__
@@ -83,12 +86,12 @@ class Test_ResourceExplorer2_Service:
         )
 
     def test__get_service__(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         resourceeplorer2 = ResourceExplorer2(audit_info)
         assert resourceeplorer2.service == "resource-explorer-2"
 
     def test__list_indexes__(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         resourceeplorer2 = ResourceExplorer2(audit_info)
         assert len(resourceeplorer2.indexes) == 1
         assert resourceeplorer2.indexes[0].arn == INDEX_ARN

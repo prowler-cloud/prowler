@@ -9,6 +9,10 @@ from prowler.providers.aws.services.organizations.organizations_service import (
     Organizations,
 )
 from prowler.providers.common.models import Audit_Metadata
+from tests.providers.aws.audit_info_utils import (
+    AWS_REGION_EU_WEST_1,
+    set_mocked_aws_audit_info,
+)
 
 AWS_REGION = "us-east-1"
 AWS_ACCOUNT_ID = "123456789012"
@@ -16,7 +20,6 @@ AWS_ACCOUNT_ARN = f"arn:aws:iam::{AWS_ACCOUNT_ID}:root"
 
 
 class Test_organizations_account_part_of_organizations:
-    # Mocked Audit Info
     def set_mocked_audit_info(self):
         audit_info = AWS_Audit_Info(
             session_config=None,
@@ -49,7 +52,7 @@ class Test_organizations_account_part_of_organizations:
 
     @mock_organizations
     def test_no_organization(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -79,7 +82,7 @@ class Test_organizations_account_part_of_organizations:
 
     @mock_organizations
     def test_organization(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         # Create Organization
         conn = client("organizations")

@@ -9,6 +9,10 @@ from moto.core import DEFAULT_ACCOUNT_ID
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.aws.services.emr.emr_service import EMR, ClusterStatus
 from prowler.providers.common.models import Audit_Metadata
+from tests.providers.aws.audit_info_utils import (
+    AWS_REGION_EU_WEST_1,
+    set_mocked_aws_audit_info,
+)
 
 # Mock Test Region
 AWS_REGION = "eu-west-1"
@@ -83,19 +87,19 @@ class Test_EMR_Service:
     # Test EMR Client
     @mock_emr
     def test__get_client__(self):
-        emr = EMR(self.set_mocked_audit_info())
+        emr = EMR(set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1]))
         assert emr.regional_clients[AWS_REGION].__class__.__name__ == "EMR"
 
     # Test EMR Session
     @mock_emr
     def test__get_session__(self):
-        emr = EMR(self.set_mocked_audit_info())
+        emr = EMR(set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1]))
         assert emr.session.__class__.__name__ == "Session"
 
     # Test EMR Service
     @mock_emr
     def test__get_service__(self):
-        emr = EMR(self.set_mocked_audit_info())
+        emr = EMR(set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1]))
         assert emr.service == "emr"
 
     # Test __list_clusters__ and __describe_cluster__
@@ -123,7 +127,7 @@ class Test_EMR_Service:
         )
         cluster_id = emr_client.run_job_flow(**run_job_flow_args)["JobFlowId"]
         # EMR Class
-        emr = EMR(self.set_mocked_audit_info())
+        emr = EMR(set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1]))
 
         assert len(emr.clusters) == 1
         assert emr.clusters[cluster_id].id == cluster_id
@@ -145,7 +149,7 @@ class Test_EMR_Service:
 
     @mock_emr
     def test__get_block_public_access_configuration__(self):
-        emr = EMR(self.set_mocked_audit_info())
+        emr = EMR(set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1]))
 
         assert len(emr.block_public_access_configuration) == 1
         assert emr.block_public_access_configuration[

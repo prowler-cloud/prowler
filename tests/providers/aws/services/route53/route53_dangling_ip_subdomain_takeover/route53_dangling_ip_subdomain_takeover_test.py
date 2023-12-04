@@ -7,12 +7,15 @@ from moto.core import DEFAULT_ACCOUNT_ID
 
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.common.models import Audit_Metadata
+from tests.providers.aws.audit_info_utils import (
+    AWS_REGION_EU_WEST_1,
+    set_mocked_aws_audit_info,
+)
 
 AWS_REGION = "us-east-1"
 
 
 class Test_route53_dangling_ip_subdomain_takeover:
-    # Mocked Audit Info
     def set_mocked_audit_info(self):
         audit_info = AWS_Audit_Info(
             session_config=None,
@@ -50,7 +53,7 @@ class Test_route53_dangling_ip_subdomain_takeover:
         from prowler.providers.aws.services.ec2.ec2_service import EC2
         from prowler.providers.aws.services.route53.route53_service import Route53
 
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -86,7 +89,7 @@ class Test_route53_dangling_ip_subdomain_takeover:
         from prowler.providers.aws.services.ec2.ec2_service import EC2
         from prowler.providers.aws.services.route53.route53_service import Route53
 
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -137,7 +140,7 @@ class Test_route53_dangling_ip_subdomain_takeover:
         from prowler.providers.aws.services.ec2.ec2_service import EC2
         from prowler.providers.aws.services.route53.route53_service import Route53
 
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -171,7 +174,7 @@ class Test_route53_dangling_ip_subdomain_takeover:
                     )
                     assert (
                         result[0].resource_arn
-                        == f"arn:{audit_info.audited_partition}:route53:::hostedzone/{zone_id.replace('/hostedzone/','')}"
+                        == f"arn:{audit_info.audited_partition}:route53:::hostedzone/{zone_id.replace('/hostedzone/', '')}"
                     )
 
     @mock_ec2
@@ -201,7 +204,7 @@ class Test_route53_dangling_ip_subdomain_takeover:
         from prowler.providers.aws.services.ec2.ec2_service import EC2
         from prowler.providers.aws.services.route53.route53_service import Route53
 
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -235,7 +238,7 @@ class Test_route53_dangling_ip_subdomain_takeover:
                     )
                     assert (
                         result[0].resource_arn
-                        == f"arn:{audit_info.audited_partition}:route53:::hostedzone/{zone_id.replace('/hostedzone/','')}"
+                        == f"arn:{audit_info.audited_partition}:route53:::hostedzone/{zone_id.replace('/hostedzone/', '')}"
                     )
 
     @mock_ec2
@@ -265,7 +268,7 @@ class Test_route53_dangling_ip_subdomain_takeover:
         from prowler.providers.aws.services.ec2.ec2_service import EC2
         from prowler.providers.aws.services.route53.route53_service import Route53
 
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -299,7 +302,7 @@ class Test_route53_dangling_ip_subdomain_takeover:
                     )
                     assert (
                         result[0].resource_arn
-                        == f"arn:{audit_info.audited_partition}:route53:::hostedzone/{zone_id.replace('/hostedzone/','')}"
+                        == f"arn:{audit_info.audited_partition}:route53:::hostedzone/{zone_id.replace('/hostedzone/', '')}"
                     )
 
     @mock_ec2
@@ -332,7 +335,7 @@ class Test_route53_dangling_ip_subdomain_takeover:
         from prowler.providers.aws.services.ec2.ec2_service import EC2
         from prowler.providers.aws.services.route53.route53_service import Route53
 
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -366,7 +369,7 @@ class Test_route53_dangling_ip_subdomain_takeover:
                     )
                     assert (
                         result[0].resource_arn
-                        == f"arn:{audit_info.audited_partition}:route53:::hostedzone/{zone_id.replace('/hostedzone/','')}"
+                        == f"arn:{audit_info.audited_partition}:route53:::hostedzone/{zone_id.replace('/hostedzone/', '')}"
                     )
 
     @mock_ec2
@@ -405,7 +408,7 @@ class Test_route53_dangling_ip_subdomain_takeover:
         from prowler.providers.aws.services.ec2.ec2_service import EC2
         from prowler.providers.aws.services.route53.route53_service import Route53
 
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -439,5 +442,5 @@ class Test_route53_dangling_ip_subdomain_takeover:
                     )
                     assert (
                         result[0].resource_arn
-                        == f"arn:{audit_info.audited_partition}:route53:::hostedzone/{zone_id.replace('/hostedzone/','')}"
+                        == f"arn:{audit_info.audited_partition}:route53:::hostedzone/{zone_id.replace('/hostedzone/', '')}"
                     )

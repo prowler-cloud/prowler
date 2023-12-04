@@ -11,6 +11,10 @@ from prowler.providers.aws.services.secretsmanager.secretsmanager_service import
     SecretsManager,
 )
 from prowler.providers.common.models import Audit_Metadata
+from tests.providers.aws.audit_info_utils import (
+    AWS_REGION_EU_WEST_1,
+    set_mocked_aws_audit_info,
+)
 
 # Mock Test Region
 AWS_REGION = "eu-west-1"
@@ -62,7 +66,7 @@ class Test_SecretsManager_Service:
     # Test SecretsManager Client
     @mock_secretsmanager
     def test__get_client__(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         secretsmanager = SecretsManager(audit_info)
         assert (
             secretsmanager.regional_clients[AWS_REGION].__class__.__name__
@@ -72,14 +76,14 @@ class Test_SecretsManager_Service:
     # Test SecretsManager Session
     @mock_secretsmanager
     def test__get_session__(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         secretsmanager = SecretsManager(audit_info)
         assert secretsmanager.session.__class__.__name__ == "Session"
 
     # Test SecretsManager Service
     @mock_secretsmanager
     def test__get_service__(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         secretsmanager = SecretsManager(audit_info)
         assert secretsmanager.service == "secretsmanager"
 
@@ -158,7 +162,7 @@ class Test_SecretsManager_Service:
         )
 
         # Set partition for the service
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         secretsmanager = SecretsManager(audit_info)
 
         assert len(secretsmanager.secrets) == 1

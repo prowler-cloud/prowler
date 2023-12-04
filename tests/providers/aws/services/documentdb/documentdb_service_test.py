@@ -8,6 +8,10 @@ from prowler.providers.aws.services.documentdb.documentdb_service import (
     Instance,
 )
 from prowler.providers.common.models import Audit_Metadata
+from tests.providers.aws.audit_info_utils import (
+    AWS_REGION_EU_WEST_1,
+    set_mocked_aws_audit_info,
+)
 
 AWS_ACCOUNT_NUMBER = "123456789012"
 AWS_ACCOUNT_ARN = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
@@ -73,7 +77,6 @@ def mock_generate_regional_clients(service, audit_info, _):
 # Patch every AWS call using Boto3
 @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
 class Test_DocumentDB_Service:
-    # Mocked Audit Info
     def set_mocked_audit_info(self):
         audit_info = AWS_Audit_Info(
             session_config=None,
@@ -106,31 +109,31 @@ class Test_DocumentDB_Service:
 
     # Test DocumentDB Service
     def test_service(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         docdb = DocumentDB(audit_info)
         assert docdb.service == "docdb"
 
     # Test DocumentDB Client
     def test_client(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         docdb = DocumentDB(audit_info)
         assert docdb.client.__class__.__name__ == "DocDB"
 
     # Test DocumentDB Session
     def test__get_session__(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         docdb = DocumentDB(audit_info)
         assert docdb.session.__class__.__name__ == "Session"
 
     # Test DocumentDB Session
     def test_audited_account(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         docdb = DocumentDB(audit_info)
         assert docdb.audited_account == AWS_ACCOUNT_NUMBER
 
     # Test DocumentDB Get DocumentDB Contacts
     def test_describe_db_instances(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         docdb = DocumentDB(audit_info)
         assert docdb.db_instances == {
             DOC_DB_INSTANCE_ARN: Instance(

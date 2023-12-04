@@ -7,6 +7,10 @@ from moto.core import DEFAULT_ACCOUNT_ID
 
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.common.models import Audit_Metadata
+from tests.providers.aws.audit_info_utils import (
+    AWS_REGION_EU_WEST_1,
+    set_mocked_aws_audit_info,
+)
 
 AWS_REGION = "us-east-1"
 
@@ -47,7 +51,7 @@ class Test_dynamodb_accelerator_cluster_encryption_enabled:
     def test_dax_no_clusters(self):
         from prowler.providers.aws.services.dynamodb.dynamodb_service import DAX
 
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -78,7 +82,7 @@ class Test_dynamodb_accelerator_cluster_encryption_enabled:
         )["Cluster"]
         from prowler.providers.aws.services.dynamodb.dynamodb_service import DAX
 
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -119,7 +123,7 @@ class Test_dynamodb_accelerator_cluster_encryption_enabled:
         )["Cluster"]
         from prowler.providers.aws.services.dynamodb.dynamodb_service import DAX
 
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",

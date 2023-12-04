@@ -1,12 +1,11 @@
 import boto3
 import botocore
 import pytest
-from boto3 import session
 from mock import patch
 from moto import mock_ec2, mock_resourcegroupstaggingapi
 
 from prowler.config.config import default_config_file_path
-from prowler.providers.aws.lib.audit_info.models import AWS_Assume_Role, AWS_Audit_Info
+from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.azure.azure_provider import Azure_Provider
 from prowler.providers.azure.lib.audit_info.models import (
     Azure_Audit_Info,
@@ -19,9 +18,12 @@ from prowler.providers.common.audit_info import (
     get_tagged_resources,
     set_provider_audit_info,
 )
-from prowler.providers.common.models import Audit_Metadata
 from prowler.providers.gcp.gcp_provider import GCP_Provider
 from prowler.providers.gcp.lib.audit_info.models import GCP_Audit_Info
+from tests.providers.aws.audit_info_utils import (
+    AWS_REGION_EU_WEST_1,
+    set_mocked_aws_audit_info,
+)
 
 EXAMPLE_AMI_ID = "ami-12c6146b"
 AWS_ACCOUNT_NUMBER = "123456789012"
@@ -94,43 +96,6 @@ def mock_get_project_ids(*_):
 
 
 class Test_Set_Audit_Info:
-    # Mocked Audit Info
-    def set_mocked_audit_info(self):
-        audit_info = AWS_Audit_Info(
-            session_config=None,
-            original_session=None,
-            audit_session=session.Session(
-                profile_name=None,
-                botocore_session=None,
-            ),
-            audited_account=AWS_ACCOUNT_NUMBER,
-            audited_account_arn=f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root",
-            audited_user_id=None,
-            audited_partition="aws",
-            audited_identity_arn="arn:aws:iam::123456789012:user/test",
-            profile=None,
-            profile_region="eu-west-1",
-            credentials=None,
-            assumed_role_info=AWS_Assume_Role(
-                role_arn=None,
-                session_duration=None,
-                external_id=None,
-                mfa_enabled=None,
-            ),
-            audited_regions=["eu-west-2", "eu-west-1"],
-            organizations_metadata=None,
-            audit_resources=None,
-            mfa_enabled=False,
-            audit_metadata=Audit_Metadata(
-                services_scanned=0,
-                expected_checks=[],
-                completed_checks=0,
-                audit_progress=0,
-            ),
-        )
-
-        return audit_info
-
     @patch(
         "prowler.providers.common.audit_info.azure_audit_info",
         new=mock_azure_audit_info,
@@ -283,7 +248,7 @@ class Test_Set_Audit_Info:
     def test_get_tagged_resources(self):
         with patch(
             "prowler.providers.common.audit_info.current_audit_info",
-            new=self.set_mocked_audit_info(),
+            new=set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1]),
         ) as mock_audit_info:
             client = boto3.client("ec2", region_name="eu-central-1")
             instances = client.run_instances(
@@ -338,7 +303,7 @@ class Test_Set_Audit_Info:
     def test_set_audit_info_aws(self):
         with patch(
             "prowler.providers.common.audit_info.current_audit_info",
-            new=self.set_mocked_audit_info(),
+            new=set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1]),
         ):
             provider = "aws"
             arguments = {
@@ -357,7 +322,7 @@ class Test_Set_Audit_Info:
     def test_set_audit_info_aws_bad_session_duration(self):
         with patch(
             "prowler.providers.common.audit_info.current_audit_info",
-            new=self.set_mocked_audit_info(),
+            new=set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1]),
         ):
             provider = "aws"
             arguments = {
@@ -377,7 +342,7 @@ class Test_Set_Audit_Info:
     def test_set_audit_info_aws_session_duration_without_role(self):
         with patch(
             "prowler.providers.common.audit_info.current_audit_info",
-            new=self.set_mocked_audit_info(),
+            new=set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1]),
         ):
             provider = "aws"
             arguments = {
@@ -397,7 +362,7 @@ class Test_Set_Audit_Info:
     def test_set_audit_info_external_id_without_role(self):
         with patch(
             "prowler.providers.common.audit_info.current_audit_info",
-            new=self.set_mocked_audit_info(),
+            new=set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1]),
         ):
             provider = "aws"
             arguments = {

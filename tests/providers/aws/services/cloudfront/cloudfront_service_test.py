@@ -12,6 +12,10 @@ from prowler.providers.aws.services.cloudfront.cloudfront_service import (
     ViewerProtocolPolicy,
 )
 from prowler.providers.common.models import Audit_Metadata
+from tests.providers.aws.audit_info_utils import (
+    AWS_REGION_EU_WEST_1,
+    set_mocked_aws_audit_info,
+)
 
 # Mock Test Region
 AWS_REGION = "eu-west-1"
@@ -155,7 +159,6 @@ def mock_make_api_call(self, operation_name, kwarg):
 # Patch every AWS call using Boto3
 @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
 class Test_CloudFront_Service:
-    # Mocked Audit Info
     def set_mocked_audit_info(self):
         audit_info = AWS_Audit_Info(
             session_config=None,
@@ -190,24 +193,24 @@ class Test_CloudFront_Service:
     # Test CloudFront Client
     @mock_cloudfront
     def test__get_client__(self):
-        cloudfront = CloudFront(self.set_mocked_audit_info())
+        cloudfront = CloudFront(set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1]))
         assert cloudfront.client.__class__.__name__ == "CloudFront"
 
     # Test CloudFront Session
     @mock_cloudfront
     def test__get_session__(self):
-        cloudfront = CloudFront(self.set_mocked_audit_info())
+        cloudfront = CloudFront(set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1]))
         assert cloudfront.session.__class__.__name__ == "Session"
 
     # Test CloudFront Service
     @mock_cloudfront
     def test__get_service__(self):
-        cloudfront = CloudFront(self.set_mocked_audit_info())
+        cloudfront = CloudFront(set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1]))
         assert cloudfront.service == "cloudfront"
 
     @mock_cloudfront
     def test__list_distributions__zero(self):
-        cloudfront = CloudFront(self.set_mocked_audit_info())
+        cloudfront = CloudFront(set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1]))
 
         assert len(cloudfront.distributions) == 0
 
@@ -218,7 +221,7 @@ class Test_CloudFront_Service:
         response = cloudfront_client.create_distribution(DistributionConfig=config)
         cloudfront_distribution_id = response["Distribution"]["Id"]
         cloudfront_distribution_arn = response["Distribution"]["ARN"]
-        cloudfront = CloudFront(self.set_mocked_audit_info())
+        cloudfront = CloudFront(set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1]))
 
         assert len(cloudfront.distributions) == 1
         assert (
@@ -231,7 +234,9 @@ class Test_CloudFront_Service:
         )
         assert (
             cloudfront.distributions[cloudfront_distribution_id].region
-            == self.set_mocked_audit_info().audit_session.region_name
+            == set_mocked_aws_audit_info(
+                [AWS_REGION_EU_WEST_1]
+            ).audit_session.region_name
         )
         assert (
             cloudfront.distributions[cloudfront_distribution_id].logging_enabled is True

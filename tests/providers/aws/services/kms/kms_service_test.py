@@ -6,13 +6,16 @@ from moto import mock_kms
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.aws.services.kms.kms_service import KMS
 from prowler.providers.common.models import Audit_Metadata
+from tests.providers.aws.audit_info_utils import (
+    AWS_REGION_EU_WEST_1,
+    set_mocked_aws_audit_info,
+)
 
 AWS_ACCOUNT_NUMBER = "123456789012"
 AWS_REGION = "us-east-1"
 
 
 class Test_ACM_Service:
-    # Mocked Audit Info
     def set_mocked_audit_info(self):
         audit_info = AWS_Audit_Info(
             session_config=None,
@@ -47,7 +50,7 @@ class Test_ACM_Service:
     @mock_kms
     def test_service(self):
         # KMS client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         kms = KMS(audit_info)
         assert kms.service == "kms"
 
@@ -55,7 +58,7 @@ class Test_ACM_Service:
     @mock_kms
     def test_client(self):
         # KMS client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         kms = KMS(audit_info)
         for regional_client in kms.regional_clients.values():
             assert regional_client.__class__.__name__ == "KMS"
@@ -64,7 +67,7 @@ class Test_ACM_Service:
     @mock_kms
     def test__get_session__(self):
         # KMS client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         kms = KMS(audit_info)
         assert kms.session.__class__.__name__ == "Session"
 
@@ -72,7 +75,7 @@ class Test_ACM_Service:
     @mock_kms
     def test_audited_account(self):
         # KMS client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         kms = KMS(audit_info)
         assert kms.audited_account == AWS_ACCOUNT_NUMBER
 
@@ -85,7 +88,7 @@ class Test_ACM_Service:
         key1 = kms_client.create_key()["KeyMetadata"]
         key2 = kms_client.create_key()["KeyMetadata"]
         # KMS client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         kms = KMS(audit_info)
         assert len(kms.keys) == 2
         assert kms.keys[0].arn == key1["Arn"]
@@ -103,7 +106,7 @@ class Test_ACM_Service:
             ],
         )["KeyMetadata"]
         # KMS client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         kms = KMS(audit_info)
         assert len(kms.keys) == 1
         assert kms.keys[0].arn == key1["Arn"]
@@ -124,7 +127,7 @@ class Test_ACM_Service:
         key2 = kms_client.create_key()["KeyMetadata"]
         kms_client.enable_key_rotation(KeyId=key2["KeyId"])
         # KMS client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         kms = KMS(audit_info)
         assert len(kms.keys) == 2
         assert kms.keys[0].arn == key1["Arn"]
@@ -171,7 +174,7 @@ class Test_ACM_Service:
         key1 = kms_client.create_key(Policy=default_policy)["KeyMetadata"]
         key2 = kms_client.create_key(Policy=public_policy)["KeyMetadata"]
         # KMS client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         kms = KMS(audit_info)
         assert len(kms.keys) == 2
         assert kms.keys[0].arn == key1["Arn"]

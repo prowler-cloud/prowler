@@ -8,6 +8,10 @@ from prowler.providers.aws.services.networkfirewall.networkfirewall_service impo
     NetworkFirewall,
 )
 from prowler.providers.common.models import Audit_Metadata
+from tests.providers.aws.audit_info_utils import (
+    AWS_REGION_EU_WEST_1,
+    set_mocked_aws_audit_info,
+)
 
 # Mock Test Region
 AWS_REGION = "us-east-1"
@@ -65,7 +69,6 @@ def mock_generate_regional_clients(service, audit_info, _):
     new=mock_generate_regional_clients,
 )
 class Test_NetworkFirewall_Service:
-    # Mocked Audit Info
     def set_mocked_audit_info(self):
         audit_info = AWS_Audit_Info(
             session_config=None,
@@ -97,7 +100,7 @@ class Test_NetworkFirewall_Service:
         return audit_info
 
     def test__get_client__(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         networkfirewall = NetworkFirewall(audit_info)
         assert (
             networkfirewall.regional_clients[AWS_REGION].__class__.__name__
@@ -105,12 +108,12 @@ class Test_NetworkFirewall_Service:
         )
 
     def test__get_service__(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         networkfirewall = NetworkFirewall(audit_info)
         assert networkfirewall.service == "network-firewall"
 
     def test__list_firewalls__(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         networkfirewall = NetworkFirewall(audit_info)
         assert len(networkfirewall.network_firewalls) == 1
         assert networkfirewall.network_firewalls[0].arn == FIREWALL_ARN
@@ -118,7 +121,7 @@ class Test_NetworkFirewall_Service:
         assert networkfirewall.network_firewalls[0].name == FIREWALL_NAME
 
     def test__describe_firewall__(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         networkfirewall = NetworkFirewall(audit_info)
         assert len(networkfirewall.network_firewalls) == 1
         assert networkfirewall.network_firewalls[0].arn == FIREWALL_ARN

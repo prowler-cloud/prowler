@@ -6,6 +6,10 @@ from moto import mock_iam
 
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.common.models import Audit_Metadata
+from tests.providers.aws.audit_info_utils import (
+    AWS_REGION_EU_WEST_1,
+    set_mocked_aws_audit_info,
+)
 
 AWS_ACCOUNT_NUMBER = "123456789012"
 AWS_REGION = "us-east-1"
@@ -13,7 +17,6 @@ AWS_ACCOUNT_ARN = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
 
 
 class Test_iam_password_policy_expires_passwords_within_90_days_or_less:
-    # Mocked Audit Info
     def set_mocked_audit_info(self):
         audit_info = AWS_Audit_Info(
             session_config=None,
@@ -49,7 +52,7 @@ class Test_iam_password_policy_expires_passwords_within_90_days_or_less:
     def test_password_expiration_lower_90(self):
         from prowler.providers.aws.services.iam.iam_service import IAM, PasswordPolicy
 
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -91,7 +94,7 @@ class Test_iam_password_policy_expires_passwords_within_90_days_or_less:
     def test_password_expiration_greater_90(self):
         from prowler.providers.aws.services.iam.iam_service import IAM, PasswordPolicy
 
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -133,7 +136,7 @@ class Test_iam_password_policy_expires_passwords_within_90_days_or_less:
     def test_password_expiration_just_90(self):
         from prowler.providers.aws.services.iam.iam_service import IAM, PasswordPolicy
 
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",

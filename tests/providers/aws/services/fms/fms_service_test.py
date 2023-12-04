@@ -7,6 +7,10 @@ from boto3 import session
 from prowler.providers.aws.lib.audit_info.audit_info import AWS_Audit_Info
 from prowler.providers.aws.services.fms.fms_service import FMS
 from prowler.providers.common.models import Audit_Metadata
+from tests.providers.aws.audit_info_utils import (
+    AWS_REGION_EU_WEST_1,
+    set_mocked_aws_audit_info,
+)
 
 # Mock Test Region
 AWS_REGION = "us-east-1"
@@ -65,7 +69,6 @@ def mock_make_api_call(self, operation_name, kwargs):
 # Patch every AWS call using Boto3
 @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
 class Test_FMS_Service:
-    # Mocked Audit Info
     def set_mocked_audit_info(self):
         audit_info = AWS_Audit_Info(
             session_config=None,
@@ -97,17 +100,17 @@ class Test_FMS_Service:
         return audit_info
 
     def test__get_client__(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         fms = FMS(audit_info)
         assert fms.client.__class__.__name__ == "FMS"
 
     def test__get_service__(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         fms = FMS(audit_info)
         assert fms.service == "fms"
 
     def test__list_policies__(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         fms = FMS(audit_info)
         assert len(fms.fms_policies) == 1
         assert fms.fms_admin_account is True
@@ -123,7 +126,7 @@ class Test_FMS_Service:
         )
 
     def test__list_compliance_status__(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         fms = FMS(audit_info)
         assert len(fms.fms_policies) == 1
         assert fms.fms_policies[0].compliance_status[0].status == "COMPLIANT"

@@ -1,13 +1,13 @@
 from unittest import mock
 
-from boto3 import session
-
-from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.aws.services.networkfirewall.networkfirewall_service import (
     Firewall,
 )
 from prowler.providers.aws.services.vpc.vpc_service import VPCs, VpcSubnet
-from prowler.providers.common.models import Audit_Metadata
+from tests.providers.aws.audit_info_utils import (
+    AWS_REGION_EU_WEST_1,
+    set_mocked_aws_audit_info,
+)
 
 AWS_REGION = "us-east-1"
 AWS_ACCOUNT_NUMBER = "123456789012"
@@ -19,49 +19,19 @@ POLICY_ARN = "arn:aws:network-firewall:us-east-1:123456789012:firewall-policy/my
 
 
 class Test_networkfirewall_in_all_vpc:
-    # Mocked Audit Info
-    def set_mocked_audit_info(self):
-        audit_info = AWS_Audit_Info(
-            session_config=None,
-            original_session=None,
-            audit_session=session.Session(
-                profile_name=None,
-                botocore_session=None,
-                region_name=AWS_REGION,
-            ),
-            audited_account=AWS_ACCOUNT_NUMBER,
-            audited_account_arn=f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root",
-            audited_user_id=None,
-            audited_partition="aws",
-            audited_identity_arn=None,
-            profile=None,
-            profile_region=AWS_REGION,
-            credentials=None,
-            assumed_role_info=None,
-            audited_regions=None,
-            organizations_metadata=None,
-            audit_resources=None,
-            mfa_enabled=False,
-            audit_metadata=Audit_Metadata(
-                services_scanned=0,
-                expected_checks=[],
-                completed_checks=0,
-                audit_progress=0,
-            ),
-        )
-        return audit_info
-
     def test_no_vpcs(self):
         networkfirewall_client = mock.MagicMock
-        networkfirewall_client.audit_info = self.set_mocked_audit_info()
+        networkfirewall_client.audit_info = set_mocked_aws_audit_info(
+            [AWS_REGION_EU_WEST_1]
+        )
         networkfirewall_client.region = AWS_REGION
         networkfirewall_client.network_firewalls = []
         vpc_client = mock.MagicMock
-        vpc_client.audit_info = self.set_mocked_audit_info()
+        vpc_client.audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         vpc_client.region = AWS_REGION
         vpc_client.vpcs = {}
 
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -87,7 +57,9 @@ class Test_networkfirewall_in_all_vpc:
 
     def test_vpcs_with_firewall_all(self):
         networkfirewall_client = mock.MagicMock
-        networkfirewall_client.audit_info = self.set_mocked_audit_info()
+        networkfirewall_client.audit_info = set_mocked_aws_audit_info(
+            [AWS_REGION_EU_WEST_1]
+        )
         networkfirewall_client.region = AWS_REGION
         networkfirewall_client.network_firewalls = [
             Firewall(
@@ -101,7 +73,7 @@ class Test_networkfirewall_in_all_vpc:
             )
         ]
         vpc_client = mock.MagicMock
-        vpc_client.audit_info = self.set_mocked_audit_info()
+        vpc_client.audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         vpc_client.region = AWS_REGION
         vpc_client.vpcs = {
             VPC_ID_PROTECTED: VPCs(
@@ -132,7 +104,7 @@ class Test_networkfirewall_in_all_vpc:
             )
         }
 
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -167,11 +139,13 @@ class Test_networkfirewall_in_all_vpc:
 
     def test_vpcs_without_firewall(self):
         networkfirewall_client = mock.MagicMock
-        networkfirewall_client.audit_info = self.set_mocked_audit_info()
+        networkfirewall_client.audit_info = set_mocked_aws_audit_info(
+            [AWS_REGION_EU_WEST_1]
+        )
         networkfirewall_client.region = AWS_REGION
         networkfirewall_client.network_firewalls = []
         vpc_client = mock.MagicMock
-        vpc_client.audit_info = self.set_mocked_audit_info()
+        vpc_client.audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         vpc_client.region = AWS_REGION
         vpc_client.vpcs = {
             VPC_ID_UNPROTECTED: VPCs(
@@ -202,7 +176,7 @@ class Test_networkfirewall_in_all_vpc:
             )
         }
 
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -237,12 +211,14 @@ class Test_networkfirewall_in_all_vpc:
 
     def test_vpcs_with_name_without_firewall(self):
         networkfirewall_client = mock.MagicMock
-        networkfirewall_client.audit_info = self.set_mocked_audit_info()
+        networkfirewall_client.audit_info = set_mocked_aws_audit_info(
+            [AWS_REGION_EU_WEST_1]
+        )
         networkfirewall_client.region = AWS_REGION
         networkfirewall_client.network_firewalls = []
 
         vpc_client = mock.MagicMock
-        vpc_client.audit_info = self.set_mocked_audit_info()
+        vpc_client.audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         vpc_client.region = AWS_REGION
         vpc_client.vpcs = {
             VPC_ID_UNPROTECTED: VPCs(
@@ -273,7 +249,7 @@ class Test_networkfirewall_in_all_vpc:
             )
         }
 
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -308,7 +284,9 @@ class Test_networkfirewall_in_all_vpc:
 
     def test_vpcs_with_and_without_firewall(self):
         networkfirewall_client = mock.MagicMock
-        networkfirewall_client.audit_info = self.set_mocked_audit_info()
+        networkfirewall_client.audit_info = set_mocked_aws_audit_info(
+            [AWS_REGION_EU_WEST_1]
+        )
         networkfirewall_client.region = AWS_REGION
         networkfirewall_client.network_firewalls = [
             Firewall(
@@ -322,7 +300,7 @@ class Test_networkfirewall_in_all_vpc:
             )
         ]
         vpc_client = mock.MagicMock
-        vpc_client.audit_info = self.set_mocked_audit_info()
+        vpc_client.audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         vpc_client.region = AWS_REGION
         vpc_client.vpcs = {
             VPC_ID_UNPROTECTED: VPCs(
@@ -379,7 +357,7 @@ class Test_networkfirewall_in_all_vpc:
             ),
         }
 
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -426,11 +404,13 @@ class Test_networkfirewall_in_all_vpc:
 
     def test_vpcs_without_firewall_ignoring(self):
         networkfirewall_client = mock.MagicMock
-        networkfirewall_client.audit_info = self.set_mocked_audit_info()
+        networkfirewall_client.audit_info = set_mocked_aws_audit_info(
+            [AWS_REGION_EU_WEST_1]
+        )
         networkfirewall_client.region = AWS_REGION
         networkfirewall_client.network_firewalls = []
         vpc_client = mock.MagicMock
-        vpc_client.audit_info = self.set_mocked_audit_info()
+        vpc_client.audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         vpc_client.region = AWS_REGION
         vpc_client.vpcs = {
             VPC_ID_UNPROTECTED: VPCs(
@@ -461,7 +441,7 @@ class Test_networkfirewall_in_all_vpc:
             )
         }
 
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         vpc_client.audit_info.ignore_unused_services = True
 
         with mock.patch(
@@ -488,11 +468,13 @@ class Test_networkfirewall_in_all_vpc:
 
     def test_vpcs_without_firewall_ignoring_vpc_in_use(self):
         networkfirewall_client = mock.MagicMock
-        networkfirewall_client.audit_info = self.set_mocked_audit_info()
+        networkfirewall_client.audit_info = set_mocked_aws_audit_info(
+            [AWS_REGION_EU_WEST_1]
+        )
         networkfirewall_client.region = AWS_REGION
         networkfirewall_client.network_firewalls = []
         vpc_client = mock.MagicMock
-        vpc_client.audit_info = self.set_mocked_audit_info()
+        vpc_client.audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         vpc_client.region = AWS_REGION
         vpc_client.vpcs = {
             VPC_ID_UNPROTECTED: VPCs(
@@ -524,7 +506,7 @@ class Test_networkfirewall_in_all_vpc:
             )
         }
 
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         vpc_client.audit_info.ignore_unused_services = True
 
         with mock.patch(

@@ -7,6 +7,10 @@ from moto import mock_iam
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.aws.services.iam.iam_service import Role
 from prowler.providers.common.models import Audit_Metadata
+from tests.providers.aws.audit_info_utils import (
+    AWS_REGION_EU_WEST_1,
+    set_mocked_aws_audit_info,
+)
 
 AWS_REGION = "us-east-1"
 AWS_ACCOUNT_ID = "123456789012"
@@ -48,7 +52,7 @@ class Test_iam_role_cross_account_readonlyaccess_policy:
     def test_no_roles(self):
         from prowler.providers.aws.services.iam.iam_service import IAM
 
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             new=current_audit_info,
@@ -83,7 +87,7 @@ class Test_iam_role_cross_account_readonlyaccess_policy:
             AssumeRolePolicyDocument=dumps(assume_role_policy_document),
         )
 
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
@@ -132,7 +136,7 @@ class Test_iam_role_cross_account_readonlyaccess_policy:
             PolicyArn="arn:aws:iam::aws:policy/ReadOnlyAccess",
         )
 
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
@@ -181,7 +185,7 @@ class Test_iam_role_cross_account_readonlyaccess_policy:
             PolicyArn="arn:aws:iam::aws:policy/ReadOnlyAccess",
         )
 
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
@@ -230,7 +234,7 @@ class Test_iam_role_cross_account_readonlyaccess_policy:
             PolicyArn="arn:aws:iam::aws:policy/ReadOnlyAccess",
         )
 
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
@@ -279,7 +283,7 @@ class Test_iam_role_cross_account_readonlyaccess_policy:
             )
         )
 
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",

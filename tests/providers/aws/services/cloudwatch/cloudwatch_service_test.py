@@ -7,13 +7,16 @@ from prowler.providers.aws.services.cloudwatch.cloudwatch_service import (
     Logs,
 )
 from prowler.providers.common.models import Audit_Metadata
+from tests.providers.aws.audit_info_utils import (
+    AWS_REGION_EU_WEST_1,
+    set_mocked_aws_audit_info,
+)
 
 AWS_ACCOUNT_NUMBER = "123456789012"
 AWS_REGION = "us-east-1"
 
 
 class Test_CloudWatch_Service:
-    # Mocked Audit Info
     def set_mocked_audit_info(self):
         audit_info = AWS_Audit_Info(
             session_config=None,
@@ -49,7 +52,7 @@ class Test_CloudWatch_Service:
     @mock_cloudwatch
     def test_service(self):
         # CloudWatch client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         cloudwatch = CloudWatch(audit_info)
         assert cloudwatch.service == "cloudwatch"
 
@@ -57,7 +60,7 @@ class Test_CloudWatch_Service:
     @mock_cloudwatch
     def test_client(self):
         # CloudWatch client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         cloudwatch = CloudWatch(audit_info)
         for client_ in cloudwatch.regional_clients.values():
             assert client_.__class__.__name__ == "CloudWatch"
@@ -66,7 +69,7 @@ class Test_CloudWatch_Service:
     @mock_cloudwatch
     def test__get_session__(self):
         # CloudWatch client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         cloudwatch = CloudWatch(audit_info)
         assert cloudwatch.session.__class__.__name__ == "Session"
 
@@ -74,7 +77,7 @@ class Test_CloudWatch_Service:
     @mock_cloudwatch
     def test_audited_account(self):
         # CloudWatch client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         cloudwatch = CloudWatch(audit_info)
         assert cloudwatch.audited_account == AWS_ACCOUNT_NUMBER
 
@@ -82,7 +85,7 @@ class Test_CloudWatch_Service:
     @mock_logs
     def test_logs_service(self):
         # Logs client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         logs = Logs(audit_info)
         assert logs.service == "logs"
 
@@ -90,7 +93,7 @@ class Test_CloudWatch_Service:
     @mock_logs
     def test_logs_client(self):
         # Logs client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         logs = Logs(audit_info)
         for client_ in logs.regional_clients.values():
             assert client_.__class__.__name__ == "CloudWatchLogs"
@@ -99,7 +102,7 @@ class Test_CloudWatch_Service:
     @mock_logs
     def test__logs_get_session__(self):
         # Logs client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         logs = Logs(audit_info)
         assert logs.session.__class__.__name__ == "Session"
 
@@ -107,7 +110,7 @@ class Test_CloudWatch_Service:
     @mock_logs
     def test_logs_audited_account(self):
         # Logs client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         logs = Logs(audit_info)
         assert logs.audited_account == AWS_ACCOUNT_NUMBER
 
@@ -133,7 +136,7 @@ class Test_CloudWatch_Service:
             Unit="Seconds",
             Tags=[{"Key": "key-1", "Value": "value-1"}],
         )
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         cloudwatch = CloudWatch(audit_info)
         assert len(cloudwatch.metric_alarms) == 1
         assert (
@@ -165,7 +168,7 @@ class Test_CloudWatch_Service:
                 }
             ],
         )
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         logs = Logs(audit_info)
         assert len(logs.metric_filters) == 1
         assert logs.metric_filters[0].log_group == "/log-group/test"
@@ -187,7 +190,7 @@ class Test_CloudWatch_Service:
         logs_client.put_retention_policy(
             logGroupName="/log-group/test", retentionInDays=400
         )
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         logs = Logs(audit_info)
         assert len(logs.log_groups) == 1
         assert (
@@ -213,7 +216,7 @@ class Test_CloudWatch_Service:
             tags={"tag_key_1": "tag_value_1", "tag_key_2": "tag_value_2"},
         )
 
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         logs = Logs(audit_info)
         assert len(logs.log_groups) == 1
         assert (

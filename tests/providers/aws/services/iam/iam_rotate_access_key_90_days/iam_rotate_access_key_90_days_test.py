@@ -6,6 +6,10 @@ from moto import mock_iam
 
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.common.models import Audit_Metadata
+from tests.providers.aws.audit_info_utils import (
+    AWS_REGION_EU_WEST_1,
+    set_mocked_aws_audit_info,
+)
 
 AWS_ACCOUNT_NUMBER = "123456789012"
 AWS_REGION = "us-east-1"
@@ -51,7 +55,7 @@ class Test_iam_rotate_access_key_90_days_test:
 
         from prowler.providers.aws.services.iam.iam_service import IAM
 
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -89,7 +93,7 @@ class Test_iam_rotate_access_key_90_days_test:
 
         from prowler.providers.aws.services.iam.iam_service import IAM
 
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -130,7 +134,7 @@ class Test_iam_rotate_access_key_90_days_test:
 
         from prowler.providers.aws.services.iam.iam_service import IAM
 
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -171,7 +175,7 @@ class Test_iam_rotate_access_key_90_days_test:
 
         from prowler.providers.aws.services.iam.iam_service import IAM
 
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -225,7 +229,7 @@ class Test_iam_rotate_access_key_90_days_test:
 
         from prowler.providers.aws.services.iam.iam_service import IAM
 
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",

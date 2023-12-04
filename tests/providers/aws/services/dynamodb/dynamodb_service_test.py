@@ -4,13 +4,16 @@ from moto import mock_dax, mock_dynamodb
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.aws.services.dynamodb.dynamodb_service import DAX, DynamoDB
 from prowler.providers.common.models import Audit_Metadata
+from tests.providers.aws.audit_info_utils import (
+    AWS_REGION_EU_WEST_1,
+    set_mocked_aws_audit_info,
+)
 
 AWS_ACCOUNT_NUMBER = "123456789012"
 AWS_REGION = "us-east-1"
 
 
 class Test_DynamoDB_Service:
-    # Mocked Audit Info
     def set_mocked_audit_info(self):
         audit_info = AWS_Audit_Info(
             session_config=None,
@@ -45,7 +48,7 @@ class Test_DynamoDB_Service:
     @mock_dynamodb
     def test_service(self):
         # Dynamo client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         dynamodb = DynamoDB(audit_info)
         assert dynamodb.service == "dynamodb"
 
@@ -53,7 +56,7 @@ class Test_DynamoDB_Service:
     @mock_dynamodb
     def test_client(self):
         # Dynamo client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         dynamodb = DynamoDB(audit_info)
         for regional_client in dynamodb.regional_clients.values():
             assert regional_client.__class__.__name__ == "DynamoDB"
@@ -62,7 +65,7 @@ class Test_DynamoDB_Service:
     @mock_dynamodb
     def test__get_session__(self):
         # Dynamo client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         dynamodb = DynamoDB(audit_info)
         assert dynamodb.session.__class__.__name__ == "Session"
 
@@ -70,7 +73,7 @@ class Test_DynamoDB_Service:
     @mock_dynamodb
     def test_audited_account(self):
         # Dynamo client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         dynamodb = DynamoDB(audit_info)
         assert dynamodb.audited_account == AWS_ACCOUNT_NUMBER
 
@@ -105,7 +108,7 @@ class Test_DynamoDB_Service:
             BillingMode="PAY_PER_REQUEST",
         )
         # DynamoDB client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         dynamo = DynamoDB(audit_info)
         assert len(dynamo.tables) == 2
         assert dynamo.tables[0].name == "test1"
@@ -135,7 +138,7 @@ class Test_DynamoDB_Service:
             ],
         )["TableDescription"]
         # DynamoDB client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         dynamo = DynamoDB(audit_info)
         assert len(dynamo.tables) == 1
         assert dynamo.tables[0].arn == table["TableArn"]
@@ -168,7 +171,7 @@ class Test_DynamoDB_Service:
             PointInTimeRecoverySpecification={"PointInTimeRecoveryEnabled": True},
         )
         # DynamoDB client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         dynamo = DynamoDB(audit_info)
         assert len(dynamo.tables) == 1
         assert dynamo.tables[0].arn == table["TableArn"]
@@ -204,7 +207,7 @@ class Test_DynamoDB_Service:
             ],
         )
         # DAX client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         dax = DAX(audit_info)
         assert len(dax.clusters) == 2
 

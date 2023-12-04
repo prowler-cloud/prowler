@@ -6,6 +6,10 @@ from moto import mock_ecs
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.aws.services.ecs.ecs_service import ECS
 from prowler.providers.common.models import Audit_Metadata
+from tests.providers.aws.audit_info_utils import (
+    AWS_REGION_EU_WEST_1,
+    set_mocked_aws_audit_info,
+)
 
 AWS_ACCOUNT_NUMBER = "123456789012"
 AWS_REGION = "eu-west-1"
@@ -22,7 +26,6 @@ def mock_generate_regional_clients(service, audit_info, _):
     new=mock_generate_regional_clients,
 )
 class Test_ECS_Service:
-    # Mocked Audit Info
     def set_mocked_audit_info(self):
         audit_info = AWS_Audit_Info(
             session_config=None,
@@ -55,20 +58,20 @@ class Test_ECS_Service:
 
     # Test ECS Service
     def test_service(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         ecs = ECS(audit_info)
         assert ecs.service == "ecs"
 
     # Test ECS client
     def test_client(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         ecs = ECS(audit_info)
         for reg_client in ecs.regional_clients.values():
             assert reg_client.__class__.__name__ == "ECS"
 
     # Test ECS session
     def test__get_session__(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         ecs = ECS(audit_info)
         assert ecs.session.__class__.__name__ == "Session"
 
@@ -89,7 +92,7 @@ class Test_ECS_Service:
         )
 
         task_definition = ecs_client.register_task_definition(**definition)
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         ecs = ECS(audit_info)
 
         assert len(ecs.task_definitions) == 1
@@ -126,7 +129,7 @@ class Test_ECS_Service:
         )
 
         task_definition = ecs_client.register_task_definition(**definition)
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         ecs = ECS(audit_info)
 
         assert len(ecs.task_definitions) == 1

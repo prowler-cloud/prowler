@@ -6,6 +6,10 @@ from moto import mock_ec2, mock_eks
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.aws.services.eks.eks_service import EKS
 from prowler.providers.common.models import Audit_Metadata
+from tests.providers.aws.audit_info_utils import (
+    AWS_REGION_EU_WEST_1,
+    set_mocked_aws_audit_info,
+)
 
 AWS_ACCOUNT_NUMBER = "123456789012"
 AWS_REGION = "eu-west-1"
@@ -27,7 +31,6 @@ def mock_generate_regional_clients(service, audit_info, _):
     new=mock_generate_regional_clients,
 )
 class Test_EKS_Service:
-    # Mocked Audit Info
     def set_mocked_audit_info(self):
         audit_info = AWS_Audit_Info(
             session_config=None,
@@ -60,20 +63,20 @@ class Test_EKS_Service:
 
     # Test EKS Service
     def test_service(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         eks = EKS(audit_info)
         assert eks.service == "eks"
 
     # Test EKS client
     def test_client(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         eks = EKS(audit_info)
         for reg_client in eks.regional_clients.values():
             assert reg_client.__class__.__name__ == "EKS"
 
     # Test EKS session
     def test__get_session__(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         eks = EKS(audit_info)
         assert eks.session.__class__.__name__ == "Session"
 
@@ -103,7 +106,7 @@ class Test_EKS_Service:
             roleArn=f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:role/eks-service-role-AWSServiceRoleForAmazonEKS-J7ONKE3BQ4PI",
             tags={"test": "test"},
         )
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         eks = EKS(audit_info)
         assert len(eks.clusters) == 1
         assert eks.clusters[0].name == cluster_name
@@ -157,7 +160,7 @@ class Test_EKS_Service:
                 },
             ],
         )
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         eks = EKS(audit_info)
         assert len(eks.clusters) == 1
         assert eks.clusters[0].name == cluster_name

@@ -9,6 +9,10 @@ from moto.core import DEFAULT_ACCOUNT_ID
 from prowler.providers.aws.lib.audit_info.audit_info import AWS_Audit_Info
 from prowler.providers.aws.services.ssm.ssm_service import SSM, ResourceStatus
 from prowler.providers.common.models import Audit_Metadata
+from tests.providers.aws.audit_info_utils import (
+    AWS_REGION_EU_WEST_1,
+    set_mocked_aws_audit_info,
+)
 
 # Mock Test Region
 AWS_REGION = "eu-west-1"
@@ -132,7 +136,6 @@ mainSteps:
     new=mock_generate_regional_clients,
 )
 class Test_SSM_Service:
-    # Mocked Audit Info
     def set_mocked_audit_info(self):
         audit_info = AWS_Audit_Info(
             session_config=None,
@@ -166,19 +169,19 @@ class Test_SSM_Service:
     # Test SSM Client
     @mock_ssm
     def test__get_client__(self):
-        ssm = SSM(self.set_mocked_audit_info())
+        ssm = SSM(set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1]))
         assert ssm.regional_clients[AWS_REGION].__class__.__name__ == "SSM"
 
     # Test SSM Session
     @mock_ssm
     def test__get_session__(self):
-        ssm = SSM(self.set_mocked_audit_info())
+        ssm = SSM(set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1]))
         assert ssm.session.__class__.__name__ == "Session"
 
     # Test SSM Service
     @mock_ssm
     def test__get_service__(self):
-        ssm = SSM(self.set_mocked_audit_info())
+        ssm = SSM(set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1]))
         assert ssm.service == "ssm"
 
     @mock_ssm
@@ -202,7 +205,7 @@ class Test_SSM_Service:
             AccountIdsToAdd=[DEFAULT_ACCOUNT_ID],
         )
 
-        ssm = SSM(self.set_mocked_audit_info())
+        ssm = SSM(set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1]))
 
         document_arn = f"arn:aws:ssm:{AWS_REGION}:{DEFAULT_ACCOUNT_ID}:document/{ssm_document_name}"
 
@@ -220,7 +223,7 @@ class Test_SSM_Service:
 
     @mock_ssm
     def test__list_resource_compliance_summaries__(self):
-        ssm = SSM(self.set_mocked_audit_info())
+        ssm = SSM(set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1]))
         instance_id = "i-1234567890abcdef0"
         assert len(ssm.compliance_resources) == 1
         assert ssm.compliance_resources

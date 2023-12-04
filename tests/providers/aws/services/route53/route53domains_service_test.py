@@ -7,6 +7,10 @@ from boto3 import session
 from prowler.providers.aws.lib.audit_info.audit_info import AWS_Audit_Info
 from prowler.providers.aws.services.route53.route53_service import Route53Domains
 from prowler.providers.common.models import Audit_Metadata
+from tests.providers.aws.audit_info_utils import (
+    AWS_REGION_EU_WEST_1,
+    set_mocked_aws_audit_info,
+)
 
 # Mock Test Region
 AWS_REGION = "us-east-1"
@@ -71,7 +75,6 @@ def mock_make_api_call(self, operation_name, kwarg):
 # Patch every AWS call using Boto3 and generate_regional_clients to have 1 client
 @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
 class Test_Route53_Service:
-    # Mocked Audit Info
     def set_mocked_audit_info(self):
         audit_info = AWS_Audit_Info(
             session_config=None,
@@ -104,21 +107,29 @@ class Test_Route53_Service:
 
     # Test Route53Domains Client
     def test__get_client__(self):
-        route53domains = Route53Domains(self.set_mocked_audit_info())
+        route53domains = Route53Domains(
+            set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
+        )
         assert route53domains.client.__class__.__name__ == "Route53Domains"
 
     # Test Route53Domains Session
     def test__get_session__(self):
-        route53domains = Route53Domains(self.set_mocked_audit_info())
+        route53domains = Route53Domains(
+            set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
+        )
         assert route53domains.session.__class__.__name__ == "Session"
 
     # Test Route53Domains Service
     def test__get_service__(self):
-        route53domains = Route53Domains(self.set_mocked_audit_info())
+        route53domains = Route53Domains(
+            set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
+        )
         assert route53domains.service == "route53domains"
 
     def test__list_domains__(self):
-        route53domains = Route53Domains(self.set_mocked_audit_info())
+        route53domains = Route53Domains(
+            set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
+        )
         domain_name = "test.domain.com"
         assert len(route53domains.domains)
         assert route53domains.domains

@@ -6,6 +6,10 @@ from moto import mock_neptune
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.aws.services.neptune.neptune_service import Cluster, Neptune
 from prowler.providers.common.models import Audit_Metadata
+from tests.providers.aws.audit_info_utils import (
+    AWS_REGION_EU_WEST_1,
+    set_mocked_aws_audit_info,
+)
 
 AWS_ACCOUNT_NUMBER = "123456789012"
 AWS_ACCOUNT_ARN = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
@@ -80,7 +84,6 @@ def mock_generate_regional_clients(service, audit_info, _):
 # Patch every AWS call using Boto3
 @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
 class Test_Neptune_Service:
-    # Mocked Audit Info
     def set_mocked_audit_info(self):
         audit_info = AWS_Audit_Info(
             session_config=None,
@@ -114,28 +117,28 @@ class Test_Neptune_Service:
     # Test Neptune Service
     @mock_neptune
     def test_service(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         neptune = Neptune(audit_info)
         assert neptune.service == "neptune"
 
     # Test Neptune Client]
     @mock_neptune
     def test_client(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         neptune = Neptune(audit_info)
         assert neptune.client.__class__.__name__ == "Neptune"
 
     # Test Neptune Session
     @mock_neptune
     def test__get_session__(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         neptune = Neptune(audit_info)
         assert neptune.session.__class__.__name__ == "Session"
 
     # Test Neptune Session
     @mock_neptune
     def test_audited_account(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         neptune = Neptune(audit_info)
         assert neptune.audited_account == AWS_ACCOUNT_NUMBER
 
@@ -161,7 +164,7 @@ class Test_Neptune_Service:
         cluster_arn = cluster["DBClusterArn"]
         cluster_id = cluster["DbClusterResourceId"]
 
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         neptune = Neptune(audit_info)
 
         assert len(neptune.clusters) == 1

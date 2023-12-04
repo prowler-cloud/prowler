@@ -5,6 +5,10 @@ from boto3 import session
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.aws.services.ecr.ecr_service import Registry, Repository
 from prowler.providers.common.models import Audit_Metadata
+from tests.providers.aws.audit_info_utils import (
+    AWS_REGION_EU_WEST_1,
+    set_mocked_aws_audit_info,
+)
 
 # Mock Test Region
 AWS_REGION = "eu-west-1"
@@ -27,7 +31,6 @@ repo_policy_public = {
 
 
 class Test_ecr_repositories_scan_images_on_push_enabled:
-    # Mocked Audit Info
     def set_mocked_audit_info(self):
         audit_info = AWS_Audit_Info(
             session_config=None,
@@ -64,7 +67,7 @@ class Test_ecr_repositories_scan_images_on_push_enabled:
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            self.set_mocked_audit_info(),
+            set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1]),
         ), mock.patch(
             "prowler.providers.aws.services.ecr.ecr_repositories_scan_images_on_push_enabled.ecr_repositories_scan_images_on_push_enabled.ecr_client",
             ecr_client,
@@ -90,7 +93,7 @@ class Test_ecr_repositories_scan_images_on_push_enabled:
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            self.set_mocked_audit_info(),
+            set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1]),
         ), mock.patch(
             "prowler.providers.aws.services.ecr.ecr_repositories_scan_images_on_push_enabled.ecr_repositories_scan_images_on_push_enabled.ecr_client",
             ecr_client,
@@ -126,7 +129,7 @@ class Test_ecr_repositories_scan_images_on_push_enabled:
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            self.set_mocked_audit_info(),
+            set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1]),
         ), mock.patch(
             "prowler.providers.aws.services.ecr.ecr_repositories_scan_images_on_push_enabled.ecr_repositories_scan_images_on_push_enabled.ecr_client",
             ecr_client,
@@ -169,7 +172,7 @@ class Test_ecr_repositories_scan_images_on_push_enabled:
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            self.set_mocked_audit_info(),
+            set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1]),
         ), mock.patch(
             "prowler.providers.aws.services.ecr.ecr_repositories_scan_images_on_push_enabled.ecr_repositories_scan_images_on_push_enabled.ecr_client",
             ecr_client,

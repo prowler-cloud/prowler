@@ -5,6 +5,10 @@ from moto import mock_ec2
 
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.common.models import Audit_Metadata
+from tests.providers.aws.audit_info_utils import (
+    AWS_REGION_EU_WEST_1,
+    set_mocked_aws_audit_info,
+)
 
 AWS_REGION = "us-east-1"
 AWS_ACCOUNT_NUMBER = "123456789012"
@@ -45,7 +49,7 @@ class Test_vpc_flow_logs_enabled:
     def test_vpc_only_default_vpcs(self):
         from prowler.providers.aws.services.vpc.vpc_service import VPC
 
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -94,7 +98,7 @@ class Test_vpc_flow_logs_enabled:
             + ":role/test-role",
         )
 
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -129,7 +133,7 @@ class Test_vpc_flow_logs_enabled:
 
         vpc = ec2_client.create_vpc(CidrBlock="10.0.0.0/16")["Vpc"]
 
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -165,7 +169,7 @@ class Test_vpc_flow_logs_enabled:
 
         ec2_client.create_vpc(CidrBlock="10.0.0.0/16")["Vpc"]
 
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         current_audit_info.ignore_unused_services = True
 
         with mock.patch(
@@ -195,7 +199,7 @@ class Test_vpc_flow_logs_enabled:
         vpc = ec2.create_vpc(CidrBlock="10.0.0.0/16")
         subnet = ec2.create_subnet(VpcId=vpc.id, CidrBlock="10.0.0.0/18")
         ec2.create_network_interface(SubnetId=subnet.id)
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         current_audit_info.ignore_unused_services = True
 
         with mock.patch(

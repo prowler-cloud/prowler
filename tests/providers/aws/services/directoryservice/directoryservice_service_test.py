@@ -2,11 +2,9 @@ from datetime import datetime
 from unittest.mock import patch
 
 import botocore
-from boto3 import session
 from moto import mock_ds
 from moto.core import DEFAULT_ACCOUNT_ID
 
-from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.aws.services.directoryservice.directoryservice_service import (
     AuthenticationProtocol,
     CertificateState,
@@ -16,7 +14,10 @@ from prowler.providers.aws.services.directoryservice.directoryservice_service im
     EventTopicStatus,
     RadiusStatus,
 )
-from prowler.providers.common.models import Audit_Metadata
+from tests.providers.aws.audit_info_utils import (
+    AWS_REGION_EU_WEST_1,
+    set_mocked_aws_audit_info,
+)
 
 # Mock Test Region
 AWS_REGION = "eu-west-1"
@@ -119,41 +120,12 @@ def mock_generate_regional_clients(service, audit_info, _):
     new=mock_generate_regional_clients,
 )
 class Test_DirectoryService_Service:
-    def set_mocked_audit_info(self):
-        audit_info = AWS_Audit_Info(
-            session_config=None,
-            original_session=None,
-            audit_session=session.Session(
-                profile_name=None,
-                botocore_session=None,
-            ),
-            audited_account=AWS_ACCOUNT_NUMBER,
-            audited_account_arn=f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root",
-            audited_user_id=None,
-            audited_partition="aws",
-            audited_identity_arn=None,
-            profile=None,
-            profile_region=None,
-            credentials=None,
-            assumed_role_info=None,
-            audited_regions=["us-east-1", "eu-west-1"],
-            organizations_metadata=None,
-            audit_resources=None,
-            mfa_enabled=False,
-            audit_metadata=Audit_Metadata(
-                services_scanned=0,
-                expected_checks=[],
-                completed_checks=0,
-                audit_progress=0,
-            ),
-        )
-
-        return audit_info
-
     # Test DirectoryService Client
     @mock_ds
     def test__get_client__(self):
-        directoryservice = DirectoryService(self.set_mocked_audit_info())
+        directoryservice = DirectoryService(
+            set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
+        )
         assert (
             directoryservice.regional_clients[AWS_REGION].__class__.__name__
             == "DirectoryService"
@@ -162,19 +134,25 @@ class Test_DirectoryService_Service:
     # Test DirectoryService Session
     @mock_ds
     def test__get_session__(self):
-        directoryservice = DirectoryService(self.set_mocked_audit_info())
+        directoryservice = DirectoryService(
+            set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
+        )
         assert directoryservice.session.__class__.__name__ == "Session"
 
     # Test DirectoryService Service
     @mock_ds
     def test__get_service__(self):
-        directoryservice = DirectoryService(self.set_mocked_audit_info())
+        directoryservice = DirectoryService(
+            set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
+        )
         assert directoryservice.service == "ds"
 
     @mock_ds
     def test__describe_directories__(self):
         # Set partition for the service
-        directoryservice = DirectoryService(self.set_mocked_audit_info())
+        directoryservice = DirectoryService(
+            set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
+        )
 
         # __describe_directories__
         assert directoryservice.directories["d-12345a1b2"].id == "d-12345a1b2"

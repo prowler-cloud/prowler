@@ -8,6 +8,10 @@ from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.aws.services.elasticache.elasticache_service import Cluster
 from prowler.providers.aws.services.vpc.vpc_service import VpcSubnet
 from prowler.providers.common.models import Audit_Metadata
+from tests.providers.aws.audit_info_utils import (
+    AWS_REGION_EU_WEST_1,
+    set_mocked_aws_audit_info,
+)
 from tests.providers.aws.services.elasticache.elasticache_service_test import (
     AWS_REGION_AZ1,
     AWS_REGION_AZ2,
@@ -72,7 +76,7 @@ class Test_elasticache_cluster_uses_public_subnet:
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=self.set_mocked_audit_info(),
+            new=set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1]),
         ), mock.patch(
             "prowler.providers.aws.services.elasticache.elasticache_service.ElastiCache",
             new=elasticache_service,
@@ -140,7 +144,7 @@ class Test_elasticache_cluster_uses_public_subnet:
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=self.set_mocked_audit_info(),
+            new=set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1]),
         ), mock.patch(
             "prowler.providers.aws.services.elasticache.elasticache_service.ElastiCache",
             new=elasticache_service,
@@ -217,7 +221,7 @@ class Test_elasticache_cluster_uses_public_subnet:
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=self.set_mocked_audit_info(),
+            new=set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1]),
         ), mock.patch(
             "prowler.providers.aws.services.elasticache.elasticache_service.ElastiCache",
             new=elasticache_service,

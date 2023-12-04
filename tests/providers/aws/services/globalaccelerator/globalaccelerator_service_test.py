@@ -8,6 +8,10 @@ from prowler.providers.aws.services.globalaccelerator.globalaccelerator_service 
     GlobalAccelerator,
 )
 from prowler.providers.common.models import Audit_Metadata
+from tests.providers.aws.audit_info_utils import (
+    AWS_REGION_EU_WEST_1,
+    set_mocked_aws_audit_info,
+)
 
 # Mock Test Region
 AWS_REGION = "us-west-2"
@@ -50,7 +54,6 @@ def mock_make_api_call(self, operation_name, kwarg):
 # Patch every AWS call using Boto3 and generate_regional_clients to have 1 client
 @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
 class Test_GlobalAccelerator_Service:
-    # Mocked Audit Info
     def set_mocked_audit_info(self):
         audit_info = AWS_Audit_Info(
             session_config=None,
@@ -84,27 +87,27 @@ class Test_GlobalAccelerator_Service:
     # Test GlobalAccelerator Service
     def test_service(self):
         # GlobalAccelerator client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         globalaccelerator = GlobalAccelerator(audit_info)
         assert globalaccelerator.service == "globalaccelerator"
 
     # Test GlobalAccelerator Client
     def test_client(self):
         # GlobalAccelerator client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         globalaccelerator = GlobalAccelerator(audit_info)
         assert globalaccelerator.client.__class__.__name__ == "GlobalAccelerator"
 
     # Test GlobalAccelerator Session
     def test__get_session__(self):
         # GlobalAccelerator client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         globalaccelerator = GlobalAccelerator(audit_info)
         assert globalaccelerator.session.__class__.__name__ == "Session"
 
     def test__list_accelerators__(self):
         # GlobalAccelerator client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         globalaccelerator = GlobalAccelerator(audit_info)
 
         accelerator_name = "TestAccelerator"
