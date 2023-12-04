@@ -1,54 +1,25 @@
 from unittest import mock
 
-from boto3 import client, session
+from boto3 import client
 from moto import mock_apigateway, mock_wafv2
 
-from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
-from prowler.providers.common.models import Audit_Metadata
-
-AWS_REGION = "us-east-1"
-AWS_ACCOUNT_NUMBER = "123456789012"
+from tests.providers.aws.audit_info_utils import (
+    AWS_REGION_EU_WEST_1,
+    AWS_REGION_US_EAST_1,
+    set_mocked_aws_audit_info,
+)
 
 
 class Test_apigateway_restapi_waf_acl_attached:
-    def set_mocked_audit_info(self):
-        audit_info = AWS_Audit_Info(
-            session_config=None,
-            original_session=None,
-            audit_session=session.Session(
-                profile_name=None,
-                botocore_session=None,
-            ),
-            audited_account=AWS_ACCOUNT_NUMBER,
-            audited_account_arn=f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root",
-            audited_user_id=None,
-            audited_partition="aws",
-            audited_identity_arn=None,
-            profile=None,
-            profile_region=None,
-            credentials=None,
-            assumed_role_info=None,
-            audited_regions=["us-east-1", "eu-west-1"],
-            organizations_metadata=None,
-            audit_resources=None,
-            mfa_enabled=False,
-            audit_metadata=Audit_Metadata(
-                services_scanned=0,
-                expected_checks=[],
-                completed_checks=0,
-                audit_progress=0,
-            ),
-        )
-
-        return audit_info
-
     @mock_apigateway
     def test_apigateway_no_rest_apis(self):
         from prowler.providers.aws.services.apigateway.apigateway_service import (
             APIGateway,
         )
 
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = current_audit_info = set_mocked_aws_audit_info(
+            [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
+        )
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -71,8 +42,8 @@ class Test_apigateway_restapi_waf_acl_attached:
     @mock_wafv2
     def test_apigateway_one_rest_api_with_waf(self):
         # Create APIGateway Mocked Resources
-        apigateway_client = client("apigateway", region_name=AWS_REGION)
-        waf_client = client("wafv2", region_name=AWS_REGION)
+        apigateway_client = client("apigateway", region_name=AWS_REGION_US_EAST_1)
+        waf_client = client("wafv2", region_name=AWS_REGION_US_EAST_1)
         rest_api = apigateway_client.create_rest_api(
             name="test-rest-api",
         )
@@ -122,7 +93,9 @@ class Test_apigateway_restapi_waf_acl_attached:
             APIGateway,
         )
 
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = current_audit_info = set_mocked_aws_audit_info(
+            [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
+        )
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -148,15 +121,15 @@ class Test_apigateway_restapi_waf_acl_attached:
             assert result[0].resource_id == "test-rest-api"
             assert (
                 result[0].resource_arn
-                == f"arn:{current_audit_info.audited_partition}:apigateway:{AWS_REGION}::/restapis/{rest_api['id']}/stages/test"
+                == f"arn:{current_audit_info.audited_partition}:apigateway:{AWS_REGION_US_EAST_1}::/restapis/{rest_api['id']}/stages/test"
             )
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_tags == [None]
 
     @mock_apigateway
     def test_apigateway_one_rest_api_without_waf(self):
         # Create APIGateway Mocked Resources
-        apigateway_client = client("apigateway", region_name=AWS_REGION)
+        apigateway_client = client("apigateway", region_name=AWS_REGION_US_EAST_1)
         # Create APIGateway Rest API
         rest_api = apigateway_client.create_rest_api(
             name="test-rest-api",
@@ -193,7 +166,9 @@ class Test_apigateway_restapi_waf_acl_attached:
             APIGateway,
         )
 
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = current_audit_info = set_mocked_aws_audit_info(
+            [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
+        )
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -219,7 +194,7 @@ class Test_apigateway_restapi_waf_acl_attached:
             assert result[0].resource_id == "test-rest-api"
             assert (
                 result[0].resource_arn
-                == f"arn:{current_audit_info.audited_partition}:apigateway:{AWS_REGION}::/restapis/{rest_api['id']}/stages/test"
+                == f"arn:{current_audit_info.audited_partition}:apigateway:{AWS_REGION_US_EAST_1}::/restapis/{rest_api['id']}/stages/test"
             )
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_tags == [None]
