@@ -173,6 +173,7 @@ def generate_regional_clients(
             )
             regional_client.region = region
             regional_clients[region] = regional_client
+
         return regional_clients
     except Exception as error:
         logger.error(
@@ -190,9 +191,8 @@ def get_aws_enabled_regions(
     ec2_client = audit_info.audit_session.client("ec2", region_name=default_region)
 
     enabled_regions = set()
-    for region in ec2_client.describe_regions(RegionNames=list(service_regions)).get(
-        "Regions", []
-    ):
+    # With AllRegions=False we only get the enabled regions for the account
+    for region in ec2_client.describe_regions(AllRegions=False).get("Regions", []):
         enabled_regions.add(region.get("RegionName"))
 
     return service_regions.intersection(enabled_regions)
