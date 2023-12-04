@@ -17,6 +17,7 @@ def set_mocked_aws_audit_info(
     audited_regions: [str] = [],
     audited_account: str = AWS_ACCOUNT_NUMBER,
     audited_account_arn: str = AWS_ACCOUNT_ARN,
+    expected_checks: [str] = [],
 ):
     audit_info = AWS_Audit_Info(
         session_config=None,
@@ -40,7 +41,7 @@ def set_mocked_aws_audit_info(
         mfa_enabled=False,
         audit_metadata=Audit_Metadata(
             services_scanned=0,
-            expected_checks=[],
+            expected_checks=expected_checks,
             completed_checks=0,
             audit_progress=0,
         ),
