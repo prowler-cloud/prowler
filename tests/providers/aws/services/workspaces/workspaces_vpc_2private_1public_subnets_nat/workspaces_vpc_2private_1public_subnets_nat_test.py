@@ -1,16 +1,15 @@
 from unittest import mock
 from uuid import uuid4
 
-from boto3 import client, session
+from boto3 import client
 from moto import mock_ec2
 
-from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.aws.services.vpc.vpc_service import VPC
 from prowler.providers.aws.services.workspaces.workspaces_service import WorkSpace
-from prowler.providers.common.models import Audit_Metadata
 from tests.providers.aws.audit_info_utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_WEST_1,
+    set_mocked_aws_audit_info,
 )
 
 WORKSPACE_ID = str(uuid4())
@@ -18,37 +17,6 @@ WORKSPACE_ARN = f"arn:aws:workspaces:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}
 
 
 class Test_workspaces_vpc_2private_1public_subnets_nat:
-    def set_mocked_audit_info(self):
-        audit_info = AWS_Audit_Info(
-            session_config=None,
-            original_session=None,
-            audit_session=session.Session(
-                profile_name=None,
-                botocore_session=None,
-            ),
-            audited_account=AWS_ACCOUNT_NUMBER,
-            audited_account_arn=f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root",
-            audited_user_id=None,
-            audited_partition="aws",
-            audited_identity_arn=None,
-            profile=None,
-            profile_region=None,
-            credentials=None,
-            assumed_role_info=None,
-            audited_regions=["us-east-1", "eu-west-1"],
-            organizations_metadata=None,
-            audit_resources=None,
-            mfa_enabled=False,
-            audit_metadata=Audit_Metadata(
-                services_scanned=0,
-                expected_checks=[],
-                completed_checks=0,
-                audit_progress=0,
-            ),
-        )
-
-        return audit_info
-
     def test_no_workspaces(self):
         workspaces_client = mock.MagicMock
         workspaces_client.workspaces = []
@@ -84,7 +52,7 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
             )
         )
 
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -152,7 +120,7 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
             )
         )
 
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -237,7 +205,7 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
             )
         )
 
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -341,7 +309,7 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
             )
         )
 
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -453,7 +421,7 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
             )
         )
 
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
