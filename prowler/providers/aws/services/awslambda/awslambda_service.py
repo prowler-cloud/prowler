@@ -70,7 +70,7 @@ class Lambda(AWSService):
                 f" {error}"
             )
 
-    def __get_function_code__(self, function):
+    def __get_function_code__(self):
         logger.info("Lambda - Getting Function Code...")
         try:
             for function in self.functions.values():
