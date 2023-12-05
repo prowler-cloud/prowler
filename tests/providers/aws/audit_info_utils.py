@@ -4,6 +4,8 @@ from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.common.models import Audit_Metadata
 
 AWS_REGION_US_EAST_1 = "us-east-1"
+AWS_REGION_US_EAST_1_AZA = "us-east-1a"
+AWS_REGION_US_EAST_1_AZB = "us-east-1b"
 AWS_REGION_EU_WEST_1 = "eu-west-1"
 AWS_REGION_EU_WEST_1_AZA = "eu-west-1a"
 AWS_REGION_EU_WEST_1_AZB = "eu-west-1b"
