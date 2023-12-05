@@ -1,56 +1,23 @@
 from re import search
 from unittest import mock
 
-from boto3 import client, resource, session
+from boto3 import client, resource
 from moto import mock_ec2, mock_route53
-from moto.core import DEFAULT_ACCOUNT_ID
 
-from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
-from prowler.providers.common.models import Audit_Metadata
-
-AWS_REGION = "us-east-1"
+from tests.providers.aws.audit_info_utils import (
+    AWS_REGION_US_EAST_1,
+    set_mocked_aws_audit_info,
+)
 
 
 class Test_route53_dangling_ip_subdomain_takeover:
-    # Mocked Audit Info
-    def set_mocked_audit_info(self):
-        audit_info = AWS_Audit_Info(
-            session_config=None,
-            original_session=None,
-            audit_session=session.Session(
-                profile_name=None,
-                botocore_session=None,
-                region_name=AWS_REGION,
-            ),
-            audited_account=DEFAULT_ACCOUNT_ID,
-            audited_account_arn=f"arn:aws:iam::{DEFAULT_ACCOUNT_ID}:root",
-            audited_user_id=None,
-            audited_partition="aws",
-            audited_identity_arn=None,
-            profile=None,
-            profile_region=None,
-            credentials=None,
-            assumed_role_info=None,
-            audited_regions=[AWS_REGION],
-            organizations_metadata=None,
-            audit_resources=None,
-            mfa_enabled=False,
-            audit_metadata=Audit_Metadata(
-                services_scanned=0,
-                expected_checks=[],
-                completed_checks=0,
-                audit_progress=0,
-            ),
-        )
-        return audit_info
-
     @mock_ec2
     @mock_route53
     def test_no_hosted_zones(self):
         from prowler.providers.aws.services.ec2.ec2_service import EC2
         from prowler.providers.aws.services.route53.route53_service import Route53
 
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -77,7 +44,7 @@ class Test_route53_dangling_ip_subdomain_takeover:
     @mock_ec2
     @mock_route53
     def test_hosted_zone_no_records(self):
-        conn = client("route53", region_name=AWS_REGION)
+        conn = client("route53", region_name=AWS_REGION_US_EAST_1)
 
         conn.create_hosted_zone(
             Name="testdns.aws.com.", CallerReference=str(hash("foo"))
@@ -86,7 +53,7 @@ class Test_route53_dangling_ip_subdomain_takeover:
         from prowler.providers.aws.services.ec2.ec2_service import EC2
         from prowler.providers.aws.services.route53.route53_service import Route53
 
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -113,7 +80,7 @@ class Test_route53_dangling_ip_subdomain_takeover:
     @mock_ec2
     @mock_route53
     def test_hosted_zone_private_record(self):
-        conn = client("route53", region_name=AWS_REGION)
+        conn = client("route53", region_name=AWS_REGION_US_EAST_1)
 
         zone_id = conn.create_hosted_zone(
             Name="testdns.aws.com.", CallerReference=str(hash("foo"))
@@ -137,7 +104,7 @@ class Test_route53_dangling_ip_subdomain_takeover:
         from prowler.providers.aws.services.ec2.ec2_service import EC2
         from prowler.providers.aws.services.route53.route53_service import Route53
 
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -177,7 +144,7 @@ class Test_route53_dangling_ip_subdomain_takeover:
     @mock_ec2
     @mock_route53
     def test_hosted_zone_external_record(self):
-        conn = client("route53", region_name=AWS_REGION)
+        conn = client("route53", region_name=AWS_REGION_US_EAST_1)
 
         zone_id = conn.create_hosted_zone(
             Name="testdns.aws.com.", CallerReference=str(hash("foo"))
@@ -201,7 +168,7 @@ class Test_route53_dangling_ip_subdomain_takeover:
         from prowler.providers.aws.services.ec2.ec2_service import EC2
         from prowler.providers.aws.services.route53.route53_service import Route53
 
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -241,7 +208,7 @@ class Test_route53_dangling_ip_subdomain_takeover:
     @mock_ec2
     @mock_route53
     def test_hosted_zone_dangling_public_record(self):
-        conn = client("route53", region_name=AWS_REGION)
+        conn = client("route53", region_name=AWS_REGION_US_EAST_1)
 
         zone_id = conn.create_hosted_zone(
             Name="testdns.aws.com.", CallerReference=str(hash("foo"))
@@ -265,7 +232,7 @@ class Test_route53_dangling_ip_subdomain_takeover:
         from prowler.providers.aws.services.ec2.ec2_service import EC2
         from prowler.providers.aws.services.route53.route53_service import Route53
 
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -305,8 +272,8 @@ class Test_route53_dangling_ip_subdomain_takeover:
     @mock_ec2
     @mock_route53
     def test_hosted_zone_eip_record(self):
-        conn = client("route53", region_name=AWS_REGION)
-        ec2 = client("ec2", region_name=AWS_REGION)
+        conn = client("route53", region_name=AWS_REGION_US_EAST_1)
+        ec2 = client("ec2", region_name=AWS_REGION_US_EAST_1)
 
         ec2.allocate_address(Domain="vpc", Address="17.5.7.3")
 
@@ -332,7 +299,7 @@ class Test_route53_dangling_ip_subdomain_takeover:
         from prowler.providers.aws.services.ec2.ec2_service import EC2
         from prowler.providers.aws.services.route53.route53_service import Route53
 
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -372,9 +339,9 @@ class Test_route53_dangling_ip_subdomain_takeover:
     @mock_ec2
     @mock_route53
     def test_hosted_zone_eni_record(self):
-        conn = client("route53", region_name=AWS_REGION)
-        ec2 = resource("ec2", region_name=AWS_REGION)
-        ec2_client = client("ec2", region_name=AWS_REGION)
+        conn = client("route53", region_name=AWS_REGION_US_EAST_1)
+        ec2 = resource("ec2", region_name=AWS_REGION_US_EAST_1)
+        ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
         vpc = ec2.create_vpc(CidrBlock="10.0.0.0/16")
         subnet = ec2.create_subnet(VpcId=vpc.id, CidrBlock="10.0.0.0/18")
         eni_id = ec2.create_network_interface(SubnetId=subnet.id).id
@@ -405,7 +372,7 @@ class Test_route53_dangling_ip_subdomain_takeover:
         from prowler.providers.aws.services.ec2.ec2_service import EC2
         from prowler.providers.aws.services.route53.route53_service import Route53
 
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
