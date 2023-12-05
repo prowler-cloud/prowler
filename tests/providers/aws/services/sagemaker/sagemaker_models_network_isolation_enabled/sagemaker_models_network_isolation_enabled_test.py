@@ -3,12 +3,13 @@ from unittest import mock
 from uuid import uuid4
 
 from prowler.providers.aws.services.sagemaker.sagemaker_service import Model
-
-AWS_REGION = "eu-west-1"
-AWS_ACCOUNT_NUMBER = "123456789012"
+from tests.providers.aws.audit_info_utils import (
+    AWS_ACCOUNT_NUMBER,
+    AWS_REGION_EU_WEST_1,
+)
 
 test_notebook_instance = "test-notebook-instance"
-notebook_instance_arn = f"arn:aws:sagemaker:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:notebook-instance/{test_notebook_instance}"
+notebook_instance_arn = f"arn:aws:sagemaker:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:notebook-instance/{test_notebook_instance}"
 subnet_id = "subnet-" + str(uuid4())
 
 
@@ -35,7 +36,7 @@ class Test_sagemaker_models_network_isolation_enabled:
             Model(
                 name=test_notebook_instance,
                 arn=notebook_instance_arn,
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
                 network_isolation=True,
             )
         )
@@ -62,7 +63,7 @@ class Test_sagemaker_models_network_isolation_enabled:
             Model(
                 name=test_notebook_instance,
                 arn=notebook_instance_arn,
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
                 network_isolation=False,
             )
         )

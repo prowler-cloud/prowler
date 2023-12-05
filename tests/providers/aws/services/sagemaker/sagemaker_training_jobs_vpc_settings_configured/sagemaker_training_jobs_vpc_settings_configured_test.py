@@ -3,12 +3,13 @@ from unittest import mock
 from uuid import uuid4
 
 from prowler.providers.aws.services.sagemaker.sagemaker_service import TrainingJob
-
-AWS_REGION = "eu-west-1"
-AWS_ACCOUNT_NUMBER = "123456789012"
+from tests.providers.aws.audit_info_utils import (
+    AWS_ACCOUNT_NUMBER,
+    AWS_REGION_EU_WEST_1,
+)
 
 test_training_job = "test-training-job"
-training_job_arn = f"arn:aws:sagemaker:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:training-job/{test_training_job}"
+training_job_arn = f"arn:aws:sagemaker:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:training-job/{test_training_job}"
 subnet_id = "subnet-" + str(uuid4())
 
 
@@ -35,7 +36,7 @@ class Test_sagemaker_training_jobs_vpc_settings_configured:
             TrainingJob(
                 name=test_training_job,
                 arn=training_job_arn,
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
                 vpc_config_subnets=[subnet_id],
             )
         )
@@ -65,7 +66,7 @@ class Test_sagemaker_training_jobs_vpc_settings_configured:
             TrainingJob(
                 name=test_training_job,
                 arn=training_job_arn,
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
             )
         )
         with mock.patch(
