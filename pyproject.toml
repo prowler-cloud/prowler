@@ -40,7 +40,7 @@ colorama = "0.4.6"
 detect-secrets = "1.4.0"
 google-api-python-client = "2.109.0"
 google-auth-httplib2 = "^0.1.0"
-jsonschema = "4.18.0"
+jsonschema = "4.20.0"
 mkdocs = {version = "1.5.3", optional = true}
 mkdocs-material = {version = "9.4.14", optional = true}
 msgraph-core = "0.2.2"
