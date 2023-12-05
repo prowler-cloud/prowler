@@ -5,8 +5,8 @@ from moto import mock_ec2, mock_elb
 
 from tests.providers.aws.audit_info_utils import (
     AWS_REGION_EU_WEST_1,
+    AWS_REGION_EU_WEST_1_AZA,
     AWS_REGION_US_EAST_1,
-    AWS_REGION_US_EAST_1_AZA,
     set_mocked_aws_audit_info,
 )
 
@@ -57,7 +57,7 @@ class Test_elb_ssl_listeners:
                 {"Protocol": "tcp", "LoadBalancerPort": 80, "InstancePort": 8080},
                 {"Protocol": "http", "LoadBalancerPort": 81, "InstancePort": 9000},
             ],
-            AvailabilityZones=[AWS_REGION_US_EAST_1_AZA],
+            AvailabilityZones=[AWS_REGION_EU_WEST_1_AZA],
             Scheme="internal",
             SecurityGroups=[security_group.id],
         )
@@ -101,7 +101,7 @@ class Test_elb_ssl_listeners:
             Listeners=[
                 {"Protocol": "https", "LoadBalancerPort": 443, "InstancePort": 9000},
             ],
-            AvailabilityZones=[AWS_REGION_US_EAST_1_AZA],
+            AvailabilityZones=[AWS_REGION_EU_WEST_1_AZA],
             Scheme="internal",
             SecurityGroups=[security_group.id],
         )
