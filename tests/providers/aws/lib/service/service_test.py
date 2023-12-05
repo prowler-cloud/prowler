@@ -43,3 +43,20 @@ class Test_AWSService:
         )
         assert service.region == AWS_REGION_US_EAST_1
         assert service.client.__class__.__name__ == service_name.upper()
+
+    def test_AWSService_init_global_service(self):
+        service_name = "cloudfront"
+        audit_info = set_mocked_aws_audit_info()
+        service = AWSService(service_name, audit_info, global_service=True)
+
+        assert service.audit_info == audit_info
+        assert service.audited_account == AWS_ACCOUNT_NUMBER
+        assert service.audited_account_arn == AWS_ACCOUNT_ARN
+        assert service.audited_partition == AWS_COMMERCIAL_PARTITION
+        assert service.audit_resources == []
+        assert service.audited_checks == []
+        assert service.session == audit_info.audit_session
+        assert service.service == service_name
+        assert not hasattr(service, "regional_clients")
+        assert service.region == AWS_REGION_US_EAST_1
+        assert service.client.__class__.__name__ == "CloudFront"
