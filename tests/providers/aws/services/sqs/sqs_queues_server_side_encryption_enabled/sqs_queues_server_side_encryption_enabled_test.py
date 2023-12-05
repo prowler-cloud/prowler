@@ -3,16 +3,17 @@ from unittest import mock
 from uuid import uuid4
 
 from prowler.providers.aws.services.sqs.sqs_service import Queue
-
-AWS_REGION = "eu-west-1"
-AWS_ACCOUNT_NUMBER = "123456789012"
+from tests.providers.aws.audit_info_utils import (
+    AWS_ACCOUNT_NUMBER,
+    AWS_REGION_EU_WEST_1,
+)
 
 test_kms_key_id = str(uuid4())
 test_queue_name = str(uuid4())
-test_queue_url = (
-    f"https://sqs.{AWS_REGION}.amazonaws.com/{AWS_ACCOUNT_NUMBER}/{test_queue_name}"
+test_queue_url = f"https://sqs.{AWS_REGION_EU_WEST_1}.amazonaws.com/{AWS_ACCOUNT_NUMBER}/{test_queue_name}"
+test_queue_arn = (
+    f"arn:aws:sqs:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:{test_queue_name}"
 )
-test_queue_arn = f"arn:aws:sqs:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:{test_queue_name}"
 
 
 class Test_sqs_queues_server_side_encryption_enabled:
@@ -38,7 +39,7 @@ class Test_sqs_queues_server_side_encryption_enabled:
             Queue(
                 id=test_queue_url,
                 name=test_queue_name,
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
                 kms_key_id=test_kms_key_id,
                 arn=test_queue_arn,
             )
@@ -66,7 +67,7 @@ class Test_sqs_queues_server_side_encryption_enabled:
             Queue(
                 id=test_queue_url,
                 name=test_queue_name,
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
                 arn=test_queue_arn,
             )
         )
