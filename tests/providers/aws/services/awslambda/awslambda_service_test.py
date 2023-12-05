@@ -46,7 +46,7 @@ def mock_request_get(_):
 
 
 # Mock generate_regional_clients()
-def mock_generate_regional_clients(service, audit_info, _):
+def mock_generate_regional_clients(service, audit_info):
     regional_client_eu_west_1 = audit_info.audit_session.client(
         service, region_name=AWS_REGION_EU_WEST_1
     )

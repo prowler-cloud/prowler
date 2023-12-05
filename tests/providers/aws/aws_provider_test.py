@@ -459,44 +459,6 @@ class Test_AWS_Provider:
 
         assert set(generate_regional_clients_response.keys()) == set(audited_regions)
 
-    def test_generate_regional_clients_global_service(self):
-        # New Boto3 session with the previously create user
-        session = boto3.session.Session(
-            region_name=AWS_REGION,
-        )
-        audited_regions = ["eu-west-1", AWS_REGION]
-        profile_region = AWS_REGION
-        # Fulfil the input session object for Prowler
-        audit_info = AWS_Audit_Info(
-            session_config=None,
-            original_session=None,
-            audit_session=session,
-            audited_account=None,
-            audited_account_arn=None,
-            audited_partition="aws",
-            audited_identity_arn=None,
-            audited_user_id=None,
-            profile=None,
-            profile_region=profile_region,
-            credentials=None,
-            assumed_role_info=None,
-            audited_regions=audited_regions,
-            organizations_metadata=None,
-            audit_resources=None,
-            mfa_enabled=False,
-            audit_metadata=Audit_Metadata(
-                services_scanned=0,
-                expected_checks=[],
-                completed_checks=0,
-                audit_progress=0,
-            ),
-        )
-        generate_regional_clients_response = generate_regional_clients(
-            "route53", audit_info, global_service=True
-        )
-
-        assert list(generate_regional_clients_response.keys()) == [profile_region]
-
     def test_generate_regional_clients_cn_partition(self):
         # New Boto3 session with the previously create user
         session = boto3.session.Session(
@@ -529,7 +491,7 @@ class Test_AWS_Provider:
             ),
         )
         generate_regional_clients_response = generate_regional_clients(
-            "shield", audit_info, global_service=True
+            "shield", audit_info
         )
 
         # Shield does not exist in China

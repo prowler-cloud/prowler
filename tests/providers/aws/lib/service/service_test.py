@@ -11,7 +11,7 @@ AWS_PARTITION = "aws"
 AWS_REGION = "us-east-1"
 
 
-def mock_generate_regional_clients(service, audit_info, _):
+def mock_generate_regional_clients(service, audit_info):
     regional_client = audit_info.audit_session.client(service, region_name=AWS_REGION)
     regional_client.region = AWS_REGION
     return {AWS_REGION: regional_client}

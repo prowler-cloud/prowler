@@ -44,7 +44,7 @@ def mock_make_api_call(self, operation_name, kwarg):
 
 
 # Mock generate_regional_clients()
-def mock_generate_regional_clients(service, audit_info, _):
+def mock_generate_regional_clients(service, audit_info):
     regional_client = audit_info.audit_session.client(
         service, region_name=AWS_REGION_EU_WEST_1
     )
@@ -59,7 +59,6 @@ def mock_generate_regional_clients(service, audit_info, _):
     new=mock_generate_regional_clients,
 )
 class Test_SecurityHub_Service:
-
     # Test SecurityHub Client
     def test__get_client__(self):
         security_hub = SecurityHub(set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1]))
