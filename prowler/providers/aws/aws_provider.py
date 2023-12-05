@@ -298,7 +298,6 @@ def get_available_aws_service_regions(service: str, audit_info: AWS_Audit_Info) 
     actual_directory = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))
     with open_file(f"{actual_directory}/{aws_services_json_file}") as f:
         data = parse_json_file(f)
-    # Check if it is a subservice
     json_regions = set(
         data["services"][service]["regions"][audit_info.audited_partition]
     )
