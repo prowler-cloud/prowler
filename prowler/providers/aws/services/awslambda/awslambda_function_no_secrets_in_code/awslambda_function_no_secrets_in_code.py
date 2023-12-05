@@ -11,8 +11,8 @@ from prowler.providers.aws.services.awslambda.awslambda_client import awslambda_
 class awslambda_function_no_secrets_in_code(Check):
     def execute(self):
         findings = []
-        for function in awslambda_client.functions.values():
-            if function.code:
+        for function, function_code in awslambda_client.__get_function_code__():
+            if function_code:
                 report = Check_Report_AWS(self.metadata())
                 report.region = function.region
                 report.resource_id = function.name
@@ -24,7 +24,7 @@ class awslambda_function_no_secrets_in_code(Check):
                     f"No secrets found in Lambda function {function.name} code."
                 )
                 with tempfile.TemporaryDirectory() as tmp_dir_name:
-                    function.code.code_zip.extractall(tmp_dir_name)
+                    function_code.code_zip.extractall(tmp_dir_name)
                     # List all files
                     files_in_zip = next(os.walk(tmp_dir_name))[2]
                     secrets_findings = []

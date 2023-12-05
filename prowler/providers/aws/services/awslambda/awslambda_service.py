@@ -70,21 +70,22 @@ class Lambda(AWSService):
                 f" {error}"
             )
 
-    def __get_function__(self, regional_client):
-        logger.info("Lambda - Getting Function...")
+    def __get_function_code__(self, function):
+        logger.info("Lambda - Getting Function Code...")
         try:
             for function in self.functions.values():
-                if function.region == regional_client.region:
-                    function_information = regional_client.get_function(
-                        FunctionName=function.name
+                regional_client = self.regional_clients[function.region]
+                function_information = regional_client.get_function(
+                    FunctionName=function.name
+                )
+                if "Location" in function_information["Code"]:
+                    code_location_uri = function_information["Code"]["Location"]
+                    raw_code_zip = requests.get(code_location_uri).content
+                    function_code = LambdaCode(
+                        location=code_location_uri,
+                        code_zip=zipfile.ZipFile(io.BytesIO(raw_code_zip)),
                     )
-                    if "Location" in function_information["Code"]:
-                        code_location_uri = function_information["Code"]["Location"]
-                        raw_code_zip = requests.get(code_location_uri).content
-                        self.functions[function.arn].code = LambdaCode(
-                            location=code_location_uri,
-                            code_zip=zipfile.ZipFile(io.BytesIO(raw_code_zip)),
-                        )
+                    yield function, function_code
 
         except Exception as error:
             logger.error(
@@ -92,7 +93,7 @@ class Lambda(AWSService):
                 f" {error.__class__.__name__}[{error.__traceback__.tb_lineno}]:"
                 f" {error}"
             )
-
+            
     def __get_policy__(self, regional_client):
         logger.info("Lambda - Getting Policy...")
         try:
