@@ -3,10 +3,10 @@ from unittest import mock
 from boto3 import client
 from mock import patch
 from moto import mock_cloudtrail, mock_s3
-from moto.core import DEFAULT_ACCOUNT_ID
 
 from prowler.providers.aws.services.awslambda.awslambda_service import Function
 from tests.providers.aws.audit_info_utils import (
+    AWS_ACCOUNT_NUMBER,
     AWS_REGION_US_EAST_1,
     set_mocked_aws_audit_info,
 )
@@ -65,7 +65,7 @@ class Test_awslambda_function_invoke_api_operations_cloudtrail_logging_enabled:
         lambda_client = mock.MagicMock
         function_name = "test-lambda"
         function_runtime = "python3.9"
-        function_arn = f"arn:aws:lambda:{AWS_REGION_US_EAST_1}:{DEFAULT_ACCOUNT_ID}:function/{function_name}"
+        function_arn = f"arn:aws:lambda:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:function/{function_name}"
         lambda_client.functions = {
             function_name: Function(
                 name=function_name,
@@ -128,7 +128,7 @@ class Test_awslambda_function_invoke_api_operations_cloudtrail_logging_enabled:
         lambda_client = mock.MagicMock
         function_name = "test-lambda"
         function_runtime = "python3.9"
-        function_arn = f"arn:aws:lambda:{AWS_REGION_US_EAST_1}:{DEFAULT_ACCOUNT_ID}:function/{function_name}"
+        function_arn = f"arn:aws:lambda:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:function/{function_name}"
         lambda_client.functions = {
             function_name: Function(
                 name=function_name,
@@ -203,7 +203,7 @@ class Test_awslambda_function_invoke_api_operations_cloudtrail_logging_enabled:
         lambda_client = mock.MagicMock
         function_name = "test-lambda"
         function_runtime = "python3.9"
-        function_arn = f"arn:aws:lambda:{AWS_REGION_US_EAST_1}:{DEFAULT_ACCOUNT_ID}:function/{function_name}"
+        function_arn = f"arn:aws:lambda:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:function/{function_name}"
         lambda_client.functions = {
             function_name: Function(
                 name=function_name,

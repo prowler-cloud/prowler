@@ -4,10 +4,10 @@ import botocore
 import yaml
 from boto3 import client
 from moto import mock_ssm
-from moto.core import DEFAULT_ACCOUNT_ID
 
 from prowler.providers.aws.services.ssm.ssm_service import SSM, ResourceStatus
 from tests.providers.aws.audit_info_utils import (
+    AWS_ACCOUNT_NUMBER,
     AWS_REGION_US_EAST_1,
     set_mocked_aws_audit_info,
 )
@@ -169,12 +169,12 @@ class Test_SSM_Service:
         ssm_client.modify_document_permission(
             Name=ssm_document_name,
             PermissionType="Share",
-            AccountIdsToAdd=[DEFAULT_ACCOUNT_ID],
+            AccountIdsToAdd=[AWS_ACCOUNT_NUMBER],
         )
 
         ssm = SSM(set_mocked_aws_audit_info([AWS_REGION_US_EAST_1]))
 
-        document_arn = f"arn:aws:ssm:{AWS_REGION_US_EAST_1}:{DEFAULT_ACCOUNT_ID}:document/{ssm_document_name}"
+        document_arn = f"arn:aws:ssm:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:document/{ssm_document_name}"
 
         assert len(ssm.documents) == 1
         assert ssm.documents
@@ -186,7 +186,7 @@ class Test_SSM_Service:
             {"Key": "test", "Value": "test"},
         ]
         assert ssm.documents[document_arn].content == yaml.safe_load(ssm_document_yaml)
-        assert ssm.documents[document_arn].account_owners == [DEFAULT_ACCOUNT_ID]
+        assert ssm.documents[document_arn].account_owners == [AWS_ACCOUNT_NUMBER]
 
     @mock_ssm
     def test__list_resource_compliance_summaries__(self):

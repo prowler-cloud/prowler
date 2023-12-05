@@ -1,9 +1,10 @@
 from unittest import mock
 
-from moto.core import DEFAULT_ACCOUNT_ID
-
 from prowler.providers.aws.services.emr.emr_service import Cluster, ClusterStatus
-from tests.providers.aws.audit_info_utils import AWS_REGION_EU_WEST_1
+from tests.providers.aws.audit_info_utils import (
+    AWS_ACCOUNT_NUMBER,
+    AWS_REGION_EU_WEST_1,
+)
 
 
 class Test_emr_cluster_master_nodes_no_public_ip:
@@ -28,7 +29,7 @@ class Test_emr_cluster_master_nodes_no_public_ip:
         emr_client = mock.MagicMock
         cluster_name = "test-cluster"
         cluster_id = "j-XWO1UKVCC6FCV"
-        cluster_arn = f"arn:aws:elasticmapreduce:{AWS_REGION_EU_WEST_1}:{DEFAULT_ACCOUNT_ID}:cluster/{cluster_name}"
+        cluster_arn = f"arn:aws:elasticmapreduce:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:cluster/{cluster_name}"
         emr_client.clusters = {
             "test-cluster": Cluster(
                 id=cluster_id,
@@ -66,7 +67,7 @@ class Test_emr_cluster_master_nodes_no_public_ip:
         emr_client = mock.MagicMock
         cluster_name = "test-cluster"
         cluster_id = "j-XWO1UKVCC6FCV"
-        cluster_arn = f"arn:aws:elasticmapreduce:{AWS_REGION_EU_WEST_1}:{DEFAULT_ACCOUNT_ID}:cluster/{cluster_name}"
+        cluster_arn = f"arn:aws:elasticmapreduce:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:cluster/{cluster_name}"
         emr_client.clusters = {
             "test-cluster": Cluster(
                 id=cluster_id,
@@ -104,7 +105,7 @@ class Test_emr_cluster_master_nodes_no_public_ip:
         emr_client = mock.MagicMock
         cluster_name = "test-cluster"
         cluster_id = "j-XWO1UKVCC6FCV"
-        cluster_arn = f"arn:aws:elasticmapreduce:{AWS_REGION_EU_WEST_1}:{DEFAULT_ACCOUNT_ID}:cluster/{cluster_name}"
+        cluster_arn = f"arn:aws:elasticmapreduce:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:cluster/{cluster_name}"
         emr_client.clusters = {
             "test-cluster": Cluster(
                 id=cluster_id,
@@ -134,7 +135,7 @@ class Test_emr_cluster_master_nodes_no_public_ip:
         emr_client = mock.MagicMock
         cluster_name = "test-cluster"
         cluster_id = "j-XWO1UKVCC6FCV"
-        cluster_arn = f"arn:aws:elasticmapreduce:{AWS_REGION_EU_WEST_1}:{DEFAULT_ACCOUNT_ID}:cluster/{cluster_name}"
+        cluster_arn = f"arn:aws:elasticmapreduce:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:cluster/{cluster_name}"
         emr_client.clusters = {
             "test-cluster": Cluster(
                 id=cluster_id,

@@ -1,12 +1,13 @@
 from unittest import mock
 
-from moto.core import DEFAULT_ACCOUNT_ID
-
 from prowler.providers.aws.services.globalaccelerator.globalaccelerator_service import (
     Accelerator,
 )
 from prowler.providers.aws.services.shield.shield_service import Protection
-from tests.providers.aws.audit_info_utils import AWS_REGION_EU_WEST_1
+from tests.providers.aws.audit_info_utils import (
+    AWS_ACCOUNT_NUMBER,
+    AWS_REGION_EU_WEST_1,
+)
 
 
 class Test_shield_advanced_protection_in_global_accelerators:
@@ -38,7 +39,7 @@ class Test_shield_advanced_protection_in_global_accelerators:
         globalaccelerator_client = mock.MagicMock
         accelerator_name = "1234abcd-abcd-1234-abcd-1234abcdefgh"
         accelerator_id = "1234abcd-abcd-1234-abcd-1234abcdefgh"
-        accelerator_arn = f"arn:aws:globalaccelerator::{DEFAULT_ACCOUNT_ID}:accelerator/{accelerator_id}"
+        accelerator_arn = f"arn:aws:globalaccelerator::{AWS_ACCOUNT_NUMBER}:accelerator/{accelerator_id}"
         globalaccelerator_client.accelerators = {
             accelerator_name: Accelerator(
                 arn=accelerator_arn,
@@ -93,7 +94,7 @@ class Test_shield_advanced_protection_in_global_accelerators:
         globalaccelerator_client = mock.MagicMock
         accelerator_name = "1234abcd-abcd-1234-abcd-1234abcdefgh"
         accelerator_id = "1234abcd-abcd-1234-abcd-1234abcdefgh"
-        accelerator_arn = f"arn:aws:globalaccelerator::{DEFAULT_ACCOUNT_ID}:accelerator/{accelerator_id}"
+        accelerator_arn = f"arn:aws:globalaccelerator::{AWS_ACCOUNT_NUMBER}:accelerator/{accelerator_id}"
         globalaccelerator_client.accelerators = {
             accelerator_name: Accelerator(
                 arn=accelerator_arn,
@@ -139,7 +140,7 @@ class Test_shield_advanced_protection_in_global_accelerators:
         globalaccelerator_client = mock.MagicMock
         accelerator_name = "1234abcd-abcd-1234-abcd-1234abcdefgh"
         accelerator_id = "1234abcd-abcd-1234-abcd-1234abcdefgh"
-        accelerator_arn = f"arn:aws:globalaccelerator::{DEFAULT_ACCOUNT_ID}:accelerator/{accelerator_id}"
+        accelerator_arn = f"arn:aws:globalaccelerator::{AWS_ACCOUNT_NUMBER}:accelerator/{accelerator_id}"
         globalaccelerator_client.accelerators = {
             accelerator_name: Accelerator(
                 arn=accelerator_arn,

@@ -6,12 +6,12 @@ import boto3
 import botocore
 from dateutil.tz import tzutc
 from moto import mock_cloudformation
-from moto.core import DEFAULT_ACCOUNT_ID
 
 from prowler.providers.aws.services.cloudformation.cloudformation_service import (
     CloudFormation,
 )
 from tests.providers.aws.audit_info_utils import (
+    AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_WEST_1,
     set_mocked_aws_audit_info,
 )
@@ -172,7 +172,7 @@ class Test_CloudFormation_Service:
         stack_arn = cloudformation_client.create_stack(
             StackName="Test-Stack",
             TemplateBody=json.dumps(dummy_template),
-            RoleARN=f"arn:aws:iam::{DEFAULT_ACCOUNT_ID}:role/moto",
+            RoleARN=f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:role/moto",
             Tags=[
                 {"Key": "Tag1", "Value": "Value1"},
                 {"Key": "Tag2", "Value": "Value2"},

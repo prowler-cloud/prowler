@@ -2,10 +2,10 @@ from unittest import mock
 
 from boto3 import client, resource
 from moto import mock_ec2, mock_elb
-from moto.core import DEFAULT_ACCOUNT_ID
 
 from prowler.providers.aws.services.shield.shield_service import Protection
 from tests.providers.aws.audit_info_utils import (
+    AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_WEST_1,
     set_mocked_aws_audit_info,
 )
@@ -62,7 +62,7 @@ class Test_shield_advanced_protection_in_classic_load_balancers:
             Scheme="internet-facing",
             SecurityGroups=[security_group.id],
         )
-        elb_arn = f"arn:aws:elasticloadbalancing:{AWS_REGION_EU_WEST_1}:{DEFAULT_ACCOUNT_ID}:loadbalancer/{elb_name}"
+        elb_arn = f"arn:aws:elasticloadbalancing:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:loadbalancer/{elb_name}"
 
         # Shield Client
         shield_client = mock.MagicMock
@@ -130,7 +130,7 @@ class Test_shield_advanced_protection_in_classic_load_balancers:
             Scheme="internet-facing",
             SecurityGroups=[security_group.id],
         )
-        elb_arn = f"arn:aws:elasticloadbalancing:{AWS_REGION_EU_WEST_1}:{DEFAULT_ACCOUNT_ID}:loadbalancer/{elb_name}"
+        elb_arn = f"arn:aws:elasticloadbalancing:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:loadbalancer/{elb_name}"
 
         # Shield Client
         shield_client = mock.MagicMock
@@ -189,7 +189,7 @@ class Test_shield_advanced_protection_in_classic_load_balancers:
             Scheme="internet-facing",
             SecurityGroups=[security_group.id],
         )
-        _ = f"arn:aws:elasticloadbalancing:{AWS_REGION_EU_WEST_1}:{DEFAULT_ACCOUNT_ID}:loadbalancer/{elb_name}"
+        _ = f"arn:aws:elasticloadbalancing:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:loadbalancer/{elb_name}"
 
         # Shield Client
         shield_client = mock.MagicMock

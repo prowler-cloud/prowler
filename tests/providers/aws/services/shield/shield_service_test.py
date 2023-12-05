@@ -1,9 +1,9 @@
 import botocore
 from mock import patch
-from moto.core import DEFAULT_ACCOUNT_ID
 
 from prowler.providers.aws.services.shield.shield_service import Shield
 from tests.providers.aws.audit_info_utils import (
+    AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_WEST_1,
     set_mocked_aws_audit_info,
 )
@@ -20,7 +20,7 @@ def mock_make_api_call(self, operation_name, kwarg):
                 {
                     "Id": "a1b2c3d4-5678-90ab-cdef-EXAMPLE11111",
                     "Name": "Protection for CloudFront distribution",
-                    "ResourceArn": f"arn:aws:cloudfront::{DEFAULT_ACCOUNT_ID}:distribution/E198WC25FXOWY8",
+                    "ResourceArn": f"arn:aws:cloudfront::{AWS_ACCOUNT_NUMBER}:distribution/E198WC25FXOWY8",
                 }
             ]
         }
@@ -68,7 +68,7 @@ class Test_Shield_Service:
         protection_name = "Protection for CloudFront distribution"
         cloudfront_distribution_id = "E198WC25FXOWY8"
         resource_arn = (
-            f"arn:aws:cloudfront::{DEFAULT_ACCOUNT_ID}:distribution/{cloudfront_distribution_id}",
+            f"arn:aws:cloudfront::{AWS_ACCOUNT_NUMBER}:distribution/{cloudfront_distribution_id}",
         )
 
         assert shield.protections

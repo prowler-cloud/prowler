@@ -1,17 +1,15 @@
 from datetime import datetime
 from unittest import mock
 
-from moto.core import DEFAULT_ACCOUNT_ID
-
 from prowler.providers.aws.services.directoryservice.directoryservice_service import (
     Directory,
     DirectoryType,
     EventTopics,
     EventTopicStatus,
 )
+from tests.providers.aws.audit_info_utils import AWS_ACCOUNT_NUMBER
 
 AWS_REGION = "eu-west-1"
-AWS_ACCOUNT_NUMBER = "123456789012"
 
 
 class Test_directoryservice_directory_monitor_notifications:
@@ -88,7 +86,7 @@ class Test_directoryservice_directory_monitor_notifications:
                 region=AWS_REGION,
                 event_topics=[
                     EventTopics(
-                        topic_arn=f"arn:aws:sns:{AWS_REGION}:{DEFAULT_ACCOUNT_ID}:test-topic",
+                        topic_arn=f"arn:aws:sns:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:test-topic",
                         topic_name="test-topic",
                         status=EventTopicStatus.Registered,
                         created_date_time=datetime(2022, 1, 1),

@@ -1,9 +1,10 @@
 from unittest import mock
 
-from moto.core import DEFAULT_ACCOUNT_ID
-
 from prowler.providers.aws.services.ssm.ssm_service import Document
-from tests.providers.aws.audit_info_utils import AWS_REGION_US_EAST_1
+from tests.providers.aws.audit_info_utils import (
+    AWS_ACCOUNT_NUMBER,
+    AWS_REGION_US_EAST_1,
+)
 
 
 class Test_ssm_documents_set_as_public:
@@ -27,8 +28,8 @@ class Test_ssm_documents_set_as_public:
     def test_document_public(self):
         ssm_client = mock.MagicMock
         document_name = "test-document"
-        document_arn = f"arn:aws:ssm:{AWS_REGION_US_EAST_1}:{DEFAULT_ACCOUNT_ID}:document/{document_name}"
-        ssm_client.audited_account = DEFAULT_ACCOUNT_ID
+        document_arn = f"arn:aws:ssm:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:document/{document_name}"
+        ssm_client.audited_account = AWS_ACCOUNT_NUMBER
         ssm_client.documents = {
             document_name: Document(
                 arn=document_arn,
@@ -62,8 +63,8 @@ class Test_ssm_documents_set_as_public:
     def test_document_not_public(self):
         ssm_client = mock.MagicMock
         document_name = "test-document"
-        document_arn = f"arn:aws:ssm:{AWS_REGION_US_EAST_1}:{DEFAULT_ACCOUNT_ID}:document/{document_name}"
-        ssm_client.audited_account = DEFAULT_ACCOUNT_ID
+        document_arn = f"arn:aws:ssm:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:document/{document_name}"
+        ssm_client.audited_account = AWS_ACCOUNT_NUMBER
         ssm_client.documents = {
             document_name: Document(
                 arn=document_arn,
