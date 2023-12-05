@@ -2,24 +2,25 @@ from unittest import mock
 from uuid import uuid4
 
 from prowler.providers.aws.services.guardduty.guardduty_service import Detector
-
-AWS_REGION = "us-east-1"
-AWS_ACCOUNT_ID = "123456789012"
-AWS_ACCOUNT_ARN = f"arn:aws:iam::{AWS_ACCOUNT_ID}:root"
+from tests.providers.aws.audit_info_utils import (
+    AWS_ACCOUNT_ARN,
+    AWS_ACCOUNT_NUMBER,
+    AWS_REGION_EU_WEST_1,
+)
 
 DETECTOR_ID = str(uuid4())
-DETECTOR_ARN = f"arn:aws:guardduty:{AWS_REGION}:{AWS_ACCOUNT_ID}:detector/{DETECTOR_ID}"
+DETECTOR_ARN = f"arn:aws:guardduty:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:detector/{DETECTOR_ID}"
 
 
 class Test_:
     def test_no_detectors(self):
         guardduty_client = mock.MagicMock
-        guardduty_client.region = AWS_REGION
+        guardduty_client.region = AWS_REGION_EU_WEST_1
         guardduty_client.detectors = []
         guardduty_client.detectors.append(
             Detector(
-                id=AWS_ACCOUNT_ID,
-                region=AWS_REGION,
+                id=AWS_ACCOUNT_NUMBER,
+                region=AWS_REGION_EU_WEST_1,
                 arn=AWS_ACCOUNT_ARN,
                 enabled_in_account=False,
             )
@@ -38,9 +39,9 @@ class Test_:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert result[0].status_extended == "GuardDuty is not enabled."
-            assert result[0].resource_id == AWS_ACCOUNT_ID
+            assert result[0].resource_id == AWS_ACCOUNT_NUMBER
             assert result[0].resource_arn == AWS_ACCOUNT_ARN
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1
 
     def test_guardduty_enabled(self):
         guardduty_client = mock.MagicMock
@@ -48,7 +49,7 @@ class Test_:
         guardduty_client.detectors.append(
             Detector(
                 id=DETECTOR_ID,
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
                 arn=DETECTOR_ARN,
                 status=True,
             )
@@ -71,17 +72,17 @@ class Test_:
             )
             assert result[0].resource_id == DETECTOR_ID
             assert result[0].resource_arn == DETECTOR_ARN
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1
 
     def test_guardduty_configured_but_suspended(self):
         guardduty_client = mock.MagicMock
-        guardduty_client.region = AWS_REGION
+        guardduty_client.region = AWS_REGION_EU_WEST_1
         guardduty_client.detectors = []
         guardduty_client.detectors.append(
             Detector(
                 id=DETECTOR_ID,
                 arn=DETECTOR_ARN,
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
                 status=False,
             )
         )
@@ -103,17 +104,17 @@ class Test_:
             )
             assert result[0].resource_id == DETECTOR_ID
             assert result[0].resource_arn == DETECTOR_ARN
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1
 
     def test_guardduty_not_configured(self):
         guardduty_client = mock.MagicMock
         guardduty_client.detectors = []
-        guardduty_client.region = AWS_REGION
+        guardduty_client.region = AWS_REGION_EU_WEST_1
         guardduty_client.detectors.append(
             Detector(
                 id=DETECTOR_ID,
                 arn=DETECTOR_ARN,
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
             )
         )
         with mock.patch(
@@ -134,7 +135,7 @@ class Test_:
             )
             assert result[0].resource_id == DETECTOR_ID
             assert result[0].resource_arn == DETECTOR_ARN
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1
 
     def test_guardduty_not_configured_allowlisted(self):
         guardduty_client = mock.MagicMock
@@ -145,7 +146,7 @@ class Test_:
             Detector(
                 id=DETECTOR_ID,
                 arn=DETECTOR_ARN,
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
             )
         )
         with mock.patch(
@@ -166,4 +167,4 @@ class Test_:
             )
             assert result[0].resource_id == DETECTOR_ID
             assert result[0].resource_arn == DETECTOR_ARN
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1
