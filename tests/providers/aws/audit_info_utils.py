@@ -36,7 +36,7 @@ def set_mocked_aws_audit_info(
         assumed_role_info=None,
         audited_regions=audited_regions,
         organizations_metadata=None,
-        audit_resources=None,
+        audit_resources=[],
         mfa_enabled=False,
         audit_metadata=Audit_Metadata(
             services_scanned=0,

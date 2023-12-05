@@ -24,8 +24,9 @@ def mock_generate_regional_clients(service, audit_info, _):
 )
 class Test_AWSService:
     def test_AWSService_init(self):
+        service_name = "s3"
         audit_info = set_mocked_aws_audit_info()
-        service = AWSService("s3", audit_info)
+        service = AWSService(service_name, audit_info)
 
         assert service.audit_info == audit_info
         assert service.audited_account == AWS_ACCOUNT_NUMBER
@@ -34,8 +35,11 @@ class Test_AWSService:
         assert service.audit_resources == []
         assert service.audited_checks == []
         assert service.session == audit_info.audit_session
-        assert service.service == "s3"
+        assert service.service == service_name
         assert len(service.regional_clients) == 1
-        assert service.regional_clients[AWS_REGION_US_EAST_1].__class__.__name__ == "S3"
+        assert (
+            service.regional_clients[AWS_REGION_US_EAST_1].__class__.__name__
+            == service_name.upper()
+        )
         assert service.region == AWS_REGION_US_EAST_1
-        assert service.client.__class__.__name__ == "S3"
+        assert service.client.__class__.__name__ == service_name.upper()
