@@ -8,10 +8,10 @@ from unittest.mock import patch
 import mock
 from boto3 import client, resource
 from moto import mock_iam, mock_lambda, mock_s3
-from moto.core import DEFAULT_ACCOUNT_ID
 
 from prowler.providers.aws.services.awslambda.awslambda_service import AuthType, Lambda
 from tests.providers.aws.audit_info_utils import (
+    AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_WEST_1,
     AWS_REGION_US_EAST_1,
     set_mocked_aws_audit_info,
@@ -132,7 +132,7 @@ class Test_Lambda_Service:
                     "Action": "lambda:GetFunction",
                     "Principal": "*",
                     "Effect": "Allow",
-                    "Resource": f"arn:aws:lambda:{AWS_REGION_EU_WEST_1}:{DEFAULT_ACCOUNT_ID}:function:{lambda_name}",
+                    "Resource": f"arn:aws:lambda:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:function:{lambda_name}",
                     "Sid": "test",
                 }
             ],

@@ -1,9 +1,10 @@
 from unittest import mock
 
-from moto.core import DEFAULT_ACCOUNT_ID
-
 from prowler.providers.aws.services.secretsmanager.secretsmanager_service import Secret
-from tests.providers.aws.audit_info_utils import AWS_REGION_EU_WEST_1
+from tests.providers.aws.audit_info_utils import (
+    AWS_ACCOUNT_NUMBER,
+    AWS_REGION_EU_WEST_1,
+)
 
 
 class Test_secretsmanager_automatic_rotation_enabled:
@@ -27,7 +28,7 @@ class Test_secretsmanager_automatic_rotation_enabled:
     def test_secret_rotation_disabled(self):
         secretsmanager_client = mock.MagicMock
         secret_name = "test-secret"
-        secret_arn = f"arn:aws:secretsmanager:{AWS_REGION_EU_WEST_1}:{DEFAULT_ACCOUNT_ID}:secret:{secret_name}"
+        secret_arn = f"arn:aws:secretsmanager:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:secret:{secret_name}"
         secretsmanager_client.secrets = {
             secret_name: Secret(
                 arn=secret_arn,
@@ -61,7 +62,7 @@ class Test_secretsmanager_automatic_rotation_enabled:
     def test_secret_rotation_enabled(self):
         secretsmanager_client = mock.MagicMock
         secret_name = "test-secret"
-        secret_arn = f"arn:aws:secretsmanager:{AWS_REGION_EU_WEST_1}:{DEFAULT_ACCOUNT_ID}:secret:{secret_name}"
+        secret_arn = f"arn:aws:secretsmanager:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:secret:{secret_name}"
         secretsmanager_client.secrets = {
             secret_name: Secret(
                 arn=secret_arn,

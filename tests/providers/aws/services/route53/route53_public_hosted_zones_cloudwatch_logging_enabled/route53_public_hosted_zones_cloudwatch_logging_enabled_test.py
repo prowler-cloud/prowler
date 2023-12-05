@@ -1,12 +1,13 @@
 from unittest import mock
 
-from moto.core import DEFAULT_ACCOUNT_ID
-
 from prowler.providers.aws.services.route53.route53_service import (
     HostedZone,
     LoggingConfig,
 )
-from tests.providers.aws.audit_info_utils import AWS_REGION_US_EAST_1
+from tests.providers.aws.audit_info_utils import (
+    AWS_ACCOUNT_NUMBER,
+    AWS_REGION_US_EAST_1,
+)
 
 
 class Test_route53_public_hosted_zones_cloudwatch_logging_enabled:
@@ -36,7 +37,7 @@ class Test_route53_public_hosted_zones_cloudwatch_logging_enabled:
         hosted_zone_name = "test-domain.com"
         hosted_zone_id = "ABCDEF12345678"
         log_group_name = "test-log-group"
-        log_group_arn = f"rn:aws:logs:{AWS_REGION_US_EAST_1}:{DEFAULT_ACCOUNT_ID}:log-group:{log_group_name}"
+        log_group_arn = f"rn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:log-group:{log_group_name}"
         route53.hosted_zones = {
             hosted_zone_name: HostedZone(
                 name=hosted_zone_name,

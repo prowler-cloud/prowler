@@ -3,10 +3,10 @@ from unittest import mock
 from boto3 import client
 from mock import patch
 from moto import mock_ec2
-from moto.core import DEFAULT_ACCOUNT_ID
 
 from prowler.providers.aws.services.shield.shield_service import Protection
 from tests.providers.aws.audit_info_utils import (
+    AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_WEST_1,
     set_mocked_aws_audit_info,
 )
@@ -61,7 +61,7 @@ class Test_shield_advanced_protection_in_associated_elastic_ips:
         ec2_client = client("ec2", region_name=AWS_REGION_EU_WEST_1)
         resp = ec2_client.allocate_address(Domain="vpc", Address="127.38.43.222")
         allocation_id = resp["AllocationId"]
-        elastic_ip_arn = f"arn:aws:ec2:{AWS_REGION_EU_WEST_1}:{DEFAULT_ACCOUNT_ID}:eip-allocation/{allocation_id}"
+        elastic_ip_arn = f"arn:aws:ec2:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:eip-allocation/{allocation_id}"
 
         # Shield Client
         shield_client = mock.MagicMock
@@ -114,7 +114,7 @@ class Test_shield_advanced_protection_in_associated_elastic_ips:
         ec2_client = client("ec2", region_name=AWS_REGION_EU_WEST_1)
         resp = ec2_client.allocate_address(Domain="vpc", Address="127.38.43.222")
         allocation_id = resp["AllocationId"]
-        elastic_ip_arn = f"arn:aws:ec2:{AWS_REGION_EU_WEST_1}:{DEFAULT_ACCOUNT_ID}:eip-allocation/{allocation_id}"
+        elastic_ip_arn = f"arn:aws:ec2:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:eip-allocation/{allocation_id}"
 
         # Shield Client
         shield_client = mock.MagicMock
@@ -158,7 +158,7 @@ class Test_shield_advanced_protection_in_associated_elastic_ips:
         ec2_client = client("ec2", region_name=AWS_REGION_EU_WEST_1)
         resp = ec2_client.allocate_address(Domain="vpc", Address="127.38.43.222")
         allocation_id = resp["AllocationId"]
-        _ = f"arn:aws:ec2:{AWS_REGION_EU_WEST_1}:{DEFAULT_ACCOUNT_ID}:eip-allocation/{allocation_id}"
+        _ = f"arn:aws:ec2:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:eip-allocation/{allocation_id}"
 
         # Shield Client
         shield_client = mock.MagicMock

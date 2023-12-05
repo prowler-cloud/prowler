@@ -2,9 +2,9 @@ from unittest import mock
 
 from boto3 import client
 from moto import mock_apigateway, mock_iam, mock_lambda
-from moto.core import DEFAULT_ACCOUNT_ID as ACCOUNT_ID
 
 from tests.providers.aws.audit_info_utils import (
+    AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_WEST_1,
     AWS_REGION_US_EAST_1,
     set_mocked_aws_audit_info,
@@ -68,7 +68,7 @@ class Test_apigateway_restapi_authorizers_enabled:
             name="test",
             restApiId=rest_api["id"],
             type="TOKEN",
-            authorizerUri=f"arn:aws:apigateway:{apigateway_client.meta.region_name}:lambda:path/2015-03-31/functions/arn:aws:lambda:{apigateway_client.meta.region_name}:{ACCOUNT_ID}:function:{authorizer['FunctionName']}/invocations",
+            authorizerUri=f"arn:aws:apigateway:{apigateway_client.meta.region_name}:lambda:path/2015-03-31/functions/arn:aws:lambda:{apigateway_client.meta.region_name}:{AWS_ACCOUNT_NUMBER}:function:{authorizer['FunctionName']}/invocations",
         )
         from prowler.providers.aws.services.apigateway.apigateway_service import (
             APIGateway,

@@ -4,10 +4,10 @@ from unittest.mock import patch
 import botocore
 from boto3 import client
 from moto import mock_emr
-from moto.core import DEFAULT_ACCOUNT_ID
 
 from prowler.providers.aws.services.emr.emr_service import EMR, ClusterStatus
 from tests.providers.aws.audit_info_utils import (
+    AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_WEST_1,
     set_mocked_aws_audit_info,
 )
@@ -101,7 +101,7 @@ class Test_EMR_Service:
         assert emr.clusters[cluster_id].status == ClusterStatus.WAITING
         assert (
             emr.clusters[cluster_id].arn
-            == f"arn:aws:elasticmapreduce:{AWS_REGION_EU_WEST_1}:{DEFAULT_ACCOUNT_ID}:cluster/{cluster_id}"
+            == f"arn:aws:elasticmapreduce:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:cluster/{cluster_id}"
         )
         assert emr.clusters[cluster_id].region == AWS_REGION_EU_WEST_1
         assert (

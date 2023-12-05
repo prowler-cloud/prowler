@@ -1,12 +1,13 @@
 from unittest import mock
 
-from moto.core import DEFAULT_ACCOUNT_ID
-
 from prowler.providers.aws.services.ssm.ssm_service import (
     ComplianceResource,
     ResourceStatus,
 )
-from tests.providers.aws.audit_info_utils import AWS_REGION_US_EAST_1
+from tests.providers.aws.audit_info_utils import (
+    AWS_ACCOUNT_NUMBER,
+    AWS_REGION_US_EAST_1,
+)
 
 
 class Test_ssm_managed_compliant_patching:
@@ -30,7 +31,7 @@ class Test_ssm_managed_compliant_patching:
     def test_compliance_resources_compliant(self):
         ssm_client = mock.MagicMock
         instance_id = "i-1234567890abcdef0"
-        ssm_client.audited_account = DEFAULT_ACCOUNT_ID
+        ssm_client.audited_account = AWS_ACCOUNT_NUMBER
         ssm_client.compliance_resources = {
             instance_id: ComplianceResource(
                 id="i-1234567890abcdef0",
@@ -63,7 +64,7 @@ class Test_ssm_managed_compliant_patching:
     def test_compliance_resources_non_compliant(self):
         ssm_client = mock.MagicMock
         instance_id = "i-1234567890abcdef0"
-        ssm_client.audited_account = DEFAULT_ACCOUNT_ID
+        ssm_client.audited_account = AWS_ACCOUNT_NUMBER
         ssm_client.compliance_resources = {
             instance_id: ComplianceResource(
                 id="i-1234567890abcdef0",
