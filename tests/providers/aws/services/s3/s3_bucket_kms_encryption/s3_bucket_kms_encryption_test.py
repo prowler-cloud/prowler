@@ -1,54 +1,20 @@
 from unittest import mock
 
-from boto3 import client, session
+from boto3 import client
 from moto import mock_s3
 
-from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
-from prowler.providers.common.models import Audit_Metadata
-
-AWS_ACCOUNT_NUMBER = "123456789012"
-AWS_REGION = "us-east-1"
-AWS_ACCOUNT_ARN = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
+from tests.providers.aws.audit_info_utils import (
+    AWS_REGION_US_EAST_1,
+    set_mocked_aws_audit_info,
+)
 
 
 class Test_s3_bucket_kms_encryption:
-    # Mocked Audit Info
-    def set_mocked_audit_info(self):
-        audit_info = AWS_Audit_Info(
-            session_config=None,
-            original_session=None,
-            audit_session=session.Session(
-                profile_name=None,
-                botocore_session=None,
-                region_name=AWS_REGION,
-            ),
-            audited_account=AWS_ACCOUNT_NUMBER,
-            audited_account_arn=AWS_ACCOUNT_ARN,
-            audited_user_id=None,
-            audited_partition="aws",
-            audited_identity_arn=None,
-            profile=None,
-            profile_region=AWS_REGION,
-            credentials=None,
-            assumed_role_info=None,
-            audited_regions=None,
-            organizations_metadata=None,
-            audit_resources=None,
-            mfa_enabled=False,
-            audit_metadata=Audit_Metadata(
-                services_scanned=0,
-                expected_checks=[],
-                completed_checks=0,
-                audit_progress=0,
-            ),
-        )
-        return audit_info
-
     @mock_s3
     def test_no_buckets(self):
         from prowler.providers.aws.services.s3.s3_service import S3
 
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -69,13 +35,13 @@ class Test_s3_bucket_kms_encryption:
 
     @mock_s3
     def test_bucket_no_encryption(self):
-        s3_client_us_east_1 = client("s3", region_name=AWS_REGION)
+        s3_client_us_east_1 = client("s3", region_name=AWS_REGION_US_EAST_1)
         bucket_name_us = "bucket_test_us"
         s3_client_us_east_1.create_bucket(Bucket=bucket_name_us)
 
         from prowler.providers.aws.services.s3.s3_service import S3
 
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -104,11 +70,11 @@ class Test_s3_bucket_kms_encryption:
                 == f"arn:{audit_info.audited_partition}:s3:::{bucket_name_us}"
             )
             assert result[0].resource_tags == []
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_US_EAST_1
 
     @mock_s3
     def test_bucket_no_kms_encryption(self):
-        s3_client_us_east_1 = client("s3", region_name=AWS_REGION)
+        s3_client_us_east_1 = client("s3", region_name=AWS_REGION_US_EAST_1)
         bucket_name_us = "bucket_test_us"
         s3_client_us_east_1.create_bucket(
             Bucket=bucket_name_us, ObjectOwnership="BucketOwnerEnforced"
@@ -129,7 +95,7 @@ class Test_s3_bucket_kms_encryption:
 
         from prowler.providers.aws.services.s3.s3_service import S3
 
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -158,11 +124,11 @@ class Test_s3_bucket_kms_encryption:
                 == f"arn:{audit_info.audited_partition}:s3:::{bucket_name_us}"
             )
             assert result[0].resource_tags == []
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_US_EAST_1
 
     @mock_s3
     def test_bucket_kms_encryption(self):
-        s3_client_us_east_1 = client("s3", region_name=AWS_REGION)
+        s3_client_us_east_1 = client("s3", region_name=AWS_REGION_US_EAST_1)
         bucket_name_us = "bucket_test_us"
         s3_client_us_east_1.create_bucket(
             Bucket=bucket_name_us, ObjectOwnership="BucketOwnerEnforced"
@@ -185,7 +151,7 @@ class Test_s3_bucket_kms_encryption:
 
         from prowler.providers.aws.services.s3.s3_service import S3
 
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -215,11 +181,11 @@ class Test_s3_bucket_kms_encryption:
                     == f"arn:{audit_info.audited_partition}:s3:::{bucket_name_us}"
                 )
                 assert result[0].resource_tags == []
-                assert result[0].region == AWS_REGION
+                assert result[0].region == AWS_REGION_US_EAST_1
 
     @mock_s3
     def test_bucket_kms_dsse_encryption(self):
-        s3_client_us_east_1 = client("s3", region_name=AWS_REGION)
+        s3_client_us_east_1 = client("s3", region_name=AWS_REGION_US_EAST_1)
         bucket_name_us = "bucket_test_us"
         s3_client_us_east_1.create_bucket(
             Bucket=bucket_name_us, ObjectOwnership="BucketOwnerEnforced"
@@ -242,7 +208,7 @@ class Test_s3_bucket_kms_encryption:
 
         from prowler.providers.aws.services.s3.s3_service import S3
 
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -272,4 +238,4 @@ class Test_s3_bucket_kms_encryption:
                     == f"arn:{audit_info.audited_partition}:s3:::{bucket_name_us}"
                 )
                 assert result[0].resource_tags == []
-                assert result[0].region == AWS_REGION
+                assert result[0].region == AWS_REGION_US_EAST_1
