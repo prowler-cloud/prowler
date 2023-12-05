@@ -2,26 +2,20 @@ import uuid
 from datetime import datetime
 
 import botocore
-from boto3 import session
 from freezegun import freeze_time
 from mock import patch
 
-from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.aws.services.acm.acm_service import ACM
-from prowler.providers.common.models import Audit_Metadata
-
-# from moto import mock_acm
-
-
-AWS_ACCOUNT_NUMBER = "123456789012"
-AWS_REGION = "us-east-1"
+from tests.providers.aws.audit_info_utils import (
+    AWS_ACCOUNT_NUMBER,
+    AWS_REGION_US_EAST_1,
+    set_mocked_aws_audit_info,
+)
 
 # Mocking Access Analyzer Calls
 make_api_call = botocore.client.BaseClient._make_api_call
 
-certificate_arn = (
-    f"arn:aws:acm:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:certificate/{str(uuid.uuid4())}"
-)
+certificate_arn = f"arn:aws:acm:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:certificate/{str(uuid.uuid4())}"
 certificate_name = "test-certificate.com"
 certificate_type = "AMAZON_ISSUED"
 
@@ -81,9 +75,11 @@ def mock_make_api_call(self, operation_name, kwargs):
 
 # Mock generate_regional_clients()
 def mock_generate_regional_clients(service, audit_info):
-    regional_client = audit_info.audit_session.client(service, region_name=AWS_REGION)
-    regional_client.region = AWS_REGION
-    return {AWS_REGION: regional_client}
+    regional_client = audit_info.audit_session.client(
+        service, region_name=AWS_REGION_US_EAST_1
+    )
+    regional_client.region = AWS_REGION_US_EAST_1
+    return {AWS_REGION_US_EAST_1: regional_client}
 
 
 # Patch every AWS call using Boto3 and generate_regional_clients to have 1 client
@@ -96,42 +92,11 @@ def mock_generate_regional_clients(service, audit_info):
 @freeze_time("2023-01-01")
 # FIXME: Pending Moto PR to update ACM responses
 class Test_ACM_Service:
-    # Mocked Audit Info
-    def set_mocked_audit_info(self):
-        audit_info = AWS_Audit_Info(
-            session_config=None,
-            original_session=None,
-            audit_session=session.Session(
-                profile_name=None,
-                botocore_session=None,
-            ),
-            audited_account=AWS_ACCOUNT_NUMBER,
-            audited_account_arn=f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root",
-            audited_user_id=None,
-            audited_partition="aws",
-            audited_identity_arn=None,
-            profile=None,
-            profile_region=None,
-            credentials=None,
-            assumed_role_info=None,
-            audited_regions=None,
-            organizations_metadata=None,
-            audit_resources=None,
-            mfa_enabled=False,
-            audit_metadata=Audit_Metadata(
-                services_scanned=0,
-                expected_checks=[],
-                completed_checks=0,
-                audit_progress=0,
-            ),
-        )
-        return audit_info
-
     # Test ACM Service
     # @mock_acm
     def test_service(self):
         # ACM client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info()
         acm = ACM(audit_info)
         assert acm.service == "acm"
 
@@ -139,7 +104,7 @@ class Test_ACM_Service:
     # @mock_acm
     def test_client(self):
         # ACM client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info()
         acm = ACM(audit_info)
         for regional_client in acm.regional_clients.values():
             assert regional_client.__class__.__name__ == "ACM"
@@ -148,7 +113,7 @@ class Test_ACM_Service:
     # @mock_acm
     def test__get_session__(self):
         # ACM client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info()
         acm = ACM(audit_info)
         assert acm.session.__class__.__name__ == "Session"
 
@@ -156,7 +121,7 @@ class Test_ACM_Service:
     # @mock_acm
     def test_audited_account(self):
         # ACM client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info()
         acm = ACM(audit_info)
         assert acm.audited_account == AWS_ACCOUNT_NUMBER
 
@@ -171,7 +136,7 @@ class Test_ACM_Service:
         # )
 
         # ACM client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info()
         acm = ACM(audit_info)
         assert len(acm.certificates) == 1
         assert acm.certificates[0].arn == certificate_arn
@@ -179,7 +144,7 @@ class Test_ACM_Service:
         assert acm.certificates[0].type == certificate_type
         assert acm.certificates[0].expiration_days == 365
         assert acm.certificates[0].transparency_logging is False
-        assert acm.certificates[0].region == AWS_REGION
+        assert acm.certificates[0].region == AWS_REGION_US_EAST_1
 
     # Test ACM List Tags
     # @mock_acm
@@ -192,7 +157,7 @@ class Test_ACM_Service:
         # )
 
         # ACM client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info()
         acm = ACM(audit_info)
         assert len(acm.certificates) == 1
         assert acm.certificates[0].tags == [
