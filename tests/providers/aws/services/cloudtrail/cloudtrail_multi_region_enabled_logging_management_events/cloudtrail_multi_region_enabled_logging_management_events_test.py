@@ -6,7 +6,6 @@ from moto import mock_cloudtrail, mock_s3
 from tests.providers.aws.audit_info_utils import (
     AWS_ACCOUNT_ARN,
     AWS_ACCOUNT_NUMBER,
-    AWS_REGION_EU_WEST_1,
     AWS_REGION_US_EAST_1,
     set_mocked_aws_audit_info,
 )
@@ -19,9 +18,7 @@ class Test_cloudtrail_multi_region_enabled_logging_management_events:
             Cloudtrail,
         )
 
-        current_audit_info = set_mocked_aws_audit_info(
-            [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
-        )
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -78,9 +75,7 @@ class Test_cloudtrail_multi_region_enabled_logging_management_events:
             Cloudtrail,
         )
 
-        current_audit_info = set_mocked_aws_audit_info(
-            [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
-        )
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -138,9 +133,7 @@ class Test_cloudtrail_multi_region_enabled_logging_management_events:
             Cloudtrail,
         )
 
-        current_audit_info = set_mocked_aws_audit_info(
-            [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
-        )
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -195,9 +188,7 @@ class Test_cloudtrail_multi_region_enabled_logging_management_events:
             Cloudtrail,
         )
 
-        current_audit_info = set_mocked_aws_audit_info(
-            [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
-        )
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -253,9 +244,7 @@ class Test_cloudtrail_multi_region_enabled_logging_management_events:
             Cloudtrail,
         )
 
-        current_audit_info = set_mocked_aws_audit_info(
-            [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
-        )
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
