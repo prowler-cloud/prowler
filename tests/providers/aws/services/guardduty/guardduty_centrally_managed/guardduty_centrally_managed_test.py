@@ -2,14 +2,14 @@ from unittest import mock
 from uuid import uuid4
 
 from prowler.providers.aws.services.guardduty.guardduty_service import Detector
+from tests.providers.aws.audit_info_utils import (
+    AWS_ACCOUNT_NUMBER,
+    AWS_REGION_EU_WEST_1,
+)
 
-AWS_REGION = "eu-west-1"
-AWS_ACCOUNT_NUMBER = "123456789012"
 AWS_ACCOUNT_NUMBER_ADMIN = "123456789013"
 DETECTOR_ID = str(uuid4())
-DETECTOR_ARN = (
-    f"arn:aws:guardduty:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:detector/{DETECTOR_ID}"
-)
+DETECTOR_ARN = f"arn:aws:guardduty:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:detector/{DETECTOR_ID}"
 
 
 class Test_guardduty_centrally_managed:
@@ -34,7 +34,7 @@ class Test_guardduty_centrally_managed:
         guardduty_client.detectors.append(
             Detector(
                 id=DETECTOR_ID,
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
                 arn=DETECTOR_ARN,
                 status=False,
                 findings=[str(uuid4())],
@@ -59,7 +59,7 @@ class Test_guardduty_centrally_managed:
                 == f"GuardDuty detector {DETECTOR_ID} is not centrally managed."
             )
             assert result[0].resource_id == DETECTOR_ID
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1
             assert result[0].resource_arn == DETECTOR_ARN
 
     def test_not_enabled_account_detector(self):
@@ -68,7 +68,7 @@ class Test_guardduty_centrally_managed:
         guardduty_client.detectors.append(
             Detector(
                 id=AWS_ACCOUNT_NUMBER,
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
                 arn=DETECTOR_ARN,
                 enabled_in_account=False,
             )
@@ -93,7 +93,7 @@ class Test_guardduty_centrally_managed:
         guardduty_client.detectors.append(
             Detector(
                 id=DETECTOR_ID,
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
                 arn=DETECTOR_ARN,
                 status=False,
                 findings=[str(uuid4())],
@@ -119,7 +119,7 @@ class Test_guardduty_centrally_managed:
                 == f"GuardDuty detector {DETECTOR_ID} is centrally managed by account {AWS_ACCOUNT_NUMBER_ADMIN}."
             )
             assert result[0].resource_id == DETECTOR_ID
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1
             assert result[0].resource_arn == DETECTOR_ARN
 
     def test_detector_administrator(self):
@@ -128,7 +128,7 @@ class Test_guardduty_centrally_managed:
         guardduty_client.detectors.append(
             Detector(
                 id=DETECTOR_ID,
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
                 arn=DETECTOR_ARN,
                 status=False,
                 findings=[str(uuid4())],
@@ -154,5 +154,5 @@ class Test_guardduty_centrally_managed:
                 == f"GuardDuty detector {DETECTOR_ID} is administrator account with 1 member accounts."
             )
             assert result[0].resource_id == DETECTOR_ID
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1
             assert result[0].resource_arn == DETECTOR_ARN
