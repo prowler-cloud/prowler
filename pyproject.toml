@@ -49,7 +49,7 @@ pydantic = "1.10.13"
 python = ">=3.9,<3.12"
 schema = "0.7.5"
 shodan = "1.30.1"
-slack-sdk = "3.26.0"
+slack-sdk = "3.26.1"
 tabulate = "0.9.0"
 
 [tool.poetry.extras]
