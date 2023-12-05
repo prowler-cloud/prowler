@@ -2,8 +2,7 @@ from re import search
 from unittest import mock
 
 from prowler.providers.aws.services.glue.glue_service import Connection
-
-AWS_REGION = "us-east-1"
+from tests.providers.aws.audit_info_utils import AWS_REGION_US_EAST_1
 
 
 class Test_glue_database_connections_ssl_enabled:
@@ -37,7 +36,7 @@ class Test_glue_database_connections_ssl_enabled:
                     "CONNECTOR_URL": "s3://bck-dev",
                     "CONNECTOR_CLASS_NAME": "test",
                 },
-                region=AWS_REGION,
+                region=AWS_REGION_US_EAST_1,
                 arn="arn_test",
             )
         ]
@@ -76,7 +75,7 @@ class Test_glue_database_connections_ssl_enabled:
                     "CONNECTOR_CLASS_NAME": "test",
                     "JDBC_ENFORCE_SSL": "true",
                 },
-                region=AWS_REGION,
+                region=AWS_REGION_US_EAST_1,
                 arn="arn_test",
             )
         ]
