@@ -1,15 +1,14 @@
 from unittest import mock
 
-from moto.core import DEFAULT_ACCOUNT_ID
-
 from prowler.providers.aws.services.cloudfront.cloudfront_service import (
     Distribution,
     GeoRestrictionType,
 )
+from tests.providers.aws.audit_info_utils import AWS_ACCOUNT_NUMBER
 
 DISTRIBUTION_ID = "E27LVI50CSW06W"
 DISTRIBUTION_ARN = (
-    f"arn:aws:cloudfront::{DEFAULT_ACCOUNT_ID}:distribution/{DISTRIBUTION_ID}"
+    f"arn:aws:cloudfront::{AWS_ACCOUNT_NUMBER}:distribution/{DISTRIBUTION_ID}"
 )
 REGION = "eu-west-1"
 

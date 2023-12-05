@@ -4,10 +4,16 @@ from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.common.models import Audit_Metadata
 
 AWS_REGION_US_EAST_1 = "us-east-1"
+AWS_REGION_US_EAST_1_AZA = "us-east-1a"
+AWS_REGION_US_EAST_1_AZB = "us-east-1b"
 AWS_REGION_EU_WEST_1 = "eu-west-1"
+AWS_REGION_EU_WEST_1_AZA = "eu-west-1a"
+AWS_REGION_EU_WEST_1_AZB = "eu-west-1b"
 AWS_REGION_EU_WEST_2 = "eu-west-2"
 AWS_REGION_CN_NORTHWEST_1 = "cn-northwest-1"
 AWS_REGION_CN_NORTH_1 = "cn-north-1"
+AWS_REGION_EU_SOUTH_2 = "eu-south-2"
+AWS_REGION_US_WEST_2 = "us-west-2"
 AWS_ACCOUNT_NUMBER = "123456789012"
 AWS_ACCOUNT_ARN = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
 AWS_COMMERCIAL_PARTITION = "aws"
@@ -18,6 +24,10 @@ def set_mocked_aws_audit_info(
     audited_regions: [str] = [],
     audited_account: str = AWS_ACCOUNT_NUMBER,
     audited_account_arn: str = AWS_ACCOUNT_ARN,
+    expected_checks: [str] = [],
+    profile_region: str = None,
+    audit_config: dict = {},
+    ignore_unused_services: bool = False,
 ):
     audit_info = AWS_Audit_Info(
         session_config=None,
@@ -32,19 +42,22 @@ def set_mocked_aws_audit_info(
         audited_partition=AWS_COMMERCIAL_PARTITION,
         audited_identity_arn=None,
         profile=None,
-        profile_region=None,
+        profile_region=profile_region,
         credentials=None,
         assumed_role_info=None,
         audited_regions=audited_regions,
         organizations_metadata=None,
-        audit_resources=None,
+        audit_resources=[],
         mfa_enabled=False,
         audit_metadata=Audit_Metadata(
             services_scanned=0,
-            expected_checks=[],
+            expected_checks=expected_checks,
             completed_checks=0,
             audit_progress=0,
         ),
+        
+        audit_config=audit_config,
+        ignore_unused_services=ignore_unused_services,
         enabled_regions=set(audited_regions),
     )
     return audit_info

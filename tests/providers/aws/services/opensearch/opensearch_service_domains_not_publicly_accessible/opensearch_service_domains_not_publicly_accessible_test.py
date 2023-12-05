@@ -3,9 +3,10 @@ from unittest import mock
 from prowler.providers.aws.services.opensearch.opensearch_service import (
     OpenSearchDomain,
 )
-
-AWS_REGION = "eu-west-1"
-AWS_ACCOUNT_NUMBER = "123456789012"
+from tests.providers.aws.audit_info_utils import (
+    AWS_ACCOUNT_NUMBER,
+    AWS_REGION_EU_WEST_1,
+)
 
 domain_name = "test-domain"
 domain_arn = f"arn:aws:es:us-west-2:{AWS_ACCOUNT_NUMBER}:domain/{domain_name}"
@@ -95,7 +96,7 @@ class Test_opensearch_service_domains_not_publicly_accessible:
         opensearch_client.opensearch_domains.append(
             OpenSearchDomain(
                 name=domain_name,
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
                 arn=domain_arn,
                 access_policy=policy_data_restricted,
             )
@@ -127,7 +128,7 @@ class Test_opensearch_service_domains_not_publicly_accessible:
         opensearch_client.opensearch_domains.append(
             OpenSearchDomain(
                 name=domain_name,
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
                 arn=domain_arn,
                 access_policy=policy_data_not_restricted,
             )
@@ -159,7 +160,7 @@ class Test_opensearch_service_domains_not_publicly_accessible:
         opensearch_client.opensearch_domains.append(
             OpenSearchDomain(
                 name=domain_name,
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
                 arn=domain_arn,
                 access_policy=policy_data_not_restricted_principal,
             )
@@ -191,7 +192,7 @@ class Test_opensearch_service_domains_not_publicly_accessible:
         opensearch_client.opensearch_domains.append(
             OpenSearchDomain(
                 name=domain_name,
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
                 arn=domain_arn,
                 access_policy=policy_data_source_ip_full,
             )
@@ -223,7 +224,7 @@ class Test_opensearch_service_domains_not_publicly_accessible:
         opensearch_client.opensearch_domains.append(
             OpenSearchDomain(
                 name=domain_name,
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
                 arn=domain_arn,
                 access_policy=policy_data_source_whole_internet,
             )

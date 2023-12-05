@@ -2,16 +2,15 @@ from datetime import datetime
 from unittest.mock import patch
 
 import botocore
-from boto3 import session
 
-from prowler.providers.aws.lib.audit_info.audit_info import AWS_Audit_Info
 from prowler.providers.aws.services.ssmincidents.ssmincidents_service import (
     SSMIncidents,
 )
-from prowler.providers.common.models import Audit_Metadata
+from tests.providers.aws.audit_info_utils import (
+    AWS_REGION_US_EAST_1,
+    set_mocked_aws_audit_info,
+)
 
-# Mock Test Region
-AWS_REGION = "us-east-1"
 REPLICATION_SET_ARN = "arn:aws:ssm-incidents::111122223333:replication-set/40bd98f0-4110-2dee-b35e-b87006f9e172"
 RESPONSE_PLAN_ARN = "arn:aws:ssm-incidents::111122223333:response-plan/example-response"
 
@@ -33,7 +32,7 @@ def mock_make_api_call(self, operation_name, kwargs):
                 "lastModifiedBy": datetime(2024, 1, 1),
                 "lastModifiedTime": datetime(2024, 1, 1),
                 "regionMap": {
-                    AWS_REGION: {
+                    AWS_REGION_US_EAST_1: {
                         "sseKmsKeyId": "DefaultKey",
                         "status": "ACTIVE",
                         "statusMessage": "Test",
@@ -56,9 +55,11 @@ def mock_make_api_call(self, operation_name, kwargs):
 
 
 def mock_generate_regional_clients(service, audit_info, _):
-    regional_client = audit_info.audit_session.client(service, region_name=AWS_REGION)
-    regional_client.region = AWS_REGION
-    return {AWS_REGION: regional_client}
+    regional_client = audit_info.audit_session.client(
+        service, region_name=AWS_REGION_US_EAST_1
+    )
+    regional_client.region = AWS_REGION_US_EAST_1
+    return {AWS_REGION_US_EAST_1: regional_client}
 
 
 # Patch every AWS call using Boto3 and generate_regional_clients to have 1 client
@@ -68,76 +69,45 @@ def mock_generate_regional_clients(service, audit_info, _):
     new=mock_generate_regional_clients,
 )
 class Test_SSMIncidents_Service:
-    # Mocked Audit Info
-    def set_mocked_audit_info(self):
-        audit_info = AWS_Audit_Info(
-            session_config=None,
-            original_session=None,
-            audit_session=session.Session(
-                profile_name=None,
-                botocore_session=None,
-            ),
-            audited_account=None,
-            audited_account_arn=None,
-            audited_user_id=None,
-            audited_partition="aws",
-            audited_identity_arn=None,
-            profile=None,
-            profile_region=None,
-            credentials=None,
-            assumed_role_info=None,
-            audited_regions=None,
-            organizations_metadata=None,
-            audit_resources=None,
-            mfa_enabled=False,
-            audit_metadata=Audit_Metadata(
-                services_scanned=0,
-                expected_checks=[],
-                completed_checks=0,
-                audit_progress=0,
-            ),
-        )
-        return audit_info
-
     def test__get_client__(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
         ssmincidents = SSMIncidents(audit_info)
         assert (
-            ssmincidents.regional_clients[AWS_REGION].__class__.__name__
+            ssmincidents.regional_clients[AWS_REGION_US_EAST_1].__class__.__name__
             == "SSMIncidents"
         )
 
     def test__get_service__(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
         ssmincidents = SSMIncidents(audit_info)
         assert ssmincidents.service == "ssm-incidents"
 
     def test__list_replication_sets__(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
         ssmincidents = SSMIncidents(audit_info)
         assert len(ssmincidents.replication_set) == 1
 
     def test__get_replication_set__(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
         ssmincidents = SSMIncidents(audit_info)
         assert ssmincidents.replication_set[0].arn == REPLICATION_SET_ARN
         assert ssmincidents.replication_set[0].status == "ACTIVE"
         for region in ssmincidents.replication_set[0].region_map:
-            assert region.region == AWS_REGION
+            assert region.region == AWS_REGION_US_EAST_1
             assert region.status == "ACTIVE"
             assert region.sse_kms_id == "DefaultKey"
 
     def test__list_response_plans__(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
         ssmincidents = SSMIncidents(audit_info)
         assert len(ssmincidents.response_plans) == 1
         assert ssmincidents.response_plans[0].arn == RESPONSE_PLAN_ARN
         assert ssmincidents.response_plans[0].name == "test"
-        assert ssmincidents.response_plans[0].region == AWS_REGION
+        assert ssmincidents.response_plans[0].region == AWS_REGION_US_EAST_1
         assert ssmincidents.response_plans[0].tags == {"tag_test": "tag_value"}
 
     def test__list_tags_for_resource__(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
         ssmincidents = SSMIncidents(audit_info)
         assert len(ssmincidents.response_plans) == 1
         assert ssmincidents.response_plans[0].tags == {"tag_test": "tag_value"}

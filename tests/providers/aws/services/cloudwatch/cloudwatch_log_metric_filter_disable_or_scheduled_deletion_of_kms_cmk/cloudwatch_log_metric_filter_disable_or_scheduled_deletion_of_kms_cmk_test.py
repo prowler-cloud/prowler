@@ -1,48 +1,18 @@
 from unittest import mock
 
-from boto3 import client, session
+from boto3 import client
 from moto import mock_cloudtrail, mock_cloudwatch, mock_logs, mock_s3
-from moto.core import DEFAULT_ACCOUNT_ID
 
-from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
-from prowler.providers.common.models import Audit_Metadata
-
-AWS_REGION = "us-east-1"
-AWS_ACCOUNT_NUMBER = "123456789012"
+from tests.providers.aws.audit_info_utils import (
+    AWS_ACCOUNT_ARN,
+    AWS_ACCOUNT_NUMBER,
+    AWS_REGION_EU_WEST_1,
+    AWS_REGION_US_EAST_1,
+    set_mocked_aws_audit_info,
+)
 
 
 class Test_cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk:
-    def set_mocked_audit_info(self):
-        audit_info = AWS_Audit_Info(
-            session_config=None,
-            original_session=None,
-            audit_session=session.Session(
-                profile_name=None,
-                botocore_session=None,
-            ),
-            audited_account=AWS_ACCOUNT_NUMBER,
-            audited_account_arn=f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root",
-            audited_user_id=None,
-            audited_partition="aws",
-            audited_identity_arn=None,
-            profile=None,
-            profile_region=None,
-            credentials=None,
-            assumed_role_info=None,
-            audited_regions=["us-east-1", "eu-west-1"],
-            organizations_metadata=None,
-            audit_resources=None,
-            mfa_enabled=False,
-            audit_metadata=Audit_Metadata(
-                services_scanned=0,
-                expected_checks=[],
-                completed_checks=0,
-                audit_progress=0,
-            ),
-        )
-
-        return audit_info
-
     @mock_logs
     @mock_cloudtrail
     @mock_cloudwatch
@@ -55,7 +25,9 @@ class Test_cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk
             Logs,
         )
 
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info(
+            [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
+        )
 
         from prowler.providers.common.models import Audit_Metadata
 
@@ -96,15 +68,17 @@ class Test_cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk
                 result[0].status_extended
                 == "No CloudWatch log groups found with metric filters or alarms associated."
             )
-            assert result[0].resource_id == current_audit_info.audited_account
+            assert result[0].resource_id == AWS_ACCOUNT_NUMBER
+            assert result[0].resource_arn == AWS_ACCOUNT_ARN
+            assert result[0].region == AWS_REGION_EU_WEST_1
 
     @mock_logs
     @mock_cloudtrail
     @mock_cloudwatch
     @mock_s3
     def test_cloudwatch_trail_no_log_group(self):
-        cloudtrail_client = client("cloudtrail", region_name=AWS_REGION)
-        s3_client = client("s3", region_name=AWS_REGION)
+        cloudtrail_client = client("cloudtrail", region_name=AWS_REGION_US_EAST_1)
+        s3_client = client("s3", region_name=AWS_REGION_US_EAST_1)
         s3_client.create_bucket(Bucket="test")
         cloudtrail_client.create_trail(Name="test_trail", S3BucketName="test")
 
@@ -116,7 +90,9 @@ class Test_cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk
             Logs,
         )
 
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info(
+            [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
+        )
 
         from prowler.providers.common.models import Audit_Metadata
 
@@ -157,22 +133,24 @@ class Test_cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk
                 result[0].status_extended
                 == "No CloudWatch log groups found with metric filters or alarms associated."
             )
-            assert result[0].resource_id == current_audit_info.audited_account
+            assert result[0].resource_id == AWS_ACCOUNT_NUMBER
+            assert result[0].resource_arn == AWS_ACCOUNT_ARN
+            assert result[0].region == AWS_REGION_EU_WEST_1
 
     @mock_logs
     @mock_cloudtrail
     @mock_cloudwatch
     @mock_s3
     def test_cloudwatch_trail_with_log_group(self):
-        cloudtrail_client = client("cloudtrail", region_name=AWS_REGION)
-        logs_client = client("logs", region_name=AWS_REGION)
-        s3_client = client("s3", region_name=AWS_REGION)
+        cloudtrail_client = client("cloudtrail", region_name=AWS_REGION_US_EAST_1)
+        logs_client = client("logs", region_name=AWS_REGION_US_EAST_1)
+        s3_client = client("s3", region_name=AWS_REGION_US_EAST_1)
         s3_client.create_bucket(Bucket="test")
         logs_client.create_log_group(logGroupName="/log-group/test")
         cloudtrail_client.create_trail(
             Name="test_trail",
             S3BucketName="test",
-            CloudWatchLogsLogGroupArn=f"arn:aws:logs:{AWS_REGION}:{DEFAULT_ACCOUNT_ID}:log-group:/log-group/test:*",
+            CloudWatchLogsLogGroupArn=f"arn:aws:logs:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:log-group:/log-group/test:*",
         )
 
         from prowler.providers.aws.services.cloudtrail.cloudtrail_service import (
@@ -183,7 +161,9 @@ class Test_cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk
             Logs,
         )
 
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info(
+            [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
+        )
 
         from prowler.providers.common.models import Audit_Metadata
 
@@ -224,22 +204,24 @@ class Test_cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk
                 result[0].status_extended
                 == "No CloudWatch log groups found with metric filters or alarms associated."
             )
-            assert result[0].resource_id == current_audit_info.audited_account
+            assert result[0].resource_id == AWS_ACCOUNT_NUMBER
+            assert result[0].resource_arn == AWS_ACCOUNT_ARN
+            assert result[0].region == AWS_REGION_EU_WEST_1
 
     @mock_logs
     @mock_cloudtrail
     @mock_cloudwatch
     @mock_s3
     def test_cloudwatch_trail_with_log_group_with_metric(self):
-        cloudtrail_client = client("cloudtrail", region_name=AWS_REGION)
-        logs_client = client("logs", region_name=AWS_REGION)
-        s3_client = client("s3", region_name=AWS_REGION)
+        cloudtrail_client = client("cloudtrail", region_name=AWS_REGION_US_EAST_1)
+        logs_client = client("logs", region_name=AWS_REGION_US_EAST_1)
+        s3_client = client("s3", region_name=AWS_REGION_US_EAST_1)
         s3_client.create_bucket(Bucket="test")
         logs_client.create_log_group(logGroupName="/log-group/test")
         cloudtrail_client.create_trail(
             Name="test_trail",
             S3BucketName="test",
-            CloudWatchLogsLogGroupArn=f"arn:aws:logs:{AWS_REGION}:{DEFAULT_ACCOUNT_ID}:log-group:/log-group/test:*",
+            CloudWatchLogsLogGroupArn=f"arn:aws:logs:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:log-group:/log-group/test:*",
         )
         logs_client.put_metric_filter(
             logGroupName="/log-group/test",
@@ -262,7 +244,9 @@ class Test_cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk
             Logs,
         )
 
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info(
+            [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
+        )
 
         from prowler.providers.common.models import Audit_Metadata
 
@@ -304,22 +288,27 @@ class Test_cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk
                 == "CloudWatch log group /log-group/test found with metric filter test-filter but no alarms associated."
             )
             assert result[0].resource_id == "/log-group/test"
+            assert (
+                result[0].resource_arn
+                == f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:metric-filter/test-filter"
+            )
+            assert result[0].region == AWS_REGION_US_EAST_1
 
     @mock_logs
     @mock_cloudtrail
     @mock_cloudwatch
     @mock_s3
     def test_cloudwatch_trail_with_log_group_with_metric_and_alarm(self):
-        cloudtrail_client = client("cloudtrail", region_name=AWS_REGION)
-        cloudwatch_client = client("cloudwatch", region_name=AWS_REGION)
-        logs_client = client("logs", region_name=AWS_REGION)
-        s3_client = client("s3", region_name=AWS_REGION)
+        cloudtrail_client = client("cloudtrail", region_name=AWS_REGION_US_EAST_1)
+        cloudwatch_client = client("cloudwatch", region_name=AWS_REGION_US_EAST_1)
+        logs_client = client("logs", region_name=AWS_REGION_US_EAST_1)
+        s3_client = client("s3", region_name=AWS_REGION_US_EAST_1)
         s3_client.create_bucket(Bucket="test")
         logs_client.create_log_group(logGroupName="/log-group/test")
         cloudtrail_client.create_trail(
             Name="test_trail",
             S3BucketName="test",
-            CloudWatchLogsLogGroupArn=f"arn:aws:logs:{AWS_REGION}:{DEFAULT_ACCOUNT_ID}:log-group:/log-group/test:*",
+            CloudWatchLogsLogGroupArn=f"arn:aws:logs:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:log-group:/log-group/test:*",
         )
         logs_client.put_metric_filter(
             logGroupName="/log-group/test",
@@ -353,7 +342,9 @@ class Test_cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk
             Logs,
         )
 
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info(
+            [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
+        )
 
         from prowler.providers.common.models import Audit_Metadata
 
@@ -395,22 +386,27 @@ class Test_cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk
                 == "CloudWatch log group /log-group/test found with metric filter test-filter and alarms set."
             )
             assert result[0].resource_id == "/log-group/test"
+            assert (
+                result[0].resource_arn
+                == f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:metric-filter/test-filter"
+            )
+            assert result[0].region == AWS_REGION_US_EAST_1
 
     @mock_logs
     @mock_cloudtrail
     @mock_cloudwatch
     @mock_s3
     def test_cloudwatch_trail_with_log_group_with_metric_and_alarm_with_quotes(self):
-        cloudtrail_client = client("cloudtrail", region_name=AWS_REGION)
-        cloudwatch_client = client("cloudwatch", region_name=AWS_REGION)
-        logs_client = client("logs", region_name=AWS_REGION)
-        s3_client = client("s3", region_name=AWS_REGION)
+        cloudtrail_client = client("cloudtrail", region_name=AWS_REGION_US_EAST_1)
+        cloudwatch_client = client("cloudwatch", region_name=AWS_REGION_US_EAST_1)
+        logs_client = client("logs", region_name=AWS_REGION_US_EAST_1)
+        s3_client = client("s3", region_name=AWS_REGION_US_EAST_1)
         s3_client.create_bucket(Bucket="test")
         logs_client.create_log_group(logGroupName="/log-group/test")
         cloudtrail_client.create_trail(
             Name="test_trail",
             S3BucketName="test",
-            CloudWatchLogsLogGroupArn=f"arn:aws:logs:{AWS_REGION}:{DEFAULT_ACCOUNT_ID}:log-group:/log-group/test:*",
+            CloudWatchLogsLogGroupArn=f"arn:aws:logs:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:log-group:/log-group/test:*",
         )
         logs_client.put_metric_filter(
             logGroupName="/log-group/test",
@@ -444,7 +440,9 @@ class Test_cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk
             Logs,
         )
 
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info(
+            [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
+        )
 
         from prowler.providers.common.models import Audit_Metadata
 
@@ -486,22 +484,27 @@ class Test_cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk
                 == "CloudWatch log group /log-group/test found with metric filter test-filter and alarms set."
             )
             assert result[0].resource_id == "/log-group/test"
+            assert (
+                result[0].resource_arn
+                == f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:metric-filter/test-filter"
+            )
+            assert result[0].region == AWS_REGION_US_EAST_1
 
     @mock_logs
     @mock_cloudtrail
     @mock_cloudwatch
     @mock_s3
     def test_cloudwatch_trail_with_log_group_with_metric_and_alarm_with_newlines(self):
-        cloudtrail_client = client("cloudtrail", region_name=AWS_REGION)
-        cloudwatch_client = client("cloudwatch", region_name=AWS_REGION)
-        logs_client = client("logs", region_name=AWS_REGION)
-        s3_client = client("s3", region_name=AWS_REGION)
+        cloudtrail_client = client("cloudtrail", region_name=AWS_REGION_US_EAST_1)
+        cloudwatch_client = client("cloudwatch", region_name=AWS_REGION_US_EAST_1)
+        logs_client = client("logs", region_name=AWS_REGION_US_EAST_1)
+        s3_client = client("s3", region_name=AWS_REGION_US_EAST_1)
         s3_client.create_bucket(Bucket="test")
         logs_client.create_log_group(logGroupName="/log-group/test")
         cloudtrail_client.create_trail(
             Name="test_trail",
             S3BucketName="test",
-            CloudWatchLogsLogGroupArn=f"arn:aws:logs:{AWS_REGION}:{DEFAULT_ACCOUNT_ID}:log-group:/log-group/test:*",
+            CloudWatchLogsLogGroupArn=f"arn:aws:logs:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:log-group:/log-group/test:*",
         )
         logs_client.put_metric_filter(
             logGroupName="/log-group/test",
@@ -535,7 +538,9 @@ class Test_cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk
             Logs,
         )
 
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info(
+            [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
+        )
 
         from prowler.providers.common.models import Audit_Metadata
 
@@ -577,3 +582,8 @@ class Test_cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk
                 == "CloudWatch log group /log-group/test found with metric filter test-filter and alarms set."
             )
             assert result[0].resource_id == "/log-group/test"
+            assert (
+                result[0].resource_arn
+                == f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:metric-filter/test-filter"
+            )
+            assert result[0].region == AWS_REGION_US_EAST_1

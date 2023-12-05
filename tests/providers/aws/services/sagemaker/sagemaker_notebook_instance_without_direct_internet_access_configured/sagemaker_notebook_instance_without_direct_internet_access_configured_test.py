@@ -2,12 +2,13 @@ from re import search
 from unittest import mock
 
 from prowler.providers.aws.services.sagemaker.sagemaker_service import NotebookInstance
-
-AWS_REGION = "eu-west-1"
-AWS_ACCOUNT_NUMBER = "123456789012"
+from tests.providers.aws.audit_info_utils import (
+    AWS_ACCOUNT_NUMBER,
+    AWS_REGION_EU_WEST_1,
+)
 
 test_notebook_instance = "test-notebook-instance"
-notebook_instance_arn = f"arn:aws:sagemaker:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:notebook-instance/{test_notebook_instance}"
+notebook_instance_arn = f"arn:aws:sagemaker:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:notebook-instance/{test_notebook_instance}"
 
 
 class Test_sagemaker_notebook_instance_without_direct_internet_access_configured:
@@ -35,7 +36,7 @@ class Test_sagemaker_notebook_instance_without_direct_internet_access_configured
             NotebookInstance(
                 name=test_notebook_instance,
                 arn=notebook_instance_arn,
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
                 direct_internet_access=False,
             )
         )
@@ -66,7 +67,7 @@ class Test_sagemaker_notebook_instance_without_direct_internet_access_configured
             NotebookInstance(
                 name=test_notebook_instance,
                 arn=notebook_instance_arn,
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
                 direct_internet_access=True,
             )
         )

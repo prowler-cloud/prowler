@@ -2,8 +2,7 @@ from re import search
 from unittest import mock
 
 from prowler.providers.aws.services.glue.glue_service import Job, SecurityConfig
-
-AWS_REGION = "us-east-1"
+from tests.providers.aws.audit_info_utils import AWS_REGION_US_EAST_1
 
 
 class Test_glue_etl_jobs_amazon_s3_encryption_enabled:
@@ -32,7 +31,7 @@ class Test_glue_etl_jobs_amazon_s3_encryption_enabled:
                 name="test",
                 security="sec_config",
                 arguments=None,
-                region=AWS_REGION,
+                region=AWS_REGION_US_EAST_1,
                 arn="arn_test",
             )
         ]
@@ -43,7 +42,7 @@ class Test_glue_etl_jobs_amazon_s3_encryption_enabled:
                 s3_key_arn="key_arn",
                 cw_encryption="DISABLED",
                 jb_encryption="DISABLED",
-                region=AWS_REGION,
+                region=AWS_REGION_US_EAST_1,
             )
         ]
 
@@ -75,7 +74,7 @@ class Test_glue_etl_jobs_amazon_s3_encryption_enabled:
                 name="test",
                 security="sec_config",
                 arguments=None,
-                region=AWS_REGION,
+                region=AWS_REGION_US_EAST_1,
                 arn="arn_test",
             )
         ]
@@ -85,7 +84,7 @@ class Test_glue_etl_jobs_amazon_s3_encryption_enabled:
                 s3_encryption="DISABLED",
                 cw_encryption="DISABLED",
                 jb_encryption="DISABLED",
-                region=AWS_REGION,
+                region=AWS_REGION_US_EAST_1,
             )
         ]
 
@@ -116,7 +115,7 @@ class Test_glue_etl_jobs_amazon_s3_encryption_enabled:
             Job(
                 name="test",
                 security="sec_config",
-                region=AWS_REGION,
+                region=AWS_REGION_US_EAST_1,
                 arn="arn_test",
             )
         ]
@@ -153,7 +152,7 @@ class Test_glue_etl_jobs_amazon_s3_encryption_enabled:
                     "--encryption-type": "sse-s3",
                     "--enable-job-insights": "false",
                 },
-                region=AWS_REGION,
+                region=AWS_REGION_US_EAST_1,
                 arn="arn_test",
             )
         ]

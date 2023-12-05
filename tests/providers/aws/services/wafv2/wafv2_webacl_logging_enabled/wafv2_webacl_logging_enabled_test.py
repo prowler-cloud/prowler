@@ -2,12 +2,14 @@ from unittest import mock
 from uuid import uuid4
 
 from prowler.providers.aws.services.wafv2.wafv2_service import WebAclv2
+from tests.providers.aws.audit_info_utils import (
+    AWS_ACCOUNT_NUMBER,
+    AWS_REGION_EU_WEST_1,
+)
 
-AWS_REGION = "eu-west-1"
-AWS_ACCOUNT_NUMBER = "123456789012"
 waf_id = str(uuid4())
 waf_name = "waf-example"
-waf_arn = f"arn:aws:wafv2:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:regional/webacl/{waf_name}/{waf_id}"
+waf_arn = f"arn:aws:wafv2:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:regional/webacl/{waf_name}/{waf_id}"
 
 
 class Test_wafv2_webacl_logging_enabled:
@@ -39,7 +41,7 @@ class Test_wafv2_webacl_logging_enabled:
                 name=waf_name,
                 id=waf_id,
                 albs=[],
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
                 logging_enabled=True,
             )
         )
@@ -64,7 +66,7 @@ class Test_wafv2_webacl_logging_enabled:
             )
             assert result[0].resource_id == waf_id
             assert result[0].resource_arn == waf_arn
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1
 
     def test_wafv2_wb_acl_without_logging(self):
         wafv2_client = mock.MagicMock
@@ -76,7 +78,7 @@ class Test_wafv2_webacl_logging_enabled:
                 name=waf_name,
                 id=waf_id,
                 albs=[],
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
                 logging_enabled=False,
             )
         )
@@ -101,4 +103,4 @@ class Test_wafv2_webacl_logging_enabled:
             )
             assert result[0].resource_id == waf_id
             assert result[0].resource_arn == waf_arn
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1

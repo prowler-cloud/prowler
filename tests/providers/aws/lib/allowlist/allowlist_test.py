@@ -1,5 +1,5 @@
 import yaml
-from boto3 import resource, session
+from boto3 import resource
 from mock import MagicMock
 from moto import mock_dynamodb, mock_s3
 
@@ -13,51 +13,19 @@ from prowler.providers.aws.lib.allowlist.allowlist import (
     is_excepted,
     parse_allowlist_file,
 )
-from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
-from prowler.providers.common.models import Audit_Metadata
 from tests.providers.aws.audit_info_utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_WEST_1,
     AWS_REGION_US_EAST_1,
+    set_mocked_aws_audit_info,
 )
 
 
 class Test_Allowlist:
-    # Mocked Audit Info
-    def set_mocked_audit_info(self):
-        audit_info = AWS_Audit_Info(
-            session_config=None,
-            original_session=None,
-            audit_session=session.Session(
-                profile_name=None,
-                botocore_session=None,
-            ),
-            audited_account=AWS_ACCOUNT_NUMBER,
-            audited_account_arn=f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root",
-            audited_user_id=None,
-            audited_partition="aws",
-            audited_identity_arn=None,
-            profile=None,
-            profile_region=None,
-            credentials=None,
-            assumed_role_info=None,
-            audited_regions=None,
-            organizations_metadata=None,
-            audit_resources=None,
-            mfa_enabled=False,
-            audit_metadata=Audit_Metadata(
-                services_scanned=0,
-                expected_checks=[],
-                completed_checks=0,
-                audit_progress=0,
-            ),
-        )
-        return audit_info
-
     # Test S3 allowlist
     @mock_s3
     def test_s3_allowlist(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info()
         # Create bucket and upload allowlist yaml
         s3_resource = resource("s3", region_name=AWS_REGION_US_EAST_1)
         s3_resource.create_bucket(Bucket="test-allowlist")
@@ -76,7 +44,7 @@ class Test_Allowlist:
     # Test DynamoDB allowlist
     @mock_dynamodb
     def test_dynamo_allowlist(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info()
         # Create table and put item
         dynamodb_resource = resource("dynamodb", region_name=AWS_REGION_US_EAST_1)
         table_name = "test-allowlist"
@@ -120,7 +88,7 @@ class Test_Allowlist:
 
     @mock_dynamodb
     def test_dynamo_allowlist_with_tags(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info()
         # Create table and put item
         dynamodb_resource = resource("dynamodb", region_name=AWS_REGION_US_EAST_1)
         table_name = "test-allowlist"

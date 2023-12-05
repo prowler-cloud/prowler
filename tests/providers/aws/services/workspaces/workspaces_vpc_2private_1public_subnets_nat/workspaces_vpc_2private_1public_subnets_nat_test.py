@@ -1,54 +1,22 @@
 from unittest import mock
 from uuid import uuid4
 
-from boto3 import client, session
+from boto3 import client
 from moto import mock_ec2
 
-from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.aws.services.vpc.vpc_service import VPC
 from prowler.providers.aws.services.workspaces.workspaces_service import WorkSpace
-from prowler.providers.common.models import Audit_Metadata
-
-AWS_REGION = "eu-west-1"
-AWS_ACCOUNT_NUMBER = "123456789012"
-WORKSPACE_ID = str(uuid4())
-WORKSPACE_ARN = (
-    f"arn:aws:workspaces:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:workspace/{WORKSPACE_ID}"
+from tests.providers.aws.audit_info_utils import (
+    AWS_ACCOUNT_NUMBER,
+    AWS_REGION_EU_WEST_1,
+    set_mocked_aws_audit_info,
 )
+
+WORKSPACE_ID = str(uuid4())
+WORKSPACE_ARN = f"arn:aws:workspaces:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:workspace/{WORKSPACE_ID}"
 
 
 class Test_workspaces_vpc_2private_1public_subnets_nat:
-    def set_mocked_audit_info(self):
-        audit_info = AWS_Audit_Info(
-            session_config=None,
-            original_session=None,
-            audit_session=session.Session(
-                profile_name=None,
-                botocore_session=None,
-            ),
-            audited_account=AWS_ACCOUNT_NUMBER,
-            audited_account_arn=f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root",
-            audited_user_id=None,
-            audited_partition="aws",
-            audited_identity_arn=None,
-            profile=None,
-            profile_region=None,
-            credentials=None,
-            assumed_role_info=None,
-            audited_regions=["us-east-1", "eu-west-1"],
-            organizations_metadata=None,
-            audit_resources=None,
-            mfa_enabled=False,
-            audit_metadata=Audit_Metadata(
-                services_scanned=0,
-                expected_checks=[],
-                completed_checks=0,
-                audit_progress=0,
-            ),
-        )
-
-        return audit_info
-
     def test_no_workspaces(self):
         workspaces_client = mock.MagicMock
         workspaces_client.workspaces = []
@@ -78,13 +46,13 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
             WorkSpace(
                 id=WORKSPACE_ID,
                 arn=WORKSPACE_ARN,
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
                 user_volume_encryption_enabled=True,
                 root_volume_encryption_enabled=True,
             )
         )
 
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -112,12 +80,12 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
                     )
                     assert result[0].resource_id == WORKSPACE_ID
                     assert result[0].resource_arn == WORKSPACE_ARN
-                    assert result[0].region == AWS_REGION
+                    assert result[0].region == AWS_REGION_EU_WEST_1
 
     @mock_ec2
     def test_workspaces_vpc_one_private_subnet(self):
         # EC2 Client
-        ec2_client = client("ec2", region_name=AWS_REGION)
+        ec2_client = client("ec2", region_name=AWS_REGION_EU_WEST_1)
         vpc = ec2_client.create_vpc(
             CidrBlock="172.28.7.0/24", InstanceTenancy="default"
         )
@@ -125,7 +93,7 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
         subnet_private = ec2_client.create_subnet(
             VpcId=vpc["Vpc"]["VpcId"],
             CidrBlock="172.28.7.0/26",
-            AvailabilityZone=f"{AWS_REGION}a",
+            AvailabilityZone=f"{AWS_REGION_EU_WEST_1}a",
         )
         route_table_private = ec2_client.create_route_table(
             VpcId=vpc["Vpc"]["VpcId"],
@@ -145,14 +113,14 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
             WorkSpace(
                 id=WORKSPACE_ID,
                 arn=WORKSPACE_ARN,
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
                 user_volume_encryption_enabled=True,
                 root_volume_encryption_enabled=True,
                 subnet_id=subnet_private["Subnet"]["SubnetId"],
             )
         )
 
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -180,12 +148,12 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
                     )
                     assert result[0].resource_id == WORKSPACE_ID
                     assert result[0].resource_arn == WORKSPACE_ARN
-                    assert result[0].region == AWS_REGION
+                    assert result[0].region == AWS_REGION_EU_WEST_1
 
     @mock_ec2
     def test_workspaces_vpc_two_private_subnet(self):
         # EC2 Client
-        ec2_client = client("ec2", region_name=AWS_REGION)
+        ec2_client = client("ec2", region_name=AWS_REGION_EU_WEST_1)
         vpc = ec2_client.create_vpc(
             CidrBlock="172.28.7.0/24", InstanceTenancy="default"
         )
@@ -193,7 +161,7 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
         subnet_private = ec2_client.create_subnet(
             VpcId=vpc["Vpc"]["VpcId"],
             CidrBlock="172.28.7.0/26",
-            AvailabilityZone=f"{AWS_REGION}a",
+            AvailabilityZone=f"{AWS_REGION_EU_WEST_1}a",
         )
         route_table_private = ec2_client.create_route_table(
             VpcId=vpc["Vpc"]["VpcId"],
@@ -210,7 +178,7 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
         subnet_private_2 = ec2_client.create_subnet(
             VpcId=vpc["Vpc"]["VpcId"],
             CidrBlock="172.28.7.64/26",
-            AvailabilityZone=f"{AWS_REGION}a",
+            AvailabilityZone=f"{AWS_REGION_EU_WEST_1}a",
         )
         route_table_private_2 = ec2_client.create_route_table(
             VpcId=vpc["Vpc"]["VpcId"],
@@ -230,14 +198,14 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
             WorkSpace(
                 id=WORKSPACE_ID,
                 arn=WORKSPACE_ARN,
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
                 user_volume_encryption_enabled=True,
                 root_volume_encryption_enabled=True,
                 subnet_id=subnet_private["Subnet"]["SubnetId"],
             )
         )
 
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -265,12 +233,12 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
                     )
                     assert result[0].resource_id == WORKSPACE_ID
                     assert result[0].resource_arn == WORKSPACE_ARN
-                    assert result[0].region == AWS_REGION
+                    assert result[0].region == AWS_REGION_EU_WEST_1
 
     @mock_ec2
     def test_workspaces_vpc_two_private_subnet_one_public(self):
         # EC2 Client
-        ec2_client = client("ec2", region_name=AWS_REGION)
+        ec2_client = client("ec2", region_name=AWS_REGION_EU_WEST_1)
         vpc = ec2_client.create_vpc(
             CidrBlock="172.28.7.0/24", InstanceTenancy="default"
         )
@@ -278,7 +246,7 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
         subnet_private = ec2_client.create_subnet(
             VpcId=vpc["Vpc"]["VpcId"],
             CidrBlock="172.28.7.0/26",
-            AvailabilityZone=f"{AWS_REGION}a",
+            AvailabilityZone=f"{AWS_REGION_EU_WEST_1}a",
         )
         route_table_private = ec2_client.create_route_table(
             VpcId=vpc["Vpc"]["VpcId"],
@@ -295,7 +263,7 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
         subnet_private_2 = ec2_client.create_subnet(
             VpcId=vpc["Vpc"]["VpcId"],
             CidrBlock="172.28.7.64/26",
-            AvailabilityZone=f"{AWS_REGION}a",
+            AvailabilityZone=f"{AWS_REGION_EU_WEST_1}a",
         )
         route_table_private_2 = ec2_client.create_route_table(
             VpcId=vpc["Vpc"]["VpcId"],
@@ -312,7 +280,7 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
         subnet_public = ec2_client.create_subnet(
             VpcId=vpc["Vpc"]["VpcId"],
             CidrBlock="172.28.7.192/26",
-            AvailabilityZone=f"{AWS_REGION}a",
+            AvailabilityZone=f"{AWS_REGION_EU_WEST_1}a",
         )
         route_table_public = ec2_client.create_route_table(
             VpcId=vpc["Vpc"]["VpcId"],
@@ -334,14 +302,14 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
             WorkSpace(
                 id=WORKSPACE_ID,
                 arn=WORKSPACE_ARN,
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
                 user_volume_encryption_enabled=True,
                 root_volume_encryption_enabled=True,
                 subnet_id=subnet_private["Subnet"]["SubnetId"],
             )
         )
 
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -369,12 +337,12 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
                     )
                     assert result[0].resource_id == WORKSPACE_ID
                     assert result[0].resource_arn == WORKSPACE_ARN
-                    assert result[0].region == AWS_REGION
+                    assert result[0].region == AWS_REGION_EU_WEST_1
 
     @mock_ec2
     def test_workspaces_vpc_two_private_subnet_one_public_and_nat(self):
         # EC2 Client
-        ec2_client = client("ec2", region_name=AWS_REGION)
+        ec2_client = client("ec2", region_name=AWS_REGION_EU_WEST_1)
         vpc = ec2_client.create_vpc(
             CidrBlock="172.28.7.0/24", InstanceTenancy="default"
         )
@@ -382,7 +350,7 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
         subnet_private = ec2_client.create_subnet(
             VpcId=vpc["Vpc"]["VpcId"],
             CidrBlock="172.28.7.0/26",
-            AvailabilityZone=f"{AWS_REGION}a",
+            AvailabilityZone=f"{AWS_REGION_EU_WEST_1}a",
         )
         route_table_private = ec2_client.create_route_table(
             VpcId=vpc["Vpc"]["VpcId"],
@@ -399,7 +367,7 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
         subnet_private_2 = ec2_client.create_subnet(
             VpcId=vpc["Vpc"]["VpcId"],
             CidrBlock="172.28.7.64/26",
-            AvailabilityZone=f"{AWS_REGION}a",
+            AvailabilityZone=f"{AWS_REGION_EU_WEST_1}a",
         )
         route_table_private_2 = ec2_client.create_route_table(
             VpcId=vpc["Vpc"]["VpcId"],
@@ -424,7 +392,7 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
         subnet_public = ec2_client.create_subnet(
             VpcId=vpc["Vpc"]["VpcId"],
             CidrBlock="172.28.7.192/26",
-            AvailabilityZone=f"{AWS_REGION}a",
+            AvailabilityZone=f"{AWS_REGION_EU_WEST_1}a",
         )
         route_table_public = ec2_client.create_route_table(
             VpcId=vpc["Vpc"]["VpcId"],
@@ -446,14 +414,14 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
             WorkSpace(
                 id=WORKSPACE_ID,
                 arn=WORKSPACE_ARN,
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
                 user_volume_encryption_enabled=True,
                 root_volume_encryption_enabled=True,
                 subnet_id=subnet_private["Subnet"]["SubnetId"],
             )
         )
 
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -481,4 +449,4 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
                     )
                     assert result[0].resource_id == WORKSPACE_ID
                     assert result[0].resource_arn == WORKSPACE_ARN
-                    assert result[0].region == AWS_REGION
+                    assert result[0].region == AWS_REGION_EU_WEST_1

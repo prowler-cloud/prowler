@@ -1,53 +1,22 @@
 from re import search
 from unittest import mock
 
-from boto3 import client, session
+from boto3 import client
 from moto import mock_organizations
 
-from prowler.providers.aws.lib.audit_info.audit_info import AWS_Audit_Info
 from prowler.providers.aws.services.organizations.organizations_service import (
     Organizations,
 )
-from prowler.providers.common.models import Audit_Metadata
-
-AWS_REGION = "us-east-1"
+from tests.providers.aws.audit_info_utils import (
+    AWS_REGION_EU_WEST_1,
+    set_mocked_aws_audit_info,
+)
 
 
 class Test_organizations_delegated_administrators:
-    # Mocked Audit Info
-    def set_mocked_audit_info(self):
-        audit_info = AWS_Audit_Info(
-            session_config=None,
-            original_session=None,
-            audit_session=session.Session(
-                profile_name=None,
-                botocore_session=None,
-            ),
-            audited_account=None,
-            audited_account_arn=None,
-            audited_user_id=None,
-            audited_partition="aws",
-            audited_identity_arn=None,
-            profile=None,
-            profile_region=None,
-            credentials=None,
-            assumed_role_info=None,
-            audited_regions=[AWS_REGION],
-            organizations_metadata=None,
-            audit_resources=None,
-            mfa_enabled=False,
-            audit_metadata=Audit_Metadata(
-                services_scanned=0,
-                expected_checks=[],
-                completed_checks=0,
-                audit_progress=0,
-            ),
-        )
-        return audit_info
-
     @mock_organizations
     def test_no_organization(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         audit_info.audit_config = {"organizations_trusted_delegated_administrators": []}
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -69,11 +38,11 @@ class Test_organizations_delegated_administrators:
 
     @mock_organizations
     def test_organization_no_delegations(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         audit_info.audit_config = {"organizations_trusted_delegated_administrators": []}
 
         # Create Organization
-        conn = client("organizations", region_name=AWS_REGION)
+        conn = client("organizations", region_name=AWS_REGION_EU_WEST_1)
         response = conn.create_organization()
 
         with mock.patch(
@@ -100,14 +69,14 @@ class Test_organizations_delegated_administrators:
                     "No Delegated Administrators",
                     result[0].status_extended,
                 )
-                assert result[0].region == AWS_REGION
+                assert result[0].region == AWS_REGION_EU_WEST_1
 
     @mock_organizations
     def test_organization_trusted_delegated(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         # Create Organization
-        conn = client("organizations", region_name=AWS_REGION)
+        conn = client("organizations", region_name=AWS_REGION_EU_WEST_1)
         response = conn.create_organization()
         # Create Dummy Account
         account = conn.create_account(
@@ -151,14 +120,14 @@ class Test_organizations_delegated_administrators:
                     "Trusted Delegated Administrator",
                     result[0].status_extended,
                 )
-                assert result[0].region == AWS_REGION
+                assert result[0].region == AWS_REGION_EU_WEST_1
 
     @mock_organizations
     def test_organization_untrusted_delegated(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         # Create Organization
-        conn = client("organizations", region_name=AWS_REGION)
+        conn = client("organizations", region_name=AWS_REGION_EU_WEST_1)
         response = conn.create_organization()
         # Create Dummy Account
         account = conn.create_account(
@@ -198,4 +167,4 @@ class Test_organizations_delegated_administrators:
                     "Untrusted Delegated Administrator",
                     result[0].status_extended,
                 )
-                assert result[0].region == AWS_REGION
+                assert result[0].region == AWS_REGION_EU_WEST_1

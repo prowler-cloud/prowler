@@ -1,7 +1,5 @@
 from unittest import mock
 
-from moto.core import DEFAULT_ACCOUNT_ID
-
 from prowler.providers.aws.services.codeartifact.codeartifact_service import (
     LatestPackageVersion,
     LatestPackageVersionStatus,
@@ -13,6 +11,7 @@ from prowler.providers.aws.services.codeartifact.codeartifact_service import (
     Restrictions,
     RestrictionValues,
 )
+from tests.providers.aws.audit_info_utils import AWS_ACCOUNT_NUMBER
 
 AWS_REGION = "eu-west-1"
 
@@ -65,7 +64,7 @@ class Test_codeartifact_packages_external_public_publishing_disabled:
         codeartifact_client = mock.MagicMock
         package_name = "test-package"
         package_namespace = "test-namespace"
-        repository_arn = f"arn:aws:codebuild:{AWS_REGION}:{DEFAULT_ACCOUNT_ID}:repository/test-repository"
+        repository_arn = f"arn:aws:codebuild:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:repository/test-repository"
         codeartifact_client.repositories = {
             "test-repository": Repository(
                 name="test-repository",
@@ -125,7 +124,7 @@ class Test_codeartifact_packages_external_public_publishing_disabled:
         codeartifact_client = mock.MagicMock
         package_name = "test-package"
         package_namespace = "test-namespace"
-        repository_arn = f"arn:aws:codebuild:{AWS_REGION}:{DEFAULT_ACCOUNT_ID}:repository/test-repository"
+        repository_arn = f"arn:aws:codebuild:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:repository/test-repository"
         codeartifact_client.repositories = {
             "test-repository": Repository(
                 name="test-repository",
