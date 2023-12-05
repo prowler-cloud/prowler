@@ -4,6 +4,7 @@ from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.common.models import Audit_Metadata
 
 AWS_REGION_US_EAST_1 = "us-east-1"
+AWS_REGION_US_EAST_1_AZA = "us-east-1a"
 AWS_REGION_EU_WEST_1 = "eu-west-1"
 AWS_REGION_EU_WEST_2 = "eu-west-2"
 AWS_REGION_EU_SOUTH_2 = "eu-south-2"
@@ -21,6 +22,7 @@ def set_mocked_aws_audit_info(
     expected_checks: [str] = [],
     profile_region: str = None,
     audit_config: dict = {},
+    ignore_unused_services: bool = False,
 ):
     audit_info = AWS_Audit_Info(
         session_config=None,
@@ -49,5 +51,6 @@ def set_mocked_aws_audit_info(
             audit_progress=0,
         ),
         audit_config=audit_config,
+        ignore_unused_services=ignore_unused_services,
     )
     return audit_info
