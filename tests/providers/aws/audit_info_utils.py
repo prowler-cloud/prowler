@@ -26,6 +26,7 @@ def set_mocked_aws_audit_info(
     expected_checks: [str] = [],
     profile_region: str = None,
     audit_config: dict = {},
+    ignore_unused_services: bool = False,
 ):
     audit_info = AWS_Audit_Info(
         session_config=None,
@@ -54,5 +55,6 @@ def set_mocked_aws_audit_info(
             audit_progress=0,
         ),
         audit_config=audit_config,
+        ignore_unused_services=ignore_unused_services,
     )
     return audit_info

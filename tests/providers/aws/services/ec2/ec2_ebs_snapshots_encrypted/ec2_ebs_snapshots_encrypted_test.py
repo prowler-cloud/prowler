@@ -1,20 +1,22 @@
 from unittest import mock
 
-from boto3 import resource, session
+from boto3 import resource
 from mock import patch
 from moto import mock_ec2
 
-from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
-from prowler.providers.common.models import Audit_Metadata
-
-AWS_REGION = "us-east-1"
-AWS_ACCOUNT_NUMBER = "123456789012"
+from tests.providers.aws.audit_info_utils import (
+    AWS_REGION_EU_WEST_1,
+    AWS_REGION_US_EAST_1,
+    set_mocked_aws_audit_info,
+)
 
 
 def mock_generate_regional_clients(service, audit_info, _):
-    regional_client = audit_info.audit_session.client(service, region_name=AWS_REGION)
-    regional_client.region = AWS_REGION
-    return {AWS_REGION: regional_client}
+    regional_client = audit_info.audit_session.client(
+        service, region_name=AWS_REGION_US_EAST_1
+    )
+    regional_client.region = AWS_REGION_US_EAST_1
+    return {AWS_REGION_US_EAST_1: regional_client}
 
 
 @patch(
@@ -22,42 +24,13 @@ def mock_generate_regional_clients(service, audit_info, _):
     new=mock_generate_regional_clients,
 )
 class Test_ec2_ebs_snapshots_encrypted:
-    def set_mocked_audit_info(self):
-        audit_info = AWS_Audit_Info(
-            session_config=None,
-            original_session=None,
-            audit_session=session.Session(
-                profile_name=None,
-                botocore_session=None,
-            ),
-            audited_account=AWS_ACCOUNT_NUMBER,
-            audited_account_arn=f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root",
-            audited_user_id=None,
-            audited_partition="aws",
-            audited_identity_arn=None,
-            profile=None,
-            profile_region=None,
-            credentials=None,
-            assumed_role_info=None,
-            audited_regions=["us-east-1", "eu-west-1"],
-            organizations_metadata=None,
-            audit_resources=None,
-            mfa_enabled=False,
-            audit_metadata=Audit_Metadata(
-                services_scanned=0,
-                expected_checks=[],
-                completed_checks=0,
-                audit_progress=0,
-            ),
-        )
-
-        return audit_info
-
     @mock_ec2
     def test_ec2_default_snapshots(self):
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info(
+            [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
+        )
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -80,13 +53,15 @@ class Test_ec2_ebs_snapshots_encrypted:
     @mock_ec2
     def test_ec2_unencrypted_snapshot(self):
         # Create EC2 Mocked Resources
-        ec2 = resource("ec2", region_name=AWS_REGION)
-        volume = ec2.create_volume(Size=80, AvailabilityZone=f"{AWS_REGION}a")
+        ec2 = resource("ec2", region_name=AWS_REGION_US_EAST_1)
+        volume = ec2.create_volume(Size=80, AvailabilityZone=f"{AWS_REGION_US_EAST_1}a")
         snapshot = volume.create_snapshot(Description="testsnap")
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info(
+            [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
+        )
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -108,7 +83,7 @@ class Test_ec2_ebs_snapshots_encrypted:
 
             for snap in results:
                 if snap.resource_id == snapshot.id:
-                    assert snap.region == AWS_REGION
+                    assert snap.region == AWS_REGION_US_EAST_1
                     assert snap.resource_tags == []
                     assert snap.status == "FAIL"
                     assert (
@@ -117,21 +92,23 @@ class Test_ec2_ebs_snapshots_encrypted:
                     )
                     assert (
                         snap.resource_arn
-                        == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:snapshot/{snapshot.id}"
+                        == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION_US_EAST_1}:{current_audit_info.audited_account}:snapshot/{snapshot.id}"
                     )
 
     @mock_ec2
     def test_ec2_encrypted_snapshot(self):
         # Create EC2 Mocked Resources
-        ec2 = resource("ec2", region_name=AWS_REGION)
+        ec2 = resource("ec2", region_name=AWS_REGION_US_EAST_1)
         snapshot = volume = ec2.create_volume(
-            Size=80, AvailabilityZone=f"{AWS_REGION}a", Encrypted=True
+            Size=80, AvailabilityZone=f"{AWS_REGION_US_EAST_1}a", Encrypted=True
         )
         snapshot = volume.create_snapshot(Description="testsnap")
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info(
+            [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
+        )
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -153,7 +130,7 @@ class Test_ec2_ebs_snapshots_encrypted:
 
             for snap in results:
                 if snap.resource_id == snapshot.id:
-                    assert snap.region == AWS_REGION
+                    assert snap.region == AWS_REGION_US_EAST_1
                     assert snap.resource_tags == []
                     assert snap.status == "PASS"
                     assert (
@@ -162,5 +139,5 @@ class Test_ec2_ebs_snapshots_encrypted:
                     )
                     assert (
                         snap.resource_arn
-                        == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION}:{current_audit_info.audited_account}:snapshot/{snapshot.id}"
+                        == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION_US_EAST_1}:{current_audit_info.audited_account}:snapshot/{snapshot.id}"
                     )

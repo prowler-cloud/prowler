@@ -28,7 +28,10 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_redis_6379:
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
         current_audit_info = set_mocked_aws_audit_info(
-            audited_regions=[AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
+            audited_regions=[
+                AWS_REGION_US_EAST_1,
+                AWS_REGION_EU_WEST_1,
+            ]
         )
 
         with mock.patch(
@@ -114,7 +117,10 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_redis_6379:
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
         current_audit_info = set_mocked_aws_audit_info(
-            audited_regions=[AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
+            audited_regions=[
+                AWS_REGION_US_EAST_1,
+                AWS_REGION_EU_WEST_1,
+            ]
         )
 
         with mock.patch(
@@ -180,7 +186,10 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_redis_6379:
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
         current_audit_info = set_mocked_aws_audit_info(
-            audited_regions=[AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
+            audited_regions=[
+                AWS_REGION_US_EAST_1,
+                AWS_REGION_EU_WEST_1,
+            ]
         )
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -229,7 +238,10 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_redis_6379:
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
         current_audit_info = set_mocked_aws_audit_info(
-            audited_regions=[AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
+            audited_regions=[
+                AWS_REGION_US_EAST_1,
+                AWS_REGION_EU_WEST_1,
+            ]
         )
         current_audit_info.ignore_unused_services = True
 
