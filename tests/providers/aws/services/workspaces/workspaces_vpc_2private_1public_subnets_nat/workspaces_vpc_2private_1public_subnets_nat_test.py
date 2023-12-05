@@ -8,13 +8,13 @@ from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.aws.services.vpc.vpc_service import VPC
 from prowler.providers.aws.services.workspaces.workspaces_service import WorkSpace
 from prowler.providers.common.models import Audit_Metadata
-
-AWS_REGION = "eu-west-1"
-AWS_ACCOUNT_NUMBER = "123456789012"
-WORKSPACE_ID = str(uuid4())
-WORKSPACE_ARN = (
-    f"arn:aws:workspaces:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:workspace/{WORKSPACE_ID}"
+from tests.providers.aws.audit_info_utils import (
+    AWS_ACCOUNT_NUMBER,
+    AWS_REGION_EU_WEST_1,
 )
+
+WORKSPACE_ID = str(uuid4())
+WORKSPACE_ARN = f"arn:aws:workspaces:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:workspace/{WORKSPACE_ID}"
 
 
 class Test_workspaces_vpc_2private_1public_subnets_nat:
@@ -78,7 +78,7 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
             WorkSpace(
                 id=WORKSPACE_ID,
                 arn=WORKSPACE_ARN,
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
                 user_volume_encryption_enabled=True,
                 root_volume_encryption_enabled=True,
             )
@@ -112,12 +112,12 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
                     )
                     assert result[0].resource_id == WORKSPACE_ID
                     assert result[0].resource_arn == WORKSPACE_ARN
-                    assert result[0].region == AWS_REGION
+                    assert result[0].region == AWS_REGION_EU_WEST_1
 
     @mock_ec2
     def test_workspaces_vpc_one_private_subnet(self):
         # EC2 Client
-        ec2_client = client("ec2", region_name=AWS_REGION)
+        ec2_client = client("ec2", region_name=AWS_REGION_EU_WEST_1)
         vpc = ec2_client.create_vpc(
             CidrBlock="172.28.7.0/24", InstanceTenancy="default"
         )
@@ -125,7 +125,7 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
         subnet_private = ec2_client.create_subnet(
             VpcId=vpc["Vpc"]["VpcId"],
             CidrBlock="172.28.7.0/26",
-            AvailabilityZone=f"{AWS_REGION}a",
+            AvailabilityZone=f"{AWS_REGION_EU_WEST_1}a",
         )
         route_table_private = ec2_client.create_route_table(
             VpcId=vpc["Vpc"]["VpcId"],
@@ -145,7 +145,7 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
             WorkSpace(
                 id=WORKSPACE_ID,
                 arn=WORKSPACE_ARN,
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
                 user_volume_encryption_enabled=True,
                 root_volume_encryption_enabled=True,
                 subnet_id=subnet_private["Subnet"]["SubnetId"],
@@ -180,12 +180,12 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
                     )
                     assert result[0].resource_id == WORKSPACE_ID
                     assert result[0].resource_arn == WORKSPACE_ARN
-                    assert result[0].region == AWS_REGION
+                    assert result[0].region == AWS_REGION_EU_WEST_1
 
     @mock_ec2
     def test_workspaces_vpc_two_private_subnet(self):
         # EC2 Client
-        ec2_client = client("ec2", region_name=AWS_REGION)
+        ec2_client = client("ec2", region_name=AWS_REGION_EU_WEST_1)
         vpc = ec2_client.create_vpc(
             CidrBlock="172.28.7.0/24", InstanceTenancy="default"
         )
@@ -193,7 +193,7 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
         subnet_private = ec2_client.create_subnet(
             VpcId=vpc["Vpc"]["VpcId"],
             CidrBlock="172.28.7.0/26",
-            AvailabilityZone=f"{AWS_REGION}a",
+            AvailabilityZone=f"{AWS_REGION_EU_WEST_1}a",
         )
         route_table_private = ec2_client.create_route_table(
             VpcId=vpc["Vpc"]["VpcId"],
@@ -210,7 +210,7 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
         subnet_private_2 = ec2_client.create_subnet(
             VpcId=vpc["Vpc"]["VpcId"],
             CidrBlock="172.28.7.64/26",
-            AvailabilityZone=f"{AWS_REGION}a",
+            AvailabilityZone=f"{AWS_REGION_EU_WEST_1}a",
         )
         route_table_private_2 = ec2_client.create_route_table(
             VpcId=vpc["Vpc"]["VpcId"],
@@ -230,7 +230,7 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
             WorkSpace(
                 id=WORKSPACE_ID,
                 arn=WORKSPACE_ARN,
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
                 user_volume_encryption_enabled=True,
                 root_volume_encryption_enabled=True,
                 subnet_id=subnet_private["Subnet"]["SubnetId"],
@@ -265,12 +265,12 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
                     )
                     assert result[0].resource_id == WORKSPACE_ID
                     assert result[0].resource_arn == WORKSPACE_ARN
-                    assert result[0].region == AWS_REGION
+                    assert result[0].region == AWS_REGION_EU_WEST_1
 
     @mock_ec2
     def test_workspaces_vpc_two_private_subnet_one_public(self):
         # EC2 Client
-        ec2_client = client("ec2", region_name=AWS_REGION)
+        ec2_client = client("ec2", region_name=AWS_REGION_EU_WEST_1)
         vpc = ec2_client.create_vpc(
             CidrBlock="172.28.7.0/24", InstanceTenancy="default"
         )
@@ -278,7 +278,7 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
         subnet_private = ec2_client.create_subnet(
             VpcId=vpc["Vpc"]["VpcId"],
             CidrBlock="172.28.7.0/26",
-            AvailabilityZone=f"{AWS_REGION}a",
+            AvailabilityZone=f"{AWS_REGION_EU_WEST_1}a",
         )
         route_table_private = ec2_client.create_route_table(
             VpcId=vpc["Vpc"]["VpcId"],
@@ -295,7 +295,7 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
         subnet_private_2 = ec2_client.create_subnet(
             VpcId=vpc["Vpc"]["VpcId"],
             CidrBlock="172.28.7.64/26",
-            AvailabilityZone=f"{AWS_REGION}a",
+            AvailabilityZone=f"{AWS_REGION_EU_WEST_1}a",
         )
         route_table_private_2 = ec2_client.create_route_table(
             VpcId=vpc["Vpc"]["VpcId"],
@@ -312,7 +312,7 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
         subnet_public = ec2_client.create_subnet(
             VpcId=vpc["Vpc"]["VpcId"],
             CidrBlock="172.28.7.192/26",
-            AvailabilityZone=f"{AWS_REGION}a",
+            AvailabilityZone=f"{AWS_REGION_EU_WEST_1}a",
         )
         route_table_public = ec2_client.create_route_table(
             VpcId=vpc["Vpc"]["VpcId"],
@@ -334,7 +334,7 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
             WorkSpace(
                 id=WORKSPACE_ID,
                 arn=WORKSPACE_ARN,
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
                 user_volume_encryption_enabled=True,
                 root_volume_encryption_enabled=True,
                 subnet_id=subnet_private["Subnet"]["SubnetId"],
@@ -369,12 +369,12 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
                     )
                     assert result[0].resource_id == WORKSPACE_ID
                     assert result[0].resource_arn == WORKSPACE_ARN
-                    assert result[0].region == AWS_REGION
+                    assert result[0].region == AWS_REGION_EU_WEST_1
 
     @mock_ec2
     def test_workspaces_vpc_two_private_subnet_one_public_and_nat(self):
         # EC2 Client
-        ec2_client = client("ec2", region_name=AWS_REGION)
+        ec2_client = client("ec2", region_name=AWS_REGION_EU_WEST_1)
         vpc = ec2_client.create_vpc(
             CidrBlock="172.28.7.0/24", InstanceTenancy="default"
         )
@@ -382,7 +382,7 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
         subnet_private = ec2_client.create_subnet(
             VpcId=vpc["Vpc"]["VpcId"],
             CidrBlock="172.28.7.0/26",
-            AvailabilityZone=f"{AWS_REGION}a",
+            AvailabilityZone=f"{AWS_REGION_EU_WEST_1}a",
         )
         route_table_private = ec2_client.create_route_table(
             VpcId=vpc["Vpc"]["VpcId"],
@@ -399,7 +399,7 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
         subnet_private_2 = ec2_client.create_subnet(
             VpcId=vpc["Vpc"]["VpcId"],
             CidrBlock="172.28.7.64/26",
-            AvailabilityZone=f"{AWS_REGION}a",
+            AvailabilityZone=f"{AWS_REGION_EU_WEST_1}a",
         )
         route_table_private_2 = ec2_client.create_route_table(
             VpcId=vpc["Vpc"]["VpcId"],
@@ -424,7 +424,7 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
         subnet_public = ec2_client.create_subnet(
             VpcId=vpc["Vpc"]["VpcId"],
             CidrBlock="172.28.7.192/26",
-            AvailabilityZone=f"{AWS_REGION}a",
+            AvailabilityZone=f"{AWS_REGION_EU_WEST_1}a",
         )
         route_table_public = ec2_client.create_route_table(
             VpcId=vpc["Vpc"]["VpcId"],
@@ -446,7 +446,7 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
             WorkSpace(
                 id=WORKSPACE_ID,
                 arn=WORKSPACE_ARN,
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
                 user_volume_encryption_enabled=True,
                 root_volume_encryption_enabled=True,
                 subnet_id=subnet_private["Subnet"]["SubnetId"],
@@ -481,4 +481,4 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
                     )
                     assert result[0].resource_id == WORKSPACE_ID
                     assert result[0].resource_arn == WORKSPACE_ARN
-                    assert result[0].region == AWS_REGION
+                    assert result[0].region == AWS_REGION_EU_WEST_1
