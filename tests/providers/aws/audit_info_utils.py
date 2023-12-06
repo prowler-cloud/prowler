@@ -1,6 +1,6 @@
 from boto3 import session
 
-from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
+from prowler.providers.aws.lib.audit_info.models import AWS_Assume_Role, AWS_Audit_Info
 from prowler.providers.common.models import Audit_Metadata
 
 # Root AWS Account
@@ -45,14 +45,17 @@ def set_mocked_aws_audit_info(
     profile_region: str = None,
     audit_config: dict = {},
     ignore_unused_services: bool = False,
+    assumed_role_info: AWS_Assume_Role = None,
+    audit_session: session.Session = session.Session(
+        profile_name=None,
+        botocore_session=None,
+    ),
+    original_session: session.Session = None,
 ):
     audit_info = AWS_Audit_Info(
         session_config=None,
-        original_session=None,
-        audit_session=session.Session(
-            profile_name=None,
-            botocore_session=None,
-        ),
+        original_session=original_session,
+        audit_session=audit_session,
         audited_account=audited_account,
         audited_account_arn=audited_account_arn,
         audited_user_id=None,
@@ -61,7 +64,7 @@ def set_mocked_aws_audit_info(
         profile=None,
         profile_region=profile_region,
         credentials=None,
-        assumed_role_info=None,
+        assumed_role_info=assumed_role_info,
         audited_regions=audited_regions,
         organizations_metadata=None,
         audit_resources=[],
