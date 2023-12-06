@@ -21,15 +21,6 @@ class Lambda(AWSService):
         self.functions = {}
         self.__threading_call__(self.__list_functions__)
         self.__list_tags_for_resource__()
-
-        # We only want to retrieve the Lambda code if the
-        # awslambda_function_no_secrets_in_code check is set
-        if (
-            "awslambda_function_no_secrets_in_code"
-            in audit_info.audit_metadata.expected_checks
-        ):
-            self.__threading_call__(self.__get_function__)
-
         self.__threading_call__(self.__get_policy__)
         self.__threading_call__(self.__get_function_url_config__)
 
@@ -93,7 +84,7 @@ class Lambda(AWSService):
                 f" {error.__class__.__name__}[{error.__traceback__.tb_lineno}]:"
                 f" {error}"
             )
-            
+
     def __get_policy__(self, regional_client):
         logger.info("Lambda - Getting Policy...")
         try:
