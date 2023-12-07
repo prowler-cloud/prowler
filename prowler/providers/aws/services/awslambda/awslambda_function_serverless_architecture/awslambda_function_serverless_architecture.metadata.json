@@ -1,0 +1,31 @@
+{
+    "Provider": "aws",
+    "CheckID": "awslambda_function_serverless_architecture",
+    "CheckTitle": "Ensure AWS Lambda functions use serverless architecture",
+    "CheckType": ["Service"],
+    "ServiceName": "awslambda",
+    "SubServiceName": "",
+    "ResourceIdTemplate": "",
+    "Severity": "medium",
+    "ResourceType": "Other",
+    "Description": "Ensure AWS Lambda functions use serverless architecture.",
+    "Risk": "Using non-serverless architecture for Lambda functions may require infrastructure provisioning and maintenance, reducing the efficiency of resource usage.",
+    "RelatedUrl": "https://docs.aws.amazon.com/lambda/latest/dg/serverless_app_arch.html",
+    "Remediation": {
+      "Code": {
+        "CLI": "N/A",
+        "NativeIaC": "",
+        "Other": "",
+        "Terraform": "N/A"
+      },
+      "Recommendation": {
+        "Text": "We recommend leveraging serverless architecture for AWS Lambda functions to eliminate the need for infrastructure provisioning and maintenance.",
+        "Url": "https://docs.aws.amazon.com/lambda/latest/dg/serverless_app_arch.html"
+      }
+    },
+    "Categories": ["compute"],
+    "DependsOn": [],
+    "RelatedTo": [],
+    "Notes": ""
+  }
+  

@@ -1,0 +1,31 @@
+{
+    "Provider": "aws",
+    "CheckID": "autoscaling_group_scaling_enabled",
+    "CheckTitle": "Ensure Auto Scaling group has scaling enabled",
+    "CheckType": ["Service"],
+    "ServiceName": "autoscaling",
+    "SubServiceName": "",
+    "ResourceIdTemplate": "",
+    "Severity": "medium",
+    "ResourceType": "Other",
+    "Description": "Ensure Auto Scaling group has scaling enabled.",
+    "Risk": "If Auto Scaling group does not have scaling enabled, it may not effectively respond to changes in demand, leading to suboptimal resource utilization.",
+    "RelatedUrl": "https://docs.aws.amazon.com/autoscaling/ec2/userguide/as-scale-based-on-demand.html",
+    "Remediation": {
+      "Code": {
+        "CLI": "aws autoscaling update-auto-scaling-group --auto-scaling-group-name <group_name> --min-size <min_size> --max-size <max_size> --desired-capacity <desired_capacity>",
+        "NativeIaC": "",
+        "Other": "",
+        "Terraform": "resource \"aws_autoscaling_group\" \"example\" {\n  desired_capacity = <desired_capacity>\n  min_size         = <min_size>\n  max_size         = <max_size>\n}"
+      },
+      "Recommendation": {
+        "Text": "We recommend enabling scaling for Auto Scaling groups to effectively respond to changes in demand.",
+        "Url": "https://docs.aws.amazon.com/autoscaling/ec2/userguide/as-scale-based-on-demand.html"
+      }
+    },
+    "Categories": ["autoscaling"],
+    "DependsOn": [],
+    "RelatedTo": [],
+    "Notes": ""
+  }
+  
