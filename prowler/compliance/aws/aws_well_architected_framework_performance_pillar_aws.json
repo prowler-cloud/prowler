@@ -1,0 +1,102 @@
+{
+  "Framework": "AWS-Well-Architected-Framework-Performance-Efficiency-Pillar",
+  "Version": "",
+  "Provider": "AWS",
+  "Description": "Best Practices for the AWS Well-Architected Framework Performance Efficiency Pillar encompass the ability of a workload to use computing resources efficiently and meet requirements. Performance efficiency focuses on the efficient use of cloud resources to meet requirements and avoid unnecessary costs.",
+  "Requirements": [
+    {
+      "Id": "PERF03-BP02",
+      "Description": "Optimize the use of  computing resources by selecting the right instance types and sizes for your workload. Regularly review and update your choices based on the workload's evolving requirements.",
+      "Attributes": [
+        {
+          "Name": "PERF03-BP02 Optimize instance types and sizes",
+          "WellArchitectedQuestionId": "selecting-right-instance-types",
+          "WellArchitectedPracticeId": "perf_selecting_right_instance_types",
+          "Section": "Resource optimization",
+          "SubSection": "Selecting the right instance types",
+          "LevelOfRisk": "Medium",
+          "AssessmentMethod": "Manual",
+          "Description": "Optimize the use of computing resources by selecting the right instance types and sizes for your workload. Regularly review and update your choices based on the workload's evolving requirements.",
+          "ImplementationGuidanceUrl": "https://docs.aws.amazon.com/wellarchitected/latest/performance-pillar/perf_selecting_right_instance_types.html#implementation-guidance"
+        }
+      ],
+      "Checks": [
+        "ec2_instance_optimized",
+        "lambda_function_memory_size_optimized",
+        "ecs_task_memory_reservation",
+        "ecr_image_scan_on_push_enabled",
+        "batch_compute_environment_optimized"
+      ]
+    },
+    {
+      "Id": "PERF07-BP01",
+      "Description": "Implement efficient data storage practices, including selecting the appropriate storage types, managing lifecycle policies, and using data compression where applicable.",
+      "Attributes": [
+        {
+          "Name": "PERF07-BP01 Optimize data storage",
+          "WellArchitectedQuestionId": "storage-efficiency",
+          "WellArchitectedPracticeId": "perf_storage_efficiency",
+          "Section": "Resource optimization",
+          "SubSection": "Storage efficiency",
+          "LevelOfRisk": "Medium",
+          "AssessmentMethod": "Manual",
+          "Description": "Implement efficient data storage practices, including selecting the appropriate storage types, managing lifecycle policies, and using data compression where applicable.",
+          "ImplementationGuidanceUrl": "https://docs.aws.amazon.com/wellarchitected/latest/performance-pillar/perf_storage_efficiency.html#implementation-guidance"
+        }
+      ],
+      "Checks": [
+        "s3_bucket_versioning_enabled",
+        "s3_bucket_logging_enabled",
+        "ebs_volume_optimized",
+        "glacier_vault_notifications_enabled",
+        "dynamodb_auto_scaling_enabled"
+      ]
+    },
+    {
+      "Id": "PERF04-BP03",
+      "Description": "Design your architecture to scale horizontally, allowing you to distribute incoming traffic and workload demand across multiple resources.",
+      "Attributes": [
+        {
+          "Name": "PERF04-BP03 Scale horizontally",
+          "WellArchitectedQuestionId": "horizontal-scalability",
+          "WellArchitectedPracticeId": "perf_horizontal_scalability",
+          "Section": "Scalability",
+          "SubSection": "Scale horizontally",
+          "LevelOfRisk": "High",
+          "AssessmentMethod": "Automated",
+          "Description": "Design your architecture to scale horizontally, allowing you to distribute incoming traffic and workload demand across multiple resources.",
+          "ImplementationGuidanceUrl": "https://docs.aws.amazon.com/wellarchitected/latest/performance-pillar/perf_horizontal_scalability.html#implementation-guidance"
+        }
+      ],
+      "Checks": [
+        "autoscaling_group_min_size",
+        "autoscaling_group_desired_capacity",
+        "ecs_service_autoscaling_enabled",
+        "appmesh_mesh_specified"
+      ]
+    },
+    {
+      "Id": "PERF05-BP02",
+      "Description": "Optimize network performance by using Content Delivery Networks (CDN) and selecting the right AWS network services for your workload.",
+      "Attributes": [
+        {
+          "Name": "PERF05-BP02 Optimize network performance",
+          "WellArchitectedQuestionId": "network-performance",
+          "WellArchitectedPracticeId": "perf_network_performance",
+          "Section": "Network optimization",
+          "SubSection": "Optimize network performance",
+          "LevelOfRisk": "Medium",
+          "AssessmentMethod": "Manual",
+          "Description": "Optimize network performance by using Content Delivery Networks (CDN) and selecting the right AWS network services for your workload.",
+          "ImplementationGuidanceUrl": "https://docs.aws.amazon.com/wellarchitected/latest/performance-pillar/perf_network_performance.html#implementation-guidance"
+        }
+      ],
+      "Checks": [
+        "cloudfront_distribution_enabled",
+        "elasticache_replication_group_automatic_failover_enabled",
+        "api_gateway_stage_cache_data_encrypted",
+        "directconnect_connection_logical_redundancy"
+      ]
+    }
+  ]
+}

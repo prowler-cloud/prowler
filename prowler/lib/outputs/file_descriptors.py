@@ -9,9 +9,12 @@ from prowler.config.config import (
     json_file_suffix,
     json_ocsf_file_suffix,
 )
+
 from prowler.lib.logger import logger
 from prowler.lib.outputs.html import add_html_header
 from prowler.lib.outputs.models import (
+    Aws_Check_Output_CSV,
+    Azure_Check_Output_CSV,
     Check_Output_CSV_AWS_CIS,
     Check_Output_CSV_AWS_ISO27001_2013,
     Check_Output_CSV_AWS_Well_Architected,
@@ -19,18 +22,19 @@ from prowler.lib.outputs.models import (
     Check_Output_CSV_GCP_CIS,
     Check_Output_CSV_Generic_Compliance,
     Check_Output_MITRE_ATTACK,
+    Gcp_Check_Output_CSV,
     generate_csv_fields,
 )
 from prowler.lib.utils.utils import file_exists, open_file
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
-from prowler.providers.common.outputs import get_provider_output_model
+from prowler.providers.azure.lib.audit_info.models import Azure_Audit_Info
 from prowler.providers.gcp.lib.audit_info.models import GCP_Audit_Info
 
 
 def initialize_file_descriptor(
     filename: str,
     output_mode: str,
-    audit_info: Any,
+    audit_info: AWS_Audit_Info,
     format: Any = None,
 ) -> TextIOWrapper:
     """Open/Create the output file. If needed include headers or the required format"""
@@ -72,15 +76,27 @@ def fill_file_descriptors(output_modes, output_directory, output_filename, audit
             for output_mode in output_modes:
                 if output_mode == "csv":
                     filename = f"{output_directory}/{output_filename}{csv_file_suffix}"
-                    output_model = get_provider_output_model(
-                        audit_info.__class__.__name__
-                    )
-                    file_descriptor = initialize_file_descriptor(
-                        filename,
-                        output_mode,
-                        audit_info,
-                        output_model,
-                    )
+                    if isinstance(audit_info, AWS_Audit_Info):
+                        file_descriptor = initialize_file_descriptor(
+                            filename,
+                            output_mode,
+                            audit_info,
+                            Aws_Check_Output_CSV,
+                        )
+                    if isinstance(audit_info, Azure_Audit_Info):
+                        file_descriptor = initialize_file_descriptor(
+                            filename,
+                            output_mode,
+                            audit_info,
+                            Azure_Check_Output_CSV,
+                        )
+                    if isinstance(audit_info, GCP_Audit_Info):
+                        file_descriptor = initialize_file_descriptor(
+                            filename,
+                            output_mode,
+                            audit_info,
+                            Gcp_Check_Output_CSV,
+                        )
                     file_descriptors.update({output_mode: file_descriptor})
 
                 elif output_mode == "json":
@@ -164,6 +180,19 @@ def fill_file_descriptors(output_modes, output_directory, output_filename, audit
                         == "aws_well_architected_framework_reliability_pillar_aws"
                     ):
                         filename = f"{output_directory}/{output_filename}_aws_well_architected_framework_reliability_pillar_aws{csv_file_suffix}"
+                        file_descriptor = initialize_file_descriptor(
+                            filename,
+                            output_mode,
+                            audit_info,
+                            Check_Output_CSV_AWS_Well_Architected,
+                        )
+                        file_descriptors.update({output_mode: file_descriptor})
+
+                    elif (
+                        output_mode
+                        == "aws_well_architected_framework_performance_pillar_aws"
+                    ):
+                        filename = f"{output_directory}/{output_filename}_aws_well_architected_framework_performance_pillar_aws{csv_file_suffix}"
                         file_descriptor = initialize_file_descriptor(
                             filename,
                             output_mode,
