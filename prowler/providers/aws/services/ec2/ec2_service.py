@@ -27,7 +27,7 @@ class EC2(AWSService):
         self.volumes_with_snapshots = {}
         self.regions_with_snapshots = {}
         self.__threading_call__(self.__describe_snapshots__)
-        self.__threading_call__(self.__get_snapshot_public__, self.snapshots)
+        self.__threading_call__(self.__determine_public_snapshots__, self.snapshots)
         self.network_interfaces = []
         self.__threading_call__(self.__describe_public_network_interfaces__)
         self.__threading_call__(self.__describe_sg_network_interfaces__)
@@ -36,9 +36,9 @@ class EC2(AWSService):
         self.volumes = []
         self.__threading_call__(self.__describe_volumes__)
         self.ebs_encryption_by_default = []
-        self.__threading_call__(self.__get_ebs_encryption_by_default__)
+        self.__threading_call__(self.__get_ebs_encryption_settings__)
         self.elastic_ips = []
-        self.__threading_call__(self.__describe_addresses__)
+        self.__threading_call__(self.__describe_ec2_addresses__)
 
     def __describe_instances__(self, regional_client):
         try:
@@ -215,7 +215,7 @@ class EC2(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __get_snapshot_public__(self, snapshot):
+    def __determine_public_snapshots__(self, snapshot):
         try:
             regional_client = self.regional_clients[snapshot.region]
             snapshot_public = regional_client.describe_snapshot_attribute(
@@ -354,7 +354,7 @@ class EC2(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_addresses__(self, regional_client):
+    def __describe_ec2_addresses__(self, regional_client):
         try:
             for address in regional_client.describe_addresses()["Addresses"]:
                 public_ip = None
@@ -385,7 +385,7 @@ class EC2(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __get_ebs_encryption_by_default__(self, regional_client):
+    def __get_ebs_encryption_settings__(self, regional_client):
         try:
             volumes_in_region = False
             for volume in self.volumes:
