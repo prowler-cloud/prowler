@@ -40,7 +40,7 @@ def mock_make_api_call(self, operation_name, kwarg):
     return make_api_call(self, operation_name, kwarg)
 
 
-def mock_generate_regional_clients(service, audit_info, _):
+def mock_generate_regional_clients(service, audit_info):
     regional_client = audit_info.audit_session.client(
         service, region_name=AWS_REGION_EU_WEST_1
     )
@@ -54,7 +54,6 @@ def mock_generate_regional_clients(service, audit_info, _):
     new=mock_generate_regional_clients,
 )
 class Test_WellArchitected_Service:
-
     # Test WellArchitected Service
     def test_service(self):
         audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])

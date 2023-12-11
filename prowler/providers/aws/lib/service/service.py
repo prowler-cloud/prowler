@@ -34,9 +34,7 @@ class AWSService:
 
         # Generate Regional Clients
         if not global_service:
-            self.regional_clients = generate_regional_clients(
-                self.service, audit_info, global_service
-            )
+            self.regional_clients = generate_regional_clients(self.service, audit_info)
 
         # Get a single region and client if the service needs it (e.g. AWS Global Service)
         # We cannot include this within an else because some services needs both the regional_clients

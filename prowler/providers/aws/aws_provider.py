@@ -152,17 +152,18 @@ def input_role_mfa_token_and_code() -> tuple[str]:
 
 
 def generate_regional_clients(
-    service: str, audit_info: AWS_Audit_Info, global_service: bool = False
+    service: str,
+    audit_info: AWS_Audit_Info,
 ) -> dict:
+    """generate_regional_clients returns a dict with the following format for the given service:
+
+    Example:
+        {"eu-west-1": boto3_service_client}
+    """
     try:
         regional_clients = {}
         service_regions = get_available_aws_service_regions(service, audit_info)
-        # Check if it is global service to gather only one region
-        if global_service:
-            if service_regions:
-                if audit_info.profile_region in service_regions:
-                    service_regions = [audit_info.profile_region]
-                service_regions = service_regions[:1]
+
         for region in service_regions:
             regional_client = audit_info.audit_session.client(
                 service, region_name=region, config=audit_info.session_config
