@@ -8,14 +8,15 @@ from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
 
-################## Cognito
-class Cognito(AWSService):
+################## CognitoIDP
+class CognitoIDP(AWSService):
     def __init__(self, audit_info):
         super().__init__("cognito-idp", audit_info)
         self.user_pools = []
         self.__threading_call__(self.__list_user_pools__)
         self.__describe_user_pools__()
         self.__get_user_pool_mfa_config__()
+        print(self.user_pools)
 
     def __list_user_pools__(self, regional_client):
         logger.info("Cognito - Listing User Pools...")
