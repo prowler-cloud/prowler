@@ -240,6 +240,8 @@ def get_checks_from_input_arn(audit_resources: list, provider: str) -> set:
                     service = "efs"
                 elif service == "logs":
                     service = "cloudwatch"
+                elif service == "cognito":
+                    service = "cognito-idp"
                 # Check if Prowler has checks in service
                 try:
                     list_modules(provider, service)
