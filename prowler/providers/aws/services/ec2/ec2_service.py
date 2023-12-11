@@ -41,7 +41,6 @@ class EC2(AWSService):
         self.__threading_call__(self.__describe_addresses__)
 
     def __describe_instances__(self, regional_client):
-        logger.info("EC2 - Describing EC2 Instances...")
         try:
             describe_instances_paginator = regional_client.get_paginator(
                 "describe_instances"
@@ -106,7 +105,6 @@ class EC2(AWSService):
             )
 
     def __describe_security_groups__(self, regional_client):
-        logger.info("EC2 - Describing Security Groups...")
         try:
             describe_security_groups_paginator = regional_client.get_paginator(
                 "describe_security_groups"
@@ -155,7 +153,6 @@ class EC2(AWSService):
             )
 
     def __describe_network_acls__(self, regional_client):
-        logger.info("EC2 - Describing Network ACLs...")
         try:
             describe_network_acls_paginator = regional_client.get_paginator(
                 "describe_network_acls"
@@ -186,7 +183,6 @@ class EC2(AWSService):
             )
 
     def __describe_snapshots__(self, regional_client):
-        logger.info("EC2 - Describing Snapshots...")
         try:
             snapshots_in_region = False
             describe_snapshots_paginator = regional_client.get_paginator(
@@ -220,7 +216,6 @@ class EC2(AWSService):
             )
 
     def __get_snapshot_public__(self, snapshot):
-        logger.info("EC2 - Getting snapshot volume attribute permissions...")
         try:
             regional_client = self.regional_clients[snapshot.region]
             snapshot_public = regional_client.describe_snapshot_attribute(
@@ -244,7 +239,6 @@ class EC2(AWSService):
             )
 
     def __describe_public_network_interfaces__(self, regional_client):
-        logger.info("EC2 - Describing Network Interfaces...")
         try:
             # Get Network Interfaces with Public IPs
             describe_network_interfaces_paginator = regional_client.get_paginator(
@@ -271,7 +265,6 @@ class EC2(AWSService):
             )
 
     def __describe_sg_network_interfaces__(self, regional_client):
-        logger.info("EC2 - Describing Network Interfaces...")
         try:
             # Get Network Interfaces for Security Groups
             for sg in self.security_groups:
@@ -297,7 +290,6 @@ class EC2(AWSService):
             )
 
     def __get_instance_user_data__(self, instance):
-        logger.info("EC2 - Getting instance user data...")
         try:
             regional_client = self.regional_clients[instance.region]
             user_data = regional_client.describe_instance_attribute(
@@ -316,7 +308,6 @@ class EC2(AWSService):
             )
 
     def __describe_images__(self, regional_client):
-        logger.info("EC2 - Describing Images...")
         try:
             for image in regional_client.describe_images(Owners=["self"])["Images"]:
                 arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:image/{image['ImageId']}"
@@ -339,7 +330,6 @@ class EC2(AWSService):
             )
 
     def __describe_volumes__(self, regional_client):
-        logger.info("EC2 - Describing Volumes...")
         try:
             describe_volumes_paginator = regional_client.get_paginator(
                 "describe_volumes"
@@ -365,7 +355,6 @@ class EC2(AWSService):
             )
 
     def __describe_addresses__(self, regional_client):
-        logger.info("EC2 - Describing Elastic IPs...")
         try:
             for address in regional_client.describe_addresses()["Addresses"]:
                 public_ip = None
@@ -397,7 +386,6 @@ class EC2(AWSService):
             )
 
     def __get_ebs_encryption_by_default__(self, regional_client):
-        logger.info("EC2 - Get EBS Encryption By Default...")
         try:
             volumes_in_region = False
             for volume in self.volumes:
