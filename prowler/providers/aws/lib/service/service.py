@@ -52,7 +52,7 @@ class AWSService:
     def __get_session__(self):
         return self.session
 
-    def __threading_call__(self, call, iterator=None, max_workers=10):
+    def __threading_call__(self, call, iterator=None):
         # Use the provided iterator, or default to self.regional_clients
         items = iterator if iterator is not None else self.regional_clients.values()
         # Determine the total count for logging
