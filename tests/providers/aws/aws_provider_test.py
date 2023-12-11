@@ -282,7 +282,6 @@ class Test_AWS_Provider:
         session_duration_seconds = 900
         AWS_REGION_US_EAST_1 = AWS_REGION_EU_WEST_1
         sts_endpoint_region = AWS_REGION_US_EAST_1
-        audited_regions = [AWS_REGION_US_EAST_1]
         sessionName = "ProwlerAsessmentSession"
 
         # Boto 3 client to create our user

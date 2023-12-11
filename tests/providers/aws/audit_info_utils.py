@@ -53,6 +53,7 @@ def set_mocked_aws_audit_info(
         botocore_session=None,
     ),
     original_session: session.Session = None,
+    enabled_regions: set = None,
 ):
     audit_info = AWS_Audit_Info(
         session_config=None,
@@ -61,7 +62,6 @@ def set_mocked_aws_audit_info(
         audited_account=audited_account,
         audited_account_arn=audited_account_arn,
         audited_user_id=None,
-        audited_partition=AWS_COMMERCIAL_PARTITION,
         audited_partition=audited_partition,
         audited_identity_arn=None,
         profile=None,
@@ -78,9 +78,8 @@ def set_mocked_aws_audit_info(
             completed_checks=0,
             audit_progress=0,
         ),
-        
         audit_config=audit_config,
         ignore_unused_services=ignore_unused_services,
-        enabled_regions=set(audited_regions),
+        enabled_regions=enabled_regions if enabled_regions else set(audited_regions),
     )
     return audit_info
