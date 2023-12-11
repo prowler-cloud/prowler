@@ -33,7 +33,7 @@ class elbv2_insecure_ssl_ciphers(Check):
                     and listener.ssl_policy not in secure_ssl_policies
                 ):
                     report.status = "FAIL"
-                    report.status_extended = f"ELBv2 {lb.name} has listeners with insecure SSL protocols or ciphers."
+                    report.status_extended = f"ELBv2 {lb.name} has listeners with insecure SSL protocols or ciphers ({listener.ssl_policy})."
 
             findings.append(report)
 
