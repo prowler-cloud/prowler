@@ -64,10 +64,9 @@ class AWSService:
         call_name = ' '.join([x.capitalize() for x in call_name.split('_')])
 
         # Print a message based on the call's name, and if its regional or processing a list of items
-        if iterator == None:
-            logger.info(f"{self.service.upper()} - Starting threads for '{call_name}' function across {item_count} regions...")
-        else:
-            logger.info(f"{self.service.upper()} - Starting threads for '{call_name}' function to process {item_count} items...")
+        logger.info(
+            f"{self.service.upper()} - Starting threads for '{call_name}' function {f'across {item_count} regions...' if iterator is None else f'to process {item_count} items...'}"
+        )
 
         # Submit tasks to the thread pool
         futures = [self.thread_pool.submit(call, item) for item in items]
