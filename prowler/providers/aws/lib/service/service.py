@@ -69,16 +69,13 @@ class AWSService:
         else:
             logger.info(f"{self.service.upper()} - Starting threads for '{call_name}' function to process {item_count} items...")
 
+        # Submit tasks to the thread pool
+        futures = [self.thread_pool.submit(call, item) for item in items]
 
-        # Using ThreadPoolExecutor for managing threads
-        with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            # Submit tasks to the executor
-            futures = [self.thread_pool.submit(call, item) for item in items]
-
-            # Wait for all tasks to complete
-            for future in as_completed(futures):
-                try:
-                    future.result()  # Raises exceptions from the thread, if any
-                except Exception as e:
-                    # Handle exceptions if necessary
-                    pass  # Replace 'pass' with any additional exception handling logic
+        # Wait for all tasks to complete
+        for future in as_completed(futures):
+            try:
+                future.result()  # Raises exceptions from the thread, if any
+            except Exception as e:
+                # Handle exceptions if necessary
+                pass  # Replace 'pass' with any additional exception handling logic
