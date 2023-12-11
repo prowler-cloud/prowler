@@ -17,7 +17,7 @@ class EC2(AWSService):
         super().__init__(__class__.__name__, audit_info)
         self.instances = []
         self.__threading_call__(self.__describe_instances__)
-        self.__get_instance_user_data__()
+        self.__threading_call__(self.__get_instance_user_data__, self.instances)
         self.security_groups = []
         self.regions_with_sgs = []
         self.__threading_call__(self.__describe_security_groups__)
@@ -27,7 +27,7 @@ class EC2(AWSService):
         self.volumes_with_snapshots = {}
         self.regions_with_snapshots = {}
         self.__threading_call__(self.__describe_snapshots__)
-        self.__get_snapshot_public__()
+        self.__threading_call__(self.__get_snapshot_public__, self.snapshots)
         self.network_interfaces = []
         self.__threading_call__(self.__describe_public_network_interfaces__)
         self.__threading_call__(self.__describe_sg_network_interfaces__)
@@ -219,32 +219,29 @@ class EC2(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __get_snapshot_public__(self):
+    def __get_snapshot_public__(self, snapshot):
         logger.info("EC2 - Getting snapshot volume attribute permissions...")
-        for snapshot in self.snapshots:
-            try:
-                regional_client = self.regional_clients[snapshot.region]
-                snapshot_public = regional_client.describe_snapshot_attribute(
-                    Attribute="createVolumePermission", SnapshotId=snapshot.id
-                )
-                for permission in snapshot_public["CreateVolumePermissions"]:
-                    if "Group" in permission:
-                        if permission["Group"] == "all":
-                            snapshot.public = True
+        try:
+            regional_client = self.regional_clients[snapshot.region]
+            snapshot_public = regional_client.describe_snapshot_attribute(
+                Attribute="createVolumePermission", SnapshotId=snapshot.id
+            )
+            for permission in snapshot_public["CreateVolumePermissions"]:
+                if "Group" in permission:
+                    if permission["Group"] == "all":
+                        snapshot.public = True
 
-            except ClientError as error:
-                if error.response["Error"]["Code"] == "InvalidSnapshot.NotFound":
-                    logger.warning(
-                        f"{snapshot.region} --"
-                        f" {error.__class__.__name__}[{error.__traceback__.tb_lineno}]:"
-                        f" {error}"
-                    )
-                    continue
-
-            except Exception as error:
-                logger.error(
-                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+        except ClientError as error:
+            if error.response["Error"]["Code"] == "InvalidSnapshot.NotFound":
+                logger.warning(
+                    f"{snapshot.region} --"
+                    f" {error.__class__.__name__}[{error.__traceback__.tb_lineno}]:"
+                    f" {error}"
                 )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
 
     def __describe_public_network_interfaces__(self, regional_client):
         logger.info("EC2 - Describing Network Interfaces...")
@@ -299,27 +296,24 @@ class EC2(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __get_instance_user_data__(self):
+    def __get_instance_user_data__(self, instance):
         logger.info("EC2 - Getting instance user data...")
-        for instance in self.instances:
-            try:
-                regional_client = self.regional_clients[instance.region]
-                user_data = regional_client.describe_instance_attribute(
-                    Attribute="userData", InstanceId=instance.id
-                )["UserData"]
-                if "Value" in user_data:
-                    instance.user_data = user_data["Value"]
-
-            except ClientError as error:
-                if error.response["Error"]["Code"] == "InvalidInstanceID.NotFound":
-                    logger.warning(
-                        f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                    )
-                    continue
-            except Exception as error:
-                logger.error(
+        try:
+            regional_client = self.regional_clients[instance.region]
+            user_data = regional_client.describe_instance_attribute(
+                Attribute="userData", InstanceId=instance.id
+            )["UserData"]
+            if "Value" in user_data:
+                instance.user_data = user_data["Value"]
+        except ClientError as error:
+            if error.response["Error"]["Code"] == "InvalidInstanceID.NotFound":
+                logger.warning(
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
 
     def __describe_images__(self, regional_client):
         logger.info("EC2 - Describing Images...")
