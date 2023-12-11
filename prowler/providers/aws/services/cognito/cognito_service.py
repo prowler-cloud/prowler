@@ -14,8 +14,8 @@ class Cognito(AWSService):
         super().__init__("cognito-idp", audit_info)
         self.user_pools = []
         self.__threading_call__(self.__list_user_pools__)
-        self.__threading_call__(self.__describe_user_pools__)
-        self.__threading_call__(self.__get_user_pool_mfa_config__)
+        self.__describe_user_pools__()
+        self.__get_user_pool_mfa_config__()
 
     def __list_user_pools__(self, regional_client):
         logger.info("Cognito - Listing User Pools...")
@@ -48,19 +48,17 @@ class Cognito(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_user_pools__(self, regional_client):
+    def __describe_user_pools__(self):
         logger.info("Cognito - Describing User Pools...")
         try:
             for user_pool in self.user_pools:
                 try:
-                    user_pool_details = regional_client.describe_user_pool(
-                        UserPoolId=user_pool.id
-                    )
-                    user_pool.password_policy = PasswordPolicy(
-                        **user_pool_details.get("Policies", {}).get(
-                            "PasswordPolicy", {}
-                        )
-                    )
+                    user_pool_details = self.regional_clients[
+                        user_pool.region
+                    ].describe_user_pool(UserPoolId=user_pool.id)["UserPool"]
+                    user_pool.password_policy = user_pool_details.get(
+                        "Policies", {}
+                    ).get("PasswordPolicy", {})
                     user_pool.deletion_protection = user_pool_details.get(
                         "DeletionProtection", "INACTIVE"
                     )
@@ -70,21 +68,21 @@ class Cognito(AWSService):
                     user_pool.tags = [user_pool_details.get("UserPoolTags", "")]
                 except Exception as error:
                     logger.error(
-                        f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        f"{user_pool.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
         except Exception as error:
             logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                f"{user_pool.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __get_user_pool_mfa_config__(self, regional_client):
+    def __get_user_pool_mfa_config__(self):
         logger.info("Cognito - Getting User Pool MFA Configuration...")
         try:
             for user_pool in self.user_pools:
                 try:
-                    mfa_config = regional_client.get_user_pool_mfa_config(
-                        UserPoolId=user_pool.id
-                    )
+                    mfa_config = self.regional_clients[
+                        user_pool.region
+                    ].get_user_pool_mfa_config(UserPoolId=user_pool.id)
                     if mfa_config["MfaConfiguration"] != "OFF":
                         user_pool.mfa_config = MFAConfig(
                             sms_authentication=mfa_config.get(
@@ -97,11 +95,11 @@ class Cognito(AWSService):
                         )
                 except Exception as error:
                     logger.error(
-                        f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        f"{user_pool.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
         except Exception as error:
             logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                f"{user_pool.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
 
@@ -109,15 +107,6 @@ class MFAConfig(BaseModel):
     sms_authentication: Optional[dict]
     software_token_mfa_authentication: Optional[dict]
     status: str
-
-
-class PasswordPolicy(BaseModel):
-    minimum_length: Optional[int]
-    require_uppercase: Optional[bool]
-    require_lowercase: Optional[bool]
-    require_numbers: Optional[bool]
-    require_symbols: Optional[bool]
-    temporary_password_validity_days: Optional[int]
 
 
 class UserPool(BaseModel):
@@ -130,6 +119,6 @@ class UserPool(BaseModel):
     last_modified: datetime
     creation_date: datetime
     status: str
-    password_policy: Optional[PasswordPolicy]
+    password_policy: Optional[dict]
     mfa_config: Optional[MFAConfig]
     tags: Optional[list] = []
