@@ -280,7 +280,7 @@ class Test_AWS_Provider:
         role_name = "test-role"
         role_arn = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:role/{role_name}"
         session_duration_seconds = 900
-        AWS_REGION_US_EAST_1 = "eu-west-1"
+        AWS_REGION_US_EAST_1 = AWS_REGION_EU_WEST_1
         sts_endpoint_region = AWS_REGION_US_EAST_1
         sessionName = "ProwlerAsessmentSession"
 
@@ -352,6 +352,7 @@ class Test_AWS_Provider:
             audit_session=boto3.session.Session(
                 region_name=AWS_REGION_US_EAST_1,
             ),
+            enabled_regions=audited_regions,
         )
 
         generate_regional_clients_response = generate_regional_clients(
@@ -367,6 +368,7 @@ class Test_AWS_Provider:
             audit_session=boto3.session.Session(
                 region_name=AWS_REGION_US_EAST_1,
             ),
+            enabled_regions=audited_regions,
         )
         generate_regional_clients_response = generate_regional_clients(
             "shield", audit_info
@@ -430,7 +432,7 @@ class Test_AWS_Provider:
                                 "eu-north-1",
                                 "eu-south-1",
                                 "eu-south-2",
-                                "eu-west-1",
+                                AWS_REGION_EU_WEST_1,
                                 "eu-west-2",
                                 "eu-west-3",
                                 "me-central-1",
@@ -446,9 +448,9 @@ class Test_AWS_Provider:
                 }
             },
         ):
-            assert get_available_aws_service_regions("ec2", audit_info) == [
+            assert get_available_aws_service_regions("ec2", audit_info) == {
                 AWS_REGION_US_EAST_1
-            ]
+            }
 
     def test_get_available_aws_service_regions_with_all_regions_audited(self):
         audit_info = set_mocked_aws_audit_info()
@@ -467,7 +469,7 @@ class Test_AWS_Provider:
                                 "eu-north-1",
                                 "eu-south-1",
                                 "eu-south-2",
-                                "eu-west-1",
+                                AWS_REGION_EU_WEST_1,
                                 "eu-west-2",
                                 "eu-west-3",
                                 "me-central-1",

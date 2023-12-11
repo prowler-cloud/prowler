@@ -15,6 +15,8 @@ AWS_REGION_EU_WEST_1 = "eu-west-1"
 AWS_REGION_EU_WEST_1_AZA = "eu-west-1a"
 AWS_REGION_EU_WEST_1_AZB = "eu-west-1b"
 AWS_REGION_EU_WEST_2 = "eu-west-2"
+AWS_REGION_CN_NORTHWEST_1 = "cn-northwest-1"
+AWS_REGION_CN_NORTH_1 = "cn-north-1"
 AWS_REGION_EU_SOUTH_2 = "eu-south-2"
 AWS_REGION_US_WEST_2 = "us-west-2"
 AWS_REGION_US_EAST_2 = "us-east-2"
@@ -51,6 +53,7 @@ def set_mocked_aws_audit_info(
         botocore_session=None,
     ),
     original_session: session.Session = None,
+    enabled_regions: set = None,
 ):
     audit_info = AWS_Audit_Info(
         session_config=None,
@@ -77,5 +80,6 @@ def set_mocked_aws_audit_info(
         ),
         audit_config=audit_config,
         ignore_unused_services=ignore_unused_services,
+        enabled_regions=enabled_regions if enabled_regions else set(audited_regions),
     )
     return audit_info
