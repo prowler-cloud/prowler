@@ -5,6 +5,9 @@ class ec2_instance_type_optimized(Check):
     def execute(self):
         findings = []
 
+        # List of optimized instance types (modify as needed)
+        optimized_instance_types = ["t3.micro", "t3.small", "t3.medium"]
+
         for instance in ec2_client.instances:
             report = Check_Report_AWS(self.metadata())
             report.region = instance.region
@@ -15,10 +18,13 @@ class ec2_instance_type_optimized(Check):
             report.status = "PASS"
             report.status_extended = f"EC2 instance {instance.id} is using an optimized instance type."
 
-            # Check if instance type is optimized
-            if not instance.is_instance_type_optimized:
+            # Get the instance type
+            instance_type = instance.instance_type
+
+            # Check if the instance type is in the list of optimized instance types
+            if instance_type not in optimized_instance_types:
                 report.status = "FAIL"
-                report.status_extended = f"EC2 instance {instance.id} is not using an optimized instance type."
+                report.status_extended = f"EC2 instance {instance.id} is not using an optimized instance type. Current type: {instance_type}"
 
             findings.append(report)
 

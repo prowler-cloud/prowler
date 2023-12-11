@@ -1,0 +1,31 @@
+{
+    "Provider": "aws",
+    "CheckID": "ec2_instance_type_optimized",
+    "CheckTitle": "Ensure EC2 instances are of the optimized type",
+    "CheckType": ["Service"],
+    "ServiceName": "ec2",
+    "SubServiceName": "",
+    "ResourceIdTemplate": "",
+    "Severity": "high",
+    "ResourceType": "Other",
+    "Description": "Ensure EC2 instances are of the optimized type.",
+    "Risk": "Using non-optimized EC2 instance types may result in suboptimal performance and increased costs.",
+    "RelatedUrl": "https://aws.amazon.com/ec2/instance-types/",
+    "Remediation": {
+      "Code": {
+        "CLI": "N/A",
+        "NativeIaC": "",
+        "Other": "",
+        "Terraform": "N/A"
+      },
+      "Recommendation": {
+        "Text": "We recommend choosing EC2 instance types that are optimized for your specific workload to achieve better performance and cost efficiency.",
+        "Url": "https://aws.amazon.com/ec2/instance-types/"
+      }
+    },
+    "Categories": ["compute"],
+    "DependsOn": [],
+    "RelatedTo": [],
+    "Notes": ""
+  }
+  
