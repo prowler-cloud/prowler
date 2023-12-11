@@ -101,6 +101,15 @@ class S3(AWSService):
             if "MFADelete" in bucket_versioning:
                 if "Enabled" == bucket_versioning["MFADelete"]:
                     bucket.mfa_delete = True
+        except ClientError as error:
+            if error.response["Error"]["Code"] == "NoSuchBucket":
+                logger.warning(
+                    f"{bucket['Name']} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+            else:
+                logger.error(
+                    f"{bucket['Name']} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
         except Exception as error:
             if bucket.region:
                 logger.error(
