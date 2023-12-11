@@ -85,21 +85,36 @@ class AccessAnalyzer(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    # TODO: We need to include ListFindingsV2
+    # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/accessanalyzer/client/list_findings_v2.html
     def __list_findings__(self):
         logger.info("AccessAnalyzer - Listing Findings per Analyzer...")
         try:
             for analyzer in self.analyzers:
-                if analyzer.status == "ACTIVE":
-                    regional_client = self.regional_clients[analyzer.region]
-                    list_findings_paginator = regional_client.get_paginator(
-                        "list_findings"
+                try:
+                    if analyzer.status == "ACTIVE":
+                        regional_client = self.regional_clients[analyzer.region]
+                        list_findings_paginator = regional_client.get_paginator(
+                            "list_findings"
+                        )
+                        for page in list_findings_paginator.paginate(
+                            analyzerArn=analyzer.arn
+                        ):
+                            for finding in page["findings"]:
+                                analyzer.findings.append(Finding(id=finding["id"]))
+                except ClientError as error:
+                    if error.response["Error"]["Code"] == "ValidationException":
+                        logger.warning(
+                            f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
+                    else:
+                        logger.error(
+                            f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
+                except Exception as error:
+                    logger.error(
+                        f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
-                    for page in list_findings_paginator.paginate(
-                        analyzerArn=analyzer.arn
-                    ):
-                        for finding in page["findings"]:
-                            analyzer.findings.append(Finding(id=finding["id"]))
-
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
