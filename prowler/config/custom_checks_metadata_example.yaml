@@ -1,0 +1,15 @@
+CustomChecksMetadata:
+  aws:
+    Checks:
+      s3_bucket_level_public_access_block:
+        Severity: high
+      s3_bucket_no_mfa_delete:
+        Severity: high
+  azure:
+    Checks:
+      storage_infrastructure_encryption_is_enabled:
+        Severity: medium
+  gcp:
+    Checks:
+      compute_instance_public_ip:
+        Severity: critical

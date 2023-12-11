@@ -18,10 +18,18 @@ class ec2_securitygroup_not_used(Check):
                 report.status = "PASS"
                 report.status_extended = f"Security group {security_group.name} ({security_group.id}) it is being used."
                 sg_in_lambda = False
+                sg_associated = False
                 for function in awslambda_client.functions.values():
                     if security_group.id in function.security_groups:
                         sg_in_lambda = True
-                if len(security_group.network_interfaces) == 0 and not sg_in_lambda:
+                for sg in ec2_client.security_groups:
+                    if security_group.id in sg.associated_sgs:
+                        sg_associated = True
+                if (
+                    len(security_group.network_interfaces) == 0
+                    and not sg_in_lambda
+                    and not sg_associated
+                ):
                     report.status = "FAIL"
                     report.status_extended = f"Security group {security_group.name} ({security_group.id}) it is not being used."
 

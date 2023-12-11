@@ -11,6 +11,7 @@ from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.azure.lib.audit_info.models import (
     Azure_Audit_Info,
     Azure_Identity_Info,
+    Azure_Region_Config,
 )
 from prowler.providers.common.models import Audit_Metadata
 from prowler.providers.gcp.lib.audit_info.models import GCP_Audit_Info
@@ -76,6 +77,7 @@ class Test_Slack_Integration:
             audit_resources=None,
             audit_metadata=None,
             audit_config=None,
+            azure_region_config=Azure_Region_Config(),
         )
         assert create_message_identity("aws", aws_audit_info) == (
             f"AWS Account *{aws_audit_info.audited_account}*",

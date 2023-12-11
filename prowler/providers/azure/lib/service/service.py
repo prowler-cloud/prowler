@@ -9,17 +9,27 @@ class AzureService:
         audit_info: Azure_Audit_Info,
     ):
         self.clients = self.__set_clients__(
-            audit_info.identity.subscriptions, audit_info.credentials, service
+            audit_info.identity.subscriptions,
+            audit_info.credentials,
+            service,
+            audit_info.azure_region_config,
         )
 
         self.subscriptions = audit_info.identity.subscriptions
 
-    def __set_clients__(self, subscriptions, credentials, service):
+    def __set_clients__(self, subscriptions, credentials, service, region_config):
         clients = {}
         try:
             for display_name, id in subscriptions.items():
                 clients.update(
-                    {display_name: service(credential=credentials, subscription_id=id)}
+                    {
+                        display_name: service(
+                            credential=credentials,
+                            subscription_id=id,
+                            base_url=region_config.base_url,
+                            credential_scopes=region_config.credential_scopes,
+                        )
+                    }
                 )
         except Exception as error:
             logger.error(
