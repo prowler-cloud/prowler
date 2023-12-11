@@ -1,7 +1,7 @@
 from boto3 import client
 from moto import mock_cognitoidp
 
-from prowler.providers.aws.services.cognito.cognito_service import Cognito
+from prowler.providers.aws.services.cognito.cognito_service import CognitoIDP
 from tests.providers.aws.audit_info_utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_WEST_1,
@@ -17,7 +17,7 @@ class Test_Cognito_Service:
         audit_info = set_mocked_aws_audit_info(
             audited_regions=[AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
-        cognito = Cognito(audit_info)
+        cognito = CognitoIDP(audit_info)
         assert cognito.service == "cognito-idp"
 
     # Test Cognito client
@@ -26,7 +26,7 @@ class Test_Cognito_Service:
         audit_info = set_mocked_aws_audit_info(
             audited_regions=[AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
-        cognito = Cognito(audit_info)
+        cognito = CognitoIDP(audit_info)
         for regional_client in cognito.regional_clients.values():
             assert regional_client.__class__.__name__ == "CognitoIdentityProvider"
 
@@ -36,7 +36,7 @@ class Test_Cognito_Service:
         audit_info = set_mocked_aws_audit_info(
             audited_regions=[AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
-        cognito = Cognito(audit_info)
+        cognito = CognitoIDP(audit_info)
         assert cognito.session.__class__.__name__ == "Session"
 
     # Test Cognito Session
@@ -45,7 +45,7 @@ class Test_Cognito_Service:
         audit_info = set_mocked_aws_audit_info(
             audited_regions=[AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
-        cognito = Cognito(audit_info)
+        cognito = CognitoIDP(audit_info)
         assert cognito.audited_account == AWS_ACCOUNT_NUMBER
 
     @mock_cognitoidp
@@ -59,9 +59,9 @@ class Test_Cognito_Service:
         cognito_client_us_east_1 = client("cognito-idp", region_name="us-east-1")
         cognito_client_eu_west_1.create_user_pool(PoolName=user_pool_name_1)
         cognito_client_us_east_1.create_user_pool(PoolName=user_pool_name_2)
-        cognito = Cognito(audit_info)
+        cognito = CognitoIDP(audit_info)
         assert len(cognito.user_pools) == 2
-        for user_pool in cognito.user_pools:
+        for user_pool in cognito.user_pools.values():
             assert (
                 user_pool.name == user_pool_name_1 or user_pool.name == user_pool_name_2
             )
@@ -77,9 +77,9 @@ class Test_Cognito_Service:
         user_pool_id = cognito_client_eu_west_1.create_user_pool(
             PoolName=user_pool_name_1
         )["UserPool"]["Id"]
-        cognito = Cognito(audit_info)
+        cognito = CognitoIDP(audit_info)
         assert len(cognito.user_pools) == 1
-        for user_pool in cognito.user_pools:
+        for user_pool in cognito.user_pools.values():
             assert user_pool.name == user_pool_name_1
             assert user_pool.region == "eu-west-1"
             assert user_pool.id == user_pool_id
@@ -103,9 +103,9 @@ class Test_Cognito_Service:
             SoftwareTokenMfaConfiguration={"Enabled": True},
             MfaConfiguration="ON",
         )
-        cognito = Cognito(audit_info)
+        cognito = CognitoIDP(audit_info)
         assert len(cognito.user_pools) == 1
-        for user_pool in cognito.user_pools:
+        for user_pool in cognito.user_pools.values():
             assert user_pool.name == user_pool_name_1
             assert user_pool.region == "eu-west-1"
             assert user_pool.id == user_pool_id

@@ -12,11 +12,10 @@ from prowler.providers.aws.lib.service.service import AWSService
 class CognitoIDP(AWSService):
     def __init__(self, audit_info):
         super().__init__("cognito-idp", audit_info)
-        self.user_pools = []
+        self.user_pools = {}
         self.__threading_call__(self.__list_user_pools__)
         self.__describe_user_pools__()
         self.__get_user_pool_mfa_config__()
-        print(self.user_pools)
 
     def __list_user_pools__(self, regional_client):
         logger.info("Cognito - Listing User Pools...")
@@ -29,16 +28,14 @@ class CognitoIDP(AWSService):
                         is_resource_filtered(arn, self.audit_resources)
                     ):
                         try:
-                            self.user_pools.append(
-                                UserPool(
-                                    id=user_pool["Id"],
-                                    arn=arn,
-                                    name=user_pool["Name"],
-                                    region=regional_client.region,
-                                    last_modified=user_pool["LastModifiedDate"],
-                                    creation_date=user_pool["CreationDate"],
-                                    status=user_pool.get("Status", "Disabled"),
-                                )
+                            self.user_pools[arn] = UserPool(
+                                id=user_pool["Id"],
+                                arn=arn,
+                                name=user_pool["Name"],
+                                region=regional_client.region,
+                                last_modified=user_pool["LastModifiedDate"],
+                                creation_date=user_pool["CreationDate"],
+                                status=user_pool.get("Status", "Disabled"),
                             )
                         except Exception as error:
                             logger.error(
@@ -52,7 +49,7 @@ class CognitoIDP(AWSService):
     def __describe_user_pools__(self):
         logger.info("Cognito - Describing User Pools...")
         try:
-            for user_pool in self.user_pools:
+            for user_pool in self.user_pools.values():
                 try:
                     user_pool_details = self.regional_clients[
                         user_pool.region
@@ -79,7 +76,7 @@ class CognitoIDP(AWSService):
     def __get_user_pool_mfa_config__(self):
         logger.info("Cognito - Getting User Pool MFA Configuration...")
         try:
-            for user_pool in self.user_pools:
+            for user_pool in self.user_pools.values():
                 try:
                     mfa_config = self.regional_clients[
                         user_pool.region
