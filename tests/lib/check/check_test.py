@@ -257,6 +257,10 @@ def mock_recover_checks_from_aws_provider_rds_service(*_):
     ]
 
 
+def mock_recover_checks_from_aws_provider_cognito_service(*_):
+    return []
+
+
 class Test_Check:
     def set_mocked_audit_info(self):
         audit_info = AWS_Audit_Info(
@@ -593,6 +597,19 @@ class Test_Check:
             "cloudwatch_changes_to_network_gateways_alarm_configured",
             "cloudwatch_changes_to_network_route_tables_alarm_configured",
         ]
+        recovered_checks = get_checks_from_input_arn(audit_resources, provider)
+        assert recovered_checks == expected_checks
+
+    @patch(
+        "prowler.lib.check.check.recover_checks_from_provider",
+        new=mock_recover_checks_from_aws_provider_cognito_service,
+    )
+    def test_get_checks_from_input_arn_cognito(self):
+        audit_resources = [
+            f"arn:aws:cognito-idp:us-east-1:{AWS_ACCOUNT_NUMBER}:userpool/test"
+        ]
+        provider = "aws"
+        expected_checks = []
         recovered_checks = get_checks_from_input_arn(audit_resources, provider)
         assert recovered_checks == expected_checks
 
