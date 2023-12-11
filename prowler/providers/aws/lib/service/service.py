@@ -44,6 +44,11 @@ class AWSService:
         self.region = get_default_region(self.service, audit_info)
         self.client = self.session.client(self.service, self.region)
 
+        # Thread pool for __threading_call__
+        self.thread_pool = ThreadPoolExecutor(
+                                max_workers=10
+                            )
+
     def __get_session__(self):
         return self.session
 
@@ -68,7 +73,7 @@ class AWSService:
         # Using ThreadPoolExecutor for managing threads
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             # Submit tasks to the executor
-            futures = [executor.submit(call, item) for item in items]
+            futures = [self.thread_pool.submit(call, item) for item in items]
 
             # Wait for all tasks to complete
             for future in as_completed(futures):
