@@ -36,7 +36,7 @@ class Azure_Audit_Info:
         audit_metadata,
         audit_resources,
         audit_config,
-        AzureRegionConfig,
+        azure_region_config,
     ):
         self.credentials = credentials
         self.identity = identity
