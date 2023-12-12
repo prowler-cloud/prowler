@@ -1,9 +1,11 @@
 import uuid
+from argparse import ArgumentTypeError
 
 import pytest
 from mock import patch
 
 from prowler.lib.cli.parser import ProwlerArgumentParser
+from prowler.providers.azure.lib.arguments.arguments import validate_azure_region
 
 prowler_command = "prowler"
 
@@ -73,7 +75,7 @@ class Test_Parser:
         assert not parsed.output_bucket
         assert not parsed.output_bucket_no_assume
         assert not parsed.shodan
-        assert not parsed.allowlist_file
+        assert not parsed.mutelist_file
         assert not parsed.resource_tags
         assert not parsed.ignore_unused_services
 
@@ -502,6 +504,18 @@ class Test_Parser:
         assert service_1 in parsed.services
         assert service_2 in parsed.services
 
+    def test_checks_parser_services_with_severity(self):
+        argument1 = "--services"
+        service_1 = "iam"
+        argument2 = "--severity"
+        severity = "low"
+        command = [prowler_command, argument1, service_1, argument2, severity]
+        parsed = self.parser.parse(command)
+        assert len(parsed.services) == 1
+        assert service_1 in parsed.services
+        assert len(parsed.severity) == 1
+        assert severity in parsed.severity
+
     def test_checks_parser_informational_severity(self):
         argument = "--severity"
         severity = "informational"
@@ -922,19 +936,19 @@ class Test_Parser:
         parsed = self.parser.parse(command)
         assert parsed.shodan == shodan_api_key
 
-    def test_aws_parser_allowlist_short(self):
+    def test_aws_parser_mutelist_short(self):
         argument = "-w"
-        allowlist_file = "allowlist.txt"
-        command = [prowler_command, argument, allowlist_file]
+        mutelist_file = "mutelist.txt"
+        command = [prowler_command, argument, mutelist_file]
         parsed = self.parser.parse(command)
-        assert parsed.allowlist_file == allowlist_file
+        assert parsed.mutelist_file == mutelist_file
 
-    def test_aws_parser_allowlist_long(self):
-        argument = "--allowlist-file"
-        allowlist_file = "allowlist.txt"
-        command = [prowler_command, argument, allowlist_file]
+    def test_aws_parser_mutelist_long(self):
+        argument = "--mutelist-file"
+        mutelist_file = "mutelist.txt"
+        command = [prowler_command, argument, mutelist_file]
         parsed = self.parser.parse(command)
-        assert parsed.allowlist_file == allowlist_file
+        assert parsed.mutelist_file == mutelist_file
 
     def test_aws_parser_resource_tags(self):
         argument = "--resource-tags"
@@ -1038,6 +1052,14 @@ class Test_Parser:
         assert parsed.subscription_ids[0] == subscription_1
         assert parsed.subscription_ids[1] == subscription_2
 
+    def test_parser_azure_region(self):
+        argument = "--azure-region"
+        region = "AzureChinaCloud"
+        command = [prowler_command, "azure", argument, region]
+        parsed = self.parser.parse(command)
+        assert parsed.provider == "azure"
+        assert parsed.azure_region == region
+
     # Test AWS flags with Azure provider
     def test_parser_azure_with_aws_flag(self, capsys):
         command = [prowler_command, "azure", "-p"]
@@ -1080,3 +1102,33 @@ class Test_Parser:
         assert len(parsed.project_ids) == 2
         assert parsed.project_ids[0] == project_1
         assert parsed.project_ids[1] == project_2
+
+    def test_validate_azure_region_valid_regions(self):
+        expected_regions = [
+            "AzureChinaCloud",
+            "AzureUSGovernment",
+            "AzureGermanCloud",
+            "AzureCloud",
+        ]
+        input_regions = [
+            "AzureChinaCloud",
+            "AzureUSGovernment",
+            "AzureGermanCloud",
+            "AzureCloud",
+        ]
+        for region in input_regions:
+            assert validate_azure_region(region) in expected_regions
+
+    def test_validate_azure_region_invalid_regions(self):
+        expected_regions = [
+            "AzureChinaCloud",
+            "AzureUSGovernment",
+            "AzureGermanCloud",
+            "AzureCloud",
+        ]
+        invalid_region = "non-valid-region"
+        with pytest.raises(
+            ArgumentTypeError,
+            match=f"Region {invalid_region} not allowed, allowed regions are {' '.join(expected_regions)}",
+        ):
+            validate_azure_region(invalid_region)

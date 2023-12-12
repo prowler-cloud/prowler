@@ -16,11 +16,12 @@ from colorama import Fore, Style
 import prowler
 from prowler.config.config import orange_color
 from prowler.lib.check.compliance_models import load_compliance_framework
+from prowler.lib.check.custom_checks_metadata import update_check_metadata
 from prowler.lib.check.models import Check, load_check_metadata
 from prowler.lib.logger import logger
 from prowler.lib.outputs.outputs import report
 from prowler.lib.utils.utils import open_file, parse_json_file
-from prowler.providers.aws.lib.allowlist.allowlist import allowlist_findings
+from prowler.providers.aws.lib.mutelist.mutelist import mutelist_findings
 from prowler.providers.common.models import Audit_Metadata
 from prowler.providers.common.outputs import Provider_Output_Options
 
@@ -416,6 +417,7 @@ def execute_checks(
     provider: str,
     audit_info: Any,
     audit_output_options: Provider_Output_Options,
+    custom_checks_metadata: Any,
 ) -> list:
     # List to store all the check's findings
     all_findings = []
@@ -461,6 +463,7 @@ def execute_checks(
                     audit_info,
                     services_executed,
                     checks_executed,
+                    custom_checks_metadata,
                 )
                 all_findings.extend(check_findings)
 
@@ -506,6 +509,7 @@ def execute_checks(
                         audit_info,
                         services_executed,
                         checks_executed,
+                        custom_checks_metadata,
                     )
                     all_findings.extend(check_findings)
 
@@ -531,6 +535,7 @@ def execute(
     audit_info: Any,
     services_executed: set,
     checks_executed: set,
+    custom_checks_metadata: Any,
 ):
     # Import check module
     check_module_path = (
@@ -540,6 +545,10 @@ def execute(
     # Recover functions from check
     check_to_execute = getattr(lib, check_name)
     c = check_to_execute()
+
+    # Update check metadata to reflect that in the outputs
+    if custom_checks_metadata and custom_checks_metadata["Checks"].get(c.CheckID):
+        c = update_check_metadata(c, custom_checks_metadata["Checks"][c.CheckID])
 
     # Run check
     check_findings = run_check(c, audit_output_options)
@@ -551,10 +560,10 @@ def execute(
         audit_info.audit_metadata, services_executed, checks_executed
     )
 
-    # Allowlist findings
-    if audit_output_options.allowlist_file:
-        check_findings = allowlist_findings(
-            audit_output_options.allowlist_file,
+    # Mute List findings
+    if audit_output_options.mutelist_file:
+        check_findings = mutelist_findings(
+            audit_output_options.mutelist_file,
             audit_info.audited_account,
             check_findings,
         )

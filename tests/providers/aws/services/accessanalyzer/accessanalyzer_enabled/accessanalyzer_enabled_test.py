@@ -33,6 +33,7 @@ class Test_accessanalyzer_enabled:
     def test_one_analyzer_not_available(self):
         # Include analyzers to check
         accessanalyzer_client = mock.MagicMock
+        accessanalyzer_client.region = AWS_REGION_1
         accessanalyzer_client.analyzers = [
             Analyzer(
                 arn=AWS_ACCOUNT_ARN,
@@ -65,8 +66,46 @@ class Test_accessanalyzer_enabled:
             assert result[0].region == AWS_REGION_1
             assert result[0].resource_tags == []
 
+    def test_one_analyzer_not_available_muted(self):
+        # Include analyzers to check
+        accessanalyzer_client = mock.MagicMock
+        accessanalyzer_client.region = AWS_REGION_2
+        accessanalyzer_client.audit_config = {"mute_non_default_regions": True}
+        accessanalyzer_client.analyzers = [
+            Analyzer(
+                arn=AWS_ACCOUNT_ARN,
+                name=AWS_ACCOUNT_NUMBER,
+                status="NOT_AVAILABLE",
+                tags=[],
+                type="",
+                region=AWS_REGION_1,
+            )
+        ]
+        with mock.patch(
+            "prowler.providers.aws.services.accessanalyzer.accessanalyzer_service.AccessAnalyzer",
+            accessanalyzer_client,
+        ):
+            from prowler.providers.aws.services.accessanalyzer.accessanalyzer_enabled.accessanalyzer_enabled import (
+                accessanalyzer_enabled,
+            )
+
+            check = accessanalyzer_enabled()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "MUTED"
+            assert (
+                result[0].status_extended
+                == f"IAM Access Analyzer in account {AWS_ACCOUNT_NUMBER} is not enabled."
+            )
+            assert result[0].resource_id == AWS_ACCOUNT_NUMBER
+            assert result[0].resource_arn == AWS_ACCOUNT_ARN
+            assert result[0].region == AWS_REGION_1
+            assert result[0].resource_tags == []
+
     def test_two_analyzers(self):
         accessanalyzer_client = mock.MagicMock
+        accessanalyzer_client.region = AWS_REGION_1
         accessanalyzer_client.analyzers = [
             Analyzer(
                 arn=AWS_ACCOUNT_ARN,

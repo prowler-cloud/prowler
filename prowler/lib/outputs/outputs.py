@@ -169,12 +169,12 @@ def set_report_color(status: str) -> str:
         color = Fore.RED
     elif status == "ERROR":
         color = Fore.BLACK
-    elif status == "WARNING":
+    elif status == "MUTED":
         color = orange_color
     elif status == "INFO":
         color = Fore.YELLOW
     else:
-        raise Exception("Invalid Report Status. Must be PASS, FAIL, ERROR or WARNING")
+        raise Exception("Invalid Report Status. Must be PASS, FAIL, ERROR or MUTED")
     return color
 
 

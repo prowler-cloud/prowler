@@ -173,7 +173,7 @@ def fill_html(file_descriptor, finding, output_options):
             row_class = "table-info"
         elif finding.status == "FAIL":
             row_class = "table-danger"
-        elif finding.status == "WARNING":
+        elif finding.status == "MUTED":
             row_class = "table-warning"
         file_descriptor.write(
             f"""
@@ -338,8 +338,9 @@ def add_html_footer(output_filename, output_directory):
 def get_aws_html_assessment_summary(audit_info):
     try:
         if isinstance(audit_info, AWS_Audit_Info):
-            if not audit_info.profile:
-                audit_info.profile = "ENV"
+            profile = (
+                audit_info.profile if audit_info.profile is not None else "default"
+            )
             if isinstance(audit_info.audited_regions, list):
                 audited_regions = " ".join(audit_info.audited_regions)
             elif not audit_info.audited_regions:
@@ -361,7 +362,7 @@ def get_aws_html_assessment_summary(audit_info):
                         </li>
                         <li class="list-group-item">
                             <b>AWS-CLI Profile:</b> """
-                + audit_info.profile
+                + profile
                 + """
                         </li>
                         <li class="list-group-item">

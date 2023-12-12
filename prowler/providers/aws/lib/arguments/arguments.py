@@ -117,15 +117,16 @@ def init_parser(self):
         default=None,
         help="Shodan API key used by check ec2_elastic_ip_shodan.",
     )
-    # Allowlist
-    allowlist_subparser = aws_parser.add_argument_group("Allowlist")
-    allowlist_subparser.add_argument(
+    # Mute List
+    mutelist_subparser = aws_parser.add_argument_group("Mute List")
+    mutelist_subparser.add_argument(
         "-w",
-        "--allowlist-file",
+        "--mutelist-file",
         nargs="?",
         default=None,
-        help="Path for allowlist yaml file. See example prowler/config/aws_allowlist.yaml for reference and format. It also accepts AWS DynamoDB Table or Lambda ARNs or S3 URIs, see more in https://docs.prowler.cloud/en/latest/tutorials/allowlist/",
+        help="Path for mutelist yaml file. See example prowler/config/aws_mutelist.yaml for reference and format. It also accepts AWS DynamoDB Table or Lambda ARNs or S3 URIs, see more in https://docs.prowler.cloud/en/latest/tutorials/mutelist/",
     )
+
     # Based Scans
     aws_based_scans_subparser = aws_parser.add_argument_group("AWS Based Scans")
     aws_based_scans_parser = aws_based_scans_subparser.add_mutually_exclusive_group()

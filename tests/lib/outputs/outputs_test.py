@@ -165,7 +165,7 @@ class Test_Outputs:
                 remove(expected[index][output_mode].name)
 
     def test_set_report_color(self):
-        test_status = ["PASS", "FAIL", "ERROR", "WARNING"]
+        test_status = ["PASS", "FAIL", "ERROR", "MUTED"]
         test_colors = [Fore.GREEN, Fore.RED, Fore.BLACK, orange_color]
 
         for status in test_status:
@@ -177,7 +177,7 @@ class Test_Outputs:
         with pytest.raises(Exception) as exc:
             set_report_color(test_status)
 
-        assert "Invalid Report Status. Must be PASS, FAIL, ERROR or WARNING" in str(
+        assert "Invalid Report Status. Must be PASS, FAIL, ERROR or MUTED" in str(
             exc.value
         )
         assert exc.type == Exception
@@ -1347,7 +1347,7 @@ class Test_Outputs:
     def test_generate_json_asff_status(self):
         assert generate_json_asff_status("PASS") == "PASSED"
         assert generate_json_asff_status("FAIL") == "FAILED"
-        assert generate_json_asff_status("WARNING") == "WARNING"
+        assert generate_json_asff_status("MUTED") == "MUTED"
         assert generate_json_asff_status("SOMETHING ELSE") == "NOT_AVAILABLE"
 
     def test_generate_json_asff_resource_tags(self):
@@ -1364,13 +1364,13 @@ class Test_Outputs:
     def test_generate_json_ocsf_status(self):
         assert generate_json_ocsf_status("PASS") == "Success"
         assert generate_json_ocsf_status("FAIL") == "Failure"
-        assert generate_json_ocsf_status("WARNING") == "Other"
+        assert generate_json_ocsf_status("MUTED") == "Other"
         assert generate_json_ocsf_status("SOMETHING ELSE") == "Unknown"
 
     def test_generate_json_ocsf_status_id(self):
         assert generate_json_ocsf_status_id("PASS") == 1
         assert generate_json_ocsf_status_id("FAIL") == 2
-        assert generate_json_ocsf_status_id("WARNING") == 99
+        assert generate_json_ocsf_status_id("MUTED") == 99
         assert generate_json_ocsf_status_id("SOMETHING ELSE") == 0
 
     def test_generate_json_ocsf_severity_id(self):

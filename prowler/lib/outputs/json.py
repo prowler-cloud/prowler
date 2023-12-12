@@ -31,6 +31,7 @@ from prowler.lib.outputs.models import (
     unroll_dict_to_list,
 )
 from prowler.lib.utils.utils import hash_sha512, open_file, outputs_unix_timestamp
+from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 
 
 def fill_json_asff(finding_output, audit_info, finding, output_options):
@@ -115,8 +116,8 @@ def generate_json_asff_status(status: str) -> str:
         json_asff_status = "PASSED"
     elif status == "FAIL":
         json_asff_status = "FAILED"
-    elif status == "WARNING":
-        json_asff_status = "WARNING"
+    elif status == "MUTED":
+        json_asff_status = "MUTED"
     else:
         json_asff_status = "NOT_AVAILABLE"
 
@@ -155,6 +156,11 @@ def fill_json_ocsf(audit_info, finding, output_options) -> Check_Output_JSON_OCS
         aws_org_uid = ""
         account = None
         org = None
+        profile = ""
+        if isinstance(audit_info, AWS_Audit_Info):
+            profile = (
+                audit_info.profile if audit_info.profile is not None else "default"
+            )
         if (
             hasattr(audit_info, "organizations_metadata")
             and audit_info.organizations_metadata
@@ -249,9 +255,7 @@ def fill_json_ocsf(audit_info, finding, output_options) -> Check_Output_JSON_OCS
             original_time=outputs_unix_timestamp(
                 output_options.unix_timestamp, timestamp
             ),
-            profiles=[audit_info.profile]
-            if hasattr(audit_info, "organizations_metadata")
-            else [],
+            profiles=[profile],
         )
         compliance = Compliance_OCSF(
             status=generate_json_ocsf_status(finding.status),
@@ -289,7 +293,7 @@ def generate_json_ocsf_status(status: str):
         json_ocsf_status = "Success"
     elif status == "FAIL":
         json_ocsf_status = "Failure"
-    elif status == "WARNING":
+    elif status == "MUTED":
         json_ocsf_status = "Other"
     else:
         json_ocsf_status = "Unknown"
@@ -303,7 +307,7 @@ def generate_json_ocsf_status_id(status: str):
         json_ocsf_status_id = 1
     elif status == "FAIL":
         json_ocsf_status_id = 2
-    elif status == "WARNING":
+    elif status == "MUTED":
         json_ocsf_status_id = 99
     else:
         json_ocsf_status_id = 0

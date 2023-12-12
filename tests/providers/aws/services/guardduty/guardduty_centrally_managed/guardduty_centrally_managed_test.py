@@ -62,6 +62,31 @@ class Test_guardduty_centrally_managed:
             assert result[0].region == AWS_REGION
             assert result[0].resource_arn == DETECTOR_ARN
 
+    def test_not_enabled_account_detector(self):
+        guardduty_client = mock.MagicMock
+        guardduty_client.detectors = []
+        guardduty_client.detectors.append(
+            Detector(
+                id=AWS_ACCOUNT_NUMBER,
+                region=AWS_REGION,
+                arn=DETECTOR_ARN,
+                enabled_in_account=False,
+            )
+        )
+
+        with mock.patch(
+            "prowler.providers.aws.services.guardduty.guardduty_service.GuardDuty",
+            guardduty_client,
+        ):
+            # Test Check
+            from prowler.providers.aws.services.guardduty.guardduty_centrally_managed.guardduty_centrally_managed import (
+                guardduty_centrally_managed,
+            )
+
+            check = guardduty_centrally_managed()
+            result = check.execute()
+            assert len(result) == 0
+
     def test_detector_centralized_managed(self):
         guardduty_client = mock.MagicMock
         guardduty_client.detectors = []
