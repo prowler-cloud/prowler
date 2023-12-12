@@ -69,7 +69,7 @@ def mock_make_api_call(self, operation_name, kwargs):
     return make_api_call(self, operation_name, kwargs)
 
 
-def mock_generate_regional_clients(service, audit_info, _):
+def mock_generate_regional_clients(service, audit_info):
     regional_client = audit_info.audit_session.client(
         service, region_name=AWS_REGION_US_EAST_1
     )
@@ -84,7 +84,6 @@ def mock_generate_regional_clients(service, audit_info, _):
 # Patch every AWS call using Boto3
 @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
 class Test_Neptune_Service:
-
     # Test Neptune Service
     @mock_neptune
     def test_service(self):

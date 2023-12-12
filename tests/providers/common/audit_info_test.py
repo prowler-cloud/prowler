@@ -327,6 +327,7 @@ class Test_Set_Audit_Info:
                 get_tagged_resources(["MY_TAG1=MY_VALUE1"], mock_audit_info)
             )
 
+    @mock_ec2
     @patch(
         "prowler.providers.common.audit_info.validate_aws_credentials",
         new=mock_validate_credentials,
