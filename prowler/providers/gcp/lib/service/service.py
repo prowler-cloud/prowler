@@ -11,7 +11,6 @@ from prowler.lib.logger import logger
 from prowler.providers.gcp.gcp_provider_new import GcpProvider
 
 
-
 class GCPService:
     def __init__(
         self,
@@ -27,9 +26,7 @@ class GCPService:
         self.api_version = api_version
         self.default_project_id = provider.default_project_id
         self.region = region
-        self.client = self.__generate_client__(
-            service, api_version, audit_info.credentials
-        )
+        self.client = self.__generate_client__(service, api_version, self.credentials)
         # Only project ids that have their API enabled will be scanned
         self.project_ids = self.__is_api_active__(provider.project_ids)
 
