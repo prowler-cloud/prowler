@@ -40,6 +40,6 @@ If you are making changes to Prowler, and want to validate if requests are being
 * Run prowler with `--log-level DEBUG` and `--log-file debuglogs.txt`
 * Search for retry attempts using `grep -i 'Retry needed' debuglogs.txt`
 
-This is based off of the [AWS documentation](https://boto3.amazonaws.com/v1/documentation/api/latest/guide/retries.html#checking-retry-attempts-in-your-client-logs), wihch states that if a retry is performed, you will see a message starting with "Retry needed".
+This is based off of the [AWS documentation](https://boto3.amazonaws.com/v1/documentation/api/latest/guide/retries.html#checking-retry-attempts-in-your-client-logs), which states that if a retry is performed, you will see a message starting with "Retry needed".
 
 You can determine the total number of calls made using `grep -i 'Sending http request' debuglogs.txt | wc -l`
