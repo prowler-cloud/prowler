@@ -1005,13 +1005,6 @@ class Test_Parser:
         parsed = self.parser.parse(command)
         assert parsed.config_file == config_file
 
-    def test_aws_parser_sts_endpoint_region(self):
-        argument = "--sts-endpoint-region"
-        sts_endpoint_region = "eu-west-1"
-        command = [prowler_command, argument, sts_endpoint_region]
-        parsed = self.parser.parse(command)
-        assert parsed.sts_endpoint_region == sts_endpoint_region
-
     def test_parser_azure_auth_sp(self):
         argument = "--sp-env-auth"
         command = [prowler_command, "azure", argument]
