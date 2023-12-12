@@ -8,8 +8,8 @@ from prowler.lib.outputs.html import get_assessment_summary
 from prowler.providers.aws.lib.audit_info.audit_info import AWS_Audit_Info
 from prowler.providers.azure.lib.audit_info.audit_info import (
     Azure_Audit_Info,
-    Azure_Identity_Info,
-    Azure_Region_Config,
+    AzureIdentityInfo,
+    AzureRegionConfig,
 )
 from prowler.providers.common.models import Audit_Metadata
 from prowler.providers.common.outputs import (
@@ -31,11 +31,11 @@ class Test_Common_Output_Options:
     def set_mocked_azure_audit_info(self):
         audit_info = Azure_Audit_Info(
             credentials=None,
-            identity=Azure_Identity_Info(),
+            identity=AzureIdentityInfo(),
             audit_metadata=None,
             audit_resources=None,
             audit_config=None,
-            azure_region_config=Azure_Region_Config(),
+            azure_region_config=AzureRegionConfig(),
         )
         return audit_info
 
