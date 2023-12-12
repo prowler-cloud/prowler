@@ -35,7 +35,7 @@ class Test_Common_Output_Options:
             audit_metadata=None,
             audit_resources=None,
             audit_config=None,
-            AzureRegionConfig=AzureRegionConfig(),
+            azure_region_config=AzureRegionConfig(),
         )
         return audit_info
 
