@@ -1,6 +1,7 @@
 import io
 import json
 import zipfile
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from enum import Enum
 from typing import Any, Optional
 
@@ -63,27 +64,42 @@ class Lambda(AWSService):
 
     def __get_function_code__(self):
         logger.info("Lambda - Getting Function Code...")
-        try:
-            for function in self.functions.values():
-                regional_client = self.regional_clients[function.region]
-                function_information = regional_client.get_function(
-                    FunctionName=function.name
-                )
-                if "Location" in function_information["Code"]:
-                    code_location_uri = function_information["Code"]["Location"]
-                    raw_code_zip = requests.get(code_location_uri).content
-                    function_code = LambdaCode(
-                        location=code_location_uri,
-                        code_zip=zipfile.ZipFile(io.BytesIO(raw_code_zip)),
-                    )
-                    yield function, function_code
+        # Use a thread pool handle the queueing and execution of the __fetch_function_code tasks, up to max_workers tasks concurrently.
+        with ThreadPoolExecutor(max_workers=10) as executor:
+            futures = {
+                executor.submit(self.__fetch_function_code, function): function
+                for function in self.functions.values()
+            }
 
+            for future in as_completed(futures):
+                function = futures[future]
+                try:
+                    function_code = future.result()
+                    if function_code:
+                        yield function, function_code
+                except Exception as error:
+                    logger.error(
+                        f"Error fetching code for function {function.name} in region {function.region}: {error}"
+                    )
+
+    def __fetch_function_code(self, function):
+        try:
+            regional_client = self.regional_clients[function.region]
+            function_information = regional_client.get_function(
+                FunctionName=function.name
+            )
+            if "Location" in function_information["Code"]:
+                code_location_uri = function_information["Code"]["Location"]
+                raw_code_zip = requests.get(code_location_uri).content
+                return LambdaCode(
+                    location=code_location_uri,
+                    code_zip=zipfile.ZipFile(io.BytesIO(raw_code_zip)),
+                )
         except Exception as error:
             logger.error(
-                f"{regional_client.region} --"
-                f" {error.__class__.__name__}[{error.__traceback__.tb_lineno}]:"
-                f" {error}"
+                f"Error in fetch_function_code for function {function.name} in region {function.region}: {error}"
             )
+            raise
 
     def __get_policy__(self, regional_client):
         logger.info("Lambda - Getting Policy...")
