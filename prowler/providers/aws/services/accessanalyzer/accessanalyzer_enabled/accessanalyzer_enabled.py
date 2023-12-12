@@ -31,11 +31,11 @@ class accessanalyzer_enabled(Check):
                     )
                 if (
                     accessanalyzer_client.audit_config.get(
-                        "allowlist_non_default_regions", False
+                        "mute_non_default_regions", False
                     )
                     and not analyzer.region == accessanalyzer_client.region
                 ):
-                    report.status = "WARNING"
+                    report.status = "MUTED"
 
             findings.append(report)
 
