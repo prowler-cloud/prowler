@@ -1,7 +1,7 @@
 import io
 import json
 import zipfile
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import as_completed
 from enum import Enum
 from typing import Any, Optional
 
@@ -65,22 +65,21 @@ class Lambda(AWSService):
     def __get_function_code__(self):
         logger.info("Lambda - Getting Function Code...")
         # Use a thread pool handle the queueing and execution of the __fetch_function_code tasks, up to max_workers tasks concurrently.
-        with ThreadPoolExecutor(max_workers=10) as executor:
-            futures = {
-                executor.submit(self.__fetch_function_code, function): function
-                for function in self.functions.values()
-            }
+        futures = {
+            self.thread_pool.submit(self.__fetch_function_code, function): function
+            for function in self.functions.values()
+        }
 
-            for future in as_completed(futures):
-                function = futures[future]
-                try:
-                    function_code = future.result()
-                    if function_code:
-                        yield function, function_code
-                except Exception as error:
-                    logger.error(
-                        f"Error fetching code for function {function.name} in region {function.region}: {error}"
-                    )
+        for future in as_completed(futures):
+            function = futures[future]
+            try:
+                function_code = future.result()
+                if function_code:
+                    yield function, function_code
+            except Exception as error:
+                logger.error(
+                    f"Error fetching code for function {function.name} in region {function.region}: {error}"
+                )
 
     def __fetch_function_code(self, function):
         try:
