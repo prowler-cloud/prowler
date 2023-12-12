@@ -27,7 +27,7 @@ class Azure_Audit_Info:
     audit_resources: Optional[Any]
     audit_metadata: Optional[Any]
     audit_config: dict
-    AzureRegionConfig: AzureRegionConfig
+    azure_region_config: AzureRegionConfig
 
     def __init__(
         self,
