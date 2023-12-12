@@ -7,6 +7,8 @@ from prowler.providers.aws.aws_provider import (
 )
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 
+MAX_WORKERS = 10
+
 
 class AWSService:
     """The AWSService class offers a parent class for each AWS Service to generate:
@@ -47,7 +49,7 @@ class AWSService:
         self.client = self.session.client(self.service, self.region)
 
         # Thread pool for __threading_call__
-        self.thread_pool = ThreadPoolExecutor(max_workers=10)
+        self.thread_pool = ThreadPoolExecutor(max_workers=MAX_WORKERS)
 
     def __get_session__(self):
         return self.session
