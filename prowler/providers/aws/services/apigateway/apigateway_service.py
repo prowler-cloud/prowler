@@ -118,7 +118,6 @@ class APIGateway(AWSService):
                         for resource_method in resource.get(
                             "resourceMethods", {}
                         ).keys():
-                            # rest_api.resources.resource_methods.update({resource_method:resource_config.get("authorizationType", None)})
                             resource_methods.append(resource_method)
 
                         for resource_method in resource_methods:
