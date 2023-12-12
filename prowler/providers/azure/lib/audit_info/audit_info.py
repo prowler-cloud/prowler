@@ -10,5 +10,5 @@ azure_audit_info = Azure_Audit_Info(
     audit_resources=None,
     audit_metadata=None,
     audit_config=None,
-    AzureRegionConfig=AzureRegionConfig(),
+    azure_region_config=AzureRegionConfig(),
 )
