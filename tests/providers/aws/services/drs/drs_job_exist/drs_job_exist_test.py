@@ -120,9 +120,9 @@ class Test_drs_job_exist:
             assert result[0].region == AWS_REGION
             assert result[0].resource_tags == []
 
-    def test_drs_disabled_allowlisted(self):
+    def test_drs_disabled_muted(self):
         drs_client = mock.MagicMock
-        drs_client.audit_config = {"allowlist_non_default_regions": True}
+        drs_client.audit_config = {"mute_non_default_regions": True}
         drs_client.audited_account = AWS_ACCOUNT_NUMBER
         drs_client.audited_account_arn = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
         drs_client.region = "eu-west-2"
@@ -147,7 +147,7 @@ class Test_drs_job_exist:
             result = check.execute()
 
             assert len(result) == 1
-            assert result[0].status == "WARNING"
+            assert result[0].status == "MUTED"
             assert result[0].status_extended == "DRS is not enabled for this region."
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
             assert result[0].resource_arn == f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"

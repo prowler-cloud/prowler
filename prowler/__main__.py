@@ -49,12 +49,12 @@ from prowler.providers.aws.lib.security_hub.security_hub import (
     resolve_security_hub_previous_findings,
     verify_security_hub_integration_enabled_per_region,
 )
-from prowler.providers.common.allowlist import set_provider_allowlist
 from prowler.providers.common.audit_info import (
     set_provider_audit_info,
     set_provider_execution_parameters,
 )
 from prowler.providers.common.clean import clean_provider_local_output_directories
+from prowler.providers.common.mutelist import set_provider_mutelist
 from prowler.providers.common.outputs import set_provider_output_options
 from prowler.providers.common.quick_inventory import run_provider_quick_inventory
 
@@ -178,12 +178,12 @@ def prowler():
     # Sort final check list
     checks_to_execute = sorted(checks_to_execute)
 
-    # Parse Allowlist
-    allowlist_file = set_provider_allowlist(provider, audit_info, args)
+    # Parse Mute List
+    mutelist_file = set_provider_mutelist(provider, audit_info, args)
 
     # Set output options based on the selected provider
     audit_output_options = set_provider_output_options(
-        provider, args, audit_info, allowlist_file, bulk_checks_metadata
+        provider, args, audit_info, mutelist_file, bulk_checks_metadata
     )
 
     # Run the quick inventory for the provider if available

@@ -76,7 +76,7 @@ class Test_Parser:
         assert not parsed.output_bucket
         assert not parsed.output_bucket_no_assume
         assert not parsed.shodan
-        assert not parsed.allowlist_file
+        assert not parsed.mutelist_file
         assert not parsed.resource_tags
         assert not parsed.ignore_unused_services
 
@@ -943,19 +943,19 @@ class Test_Parser:
         parsed = self.parser.parse(command)
         assert parsed.shodan == shodan_api_key
 
-    def test_aws_parser_allowlist_short(self):
+    def test_aws_parser_mutelist_short(self):
         argument = "-w"
-        allowlist_file = "allowlist.txt"
-        command = [prowler_command, argument, allowlist_file]
+        mutelist_file = "mutelist.txt"
+        command = [prowler_command, argument, mutelist_file]
         parsed = self.parser.parse(command)
-        assert parsed.allowlist_file == allowlist_file
+        assert parsed.mutelist_file == mutelist_file
 
-    def test_aws_parser_allowlist_long(self):
-        argument = "--allowlist-file"
-        allowlist_file = "allowlist.txt"
-        command = [prowler_command, argument, allowlist_file]
+    def test_aws_parser_mutelist_long(self):
+        argument = "--mutelist-file"
+        mutelist_file = "mutelist.txt"
+        command = [prowler_command, argument, mutelist_file]
         parsed = self.parser.parse(command)
-        assert parsed.allowlist_file == allowlist_file
+        assert parsed.mutelist_file == mutelist_file
 
     def test_aws_parser_resource_tags(self):
         argument = "--resource-tags"

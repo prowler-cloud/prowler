@@ -66,11 +66,11 @@ class Test_accessanalyzer_enabled:
             assert result[0].region == AWS_REGION_1
             assert result[0].resource_tags == []
 
-    def test_one_analyzer_not_available_allowlisted(self):
+    def test_one_analyzer_not_available_muted(self):
         # Include analyzers to check
         accessanalyzer_client = mock.MagicMock
         accessanalyzer_client.region = AWS_REGION_2
-        accessanalyzer_client.audit_config = {"allowlist_non_default_regions": True}
+        accessanalyzer_client.audit_config = {"mute_non_default_regions": True}
         accessanalyzer_client.analyzers = [
             Analyzer(
                 arn=AWS_ACCOUNT_ARN,
@@ -93,7 +93,7 @@ class Test_accessanalyzer_enabled:
             result = check.execute()
 
             assert len(result) == 1
-            assert result[0].status == "WARNING"
+            assert result[0].status == "MUTED"
             assert (
                 result[0].status_extended
                 == f"IAM Access Analyzer in account {AWS_ACCOUNT_NUMBER} is not enabled."

@@ -132,7 +132,7 @@ class Test_config_recorder_all_regions_enabled:
                     assert recorder.region == AWS_REGION_US_EAST_1
 
     @mock_config
-    def test_config_one_recorder_disabled_allowlisted(self):
+    def test_config_one_recorder_disabled_muted(self):
         # Create Config Mocked Resources
         config_client = client("config", region_name=AWS_REGION_US_EAST_1)
         # Create Config Recorder
@@ -165,7 +165,7 @@ class Test_config_recorder_all_regions_enabled:
             # Search for the recorder just created
             for recorder in result:
                 if recorder.region == AWS_REGION_US_EAST_1:
-                    assert recorder.status == "WARNING"
+                    assert recorder.status == "MUTED"
                     assert (
                         recorder.status_extended
                         == f"AWS Config recorder {AWS_ACCOUNT_NUMBER} is disabled."

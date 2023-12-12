@@ -137,9 +137,9 @@ class Test_:
             assert result[0].resource_arn == DETECTOR_ARN
             assert result[0].region == AWS_REGION_EU_WEST_1
 
-    def test_guardduty_not_configured_allowlisted(self):
+    def test_guardduty_not_configured_muted(self):
         guardduty_client = mock.MagicMock
-        guardduty_client.audit_config = {"allowlist_non_default_regions": True}
+        guardduty_client.audit_config = {"mute_non_default_regions": True}
         guardduty_client.region = "eu-south-2"
         guardduty_client.detectors = []
         guardduty_client.detectors.append(
@@ -160,7 +160,7 @@ class Test_:
             check = guardduty_is_enabled()
             result = check.execute()
             assert len(result) == 1
-            assert result[0].status == "WARNING"
+            assert result[0].status == "MUTED"
             assert (
                 result[0].status_extended
                 == f"GuardDuty detector {DETECTOR_ID} not configured."

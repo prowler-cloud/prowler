@@ -3,16 +3,18 @@ from boto3 import resource
 from mock import MagicMock
 from moto import mock_dynamodb, mock_s3
 
-from prowler.providers.aws.lib.allowlist.allowlist import (
-    allowlist_findings,
-    is_allowlisted,
-    is_allowlisted_in_check,
-    is_allowlisted_in_region,
-    is_allowlisted_in_resource,
-    is_allowlisted_in_tags,
+from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
+from prowler.providers.aws.lib.mutelist.mutelist import (
     is_excepted,
-    parse_allowlist_file,
+    is_muted,
+    is_muted_in_check,
+    is_muted_in_region,
+    is_muted_in_resource,
+    is_muted_in_tags,
+    mutelist_findings,
+    parse_mutelist_file,
 )
+from prowler.providers.common.models import Audit_Metadata
 from tests.providers.aws.audit_info_utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_WEST_1,
@@ -21,33 +23,64 @@ from tests.providers.aws.audit_info_utils import (
 )
 
 
-class Test_Allowlist:
-    # Test S3 allowlist
+class Test_Mutelist:
+    # Mocked Audit Info
+    def set_mocked_audit_info(self):
+        audit_info = AWS_Audit_Info(
+            session_config=None,
+            original_session=None,
+            audit_session=session.Session(
+                profile_name=None,
+                botocore_session=None,
+            ),
+            audited_account=AWS_ACCOUNT_NUMBER,
+            audited_account_arn=f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root",
+            audited_user_id=None,
+            audited_partition="aws",
+            audited_identity_arn=None,
+            profile=None,
+            profile_region=None,
+            credentials=None,
+            assumed_role_info=None,
+            audited_regions=None,
+            organizations_metadata=None,
+            audit_resources=None,
+            mfa_enabled=False,
+            audit_metadata=Audit_Metadata(
+                services_scanned=0,
+                expected_checks=[],
+                completed_checks=0,
+                audit_progress=0,
+            ),
+        )
+        return audit_info
+
+    # Test S3 mutelist
     @mock_s3
-    def test_s3_allowlist(self):
-        audit_info = set_mocked_aws_audit_info()
-        # Create bucket and upload allowlist yaml
+    def test_s3_mutelist(self):
+        audit_info = self.set_mocked_audit_info()
+        # Create bucket and upload mutelist yaml
         s3_resource = resource("s3", region_name=AWS_REGION_US_EAST_1)
-        s3_resource.create_bucket(Bucket="test-allowlist")
-        s3_resource.Object("test-allowlist", "allowlist.yaml").put(
+        s3_resource.create_bucket(Bucket="test-mutelist")
+        s3_resource.Object("test-mutelist", "mutelist.yaml").put(
             Body=open(
-                "tests/providers/aws/lib/allowlist/fixtures/allowlist.yaml",
+                "tests/providers/aws/lib/mutelist/fixtures/mutelist.yaml",
                 "rb",
             )
         )
 
-        with open("tests/providers/aws/lib/allowlist/fixtures/allowlist.yaml") as f:
-            assert yaml.safe_load(f)["Allowlist"] == parse_allowlist_file(
-                audit_info, "s3://test-allowlist/allowlist.yaml"
+        with open("tests/providers/aws/lib/mutelist/fixtures/mutelist.yaml") as f:
+            assert yaml.safe_load(f)["Mute List"] == parse_mutelist_file(
+                audit_info, "s3://test-mutelist/mutelist.yaml"
             )
 
-    # Test DynamoDB allowlist
+    # Test DynamoDB mutelist
     @mock_dynamodb
-    def test_dynamo_allowlist(self):
-        audit_info = set_mocked_aws_audit_info()
+    def test_dynamo_mutelist(self):
+        audit_info = self.set_mocked_audit_info()
         # Create table and put item
         dynamodb_resource = resource("dynamodb", region_name=AWS_REGION_US_EAST_1)
-        table_name = "test-allowlist"
+        table_name = "test-mutelist"
         params = {
             "TableName": table_name,
             "KeySchema": [
@@ -75,7 +108,7 @@ class Test_Allowlist:
 
         assert (
             "keyword"
-            in parse_allowlist_file(
+            in parse_mutelist_file(
                 audit_info,
                 "arn:aws:dynamodb:"
                 + AWS_REGION_US_EAST_1
@@ -87,11 +120,11 @@ class Test_Allowlist:
         )
 
     @mock_dynamodb
-    def test_dynamo_allowlist_with_tags(self):
-        audit_info = set_mocked_aws_audit_info()
+    def test_dynamo_mutelist_with_tags(self):
+        audit_info = self.set_mocked_audit_info()
         # Create table and put item
         dynamodb_resource = resource("dynamodb", region_name=AWS_REGION_US_EAST_1)
-        table_name = "test-allowlist"
+        table_name = "test-mutelist"
         params = {
             "TableName": table_name,
             "KeySchema": [
@@ -120,7 +153,7 @@ class Test_Allowlist:
 
         assert (
             "environment=dev"
-            in parse_allowlist_file(
+            in parse_mutelist_file(
                 audit_info,
                 "arn:aws:dynamodb:"
                 + AWS_REGION_US_EAST_1
@@ -131,11 +164,11 @@ class Test_Allowlist:
             )["Accounts"]["*"]["Checks"]["*"]["Tags"]
         )
 
-    # Allowlist tests
+    # Mutelist tests
 
-    def test_allowlist_findings(self):
-        # Allowlist example
-        allowlist = {
+    def test_mutelist_findings(self):
+        # Mutelist example
+        mutelist = {
             "Accounts": {
                 "*": {
                     "Checks": {
@@ -160,14 +193,12 @@ class Test_Allowlist:
 
         check_findings.append(finding_1)
 
-        allowlisted_findings = allowlist_findings(
-            allowlist, AWS_ACCOUNT_NUMBER, check_findings
-        )
-        assert len(allowlisted_findings) == 1
-        assert allowlisted_findings[0].status == "WARNING"
+        muted_findings = mutelist_findings(mutelist, AWS_ACCOUNT_NUMBER, check_findings)
+        assert len(muted_findings) == 1
+        assert muted_findings[0].status == "MUTED"
 
-    def test_is_allowlisted_with_everything_excepted(self):
-        allowlist = {
+    def test_is_muted_with_everything_excepted(self):
+        mutelist = {
             "Accounts": {
                 "*": {
                     "Checks": {
@@ -187,8 +218,8 @@ class Test_Allowlist:
             }
         }
 
-        assert not is_allowlisted(
-            allowlist,
+        assert not is_muted(
+            mutelist,
             AWS_ACCOUNT_NUMBER,
             "athena_1",
             AWS_REGION_US_EAST_1,
@@ -196,8 +227,8 @@ class Test_Allowlist:
             "",
         )
 
-    def test_is_allowlisted_with_default_allowlist(self):
-        allowlist = {
+    def test_is_muted_with_default_mutelist(self):
+        mutelist = {
             "Accounts": {
                 "*": {
                     "Checks": {
@@ -217,8 +248,8 @@ class Test_Allowlist:
             }
         }
 
-        assert is_allowlisted(
-            allowlist,
+        assert is_muted(
+            mutelist,
             AWS_ACCOUNT_NUMBER,
             "athena_1",
             AWS_REGION_US_EAST_1,
@@ -226,9 +257,9 @@ class Test_Allowlist:
             "",
         )
 
-    def test_is_allowlisted(self):
-        # Allowlist example
-        allowlist = {
+    def test_is_muted(self):
+        # Mutelist example
+        mutelist = {
             "Accounts": {
                 "*": {
                     "Checks": {
@@ -241,8 +272,8 @@ class Test_Allowlist:
             }
         }
 
-        assert is_allowlisted(
-            allowlist,
+        assert is_muted(
+            mutelist,
             AWS_ACCOUNT_NUMBER,
             "check_test",
             AWS_REGION_US_EAST_1,
@@ -250,8 +281,8 @@ class Test_Allowlist:
             "",
         )
 
-        assert is_allowlisted(
-            allowlist,
+        assert is_muted(
+            mutelist,
             AWS_ACCOUNT_NUMBER,
             "check_test",
             AWS_REGION_US_EAST_1,
@@ -259,8 +290,8 @@ class Test_Allowlist:
             "",
         )
 
-        assert is_allowlisted(
-            allowlist,
+        assert is_muted(
+            mutelist,
             AWS_ACCOUNT_NUMBER,
             "check_test",
             AWS_REGION_US_EAST_1,
@@ -268,8 +299,8 @@ class Test_Allowlist:
             "",
         )
 
-        assert is_allowlisted(
-            allowlist,
+        assert is_muted(
+            mutelist,
             AWS_ACCOUNT_NUMBER,
             "check_test",
             AWS_REGION_US_EAST_1,
@@ -278,14 +309,14 @@ class Test_Allowlist:
         )
 
         assert not (
-            is_allowlisted(
-                allowlist, AWS_ACCOUNT_NUMBER, "check_test", "us-east-2", "test", ""
+            is_muted(
+                mutelist, AWS_ACCOUNT_NUMBER, "check_test", "us-east-2", "test", ""
             )
         )
 
-    def test_is_allowlisted_wildcard(self):
-        # Allowlist example
-        allowlist = {
+    def test_is_muted_wildcard(self):
+        # Mutelist example
+        mutelist = {
             "Accounts": {
                 "*": {
                     "Checks": {
@@ -298,8 +329,8 @@ class Test_Allowlist:
             }
         }
 
-        assert is_allowlisted(
-            allowlist,
+        assert is_muted(
+            mutelist,
             AWS_ACCOUNT_NUMBER,
             "check_test",
             AWS_REGION_US_EAST_1,
@@ -307,8 +338,8 @@ class Test_Allowlist:
             "",
         )
 
-        assert is_allowlisted(
-            allowlist,
+        assert is_muted(
+            mutelist,
             AWS_ACCOUNT_NUMBER,
             "check_test",
             AWS_REGION_US_EAST_1,
@@ -316,8 +347,8 @@ class Test_Allowlist:
             "",
         )
 
-        assert is_allowlisted(
-            allowlist,
+        assert is_muted(
+            mutelist,
             AWS_ACCOUNT_NUMBER,
             "check_test",
             AWS_REGION_US_EAST_1,
@@ -326,14 +357,14 @@ class Test_Allowlist:
         )
 
         assert not (
-            is_allowlisted(
-                allowlist, AWS_ACCOUNT_NUMBER, "check_test", "us-east-2", "test", ""
+            is_muted(
+                mutelist, AWS_ACCOUNT_NUMBER, "check_test", "us-east-2", "test", ""
             )
         )
 
-    def test_is_allowlisted_asterisk(self):
-        # Allowlist example
-        allowlist = {
+    def test_is_muted_asterisk(self):
+        # Mutelist example
+        mutelist = {
             "Accounts": {
                 "*": {
                     "Checks": {
@@ -346,8 +377,8 @@ class Test_Allowlist:
             }
         }
 
-        assert is_allowlisted(
-            allowlist,
+        assert is_muted(
+            mutelist,
             AWS_ACCOUNT_NUMBER,
             "check_test",
             AWS_REGION_US_EAST_1,
@@ -355,8 +386,8 @@ class Test_Allowlist:
             "",
         )
 
-        assert is_allowlisted(
-            allowlist,
+        assert is_muted(
+            mutelist,
             AWS_ACCOUNT_NUMBER,
             "check_test",
             AWS_REGION_US_EAST_1,
@@ -364,8 +395,8 @@ class Test_Allowlist:
             "",
         )
 
-        assert is_allowlisted(
-            allowlist,
+        assert is_muted(
+            mutelist,
             AWS_ACCOUNT_NUMBER,
             "check_test",
             AWS_REGION_US_EAST_1,
@@ -374,14 +405,14 @@ class Test_Allowlist:
         )
 
         assert not (
-            is_allowlisted(
-                allowlist, AWS_ACCOUNT_NUMBER, "check_test", "us-east-2", "test", ""
+            is_muted(
+                mutelist, AWS_ACCOUNT_NUMBER, "check_test", "us-east-2", "test", ""
             )
         )
 
-    def test_is_allowlisted_all_and_single_account(self):
-        # Allowlist example
-        allowlist = {
+    def test_is_muted_all_and_single_account(self):
+        # Mutelist example
+        mutelist = {
             "Accounts": {
                 "*": {
                     "Checks": {
@@ -402,8 +433,8 @@ class Test_Allowlist:
             }
         }
 
-        assert is_allowlisted(
-            allowlist,
+        assert is_muted(
+            mutelist,
             AWS_ACCOUNT_NUMBER,
             "check_test_2",
             AWS_REGION_US_EAST_1,
@@ -411,8 +442,8 @@ class Test_Allowlist:
             "",
         )
 
-        assert is_allowlisted(
-            allowlist,
+        assert is_muted(
+            mutelist,
             AWS_ACCOUNT_NUMBER,
             "check_test",
             AWS_REGION_US_EAST_1,
@@ -420,8 +451,8 @@ class Test_Allowlist:
             "",
         )
 
-        assert is_allowlisted(
-            allowlist,
+        assert is_muted(
+            mutelist,
             AWS_ACCOUNT_NUMBER,
             "check_test",
             AWS_REGION_US_EAST_1,
@@ -429,8 +460,8 @@ class Test_Allowlist:
             "",
         )
 
-        assert is_allowlisted(
-            allowlist,
+        assert is_muted(
+            mutelist,
             AWS_ACCOUNT_NUMBER,
             "check_test",
             AWS_REGION_US_EAST_1,
@@ -439,13 +470,13 @@ class Test_Allowlist:
         )
 
         assert not (
-            is_allowlisted(
-                allowlist, AWS_ACCOUNT_NUMBER, "check_test", "us-east-2", "test", ""
+            is_muted(
+                mutelist, AWS_ACCOUNT_NUMBER, "check_test", "us-east-2", "test", ""
             )
         )
 
-    def test_is_allowlisted_single_account(self):
-        allowlist = {
+    def test_is_muted_single_account(self):
+        mutelist = {
             "Accounts": {
                 AWS_ACCOUNT_NUMBER: {
                     "Checks": {
@@ -458,8 +489,8 @@ class Test_Allowlist:
             }
         }
 
-        assert is_allowlisted(
-            allowlist,
+        assert is_muted(
+            mutelist,
             AWS_ACCOUNT_NUMBER,
             "check_test",
             AWS_REGION_US_EAST_1,
@@ -468,39 +499,39 @@ class Test_Allowlist:
         )
 
         assert not (
-            is_allowlisted(
-                allowlist, AWS_ACCOUNT_NUMBER, "check_test", "us-east-2", "test", ""
+            is_muted(
+                mutelist, AWS_ACCOUNT_NUMBER, "check_test", "us-east-2", "test", ""
             )
         )
 
-    def test_is_allowlisted_in_region(self):
-        allowlisted_regions = [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
+    def test_is_muted_in_region(self):
+        muted_regions = [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
         finding_region = AWS_REGION_US_EAST_1
 
-        assert is_allowlisted_in_region(allowlisted_regions, finding_region)
+        assert is_muted_in_region(muted_regions, finding_region)
 
-    def test_is_allowlisted_in_region_wildcard(self):
-        allowlisted_regions = ["*"]
+    def test_is_muted_in_region_wildcard(self):
+        muted_regions = ["*"]
         finding_region = AWS_REGION_US_EAST_1
 
-        assert is_allowlisted_in_region(allowlisted_regions, finding_region)
+        assert is_muted_in_region(muted_regions, finding_region)
 
-    def test_is_not_allowlisted_in_region(self):
-        allowlisted_regions = [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
+    def test_is_not_muted_in_region(self):
+        muted_regions = [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
         finding_region = "eu-west-2"
 
-        assert not is_allowlisted_in_region(allowlisted_regions, finding_region)
+        assert not is_muted_in_region(muted_regions, finding_region)
 
-    def test_is_allowlisted_in_check(self):
-        allowlisted_checks = {
+    def test_is_muted_in_check(self):
+        muted_checks = {
             "check_test": {
                 "Regions": [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1],
                 "Resources": ["*"],
             }
         }
 
-        assert is_allowlisted_in_check(
-            allowlisted_checks,
+        assert is_muted_in_check(
+            muted_checks,
             AWS_ACCOUNT_NUMBER,
             "check_test",
             AWS_REGION_US_EAST_1,
@@ -508,8 +539,8 @@ class Test_Allowlist:
             "",
         )
 
-        assert is_allowlisted_in_check(
-            allowlisted_checks,
+        assert is_muted_in_check(
+            muted_checks,
             AWS_ACCOUNT_NUMBER,
             "check_test",
             AWS_REGION_US_EAST_1,
@@ -517,8 +548,8 @@ class Test_Allowlist:
             "",
         )
 
-        assert is_allowlisted_in_check(
-            allowlisted_checks,
+        assert is_muted_in_check(
+            muted_checks,
             AWS_ACCOUNT_NUMBER,
             "check_test",
             AWS_REGION_US_EAST_1,
@@ -527,8 +558,8 @@ class Test_Allowlist:
         )
 
         assert not (
-            is_allowlisted_in_check(
-                allowlisted_checks,
+            is_muted_in_check(
+                muted_checks,
                 AWS_ACCOUNT_NUMBER,
                 "check_test",
                 "us-east-2",
@@ -537,17 +568,17 @@ class Test_Allowlist:
             )
         )
 
-    def test_is_allowlisted_in_check_regex(self):
-        # Allowlist example
-        allowlisted_checks = {
+    def test_is_muted_in_check_regex(self):
+        # Mutelist example
+        muted_checks = {
             "s3_*": {
                 "Regions": [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1],
                 "Resources": ["*"],
             }
         }
 
-        assert is_allowlisted_in_check(
-            allowlisted_checks,
+        assert is_muted_in_check(
+            muted_checks,
             AWS_ACCOUNT_NUMBER,
             "s3_bucket_public_access",
             AWS_REGION_US_EAST_1,
@@ -555,8 +586,8 @@ class Test_Allowlist:
             "",
         )
 
-        assert is_allowlisted_in_check(
-            allowlisted_checks,
+        assert is_muted_in_check(
+            muted_checks,
             AWS_ACCOUNT_NUMBER,
             "s3_bucket_no_mfa_delete",
             AWS_REGION_US_EAST_1,
@@ -564,8 +595,8 @@ class Test_Allowlist:
             "",
         )
 
-        assert is_allowlisted_in_check(
-            allowlisted_checks,
+        assert is_muted_in_check(
+            muted_checks,
             AWS_ACCOUNT_NUMBER,
             "s3_bucket_policy_public_write_access",
             AWS_REGION_US_EAST_1,
@@ -574,8 +605,8 @@ class Test_Allowlist:
         )
 
         assert not (
-            is_allowlisted_in_check(
-                allowlisted_checks,
+            is_muted_in_check(
+                muted_checks,
                 AWS_ACCOUNT_NUMBER,
                 "iam_user_hardware_mfa_enabled",
                 AWS_REGION_US_EAST_1,
@@ -584,16 +615,16 @@ class Test_Allowlist:
             )
         )
 
-    def test_is_allowlisted_lambda_generic_check(self):
-        allowlisted_checks = {
+    def test_is_muted_lambda_generic_check(self):
+        muted_checks = {
             "lambda_*": {
                 "Regions": [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1],
                 "Resources": ["*"],
             }
         }
 
-        assert is_allowlisted_in_check(
-            allowlisted_checks,
+        assert is_muted_in_check(
+            muted_checks,
             AWS_ACCOUNT_NUMBER,
             "awslambda_function_invoke_api_operations_cloudtrail_logging_enabled",
             AWS_REGION_US_EAST_1,
@@ -601,8 +632,8 @@ class Test_Allowlist:
             "",
         )
 
-        assert is_allowlisted_in_check(
-            allowlisted_checks,
+        assert is_muted_in_check(
+            muted_checks,
             AWS_ACCOUNT_NUMBER,
             "awslambda_function_no_secrets_in_code",
             AWS_REGION_US_EAST_1,
@@ -610,8 +641,8 @@ class Test_Allowlist:
             "",
         )
 
-        assert is_allowlisted_in_check(
-            allowlisted_checks,
+        assert is_muted_in_check(
+            muted_checks,
             AWS_ACCOUNT_NUMBER,
             "awslambda_function_no_secrets_in_variables",
             AWS_REGION_US_EAST_1,
@@ -619,8 +650,8 @@ class Test_Allowlist:
             "",
         )
 
-        assert is_allowlisted_in_check(
-            allowlisted_checks,
+        assert is_muted_in_check(
+            muted_checks,
             AWS_ACCOUNT_NUMBER,
             "awslambda_function_not_publicly_accessible",
             AWS_REGION_US_EAST_1,
@@ -628,8 +659,8 @@ class Test_Allowlist:
             "",
         )
 
-        assert is_allowlisted_in_check(
-            allowlisted_checks,
+        assert is_muted_in_check(
+            muted_checks,
             AWS_ACCOUNT_NUMBER,
             "awslambda_function_url_cors_policy",
             AWS_REGION_US_EAST_1,
@@ -637,8 +668,8 @@ class Test_Allowlist:
             "",
         )
 
-        assert is_allowlisted_in_check(
-            allowlisted_checks,
+        assert is_muted_in_check(
+            muted_checks,
             AWS_ACCOUNT_NUMBER,
             "awslambda_function_url_public",
             AWS_REGION_US_EAST_1,
@@ -646,8 +677,8 @@ class Test_Allowlist:
             "",
         )
 
-        assert is_allowlisted_in_check(
-            allowlisted_checks,
+        assert is_muted_in_check(
+            muted_checks,
             AWS_ACCOUNT_NUMBER,
             "awslambda_function_using_supported_runtimes",
             AWS_REGION_US_EAST_1,
@@ -655,16 +686,16 @@ class Test_Allowlist:
             "",
         )
 
-    def test_is_allowlisted_lambda_concrete_check(self):
-        allowlisted_checks = {
+    def test_is_muted_lambda_concrete_check(self):
+        muted_checks = {
             "lambda_function_no_secrets_in_variables": {
                 "Regions": [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1],
                 "Resources": ["*"],
             }
         }
 
-        assert is_allowlisted_in_check(
-            allowlisted_checks,
+        assert is_muted_in_check(
+            muted_checks,
             AWS_ACCOUNT_NUMBER,
             "awslambda_function_no_secrets_in_variables",
             AWS_REGION_US_EAST_1,
@@ -672,9 +703,9 @@ class Test_Allowlist:
             "",
         )
 
-    def test_is_allowlisted_tags(self):
-        # Allowlist example
-        allowlist = {
+    def test_is_muted_tags(self):
+        # Mutelist example
+        mutelist = {
             "Accounts": {
                 "*": {
                     "Checks": {
@@ -688,8 +719,8 @@ class Test_Allowlist:
             }
         }
 
-        assert is_allowlisted(
-            allowlist,
+        assert is_muted(
+            mutelist,
             AWS_ACCOUNT_NUMBER,
             "check_test",
             AWS_REGION_US_EAST_1,
@@ -697,8 +728,8 @@ class Test_Allowlist:
             "environment=dev",
         )
 
-        assert is_allowlisted(
-            allowlist,
+        assert is_muted(
+            mutelist,
             AWS_ACCOUNT_NUMBER,
             "check_test",
             AWS_REGION_US_EAST_1,
@@ -707,8 +738,8 @@ class Test_Allowlist:
         )
 
         assert not (
-            is_allowlisted(
-                allowlist,
+            is_muted(
+                mutelist,
                 AWS_ACCOUNT_NUMBER,
                 "check_test",
                 "us-east-2",
@@ -717,49 +748,49 @@ class Test_Allowlist:
             )
         )
 
-    def test_is_allowlisted_in_tags(self):
-        allowlist_tags = ["environment=dev", "project=prowler"]
+    def test_is_muted_in_tags(self):
+        mutelist_tags = ["environment=dev", "project=prowler"]
 
-        assert is_allowlisted_in_tags(allowlist_tags, "environment=dev")
+        assert is_muted_in_tags(mutelist_tags, "environment=dev")
 
-        assert is_allowlisted_in_tags(
-            allowlist_tags,
+        assert is_muted_in_tags(
+            mutelist_tags,
             "environment=dev | project=prowler",
         )
 
         assert not (
-            is_allowlisted_in_tags(
-                allowlist_tags,
+            is_muted_in_tags(
+                mutelist_tags,
                 "environment=pro",
             )
         )
 
-    def test_is_allowlisted_in_tags_regex(self):
-        allowlist_tags = ["environment=(dev|test)", ".*=prowler"]
+    def test_is_muted_in_tags_regex(self):
+        mutelist_tags = ["environment=(dev|test)", ".*=prowler"]
 
-        assert is_allowlisted_in_tags(
-            allowlist_tags,
+        assert is_muted_in_tags(
+            mutelist_tags,
             "environment=test | proj=prowler",
         )
 
-        assert is_allowlisted_in_tags(
-            allowlist_tags,
+        assert is_muted_in_tags(
+            mutelist_tags,
             "env=prod | project=prowler",
         )
 
-        assert not is_allowlisted_in_tags(
-            allowlist_tags,
+        assert not is_muted_in_tags(
+            mutelist_tags,
             "environment=prod | project=myproj",
         )
 
-    def test_is_allowlisted_in_tags_with_no_tags_in_finding(self):
-        allowlist_tags = ["environment=(dev|test)", ".*=prowler"]
+    def test_is_muted_in_tags_with_no_tags_in_finding(self):
+        mutelist_tags = ["environment=(dev|test)", ".*=prowler"]
         finding_tags = ""
 
-        assert not is_allowlisted_in_tags(allowlist_tags, finding_tags)
+        assert not is_muted_in_tags(mutelist_tags, finding_tags)
 
     def test_is_excepted(self):
-        # Allowlist example
+        # Mutelist example
         exceptions = {
             "Accounts": [AWS_ACCOUNT_NUMBER],
             "Regions": ["eu-central-1", "eu-south-3"],
@@ -837,10 +868,10 @@ class Test_Allowlist:
             "environment=pro",
         )
 
-    def test_is_allowlisted_in_resource(self):
-        allowlist_resources = ["prowler", "^test", "prowler-pro"]
+    def test_is_muted_in_resource(self):
+        mutelist_resources = ["prowler", "^test", "prowler-pro"]
 
-        assert is_allowlisted_in_resource(allowlist_resources, "prowler")
-        assert is_allowlisted_in_resource(allowlist_resources, "prowler-test")
-        assert is_allowlisted_in_resource(allowlist_resources, "test-prowler")
-        assert not is_allowlisted_in_resource(allowlist_resources, "random")
+        assert is_muted_in_resource(mutelist_resources, "prowler")
+        assert is_muted_in_resource(mutelist_resources, "prowler-test")
+        assert is_muted_in_resource(mutelist_resources, "test-prowler")
+        assert not is_muted_in_resource(mutelist_resources, "random")

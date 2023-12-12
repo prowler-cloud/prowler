@@ -21,7 +21,7 @@ from prowler.lib.logger import logger
 from prowler.lib.outputs.outputs import report
 from prowler.lib.ui.live_display import live_display
 from prowler.lib.utils.utils import open_file, parse_json_file
-from prowler.providers.aws.lib.allowlist.allowlist import allowlist_findings
+from prowler.providers.aws.lib.mutelist.mutelist import mutelist_findings
 from prowler.providers.common.models import Audit_Metadata
 from prowler.providers.common.outputs import Provider_Output_Options
 
@@ -576,10 +576,10 @@ def execute(
         audit_info.audit_metadata, services_executed, checks_executed
     )
 
-    # Allowlist findings
-    if audit_output_options.allowlist_file:
-        check_findings = allowlist_findings(
-            audit_output_options.allowlist_file,
+    # Mute List findings
+    if audit_output_options.mutelist_file:
+        check_findings = mutelist_findings(
+            audit_output_options.mutelist_file,
             audit_info.audited_account,
             check_findings,
         )

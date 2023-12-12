@@ -9,7 +9,7 @@ from schema import Optional, Schema
 from prowler.lib.logger import logger
 from prowler.lib.outputs.models import unroll_tags
 
-allowlist_schema = Schema(
+mutelist_schema = Schema(
     {
         "Accounts": {
             str: {
@@ -32,38 +32,38 @@ allowlist_schema = Schema(
 )
 
 
-def parse_allowlist_file(audit_info, allowlist_file):
+def parse_mutelist_file(audit_info, mutelist_file):
     try:
         # Check if file is a S3 URI
-        if re.search("^s3://([^/]+)/(.*?([^/]+))$", allowlist_file):
-            bucket = allowlist_file.split("/")[2]
-            key = ("/").join(allowlist_file.split("/")[3:])
+        if re.search("^s3://([^/]+)/(.*?([^/]+))$", mutelist_file):
+            bucket = mutelist_file.split("/")[2]
+            key = ("/").join(mutelist_file.split("/")[3:])
             s3_client = audit_info.audit_session.client("s3")
-            allowlist = yaml.safe_load(
+            mutelist = yaml.safe_load(
                 s3_client.get_object(Bucket=bucket, Key=key)["Body"]
-            )["Allowlist"]
+            )["Mute List"]
         # Check if file is a Lambda Function ARN
-        elif re.search(r"^arn:(\w+):lambda:", allowlist_file):
-            lambda_region = allowlist_file.split(":")[3]
+        elif re.search(r"^arn:(\w+):lambda:", mutelist_file):
+            lambda_region = mutelist_file.split(":")[3]
             lambda_client = audit_info.audit_session.client(
                 "lambda", region_name=lambda_region
             )
             lambda_response = lambda_client.invoke(
-                FunctionName=allowlist_file, InvocationType="RequestResponse"
+                FunctionName=mutelist_file, InvocationType="RequestResponse"
             )
             lambda_payload = lambda_response["Payload"].read()
-            allowlist = yaml.safe_load(lambda_payload)["Allowlist"]
+            mutelist = yaml.safe_load(lambda_payload)["Mute List"]
         # Check if file is a DynamoDB ARN
         elif re.search(
             r"^arn:aws(-cn|-us-gov)?:dynamodb:[a-z]{2}-[a-z-]+-[1-9]{1}:[0-9]{12}:table\/[a-zA-Z0-9._-]+$",
-            allowlist_file,
+            mutelist_file,
         ):
-            allowlist = {"Accounts": {}}
-            table_region = allowlist_file.split(":")[3]
+            mutelist = {"Accounts": {}}
+            table_region = mutelist_file.split(":")[3]
             dynamodb_resource = audit_info.audit_session.resource(
                 "dynamodb", region_name=table_region
             )
-            dynamo_table = dynamodb_resource.Table(allowlist_file.split("/")[1])
+            dynamo_table = dynamodb_resource.Table(mutelist_file.split("/")[1])
             response = dynamo_table.scan(
                 FilterExpression=Attr("Accounts").is_in(
                     [audit_info.audited_account, "*"]
@@ -80,8 +80,8 @@ def parse_allowlist_file(audit_info, allowlist_file):
                 )
                 dynamodb_items.update(response["Items"])
             for item in dynamodb_items:
-                # Create allowlist for every item
-                allowlist["Accounts"][item["Accounts"]] = {
+                # Create mutelist for every item
+                mutelist["Accounts"][item["Accounts"]] = {
                     "Checks": {
                         item["Checks"]: {
                             "Regions": item["Regions"],
@@ -90,24 +90,24 @@ def parse_allowlist_file(audit_info, allowlist_file):
                     }
                 }
                 if "Tags" in item:
-                    allowlist["Accounts"][item["Accounts"]]["Checks"][item["Checks"]][
+                    mutelist["Accounts"][item["Accounts"]]["Checks"][item["Checks"]][
                         "Tags"
                     ] = item["Tags"]
                 if "Exceptions" in item:
-                    allowlist["Accounts"][item["Accounts"]]["Checks"][item["Checks"]][
+                    mutelist["Accounts"][item["Accounts"]]["Checks"][item["Checks"]][
                         "Exceptions"
                     ] = item["Exceptions"]
         else:
-            with open(allowlist_file) as f:
-                allowlist = yaml.safe_load(f)["Allowlist"]
+            with open(mutelist_file) as f:
+                mutelist = yaml.safe_load(f)["Mute List"]
         try:
-            allowlist_schema.validate(allowlist)
+            mutelist_schema.validate(mutelist)
         except Exception as error:
             logger.critical(
-                f"{error.__class__.__name__} -- Allowlist YAML is malformed - {error}[{error.__traceback__.tb_lineno}]"
+                f"{error.__class__.__name__} -- Mute List YAML is malformed - {error}[{error.__traceback__.tb_lineno}]"
             )
             sys.exit(1)
-        return allowlist
+        return mutelist
     except Exception as error:
         logger.critical(
             f"{error.__class__.__name__} -- {error}[{error.__traceback__.tb_lineno}]"
@@ -115,27 +115,27 @@ def parse_allowlist_file(audit_info, allowlist_file):
         sys.exit(1)
 
 
-def allowlist_findings(
-    allowlist: dict,
+def mutelist_findings(
+    mutelist: dict,
     audited_account: str,
     check_findings: [Any],
 ):
-    # Check if finding is allowlisted
+    # Check if finding is muted
     for finding in check_findings:
-        if is_allowlisted(
-            allowlist,
+        if is_muted(
+            mutelist,
             audited_account,
             finding.check_metadata.CheckID,
             finding.region,
             finding.resource_id,
             unroll_tags(finding.resource_tags),
         ):
-            finding.status = "WARNING"
+            finding.status = "MUTED"
     return check_findings
 
 
-def is_allowlisted(
-    allowlist: dict,
+def is_muted(
+    mutelist: dict,
     audited_account: str,
     check: str,
     finding_region: str,
@@ -143,31 +143,30 @@ def is_allowlisted(
     finding_tags,
 ):
     try:
-        allowlisted_checks = {}
-        # By default is not allowlisted
-        is_finding_allowlisted = False
-        # First set account key from allowlist dict
-        if audited_account in allowlist["Accounts"]:
-            allowlisted_checks = allowlist["Accounts"][audited_account]["Checks"]
+        muted_checks = {}
+        # By default is not muted
+        is_finding_muted = False
+        # First set account key from mutelist dict
+        if audited_account in mutelist["Accounts"]:
+            muted_checks = mutelist["Accounts"][audited_account]["Checks"]
         # If there is a *, it affects to all accounts
         # This cannot be elif since in the case of * and single accounts we
-        # want to merge allowlisted checks from * to the other accounts check list
-        if "*" in allowlist["Accounts"]:
-            checks_multi_account = allowlist["Accounts"]["*"]["Checks"]
-            allowlisted_checks.update(checks_multi_account)
-
-        # Test if it is allowlisted
-        if is_allowlisted_in_check(
-            allowlisted_checks,
+        # want to merge muted checks from * to the other accounts check list
+        if "*" in mutelist["Accounts"]:
+            checks_multi_account = mutelist["Accounts"]["*"]["Checks"]
+            muted_checks.update(checks_multi_account)
+        # Test if it is muted
+        if is_muted_in_check(
+            muted_checks,
             audited_account,
             check,
             finding_region,
             finding_resource,
             finding_tags,
         ):
-            is_finding_allowlisted = True
+            is_finding_muted = True
 
-        return is_finding_allowlisted
+        return is_finding_muted
     except Exception as error:
         logger.critical(
             f"{error.__class__.__name__} -- {error}[{error.__traceback__.tb_lineno}]"
@@ -175,8 +174,8 @@ def is_allowlisted(
         sys.exit(1)
 
 
-def is_allowlisted_in_check(
-    allowlisted_checks,
+def is_muted_in_check(
+    muted_checks,
     audited_account,
     check,
     finding_region,
@@ -184,15 +183,15 @@ def is_allowlisted_in_check(
     finding_tags,
 ):
     try:
-        # Default value is not allowlisted
-        is_check_allowlisted = False
+        # Default value is not muted
+        is_check_muted = False
 
-        for allowlisted_check, allowlisted_check_info in allowlisted_checks.items():
+        for muted_check, muted_check_info in muted_checks.items():
             # map lambda to awslambda
-            allowlisted_check = re.sub("^lambda", "awslambda", allowlisted_check)
+            muted_check = re.sub("^lambda", "awslambda", muted_check)
 
             # Check if the finding is excepted
-            exceptions = allowlisted_check_info.get("Exceptions")
+            exceptions = muted_check_info.get("Exceptions")
             if is_excepted(
                 exceptions,
                 audited_account,
@@ -203,40 +202,36 @@ def is_allowlisted_in_check(
                 # Break loop and return default value since is excepted
                 break
 
-            allowlisted_regions = allowlisted_check_info.get("Regions")
-            allowlisted_resources = allowlisted_check_info.get("Resources")
-            allowlisted_tags = allowlisted_check_info.get("Tags")
+            muted_regions = muted_check_info.get("Regions")
+            muted_resources = muted_check_info.get("Resources")
+            muted_tags = muted_check_info.get("Tags")
             # If there is a *, it affects to all checks
             if (
-                "*" == allowlisted_check
-                or check == allowlisted_check
-                or re.search(allowlisted_check, check)
+                "*" == muted_check
+                or check == muted_check
+                or re.search(muted_check, check)
             ):
-                allowlisted_in_check = True
-                allowlisted_in_region = is_allowlisted_in_region(
-                    allowlisted_regions, finding_region
+                muted_in_check = True
+                muted_in_region = is_muted_in_region(muted_regions, finding_region)
+                muted_in_resource = is_muted_in_resource(
+                    muted_resources, finding_resource
                 )
-                allowlisted_in_resource = is_allowlisted_in_resource(
-                    allowlisted_resources, finding_resource
-                )
-                allowlisted_in_tags = is_allowlisted_in_tags(
-                    allowlisted_tags, finding_tags
-                )
+                muted_in_tags = is_muted_in_tags(muted_tags, finding_tags)
 
-                # For a finding to be allowlisted requires the following set to True:
-                # - allowlisted_in_check -> True
-                # - allowlisted_in_region -> True
-                # - allowlisted_in_tags -> True or allowlisted_in_resource -> True
+                # For a finding to be muted requires the following set to True:
+                # - muted_in_check -> True
+                # - muted_in_region -> True
+                # - muted_in_tags -> True or muted_in_resource -> True
                 # - excepted -> False
 
                 if (
-                    allowlisted_in_check
-                    and allowlisted_in_region
-                    and (allowlisted_in_tags or allowlisted_in_resource)
+                    muted_in_check
+                    and muted_in_region
+                    and (muted_in_tags or muted_in_resource)
                 ):
-                    is_check_allowlisted = True
+                    is_check_muted = True
 
-        return is_check_allowlisted
+        return is_check_muted
     except Exception as error:
         logger.critical(
             f"{error.__class__.__name__} -- {error}[{error.__traceback__.tb_lineno}]"
@@ -244,12 +239,12 @@ def is_allowlisted_in_check(
         sys.exit(1)
 
 
-def is_allowlisted_in_region(
-    allowlisted_regions,
+def is_muted_in_region(
+    mutelist_regions,
     finding_region,
 ):
     try:
-        return __is_item_matched__(allowlisted_regions, finding_region)
+        return __is_item_matched__(mutelist_regions, finding_region)
     except Exception as error:
         logger.critical(
             f"{error.__class__.__name__} -- {error}[{error.__traceback__.tb_lineno}]"
@@ -257,9 +252,9 @@ def is_allowlisted_in_region(
         sys.exit(1)
 
 
-def is_allowlisted_in_tags(allowlisted_tags, finding_tags):
+def is_muted_in_tags(muted_tags, finding_tags):
     try:
-        return __is_item_matched__(allowlisted_tags, finding_tags)
+        return __is_item_matched__(muted_tags, finding_tags)
     except Exception as error:
         logger.critical(
             f"{error.__class__.__name__} -- {error}[{error.__traceback__.tb_lineno}]"
@@ -267,9 +262,9 @@ def is_allowlisted_in_tags(allowlisted_tags, finding_tags):
         sys.exit(1)
 
 
-def is_allowlisted_in_resource(allowlisted_resources, finding_resource):
+def is_muted_in_resource(muted_resources, finding_resource):
     try:
-        return __is_item_matched__(allowlisted_resources, finding_resource)
+        return __is_item_matched__(muted_resources, finding_resource)
 
     except Exception as error:
         logger.critical(
