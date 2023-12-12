@@ -98,17 +98,17 @@ class Test_Common_Output_Options:
         arguments.unix_timestamp = False
 
         audit_info = self.set_mocked_aws_audit_info()
-        allowlist_file = ""
+        mutelist_file = ""
         bulk_checks_metadata = {}
         output_options = set_provider_output_options(
-            provider, arguments, audit_info, allowlist_file, bulk_checks_metadata
+            provider, arguments, audit_info, mutelist_file, bulk_checks_metadata
         )
         assert isinstance(output_options, Aws_Output_Options)
         assert output_options.security_hub_enabled
         assert output_options.is_quiet
         assert output_options.output_modes == ["html", "csv", "json", "json-asff"]
         assert output_options.output_directory == arguments.output_directory
-        assert output_options.allowlist_file == ""
+        assert output_options.mutelist_file == ""
         assert output_options.bulk_checks_metadata == {}
         assert output_options.verbose
         assert output_options.output_filename == arguments.output_filename
@@ -130,16 +130,16 @@ class Test_Common_Output_Options:
         arguments.unix_timestamp = False
 
         audit_info = self.set_mocked_gcp_audit_info()
-        allowlist_file = ""
+        mutelist_file = ""
         bulk_checks_metadata = {}
         output_options = set_provider_output_options(
-            provider, arguments, audit_info, allowlist_file, bulk_checks_metadata
+            provider, arguments, audit_info, mutelist_file, bulk_checks_metadata
         )
         assert isinstance(output_options, Gcp_Output_Options)
         assert output_options.is_quiet
         assert output_options.output_modes == ["html", "csv", "json"]
         assert output_options.output_directory == arguments.output_directory
-        assert output_options.allowlist_file == ""
+        assert output_options.mutelist_file == ""
         assert output_options.bulk_checks_metadata == {}
         assert output_options.verbose
         assert output_options.output_filename == arguments.output_filename
@@ -164,17 +164,17 @@ class Test_Common_Output_Options:
         # Mock AWS Audit Info
         audit_info = self.set_mocked_aws_audit_info()
 
-        allowlist_file = ""
+        mutelist_file = ""
         bulk_checks_metadata = {}
         output_options = set_provider_output_options(
-            provider, arguments, audit_info, allowlist_file, bulk_checks_metadata
+            provider, arguments, audit_info, mutelist_file, bulk_checks_metadata
         )
         assert isinstance(output_options, Aws_Output_Options)
         assert output_options.security_hub_enabled
         assert output_options.is_quiet
         assert output_options.output_modes == ["html", "csv", "json", "json-asff"]
         assert output_options.output_directory == arguments.output_directory
-        assert output_options.allowlist_file == ""
+        assert output_options.mutelist_file == ""
         assert output_options.bulk_checks_metadata == {}
         assert output_options.verbose
         assert (
@@ -201,10 +201,10 @@ class Test_Common_Output_Options:
         audit_info = self.set_mocked_azure_audit_info()
         audit_info.identity.domain = "test-domain"
 
-        allowlist_file = ""
+        mutelist_file = ""
         bulk_checks_metadata = {}
         output_options = set_provider_output_options(
-            provider, arguments, audit_info, allowlist_file, bulk_checks_metadata
+            provider, arguments, audit_info, mutelist_file, bulk_checks_metadata
         )
         assert isinstance(output_options, Azure_Output_Options)
         assert output_options.is_quiet
@@ -214,7 +214,7 @@ class Test_Common_Output_Options:
             "json",
         ]
         assert output_options.output_directory == arguments.output_directory
-        assert output_options.allowlist_file == ""
+        assert output_options.mutelist_file == ""
         assert output_options.bulk_checks_metadata == {}
         assert output_options.verbose
         assert (
@@ -242,10 +242,10 @@ class Test_Common_Output_Options:
         tenants = ["tenant-1", "tenant-2"]
         audit_info.identity.tenant_ids = tenants
 
-        allowlist_file = ""
+        mutelist_file = ""
         bulk_checks_metadata = {}
         output_options = set_provider_output_options(
-            provider, arguments, audit_info, allowlist_file, bulk_checks_metadata
+            provider, arguments, audit_info, mutelist_file, bulk_checks_metadata
         )
         assert isinstance(output_options, Azure_Output_Options)
         assert output_options.is_quiet
@@ -255,7 +255,7 @@ class Test_Common_Output_Options:
             "json",
         ]
         assert output_options.output_directory == arguments.output_directory
-        assert output_options.allowlist_file == ""
+        assert output_options.mutelist_file == ""
         assert output_options.bulk_checks_metadata == {}
         assert output_options.verbose
         assert (
