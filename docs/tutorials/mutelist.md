@@ -12,7 +12,7 @@ You can use `-w`/`--mutelist-file` with the path of your mutelist yaml file, but
     ### Tags is an optional list that matches on tuples of 'key=value' and are "ANDed" together.
     ### Use an alternation Regex to match one of multiple tags with "ORed" logic.
     ### For each check you can except Accounts, Regions, Resources and/or Tags.
-    ###########################  ALLOWLIST EXAMPLE  ###########################
+    ###########################  MUTE LIST EXAMPLE  ###########################
     Mute List:
       Accounts:
         "123456789012":
@@ -151,7 +151,7 @@ prowler aws -w arn:aws:lambda:REGION:ACCOUNT_ID:function:FUNCTION_NAME
 Make sure that the credentials that Prowler uses can invoke the Lambda Function:
 
 ```
-- PolicyName: GetAllowList
+- PolicyName: GetMuteList
   PolicyDocument:
     Version: '2012-10-17'
     Statement:
