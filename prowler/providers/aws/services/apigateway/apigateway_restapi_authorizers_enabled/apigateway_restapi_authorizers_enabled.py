@@ -38,7 +38,7 @@ class apigateway_restapi_authorizers_enabled(Check):
                     report.status = "FAIL"
                     failed_status_parts = []
                     for path, methods in paths_without_authorizers.items():
-                        methods_str = self.array_to_string(methods)
+                        methods_str = ", ".join(methods)
                         if len(methods) == 1:
                             failed_status_parts.append(
                                 f"{path} without authorizer for the {methods_str} method"
@@ -56,18 +56,3 @@ class apigateway_restapi_authorizers_enabled(Check):
             findings.append(report)
 
         return findings
-
-    @staticmethod
-    def array_to_string(arr):
-        if len(arr) == 0:
-            return ""
-        elif len(arr) == 1:
-            # ['A'] => 'A'
-            return arr[0]
-        elif len(arr) == 2:
-            # ['A', 'B'] => 'A and B'
-            return f"{arr[0]} and {arr[1]}"
-        else:
-            # ['A', 'B', 'C'] => 'A, B and C'
-            # ['A', 'B', 'C', 'D'] => 'A, B, C and D'
-            return ", ".join(arr[:-1]) + f", and {arr[-1]}"
