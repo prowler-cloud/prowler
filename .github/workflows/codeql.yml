@@ -13,10 +13,10 @@ name: "CodeQL"
 
 on:
   push:
-    branches: [ "master", prowler-2, prowler-3.0-dev ]
+    branches: [ "master", "prowler-4.0-dev" ]
   pull_request:
     # The branches below must be a subset of the branches above
-    branches: [ "master" ]
+    branches: [ "master", "prowler-4.0-dev" ]
   schedule:
     - cron: '00 12 * * *'
 
