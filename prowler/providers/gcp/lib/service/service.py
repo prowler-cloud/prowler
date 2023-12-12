@@ -11,6 +11,7 @@ from prowler.lib.logger import logger
 from prowler.providers.gcp.gcp_provider_new import GcpProvider
 
 
+
 class GCPService:
     def __init__(
         self,
@@ -26,7 +27,9 @@ class GCPService:
         self.api_version = api_version
         self.default_project_id = provider.default_project_id
         self.region = region
-        self.client = generate_client(service, api_version, provider.session)
+        self.client = self.__generate_client__(
+            service, api_version, audit_info.credentials
+        )
         # Only project ids that have their API enabled will be scanned
         self.project_ids = self.__is_api_active__(provider.project_ids)
 
@@ -68,15 +71,15 @@ class GCPService:
                 )
         return project_ids
 
-
-def generate_client(
-    service: str,
-    api_version: str,
-    session: Credentials,
-) -> Resource:
-    try:
-        return discovery.build(service, api_version, credentials=session)
-    except Exception as error:
-        logger.error(
-            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-        )
+    def __generate_client__(
+        self,
+        service: str,
+        api_version: str,
+        credentials: Credentials,
+    ) -> Resource:
+        try:
+            return discovery.build(service, api_version, credentials=credentials)
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
