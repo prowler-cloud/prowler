@@ -29,12 +29,10 @@ class guardduty_is_enabled(Check):
                 )
 
             if report.status == "FAIL" and (
-                guardduty_client.audit_config.get(
-                    "allowlist_non_default_regions", False
-                )
+                guardduty_client.audit_config.get("mute_non_default_regions", False)
                 and not detector.region == guardduty_client.region
             ):
-                report.status = "WARNING"
+                report.status = "MUTED"
 
             findings.append(report)
 

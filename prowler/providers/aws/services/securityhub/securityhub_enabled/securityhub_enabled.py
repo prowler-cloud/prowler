@@ -26,12 +26,10 @@ class securityhub_enabled(Check):
                 report.status_extended = "Security Hub is not enabled."
 
             if report.status == "FAIL" and (
-                securityhub_client.audit_config.get(
-                    "allowlist_non_default_regions", False
-                )
+                securityhub_client.audit_config.get("mute_non_default_regions", False)
                 and not securityhub.region == securityhub_client.region
             ):
-                report.status = "WARNING"
+                report.status = "MUTED"
 
             findings.append(report)
 
