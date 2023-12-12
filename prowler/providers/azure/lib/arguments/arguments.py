@@ -1,3 +1,6 @@
+from argparse import ArgumentTypeError
+
+
 def init_parser(self):
     """Init the Azure Provider CLI parser"""
     azure_parser = self.subparsers.add_parser(
@@ -40,3 +43,27 @@ def init_parser(self):
         default=None,
         help="Azure Tenant ID to be used with --browser-auth option",
     )
+    # Regions
+    azure_regions_subparser = azure_parser.add_argument_group("Regions")
+    azure_regions_subparser.add_argument(
+        "--azure-region",
+        nargs="?",
+        default="AzureCloud",
+        type=validate_azure_region,
+        help="Azure region from `az cloud list --output table`, by default AzureCloud",
+    )
+
+
+def validate_azure_region(region):
+    """validate_azure_region validates if the region passed as argument is valid"""
+    regions_allowed = [
+        "AzureChinaCloud",
+        "AzureUSGovernment",
+        "AzureGermanCloud",
+        "AzureCloud",
+    ]
+    if region not in regions_allowed:
+        raise ArgumentTypeError(
+            f"Region {region} not allowed, allowed regions are {' '.join(regions_allowed)}"
+        )
+    return region

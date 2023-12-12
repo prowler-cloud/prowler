@@ -36,6 +36,10 @@ def load_checks_to_execute(
             # Check check's severity
             if bulk_checks_metadata[check].Severity in severities:
                 checks_to_execute.add(check)
+        if service_list:
+            checks_to_execute = (
+                recover_checks_from_service(service_list, provider) & checks_to_execute
+            )
 
     # Handle if there are checks passed using -C/--checks-file
     elif checks_file:

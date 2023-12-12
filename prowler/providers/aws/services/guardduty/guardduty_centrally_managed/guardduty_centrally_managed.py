@@ -6,7 +6,7 @@ class guardduty_centrally_managed(Check):
     def execute(self):
         findings = []
         for detector in guardduty_client.detectors:
-            if detector.id:
+            if detector.id and detector.enabled_in_account:
                 report = Check_Report_AWS(self.metadata())
                 report.region = detector.region
                 report.resource_id = detector.id
