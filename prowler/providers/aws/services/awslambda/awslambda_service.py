@@ -97,7 +97,7 @@ class Lambda(AWSService):
                 )
         except Exception as error:
             logger.error(
-                f"Error in fetch_function_code for function {function.name} in region {function.region}: {error}"
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
             raise
 
