@@ -1,14 +1,14 @@
 from prowler.providers.azure.lib.audit_info.models import (
     Azure_Audit_Info,
-    Azure_Identity_Info,
-    Azure_Region_Config,
+    AzureIdentityInfo,
+    AzureRegionConfig,
 )
 
 azure_audit_info = Azure_Audit_Info(
     credentials=None,
-    identity=Azure_Identity_Info(),
+    identity=AzureIdentityInfo(),
     audit_resources=None,
     audit_metadata=None,
     audit_config=None,
-    azure_region_config=Azure_Region_Config(),
+    AzureRegionConfig=AzureRegionConfig(),
 )

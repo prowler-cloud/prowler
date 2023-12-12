@@ -6,7 +6,7 @@ from azure.mgmt.subscription import SubscriptionClient
 from msgraph.core import GraphClient
 
 from prowler.lib.logger import logger
-from prowler.providers.azure.lib.audit_info.models import Azure_Identity_Info
+from prowler.providers.azure.lib.audit_info.models import AzureIdentityInfo
 from prowler.providers.azure.lib.regions.regions import get_regions_config
 
 
@@ -99,7 +99,7 @@ class Azure_Provider:
         managed_entity_auth,
         subscription_ids,
     ):
-        identity = Azure_Identity_Info()
+        identity = AzureIdentityInfo()
 
         # If credentials comes from service principal or browser, if the required permissions are assigned
         # the identity can access AAD and retrieve the tenant domain name.

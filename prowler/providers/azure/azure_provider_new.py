@@ -13,7 +13,7 @@ from prowler.providers.azure.lib.regions.regions import get_regions_config
 from prowler.providers.common.provider import CloudProvider
 
 
-class Azure_Identity_Info(BaseModel):
+class AzureIdentityInfo(BaseModel):
     identity_id: str = ""
     identity_type: str = ""
     tenant_ids: list[str] = []
@@ -21,7 +21,7 @@ class Azure_Identity_Info(BaseModel):
     subscriptions: dict = {}
 
 
-class Azure_Region_Config(BaseModel):
+class AzureRegionConfig(BaseModel):
     name: str = ""
     authority: str = None
     base_url: str = ""
@@ -30,11 +30,11 @@ class Azure_Region_Config(BaseModel):
 
 class AzureProvider(CloudProvider):
     session: DefaultAzureCredential
-    identity: Azure_Identity_Info
+    identity: AzureIdentityInfo
     audit_resources: Optional[Any]
     audit_metadata: Optional[Any]
     audit_config: dict
-    region_config: Azure_Region_Config
+    region_config: AzureRegionConfig
 
     def __init__(self, arguments):
         logger.info("Setting Azure session ...")
@@ -85,7 +85,7 @@ class AzureProvider(CloudProvider):
 
     def setup_region_config(self, region):
         config = get_regions_config(region)
-        return Azure_Region_Config(
+        return AzureRegionConfig(
             name=region,
             authority=config["authority"],
             base_url=config["base_url"],
@@ -112,7 +112,7 @@ Azure Identity Type: {Fore.YELLOW}[{self.identity.identity_type}]{Style.RESET_AL
         # Browser auth creds cannot be set with DefaultAzureCredentials()
         if not browser_auth:
             if sp_env_auth:
-                self.__check_sp_creds_env_vars__()
+                self.__check_service_principal_creds_env_vars__()
             try:
                 # Since the input vars come as True when it is wanted to be used, we need to inverse it since
                 # DefaultAzureCredential sets the auth method excluding the others
@@ -147,7 +147,7 @@ Azure Identity Type: {Fore.YELLOW}[{self.identity.identity_type}]{Style.RESET_AL
 
         return credentials
 
-    def __check_sp_creds_env_vars__(self):
+    def __check_service_principal_creds_env_vars__(self):
         logger.info(
             "Azure provider: checking service principal environment variables  ..."
         )
@@ -167,7 +167,7 @@ Azure Identity Type: {Fore.YELLOW}[{self.identity.identity_type}]{Style.RESET_AL
         subscription_ids,
     ):
         credentials = self.session
-        identity = Azure_Identity_Info()
+        identity = AzureIdentityInfo()
 
         # If credentials comes from service principal or browser, if the required permissions are assigned
         # the identity can access AAD and retrieve the tenant domain name.
