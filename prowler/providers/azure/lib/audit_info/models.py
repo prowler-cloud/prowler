@@ -43,4 +43,4 @@ class Azure_Audit_Info:
         self.audit_metadata = audit_metadata
         self.audit_resources = audit_resources
         self.audit_config = audit_config
-        self.azure_region_config = AzureRegionConfig
+        self.azure_region_config = azure_region_config
