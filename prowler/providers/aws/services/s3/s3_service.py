@@ -28,6 +28,7 @@ class S3(AWSService):
         self.__threading_call__(self.__get_bucket_tagging__)
 
     # In the S3 service we override the "__threading_call__" method because we spawn a process per bucket instead of per region
+    # TODO: Replace the above function with the service __threading_call__ using the buckets as the iterator
     def __threading_call__(self, call):
         threads = []
         for bucket in self.buckets:

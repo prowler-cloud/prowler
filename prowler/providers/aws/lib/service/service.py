@@ -1,10 +1,13 @@
-import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
+
+from prowler.lib.logger import logger
 from prowler.providers.aws.aws_provider import (
     generate_regional_clients,
     get_default_region,
 )
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
+
+MAX_WORKERS = 10
 
 
 class AWSService:
@@ -12,6 +15,7 @@ class AWSService:
     - AWS Regional Clients
     - Shared information like the account ID and ARN, the the AWS partition and the checks audited
     - AWS Session
+    - Thread pool for the __threading_call__
     - Also handles if the AWS Service is Global
     """
 
@@ -34,9 +38,7 @@ class AWSService:
 
         # Generate Regional Clients
         if not global_service:
-            self.regional_clients = generate_regional_clients(
-                self.service, audit_info, global_service
-            )
+            self.regional_clients = generate_regional_clients(self.service, audit_info)
 
         # Get a single region and client if the service needs it (e.g. AWS Global Service)
         # We cannot include this within an else because some services needs both the regional_clients
@@ -44,22 +46,40 @@ class AWSService:
         self.region = get_default_region(self.service, audit_info)
         self.client = self.session.client(self.service, self.region)
 
+        # Thread pool for __threading_call__
+        self.thread_pool = ThreadPoolExecutor(max_workers=MAX_WORKERS)
+
     def __get_session__(self):
         return self.session
 
-    def __threading_call__(self, call, iterator=None, max_workers=10):
+    def __threading_call__(self, call, iterator=None):
         # Use the provided iterator, or default to self.regional_clients
         items = iterator if iterator is not None else self.regional_clients.values()
+        # Determine the total count for logging
+        item_count = len(items)
 
-        # Using ThreadPoolExecutor for managing threads
-        with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            # Submit tasks to the executor
-            futures = [executor.submit(call, item) for item in items]
+        # Trim leading and trailing underscores from the call's name
+        call_name = call.__name__.strip("_")
+        # Add Capitalization
+        call_name = " ".join([x.capitalize() for x in call_name.split("_")])
 
-            # Wait for all tasks to complete
-            for future in as_completed(futures):
-                try:
-                    future.result()  # Raises exceptions from the thread, if any
-                except Exception as e:
-                    # Handle exceptions if necessary
-                    pass  # Replace 'pass' with any additional exception handling logic
+        # Print a message based on the call's name, and if its regional or processing a list of items
+        if iterator is None:
+            logger.info(
+                f"{self.service.upper()} - Starting threads for '{call_name}' function across {item_count} regions..."
+            )
+        else:
+            logger.info(
+                f"{self.service.upper()} - Starting threads for '{call_name}' function to process {item_count} items..."
+            )
+
+        # Submit tasks to the thread pool
+        futures = [self.thread_pool.submit(call, item) for item in items]
+
+        # Wait for all tasks to complete
+        for future in as_completed(futures):
+            try:
+                future.result()  # Raises exceptions from the thread, if any
+            except Exception:
+                # Handle exceptions if necessary
+                pass  # Replace 'pass' with any additional exception handling logic. Currently handled within the called function

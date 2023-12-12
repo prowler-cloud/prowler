@@ -62,7 +62,7 @@ class GCPService:
                     project_ids.append(project_id)
                 else:
                     print(
-                        f"\n{Fore.YELLOW}{self.service} API {Style.RESET_ALL}has not been used in project {project_id} before or it is disabled.\nEnable it by visiting https://console.developers.google.com/apis/api/dataproc.googleapis.com/overview?project={project_id} then retry."
+                        f"\n{Fore.YELLOW}{self.service} API {Style.RESET_ALL}has not been used in project {project_id} before or it is disabled.\nEnable it by visiting https://console.developers.google.com/apis/api/{self.service}.googleapis.com/overview?project={project_id} then retry."
                     )
             except Exception as error:
                 logger.error(

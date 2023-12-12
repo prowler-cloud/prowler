@@ -4,9 +4,11 @@ on:
   push:
     branches:
       - "master"
+      - "prowler-4.0-dev"
   pull_request:
     branches:
       - "master"
+      - "prowler-4.0-dev"
 jobs:
   build:
     runs-on: ubuntu-latest
