@@ -10,8 +10,8 @@ from prowler.providers.aws.lib.audit_info.models import AWS_Assume_Role, AWS_Aud
 from prowler.providers.azure.azure_provider import Azure_Provider
 from prowler.providers.azure.lib.audit_info.models import (
     Azure_Audit_Info,
-    Azure_Identity_Info,
-    Azure_Region_Config,
+    AzureIdentityInfo,
+    AzureRegionConfig,
 )
 from prowler.providers.azure.lib.exception.exception import AzureException
 from prowler.providers.common.audit_info import (
@@ -29,11 +29,11 @@ AWS_ACCOUNT_NUMBER = "123456789012"
 
 mock_azure_audit_info = Azure_Audit_Info(
     credentials=None,
-    identity=Azure_Identity_Info(),
+    identity=AzureIdentityInfo(),
     audit_metadata=None,
     audit_resources=None,
     audit_config=None,
-    azure_region_config=Azure_Region_Config(),
+    azure_region_config=AzureRegionConfig(),
 )
 
 mock_set_audit_info = Audit_Info()
@@ -78,7 +78,7 @@ def mock_print_audit_credentials(*_):
 
 
 def mock_set_identity_info(*_):
-    return Azure_Identity_Info()
+    return AzureIdentityInfo()
 
 
 def mock_set_azure_credentials(*_):

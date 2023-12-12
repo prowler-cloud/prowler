@@ -5,7 +5,7 @@ from azure.identity import DefaultAzureCredential
 from pydantic import BaseModel
 
 
-class Azure_Identity_Info(BaseModel):
+class AzureIdentityInfo(BaseModel):
     identity_id: str = ""
     identity_type: str = ""
     tenant_ids: list[str] = []
@@ -13,7 +13,7 @@ class Azure_Identity_Info(BaseModel):
     subscriptions: dict = {}
 
 
-class Azure_Region_Config(BaseModel):
+class AzureRegionConfig(BaseModel):
     name: str = ""
     authority: str = None
     base_url: str = ""
@@ -23,11 +23,11 @@ class Azure_Region_Config(BaseModel):
 @dataclass
 class Azure_Audit_Info:
     credentials: DefaultAzureCredential
-    identity: Azure_Identity_Info
+    identity: AzureIdentityInfo
     audit_resources: Optional[Any]
     audit_metadata: Optional[Any]
     audit_config: dict
-    azure_region_config: Azure_Region_Config
+    azure_region_config: AzureRegionConfig
 
     def __init__(
         self,
