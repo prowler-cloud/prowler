@@ -6,6 +6,7 @@ import sys
 
 from colorama import Fore, Style
 
+from prowler.config.config import get_available_compliance_frameworks
 from prowler.lib.banner import print_banner
 from prowler.lib.check.check import (
     bulk_load_checks_metadata,
@@ -32,7 +33,7 @@ from prowler.lib.check.custom_checks_metadata import (
 )
 from prowler.lib.cli.parser import ProwlerArgumentParser
 from prowler.lib.logger import logger, set_logging_config
-from prowler.lib.outputs.compliance import display_compliance_table
+from prowler.lib.outputs.compliance.compliance import display_compliance_table
 from prowler.lib.outputs.html import add_html_footer, fill_html_overview_statistics
 from prowler.lib.outputs.json import close_json
 from prowler.lib.outputs.outputs import extract_findings_statistics
@@ -81,6 +82,9 @@ def prowler():
     # We treat the compliance framework as another output format
     if compliance_framework:
         args.output_modes.extend(compliance_framework)
+    # If no input compliance framework, set all
+    else:
+        args.output_modes.extend(get_available_compliance_frameworks(provider))
 
     # Set Logger configuration
     set_logging_config(args.log_level, args.log_file, args.only_logs)
@@ -311,8 +315,12 @@ def prowler():
             provider,
         )
 
-        if compliance_framework and findings:
-            for compliance in compliance_framework:
+        if findings:
+            compliance_overview = False
+            if not compliance_framework:
+                compliance_overview = True
+                compliance_framework = get_available_compliance_frameworks(provider)
+            for compliance in sorted(compliance_framework):
                 # Display compliance table
                 display_compliance_table(
                     findings,
@@ -320,6 +328,11 @@ def prowler():
                     compliance,
                     audit_output_options.output_filename,
                     audit_output_options.output_directory,
+                    compliance_overview,
+                )
+            if compliance_overview:
+                print(
+                    f"\nDetailed compliance results are in {Fore.YELLOW}{audit_output_options.output_directory}/compliance/{Style.RESET_ALL}\n"
                 )
 
     # If custom checks were passed, remove the modules

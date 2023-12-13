@@ -4,7 +4,10 @@ from colorama import Fore, Style
 
 from prowler.config.config import available_compliance_frameworks, orange_color
 from prowler.lib.logger import logger
-from prowler.lib.outputs.compliance import add_manual_controls, fill_compliance
+from prowler.lib.outputs.compliance.compliance import (
+    add_manual_controls,
+    fill_compliance,
+)
 from prowler.lib.outputs.file_descriptors import fill_file_descriptors
 from prowler.lib.outputs.html import fill_html
 from prowler.lib.outputs.json import fill_json_asff, fill_json_ocsf
@@ -63,22 +66,26 @@ def report(check_findings, output_options, audit_info):
                 if file_descriptors:
                     # Check if --quiet to only add fails to outputs
                     if not (finding.status != "FAIL" and output_options.is_quiet):
-                        if any(
-                            compliance in output_options.output_modes
-                            for compliance in available_compliance_frameworks
-                        ):
-                            fill_compliance(
-                                output_options,
-                                finding,
-                                audit_info,
-                                file_descriptors,
+                        input_compliance_frameworks = list(
+                            set(output_options.output_modes).intersection(
+                                available_compliance_frameworks
                             )
+                        )
 
-                            add_manual_controls(
-                                output_options,
-                                audit_info,
-                                file_descriptors,
-                            )
+                        fill_compliance(
+                            output_options,
+                            finding,
+                            audit_info,
+                            file_descriptors,
+                            input_compliance_frameworks,
+                        )
+
+                        add_manual_controls(
+                            output_options,
+                            audit_info,
+                            file_descriptors,
+                            input_compliance_frameworks,
+                        )
 
                         # AWS specific outputs
                         if finding.check_metadata.Provider == "aws":

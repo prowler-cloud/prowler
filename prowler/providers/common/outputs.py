@@ -70,6 +70,9 @@ class Provider_Output_Options:
             if not isdir(arguments.output_directory):
                 if arguments.output_modes:
                     makedirs(arguments.output_directory)
+            if not isdir(arguments.output_directory + "/compliance"):
+                if arguments.output_modes:
+                    makedirs(arguments.output_directory + "/compliance")
 
 
 class Azure_Output_Options(Provider_Output_Options):

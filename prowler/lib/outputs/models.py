@@ -13,7 +13,16 @@ from prowler.lib.utils.utils import outputs_unix_timestamp
 from prowler.providers.aws.lib.audit_info.models import AWS_Organizations_Info
 
 
-def get_check_compliance(finding, provider, output_options):
+def get_check_compliance(finding, provider, output_options) -> dict:
+    """get_check_compliance returns a map with the compliance framework as key and the requirements where the finding's check is present.
+
+        Example:
+
+    {
+        "CIS-1.4": ["2.1.3"],
+        "CIS-1.5": ["2.1.3"],
+    }
+    """
     try:
         check_compliance = {}
         # We have to retrieve all the check's compliance requirements
