@@ -30,26 +30,33 @@ def lambda_handler(event, context):
 """
 
 
-def create_lambda_function(code: str) -> Function:
+def create_lambda_function() -> Function:
     return Function(
         name=LAMBDA_FUNCTION_NAME,
         security_groups=[],
         arn=LAMBDA_FUNCTION_ARN,
         region=AWS_REGION_US_EAST_1,
         runtime=LAMBDA_FUNCTION_RUNTIME,
-        code=LambdaCode(
-            location="",
-            code_zip=zipfile.ZipFile(create_zip_file(code)),
-        ),
+    )
+
+
+def get_lambda_code_with_secrets(code):
+    return LambdaCode(
+        location="",
+        code_zip=zipfile.ZipFile(create_zip_file(code)),
     )
 
 
 def mock__get_function_code__with_secrets():
-    yield create_lambda_function(LAMBDA_FUNCTION_CODE_WITH_SECRETS)
+    yield create_lambda_function(), get_lambda_code_with_secrets(
+        LAMBDA_FUNCTION_CODE_WITH_SECRETS
+    )
 
 
 def mock__get_function_code__without_secrets():
-    yield create_lambda_function(LAMBDA_FUNCTION_CODE_WITHOUT_SECRETS)
+    yield create_lambda_function(), get_lambda_code_with_secrets(
+        LAMBDA_FUNCTION_CODE_WITHOUT_SECRETS
+    )
 
 
 class Test_awslambda_function_no_secrets_in_code:
@@ -76,11 +83,7 @@ class Test_awslambda_function_no_secrets_in_code:
 
     def test_function_code_with_secrets(self):
         lambda_client = mock.MagicMock
-        lambda_client.functions = {
-            LAMBDA_FUNCTION_NAME: create_lambda_function(
-                LAMBDA_FUNCTION_CODE_WITH_SECRETS
-            )
-        }
+        lambda_client.functions = {LAMBDA_FUNCTION_ARN: create_lambda_function()}
         lambda_client.__get_function_code__ = mock__get_function_code__with_secrets
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -110,11 +113,7 @@ class Test_awslambda_function_no_secrets_in_code:
 
     def test_function_code_without_secrets(self):
         lambda_client = mock.MagicMock
-        lambda_client.functions = {
-            LAMBDA_FUNCTION_NAME: create_lambda_function(
-                LAMBDA_FUNCTION_CODE_WITHOUT_SECRETS
-            )
-        }
+        lambda_client.functions = {LAMBDA_FUNCTION_ARN: create_lambda_function()}
 
         lambda_client.__get_function_code__ = mock__get_function_code__without_secrets
 

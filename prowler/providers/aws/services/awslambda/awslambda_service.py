@@ -77,8 +77,7 @@ class Lambda(AWSService):
             try:
                 function_code = fetched_lambda_code.result()
                 if function_code:
-                    function.code = function_code
-                    yield function
+                    yield function, function_code
             except Exception as error:
                 logger.error(
                     f"Error fetching code for function {function.name} in region {function.region}: {error}"
