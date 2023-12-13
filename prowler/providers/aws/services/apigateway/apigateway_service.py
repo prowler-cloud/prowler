@@ -17,6 +17,7 @@ class APIGateway(AWSService):
         self.__get_authorizers__()
         self.__get_rest_api__()
         self.__get_stages__()
+        self.__get_resources__()
 
     def __get_rest_apis__(self, regional_client):
         logger.info("APIGateway - Getting Rest APIs...")
@@ -53,7 +54,9 @@ class APIGateway(AWSService):
                 if authorizers:
                     rest_api.authorizer = True
         except Exception as error:
-            logger.error(f"{error.__class__.__name__}: {error}")
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
 
     def __get_rest_api__(self):
         logger.info("APIGateway - Describing Rest API...")
@@ -64,7 +67,9 @@ class APIGateway(AWSService):
                 if rest_api_info["endpointConfiguration"]["types"] == ["PRIVATE"]:
                     rest_api.public_endpoint = False
         except Exception as error:
-            logger.error(f"{error.__class__.__name__}: {error}")
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
 
     def __get_stages__(self):
         logger.info("APIGateway - Getting stages for Rest APIs...")
@@ -95,7 +100,46 @@ class APIGateway(AWSService):
                         )
                     )
         except Exception as error:
-            logger.error(f"{error.__class__.__name__}: {error}")
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def __get_resources__(self):
+        logger.info("APIGateway - Getting API resources...")
+        try:
+            for rest_api in self.rest_apis:
+                regional_client = self.regional_clients[rest_api.region]
+                get_resources_paginator = regional_client.get_paginator("get_resources")
+                for page in get_resources_paginator.paginate(restApiId=rest_api.id):
+                    for resource in page["items"]:
+                        id = resource["id"]
+                        resource_methods = []
+                        methods_auth = {}
+                        for resource_method in resource.get(
+                            "resourceMethods", {}
+                        ).keys():
+                            resource_methods.append(resource_method)
+
+                        for resource_method in resource_methods:
+                            if resource_method != "OPTIONS":
+                                method_config = regional_client.get_method(
+                                    restApiId=rest_api.id,
+                                    resourceId=id,
+                                    httpMethod=resource_method,
+                                )
+                                auth_type = method_config["authorizationType"]
+                                methods_auth.update({resource_method: auth_type})
+
+                        rest_api.resources.append(
+                            PathResourceMethods(
+                                path=resource["path"], resource_methods=methods_auth
+                            )
+                        )
+
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
 
 
 class Stage(BaseModel):
@@ -107,6 +151,11 @@ class Stage(BaseModel):
     tags: Optional[list] = []
 
 
+class PathResourceMethods(BaseModel):
+    path: str
+    resource_methods: dict
+
+
 class RestAPI(BaseModel):
     id: str
     arn: str
@@ -116,3 +165,4 @@ class RestAPI(BaseModel):
     public_endpoint: bool = True
     stages: list[Stage] = []
     tags: Optional[list] = []
+    resources: list[PathResourceMethods] = []

@@ -146,3 +146,45 @@ class Test_APIGateway_Service:
         audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
         apigateway = APIGateway(audit_info)
         assert apigateway.rest_apis[0].stages[0].logging is True
+
+    # Test APIGateway __get_resources__
+    @mock_apigateway
+    def test__get_resources__(self):
+        apigateway_client = client("apigateway", region_name=AWS_REGION_US_EAST_1)
+
+        rest_api = apigateway_client.create_rest_api(
+            name="test-rest-api",
+        )
+
+        default_resource_id = apigateway_client.get_resources(restApiId=rest_api["id"])[
+            "items"
+        ][0]["id"]
+
+        api_resource = apigateway_client.create_resource(
+            restApiId=rest_api["id"], parentId=default_resource_id, pathPart="test"
+        )
+
+        apigateway_client.put_method(
+            restApiId=rest_api["id"],
+            resourceId=api_resource["id"],
+            httpMethod="GET",
+            authorizationType="AWS_IAM",
+        )
+
+        apigateway_client.put_method(
+            restApiId=rest_api["id"],
+            resourceId=api_resource["id"],
+            httpMethod="OPTIONS",
+            authorizationType="AWS_IAM",
+        )
+
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        apigateway = APIGateway(audit_info)
+
+        # we skip OPTIONS methods
+        assert list(apigateway.rest_apis[0].resources[1].resource_methods.keys()) == [
+            "GET"
+        ]
+        assert list(apigateway.rest_apis[0].resources[1].resource_methods.values()) == [
+            "AWS_IAM"
+        ]
