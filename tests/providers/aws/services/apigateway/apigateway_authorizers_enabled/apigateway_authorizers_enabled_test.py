@@ -97,7 +97,7 @@ class Test_apigateway_restapi_authorizers_enabled:
             assert len(result) == 1
             assert (
                 result[0].status_extended
-                == f"API Gateway test-rest-api ID {rest_api['id']} has an authorizer configured at api or methods scope."
+                == f"API Gateway test-rest-api ID {rest_api['id']} has an authorizer configured at api level"
             )
             assert result[0].resource_id == "test-rest-api"
             assert (
@@ -142,7 +142,7 @@ class Test_apigateway_restapi_authorizers_enabled:
             assert len(result) == 1
             assert (
                 result[0].status_extended
-                == f"API Gateway test-rest-api ID {rest_api['id']} does not have an authorizer configured at api or methods level."
+                == f"API Gateway test-rest-api ID {rest_api['id']} does not have an authorizer configured at api level."
             )
             assert result[0].resource_id == "test-rest-api"
             assert (
@@ -205,7 +205,7 @@ class Test_apigateway_restapi_authorizers_enabled:
             assert len(result) == 1
             assert (
                 result[0].status_extended
-                == f"API Gateway test-rest-api ID {rest_api['id']} does not have an authorizer configured at api or methods level."
+                == f"API Gateway test-rest-api ID {rest_api['id']} does not have authorizers at api level and the following paths and methods are unauthorized: /test -> GET."
             )
             assert result[0].resource_id == "test-rest-api"
             assert (
@@ -268,7 +268,7 @@ class Test_apigateway_restapi_authorizers_enabled:
             assert len(result) == 1
             assert (
                 result[0].status_extended
-                == f"API Gateway test-rest-api ID {rest_api['id']} has an authorizer configured at api or methods level."
+                == f"API Gateway test-rest-api ID {rest_api['id']} has all methods authorized"
             )
             assert result[0].resource_id == "test-rest-api"
             assert (
@@ -338,7 +338,7 @@ class Test_apigateway_restapi_authorizers_enabled:
             assert len(result) == 1
             assert (
                 result[0].status_extended
-                == f"API Gateway test-rest-api ID {rest_api['id']} does not have an authorizer configured at api or methods level."
+                == f"API Gateway test-rest-api ID {rest_api['id']} does not have authorizers at api level and the following paths and methods are unauthorized: /test -> GET."
             )
             assert result[0].resource_id == "test-rest-api"
             assert (
@@ -410,7 +410,69 @@ class Test_apigateway_restapi_authorizers_enabled:
             assert len(result) == 1
             assert (
                 result[0].status_extended
-                == f"API Gateway test-rest-api ID {rest_api['id']} does not have an authorizer configured at api or methods level."
+                == f"API Gateway test-rest-api ID {rest_api['id']} does not have authorizers at api level and the following paths and methods are unauthorized: /test -> GET."
+            )
+            assert result[0].resource_id == "test-rest-api"
+            assert (
+                result[0].resource_arn
+                == f"arn:{current_audit_info.audited_partition}:apigateway:{AWS_REGION_US_EAST_1}::/restapis/{rest_api['id']}"
+            )
+            assert result[0].region == AWS_REGION_US_EAST_1
+            assert result[0].resource_tags == [{}]
+
+    @mock_apigateway
+    @mock_iam
+    @mock_lambda
+    def test_apigateway_one_rest_api_without_authorizers_with_various_resources_without_endpoints(
+        self,
+    ):
+        # Create APIGateway Mocked Resources
+        apigateway_client = client("apigateway", region_name=AWS_REGION_US_EAST_1)
+
+        rest_api = apigateway_client.create_rest_api(
+            name="test-rest-api",
+        )
+
+        default_resource_id = apigateway_client.get_resources(restApiId=rest_api["id"])[
+            "items"
+        ][0]["id"]
+
+        apigateway_client.create_resource(
+            restApiId=rest_api["id"], parentId=default_resource_id, pathPart="test"
+        )
+
+        apigateway_client.create_resource(
+            restApiId=rest_api["id"], parentId=default_resource_id, pathPart="test2"
+        )
+
+        from prowler.providers.aws.services.apigateway.apigateway_service import (
+            APIGateway,
+        )
+
+        current_audit_info = current_audit_info = set_mocked_aws_audit_info(
+            [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
+        )
+
+        with mock.patch(
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            new=current_audit_info,
+        ), mock.patch(
+            "prowler.providers.aws.services.apigateway.apigateway_restapi_authorizers_enabled.apigateway_restapi_authorizers_enabled.apigateway_client",
+            new=APIGateway(current_audit_info),
+        ):
+            # Test Check
+            from prowler.providers.aws.services.apigateway.apigateway_restapi_authorizers_enabled.apigateway_restapi_authorizers_enabled import (
+                apigateway_restapi_authorizers_enabled,
+            )
+
+            check = apigateway_restapi_authorizers_enabled()
+            result = check.execute()
+
+            assert result[0].status == "FAIL"
+            assert len(result) == 1
+            assert (
+                result[0].status_extended
+                == f"API Gateway test-rest-api ID {rest_api['id']} does not have an authorizer configured at api level."
             )
             assert result[0].resource_id == "test-rest-api"
             assert (

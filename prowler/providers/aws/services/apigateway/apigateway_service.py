@@ -121,13 +121,14 @@ class APIGateway(AWSService):
                             resource_methods.append(resource_method)
 
                         for resource_method in resource_methods:
-                            method_config = regional_client.get_method(
-                                restApiId=rest_api.id,
-                                resourceId=id,
-                                httpMethod=resource_method,
-                            )
-                            auth_type = method_config["authorizationType"]
-                            methods_auth.update({resource_method: auth_type})
+                            if resource_method != "OPTIONS":
+                                method_config = regional_client.get_method(
+                                    restApiId=rest_api.id,
+                                    resourceId=id,
+                                    httpMethod=resource_method,
+                                )
+                                auth_type = method_config["authorizationType"]
+                                methods_auth.update({resource_method: auth_type})
 
                         rest_api.resources.append(
                             PathResourceMethods(

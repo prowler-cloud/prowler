@@ -170,8 +170,18 @@ class Test_APIGateway_Service:
             httpMethod="GET",
             authorizationType="AWS_IAM",
         )
+
+        apigateway_client.put_method(
+            restApiId=rest_api["id"],
+            resourceId=api_resource["id"],
+            httpMethod="OPTIONS",
+            authorizationType="AWS_IAM",
+        )
+
         audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
         apigateway = APIGateway(audit_info)
+
+        # we skip OPTIONS methods
         assert list(apigateway.rest_apis[0].resources[1].resource_methods.keys()) == [
             "GET"
         ]
