@@ -136,26 +136,16 @@ Prowler is available as a project in [PyPI](https://pypi.org/project/prowler-clo
 
 === "AWS CloudShell"
 
-    Prowler can be easely executed in AWS CloudShell but it has some prerequsites to be able to to so. AWS CloudShell is a container running with `Amazon Linux release 2 (Karoo)` that comes with Python 3.7, since Prowler requires Python >= 3.9 we need to first install a newer version of Python. Follow the steps below to successfully execute Prowler v3 in AWS CloudShell:
+    After the migration of AWS CloudShell from Amazon Linux 2 to Amazon Linux 2023 [1](https://aws.amazon.com/about-aws/whats-new/2023/12/aws-cloudshell-migrated-al2023/) [2](https://docs.aws.amazon.com/cloudshell/latest/userguide/cloudshell-AL2023-migration.html), there is no longer a need to manually compile Python 3.9 as it's already included in AL2023. Prowler can thus be easily installed following the Generic method of installation via pip. Follow the steps below to successfully execute Prowler v3 in AWS CloudShell:
 
     _Requirements_:
 
-    * First install all dependences and then Python, in this case we need to compile it because there is not a package available at the time this document is written:
-    ```
-    sudo yum -y install gcc openssl-devel bzip2-devel libffi-devel
-    wget https://www.python.org/ftp/python/3.9.16/Python-3.9.16.tgz
-    tar zxf Python-3.9.16.tgz
-    cd Python-3.9.16/
-    ./configure --enable-optimizations
-    sudo make altinstall
-    python3.9 --version
-    cd
-    ```
+    * Open AWS CloudShell `bash`.
+
     _Commands_:
 
-    * Once Python 3.9 is available we can install Prowler from pip:
     ```
-    pip3.9 install prowler
+    pip install prowler
     prowler -v
     ```
 
