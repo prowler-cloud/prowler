@@ -12,6 +12,8 @@ class awslambda_function_no_secrets_in_code(Check):
     def execute(self):
         findings = []
         if awslambda_client.functions:
+            functions = awslambda_client.functions.values()
+            self.start_task("Processing functions...", len(functions))
             for function, function_code in awslambda_client.__get_function_code__():
                 if function_code:
                     report = Check_Report_AWS(self.metadata())
@@ -61,5 +63,6 @@ class awslambda_function_no_secrets_in_code(Check):
                             report.status_extended = f"Potential {'secrets' if len(secrets_findings) > 1 else 'secret'} found in Lambda function {function.name} code -> {final_output_string}."
 
                     findings.append(report)
-
+                    self.increment_task_progress()
+        self.update_title_with_findings(findings)
         return findings

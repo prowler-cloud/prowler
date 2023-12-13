@@ -1,0 +1,5 @@
+[styles]
+info = dim cyan
+warning = magenta
+fail = bold red
+pass = bold green

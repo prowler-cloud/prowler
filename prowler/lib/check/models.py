@@ -7,7 +7,7 @@ from pydantic import BaseModel, ValidationError
 from rich.progress import Task
 
 from prowler.lib.logger import logger
-from prowler.lib.utils.ui import task_progress, title_bar
+from prowler.lib.utils.ui import progress_manager
 
 
 class Code(BaseModel):
@@ -62,10 +62,10 @@ class Check_Metadata_Model(BaseModel):
 class Check(ABC, Check_Metadata_Model):
     """Prowler Check"""
 
-    task_display_message: str = ""
-    total_task_items: int = 0
     title_bar_task: Task = None
     progress_task: Task = None
+    # title_bar: Any = None
+    # task_progress: Any = None
 
     def __init__(self, **data):
         """Check's init function. Calls the CheckMetadataModel init."""
@@ -79,23 +79,40 @@ class Check(ABC, Check_Metadata_Model):
         # Calls parents init function
         super().__init__(**data)
 
-        self.title_bar_task = title_bar.add_task(
-            f"Executing {self.CheckTitle}...", start=False
-        )
-        self.progress_task = task_progress.add_task(
-            self.task_display_message, total=self.total_task_items, visible=False
-        )
+        current_manager = progress_manager.get_current_manager()
+        # Cant do this as it messes with self.metdata()
+        # self.title_bar = current_manager.title_bar
+        # self.task_progress = current_manager.task_progress
 
-    def clear_ui(self):
-        title_bar.remove_task(self.title_bar_task)
-        task_progress.remove_task(self.progress_task)
+        self.title_bar_task = current_manager.title_bar.add_task(
+            f"{self.CheckTitle}...", start=False
+        )
 
     def increment_task_progress(self):
-        task_progress.update(self.progress_task, advance=1)
+        current_manager = progress_manager.get_current_manager()
+        current_manager.task_progress.update(self.progress_task, advance=1)
 
     def start_task(self, message, count):
-        task_progress.update(
+        current_manager = progress_manager.get_current_manager()
+        self.progress_task = current_manager.task_progress.add_task(
             task_id=self.progress_task, description=message, total=count, visible=True
+        )
+
+    def update_title_with_findings(self, findings):
+        current_manager = progress_manager.get_current_manager()
+        current_manager.task_progress.remove_task(self.progress_task)
+        total_failed = len([report for report in findings if report.status == "FAIL"])
+        total_checked = len(findings)
+        if total_failed == 0:
+            message = (
+                f"{self.CheckTitle} [pass]All resources passed ({total_checked})[/pass]"
+            )
+        else:
+            message = (
+                f"{self.CheckTitle} [fail]{total_failed}/{total_checked} failed![/fail]"
+            )
+        current_manager.title_bar.update(
+            task_id=self.title_bar_task, description=message
         )
 
     def metadata(self) -> dict:

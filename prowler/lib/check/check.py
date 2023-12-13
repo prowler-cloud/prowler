@@ -12,8 +12,6 @@ from typing import Any
 
 from colorama import Fore, Style
 from rich.live import Live
-from rich.style import Style as RichStyle
-from rich.text import Text
 
 import prowler
 from prowler.lib.check.compliance_models import load_compliance_framework
@@ -21,7 +19,7 @@ from prowler.lib.check.custom_checks_metadata import update_check_metadata
 from prowler.lib.check.models import Check, load_check_metadata
 from prowler.lib.logger import logger
 from prowler.lib.outputs.outputs import report
-from prowler.lib.utils.ui import clear_progress_tasks, overall_progress, progress_table
+from prowler.lib.utils.ui import progress_manager
 from prowler.lib.utils.utils import open_file, parse_json_file
 from prowler.providers.aws.lib.allowlist.allowlist import allowlist_findings
 from prowler.providers.common.models import Audit_Metadata
@@ -494,53 +492,55 @@ def execute_checks(
         print(
             f"{Style.BRIGHT}Executing {checks_num} {check_noun}, please wait...{Style.RESET_ALL}\n"
         )
-        with Live(progress_table, refresh_per_second=10):
-            # Create a task with total equal to the number of checks
-            task_id = overall_progress.add_task("Scanning...", total=checks_num)
 
-            for check_name in checks_to_execute:
-                # Recover service from check name
-                service = check_name.split("_")[0]
-                # Create a Rich Text object with styling
-                service_text = Text(service, style=RichStyle(color="red"))
-                description = (
-                    Text("-> Scanning ", style="bold")
-                    + service_text
-                    + Text(" service", style="bold")
-                )
-                overall_progress.update(task_id, description=description)
-                try:
-                    check_findings = execute(
-                        service,
-                        check_name,
-                        provider,
-                        audit_output_options,
-                        audit_info,
-                        services_executed,
-                        checks_executed,
-                        custom_checks_metadata,
-                    )
-                    all_findings.extend(check_findings)
-                    # Clear the tasks from the progress and title bars
-                    clear_progress_tasks()
+        check_dict = create_check_service_dict(checks_to_execute)
 
-                # If check does not exists in the provider or is from another provider
-                except ModuleNotFoundError:
-                    logger.error(
-                        f"Check '{check_name}' was not found for the {provider.upper()} provider"
-                    )
-                except Exception as error:
-                    logger.error(
-                        f"{check_name} - {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                    )
-                # Update the progress bar
-                overall_progress.update(task_id, advance=1)
-            overall_progress.update(
-                task_id,
-                completed=checks_num,
-                description=f"-> {Fore.GREEN}Scan completed!{Style.RESET_ALL}",
-            )
+        for service in check_dict:
+            service_check_num = len(check_dict[service])
+            progress_manager.create_manager(service, service_check_num)
+            current_manager = progress_manager.get_current_manager()
+            with Live(
+                current_manager.progress_table,
+                console=current_manager.console,
+                refresh_per_second=10,
+            ):
+                for check_name in check_dict[service]:
+                    try:
+                        check_findings = execute(
+                            service,
+                            check_name,
+                            provider,
+                            audit_output_options,
+                            audit_info,
+                            services_executed,
+                            checks_executed,
+                            custom_checks_metadata,
+                        )
+                        all_findings.extend(check_findings)
+
+                    # If check does not exists in the provider or is from another provider
+                    except ModuleNotFoundError:
+                        logger.error(
+                            f"Check '{check_name}' was not found for the {provider.upper()} provider"
+                        )
+                    except Exception as error:
+                        logger.error(
+                            f"{check_name} - {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
+                    # Update the progress bar
+                    current_manager.clear_service_init_titles()
+                    current_manager.increment_progress()
     return all_findings
+
+
+def create_check_service_dict(checks_to_execute):
+    output = {}
+    for check_name in checks_to_execute:
+        service = check_name.split("_")[0]
+        if service not in output.keys():
+            output[service] = []
+        output[service].append(check_name)
+    return output
 
 
 def execute(

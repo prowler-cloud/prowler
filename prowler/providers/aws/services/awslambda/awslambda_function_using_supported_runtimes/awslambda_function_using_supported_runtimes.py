@@ -5,6 +5,8 @@ from prowler.providers.aws.services.awslambda.awslambda_client import awslambda_
 class awslambda_function_using_supported_runtimes(Check):
     def execute(self):
         findings = []
+        functions = awslambda_client.functions.values()
+        self.start_task("Processing functions...", len(functions))
         for function in awslambda_client.functions.values():
             if function.runtime:
                 report = Check_Report_AWS(self.metadata())
@@ -23,5 +25,7 @@ class awslambda_function_using_supported_runtimes(Check):
                     report.status_extended = f"Lambda function {function.name} is using {function.runtime} which is supported."
 
                 findings.append(report)
+            self.increment_task_progress()
 
+        self.update_title_with_findings(findings)
         return findings

@@ -1,7 +1,7 @@
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from prowler.lib.logger import logger
-from prowler.lib.utils.ui import task_progress, title_bar
+from prowler.lib.utils.ui import progress_manager
 from prowler.providers.aws.aws_provider import (
     generate_regional_clients,
     get_default_region,
@@ -51,11 +51,13 @@ class AWSService:
         self.thread_pool = ThreadPoolExecutor(max_workers=MAX_WORKERS)
 
         # Progress bar to add tasks to
-        self.progress = task_progress
+        current_manager = progress_manager.get_current_manager()
+        self.progress = current_manager.task_progress
         self.progress_tasks = []
-        self.title_bar = title_bar
-        self.title_bar_task = title_bar.add_task(
-            f"Intializing {self.service.upper()} service:", start=False
+        self.title_bar = current_manager.title_bar
+
+        self.title_bar_task = self.title_bar.add_task(
+            f"Intializing {self.service} service:", start=False, task_type="Service"
         )
 
     def __get_session__(self):
@@ -83,7 +85,9 @@ class AWSService:
             )
 
         # Setup the progress bar
-        task_id = self.progress.add_task(f"- {call_name}...", total=item_count)
+        task_id = self.progress.add_task(
+            f"- {call_name}...", total=item_count, task_type="Service"
+        )
         self.progress_tasks.append(task_id)
 
         # Submit tasks to the thread pool
@@ -103,9 +107,9 @@ class AWSService:
         # self.progress.remove_task(task_id)
 
     def __update_progress_is_complete__(self):
-        title_bar.update(
+        self.title_bar.update(
             self.title_bar_task,
-            description=f"Completed initlization for {self.service.upper()}",
+            description=f"Completed initilization for {self.service}",
         )
         for task_id in self.progress_tasks:
             self.progress.remove_task(task_id)

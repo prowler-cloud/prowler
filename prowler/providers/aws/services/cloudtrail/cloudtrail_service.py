@@ -16,10 +16,11 @@ class Cloudtrail(AWSService):
         super().__init__(__class__.__name__, audit_info)
         self.trails = []
         self.__threading_call__(self.__get_trails__)
-        self.__get_trail_status__()
-        self.__get_insight_selectors__()
-        self.__get_event_selectors__()
-        self.__list_tags_for_resource__()
+        self.__threading_call__(self.__get_trail_status__, self.trails)
+        self.__threading_call__(self.__get_insight_selectors__, self.trails)
+        self.__threading_call__(self.__get_event_selectors__, self.trails)
+        self.__threading_call__(self.__list_tags_for_resource__, self.trails)
+        self.__update_progress_is_complete__()
 
     def __get_trails__(self, regional_client):
         logger.info("Cloudtrail - Getting trails...")
@@ -68,121 +69,102 @@ class Cloudtrail(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __get_trail_status__(self):
-        logger.info("Cloudtrail - Getting trail status")
+    def __get_trail_status__(self, trail):
         try:
-            for trail in self.trails:
-                for region, client in self.regional_clients.items():
-                    if trail.region == region and trail.name:
-                        status = client.get_trail_status(Name=trail.arn)
-                        trail.is_logging = status["IsLogging"]
-                        if "LatestCloudWatchLogsDeliveryTime" in status:
-                            trail.latest_cloudwatch_delivery_time = status[
-                                "LatestCloudWatchLogsDeliveryTime"
-                            ]
+            regional_client = self.regional_clients[trail.region]
+            if trail.region and trail.name:
+                status = regional_client.get_trail_status(Name=trail.arn)
+                trail.is_logging = status["IsLogging"]
+                if "LatestCloudWatchLogsDeliveryTime" in status:
+                    trail.latest_cloudwatch_delivery_time = status[
+                        "LatestCloudWatchLogsDeliveryTime"
+                    ]
 
         except Exception as error:
             logger.error(
-                f"{client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __get_event_selectors__(self):
-        logger.info("Cloudtrail - Getting event selector")
+    def __get_event_selectors__(self, trail):
         try:
-            for trail in self.trails:
-                for region, client in self.regional_clients.items():
-                    if trail.region == region and trail.name:
-                        data_events = client.get_event_selectors(TrailName=trail.arn)
-                        # EventSelectors
-                        if (
-                            "EventSelectors" in data_events
-                            and data_events["EventSelectors"]
-                        ):
-                            for event in data_events["EventSelectors"]:
-                                event_selector = Event_Selector(
-                                    is_advanced=False, event_selector=event
-                                )
-                                trail.data_events.append(event_selector)
-                        # AdvancedEventSelectors
-                        elif (
-                            "AdvancedEventSelectors" in data_events
-                            and data_events["AdvancedEventSelectors"]
-                        ):
-                            for event in data_events["AdvancedEventSelectors"]:
-                                event_selector = Event_Selector(
-                                    is_advanced=True, event_selector=event
-                                )
-                                trail.data_events.append(event_selector)
+            regional_client = self.regional_clients[trail.region]
+            if trail.region and trail.name:
+                data_events = regional_client.get_event_selectors(TrailName=trail.arn)
+                # EventSelectors
+                if "EventSelectors" in data_events and data_events["EventSelectors"]:
+                    for event in data_events["EventSelectors"]:
+                        event_selector = Event_Selector(
+                            is_advanced=False, event_selector=event
+                        )
+                        trail.data_events.append(event_selector)
+                # AdvancedEventSelectors
+                elif (
+                    "AdvancedEventSelectors" in data_events
+                    and data_events["AdvancedEventSelectors"]
+                ):
+                    for event in data_events["AdvancedEventSelectors"]:
+                        event_selector = Event_Selector(
+                            is_advanced=True, event_selector=event
+                        )
+                        trail.data_events.append(event_selector)
 
         except Exception as error:
             logger.error(
-                f"{client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __get_insight_selectors__(self):
-        logger.info("Cloudtrail - Getting trail insight selectors...")
-
+    def __get_insight_selectors__(self, trail):
         try:
-            for trail in self.trails:
-                for region, client in self.regional_clients.items():
-                    if trail.region == region and trail.name:
-                        insight_selectors = None
-                        trail.has_insight_selectors = None
-                        try:
-                            client_insight_selectors = client.get_insight_selectors(
-                                TrailName=trail.arn
-                            )
-                            insight_selectors = client_insight_selectors.get(
-                                "InsightSelectors"
-                            )
-                        except ClientError as error:
-                            if (
-                                error.response["Error"]["Code"]
-                                == "InsightNotEnabledException"
-                            ):
-                                logger.warning(
-                                    f"{client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                                )
-                            elif (
-                                error.response["Error"]["Code"]
-                                == "UnsupportedOperationException"
-                            ):
-                                logger.warning(
-                                    f"{client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                                )
-                            else:
-                                logger.error(
-                                    f"{client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                                )
-                        except Exception as error:
-                            logger.error(
-                                f"{client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                            )
-                            continue
-                        if insight_selectors:
-                            trail.has_insight_selectors = insight_selectors[0].get(
-                                "InsightType"
-                            )
+            regional_client = self.regional_clients[trail.region]
+            if trail.region and trail.name:
+                insight_selectors = None
+                trail.has_insight_selectors = None
+                try:
+                    client_insight_selectors = regional_client.get_insight_selectors(
+                        TrailName=trail.arn
+                    )
+                    insight_selectors = client_insight_selectors.get("InsightSelectors")
+                except ClientError as error:
+                    if error.response["Error"]["Code"] == "InsightNotEnabledException":
+                        logger.warning(
+                            f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
+                    elif (
+                        error.response["Error"]["Code"]
+                        == "UnsupportedOperationException"
+                    ):
+                        logger.warning(
+                            f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
+                    else:
+                        logger.error(
+                            f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
+                except Exception as error:
+                    logger.error(
+                        f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
+                    raise
+                if insight_selectors:
+                    trail.has_insight_selectors = insight_selectors[0].get(
+                        "InsightType"
+                    )
 
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __list_tags_for_resource__(self):
+    def __list_tags_for_resource__(self, trail):
         logger.info("CloudTrail - List Tags...")
         try:
-            for trail in self.trails:
-                # Check if trails are in this account and region
-                if (
-                    trail.region == trail.home_region
-                    and self.audited_account in trail.arn
-                ):
-                    regional_client = self.regional_clients[trail.region]
-                    response = regional_client.list_tags(ResourceIdList=[trail.arn])[
-                        "ResourceTagList"
-                    ][0]
-                    trail.tags = response.get("TagsList")
+            # Check if trails are in this account and region
+            if trail.region == trail.home_region and self.audited_account in trail.arn:
+                regional_client = self.regional_clients[trail.region]
+                response = regional_client.list_tags(ResourceIdList=[trail.arn])[
+                    "ResourceTagList"
+                ][0]
+                trail.tags = response.get("TagsList")
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

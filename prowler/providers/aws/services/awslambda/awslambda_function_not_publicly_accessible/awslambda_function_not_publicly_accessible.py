@@ -42,4 +42,5 @@ class awslambda_function_not_publicly_accessible(Check):
 
             findings.append(report)
             self.increment_task_progress()
+        self.update_title_with_findings(findings)
         return findings

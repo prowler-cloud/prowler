@@ -6,6 +6,8 @@ from prowler.providers.aws.services.awslambda.awslambda_service import AuthType
 class awslambda_function_url_public(Check):
     def execute(self):
         findings = []
+        functions = awslambda_client.functions.values()
+        self.start_task("Processing functions...", len(functions))
         for function in awslambda_client.functions.values():
             report = Check_Report_AWS(self.metadata())
             report.region = function.region
@@ -21,5 +23,6 @@ class awslambda_function_url_public(Check):
                     report.status_extended = f"Lambda function {function.name} has a publicly accessible function URL."
 
                 findings.append(report)
-
+            self.increment_task_progress()
+        self.update_title_with_findings(findings)
         return findings
