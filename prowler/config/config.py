@@ -29,9 +29,12 @@ valid_severities = ["critical", "high", "medium", "low", "informational"]
 actual_directory = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))
 
 
-def get_available_compliance_frameworks():
+def get_available_compliance_frameworks(provider=None):
     available_compliance_frameworks = []
-    for provider in ["aws", "gcp", "azure"]:
+    providers = ["aws", "gcp", "azure"]
+    if provider:
+        providers = [provider]
+    for provider in providers:
         with os.scandir(f"{actual_directory}/../compliance/{provider}") as files:
             for file in files:
                 if file.is_file() and file.name.endswith(".json"):

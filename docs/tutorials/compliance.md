@@ -1,5 +1,18 @@
 # Compliance
-Prowler allows you to execute checks based on requirements defined in compliance frameworks.
+Prowler allows you to execute checks based on requirements defined in compliance frameworks. By default, it will execute and give you an overview of the status of each compliance framework:
+
+<img src="../img/compliance.png"/>
+
+> You can find CSVs containing detailed compliance results inside the compliance folder within Prowler's output folder.
+
+## Execute Prowler based on Compliance Frameworks
+Prowler can analyze your environment based on a specific compliance framework and get more details, to do it, you can use option `--compliance`:
+```sh
+prowler <provider> --compliance <compliance_framework>
+```
+Standard results will be shown and additionally the framework information as the sample below for CIS AWS 1.5. For details a CSV file has been generated as well.
+
+<img src="../img/compliance-cis-sample1.png"/>
 
 ## List Available Compliance Frameworks
 In order to see which compliance frameworks are cover by Prowler, you can use option `--list-compliance`:
@@ -10,9 +23,12 @@ Currently, the available frameworks are:
 
 - `cis_1.4_aws`
 - `cis_1.5_aws`
+- `cis_2.0_aws`
+- `cisa_aws`
 - `ens_rd2022_aws`
 - `aws_audit_manager_control_tower_guardrails_aws`
 - `aws_foundational_security_best_practices_aws`
+- `aws_well_architected_framework_reliability_pillar_aws`
 - `aws_well_architected_framework_security_pillar_aws`
 - `cisa_aws`
 - `fedramp_low_revision_4_aws`
@@ -22,6 +38,9 @@ Currently, the available frameworks are:
 - `gxp_eu_annex_11_aws`
 - `gxp_21_cfr_part_11_aws`
 - `hipaa_aws`
+- `iso27001_2013_aws`
+- `iso27001_2013_aws`
+- `mitre_attack_aws`
 - `nist_800_53_revision_4_aws`
 - `nist_800_53_revision_5_aws`
 - `nist_800_171_revision_2_aws`
@@ -38,7 +57,6 @@ prowler <provider> --list-compliance-requirements <compliance_framework(s)>
 ```
 
 Example for the first requirements of CIS 1.5 for AWS:
-
 ```
 Listing CIS 1.5 AWS Compliance Requirements:
 
@@ -70,15 +88,6 @@ Requirement Id: 1.5
 [redacted]
 
 ```
-
-## Execute Prowler based on Compliance Frameworks
-As we mentioned, Prowler can be execute to analyse you environment based on a specific compliance framework, to do it, you can use option `--compliance`:
-```sh
-prowler <provider> --compliance <compliance_framework>
-```
-Standard results will be shown and additionally the framework information as the sample below for CIS AWS 1.5. For details a CSV file has been generated as well.
-
-<img src="../img/compliance-cis-sample1.png"/>
 
 ## Create and contribute adding other Security Frameworks
 

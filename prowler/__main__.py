@@ -28,13 +28,10 @@ from prowler.lib.check.custom_checks_metadata import (
     parse_custom_checks_metadata_file,
     update_checks_metadata,
 )
-<<<<<<< HEAD
 from prowler.lib.check.managers import ExecutionManager
-=======
->>>>>>> 856afb396 (chore(update): rebase from master (#3067))
 from prowler.lib.cli.parser import ProwlerArgumentParser
 from prowler.lib.logger import logger, set_logging_config
-from prowler.lib.outputs.compliance import display_compliance_table
+from prowler.lib.outputs.compliance.compliance import display_compliance_table
 from prowler.lib.outputs.html import add_html_footer, fill_html_overview_statistics
 from prowler.lib.outputs.json import close_json
 from prowler.lib.outputs.outputs import extract_findings_statistics
@@ -86,6 +83,9 @@ def prowler():
     # We treat the compliance framework as another output format
     if compliance_framework:
         args.output_modes.extend(compliance_framework)
+    # If no input compliance framework, set all
+    else:
+        args.output_modes.extend(get_available_compliance_frameworks(provider))
 
     # Set Logger configuration
     set_logging_config(args.log_level, args.log_file, args.only_logs)
@@ -197,11 +197,7 @@ def prowler():
     findings = []
 
     if len(checks_to_execute):
-<<<<<<< HEAD
         execution_manager = ExecutionManager(
-=======
-        findings = execute_checks(
->>>>>>> 856afb396 (chore(update): rebase from master (#3067))
             checks_to_execute,
             provider,
             audit_info,
@@ -322,8 +318,12 @@ def prowler():
             provider,
         )
 
-        if compliance_framework and findings:
-            for compliance in compliance_framework:
+        if findings:
+            compliance_overview = False
+            if not compliance_framework:
+                compliance_overview = True
+                compliance_framework = get_available_compliance_frameworks(provider)
+            for compliance in sorted(compliance_framework):
                 # Display compliance table
                 display_compliance_table(
                     findings,
@@ -331,6 +331,11 @@ def prowler():
                     compliance,
                     audit_output_options.output_filename,
                     audit_output_options.output_directory,
+                    compliance_overview,
+                )
+            if compliance_overview:
+                print(
+                    f"\nDetailed compliance results are in {Fore.YELLOW}{audit_output_options.output_directory}/compliance/{Style.RESET_ALL}\n"
                 )
 
     # If custom checks were passed, remove the modules

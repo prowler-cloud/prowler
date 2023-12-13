@@ -72,7 +72,6 @@ class Provider_Output_Options:
                     # exist_ok is set to True not to raise FileExistsError
                     makedirs(arguments.output_directory, exist_ok=True)
 
-
 class Azure_Output_Options(Provider_Output_Options):
     def __init__(self, arguments, audit_info, mutelist_file, bulk_checks_metadata):
         # First call Provider_Output_Options init
