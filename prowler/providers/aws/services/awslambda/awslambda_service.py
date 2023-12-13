@@ -64,28 +64,31 @@ class Lambda(AWSService):
 
     def __get_function_code__(self):
         logger.info("Lambda - Getting Function Code...")
-        # Use a thread pool handle the queueing and execution of the __fetch_function_code tasks, up to max_workers tasks concurrently.
-        futures = {
-            self.thread_pool.submit(self.__fetch_function_code, function): function
+        # Use a thread pool handle the queueing and execution of the __fetch_function_code__ tasks, up to max_workers tasks concurrently.
+        lambda_functions_to_fetch = {
+            self.thread_pool.submit(
+                self.__fetch_function_code__, function.name, function.region
+            ): function
             for function in self.functions.values()
         }
 
-        for future in as_completed(futures):
-            function = futures[future]
+        for fetched_lambda_code in as_completed(lambda_functions_to_fetch):
+            function = lambda_functions_to_fetch[fetched_lambda_code]
             try:
-                function_code = future.result()
+                function_code = fetched_lambda_code.result()
                 if function_code:
-                    yield function, function_code
+                    function.code = function_code
+                    yield function
             except Exception as error:
                 logger.error(
                     f"Error fetching code for function {function.name} in region {function.region}: {error}"
                 )
 
-    def __fetch_function_code(self, function):
+    def __fetch_function_code__(self, function_name, function_region):
         try:
-            regional_client = self.regional_clients[function.region]
+            regional_client = self.regional_clients[function_region]
             function_information = regional_client.get_function(
-                FunctionName=function.name
+                FunctionName=function_name
             )
             if "Location" in function_information["Code"]:
                 code_location_uri = function_information["Code"]["Location"]
