@@ -11,7 +11,7 @@ cd Python-3.9.16/
 ./configure --enable-optimizations
 sudo make altinstall
 python3.9 --version
-cd 
+cd
 ```
 - Once Python 3.9 is available we can install Prowler from pip:
 ```
@@ -20,7 +20,20 @@ pip3.9 install prowler
 - Now enjoy Prowler:
 ```
 prowler -v
-prowler 
+prowler
 ```
 
 - To download the results from AWS CloudShell, select Actions -> Download File and add the full path of each file. For the CSV file it will be something like `/home/cloudshell-user/output/prowler-output-123456789012-20221220191331.csv`
+
+## Clone the Prowler Github Repository in CloudShell
+
+The limited storage that AWS CloudShell provides for the user's home directory causes issues when installing the poetry dependencies to run Prowler from GitHub. Here is a workaround:
+```shell
+git clone https://github.com/prowler-cloud/prowler.git
+cd prowler
+git checkout master
+pip install poetry
+mkdir /tmp/pypoetry
+poetry config cache-dir /tmp/pypoetry
+poetry shell
+```
