@@ -81,7 +81,7 @@ class Lambda(AWSService):
                     yield function
             except Exception as error:
                 logger.error(
-                    f"Error fetching code for function {function.name} in region {function.region}: {error}"
+                    f"{function.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
     def __fetch_function_code__(self, function_name, function_region):
