@@ -52,15 +52,13 @@ def add_manual_controls(
         )
 
 
-def fill_compliance(
-    output_options, finding, audit_info, file_descriptors, input_compliance_frameworks
+def get_check_compliance_frameworks_in_input(
+    check_id, bulk_checks_metadata, input_compliance_frameworks
 ):
-    try:
-        # We have to retrieve all the check's compliance requirements and get the ones matching with the input ones
-        check_compliances = []
-        for compliance in output_options.bulk_checks_metadata[
-            finding.check_metadata.CheckID
-        ].Compliance:
+    """get_check_compliance_frameworks_in_input returns a list of Compliance for the given check if the compliance framework is present in the input compliance to execute"""
+    check_compliances = []
+    if bulk_checks_metadata and bulk_checks_metadata[check_id]:
+        for compliance in bulk_checks_metadata[check_id].Compliance:
             compliance_name = ""
             if compliance.Version:
                 compliance_name = (
@@ -76,6 +74,21 @@ def fill_compliance(
                 )
             if compliance_name.replace("-", "_") in input_compliance_frameworks:
                 check_compliances.append(compliance)
+
+    return check_compliances
+
+
+def fill_compliance(
+    output_options, finding, audit_info, file_descriptors, input_compliance_frameworks
+):
+    try:
+        # We have to retrieve all the check's compliance requirements and get the ones matching with the input ones
+        check_compliances = get_check_compliance_frameworks_in_input(
+            finding.check_metadata.CheckID,
+            output_options.bulk_checks_metadata,
+            input_compliance_frameworks,
+        )
+
         for compliance in check_compliances:
             if compliance.Framework == "ENS" and compliance.Version == "RD2022":
                 write_compliance_row_ens_rd2022_aws(
