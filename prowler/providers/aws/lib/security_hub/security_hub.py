@@ -14,9 +14,11 @@ def prepare_security_hub_findings(
     findings: [], audit_info: AWS_Audit_Info, output_options, enabled_regions: []
 ) -> dict:
     security_hub_findings_per_region = {}
-    # Create a key per region
-    for region in audit_info.audited_regions:
+
+    # Create a key per audited region
+    for region in enabled_regions:
         security_hub_findings_per_region[region] = []
+
     for finding in findings:
         # We don't send the INFO findings to AWS Security Hub
         if finding.status == "INFO":
@@ -47,8 +49,10 @@ def prepare_security_hub_findings(
 
 
 def verify_security_hub_integration_enabled_per_region(
+    partition: str,
     region: str,
     session: session.Session,
+    aws_account_number: str,
 ) -> bool:
     f"""verify_security_hub_integration_enabled returns True if the {SECURITY_HUB_INTEGRATION_NAME} is enabled for the given region. Otherwise returns false."""
     prowler_integration_enabled = False
@@ -62,7 +66,8 @@ def verify_security_hub_integration_enabled_per_region(
         security_hub_client.describe_hub()
 
         # Check if Prowler integration is enabled in Security Hub
-        if "prowler/prowler" not in str(
+        security_hub_prowler_integration_arn = f"arn:{partition}:securityhub:{region}:{aws_account_number}:product-subscription/{SECURITY_HUB_INTEGRATION_NAME}"
+        if security_hub_prowler_integration_arn not in str(
             security_hub_client.list_enabled_products_for_import()
         ):
             logger.error(

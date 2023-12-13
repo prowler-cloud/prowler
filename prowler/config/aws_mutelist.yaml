@@ -1,4 +1,4 @@
-Allowlist:
+Mute List:
   Accounts:
     "*":
       ########################### AWS CONTROL TOWER ###########################

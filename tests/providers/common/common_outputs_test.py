@@ -9,12 +9,14 @@ from prowler.providers.aws.lib.audit_info.audit_info import AWS_Audit_Info
 from prowler.providers.azure.lib.audit_info.audit_info import (
     Azure_Audit_Info,
     Azure_Identity_Info,
+    Azure_Region_Config,
 )
 from prowler.providers.common.models import Audit_Metadata
 from prowler.providers.common.outputs import (
     Aws_Output_Options,
     Azure_Output_Options,
     Gcp_Output_Options,
+    get_provider_output_model,
     set_provider_output_options,
 )
 from prowler.providers.gcp.lib.audit_info.models import GCP_Audit_Info
@@ -33,6 +35,7 @@ class Test_Common_Output_Options:
             audit_metadata=None,
             audit_resources=None,
             audit_config=None,
+            azure_region_config=Azure_Region_Config(),
         )
         return audit_info
 
@@ -95,17 +98,17 @@ class Test_Common_Output_Options:
         arguments.unix_timestamp = False
 
         audit_info = self.set_mocked_aws_audit_info()
-        allowlist_file = ""
+        mutelist_file = ""
         bulk_checks_metadata = {}
         output_options = set_provider_output_options(
-            provider, arguments, audit_info, allowlist_file, bulk_checks_metadata
+            provider, arguments, audit_info, mutelist_file, bulk_checks_metadata
         )
         assert isinstance(output_options, Aws_Output_Options)
         assert output_options.security_hub_enabled
         assert output_options.is_quiet
         assert output_options.output_modes == ["html", "csv", "json", "json-asff"]
         assert output_options.output_directory == arguments.output_directory
-        assert output_options.allowlist_file == ""
+        assert output_options.mutelist_file == ""
         assert output_options.bulk_checks_metadata == {}
         assert output_options.verbose
         assert output_options.output_filename == arguments.output_filename
@@ -127,16 +130,16 @@ class Test_Common_Output_Options:
         arguments.unix_timestamp = False
 
         audit_info = self.set_mocked_gcp_audit_info()
-        allowlist_file = ""
+        mutelist_file = ""
         bulk_checks_metadata = {}
         output_options = set_provider_output_options(
-            provider, arguments, audit_info, allowlist_file, bulk_checks_metadata
+            provider, arguments, audit_info, mutelist_file, bulk_checks_metadata
         )
         assert isinstance(output_options, Gcp_Output_Options)
         assert output_options.is_quiet
         assert output_options.output_modes == ["html", "csv", "json"]
         assert output_options.output_directory == arguments.output_directory
-        assert output_options.allowlist_file == ""
+        assert output_options.mutelist_file == ""
         assert output_options.bulk_checks_metadata == {}
         assert output_options.verbose
         assert output_options.output_filename == arguments.output_filename
@@ -161,17 +164,17 @@ class Test_Common_Output_Options:
         # Mock AWS Audit Info
         audit_info = self.set_mocked_aws_audit_info()
 
-        allowlist_file = ""
+        mutelist_file = ""
         bulk_checks_metadata = {}
         output_options = set_provider_output_options(
-            provider, arguments, audit_info, allowlist_file, bulk_checks_metadata
+            provider, arguments, audit_info, mutelist_file, bulk_checks_metadata
         )
         assert isinstance(output_options, Aws_Output_Options)
         assert output_options.security_hub_enabled
         assert output_options.is_quiet
         assert output_options.output_modes == ["html", "csv", "json", "json-asff"]
         assert output_options.output_directory == arguments.output_directory
-        assert output_options.allowlist_file == ""
+        assert output_options.mutelist_file == ""
         assert output_options.bulk_checks_metadata == {}
         assert output_options.verbose
         assert (
@@ -198,10 +201,10 @@ class Test_Common_Output_Options:
         audit_info = self.set_mocked_azure_audit_info()
         audit_info.identity.domain = "test-domain"
 
-        allowlist_file = ""
+        mutelist_file = ""
         bulk_checks_metadata = {}
         output_options = set_provider_output_options(
-            provider, arguments, audit_info, allowlist_file, bulk_checks_metadata
+            provider, arguments, audit_info, mutelist_file, bulk_checks_metadata
         )
         assert isinstance(output_options, Azure_Output_Options)
         assert output_options.is_quiet
@@ -211,7 +214,7 @@ class Test_Common_Output_Options:
             "json",
         ]
         assert output_options.output_directory == arguments.output_directory
-        assert output_options.allowlist_file == ""
+        assert output_options.mutelist_file == ""
         assert output_options.bulk_checks_metadata == {}
         assert output_options.verbose
         assert (
@@ -239,10 +242,10 @@ class Test_Common_Output_Options:
         tenants = ["tenant-1", "tenant-2"]
         audit_info.identity.tenant_ids = tenants
 
-        allowlist_file = ""
+        mutelist_file = ""
         bulk_checks_metadata = {}
         output_options = set_provider_output_options(
-            provider, arguments, audit_info, allowlist_file, bulk_checks_metadata
+            provider, arguments, audit_info, mutelist_file, bulk_checks_metadata
         )
         assert isinstance(output_options, Azure_Output_Options)
         assert output_options.is_quiet
@@ -252,7 +255,7 @@ class Test_Common_Output_Options:
             "json",
         ]
         assert output_options.output_directory == arguments.output_directory
-        assert output_options.allowlist_file == ""
+        assert output_options.mutelist_file == ""
         assert output_options.bulk_checks_metadata == {}
         assert output_options.verbose
         assert (
@@ -332,7 +335,7 @@ class Test_Common_Output_Options:
                             <b>AWS Account:</b> {audit_info.audited_account}
                         </li>
                         <li class="list-group-item">
-                            <b>AWS-CLI Profile:</b> {audit_info.profile}
+                            <b>AWS-CLI Profile:</b> default
                         </li>
                         <li class="list-group-item">
                             <b>Audited Regions:</b> All Regions
@@ -391,3 +394,16 @@ class Test_Common_Output_Options:
             </div>
             """
         )
+
+    def test_get_provider_output_model(self):
+        audit_info_class_names = [
+            "AWS_Audit_Info",
+            "GCP_Audit_Info",
+            "Azure_Audit_Info",
+        ]
+        for class_name in audit_info_class_names:
+            provider_prefix = class_name.split("_", 1)[0].lower().capitalize()
+            assert (
+                get_provider_output_model(class_name).__name__
+                == f"{provider_prefix}_Check_Output_CSV"
+            )

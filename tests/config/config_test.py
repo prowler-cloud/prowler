@@ -63,7 +63,7 @@ class Test_Config:
     def test_check_current_version_with_latest(self):
         assert (
             check_current_version()
-            == f"Prowler {MOCK_PROWLER_VERSION} (it is the latest version, yay!)"
+            == f"Prowler {MOCK_PROWLER_VERSION} (You are running the latest version, yay!)"
         )
 
     @mock.patch(

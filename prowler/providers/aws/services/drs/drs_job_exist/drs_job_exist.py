@@ -20,10 +20,10 @@ class drs_job_exist(Check):
                     report.status_extended = "DRS is enabled for this region with jobs."
 
             if report.status == "FAIL" and (
-                drs_client.audit_config.get("allowlist_non_default_regions", False)
+                drs_client.audit_config.get("mute_non_default_regions", False)
                 and not drs.region == drs_client.region
             ):
-                report.status = "WARNING"
+                report.status = "MUTED"
 
             findings.append(report)
 

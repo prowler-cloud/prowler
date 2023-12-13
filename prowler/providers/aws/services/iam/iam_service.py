@@ -139,7 +139,10 @@ class IAM(AWSService):
                 logger.warning(
                     f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
-
+            else:
+                logger.error(
+                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
         except Exception as error:
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -208,14 +211,24 @@ class IAM(AWSService):
                 reuse_prevention=reuse_prevention,
                 hard_expiry=hard_expiry,
             )
-        except Exception as error:
-            if "NoSuchEntity" in str(error):
+
+        except ClientError as error:
+            if error.response["Error"]["Code"] == "NoSuchEntity":
                 # Password policy does not exist
                 stored_password_policy = None
+                logger.warning(
+                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
             else:
                 logger.error(
                     f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
+
+        except Exception as error:
+            logger.error(
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
         finally:
             return stored_password_policy
 
@@ -268,17 +281,22 @@ class IAM(AWSService):
         logger.info("IAM - List Attached Group Policies...")
         try:
             for group in self.groups:
-                list_attached_group_policies_paginator = self.client.get_paginator(
-                    "list_attached_group_policies"
-                )
-                attached_group_policies = []
-                for page in list_attached_group_policies_paginator.paginate(
-                    GroupName=group.name
-                ):
-                    for attached_group_policy in page["AttachedPolicies"]:
-                        attached_group_policies.append(attached_group_policy)
+                try:
+                    list_attached_group_policies_paginator = self.client.get_paginator(
+                        "list_attached_group_policies"
+                    )
+                    attached_group_policies = []
+                    for page in list_attached_group_policies_paginator.paginate(
+                        GroupName=group.name
+                    ):
+                        for attached_group_policy in page["AttachedPolicies"]:
+                            attached_group_policies.append(attached_group_policy)
 
-                group.attached_policies = attached_group_policies
+                    group.attached_policies = attached_group_policies
+                except Exception as error:
+                    logger.error(
+                        f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
         except Exception as error:
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -337,18 +355,33 @@ class IAM(AWSService):
         logger.info("IAM - List Attached User Policies...")
         try:
             for user in self.users:
-                attached_user_policies = []
-                get_user_attached_policies_paginator = self.client.get_paginator(
-                    "list_attached_user_policies"
-                )
-                for page in get_user_attached_policies_paginator.paginate(
-                    UserName=user.name
-                ):
-                    for policy in page["AttachedPolicies"]:
-                        attached_user_policies.append(policy)
+                try:
+                    attached_user_policies = []
+                    get_user_attached_policies_paginator = self.client.get_paginator(
+                        "list_attached_user_policies"
+                    )
+                    for page in get_user_attached_policies_paginator.paginate(
+                        UserName=user.name
+                    ):
+                        for policy in page["AttachedPolicies"]:
+                            attached_user_policies.append(policy)
 
-                user.attached_policies = attached_user_policies
+                    user.attached_policies = attached_user_policies
 
+                except ClientError as error:
+                    if error.response["Error"]["Code"] == "NoSuchEntity":
+                        logger.warning(
+                            f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
+                    else:
+                        logger.error(
+                            f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
+
+                except Exception as error:
+                    logger.error(
+                        f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
         except Exception as error:
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -371,10 +404,19 @@ class IAM(AWSService):
 
                     role.attached_policies = attached_role_policies
                 except ClientError as error:
-                    if error.response["Error"]["Code"] == "NoSuchEntityException":
+                    if error.response["Error"]["Code"] == "NoSuchEntity":
                         logger.warning(
                             f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                         )
+                    else:
+                        logger.error(
+                            f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
+
+                except Exception as error:
+                    logger.error(
+                        f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
 
         except Exception as error:
             logger.error(
@@ -639,8 +681,16 @@ class IAM(AWSService):
                     response = self.client.list_role_tags(RoleName=role.name)["Tags"]
                     role.tags = response
                 except ClientError as error:
-                    if error.response["Error"]["Code"] == "NoSuchEntityException":
+                    if error.response["Error"]["Code"] == "NoSuchEntity":
                         role.tags = []
+                    else:
+                        logger.error(
+                            f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
+                except Exception as error:
+                    logger.error(
+                        f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
 
         except Exception as error:
             logger.error(
@@ -653,8 +703,12 @@ class IAM(AWSService):
                     response = self.client.list_user_tags(UserName=user.name)["Tags"]
                     user.tags = response
                 except ClientError as error:
-                    if error.response["Error"]["Code"] == "NoSuchEntityException":
+                    if error.response["Error"]["Code"] == "NoSuchEntity":
                         user.tags = []
+                    else:
+                        logger.error(
+                            f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
 
         except Exception as error:
             logger.error(
@@ -664,13 +718,22 @@ class IAM(AWSService):
         try:
             for policy in self.policies:
                 try:
-                    response = self.client.list_policy_tags(PolicyArn=policy.arn)[
-                        "Tags"
-                    ]
-                    policy.tags = response
+                    if policy.type != "Inline":
+                        response = self.client.list_policy_tags(PolicyArn=policy.arn)[
+                            "Tags"
+                        ]
+                        policy.tags = response
                 except ClientError as error:
-                    if error.response["Error"]["Code"] == "NoSuchEntityException":
+                    if error.response["Error"]["Code"] == "NoSuchEntity":
                         policy.tags = []
+                    else:
+                        logger.error(
+                            f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
+                except Exception as error:
+                    logger.error(
+                        f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
 
         except Exception as error:
             logger.error(
@@ -697,9 +760,19 @@ class IAM(AWSService):
                     ]
 
                 except ClientError as error:
+                    if error.response["Error"]["Code"] == "NoSuchEntity":
+                        logger.warning(
+                            f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
+                    else:
+                        logger.error(
+                            f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
+                except Exception as error:
                     logger.error(
                         f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
+
         except Exception as error:
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -717,6 +790,15 @@ class IAM(AWSService):
                             "AccessKeyMetadata"
                         ]
                 except ClientError as error:
+                    if error.response["Error"]["Code"] == "NoSuchEntity":
+                        logger.warning(
+                            f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
+                    else:
+                        logger.error(
+                            f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
+                except Exception as error:
                     logger.error(
                         f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )

@@ -110,7 +110,10 @@ class Test_codeartifact_packages_external_public_publishing_disabled:
             assert len(result) == 1
             assert result[0].region == AWS_REGION
             assert result[0].resource_id == "test-package"
-            assert result[0].resource_arn == repository_arn
+            assert (
+                result[0].resource_arn
+                == repository_arn + "/" + package_namespace + ":" + package_name
+            )
             assert result[0].resource_tags == []
             assert result[0].status == "FAIL"
             assert (
@@ -167,7 +170,10 @@ class Test_codeartifact_packages_external_public_publishing_disabled:
             assert len(result) == 1
             assert result[0].region == AWS_REGION
             assert result[0].resource_id == "test-package"
-            assert result[0].resource_arn == repository_arn
+            assert (
+                result[0].resource_arn
+                == repository_arn + "/" + package_namespace + ":" + package_name
+            )
             assert result[0].resource_tags == []
             assert result[0].status == "PASS"
             assert (

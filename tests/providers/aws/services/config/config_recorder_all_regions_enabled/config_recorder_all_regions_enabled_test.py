@@ -162,7 +162,7 @@ class Test_config_recorder_all_regions_enabled:
                     assert recorder.region == AWS_REGION
 
     @mock_config
-    def test_config_one_recorder_disabled_allowlisted(self):
+    def test_config_one_recorder_disabled_muted(self):
         # Create Config Mocked Resources
         config_client = client("config", region_name=AWS_REGION)
         # Create Config Recorder
@@ -174,7 +174,7 @@ class Test_config_recorder_all_regions_enabled:
         current_audit_info = self.set_mocked_audit_info()
         current_audit_info.profile_region = "eu-south-2"
         current_audit_info.audited_regions = ["eu-south-2", AWS_REGION]
-        current_audit_info.audit_config = {"allowlist_non_default_regions": True}
+        current_audit_info.audit_config = {"mute_non_default_regions": True}
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -194,7 +194,7 @@ class Test_config_recorder_all_regions_enabled:
             # Search for the recorder just created
             for recorder in result:
                 if recorder.region == AWS_REGION:
-                    assert recorder.status == "WARNING"
+                    assert recorder.status == "MUTED"
                     assert (
                         recorder.status_extended
                         == f"AWS Config recorder {AWS_ACCOUNT_NUMBER} is disabled."
