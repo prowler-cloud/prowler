@@ -3772,6 +3772,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "me-central-1",
           "me-south-1",
           "sa-east-1",
           "us-east-1",
@@ -6335,15 +6336,6 @@
         "aws-us-gov": []
       }
     },
-    "marketplace-deployment": {
-      "regions": {
-        "aws": [
-          "us-east-1"
-        ],
-        "aws-cn": [],
-        "aws-us-gov": []
-      }
-    },
     "marketplace-entitlement": {
       "regions": {
         "aws": [
@@ -7561,7 +7553,10 @@
           "us-west-1",
           "us-west-2"
         ],
-        "aws-cn": [],
+        "aws-cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
         "aws-us-gov": []
       }
     },
