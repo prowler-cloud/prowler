@@ -77,8 +77,7 @@ class Lambda(AWSService):
             try:
                 function_code = fetched_lambda_code.result()
                 if function_code:
-                    function.code = function_code
-                    yield function
+                    yield function_code, function
             except Exception as error:
                 logger.error(
                     f"{function.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
