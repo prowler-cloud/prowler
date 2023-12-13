@@ -1,50 +1,118 @@
 import sys
 from os import getenv
+from typing import Any, Optional
 
 from azure.identity import DefaultAzureCredential, InteractiveBrowserCredential
 from azure.mgmt.subscription import SubscriptionClient
+from colorama import Fore, Style
 from msgraph.core import GraphClient
+from pydantic import BaseModel
 
 from prowler.lib.logger import logger
-from prowler.providers.azure.lib.audit_info.models import AzureIdentityInfo
 from prowler.providers.azure.lib.regions.regions import get_regions_config
+from prowler.providers.common.provider import CloudProvider
 
 
-class Azure_Provider:
-    def __init__(
-        self,
-        az_cli_auth: bool,
-        sp_env_auth: bool,
-        browser_auth: bool,
-        managed_entity_auth: bool,
-        subscription_ids: list,
-        tenant_id: str,
-        region: str,
-    ):
-        logger.info("Instantiating Azure Provider ...")
-        self.region_config = self.__get_region_config__(region)
-        self.credentials = self.__get_credentials__(
+class AzureIdentityInfo(BaseModel):
+    identity_id: str = ""
+    identity_type: str = ""
+    tenant_ids: list[str] = []
+    domain: str = "Unknown tenant domain (missing AAD permissions)"
+    subscriptions: dict = {}
+
+
+class AzureRegionConfig(BaseModel):
+    name: str = ""
+    authority: str = None
+    base_url: str = ""
+    credential_scopes: list = []
+
+
+class AzureProvider(CloudProvider):
+    session: DefaultAzureCredential
+    identity: AzureIdentityInfo
+    audit_resources: Optional[Any]
+    audit_metadata: Optional[Any]
+    audit_config: dict
+    region_config: AzureRegionConfig
+
+    def __init__(self, arguments):
+        logger.info("Setting Azure session ...")
+        subscription_ids = arguments.subscription_ids
+
+        logger.info("Checking if any credentials mode is set ...")
+        az_cli_auth = arguments.az_cli_auth
+        sp_env_auth = arguments.sp_env_auth
+        browser_auth = arguments.browser_auth
+        managed_entity_auth = arguments.managed_identity_auth
+        tenant_id = arguments.tenant_id
+
+        logger.info("Checking if region is different than default one")
+        region = arguments.azure_region
+        self.validate_arguments(
             az_cli_auth, sp_env_auth, browser_auth, managed_entity_auth, tenant_id
         )
-        self.identity = self.__get_identity_info__(
-            self.credentials,
+        self.region_config = self.setup_region_config(region)
+        self.session = self.setup_session(
+            az_cli_auth, sp_env_auth, browser_auth, managed_entity_auth, tenant_id
+        )
+        self.identity = self.setup_identity(
             az_cli_auth,
             sp_env_auth,
             browser_auth,
             managed_entity_auth,
             subscription_ids,
         )
+        if not arguments.only_logs:
+            self.print_credentials()
 
-    def __get_region_config__(self, region):
-        return get_regions_config(region)
+    def validate_arguments(
+        self, az_cli_auth, sp_env_auth, browser_auth, managed_entity_auth, tenant_id
+    ):
+        if (
+            not az_cli_auth
+            and not sp_env_auth
+            and not browser_auth
+            and not managed_entity_auth
+        ):
+            raise Exception(
+                "Azure provider requires at least one authentication method set: [--az-cli-auth | --sp-env-auth | --browser-auth | --managed-identity-auth]"
+            )
+        if (not browser_auth and tenant_id) or (browser_auth and not tenant_id):
+            raise Exception(
+                "Azure Tenant ID (--tenant-id) is required only for browser authentication mode"
+            )
 
-    def __get_credentials__(
+    def setup_region_config(self, region):
+        config = get_regions_config(region)
+        return AzureRegionConfig(
+            name=region,
+            authority=config["authority"],
+            base_url=config["base_url"],
+            credential_scopes=config["credential_scopes"],
+        )
+
+    def print_credentials(self):
+        printed_subscriptions = []
+        for key, value in self.identity.subscriptions.items():
+            intermediate = key + " : " + value
+            printed_subscriptions.append(intermediate)
+        report = f"""
+This report is being generated using the identity below:
+
+Azure Tenant IDs: {Fore.YELLOW}[{" ".join(self.identity.tenant_ids)}]{Style.RESET_ALL} Azure Tenant Domain: {Fore.YELLOW}[{self.identity.domain}]{Style.RESET_ALL} Azure Region: {Fore.YELLOW}[{self.region_config.name}]{Style.RESET_ALL}
+Azure Subscriptions: {Fore.YELLOW}{printed_subscriptions}{Style.RESET_ALL}
+Azure Identity Type: {Fore.YELLOW}[{self.identity.identity_type}]{Style.RESET_ALL} Azure Identity ID: {Fore.YELLOW}[{self.identity.identity_id}]{Style.RESET_ALL}
+"""
+        print(report)
+
+    def setup_session(
         self, az_cli_auth, sp_env_auth, browser_auth, managed_entity_auth, tenant_id
     ):
         # Browser auth creds cannot be set with DefaultAzureCredentials()
         if not browser_auth:
             if sp_env_auth:
-                self.__check_sp_creds_env_vars__()
+                self.__check_service_principal_creds_env_vars__()
             try:
                 # Since the input vars come as True when it is wanted to be used, we need to inverse it since
                 # DefaultAzureCredential sets the auth method excluding the others
@@ -59,7 +127,7 @@ class Azure_Provider:
                     # Azure Auth using PowerShell is not supported
                     exclude_powershell_credential=True,
                     # set Authority of a Microsoft Entra endpoint
-                    authority=self.region_config["authority"],
+                    authority=self.region_config.authority,
                 )
             except Exception as error:
                 logger.critical("Failed to retrieve azure credentials")
@@ -79,7 +147,7 @@ class Azure_Provider:
 
         return credentials
 
-    def __check_sp_creds_env_vars__(self):
+    def __check_service_principal_creds_env_vars__(self):
         logger.info(
             "Azure provider: checking service principal environment variables  ..."
         )
@@ -90,15 +158,15 @@ class Azure_Provider:
                 )
                 sys.exit(1)
 
-    def __get_identity_info__(
+    def setup_identity(
         self,
-        credentials,
         az_cli_auth,
         sp_env_auth,
         browser_auth,
         managed_entity_auth,
         subscription_ids,
     ):
+        credentials = self.session
         identity = AzureIdentityInfo()
 
         # If credentials comes from service principal or browser, if the required permissions are assigned
@@ -162,8 +230,8 @@ class Azure_Provider:
             )
             subscriptions_client = SubscriptionClient(
                 credential=credentials,
-                base_url=self.region_config["base_url"],
-                credential_scopes=self.region_config["credential_scopes"],
+                base_url=self.region_config.base_url,
+                credential_scopes=self.region_config.credential_scopes,
             )
             if not subscription_ids:
                 logger.info("Scanning all the Azure subscriptions...")
@@ -200,12 +268,3 @@ class Azure_Provider:
             sys.exit(1)
 
         return identity
-
-    def get_credentials(self):
-        return self.credentials
-
-    def get_identity(self):
-        return self.identity
-
-    def get_region_config(self):
-        return self.region_config

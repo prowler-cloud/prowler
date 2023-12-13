@@ -28,7 +28,7 @@ from prowler.providers.azure.azure_provider import Azure_Provider
 from prowler.providers.azure.lib.audit_info.audit_info import azure_audit_info
 from prowler.providers.azure.lib.audit_info.models import (
     Azure_Audit_Info,
-    Azure_Region_Config,
+    AzureRegionConfig,
 )
 from prowler.providers.azure.lib.exception.exception import AzureException
 from prowler.providers.gcp.gcp_provider import GCP_Provider
@@ -67,7 +67,7 @@ GCP Account: {Fore.YELLOW}[{profile}]{Style.RESET_ALL}  GCP Project IDs: {Fore.Y
         report = f"""
 This report is being generated using the identity below:
 
-Azure Tenant IDs: {Fore.YELLOW}[{" ".join(audit_info.identity.tenant_ids)}]{Style.RESET_ALL} Azure Tenant Domain: {Fore.YELLOW}[{audit_info.identity.domain}]{Style.RESET_ALL} Azure Region: {Fore.YELLOW}[{audit_info.azure_region_config.name}]{Style.RESET_ALL}
+Azure Tenant IDs: {Fore.YELLOW}[{" ".join(audit_info.identity.tenant_ids)}]{Style.RESET_ALL} Azure Tenant Domain: {Fore.YELLOW}[{audit_info.identity.domain}]{Style.RESET_ALL} Azure Region: {Fore.YELLOW}[{audit_info.AzureRegionConfig.name}]{Style.RESET_ALL}
 Azure Subscriptions: {Fore.YELLOW}{printed_subscriptions}{Style.RESET_ALL}
 Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RESET_ALL} Azure Identity ID: {Fore.YELLOW}[{audit_info.identity.identity_id}]{Style.RESET_ALL}
 """
@@ -316,15 +316,17 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
         azure_audit_info.credentials = azure_provider.get_credentials()
         azure_audit_info.identity = azure_provider.get_identity()
         region_config = azure_provider.get_region_config()
-        azure_audit_info.azure_region_config = Azure_Region_Config(
+        azure_audit_info.AzureRegionConfig = AzureRegionConfig(
             name=region,
             authority=region_config["authority"],
             base_url=region_config["base_url"],
             credential_scopes=region_config["credential_scopes"],
         )
 
-        if not arguments.get("only_logs"):
-            self.print_azure_credentials(azure_audit_info)
+        # TODO - remove it
+        # this logic is being processed in general provider
+        # if not arguments.get("only_logs"):
+        #     self.print_azure_credentials(azure_audit_info)
 
         return azure_audit_info
 
@@ -349,8 +351,10 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
             gcp_audit_info.project_ids,
         ) = gcp_provider.get_credentials()
 
-        if not arguments.get("only_logs"):
-            self.print_gcp_credentials(gcp_audit_info)
+        # TODO - remove it
+        # this logic is being processed in general provider
+        # if not arguments.get("only_logs"):
+        #     self.print_gcp_credentials(gcp_audit_info)
 
         return gcp_audit_info
 

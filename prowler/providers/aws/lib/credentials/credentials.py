@@ -12,12 +12,8 @@ def validate_aws_credentials(
     session: session, input_regions: list, sts_endpoint_region: str = None
 ) -> dict:
     try:
-        # For a valid STS GetCallerIdentity we have to use the right AWS Region
-        # Check if the --sts-endpoint-region is set
-        if sts_endpoint_region is not None:
-            aws_region = sts_endpoint_region
         # If there is no region passed with -f/--region/--filter-region
-        elif input_regions is None or len(input_regions) == 0:
+        if input_regions is None or len(input_regions) == 0:
             # If you have a region configured in your AWS config or credentials file
             if session.region_name is not None:
                 aws_region = session.region_name
