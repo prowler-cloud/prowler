@@ -4,8 +4,10 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
 from pydantic import BaseModel, ValidationError
+from rich.progress import Task
 
 from prowler.lib.logger import logger
+from prowler.lib.utils.ui import task_progress, title_bar
 
 
 class Code(BaseModel):
@@ -60,6 +62,11 @@ class Check_Metadata_Model(BaseModel):
 class Check(ABC, Check_Metadata_Model):
     """Prowler Check"""
 
+    task_display_message: str = ""
+    total_task_items: int = 0
+    title_bar_task: Task = None
+    progress_task: Task = None
+
     def __init__(self, **data):
         """Check's init function. Calls the CheckMetadataModel init."""
         # Parse the Check's metadata file
@@ -71,6 +78,25 @@ class Check(ABC, Check_Metadata_Model):
         data = Check_Metadata_Model.parse_file(metadata_file).dict()
         # Calls parents init function
         super().__init__(**data)
+
+        self.title_bar_task = title_bar.add_task(
+            f"Executing {self.CheckTitle}...", start=False
+        )
+        self.progress_task = task_progress.add_task(
+            self.task_display_message, total=self.total_task_items, visible=False
+        )
+
+    def clear_ui(self):
+        title_bar.remove_task(self.title_bar_task)
+        task_progress.remove_task(self.progress_task)
+
+    def increment_task_progress(self):
+        task_progress.update(self.progress_task, advance=1)
+
+    def start_task(self, message, count):
+        task_progress.update(
+            task_id=self.progress_task, description=message, total=count, visible=True
+        )
 
     def metadata(self) -> dict:
         """Return the JSON representation of the check's metadata"""

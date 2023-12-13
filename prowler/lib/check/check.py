@@ -10,16 +10,18 @@ from pkgutil import walk_packages
 from types import ModuleType
 from typing import Any
 
-from alive_progress import alive_bar
 from colorama import Fore, Style
+from rich.live import Live
+from rich.style import Style as RichStyle
+from rich.text import Text
 
 import prowler
-from prowler.config.config import orange_color
 from prowler.lib.check.compliance_models import load_compliance_framework
 from prowler.lib.check.custom_checks_metadata import update_check_metadata
 from prowler.lib.check.models import Check, load_check_metadata
 from prowler.lib.logger import logger
 from prowler.lib.outputs.outputs import report
+from prowler.lib.utils.ui import clear_progress_tasks, overall_progress, progress_table
 from prowler.lib.utils.utils import open_file, parse_json_file
 from prowler.providers.aws.lib.allowlist.allowlist import allowlist_findings
 from prowler.providers.common.models import Audit_Metadata
@@ -492,20 +494,21 @@ def execute_checks(
         print(
             f"{Style.BRIGHT}Executing {checks_num} {check_noun}, please wait...{Style.RESET_ALL}\n"
         )
-        with alive_bar(
-            total=len(checks_to_execute),
-            ctrl_c=False,
-            bar="blocks",
-            spinner="classic",
-            stats=False,
-            enrich_print=False,
-        ) as bar:
+        with Live(progress_table, refresh_per_second=10):
+            # Create a task with total equal to the number of checks
+            task_id = overall_progress.add_task("Scanning...", total=checks_num)
+
             for check_name in checks_to_execute:
                 # Recover service from check name
                 service = check_name.split("_")[0]
-                bar.title = (
-                    f"-> Scanning {orange_color}{service}{Style.RESET_ALL} service"
+                # Create a Rich Text object with styling
+                service_text = Text(service, style=RichStyle(color="red"))
+                description = (
+                    Text("-> Scanning ", style="bold")
+                    + service_text
+                    + Text(" service", style="bold")
                 )
+                overall_progress.update(task_id, description=description)
                 try:
                     check_findings = execute(
                         service,
@@ -518,6 +521,8 @@ def execute_checks(
                         custom_checks_metadata,
                     )
                     all_findings.extend(check_findings)
+                    # Clear the tasks from the progress and title bars
+                    clear_progress_tasks()
 
                 # If check does not exists in the provider or is from another provider
                 except ModuleNotFoundError:
@@ -528,8 +533,13 @@ def execute_checks(
                     logger.error(
                         f"{check_name} - {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
-                bar()
-            bar.title = f"-> {Fore.GREEN}Scan completed!{Style.RESET_ALL}"
+                # Update the progress bar
+                overall_progress.update(task_id, advance=1)
+            overall_progress.update(
+                task_id,
+                completed=checks_num,
+                description=f"-> {Fore.GREEN}Scan completed!{Style.RESET_ALL}",
+            )
     return all_findings
 
 

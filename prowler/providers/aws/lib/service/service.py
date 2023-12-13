@@ -1,6 +1,7 @@
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from prowler.lib.logger import logger
+from prowler.lib.utils.ui import task_progress, title_bar
 from prowler.providers.aws.aws_provider import (
     generate_regional_clients,
     get_default_region,
@@ -49,6 +50,14 @@ class AWSService:
         # Thread pool for __threading_call__
         self.thread_pool = ThreadPoolExecutor(max_workers=MAX_WORKERS)
 
+        # Progress bar to add tasks to
+        self.progress = task_progress
+        self.progress_tasks = []
+        self.title_bar = title_bar
+        self.title_bar_task = title_bar.add_task(
+            f"Intializing {self.service.upper()} service:", start=False
+        )
+
     def __get_session__(self):
         return self.session
 
@@ -73,6 +82,10 @@ class AWSService:
                 f"{self.service.upper()} - Starting threads for '{call_name}' function to process {item_count} items..."
             )
 
+        # Setup the progress bar
+        task_id = self.progress.add_task(f"- {call_name}...", total=item_count)
+        self.progress_tasks.append(task_id)
+
         # Submit tasks to the thread pool
         futures = [self.thread_pool.submit(call, item) for item in items]
 
@@ -80,6 +93,24 @@ class AWSService:
         for future in as_completed(futures):
             try:
                 future.result()  # Raises exceptions from the thread, if any
+                # Update the progress bar
+                self.progress.update(task_id, advance=1)
             except Exception:
                 # Handle exceptions if necessary
                 pass  # Replace 'pass' with any additional exception handling logic. Currently handled within the called function
+
+        # Make the task disappear once completed
+        # self.progress.remove_task(task_id)
+
+    def __update_progress_is_complete__(self):
+        title_bar.update(
+            self.title_bar_task,
+            description=f"Completed initlization for {self.service.upper()}",
+        )
+        for task_id in self.progress_tasks:
+            self.progress.remove_task(task_id)
+
+    def __clear_ui__(self):
+        self.title_bar.remove_task(self.title_bar_task)
+        for task_id in self.progress_tasks:
+            self.progress.remove_task(task_id)
