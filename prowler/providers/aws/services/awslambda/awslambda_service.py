@@ -1,6 +1,7 @@
 import io
 import json
 import zipfile
+from concurrent.futures import as_completed
 from enum import Enum
 from typing import Any, Optional
 
@@ -23,15 +24,6 @@ class Lambda(AWSService):
         self.__threading_call__(
             self.__list_tags_for_resource__, self.functions.values()
         )
-
-        # We only want to retrieve the Lambda code if the
-        # awslambda_function_no_secrets_in_code check is set
-        if (
-            "awslambda_function_no_secrets_in_code"
-            in audit_info.audit_metadata.expected_checks
-        ):
-            self.__threading_call__(self.__get_function__)
-
         self.__threading_call__(self.__get_policy__, self.functions.values())
         self.__threading_call__(
             self.__get_function_url_config__, self.functions.values()
@@ -74,16 +66,37 @@ class Lambda(AWSService):
                 f" {error}"
             )
 
-    def __get_function__(self, function):
+    def __get_function_code__(self):
+        logger.info("Lambda - Getting Function Code...")
+        # Use a thread pool handle the queueing and execution of the __fetch_function_code__ tasks, up to max_workers tasks concurrently.
+        lambda_functions_to_fetch = {
+            self.thread_pool.submit(
+                self.__fetch_function_code__, function.name, function.region
+            ): function
+            for function in self.functions.values()
+        }
+
+        for fetched_lambda_code in as_completed(lambda_functions_to_fetch):
+            function = lambda_functions_to_fetch[fetched_lambda_code]
+            try:
+                function_code = fetched_lambda_code.result()
+                if function_code:
+                    yield function, function_code
+            except Exception as error:
+                logger.error(
+                    f"{function.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+
+    def __fetch_function_code__(self, function_name, function_region):
         try:
-            regional_client = self.regional_clients[function.region]
+            regional_client = self.regional_clients[function_region]
             function_information = regional_client.get_function(
-                FunctionName=function.name
+                FunctionName=function_name
             )
             if "Location" in function_information["Code"]:
                 code_location_uri = function_information["Code"]["Location"]
                 raw_code_zip = requests.get(code_location_uri).content
-                self.functions[function.arn].code = LambdaCode(
+                return LambdaCode(
                     location=code_location_uri,
                     code_zip=zipfile.ZipFile(io.BytesIO(raw_code_zip)),
                 )
@@ -93,6 +106,7 @@ class Lambda(AWSService):
                 f" {error.__class__.__name__}[{error.__traceback__.tb_lineno}]:"
                 f" {error}"
             )
+            raise
 
     def __get_policy__(self, function):
         try:
