@@ -31,9 +31,10 @@ The limited storage that AWS CloudShell provides for the user's home directory c
 ```shell
 git clone https://github.com/prowler-cloud/prowler.git
 cd prowler
-git checkout master
 pip install poetry
 mkdir /tmp/pypoetry
 poetry config cache-dir /tmp/pypoetry
 poetry shell
+poetry install
+python prowler.py -v
 ```
