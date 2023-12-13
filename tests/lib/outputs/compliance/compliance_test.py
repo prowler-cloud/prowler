@@ -66,6 +66,15 @@ CIS_1_5_AWS = Compliance_Base_Model(
     ],
 )
 
+NOT_PRESENT_COMPLIANCE_NAME = "not_present_compliance_name"
+NOT_PRESENT_COMPLIANCE = Compliance_Base_Model(
+    Framework="NOT_EXISTENT",
+    Provider="NOT_EXISTENT",
+    Version="NOT_EXISTENT",
+    Description="NOT_EXISTENT",
+    Requirements=[],
+)
+
 
 class TestCompliance:
     def test_get_check_compliance_frameworks_all_none(self):
@@ -86,9 +95,17 @@ class TestCompliance:
         bulk_checks_metadata[check_id] = MagicMock()
         bulk_checks_metadata[check_id].Compliance = bulk_check_metadata
         input_compliance_frameworks = [CIS_1_4_AWS_NAME, CIS_1_5_AWS_NAME]
-        assert (
-            get_check_compliance_frameworks_in_input(
-                check_id, bulk_checks_metadata, input_compliance_frameworks
-            )
-            == bulk_check_metadata
-        )
+        assert get_check_compliance_frameworks_in_input(
+            check_id, bulk_checks_metadata, input_compliance_frameworks
+        ) == [CIS_1_4_AWS, CIS_1_5_AWS]
+
+    def test_get_check_compliance_frameworks_two_of_three(self):
+        check_id = "test-check"
+        bulk_check_metadata = [CIS_1_4_AWS, CIS_1_5_AWS, NOT_PRESENT_COMPLIANCE]
+        bulk_checks_metadata = {}
+        bulk_checks_metadata[check_id] = MagicMock()
+        bulk_checks_metadata[check_id].Compliance = bulk_check_metadata
+        input_compliance_frameworks = [CIS_1_4_AWS_NAME, CIS_1_5_AWS_NAME]
+        assert get_check_compliance_frameworks_in_input(
+            check_id, bulk_checks_metadata, input_compliance_frameworks
+        ) == [CIS_1_4_AWS, CIS_1_5_AWS]
