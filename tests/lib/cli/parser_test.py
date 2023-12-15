@@ -5,6 +5,7 @@ import pytest
 from mock import patch
 
 from prowler.lib.cli.parser import ProwlerArgumentParser
+from prowler.providers.aws.lib.arguments.arguments import validate_bucket
 from prowler.providers.azure.lib.arguments.arguments import validate_azure_region
 
 prowler_command = "prowler"
@@ -1138,3 +1139,28 @@ class Test_Parser:
             match=f"Region {invalid_region} not allowed, allowed regions are {' '.join(expected_regions)}",
         ):
             validate_azure_region(invalid_region)
+
+    def test_validate_bucket_invalid_bucket_names(self):
+        bad_bucket_names = [
+            "xn--bucket-name",
+            "mrryadfpcwlscicvnrchmtmyhwrvzkgfgdxnlnvaaummnywciixnzvycnzmhhpwb",
+            "192.168.5.4",
+            "bucket-name-s3alias",
+            "bucket-name-s3alias-",
+            "bucket-n$ame",
+            "bu",
+        ]
+        for bucket_name in bad_bucket_names:
+            with pytest.raises(ArgumentTypeError) as argument_error:
+                validate_bucket(bucket_name)
+
+            assert argument_error.type == ArgumentTypeError
+            assert (
+                argument_error.value.args[0]
+                == "Bucket name must be valid (https://docs.aws.amazon.com/AmazonS3/latest/userguide/bucketnamingrules.html)"
+            )
+
+    def test_validate_bucket_valid_bucket_names(self):
+        valid_bucket_names = ["bucket-name" "test" "test-test-test"]
+        for bucket_name in valid_bucket_names:
+            assert validate_bucket(bucket_name) == bucket_name
