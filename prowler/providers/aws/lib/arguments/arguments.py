@@ -84,6 +84,11 @@ def init_parser(self):
         action="store_true",
         help="Skip updating previous findings of Prowler in Security Hub",
     )
+    aws_security_hub_subparser.add_argument(
+        "--send-sh-only-fails",
+        action="store_true",
+        help="Send only Prowler failed findings to SecurityHub",
+    )
     # AWS Quick Inventory
     aws_quick_inventory_subparser = aws_parser.add_argument_group("Quick Inventory")
     aws_quick_inventory_subparser.add_argument(
