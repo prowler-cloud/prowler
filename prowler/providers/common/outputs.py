@@ -134,6 +134,7 @@ class Aws_Output_Options(Provider_Output_Options):
 
         # Security Hub Outputs
         self.security_hub_enabled = arguments.security_hub
+        self.send_sh_only_fails = arguments.send_sh_only_fails
         if arguments.security_hub:
             if not self.output_modes:
                 self.output_modes = ["json-asff"]

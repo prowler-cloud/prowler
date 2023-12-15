@@ -882,6 +882,12 @@ class Test_Parser:
         parsed = self.parser.parse(command)
         assert parsed.skip_sh_update
 
+    def test_aws_parser_send_only_fail(self):
+        argument = "--send-sh-only-fails"
+        command = [prowler_command, argument]
+        parsed = self.parser.parse(command)
+        assert parsed.send_sh_only_fails
+
     def test_aws_parser_quick_inventory_short(self):
         argument = "-i"
         command = [prowler_command, argument]
