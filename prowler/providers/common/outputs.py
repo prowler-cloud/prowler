@@ -69,7 +69,8 @@ class Provider_Output_Options:
         if arguments.output_directory:
             if not isdir(arguments.output_directory):
                 if arguments.output_modes:
-                    makedirs(arguments.output_directory)
+                    # exist_ok is set to True not to raise FileExistsError
+                    makedirs(arguments.output_directory, exist_ok=True)
 
 
 class Azure_Output_Options(Provider_Output_Options):
