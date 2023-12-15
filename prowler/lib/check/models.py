@@ -7,7 +7,7 @@ from pydantic import BaseModel, ValidationError
 from rich.progress import Task
 
 from prowler.lib.logger import logger
-from prowler.lib.utils.ui import progress_manager
+from prowler.lib.ui.live_display import live_display
 
 
 class Code(BaseModel):
@@ -79,28 +79,28 @@ class Check(ABC, Check_Metadata_Model):
         # Calls parents init function
         super().__init__(**data)
 
-        current_manager = progress_manager.get_current_manager()
+        current_section = live_display.get_current_section()
         # Cant do this as it messes with self.metdata()
-        # self.title_bar = current_manager.title_bar
-        # self.task_progress = current_manager.task_progress
+        # self.title_bar = current_section.title_bar
+        # self.task_progress = current_section.task_progress
 
-        self.title_bar_task = current_manager.title_bar.add_task(
+        self.title_bar_task = current_section.title_bar.add_task(
             f"{self.CheckTitle}...", start=False
         )
 
     def increment_task_progress(self):
-        current_manager = progress_manager.get_current_manager()
-        current_manager.task_progress.update(self.progress_task, advance=1)
+        current_section = live_display.get_current_section()
+        current_section.task_progress.update(self.progress_task, advance=1)
 
     def start_task(self, message, count):
-        current_manager = progress_manager.get_current_manager()
-        self.progress_task = current_manager.task_progress.add_task(
-            task_id=self.progress_task, description=message, total=count, visible=True
+        current_section = live_display.get_current_section()
+        self.progress_task = current_section.task_progress.add_task(
+            description=message, total=count, visible=True
         )
 
     def update_title_with_findings(self, findings):
-        current_manager = progress_manager.get_current_manager()
-        current_manager.task_progress.remove_task(self.progress_task)
+        current_section = live_display.get_current_section()
+        current_section.task_progress.remove_task(self.progress_task)
         total_failed = len([report for report in findings if report.status == "FAIL"])
         total_checked = len(findings)
         if total_failed == 0:
@@ -111,7 +111,7 @@ class Check(ABC, Check_Metadata_Model):
             message = (
                 f"{self.CheckTitle} [fail]{total_failed}/{total_checked} failed![/fail]"
             )
-        current_manager.title_bar.update(
+        current_section.title_bar.update(
             task_id=self.title_bar_task, description=message
         )
 

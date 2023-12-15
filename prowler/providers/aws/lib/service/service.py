@@ -1,7 +1,7 @@
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from prowler.lib.logger import logger
-from prowler.lib.utils.ui import progress_manager
+from prowler.lib.ui.live_display import live_display
 from prowler.providers.aws.aws_provider import (
     generate_regional_clients,
     get_default_region,
@@ -51,10 +51,10 @@ class AWSService:
         self.thread_pool = ThreadPoolExecutor(max_workers=MAX_WORKERS)
 
         # Progress bar to add tasks to
-        current_manager = progress_manager.get_current_manager()
-        self.progress = current_manager.task_progress
+        current_section = live_display.get_current_section()
+        self.progress = current_section.task_progress
         self.progress_tasks = []
-        self.title_bar = current_manager.title_bar
+        self.title_bar = current_section.title_bar
 
         self.title_bar_task = self.title_bar.add_task(
             f"Intializing {self.service} service:", start=False, task_type="Service"

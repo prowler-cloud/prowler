@@ -11,15 +11,15 @@ from types import ModuleType
 from typing import Any
 
 from colorama import Fore, Style
-from rich.live import Live
 
 import prowler
 from prowler.lib.check.compliance_models import load_compliance_framework
 from prowler.lib.check.custom_checks_metadata import update_check_metadata
+from prowler.lib.check.managers import ExecutionManager
 from prowler.lib.check.models import Check, load_check_metadata
 from prowler.lib.logger import logger
 from prowler.lib.outputs.outputs import report
-from prowler.lib.utils.ui import progress_manager
+from prowler.lib.ui.live_display import live_display
 from prowler.lib.utils.utils import open_file, parse_json_file
 from prowler.providers.aws.lib.allowlist.allowlist import allowlist_findings
 from prowler.providers.common.models import Audit_Metadata
@@ -492,44 +492,44 @@ def execute_checks(
         print(
             f"{Style.BRIGHT}Executing {checks_num} {check_noun}, please wait...{Style.RESET_ALL}\n"
         )
+        execution_manager = ExecutionManager(provider, checks_to_execute)
+        total_checks = execution_manager.total_checks_per_service()
+        completed_checks = {service: 0 for service in total_checks}
+        service_findings = []
+        for service, check_name in execution_manager.execute_checks():
+            try:
+                check_findings = execute(
+                    service,
+                    check_name,
+                    provider,
+                    audit_output_options,
+                    audit_info,
+                    services_executed,
+                    checks_executed,
+                    custom_checks_metadata,
+                )
+                all_findings.extend(check_findings)
+                service_findings.extend(check_findings)
+                # Update the completed checks count
+                completed_checks[service] += 1
 
-        check_dict = create_check_service_dict(checks_to_execute)
+                # Check if all checks for the service are completed
+                if completed_checks[service] == total_checks[service]:
+                    # All checks for the service are completed
+                    # Add a summary table or perform other actions
+                    live_display.add_summary_table_for_service(service_findings)
+                    # Clear service_findings
+                    service_findings = []
 
-        for service in check_dict:
-            service_check_num = len(check_dict[service])
-            progress_manager.create_manager(service, service_check_num)
-            current_manager = progress_manager.get_current_manager()
-            with Live(
-                current_manager.progress_table,
-                console=current_manager.console,
-                refresh_per_second=10,
-            ):
-                for check_name in check_dict[service]:
-                    try:
-                        check_findings = execute(
-                            service,
-                            check_name,
-                            provider,
-                            audit_output_options,
-                            audit_info,
-                            services_executed,
-                            checks_executed,
-                            custom_checks_metadata,
-                        )
-                        all_findings.extend(check_findings)
-
-                    # If check does not exists in the provider or is from another provider
-                    except ModuleNotFoundError:
-                        logger.error(
-                            f"Check '{check_name}' was not found for the {provider.upper()} provider"
-                        )
-                    except Exception as error:
-                        logger.error(
-                            f"{check_name} - {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                        )
-                    # Update the progress bar
-                    current_manager.clear_service_init_titles()
-                    current_manager.increment_progress()
+            # If check does not exists in the provider or is from another provider
+            except ModuleNotFoundError:
+                logger.error(
+                    f"Check '{check_name}' was not found for the {provider.upper()} provider"
+                )
+            except Exception as error:
+                logger.error(
+                    f"{check_name} - {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
     return all_findings
 
 
