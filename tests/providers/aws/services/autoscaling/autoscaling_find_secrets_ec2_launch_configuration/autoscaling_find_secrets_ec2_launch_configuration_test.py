@@ -2,61 +2,29 @@ from os import path
 from pathlib import Path
 from unittest import mock
 
-from boto3 import client, session
+from boto3 import client
 from moto import mock_autoscaling
 
-from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
-from prowler.providers.common.models import Audit_Metadata
-
-AWS_REGION = "us-east-1"
-AWS_ACCOUNT_NUMBER = "123456789012"
+from tests.providers.aws.audit_info_utils import (
+    AWS_REGION_US_EAST_1,
+    set_mocked_aws_audit_info,
+)
 
 ACTUAL_DIRECTORY = Path(path.dirname(path.realpath(__file__)))
 FIXTURES_DIR_NAME = "fixtures"
 
 
 class Test_autoscaling_find_secrets_ec2_launch_configuration:
-    def set_mocked_audit_info(self):
-        audit_info = AWS_Audit_Info(
-            session_config=None,
-            original_session=None,
-            audit_session=session.Session(
-                profile_name=None,
-                botocore_session=None,
-            ),
-            audited_account=AWS_ACCOUNT_NUMBER,
-            audited_account_arn=f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root",
-            audited_user_id=None,
-            audited_partition="aws",
-            audited_identity_arn=None,
-            profile=None,
-            profile_region=None,
-            credentials=None,
-            assumed_role_info=None,
-            audited_regions=["us-east-1", "eu-west-1"],
-            organizations_metadata=None,
-            audit_resources=None,
-            mfa_enabled=False,
-            audit_metadata=Audit_Metadata(
-                services_scanned=0,
-                expected_checks=[],
-                completed_checks=0,
-                audit_progress=0,
-            ),
-        )
-
-        return audit_info
-
     @mock_autoscaling
     def test_no_autoscaling(self):
-        autoscaling_client = client("autoscaling", region_name=AWS_REGION)
+        autoscaling_client = client("autoscaling", region_name=AWS_REGION_US_EAST_1)
         autoscaling_client.launch_configurations = []
 
         from prowler.providers.aws.services.autoscaling.autoscaling_service import (
             AutoScaling,
         )
 
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -79,7 +47,7 @@ class Test_autoscaling_find_secrets_ec2_launch_configuration:
     def test_one_autoscaling_with_no_secrets(self):
         # Include launch_configurations to check
         launch_configuration_name = "tester"
-        autoscaling_client = client("autoscaling", region_name=AWS_REGION)
+        autoscaling_client = client("autoscaling", region_name=AWS_REGION_US_EAST_1)
         autoscaling_client.create_launch_configuration(
             LaunchConfigurationName=launch_configuration_name,
             ImageId="ami-12c6146b",
@@ -96,7 +64,7 @@ class Test_autoscaling_find_secrets_ec2_launch_configuration:
             AutoScaling,
         )
 
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -120,13 +88,13 @@ class Test_autoscaling_find_secrets_ec2_launch_configuration:
             )
             assert result[0].resource_id == launch_configuration_name
             assert result[0].resource_arn == launch_configuration_arn
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_US_EAST_1
 
     @mock_autoscaling
     def test_one_autoscaling_with_secrets(self):
         # Include launch_configurations to check
         launch_configuration_name = "tester"
-        autoscaling_client = client("autoscaling", region_name=AWS_REGION)
+        autoscaling_client = client("autoscaling", region_name=AWS_REGION_US_EAST_1)
         autoscaling_client.create_launch_configuration(
             LaunchConfigurationName=launch_configuration_name,
             ImageId="ami-12c6146b",
@@ -143,7 +111,7 @@ class Test_autoscaling_find_secrets_ec2_launch_configuration:
             AutoScaling,
         )
 
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -167,7 +135,7 @@ class Test_autoscaling_find_secrets_ec2_launch_configuration:
             )
             assert result[0].resource_id == launch_configuration_name
             assert result[0].resource_arn == launch_configuration_arn
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_US_EAST_1
 
     @mock_autoscaling
     def test_one_autoscaling_file_with_secrets(self):
@@ -178,7 +146,7 @@ class Test_autoscaling_find_secrets_ec2_launch_configuration:
         )
         secrets = f.read()
         launch_configuration_name = "tester"
-        autoscaling_client = client("autoscaling", region_name=AWS_REGION)
+        autoscaling_client = client("autoscaling", region_name=AWS_REGION_US_EAST_1)
         autoscaling_client.create_launch_configuration(
             LaunchConfigurationName="tester",
             ImageId="ami-12c6146b",
@@ -195,7 +163,7 @@ class Test_autoscaling_find_secrets_ec2_launch_configuration:
             AutoScaling,
         )
 
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -219,13 +187,13 @@ class Test_autoscaling_find_secrets_ec2_launch_configuration:
             )
             assert result[0].resource_id == launch_configuration_name
             assert result[0].resource_arn == launch_configuration_arn
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_US_EAST_1
 
     @mock_autoscaling
     def test_one_launch_configurations_without_user_data(self):
         # Include launch_configurations to check
         launch_configuration_name = "tester"
-        autoscaling_client = client("autoscaling", region_name=AWS_REGION)
+        autoscaling_client = client("autoscaling", region_name=AWS_REGION_US_EAST_1)
         autoscaling_client.create_launch_configuration(
             LaunchConfigurationName=launch_configuration_name,
             ImageId="ami-12c6146b",
@@ -241,7 +209,7 @@ class Test_autoscaling_find_secrets_ec2_launch_configuration:
             AutoScaling,
         )
 
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -265,7 +233,7 @@ class Test_autoscaling_find_secrets_ec2_launch_configuration:
             )
             assert result[0].resource_id == launch_configuration_name
             assert result[0].resource_arn == launch_configuration_arn
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_US_EAST_1
 
     @mock_autoscaling
     def test_one_autoscaling_file_with_secrets_gzip(self):
@@ -277,7 +245,7 @@ class Test_autoscaling_find_secrets_ec2_launch_configuration:
 
         secrets = f.read()
         launch_configuration_name = "tester"
-        autoscaling_client = client("autoscaling", region_name=AWS_REGION)
+        autoscaling_client = client("autoscaling", region_name=AWS_REGION_US_EAST_1)
         autoscaling_client.create_launch_configuration(
             LaunchConfigurationName="tester",
             ImageId="ami-12c6146b",
@@ -294,7 +262,7 @@ class Test_autoscaling_find_secrets_ec2_launch_configuration:
             AutoScaling,
         )
 
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -318,4 +286,4 @@ class Test_autoscaling_find_secrets_ec2_launch_configuration:
             )
             assert result[0].resource_id == launch_configuration_name
             assert result[0].resource_arn == launch_configuration_arn
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_US_EAST_1

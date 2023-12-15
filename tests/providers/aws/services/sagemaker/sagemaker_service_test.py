@@ -2,25 +2,22 @@ from unittest.mock import patch
 from uuid import uuid4
 
 import botocore
-from boto3 import session
 
-from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.aws.services.sagemaker.sagemaker_service import SageMaker
-from prowler.providers.common.models import Audit_Metadata
-
-AWS_ACCOUNT_NUMBER = "123456789012"
-AWS_REGION = "eu-west-1"
+from tests.providers.aws.audit_info_utils import (
+    AWS_ACCOUNT_NUMBER,
+    AWS_REGION_EU_WEST_1,
+    set_mocked_aws_audit_info,
+)
 
 test_notebook_instance = "test-notebook-instance"
-notebook_instance_arn = f"arn:aws:sagemaker:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:notebook-instance/{test_notebook_instance}"
+notebook_instance_arn = f"arn:aws:sagemaker:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:notebook-instance/{test_notebook_instance}"
 test_model = "test-model"
 test_arn_model = (
-    f"arn:aws:sagemaker:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:model/{test_model}"
+    f"arn:aws:sagemaker:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:model/{test_model}"
 )
 test_training_job = "test-training-job"
-test_arn_training_job = (
-    f"arn:aws:sagemaker:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:training-job/{test_model}"
-)
+test_arn_training_job = f"arn:aws:sagemaker:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:training-job/{test_model}"
 subnet_id = "subnet-" + str(uuid4())
 kms_key_id = str(uuid4())
 
@@ -93,10 +90,12 @@ def mock_make_api_call(self, operation_name, kwarg):
     return make_api_call(self, operation_name, kwarg)
 
 
-def mock_generate_regional_clients(service, audit_info, _):
-    regional_client = audit_info.audit_session.client(service, region_name=AWS_REGION)
-    regional_client.region = AWS_REGION
-    return {AWS_REGION: regional_client}
+def mock_generate_regional_clients(service, audit_info):
+    regional_client = audit_info.audit_session.client(
+        service, region_name=AWS_REGION_EU_WEST_1
+    )
+    regional_client.region = AWS_REGION_EU_WEST_1
+    return {AWS_REGION_EU_WEST_1: regional_client}
 
 
 @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
@@ -105,95 +104,64 @@ def mock_generate_regional_clients(service, audit_info, _):
     new=mock_generate_regional_clients,
 )
 class Test_SageMaker_Service:
-    # Mocked Audit Info
-    def set_mocked_audit_info(self):
-        audit_info = AWS_Audit_Info(
-            session_config=None,
-            original_session=None,
-            audit_session=session.Session(
-                profile_name=None,
-                botocore_session=None,
-            ),
-            audited_account=AWS_ACCOUNT_NUMBER,
-            audited_account_arn=f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root",
-            audited_user_id=None,
-            audited_partition="aws",
-            audited_identity_arn=None,
-            profile=None,
-            profile_region=None,
-            credentials=None,
-            assumed_role_info=None,
-            audited_regions=None,
-            organizations_metadata=None,
-            audit_resources=None,
-            mfa_enabled=False,
-            audit_metadata=Audit_Metadata(
-                services_scanned=0,
-                expected_checks=[],
-                completed_checks=0,
-                audit_progress=0,
-            ),
-        )
-        return audit_info
-
     # Test SageMaker Service
     def test_service(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         sagemaker = SageMaker(audit_info)
         assert sagemaker.service == "sagemaker"
 
     # Test SageMaker client
     def test_client(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         sagemaker = SageMaker(audit_info)
         for reg_client in sagemaker.regional_clients.values():
             assert reg_client.__class__.__name__ == "SageMaker"
 
     # Test SageMaker session
     def test__get_session__(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         sagemaker = SageMaker(audit_info)
         assert sagemaker.session.__class__.__name__ == "Session"
 
     # Test SageMaker list notebook instances
     def test_list_notebook_instances(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         sagemaker = SageMaker(audit_info)
         assert len(sagemaker.sagemaker_notebook_instances) == 1
         assert sagemaker.sagemaker_notebook_instances[0].name == test_notebook_instance
         assert sagemaker.sagemaker_notebook_instances[0].arn == notebook_instance_arn
-        assert sagemaker.sagemaker_notebook_instances[0].region == AWS_REGION
+        assert sagemaker.sagemaker_notebook_instances[0].region == AWS_REGION_EU_WEST_1
         assert sagemaker.sagemaker_notebook_instances[0].tags == [
             {"Key": "test", "Value": "test"},
         ]
 
     # Test SageMaker list models
     def test_list_models(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         sagemaker = SageMaker(audit_info)
         assert len(sagemaker.sagemaker_models) == 1
         assert sagemaker.sagemaker_models[0].name == test_model
         assert sagemaker.sagemaker_models[0].arn == test_arn_model
-        assert sagemaker.sagemaker_models[0].region == AWS_REGION
+        assert sagemaker.sagemaker_models[0].region == AWS_REGION_EU_WEST_1
         assert sagemaker.sagemaker_models[0].tags == [
             {"Key": "test", "Value": "test"},
         ]
 
     # Test SageMaker list training jobs
     def test_list_training_jobs(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         sagemaker = SageMaker(audit_info)
         assert len(sagemaker.sagemaker_training_jobs) == 1
         assert sagemaker.sagemaker_training_jobs[0].name == test_training_job
         assert sagemaker.sagemaker_training_jobs[0].arn == test_arn_training_job
-        assert sagemaker.sagemaker_training_jobs[0].region == AWS_REGION
+        assert sagemaker.sagemaker_training_jobs[0].region == AWS_REGION_EU_WEST_1
         assert sagemaker.sagemaker_training_jobs[0].tags == [
             {"Key": "test", "Value": "test"},
         ]
 
     # Test SageMaker describe notebook instance
     def test_describe_notebook_instance(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         sagemaker = SageMaker(audit_info)
         assert len(sagemaker.sagemaker_notebook_instances) == 1
         assert sagemaker.sagemaker_notebook_instances[0].root_access
@@ -203,7 +171,7 @@ class Test_SageMaker_Service:
 
     # Test SageMaker describe model
     def test_describe_model(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         sagemaker = SageMaker(audit_info)
         assert len(sagemaker.sagemaker_models) == 1
         assert sagemaker.sagemaker_models[0].network_isolation
@@ -211,7 +179,7 @@ class Test_SageMaker_Service:
 
     # Test SageMaker describe training jobs
     def test_describe_training_jobs(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         sagemaker = SageMaker(audit_info)
         assert len(sagemaker.sagemaker_training_jobs) == 1
         assert sagemaker.sagemaker_training_jobs[0].container_traffic_encryption

@@ -401,7 +401,8 @@ def display_compliance_table(
                                         "Bajo": 0,
                                     }
                                 if finding.status == "FAIL":
-                                    fail_count += 1
+                                    if attribute.Tipo != "recomendacion":
+                                        fail_count += 1
                                     marcos[marco_categoria][
                                         "Estado"
                                     ] = f"{Fore.RED}NO CUMPLE{Style.RESET_ALL}"

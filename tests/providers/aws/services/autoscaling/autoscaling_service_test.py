@@ -1,53 +1,22 @@
 from base64 import b64decode
 
-from boto3 import client, session
+from boto3 import client
 from moto import mock_autoscaling
 
-from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.aws.services.autoscaling.autoscaling_service import AutoScaling
-from prowler.providers.common.models import Audit_Metadata
-
-AWS_ACCOUNT_NUMBER = "123456789012"
-AWS_REGION = "us-east-1"
+from tests.providers.aws.audit_info_utils import (
+    AWS_ACCOUNT_NUMBER,
+    AWS_REGION_US_EAST_1,
+    set_mocked_aws_audit_info,
+)
 
 
 class Test_AutoScaling_Service:
-    # Mocked Audit Info
-    def set_mocked_audit_info(self):
-        audit_info = AWS_Audit_Info(
-            session_config=None,
-            original_session=None,
-            audit_session=session.Session(
-                profile_name=None,
-                botocore_session=None,
-            ),
-            audited_account=AWS_ACCOUNT_NUMBER,
-            audited_account_arn=f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root",
-            audited_user_id=None,
-            audited_partition="aws",
-            audited_identity_arn=None,
-            profile=None,
-            profile_region=None,
-            credentials=None,
-            assumed_role_info=None,
-            audited_regions=None,
-            organizations_metadata=None,
-            audit_resources=None,
-            mfa_enabled=False,
-            audit_metadata=Audit_Metadata(
-                services_scanned=0,
-                expected_checks=[],
-                completed_checks=0,
-                audit_progress=0,
-            ),
-        )
-        return audit_info
-
     # Test AutoScaling Service
     @mock_autoscaling
     def test_service(self):
         # AutoScaling client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
         autoscaling = AutoScaling(audit_info)
         assert autoscaling.service == "autoscaling"
 
@@ -55,7 +24,7 @@ class Test_AutoScaling_Service:
     @mock_autoscaling
     def test_client(self):
         # AutoScaling client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
         autoscaling = AutoScaling(audit_info)
         for regional_client in autoscaling.regional_clients.values():
             assert regional_client.__class__.__name__ == "AutoScaling"
@@ -64,7 +33,7 @@ class Test_AutoScaling_Service:
     @mock_autoscaling
     def test__get_session__(self):
         # AutoScaling client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
         autoscaling = AutoScaling(audit_info)
         assert autoscaling.session.__class__.__name__ == "Session"
 
@@ -72,7 +41,7 @@ class Test_AutoScaling_Service:
     @mock_autoscaling
     def test_audited_account(self):
         # AutoScaling client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
         autoscaling = AutoScaling(audit_info)
         assert autoscaling.audited_account == AWS_ACCOUNT_NUMBER
 
@@ -80,7 +49,7 @@ class Test_AutoScaling_Service:
     @mock_autoscaling
     def test__describe_launch_configurations__(self):
         # Generate AutoScaling Client
-        autoscaling_client = client("autoscaling", region_name=AWS_REGION)
+        autoscaling_client = client("autoscaling", region_name=AWS_REGION_US_EAST_1)
         # Create AutoScaling API
         autoscaling_client.create_launch_configuration(
             LaunchConfigurationName="tester1",
@@ -98,7 +67,7 @@ class Test_AutoScaling_Service:
             SecurityGroups=["default", "default2"],
         )
         # AutoScaling client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
         autoscaling = AutoScaling(audit_info)
         assert len(autoscaling.launch_configurations) == 2
         assert autoscaling.launch_configurations[0].name == "tester1"
@@ -114,7 +83,7 @@ class Test_AutoScaling_Service:
     @mock_autoscaling
     def test__describe_auto_scaling_groups__(self):
         # Generate AutoScaling Client
-        autoscaling_client = client("autoscaling", region_name=AWS_REGION)
+        autoscaling_client = client("autoscaling", region_name=AWS_REGION_US_EAST_1)
         autoscaling_client.create_launch_configuration(
             LaunchConfigurationName="test",
             ImageId="ami-12c6146b",
@@ -138,14 +107,14 @@ class Test_AutoScaling_Service:
         )
 
         # AutoScaling client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
         autoscaling = AutoScaling(audit_info)
         print("asg", asg)
         assert len(autoscaling.groups) == 1
         # create_auto_scaling_group doesn't return the ARN, can't check it
         # assert autoscaling.groups[0].arn ==
         assert autoscaling.groups[0].name == "my-autoscaling-group"
-        assert autoscaling.groups[0].region == AWS_REGION
+        assert autoscaling.groups[0].region == AWS_REGION_US_EAST_1
         assert autoscaling.groups[0].availability_zones == ["us-east-1a", "us-east-1b"]
         assert autoscaling.groups[0].tags == [
             {

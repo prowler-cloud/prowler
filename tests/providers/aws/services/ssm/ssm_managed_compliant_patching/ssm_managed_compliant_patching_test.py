@@ -1,13 +1,13 @@
 from unittest import mock
 
-from moto.core import DEFAULT_ACCOUNT_ID
-
 from prowler.providers.aws.services.ssm.ssm_service import (
     ComplianceResource,
     ResourceStatus,
 )
-
-AWS_REGION = "eu-west-1"
+from tests.providers.aws.audit_info_utils import (
+    AWS_ACCOUNT_NUMBER,
+    AWS_REGION_US_EAST_1,
+)
 
 
 class Test_ssm_managed_compliant_patching:
@@ -31,11 +31,11 @@ class Test_ssm_managed_compliant_patching:
     def test_compliance_resources_compliant(self):
         ssm_client = mock.MagicMock
         instance_id = "i-1234567890abcdef0"
-        ssm_client.audited_account = DEFAULT_ACCOUNT_ID
+        ssm_client.audited_account = AWS_ACCOUNT_NUMBER
         ssm_client.compliance_resources = {
             instance_id: ComplianceResource(
                 id="i-1234567890abcdef0",
-                region=AWS_REGION,
+                region=AWS_REGION_US_EAST_1,
                 status=ResourceStatus.COMPLIANT,
             )
         }
@@ -53,7 +53,7 @@ class Test_ssm_managed_compliant_patching:
             result = check.execute()
 
             assert len(result) == 1
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_id == instance_id
             assert result[0].status == "PASS"
             assert (
@@ -64,11 +64,11 @@ class Test_ssm_managed_compliant_patching:
     def test_compliance_resources_non_compliant(self):
         ssm_client = mock.MagicMock
         instance_id = "i-1234567890abcdef0"
-        ssm_client.audited_account = DEFAULT_ACCOUNT_ID
+        ssm_client.audited_account = AWS_ACCOUNT_NUMBER
         ssm_client.compliance_resources = {
             instance_id: ComplianceResource(
                 id="i-1234567890abcdef0",
-                region=AWS_REGION,
+                region=AWS_REGION_US_EAST_1,
                 status=ResourceStatus.NON_COMPLIANT,
             )
         }
@@ -86,7 +86,7 @@ class Test_ssm_managed_compliant_patching:
             result = check.execute()
 
             assert len(result) == 1
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_id == instance_id
             assert result[0].status == "FAIL"
             assert (

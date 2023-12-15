@@ -3,11 +3,15 @@ from unittest import mock
 from uuid import uuid4
 
 from prowler.providers.aws.services.redshift.redshift_service import Cluster
+from tests.providers.aws.audit_info_utils import (
+    AWS_ACCOUNT_NUMBER,
+    AWS_REGION_EU_WEST_1,
+)
 
-AWS_REGION = "eu-west-1"
-AWS_ACCOUNT_NUMBER = "123456789012"
 CLUSTER_ID = str(uuid4())
-CLUSTER_ARN = f"arn:aws:redshift:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:cluster:{CLUSTER_ID}"
+CLUSTER_ARN = (
+    f"arn:aws:redshift:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:cluster:{CLUSTER_ID}"
+)
 
 
 class Test_redshift_cluster_public_access:
@@ -33,7 +37,7 @@ class Test_redshift_cluster_public_access:
             Cluster(
                 id=CLUSTER_ID,
                 arn=CLUSTER_ARN,
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
                 public_access=True,
                 endpoint_address="192.192.192.192",
             )
@@ -60,7 +64,7 @@ class Test_redshift_cluster_public_access:
             Cluster(
                 id=CLUSTER_ID,
                 arn=CLUSTER_ARN,
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
                 public_access=False,
                 endpoint_address="192.192.192.192",
             )
@@ -87,7 +91,7 @@ class Test_redshift_cluster_public_access:
             Cluster(
                 id=CLUSTER_ID,
                 arn=CLUSTER_ARN,
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
                 public_access=True,
             )
         )

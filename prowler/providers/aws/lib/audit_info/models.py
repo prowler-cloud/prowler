@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Optional
 
@@ -53,3 +53,4 @@ class AWS_Audit_Info:
     audit_metadata: Optional[Any] = None
     audit_config: Optional[dict] = None
     ignore_unused_services: bool = False
+    enabled_regions: set = field(default_factory=set)

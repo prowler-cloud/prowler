@@ -1,50 +1,18 @@
 from unittest import mock
 
-from boto3 import client, session
+from boto3 import client
 from moto import mock_ec2
 
-from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
-from prowler.providers.common.models import Audit_Metadata
-
-AWS_REGION = "us-east-1"
-AWS_ACCOUNT_NUMBER = "123456789012"
+from tests.providers.aws.audit_info_utils import (
+    AWS_REGION_US_EAST_1,
+    set_mocked_aws_audit_info,
+)
 
 
 class Test_vpc_subnet_separate_private_public:
-    def set_mocked_audit_info(self):
-        audit_info = AWS_Audit_Info(
-            session_config=None,
-            original_session=None,
-            audit_session=session.Session(
-                profile_name=None,
-                botocore_session=None,
-            ),
-            audited_account=AWS_ACCOUNT_NUMBER,
-            audited_account_arn=f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root",
-            audited_user_id=None,
-            audited_partition="aws",
-            audited_identity_arn=None,
-            profile=None,
-            profile_region=None,
-            credentials=None,
-            assumed_role_info=None,
-            audited_regions=["us-east-1", "eu-west-1"],
-            organizations_metadata=None,
-            audit_resources=None,
-            mfa_enabled=False,
-            audit_metadata=Audit_Metadata(
-                services_scanned=0,
-                expected_checks=[],
-                completed_checks=0,
-                audit_progress=0,
-            ),
-        )
-
-        return audit_info
-
     @mock_ec2
     def test_vpc_subnet_only_private(self):
-        ec2_client = client("ec2", region_name=AWS_REGION)
+        ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
         vpc = ec2_client.create_vpc(
             CidrBlock="172.28.7.0/24",
             InstanceTenancy="default",
@@ -61,7 +29,7 @@ class Test_vpc_subnet_separate_private_public:
         subnet_private = ec2_client.create_subnet(
             VpcId=vpc["Vpc"]["VpcId"],
             CidrBlock="172.28.7.192/26",
-            AvailabilityZone=f"{AWS_REGION}a",
+            AvailabilityZone=f"{AWS_REGION_US_EAST_1}a",
         )
         route_table_private = ec2_client.create_route_table(
             VpcId=vpc["Vpc"]["VpcId"],
@@ -77,7 +45,7 @@ class Test_vpc_subnet_separate_private_public:
 
         from prowler.providers.aws.services.vpc.vpc_service import VPC
 
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -107,13 +75,13 @@ class Test_vpc_subnet_separate_private_public:
                         assert result.resource_tags == [
                             {"Key": "Name", "Value": "vpc_name"}
                         ]
-                        assert result.region == AWS_REGION
+                        assert result.region == AWS_REGION_US_EAST_1
                 if not found:
                     assert False
 
     @mock_ec2
     def test_vpc_subnet_only_public(self):
-        ec2_client = client("ec2", region_name=AWS_REGION)
+        ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
         vpc = ec2_client.create_vpc(
             CidrBlock="172.28.7.0/24", InstanceTenancy="default"
         )
@@ -121,7 +89,7 @@ class Test_vpc_subnet_separate_private_public:
         subnet_public = ec2_client.create_subnet(
             VpcId=vpc["Vpc"]["VpcId"],
             CidrBlock="172.28.7.192/26",
-            AvailabilityZone=f"{AWS_REGION}a",
+            AvailabilityZone=f"{AWS_REGION_US_EAST_1}a",
         )
         route_table_public = ec2_client.create_route_table(
             VpcId=vpc["Vpc"]["VpcId"],
@@ -139,7 +107,7 @@ class Test_vpc_subnet_separate_private_public:
 
         from prowler.providers.aws.services.vpc.vpc_service import VPC
 
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -167,13 +135,13 @@ class Test_vpc_subnet_separate_private_public:
                         )
                         assert result.resource_id == vpc["Vpc"]["VpcId"]
                         assert result.resource_tags == []
-                        assert result.region == AWS_REGION
+                        assert result.region == AWS_REGION_US_EAST_1
                 if not found:
                     assert False
 
     @mock_ec2
     def test_vpc_subnet_private_and_public(self):
-        ec2_client = client("ec2", region_name=AWS_REGION)
+        ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
         vpc = ec2_client.create_vpc(
             CidrBlock="172.28.7.0/24", InstanceTenancy="default"
         )
@@ -181,7 +149,7 @@ class Test_vpc_subnet_separate_private_public:
         subnet_private = ec2_client.create_subnet(
             VpcId=vpc["Vpc"]["VpcId"],
             CidrBlock="172.28.7.192/26",
-            AvailabilityZone=f"{AWS_REGION}a",
+            AvailabilityZone=f"{AWS_REGION_US_EAST_1}a",
         )
         route_table_private = ec2_client.create_route_table(
             VpcId=vpc["Vpc"]["VpcId"],
@@ -198,7 +166,7 @@ class Test_vpc_subnet_separate_private_public:
         subnet_public = ec2_client.create_subnet(
             VpcId=vpc["Vpc"]["VpcId"],
             CidrBlock="172.28.7.0/26",
-            AvailabilityZone=f"{AWS_REGION}a",
+            AvailabilityZone=f"{AWS_REGION_US_EAST_1}a",
         )
         route_table_public = ec2_client.create_route_table(
             VpcId=vpc["Vpc"]["VpcId"],
@@ -216,7 +184,7 @@ class Test_vpc_subnet_separate_private_public:
 
         from prowler.providers.aws.services.vpc.vpc_service import VPC
 
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -244,6 +212,6 @@ class Test_vpc_subnet_separate_private_public:
                         )
                         assert result.resource_id == vpc["Vpc"]["VpcId"]
                         assert result.resource_tags == []
-                        assert result.region == AWS_REGION
+                        assert result.region == AWS_REGION_US_EAST_1
                 if not found:
                     assert False
