@@ -4,19 +4,6 @@ import pathlib
 
 from prowler.lib.logger import logger
 
-
-class CheckFileFinder(ast.NodeVisitor):
-    def __init__(self):
-        self.is_check_file = False
-
-    def visit_ClassDef(self, node):
-        for base in node.bases:
-            if isinstance(base, ast.Name) and base.id == "Check":
-                self.is_check_file = True
-                break
-        self.generic_visit(node)
-
-
 class ImportFinder(ast.NodeVisitor):
     def __init__(self, provider):
         self.imports = set()
@@ -29,16 +16,16 @@ class ImportFinder(ast.NodeVisitor):
                     self.imports.add(name.name)
         self.generic_visit(node)
 
+def analyze_check_file(file_path, provider):
+    # Prase the check file
+    with open(file_path, "r") as file:
+        node = ast.parse(file.read(), filename=file_path)
+
+    finder = ImportFinder(provider)
+    finder.visit(node)
+    return list(finder.imports)
 
 def get_dependencies_for_checks(provider, checks_dict):
-    def analyze_check_file(file_path, provider):
-        # Prase the check file
-        with open(file_path, "r") as file:
-            node = ast.parse(file.read(), filename=file_path)
-
-        finder = ImportFinder(provider)
-        finder.visit(node)
-        return list(finder.imports)
 
     current_directory = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))
     prowler_dir = current_directory.parent.parent

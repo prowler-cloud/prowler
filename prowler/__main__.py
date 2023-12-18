@@ -54,6 +54,7 @@ from prowler.providers.common.audit_info import (
 from prowler.providers.common.outputs import set_provider_output_options
 from prowler.providers.common.quick_inventory import run_provider_quick_inventory
 
+from prowler.lib.check.managers import ExecutionManager
 
 def prowler():
     # Parse Arguments
@@ -187,14 +188,16 @@ def prowler():
 
     # Execute checks
     findings = []
+    
     if len(checks_to_execute):
-        findings = execute_checks(
+        execution_manager = ExecutionManager(
             checks_to_execute,
             provider,
             audit_info,
             audit_output_options,
             custom_checks_metadata,
         )
+        findings = execution_manager.execute_checks()
     else:
         logger.error(
             "There are no checks to execute. Please, check your input arguments"
