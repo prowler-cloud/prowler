@@ -3,6 +3,7 @@ import pathlib
 
 from rich.align import Align
 from rich.console import Console, Group
+from rich.layout import Layout
 from rich.live import Live
 from rich.panel import Panel
 from rich.progress import (
@@ -15,9 +16,12 @@ from rich.progress import (
 )
 from rich.rule import Rule
 from rich.table import Table
+from rich.text import Text
 from rich.theme import Theme
 
+from prowler.config.config import prowler_version
 from prowler.lib.logger import logger
+from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 
 
 class LiveDisplay(Live):
@@ -25,21 +29,18 @@ class LiveDisplay(Live):
         theme = self.__load_theme_from_file__()
         super().__init__(renderable=None, console=Console(theme=theme), *args, **kwargs)
         self.sections = {}
-        self.ordered_section_names = []  # List to remember the order of sections
+        self.ordered_service_names = []  # List to remember the order of sections
         self.current_section = None
+        self.make_layout()
 
     def has_section(self, section_name):
         return section_name in self.sections.keys()
 
-    def add_service_section(self, service_name, total_checks):
-        # Create a new section for the service
-        if service_name in self.sections:
-            logger.error(f"Section already exists for {service_name}")
-            return
-        service_section = ServiceSection(service_name, total_checks)
-        self.sections[service_name] = service_section
-        self.ordered_section_names.append(service_name)  # Store the order
-        self.current_section = service_name
+    def add_section(self, section_name, section_class, default_section=False):
+        self.sections[section_name] = section_class
+        if not default_section:
+            self.ordered_service_names.append(section_name)  # Store the order
+            self.current_section = section_name
         self.__update_layout__()
 
     def get_current_section(self):
@@ -50,19 +51,81 @@ class LiveDisplay(Live):
             return
         return self.sections[self.current_section]
 
+    def get_section(self, section_name):
+        return self.sections[section_name]
+
+    def get_client_init_section(self):
+        return self.sections["client_init"]
+
+    def remove_section(self, section_name):
+        del self.sections[section_name]
+        if section_name in self.ordered_service_names:
+            self.ordered_service_names.remove(section_name)
+
+    def add_service_section(self, service_name, total_checks):
+        # Create a new section for the service
+        if service_name in self.sections:
+            logger.error(f"Section already exists for {service_name}")
+            return
+        service_section = ServiceSection(service_name, total_checks)
+        self.add_section(service_name, service_section)
+
     def print_message(self, message):
         self.console.print(message)
 
+    def make_layout(self):
+        """
+        Define the layout.
+        Making sections invisible so it doesnt show the default Layout metadata before content is added
+        """
+        self.layout = Layout(name="root")
+        self.layout.split(
+            Layout(name="intro"),
+            Layout(name="overall_progress", visible=False),
+            Layout(name="results", visible=False),
+            Layout(name="client_init", visible=False),
+            Layout(name="service"),
+        )
+        self.layout["intro"].split_row(
+            Layout(name="body", ratio=3, minimum_size=30),
+            Layout(name="side", ratio=2, visible=False),
+        )
+        self.layout["intro"].minimum_size = 9
+
     def __update_layout__(self):
-        # Just a basic layout for now. Will be improved
-        # Create a group of renderables based on the order of sections
-        renderables = [
-            self.sections[name].renderables for name in self.ordered_section_names
-        ]
-        grouped_renderables = Group(*renderables)
+
+        default_sections = ["results", "client_init"]
+
+        for section in default_sections:
+            if section in self.sections:
+                self.layout[section].visible = True
+                self.layout[section].update(self.sections[section].renderables)
+            else:
+                self.layout[section].visible = False
+
+        renderables = []
+        for name in self.ordered_service_names:
+            section_renderable = self.sections[name].renderables
+            if isinstance(section_renderable, list):
+                # If it's a list, create a Panel with these renderables
+                section_title = getattr(
+                    self.sections[name], "title", None
+                )  # Get title if it exists
+                panel = Panel(Group(*section_renderable), title=section_title)
+                renderables.append(panel)
+            else:
+                # Otherwise, treat it as a single renderable
+                renderables.append(section_renderable)
+
+        if renderables:
+            grouped_renderables = Group(*renderables)
+            self.layout["service"].visible = True
+            self.layout["service"].update(grouped_renderables)
+        else:
+            self.layout["service"].visible = False
 
         # Update the existing layout
-        self.update(grouped_renderables)
+        self.update(self.layout)
 
     def __load_theme_from_file__(self):
         # Loads theme.yaml from the same folder as this file
@@ -71,7 +134,7 @@ class LiveDisplay(Live):
             theme = Theme.from_file(f)
         return theme
 
-    # Wrappers to call the increment_progress in the ServiceSection class objects
+    # Wrappers for ServiceSection methods
     def increment_check_progress(self):
         current_section = self.get_current_section()
         if not isinstance(current_section, ServiceSection):
@@ -86,6 +149,46 @@ class LiveDisplay(Live):
             return
         current_section.add_summary_table_for_service(service_findings)
         self.update()
+
+    # Service Init Methods
+    def add_client_init_section(self, service_name):
+        client_init_section = ClientInitSection(service_name)
+        self.add_section("client_init", client_init_section, default_section=True)
+
+    def remove_client_init_section(self):
+        if "client_init" not in self.sections:
+            # Might not have needed to init any services
+            return
+        self.remove_section("client_init")
+        self.__update_layout__()
+
+    # Intro Section Methods
+    def add_intro(self, args):
+        # A way to get around parsing args to LiveDisplay when it is intialized
+        # This is so that the live_display object can be intialized in this file, and imported to other parts of prowler
+        self.cli_args = args
+        intro_layout = self.layout["intro"]
+        intro_section = IntroSection(args, intro_layout)
+        self.add_section("intro", intro_section, default_section=True)
+
+    def print_aws_credentials(self, audit_info):
+        intro_section = self.get_section("intro")
+        intro_section.add_aws_credentials(audit_info)
+
+    # Overall Progress Methods
+    def add_overall_progress_section(self, total_checks_dict):
+        # section = self.get_section("intro")
+        overall_progress_layout = self.layout["overall_progress"]
+        OverallProgressSection(overall_progress_layout, total_checks_dict)
+        # section.add_overall_progress(total_checks_dict)
+
+    def increment_overall_check_progress(self):
+        section = self.get_section("intro")
+        section.increment_check_progress()
+
+    def increment_overall_service_progress(self):
+        section = self.get_section("intro")
+        section.increment_service_progress()
 
 
 class ServiceSection:
@@ -133,7 +236,7 @@ class ServiceSection:
 
     def __start_check_progress__(self):
         self.check_progress_task_id = self.check_progress.add_task(
-            "Checks executed", total=self.total_checks
+            f"{self.service_name} checks executed", total=self.total_checks
         )
 
     def increment_check_progress(self):
@@ -158,7 +261,7 @@ class ServiceSection:
             percentage = (count / total_checks * 100) if total_checks else 0
             results_table.add_row(
                 f"{status.capitalize()}",
-                f"[{status.lower()}]{str(count)}[/{status.lower()}]",
+                f"[{status.lower()}]{str(count)}[/{status.lower()}]",  # Add the rich theme defined in theme.yaml
                 f"{percentage:.2f}%",
             )
 
@@ -180,11 +283,188 @@ class ServiceSection:
         )
 
 
-class ServiceInitSection:
-    def __init__(self) -> None:
-        pass
+class ClientInitSection:
+    def __init__(self, client_name) -> None:
+        self.client_name = client_name
+        self.renderables = self.__create_client_init_section__()
+
+    def __create_client_init_section__(self):
+        # Progress Bar for Service Init and Checks
+        self.task_progress_bar = Progress(
+            TextColumn("[progress.description]{task.description}"),
+            BarColumn(bar_width=None),
+            MofNCompleteColumn(),
+            TimeElapsedColumn(),
+            TimeRemainingColumn(),
+            transient=True,
+        )
+
+        return Group(
+            Panel(
+                Group(
+                    self.task_progress_bar,
+                ),
+                title=f"Intializing {self.client_name.replace('_', ' ')}",
+            ),
+        )
+
+
+class IntroSection:
+    def __init__(self, args, layout: Layout) -> None:
+        self.body_layout = layout["body"]
+        self.side_layout = layout["side"]
+        self.renderables = []
+        self.title = f"Prowler v{prowler_version}"
+        if not args.no_banner:
+            self.__create_banner__(args)
+
+    def __create_banner__(self, args):
+        banner_text = """[banner_color]                         _
+ _ __  _ __ _____      _| | ___ _ __
+| '_ \| '__/ _ \ \ /\ / / |/ _ \ '__|
+| |_) | | | (_) \ V  V /| |  __/ |
+| .__/|_|  \___/ \_/\_/ |_|\___|_|v{prowler_version}
+|_|[/banner_color][banner_blue]the handy cloud security tool[/banner_blue]
+
+[info]Date: {timestamp.strftime('%Y-%m-%d %H:%M:%S')}[/info]
+        """
+
+        if args.verbose or args.quiet or True:
+            banner_text += """
+Color code for results:
+- [info]INFO (Information)[/info]
+- [pass]PASS (Recommended value)[/pass]
+- [orange_color]WARNING (Ignored by allowlist)[/orange_color]
+- [fail]FAIL (Fix required)[/fail]
+                """
+        self.renderables.append(banner_text)
+        self.body_layout.update(Group(*self.renderables))
+        self.body_layout.visible = True
+
+    def add_aws_credentials(self, audit_info: AWS_Audit_Info):
+        # Beautify audited regions, set "all" if there is no filter region
+        regions = (
+            ", ".join(audit_info.audited_regions)
+            if audit_info.audited_regions is not None
+            else "all"
+        )
+        # Beautify audited profile, set "default" if there is no profile set
+        profile = audit_info.profile if audit_info.profile is not None else "default"
+
+        content = Text()
+        content.append(
+            "This report is being generated using credentials below:\n\n", style="bold"
+        )
+
+        content.append("AWS-CLI Profile: ", style="bold")
+        content.append(f"[{profile}]\n", style="info")
+
+        content.append("AWS Filter Region: ", style="bold")
+        content.append(f"[{regions}]\n", style="info")
+
+        content.append("AWS Account: ", style="bold")
+        content.append(f"[{audit_info.audited_account}]\n", style="info")
+
+        content.append("UserId: ", style="bold")
+        content.append(f"[{audit_info.audited_user_id}]\n", style="info")
+
+        content.append("Caller Identity ARN: ", style="bold")
+        content.append(f"[{audit_info.audited_identity_arn}]\n", style="info")
+        # If -A is set, print Assumed Role ARN
+        if audit_info.assumed_role_info.role_arn is not None:
+            content.append("Assumed Role ARN: ", style="bold")
+            content.append(f"[{audit_info.assumed_role_info.role_arn}]\n", style="info")
+
+        self.side_layout.update(content)
+        self.side_layout.visible = True
+
+    def add_overall_progress(self, total_checks_dict):
+        services_num = len(total_checks_dict)  # number of keys == number of services
+        checks_num = sum(total_checks_dict.values())
+
+        plural_string = "checks"
+        singular_string = "check"
+
+        check_noun = plural_string if checks_num > 1 else singular_string
+
+        # Create the progress bar
+        self.overall_progress_bar = Progress(
+            TextColumn("[bold]{task.description}"),
+            BarColumn(bar_width=None),
+            MofNCompleteColumn(),
+            TimeElapsedColumn(),
+            transient=False,  # Optional: set True if you want the progress bar to disappear after completion
+        )
+        # Create the Services Completed task, to track the number of services completed
+        self.service_progress_task_id = self.overall_progress_bar.add_task(
+            "Services completed", total=services_num
+        )
+        # Create the Checks Completed task, to track the number of checks completed across all services
+        self.check_progress_task_id = self.overall_progress_bar.add_task(
+            "Checks executed", total=checks_num
+        )
+
+        content = Text()
+        content.append(
+            f"Executing {checks_num} {check_noun}, please wait...\n", style="bold"
+        )
+
+        self.renderables.extend([content, self.overall_progress_bar])
+        self.body_layout.update(Group(*self.renderables))
+
+    def increment_check_progress(self):
+        self.overall_progress_bar.update(self.check_progress_task_id, advance=1)
+
+    def increment_service_progress(self):
+        self.overall_progress_bar.update(self.service_progress_task_id, advance=1)
+
+
+class OverallProgressSection:
+    def __init__(self, layout: Layout, total_checks_dict: dict) -> None:
+        self.renderables = self.create_renderable(total_checks_dict)
+        layout.update(self.renderables)
+        layout.visible = True
+
+    def create_renderable(self, total_checks_dict):
+        services_num = len(total_checks_dict)  # number of keys == number of services
+        checks_num = sum(total_checks_dict.values())
+
+        plural_string = "checks"
+        singular_string = "check"
+
+        check_noun = plural_string if checks_num > 1 else singular_string
+
+        # Create the progress bar
+        self.overall_progress_bar = Progress(
+            TextColumn("[bold]{task.description}"),
+            BarColumn(bar_width=None),
+            MofNCompleteColumn(),
+            transient=False,  # Optional: set True if you want the progress bar to disappear after completion
+        )
+        # Create the Services Completed task, to track the number of services completed
+        self.service_progress_task_id = self.overall_progress_bar.add_task(
+            "Services completed", total=services_num
+        )
+        # Create the Checks Completed task, to track the number of checks completed across all services
+        self.check_progress_task_id = self.overall_progress_bar.add_task(
+            "Checks executed", total=checks_num
+        )
+
+        content = Text()
+        content.append(
+            f"Executing {checks_num} {check_noun} across {services_num} services, please wait...\n",
+            style="bold",
+        )
+
+        return Group(content, self.overall_progress_bar)
+
+    def increment_check_progress(self):
+        self.overall_progress_bar.update(self.check_progress_task_id, advance=1)
+
+    def increment_service_progress(self):
+        self.overall_progress_bar.update(self.service_progress_task_id, advance=1)
 
 
 # Create an instance of LiveDisplay to import elsewhere (ExecutionManager, the checks, the services)
 
-live_display = LiveDisplay()
+live_display = LiveDisplay(vertical_overflow="visible")

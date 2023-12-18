@@ -2,9 +2,6 @@ import importlib
 import os
 import sys
 import traceback
-
-# To check if client is being GC
-import weakref
 from types import ModuleType
 from typing import Any
 
@@ -83,12 +80,14 @@ class ExecutionManager:
     # Imports service clients, and tracks if it needs to be imported
     def import_client(self, client_name):
         if not self.loaded_clients.get(client_name):
+            self.live_display.add_client_init_section(client_name)
             # Dynamically import the client
             module_name, _ = client_name.rsplit("_", 1)
             client_module = importlib.import_module(
                 f"prowler.providers.{self.provider}.services.{module_name}.{client_name}"
             )
             self.loaded_clients[client_name] = client_module
+            self.live_display.remove_client_init_section()
 
     @staticmethod
     def import_check(check_path: str) -> ModuleType:
@@ -111,10 +110,6 @@ class ExecutionManager:
                 for check in self.remaining_checks
                 for client in self.remaining_checks[check]
             ):
-                # DEBUG: To check GC
-                weakref.finalize(
-                    self.loaded_clients[client_name], on_finalize, client_name
-                )
                 # Delete the reference to the client for this object
                 del self.loaded_clients[client_name]
                 module_name, _ = client_name.rsplit("_", 1)
@@ -122,16 +117,6 @@ class ExecutionManager:
                 del sys.modules[
                     f"prowler.providers.aws.services.{module_name}.{client_name}"
                 ]
-
-    def create_finalizer(self, client_name):
-        # Just for debugging purposes, will be removed
-        def on_finalize():
-            self.live_display.print_message(
-                f"Client {client_name} is being garbage collected."
-            )
-            print("gc")
-
-        return on_finalize
 
     def generate_checks(self):
         """
@@ -151,22 +136,32 @@ class ExecutionManager:
             # Remove the service from the services_queue
             self.services_queue.remove(current_service)
 
+            checks = self.check_dependencies[current_service]
+            clients_for_service = list(
+                set(client for client_list in checks.values() for client in client_list)
+            )
+
+            for client in clients_for_service:
+                self.live_display.add_client_init_section(client)
+                self.import_client(client)
+                self.live_display.remove_client_init_section()
+
             if not self.live_display.has_section(current_service):
                 total_checks = len(self.check_dict[current_service])
                 self.live_display.add_service_section(current_service, total_checks)
 
-            checks = self.check_dependencies[current_service]
-            for check_name in checks:
-                clients = checks[check_name]
-                for client in clients:
-                    self.import_client(client)
+            for check_name, clients_for_check in checks.items():
 
                 yield current_service, check_name
 
                 self.live_display.increment_check_progress()
+                self.live_display.increment_overall_check_progress()
 
                 del self.remaining_checks[(current_service, check_name)]
-                self.release_clients(clients)
+                self.release_clients(clients_for_check)
+
+            self.live_display.increment_overall_service_progress()
+            self.live_display.remove_section(current_service)
 
     @staticmethod
     def create_check_service_dict(checks_to_execute):
@@ -339,15 +334,11 @@ class ExecutionManager:
                     )
         else:
             # Default execution
-            checks_num = len(self.checks_to_execute)
-            plural_string = "checks"
-            singular_string = "check"
-
-            check_noun = plural_string if checks_num > 1 else singular_string
-            print(
-                f"{Style.BRIGHT}Executing {checks_num} {check_noun}, please wait...{Style.RESET_ALL}\n"
-            )
             total_checks = self.total_checks_per_service()
+            self.live_display.add_overall_progress_section(
+                total_checks_dict=total_checks
+            )
+            # For tracking when a service is completed
             completed_checks = {service: 0 for service in total_checks}
             service_findings = []
             for service, check_name in self.generate_checks():

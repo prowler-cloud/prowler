@@ -5,6 +5,7 @@ from colorama import Fore, Style
 
 from prowler.config.config import load_and_validate_config_file
 from prowler.lib.logger import logger
+from prowler.lib.ui.live_display import live_display
 from prowler.providers.aws.aws_provider import (
     AWS_Provider,
     assume_role,
@@ -15,10 +16,7 @@ from prowler.providers.aws.aws_provider import (
 from prowler.providers.aws.lib.arn.arn import parse_iam_credentials_arn
 from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info, AWS_Credentials
-from prowler.providers.aws.lib.credentials.credentials import (
-    print_aws_credentials,
-    validate_aws_credentials,
-)
+from prowler.providers.aws.lib.credentials.credentials import validate_aws_credentials
 from prowler.providers.aws.lib.organizations.organizations import (
     get_organizations_metadata,
 )
@@ -245,7 +243,7 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
             current_audit_info.profile_region = "us-east-1"
 
         if not arguments.get("only_logs"):
-            print_aws_credentials(current_audit_info)
+            live_display.print_aws_credentials(current_audit_info)
 
         # Parse Scan Tags
         if arguments.get("resource_tags"):

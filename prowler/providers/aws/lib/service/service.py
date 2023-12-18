@@ -51,14 +51,9 @@ class AWSService:
         self.thread_pool = ThreadPoolExecutor(max_workers=MAX_WORKERS)
 
         # Progress bar to add tasks to
-        current_section = live_display.get_current_section()
-        self.progress = current_section.task_progress
+        service_init_section = live_display.get_client_init_section()
+        self.task_progress_bar = service_init_section.task_progress_bar
         self.progress_tasks = []
-        self.title_bar = current_section.title_bar
-
-        self.title_bar_task = self.title_bar.add_task(
-            f"Intializing {self.service} service:", start=False, task_type="Service"
-        )
 
     def __get_session__(self):
         return self.session
@@ -85,7 +80,7 @@ class AWSService:
             )
 
         # Setup the progress bar
-        task_id = self.progress.add_task(
+        task_id = self.task_progress_bar.add_task(
             f"- {call_name}...", total=item_count, task_type="Service"
         )
         self.progress_tasks.append(task_id)
@@ -98,23 +93,10 @@ class AWSService:
             try:
                 future.result()  # Raises exceptions from the thread, if any
                 # Update the progress bar
-                self.progress.update(task_id, advance=1)
+                self.task_progress_bar.update(task_id, advance=1)
             except Exception:
                 # Handle exceptions if necessary
                 pass  # Replace 'pass' with any additional exception handling logic. Currently handled within the called function
 
         # Make the task disappear once completed
         # self.progress.remove_task(task_id)
-
-    def __update_progress_is_complete__(self):
-        self.title_bar.update(
-            self.title_bar_task,
-            description=f"Completed initilization for {self.service}",
-        )
-        for task_id in self.progress_tasks:
-            self.progress.remove_task(task_id)
-
-    def __clear_ui__(self):
-        self.title_bar.remove_task(self.title_bar_task)
-        for task_id in self.progress_tasks:
-            self.progress.remove_task(task_id)

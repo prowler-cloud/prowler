@@ -20,7 +20,6 @@ class Cloudtrail(AWSService):
         self.__threading_call__(self.__get_insight_selectors__, self.trails)
         self.__threading_call__(self.__get_event_selectors__, self.trails)
         self.__threading_call__(self.__list_tags_for_resource__, self.trails)
-        self.__update_progress_is_complete__()
 
     def __get_trails__(self, regional_client):
         logger.info("Cloudtrail - Getting trails...")

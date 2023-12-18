@@ -1,5 +1,4 @@
 import json
-import threading
 from typing import Optional
 
 from botocore.client import ClientError
@@ -17,26 +16,26 @@ class S3(AWSService):
         super().__init__(__class__.__name__, audit_info)
         self.regions_with_buckets = []
         self.buckets = self.__list_buckets__(audit_info)
-        self.__threading_call__(self.__get_bucket_versioning__)
-        self.__threading_call__(self.__get_bucket_logging__)
-        self.__threading_call__(self.__get_bucket_policy__)
-        self.__threading_call__(self.__get_bucket_acl__)
-        self.__threading_call__(self.__get_public_access_block__)
-        self.__threading_call__(self.__get_bucket_encryption__)
-        self.__threading_call__(self.__get_bucket_ownership_controls__)
-        self.__threading_call__(self.__get_object_lock_configuration__)
-        self.__threading_call__(self.__get_bucket_tagging__)
+        self.__threading_call__(self.__get_bucket_versioning__, self.buckets)
+        self.__threading_call__(self.__get_bucket_logging__, self.buckets)
+        self.__threading_call__(self.__get_bucket_policy__, self.buckets)
+        self.__threading_call__(self.__get_bucket_acl__, self.buckets)
+        self.__threading_call__(self.__get_public_access_block__, self.buckets)
+        self.__threading_call__(self.__get_bucket_encryption__, self.buckets)
+        self.__threading_call__(self.__get_bucket_ownership_controls__, self.buckets)
+        self.__threading_call__(self.__get_object_lock_configuration__, self.buckets)
+        self.__threading_call__(self.__get_bucket_tagging__, self.buckets)
 
     # In the S3 service we override the "__threading_call__" method because we spawn a process per bucket instead of per region
     # TODO: Replace the above function with the service __threading_call__ using the buckets as the iterator
-    def __threading_call__(self, call):
-        threads = []
-        for bucket in self.buckets:
-            threads.append(threading.Thread(target=call, args=(bucket,)))
-        for t in threads:
-            t.start()
-        for t in threads:
-            t.join()
+    # def __threading_call__(self, call):
+    #     threads = []
+    #     for bucket in self.buckets:
+    #         threads.append(threading.Thread(target=call, args=(bucket,)))
+    #     for t in threads:
+    #         t.start()
+    #     for t in threads:
+    #         t.join()
 
     def __list_buckets__(self, audit_info):
         logger.info("S3 - Listing buckets...")

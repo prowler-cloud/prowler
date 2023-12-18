@@ -1,5 +1,12 @@
 [styles]
-info = dim cyan
-warning = magenta
+info = yellow1
+warning = dark_orange
 fail = bold red
 pass = bold green
+banner_blue = dodger_blue3 bold
+banner_color = bold green
+orange_color = dark_orange
+
+
+
+# style names must be lower case, start with a letter, and only contain letters or the characters ".", "-", "_".

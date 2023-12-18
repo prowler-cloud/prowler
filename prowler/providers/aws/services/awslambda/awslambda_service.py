@@ -29,8 +29,6 @@ class Lambda(AWSService):
             self.__get_function_url_config__, self.functions.values()
         )
 
-        self.__update_progress_is_complete__()
-
     def __list_functions__(self, regional_client):
         try:
             list_functions_paginator = regional_client.get_paginator("list_functions")
