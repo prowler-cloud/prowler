@@ -28,7 +28,7 @@ def write_compliance_row_cis(
                     )
                 elif compliance.Provider == "GCP":
                     (compliance_row, csv_header) = generate_compliance_row_cis_gcp(
-                        finding, compliance, output_options
+                        finding, compliance, requirement, attribute, output_options
                     )
 
                 write_csv(
