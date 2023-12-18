@@ -10,7 +10,7 @@ from prowler.providers.common.provider import CloudProvider
 
 
 class KubernetesProvider(CloudProvider):
-    session: client.ApiClient
+    api_client: client.ApiClient
     context: Optional[str]
     audit_resources: Optional[Any]
     audit_metadata: Optional[Any]
@@ -21,15 +21,15 @@ class KubernetesProvider(CloudProvider):
         kubeconfig_file = arguments.kubeconfig_file
         self.context = arguments.context
 
-        self.session = self.setup_session(kubeconfig_file, self.context)
-        if not self.session:
+        self.api_client = self.setup_api_client(kubeconfig_file, self.context)
+        if not self.api_client:
             logger.critical("Failed to set up a Kubernetes session.")
             sys.exit(1)
 
         if not arguments.only_logs:
             self.print_credentials()
 
-    def setup_session(self, kubeconfig_file, context):
+    def setup_api_client(self, kubeconfig_file, context):
         try:
             if kubeconfig_file:
                 # Use kubeconfig file if provided

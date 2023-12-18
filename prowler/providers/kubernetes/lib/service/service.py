@@ -1,16 +1,15 @@
 import threading
 
-from kubernetes import client
+from prowler.providers.kubernetes.kubernetes_provider_new import KubernetesProvider
 
 
 class KubernetesService:
-    def __init__(self, provider):
-        self.api_client = provider.session
+    def __init__(self, provider: KubernetesProvider):
         self.context = provider.context
-        self.client = client.CoreV1Api(self.api_client)
+        self.api_client = provider.api_client
 
-    def __get_client__(self):
-        return self.client
+    def __get_api_client__(self):
+        return self.api_client
 
     def __threading_call__(self, call, iterator):
         threads = []

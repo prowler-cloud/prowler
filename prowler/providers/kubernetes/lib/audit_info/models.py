@@ -6,7 +6,7 @@ from kubernetes import client
 
 @dataclass
 class Kubernetes_Audit_Info:
-    session: client.ApiClient
+    api_client: client.ApiClient
     context: Optional[str]
     audit_resources: Optional[Any]
     audit_metadata: Optional[Any]
@@ -14,13 +14,13 @@ class Kubernetes_Audit_Info:
 
     def __init__(
         self,
-        session,
+        api_client,
         context,
         audit_metadata,
         audit_resources,
         audit_config,
     ):
-        self.session = session
+        self.api_client = api_client
         self.context = context
         self.audit_metadata = audit_metadata
         self.audit_resources = audit_resources
