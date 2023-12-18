@@ -1,45 +1,44 @@
 import importlib
-import sys
-
-# To check if client is being GC
-import weakref
-from collections import defaultdict
-
-from prowler.lib.ui.live_display import live_display
-from prowler.lib.check.check_to_client_mapper import get_dependencies_for_checks
-
-import importlib
 import os
 import sys
 import traceback
-from pkgutil import walk_packages
+
+# To check if client is being GC
+import weakref
 from types import ModuleType
 from typing import Any
 
 from colorama import Fore, Style
 
+from prowler.lib.check.check_to_client_mapper import get_dependencies_for_checks
 from prowler.lib.check.custom_checks_metadata import update_check_metadata
 from prowler.lib.check.models import Check
 from prowler.lib.logger import logger
 from prowler.lib.outputs.outputs import report
 from prowler.lib.ui.live_display import live_display
-from prowler.lib.utils.utils import open_file, parse_json_file
 from prowler.providers.aws.lib.allowlist.allowlist import allowlist_findings
 from prowler.providers.common.models import Audit_Metadata
 from prowler.providers.common.outputs import Provider_Output_Options
 
 
 class ExecutionManager:
-    def __init__(self, checks_to_execute: list, provider: str, audit_info: Any, audit_output_options: Provider_Output_Options, custom_checks_metadata: Any):
+    def __init__(
+        self,
+        checks_to_execute: list,
+        provider: str,
+        audit_info: Any,
+        audit_output_options: Provider_Output_Options,
+        custom_checks_metadata: Any,
+    ):
         self.checks_to_execute = checks_to_execute
         self.provider = provider
         self.audit_info = audit_info
         self.audit_output_options = audit_output_options
         self.custom_checks_metadata = custom_checks_metadata
-        
+
         self.live_display = live_display
         self.live_display.start()
-        self.loaded_clients = {} #defaultdict(lambda: False)
+        self.loaded_clients = {}  # defaultdict(lambda: False)
         self.check_dict = self.create_check_service_dict(checks_to_execute)
         self.check_dependencies = get_dependencies_for_checks(provider, self.check_dict)
         self.remaining_checks = self.initialize_remaining_checks(
@@ -47,8 +46,8 @@ class ExecutionManager:
         )
         self.services_queue = self.initialize_services_queue(self.check_dependencies)
 
-        self.services_executed = set(),
-        self.checks_executed = set(),
+        self.services_executed = (set(),)
+        self.checks_executed = (set(),)
 
     @staticmethod
     def initialize_remaining_checks(check_dependencies):
@@ -90,8 +89,7 @@ class ExecutionManager:
                 f"prowler.providers.{self.provider}.services.{module_name}.{client_name}"
             )
             self.loaded_clients[client_name] = client_module
-    
-    
+
     @staticmethod
     def import_check(check_path: str) -> ModuleType:
         """
@@ -107,14 +105,16 @@ class ExecutionManager:
 
     def release_clients(self, completed_check_clients):
         for client_name in completed_check_clients:
-            # Determine if any of the remaining checks still require the client 
+            # Determine if any of the remaining checks still require the client
             if not any(
                 client == client_name
                 for check in self.remaining_checks
                 for client in self.remaining_checks[check]
             ):
                 # DEBUG: To check GC
-                weakref.finalize(self.loaded_clients[client_name], on_finalize, client_name)
+                weakref.finalize(
+                    self.loaded_clients[client_name], on_finalize, client_name
+                )
                 # Delete the reference to the client for this object
                 del self.loaded_clients[client_name]
                 module_name, _ = client_name.rsplit("_", 1)
@@ -133,7 +133,6 @@ class ExecutionManager:
 
         return on_finalize
 
-    
     def generate_checks(self):
         """
         This is a generator function, which will:
@@ -142,7 +141,7 @@ class ExecutionManager:
         * Yield the service and check name, 1-by-1, to be used within execute_checks
         * Pass the completed checks to release_clients to determine if the clients that were required by the check are no longer needed, and can be garabage collected
         It will complete the checks for a service, before moving onto the next one
-        It uses find_next_service to prioritize the next service based on if any of that service's checks require a client that has already been loaded 
+        It uses find_next_service to prioritize the next service based on if any of that service's checks require a client that has already been loaded
         """
         while self.remaining_checks:
             current_service = self.find_next_service()
@@ -168,7 +167,6 @@ class ExecutionManager:
 
                 del self.remaining_checks[(current_service, check_name)]
                 self.release_clients(clients)
-                
 
     @staticmethod
     def create_check_service_dict(checks_to_execute):
@@ -179,7 +177,7 @@ class ExecutionManager:
                 output[service] = []
             output[service].append(check_name)
         return output
-    
+
     def execute(
         self,
         service: str,
@@ -188,17 +186,19 @@ class ExecutionManager:
         checks_executed: set,
     ):
         # Import check module
-        check_module_path = (
-            f"prowler.providers.{self.provider}.services.{service}.{check_name}.{check_name}"
-        )
+        check_module_path = f"prowler.providers.{self.provider}.services.{service}.{check_name}.{check_name}"
         lib = self.import_check(check_module_path)
         # Recover functions from check
         check_to_execute = getattr(lib, check_name)
         c = check_to_execute()
 
         # Update check metadata to reflect that in the outputs
-        if self.custom_checks_metadata and self.custom_checks_metadata["Checks"].get(c.CheckID):
-            c = update_check_metadata(c, self.custom_checks_metadata["Checks"][c.CheckID])
+        if self.custom_checks_metadata and self.custom_checks_metadata["Checks"].get(
+            c.CheckID
+        ):
+            c = update_check_metadata(
+                c, self.custom_checks_metadata["Checks"][c.CheckID]
+            )
 
         # Run check
         check_findings = self.run_check(c, self.audit_output_options)
@@ -228,12 +228,14 @@ class ExecutionManager:
                 outputs_module = importlib.import_module(lib)
                 custom_report_interface = getattr(outputs_module, "report")
 
-                custom_report_interface(check_findings, self.audit_output_options, self.audit_info)
+                custom_report_interface(
+                    check_findings, self.audit_output_options, self.audit_info
+                )
             except Exception:
                 sys.exit(1)
 
         return check_findings
-    
+
     @staticmethod
     def update_audit_metadata(
         audit_metadata: Audit_Metadata, services_executed: set, checks_executed: set
@@ -276,10 +278,8 @@ class ExecutionManager:
             )
         finally:
             return findings
-        
-    def execute_checks(
-        self
-    ) -> list:
+
+    def execute_checks(self) -> list:
         # List to store all the check's findings
         all_findings = []
         # Services and checks executed for the Audit Status
@@ -381,6 +381,7 @@ class ExecutionManager:
                         f"{check_name} - {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
         return all_findings
+
 
 def on_finalize(client_name):
     print(f"Client {client_name} is being garbage collected.")
