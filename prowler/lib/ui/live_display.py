@@ -19,7 +19,7 @@ from rich.table import Table
 from rich.text import Text
 from rich.theme import Theme
 
-from prowler.config.config import prowler_version
+from prowler.config.config import prowler_version, timestamp
 from prowler.lib.logger import logger
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 
@@ -94,16 +94,18 @@ class LiveDisplay(Live):
 
     def __update_layout__(self):
 
-        default_sections = ["results", "client_init"]
-
-        for section in default_sections:
-            if section in self.sections:
-                self.layout[section].visible = True
-                self.layout[section].update(self.sections[section].renderables)
+        for name, section in self.sections.items():
+            if self.layout.get(name):
+                if hasattr(section, "__rich__"):
+                    self.layout[name].update(section)
+                    self.layout[name].visible = True
+                else:
+                    self.layout[name].visible = False
             else:
-                self.layout[section].visible = False
+                # Its needs to be part of service section
+                pass
 
-        renderables = []
+        service_renderables = []
         for name in self.ordered_service_names:
             section_renderable = self.sections[name].renderables
             if isinstance(section_renderable, list):
@@ -112,13 +114,13 @@ class LiveDisplay(Live):
                     self.sections[name], "title", None
                 )  # Get title if it exists
                 panel = Panel(Group(*section_renderable), title=section_title)
-                renderables.append(panel)
+                service_renderables.append(panel)
             else:
                 # Otherwise, treat it as a single renderable
-                renderables.append(section_renderable)
+                service_renderables.append(section_renderable)
 
-        if renderables:
-            grouped_renderables = Group(*renderables)
+        if service_renderables:
+            grouped_renderables = Group(*service_renderables)
             self.layout["service"].visible = True
             self.layout["service"].update(grouped_renderables)
         else:
@@ -142,13 +144,17 @@ class LiveDisplay(Live):
             return
         current_section.increment_check_progress()
 
-    def add_summary_table_for_service(self, service_findings):
-        current_section = self.get_current_section()
-        if not isinstance(current_section, ServiceSection):
-            logger.error("Current section is not set or not a ServiceSection")
-            return
-        current_section.add_summary_table_for_service(service_findings)
-        self.update()
+    # Results Section Methods
+    def add_results_for_service(self, service_name, service_findings):
+        results_section = self.sections["results"]
+        results_section.add_results_for_service(service_name, service_findings)
+
+    def add_results_section(self):
+        results_layout = self.layout["results"]
+        results_section = ResultsSection()
+        results_layout.update(results_section)
+        results_layout.visible = True
+        self.sections["results"] = results_section
 
     # Service Init Methods
     def add_client_init_section(self, service_name):
@@ -160,6 +166,7 @@ class LiveDisplay(Live):
             # Might not have needed to init any services
             return
         self.remove_section("client_init")
+        self.layout["client_init"].visible = False
         self.__update_layout__()
 
     # Intro Section Methods
@@ -178,16 +185,19 @@ class LiveDisplay(Live):
     # Overall Progress Methods
     def add_overall_progress_section(self, total_checks_dict):
         # section = self.get_section("intro")
-        overall_progress_layout = self.layout["overall_progress"]
-        OverallProgressSection(overall_progress_layout, total_checks_dict)
-        # section.add_overall_progress(total_checks_dict)
+        overall_progress_section = OverallProgressSection(total_checks_dict)
+        self.add_section(
+            "overall_progress", overall_progress_section, default_section=True
+        )
+        # Add results section
+        self.add_results_section()
 
     def increment_overall_check_progress(self):
-        section = self.get_section("intro")
+        section = self.get_section("overall_progress")
         section.increment_check_progress()
 
     def increment_overall_service_progress(self):
-        section = self.get_section("intro")
+        section = self.get_section("overall_progress")
         section.increment_service_progress()
 
 
@@ -197,6 +207,9 @@ class ServiceSection:
         self.total_checks = total_checks
         self.renderables = self.__create_service_section__()
         self.__start_check_progress__()
+
+    def __rich__(self):
+        return self.renderables
 
     def __create_service_section__(self):
         # Create the progress components
@@ -288,6 +301,9 @@ class ClientInitSection:
         self.client_name = client_name
         self.renderables = self.__create_client_init_section__()
 
+    def __rich__(self):
+        return self.renderables
+
     def __create_client_init_section__(self):
         # Progress Bar for Service Init and Checks
         self.task_progress_bar = Progress(
@@ -318,8 +334,11 @@ class IntroSection:
         if not args.no_banner:
             self.__create_banner__(args)
 
+    def __rich__(self):
+        return Group(*self.renderables)
+
     def __create_banner__(self, args):
-        banner_text = """[banner_color]                         _
+        banner_text = f"""[banner_color]                         _
  _ __  _ __ _____      _| | ___ _ __
 | '_ \| '__/ _ \ \ /\ / / |/ _ \ '__|
 | |_) | | | (_) \ V  V /| |  __/ |
@@ -420,10 +439,11 @@ Color code for results:
 
 
 class OverallProgressSection:
-    def __init__(self, layout: Layout, total_checks_dict: dict) -> None:
+    def __init__(self, total_checks_dict: dict) -> None:
         self.renderables = self.create_renderable(total_checks_dict)
-        layout.update(self.renderables)
-        layout.visible = True
+
+    def __rich__(self):
+        return self.renderables
 
     def create_renderable(self, total_checks_dict):
         services_num = len(total_checks_dict)  # number of keys == number of services
@@ -463,6 +483,55 @@ class OverallProgressSection:
 
     def increment_service_progress(self):
         self.overall_progress_bar.update(self.service_progress_task_id, advance=1)
+
+
+class ResultsSection:
+    def __init__(self):
+        self.table = Table(title="Service Check Results")
+        self.table.add_column("Service", justify="left")
+        self.status_columns = set(["PASS", "FAIL"])
+        self.service_findings = {}  # Dictionary to store findings for each service
+
+    def add_results_for_service(self, service_name, service_findings):
+        # Update the dictionary with the new findings
+        status_counts = {report.status: 0 for report in service_findings}
+        for report in service_findings:
+            status_counts[report.status] += 1
+        self.service_findings[service_name] = status_counts
+
+        # Update status_columns and table columns
+        self.status_columns.update(status_counts.keys())
+        for status in self.status_columns:
+            if status not in [col.header for col in self.table.columns]:
+                # [{status.lower()}] is for the styling (defined in theme.yaml)
+                self.table.add_column(
+                    f"[{status.lower()}]{status.capitalize()}[/{status.lower()}]",
+                    justify="center",
+                )
+
+        # Update the table with findings for all services
+        self._update_table()
+
+    def _update_table(self):
+        # Clear existing rows
+        self.table.rows.clear()
+
+        # Add updated rows for all services
+        for service, counts in self.service_findings.items():
+            row = [service]
+            for status in self.status_columns:
+                count = counts.get(status, 0)
+                percentage = (
+                    f"{(count / sum(counts.values()) * 100):.2f}%" if counts else "0%"
+                )
+                row.append(f"{count} ({percentage})")
+            self.table.add_row(*row)
+
+    def __rich__(self):
+        # This method allows the ResultsSection to be directly rendered by Rich
+        if not self.table.rows:
+            return Text("")
+        return self.table
 
 
 # Create an instance of LiveDisplay to import elsewhere (ExecutionManager, the checks, the services)

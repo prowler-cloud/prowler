@@ -517,7 +517,7 @@ def execute_checks(
                 if completed_checks[service] == total_checks[service]:
                     # All checks for the service are completed
                     # Add a summary table or perform other actions
-                    live_display.add_summary_table_for_service(service_findings)
+                    live_display.add_results_for_service(service, service_findings)
                     # Clear service_findings
                     service_findings = []
 
