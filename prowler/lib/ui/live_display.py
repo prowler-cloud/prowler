@@ -87,7 +87,7 @@ class LiveDisplay(Live):
             Layout(name="service"),
         )
         self.layout["intro"].split_row(
-            Layout(name="body", ratio=3, minimum_size=30),
+            Layout(name="body", ratio=3),
             Layout(name="side", ratio=2, visible=False),
         )
         self.layout["intro"].minimum_size = 9
@@ -531,7 +531,7 @@ class ResultsSection:
         # This method allows the ResultsSection to be directly rendered by Rich
         if not self.table.rows:
             return Text("")
-        return self.table
+        return Align.center(self.table)
 
 
 # Create an instance of LiveDisplay to import elsewhere (ExecutionManager, the checks, the services)
