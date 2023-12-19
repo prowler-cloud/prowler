@@ -153,8 +153,16 @@ def is_allowlisted(
         # This cannot be elif since in the case of * and single accounts we
         # want to merge allowlisted checks from * to the other accounts check list
         if "*" in allowlist["Accounts"]:
-            checks_multi_account = allowlist["Accounts"]["*"]["Checks"]
-            allowlisted_checks.update(checks_multi_account)
+            allowlisted_checks_multi_account = allowlist["Accounts"]["*"]["Checks"]
+
+            if allowlisted_checks and allowlisted_checks_multi_account:
+                allowlisted_checks = __merge_allowlist_checks_dictionaries__(
+                    check,
+                    allowlisted_checks,
+                    allowlisted_checks_multi_account,
+                )
+            else:
+                allowlisted_checks.update(allowlisted_checks_multi_account)
 
         # Test if it is allowlisted
         if is_allowlisted_in_check(
@@ -341,3 +349,62 @@ def __is_item_matched__(matched_items, finding_items):
             f"{error.__class__.__name__} -- {error}[{error.__traceback__.tb_lineno}]"
         )
         sys.exit(1)
+
+
+def __merge_allowlist_checks_dictionaries__(
+    check: str,
+    allowlisted_checks_single_account: dict,
+    allowlisted_checks_multi_account: dict,
+):
+    """__merge_allowlist_checks_dict__ returns a merged dictorionary.
+
+    Example:
+    allowlisted_checks_single_account = {
+        "check_test_1": {
+            "Regions": ["eu-west-1"],
+            "Resources": ["resource_1", "resource_2"],
+        },
+    }
+    allowlisted_checks_multi_account = {
+        "check_test_1": {
+            "Regions": ["*"],
+            "Resources": ["resource_3"],
+        }
+    }
+
+    __merge_allowlist_checks_dict__(allowlisted_checks_single_account, allowlisted_checks_multi_account) returns
+    {
+        "check_test_1": {
+            "Regions": ["*"],
+            "Resources": ["resource_1", "resource_2", "resource_3"],
+        },
+    }
+
+    """
+    # Empty allowlist
+    merged_dict = {check: {"Regions": [], "Resources": []}}
+    # First merge empty allowlist with the allowlisted_checks_single_account
+    merged_dict = __merge_allowlist_dict__(
+        check, merged_dict, allowlisted_checks_single_account
+    )
+    # Then merge the allowlisted_checks_multi_account with the previous one
+    merged_dict = __merge_allowlist_dict__(
+        check, merged_dict, allowlisted_checks_multi_account
+    )
+
+    return merged_dict
+
+
+def __merge_allowlist_dict__(check: str, merged_dict: dict, to_merge_dict: dict):
+    """__merge_allowlist_dict__ returns a merged allowlist based if the Regions or Resources has * or not."""
+    if to_merge_dict and check in to_merge_dict:
+        for key, value in to_merge_dict[check].items():
+            if key in ["Regions", "Resources"]:
+                if "*" in value:
+                    merged_dict[check][key] = ["*"]
+                else:
+                    merged_dict[check][key].extend(value)
+                    merged_dict[check][key] = list(
+                        dict.fromkeys(merged_dict[check][key])
+                    )
+    return merged_dict
