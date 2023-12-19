@@ -2,10 +2,9 @@ def is_condition_block_restrictive(
     condition_statement: dict, source_account: str, is_cross_account_allowed=False
 ):
     """
-    is_condition_block_restrictive parses the IAM Condition policy block and, by default, returns True
-    if the source_account passed as argument is within, False if not.
-    If argumetn is_cross_account_allowed is True it tests if the Condition block includes any of the operators allowlisted
-    returning True if does, False if does not.
+    is_condition_block_restrictive parses the IAM Condition policy block and, by default, returns True if the source_account passed as argument is within, False if not.
+
+    If argument is_cross_account_allowed is True it tests if the Condition block includes any of the operators allowlisted returning True if does, False if not.
 
 
     @param condition_statement: dict with an IAM Condition block, e.g.:
@@ -58,7 +57,6 @@ def is_condition_block_restrictive(
                         condition_statement[condition_operator][value],
                         list,
                     ):
-
                         is_condition_key_restrictive = True
                         # if cross account is not allowed check for each condition block looking for accounts
                         # different than default
