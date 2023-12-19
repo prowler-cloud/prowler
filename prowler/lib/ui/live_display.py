@@ -7,6 +7,7 @@ from rich.align import Align
 from rich.console import Console, Group
 from rich.layout import Layout
 from rich.live import Live
+from rich.padding import Padding
 from rich.panel import Panel
 from rich.progress import (
     BarColumn,
@@ -43,7 +44,7 @@ class LiveDisplay(Live):
         if not default_section:
             self.ordered_service_names.append(section_name)  # Store the order
             self.current_section = section_name
-        self.__update_layout__()
+        # self.__update_layout__()
 
     def get_current_section(self):
         if not self.current_section:
@@ -71,6 +72,7 @@ class LiveDisplay(Live):
             return
         service_section = ServiceSection(service_name, total_checks)
         self.add_section(service_name, service_section)
+        self.layout["client_init"].update(service_section)
 
     def print_message(self, message):
         self.console.print(message)
@@ -79,20 +81,24 @@ class LiveDisplay(Live):
         """
         Define the layout.
         Making sections invisible so it doesnt show the default Layout metadata before content is added
+        Text(" ") is to stop the layout metadata from rendering before the layout is updated with real content
         """
         self.layout = Layout(name="root")
         self.layout.split(
-            Layout(name="intro"),
-            Layout(name="overall_progress", visible=False),
-            Layout(name="results", visible=False),
-            Layout(name="client_init", visible=False),
-            Layout(name="service"),
+            Layout(name="intro", ratio=3, minimum_size=9),
+            Layout(Text(" "), name="overall_progress", minimum_size=5),
+            Layout(name="main", ratio=10),
         )
         self.layout["intro"].split_row(
             Layout(name="body", ratio=3),
             Layout(name="side", ratio=2, visible=False),
         )
-        self.layout["intro"].minimum_size = 9
+        self.layout["main"].split_row(
+            Layout(
+                Text(" "), name="client_init", ratio=3
+            ),  # For client_init and service
+            Layout(name="results", ratio=2, visible=False),
+        )
 
     def __update_layout__(self):
 
@@ -129,6 +135,7 @@ class LiveDisplay(Live):
             self.layout["service"].visible = False
 
         # Update the existing layout
+        self.console.print(self.layout.tree)
         self.update(self.layout)
 
     def __load_theme_from_file__(self):
@@ -158,17 +165,21 @@ class LiveDisplay(Live):
         results_layout.visible = True
         self.sections["results"] = results_section
 
-    # Service Init Methods
+    # Client Init Methods
     def add_client_init_section(self, service_name):
         client_init_section = ClientInitSection(service_name)
         self.add_section("client_init", client_init_section, default_section=True)
+        self.layout["client_init"].update(client_init_section)
+        self.layout["client_init"].visible = True
+        self.update(self.layout)
 
     def remove_client_init_section(self):
+        return
         if "client_init" not in self.sections:
             # Might not have needed to init any services
             return
         self.remove_section("client_init")
-        self.layout["client_init"].visible = False
+        # self.layout["client_init"].visible = False
         self.__update_layout__()
 
     # Intro Section Methods
@@ -179,6 +190,7 @@ class LiveDisplay(Live):
         intro_layout = self.layout["intro"]
         intro_section = IntroSection(args, intro_layout)
         self.add_section("intro", intro_section, default_section=True)
+        self.update(self.layout)
 
     def print_aws_credentials(self, audit_info):
         intro_section = self.get_section("intro")
@@ -188,11 +200,16 @@ class LiveDisplay(Live):
     def add_overall_progress_section(self, total_checks_dict):
         # section = self.get_section("intro")
         overall_progress_section = OverallProgressSection(total_checks_dict)
+        overall_progress_layout = self.layout["overall_progress"]
+        overall_progress_layout.update(overall_progress_section)
+        overall_progress_layout.visible = True
         self.add_section(
             "overall_progress", overall_progress_section, default_section=True
         )
+
         # Add results section
         self.add_results_section()
+        self.update(self.layout)
 
     def increment_overall_check_progress(self):
         section = self.get_section("overall_progress")
@@ -211,7 +228,7 @@ class ServiceSection:
         self.__start_check_progress__()
 
     def __rich__(self):
-        return self.renderables
+        return Padding(self.renderables, (2, 2))
 
     def __create_service_section__(self):
         # Create the progress components
@@ -304,10 +321,10 @@ class ClientInitSection:
         self.renderables = self.__create_client_init_section__()
 
     def __rich__(self):
-        return self.renderables
+        return Padding(self.renderables, (2, 2))
 
     def __create_client_init_section__(self):
-        # Progress Bar for Service Init and Checks
+        # Progress Bar for Checks
         self.task_progress_bar = Progress(
             TextColumn("[progress.description]{task.description}"),
             BarColumn(bar_width=None),
@@ -399,46 +416,6 @@ Color code for results:
         self.side_layout.update(content)
         self.side_layout.visible = True
 
-    def add_overall_progress(self, total_checks_dict):
-        services_num = len(total_checks_dict)  # number of keys == number of services
-        checks_num = sum(total_checks_dict.values())
-
-        plural_string = "checks"
-        singular_string = "check"
-
-        check_noun = plural_string if checks_num > 1 else singular_string
-
-        # Create the progress bar
-        self.overall_progress_bar = Progress(
-            TextColumn("[bold]{task.description}"),
-            BarColumn(bar_width=None),
-            MofNCompleteColumn(),
-            TimeElapsedColumn(),
-            transient=False,  # Optional: set True if you want the progress bar to disappear after completion
-        )
-        # Create the Services Completed task, to track the number of services completed
-        self.service_progress_task_id = self.overall_progress_bar.add_task(
-            "Services completed", total=services_num
-        )
-        # Create the Checks Completed task, to track the number of checks completed across all services
-        self.check_progress_task_id = self.overall_progress_bar.add_task(
-            "Checks executed", total=checks_num
-        )
-
-        content = Text()
-        content.append(
-            f"Executing {checks_num} {check_noun}, please wait...\n", style="bold"
-        )
-
-        self.renderables.extend([content, self.overall_progress_bar])
-        self.body_layout.update(Group(*self.renderables))
-
-    def increment_check_progress(self):
-        self.overall_progress_bar.update(self.check_progress_task_id, advance=1)
-
-    def increment_service_progress(self):
-        self.overall_progress_bar.update(self.service_progress_task_id, advance=1)
-
 
 class OverallProgressSection:
     def __init__(self, total_checks_dict: dict) -> None:
@@ -447,12 +424,12 @@ class OverallProgressSection:
 
     def __rich__(self):
         elapsed_time = self.total_time_taken()
-        return Group(*self.renderables, elapsed_time)
+        return Group(*self.renderables, f"Total time taken: {elapsed_time}")
 
     def total_time_taken(self):
         elapsed_seconds = int(time() - self.start_time)
         elapsed_time = timedelta(seconds=elapsed_seconds)
-        return f"Total time taken: {elapsed_time}"
+        return elapsed_time
 
     def create_renderable(self, total_checks_dict):
         services_num = len(total_checks_dict)  # number of keys == number of services
@@ -501,7 +478,7 @@ class ResultsSection:
         self.table.add_column("Service", justify="left")
 
         if self.verbose:
-            self.serverities = ["critical", "high", "medium", "low", "informational"]
+            self.serverities = ["critical", "high", "medium", "low"]
             # Add columns for each severity level when verbose, report on the count of fails per severity per service
             for severity in self.serverities:
                 styled_header = (
@@ -579,7 +556,7 @@ class ResultsSection:
         # This method allows the ResultsSection to be directly rendered by Rich
         if not self.table.rows:
             return Text("")
-        return Align.center(self.table)
+        return Padding(Align.center(self.table), (0, 2))
 
 
 # Create an instance of LiveDisplay to import elsewhere (ExecutionManager, the checks, the services)
