@@ -1,5 +1,7 @@
 import os
 import pathlib
+from datetime import timedelta
+from time import time
 
 from rich.align import Align
 from rich.console import Console, Group
@@ -440,10 +442,17 @@ Color code for results:
 
 class OverallProgressSection:
     def __init__(self, total_checks_dict: dict) -> None:
+        self.start_time = time()  # Start the timer
         self.renderables = self.create_renderable(total_checks_dict)
 
     def __rich__(self):
-        return self.renderables
+        elapsed_time = self.total_time_taken()
+        return Group(*self.renderables, elapsed_time)
+
+    def total_time_taken(self):
+        elapsed_seconds = int(time() - self.start_time)
+        elapsed_time = timedelta(seconds=elapsed_seconds)
+        return f"Total time taken: {elapsed_time}"
 
     def create_renderable(self, total_checks_dict):
         services_num = len(total_checks_dict)  # number of keys == number of services
@@ -476,7 +485,7 @@ class OverallProgressSection:
             style="bold",
         )
 
-        return Group(content, self.overall_progress_bar)
+        return [content, self.overall_progress_bar]
 
     def increment_check_progress(self):
         self.overall_progress_bar.update(self.check_progress_task_id, advance=1)
@@ -486,33 +495,72 @@ class OverallProgressSection:
 
 
 class ResultsSection:
-    def __init__(self):
+    def __init__(self, verbose=True):
+        self.verbose = verbose
         self.table = Table(title="Service Check Results")
         self.table.add_column("Service", justify="left")
-        self.status_columns = set(["PASS", "FAIL"])
-        self.service_findings = {}  # Dictionary to store findings for each service
+
+        if self.verbose:
+            self.serverities = ["critical", "high", "medium", "low", "informational"]
+            # Add columns for each severity level when verbose, report on the count of fails per severity per service
+            for severity in self.serverities:
+                styled_header = (
+                    f"[{severity.lower()}]{severity.capitalize()}[/{severity.lower()}]"
+                )
+                self.table.add_column(styled_header, justify="center")
+
+        else:
+            # Dynamically track the status's, report on the status counts for each service
+            self.status_columns = set(["PASS", "FAIL"])
+            self.service_findings = {}  # Dictionary to store findings for each service
+
+            # Dictionary to map plain statuses to their stylized forms
+            self.status_headers = {
+                "FAIL": "[fail]Fail[/fail]",
+                "PASS": "[pass]Pass[/pass]",
+            }
+
+            # Add the initial columns with styling
+            for status, header in self.status_headers.items():
+                self.table.add_column(header, justify="center")
 
     def add_results_for_service(self, service_name, service_findings):
-        # Update the dictionary with the new findings
-        status_counts = {report.status: 0 for report in service_findings}
-        for report in service_findings:
-            status_counts[report.status] += 1
-        self.service_findings[service_name] = status_counts
+        if self.verbose:
+            # Count fails per severity
+            severity_counts = {severity: 0 for severity in self.serverities}
+            for finding in service_findings:
+                if finding.status == "FAIL":
+                    severity_counts[finding.check_metadata.Severity] += 1
 
-        # Update status_columns and table columns
-        self.status_columns.update(status_counts.keys())
-        for status in self.status_columns:
-            if status not in [col.header for col in self.table.columns]:
-                # [{status.lower()}] is for the styling (defined in theme.yaml)
-                self.table.add_column(
-                    f"[{status.lower()}]{status.capitalize()}[/{status.lower()}]",
-                    justify="center",
-                )
+            # Add row with severity counts
+            row = [service_name] + [
+                str(severity_counts[severity]) for severity in self.serverities
+            ]
+            self.table.add_row(*row)
+        else:
+            # Update the dictionary with the new findings
+            status_counts = {report.status: 0 for report in service_findings}
+            for report in service_findings:
+                status_counts[report.status] += 1
+            self.service_findings[service_name] = status_counts
 
-        # Update the table with findings for all services
-        self._update_table()
+            # Update status_columns and table columns
+            self.status_columns.update(status_counts.keys())
+            for status in self.status_columns:
+                if status not in self.status_headers:
+                    # [{status.lower()}] is for the styling (defined in theme.yaml)
+                    # If new status, add it to status_headers and table
+                    styled_header = (
+                        f"[{status.lower()}]{status.capitalize()}[/{status.lower()}]"
+                    )
+                    self.status_headers[status] = styled_header
+                    self.table.add_column(styled_header, justify="center")
+
+            # Update the table with findings for all services
+            self._update_table()
 
     def _update_table(self):
+        # Used for when verbose = false
         # Clear existing rows
         self.table.rows.clear()
 

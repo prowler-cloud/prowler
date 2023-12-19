@@ -6,6 +6,10 @@ pass = bold green
 banner_blue = dodger_blue3 bold
 banner_color = bold green
 orange_color = dark_orange
+critical = bold bright_red
+high = bold red
+medium = bold dark_orange
+low = bold yellow1
 
 
 
