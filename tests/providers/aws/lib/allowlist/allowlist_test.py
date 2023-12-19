@@ -977,7 +977,7 @@ class Test_Allowlist:
             },
         }
 
-    def test__merge_allowlist_checks_dictionaries__with_only_multi_accountA(
+    def test__merge_allowlist_checks_dictionaries__with_wildcard_region_for_single_and_multi(
         self,
     ):
         check = "check_test_1"
