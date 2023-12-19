@@ -407,4 +407,5 @@ def __merge_allowlist_dict__(check: str, merged_dict: dict, to_merge_dict: dict)
                     merged_dict[check][key] = list(
                         dict.fromkeys(merged_dict[check][key])
                     )
+                    merged_dict[check][key].sort()
     return merged_dict
