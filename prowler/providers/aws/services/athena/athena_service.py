@@ -14,9 +14,13 @@ class Athena(AWSService):
         super().__init__(__class__.__name__, audit_info)
         self.workgroups = {}
         self.__threading_call__(self.__list_workgroups__)
-        self.__get_workgroups__()
-        self.__list_query_executions__()
-        self.__list_tags_for_resource__()
+        self.__threading_call__(self.__get_workgroups__, self.workgroups.values())
+        self.__threading_call__(
+            self.__list_query_executions__, self.workgroups.values()
+        )
+        self.__threading_call__(
+            self.__list_tags_for_resource__, self.workgroups.values()
+        )
 
     def __list_workgroups__(self, regional_client):
         logger.info("Athena - Listing WorkGroups...")
@@ -44,86 +48,65 @@ class Athena(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __get_workgroups__(self):
-        logger.info("Athena - Getting WorkGroups...")
+    def __get_workgroups__(self, workgroup):
         try:
-            for workgroup in self.workgroups.values():
-                try:
-                    wg = self.regional_clients[workgroup.region].get_work_group(
-                        WorkGroup=workgroup.name
-                    )
+            wg = self.regional_clients[workgroup.region].get_work_group(
+                WorkGroup=workgroup.name
+            )
 
-                    wg_configuration = wg.get("WorkGroup").get("Configuration")
-                    self.workgroups[
-                        workgroup.arn
-                    ].enforce_workgroup_configuration = wg_configuration.get(
-                        "EnforceWorkGroupConfiguration", False
-                    )
+            wg_configuration = wg.get("WorkGroup").get("Configuration")
+            self.workgroups[
+                workgroup.arn
+            ].enforce_workgroup_configuration = wg_configuration.get(
+                "EnforceWorkGroupConfiguration", False
+            )
 
-                    # We include an empty EncryptionConfiguration to handle if the workgroup does not have encryption configured
-                    encryption = (
-                        wg_configuration.get(
-                            "ResultConfiguration",
-                            {"EncryptionConfiguration": {}},
-                        )
-                        .get(
-                            "EncryptionConfiguration",
-                            {"EncryptionOption": ""},
-                        )
-                        .get("EncryptionOption")
-                    )
+            # We include an empty EncryptionConfiguration to handle if the workgroup does not have encryption configured
+            encryption = (
+                wg_configuration.get(
+                    "ResultConfiguration",
+                    {"EncryptionConfiguration": {}},
+                )
+                .get(
+                    "EncryptionConfiguration",
+                    {"EncryptionOption": ""},
+                )
+                .get("EncryptionOption")
+            )
 
-                    if encryption in ["SSE_S3", "SSE_KMS", "CSE_KMS"]:
-                        encryption_configuration = EncryptionConfiguration(
-                            encryption_option=encryption, encrypted=True
-                        )
-                        self.workgroups[
-                            workgroup.arn
-                        ].encryption_configuration = encryption_configuration
-                except Exception as error:
-                    logger.error(
-                        f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                    )
+            if encryption in ["SSE_S3", "SSE_KMS", "CSE_KMS"]:
+                encryption_configuration = EncryptionConfiguration(
+                    encryption_option=encryption, encrypted=True
+                )
+                self.workgroups[
+                    workgroup.arn
+                ].encryption_configuration = encryption_configuration
 
         except Exception as error:
             logger.error(
-                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                f"{workgroup.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __list_query_executions__(self):
-        logger.info("Athena - Listing Queries...")
+    def __list_query_executions__(self, workgroup):
         try:
-            for workgroup in self.workgroups.values():
-                try:
-                    queries = (
-                        self.regional_clients[workgroup.region]
-                        .list_query_executions(WorkGroup=workgroup.name)
-                        .get("QueryExecutionIds", [])
-                    )
-                    if queries:
-                        workgroup.queries = True
-                except Exception as error:
-                    logger.error(
-                        f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                    )
+            queries = (
+                self.regional_clients[workgroup.region]
+                .list_query_executions(WorkGroup=workgroup.name)
+                .get("QueryExecutionIds", [])
+            )
+            if queries:
+                workgroup.queries = True
         except Exception as error:
             logger.error(
-                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                f"{workgroup.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __list_tags_for_resource__(self):
-        logger.info("Athena - Listing Tags...")
+    def __list_tags_for_resource__(self, workgroup):
         try:
-            for workgroup in self.workgroups.values():
-                try:
-                    regional_client = self.regional_clients[workgroup.region]
-                    workgroup.tags = regional_client.list_tags_for_resource(
-                        ResourceARN=workgroup.arn
-                    )["Tags"]
-                except Exception as error:
-                    logger.error(
-                        f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                    )
+            regional_client = self.regional_clients[workgroup.region]
+            workgroup.tags = regional_client.list_tags_for_resource(
+                ResourceARN=workgroup.arn
+            )["Tags"]
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

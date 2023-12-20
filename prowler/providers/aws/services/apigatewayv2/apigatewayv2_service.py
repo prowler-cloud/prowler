@@ -13,9 +13,9 @@ class ApiGatewayV2(AWSService):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, audit_info)
         self.apis = []
-        self.__threading_call__(self.__get_apis__)
-        self.__get_authorizers__()
-        self.__get_stages__()
+        self.__threading_call__(self.__get_apis__, self.apis)
+        self.__threading_call__(self.__get_authorizers__, self.apis)
+        self.__threading_call__(self.__get_stages__, self.apis)
 
     def __get_apis__(self, regional_client):
         logger.info("APIGatewayv2 - Getting APIs...")
@@ -41,36 +41,32 @@ class ApiGatewayV2(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __get_authorizers__(self):
-        logger.info("APIGatewayv2 - Getting APIs authorizer...")
+    def __get_authorizers__(self, api):
         try:
-            for api in self.apis:
-                regional_client = self.regional_clients[api.region]
-                authorizers = regional_client.get_authorizers(ApiId=api.id)["Items"]
-                if authorizers:
-                    api.authorizer = True
+            regional_client = self.regional_clients[api.region]
+            authorizers = regional_client.get_authorizers(ApiId=api.id)["Items"]
+            if authorizers:
+                api.authorizer = True
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
             )
 
-    def __get_stages__(self):
-        logger.info("APIGatewayv2 - Getting stages for APIs...")
+    def __get_stages__(self, api):
         try:
-            for api in self.apis:
-                regional_client = self.regional_clients[api.region]
-                stages = regional_client.get_stages(ApiId=api.id)
-                for stage in stages["Items"]:
-                    logging = False
-                    if "AccessLogSettings" in stage:
-                        logging = True
-                    api.stages.append(
-                        Stage(
-                            name=stage["StageName"],
-                            logging=logging,
-                            tags=[stage.get("Tags")],
-                        )
+            regional_client = self.regional_clients[api.region]
+            stages = regional_client.get_stages(ApiId=api.id)
+            for stage in stages["Items"]:
+                logging = False
+                if "AccessLogSettings" in stage:
+                    logging = True
+                api.stages.append(
+                    Stage(
+                        name=stage["StageName"],
+                        logging=logging,
+                        tags=[stage.get("Tags")],
                     )
+                )
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"

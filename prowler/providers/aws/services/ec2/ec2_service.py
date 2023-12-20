@@ -18,6 +18,7 @@ class EC2(AWSService):
         self.instances = []
         self.__threading_call__(self.__describe_instances__)
         self.__threading_call__(self.__get_instance_user_data__, self.instances)
+        self.__threading_call__(self.__get_instance_user_data__, self.instances)
         self.security_groups = []
         self.regions_with_sgs = []
         self.__threading_call__(self.__describe_security_groups__)
@@ -27,7 +28,7 @@ class EC2(AWSService):
         self.volumes_with_snapshots = {}
         self.regions_with_snapshots = {}
         self.__threading_call__(self.__describe_snapshots__)
-        self.__threading_call__(self.__determine_public_snapshots__, self.snapshots)
+        self.__threading_call__(self.__get_snapshot_public__, self.snapshots)
         self.network_interfaces = []
         self.__threading_call__(self.__describe_public_network_interfaces__)
         self.__threading_call__(self.__describe_sg_network_interfaces__)
@@ -215,7 +216,8 @@ class EC2(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __determine_public_snapshots__(self, snapshot):
+    def __get_snapshot_public__(self, snapshot):
+        logger.info("EC2 - Getting snapshot volume attribute permissions...")
         try:
             regional_client = self.regional_clients[snapshot.region]
             snapshot_public = regional_client.describe_snapshot_attribute(
@@ -290,6 +292,7 @@ class EC2(AWSService):
             )
 
     def __get_instance_user_data__(self, instance):
+        logger.info("EC2 - Getting instance user data...")
         try:
             regional_client = self.regional_clients[instance.region]
             user_data = regional_client.describe_instance_attribute(

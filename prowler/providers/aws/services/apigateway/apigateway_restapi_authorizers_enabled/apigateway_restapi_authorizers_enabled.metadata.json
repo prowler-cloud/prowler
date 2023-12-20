@@ -1,7 +1,7 @@
 {
   "Provider": "aws",
   "CheckID": "apigateway_restapi_authorizers_enabled",
-  "CheckTitle": "Check if API Gateway has configured authorizers.",
+  "CheckTitle": "Check if API Gateway has configured authorizers at api or method level.",
   "CheckAliases": [
     "apigateway_authorizers_enabled"
   ],
@@ -13,7 +13,7 @@
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
   "Severity": "medium",
   "ResourceType": "AwsApiGatewayRestApi",
-  "Description": "Check if API Gateway has configured authorizers.",
+  "Description": "Check if API Gateway has configured authorizers at api or method level.",
   "Risk": "If no authorizer is enabled anyone can use the service.",
   "RelatedUrl": "",
   "Remediation": {

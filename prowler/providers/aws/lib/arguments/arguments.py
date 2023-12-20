@@ -1,4 +1,5 @@
 from argparse import ArgumentTypeError, Namespace
+from re import search
 
 from prowler.providers.aws.aws_provider import get_aws_available_regions
 from prowler.providers.aws.lib.arn.arn import arn_type
@@ -84,6 +85,11 @@ def init_parser(self):
         action="store_true",
         help="Skip updating previous findings of Prowler in Security Hub",
     )
+    aws_security_hub_subparser.add_argument(
+        "--send-sh-only-fails",
+        action="store_true",
+        help="Send only Prowler failed findings to SecurityHub",
+    )
     # AWS Quick Inventory
     aws_quick_inventory_subparser = aws_parser.add_argument_group("Quick Inventory")
     aws_quick_inventory_subparser.add_argument(
@@ -99,6 +105,7 @@ def init_parser(self):
         "-B",
         "--output-bucket",
         nargs="?",
+        type=validate_bucket,
         default=None,
         help="Custom output bucket, requires -M <mode> and it can work also with -o flag.",
     )
@@ -106,6 +113,7 @@ def init_parser(self):
         "-D",
         "--output-bucket-no-assume",
         nargs="?",
+        type=validate_bucket,
         default=None,
         help="Same as -B but do not use the assumed role credentials to put objects to the bucket, instead uses the initial credentials.",
     )
@@ -185,3 +193,13 @@ def validate_arguments(arguments: Namespace) -> tuple[bool, str]:
             return (False, "To use -I/-T options -R option is needed")
 
     return (True, "")
+
+
+def validate_bucket(bucket_name):
+    """validate_bucket validates that the input bucket_name is valid"""
+    if search("(?!(^xn--|.+-s3alias$))^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$", bucket_name):
+        return bucket_name
+    else:
+        raise ArgumentTypeError(
+            "Bucket name must be valid (https://docs.aws.amazon.com/AmazonS3/latest/userguide/bucketnamingrules.html)"
+        )

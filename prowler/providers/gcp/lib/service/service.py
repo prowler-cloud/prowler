@@ -27,7 +27,7 @@ class GCPService:
         self.default_project_id = audit_info.default_project_id
         self.region = region
         self.client = self.__generate_client__(
-            service, api_version, audit_info.credentials
+            self.service, api_version, audit_info.credentials
         )
         # Only project ids that have their API enabled will be scanned
         self.project_ids = self.__is_api_active__(audit_info.project_ids)

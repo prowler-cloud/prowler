@@ -29,7 +29,9 @@ def prepare_security_hub_findings(
             continue
 
         # Handle quiet mode
-        if output_options.is_quiet and finding.status != "FAIL":
+        if (
+            output_options.is_quiet or output_options.send_sh_only_fails
+        ) and finding.status != "FAIL":
             continue
 
         # Get the finding region
