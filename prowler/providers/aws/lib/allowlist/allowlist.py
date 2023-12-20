@@ -9,6 +9,9 @@ from schema import Optional, Schema
 from prowler.lib.logger import logger
 from prowler.lib.outputs.models import unroll_tags
 
+allowlist_base_fields = ["Regions", "Resources", "Tags"]
+allowlist_exceptions_fields = allowlist_base_fields + ["Accounts"]
+
 allowlist_schema = Schema(
     {
         "Accounts": {
@@ -399,7 +402,11 @@ def __merge_allowlist_dict__(check: str, merged_dict: dict, to_merge_dict: dict)
     """__merge_allowlist_dict__ returns a merged allowlist based if the Regions or Resources has * or not."""
     if to_merge_dict and check in to_merge_dict:
         for key, value in to_merge_dict[check].items():
-            if key in ["Regions", "Resources"]:
+            # Handle Base fields
+            if key in allowlist_base_fields:
+                # Key Tags is optional, so create it if present
+                if key == "Tags":
+                    merged_dict[check]["Tags"] = []
                 if "*" in value:
                     merged_dict[check][key] = ["*"]
                 else:

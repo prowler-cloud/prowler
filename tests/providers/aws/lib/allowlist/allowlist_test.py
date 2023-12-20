@@ -912,12 +912,14 @@ class Test_Allowlist:
             check: {
                 "Regions": ["eu-west-1"],
                 "Resources": ["resource_1", "resource_2"],
+                "Tags": ["test:test"],
             },
         }
         allowlisted_checks_multi_account = {
             check: {
                 "Regions": ["*"],
                 "Resources": ["resource_3"],
+                "Tags": ["test:test"],
             }
         }
 
@@ -927,6 +929,7 @@ class Test_Allowlist:
             check: {
                 "Regions": ["*"],
                 "Resources": ["resource_1", "resource_2", "resource_3"],
+                "Tags": ["test:test"],
             },
         }
 
