@@ -14,7 +14,7 @@ class AppStream(AWSService):
         super().__init__(__class__.__name__, audit_info)
         self.fleets = []
         self.__threading_call__(self.__describe_fleets__)
-        self.__list_tags_for_resource__()
+        self.__threading_call__(self.__list_tags_for_resource__, self.fleets)
 
     def __describe_fleets__(self, regional_client):
         logger.info("AppStream - Describing Fleets...")
@@ -50,15 +50,13 @@ class AppStream(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __list_tags_for_resource__(self):
-        logger.info("AppStream - List Tags...")
+    def __list_tags_for_resource__(self, fleet):
         try:
-            for fleet in self.fleets:
-                regional_client = self.regional_clients[fleet.region]
-                response = regional_client.list_tags_for_resource(
-                    ResourceArn=fleet.arn
-                )["Tags"]
-                fleet.tags = [response]
+            regional_client = self.regional_clients[fleet.region]
+            response = regional_client.list_tags_for_resource(ResourceArn=fleet.arn)[
+                "Tags"
+            ]
+            fleet.tags = [response]
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

@@ -15,7 +15,7 @@ class CloudFormation(AWSService):
         super().__init__(__class__.__name__, audit_info)
         self.stacks = []
         self.__threading_call__(self.__describe_stacks__)
-        self.__describe_stack__()
+        self.__threading_call__(self.__describe_stack__, self.stacks)
 
     def __describe_stacks__(self, regional_client):
         """Get ALL CloudFormation Stacks"""
@@ -47,33 +47,30 @@ class CloudFormation(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_stack__(self):
+    def __describe_stack__(self, stack):
         """Get Details for a CloudFormation Stack"""
-        logger.info("CloudFormation - Describing Stack to get specific details...")
-        for stack in self.stacks:
-            try:
-                stack_details = self.regional_clients[stack.region].describe_stacks(
-                    StackName=stack.name
-                )
-                # Termination Protection
-                stack.enable_termination_protection = stack_details["Stacks"][0][
-                    "EnableTerminationProtection"
-                ]
-                # Nested Stack
-                if "RootId" in stack_details["Stacks"][0]:
-                    stack.root_nested_stack = stack_details["Stacks"][0]["RootId"]
-                stack.is_nested_stack = True if stack.root_nested_stack != "" else False
+        try:
+            stack_details = self.regional_clients[stack.region].describe_stacks(
+                StackName=stack.name
+            )
+            # Termination Protection
+            stack.enable_termination_protection = stack_details["Stacks"][0][
+                "EnableTerminationProtection"
+            ]
+            # Nested Stack
+            if "RootId" in stack_details["Stacks"][0]:
+                stack.root_nested_stack = stack_details["Stacks"][0]["RootId"]
+            stack.is_nested_stack = True if stack.root_nested_stack != "" else False
 
-            except ClientError as error:
-                if error.response["Error"]["Code"] == "ValidationError":
-                    logger.warning(
-                        f"{stack.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                    )
-                    continue
-            except Exception as error:
-                logger.error(
+        except ClientError as error:
+            if error.response["Error"]["Code"] == "ValidationError":
+                logger.warning(
                     f"{stack.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
+        except Exception as error:
+            logger.error(
+                f"{stack.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
 
 
 class Stack(BaseModel):

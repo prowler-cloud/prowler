@@ -1,4 +1,5 @@
 from concurrent.futures import ThreadPoolExecutor, as_completed
+
 from prowler.providers.aws.aws_provider import (
     generate_regional_clients,
     get_default_region,
@@ -50,19 +51,19 @@ class AWSService:
     def __get_session__(self):
         return self.session
 
-    def __threading_call__(self, call, iterator=None, max_workers=10):
+    def __threading_call__(self, call, iterator=None, max_workers=10, *args, **kwargs):
         # Use the provided iterator, or default to self.regional_clients
         items = iterator if iterator is not None else self.regional_clients.values()
 
         # Using ThreadPoolExecutor for managing threads
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             # Submit tasks to the executor
-            futures = [executor.submit(call, item) for item in items]
+            futures = [executor.submit(call, item, *args, **kwargs) for item in items]
 
             # Wait for all tasks to complete
             for future in as_completed(futures):
                 try:
                     future.result()  # Raises exceptions from the thread, if any
-                except Exception as e:
+                except Exception:
                     # Handle exceptions if necessary
                     pass  # Replace 'pass' with any additional exception handling logic

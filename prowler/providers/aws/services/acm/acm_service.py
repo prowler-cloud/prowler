@@ -15,8 +15,8 @@ class ACM(AWSService):
         super().__init__(__class__.__name__, audit_info)
         self.certificates = []
         self.__threading_call__(self.__list_certificates__)
-        self.__describe_certificates__()
-        self.__list_tags_for_certificate__()
+        self.__threading_call__(self.__describe_certificates__, self.certificates)
+        self.__threading_call__(self.__list_tags_for_certificate__, self.certificates)
 
     def __list_certificates__(self, regional_client):
         logger.info("ACM - Listing Certificates...")
@@ -59,33 +59,29 @@ class ACM(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_certificates__(self):
-        logger.info("ACM - Describing Certificates...")
+    def __describe_certificates__(self, certificate):
         try:
-            for certificate in self.certificates:
-                regional_client = self.regional_clients[certificate.region]
-                response = regional_client.describe_certificate(
-                    CertificateArn=certificate.arn
-                )["Certificate"]
-                if (
-                    response["Options"]["CertificateTransparencyLoggingPreference"]
-                    == "ENABLED"
-                ):
-                    certificate.transparency_logging = True
+            regional_client = self.regional_clients[certificate.region]
+            response = regional_client.describe_certificate(
+                CertificateArn=certificate.arn
+            )["Certificate"]
+            if (
+                response["Options"]["CertificateTransparencyLoggingPreference"]
+                == "ENABLED"
+            ):
+                certificate.transparency_logging = True
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __list_tags_for_certificate__(self):
-        logger.info("ACM - List Tags...")
+    def __list_tags_for_certificate__(self, certificate):
         try:
-            for certificate in self.certificates:
-                regional_client = self.regional_clients[certificate.region]
-                response = regional_client.list_tags_for_certificate(
-                    CertificateArn=certificate.arn
-                )["Tags"]
-                certificate.tags = response
+            regional_client = self.regional_clients[certificate.region]
+            response = regional_client.list_tags_for_certificate(
+                CertificateArn=certificate.arn
+            )["Tags"]
+            certificate.tags = response
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
