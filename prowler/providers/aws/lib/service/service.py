@@ -1,4 +1,5 @@
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from functools import wraps
 
 from prowler.lib.logger import logger
 from prowler.lib.ui.live_display import live_display
@@ -58,7 +59,7 @@ class AWSService:
     def __get_session__(self):
         return self.session
 
-    def __threading_call__(self, call, iterator=None):
+    def __threading_call__(self, call, iterator=None, *args, **kwargs):
         # Use the provided iterator, or default to self.regional_clients
         items = iterator if iterator is not None else self.regional_clients.values()
         # Determine the total count for logging
@@ -86,7 +87,9 @@ class AWSService:
         self.progress_tasks.append(task_id)
 
         # Submit tasks to the thread pool
-        futures = [self.thread_pool.submit(call, item) for item in items]
+        futures = [
+            self.thread_pool.submit(call, item, *args, **kwargs) for item in items
+        ]
 
         # Wait for all tasks to complete
         for future in as_completed(futures):
@@ -100,3 +103,23 @@ class AWSService:
 
         # Make the task disappear once completed
         # self.progress.remove_task(task_id)
+
+    def progress_decorator(self, func):
+        """Decorator to update the progress bar before and after a function call."""
+
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            task_name = func.__name__.replace("_", " ").capitalize()
+            task_id = self.task_progress_bar.add_task(
+                f"- {task_name}...", total=1, task_type="Service"
+            )
+            self.progress_tasks.append(task_id)
+
+            result = func(*args, **kwargs)  # Execute the function
+
+            self.task_progress_bar.update(task_id, advance=1)
+            # self.task_progress_bar.remove_task(task_id)  # Uncomment if you want to remove the task on completion
+
+            return result
+
+        return wrapper
