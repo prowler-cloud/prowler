@@ -1,4 +1,5 @@
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from functools import wraps
 
 from prowler.providers.aws.aws_provider import (
     generate_regional_clients,
@@ -67,3 +68,23 @@ class AWSService:
                 except Exception:
                     # Handle exceptions if necessary
                     pass  # Replace 'pass' with any additional exception handling logic
+
+    def progress_decorator(self, func):
+        """Decorator to update the progress bar before and after a function call."""
+
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            task_name = func.__name__.replace("_", " ").capitalize()
+            task_id = self.task_progress_bar.add_task(
+                f"- {task_name}...", total=1, task_type="Service"
+            )
+            self.progress_tasks.append(task_id)
+
+            result = func(*args, **kwargs)  # Execute the function
+
+            self.task_progress_bar.update(task_id, advance=1)
+            # self.task_progress_bar.remove_task(task_id)  # Uncomment if you want to remove the task on completion
+
+            return result
+
+        return wrapper

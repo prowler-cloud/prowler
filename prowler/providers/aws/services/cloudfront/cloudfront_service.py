@@ -15,9 +15,18 @@ class CloudFront(AWSService):
         super().__init__(__class__.__name__, audit_info, global_service=True)
         self.distributions = {}
         self.__list_distributions__(self.client, self.region)
-        self.__get_distribution_config__(self.client, self.distributions, self.region)
-        self.__list_tags_for_resource__(self.client, self.distributions, self.region)
+        self.__threading_call__(
+            self.__get_distribution_config__,
+            iterator=self.distributions,
+            args=(self.client, self.region),
+        )
+        self.__threading_call__(
+            self.__list_tags_for_resource__,
+            iterator=self.distributions,
+            args=(self.client, self.region),
+        )
 
+    @AWSService.progress_decorator
     def __list_distributions__(self, client, region) -> dict:
         logger.info("CloudFront - Listing Distributions...")
         try:
@@ -44,57 +53,53 @@ class CloudFront(AWSService):
                 f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __get_distribution_config__(self, client, distributions, region) -> dict:
-        logger.info("CloudFront - Getting Distributions...")
+    @AWSService.progress_decorator
+    def __get_distribution_config__(self, distribution_id, client, region) -> dict:
         try:
-            for distribution_id in distributions.keys():
-                distribution_config = client.get_distribution_config(Id=distribution_id)
-                # Global Config
-                distributions[distribution_id].logging_enabled = distribution_config[
-                    "DistributionConfig"
-                ]["Logging"]["Enabled"]
-                distributions[
-                    distribution_id
-                ].geo_restriction_type = GeoRestrictionType(
-                    distribution_config["DistributionConfig"]["Restrictions"][
-                        "GeoRestriction"
-                    ]["RestrictionType"]
-                )
-                distributions[distribution_id].web_acl_id = distribution_config[
-                    "DistributionConfig"
-                ]["WebACLId"]
+            distribution_config = client.get_distribution_config(Id=distribution_id)
+            # Global Config
+            self.distributions[distribution_id].logging_enabled = distribution_config[
+                "DistributionConfig"
+            ]["Logging"]["Enabled"]
+            self.distributions[
+                distribution_id
+            ].geo_restriction_type = GeoRestrictionType(
+                distribution_config["DistributionConfig"]["Restrictions"][
+                    "GeoRestriction"
+                ]["RestrictionType"]
+            )
+            self.distributions[distribution_id].web_acl_id = distribution_config[
+                "DistributionConfig"
+            ]["WebACLId"]
 
-                # Default Cache Config
-                default_cache_config = DefaultCacheConfigBehaviour(
-                    realtime_log_config_arn=distribution_config["DistributionConfig"][
+            # Default Cache Config
+            default_cache_config = DefaultCacheConfigBehaviour(
+                realtime_log_config_arn=distribution_config["DistributionConfig"][
+                    "DefaultCacheBehavior"
+                ].get("RealtimeLogConfigArn"),
+                viewer_protocol_policy=ViewerProtocolPolicy(
+                    distribution_config["DistributionConfig"][
                         "DefaultCacheBehavior"
-                    ].get("RealtimeLogConfigArn"),
-                    viewer_protocol_policy=ViewerProtocolPolicy(
-                        distribution_config["DistributionConfig"][
-                            "DefaultCacheBehavior"
-                        ].get("ViewerProtocolPolicy")
-                    ),
-                    field_level_encryption_id=distribution_config["DistributionConfig"][
-                        "DefaultCacheBehavior"
-                    ].get("FieldLevelEncryptionId"),
-                )
-                distributions[
-                    distribution_id
-                ].default_cache_config = default_cache_config
+                    ].get("ViewerProtocolPolicy")
+                ),
+                field_level_encryption_id=distribution_config["DistributionConfig"][
+                    "DefaultCacheBehavior"
+                ].get("FieldLevelEncryptionId"),
+            )
+            self.distributions[
+                distribution_id
+            ].default_cache_config = default_cache_config
 
         except Exception as error:
             logger.error(
                 f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __list_tags_for_resource__(self, client, distributions, region):
+    def __list_tags_for_resource__(self, distribution, client, region):
         logger.info("CloudFront - List Tags...")
         try:
-            for distribution in distributions.values():
-                response = client.list_tags_for_resource(Resource=distribution.arn)[
-                    "Tags"
-                ]
-                distribution.tags = response.get("Items")
+            response = client.list_tags_for_resource(Resource=distribution.arn)["Tags"]
+            distribution.tags = response.get("Items")
         except Exception as error:
             logger.error(
                 f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
