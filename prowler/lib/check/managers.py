@@ -3,7 +3,7 @@ import os
 import sys
 import traceback
 from types import ModuleType
-from typing import Any
+from typing import Any, Set
 
 from colorama import Fore, Style
 
@@ -43,8 +43,21 @@ class ExecutionManager:
         )
         self.services_queue = self.initialize_services_queue(self.check_dependencies)
 
-        self.services_executed = (set(),)
-        self.checks_executed = (set(),)
+        # For tracking the executed services and checks
+        self.services_executed: Set[str] = set()
+        self.checks_executed: Set[str] = set()
+
+        # Initialize the Audit Metadata
+        self.audit_info.audit_metadata = Audit_Metadata(
+            services_scanned=0,
+            expected_checks=self.checks_to_execute,
+            completed_checks=0,
+            audit_progress=0,
+        )
+
+    def update_tracking(self, service: str, check: str):
+        self.services_executed.add(service)
+        self.checks_executed.add(check)
 
     @staticmethod
     def initialize_remaining_checks(check_dependencies):
@@ -57,6 +70,16 @@ class ExecutionManager:
     @staticmethod
     def initialize_services_queue(check_dependencies):
         return list(check_dependencies.keys())
+
+    @staticmethod
+    def create_check_service_dict(checks_to_execute):
+        output = {}
+        for check_name in checks_to_execute:
+            service = check_name.split("_")[0]
+            if service not in output.keys():
+                output[service] = []
+            output[service].append(check_name)
+        return output
 
     def total_checks_per_service(self):
         """Returns a dictionary with the total number of checks for each service."""
@@ -77,18 +100,6 @@ class ExecutionManager:
                 return service
         return None if not self.services_queue else self.services_queue[0]
 
-    # Imports service clients, and tracks if it needs to be imported
-    def import_client(self, client_name):
-        if not self.loaded_clients.get(client_name):
-            self.live_display.add_client_init_section(client_name)
-            # Dynamically import the client
-            module_name, _ = client_name.rsplit("_", 1)
-            client_module = importlib.import_module(
-                f"prowler.providers.{self.provider}.services.{module_name}.{client_name}"
-            )
-            self.loaded_clients[client_name] = client_module
-            self.live_display.remove_client_init_section()
-
     @staticmethod
     def import_check(check_path: str) -> ModuleType:
         """
@@ -101,6 +112,16 @@ class ExecutionManager:
         """
         lib = importlib.import_module(f"{check_path}")
         return lib
+
+    # Imports service clients, and tracks if it needs to be imported
+    def import_client(self, client_name):
+        if not self.loaded_clients.get(client_name):
+            # Dynamically import the client
+            module_name, _ = client_name.rsplit("_", 1)
+            client_module = importlib.import_module(
+                f"prowler.providers.{self.provider}.services.{module_name}.{client_name}"
+            )
+            self.loaded_clients[client_name] = client_module
 
     def release_clients(self, completed_check_clients):
         for client_name in completed_check_clients:
@@ -144,11 +165,10 @@ class ExecutionManager:
             for client in clients_for_service:
                 self.live_display.add_client_init_section(client)
                 self.import_client(client)
-                self.live_display.remove_client_init_section()
 
-            if not self.live_display.has_section(current_service):
-                total_checks = len(self.check_dict[current_service])
-                self.live_display.add_service_section(current_service, total_checks)
+            # Add the display component
+            total_checks = len(self.check_dict[current_service])
+            self.live_display.add_service_section(current_service, total_checks)
 
             for check_name, clients_for_check in checks.items():
 
@@ -161,24 +181,87 @@ class ExecutionManager:
                 self.release_clients(clients_for_check)
 
             self.live_display.increment_overall_service_progress()
-            self.live_display.remove_section(current_service)
 
-    @staticmethod
-    def create_check_service_dict(checks_to_execute):
-        output = {}
-        for check_name in checks_to_execute:
-            service = check_name.split("_")[0]
-            if service not in output.keys():
-                output[service] = []
-            output[service].append(check_name)
-        return output
+    def execute_checks(self) -> list:
+        # List to store all the check's findings
+        all_findings = []
+
+        if os.name != "nt":
+            try:
+                from resource import RLIMIT_NOFILE, getrlimit
+
+                # Check ulimit for the maximum system open files
+                soft, _ = getrlimit(RLIMIT_NOFILE)
+                if soft < 4096:
+                    logger.warning(
+                        f"Your session file descriptors limit ({soft} open files) is below 4096. We recommend to increase it to avoid errors. Solve it running this command `ulimit -n 4096`. For more info visit https://docs.prowler.cloud/en/latest/troubleshooting/"
+                    )
+            except Exception as error:
+                logger.error("Unable to retrieve ulimit default settings")
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+
+        # Execution with the --only-logs flag
+        if self.audit_output_options.only_logs:
+            for service, check_name in self.generate_checks():
+                try:
+                    check_findings = self.execute(service, check_name)
+                    all_findings.extend(check_findings)
+
+                # If check does not exists in the provider or is from another provider
+                except ModuleNotFoundError:
+                    logger.error(
+                        f"Check '{check_name}' was not found for the {self.provider.upper()} provider"
+                    )
+                except Exception as error:
+                    logger.error(
+                        f"{check_name} - {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
+        else:
+            # Default execution
+            total_checks = self.total_checks_per_service()
+            self.live_display.add_overall_progress_section(
+                total_checks_dict=total_checks
+            )
+            # For tracking when a service is completed
+            completed_checks = {service: 0 for service in total_checks}
+            service_findings = []
+            for service, check_name in self.generate_checks():
+                try:
+                    check_findings = self.execute(
+                        service,
+                        check_name,
+                    )
+                    all_findings.extend(check_findings)
+                    service_findings.extend(check_findings)
+                    # Update the completed checks count
+                    completed_checks[service] += 1
+
+                    # Check if all checks for the service are completed
+                    if completed_checks[service] == total_checks[service]:
+                        # All checks for the service are completed
+                        # Add a summary table or perform other actions
+                        live_display.add_results_for_service(service, service_findings)
+                        # Clear service_findings
+                        service_findings = []
+
+                # If check does not exists in the provider or is from another provider
+                except ModuleNotFoundError:
+                    logger.error(
+                        f"Check '{check_name}' was not found for the {self.provider.upper()} provider"
+                    )
+                except Exception as error:
+                    logger.error(
+                        f"{check_name} - {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
+            self.live_display.hide_service_section()
+        return all_findings
 
     def execute(
         self,
         service: str,
         check_name: str,
-        services_executed: set,
-        checks_executed: set,
     ):
         # Import check module
         check_module_path = f"prowler.providers.{self.provider}.services.{service}.{check_name}.{check_name}"
@@ -199,11 +282,8 @@ class ExecutionManager:
         check_findings = self.run_check(c, self.audit_output_options)
 
         # Update Audit Status
-        services_executed.add(service)
-        checks_executed.add(check_name)
-        self.audit_info.audit_metadata = self.update_audit_metadata(
-            self.audit_info.audit_metadata, services_executed, checks_executed
-        )
+        self.update_tracking(service, check_name)
+        self.update_audit_metadata()
 
         # Allowlist findings
         if self.audit_output_options.allowlist_file:
@@ -232,28 +312,6 @@ class ExecutionManager:
         return check_findings
 
     @staticmethod
-    def update_audit_metadata(
-        audit_metadata: Audit_Metadata, services_executed: set, checks_executed: set
-    ) -> Audit_Metadata:
-        """update_audit_metadata returns the audit_metadata updated with the new status
-
-        Updates the given audit_metadata using the length of the services_executed and checks_executed
-        """
-        try:
-            audit_metadata.services_scanned = len(services_executed)
-            audit_metadata.completed_checks = len(checks_executed)
-            audit_metadata.audit_progress = (
-                100 * len(checks_executed) / len(audit_metadata.expected_checks)
-            )
-
-            return audit_metadata
-
-        except Exception as error:
-            logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
-
-    @staticmethod
     def run_check(check: Check, output_options: Provider_Output_Options) -> list:
         findings = []
         if output_options.verbose:
@@ -274,105 +332,22 @@ class ExecutionManager:
         finally:
             return findings
 
-    def execute_checks(self) -> list:
-        # List to store all the check's findings
-        all_findings = []
-        # Services and checks executed for the Audit Status
-        services_executed = set()
-        checks_executed = set()
+    def update_audit_metadata(self):
+        """update_audit_metadata returns the audit_metadata updated with the new status
 
-        # Initialize the Audit Metadata
-        self.audit_info.audit_metadata = Audit_Metadata(
-            services_scanned=0,
-            expected_checks=self.checks_to_execute,
-            completed_checks=0,
-            audit_progress=0,
-        )
-
-        if os.name != "nt":
-            try:
-                from resource import RLIMIT_NOFILE, getrlimit
-
-                # Check ulimit for the maximum system open files
-                soft, _ = getrlimit(RLIMIT_NOFILE)
-                if soft < 4096:
-                    logger.warning(
-                        f"Your session file descriptors limit ({soft} open files) is below 4096. We recommend to increase it to avoid errors. Solve it running this command `ulimit -n 4096`. For more info visit https://docs.prowler.cloud/en/latest/troubleshooting/"
-                    )
-            except Exception as error:
-                logger.error("Unable to retrieve ulimit default settings")
-                logger.error(
-                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                )
-
-        # Execution with the --only-logs flag
-        if self.audit_output_options.only_logs:
-            for check_name in self.checks_to_execute:
-                # Recover service from check name
-                service = check_name.split("_")[0]
-                try:
-                    check_findings = self.execute(
-                        service,
-                        check_name,
-                        self.provider,
-                        self.audit_output_options,
-                        self.audit_info,
-                        services_executed,
-                        checks_executed,
-                        self.custom_checks_metadata,
-                    )
-                    all_findings.extend(check_findings)
-
-                # If check does not exists in the provider or is from another provider
-                except ModuleNotFoundError:
-                    logger.error(
-                        f"Check '{check_name}' was not found for the {self.provider.upper()} provider"
-                    )
-                except Exception as error:
-                    logger.error(
-                        f"{check_name} - {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                    )
-        else:
-            # Default execution
-            total_checks = self.total_checks_per_service()
-            self.live_display.add_overall_progress_section(
-                total_checks_dict=total_checks
+        Updates the given audit_metadata using the length of the services_executed and checks_executed
+        """
+        try:
+            self.audit_info.audit_metadata.services_scanned = len(
+                self.services_executed
             )
-            # For tracking when a service is completed
-            completed_checks = {service: 0 for service in total_checks}
-            service_findings = []
-            for service, check_name in self.generate_checks():
-                try:
-                    check_findings = self.execute(
-                        service,
-                        check_name,
-                        services_executed,
-                        checks_executed,
-                    )
-                    all_findings.extend(check_findings)
-                    service_findings.extend(check_findings)
-                    # Update the completed checks count
-                    completed_checks[service] += 1
-
-                    # Check if all checks for the service are completed
-                    if completed_checks[service] == total_checks[service]:
-                        # All checks for the service are completed
-                        # Add a summary table or perform other actions
-                        live_display.add_results_for_service(service, service_findings)
-                        # Clear service_findings
-                        service_findings = []
-
-                # If check does not exists in the provider or is from another provider
-                except ModuleNotFoundError:
-                    logger.error(
-                        f"Check '{check_name}' was not found for the {self.provider.upper()} provider"
-                    )
-                except Exception as error:
-                    logger.error(
-                        f"{check_name} - {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                    )
-        return all_findings
-
-
-def on_finalize(client_name):
-    print(f"Client {client_name} is being garbage collected.")
+            self.audit_info.audit_metadata.completed_checks = len(self.checks_executed)
+            self.audit_info.audit_metadata.audit_progress = (
+                100
+                * len(self.checks_executed)
+                / len(self.audit_info.audit_metadata.expected_checks)
+            )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )

@@ -23,7 +23,6 @@ from rich.text import Text
 from rich.theme import Theme
 
 from prowler.config.config import prowler_version, timestamp
-from prowler.lib.logger import logger
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 
 
@@ -32,56 +31,37 @@ class LiveDisplay(Live):
         theme = self.__load_theme_from_file__()
         super().__init__(renderable=None, console=Console(theme=theme), *args, **kwargs)
         self.sections = {}
-        self.ordered_service_names = []  # List to remember the order of sections
         self.current_section = None
         self.make_layout()
 
-    def has_section(self, section_name):
-        return section_name in self.sections.keys()
-
-    def add_section(self, section_name, section_class, default_section=False):
-        self.sections[section_name] = section_class
-        if not default_section:
-            self.ordered_service_names.append(section_name)  # Store the order
-            self.current_section = section_name
-        # self.__update_layout__()
-
-    def get_current_section(self):
-        if not self.current_section:
-            logger.error(
-                "LiveDisplay has not been intialized! No current section to return"
-            )
-            return
-        return self.sections[self.current_section]
-
-    def get_section(self, section_name):
-        return self.sections[section_name]
+    def get_service_section(self):
+        # Used by Check
+        return self.sections["client_and_service"]
 
     def get_client_init_section(self):
-        return self.sections["client_init"]
-
-    def remove_section(self, section_name):
-        del self.sections[section_name]
-        if section_name in self.ordered_service_names:
-            self.ordered_service_names.remove(section_name)
+        # Used by AWSService
+        return self.sections["client_and_service"]
 
     def add_service_section(self, service_name, total_checks):
-        # Create a new section for the service
-        if service_name in self.sections:
-            logger.error(f"Section already exists for {service_name}")
-            return
+        # Used to create the ServiceSection when checks start to execute (after clients have been imported)
         service_section = ServiceSection(service_name, total_checks)
-        self.add_section(service_name, service_section)
-        self.layout["client_init"].update(service_section)
+        self.sections["client_and_service"] = service_section
+        self.layout["client_and_service"].update(service_section)
+
+    def hide_service_section(self):
+        # To hide the last service after execution has completed
+        self.layout["client_and_service"].visible = False
 
     def print_message(self, message):
+        # No use yet
         self.console.print(message)
 
     def make_layout(self):
         """
-        Define the layout.
+        Defines the layout.
         Making sections invisible so it doesnt show the default Layout metadata before content is added
         Text(" ") is to stop the layout metadata from rendering before the layout is updated with real content
+        client_and_service handles client init (when importing clients) and service check execution
         """
         self.layout = Layout(name="root")
         self.layout.split(
@@ -95,48 +75,10 @@ class LiveDisplay(Live):
         )
         self.layout["main"].split_row(
             Layout(
-                Text(" "), name="client_init", ratio=3
+                Text(" "), name="client_and_service", ratio=3
             ),  # For client_init and service
             Layout(name="results", ratio=2, visible=False),
         )
-
-    def __update_layout__(self):
-
-        for name, section in self.sections.items():
-            if self.layout.get(name):
-                if hasattr(section, "__rich__"):
-                    self.layout[name].update(section)
-                    self.layout[name].visible = True
-                else:
-                    self.layout[name].visible = False
-            else:
-                # Its needs to be part of service section
-                pass
-
-        service_renderables = []
-        for name in self.ordered_service_names:
-            section_renderable = self.sections[name].renderables
-            if isinstance(section_renderable, list):
-                # If it's a list, create a Panel with these renderables
-                section_title = getattr(
-                    self.sections[name], "title", None
-                )  # Get title if it exists
-                panel = Panel(Group(*section_renderable), title=section_title)
-                service_renderables.append(panel)
-            else:
-                # Otherwise, treat it as a single renderable
-                service_renderables.append(section_renderable)
-
-        if service_renderables:
-            grouped_renderables = Group(*service_renderables)
-            self.layout["service"].visible = True
-            self.layout["service"].update(grouped_renderables)
-        else:
-            self.layout["service"].visible = False
-
-        # Update the existing layout
-        self.console.print(self.layout.tree)
-        self.update(self.layout)
 
     def __load_theme_from_file__(self):
         # Loads theme.yaml from the same folder as this file
@@ -147,40 +89,31 @@ class LiveDisplay(Live):
 
     # Wrappers for ServiceSection methods
     def increment_check_progress(self):
-        current_section = self.get_current_section()
-        if not isinstance(current_section, ServiceSection):
-            logger.error("Current section is not set or not a ServiceSection")
-            return
-        current_section.increment_check_progress()
+        service_section = self.sections["client_and_service"]
+        service_section.increment_check_progress()
 
     # Results Section Methods
-    def add_results_for_service(self, service_name, service_findings):
-        results_section = self.sections["results"]
-        results_section.add_results_for_service(service_name, service_findings)
-
     def add_results_section(self):
+        # Intializes the results section
         results_layout = self.layout["results"]
         results_section = ResultsSection()
         results_layout.update(results_section)
         results_layout.visible = True
         self.sections["results"] = results_section
 
+    def add_results_for_service(self, service_name, service_findings):
+        # Adds rows to the Service Check Results table
+        results_section = self.sections["results"]
+        results_section.add_results_for_service(service_name, service_findings)
+
     # Client Init Methods
     def add_client_init_section(self, service_name):
         client_init_section = ClientInitSection(service_name)
-        self.add_section("client_init", client_init_section, default_section=True)
-        self.layout["client_init"].update(client_init_section)
-        self.layout["client_init"].visible = True
+        # self.add_section("client_and_service", client_init_section, default_section=True)
+        self.sections["client_and_service"] = client_init_section
+        self.layout["client_and_service"].update(client_init_section)
+        self.layout["client_and_service"].visible = True
         self.update(self.layout)
-
-    def remove_client_init_section(self):
-        return
-        if "client_init" not in self.sections:
-            # Might not have needed to init any services
-            return
-        self.remove_section("client_init")
-        # self.layout["client_init"].visible = False
-        self.__update_layout__()
 
     # Intro Section Methods
     def add_intro(self, args):
@@ -189,34 +122,34 @@ class LiveDisplay(Live):
         self.cli_args = args
         intro_layout = self.layout["intro"]
         intro_section = IntroSection(args, intro_layout)
-        self.add_section("intro", intro_section, default_section=True)
+        self.sections["intro"] = intro_section
         self.update(self.layout)
 
     def print_aws_credentials(self, audit_info):
-        intro_section = self.get_section("intro")
+        # Adds the AWS credentials to the display - will need to extend to gcp and azure
+        intro_section = self.sections["intro"]
         intro_section.add_aws_credentials(audit_info)
 
     # Overall Progress Methods
     def add_overall_progress_section(self, total_checks_dict):
-        # section = self.get_section("intro")
         overall_progress_section = OverallProgressSection(total_checks_dict)
         overall_progress_layout = self.layout["overall_progress"]
         overall_progress_layout.update(overall_progress_section)
         overall_progress_layout.visible = True
-        self.add_section(
-            "overall_progress", overall_progress_section, default_section=True
-        )
+        self.sections["overall_progress"] = overall_progress_section
 
         # Add results section
         self.add_results_section()
         self.update(self.layout)
 
     def increment_overall_check_progress(self):
-        section = self.get_section("overall_progress")
+        # Called by ExecutionManager
+        section = self.sections["overall_progress"]
         section.increment_check_progress()
 
     def increment_overall_service_progress(self):
-        section = self.get_section("overall_progress")
+        # Called by ExecutionManager
+        section = self.sections["overall_progress"]
         section.increment_service_progress()
 
 
@@ -268,7 +201,7 @@ class ServiceSection:
 
     def __start_check_progress__(self):
         self.check_progress_task_id = self.check_progress.add_task(
-            f"{self.service_name} checks executed", total=self.total_checks
+            "Checks executed", total=self.total_checks
         )
 
     def increment_check_progress(self):

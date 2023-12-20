@@ -106,7 +106,10 @@ class AWSService:
 
     @staticmethod
     def progress_decorator(func):
-        """Decorator to update the progress bar before and after a function call."""
+        """
+        Decorator to update the progress bar before and after a function call.
+        To be used for methods within global services, which do not make use of the __threading_call__ function
+        """
 
         @wraps(func)
         def wrapper(self, *args, **kwargs):
