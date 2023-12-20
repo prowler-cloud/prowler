@@ -53,7 +53,6 @@ class CloudFront(AWSService):
                 f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    @AWSService.progress_decorator
     def __get_distribution_config__(self, distribution_id, client, region) -> dict:
         try:
             distribution_config = client.get_distribution_config(Id=distribution_id)

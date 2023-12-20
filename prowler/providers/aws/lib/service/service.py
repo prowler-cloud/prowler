@@ -104,18 +104,22 @@ class AWSService:
         # Make the task disappear once completed
         # self.progress.remove_task(task_id)
 
-    def progress_decorator(self, func):
+    @staticmethod
+    def progress_decorator(func):
         """Decorator to update the progress bar before and after a function call."""
 
         @wraps(func)
-        def wrapper(*args, **kwargs):
-            task_name = func.__name__.replace("_", " ").capitalize()
+        def wrapper(self, *args, **kwargs):
+            # Trim leading and trailing underscores from the call's name
+            func_name = func.__name__.strip("_")
+            # Add Capitalization
+            func_name = " ".join([x.capitalize() for x in func_name.split("_")])
             task_id = self.task_progress_bar.add_task(
-                f"- {task_name}...", total=1, task_type="Service"
+                f"- {func_name}...", total=1, task_type="Service"
             )
             self.progress_tasks.append(task_id)
 
-            result = func(*args, **kwargs)  # Execute the function
+            result = func(self, *args, **kwargs)  # Execute the function
 
             self.task_progress_bar.update(task_id, advance=1)
             # self.task_progress_bar.remove_task(task_id)  # Uncomment if you want to remove the task on completion
