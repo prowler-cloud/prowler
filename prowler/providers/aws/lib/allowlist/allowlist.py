@@ -415,4 +415,26 @@ def __merge_allowlist_dict__(check: str, merged_dict: dict, to_merge_dict: dict)
                         dict.fromkeys(merged_dict[check][key])
                     )
                     merged_dict[check][key].sort()
+            # handle exceptions if present
+            if key == "Exceptions" and to_merge_dict[check][key]:
+                merged_dict[check][key] = {
+                    "Accounts": [],
+                    "Regions": [],
+                    "Resources": [],
+                    "Tags": [],
+                }
+                for exceptions_key, exceptions_value in to_merge_dict[check][
+                    key
+                ].items():
+                    if exceptions_key in allowlist_exceptions_fields:
+                        if "*" in exceptions_value:
+                            merged_dict[check][key][exceptions_key] = ["*"]
+                        else:
+                            merged_dict[check][key][exceptions_key].extend(
+                                exceptions_value
+                            )
+                            merged_dict[check][key][exceptions_key] = list(
+                                dict.fromkeys(merged_dict[check][key][exceptions_key])
+                            )
+                            merged_dict[check][key][exceptions_key].sort()
     return merged_dict
