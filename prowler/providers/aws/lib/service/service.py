@@ -51,10 +51,15 @@ class AWSService:
         # Thread pool for __threading_call__
         self.thread_pool = ThreadPoolExecutor(max_workers=MAX_WORKERS)
 
+        self.live_display_enabled = False
         # Progress bar to add tasks to
         service_init_section = live_display.get_client_init_section()
-        self.task_progress_bar = service_init_section.task_progress_bar
-        self.progress_tasks = []
+        if service_init_section:
+            # Only Flags is not set to True
+            self.task_progress_bar = service_init_section.task_progress_bar
+            self.progress_tasks = []
+            # For us in other functions
+            self.live_display_enabled = True
 
     def __get_session__(self):
         return self.session
@@ -80,11 +85,12 @@ class AWSService:
                 f"{self.service.upper()} - Starting threads for '{call_name}' function to process {item_count} items..."
             )
 
-        # Setup the progress bar
-        task_id = self.task_progress_bar.add_task(
-            f"- {call_name}...", total=item_count, task_type="Service"
-        )
-        self.progress_tasks.append(task_id)
+        if self.live_display_enabled:
+            # Setup the progress bar
+            task_id = self.task_progress_bar.add_task(
+                f"- {call_name}...", total=item_count, task_type="Service"
+            )
+            self.progress_tasks.append(task_id)
 
         # Submit tasks to the thread pool
         futures = [
@@ -95,8 +101,9 @@ class AWSService:
         for future in as_completed(futures):
             try:
                 future.result()  # Raises exceptions from the thread, if any
-                # Update the progress bar
-                self.task_progress_bar.update(task_id, advance=1)
+                if self.live_display_enabled:
+                    # Update the progress bar
+                    self.task_progress_bar.update(task_id, advance=1)
             except Exception:
                 # Handle exceptions if necessary
                 pass  # Replace 'pass' with any additional exception handling logic. Currently handled within the called function
@@ -117,14 +124,17 @@ class AWSService:
             func_name = func.__name__.strip("_")
             # Add Capitalization
             func_name = " ".join([x.capitalize() for x in func_name.split("_")])
-            task_id = self.task_progress_bar.add_task(
-                f"- {func_name}...", total=1, task_type="Service"
-            )
-            self.progress_tasks.append(task_id)
+
+            if self.live_display_enabled:
+                task_id = self.task_progress_bar.add_task(
+                    f"- {func_name}...", total=1, task_type="Service"
+                )
+                self.progress_tasks.append(task_id)
 
             result = func(self, *args, **kwargs)  # Execute the function
 
-            self.task_progress_bar.update(task_id, advance=1)
+            if self.live_display_enabled:
+                self.task_progress_bar.update(task_id, advance=1)
             # self.task_progress_bar.remove_task(task_id)  # Uncomment if you want to remove the task on completion
 
             return result

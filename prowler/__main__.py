@@ -73,9 +73,7 @@ def prowler():
     compliance_framework = args.compliance
     custom_checks_metadata_file = args.custom_checks_metadata_file
 
-    live_display.add_intro(args)
-
-    live_display.start()
+    live_display.initialize(args)
 
     # if not args.no_banner:
     #     print_banner(args)

@@ -6,7 +6,6 @@ from functools import wraps
 
 from pydantic import BaseModel, ValidationError
 from pydantic.main import ModelMetaclass
-from rich.progress import Task
 
 from prowler.lib.logger import logger
 from prowler.lib.ui.live_display import live_display
@@ -81,10 +80,8 @@ class CheckMeta(ModelMetaclass):
 class Check(ABC, Check_Metadata_Model, metaclass=CheckMeta):
     """Prowler Check"""
 
-    title_bar_task: Task = None
-    progress_task: Task = None
-    # title_bar: Any = None
-    # task_progress: Any = None
+    title_bar_task: int = None
+    progress_task: int = None
 
     def __init__(self, **data):
         """Check's init function. Calls the CheckMetadataModel init."""
@@ -98,38 +95,42 @@ class Check(ABC, Check_Metadata_Model, metaclass=CheckMeta):
         # Calls parents init function
         super().__init__(**data)
 
-        current_section = live_display.get_service_section()
+        self.live_display_enabled = False
+        service_section = live_display.get_service_section()
+        if service_section:
+            self.live_display_enabled = True
 
-        self.title_bar_task = current_section.title_bar.add_task(
-            f"{self.CheckTitle}...", start=False
-        )
+            self.title_bar_task = service_section.title_bar.add_task(
+                f"{self.CheckTitle}...", start=False
+            )
 
     def increment_task_progress(self):
-        current_section = live_display.get_service_section()
-        current_section.task_progress.update(self.progress_task, advance=1)
+        if self.live_display_enabled:
+            current_section = live_display.get_service_section()
+            current_section.task_progress.update(self.progress_task, advance=1)
 
     def start_task(self, message, count):
-        current_section = live_display.get_service_section()
-        self.progress_task = current_section.task_progress.add_task(
-            description=message, total=count, visible=True
-        )
+        if self.live_display_enabled:
+            current_section = live_display.get_service_section()
+            self.progress_task = current_section.task_progress.add_task(
+                description=message, total=count, visible=True
+            )
 
     def update_title_with_findings(self, findings):
-        current_section = live_display.get_service_section()
-        # current_section.task_progress.remove_task(self.progress_task)
-        total_failed = len([report for report in findings if report.status == "FAIL"])
-        total_checked = len(findings)
-        if total_failed == 0:
-            message = (
-                f"{self.CheckTitle} [pass]All resources passed ({total_checked})[/pass]"
+        if self.live_display_enabled:
+            current_section = live_display.get_service_section()
+            # current_section.task_progress.remove_task(self.progress_task)
+            total_failed = len(
+                [report for report in findings if report.status == "FAIL"]
             )
-        else:
-            message = (
-                f"{self.CheckTitle} [fail]{total_failed}/{total_checked} failed![/fail]"
+            total_checked = len(findings)
+            if total_failed == 0:
+                message = f"{self.CheckTitle} [pass]All resources passed ({total_checked})[/pass]"
+            else:
+                message = f"{self.CheckTitle} [fail]{total_failed}/{total_checked} failed![/fail]"
+            current_section.title_bar.update(
+                task_id=self.title_bar_task, description=message
             )
-        current_section.title_bar.update(
-            task_id=self.title_bar_task, description=message
-        )
 
     def metadata(self) -> dict:
         """Return the JSON representation of the check's metadata"""

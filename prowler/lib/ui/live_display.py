@@ -28,33 +28,10 @@ from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 
 class LiveDisplay(Live):
     def __init__(self, *args, **kwargs):
-        theme = self.__load_theme_from_file__()
+        theme = self.load_theme_from_file()
         super().__init__(renderable=None, console=Console(theme=theme), *args, **kwargs)
         self.sections = {}
-        self.current_section = None
-        self.make_layout()
-
-    def get_service_section(self):
-        # Used by Check
-        return self.sections["client_and_service"]
-
-    def get_client_init_section(self):
-        # Used by AWSService
-        return self.sections["client_and_service"]
-
-    def add_service_section(self, service_name, total_checks):
-        # Used to create the ServiceSection when checks start to execute (after clients have been imported)
-        service_section = ServiceSection(service_name, total_checks)
-        self.sections["client_and_service"] = service_section
-        self.layout["client_and_service"].update(service_section)
-
-    def hide_service_section(self):
-        # To hide the last service after execution has completed
-        self.layout["client_and_service"].visible = False
-
-    def print_message(self, message):
-        # No use yet
-        self.console.print(message)
+        self.enabled = False
 
     def make_layout(self):
         """
@@ -71,7 +48,7 @@ class LiveDisplay(Live):
         )
         self.layout["intro"].split_row(
             Layout(name="body", ratio=3),
-            Layout(name="side", ratio=2, visible=False),
+            Layout(name="creds", ratio=2, visible=False),
         )
         self.layout["main"].split_row(
             Layout(
@@ -80,50 +57,32 @@ class LiveDisplay(Live):
             Layout(name="results", ratio=2, visible=False),
         )
 
-    def __load_theme_from_file__(self):
+    def load_theme_from_file(self):
         # Loads theme.yaml from the same folder as this file
         actual_directory = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))
         with open(f"{actual_directory}/theme.yaml") as f:
             theme = Theme.from_file(f)
         return theme
 
-    # Wrappers for ServiceSection methods
-    def increment_check_progress(self):
-        service_section = self.sections["client_and_service"]
-        service_section.increment_check_progress()
-
-    # Results Section Methods
-    def add_results_section(self):
-        # Intializes the results section
-        results_layout = self.layout["results"]
-        results_section = ResultsSection()
-        results_layout.update(results_section)
-        results_layout.visible = True
-        self.sections["results"] = results_section
-
-    def add_results_for_service(self, service_name, service_findings):
-        # Adds rows to the Service Check Results table
-        results_section = self.sections["results"]
-        results_section.add_results_for_service(service_name, service_findings)
-
-    # Client Init Methods
-    def add_client_init_section(self, service_name):
-        client_init_section = ClientInitSection(service_name)
-        # self.add_section("client_and_service", client_init_section, default_section=True)
-        self.sections["client_and_service"] = client_init_section
-        self.layout["client_and_service"].update(client_init_section)
-        self.layout["client_and_service"].visible = True
-        self.update(self.layout)
-
     # Intro Section Methods
-    def add_intro(self, args):
+    def initialize(self, args):
         # A way to get around parsing args to LiveDisplay when it is intialized
         # This is so that the live_display object can be intialized in this file, and imported to other parts of prowler
         self.cli_args = args
-        intro_layout = self.layout["intro"]
-        intro_section = IntroSection(args, intro_layout)
-        self.sections["intro"] = intro_section
-        self.update(self.layout)
+
+        self.enabled = not args.only_logs
+
+        if self.enabled:
+            # Initialize layout
+            self.make_layout()
+            # Apply layout
+            self.update(self.layout)
+            # Add Intro section
+            intro_layout = self.layout["intro"]
+            intro_section = IntroSection(args, intro_layout)
+            self.sections["intro"] = intro_section
+            # Start live display
+            self.start()
 
     def print_aws_credentials(self, audit_info):
         # Adds the AWS credentials to the display - will need to extend to gcp and azure
@@ -140,30 +99,87 @@ class LiveDisplay(Live):
 
         # Add results section
         self.add_results_section()
-        self.update(self.layout)
 
     def increment_overall_check_progress(self):
         # Called by ExecutionManager
-        section = self.sections["overall_progress"]
-        section.increment_check_progress()
+        if self.enabled:
+            section = self.sections["overall_progress"]
+            section.increment_check_progress()
 
     def increment_overall_service_progress(self):
         # Called by ExecutionManager
-        section = self.sections["overall_progress"]
-        section.increment_service_progress()
+        if self.enabled:
+            section = self.sections["overall_progress"]
+            section.increment_service_progress()
+
+    # Results Section Methods
+    def add_results_section(self):
+        # Intializes the results section
+        results_layout = self.layout["results"]
+        results_section = ResultsSection()
+        results_layout.update(results_section)
+        results_layout.visible = True
+        self.sections["results"] = results_section
+
+    def add_results_for_service(self, service_name, service_findings):
+        # Adds rows to the Service Check Results table
+        if self.enabled:
+            results_section = self.sections["results"]
+            results_section.add_results_for_service(service_name, service_findings)
+
+    # Client Init Section
+    def add_client_init_section(self, service_name):
+        # Used to track progress of client init process
+        if self.enabled:
+            client_init_section = ClientInitSection(service_name)
+            self.sections["client_and_service"] = client_init_section
+            self.layout["client_and_service"].update(client_init_section)
+            self.layout["client_and_service"].visible = True
+
+    # Service Section
+    def add_service_section(self, service_name, total_checks):
+        # Used to create the ServiceSection when checks start to execute (after clients have been imported)
+        if self.enabled:
+            service_section = ServiceSection(service_name, total_checks)
+            self.sections["client_and_service"] = service_section
+            self.layout["client_and_service"].update(service_section)
+
+    def increment_check_progress(self):
+        if self.enabled:
+            service_section = self.sections["client_and_service"]
+            service_section.increment_check_progress()
+
+    # Misc
+    def get_service_section(self):
+        # Used by Check
+        if self.enabled:
+            return self.sections["client_and_service"]
+
+    def get_client_init_section(self):
+        # Used by AWSService
+        if self.enabled:
+            return self.sections["client_and_service"]
+
+    def hide_service_section(self):
+        # To hide the last service after execution has completed
+        self.layout["client_and_service"].visible = False
+
+    def print_message(self, message):
+        # No use yet
+        self.console.print(message)
 
 
 class ServiceSection:
     def __init__(self, service_name, total_checks) -> None:
         self.service_name = service_name
         self.total_checks = total_checks
-        self.renderables = self.__create_service_section__()
-        self.__start_check_progress__()
+        self.renderables = self.create_service_section()
+        self.start_check_progress()
 
     def __rich__(self):
         return Padding(self.renderables, (2, 2))
 
-    def __create_service_section__(self):
+    def create_service_section(self):
         # Create the progress components
         self.check_progress = Progress(
             TextColumn("[bold]{task.description}"),
@@ -199,7 +215,7 @@ class ServiceSection:
             ),
         )
 
-    def __start_check_progress__(self):
+    def start_check_progress(self):
         self.check_progress_task_id = self.check_progress.add_task(
             "Checks executed", total=self.total_checks
         )
@@ -207,56 +223,16 @@ class ServiceSection:
     def increment_check_progress(self):
         self.check_progress.update(self.check_progress_task_id, advance=1)
 
-    def add_summary_table_for_service(self, service_findings):
-        # Calculate the total number of checks
-        total_checks = len(service_findings)
-
-        # Create a new renderable to show the results
-        results_table = Table(title="Service Check Results")
-        results_table.add_column("Result", justify="right")
-        results_table.add_column("Count", justify="center")
-        results_table.add_column("Percentage", justify="center")
-
-        # For each status type, determine the count and percentage
-        statuses = list(set([report.status for report in service_findings]))
-        for status in statuses:
-            count = len(
-                [report for report in service_findings if report.status == status]
-            )
-            percentage = (count / total_checks * 100) if total_checks else 0
-            results_table.add_row(
-                f"{status.capitalize()}",
-                f"[{status.lower()}]{str(count)}[/{status.lower()}]",  # Add the rich theme defined in theme.yaml
-                f"{percentage:.2f}%",
-            )
-
-        # Create a centered Panel
-        centered_results_table = Panel(Align.center(results_table))
-
-        # Replace the task_progress in the progress_table
-        self.renderables = Group(
-            Panel(
-                Group(
-                    self.check_progress,
-                    Rule(style="bold blue"),
-                    self.title_bar,
-                    Rule(style="bold blue"),
-                    centered_results_table,  # Replacing task_progress with results_table
-                ),
-                title=f"Service: {self.service_name}",
-            ),
-        )
-
 
 class ClientInitSection:
     def __init__(self, client_name) -> None:
         self.client_name = client_name
-        self.renderables = self.__create_client_init_section__()
+        self.renderables = self.create_client_init_section()
 
     def __rich__(self):
         return Padding(self.renderables, (2, 2))
 
-    def __create_client_init_section__(self):
+    def create_client_init_section(self):
         # Progress Bar for Checks
         self.task_progress_bar = Progress(
             TextColumn("[progress.description]{task.description}"),
@@ -280,16 +256,16 @@ class ClientInitSection:
 class IntroSection:
     def __init__(self, args, layout: Layout) -> None:
         self.body_layout = layout["body"]
-        self.side_layout = layout["side"]
+        self.creds_layout = layout["creds"]
         self.renderables = []
         self.title = f"Prowler v{prowler_version}"
         if not args.no_banner:
-            self.__create_banner__(args)
+            self.create_banner(args)
 
     def __rich__(self):
         return Group(*self.renderables)
 
-    def __create_banner__(self, args):
+    def create_banner(self, args):
         banner_text = f"""[banner_color]                         _
  _ __  _ __ _____      _| | ___ _ __
 | '_ \| '__/ _ \ \ /\ / / |/ _ \ '__|
@@ -346,8 +322,8 @@ Color code for results:
             content.append("Assumed Role ARN: ", style="bold")
             content.append(f"[{audit_info.assumed_role_info.role_arn}]\n", style="info")
 
-        self.side_layout.update(content)
-        self.side_layout.visible = True
+        self.creds_layout.update(content)
+        self.creds_layout.visible = True
 
 
 class OverallProgressSection:
