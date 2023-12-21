@@ -8,9 +8,6 @@ class KubernetesService:
         self.context = provider.context
         self.api_client = provider.api_client
 
-    def __get_api_client__(self):
-        return self.api_client
-
     def __threading_call__(self, call, iterator):
         threads = []
         for value in iterator:

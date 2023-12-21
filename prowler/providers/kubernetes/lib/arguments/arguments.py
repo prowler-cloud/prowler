@@ -11,11 +11,11 @@ def init_parser(self):
         "--kubeconfig-file",
         nargs="?",
         metavar="FILE_PATH",
-        help="Path to the kubeconfig file to use for CLI requests",
+        help="Path to the kubeconfig file to use for CLI requests. Not necessary for in-cluster execution.",
     )
     k8s_auth_subparser.add_argument(
         "--context",
         nargs="?",
         metavar="CONTEXT_NAME",
-        help="The name of the kubeconfig context to use",
+        help="The name of the kubeconfig context to use. By default, current_context from config file will be used.",
     )

@@ -41,7 +41,7 @@ def display_summary_table(
             audited_entities = ", ".join(audit_info.project_ids)
         elif provider == "kubernetes":
             entity_type = "Context"
-            audited_entities = audit_info.context
+            audited_entities = audit_info.context["name"]
 
         if findings:
             current = {

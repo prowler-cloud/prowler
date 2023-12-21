@@ -2,7 +2,6 @@ import sys
 
 from botocore.config import Config
 from colorama import Fore, Style
-from kubernetes import config
 
 from prowler.config.config import load_and_validate_config_file
 from prowler.lib.logger import logger
@@ -63,25 +62,20 @@ GCP Account: {Fore.YELLOW}[{profile}]{Style.RESET_ALL}  GCP Project IDs: {Fore.Y
 """
         print(report)
 
-    def print_kubernetes_credentials(self):
-        # Load the kubeconfig file
-        kube_config = config.list_kube_config_contexts()
+    def print_kubernetes_credentials(self, audit_info: Kubernetes_Audit_Info):
+        # Get the current context
+        cluster_name = self.context.get("context").get("cluster")
+        user_name = self.context.get("context").get("user")
+        namespace = self.context.get("namespace", "default")
+        roles = self.get_context_user_roles()
+        roles_str = ", ".join(roles) if roles else "No associated Roles"
 
-        if kube_config:
-            # Get the current context
-            current_context = kube_config[1].get("context")
-            cluster_name = current_context.get("cluster")
-            user_name = current_context.get("user")
-            namespace = current_context.get("namespace", "default")
-
-            report = f"""
+        report = f"""
 This report is being generated using the Kubernetes configuration below:
 
-Kubernetes Cluster: {Fore.YELLOW}[{cluster_name}]{Style.RESET_ALL}  User: {Fore.YELLOW}[{user_name}]{Style.RESET_ALL}  Namespace: {Fore.YELLOW}[{namespace}]{Style.RESET_ALL}
+Kubernetes Cluster: {Fore.YELLOW}[{cluster_name}]{Style.RESET_ALL}  User: {Fore.YELLOW}[{user_name}]{Style.RESET_ALL}  Namespace: {Fore.YELLOW}[{namespace}]{Style.RESET_ALL}  Roles: {Fore.YELLOW}[{roles_str}]{Style.RESET_ALL}
 """
-            print(report)
-        else:
-            print("No Kubernetes configuration found.")
+        print(report)
 
     def print_azure_credentials(self, audit_info: Azure_Audit_Info):
         printed_subscriptions = []

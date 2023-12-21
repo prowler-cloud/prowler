@@ -536,7 +536,7 @@ def get_kubernetes_html_assessment_summary(audit_info):
                     <ul class="list-group list-group-flush">
                         <li class="list-group-item">
                             <b>Kubernetes Context:</b> """
-                + audit_info.context
+                + audit_info.context["name"]
                 + """
                         </li>
                     </ul>
@@ -549,8 +549,13 @@ def get_kubernetes_html_assessment_summary(audit_info):
                     </div>
                     <ul class="list-group list-group-flush">
                         <li class="list-group-item">
-                            <b>Kubernetes Config File:</b> """
-                + audit_info.context
+                            <b>Kubernetes Cluster:</b> """
+                + audit_info.context["context"]["cluster"]
+                + """
+                        </li>
+                        <li class="list-group-item">
+                            <b>Kubernetes User:</b> """
+                + audit_info.context["context"]["user"]
                 + """
                         </li>
                     </ul>
