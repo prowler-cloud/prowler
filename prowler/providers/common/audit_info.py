@@ -2,6 +2,7 @@ import sys
 
 from botocore.config import Config
 from colorama import Fore, Style
+from kubernetes import config
 
 from prowler.config.config import load_and_validate_config_file
 from prowler.lib.logger import logger
@@ -34,6 +35,9 @@ from prowler.providers.azure.lib.exception.exception import AzureException
 from prowler.providers.gcp.gcp_provider import GCP_Provider
 from prowler.providers.gcp.lib.audit_info.audit_info import gcp_audit_info
 from prowler.providers.gcp.lib.audit_info.models import GCP_Audit_Info
+from prowler.providers.kubernetes.kubernetes_provider import Kubernetes_Provider
+from prowler.providers.kubernetes.lib.audit_info.audit_info import kubernetes_audit_info
+from prowler.providers.kubernetes.lib.audit_info.models import Kubernetes_Audit_Info
 
 
 class Audit_Info:
@@ -58,6 +62,26 @@ This report is being generated using credentials below:
 GCP Account: {Fore.YELLOW}[{profile}]{Style.RESET_ALL}  GCP Project IDs: {Fore.YELLOW}[{", ".join(audit_info.project_ids)}]{Style.RESET_ALL}
 """
         print(report)
+
+    def print_kubernetes_credentials(self):
+        # Load the kubeconfig file
+        kube_config = config.list_kube_config_contexts()
+
+        if kube_config:
+            # Get the current context
+            current_context = kube_config[1].get("context")
+            cluster_name = current_context.get("cluster")
+            user_name = current_context.get("user")
+            namespace = current_context.get("namespace", "default")
+
+            report = f"""
+This report is being generated using the Kubernetes configuration below:
+
+Kubernetes Cluster: {Fore.YELLOW}[{cluster_name}]{Style.RESET_ALL}  User: {Fore.YELLOW}[{user_name}]{Style.RESET_ALL}  Namespace: {Fore.YELLOW}[{namespace}]{Style.RESET_ALL}
+"""
+            print(report)
+        else:
+            print("No Kubernetes configuration found.")
 
     def print_azure_credentials(self, audit_info: Azure_Audit_Info):
         printed_subscriptions = []
@@ -357,6 +381,30 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
         #     self.print_gcp_credentials(gcp_audit_info)
 
         return gcp_audit_info
+
+    def set_kubernetes_audit_info(self, arguments) -> Kubernetes_Audit_Info:
+        """
+        set_kubernetes_audit_info returns the Kubernetes_Audit_Info
+        """
+        logger.info("Setting Kubernetes session ...")
+        kubeconfig_file = arguments.get("kubeconfig_file")
+
+        logger.info("Checking if any context is set ...")
+        context = arguments.get("context")
+
+        kubernetes_provider = Kubernetes_Provider(kubeconfig_file, context)
+
+        (
+            kubernetes_audit_info.api_client,
+            kubernetes_audit_info.context,
+        ) = kubernetes_provider.get_credentials()
+
+        # TODO - remove it
+        # this logic is being processed in general provider
+        # if not arguments.get("only_logs"):
+        #     self.print_gcp_credentials(gcp_audit_info)
+
+        return kubernetes_audit_info
 
 
 def set_provider_audit_info(provider: str, arguments: dict):

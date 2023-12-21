@@ -19,7 +19,6 @@ def set_provider(provider, arguments) -> Any:
 def get_available_providers() -> list[str]:
     """get_available_providers returns a list of the available providers"""
     providers_list = import_module(f"{providers_prowler_lib_path}")
-    print(providers_list.__dict__)
     providers = [
         provider
         for provider in providers_list.__dict__

@@ -1,0 +1,30 @@
+{
+  "Provider": "kubernetes",
+  "CheckID": "apiserver_anonymous_requests",
+  "CheckTitle": "Ensure that the --anonymous-auth argument is set to false",
+  "CheckType": [],
+  "ServiceName": "APIServer",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Pod",
+  "Description": "When enabled, requests that are not rejected by other configured authentication methods are treated as anonymous requests. These requests are then served by the API server. You should rely on authentication to authorize access and disallow anonymous requests.",
+  "Risk": "If you are using RBAC authorization, it is generally considered reasonable to allow anonymous access to the API Server for health checks and discovery purposes, and hence this recommendation is not scored. However, you should consider whether anonymous discovery is an acceptable risk for your purposes.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "--anonymous-auth=false",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Edit the API server pod specification file /etc/kubernetes/manifests/kube-apiserver.yaml on the Control Plane",
+      "Url": ""
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

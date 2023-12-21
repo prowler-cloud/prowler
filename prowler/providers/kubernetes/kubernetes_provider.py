@@ -1,35 +1,25 @@
 import os
 import sys
-from typing import Any, Optional
 
-from colorama import Fore, Style
 from kubernetes import client, config
 
 from prowler.lib.logger import logger
-from prowler.providers.common.provider import CloudProvider
 
 
-class KubernetesProvider(CloudProvider):
-    api_client: client.ApiClient
-    context: Optional[str]
-    audit_resources: Optional[Any]
-    audit_metadata: Optional[Any]
-    audit_config: Optional[dict]
-
-    def __init__(self, arguments):
+class Kubernetes_Provider:
+    def __init__(
+        self,
+        kubeconfig_file: str,
+        context: list,
+    ):
         logger.info("Instantiating Kubernetes Provider ...")
-        kubeconfig_file = arguments.kubeconfig_file
-        self.context = arguments.context
-
-        self.api_client = self.setup_api_client(kubeconfig_file, self.context)
+        self.context = context
+        self.api_client = self.__set_credentials__(kubeconfig_file, context)
         if not self.api_client:
             logger.critical("Failed to set up a Kubernetes session.")
             sys.exit(1)
 
-        if not arguments.only_logs:
-            self.print_credentials()
-
-    def setup_api_client(self, kubeconfig_file, context):
+    def __set_credentials__(self, kubeconfig_file, context):
         try:
             if kubeconfig_file:
                 # Use kubeconfig file if provided
@@ -47,22 +37,5 @@ class KubernetesProvider(CloudProvider):
             )
             sys.exit(1)
 
-    def print_credentials(self):
-        # Load the kubeconfig file
-        kube_config = config.list_kube_config_contexts()
-
-        if kube_config:
-            # Get the current context
-            current_context = kube_config[1].get("context")
-            cluster_name = current_context.get("cluster")
-            user_name = current_context.get("user")
-            namespace = current_context.get("namespace", "default")
-
-            report = f"""
-This report is being generated using the Kubernetes configuration below:
-
-Kubernetes Cluster: {Fore.YELLOW}[{cluster_name}]{Style.RESET_ALL}  User: {Fore.YELLOW}[{user_name}]{Style.RESET_ALL}  Namespace: {Fore.YELLOW}[{namespace}]{Style.RESET_ALL}
-"""
-            print(report)
-        else:
-            print("No Kubernetes configuration found.")
+    def get_credentials(self):
+        return self.api_client, self.context
