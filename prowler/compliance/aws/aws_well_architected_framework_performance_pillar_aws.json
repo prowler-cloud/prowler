@@ -1,5 +1,5 @@
 {
-  "Framework": "AWS-Well-Architected-Framework-Performance-Efficiency-Pillar",
+  "Framework": "AWS-Well-Architected-Framework-Performance-Pillar",
   "Version": "",
   "Provider": "AWS",
   "Description": "Best Practices for the AWS Well-Architected Framework Performance Efficiency Pillar encompass the ability of a workload to use computing resources efficiently and meet requirements. Performance efficiency focuses on the efficient use of cloud resources to meet requirements and avoid unnecessary costs.",
@@ -21,7 +21,7 @@
         }
       ],
       "Checks": [
-        "ec2_instance_type_optimized", 
+        "ec2_instance_type_optimized",
         "autoscaling_group_scaling_enabled",
         "awslambda_function_serverless_architecture"
       ]
