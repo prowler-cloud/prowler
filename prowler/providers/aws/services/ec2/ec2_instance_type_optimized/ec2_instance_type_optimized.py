@@ -1,6 +1,7 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.ec2.ec2_client import ec2_client
 
+
 class ec2_instance_type_optimized(Check):
     def execute(self):
         findings = []
@@ -16,15 +17,14 @@ class ec2_instance_type_optimized(Check):
             report.resource_tags = instance.tags
 
             report.status = "PASS"
-            report.status_extended = f"EC2 instance {instance.id} is using an optimized instance type."
-
-            # Get the instance type
-            instance_type = instance.instance_type
+            report.status_extended = (
+                f"EC2 instance {instance.id} is using an optimized instance type."
+            )
 
             # Check if the instance type is in the list of optimized instance types
-            if instance_type not in optimized_instance_types:
+            if instance.type not in optimized_instance_types:
                 report.status = "FAIL"
-                report.status_extended = f"EC2 instance {instance.id} is not using an optimized instance type. Current type: {instance_type}"
+                report.status_extended = f"EC2 instance {instance.id} is not using an optimized instance type. Current type: {instance.type}"
 
             findings.append(report)
 
