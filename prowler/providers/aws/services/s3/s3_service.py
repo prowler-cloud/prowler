@@ -270,7 +270,9 @@ class S3(AWSService):
                 regional_client.get_bucket_policy(Bucket=bucket.name)["Policy"]
             )
         except ClientError as error:
-            if error.response["Error"]["Code"] == "NoSuchBucket":
+            if error.response["Error"]["Code"] == "NoSuchBucketPolicy":
+                bucket.policy = {}
+            elif error.response["Error"]["Code"] == "NoSuchBucket":
                 logger.warning(
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
@@ -279,17 +281,14 @@ class S3(AWSService):
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         except Exception as error:
-            if "NoSuchBucketPolicy" in str(error):
-                bucket.policy = {}
+            if regional_client:
+                logger.error(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
             else:
-                if regional_client:
-                    logger.error(
-                        f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                    )
-                else:
-                    logger.error(
-                        f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                    )
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
 
     def __get_bucket_ownership_controls__(self, bucket):
         logger.info("S3 - Get buckets ownership controls...")
