@@ -1,30 +1,32 @@
 {
   "Provider": "aws",
-  "CheckID": "awslambda_function_serverless_architecture",
-  "CheckTitle": "Ensure AWS Lambda function uses a serverless architecture",
-  "CheckType": ["Serverless Architecture"],
+  "CheckID": "awslambda_function_not_publicly_accessible",
+  "CheckTitle": "Check if Lambda functions have resource-based policy set as Public.",
+  "CheckType": [],
   "ServiceName": "lambda",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:aws:lambda:{region}:{account-id}:function:{function-name}",
-  "Severity": "medium",
-  "ResourceType": "AWS::Lambda::Function",
-  "Description": "Verify if an AWS Lambda function uses a serverless architecture by checking if it is part of an AWS SAM deployment.",
-  "Risk": "AWS SAM deployments are often associated with serverless architectures. A Lambda function that is part of an AWS SAM deployment is considered to be using a serverless architecture.",
-  "RelatedUrl": "https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/what-is-sam.html",
+  "ResourceIdTemplate": "arn:partition:lambda:region:account-id:function/function-name",
+  "Severity": "critical",
+  "ResourceType": "AwsLambdaFunction",
+  "Description": "Check if Lambda functions have resource-based policy set as Public.",
+  "Risk": "Publicly accessible services could expose sensitive data to bad actors.",
+  "RelatedUrl": "https://docs.aws.amazon.com/lambda/latest/dg/access-control-resource-based.html",
   "Remediation": {
     "Code": {
-      "CLI": "N/A",
-      "NativeIaC": "N/A",
-      "Other": "N/A",
-      "Terraform": "N/A"
+      "CLI": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Lambda/function-exposed.html",
+      "NativeIaC": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Lambda/function-exposed.html",
+      "Other": "",
+      "Terraform": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Lambda/function-exposed.html"
     },
     "Recommendation": {
-      "Text": "Consider reviewing the AWS SAM documentation to understand the characteristics of serverless architectures. Ensure that your Lambda functions align with your architectural principles.",
-      "Url": "https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/what-is-sam.html"
+      "Text": "Grant usage permission on a per-resource basis and applying least privilege principle.",
+      "Url": "https://docs.aws.amazon.com/lambda/latest/dg/access-control-resource-based.html"
     }
   },
-  "Categories": ["serverless-architecture"],
+  "Categories": [
+    "internet-exposed"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "This check determines if an AWS Lambda function is using a serverless architecture based on whether it is part of an AWS SAM deployment."
+  "Notes": ""
 }
