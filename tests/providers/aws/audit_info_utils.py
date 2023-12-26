@@ -18,8 +18,11 @@ AWS_REGION_EU_WEST_2 = "eu-west-2"
 AWS_REGION_CN_NORTHWEST_1 = "cn-northwest-1"
 AWS_REGION_CN_NORTH_1 = "cn-north-1"
 AWS_REGION_EU_SOUTH_2 = "eu-south-2"
+AWS_REGION_EU_SOUTH_3 = "eu-south-3"
 AWS_REGION_US_WEST_2 = "us-west-2"
 AWS_REGION_US_EAST_2 = "us-east-2"
+AWS_REGION_EU_CENTRAL_1 = "eu-central-1"
+
 
 # China Regions
 AWS_REGION_CHINA_NORHT_1 = "cn-north-1"

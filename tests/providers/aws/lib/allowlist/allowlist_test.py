@@ -16,6 +16,8 @@ from prowler.providers.aws.lib.allowlist.allowlist import (
 )
 from tests.providers.aws.audit_info_utils import (
     AWS_ACCOUNT_NUMBER,
+    AWS_REGION_EU_CENTRAL_1,
+    AWS_REGION_EU_SOUTH_3,
     AWS_REGION_EU_WEST_1,
     AWS_REGION_US_EAST_1,
     set_mocked_aws_audit_info,
@@ -932,6 +934,113 @@ class Test_Allowlist:
             "eu-south-3",
             "test123",
             "environment=test",
+        )
+
+    # exceptions = {
+    #             "Accounts": [AWS_ACCOUNT_NUMBER],
+    #             "Regions": ["eu-central-1", "eu-south-3"],
+    #             "Resources": ["test"],
+    #             "Tags": ["environment=test", "project=.*"],
+    #         }
+    def test_is_excepted_only_in_account(self):
+        # Allowlist example
+        exceptions = {
+            "Accounts": [AWS_ACCOUNT_NUMBER],
+            "Regions": [],
+            "Resources": [],
+            "Tags": [],
+        }
+
+        assert is_excepted(
+            exceptions,
+            AWS_ACCOUNT_NUMBER,
+            "eu-central-1",
+            "test",
+            "environment=test",
+        )
+
+    def test_is_excepted_only_in_region(self):
+        # Allowlist example
+        exceptions = {
+            "Accounts": [],
+            "Regions": [AWS_REGION_EU_CENTRAL_1, AWS_REGION_EU_SOUTH_3],
+            "Resources": [],
+            "Tags": [],
+        }
+
+        assert is_excepted(
+            exceptions,
+            AWS_ACCOUNT_NUMBER,
+            AWS_REGION_EU_CENTRAL_1,
+            "test",
+            "environment=test",
+        )
+
+    def test_is_excepted_only_in_resources(self):
+        # Allowlist example
+        exceptions = {
+            "Accounts": [],
+            "Regions": [],
+            "Resources": ["resource_1"],
+            "Tags": [],
+        }
+
+        assert is_excepted(
+            exceptions,
+            AWS_ACCOUNT_NUMBER,
+            AWS_REGION_EU_CENTRAL_1,
+            "resource_1",
+            "environment=test",
+        )
+
+    def test_is_excepted_only_in_tags(self):
+        # Allowlist example
+        exceptions = {
+            "Accounts": [],
+            "Regions": [],
+            "Resources": [],
+            "Tags": ["environment=test"],
+        }
+
+        assert is_excepted(
+            exceptions,
+            AWS_ACCOUNT_NUMBER,
+            AWS_REGION_EU_CENTRAL_1,
+            "resource_1",
+            "environment=test",
+        )
+
+    def test_is_excepted_in_account_and_tags(self):
+        # Allowlist example
+        exceptions = {
+            "Accounts": [AWS_ACCOUNT_NUMBER],
+            "Regions": [],
+            "Resources": [],
+            "Tags": ["environment=test"],
+        }
+
+        assert is_excepted(
+            exceptions,
+            AWS_ACCOUNT_NUMBER,
+            AWS_REGION_EU_CENTRAL_1,
+            "resource_1",
+            "environment=test",
+        )
+
+        assert not is_excepted(
+            exceptions,
+            "111122223333",
+            AWS_REGION_EU_CENTRAL_1,
+            "resource_1",
+            "environment=test",
+        )
+
+        assert not is_excepted(
+            exceptions,
+            "111122223333",
+            AWS_REGION_EU_CENTRAL_1,
+            "resource_1",
+            "environment=dev",
         )
 
     def test_is_excepted_all_wildcard(self):
