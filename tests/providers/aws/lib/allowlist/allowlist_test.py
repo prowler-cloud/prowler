@@ -205,12 +205,6 @@ class Test_Allowlist:
                             "Tags": ["*"],
                             "Regions": ["*"],
                             "Resources": ["*"],
-                            "Exceptions": {
-                                "Tags": [],
-                                "Regions": [],
-                                "Accounts": [],
-                                "Resources": [],
-                            },
                         }
                     }
                 }
