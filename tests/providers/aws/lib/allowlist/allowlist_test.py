@@ -936,12 +936,6 @@ class Test_Allowlist:
             "environment=test",
         )
 
-    # exceptions = {
-    #             "Accounts": [AWS_ACCOUNT_NUMBER],
-    #             "Regions": ["eu-central-1", "eu-south-3"],
-    #             "Resources": ["test"],
-    #             "Tags": ["environment=test", "project=.*"],
-    #         }
     def test_is_excepted_only_in_account(self):
         # Allowlist example
         exceptions = {
