@@ -321,13 +321,10 @@ def is_excepted(
             is_tag_excepted = __is_item_matched__(excepted_tags, finding_tags)
 
             if (
-                ((excepted_accounts and is_account_excepted) or not excepted_accounts)
-                and ((excepted_regions and is_region_excepted) or not excepted_regions)
-                and (
-                    (excepted_resources and is_resource_excepted)
-                    or not excepted_resources
-                )
-                and ((excepted_tags and is_tag_excepted) or not excepted_tags)
+                (is_account_excepted or not excepted_accounts)
+                and (is_region_excepted or not excepted_regions)
+                and (is_resource_excepted or not excepted_resources)
+                and (is_tag_excepted or not excepted_tags)
             ):
                 excepted = True
         return excepted
