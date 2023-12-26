@@ -503,6 +503,96 @@ class Test_Allowlist:
             "",
         )
 
+        assert is_allowlisted(
+            allowlist,
+            AWS_ACCOUNT_NUMBER,
+            "check_test_1",
+            AWS_REGION_US_EAST_1,
+            "resource_2",
+            "",
+        )
+
+    def test_is_allowlisted_all_and_single_account_with_different_resources_and_exceptions(
+        self,
+    ):
+        # Allowlist example
+        allowlist = {
+            "Accounts": {
+                "*": {
+                    "Checks": {
+                        "check_test_1": {
+                            "Regions": ["*"],
+                            "Resources": ["resource_1", "resource_2"],
+                            "Exceptions": {"Regions": AWS_REGION_US_EAST_1},
+                        },
+                    }
+                },
+                AWS_ACCOUNT_NUMBER: {
+                    "Checks": {
+                        "check_test_1": {
+                            "Regions": ["*"],
+                            "Resources": ["resource_3"],
+                            "Exceptions": {"Regions": AWS_REGION_EU_WEST_1},
+                        }
+                    }
+                },
+            }
+        }
+
+        assert not is_allowlisted(
+            allowlist,
+            "*",
+            "check_test_1",
+            AWS_REGION_US_EAST_1,
+            "resource_1",
+            "",
+        )
+
+        assert is_allowlisted(
+            allowlist,
+            "*",
+            "check_test_1",
+            AWS_REGION_EU_WEST_1,
+            "resource_2",
+            "",
+        )
+
+        assert not is_allowlisted(
+            allowlist,
+            "*",
+            "check_test_1",
+            AWS_REGION_US_EAST_1,
+            "resource_3",
+            "",
+        )
+
+        assert is_allowlisted(
+            allowlist,
+            AWS_ACCOUNT_NUMBER,
+            "check_test_1",
+            AWS_REGION_US_EAST_1,
+            "resource_3",
+            "",
+        )
+
+        assert not is_allowlisted(
+            allowlist,
+            AWS_ACCOUNT_NUMBER,
+            "check_test_1",
+            AWS_REGION_EU_WEST_1,
+            "resource_3",
+            "",
+        )
+
+        assert is_allowlisted(
+            allowlist,
+            AWS_ACCOUNT_NUMBER,
+            "check_test_1",
+            AWS_REGION_US_EAST_1,
+            "resource_2",
+            "",
+        )
+
     def test_is_allowlisted_single_account(self):
         allowlist = {
             "Accounts": {
