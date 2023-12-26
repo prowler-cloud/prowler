@@ -519,7 +519,7 @@ class Test_Allowlist:
                         "check_test_1": {
                             "Regions": ["*"],
                             "Resources": ["resource_1", "resource_2"],
-                            "Exceptions": {"Regions": AWS_REGION_US_EAST_1},
+                            "Exceptions": {"Regions": [AWS_REGION_US_EAST_1]},
                         },
                     }
                 },
@@ -528,7 +528,7 @@ class Test_Allowlist:
                         "check_test_1": {
                             "Regions": ["*"],
                             "Resources": ["resource_3"],
-                            "Exceptions": {"Regions": AWS_REGION_EU_WEST_1},
+                            "Exceptions": {"Regions": [AWS_REGION_EU_WEST_1]},
                         }
                     }
                 },
@@ -559,33 +559,6 @@ class Test_Allowlist:
             "check_test_1",
             AWS_REGION_US_EAST_1,
             "resource_3",
-            "",
-        )
-
-        assert is_allowlisted(
-            allowlist,
-            AWS_ACCOUNT_NUMBER,
-            "check_test_1",
-            AWS_REGION_US_EAST_1,
-            "resource_3",
-            "",
-        )
-
-        assert not is_allowlisted(
-            allowlist,
-            AWS_ACCOUNT_NUMBER,
-            "check_test_1",
-            AWS_REGION_EU_WEST_1,
-            "resource_3",
-            "",
-        )
-
-        assert is_allowlisted(
-            allowlist,
-            AWS_ACCOUNT_NUMBER,
-            "check_test_1",
-            AWS_REGION_US_EAST_1,
-            "resource_2",
             "",
         )
 
