@@ -15,6 +15,8 @@ from prowler.providers.aws.lib.allowlist.allowlist import (
 )
 from tests.providers.aws.audit_info_utils import (
     AWS_ACCOUNT_NUMBER,
+    AWS_REGION_EU_CENTRAL_1,
+    AWS_REGION_EU_SOUTH_3,
     AWS_REGION_EU_WEST_1,
     AWS_REGION_US_EAST_1,
     set_mocked_aws_audit_info,
@@ -132,8 +134,7 @@ class Test_Allowlist:
         )
 
     # Allowlist tests
-
-    def test_allowlist_findings(self):
+    def test_allowlist_findings_only_wildcard(self):
         # Allowlist example
         allowlist = {
             "Accounts": {
@@ -205,12 +206,6 @@ class Test_Allowlist:
                             "Tags": ["*"],
                             "Regions": ["*"],
                             "Resources": ["*"],
-                            "Exceptions": {
-                                "Tags": [],
-                                "Regions": [],
-                                "Accounts": [],
-                                "Resources": [],
-                            },
                         }
                     }
                 }
@@ -442,6 +437,155 @@ class Test_Allowlist:
             is_allowlisted(
                 allowlist, AWS_ACCOUNT_NUMBER, "check_test", "us-east-2", "test", ""
             )
+        )
+
+    def test_is_allowlisted_all_and_single_account_with_different_resources(self):
+        # Allowlist example
+        allowlist = {
+            "Accounts": {
+                "*": {
+                    "Checks": {
+                        "check_test_1": {
+                            "Regions": ["*"],
+                            "Resources": ["resource_1", "resource_2"],
+                        },
+                    }
+                },
+                AWS_ACCOUNT_NUMBER: {
+                    "Checks": {
+                        "check_test_1": {
+                            "Regions": ["*"],
+                            "Resources": ["resource_3"],
+                        }
+                    }
+                },
+            }
+        }
+
+        assert is_allowlisted(
+            allowlist,
+            "111122223333",
+            "check_test_1",
+            AWS_REGION_US_EAST_1,
+            "resource_1",
+            "",
+        )
+
+        assert is_allowlisted(
+            allowlist,
+            "111122223333",
+            "check_test_1",
+            AWS_REGION_US_EAST_1,
+            "resource_2",
+            "",
+        )
+
+        assert not is_allowlisted(
+            allowlist,
+            "111122223333",
+            "check_test_1",
+            AWS_REGION_US_EAST_1,
+            "resource_3",
+            "",
+        )
+
+        assert is_allowlisted(
+            allowlist,
+            AWS_ACCOUNT_NUMBER,
+            "check_test_1",
+            AWS_REGION_US_EAST_1,
+            "resource_3",
+            "",
+        )
+
+        assert is_allowlisted(
+            allowlist,
+            AWS_ACCOUNT_NUMBER,
+            "check_test_1",
+            AWS_REGION_US_EAST_1,
+            "resource_2",
+            "",
+        )
+
+    def test_is_allowlisted_all_and_single_account_with_different_resources_and_exceptions(
+        self,
+    ):
+        # Allowlist example
+        allowlist = {
+            "Accounts": {
+                "*": {
+                    "Checks": {
+                        "check_test_1": {
+                            "Regions": ["*"],
+                            "Resources": ["resource_1", "resource_2"],
+                            "Exceptions": {"Regions": [AWS_REGION_US_EAST_1]},
+                        },
+                    }
+                },
+                AWS_ACCOUNT_NUMBER: {
+                    "Checks": {
+                        "check_test_1": {
+                            "Regions": ["*"],
+                            "Resources": ["resource_3"],
+                            "Exceptions": {"Regions": [AWS_REGION_EU_WEST_1]},
+                        }
+                    }
+                },
+            }
+        }
+
+        assert not is_allowlisted(
+            allowlist,
+            AWS_ACCOUNT_NUMBER,
+            "check_test_1",
+            AWS_REGION_US_EAST_1,
+            "resource_2",
+            "",
+        )
+
+        assert not is_allowlisted(
+            allowlist,
+            "111122223333",
+            "check_test_1",
+            AWS_REGION_US_EAST_1,
+            "resource_1",
+            "",
+        )
+
+        assert is_allowlisted(
+            allowlist,
+            "111122223333",
+            "check_test_1",
+            AWS_REGION_EU_WEST_1,
+            "resource_2",
+            "",
+        )
+
+        assert not is_allowlisted(
+            allowlist,
+            "111122223333",
+            "check_test_1",
+            AWS_REGION_US_EAST_1,
+            "resource_3",
+            "",
+        )
+
+        assert is_allowlisted(
+            allowlist,
+            AWS_ACCOUNT_NUMBER,
+            "check_test_1",
+            AWS_REGION_US_EAST_1,
+            "resource_3",
+            "",
+        )
+
+        assert not is_allowlisted(
+            allowlist,
+            AWS_ACCOUNT_NUMBER,
+            "check_test_1",
+            AWS_REGION_EU_WEST_1,
+            "resource_3",
+            "",
         )
 
     def test_is_allowlisted_single_account(self):
@@ -717,6 +861,111 @@ class Test_Allowlist:
             )
         )
 
+    def test_is_allowlisted_specific_account_with_other_account_excepted(self):
+        # Allowlist example
+        allowlist = {
+            "Accounts": {
+                AWS_ACCOUNT_NUMBER: {
+                    "Checks": {
+                        "check_test": {
+                            "Regions": [AWS_REGION_EU_WEST_1],
+                            "Resources": ["*"],
+                            "Tags": [],
+                            "Exceptions": {"Accounts": ["111122223333"]},
+                        }
+                    }
+                }
+            }
+        }
+
+        assert is_allowlisted(
+            allowlist,
+            AWS_ACCOUNT_NUMBER,
+            "check_test",
+            AWS_REGION_EU_WEST_1,
+            "prowler",
+            "environment=dev",
+        )
+
+        assert not is_allowlisted(
+            allowlist,
+            "111122223333",
+            "check_test",
+            AWS_REGION_EU_WEST_1,
+            "prowler",
+            "environment=dev",
+        )
+
+    def test_is_allowlisted_complex_allowlist(self):
+        # Allowlist example
+        allowlist = {
+            "Accounts": {
+                "*": {
+                    "Checks": {
+                        "s3_bucket_object_versioning": {
+                            "Regions": [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1],
+                            "Resources": ["ci-logs", "logs", ".+-logs"],
+                        },
+                        "ecs_task_definitions_no_environment_secrets": {
+                            "Regions": ["*"],
+                            "Resources": ["*"],
+                            "Exceptions": {
+                                "Accounts": [AWS_ACCOUNT_NUMBER],
+                                "Regions": [
+                                    AWS_REGION_EU_WEST_1,
+                                    AWS_REGION_EU_SOUTH_3,
+                                ],
+                            },
+                        },
+                        "*": {
+                            "Regions": ["*"],
+                            "Resources": ["*"],
+                            "Tags": ["environment=dev"],
+                        },
+                    }
+                },
+                AWS_ACCOUNT_NUMBER: {
+                    "Checks": {
+                        "*": {
+                            "Regions": ["*"],
+                            "Resources": ["*"],
+                            "Exceptions": {
+                                "Resources": ["test"],
+                                "Tags": ["environment=prod"],
+                            },
+                        }
+                    }
+                },
+            }
+        }
+
+        assert is_allowlisted(
+            allowlist,
+            AWS_ACCOUNT_NUMBER,
+            "test_check",
+            AWS_REGION_EU_WEST_1,
+            "prowler-logs",
+            "environment=dev",
+        )
+
+        assert is_allowlisted(
+            allowlist,
+            AWS_ACCOUNT_NUMBER,
+            "ecs_task_definitions_no_environment_secrets",
+            AWS_REGION_EU_WEST_1,
+            "prowler",
+            "environment=dev",
+        )
+
+        assert is_allowlisted(
+            allowlist,
+            AWS_ACCOUNT_NUMBER,
+            "s3_bucket_object_versioning",
+            AWS_REGION_EU_WEST_1,
+            "prowler-logs",
+            "environment=dev",
+        )
+
     def test_is_allowlisted_in_tags(self):
         allowlist_tags = ["environment=dev", "project=prowler"]
 
@@ -789,6 +1038,107 @@ class Test_Allowlist:
             "eu-south-3",
             "test123",
             "environment=test",
+        )
+
+    def test_is_excepted_only_in_account(self):
+        # Allowlist example
+        exceptions = {
+            "Accounts": [AWS_ACCOUNT_NUMBER],
+            "Regions": [],
+            "Resources": [],
+            "Tags": [],
+        }
+
+        assert is_excepted(
+            exceptions,
+            AWS_ACCOUNT_NUMBER,
+            "eu-central-1",
+            "test",
+            "environment=test",
+        )
+
+    def test_is_excepted_only_in_region(self):
+        # Allowlist example
+        exceptions = {
+            "Accounts": [],
+            "Regions": [AWS_REGION_EU_CENTRAL_1, AWS_REGION_EU_SOUTH_3],
+            "Resources": [],
+            "Tags": [],
+        }
+
+        assert is_excepted(
+            exceptions,
+            AWS_ACCOUNT_NUMBER,
+            AWS_REGION_EU_CENTRAL_1,
+            "test",
+            "environment=test",
+        )
+
+    def test_is_excepted_only_in_resources(self):
+        # Allowlist example
+        exceptions = {
+            "Accounts": [],
+            "Regions": [],
+            "Resources": ["resource_1"],
+            "Tags": [],
+        }
+
+        assert is_excepted(
+            exceptions,
+            AWS_ACCOUNT_NUMBER,
+            AWS_REGION_EU_CENTRAL_1,
+            "resource_1",
+            "environment=test",
+        )
+
+    def test_is_excepted_only_in_tags(self):
+        # Allowlist example
+        exceptions = {
+            "Accounts": [],
+            "Regions": [],
+            "Resources": [],
+            "Tags": ["environment=test"],
+        }
+
+        assert is_excepted(
+            exceptions,
+            AWS_ACCOUNT_NUMBER,
+            AWS_REGION_EU_CENTRAL_1,
+            "resource_1",
+            "environment=test",
+        )
+
+    def test_is_excepted_in_account_and_tags(self):
+        # Allowlist example
+        exceptions = {
+            "Accounts": [AWS_ACCOUNT_NUMBER],
+            "Regions": [],
+            "Resources": [],
+            "Tags": ["environment=test"],
+        }
+
+        assert is_excepted(
+            exceptions,
+            AWS_ACCOUNT_NUMBER,
+            AWS_REGION_EU_CENTRAL_1,
+            "resource_1",
+            "environment=test",
+        )
+
+        assert not is_excepted(
+            exceptions,
+            "111122223333",
+            AWS_REGION_EU_CENTRAL_1,
+            "resource_1",
+            "environment=test",
+        )
+
+        assert not is_excepted(
+            exceptions,
+            "111122223333",
+            AWS_REGION_EU_CENTRAL_1,
+            "resource_1",
+            "environment=dev",
         )
 
     def test_is_excepted_all_wildcard(self):

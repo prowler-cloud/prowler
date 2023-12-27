@@ -143,29 +143,23 @@ def is_allowlisted(
     finding_tags,
 ):
     try:
-        allowlisted_checks = {}
         # By default is not allowlisted
         is_finding_allowlisted = False
-        # First set account key from allowlist dict
-        if audited_account in allowlist["Accounts"]:
-            allowlisted_checks = allowlist["Accounts"][audited_account]["Checks"]
-        # If there is a *, it affects to all accounts
-        # This cannot be elif since in the case of * and single accounts we
-        # want to merge allowlisted checks from * to the other accounts check list
-        if "*" in allowlist["Accounts"]:
-            checks_multi_account = allowlist["Accounts"]["*"]["Checks"]
-            allowlisted_checks.update(checks_multi_account)
 
-        # Test if it is allowlisted
-        if is_allowlisted_in_check(
-            allowlisted_checks,
-            audited_account,
-            check,
-            finding_region,
-            finding_resource,
-            finding_tags,
-        ):
-            is_finding_allowlisted = True
+        # We always check all the accounts present in the allowlist
+        # if one allowlists the finding we set the finding as allowlisted
+        for account in allowlist["Accounts"]:
+            if account == audited_account or account == "*":
+                if is_allowlisted_in_check(
+                    allowlist["Accounts"][account]["Checks"],
+                    audited_account,
+                    check,
+                    finding_region,
+                    finding_resource,
+                    finding_tags,
+                ):
+                    is_finding_allowlisted = True
+                    break
 
         return is_finding_allowlisted
     except Exception as error:
@@ -310,10 +304,10 @@ def is_excepted(
             is_tag_excepted = __is_item_matched__(excepted_tags, finding_tags)
 
             if (
-                is_account_excepted
-                and is_region_excepted
-                and is_resource_excepted
-                and is_tag_excepted
+                (is_account_excepted or not excepted_accounts)
+                and (is_region_excepted or not excepted_regions)
+                and (is_resource_excepted or not excepted_resources)
+                and (is_tag_excepted or not excepted_tags)
             ):
                 excepted = True
         return excepted
