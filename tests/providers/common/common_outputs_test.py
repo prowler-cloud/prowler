@@ -281,7 +281,7 @@ class Test_Common_Output_Options:
         }
         printed_subscriptions = []
         for key, value in audit_info.identity.subscriptions.items():
-            intermediate = key + " : " + value
+            intermediate = f"{key} : {value}"
             printed_subscriptions.append(intermediate)
         assert (
             get_assessment_summary(audit_info)
