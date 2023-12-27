@@ -16,10 +16,12 @@ from prowler.providers.common.outputs import (
     Aws_Output_Options,
     Azure_Output_Options,
     Gcp_Output_Options,
+    Kubernetes_Output_Options,
     get_provider_output_model,
     set_provider_output_options,
 )
 from prowler.providers.gcp.lib.audit_info.models import GCP_Audit_Info
+from prowler.providers.kubernetes.lib.audit_info.models import Kubernetes_Audit_Info
 
 AWS_ACCOUNT_NUMBER = "012345678912"
 DATETIME = "20230101120000"
@@ -45,6 +47,20 @@ class Test_Common_Output_Options:
             credentials=None,
             default_project_id="test-project1",
             project_ids=["test-project1", "test-project2"],
+            audit_resources=None,
+            audit_metadata=None,
+            audit_config=None,
+        )
+        return audit_info
+
+    # Mocked Kusbernete Audit Info
+    def set_mocked_kubernetes_audit_info(self):
+        audit_info = Kubernetes_Audit_Info(
+            api_client=None,
+            context={
+                "name": "test-context",
+                "context": {"cluster": "test-cluster", "user": "XXXXXXXXX"},
+            },
             audit_resources=None,
             audit_metadata=None,
             audit_config=None,
@@ -136,6 +152,37 @@ class Test_Common_Output_Options:
             provider, arguments, audit_info, mutelist_file, bulk_checks_metadata
         )
         assert isinstance(output_options, Gcp_Output_Options)
+        assert output_options.is_quiet
+        assert output_options.output_modes == ["html", "csv", "json"]
+        assert output_options.output_directory == arguments.output_directory
+        assert output_options.mutelist_file == ""
+        assert output_options.bulk_checks_metadata == {}
+        assert output_options.verbose
+        assert output_options.output_filename == arguments.output_filename
+
+        # Delete testing directory
+        rmdir(arguments.output_directory)
+
+    def test_set_provider_output_options_kubernetes(self):
+        #  Set the cloud provider
+        provider = "kubernetes"
+        # Set the arguments passed
+        arguments = Namespace()
+        arguments.quiet = True
+        arguments.output_modes = ["html", "csv", "json"]
+        arguments.output_directory = "output_test_directory"
+        arguments.verbose = True
+        arguments.output_filename = "output_test_filename"
+        arguments.only_logs = False
+        arguments.unix_timestamp = False
+
+        audit_info = self.set_mocked_kubernetes_audit_info()
+        mutelist_file = ""
+        bulk_checks_metadata = {}
+        output_options = set_provider_output_options(
+            provider, arguments, audit_info, mutelist_file, bulk_checks_metadata
+        )
+        assert isinstance(output_options, Kubernetes_Output_Options)
         assert output_options.is_quiet
         assert output_options.output_modes == ["html", "csv", "json"]
         assert output_options.output_directory == arguments.output_directory
@@ -362,7 +409,7 @@ class Test_Common_Output_Options:
         )
 
     def test_gcp_get_assessment_summary(self):
-        # Mock Azure Audit Info
+        # Mock GCP Audit Info
         audit_info = self.set_mocked_gcp_audit_info()
         profile = "default"
         assert (
@@ -395,11 +442,54 @@ class Test_Common_Output_Options:
             """
         )
 
+    def test_kubernetes_get_assessment_summary(self):
+        # Mock Kubernetes Audit Info
+        audit_info = self.set_mocked_kubernetes_audit_info()
+        assert (
+            get_assessment_summary(audit_info)
+            == """
+            <div class="col-md-2">
+                <div class="card">
+                    <div class="card-header">
+                        Kubernetes Assessment Summary
+                    </div>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item">
+                            <b>Kubernetes Context:</b> """
+            + audit_info.context["name"]
+            + """
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        Kubernetes Credentials
+                    </div>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item">
+                            <b>Kubernetes Cluster:</b> """
+            + audit_info.context["context"]["cluster"]
+            + """
+                        </li>
+                        <li class="list-group-item">
+                            <b>Kubernetes User:</b> """
+            + audit_info.context["context"]["user"]
+            + """
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            """
+        )
+
     def test_get_provider_output_model(self):
         audit_info_class_names = [
             "AWS_Audit_Info",
             "GCP_Audit_Info",
             "Azure_Audit_Info",
+            "Kubernetes_Audit_Info",
         ]
         for class_name in audit_info_class_names:
             provider_prefix = class_name.split("_", 1)[0].lower().capitalize()

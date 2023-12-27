@@ -21,6 +21,7 @@ CUSTOM_CHECKS_METADATA_FIXTURE_FILE_NOT_VALID = f"{os.path.dirname(os.path.realp
 AWS_PROVIDER = "aws"
 AZURE_PROVIDER = "azure"
 GCP_PROVIDER = "gcp"
+KUBERNETES_PROVIDER = "kubernetes"
 
 S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME = "s3_bucket_level_public_access_block"
 S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_SEVERITY = "medium"
@@ -79,6 +80,11 @@ class TestCustomChecksMetadata:
     def test_parse_custom_checks_metadata_file_for_gcp(self):
         assert parse_custom_checks_metadata_file(
             GCP_PROVIDER, CUSTOM_CHECKS_METADATA_FIXTURE_FILE
+        ) == {"Checks": {"bigquery_dataset_cmk_encryption": {"Severity": "low"}}}
+
+    def test_parse_custom_checks_metadata_file_for_kubernetes(self):
+        assert parse_custom_checks_metadata_file(
+            KUBERNETES_PROVIDER, CUSTOM_CHECKS_METADATA_FIXTURE_FILE
         ) == {"Checks": {"bigquery_dataset_cmk_encryption": {"Severity": "low"}}}
 
     def test_parse_custom_checks_metadata_file_for_aws_validation_error(self, caplog):
