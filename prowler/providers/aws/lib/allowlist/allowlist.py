@@ -9,9 +9,6 @@ from schema import Optional, Schema
 from prowler.lib.logger import logger
 from prowler.lib.outputs.models import unroll_tags
 
-allowlist_base_fields = ["Regions", "Resources", "Tags"]
-allowlist_exceptions_fields = allowlist_base_fields + ["Accounts"]
-
 allowlist_schema = Schema(
     {
         "Accounts": {
