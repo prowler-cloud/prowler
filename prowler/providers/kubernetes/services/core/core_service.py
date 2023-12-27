@@ -55,7 +55,6 @@ class Core(KubernetesService):
                         containers=pod_containers,
                     )
                 )
-                # print(f"Pod Name: {pod.metadata.name}, Namespace: {pod.metadata.namespace}")
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
