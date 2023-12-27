@@ -1,30 +1,36 @@
 {
   "Provider": "kubernetes",
   "CheckID": "scheduler_profiling",
-  "CheckTitle": "Ensure that the --anonymous-auth argument is set to false",
-  "CheckType": [],
-  "ServiceName": "APIServer",
+  "CheckTitle": "Ensure that the --profiling argument is set to false",
+  "CheckType": [
+    "Cluster Performance",
+    "Cluster Security"
+  ],
+  "ServiceName": "kube-scheduler",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
-  "ResourceType": "Pod",
-  "Description": "When enabled, requests that are not rejected by other configured authentication methods are treated as anonymous requests. These requests are then served by the API server. You should rely on authentication to authorize access and disallow anonymous requests.",
-  "Risk": "If you are using RBAC authorization, it is generally considered reasonable to allow anonymous access to the API Server for health checks and discovery purposes, and hence this recommendation is not scored. However, you should consider whether anonymous discovery is an acceptable risk for your purposes.",
-  "RelatedUrl": "",
+  "Severity": "medium",
+  "ResourceType": "KubernetesScheduler",
+  "Description": "Disable profiling in the Kubernetes Scheduler unless it is needed for troubleshooting. Profiling can reveal detailed system and application performance data, which might be exploited if exposed. Turning off profiling reduces the potential attack surface and performance overhead.",
+  "Risk": "While profiling is useful for identifying performance issues, it generates detailed data that could potentially expose sensitive information about the system and its performance characteristics.",
+  "RelatedUrl": "https://github.com/kubernetes/community/blob/master/contributors/devel/profiling.md",
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "Edit the Scheduler pod specification file /etc/kubernetes/manifests/kube-scheduler.yaml and set --profiling=false",
       "NativeIaC": "",
-      "Other": "--anonymous-auth=false",
+      "Other": "",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Edit the API server pod specification file /etc/kubernetes/manifests/kube-apiserver.yaml on the Control Plane",
-      "Url": ""
+      "Text": "To minimize exposure to performance data and potential vulnerabilities, ensure the --profiling argument in the Kubernetes Scheduler is set to false.",
+      "Url": "https://kubernetes.io/docs/admin/kube-scheduler/"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "Performance Optimization",
+    "Security Best Practices"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": ""
+  "Notes": "By default, profiling is enabled in Kubernetes Scheduler. Disabling it is a good security practice if profiling data is not needed for regular operations."
 }

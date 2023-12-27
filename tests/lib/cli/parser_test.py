@@ -229,19 +229,16 @@ class Test_Parser:
     def test_root_parser_azure_provider(self):
         command = [prowler_command, "azure"]
         parsed = self.parser.parse(command)
-        print(parsed)
         assert parsed.provider == "azure"
 
     def test_root_parser_gcp_provider(self):
         command = [prowler_command, "gcp"]
         parsed = self.parser.parse(command)
-        print(parsed)
         assert parsed.provider == "gcp"
 
     def test_root_parser_kubernetes_provider(self):
         command = [prowler_command, "kubernetes"]
         parsed = self.parser.parse(command)
-        print(parsed)
         assert parsed.provider == "kubernetes"
 
     def test_root_parser_quiet_short(self):
