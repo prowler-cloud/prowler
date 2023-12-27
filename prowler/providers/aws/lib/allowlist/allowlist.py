@@ -146,37 +146,23 @@ def is_allowlisted(
     finding_tags,
 ):
     try:
-        allowlisted_checks = {}
         # By default is not allowlisted
         is_finding_allowlisted = False
-        # First set account key from allowlist dict
-        if audited_account != "*" and audited_account in allowlist["Accounts"]:
-            allowlisted_checks = allowlist["Accounts"][audited_account]["Checks"]
-        # If there is a *, it affects to all accounts
-        # This cannot be elif since in the case of * and single accounts we
-        # want to merge allowlisted checks from * to the other accounts check list
-        if "*" in allowlist["Accounts"]:
-            allowlisted_checks_multi_account = allowlist["Accounts"]["*"]["Checks"]
 
-            if allowlisted_checks and allowlisted_checks_multi_account:
-                allowlisted_checks = __merge_allowlist_checks_dictionaries__(
+        # We always check all the accounts present in the allowlist
+        # if one allowlists the finding we set the finding as allowlisted
+        for account in allowlist["Accounts"]:
+            if account == audited_account or account == "*":
+                if is_allowlisted_in_check(
+                    allowlist["Accounts"][account]["Checks"],
+                    audited_account,
                     check,
-                    allowlisted_checks,
-                    allowlisted_checks_multi_account,
-                )
-            else:
-                allowlisted_checks.update(allowlisted_checks_multi_account)
-
-        # Test if it is allowlisted
-        if is_allowlisted_in_check(
-            allowlisted_checks,
-            audited_account,
-            check,
-            finding_region,
-            finding_resource,
-            finding_tags,
-        ):
-            is_finding_allowlisted = True
+                    finding_region,
+                    finding_resource,
+                    finding_tags,
+                ):
+                    is_finding_allowlisted = True
+                    break
 
         return is_finding_allowlisted
     except Exception as error:
@@ -352,89 +338,3 @@ def __is_item_matched__(matched_items, finding_items):
             f"{error.__class__.__name__} -- {error}[{error.__traceback__.tb_lineno}]"
         )
         sys.exit(1)
-
-
-def __merge_allowlist_checks_dictionaries__(
-    check: str,
-    allowlisted_checks_single_account: dict,
-    allowlisted_checks_multi_account: dict,
-):
-    """__merge_allowlist_checks_dict__ returns a merged dictorionary.
-
-    Example:
-    allowlisted_checks_single_account = {
-        "check_test_1": {
-            "Regions": ["eu-west-1"],
-            "Resources": ["resource_1", "resource_2"],
-        },
-    }
-    allowlisted_checks_multi_account = {
-        "check_test_1": {
-            "Regions": ["*"],
-            "Resources": ["resource_3"],
-        }
-    }
-
-    __merge_allowlist_checks_dict__(allowlisted_checks_single_account, allowlisted_checks_multi_account) returns
-    {
-        "check_test_1": {
-            "Regions": ["*"],
-            "Resources": ["resource_1", "resource_2", "resource_3"],
-        },
-    }
-
-    """
-    # Empty allowlist
-    merged_dict = {check: {"Regions": [], "Resources": []}}
-    # First merge empty allowlist with the allowlisted_checks_single_account
-    merged_dict = __merge_allowlist_dict__(
-        check, merged_dict, allowlisted_checks_single_account
-    )
-    # Then merge the allowlisted_checks_multi_account with the previous one
-    merged_dict = __merge_allowlist_dict__(
-        check, merged_dict, allowlisted_checks_multi_account
-    )
-
-    return merged_dict
-
-
-def __merge_allowlist_dict__(check: str, merged_dict: dict, to_merge_dict: dict):
-    """__merge_allowlist_dict__ returns a merged allowlist based if the Regions or Resources has * or not."""
-    if to_merge_dict and check in to_merge_dict:
-        for key, value in to_merge_dict[check].items():
-            # Handle Base fields
-            if key in allowlist_base_fields:
-                # Key Tags is optional, so create it if present
-                if key == "Tags":
-                    merged_dict[check]["Tags"] = []
-                if "*" in value:
-                    merged_dict[check][key] = ["*"]
-                else:
-                    merged_dict[check][key].extend(value)
-                    merged_dict[check][key] = list(
-                        dict.fromkeys(merged_dict[check][key])
-                    )
-                    merged_dict[check][key].sort()
-            # handle exceptions if present
-            if key == "Exceptions" and to_merge_dict[check][key]:
-                merged_dict[check][key] = {
-                    "Accounts": [],
-                    "Regions": [],
-                    "Resources": [],
-                    "Tags": [],
-                }
-                for exceptions_key, exceptions_value in to_merge_dict[check][
-                    key
-                ].items():
-                    if exceptions_key in allowlist_exceptions_fields:
-                        if "*" in exceptions_value:
-                            merged_dict[check][key][exceptions_key] = ["*"]
-                        else:
-                            merged_dict[check][key][exceptions_key].extend(
-                                exceptions_value
-                            )
-                            merged_dict[check][key][exceptions_key] = list(
-                                dict.fromkeys(merged_dict[check][key][exceptions_key])
-                            )
-                            merged_dict[check][key][exceptions_key].sort()
-    return merged_dict

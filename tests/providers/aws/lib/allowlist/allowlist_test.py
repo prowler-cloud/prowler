@@ -3,8 +3,7 @@ from boto3 import resource
 from mock import MagicMock
 from moto import mock_dynamodb, mock_s3
 
-from prowler.providers.aws.lib.allowlist.allowlist import (
-    __merge_allowlist_checks_dictionaries__,
+from prowler.providers.aws.lib.allowlist.allowlist import (  # __merge_allowlist_checks_dictionaries__,
     allowlist_findings,
     is_allowlisted,
     is_allowlisted_in_check,
@@ -135,7 +134,7 @@ class Test_Allowlist:
         )
 
     # Allowlist tests
-    def test_allowlist_findings(self):
+    def test_allowlist_findings_only_wildcard(self):
         # Allowlist example
         allowlist = {
             "Accounts": {
@@ -519,7 +518,7 @@ class Test_Allowlist:
                         "check_test_1": {
                             "Regions": ["*"],
                             "Resources": ["resource_1", "resource_2"],
-                            "Exceptions": {"Regions": AWS_REGION_US_EAST_1},
+                            "Exceptions": {"Regions": [AWS_REGION_US_EAST_1]},
                         },
                     }
                 },
@@ -528,12 +527,21 @@ class Test_Allowlist:
                         "check_test_1": {
                             "Regions": ["*"],
                             "Resources": ["resource_3"],
-                            "Exceptions": {"Regions": AWS_REGION_EU_WEST_1},
+                            "Exceptions": {"Regions": [AWS_REGION_EU_WEST_1]},
                         }
                     }
                 },
             }
         }
+
+        assert not is_allowlisted(
+            allowlist,
+            AWS_ACCOUNT_NUMBER,
+            "check_test_1",
+            AWS_REGION_US_EAST_1,
+            "resource_2",
+            "",
+        )
 
         assert not is_allowlisted(
             allowlist,
@@ -577,15 +585,6 @@ class Test_Allowlist:
             "check_test_1",
             AWS_REGION_EU_WEST_1,
             "resource_3",
-            "",
-        )
-
-        assert is_allowlisted(
-            allowlist,
-            AWS_ACCOUNT_NUMBER,
-            "check_test_1",
-            AWS_REGION_US_EAST_1,
-            "resource_2",
             "",
         )
 
@@ -862,6 +861,111 @@ class Test_Allowlist:
             )
         )
 
+    def test_is_allowlisted_specific_account_with_other_account_excepted(self):
+        # Allowlist example
+        allowlist = {
+            "Accounts": {
+                AWS_ACCOUNT_NUMBER: {
+                    "Checks": {
+                        "check_test": {
+                            "Regions": [AWS_REGION_EU_WEST_1],
+                            "Resources": ["*"],
+                            "Tags": [],
+                            "Exceptions": {"Accounts": ["111122223333"]},
+                        }
+                    }
+                }
+            }
+        }
+
+        assert is_allowlisted(
+            allowlist,
+            AWS_ACCOUNT_NUMBER,
+            "check_test",
+            AWS_REGION_EU_WEST_1,
+            "prowler",
+            "environment=dev",
+        )
+
+        assert not is_allowlisted(
+            allowlist,
+            "111122223333",
+            "check_test",
+            AWS_REGION_EU_WEST_1,
+            "prowler",
+            "environment=dev",
+        )
+
+    def test_is_allowlisted_complex_allowlist(self):
+        # Allowlist example
+        allowlist = {
+            "Accounts": {
+                "*": {
+                    "Checks": {
+                        "s3_bucket_object_versioning": {
+                            "Regions": [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1],
+                            "Resources": ["ci-logs", "logs", ".+-logs"],
+                        },
+                        "ecs_task_definitions_no_environment_secrets": {
+                            "Regions": ["*"],
+                            "Resources": ["*"],
+                            "Exceptions": {
+                                "Accounts": [AWS_ACCOUNT_NUMBER],
+                                "Regions": [
+                                    AWS_REGION_EU_WEST_1,
+                                    AWS_REGION_EU_SOUTH_3,
+                                ],
+                            },
+                        },
+                        "*": {
+                            "Regions": ["*"],
+                            "Resources": ["*"],
+                            "Tags": ["environment=dev"],
+                        },
+                    }
+                },
+                AWS_ACCOUNT_NUMBER: {
+                    "Checks": {
+                        "*": {
+                            "Regions": ["*"],
+                            "Resources": ["*"],
+                            "Exceptions": {
+                                "Resources": ["test"],
+                                "Tags": ["environment=prod"],
+                            },
+                        }
+                    }
+                },
+            }
+        }
+
+        assert is_allowlisted(
+            allowlist,
+            AWS_ACCOUNT_NUMBER,
+            "test_check",
+            AWS_REGION_EU_WEST_1,
+            "prowler-logs",
+            "environment=dev",
+        )
+
+        assert is_allowlisted(
+            allowlist,
+            AWS_ACCOUNT_NUMBER,
+            "ecs_task_definitions_no_environment_secrets",
+            AWS_REGION_EU_WEST_1,
+            "prowler",
+            "environment=dev",
+        )
+
+        assert is_allowlisted(
+            allowlist,
+            AWS_ACCOUNT_NUMBER,
+            "s3_bucket_object_versioning",
+            AWS_REGION_EU_WEST_1,
+            "prowler-logs",
+            "environment=dev",
+        )
+
     def test_is_allowlisted_in_tags(self):
         allowlist_tags = ["environment=dev", "project=prowler"]
 
@@ -1090,105 +1194,3 @@ class Test_Allowlist:
         assert is_allowlisted_in_resource(allowlist_resources, "prowler-test")
         assert is_allowlisted_in_resource(allowlist_resources, "test-prowler")
         assert not is_allowlisted_in_resource(allowlist_resources, "random")
-
-    def test__merge_allowlist_checks_dictionaries__with_wildcard_region_and_multiple_resources(
-        self,
-    ):
-        check = "check_test_1"
-        allowlisted_checks_single_account = {
-            check: {
-                "Regions": ["eu-west-1"],
-                "Resources": ["resource_1", "resource_2"],
-                "Tags": ["test:test"],
-            },
-        }
-        allowlisted_checks_multi_account = {
-            check: {
-                "Regions": ["*"],
-                "Resources": ["resource_3"],
-                "Tags": ["test:test"],
-            }
-        }
-
-        assert __merge_allowlist_checks_dictionaries__(
-            check, allowlisted_checks_single_account, allowlisted_checks_multi_account
-        ) == {
-            check: {
-                "Regions": ["*"],
-                "Resources": ["resource_1", "resource_2", "resource_3"],
-                "Tags": ["test:test"],
-            },
-        }
-
-    def test__merge_allowlist_checks_dictionaries__with_same_region_and_multiple_resources(
-        self,
-    ):
-        check = "check_test_1"
-        allowlisted_checks_single_account = {
-            check: {
-                "Regions": ["eu-west-1"],
-                "Resources": ["resource_1", "resource_2"],
-            },
-        }
-        allowlisted_checks_multi_account = {
-            check: {
-                "Regions": ["eu-west-1"],
-                "Resources": ["resource_3"],
-            }
-        }
-
-        assert __merge_allowlist_checks_dictionaries__(
-            check, allowlisted_checks_single_account, allowlisted_checks_multi_account
-        ) == {
-            check: {
-                "Regions": ["eu-west-1"],
-                "Resources": ["resource_1", "resource_2", "resource_3"],
-            },
-        }
-
-    def test__merge_allowlist_checks_dictionaries__with_only_multi_account(
-        self,
-    ):
-        check = "check_test_1"
-        allowlisted_checks_single_account = {}
-        allowlisted_checks_multi_account = {
-            check: {
-                "Regions": ["eu-west-1"],
-                "Resources": ["resource_3"],
-            }
-        }
-
-        assert __merge_allowlist_checks_dictionaries__(
-            check, allowlisted_checks_single_account, allowlisted_checks_multi_account
-        ) == {
-            "check_test_1": {
-                "Regions": ["eu-west-1"],
-                "Resources": ["resource_3"],
-            },
-        }
-
-    def test__merge_allowlist_checks_dictionaries__with_wildcard_region_for_single_and_multi(
-        self,
-    ):
-        check = "check_test_1"
-        allowlisted_checks_single_account = {
-            "check_test_1": {
-                "Regions": ["*"],
-                "Resources": ["resource_3"],
-            }
-        }
-        allowlisted_checks_multi_account = {
-            "check_test_1": {
-                "Regions": ["*"],
-                "Resources": ["resource_1", "resource_2"],
-            }
-        }
-
-        assert __merge_allowlist_checks_dictionaries__(
-            check, allowlisted_checks_single_account, allowlisted_checks_multi_account
-        ) == {
-            "check_test_1": {
-                "Regions": ["*"],
-                "Resources": ["resource_1", "resource_2", "resource_3"],
-            },
-        }
