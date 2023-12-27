@@ -3,7 +3,7 @@ from boto3 import resource
 from mock import MagicMock
 from moto import mock_dynamodb, mock_s3
 
-from prowler.providers.aws.lib.allowlist.allowlist import (  # __merge_allowlist_checks_dictionaries__,
+from prowler.providers.aws.lib.allowlist.allowlist import (
     allowlist_findings,
     is_allowlisted,
     is_allowlisted_in_check,
