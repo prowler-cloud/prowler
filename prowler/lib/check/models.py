@@ -148,6 +148,7 @@ class Check_Report_GCP(Check_Report):
 
 @dataclass
 class Check_Report_Kubernetes(Check_Report):
+    # TODO change class name to CheckReportKubernetes
     """Contains the Kubernetes Check's finding information."""
 
     resource_name: str
