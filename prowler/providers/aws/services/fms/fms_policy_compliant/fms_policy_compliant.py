@@ -13,17 +13,21 @@ class fms_policy_compliant(Check):
             report.status = "PASS"
             report.status_extended = "FMS enabled with all compliant accounts."
             non_compliant_policy = False
-            for policy in fms_client.fms_policies:
-                for policy_to_account in policy.compliance_status:
-                    if policy_to_account.status == "NON_COMPLIANT":
-                        report.status = "FAIL"
-                        report.status_extended = f"FMS with non-compliant policy {policy.name} for account {policy_to_account.account_id}."
-                        report.resource_id = policy.id
-                        report.resource_arn = policy.arn
-                        non_compliant_policy = True
+            if fms_client.fms_policies:
+                for policy in fms_client.fms_policies:
+                    for policy_to_account in policy.compliance_status:
+                        if policy_to_account.status == "NON_COMPLIANT":
+                            report.status = "FAIL"
+                            report.status_extended = f"FMS with non-compliant policy {policy.name} for account {policy_to_account.account_id}."
+                            report.resource_id = policy.id
+                            report.resource_arn = policy.arn
+                            non_compliant_policy = True
+                            break
+                    if non_compliant_policy:
                         break
-                if non_compliant_policy:
-                    break
+            else:
+                report.status = "FAIL"
+                report.status_extended = f"FMS without any compliant policy for account {fms_client.audited_account}."
 
             findings.append(report)
         return findings
