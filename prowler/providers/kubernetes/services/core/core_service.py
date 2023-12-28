@@ -44,6 +44,7 @@ class Core(KubernetesService):
                 self.pods.append(
                     Pod(
                         name=pod.metadata.name,
+                        uid=pod.metadata.uid,
                         namespace=pod.metadata.namespace,
                         labels=pod.metadata.labels,
                         annotations=pod.metadata.annotations,
@@ -71,6 +72,7 @@ class Container(BaseModel):
 
 class Pod(BaseModel):
     name: str
+    uid: str
     namespace: str
     labels: Optional[dict]
     annotations: Optional[dict]

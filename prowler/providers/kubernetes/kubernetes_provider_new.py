@@ -50,7 +50,7 @@ class KubernetesProvider(CloudProvider):
     def get_context_user_roles(self):
         try:
             rbac_api = client.RbacAuthorizationV1Api()
-            context_user = self.context.get("context").get("user")
+            context_user = self.context.get("context", {}).get("user", "")
             roles = []
 
             # Search in ClusterRoleBindings

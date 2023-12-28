@@ -11,7 +11,7 @@ class apiserver_anonymous_requests(Check):
         report = Check_Report_Kubernetes(self.metadata())
         report.namespace = pod.namespace
         report.resource_name = pod.name
-        report.resource_id = pod.name
+        report.resource_id = pod.uid
         report.status = "PASS"
         report.status_extended = "API Server does not have anonymous-auth enabled."
         for container in pod.containers:

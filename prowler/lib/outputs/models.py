@@ -91,7 +91,7 @@ def generate_provider_output_csv(
             data["namespace"] = finding.namespace
             data[
                 "finding_unique_id"
-            ] = f"prowler-{provider}-{finding.check_metadata.CheckID}-{finding.namespace}-{finding.resource_name}"
+            ] = f"prowler-{provider}-{finding.check_metadata.CheckID}-{finding.namespace}-{finding.resource_id}"
             data["compliance"] = unroll_dict(
                 get_check_compliance(finding, provider, output_options)
             )
