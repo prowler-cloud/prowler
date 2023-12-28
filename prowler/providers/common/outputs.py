@@ -115,7 +115,7 @@ class Kubernetes_Output_Options(Provider_Output_Options):
     def __init__(self, arguments, audit_info, mutelist_file, bulk_checks_metadata):
         # First call Provider_Output_Options init
         super().__init__(arguments, mutelist_file, bulk_checks_metadata)
-
+        # TODO move the below if to Provider_Output_Options
         # Check if custom output filename was input, if not, set the default
         if (
             not hasattr(arguments, "output_filename")
