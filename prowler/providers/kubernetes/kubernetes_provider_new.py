@@ -49,7 +49,7 @@ class KubernetesProvider(CloudProvider):
             sys.exit(1)
 
     def search_and_save_roles(
-        roles: list, role_bindings, context_user: str, role_binding_type: str
+        self, roles: list, role_bindings, context_user: str, role_binding_type: str
     ):
         try:
             for rb in role_bindings:
@@ -76,13 +76,16 @@ class KubernetesProvider(CloudProvider):
             roles = []
             # Search in ClusterRoleBindings
             roles = self.search_and_save_roles(
-                roles, rbac_api.list_cluster_role_binding(), context_user, "ClusterRole"
+                roles,
+                rbac_api.list_cluster_role_binding().items,
+                context_user,
+                "ClusterRole",
             )
 
             # Search in RoleBindings for all namespaces
             roles = self.search_and_save_roles(
                 roles,
-                rbac_api.list_role_binding_for_all_namespaces(),
+                rbac_api.list_role_binding_for_all_namespaces().items,
                 context_user,
                 "Role",
             )
