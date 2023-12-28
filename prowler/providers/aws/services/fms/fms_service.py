@@ -66,7 +66,9 @@ class FMS(AWSService):
                 for page in list_compliance_status_paginator.paginate(
                     PolicyId=fms_policy.id
                 ):
-                    for fms_compliance_status in page["PolicyComplianceStatusList"]:
+                    for fms_compliance_status in page.get(
+                        "PolicyComplianceStatusList", []
+                    ):
                         fms_policy.compliance_status.append(
                             PolicyAccountComplianceStatus(
                                 account_id=fms_compliance_status.get("MemberAccount"),
