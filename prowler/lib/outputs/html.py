@@ -407,7 +407,7 @@ def get_azure_html_assessment_summary(audit_info):
         if isinstance(audit_info, Azure_Audit_Info):
             printed_subscriptions = []
             for key, value in audit_info.identity.subscriptions.items():
-                intermediate = key + " : " + value
+                intermediate = f"{key} : {value}"
                 printed_subscriptions.append(intermediate)
 
             # check if identity is str(coming from SP) or dict(coming from browser or)

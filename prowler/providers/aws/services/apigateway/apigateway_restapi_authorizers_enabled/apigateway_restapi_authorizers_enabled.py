@@ -35,7 +35,7 @@ class apigateway_restapi_authorizers_enabled(Check):
                             if authorization_method == "NONE":
                                 all_methods_authorized = False
                                 unauthorized_method = (
-                                    resource.path + " -> " + http_method
+                                    f"{resource.path} -> {http_method}"
                                 )
                                 resource_paths_with_unathorized_methods.append(
                                     unauthorized_method

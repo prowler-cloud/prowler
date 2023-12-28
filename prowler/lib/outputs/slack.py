@@ -13,7 +13,7 @@ def send_slack_message(token, channel, stats, provider, audit_info):
         response = client.chat_postMessage(
             username="Prowler",
             icon_url=square_logo_img,
-            channel="#" + channel,
+            channel=f"#{channel}",
             blocks=create_message_blocks(identity, logo, stats),
         )
         return response
@@ -35,7 +35,7 @@ def create_message_identity(provider, audit_info):
         elif provider == "azure":
             printed_subscriptions = []
             for key, value in audit_info.identity.subscriptions.items():
-                intermediate = "- *" + key + ": " + value + "*\n"
+                intermediate = f"- *{key}: {value}*\n"
                 printed_subscriptions.append(intermediate)
             identity = f"Azure Subscriptions:\n{''.join(printed_subscriptions)}"
             logo = azure_logo
