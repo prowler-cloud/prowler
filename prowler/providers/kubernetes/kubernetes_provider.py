@@ -41,29 +41,44 @@ class Kubernetes_Provider:
     def get_credentials(self):
         return self.api_client, self.context
 
+    def search_and_save_roles(
+        roles: list, role_bindings, context_user: str, role_binding_type: str
+    ):
+        try:
+            for rb in role_bindings:
+                if rb.subjects:
+                    for subject in rb.subjects:
+                        if subject.kind == "User" and subject.name == context_user:
+                            if role_binding_type == "ClusterRole":
+                                roles.append(f"{role_binding_type}: {rb.role_ref.name}")
+                            elif role_binding_type == "Role":
+                                roles.append(
+                                    f"{role_binding_type} ({rb.metadata.namespace}): {rb.role_ref.name}"
+                                )
+            return roles
+        except Exception as error:
+            logger.critical(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            sys.exit(1)
+
     def get_context_user_roles(self):
         try:
             rbac_api = client.RbacAuthorizationV1Api()
             context_user = self.context.get("context", {}).get("user", "")
             roles = []
-
             # Search in ClusterRoleBindings
-            cluster_role_bindings = rbac_api.list_cluster_role_binding()
-            for crb in cluster_role_bindings.items:
-                if crb.subjects:
-                    for subject in crb.subjects:
-                        if subject.kind == "User" and subject.name == context_user:
-                            roles.append(f"ClusterRole: {crb.role_ref.name}")
+            roles = self.search_and_save_roles(
+                roles, rbac_api.list_cluster_role_binding(), context_user, "ClusterRole"
+            )
 
             # Search in RoleBindings for all namespaces
-            role_bindings = rbac_api.list_role_binding_for_all_namespaces()
-            for rb in role_bindings.items:
-                for subject in rb.subjects:
-                    if subject.kind == "User" and subject.name == context_user:
-                        roles.append(
-                            f"Role ({rb.metadata.namespace}): {rb.role_ref.name}"
-                        )
-
+            roles = self.search_and_save_roles(
+                roles,
+                rbac_api.list_role_binding_for_all_namespaces(),
+                context_user,
+                "Role",
+            )
             return roles
         except Exception as error:
             logger.critical(

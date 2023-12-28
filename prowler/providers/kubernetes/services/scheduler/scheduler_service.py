@@ -13,7 +13,7 @@ class Scheduler(KubernetesService):
 
     def __get_scheduler_pod__(self):
         try:
-            for pod in self.client.pods:
+            for pod in self.client.pods.values():
                 if pod.namespace == "kube-system" and pod.name.startswith(
                     "kube-scheduler"
                 ):
