@@ -64,19 +64,19 @@ class Core(KubernetesService):
 class Container(BaseModel):
     name: str
     image: str
-    command: Optional[List[str]] = None
-    ports: Optional[List[dict]] = None
-    env: Optional[List[dict]] = None
+    command: Optional[List[str]]
+    ports: Optional[List[dict]]
+    env: Optional[List[dict]]
 
 
 class Pod(BaseModel):
     name: str
     namespace: str
-    labels: Optional[dict] = None
-    annotations: Optional[dict] = None
-    node_name: Optional[str] = None
-    service_account: Optional[str] = None
-    status_phase: Optional[str] = None
-    pod_ip: Optional[str] = None
-    host_ip: Optional[str] = None
-    containers: Optional[List[Container]] = None
+    labels: Optional[dict]
+    annotations: Optional[dict]
+    node_name: Optional[str]
+    service_account: Optional[str]
+    status_phase: Optional[str]
+    pod_ip: Optional[str]
+    host_ip: Optional[str]
+    containers: Optional[List[Container]]

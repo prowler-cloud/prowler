@@ -10,7 +10,7 @@ class Kubernetes_Provider:
     def __init__(
         self,
         kubeconfig_file: str,
-        context: list,
+        context: str,
     ):
         logger.info("Instantiating Kubernetes Provider ...")
         self.api_client, self.context = self.__set_credentials__(
@@ -44,7 +44,7 @@ class Kubernetes_Provider:
     def get_context_user_roles(self):
         try:
             rbac_api = client.RbacAuthorizationV1Api()
-            context_user = self.context.get("context").get("user")
+            context_user = self.context.get("context", {}).get("user", "")
             roles = []
 
             # Search in ClusterRoleBindings
