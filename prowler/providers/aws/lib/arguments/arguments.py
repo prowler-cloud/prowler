@@ -1,5 +1,5 @@
 from argparse import ArgumentTypeError, Namespace
-from re import search
+from re import search, fullmatch
 
 from prowler.providers.aws.aws_provider import get_aws_available_regions
 from prowler.providers.aws.lib.arn.arn import arn_type
@@ -217,14 +217,9 @@ def validate_role_session_name(session_name):
     validates that the role session name is valid
     Documentation: https://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRole.html
     """
-    if search("[\w+=,.@-]*", session_name):
-        if len(session_name) >= 2 and len(session_name) <= 64:
-            return session_name
-        else:
-            raise ArgumentTypeError(
-                "Role Session Name length must be at least 2 and less than or equal to 64 characters"
-            )
+    if fullmatch("[\w+=,.@-]{2,64}", session_name):
+        return session_name
     else:
         raise ArgumentTypeError(
-            "Role Session Name must only consist of upper- and lower-case alphanumeric characters with no spaces. You can also include underscores or any of the following characters: =,.@-"
+                        "Role Session Name must be 2-64 characters long and consist only of upper- and lower-case alphanumeric characters with no spaces. You can also include underscores or any of the following characters: =,.@-"
         )
