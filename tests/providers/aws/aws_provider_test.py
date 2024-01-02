@@ -56,6 +56,7 @@ class Test_AWS_Provider:
                 session_duration=None,
                 external_id=None,
                 mfa_enabled=False,
+                role_session_name="ProwlerAsessmentSession",
             ),
             original_session=session,
         )
@@ -75,6 +76,7 @@ class Test_AWS_Provider:
                 session_duration=None,
                 external_id=None,
                 mfa_enabled=False,
+                role_session_name="ProwlerAsessmentSession",
             )
 
     @mock_iam
@@ -103,6 +105,7 @@ class Test_AWS_Provider:
                 session_duration=None,
                 external_id=None,
                 mfa_enabled=False,
+                role_session_name="ProwlerAsessmentSession",
             ),
             original_session=session,
             profile_region=AWS_REGION_US_EAST_1,
@@ -123,6 +126,7 @@ class Test_AWS_Provider:
                 session_duration=None,
                 external_id=None,
                 mfa_enabled=False,
+                role_session_name="ProwlerAsessmentSession",
             )
 
     @mock_iam
@@ -157,6 +161,7 @@ class Test_AWS_Provider:
                 session_duration=session_duration_seconds,
                 external_id=None,
                 mfa_enabled=True,
+                role_session_name="ProwlerAsessmentSession",
             ),
             original_session=session,
             profile_region=AWS_REGION_US_EAST_1,
@@ -235,6 +240,7 @@ class Test_AWS_Provider:
                 session_duration=session_duration_seconds,
                 external_id=None,
                 mfa_enabled=False,
+                role_session_name="ProwlerAsessmentSession",
             ),
             original_session=session,
             profile_region=AWS_REGION_US_EAST_1,
@@ -307,6 +313,7 @@ class Test_AWS_Provider:
                 session_duration=session_duration_seconds,
                 external_id=None,
                 mfa_enabled=False,
+                role_session_name="ProwlerAsessmentSession",
             ),
             original_session=session,
             profile_region=AWS_REGION_US_EAST_1,

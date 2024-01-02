@@ -20,6 +20,7 @@ class AWS_Assume_Role:
     session_duration: int
     external_id: str
     mfa_enabled: bool
+    role_session_name: str
 
 
 @dataclass

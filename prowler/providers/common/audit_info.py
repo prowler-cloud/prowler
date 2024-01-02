@@ -63,7 +63,7 @@ GCP Account: {Fore.YELLOW}[{profile}]{Style.RESET_ALL}  GCP Project IDs: {Fore.Y
     def print_azure_credentials(self, audit_info: Azure_Audit_Info):
         printed_subscriptions = []
         for key, value in audit_info.identity.subscriptions.items():
-            intermediate = f"{key} : {value}"
+            intermediate = key + " : " + value
             printed_subscriptions.append(intermediate)
         report = f"""
 This report is being generated using the identity below:
@@ -85,6 +85,7 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
         current_audit_info.assumed_role_info.role_arn = input_role
         input_session_duration = arguments.get("session_duration")
         input_external_id = arguments.get("external_id")
+        input_role_session_name = arguments.get("role_session_name")
 
         # STS Endpoint Region
         sts_endpoint_region = arguments.get("sts_endpoint_region")
@@ -153,6 +154,9 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
             )
             current_audit_info.assumed_role_info.external_id = input_external_id
             current_audit_info.assumed_role_info.mfa_enabled = input_mfa
+            current_audit_info.assumed_role_info.role_session_name = (
+                input_role_session_name
+            )
 
             # Check if role arn is valid
             try:

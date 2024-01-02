@@ -115,7 +115,7 @@ def assume_role(
     try:
         assume_role_arguments = {
             "RoleArn": assumed_role_info.role_arn,
-            "RoleSessionName": "ProwlerAsessmentSession",
+            "RoleSessionName": assumed_role_info.role_session_name,
             "DurationSeconds": assumed_role_info.session_duration,
         }
 

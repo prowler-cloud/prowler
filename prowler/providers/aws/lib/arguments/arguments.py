@@ -28,6 +28,13 @@ def init_parser(self):
         # Pending ARN validation
     )
     aws_auth_subparser.add_argument(
+        "--role-session-name",
+        nargs="?",
+        default="ProwlerAsessmentSession",
+        help="An identifier for the assumed role session. Defaults to ProwlerAsessmentSession",
+        type=validate_role_session_name,
+    )
+    aws_auth_subparser.add_argument(
         "--sts-endpoint-region",
         nargs="?",
         default=None,
@@ -202,4 +209,22 @@ def validate_bucket(bucket_name):
     else:
         raise ArgumentTypeError(
             "Bucket name must be valid (https://docs.aws.amazon.com/AmazonS3/latest/userguide/bucketnamingrules.html)"
+        )
+
+
+def validate_role_session_name(session_name):
+    """
+    validates that the role session name is valid
+    Documentation: https://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRole.html
+    """
+    if search("[\w+=,.@-]*", session_name):
+        if len(session_name) > 1 and len(session_name) < 64:
+            return session_name
+        else:
+            raise ArgumentTypeError(
+                "Role Session Name length must be at least 2 and less than 64 characters"
+            )
+    else:
+        raise ArgumentTypeError(
+            "Role Session Name must characters must only consist of upper- and lower-case alphanumeric characters with no spaces. You can also include underscores or any of the following characters: =,.@-"
         )
