@@ -226,5 +226,5 @@ def validate_role_session_name(session_name):
             )
     else:
         raise ArgumentTypeError(
-            "Role Session Name characters must only consist of upper- and lower-case alphanumeric characters with no spaces. You can also include underscores or any of the following characters: =,.@-"
+            "Role Session Name must only consist of upper- and lower-case alphanumeric characters with no spaces. You can also include underscores or any of the following characters: =,.@-"
         )
