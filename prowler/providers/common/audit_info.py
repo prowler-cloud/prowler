@@ -63,7 +63,7 @@ GCP Account: {Fore.YELLOW}[{profile}]{Style.RESET_ALL}  GCP Project IDs: {Fore.Y
     def print_azure_credentials(self, audit_info: Azure_Audit_Info):
         printed_subscriptions = []
         for key, value in audit_info.identity.subscriptions.items():
-            intermediate = key + " : " + value
+            intermediate = f"{key} : {value}"
             printed_subscriptions.append(intermediate)
         report = f"""
 This report is being generated using the identity below:
