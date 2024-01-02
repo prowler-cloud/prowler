@@ -221,5 +221,5 @@ def validate_role_session_name(session_name):
         return session_name
     else:
         raise ArgumentTypeError(
-                        "Role Session Name must be 2-64 characters long and consist only of upper- and lower-case alphanumeric characters with no spaces. You can also include underscores or any of the following characters: =,.@-"
+            "Role Session Name must be 2-64 characters long and consist only of upper- and lower-case alphanumeric characters with no spaces. You can also include underscores or any of the following characters: =,.@-"
         )
