@@ -222,7 +222,7 @@ def validate_role_session_name(session_name):
             return session_name
         else:
             raise ArgumentTypeError(
-                "Role Session Name length must be at least 2 and less than 64 characters"
+                "Role Session Name length must be at least 2 and less than or equal to 64 characters"
             )
     else:
         raise ArgumentTypeError(
