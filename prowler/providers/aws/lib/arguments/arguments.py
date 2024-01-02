@@ -218,7 +218,7 @@ def validate_role_session_name(session_name):
     Documentation: https://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRole.html
     """
     if search("[\w+=,.@-]*", session_name):
-        if len(session_name) > 1 and len(session_name) < 64:
+        if len(session_name) >= 2 and len(session_name) <= 64:
             return session_name
         else:
             raise ArgumentTypeError(
