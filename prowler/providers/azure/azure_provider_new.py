@@ -37,7 +37,7 @@ class AzureProvider(CloudProvider):
     region_config: AzureRegionConfig
 
     def __init__(self, arguments):
-        logger.info("Setting Azure session ...")
+        logger.info("Setting Azure provider ...")
         subscription_ids = arguments.subscription_ids
 
         logger.info("Checking if any credentials mode is set ...")
