@@ -393,11 +393,6 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
             kubernetes_audit_info.context,
         ) = kubernetes_provider.get_credentials()
 
-        # TODO - remove it
-        # this logic is being processed in general provider
-        # if not arguments.get("only_logs"):
-        #     self.print_gcp_credentials(gcp_audit_info)
-
         return kubernetes_audit_info
 
 

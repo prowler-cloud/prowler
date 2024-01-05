@@ -580,6 +580,7 @@ def get_assessment_summary(audit_info):
         # AWS_Audit_Info --> aws
         # GCP_Audit_Info --> gcp
         # Azure_Audit_Info --> azure
+        # Kubernetes_Audit_Info --> kubernetes
         provider = audit_info.__class__.__name__.split("_")[0].lower()
 
         # Dynamically get the Provider quick inventory handler
