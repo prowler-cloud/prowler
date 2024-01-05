@@ -113,9 +113,15 @@ def assume_role(
     sts_endpoint_region: str = None,
 ) -> dict:
     try:
+        role_session_name = (
+            assumed_role_info.role_session_name
+            if assumed_role_info.role_session_name
+            else "ProwlerAsessmentSession"
+        )
+
         assume_role_arguments = {
             "RoleArn": assumed_role_info.role_arn,
-            "RoleSessionName": assumed_role_info.role_session_name,
+            "RoleSessionName": role_session_name,
             "DurationSeconds": assumed_role_info.session_duration,
         }
 
