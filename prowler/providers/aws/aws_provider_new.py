@@ -3,6 +3,8 @@ from datetime import datetime
 from typing import Any, Optional
 
 from boto3 import client, session
+from botocore.credentials import RefreshableCredentials
+from botocore.session import get_session
 from botocore.config import Config
 from colorama import Fore, Style
 from pydantic import BaseModel
@@ -269,19 +271,46 @@ class AWSProvider(CloudProvider):
             self.identity.account_arn = (
                 f"arn:{self.identity.partition}:iam::{self.identity.account}:root"
             )
-
-            return session.Session(
-                aws_access_key_id=self.assumed_role.assumed_role_credentials[
-                    "Credentials"
-                ]["AccessKeyId"],
-                aws_secret_access_key=self.assumed_role.assumed_role_credentials[
-                    "Credentials"
-                ]["SecretAccessKey"],
-                aws_session_token=self.assumed_role.assumed_role_credentials[
-                    "Credentials"
-                ]["SessionToken"],
-                profile_name=self.identity.profile,
+            # From botocore we can use RefreshableCredentials class, which has an attribute (refresh_using)
+            # that needs to be a method without arguments that retrieves a new set of fresh credentials
+            # asuming the role again. -> https://github.com/boto/botocore/blob/098cc255f81a25b852e1ecdeb7adebd94c7b1b73/botocore/credentials.py#L395
+            assumed_refreshable_credentials = RefreshableCredentials(
+            access_key=self.assumed_role.assumed_role_credentials.aws_access_key_id,
+            secret_key=self.assumed_role.assumed_role_credentials.aws_secret_access_key,
+            token=self.assumed_role.assumed_role_credentials.aws_session_token,
+            expiry_time=self.assumed_role.assumed_role_credentials.expiration,
+            refresh_using=self.refresh_credentials,
+            method="sts-assume-role",
+                )
+            # Here we need the botocore session since it needs to use refreshable credentials
+            assumed_botocore_session = get_session()
+            assumed_botocore_session._credentials = assumed_refreshable_credentials
+            assumed_botocore_session.set_config_variable(
+                "region", self.identity.profile_region
             )
+            return session.Session(
+                profile_name=self.identity.profile,
+                botocore_session=assumed_botocore_session,
+            )
+
+    # Refresh credentials method using assume role
+    # This method is called "adding ()" to the name, so it cannot accept arguments
+    # https://github.com/boto/botocore/blob/098cc255f81a25b852e1ecdeb7adebd94c7b1b73/botocore/credentials.py#L570
+    def refresh_credentials(self):
+        logger.info("Refreshing assumed credentials...")
+
+        response = self.__assume_role__(self.aws_session, self.role_info)
+        refreshed_credentials = dict(
+            # Keys of the dict has to be the same as those that are being searched in the parent class
+            # https://github.com/boto/botocore/blob/098cc255f81a25b852e1ecdeb7adebd94c7b1b73/botocore/credentials.py#L609
+            access_key=response["Credentials"]["AccessKeyId"],
+            secret_key=response["Credentials"]["SecretAccessKey"],
+            token=response["Credentials"]["SessionToken"],
+            expiry_time=response["Credentials"]["Expiration"].isoformat(),
+        )
+        logger.info("Refreshed Credentials:")
+        logger.info(refreshed_credentials)
+        return refreshed_credentials
 
     def print_credentials(self):
         # Beautify audited regions, set "all" if there is no filter region
