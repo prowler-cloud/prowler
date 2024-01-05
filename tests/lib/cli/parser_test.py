@@ -194,24 +194,17 @@ class Test_Parser:
     def test_root_parser_azure_provider(self):
         command = [prowler_command, "azure"]
         parsed = self.parser.parse(command)
-        print(parsed)
         assert parsed.provider == "azure"
 
     def test_root_parser_gcp_provider(self):
         command = [prowler_command, "gcp"]
         parsed = self.parser.parse(command)
-        print(parsed)
         assert parsed.provider == "gcp"
 
-    def test_root_parser_quiet_short(self):
-        command = [prowler_command, "-q"]
+    def test_root_parser_status(self):
+        command = [prowler_command, "--status"]
         parsed = self.parser.parse(command)
-        assert parsed.quiet
-
-    def test_root_parser_quiet_long(self):
-        command = [prowler_command, "--quiet"]
-        parsed = self.parser.parse(command)
-        assert parsed.quiet
+        assert parsed.status
 
     def test_root_parser_exit_code_3_short(self):
         command = [prowler_command, "-z"]

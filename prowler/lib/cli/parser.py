@@ -115,10 +115,10 @@ Detailed documentation at https://docs.prowler.cloud
             "Outputs"
         )
         common_outputs_parser.add_argument(
-            "-q",
-            "--quiet",
-            action="store_true",
-            help="Store or send only Prowler failed findings",
+            "--status",
+            nargs="+",
+            help="Filter by the status of the findings [PASS, FAIL, INFO]",
+            choices=["PASS", "FAIL", "INFO"],
         )
         common_outputs_parser.add_argument(
             "-M",

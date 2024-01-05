@@ -46,7 +46,7 @@ def get_provider_output_model(audit_info_class_name):
 
 @dataclass
 class Provider_Output_Options:
-    is_quiet: bool
+    status: bool
     output_modes: list
     output_directory: str
     mutelist_file: str
@@ -57,7 +57,7 @@ class Provider_Output_Options:
     unix_timestamp: bool
 
     def __init__(self, arguments, mutelist_file, bulk_checks_metadata):
-        self.is_quiet = arguments.quiet
+        self.status = arguments.status
         self.output_modes = arguments.output_modes
         self.output_directory = arguments.output_directory
         self.verbose = arguments.verbose
