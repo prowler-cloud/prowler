@@ -194,10 +194,15 @@ def validate_arguments(arguments: Namespace) -> tuple[bool, str]:
 
     # Handle if session_duration is not the default value or external_id is set
     if (
-        arguments.session_duration and arguments.session_duration != 3600
-    ) or arguments.external_id:
+        (arguments.session_duration and arguments.session_duration != 3600)
+        or arguments.external_id
+        or arguments.role_session_name
+    ):
         if not arguments.role:
-            return (False, "To use -I/-T options -R option is needed")
+            return (
+                False,
+                "To use -I/--external-id, -T/--session-duration or --role-session-name options -R/--role option is needed",
+            )
 
     return (True, "")
 
