@@ -69,8 +69,8 @@ aws:
   # AWS Organizations
   # organizations_scp_check_deny_regions
   # organizations_enabled_regions: [
-  #   'eu-central-1',
-  #   'eu-west-1',
+  #   "eu-central-1",
+  #   "eu-west-1",
   #   "us-east-1"
   # ]
   organizations_enabled_regions: []
