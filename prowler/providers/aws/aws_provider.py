@@ -199,10 +199,14 @@ def get_aws_enabled_regions(audit_info: AWS_Audit_Info) -> set:
     ec2_client = audit_info.audit_session.client(service, region_name=default_region)
 
     enabled_regions = set()
-    # With AllRegions=False we only get the enabled regions for the account
-    for region in ec2_client.describe_regions(AllRegions=False).get("Regions", []):
-        enabled_regions.add(region.get("RegionName"))
-
+    try:
+        # With AllRegions=False we only get the enabled regions for the account
+        for region in ec2_client.describe_regions(AllRegions=False).get("Regions", []):
+            enabled_regions.add(region.get("RegionName"))
+    except Exception as error:
+        logger.warning(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+        )
     return enabled_regions
 
 
