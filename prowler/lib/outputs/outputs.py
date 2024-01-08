@@ -27,8 +27,6 @@ def stdout_report(finding, color, verbose, status):
         details = finding.check_metadata.ServiceName
     if finding.check_metadata.Provider == "gcp":
         details = finding.location.lower()
-    print(status)
-    print(finding.status)
     if verbose and (not status or finding.status in status):
         print(
             f"\t{color}{finding.status}{Style.RESET_ALL} {details}: {finding.status_extended}"
