@@ -2,6 +2,7 @@ from argparse import ArgumentTypeError, Namespace
 from re import fullmatch, search
 
 from prowler.providers.aws.aws_provider import get_aws_available_regions
+from prowler.providers.aws.config import ROLE_SESSION_NAME
 from prowler.providers.aws.lib.arn.arn import arn_type
 
 
@@ -30,7 +31,7 @@ def init_parser(self):
     aws_auth_subparser.add_argument(
         "--role-session-name",
         nargs="?",
-        default="ProwlerAssessmentSession",
+        default=ROLE_SESSION_NAME,
         help="An identifier for the assumed role session. Defaults to ProwlerAssessmentSession",
         type=validate_role_session_name,
     )
@@ -196,7 +197,7 @@ def validate_arguments(arguments: Namespace) -> tuple[bool, str]:
     if (
         (arguments.session_duration and arguments.session_duration != 3600)
         or arguments.external_id
-        or arguments.role_session_name != "ProwlerAssessmentSession"
+        or arguments.role_session_name != ROLE_SESSION_NAME
     ):
         if not arguments.role:
             return (

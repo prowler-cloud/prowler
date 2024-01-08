@@ -5,6 +5,7 @@ import pytest
 from mock import patch
 
 from prowler.lib.cli.parser import ProwlerArgumentParser
+from prowler.providers.aws.config import ROLE_SESSION_NAME
 from prowler.providers.aws.lib.arguments.arguments import (
     validate_bucket,
     validate_role_session_name,
@@ -1017,7 +1018,7 @@ class Test_Parser:
 
     def test_aws_parser_role_session_name(self):
         argument = "--role-session-name"
-        role_session_name = "ProwlerAssessmentSession"
+        role_session_name = ROLE_SESSION_NAME
         command = [prowler_command, argument, role_session_name]
         parsed = self.parser.parse(command)
         assert parsed.role_session_name == role_session_name
