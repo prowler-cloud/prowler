@@ -9,15 +9,17 @@ class Scheduler(KubernetesService):
         super().__init__(audit_info)
         self.client = core_client
 
-        self.scheduler_pod = self.__get_scheduler_pod__()
+        self.scheduler_pods = self.__get_scheduler_pod__()
 
     def __get_scheduler_pod__(self):
         try:
+            scheduler_pods = []
             for pod in self.client.pods.values():
                 if pod.namespace == "kube-system" and pod.name.startswith(
                     "kube-scheduler"
                 ):
-                    return pod
+                    scheduler_pods.append(pod)
+            return scheduler_pods
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
