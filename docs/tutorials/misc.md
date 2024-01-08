@@ -9,10 +9,10 @@ Execute Prowler in verbose mode (like in Version 2):
 ```console
 prowler <provider> --verbose
 ```
-## Show only Fails
-Prowler can only display the failed findings:
+## Filter findings by status
+Prowler can filter the findings by their status:
 ```console
-prowler <provider> -q/--quiet
+prowler <provider> --status [PASS, FAIL, INFO]
 ```
 ## Disable Exit Code 3
 Prowler does not trigger exit code 3 with failed checks:
