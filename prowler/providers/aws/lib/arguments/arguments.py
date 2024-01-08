@@ -196,7 +196,7 @@ def validate_arguments(arguments: Namespace) -> tuple[bool, str]:
     if (
         (arguments.session_duration and arguments.session_duration != 3600)
         or arguments.external_id
-        or arguments.role_session_name
+        or arguments.role_session_name != "ProwlerAssessmentSession"
     ):
         if not arguments.role:
             return (

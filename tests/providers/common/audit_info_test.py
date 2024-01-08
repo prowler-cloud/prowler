@@ -393,7 +393,7 @@ class Test_Set_Audit_Info:
 
             with pytest.raises(SystemExit) as exception:
                 _ = set_provider_audit_info(provider, arguments)
-            # assert exception == "To use -I/-T options -R option is needed"
+            # assert exception == "To use -I/--external-id, -T/--session-duration or --role-session-name options -R/--role option is needed"
             assert isinstance(exception, pytest.ExceptionInfo)
 
     def test_set_audit_info_external_id_without_role(self):
@@ -413,5 +413,5 @@ class Test_Set_Audit_Info:
 
             with pytest.raises(SystemExit) as exception:
                 _ = set_provider_audit_info(provider, arguments)
-            # assert exception == "To use -I/-T options -R option is needed"
+            # assert exception == "To use -I/--external-id, -T/--session-duration or --role-session-name options -R/--role option is needed"
             assert isinstance(exception, pytest.ExceptionInfo)
