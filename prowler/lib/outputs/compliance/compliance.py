@@ -172,9 +172,6 @@ def display_compliance_table(
                         and compliance.Provider == "AWS"
                         and compliance.Version == "RD2022"
                     ):
-                        compliance_version = compliance.Version
-                        compliance_fm = compliance.Framework
-                        compliance_provider = compliance.Provider
                         for requirement in compliance.Requirements:
                             for attribute in requirement.Attributes:
                                 marco_categoria = (
@@ -222,13 +219,13 @@ def display_compliance_table(
                 ens_compliance_table["Bajo"].append(
                     f"{Fore.YELLOW}{marcos[marco]['Bajo']}{Style.RESET_ALL}"
                 )
-            if fail_count + pass_count < 0:
+            if fail_count + pass_count < 1:
                 print(
-                    f"\n {Style.BRIGHT}There are no resources for {Fore.YELLOW}{compliance_fm}_{compliance_version}_{compliance_provider}{Style.RESET_ALL}.\n"
+                    f"\n {Style.BRIGHT}There are no resources for {Fore.YELLOW}{compliance.Framework}_{compliance.Version}_{compliance.Provider}{Style.RESET_ALL}.\n"
                 )
             else:
                 print(
-                    f"\nEstado de Cumplimiento de {Fore.YELLOW}{compliance_fm}_{compliance_version}_{compliance_provider}{Style.RESET_ALL}:"
+                    f"\nEstado de Cumplimiento de {Fore.YELLOW}{compliance.Framework}_{compliance.Version}_{compliance.Provider}{Style.RESET_ALL}:"
                 )
                 overview_table = [
                     [
@@ -239,7 +236,7 @@ def display_compliance_table(
                 print(tabulate(overview_table, tablefmt="rounded_grid"))
                 if not compliance_overview:
                     print(
-                        f"\nResultados de {Fore.YELLOW}{compliance_fm}_{compliance_version}_{compliance_provider}{Style.RESET_ALL}:"
+                        f"\nResultados de {Fore.YELLOW}{compliance.Framework}_{compliance.Version}_{compliance.Provider}{Style.RESET_ALL}:"
                     )
                     print(
                         tabulate(
@@ -251,7 +248,7 @@ def display_compliance_table(
                     print(
                         f"{Style.BRIGHT}* Solo aparece el Marco/Categoria que contiene resultados.{Style.RESET_ALL}"
                     )
-                    print(f"\nResultados detallados de {compliance_fm} en:")
+                    print(f"\nResultados detallados de {compliance.Framework} en:")
                     print(
                         f" - CSV: {output_directory}/compliance/{output_filename}_{compliance_framework}.csv\n"
                     )
@@ -272,8 +269,6 @@ def display_compliance_table(
                         compliance.Framework == "CIS"
                         and compliance.Version in compliance_framework
                     ):
-                        compliance_version = compliance.Version
-                        compliance_fm = compliance.Framework
                         for requirement in compliance.Requirements:
                             for attribute in requirement.Attributes:
                                 section = attribute.Section
@@ -322,11 +317,11 @@ def display_compliance_table(
                     )
             if fail_count + pass_count < 1:
                 print(
-                    f"\n {Style.BRIGHT}There are no resources for {Fore.YELLOW}{compliance_fm}_{compliance_version}{Style.RESET_ALL}.\n"
+                    f"\n {Style.BRIGHT}There are no resources for {Fore.YELLOW}{compliance.Framework}_{compliance.Version}{Style.RESET_ALL}.\n"
                 )
             else:
                 print(
-                    f"\nCompliance Status of {Fore.YELLOW}{compliance_fm}_{compliance_version}{Style.RESET_ALL} Framework:"
+                    f"\nCompliance Status of {Fore.YELLOW}{compliance.Framework}_{compliance.Version}{Style.RESET_ALL} Framework:"
                 )
                 overview_table = [
                     [
@@ -337,7 +332,7 @@ def display_compliance_table(
                 print(tabulate(overview_table, tablefmt="rounded_grid"))
                 if not compliance_overview:
                     print(
-                        f"\nFramework {Fore.YELLOW}{compliance_fm}_{compliance_version}{Style.RESET_ALL} Results:"
+                        f"\nFramework {Fore.YELLOW}{compliance.Framework}_{compliance.Version}{Style.RESET_ALL} Results:"
                     )
                     print(
                         tabulate(
@@ -349,7 +344,7 @@ def display_compliance_table(
                     print(
                         f"{Style.BRIGHT}* Only sections containing results appear.{Style.RESET_ALL}"
                     )
-                    print(f"\nDetailed results of {compliance_fm} are in:")
+                    print(f"\nDetailed results of {compliance.Framework} are in:")
                     print(
                         f" - CSV: {output_directory}/compliance/{output_filename}_{compliance_framework}.csv\n"
                     )
@@ -369,7 +364,6 @@ def display_compliance_table(
                         "MITRE-ATTACK" in compliance.Framework
                         and compliance.Version in compliance_framework
                     ):
-                        compliance_fm = compliance.Framework
                         for requirement in compliance.Requirements:
                             for tactic in requirement.Tactics:
                                 if tactic not in tactics:
@@ -396,11 +390,11 @@ def display_compliance_table(
                     )
             if fail_count + pass_count < 1:
                 print(
-                    f"\n {Style.BRIGHT}There are no resources for {Fore.YELLOW}{compliance_fm}{Style.RESET_ALL}.\n"
+                    f"\n {Style.BRIGHT}There are no resources for {Fore.YELLOW}{compliance.Framework}{Style.RESET_ALL}.\n"
                 )
             else:
                 print(
-                    f"\nCompliance Status of {Fore.YELLOW}{compliance_fm}{Style.RESET_ALL} Framework:"
+                    f"\nCompliance Status of {Fore.YELLOW}{compliance.Framework}{Style.RESET_ALL} Framework:"
                 )
                 overview_table = [
                     [
@@ -411,7 +405,7 @@ def display_compliance_table(
                 print(tabulate(overview_table, tablefmt="rounded_grid"))
                 if not compliance_overview:
                     print(
-                        f"\nFramework {Fore.YELLOW}{compliance_fm}{Style.RESET_ALL} Results:"
+                        f"\nFramework {Fore.YELLOW}{compliance.Framework}{Style.RESET_ALL} Results:"
                     )
                     print(
                         tabulate(
@@ -423,7 +417,7 @@ def display_compliance_table(
                     print(
                         f"{Style.BRIGHT}* Only sections containing results appear.{Style.RESET_ALL}"
                     )
-                    print(f"\nDetailed results of {compliance_fm} are in:")
+                    print(f"\nDetailed results of {compliance.Framework} are in:")
                     print(
                         f" - CSV: {output_directory}/compliance/{output_filename}_{compliance_framework}.csv\n"
                     )
