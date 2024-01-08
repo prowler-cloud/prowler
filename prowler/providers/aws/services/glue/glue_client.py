@@ -1,4 +1,4 @@
-from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
 from prowler.providers.aws.services.glue.glue_service import Glue
+from prowler.providers.common.common import get_global_provider
 
-glue_client = Glue(current_audit_info)
+glue_client = Glue(get_global_provider())

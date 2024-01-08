@@ -1,10 +1,6 @@
 import threading
 
-from prowler.providers.aws.aws_provider import (
-    generate_regional_clients,
-    get_default_region,
-)
-from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
+from prowler.providers.aws.aws_provider_new import AwsProvider
 
 
 class AWSService:
@@ -15,18 +11,17 @@ class AWSService:
     - Also handles if the AWS Service is Global
     """
 
-    def __init__(self, service: str, audit_info: AWS_Audit_Info, global_service=False):
+    def __init__(self, service: str, provider: AwsProvider, global_service=False):
         # Audit Information
-        self.audit_info = audit_info
-        self.audited_account = audit_info.audited_account
-        self.audited_account_arn = audit_info.audited_account_arn
-        self.audited_partition = audit_info.audited_partition
-        self.audit_resources = audit_info.audit_resources
-        self.audited_checks = audit_info.audit_metadata.expected_checks
-        self.audit_config = audit_info.audit_config
+        self.audited_account = provider.identity.account
+        self.audited_account_arn = provider.identity.account_arn
+        self.audited_partition = provider.identity.partition
+        self.audit_resources = provider.audit_resources
+        self.audited_checks = provider.audit_metadata.expected_checks
+        self.audit_config = provider.audit_config
 
         # AWS Session
-        self.session = audit_info.audit_session
+        self.session = provider.session.session
 
         # We receive the service using __class__.__name__ or the service name in lowercase
         # e.g.: AccessAnalyzer --> we need a lowercase string, so service.lower()
@@ -34,14 +29,14 @@ class AWSService:
 
         # Generate Regional Clients
         if not global_service:
-            self.regional_clients = generate_regional_clients(
-                self.service, audit_info, global_service
+            self.regional_clients = provider.generate_regional_clients(
+                self.service, global_service
             )
 
         # Get a single region and client if the service needs it (e.g. AWS Global Service)
         # We cannot include this within an else because some services needs both the regional_clients
         # and a single client like S3
-        self.region = get_default_region(self.service, audit_info)
+        self.region = provider.get_default_region(self.service)
         self.client = self.session.client(self.service, self.region)
 
     def __get_session__(self):

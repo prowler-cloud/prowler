@@ -1,15 +1,20 @@
+import os
+import pathlib
 import sys
+from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Optional
 
 from boto3 import client, session
+from botocore.config import Config
 from botocore.credentials import RefreshableCredentials
 from botocore.session import get_session
-from botocore.config import Config
 from colorama import Fore, Style
-from pydantic import BaseModel
 
+from prowler.config.config import aws_services_json_file
+from prowler.lib.check.check import list_modules, recover_checks_from_service
 from prowler.lib.logger import logger
+from prowler.lib.utils.utils import open_file, parse_json_file
 from prowler.providers.aws.config import (
     AWS_STS_GLOBAL_ENDPOINT_REGION,
     BOTO3_USER_AGENT_EXTRA,
@@ -22,13 +27,11 @@ from prowler.providers.aws.lib.credentials.credentials import (
 from prowler.providers.aws.lib.organizations.organizations import (
     get_organizations_metadata,
 )
-from prowler.providers.aws.lib.resource_api_tagging.resource_api_tagging import (
-    get_tagged_resources,
-)
 from prowler.providers.common.provider import CloudProvider
 
 
-class AWS_Organizations_Info(BaseModel):
+@dataclass
+class AWS_Organizations_Info:
     account_details_email: str
     account_details_name: str
     account_details_arn: str
@@ -36,62 +39,93 @@ class AWS_Organizations_Info(BaseModel):
     account_details_tags: str
 
 
-class AWS_Credentials(BaseModel):
+@dataclass
+class AWS_Credentials:
     aws_access_key_id: str
     aws_session_token: str
     aws_secret_access_key: str
     expiration: datetime
 
 
-class AWS_Assume_Role(BaseModel):
-    role_arn: str = None
-    session_duration: int = None
-    external_id: str = None
-    mfa_enabled: bool = None
+@dataclass
+class AWS_Assume_Role:
+    role_arn: str
+    session_duration: int
+    external_id: str
+    mfa_enabled: bool
 
 
-class AWSAssumeRoleConfiguration(BaseModel):
+@dataclass
+class AWSAssumeRoleConfiguration:
     assumed_role_info: AWS_Assume_Role
     assumed_role_credentials: AWS_Credentials
 
 
-class AWSIdentityInfo(BaseModel):
-    account: str = (None,)
-    account_arn: str = (None,)
-    user_id: str = (None,)
-    partition: str = (None,)
-    identity_arn: str = (None,)
-    profile: str = (None,)
-    profile_region: str = (None,)
-    audited_regions: list = ([],)
+@dataclass
+class AWSIdentityInfo:
+    account: str
+    account_arn: str
+    user_id: str
+    partition: str
+    identity_arn: str
+    profile: str
+    profile_region: str
+    audited_regions: list
 
 
-class AWSSession(BaseModel):
+@dataclass
+class AWSSession:
     session: session.Session
     session_config: Config
     original_session: None
 
 
-class AWSAuditConfig(BaseModel):
+class AwsProvider(CloudProvider):
+    session: AWSSession = AWSSession(
+        session=None, session_config=None, original_session=None
+    )
+    identity: AWSIdentityInfo = AWSIdentityInfo(
+        account=None,
+        account_arn=None,
+        user_id=None,
+        partition=None,
+        identity_arn=None,
+        profile=None,
+        profile_region=None,
+        audited_regions=[],
+    )
+    assumed_role: AWSAssumeRoleConfiguration = AWSAssumeRoleConfiguration(
+        assumed_role_info=AWS_Assume_Role(
+            role_arn=None,
+            session_duration=None,
+            external_id=None,
+            mfa_enabled=False,
+        ),
+        assumed_role_credentials=AWS_Credentials(
+            aws_access_key_id=None,
+            aws_session_token=None,
+            aws_secret_access_key=None,
+            expiration=None,
+        ),
+    )
+    organizations_metadata: AWS_Organizations_Info = AWS_Organizations_Info(
+        account_details_email=None,
+        account_details_name=None,
+        account_details_arn=None,
+        account_details_org=None,
+        account_details_tags=None,
+    )
+    audit_resources: Optional[Any] = None
+    audit_metadata: Optional[Any] = None
+    audit_config: dict = {}
     mfa_enabled: bool = False
     ignore_unused_services: bool = False
 
-
-class AWSProvider(CloudProvider):
-    session: AWSSession
-    identity: AWSIdentityInfo
-    assumed_role: AWSAssumeRoleConfiguration
-    organizations_metadata: AWS_Organizations_Info
-    audit_resources: Optional[Any]
-    audit_metadata: Optional[Any]
-    audit_config: dict
-    mfa_enabled: bool = False
-    ignore_unused_services: bool = False
-
-    def __init__(self, arguments):
+    def __init__(self, args):
         logger.info("Setting AWS provider ...")
         # Parse input arguments
         # Assume Role Options
+        arguments = args.__dict__
         input_role = arguments.get("role")
         input_session_duration = arguments.get("session_duration")
         input_external_id = arguments.get("external_id")
@@ -131,7 +165,7 @@ class AWSProvider(CloudProvider):
         # After the session is created, validate it
         logger.info("Validating credentials ...")
         caller_identity = validate_aws_credentials(
-            self.session, input_regions, sts_endpoint_region
+            self.session.session, input_regions, sts_endpoint_region
         )
 
         logger.info("Credentials validated")
@@ -189,15 +223,13 @@ class AWSProvider(CloudProvider):
         # Parse Scan Tags
         if arguments.get("resource_tags"):
             input_resource_tags = arguments.get("resource_tags")
-            self.audit_resources = get_tagged_resources(
-                input_resource_tags, current_audit_info
-            )
+            self.audit_resources = self.get_tagged_resources(input_resource_tags)
 
         # Parse Input Resource ARNs
         if arguments.get("resource_arn"):
-            current_audit_info.audit_resources = arguments.get("resource_arn")
+            self.audit_resources = arguments.get("resource_arn")
 
-    def setup_session(self, input_mfa: bool) -> session.Session:
+    def setup_session(self, input_mfa: bool):
         logger.info("Creating regular session ...")
         # Input MFA only if a role is not going to be assumed
         if input_mfa and not self.assumed_role.assumed_role_info.role_arn:
@@ -230,7 +262,7 @@ class AWSProvider(CloudProvider):
         input_mfa: str,
         session_duration: int,
         sts_endpoint_region: str,
-    ) -> session.Session:
+    ):
         logger.info("Creating assumed session ...")
         # store information about the role is gonna be assumed
         self.assumed_role.assumed_role_info.role_arn = input_role
@@ -275,13 +307,13 @@ class AWSProvider(CloudProvider):
             # that needs to be a method without arguments that retrieves a new set of fresh credentials
             # asuming the role again. -> https://github.com/boto/botocore/blob/098cc255f81a25b852e1ecdeb7adebd94c7b1b73/botocore/credentials.py#L395
             assumed_refreshable_credentials = RefreshableCredentials(
-            access_key=self.assumed_role.assumed_role_credentials.aws_access_key_id,
-            secret_key=self.assumed_role.assumed_role_credentials.aws_secret_access_key,
-            token=self.assumed_role.assumed_role_credentials.aws_session_token,
-            expiry_time=self.assumed_role.assumed_role_credentials.expiration,
-            refresh_using=self.refresh_credentials,
-            method="sts-assume-role",
-                )
+                access_key=self.assumed_role.assumed_role_credentials.aws_access_key_id,
+                secret_key=self.assumed_role.assumed_role_credentials.aws_secret_access_key,
+                token=self.assumed_role.assumed_role_credentials.aws_session_token,
+                expiry_time=self.assumed_role.assumed_role_credentials.expiration,
+                refresh_using=self.refresh_credentials,
+                method="sts-assume-role",
+            )
             # Here we need the botocore session since it needs to use refreshable credentials
             assumed_botocore_session = get_session()
             assumed_botocore_session._credentials = assumed_refreshable_credentials
@@ -337,6 +369,196 @@ class AWSProvider(CloudProvider):
     """
         print(report)
 
+    def generate_regional_clients(
+        self, service: str, global_service: bool = False
+    ) -> dict:
+        try:
+            regional_clients = {}
+            service_regions = self.get_available_aws_service_regions(service)
+            # Check if it is global service to gather only one region
+            if global_service:
+                if service_regions:
+                    if self.identity.profile_region in service_regions:
+                        service_regions = [self.identity.profile_region]
+                    service_regions = service_regions[:1]
+            for region in service_regions:
+                regional_client = self.session.session.client(
+                    service, region_name=region, config=self.session.session_config
+                )
+                regional_client.region = region
+                regional_clients[region] = regional_client
+            return regional_clients
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def get_available_aws_service_regions(self, service: str) -> list:
+        # Get json locally
+        actual_directory = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))
+        with open_file(f"{actual_directory}/{aws_services_json_file}") as f:
+            data = parse_json_file(f)
+        # Check if it is a subservice
+        json_regions = data["services"][service]["regions"][self.identity.partition]
+        if (
+            self.identity.audited_regions
+        ):  # Check for input aws audit_info.audited_regions
+            regions = list(
+                set(json_regions).intersection(self.identity.audited_regions)
+            )  # Get common regions between input and json
+        else:  # Get all regions from json of the service and partition
+            regions = json_regions
+        return regions
+
+    def get_aws_available_regions():
+        try:
+            actual_directory = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))
+            with open_file(f"{actual_directory}/{aws_services_json_file}") as f:
+                data = parse_json_file(f)
+
+            regions = set()
+            for service in data["services"].values():
+                for partition in service["regions"]:
+                    for item in service["regions"][partition]:
+                        regions.add(item)
+            return list(regions)
+        except Exception as error:
+            logger.error(f"{error.__class__.__name__}: {error}")
+            return []
+
+    def get_checks_from_input_arn(audit_resources: list, provider: str) -> set:
+        """get_checks_from_input_arn gets the list of checks from the input arns"""
+        checks_from_arn = set()
+        is_subservice_in_checks = False
+        # Handle if there are audit resources so only their services are executed
+        if audit_resources:
+            services_without_subservices = ["guardduty", "kms", "s3", "elb", "efs"]
+            service_list = set()
+            sub_service_list = set()
+            for resource in audit_resources:
+                service = resource.split(":")[2]
+                sub_service = resource.split(":")[5].split("/")[0].replace("-", "_")
+                # WAF Services does not have checks
+                if service != "wafv2" and service != "waf":
+                    # Parse services when they are different in the ARNs
+                    if service == "lambda":
+                        service = "awslambda"
+                    elif service == "elasticloadbalancing":
+                        service = "elb"
+                    elif service == "elasticfilesystem":
+                        service = "efs"
+                    elif service == "logs":
+                        service = "cloudwatch"
+                    # Check if Prowler has checks in service
+                    try:
+                        list_modules(provider, service)
+                    except ModuleNotFoundError:
+                        # Service is not supported
+                        pass
+                    else:
+                        service_list.add(service)
+
+                    # Get subservices to execute only applicable checks
+                    if service not in services_without_subservices:
+                        # Parse some specific subservices
+                        if service == "ec2":
+                            if sub_service == "security_group":
+                                sub_service = "securitygroup"
+                            if sub_service == "network_acl":
+                                sub_service = "networkacl"
+                            if sub_service == "image":
+                                sub_service = "ami"
+                        if service == "rds":
+                            if sub_service == "cluster_snapshot":
+                                sub_service = "snapshot"
+                        sub_service_list.add(sub_service)
+                    else:
+                        sub_service_list.add(service)
+            checks = recover_checks_from_service(service_list, provider)
+
+            # Filter only checks with audited subservices
+            for check in checks:
+                if any(sub_service in check for sub_service in sub_service_list):
+                    if not (sub_service == "policy" and "password_policy" in check):
+                        checks_from_arn.add(check)
+                        is_subservice_in_checks = True
+
+            if not is_subservice_in_checks:
+                checks_from_arn = checks
+
+        # Return final checks list
+        return sorted(checks_from_arn)
+
+    def get_regions_from_audit_resources(audit_resources: list) -> set:
+        """get_regions_from_audit_resources gets the regions from the audit resources arns"""
+        audited_regions = set()
+        for resource in audit_resources:
+            region = resource.split(":")[3]
+            if region:
+                audited_regions.add(region)
+        return audited_regions
+
+    def get_tagged_resources(self, input_resource_tags: list):
+        """
+        get_tagged_resources returns a list of the resources that are going to be scanned based on the given input tags
+        """
+        try:
+            resource_tags = []
+            tagged_resources = []
+            for tag in input_resource_tags:
+                key = tag.split("=")[0]
+                value = tag.split("=")[1]
+                resource_tags.append({"Key": key, "Values": [value]})
+            # Get Resources with resource_tags for all regions
+            for regional_client in self.generate_regional_clients(
+                "resourcegroupstaggingapi"
+            ).values():
+                try:
+                    get_resources_paginator = regional_client.get_paginator(
+                        "get_resources"
+                    )
+                    for page in get_resources_paginator.paginate(
+                        TagFilters=resource_tags
+                    ):
+                        for resource in page["ResourceTagMappingList"]:
+                            tagged_resources.append(resource["ResourceARN"])
+                except Exception as error:
+                    logger.error(
+                        f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
+        except Exception as error:
+            logger.critical(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            sys.exit(1)
+        else:
+            return tagged_resources
+
+    def get_default_region(self, service: str) -> str:
+        """get_default_region gets the default region based on the profile and audited service regions"""
+        service_regions = self.get_available_aws_service_regions(service)
+        default_region = (
+            self.get_global_region()
+        )  # global region of the partition when all regions are audited and there is no profile region
+        if self.identity.profile_region in service_regions:
+            # return profile region only if it is audited
+            default_region = self.identity.profile_region
+        # return first audited region if specific regions are audited
+        elif self.identity.audited_regions:
+            default_region = self.identity.audited_regions[0]
+        return default_region
+
+    def get_global_region(self) -> str:
+        """get_global_region gets the global region based on the audited partition"""
+        global_region = "us-east-1"
+        if self.identity.partition == "aws-cn":
+            global_region = "cn-north-1"
+        elif self.identity.partition == "aws-us-gov":
+            global_region = "us-gov-east-1"
+        elif "aws-iso" in self.identity.partition:
+            global_region = "aws-iso-global"
+        return global_region
+
     def __input_role_mfa_token_and_code__() -> tuple[str]:
         """input_role_mfa_token_and_code ask for the AWS MFA ARN and TOTP and returns it."""
         mfa_ARN = input("Enter ARN of MFA: ")
@@ -363,8 +585,8 @@ class AWSProvider(CloudProvider):
 
     def __assume_role__(
         self,
-        session: session.Session,
-        sts_endpoint_region: str = None,
+        session,
+        sts_endpoint_region: str,
     ) -> dict:
         try:
             assume_role_arguments = {

@@ -1,4 +1,4 @@
-from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
 from prowler.providers.aws.services.redshift.redshift_service import Redshift
+from prowler.providers.common.common import get_global_provider
 
-redshift_client = Redshift(current_audit_info)
+redshift_client = Redshift(get_global_provider())
