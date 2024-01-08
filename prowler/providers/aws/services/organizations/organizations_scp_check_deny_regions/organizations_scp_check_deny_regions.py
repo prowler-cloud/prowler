@@ -48,11 +48,12 @@ class organizations_scp_check_deny_regions(Check):
                                 and "aws:RequestedRegion"
                                 in statement["Condition"]["StringNotEquals"]
                             ):
-                                if (
-                                    organizations_enabled_regions
-                                    == statement["Condition"]["StringNotEquals"][
+                                if all(
+                                    region
+                                    in statement["Condition"]["StringNotEquals"][
                                         "aws:RequestedRegion"
                                     ]
+                                    for region in organizations_enabled_regions
                                 ):
                                     # All defined regions are restricted, we exit here, no need to continue.
                                     report.status = "PASS"
@@ -73,11 +74,12 @@ class organizations_scp_check_deny_regions(Check):
                                 and "aws:RequestedRegion"
                                 in statement["Condition"]["StringEquals"]
                             ):
-                                if (
-                                    organizations_enabled_regions
-                                    == statement["Condition"]["StringEquals"][
+                                if all(
+                                    region
+                                    in statement["Condition"]["StringEquals"][
                                         "aws:RequestedRegion"
                                     ]
+                                    for region in organizations_enabled_regions
                                 ):
                                     # All defined regions are restricted, we exit here, no need to continue.
                                     report.status = "PASS"
