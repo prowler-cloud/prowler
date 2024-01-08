@@ -32,7 +32,7 @@ class Test_AWS_Provider:
     @mock_iam
     @mock_sts
     def test_aws_provider_user_without_mfa(self):
-        # sessionName = "ProwlerAsessmentSession"
+        # sessionName = "ProwlerAssessmentSession"
         # Boto 3 client to create our user
         iam_client = boto3.client("iam", region_name=AWS_REGION_US_EAST_1)
         # IAM user
@@ -56,6 +56,7 @@ class Test_AWS_Provider:
                 session_duration=None,
                 external_id=None,
                 mfa_enabled=False,
+                role_session_name="ProwlerAssessmentSession",
             ),
             original_session=session,
         )
@@ -75,6 +76,7 @@ class Test_AWS_Provider:
                 session_duration=None,
                 external_id=None,
                 mfa_enabled=False,
+                role_session_name="ProwlerAssessmentSession",
             )
 
     @mock_iam
@@ -103,6 +105,7 @@ class Test_AWS_Provider:
                 session_duration=None,
                 external_id=None,
                 mfa_enabled=False,
+                role_session_name="ProwlerAssessmentSession",
             ),
             original_session=session,
             profile_region=AWS_REGION_US_EAST_1,
@@ -123,6 +126,7 @@ class Test_AWS_Provider:
                 session_duration=None,
                 external_id=None,
                 mfa_enabled=False,
+                role_session_name="ProwlerAssessmentSession",
             )
 
     @mock_iam
@@ -132,7 +136,7 @@ class Test_AWS_Provider:
         role_name = "test-role"
         role_arn = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:role/{role_name}"
         session_duration_seconds = 900
-        sessionName = "ProwlerAsessmentSession"
+        sessionName = "ProwlerAssessmentSession"
 
         # Boto 3 client to create our user
         iam_client = boto3.client("iam", region_name=AWS_REGION_US_EAST_1)
@@ -157,6 +161,7 @@ class Test_AWS_Provider:
                 session_duration=session_duration_seconds,
                 external_id=None,
                 mfa_enabled=True,
+                role_session_name="ProwlerAssessmentSession",
             ),
             original_session=session,
             profile_region=AWS_REGION_US_EAST_1,
@@ -210,7 +215,7 @@ class Test_AWS_Provider:
         role_name = "test-role"
         role_arn = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:role/{role_name}"
         session_duration_seconds = 900
-        sessionName = "ProwlerAsessmentSession"
+        sessionName = "ProwlerAssessmentSession"
 
         # Boto 3 client to create our user
         iam_client = boto3.client("iam", region_name=AWS_REGION_US_EAST_1)
@@ -235,6 +240,7 @@ class Test_AWS_Provider:
                 session_duration=session_duration_seconds,
                 external_id=None,
                 mfa_enabled=False,
+                role_session_name="ProwlerAssessmentSession",
             ),
             original_session=session,
             profile_region=AWS_REGION_US_EAST_1,
@@ -282,7 +288,7 @@ class Test_AWS_Provider:
         session_duration_seconds = 900
         AWS_REGION_US_EAST_1 = AWS_REGION_EU_WEST_1
         sts_endpoint_region = AWS_REGION_US_EAST_1
-        sessionName = "ProwlerAsessmentSession"
+        sessionName = "ProwlerAssessmentSession"
 
         # Boto 3 client to create our user
         iam_client = boto3.client("iam", region_name=AWS_REGION_US_EAST_1)
@@ -307,6 +313,7 @@ class Test_AWS_Provider:
                 session_duration=session_duration_seconds,
                 external_id=None,
                 mfa_enabled=False,
+                role_session_name="ProwlerAssessmentSession",
             ),
             original_session=session,
             profile_region=AWS_REGION_US_EAST_1,

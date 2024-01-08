@@ -85,6 +85,7 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
         current_audit_info.assumed_role_info.role_arn = input_role
         input_session_duration = arguments.get("session_duration")
         input_external_id = arguments.get("external_id")
+        input_role_session_name = arguments.get("role_session_name")
 
         # STS Endpoint Region
         sts_endpoint_region = arguments.get("sts_endpoint_region")
@@ -153,6 +154,9 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
             )
             current_audit_info.assumed_role_info.external_id = input_external_id
             current_audit_info.assumed_role_info.mfa_enabled = input_mfa
+            current_audit_info.assumed_role_info.role_session_name = (
+                input_role_session_name
+            )
 
             # Check if role arn is valid
             try:
