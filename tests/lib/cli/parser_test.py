@@ -1017,7 +1017,7 @@ class Test_Parser:
 
     def test_aws_parser_role_session_name(self):
         argument = "--role-session-name"
-        role_session_name = "ProwlerAsessmentSession"
+        role_session_name = "ProwlerAssessmentSession"
         command = [prowler_command, argument, role_session_name]
         parsed = self.parser.parse(command)
         assert parsed.role_session_name == role_session_name

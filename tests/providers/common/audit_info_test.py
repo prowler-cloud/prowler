@@ -116,7 +116,7 @@ class Test_Set_Audit_Info:
                 session_duration=None,
                 external_id=None,
                 mfa_enabled=None,
-                role_session_name="ProwlerAsessmentSession",
+                role_session_name="ProwlerAssessmentSession",
             ),
             audited_regions=["eu-west-2", "eu-west-1"],
             organizations_metadata=None,

@@ -116,7 +116,7 @@ def assume_role(
         role_session_name = (
             assumed_role_info.role_session_name
             if assumed_role_info.role_session_name
-            else "ProwlerAsessmentSession"
+            else "ProwlerAssessmentSession"
         )
 
         assume_role_arguments = {

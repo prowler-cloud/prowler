@@ -1,5 +1,5 @@
 from argparse import ArgumentTypeError, Namespace
-from re import search, fullmatch
+from re import fullmatch, search
 
 from prowler.providers.aws.aws_provider import get_aws_available_regions
 from prowler.providers.aws.lib.arn.arn import arn_type
@@ -30,8 +30,8 @@ def init_parser(self):
     aws_auth_subparser.add_argument(
         "--role-session-name",
         nargs="?",
-        default="ProwlerAsessmentSession",
-        help="An identifier for the assumed role session. Defaults to ProwlerAsessmentSession",
+        default="ProwlerAssessmentSession",
+        help="An identifier for the assumed role session. Defaults to ProwlerAssessmentSession",
         type=validate_role_session_name,
     )
     aws_auth_subparser.add_argument(

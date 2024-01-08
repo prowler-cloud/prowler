@@ -23,6 +23,15 @@ prowler aws -R arn:aws:iam::<account_id>:role/<role_name>
 prowler aws -T/--session-duration <seconds> -I/--external-id <external_id> -R arn:aws:iam::<account_id>:role/<role_name>
 ```
 
+## Custom Role Session Name
+
+Prowler can use your custom Role Session name with:
+```console
+prowler aws --role-session-name <role_session_name>
+```
+
+> It defaults to `ProwlerAssessmentSession`
+
 ## STS Endpoint Region
 
 If you are using Prowler in AWS regions that are not enabled by default you need to use the argument `--sts-endpoint-region` to point the AWS STS API calls `assume-role` and `get-caller-identity` to the non-default region, e.g.: `prowler aws --sts-endpoint-region eu-south-2`.
