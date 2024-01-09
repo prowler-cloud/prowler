@@ -7,6 +7,7 @@ from prowler.config.config import (
     check_current_version,
     default_config_file_path,
     default_output_directory,
+    finding_statuses,
 )
 from prowler.providers.common.arguments import (
     init_providers_parser,
@@ -118,7 +119,7 @@ Detailed documentation at https://docs.prowler.cloud
             "--status",
             nargs="+",
             help="Filter by the status of the findings [PASS, FAIL, INFO]",
-            choices=["PASS", "FAIL", "INFO"],
+            choices=finding_statuses,
         )
         common_outputs_parser.add_argument(
             "-M",
