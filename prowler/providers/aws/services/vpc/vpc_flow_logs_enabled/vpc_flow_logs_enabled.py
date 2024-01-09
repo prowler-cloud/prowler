@@ -6,7 +6,7 @@ class vpc_flow_logs_enabled(Check):
     def execute(self):
         findings = []
         for vpc in vpc_client.vpcs.values():
-            if not vpc_client.audit_info.ignore_unused_services or vpc.in_use:
+            if not vpc_client.provider.ignore_unused_services or vpc.in_use:
                 report = Check_Report_AWS(self.metadata())
                 report.region = vpc.region
                 report.resource_tags = vpc.tags

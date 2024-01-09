@@ -357,16 +357,16 @@ class AwsProvider(CloudProvider):
         )
 
         report = f"""
-    This report is being generated using credentials below:
+This report is being generated using credentials below:
 
-    AWS-CLI Profile: {Fore.YELLOW}[{profile}]{Style.RESET_ALL} AWS Filter Region: {Fore.YELLOW}[{regions}]{Style.RESET_ALL}
-    AWS Account: {Fore.YELLOW}[{self.identity.account}]{Style.RESET_ALL} UserId: {Fore.YELLOW}[{self.identity.user_id}]{Style.RESET_ALL}
-    Caller Identity ARN: {Fore.YELLOW}[{ self.identity.identity_arn}]{Style.RESET_ALL}
-    """
+AWS-CLI Profile: {Fore.YELLOW}[{profile}]{Style.RESET_ALL} AWS Filter Region: {Fore.YELLOW}[{regions}]{Style.RESET_ALL}
+AWS Account: {Fore.YELLOW}[{self.identity.account}]{Style.RESET_ALL} UserId: {Fore.YELLOW}[{self.identity.user_id}]{Style.RESET_ALL}
+Caller Identity ARN: {Fore.YELLOW}[{ self.identity.identity_arn}]{Style.RESET_ALL}
+"""
         # If -A is set, print Assumed Role ARN
         if self.assumed_role.assumed_role_info.role_arn is not None:
             report += f"""Assumed Role ARN: {Fore.YELLOW}[{self.assumed_role.assumed_role_info.role_arn}]{Style.RESET_ALL}
-    """
+        """
         print(report)
 
     def generate_regional_clients(

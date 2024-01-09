@@ -9,10 +9,10 @@ from prowler.providers.aws.lib.service.service import AWSService
 
 ################## Neptune
 class Neptune(AWSService):
-    def __init__(self, audit_info):
+    def __init__(self, provider):
         # Call AWSService's __init__
         self.service_name = "neptune"
-        super().__init__(self.service_name, audit_info)
+        super().__init__(self.service_name, provider)
         self.clusters = {}
         self.__threading_call__(self.__describe_clusters__)
         self.__threading_call__(self.__describe_db_subnet_groups__)

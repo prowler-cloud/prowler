@@ -13,6 +13,7 @@ class AWSService:
 
     def __init__(self, service: str, provider: AwsProvider, global_service=False):
         # Audit Information
+        self.provider = provider
         self.audited_account = provider.identity.account
         self.audited_account_arn = provider.identity.account_arn
         self.audited_partition = provider.identity.partition

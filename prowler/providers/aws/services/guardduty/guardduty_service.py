@@ -9,9 +9,9 @@ from prowler.providers.aws.lib.service.service import AWSService
 
 ################################ GuardDuty
 class GuardDuty(AWSService):
-    def __init__(self, audit_info):
+    def __init__(self, provider):
         # Call AWSService's __init__
-        super().__init__(__class__.__name__, audit_info)
+        super().__init__(__class__.__name__, provider)
         self.detectors = []
         self.__threading_call__(self.__list_detectors__)
         self.__get_detector__()

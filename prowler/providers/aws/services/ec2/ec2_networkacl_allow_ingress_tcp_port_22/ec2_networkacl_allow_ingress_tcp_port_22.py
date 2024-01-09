@@ -10,7 +10,7 @@ class ec2_networkacl_allow_ingress_tcp_port_22(Check):
         check_port = 22
         for network_acl in ec2_client.network_acls:
             if (
-                not ec2_client.audit_info.ignore_unused_services
+                not ec2_client.provider.ignore_unused_services
                 or network_acl.region in ec2_client.regions_with_sgs
             ):
                 # If some entry allows it, that ACL is not securely configured

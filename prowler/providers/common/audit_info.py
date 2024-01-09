@@ -14,10 +14,7 @@ from prowler.providers.aws.aws_provider import (
 from prowler.providers.aws.lib.arn.arn import parse_iam_credentials_arn
 from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info, AWS_Credentials
-from prowler.providers.aws.lib.credentials.credentials import (
-    print_aws_credentials,
-    validate_aws_credentials,
-)
+from prowler.providers.aws.lib.credentials.credentials import validate_aws_credentials
 from prowler.providers.aws.lib.organizations.organizations import (
     get_organizations_metadata,
 )
@@ -243,9 +240,6 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
         else:
             current_audit_info.profile_region = "us-east-1"
 
-        if not arguments.get("only_logs"):
-            print_aws_credentials(current_audit_info)
-
         # Parse Scan Tags
         if arguments.get("resource_tags"):
             input_resource_tags = arguments.get("resource_tags")
@@ -323,11 +317,6 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
             credential_scopes=region_config["credential_scopes"],
         )
 
-        # TODO - remove it
-        # this logic is being processed in general provider
-        # if not arguments.get("only_logs"):
-        #     self.print_azure_credentials(azure_audit_info)
-
         return azure_audit_info
 
     def set_gcp_audit_info(self, arguments) -> GCP_Audit_Info:
@@ -350,11 +339,6 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
             gcp_audit_info.default_project_id,
             gcp_audit_info.project_ids,
         ) = gcp_provider.get_credentials()
-
-        # TODO - remove it
-        # this logic is being processed in general provider
-        # if not arguments.get("only_logs"):
-        #     self.print_gcp_credentials(gcp_audit_info)
 
         return gcp_audit_info
 
