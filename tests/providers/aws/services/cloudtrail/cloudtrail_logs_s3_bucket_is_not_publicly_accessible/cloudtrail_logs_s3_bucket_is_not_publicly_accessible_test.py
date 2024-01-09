@@ -275,7 +275,7 @@ class Test_cloudtrail_logs_s3_bucket_is_not_publicly_accessible:
             result = check.execute()
 
             assert len(result) == 1
-            assert result[0].status == "INFO"
+            assert result[0].status == "MANUAL"
             assert result[0].resource_id == trail_name_us
             assert result[0].resource_arn == trail_us["TrailARN"]
             assert search(

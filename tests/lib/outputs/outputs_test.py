@@ -1238,7 +1238,7 @@ class Test_Outputs:
 
     def test_extract_findings_statistics_info_resources(self):
         finding_1 = mock.MagicMock()
-        finding_1.status = "INFO"
+        finding_1.status = "MANUAL"
         finding_1.resource_id = "test_resource_1"
         finding_2 = mock.MagicMock()
         finding_2.status = "PASS"

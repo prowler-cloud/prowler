@@ -147,10 +147,10 @@ class Test_SecurityHub:
             AWS_REGION_EU_WEST_1: [get_security_hub_finding("PASSED")],
         }
 
-    def test_prepare_security_hub_findings_quiet_INFO_finding(self):
+    def test_prepare_security_hub_findings_quiet_MANUAL_finding(self):
         enabled_regions = [AWS_REGION_EU_WEST_1]
         output_options = self.set_mocked_output_options(is_quiet=False)
-        findings = [self.generate_finding("INFO", AWS_REGION_EU_WEST_1)]
+        findings = [self.generate_finding("MANUAL", AWS_REGION_EU_WEST_1)]
         audit_info = set_mocked_aws_audit_info(
             audited_regions=[AWS_REGION_EU_WEST_1, AWS_REGION_EU_WEST_2]
         )
