@@ -241,15 +241,10 @@ class Test_Parser:
         parsed = self.parser.parse(command)
         assert parsed.provider == "kubernetes"
 
-    def test_root_parser_quiet_short(self):
-        command = [prowler_command, "-q"]
+    def test_root_parser_status(self):
+        command = [prowler_command, "--status"]
         parsed = self.parser.parse(command)
-        assert parsed.quiet
-
-    def test_root_parser_quiet_long(self):
-        command = [prowler_command, "--quiet"]
-        parsed = self.parser.parse(command)
-        assert parsed.quiet
+        assert parsed.status
 
     def test_root_parser_exit_code_3_short(self):
         command = [prowler_command, "-z"]

@@ -22,6 +22,8 @@ gcp_logo = "https://user-images.githubusercontent.com/38561120/235928332-eb4accd
 orange_color = "\033[38;5;208m"
 banner_color = "\033[1;92m"
 
+finding_statuses = ["PASS", "FAIL", "INFO"]
+
 # Compliance
 actual_directory = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))
 
@@ -50,7 +52,6 @@ aws_services_json_file = "aws_regions_by_service.json"
 # gcp_zones_json_file = "gcp_zones.json"
 
 default_output_directory = getcwd() + "/output"
-
 output_file_timestamp = timestamp.strftime("%Y%m%d%H%M%S")
 timestamp_iso = timestamp.isoformat(sep=" ", timespec="seconds")
 csv_file_suffix = ".csv"

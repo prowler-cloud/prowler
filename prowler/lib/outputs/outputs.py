@@ -20,7 +20,7 @@ from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.azure.lib.audit_info.models import Azure_Audit_Info
 
 
-def stdout_report(finding, color, verbose, is_quiet):
+def stdout_report(finding, color, verbose, status):
     if finding.check_metadata.Provider == "aws":
         details = finding.region
     if finding.check_metadata.Provider == "azure":
@@ -30,7 +30,7 @@ def stdout_report(finding, color, verbose, is_quiet):
     if finding.check_metadata.Provider == "kubernetes":
         details = finding.namespace.lower()
 
-    if verbose and not (is_quiet and finding.status != "FAIL"):
+    if verbose and (not status or finding.status in status):
         print(
             f"\t{color}{finding.status}{Style.RESET_ALL} {details}: {finding.status_extended}"
         )
@@ -62,12 +62,15 @@ def report(check_findings, output_options, audit_info):
                 # Print findings by stdout
                 color = set_report_color(finding.status)
                 stdout_report(
-                    finding, color, output_options.verbose, output_options.is_quiet
+                    finding, color, output_options.verbose, output_options.status
                 )
 
                 if file_descriptors:
-                    # Check if --quiet to only add fails to outputs
-                    if not (finding.status != "FAIL" and output_options.is_quiet):
+                    # Check if --status is enabled and if the filter applies
+                    if (
+                        not output_options.status
+                        or finding.status in output_options.status
+                    ):
                         input_compliance_frameworks = list(
                             set(output_options.output_modes).intersection(
                                 available_compliance_frameworks
