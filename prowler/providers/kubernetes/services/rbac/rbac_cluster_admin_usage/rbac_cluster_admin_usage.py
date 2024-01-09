@@ -15,7 +15,7 @@ class rbac_cluster_admin_usage(Check):
                 )
                 report.resource_name = binding.metadata.name
                 report.resource_id = binding.metadata.uid
-                report.status = "INFO"
+                report.status = "MANUAL"
                 report.status_extended = f"Cluster Role Binding {binding.metadata.name} uses cluster-admin role."
                 findings.append(report)
         return findings

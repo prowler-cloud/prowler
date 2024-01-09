@@ -1,0 +1,36 @@
+{
+  "Provider": "kubernetes",
+  "CheckID": "apiserver_no_token_auth_file",
+  "CheckTitle": "Ensure that the --token-auth-file parameter is not set",
+  "CheckType": [
+    "Security",
+    "Configuration"
+  ],
+  "ServiceName": "apiserver",
+  "SubServiceName": "Authentication",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "KubernetesAPIServer",
+  "Description": "This check ensures that the Kubernetes API server is not using static token-based authentication, which is less secure. Static tokens are stored in clear-text and lack features like revocation or rotation without restarting the API server.",
+  "Risk": "Using static token-based authentication exposes the cluster to security risks due to the static nature of the tokens, their clear-text storage, and the inability to revoke or rotate them easily.",
+  "RelatedUrl": "https://kubernetes.io/docs/admin/authentication/#static-token-file",
+  "Remediation": {
+    "Code": {
+      "CLI": "Remove the --token-auth-file parameter from the kube-apiserver configuration. Edit /etc/kubernetes/manifests/kube-apiserver.yaml on the master node and remove the --token-auth-file=<filename> parameter.",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Replace token-based authentication with more secure mechanisms like client certificate authentication. Ensure the --token-auth-file argument is not used in the API server configuration.",
+      "Url": "https://kubernetes.io/docs/admin/kube-apiserver/"
+    }
+  },
+  "Categories": [
+    "Access Control",
+    "Best Practices"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "By default, the --token-auth-file argument is not set in the kube-apiserver. Ensure it remains unset or is removed if currently in use."
+}
