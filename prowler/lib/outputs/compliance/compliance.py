@@ -31,7 +31,7 @@ def add_manual_controls(
             manual_finding = Check_Report(
                 output_options.bulk_checks_metadata["manual_check"].json()
             )
-            manual_finding.status = "INFO"
+            manual_finding.status = "MANUAL"
             manual_finding.status_extended = "Manual check"
             manual_finding.resource_id = "manual_check"
             manual_finding.resource_name = "Manual check"

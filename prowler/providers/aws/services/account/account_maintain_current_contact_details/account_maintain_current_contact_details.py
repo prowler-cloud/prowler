@@ -10,6 +10,6 @@ class account_maintain_current_contact_details(Check):
         report.region = account_client.region
         report.resource_id = account_client.audited_account
         report.resource_arn = account_client.audited_account_arn
-        report.status = "INFO"
-        report.status_extended = "Manual check: Login to the AWS Console. Choose your account name on the top right of the window -> My Account -> Contact Information."
+        report.status = "MANUAL"
+        report.status_extended = "Login to the AWS Console. Choose your account name on the top right of the window -> My Account -> Contact Information."
         return [report]
