@@ -34,6 +34,9 @@ from prowler.providers.azure.lib.exception.exception import AzureException
 from prowler.providers.gcp.gcp_provider import GCP_Provider
 from prowler.providers.gcp.lib.audit_info.audit_info import gcp_audit_info
 from prowler.providers.gcp.lib.audit_info.models import GCP_Audit_Info
+from prowler.providers.kubernetes.kubernetes_provider import Kubernetes_Provider
+from prowler.providers.kubernetes.lib.audit_info.audit_info import kubernetes_audit_info
+from prowler.providers.kubernetes.lib.audit_info.models import Kubernetes_Audit_Info
 
 
 class Audit_Info:
@@ -56,6 +59,21 @@ class Audit_Info:
 This report is being generated using credentials below:
 
 GCP Account: {Fore.YELLOW}[{profile}]{Style.RESET_ALL}  GCP Project IDs: {Fore.YELLOW}[{", ".join(audit_info.project_ids)}]{Style.RESET_ALL}
+"""
+        print(report)
+
+    def print_kubernetes_credentials(self, audit_info: Kubernetes_Audit_Info):
+        # Get the current context
+        cluster_name = self.context.get("context").get("cluster")
+        user_name = self.context.get("context").get("user")
+        namespace = self.context.get("namespace", "default")
+        roles = self.get_context_user_roles()
+        roles_str = ", ".join(roles) if roles else "No associated Roles"
+
+        report = f"""
+This report is being generated using the Kubernetes configuration below:
+
+Kubernetes Cluster: {Fore.YELLOW}[{cluster_name}]{Style.RESET_ALL}  User: {Fore.YELLOW}[{user_name}]{Style.RESET_ALL}  Namespace: {Fore.YELLOW}[{namespace}]{Style.RESET_ALL}  Roles: {Fore.YELLOW}[{roles_str}]{Style.RESET_ALL}
 """
         print(report)
 
@@ -357,6 +375,25 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
         #     self.print_gcp_credentials(gcp_audit_info)
 
         return gcp_audit_info
+
+    def set_kubernetes_audit_info(self, arguments) -> Kubernetes_Audit_Info:
+        """
+        set_kubernetes_audit_info returns the Kubernetes_Audit_Info
+        """
+        logger.info("Setting Kubernetes session ...")
+        kubeconfig_file = arguments.get("kubeconfig_file")
+
+        logger.info("Checking if any context is set ...")
+        context = arguments.get("context")
+
+        kubernetes_provider = Kubernetes_Provider(kubeconfig_file, context)
+
+        (
+            kubernetes_audit_info.api_client,
+            kubernetes_audit_info.context,
+        ) = kubernetes_provider.get_credentials()
+
+        return kubernetes_audit_info
 
 
 def set_provider_audit_info(provider: str, arguments: dict):
