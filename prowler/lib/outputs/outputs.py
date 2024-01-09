@@ -27,6 +27,8 @@ def stdout_report(finding, color, verbose, is_quiet):
         details = finding.check_metadata.ServiceName
     if finding.check_metadata.Provider == "gcp":
         details = finding.location.lower()
+    if finding.check_metadata.Provider == "kubernetes":
+        details = finding.namespace.lower()
 
     if verbose and not (is_quiet and finding.status != "FAIL"):
         print(

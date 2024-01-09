@@ -22,6 +22,8 @@ from prowler.providers.common.audit_info import (
 from prowler.providers.common.models import Audit_Metadata
 from prowler.providers.gcp.gcp_provider import GCP_Provider
 from prowler.providers.gcp.lib.audit_info.models import GCP_Audit_Info
+from prowler.providers.kubernetes.kubernetes_provider import Kubernetes_Provider
+from prowler.providers.kubernetes.lib.audit_info.models import Kubernetes_Audit_Info
 
 EXAMPLE_AMI_ID = "ami-12c6146b"
 AWS_ACCOUNT_NUMBER = "123456789012"
@@ -91,6 +93,14 @@ def mock_set_gcp_credentials(*_):
 
 def mock_get_project_ids(*_):
     return ["project"]
+
+
+def mock_set_kubernetes_credentials(*_):
+    return ("apiclient", "context")
+
+
+def mock_get_context_user_roles(*_):
+    return []
 
 
 class Test_Set_Audit_Info:
@@ -277,6 +287,30 @@ class Test_Set_Audit_Info:
 
         audit_info = set_provider_audit_info(provider, arguments)
         assert isinstance(audit_info, GCP_Audit_Info)
+
+    @patch.object(
+        Kubernetes_Provider, "__set_credentials__", new=mock_set_kubernetes_credentials
+    )
+    @patch.object(
+        Kubernetes_Provider, "get_context_user_roles", new=mock_get_context_user_roles
+    )
+    def test_set_audit_info_kubernetes(self):
+        provider = "kubernetes"
+        arguments = {
+            "profile": None,
+            "role": None,
+            "session_duration": None,
+            "external_id": None,
+            "regions": None,
+            "organizations_role": None,
+            "subscriptions": None,
+            "context": "default",
+            "kubeconfig_file": "config",
+            "config_file": default_config_file_path,
+        }
+
+        audit_info = set_provider_audit_info(provider, arguments)
+        assert isinstance(audit_info, Kubernetes_Audit_Info)
 
     @mock_resourcegroupstaggingapi
     @mock_ec2

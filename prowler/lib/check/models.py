@@ -224,6 +224,22 @@ class Check_Report_GCP(Check_Report):
         self.location = ""
 
 
+@dataclass
+class Check_Report_Kubernetes(Check_Report):
+    # TODO change class name to CheckReportKubernetes
+    """Contains the Kubernetes Check's finding information."""
+
+    resource_name: str
+    resource_id: str
+    namespace: str
+
+    def __init__(self, metadata):
+        super().__init__(metadata)
+        self.resource_name = ""
+        self.resource_id = ""
+        self.namespace = ""
+
+
 # Testing Pending
 def load_check_metadata(metadata_file: str) -> Check_Metadata_Model:
     """load_check_metadata loads and parse a Check's metadata file"""

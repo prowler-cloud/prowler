@@ -85,6 +85,18 @@ def generate_provider_output_csv(
             )
             finding_output = output_model(**data)
 
+        if provider == "kubernetes":
+            data["resource_id"] = finding.resource_id
+            data["resource_name"] = finding.resource_name
+            data["namespace"] = finding.namespace
+            data[
+                "finding_unique_id"
+            ] = f"prowler-{provider}-{finding.check_metadata.CheckID}-{finding.namespace}-{finding.resource_id}"
+            data["compliance"] = unroll_dict(
+                get_check_compliance(finding, provider, output_options)
+            )
+            finding_output = output_model(**data)
+
         if provider == "aws":
             data["profile"] = audit_info.profile
             data["account_id"] = audit_info.audited_account
@@ -357,6 +369,16 @@ class Gcp_Check_Output_CSV(Check_Output_CSV):
     resource_name: str = ""
 
 
+class Kubernetes_Check_Output_CSV(Check_Output_CSV):
+    """
+    Kubernetes_Check_Output_CSV generates a finding's output in CSV format for the Kubernetes provider.
+    """
+
+    namespace: str = ""
+    resource_id: str = ""
+    resource_name: str = ""
+
+
 def generate_provider_output_json(
     provider: str, finding, audit_info, mode: str, output_options
 ):
@@ -487,13 +509,26 @@ class Azure_Check_Output_JSON(Check_Output_JSON):
 
 class Gcp_Check_Output_JSON(Check_Output_JSON):
     """
-    Gcp_Check_Output_JSON generates a finding's output in JSON format for the AWS provider.
+    Gcp_Check_Output_JSON generates a finding's output in JSON format for the GCP provider.
     """
 
     ProjectId: str = ""
     ResourceId: str = ""
     ResourceName: str = ""
     Location: str = ""
+
+    def __init__(self, **metadata):
+        super().__init__(**metadata)
+
+
+class Kubernetes_Check_Output_JSON(Check_Output_JSON):
+    """
+    Kubernetes_Check_Output_JSON generates a finding's output in JSON format for the Kubernetes provider.
+    """
+
+    ResourceId: str = ""
+    ResourceName: str = ""
+    Namespace: str = ""
 
     def __init__(self, **metadata):
         super().__init__(**metadata)

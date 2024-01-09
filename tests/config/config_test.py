@@ -54,7 +54,7 @@ config_aws = {
 
 class Test_Config:
     def test_get_aws_available_regions(self):
-        assert len(get_aws_available_regions()) == 32
+        assert len(get_aws_available_regions()) == 33
 
     @mock.patch(
         "prowler.config.config.requests.get", new=mock_prowler_get_latest_release
@@ -176,6 +176,13 @@ class Test_Config:
         path = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))
         config_test_file = f"{path}/fixtures/config.yaml"
         provider = "gcp"
+
+        assert load_and_validate_config_file(provider, config_test_file) is None
+
+    def test_load_and_validate_config_file_kubernetes(self):
+        path = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))
+        config_test_file = f"{path}/fixtures/config.yaml"
+        provider = "kubernetes"
 
         assert load_and_validate_config_file(provider, config_test_file) is None
 

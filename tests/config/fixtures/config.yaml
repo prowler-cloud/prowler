@@ -59,3 +59,6 @@ azure:
 
 # GCP Configuration
 gcp:
+
+# Kubernetes Configuration
+kubernetes:

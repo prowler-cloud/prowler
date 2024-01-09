@@ -42,6 +42,7 @@ google-api-python-client = "2.110.0"
 google-auth-httplib2 = ">=0.1,<0.3"
 jsonschema = "4.20.0"
 mkdocs = {version = "1.5.3", optional = true}
+kubernetes = "^28.1.0"
 mkdocs-material = {version = "9.5.2", optional = true}
 msgraph-core = "0.2.2"
 msrestazure = "^0.6.4"
