@@ -221,7 +221,7 @@ def display_compliance_table(
                 )
             if fail_count + pass_count < 1:
                 print(
-                    f"\n {Style.BRIGHT}There are no resources for {Fore.YELLOW}{compliance.Framework}_{compliance.Version}_{compliance.Provider}{Style.RESET_ALL}.\n"
+                    f"\n {Style.BRIGHT}There are no resources for {Fore.YELLOW}{compliance_framework.upper()}{Style.RESET_ALL}.\n"
                 )
             else:
                 print(
@@ -317,7 +317,7 @@ def display_compliance_table(
                     )
             if fail_count + pass_count < 1:
                 print(
-                    f"\n {Style.BRIGHT}There are no resources for {Fore.YELLOW}{compliance.Framework}_{compliance.Version}{Style.RESET_ALL}.\n"
+                    f"\n {Style.BRIGHT}There are no resources for {Fore.YELLOW}{compliance_framework.upper()}{Style.RESET_ALL}.\n"
                 )
             else:
                 print(
@@ -390,7 +390,7 @@ def display_compliance_table(
                     )
             if fail_count + pass_count < 1:
                 print(
-                    f"\n {Style.BRIGHT}There are no resources for {Fore.YELLOW}{compliance.Framework}{Style.RESET_ALL}.\n"
+                    f"\n {Style.BRIGHT}There are no resources for {Fore.YELLOW}{compliance_framework.upper()}{Style.RESET_ALL}.\n"
                 )
             else:
                 print(
