@@ -118,7 +118,7 @@ Detailed documentation at https://docs.prowler.cloud
         common_outputs_parser.add_argument(
             "--status",
             nargs="+",
-            help="Filter by the status of the findings [PASS, FAIL, INFO]",
+            help=f"Filter by the status of the findings {finding_statuses}",
             choices=finding_statuses,
         )
         common_outputs_parser.add_argument(
