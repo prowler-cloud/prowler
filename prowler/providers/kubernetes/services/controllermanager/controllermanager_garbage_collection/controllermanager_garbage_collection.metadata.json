@@ -1,0 +1,36 @@
+{
+  "Provider": "kubernetes",
+  "CheckID": "controllermanager_garbage_collection",
+  "CheckTitle": "Ensure that the --terminated-pod-gc-threshold argument is set as appropriate",
+  "CheckType": [
+    "Resource Management",
+    "Performance Optimization"
+  ],
+  "ServiceName": "kube-controller-manager",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "KubernetesControllerManager",
+  "Description": "Activate garbage collector on pod termination, as appropriate. Garbage collection is crucial for maintaining resource availability and performance. The default threshold for garbage collection is 12,500 terminated pods, which may be too high for some systems. Adjusting this threshold based on system resources and performance tests is recommended.",
+  "Risk": "A high threshold for garbage collection can lead to degraded performance and resource exhaustion. In extreme cases, it might cause system crashes or prolonged unavailability.",
+  "RelatedUrl": "https://github.com/kubernetes/kubernetes/issues/28484",
+  "Remediation": {
+    "Code": {
+      "CLI": "Edit the Controller Manager pod specification file /etc/kubernetes/manifests/kube-controller-manager.yaml and set --terminated-pod-gc-threshold to an appropriate value, e.g., --terminated-pod-gc-threshold=10",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Review and adjust the --terminated-pod-gc-threshold argument in the kube-controller-manager to ensure efficient garbage collection and optimal resource utilization.",
+      "Url": "https://kubernetes.io/docs/admin/kube-controller-manager/"
+    }
+  },
+  "Categories": [
+    "Cluster Stability",
+    "Operational Best Practices"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "The default value of --terminated-pod-gc-threshold is 12500. Adjust according to your specific cluster workload and performance requirements."
+}
