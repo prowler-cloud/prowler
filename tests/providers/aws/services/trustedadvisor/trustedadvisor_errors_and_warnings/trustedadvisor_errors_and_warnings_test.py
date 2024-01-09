@@ -31,7 +31,7 @@ class Test_trustedadvisor_errors_and_warnings:
             check = trustedadvisor_errors_and_warnings()
             result = check.execute()
             assert len(result) == 1
-            assert result[0].status == "INFO"
+            assert result[0].status == "MANUAL"
             assert (
                 result[0].status_extended
                 == "Amazon Web Services Premium Support Subscription is required to use this service."

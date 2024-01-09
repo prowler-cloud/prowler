@@ -19,7 +19,7 @@ def print_banner(args):
         print(
             f"""
 Color code for results:
-- {Fore.YELLOW}INFO (Information){Style.RESET_ALL}
+- {Fore.YELLOW}MANUAL (Manual check){Style.RESET_ALL}
 - {Fore.GREEN}PASS (Recommended value){Style.RESET_ALL}
 - {orange_color}MUTED (Muted by muted list){Style.RESET_ALL}
 - {Fore.RED}FAIL (Fix required){Style.RESET_ALL}
