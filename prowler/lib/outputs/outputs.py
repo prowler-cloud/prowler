@@ -152,7 +152,7 @@ def report(check_findings, output_options, audit_info):
                             file_descriptors["json-ocsf"].write(",")
 
         else:  # No service resources in the whole account
-            color = set_report_color("INFO")
+            color = set_report_color("MANUAL")
             if output_options.verbose:
                 print(f"\t{color}INFO{Style.RESET_ALL} There are no resources")
         # Separator between findings and bar
@@ -179,7 +179,7 @@ def set_report_color(status: str) -> str:
         color = Fore.BLACK
     elif status == "MUTED":
         color = orange_color
-    elif status == "INFO":
+    elif status == "MANUAL":
         color = Fore.YELLOW
     else:
         raise Exception("Invalid Report Status. Must be PASS, FAIL, ERROR or MUTED")
