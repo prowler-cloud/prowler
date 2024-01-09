@@ -46,7 +46,7 @@ def get_provider_output_model(audit_info_class_name):
 
 @dataclass
 class Provider_Output_Options:
-    is_quiet: bool
+    status: bool
     output_modes: list
     output_directory: str
     mutelist_file: str
@@ -57,7 +57,7 @@ class Provider_Output_Options:
     unix_timestamp: bool
 
     def __init__(self, arguments, mutelist_file, bulk_checks_metadata):
-        self.is_quiet = arguments.quiet
+        self.status = arguments.status
         self.output_modes = arguments.output_modes
         self.output_directory = arguments.output_directory
         self.verbose = arguments.verbose
@@ -107,6 +107,23 @@ class Gcp_Output_Options(Provider_Output_Options):
             or arguments.output_filename is None
         ):
             self.output_filename = f"prowler-output-{audit_info.default_project_id}-{output_file_timestamp}"
+        else:
+            self.output_filename = arguments.output_filename
+
+
+class Kubernetes_Output_Options(Provider_Output_Options):
+    def __init__(self, arguments, audit_info, mutelist_file, bulk_checks_metadata):
+        # First call Provider_Output_Options init
+        super().__init__(arguments, mutelist_file, bulk_checks_metadata)
+        # TODO move the below if to Provider_Output_Options
+        # Check if custom output filename was input, if not, set the default
+        if (
+            not hasattr(arguments, "output_filename")
+            or arguments.output_filename is None
+        ):
+            self.output_filename = (
+                f"prowler-output-{audit_info.context['name']}-{output_file_timestamp}"
+            )
         else:
             self.output_filename = arguments.output_filename
 

@@ -21,6 +21,7 @@ from prowler.lib.utils.utils import open_file
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.azure.lib.audit_info.models import Azure_Audit_Info
 from prowler.providers.gcp.lib.audit_info.models import GCP_Audit_Info
+from prowler.providers.kubernetes.lib.audit_info.models import Kubernetes_Audit_Info
 
 
 def add_html_header(file_descriptor, audit_info):
@@ -522,6 +523,53 @@ def get_gcp_html_assessment_summary(audit_info):
         sys.exit(1)
 
 
+def get_kubernetes_html_assessment_summary(audit_info):
+    try:
+        if isinstance(audit_info, Kubernetes_Audit_Info):
+            return (
+                """
+            <div class="col-md-2">
+                <div class="card">
+                    <div class="card-header">
+                        Kubernetes Assessment Summary
+                    </div>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item">
+                            <b>Kubernetes Context:</b> """
+                + audit_info.context["name"]
+                + """
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        Kubernetes Credentials
+                    </div>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item">
+                            <b>Kubernetes Cluster:</b> """
+                + audit_info.context["context"]["cluster"]
+                + """
+                        </li>
+                        <li class="list-group-item">
+                            <b>Kubernetes User:</b> """
+                + audit_info.context["context"]["user"]
+                + """
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            """
+            )
+    except Exception as error:
+        logger.critical(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+        )
+        sys.exit(1)
+
+
 def get_assessment_summary(audit_info):
     """
     get_assessment_summary gets the HTML assessment summary for the provider
@@ -532,6 +580,7 @@ def get_assessment_summary(audit_info):
         # AWS_Audit_Info --> aws
         # GCP_Audit_Info --> gcp
         # Azure_Audit_Info --> azure
+        # Kubernetes_Audit_Info --> kubernetes
         provider = audit_info.__class__.__name__.split("_")[0].lower()
 
         # Dynamically get the Provider quick inventory handler

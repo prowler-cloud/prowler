@@ -15,7 +15,7 @@ def print_banner(args):
 """
     print(banner)
 
-    if args.verbose or args.quiet:
+    if args.verbose:
         print(
             f"""
 Color code for results:
