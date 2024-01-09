@@ -13,3 +13,7 @@ CustomChecksMetadata:
     Checks:
       bigquery_dataset_cmk_encryption:
         Severity: low
+  kubernetes:
+    Checks:
+      apiserver_anonymous_requests:
+        Severity: low

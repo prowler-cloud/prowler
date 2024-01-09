@@ -11,11 +11,11 @@ prowler_command = "prowler"
 
 # capsys
 # https://docs.pytest.org/en/7.1.x/how-to/capture-stdout-stderr.html
-prowler_default_usage_error = "usage: prowler [-h] [-v] {aws,azure,gcp} ..."
+prowler_default_usage_error = "usage: prowler [-h] [-v] {aws,azure,gcp,kubernetes} ..."
 
 
 def mock_get_available_providers():
-    return ["aws", "azure", "gcp"]
+    return ["aws", "azure", "gcp", "kubernetes"]
 
 
 class Test_Parser:
@@ -153,6 +153,41 @@ class Test_Parser:
         assert not parsed.list_categories
         assert not parsed.credentials_file
 
+    def test_default_parser_no_arguments_kubernetes(self):
+        provider = "kubernetes"
+        command = [prowler_command, provider]
+        parsed = self.parser.parse(command)
+        assert parsed.provider == provider
+        assert not parsed.quiet
+        assert len(parsed.output_modes) == 4
+        assert "csv" in parsed.output_modes
+        assert "html" in parsed.output_modes
+        assert "json" in parsed.output_modes
+        assert not parsed.output_filename
+        assert "output" in parsed.output_directory
+        assert not parsed.verbose
+        assert not parsed.no_banner
+        assert not parsed.slack
+        assert not parsed.unix_timestamp
+        assert parsed.log_level == "CRITICAL"
+        assert not parsed.log_file
+        assert not parsed.only_logs
+        assert not parsed.checks
+        assert not parsed.checks_file
+        assert not parsed.checks_folder
+        assert not parsed.services
+        assert not parsed.severity
+        assert not parsed.compliance
+        assert len(parsed.categories) == 0
+        assert not parsed.excluded_checks
+        assert not parsed.excluded_services
+        assert not parsed.list_checks
+        assert not parsed.list_services
+        assert not parsed.list_compliance
+        assert not parsed.list_compliance_requirements
+        assert not parsed.list_categories
+        assert not parsed.credentials_file
+
     def test_root_parser_version_short(self):
         command = [prowler_command, "-v"]
         with pytest.raises(SystemExit) as wrapped_exit:
@@ -200,6 +235,11 @@ class Test_Parser:
         command = [prowler_command, "gcp"]
         parsed = self.parser.parse(command)
         assert parsed.provider == "gcp"
+
+    def test_root_parser_kubernetes_provider(self):
+        command = [prowler_command, "kubernetes"]
+        parsed = self.parser.parse(command)
+        assert parsed.provider == "kubernetes"
 
     def test_root_parser_status(self):
         command = [prowler_command, "--status"]
@@ -1088,6 +1128,22 @@ class Test_Parser:
         assert len(parsed.project_ids) == 2
         assert parsed.project_ids[0] == project_1
         assert parsed.project_ids[1] == project_2
+
+    def test_parser_kubernetes_auth_kubeconfig_file(self):
+        argument = "--kubeconfig-file"
+        file = "config"
+        command = [prowler_command, "kubernetes", argument, file]
+        parsed = self.parser.parse(command)
+        assert parsed.provider == "kubernetes"
+        assert parsed.kubeconfig_file == file
+
+    def test_parser_kubernetes_auth_context(self):
+        argument = "--context"
+        context = "default"
+        command = [prowler_command, "kubernetes", argument, context]
+        parsed = self.parser.parse(command)
+        assert parsed.provider == "kubernetes"
+        assert parsed.context == context
 
     def test_validate_azure_region_valid_regions(self):
         expected_regions = [
