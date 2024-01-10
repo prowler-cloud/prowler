@@ -1,6 +1,6 @@
 {
   "Provider": "kubernetes",
-  "CheckID": "apiserver_noderestriction_plugin",
+  "CheckID": "apiserver_node_restriction_plugin",
   "CheckTitle": "Ensure that the admission control plugin NodeRestriction is set",
   "CheckType": [
     "Security",

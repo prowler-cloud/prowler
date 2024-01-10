@@ -4,7 +4,7 @@ from prowler.providers.kubernetes.services.apiserver.apiserver_client import (
 )
 
 
-class apiserver_alwayspullimages_plugin(Check):
+class apiserver_always_pull_images_plugin(Check):
     def execute(self) -> Check_Report_Kubernetes:
         findings = []
         for pod in apiserver_client.apiserver_pods:

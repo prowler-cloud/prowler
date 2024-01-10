@@ -1,6 +1,6 @@
 {
   "Provider": "kubernetes",
-  "CheckID": "apiserver_namespacelifecycle_plugin",
+  "CheckID": "apiserver_namespace_lifecycle_plugin",
   "CheckTitle": "Ensure that the admission control plugin NamespaceLifecycle is set",
   "CheckType": [
     "Security",

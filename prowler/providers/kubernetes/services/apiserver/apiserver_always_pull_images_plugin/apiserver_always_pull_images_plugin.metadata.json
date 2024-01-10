@@ -1,6 +1,6 @@
 {
   "Provider": "kubernetes",
-  "CheckID": "apiserver_alwayspullimages_plugin",
+  "CheckID": "apiserver_always_pull_images_plugin",
   "CheckTitle": "Ensure that the admission control plugin AlwaysPullImages is set",
   "CheckType": [
     "Security",
