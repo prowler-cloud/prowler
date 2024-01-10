@@ -27,7 +27,7 @@ def send_to_s3_bucket(
         else:  # Compliance output mode
             filename = f"{output_filename}_{output_mode}{csv_file_suffix}"
 
-        logger.info(f"Sending outputs to S3 bucket {output_bucket_name}")
+        logger.info(f"Sending output file {filename} to S3 bucket {output_bucket_name}")
         # File location
         file_name = output_directory + "/" + filename
 
