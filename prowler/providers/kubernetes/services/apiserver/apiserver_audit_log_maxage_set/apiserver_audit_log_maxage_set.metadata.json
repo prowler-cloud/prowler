@@ -1,0 +1,36 @@
+{
+  "Provider": "kubernetes",
+  "CheckID": "apiserver_audit_log_maxage_set",
+  "CheckTitle": "Ensure that the --audit-log-maxage argument is set to 30 or as appropriate",
+  "CheckType": [
+    "Security",
+    "Configuration"
+  ],
+  "ServiceName": "apiserver",
+  "SubServiceName": "Auditing",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "KubernetesAPIServer",
+  "Description": "This check ensures that the Kubernetes API server is configured with an appropriate audit log retention period. Setting --audit-log-maxage to 30 or as per business requirements helps in maintaining logs for sufficient time to investigate past events.",
+  "Risk": "Without an adequate log retention period, there may be insufficient audit history to investigate and analyze past events or security incidents.",
+  "RelatedUrl": "https://kubernetes.io/docs/concepts/cluster-administration/audit/",
+  "Remediation": {
+    "Code": {
+      "CLI": "Edit the kube-apiserver configuration to set the --audit-log-maxage argument to 30 or an appropriate number of days. Example: --audit-log-maxage=30",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Configure the API server audit log retention period to retain logs for at least 30 days or as per your organization's requirements.",
+      "Url": "https://kubernetes.io/docs/admin/kube-apiserver/"
+    }
+  },
+  "Categories": [
+    "Logging",
+    "Compliance"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Ensure the audit log retention period is set appropriately to balance between storage constraints and the need for historical data."
+}

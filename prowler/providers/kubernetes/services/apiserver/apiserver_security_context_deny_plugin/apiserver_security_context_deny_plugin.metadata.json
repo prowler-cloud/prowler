@@ -1,6 +1,6 @@
 {
   "Provider": "kubernetes",
-  "CheckID": "apiserver_securitycontextdeny_plugin",
+  "CheckID": "apiserver_security_context_deny_plugin",
   "CheckTitle": "Ensure that the admission control plugin SecurityContextDeny is set if PodSecurityPolicy is not used",
   "CheckType": [
     "Security",

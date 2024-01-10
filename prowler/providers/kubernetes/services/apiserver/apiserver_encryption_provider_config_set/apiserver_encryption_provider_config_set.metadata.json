@@ -1,0 +1,36 @@
+{
+  "Provider": "kubernetes",
+  "CheckID": "apiserver_encryption_provider_config_set",
+  "CheckTitle": "Ensure that the --encryption-provider-config argument is set as appropriate",
+  "CheckType": [
+    "Security",
+    "Configuration"
+  ],
+  "ServiceName": "apiserver",
+  "SubServiceName": "Data Encryption",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "KubernetesAPIServer",
+  "Description": "This check ensures that the Kubernetes API server is configured with the --encryption-provider-config argument to encrypt sensitive data at rest in the etcd key-value store. Encrypting data at rest prevents potential unauthorized disclosures and ensures that the sensitive data is secure.",
+  "Risk": "Without proper configuration of the encryption provider, sensitive data stored in etcd might not be encrypted, posing a risk of data breaches.",
+  "RelatedUrl": "https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/",
+  "Remediation": {
+    "Code": {
+      "CLI": "Edit the kube-apiserver configuration to include the --encryption-provider-config parameter with the path to the EncryptionConfig file. Example: --encryption-provider-config=/path/to/EncryptionConfig/File",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Configure and enable encryption for data at rest in etcd using a suitable EncryptionConfig file.",
+      "Url": "https://kubernetes.io/docs/admin/kube-apiserver/"
+    }
+  },
+  "Categories": [
+    "Data Security",
+    "Configuration Optimization"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Ensure that the EncryptionConfig file is correctly configured and securely stored."
+}

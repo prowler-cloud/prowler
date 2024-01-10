@@ -4,7 +4,7 @@ from prowler.providers.kubernetes.services.apiserver.apiserver_client import (
 )
 
 
-class apiserver_alwayspullimages_plugin(Check):
+class apiserver_disable_profiling(Check):
     def execute(self) -> Check_Report_Kubernetes:
         findings = []
         for pod in apiserver_client.apiserver_pods:
@@ -13,19 +13,19 @@ class apiserver_alwayspullimages_plugin(Check):
             report.resource_name = pod.name
             report.resource_id = pod.uid
             report.status = "PASS"
-            report.status_extended = "AlwaysPullImages admission control plugin is set."
-            plugin_set = False
+            report.status_extended = "Profiling is disabled in the API server."
+            profiling_enabled = False
             for container in pod.containers.values():
-                if "--enable-admission-plugins" in container.command:
-                    admission_plugins = container.command.split(
-                        "--enable-admission-plugins="
-                    )[1].split(",")
-                    if "AlwaysPullImages" in admission_plugins:
-                        plugin_set = True
-                        break
-            if not plugin_set:
+                # Check if "--profiling" is set to false
+                if "--profiling=false" not in container.command:
+                    profiling_enabled = True
+                    break
+            if profiling_enabled:
                 report.resource_id = container.name
                 report.status = "FAIL"
-                report.status_extended = "AlwaysPullImages admission control plugin is not set in container {container.name}."
+                report.status_extended = (
+                    f"Profiling is enabled in container {container.name}."
+                )
+
             findings.append(report)
         return findings

@@ -4,7 +4,7 @@ from prowler.providers.kubernetes.services.apiserver.apiserver_client import (
 )
 
 
-class apiserver_event_rate_limit(Check):
+class apiserver_namespacelifecycle_plugin(Check):
     def execute(self) -> Check_Report_Kubernetes:
         findings = []
         for pod in apiserver_client.apiserver_pods:
@@ -13,29 +13,31 @@ class apiserver_event_rate_limit(Check):
             report.resource_name = pod.name
             report.resource_id = pod.uid
             report.status = "PASS"
-            report.status_extended = "ServiceAccount admission control plugin is set."
+            report.status_extended = (
+                "NamespaceLifecycle admission control plugin is set."
+            )
 
-            service_account_plugin_set = False
+            namespace_lifecycle_plugin_set = False
             for container in pod.containers.values():
-                # Check if "--enable-admission-plugins" includes "ServiceAccount"
-                # and "--disable-admission-plugins" does not include "ServiceAccount"
+                # Check if "--enable-admission-plugins" includes "NamespaceLifecycle"
+                # and "--disable-admission-plugins" does not include "NamespaceLifecycle"
                 if "--enable-admission-plugins" in container.command:
                     admission_plugins = container.command.split(
                         "--enable-admission-plugins="
                     )[1].split(",")
-                    if "ServiceAccount" in admission_plugins:
-                        service_account_plugin_set = True
+                    if "NamespaceLifecycle" in admission_plugins:
+                        namespace_lifecycle_plugin_set = True
                 if "--disable-admission-plugins" in container.command:
                     disabled_plugins = container.command.split(
                         "--disable-admission-plugins="
                     )[1].split(",")
-                    if "ServiceAccount" in disabled_plugins:
-                        service_account_plugin_set = False
+                    if "NamespaceLifecycle" in disabled_plugins:
+                        namespace_lifecycle_plugin_set = False
 
-            if not service_account_plugin_set:
+            if not namespace_lifecycle_plugin_set:
                 report.resource_id = container.name
                 report.status = "FAIL"
-                report.status_extended = "ServiceAccount admission control plugin is not set in container {container.name}."
+                report.status_extended = f"NamespaceLifecycle admission control plugin is not set in container {container.name}."
 
             findings.append(report)
         return findings

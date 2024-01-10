@@ -4,7 +4,7 @@ from prowler.providers.kubernetes.services.apiserver.apiserver_client import (
 )
 
 
-class apiserver_alwayspullimages_plugin(Check):
+class apiserver_service_account_lookup_true(Check):
     def execute(self) -> Check_Report_Kubernetes:
         findings = []
         for pod in apiserver_client.apiserver_pods:
@@ -13,19 +13,21 @@ class apiserver_alwayspullimages_plugin(Check):
             report.resource_name = pod.name
             report.resource_id = pod.uid
             report.status = "PASS"
-            report.status_extended = "AlwaysPullImages admission control plugin is set."
-            plugin_set = False
+            report.status_extended = (
+                "Service account lookup is set to true in the API server."
+            )
+
+            service_account_lookup_set = False
             for container in pod.containers.values():
-                if "--enable-admission-plugins" in container.command:
-                    admission_plugins = container.command.split(
-                        "--enable-admission-plugins="
-                    )[1].split(",")
-                    if "AlwaysPullImages" in admission_plugins:
-                        plugin_set = True
-                        break
-            if not plugin_set:
+                # Check if "--service-account-lookup" is set to true
+                if "--service-account-lookup=true" in container.command:
+                    service_account_lookup_set = True
+                    break
+
+            if not service_account_lookup_set:
                 report.resource_id = container.name
                 report.status = "FAIL"
-                report.status_extended = "AlwaysPullImages admission control plugin is not set in container {container.name}."
+                report.status_extended = "Service account lookup is not set to true in container {container.name}."
+
             findings.append(report)
         return findings
