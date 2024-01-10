@@ -28,7 +28,7 @@ class Rbac(KubernetesService):
                         {
                             "kind": subject.kind,
                             "name": subject.name,
-                            "namespace": getattr(subject, "namespace", None),
+                            "namespace": getattr(subject, "namespace", ""),
                         }
                         for subject in binding.subjects
                     ],

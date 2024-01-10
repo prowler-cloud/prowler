@@ -1,0 +1,36 @@
+{
+  "Provider": "kubernetes",
+  "CheckID": "apiserver_securitycontextdeny_plugin",
+  "CheckTitle": "Ensure that the admission control plugin SecurityContextDeny is set if PodSecurityPolicy is not used",
+  "CheckType": [
+    "Security",
+    "Configuration"
+  ],
+  "ServiceName": "apiserver",
+  "SubServiceName": "Admission Control",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "KubernetesAPIServer",
+  "Description": "This check verifies that the SecurityContextDeny admission control plugin is enabled in the Kubernetes API server if PodSecurityPolicy is not used. The SecurityContextDeny plugin denies pods that make use of certain SecurityContext fields which could allow privilege escalation.",
+  "Risk": "Without SecurityContextDeny, pods may be able to escalate privileges if PodSecurityPolicy is not used, potentially leading to security vulnerabilities.",
+  "RelatedUrl": "https://kubernetes.io/docs/admin/admission-controllers/#securitycontextdeny",
+  "Remediation": {
+    "Code": {
+      "CLI": "Edit the kube-apiserver configuration to include SecurityContextDeny in the --enable-admission-plugins argument, unless PodSecurityPolicy is already in use. Example: --enable-admission-plugins=...,SecurityContextDeny,...",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Use SecurityContextDeny as an admission control plugin in the API server to enhance security, especially in the absence of PodSecurityPolicy.",
+      "Url": "https://kubernetes.io/docs/admin/kube-apiserver/"
+    }
+  },
+  "Categories": [
+    "Pod Security",
+    "Best Practices"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "SecurityContextDeny is recommended in environments where PodSecurityPolicy is not implemented to prevent potential privilege escalations."
+}
