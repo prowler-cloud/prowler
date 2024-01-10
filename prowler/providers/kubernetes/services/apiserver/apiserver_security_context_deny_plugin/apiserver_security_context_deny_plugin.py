@@ -12,25 +12,27 @@ class apiserver_security_context_deny_plugin(Check):
             report.namespace = pod.namespace
             report.resource_name = pod.name
             report.resource_id = pod.uid
-            report.status = "PASS"
-            report.status_extended = "SecurityContextDeny admission control plugin is set or PodSecurityPolicy is in use."
             security_context_deny_set = False
             pod_security_policy_set = False
             for container in pod.containers.values():
-                if "--enable-admission-plugins" in container.command:
-                    admission_plugins = container.command.split(
-                        "--enable-admission-plugins="
-                    )[1].split(",")
-                    security_context_deny_set = (
-                        "SecurityContextDeny" in admission_plugins
-                    )
-                    pod_security_policy_set = "PodSecurityPolicy" in admission_plugins
+                for command in container.command:
+                    if command.startswith("--enable-admission-plugins"):
+                        if "SecurityContextDeny" in (command.split("=")[1]):
+                            security_context_deny_set = True
+                        if "PodSecurityPolicy" in (command.split("=")[1]):
+                            pod_security_policy_set = True
 
-            if security_context_deny_set or pod_security_policy_set:
+            if pod_security_policy_set:
                 report.status = "PASS"
+                report.status_extended = (
+                    f"PodSecurityPolicy is in use in pod {pod.name}."
+                )
+            elif security_context_deny_set:
+                report.status = "PASS"
+                report.status_extended = f"SecurityContextDeny admission control plugin is set in pod {pod.name}."
             else:
                 report.status = "FAIL"
-                report.status_extended = "Neither SecurityContextDeny nor PodSecurityPolicy admission control plugins are set in container {container.name}."
+                report.status_extended = f"Neither SecurityContextDeny nor PodSecurityPolicy admission control plugins are set in pod {pod.name}."
 
             findings.append(report)
         return findings

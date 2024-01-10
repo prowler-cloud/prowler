@@ -14,20 +14,21 @@ class apiserver_encryption_provider_config_set(Check):
             report.resource_id = pod.uid
             report.status = "PASS"
             report.status_extended = (
-                "Encryption provider config is set appropriately in the API server."
+                f"Encryption provider config is set appropriately in pod {pod.name}."
             )
 
             encryption_provider_config_set = False
             for container in pod.containers.values():
                 # Check if "--encryption-provider-config" is set
-                if "--encryption-provider-config" in container.command:
+                if "--encryption-provider-config" in str(container.command):
                     encryption_provider_config_set = True
                     break
 
             if not encryption_provider_config_set:
-                report.resource_id = container.name
                 report.status = "FAIL"
-                report.status_extended = f"Encryption provider config is not set in container {container.name}."
+                report.status_extended = (
+                    f"Encryption provider config is not set in pod {pod.name}."
+                )
 
             findings.append(report)
         return findings

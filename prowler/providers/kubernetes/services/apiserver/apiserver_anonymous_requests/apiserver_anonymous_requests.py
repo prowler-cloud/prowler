@@ -13,11 +13,15 @@ class apiserver_anonymous_requests(Check):
             report.resource_name = pod.name
             report.resource_id = pod.uid
             report.status = "PASS"
-            report.status_extended = "API Server does not have anonymous-auth enabled."
+            report.status_extended = (
+                f"API Server does not have anonymous-auth enabled in pod {pod.name}."
+            )
             for container in pod.containers.values():
                 if "--anonymous-auth=true" in container.command:
-                    report.resource_id = container.name
+
                     report.status = "FAIL"
-                    report.status_extended = f"API Server has anonymous-auth enabled in container {container.name}."
+                    report.status_extended = (
+                        f"API Server has anonymous-auth enabled in pod {pod.name}."
+                    )
             findings.append(report)
         return findings

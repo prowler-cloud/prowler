@@ -13,21 +13,20 @@ class apiserver_audit_log_path_set(Check):
             report.resource_name = pod.name
             report.resource_id = pod.uid
             report.status = "PASS"
-            report.status_extended = "Audit log path is set in the API server."
+            report.status_extended = (
+                f"Audit log path is set in the API server in pod {pod.name}."
+            )
 
             audit_log_path_set = False
             for container in pod.containers.values():
                 # Check if "--audit-log-path" is set
-                if "--audit-log-path" in container.command:
+                if "--audit-log-path" in str(container.command):
                     audit_log_path_set = True
                     break
 
             if not audit_log_path_set:
-                report.resource_id = container.name
                 report.status = "FAIL"
-                report.status_extended = (
-                    "Audit log path is not set in container {container.name}."
-                )
+                report.status_extended = f"Audit log path is not set in pod {pod.name}."
 
             findings.append(report)
         return findings

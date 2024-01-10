@@ -12,17 +12,14 @@ class apiserver_deny_service_external_ips(Check):
             report.namespace = pod.namespace
             report.resource_name = pod.name
             report.resource_id = pod.uid
-            report.status = "PASS"
-            report.status_extended = (
-                "API Server has DenyServiceExternalIPs admission controller enabled."
-            )
+            report.status = "FAIL"
+            report.status_extended = f"API Server does not have DenyServiceExternalIPs enabled in container in pod {pod.name}."
             for container in pod.containers.values():
-                if (
-                    "--disable-admission-plugins=DenyServiceExternalIPs"
-                    in container.command
-                ):
-                    report.resource_id = container.name
-                    report.status = "FAIL"
-                    report.status_extended = f"API Server does not have DenyServiceExternalIPs enabled in container {container.name}."
+                for command in container.command:
+                    if command.startswith("--disable-admission-plugins"):
+                        if "DenyServiceExternalIPs" in (command.split("=")[1]):
+
+                            report.status = "PASS"
+                            report.status_extended = f"API Server has DenyServiceExternalIPs admission controller enabled in {container.name} within pod {pod.name}."
             findings.append(report)
         return findings

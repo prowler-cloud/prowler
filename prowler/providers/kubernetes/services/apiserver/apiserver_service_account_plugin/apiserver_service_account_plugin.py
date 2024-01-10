@@ -13,29 +13,25 @@ class apiserver_service_account_plugin(Check):
             report.resource_name = pod.name
             report.resource_id = pod.uid
             report.status = "PASS"
-            report.status_extended = "ServiceAccount admission control plugin is set."
+            report.status_extended = (
+                f"ServiceAccount admission control plugin is set in pod {pod.name}."
+            )
 
             service_account_plugin_set = False
             for container in pod.containers.values():
                 # Check if "--enable-admission-plugins" includes "ServiceAccount"
                 # and "--disable-admission-plugins" does not include "ServiceAccount"
-                if "--enable-admission-plugins" in container.command:
-                    admission_plugins = container.command.split(
-                        "--enable-admission-plugins="
-                    )[1].split(",")
-                    if "ServiceAccount" in admission_plugins:
-                        service_account_plugin_set = True
-                if "--disable-admission-plugins" in container.command:
-                    disabled_plugins = container.command.split(
-                        "--disable-admission-plugins="
-                    )[1].split(",")
-                    if "ServiceAccount" in disabled_plugins:
-                        service_account_plugin_set = False
+                for command in container.command:
+                    if command.startswith("--enable-admission-plugins"):
+                        if "ServiceAccount" in (command.split("=")[1]):
+                            service_account_plugin_set = True
+                    elif command.startswith("--disable-admission-plugins"):
+                        if "ServiceAccount" in (command.split("=")[1]):
+                            service_account_plugin_set = False
 
             if not service_account_plugin_set:
-                report.resource_id = container.name
                 report.status = "FAIL"
-                report.status_extended = "ServiceAccount admission control plugin is not set in container {container.name}."
+                report.status_extended = f"ServiceAccount admission control plugin is not set in pod {pod.name}."
 
             findings.append(report)
         return findings

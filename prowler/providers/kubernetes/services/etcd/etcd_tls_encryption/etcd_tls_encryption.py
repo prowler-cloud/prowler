@@ -11,14 +11,17 @@ class etcd_tls_encryption(Check):
             report.resource_name = pod.name
             report.resource_id = pod.uid
             report.status = "FAIL"
-            report.status_extended = "Etcd does not have TLS encryption configured."
+            report.status_extended = (
+                f"Etcd does not have TLS encryption configured in pod {pod.name}."
+            )
             for container in pod.containers.values():
-                if (
-                    "--cert-file" in container.command
-                    and "--key-file" in container.command
+                if "--cert-file" in str(container.command) and "--key-file" in str(
+                    container.command
                 ):
-                    report.resource_id = container.name
+
                     report.status = "PASS"
-                    report.status_extended = "Etcd has configured TLS encryption."
+                    report.status_extended = (
+                        f"Etcd has configured TLS encryption in pod {pod.name}."
+                    )
             findings.append(report)
         return findings

@@ -14,22 +14,22 @@ class apiserver_etcd_tls_config(Check):
             report.resource_id = pod.uid
             report.status = "PASS"
             report.status_extended = (
-                "TLS configuration for etcd is set appropriately in the API server."
+                f"TLS configuration for etcd is set appropriately in pod {pod.name}."
             )
             etcd_tls_config_set = False
             for container in pod.containers.values():
                 # Check if "--etcd-certfile" and "--etcd-keyfile" are set
-                if (
-                    "--etcd-certfile" in container.command
-                    and "--etcd-keyfile" in container.command
-                ):
+                if "--etcd-certfile" in str(
+                    container.command
+                ) and "--etcd-keyfile" in str(container.command):
                     etcd_tls_config_set = True
                     break
 
             if not etcd_tls_config_set:
-                report.resource_id = container.name
                 report.status = "FAIL"
-                report.status_extended = f"TLS configuration for etcd is not set in container {container.name}."
+                report.status_extended = (
+                    f"TLS configuration for etcd is not set in pod {pod.name}."
+                )
 
             findings.append(report)
         return findings

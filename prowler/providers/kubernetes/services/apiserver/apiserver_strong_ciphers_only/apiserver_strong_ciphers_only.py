@@ -13,27 +13,24 @@ class apiserver_strong_ciphers_only(Check):
             report.resource_name = pod.name
             report.resource_id = pod.uid
             report.status = "PASS"
-            report.status_extended = (
-                "API Server is configured with strong cryptographic ciphers."
-            )
-            strong_ciphers_set = False
+            report.status_extended = f"API Server is configured with strong cryptographic ciphers in pod {pod.name}."
+            strong_ciphers_set = True
             for container in pod.containers.values():
                 # Check if strong ciphers are set in "--tls-cipher-suites"
-                if "--tls-cipher-suites" in container.command and all(
-                    cipher in container.command
-                    for cipher in [
-                        "TLS_AES_128_GCM_SHA256",
-                        "TLS_AES_256_GCM_SHA384",
-                        "TLS_CHACHA20_POLY1305_SHA256",
-                    ]
-                ):
-                    strong_ciphers_set = True
-                    break
+                for command in container.command:
+                    if command.startswith("--tls-cipher-suites"):
+                        for cipher in command.split("=")[1].split(","):
+                            if cipher not in [
+                                "TLS_AES_128_GCM_SHA256",
+                                "TLS_AES_256_GCM_SHA384",
+                                "TLS_CHACHA20_POLY1305_SHA256",
+                            ]:
+                                strong_ciphers_set = False
+                                break
 
             if not strong_ciphers_set:
-                report.resource_id = container.name
                 report.status = "FAIL"
-                report.status_extended = "API Server is not using only strong cryptographic ciphers in container {container.name}."
+                report.status_extended = f"API Server is not using only strong cryptographic ciphers in pod {pod.name}."
 
             findings.append(report)
         return findings

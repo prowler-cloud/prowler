@@ -13,23 +13,20 @@ class apiserver_node_restriction_plugin(Check):
             report.resource_name = pod.name
             report.resource_id = pod.uid
             report.status = "PASS"
-            report.status_extended = "NodeRestriction admission control plugin is set."
-
+            report.status_extended = (
+                f"NodeRestriction admission control plugin is set in pod {pod.name}."
+            )
             node_restriction_plugin_set = False
             for container in pod.containers.values():
                 # Check if "--enable-admission-plugins" includes "NodeRestriction"
-                if "--enable-admission-plugins" in container.command:
-                    admission_plugins = container.command.split(
-                        "--enable-admission-plugins="
-                    )[1].split(",")
-                    if "NodeRestriction" in admission_plugins:
-                        node_restriction_plugin_set = True
-                        break
+                for command in container.command:
+                    if command.startswith("--enable-admission-plugins"):
+                        if "NodeRestriction" in (command.split("=")[1]):
+                            node_restriction_plugin_set = True
 
             if not node_restriction_plugin_set:
-                report.resource_id = container.name
                 report.status = "FAIL"
-                report.status_extended = f"NodeRestriction admission control plugin is not set in container {container.name}."
+                report.status_extended = f"NodeRestriction admission control plugin is not set in pod {pod.name}."
 
             findings.append(report)
         return findings

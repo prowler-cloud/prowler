@@ -13,22 +13,17 @@ class apiserver_client_ca_file_set(Check):
             report.resource_name = pod.name
             report.resource_id = pod.uid
             report.status = "PASS"
-            report.status_extended = (
-                "Client CA file is set appropriately in the API server."
-            )
+            report.status_extended = f"Client CA file is set appropriately in the API server in pod {pod.name}."
             client_ca_file_set = False
             for container in pod.containers.values():
                 # Check if "--client-ca-file" is set
-                if "--client-ca-file" in container.command:
+                if "--client-ca-file" in str(container.command):
                     client_ca_file_set = True
                     break
 
             if not client_ca_file_set:
-                report.resource_id = container.name
                 report.status = "FAIL"
-                report.status_extended = (
-                    "Client CA file is not set in container {container.name}."
-                )
+                report.status_extended = f"Client CA file is not set in pod {pod.name}."
 
             findings.append(report)
         return findings

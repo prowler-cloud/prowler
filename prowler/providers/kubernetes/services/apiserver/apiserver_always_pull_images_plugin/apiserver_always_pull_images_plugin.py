@@ -13,19 +13,18 @@ class apiserver_always_pull_images_plugin(Check):
             report.resource_name = pod.name
             report.resource_id = pod.uid
             report.status = "PASS"
-            report.status_extended = "AlwaysPullImages admission control plugin is set."
+            report.status_extended = (
+                f"AlwaysPullImages admission control plugin is set in pod {pod.name}."
+            )
             plugin_set = False
             for container in pod.containers.values():
-                if "--enable-admission-plugins" in container.command:
-                    admission_plugins = container.command.split(
-                        "--enable-admission-plugins="
-                    )[1].split(",")
-                    if "AlwaysPullImages" in admission_plugins:
-                        plugin_set = True
-                        break
+                for command in container.command:
+                    if command.startswith("--enable-admission-plugins"):
+                        if "AlwaysPullImages" in command:
+                            plugin_set = True
+                            break
             if not plugin_set:
-                report.resource_id = container.name
                 report.status = "FAIL"
-                report.status_extended = "AlwaysPullImages admission control plugin is not set in container {container.name}."
+                report.status_extended = f"AlwaysPullImages admission control plugin is not set in pod {pod.name}."
             findings.append(report)
         return findings

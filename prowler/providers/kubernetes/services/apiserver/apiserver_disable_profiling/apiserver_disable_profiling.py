@@ -13,19 +13,16 @@ class apiserver_disable_profiling(Check):
             report.resource_name = pod.name
             report.resource_id = pod.uid
             report.status = "PASS"
-            report.status_extended = "Profiling is disabled in the API server."
-            profiling_enabled = False
+            report.status_extended = f"Profiling is disabled in pod {pod.name}."
+            profiling_enabled = True
             for container in pod.containers.values():
                 # Check if "--profiling" is set to false
-                if "--profiling=false" not in container.command:
-                    profiling_enabled = True
+                if "--profiling=false" in container.command:
+                    profiling_enabled = False
                     break
             if profiling_enabled:
-                report.resource_id = container.name
                 report.status = "FAIL"
-                report.status_extended = (
-                    f"Profiling is enabled in container {container.name}."
-                )
+                report.status_extended = f"Profiling is enabled in pod {pod.name}."
 
             findings.append(report)
         return findings

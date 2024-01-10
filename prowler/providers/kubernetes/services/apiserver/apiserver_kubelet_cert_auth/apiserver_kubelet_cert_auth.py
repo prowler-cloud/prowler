@@ -13,13 +13,11 @@ class apiserver_kubelet_cert_auth(Check):
             report.resource_name = pod.name
             report.resource_id = pod.uid
             report.status = "PASS"
-            report.status_extended = (
-                "API Server has appropriate kubelet certificate authority configured."
-            )
+            report.status_extended = f"API Server has appropriate kubelet certificate authority configured in pod {pod.name}."
             for container in pod.containers.values():
-                if "--kubelet-certificate-authority" not in container.command:
-                    report.resource_id = container.name
+                if "--kubelet-certificate-authority" not in str(container.command):
+
                     report.status = "FAIL"
-                    report.status_extended = f"API Server is missing kubelet certificate authority configuration in container {container.name}."
+                    report.status_extended = f"API Server is missing kubelet certificate authority configuration in pod {pod.name}."
             findings.append(report)
         return findings

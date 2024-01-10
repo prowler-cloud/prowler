@@ -13,11 +13,14 @@ class apiserver_no_token_auth_file(Check):
             report.resource_name = pod.name
             report.resource_id = pod.uid
             report.status = "PASS"
-            report.status_extended = "API Server does not have token-auth-file enabled."
+            report.status_extended = (
+                f"API Server does not have token-auth-file enabled in pod {pod.name}."
+            )
             for container in pod.containers.values():
-                if "--token-auth-file" in container.command:
-                    report.resource_id = container.name
+                if "--token-auth-file" in str(container.command):
                     report.status = "FAIL"
-                    report.status_extended = f"API Server has token-auth-file enabled in container {container.name}."
+                    report.status_extended = (
+                        f"API Server has token-auth-file enabled in pod {pod.name}."
+                    )
             findings.append(report)
         return findings

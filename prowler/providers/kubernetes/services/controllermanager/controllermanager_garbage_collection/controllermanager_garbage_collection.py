@@ -13,13 +13,10 @@ class controllermanager_garbage_collection(Check):
             report.resource_name = pod.name
             report.resource_id = pod.uid
             report.status = "PASS"
-            report.status_extended = (
-                "Controller Manager has an appropriate garbage collection threshold."
-            )
+            report.status_extended = f"Controller Manager has an appropriate garbage collection threshold in pod {pod.name}."
             for container in pod.containers.values():
-                if "--terminated-pod-gc-threshold=12500" in container.command:
-                    report.resource_id = container.name
+                if "--terminated-pod-gc-threshold=12500" in str(container.command):
                     report.status = "FAIL"
-                    report.status_extended = "Controller Manager has the default garbage collection threshold."
+                    report.status_extended = f"Controller Manager has the default garbage collection threshold in pod {pod.name}."
             findings.append(report)
         return findings

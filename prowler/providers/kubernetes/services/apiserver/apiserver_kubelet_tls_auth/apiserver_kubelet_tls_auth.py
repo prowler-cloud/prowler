@@ -13,16 +13,13 @@ class apiserver_kubelet_tls_auth(Check):
             report.resource_name = pod.name
             report.resource_id = pod.uid
             report.status = "PASS"
-            report.status_extended = (
-                "API Server has appropriate kubelet TLS authentication configured."
-            )
+            report.status_extended = f"API Server has appropriate kubelet TLS authentication configured in pod {pod.name}."
             for container in pod.containers.values():
-                if (
-                    "--kubelet-client-certificate" not in container.command
-                    or "--kubelet-client-key" not in container.command
-                ):
-                    report.resource_id = container.name
+                if "--kubelet-client-certificate" not in str(
+                    container.command
+                ) and "--kubelet-client-key" not in str(container.command):
+
                     report.status = "FAIL"
-                    report.status_extended = f"API Server is missing kubelet TLS authentication arguments in container {container.name}."
+                    report.status_extended = f"API Server is missing kubelet TLS authentication arguments in pod {pod.name}."
             findings.append(report)
         return findings

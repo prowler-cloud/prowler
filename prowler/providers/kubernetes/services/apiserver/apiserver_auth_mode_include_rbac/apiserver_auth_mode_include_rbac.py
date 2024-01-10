@@ -13,14 +13,15 @@ class apiserver_auth_mode_include_rbac(Check):
             report.resource_name = pod.name
             report.resource_id = pod.uid
             report.status = "PASS"
-            report.status_extended = "API Server authorization mode includes RBAC."
+            report.status_extended = (
+                f"API Server authorization mode includes RBAC in pod {pod.name}."
+            )
             for container in pod.containers.values():
-                if (
-                    "--authorization-mode" in container.command
-                    and "RBAC" not in container.command
-                ):
-                    report.resource_id = container.name
-                    report.status = "FAIL"
-                    report.status_extended = "API Server authorization mode does not include RBAC in container {container.name}."
+                for command in container.command:
+                    if command.startswith("--authorization-mode"):
+                        if "RBAC" not in (command.split("=")[1]):
+
+                            report.status = "FAIL"
+                            report.status_extended = "API Server authorization mode does not include RBAC in pod {pod.name}."
             findings.append(report)
         return findings

@@ -13,20 +13,19 @@ class apiserver_event_rate_limit(Check):
             report.resource_name = pod.name
             report.resource_id = pod.uid
             report.status = "PASS"
-            report.status_extended = "EventRateLimit admission control plugin is set."
+            report.status_extended = (
+                f"EventRateLimit admission control plugin is set in pod {pod.name}."
+            )
             plugin_set = False
             for container in pod.containers.values():
-                if "--enable-admission-plugins" in container.command:
-                    admission_plugins = container.command.split(
-                        "--enable-admission-plugins="
-                    )[1].split(",")
-                    if "EventRateLimit" not in admission_plugins:
-                        plugin_set = True
-                        break
+                for command in container.command:
+                    if command.startswith("--enable-admission-plugins"):
+                        if "EventRateLimit" not in (command.split("=")[1]):
+                            plugin_set = True
+                            break
             if not plugin_set:
-                report.resource_id = container.name
                 report.status = "FAIL"
-                report.status_extended = f"EventRateLimit admission control plugin is not set in container {container.name}."
+                report.status_extended = f"EventRateLimit admission control plugin is not set in pod {pod.name}."
 
             findings.append(report)
         return findings
