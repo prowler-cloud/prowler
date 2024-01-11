@@ -11,11 +11,13 @@ class rbac_cluster_admin_usage(Check):
             if binding.roleRef.name == "cluster-admin":
                 report = Check_Report_Kubernetes(self.metadata())
                 report.namespace = (
-                    "" if not binding.metadata.namespace else binding.metadata.namespace
+                    "kube-system"
+                    if not binding.metadata.namespace
+                    else binding.metadata.namespace
                 )
                 report.resource_name = binding.metadata.name
                 report.resource_id = binding.metadata.uid
-                report.status = "INFO"
+                report.status = "MANUAL"
                 report.status_extended = f"Cluster Role Binding {binding.metadata.name} uses cluster-admin role."
                 findings.append(report)
         return findings

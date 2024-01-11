@@ -12,12 +12,15 @@ class scheduler_profiling(Check):
             report.namespace = pod.namespace
             report.resource_name = pod.name
             report.resource_id = pod.uid
-            report.status = "PASS"
-            report.status_extended = "Scheduler does not have profiling enabled."
+            report.status = "FAIL"
+            report.status_extended = (
+                f"Scheduler has profiling enabled in pod {pod.name}."
+            )
             for container in pod.containers.values():
-                if "--profiling=true" in container.command:
-                    report.resource_id = container.name
-                    report.status = "FAIL"
-                    report.status_extended = f"Scheduler has profiling enabled in container {container.name}."
+                if "--profiling=false" in str(container.command):
+                    report.status = "PASS"
+                    report.status_extended = (
+                        f"Scheduler does not have profiling enabled in pod {pod.name}."
+                    )
             findings.append(report)
         return findings
