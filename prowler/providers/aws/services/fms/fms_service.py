@@ -69,7 +69,7 @@ class FMS(AWSService):
                     for fms_compliance_status in page.get(
                         "PolicyComplianceStatusList", []
                     ):
-                        compliance_status = ""
+                        compliance_status = None
                         if fms_compliance_status.get("EvaluationResults"):
                             compliance_status = fms_compliance_status.get(
                                 "EvaluationResults"
