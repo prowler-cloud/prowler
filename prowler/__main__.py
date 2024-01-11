@@ -156,6 +156,7 @@ def prowler():
 
     # Set the audit info based on the selected provider
     audit_info = set_provider_audit_info(provider, args.__dict__)
+    print("audit info")
 
     # Import custom checks from folder
     if checks_folder:
