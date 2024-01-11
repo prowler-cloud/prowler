@@ -209,7 +209,7 @@ class Test_cloudtrail_bucket_requires_mfa_delete:
             check = cloudtrail_bucket_requires_mfa_delete()
             result = check.execute()
             assert len(result) == 1
-            assert result[0].status == "INFO"
+            assert result[0].status == "MANUAL"
             assert (
                 result[0].status_extended
                 == f"Trail {trail_name_us} bucket ({bucket_name_us}) is a cross-account bucket in another account out of Prowler's permissions scope, please check it manually."
@@ -262,7 +262,7 @@ class Test_cloudtrail_bucket_requires_mfa_delete:
             check = cloudtrail_bucket_requires_mfa_delete()
             result = check.execute()
             assert len(result) == 1
-            assert result[0].status == "INFO"
+            assert result[0].status == "MANUAL"
             assert (
                 result[0].status_extended
                 == f"Trail {trail_name_us} bucket ({bucket_name_us}) is a cross-account bucket in another account out of Prowler's permissions scope, please check it manually."

@@ -170,7 +170,7 @@ def add_html_header(file_descriptor, audit_info):
 def fill_html(file_descriptor, finding, output_options):
     try:
         row_class = "p-3 mb-2 bg-success-custom"
-        if finding.status == "INFO":
+        if finding.status == "MANUAL":
             row_class = "table-info"
         elif finding.status == "FAIL":
             row_class = "table-danger"

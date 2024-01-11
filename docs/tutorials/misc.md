@@ -12,7 +12,7 @@ prowler <provider> --verbose
 ## Filter findings by status
 Prowler can filter the findings by their status:
 ```console
-prowler <provider> --status [PASS, FAIL, INFO]
+prowler <provider> --status [PASS, FAIL, MANUAL]
 ```
 ## Disable Exit Code 3
 Prowler does not trigger exit code 3 with failed checks:

@@ -20,8 +20,8 @@ def prepare_security_hub_findings(
         security_hub_findings_per_region[region] = []
 
     for finding in findings:
-        # We don't send the INFO findings to AWS Security Hub
-        if finding.status == "INFO":
+        # We don't send the MANUAL findings to AWS Security Hub
+        if finding.status == "MANUAL":
             continue
 
         # We don't send findings to not enabled regions
