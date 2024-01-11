@@ -84,7 +84,7 @@ def prowler():
         print(f"after extended output_modes -> {args.output_modes}\n")
 
     # Set Logger configuration
-    print(f"args.log_level - {args['log_level']} , args.log_file {args['log_file']} , args.only_logs {args['only_logs']}")
+    print(f"args.log_level - {args.log_level} , args.log_file {args.log_file} , args.only_logs {args.only_logs}")
     set_logging_config(args.log_level, args.log_file, args.only_logs)
 
     if args.list_services:
