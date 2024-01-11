@@ -35,7 +35,7 @@ class cloudtrail_logs_s3_bucket_access_logging_enabled(Check):
 
                 # check if trail is delivering logs in a cross account bucket
                 if not trail_bucket_is_in_account:
-                    report.status = "INFO"
+                    report.status = "MANUAL"
                     report.status_extended = f"Trail {trail.name} is delivering logs in a cross-account bucket {trail_bucket} in another account out of Prowler's permissions scope, please check it manually."
                 findings.append(report)
 

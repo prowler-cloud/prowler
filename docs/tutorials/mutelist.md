@@ -1,7 +1,7 @@
 # Mute Listing
 Sometimes you may find resources that are intentionally configured in a certain way that may be a bad practice but it is all right with it, for example an AWS S3 Bucket open to the internet hosting a web site, or an AWS Security Group with an open port needed in your use case.
 
-Mute List option works along with other options and adds a `MUTED` instead of `INFO`, `PASS` or `FAIL` to any output format.
+Mute List option works along with other options and adds a `MUTED` instead of `MANUAL`, `PASS` or `FAIL` to any output format.
 
 You can use `-w`/`--mutelist-file` with the path of your mutelist yaml file, but first, let's review the syntax.
 
