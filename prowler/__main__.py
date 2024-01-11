@@ -78,6 +78,8 @@ def prowler():
 
     # We treat the compliance framework as another output format
     if compliance_framework:
+        print(f"compliance -> {compliance_framework}")
+        print(f"output_modes -> {args.output_modes}\n")
         args.output_modes.extend(compliance_framework)
 
     # Set Logger configuration
