@@ -232,7 +232,11 @@ class RDS(AWSService):
                     for att in response["DBClusterSnapshotAttributes"]:
                         if "all" in att["AttributeValues"]:
                             snapshot.public = True
-
+        except ClientError as error:
+            if error.response["Error"]["Code"] == "DBClusterSnapshotNotFoundFault":
+                logger.warning(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
