@@ -71,7 +71,7 @@ def prowler():
     checks_folder = args.checks_folder
     severities = args.severity
     compliance_framework = args.compliance
-    custom_checks_metadata_file = args.custom_checks_metadata_file
+    custom_checks_metadata_file = False
 
     
     print(f"compliance -> {compliance_framework}\n")
