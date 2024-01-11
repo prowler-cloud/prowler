@@ -81,6 +81,7 @@ def prowler():
         print(f"compliance -> {compliance_framework}")
         print(f"output_modes -> {args.output_modes}\n")
         args.output_modes.extend(compliance_framework)
+        print(f"after extended output_modes -> {args.output_modes}\n")
 
     # Set Logger configuration
     set_logging_config(args.log_level, args.log_file, args.only_logs)
