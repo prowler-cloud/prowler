@@ -430,7 +430,7 @@ def execute_checks(
     # Services and checks executed for the Audit Status
     services_executed = set()
     checks_executed = set()
-
+    print("execute_checks")
     # Initialize the Audit Metadata
     audit_info.audit_metadata = Audit_Metadata(
         services_scanned=0,
@@ -547,6 +547,7 @@ def execute(
     check_module_path = (
         f"prowler.providers.{provider}.services.{service}.{check_name}.{check_name}"
     )
+    print("execute")
     lib = import_check(check_module_path)
     # Recover functions from check
     check_to_execute = getattr(lib, check_name)
