@@ -54,7 +54,7 @@ For Prowler v2 Documentation, please go to https://github.com/prowler-cloud/prow
 # ⚙️ Install
 
 ## Pip package
-Prowler is available as a project in [PyPI](https://pypi.org/project/prowler-cloud/), thus can be installed using pip with Python 3.9, 3.10 or 3.11 (not really tested with 3.12 yet):
+Prowler is available as a project in [PyPI](https://pypi.org/project/prowler-cloud/), thus can be installed using pip with Python >= 3.9, < 3.12:
 
 ```console
 pip install prowler
@@ -77,7 +77,7 @@ The container images are available here:
 
 ## From Github
 
-Python >= 3.9 is required with pip and poetry:
+Python >= 3.9, < 3.12 is required with pip and poetry:
 
 ```
 git clone https://github.com/prowler-cloud/prowler
