@@ -400,6 +400,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "me-central-1",
           "me-south-1",
           "sa-east-1",
           "us-east-1",
@@ -5427,7 +5428,9 @@
           "us-east-1",
           "us-west-2"
         ],
-        "aws-cn": [],
+        "aws-cn": [
+          "cn-north-1"
+        ],
         "aws-us-gov": [
           "us-gov-west-1"
         ]
