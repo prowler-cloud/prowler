@@ -69,11 +69,11 @@ class FMS(AWSService):
                     for fms_compliance_status in page.get(
                         "PolicyComplianceStatusList", []
                     ):
-                        compliance_status = None
+                        compliance_status = ""
                         if fms_compliance_status.get("EvaluationResults"):
                             compliance_status = fms_compliance_status.get(
                                 "EvaluationResults"
-                            )[0].get("ComplianceStatus")
+                            )[0].get("ComplianceStatus", "")
                         fms_policy.compliance_status.append(
                             PolicyAccountComplianceStatus(
                                 account_id=fms_compliance_status.get("MemberAccount"),

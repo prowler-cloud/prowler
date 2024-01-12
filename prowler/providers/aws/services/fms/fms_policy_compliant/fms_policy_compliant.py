@@ -16,7 +16,10 @@ class fms_policy_compliant(Check):
             if fms_client.fms_policies:
                 for policy in fms_client.fms_policies:
                     for policy_to_account in policy.compliance_status:
-                        if policy_to_account.status == "NON_COMPLIANT":
+                        if (
+                            policy_to_account.status == "NON_COMPLIANT"
+                            or not policy_to_account.status
+                        ):
                             report.status = "FAIL"
                             report.status_extended = f"FMS with non-compliant policy {policy.name} for account {policy_to_account.account_id}."
                             report.resource_id = policy.id
