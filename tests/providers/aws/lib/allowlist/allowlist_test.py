@@ -167,6 +167,46 @@ class Test_Allowlist:
         assert len(allowlisted_findings) == 1
         assert allowlisted_findings[0].status == "WARNING"
 
+    def test_allowlist_all_exceptions_empty(self):
+        # Allowlist example
+        allowlist = {
+            "Accounts": {
+                "*": {
+                    "Checks": {
+                        "*": {
+                            "Tags": ["*"],
+                            "Regions": [AWS_REGION_US_EAST_1],
+                            "Resources": ["*"],
+                            "Exceptions": {
+                                "Tags": [],
+                                "Regions": [],
+                                "Accounts": [],
+                                "Resources": [],
+                            },
+                        }
+                    }
+                }
+            }
+        }
+
+        # Check Findings
+        check_findings = []
+        finding_1 = MagicMock
+        finding_1.check_metadata = MagicMock
+        finding_1.check_metadata.CheckID = "check_test"
+        finding_1.status = "FAIL"
+        finding_1.region = AWS_REGION_US_EAST_1
+        finding_1.resource_id = "prowler"
+        finding_1.resource_tags = []
+
+        check_findings.append(finding_1)
+
+        allowlisted_findings = allowlist_findings(
+            allowlist, AWS_ACCOUNT_NUMBER, check_findings
+        )
+        assert len(allowlisted_findings) == 1
+        assert allowlisted_findings[0].status == "WARNING"
+
     def test_is_allowlisted_with_everything_excepted(self):
         allowlist = {
             "Accounts": {
@@ -1185,6 +1225,22 @@ class Test_Allowlist:
             "eu-south-3",
             "test",
             "environment=pro",
+        )
+
+    def test_is_excepted_all_empty(self):
+        exceptions = {
+            "Accounts": [],
+            "Regions": [],
+            "Resources": [],
+            "Tags": [],
+        }
+
+        assert not is_excepted(
+            exceptions,
+            AWS_ACCOUNT_NUMBER,
+            "eu-south-2",
+            "test",
+            "environment=test",
         )
 
     def test_is_allowlisted_in_resource(self):
