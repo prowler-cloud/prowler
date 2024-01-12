@@ -42,7 +42,7 @@ It contains hundreds of controls covering CIS, NIST 800, NIST CSF, CISA, RBI, Fe
 | AWS | 301 | 61 -> `prowler aws --list-services` | 25 -> `prowler aws --list-compliance` | 5 -> `prowler aws --list-categories` |
 | GCP | 73 | 11 -> `prowler gcp --list-services` | 1 -> `prowler gcp --list-compliance` | 2 -> `prowler gcp --list-categories`|
 | Azure | 23 | 4 -> `prowler azure --list-services` | CIS soon | 1 -> `prowler azure --list-categories` |
-| Kubernetes | Planned | - | - | - |
+| Kubernetes | Work In Progress | - | CIS soon | - |
 
 # 📖 Documentation
 
@@ -54,7 +54,7 @@ For Prowler v2 Documentation, please go to https://github.com/prowler-cloud/prow
 # ⚙️ Install
 
 ## Pip package
-Prowler is available as a project in [PyPI](https://pypi.org/project/prowler-cloud/), thus can be installed using pip with Python >= 3.9:
+Prowler is available as a project in [PyPI](https://pypi.org/project/prowler-cloud/), thus can be installed using pip with Python 3.9, 3.10 or 3.11 (not really tested with 3.12 yet):
 
 ```console
 pip install prowler
