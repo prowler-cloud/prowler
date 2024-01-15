@@ -38,7 +38,7 @@ jobs:
           pip install boto3
 
       - name: Configure AWS Credentials -- DEV
-        uses: aws-actions/configure-aws-credentials@v1
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-region: ${{ env.AWS_REGION_DEV }}
           role-to-assume: ${{ secrets.DEV_IAM_ROLE_ARN }}
