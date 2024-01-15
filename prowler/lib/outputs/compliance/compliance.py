@@ -221,11 +221,11 @@ def display_compliance_table(
                 )
             if fail_count + pass_count < 1:
                 print(
-                    f"\n {Style.BRIGHT}There are no resources for {Fore.YELLOW}{compliance_framework.upper()}{Style.RESET_ALL}.\n"
+                    f"\nThere are no resources for {Fore.YELLOW}{compliance_framework.upper()}{Style.RESET_ALL}.\n"
                 )
             else:
                 print(
-                    f"\nEstado de Cumplimiento de {Fore.YELLOW}{compliance.Framework}_{compliance.Version}_{compliance.Provider}{Style.RESET_ALL}:"
+                    f"\nEstado de Cumplimiento de {Fore.YELLOW}{compliance_framework.upper()}{Style.RESET_ALL}:"
                 )
                 overview_table = [
                     [
@@ -236,7 +236,7 @@ def display_compliance_table(
                 print(tabulate(overview_table, tablefmt="rounded_grid"))
                 if not compliance_overview:
                     print(
-                        f"\nResultados de {Fore.YELLOW}{compliance.Framework}_{compliance.Version}_{compliance.Provider}{Style.RESET_ALL}:"
+                        f"\nResultados de {Fore.YELLOW}{compliance_framework.upper()}{Style.RESET_ALL}:"
                     )
                     print(
                         tabulate(
@@ -248,7 +248,9 @@ def display_compliance_table(
                     print(
                         f"{Style.BRIGHT}* Solo aparece el Marco/Categoria que contiene resultados.{Style.RESET_ALL}"
                     )
-                    print(f"\nResultados detallados de {compliance.Framework} en:")
+                    print(
+                        f"\nResultados detallados de {compliance_framework.upper()} en:"
+                    )
                     print(
                         f" - CSV: {output_directory}/compliance/{output_filename}_{compliance_framework}.csv\n"
                     )
@@ -317,11 +319,11 @@ def display_compliance_table(
                     )
             if fail_count + pass_count < 1:
                 print(
-                    f"\n {Style.BRIGHT}There are no resources for {Fore.YELLOW}{compliance_framework.upper()}{Style.RESET_ALL}.\n"
+                    f"\nThere are no resources for {Fore.YELLOW}{compliance_framework.upper()}{Style.RESET_ALL}.\n"
                 )
             else:
                 print(
-                    f"\nCompliance Status of {Fore.YELLOW}{compliance.Framework}_{compliance.Version}{Style.RESET_ALL} Framework:"
+                    f"\nCompliance Status of {Fore.YELLOW}{compliance_framework.upper()}{Style.RESET_ALL} Framework:"
                 )
                 overview_table = [
                     [
@@ -332,7 +334,7 @@ def display_compliance_table(
                 print(tabulate(overview_table, tablefmt="rounded_grid"))
                 if not compliance_overview:
                     print(
-                        f"\nFramework {Fore.YELLOW}{compliance.Framework}_{compliance.Version}{Style.RESET_ALL} Results:"
+                        f"\nFramework {Fore.YELLOW}{compliance_framework.upper()}{Style.RESET_ALL} Results:"
                     )
                     print(
                         tabulate(
@@ -344,7 +346,9 @@ def display_compliance_table(
                     print(
                         f"{Style.BRIGHT}* Only sections containing results appear.{Style.RESET_ALL}"
                     )
-                    print(f"\nDetailed results of {compliance.Framework} are in:")
+                    print(
+                        f"\nDetailed results of {compliance_framework.upper()} are in:"
+                    )
                     print(
                         f" - CSV: {output_directory}/compliance/{output_filename}_{compliance_framework}.csv\n"
                     )
@@ -390,11 +394,11 @@ def display_compliance_table(
                     )
             if fail_count + pass_count < 1:
                 print(
-                    f"\n {Style.BRIGHT}There are no resources for {Fore.YELLOW}{compliance_framework.upper()}{Style.RESET_ALL}.\n"
+                    f"\nThere are no resources for {Fore.YELLOW}{compliance_framework.upper()}{Style.RESET_ALL}.\n"
                 )
             else:
                 print(
-                    f"\nCompliance Status of {Fore.YELLOW}{compliance.Framework}{Style.RESET_ALL} Framework:"
+                    f"\nCompliance Status of {Fore.YELLOW}{compliance_framework.upper()}{Style.RESET_ALL} Framework:"
                 )
                 overview_table = [
                     [
@@ -405,7 +409,7 @@ def display_compliance_table(
                 print(tabulate(overview_table, tablefmt="rounded_grid"))
                 if not compliance_overview:
                     print(
-                        f"\nFramework {Fore.YELLOW}{compliance.Framework}{Style.RESET_ALL} Results:"
+                        f"\nFramework {Fore.YELLOW}{compliance_framework.upper()}{Style.RESET_ALL} Results:"
                     )
                     print(
                         tabulate(
@@ -417,7 +421,9 @@ def display_compliance_table(
                     print(
                         f"{Style.BRIGHT}* Only sections containing results appear.{Style.RESET_ALL}"
                     )
-                    print(f"\nDetailed results of {compliance.Framework} are in:")
+                    print(
+                        f"\nDetailed results of {compliance_framework.upper()} are in:"
+                    )
                     print(
                         f" - CSV: {output_directory}/compliance/{output_filename}_{compliance_framework}.csv\n"
                     )
@@ -441,7 +447,7 @@ def display_compliance_table(
                                     pass_count += 1
             if fail_count + pass_count < 1:
                 print(
-                    f"\n {Style.BRIGHT}There are no resources for {Fore.YELLOW}{compliance_framework.upper()}{Style.RESET_ALL}.\n"
+                    f"\nThere are no resources for {Fore.YELLOW}{compliance_framework.upper()}{Style.RESET_ALL}.\n"
                 )
             else:
                 print(
