@@ -9,8 +9,8 @@ from prowler.providers.azure.lib.service.service import AzureService
 
 ########################## IAM
 class IAM(AzureService):
-    def __init__(self, audit_info):
-        super().__init__(AuthorizationManagementClient, audit_info)
+    def __init__(self, provider):
+        super().__init__(AuthorizationManagementClient, provider)
         self.roles = self.__get_roles__()
 
     def __get_roles__(self):

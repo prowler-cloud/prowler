@@ -11,9 +11,9 @@ from prowler.providers.aws.lib.service.service import AWSService
 
 ################## VPC
 class VPC(AWSService):
-    def __init__(self, audit_info):
+    def __init__(self, provider):
         # Call AWSService's __init__
-        super().__init__("ec2", audit_info)
+        super().__init__("ec2", provider)
         self.vpcs = {}
         self.vpc_peering_connections = []
         self.vpc_endpoints = []

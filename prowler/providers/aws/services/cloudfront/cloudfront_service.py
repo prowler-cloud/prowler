@@ -10,9 +10,9 @@ from prowler.providers.aws.lib.service.service import AWSService
 
 ################## CloudFront
 class CloudFront(AWSService):
-    def __init__(self, audit_info):
+    def __init__(self, provider):
         # Call AWSService's __init__
-        super().__init__(__class__.__name__, audit_info, global_service=True)
+        super().__init__(__class__.__name__, provider, global_service=True)
         self.distributions = {}
         self.__list_distributions__(self.client, self.region)
         self.__get_distribution_config__(self.client, self.distributions, self.region)

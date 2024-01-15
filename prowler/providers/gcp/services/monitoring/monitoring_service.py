@@ -6,8 +6,8 @@ from prowler.providers.gcp.lib.service.service import GCPService
 
 ################## Monitoring
 class Monitoring(GCPService):
-    def __init__(self, audit_info):
-        super().__init__(__class__.__name__, audit_info, api_version="v3")
+    def __init__(self, provider):
+        super().__init__(__class__.__name__, provider, api_version="v3")
         self.alert_policies = []
         self.__get_alert_policies__()
 
