@@ -13,8 +13,8 @@ from prowler.providers.aws.aws_provider import (
 )
 from prowler.providers.aws.lib.arn.arn import parse_iam_credentials_arn
 from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
-from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info, AWS_Credentials
-from prowler.providers.aws.lib.credentials.credentials import validate_aws_credentials
+from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info, AWSCredentials
+from prowler.providers.aws.lib.credentials.credentials import validate_AWSCredentials
 from prowler.providers.aws.lib.organizations.organizations import (
     get_organizations_metadata,
 )
@@ -143,7 +143,7 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
         current_audit_info.original_session = aws_provider.aws_session
         logger.info("Validating credentials ...")
         # Verificate if we have valid credentials
-        caller_identity = validate_aws_credentials(
+        caller_identity = validate_AWSCredentials(
             current_audit_info.original_session, input_regions, sts_endpoint_region
         )
 
@@ -191,7 +191,7 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
                 )
                 logger.info("Role assumed")
                 # Set the info needed to create a session with an assumed role
-                current_audit_info.credentials = AWS_Credentials(
+                current_audit_info.credentials = AWSCredentials(
                     aws_access_key_id=assumed_role_response["Credentials"][
                         "AccessKeyId"
                     ],

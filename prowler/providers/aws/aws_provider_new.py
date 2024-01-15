@@ -22,7 +22,7 @@ from prowler.providers.aws.config import (
 from prowler.providers.aws.lib.arn.arn import parse_iam_credentials_arn
 from prowler.providers.aws.lib.credentials.credentials import (
     create_sts_session,
-    validate_aws_credentials,
+    validate_AWSCredentials,
 )
 from prowler.providers.aws.lib.organizations.organizations import (
     get_organizations_metadata,
@@ -31,7 +31,7 @@ from prowler.providers.common.provider import CloudProvider
 
 
 @dataclass
-class AWS_Organizations_Info:
+class AWSOrganizationsInfo:
     account_details_email: str
     account_details_name: str
     account_details_arn: str
@@ -40,7 +40,7 @@ class AWS_Organizations_Info:
 
 
 @dataclass
-class AWS_Credentials:
+class AWSCredentials:
     aws_access_key_id: str
     aws_session_token: str
     aws_secret_access_key: str
@@ -48,7 +48,7 @@ class AWS_Credentials:
 
 
 @dataclass
-class AWS_Assume_Role:
+class AWSAssumeRole:
     role_arn: str
     session_duration: int
     external_id: str
@@ -57,8 +57,8 @@ class AWS_Assume_Role:
 
 @dataclass
 class AWSAssumeRoleConfiguration:
-    assumed_role_info: AWS_Assume_Role
-    assumed_role_credentials: AWS_Credentials
+    assumed_role_info: AWSAssumeRole
+    assumed_role_credentials: AWSCredentials
 
 
 @dataclass
@@ -95,20 +95,20 @@ class AwsProvider(CloudProvider):
         audited_regions=[],
     )
     assumed_role: AWSAssumeRoleConfiguration = AWSAssumeRoleConfiguration(
-        assumed_role_info=AWS_Assume_Role(
+        assumed_role_info=AWSAssumeRole(
             role_arn=None,
             session_duration=None,
             external_id=None,
             mfa_enabled=False,
         ),
-        assumed_role_credentials=AWS_Credentials(
+        assumed_role_credentials=AWSCredentials(
             aws_access_key_id=None,
             aws_session_token=None,
             aws_secret_access_key=None,
             expiration=None,
         ),
     )
-    organizations_metadata: AWS_Organizations_Info = AWS_Organizations_Info(
+    organizations_metadata: AWSOrganizationsInfo = AWSOrganizationsInfo(
         account_details_email=None,
         account_details_name=None,
         account_details_arn=None,
@@ -164,7 +164,7 @@ class AwsProvider(CloudProvider):
 
         # After the session is created, validate it
         logger.info("Validating credentials ...")
-        caller_identity = validate_aws_credentials(
+        caller_identity = validate_AWSCredentials(
             self.session.session, input_regions, sts_endpoint_region
         )
 
@@ -289,7 +289,7 @@ class AwsProvider(CloudProvider):
             )
             logger.info("Role assumed")
             # Set the info needed to create a session with an assumed role
-            self.assumed_role.assumed_role_credentials = AWS_Credentials(
+            self.assumed_role.assumed_role_credentials = AWSCredentials(
                 aws_access_key_id=assumed_role_response["Credentials"]["AccessKeyId"],
                 aws_session_token=assumed_role_response["Credentials"]["SessionToken"],
                 aws_secret_access_key=assumed_role_response["Credentials"][
