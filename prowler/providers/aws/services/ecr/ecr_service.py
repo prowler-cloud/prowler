@@ -12,10 +12,10 @@ from prowler.providers.aws.lib.service.service import AWSService
 
 ################################ ECR
 class ECR(AWSService):
-    def __init__(self, audit_info):
+    def __init__(self, provider):
         # Call AWSService's __init__
-        super().__init__(__class__.__name__, audit_info)
-        self.registry_id = audit_info.audited_account
+        super().__init__(__class__.__name__, provider)
+        self.registry_id = self.audited_account
         self.registries = {}
         self.__threading_call__(self.__describe_registries_and_repositories__)
         self.__threading_call__(self.__describe_repository_policies__)

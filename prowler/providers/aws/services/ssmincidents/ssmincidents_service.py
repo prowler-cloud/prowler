@@ -14,9 +14,9 @@ from prowler.providers.aws.lib.service.service import AWSService
 
 ################## SSMIncidents
 class SSMIncidents(AWSService):
-    def __init__(self, audit_info):
+    def __init__(self, provider):
         # Call AWSService's __init__
-        super().__init__("ssm-incidents", audit_info)
+        super().__init__("ssm-incidents", provider)
         self.replication_set = []
         self.__list_replication_sets__()
         self.__get_replication_set__()

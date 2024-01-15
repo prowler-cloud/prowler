@@ -22,6 +22,7 @@ from prowler.lib.logger import logger
 from prowler.lib.outputs.outputs import report
 from prowler.lib.utils.utils import open_file, parse_json_file
 from prowler.providers.aws.lib.mutelist.mutelist import mutelist_findings
+from prowler.providers.common.common import get_global_provider
 from prowler.providers.common.models import Audit_Metadata
 from prowler.providers.common.outputs import Provider_Output_Options
 
@@ -425,8 +426,10 @@ def execute_checks(
     services_executed = set()
     checks_executed = set()
 
+    global_provider = get_global_provider()
+
     # Initialize the Audit Metadata
-    audit_info.audit_metadata = Audit_Metadata(
+    global_provider.audit_metadata = Audit_Metadata(
         services_scanned=0,
         expected_checks=checks_to_execute,
         completed_checks=0,
@@ -537,6 +540,7 @@ def execute(
     checks_executed: set,
     custom_checks_metadata: Any,
 ):
+    global_provider = get_global_provider()
     # Import check module
     check_module_path = (
         f"prowler.providers.{provider}.services.{service}.{check_name}.{check_name}"
@@ -556,15 +560,15 @@ def execute(
     # Update Audit Status
     services_executed.add(service)
     checks_executed.add(check_name)
-    audit_info.audit_metadata = update_audit_metadata(
-        audit_info.audit_metadata, services_executed, checks_executed
+    global_provider.audit_metadata = update_audit_metadata(
+        global_provider.audit_metadata, services_executed, checks_executed
     )
 
     # Mute List findings
     if audit_output_options.mutelist_file:
         check_findings = mutelist_findings(
             audit_output_options.mutelist_file,
-            audit_info.audited_account,
+            global_provider.audited_account,
             check_findings,
         )
 

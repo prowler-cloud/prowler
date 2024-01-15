@@ -7,11 +7,11 @@ from colorama import Fore, Style
 from kubernetes import client, config
 
 from prowler.lib.logger import logger
-from prowler.providers.common.provider import CloudProvider
+from prowler.providers.common.provider import Provider
 
 
-class KubernetesProvider(CloudProvider):
-    # TODO change class name from CloudProvider to Provider
+class KubernetesProvider(Provider):
+    # TODO change class name from Provider to Provider
     api_client: Any
     context: dict
     audit_resources: Optional[Any]

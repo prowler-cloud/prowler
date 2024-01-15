@@ -9,8 +9,8 @@ from prowler.providers.azure.lib.service.service import AzureService
 
 ########################## Storage
 class Storage(AzureService):
-    def __init__(self, audit_info):
-        super().__init__(StorageManagementClient, audit_info)
+    def __init__(self, provider):
+        super().__init__(StorageManagementClient, provider)
         self.storage_accounts = self.__get_storage_accounts__()
 
     def __get_storage_accounts__(self):

@@ -9,10 +9,10 @@ from prowler.providers.aws.lib.service.service import AWSService
 
 ################## DocumentDB
 class DocumentDB(AWSService):
-    def __init__(self, audit_info):
+    def __init__(self, provider):
         # Call AWSService's __init__
         self.service_name = "docdb"
-        super().__init__(self.service_name, audit_info)
+        super().__init__(self.service_name, provider)
         self.db_instances = {}
         self.__threading_call__(self.__describe_db_instances__)
         self.__list_tags_for_resource__()

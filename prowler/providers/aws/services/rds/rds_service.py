@@ -10,9 +10,9 @@ from prowler.providers.aws.lib.service.service import AWSService
 
 ################## RDS
 class RDS(AWSService):
-    def __init__(self, audit_info):
+    def __init__(self, provider):
         # Call AWSService's __init__
-        super().__init__(__class__.__name__, audit_info)
+        super().__init__(__class__.__name__, provider)
         self.db_instances = []
         self.db_clusters = {}
         self.db_snapshots = []
