@@ -16,7 +16,7 @@ jobs:
     name: Release Prowler to PyPI
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           ref: ${{ env.GITHUB_BRANCH }}
       - name: Install dependencies
