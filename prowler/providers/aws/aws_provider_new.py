@@ -1,6 +1,7 @@
 import os
 import pathlib
 import sys
+from argparse import Namespace
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Optional
@@ -121,30 +122,29 @@ class AwsProvider(CloudProvider):
     mfa_enabled: bool = False
     ignore_unused_services: bool = False
 
-    def __init__(self, args):
+    def __init__(self, arguments: Namespace):
         logger.info("Setting AWS provider ...")
         # Parse input arguments
         # Assume Role Options
-        arguments = args.__dict__
-        input_role = arguments.get("role")
-        input_session_duration = arguments.get("session_duration")
-        input_external_id = arguments.get("external_id")
+        input_role = arguments.role
+        input_session_duration = arguments.session_duration
+        input_external_id = arguments.external_id
 
         # STS Endpoint Region
-        sts_endpoint_region = arguments.get("sts_endpoint_region")
+        sts_endpoint_region = arguments.sts_endpoint_region
 
         # MFA Configuration (false by default)
-        input_mfa = arguments.get("mfa")
+        input_mfa = arguments.mfa
 
-        input_profile = arguments.get("profile")
-        input_regions = arguments.get("region")
-        organizations_role_arn = arguments.get("organizations_role")
+        input_profile = arguments.profile
+        input_regions = arguments.region
+        organizations_role_arn = arguments.organizations_role
 
         # Set the maximum retries for the standard retrier config
-        aws_retries_max_attempts = arguments.get("aws_retries_max_attempts")
+        aws_retries_max_attempts = arguments.aws_retries_max_attempts
 
         # Set if unused services must be ignored
-        ignore_unused_services = arguments.get("ignore_unused_services")
+        ignore_unused_services = arguments.ignore_unused_services
 
         # Set the maximum retries for the standard retrier config
         self.session.session_config = self.__set_session_config__(
@@ -217,17 +217,17 @@ class AwsProvider(CloudProvider):
         else:
             self.identity.profile_region = "us-east-1"
 
-        if not arguments.get("only_logs"):
+        if not arguments.only_logs:
             self.print_credentials()
 
         # Parse Scan Tags
-        if arguments.get("resource_tags"):
-            input_resource_tags = arguments.get("resource_tags")
+        if arguments.resource_tags:
+            input_resource_tags = arguments.resource_tags
             self.audit_resources = self.get_tagged_resources(input_resource_tags)
 
         # Parse Input Resource ARNs
-        if arguments.get("resource_arn"):
-            self.audit_resources = arguments.get("resource_arn")
+        if arguments.resource_arn:
+            self.audit_resources = arguments.resource_arn
 
     def setup_session(self, input_mfa: bool):
         logger.info("Creating regular session ...")
