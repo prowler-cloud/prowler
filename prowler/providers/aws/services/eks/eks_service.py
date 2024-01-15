@@ -4,16 +4,14 @@ from pydantic import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
-from prowler.providers.aws.aws_provider import generate_regional_clients
 from prowler.providers.aws.lib.service.service import AWSService
 
 
 ################################ EKS
 class EKS(AWSService):
-    def __init__(self, audit_info):
+    def __init__(self, provider):
         # Call AWSService's __init__
-        super().__init__(__class__.__name__, audit_info)
-        self.regional_clients = generate_regional_clients(self.service, audit_info)
+        super().__init__(__class__.__name__, provider)
         self.clusters = []
         self.__threading_call__(self.__list_clusters__)
         self.__describe_cluster__(self.regional_clients)

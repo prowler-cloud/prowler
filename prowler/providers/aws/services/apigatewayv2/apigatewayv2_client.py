@@ -1,6 +1,6 @@
-from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
 from prowler.providers.aws.services.apigatewayv2.apigatewayv2_service import (
     ApiGatewayV2,
 )
+from prowler.providers.common.common import get_global_provider
 
-apigatewayv2_client = ApiGatewayV2(current_audit_info)
+apigatewayv2_client = ApiGatewayV2(get_global_provider())

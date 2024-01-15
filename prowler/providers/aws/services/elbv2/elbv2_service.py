@@ -10,9 +10,9 @@ from prowler.providers.aws.lib.service.service import AWSService
 
 ################### ELBv2
 class ELBv2(AWSService):
-    def __init__(self, audit_info):
+    def __init__(self, provider):
         # Call AWSService's __init__
-        super().__init__(__class__.__name__, audit_info)
+        super().__init__(__class__.__name__, provider)
         self.loadbalancersv2 = []
         self.__threading_call__(self.__describe_load_balancers__)
         self.listeners = []

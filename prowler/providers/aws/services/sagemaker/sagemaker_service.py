@@ -10,9 +10,9 @@ from prowler.providers.aws.lib.service.service import AWSService
 
 ################################ SageMaker
 class SageMaker(AWSService):
-    def __init__(self, audit_info):
+    def __init__(self, provider):
         # Call AWSService's __init__
-        super().__init__(__class__.__name__, audit_info)
+        super().__init__(__class__.__name__, provider)
         self.sagemaker_notebook_instances = []
         self.sagemaker_models = []
         self.sagemaker_training_jobs = []

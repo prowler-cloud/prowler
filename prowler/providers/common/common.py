@@ -3,8 +3,11 @@ from typing import Any
 
 providers_prowler_lib_path = "prowler.providers"
 
-# SHARED PROVIDER OBJECT ACROSS ALL PROWLER CODE
 global_provider = None
+
+
+def get_global_provider():
+    return global_provider
 
 
 def set_provider(provider, arguments) -> Any:
