@@ -10,7 +10,7 @@ from pydantic import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.providers.azure.lib.regions.regions import get_regions_config
-from prowler.providers.common.provider import CloudProvider
+from prowler.providers.common.provider import Provider
 
 
 class AzureIdentityInfo(BaseModel):
@@ -28,7 +28,7 @@ class AzureRegionConfig(BaseModel):
     credential_scopes: list = []
 
 
-class AzureProvider(CloudProvider):
+class AzureProvider(Provider):
     session: DefaultAzureCredential
     identity: AzureIdentityInfo
     audit_resources: Optional[Any]

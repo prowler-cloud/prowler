@@ -28,7 +28,7 @@ from prowler.providers.aws.lib.credentials.credentials import (
 from prowler.providers.aws.lib.organizations.organizations import (
     get_organizations_metadata,
 )
-from prowler.providers.common.provider import CloudProvider
+from prowler.providers.common.provider import Provider
 
 
 @dataclass
@@ -81,7 +81,7 @@ class AWSSession:
     original_session: None
 
 
-class AwsProvider(CloudProvider):
+class AwsProvider(Provider):
     session: AWSSession = AWSSession(
         session=None, session_config=None, original_session=None
     )
