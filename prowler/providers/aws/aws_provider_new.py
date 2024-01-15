@@ -116,8 +116,8 @@ class AwsProvider(CloudProvider):
         account_details_org=None,
         account_details_tags=None,
     )
-    audit_resources: Optional[Any] = None
-    audit_metadata: Optional[Any] = None
+    audit_resources: Optional[Any]
+    audit_metadata: Optional[Any]
     audit_config: dict = {}
     mfa_enabled: bool = False
     ignore_unused_services: bool = False

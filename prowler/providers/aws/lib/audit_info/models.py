@@ -50,6 +50,6 @@ class AWS_Audit_Info:
     audited_regions: list
     audit_resources: list
     organizations_metadata: AWSOrganizationsInfo
-    audit_metadata: Optional[Any] = None
+    audit_metadata: Optional[Any]
     audit_config: Optional[dict] = None
     ignore_unused_services: bool = False
