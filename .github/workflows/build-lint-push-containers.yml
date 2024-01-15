@@ -36,7 +36,7 @@ jobs:
 
       - name: Setup python (release)
         if: github.event_name == 'release'
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
