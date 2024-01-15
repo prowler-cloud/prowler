@@ -9,20 +9,20 @@ from prowler.providers.aws.lib.service.service import AWSService
 
 ################################ TrustedAdvisor
 class TrustedAdvisor(AWSService):
-    def __init__(self, audit_info):
+    def __init__(self, provider):
         # Call AWSService's __init__
-        super().__init__("support", audit_info)
+        super().__init__("support", provider)
         self.checks = []
         self.premium_support = PremiumSupport(enabled=False)
         # Support API is not available in China Partition
         # But only in us-east-1 or us-gov-west-1 https://docs.aws.amazon.com/general/latest/gr/awssupport.html
-        if audit_info.audited_partition != "aws-cn":
-            if audit_info.audited_partition == "aws":
+        if provider.audited_partition != "aws-cn":
+            if provider.audited_partition == "aws":
                 support_region = "us-east-1"
             else:
                 support_region = "us-gov-west-1"
 
-            self.client = audit_info.audit_session.client(
+            self.client = provider.audit_session.client(
                 self.service, region_name=support_region
             )
             self.client.region = support_region

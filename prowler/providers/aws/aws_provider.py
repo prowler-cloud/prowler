@@ -11,7 +11,7 @@ from prowler.lib.check.check import list_modules, recover_checks_from_service
 from prowler.lib.logger import logger
 from prowler.lib.utils.utils import open_file, parse_json_file
 from prowler.providers.aws.config import AWS_STS_GLOBAL_ENDPOINT_REGION
-from prowler.providers.aws.lib.audit_info.models import AWS_Assume_Role, AWS_Audit_Info
+from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info, AWSAssumeRole
 from prowler.providers.aws.lib.credentials.credentials import create_sts_session
 
 
@@ -109,7 +109,7 @@ class AWS_Provider:
 
 def assume_role(
     session: session.Session,
-    assumed_role_info: AWS_Assume_Role,
+    assumed_role_info: AWSAssumeRole,
     sts_endpoint_region: str = None,
 ) -> dict:
     try:

@@ -1,6 +1,6 @@
-from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
 from prowler.providers.aws.services.codeartifact.codeartifact_service import (
     CodeArtifact,
 )
+from prowler.providers.common.common import get_global_provider
 
-codeartifact_client = CodeArtifact(current_audit_info)
+codeartifact_client = CodeArtifact(get_global_provider())

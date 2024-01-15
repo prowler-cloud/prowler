@@ -48,9 +48,9 @@ def is_service_role(role):
 
 ################## IAM
 class IAM(AWSService):
-    def __init__(self, audit_info):
+    def __init__(self, provider):
         # Call AWSService's __init__
-        super().__init__(__class__.__name__, audit_info)
+        super().__init__(__class__.__name__, provider)
         self.users = self.__get_users__()
         self.roles = self.__get_roles__()
         self.account_summary = self.__get_account_summary__()

@@ -8,10 +8,10 @@ from google.oauth2.credentials import Credentials
 from googleapiclient import discovery
 
 from prowler.lib.logger import logger
-from prowler.providers.common.provider import CloudProvider
+from prowler.providers.common.provider import Provider
 
 
-class GcpProvider(CloudProvider):
+class GcpProvider(Provider):
     session: Credentials
     default_project_id: str
     project_ids: list

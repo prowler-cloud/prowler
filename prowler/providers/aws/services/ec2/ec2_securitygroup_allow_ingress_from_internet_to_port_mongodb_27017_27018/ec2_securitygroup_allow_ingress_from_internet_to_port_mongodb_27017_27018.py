@@ -10,7 +10,7 @@ class ec2_securitygroup_allow_ingress_from_internet_to_port_mongodb_27017_27018(
         check_ports = [27017, 27018]
         for security_group in ec2_client.security_groups:
             # Check if ignoring flag is set and if the VPC and the SG is in use
-            if not ec2_client.audit_info.ignore_unused_services or (
+            if not ec2_client.provider.ignore_unused_services or (
                 security_group.vpc_id in vpc_client.vpcs
                 and vpc_client.vpcs[security_group.vpc_id].in_use
                 and len(security_group.network_interfaces) > 0
