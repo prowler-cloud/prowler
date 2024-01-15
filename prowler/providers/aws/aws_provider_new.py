@@ -126,25 +126,25 @@ class AwsProvider(CloudProvider):
         logger.info("Setting AWS provider ...")
         # Parse input arguments
         # Assume Role Options
-        input_role = arguments.role
-        input_session_duration = arguments.session_duration
-        input_external_id = arguments.external_id
+        input_role = getattr(arguments, "role", None)
+        input_session_duration = getattr(arguments, "session_duration", None)
+        input_external_id = getattr(arguments, "external_id", None)
 
         # STS Endpoint Region
-        sts_endpoint_region = arguments.sts_endpoint_region
+        sts_endpoint_region = getattr(arguments, "sts_endpoint_region", None)
 
         # MFA Configuration (false by default)
-        input_mfa = arguments.mfa
+        input_mfa = getattr(arguments, "mfa", None)
 
-        input_profile = arguments.profile
-        input_regions = arguments.region
-        organizations_role_arn = arguments.organizations_role
+        input_profile = getattr(arguments, "profile", None)
+        input_regions = getattr(arguments, "region", None)
+        organizations_role_arn = getattr(arguments, "organizations_role", None)
 
         # Set the maximum retries for the standard retrier config
-        aws_retries_max_attempts = arguments.aws_retries_max_attempts
+        aws_retries_max_attempts = getattr(arguments, "aws_retries_max_attempts", None)
 
         # Set if unused services must be ignored
-        ignore_unused_services = arguments.ignore_unused_services
+        ignore_unused_services = getattr(arguments, "ignore_unused_services", None)
 
         # Set the maximum retries for the standard retrier config
         self.session.session_config = self.__set_session_config__(
@@ -217,17 +217,16 @@ class AwsProvider(CloudProvider):
         else:
             self.identity.profile_region = "us-east-1"
 
-        if not arguments.only_logs:
+        if not getattr(arguments, "only_logs", None):
             self.print_credentials()
 
         # Parse Scan Tags
-        if arguments.resource_tags:
+        if getattr(arguments, "resource_tags", None):
             input_resource_tags = arguments.resource_tags
             self.audit_resources = self.get_tagged_resources(input_resource_tags)
 
         # Parse Input Resource ARNs
-        if arguments.resource_arn:
-            self.audit_resources = arguments.resource_arn
+        self.audit_resources = getattr(arguments, "resource_arn", None)
 
     def setup_session(self, input_mfa: bool):
         logger.info("Creating regular session ...")
