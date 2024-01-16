@@ -52,13 +52,13 @@ jobs:
           poetry version ${{ github.event.release.tag_name }}
 
       - name: Login to DockerHub
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Login to Public ECR
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           registry: public.ecr.aws
           username: ${{ secrets.PUBLIC_ECR_AWS_ACCESS_KEY_ID }}
