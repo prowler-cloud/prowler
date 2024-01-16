@@ -334,7 +334,6 @@ def fill_compliance(output_options, finding, audit_info, file_descriptors):
                                 Requirements_Attributes_SubGroup=attribute.SubGroup,
                                 Requirements_Attributes_Service=attribute.Service,
                                 Requirements_Attributes_Type=attribute.Type,
-                                Requirements_Attributes_Soc_Type=attribute.Soc_Type,
                                 Status=finding.status,
                                 StatusExtended=finding.status_extended,
                                 ResourceId=finding.resource_id,
