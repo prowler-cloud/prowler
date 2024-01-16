@@ -276,12 +276,12 @@ class IntroSection:
 [info]Date: {timestamp.strftime('%Y-%m-%d %H:%M:%S')}[/info]
         """
 
-        if args.verbose or args.quiet or True:
+        if args.verbose:
             banner_text += """
 Color code for results:
 - [info]INFO (Information)[/info]
 - [pass]PASS (Recommended value)[/pass]
-- [orange_color]WARNING (Ignored by allowlist)[/orange_color]
+- [orange_color]WARNING (Ignored by mutelist)[/orange_color]
 - [fail]FAIL (Fix required)[/fail]
                 """
         self.renderables.append(banner_text)

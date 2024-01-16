@@ -6,6 +6,7 @@ import sys
 
 from colorama import Fore, Style
 
+from prowler.config.config import get_available_compliance_frameworks
 from prowler.lib.check.check import (
     bulk_load_checks_metadata,
     bulk_load_compliance_frameworks,
@@ -38,7 +39,6 @@ from prowler.lib.outputs.outputs import extract_findings_statistics
 from prowler.lib.outputs.slack import send_slack_message
 from prowler.lib.outputs.summary_table import display_summary_table
 from prowler.lib.ui.live_display import live_display
-from prowler.providers.aws.aws_provider import get_available_aws_service_regions
 from prowler.providers.aws.lib.s3.s3 import send_to_s3_bucket
 from prowler.providers.aws.lib.security_hub.security_hub import (
     batch_send_to_security_hub,

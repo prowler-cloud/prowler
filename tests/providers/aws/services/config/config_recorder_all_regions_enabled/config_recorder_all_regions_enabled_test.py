@@ -144,7 +144,7 @@ class Test_config_recorder_all_regions_enabled:
         current_audit_info = set_mocked_aws_audit_info(
             audited_regions=[AWS_REGION_EU_SOUTH_2, AWS_REGION_US_EAST_1],
             profile_region=AWS_REGION_EU_SOUTH_2,
-            audit_config={"allowlist_non_default_regions": True},
+            audit_config={"mutelist_non_default_regions": True},
         )
 
         with mock.patch(

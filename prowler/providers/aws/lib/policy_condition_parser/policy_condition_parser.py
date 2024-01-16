@@ -4,7 +4,7 @@ def is_condition_block_restrictive(
     """
     is_condition_block_restrictive parses the IAM Condition policy block and, by default, returns True if the source_account passed as argument is within, False if not.
 
-    If argument is_cross_account_allowed is True it tests if the Condition block includes any of the operators allowlisted returning True if does, False if not.
+    If argument is_cross_account_allowed is True it tests if the Condition block includes any of the operators mutelisted returning True if does, False if not.
 
 
     @param condition_statement: dict with an IAM Condition block, e.g.:

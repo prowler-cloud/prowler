@@ -13,7 +13,8 @@ from prowler.lib.check.models import Check
 from prowler.lib.logger import logger
 from prowler.lib.outputs.outputs import report
 from prowler.lib.ui.live_display import live_display
-from prowler.providers.aws.lib.allowlist.allowlist import allowlist_findings
+from prowler.providers.aws.lib.mutelist.mutelist import mutelist_findings
+from prowler.providers.common.common import get_global_provider
 from prowler.providers.common.models import Audit_Metadata
 from prowler.providers.common.outputs import Provider_Output_Options
 
@@ -185,7 +186,17 @@ class ExecutionManager:
     def execute_checks(self) -> list:
         # List to store all the check's findings
         all_findings = []
+        # Services and checks executed for the Audit Status
 
+        global_provider = get_global_provider()
+
+        # Initialize the Audit Metadata
+        global_provider.audit_metadata = Audit_Metadata(
+            services_scanned=0,
+            expected_checks=self.checks_to_execute,
+            completed_checks=0,
+            audit_progress=0,
+        )
         if os.name != "nt":
             try:
                 from resource import RLIMIT_NOFILE, getrlimit
@@ -263,51 +274,56 @@ class ExecutionManager:
         service: str,
         check_name: str,
     ):
-        # Import check module
-        check_module_path = f"prowler.providers.{self.provider}.services.{service}.{check_name}.{check_name}"
-        lib = self.import_check(check_module_path)
-        # Recover functions from check
-        check_to_execute = getattr(lib, check_name)
-        c = check_to_execute()
+        try:
+            # Import check module
+            check_module_path = f"prowler.providers.{self.provider}.services.{service}.{check_name}.{check_name}"
+            lib = self.import_check(check_module_path)
+            # Recover functions from check
+            check_to_execute = getattr(lib, check_name)
+            c = check_to_execute()
 
-        # Update check metadata to reflect that in the outputs
-        if self.custom_checks_metadata and self.custom_checks_metadata["Checks"].get(
-            c.CheckID
-        ):
-            c = update_check_metadata(
-                c, self.custom_checks_metadata["Checks"][c.CheckID]
-            )
-
-        # Run check
-        check_findings = self.run_check(c, self.audit_output_options)
-
-        # Update Audit Status
-        self.update_tracking(service, check_name)
-        self.update_audit_metadata()
-
-        # Allowlist findings
-        if self.audit_output_options.allowlist_file:
-            check_findings = allowlist_findings(
-                self.audit_output_options.allowlist_file,
-                self.audit_info.audited_account,
-                check_findings,
-            )
-
-        # Report the check's findings
-        report(check_findings, self.audit_output_options, self.audit_info)
-
-        if os.environ.get("PROWLER_REPORT_LIB_PATH"):
-            try:
-                logger.info("Using custom report interface ...")
-                lib = os.environ["PROWLER_REPORT_LIB_PATH"]
-                outputs_module = importlib.import_module(lib)
-                custom_report_interface = getattr(outputs_module, "report")
-
-                custom_report_interface(
-                    check_findings, self.audit_output_options, self.audit_info
+            # Update check metadata to reflect that in the outputs
+            if self.custom_checks_metadata and self.custom_checks_metadata[
+                "Checks"
+            ].get(c.CheckID):
+                c = update_check_metadata(
+                    c, self.custom_checks_metadata["Checks"][c.CheckID]
                 )
-            except Exception:
-                sys.exit(1)
+
+            # Run check
+            check_findings = self.run_check(c, self.audit_output_options)
+
+            # Update Audit Status
+            self.update_tracking(service, check_name)
+            self.update_audit_metadata()
+
+            # Mutelist findings
+            if self.audit_output_options.mutelist_file:
+                check_findings = mutelist_findings(
+                    self.audit_output_options.mutelist_file,
+                    self.audit_info.audited_account,
+                    check_findings,
+                )
+
+            # Report the check's findings
+            report(check_findings, self.audit_output_options, self.audit_info)
+
+            if os.environ.get("PROWLER_REPORT_LIB_PATH"):
+                try:
+                    logger.info("Using custom report interface ...")
+                    lib = os.environ["PROWLER_REPORT_LIB_PATH"]
+                    outputs_module = importlib.import_module(lib)
+                    custom_report_interface = getattr(outputs_module, "report")
+
+                    custom_report_interface(
+                        check_findings, self.audit_output_options, self.audit_info
+                    )
+                except Exception:
+                    sys.exit(1)
+        except Exception as error:
+            logger.error(
+                f"{check_name} - {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
 
         return check_findings
 
