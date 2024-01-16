@@ -612,11 +612,11 @@ class Check_Output_CSV_Generic_Compliance(BaseModel):
     Requirements_Id: str
     Requirements_Name: Optional[str]
     Requirements_Description: str
+    Requirements_Attributes_ItemId: Optional[str]
     Requirements_Attributes_Section: Optional[str]
     Requirements_Attributes_SubSection: Optional[str]
     Requirements_Attributes_SubGroup: Optional[str]
     Requirements_Attributes_Service: Optional[str]
-    Requirements_Attributes_Name: Optional[str]
     Requirements_Attributes_Type: Optional[str]
     Requirements_Attributes_Soc_Type: Optional[str]
     Status: str

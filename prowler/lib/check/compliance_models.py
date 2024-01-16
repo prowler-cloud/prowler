@@ -58,8 +58,6 @@ class Generic_Compliance_Requirement_Attribute(BaseModel):
     SubGroup: Optional[str]
     Service: Optional[str]
     Soc_Type: Optional[str]
-    Control: Optional[str]
-    Name: Optional[str]
     Type: Optional[str]
 
 

@@ -10,39 +10,48 @@
         "Description": "Deploy an account from predefined IaC template",
         "Attributes": [
           {
-            "Section": "Predefine-IAM-Roles",
-            "Name": "Predefine IAM Roles"
+            "Section": "Predefine IAM Roles",
+            "Service": "IAM"
           },
           {
-            "Section": "Enabled-security-services",
-            "Name": "Enabled security services"
+            "Section": "Enabled security services"
           },
           {
-            "Section": "IDC-integration-SSO-configuration",
-            "Name": "IDC integratio and SSO configuration for AWS Account"
+            "Section": "IDC integration and SSO configuration for AWS Account"
           },
           {
-            "Section": "Organizarion-invitation",
-            "Name": "Organizarion invitation"
+            "Section": "Organization invitation",
+            "Service": "Organizations"
           },
           {
-            "Section": "Billing-emergency-and-security-contacts",
-            "Name": "Billing, emergency, and security contacts"
+            "Section": "Billing, emergency, and security contacts",
+            "Service": "Billing"
+
           },
           {
-            "Section": "Root-user-distribution-email-MFA",
-            "Name": "Root user have distribute email + MFA"
+            "Section": "Root user have distribute email + MFA",
+            "Service": "IAM"
           },
           {
-            "Section": "S3-Block-Public-Access",
-            "Name": "S3 Block Public Access"
+            "Section": "S3 Block Public Access",
+            "Service": "S3"
           },
           {
-            "Section": "Disable-AMI-public-sharing",
-            "Name": "Disable AMI public sharing"
+            "Section": "Disable AMI public sharing",
+            "Service": "EC2"
           }
         ],
-        "Checks": []
+        "Checks": [
+          "iam_no_custom_policy_permissive_role_assumption",
+          "iam_policy_attached_only_to_group_or_roles",
+          "iam_support_role_created",
+          "iam_role_cross_service_confused_deputy_prevention",
+          "account_maintain_current_contact_details",
+          "account_security_contact_information_is_registered",
+          "iam_root_mfa_enabled",
+          "cloudtrail_logs_s3_bucket_is_not_publicly_accessible",
+          "ec2_ami_public"
+        ]
       },
       {
         "Id": "SPCS",
@@ -50,12 +59,23 @@
         "Description": "SPCS in your AWS Account.",
         "Attributes": [
           {
-            "Section": "SPCS-Based",
-            "Name": "Apply existing SPCS based on OU placement"
+            "Section": "Apply existing SPCS based on OU placement",
+            "SubSection": "Block unused regions"
           },
           {
-            "Section": "Custom-SPCS",
-            "Name": "Add custom SPCS if required"
+            "Section": "Apply existing SPCS based on OU placement",
+            "SubSection": "Block tampering with security-related settings and services"
+          },
+          {
+            "Section": "Apply existing SPCS based on OU placement",
+            "SubSection": "Restrict instances types"
+          },
+          {
+            "Section": "Apply existing SPCS based on OU placement",
+            "SubSection": "Block root user"
+          },
+          {
+            "Section": "Add custom SPCS if required"
           }
         ],
         "Checks": [
@@ -68,26 +88,25 @@
         "Description": "Logging in your AWS Account.",
         "Attributes": [
           {
-            "Section": "DNS-Resolver-Queries-SIEM",
-            "Name": "Send DNS resolvers queries to SIEM"
+            "Section": "Send DNS resolvers queries to SIEM",
+            "Service": "DNS"
           },
           {
-            "Section": "VPC-Flow-Logs",
-            "Name": "Send VPC flow logs (only denys) to S3 bucket"
+            "Section": "Send VPC flow logs (only denys) to S3 bucket",
+            "Service": "VPC"
+
           },
           {
-            "Section": "S3-Logs-Critical-Buckets",
-            "Name": "Send S3 access logs for critical buckets to separate S3 bucket"
+            "Section": "Send S3 access logs for critical buckets to separate S3 bucket",
+            "Service": "S3"
           },
           {
-            "Section": "ALB-CFD-To-SIEM",
-            "Name": "Establish ready-to-be-enabled pipelines to deliver ALB and CFD to SIEM to toggle in case of emergency and investigations"
+            "Section": "Establish ready-to-be-enabled pipelines to deliver ALB and CFD to SIEM to toggle in case of emergency and investigations"
           }
         ],
         "Checks": [
             "cloudtrail_logs_s3_bucket_access_logging_enabled",
-            "cloudtrail_s3_dataevents_write_enabled",
-            "cloudtrail_cloudwatch_logging_enabled"
+            "cloudtrail_s3_dataevents_write_enabled"
         ]
       },
       {
@@ -96,61 +115,85 @@
         "Description": "Enable alerts in your AWS Account.",
         "Attributes": [
           {
-            "Section": "Guardutty",
-            "Name": "GuardDuty"
+            "Section": "GuardDuty",
+            "SubSection": "Alert on each High finding",
+            "Service": "GuardDuty"
+          },
+          {
+            "Section": "GuardDuty",
+            "SubSection": "Alerts based on aggregated findings with severity Medium and below",
+            "Service": "GuardDuty"
           },
           {
             "Section": "Cloudtrail",
-            "Name": "Cloudtrail"
+            "SubSection": "Critical alert on every root user activity",
+            "Service": "CloudTrail"
           },
           {
-            "Section": "Cost-Anomaly",
-            "Name": "Cost-Anomaly"
+            "Section": "Cloudtrail",
+            "SubSection": "Critical alert on cloudtrail settings changes",
+            "Service": "CloudTrail"
+          },
+          {
+            "Section": "Cloudtrail",
+            "SubSection": "Alert on rise of ConsoleLoginFailures events",
+            "Service": "CloudTrail"
+          },
+          {
+            "Section": "Cloudtrail",
+            "SubSection": "Alert on IAM user changes",
+            "Service": "CloudTrail"
+          },
+          {
+            "Section": "Cloudtrail",
+            "SubSection": "Alert on snapshot manipulations",
+            "Service": "CloudTrail"
+          },
+          {
+            "Section": "Cost Anomaly",
+            "Service": "Billing"
           },
           {
             "Section": "SecurityHub",
-            "Name": "SecurityHub"
+            "SubSection": "Alerts based on (at least) each new CRITICAL finding",
+            "Service": "SecurityHub"
+          },
+          {
+            "Section": "SecurityHub",
+            "SubSection": "Realert on inactivity in a set period",
+            "Service": "SecurityHub"
           },
           {
             "Section": "WAF",
-            "Name": "WAF"
+            "SubSection": "Alerts based on rate-based rules",
+            "Service": "WAF"
+          },
+          {
+            "Section": "WAF",
+            "SubSection": "Alerts based on high amount of blocked requests by managed rules",
+            "Service": "WAF"
           },
           {
             "Section": "Shield",
-            "Name": "Shield"
+            "SubSection": "Alert based on DDoSDetected metric",
+            "Service": "Shield"
           },
           {
-            "Section": "R53-DNS-Resolver",
-            "Name": "R53-DNS-Resolver"
+            "Section": "Shield",
+            "SubSection": "Adopt incident response guide and prepared battle card",
+            "Service": "Shield"
           },
           {
-            "Section": "Vulnerability-Scanning",
-            "Name": "Vulnerability-Scanning"
+            "Section": "R53 DNS Resolver",
+            "Service": "Route53"
           },
           {
-            "Section": "Prod",
-            "Name": "Prod"
-          },
-          {
-            "Section": "QA",
-            "Name": "QA"
+            "Section": "Vulnerability Scanning",
+            "Service": "Inspector"
           }
         ],
         "Checks": [
-          "guardduty_is_enabled",
-          "guardduty_no_high_severity_findings",
-          "route53_domains_privacy_protection_enabled",
-          "securityhub_enabled",
-          "elbv2_waf_acl_attached",
-          "apigateway_restapi_waf_acl_attached",
-          "shield_advanced_protection_in_associated_elastic_ips",
-          "shield_advanced_protection_in_classic_load_balancers",
-          "shield_advanced_protection_in_cloudfront_distributions",
-          "shield_advanced_protection_in_global_accelerators",
-          "shield_advanced_protection_in_internet_facing_load_balancers",
-          "shield_advanced_protection_in_route53_hosted_zones",
-          "ecr_repositories_scan_images_on_push_enabled",
-          "ecr_repositories_scan_vulnerabilities_in_latest_image"
+          "cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled"
         ]
       },
       {
@@ -159,12 +202,17 @@
         "Description": "Budget Alarms for your AWS Account.",
         "Attributes": [
           {
-            "Section": "Prod",
-            "Name": "Prod"
+            "Section": "Prod"
           },
           {
             "Section": "QA",
-            "Name": "QA"
+            "SubSection": "Create Cost Anomaly Detection monitors to alert spending anomalies",
+            "Service": "CloudWatch"
+          },
+          {
+            "Section": "QA",
+            "SubSection": "Configure Budgets Actions to stop services in cases of big unexpected spendings",
+            "Service": "SNS"
           }
         ],
         "Checks": []
@@ -175,16 +223,18 @@
         "Description": "IAM access analyzer in your AWS Account.",
         "Attributes": [
           {
-            "Section": "Analyzer-Regions",
-            "Name": "Create analyzers in each active regions"
+            "Section": "Create analyzers in each active regions",
+            "Service": "IAM"
           },
           {
-            "Section": "Verify-that-events-are-present-in-SecurityHub-aggregated-view",
-            "Name": "Verify that events are present in SecurityHub aggregated view"
+            "Section": "Verify that events are present in SecurityHub aggregated view",
+            "Service": "SecurityHub"
           }
         ],
         "Checks": [
-          "securityhub_enabled"
+          "securityhub_enabled",
+          "accessanalyzer_enabled",
+          "accessanalyzer_enabled_without_findings"
         ]
       },
       {
@@ -193,8 +243,8 @@
         "Description": "Macie in your AWS Account.",
         "Attributes": [
           {
-            "Section": "Critical-Buckets",
-            "Name": "Consider enabling for critical buckets only"
+            "Section": "Consider enabling for critical buckets only",
+            "Service": "Macie"
           }
         ],
         "Checks": [
@@ -207,19 +257,37 @@
         "Description": "Vulnearbility Scanning in your AWS Account.",
         "Attributes": [
           {
-            "Section": "EC2-used-as-servers",
-            "Name": "Apply-existing-SPCS-based-on-OU-placement"
+            "Section": "EC2 used as servers",
+            "SubSection": "Enable and configure AWS Inspector",
+            "Service": "EC2"
           },
           {
-            "Section": "ECR-used-as-docker-image-hub",
-            "Name": "ECR used as docker image hub"
+            "Section": "EC2 used as servers",
+            "SubSection": "Export scan results as metrics in centralized collector",
+            "Service": "EC2"
+          },
+          {
+            "Section": "ECR used as docker image hub",
+            "SubSection": "Scan images for vulnerability on upload to ECR",
+            "Service": "ECR"
+          },
+          {
+            "Section": "ECR used as docker image hub",
+            "SubSection": "Deploy solution to periodically rescan currently used images and report found vulnerabilities",
+            "Service": "ECR"
+          },
+          {
+            "Section": "ECR used as docker image hub",
+            "SubSection": "Export scan results as metrics in centralized collector",
+            "Service": "ECR"
           }
         ],
         "Checks": [
           "inspector2_findings_exist",
           "ecr_repositories_scan_images_on_push_enabled",
           "ecr_repositories_lifecycle_policy_enabled",
-          "ecr_repositories_scan_vulnerabilities_in_latest_image"
+          "ecr_repositories_scan_vulnerabilities_in_latest_image",
+          "ecr_registry_scan_images_on_push_enabled"
         ]
       },
       {
@@ -228,17 +296,21 @@
         "Description": "Cloudtrail in your AWS Account.",
         "Attributes": [
           {
-            "Section": "Organization-Trail",
-            "Name": "Enable as part of Organization trail"
+            "Section": "Enable as part of Organization trail",
+            "Service": "CloudTrail"
           },
           {
-            "Section": "Confirm-Logs-S3-SIEM",
-            "Name": "Confirm that logs are present in S3 bucket and SIEM"
+            "Section": "Confirm that logs are present in S3 bucket and SIEM",
+            "Service": "CloudTrail"
           }
         ],
         "Checks": [
           "cloudtrail_cloudwatch_logging_enabled",
-          "cloudtrail_logs_s3_bucket_access_logging_enabled"
+          "cloudtrail_logs_s3_bucket_access_logging_enabled",
+          "cloudtrail_multi_region_enabled",
+          "cloudtrail_multi_region_enabled_logging_management_events",
+          "cloudtrail_s3_dataevents_read_enabled",
+          "cloudtrail_s3_dataevents_write_enabled"
         ]
       },
       {
@@ -247,24 +319,24 @@
         "Description": "SecurityHub in your AWS Account.",
         "Attributes": [
           {
-            "Section": "Alert-Critical-Findings",
-            "Name": "Deploy solution to alert on at least critical new findings"
+            "Section": "Deploy solution to alert on at least critical new findings",
+            "Service": "SecurityHub"
           },
           {
-            "Section": "Central-Configuration-Organization",
-            "Name": "Apply SecurityHub Central Configuration for Organization"
+            "Section": "Apply SecurityHub Central Configuration for Organization",
+            "Service": "SecurityHub"
           },
           {
-            "Section": "Standard-Controls",
-            "Name": "Enable/disable additional standards and controls"
+            "Section": "Enable/disable additional standards and controls",
+            "Service": "SecurityHub" 
           },
           {
-            "Section": "Visible-Aggregated-View",
-            "Name": "Confirm that findings are being visible in the aggregated view"
+            "Section": "Confirm that findings are being visible in the aggregated view",
+            "Service": "SecurityHub"
           },
           {
-            "Section": "No-Critical-Findings",
-            "Name": "Ensure that there are no critical (and considered critical) findings present in account"
+            "Section": "Ensure that there are no critical (and considered critical) findings present in account",
+            "Service": "SecurityHub"
           }
         ],
         "Checks": [
@@ -277,16 +349,16 @@
         "Description": "AWS Config in your AWS Account.",
         "Attributes": [
           {
-            "Section": "Enable-continuous-recording-for-most-of-the-resources",
-            "Name": "Enable continuous recording for most of the resources"
+            "Section": "Enable continuous recording for most of the resources",
+            "Service": "Config"
           },
           {
-            "Section": "Consider-periodic-recording-for-resources-to-optimize-bill",
-            "Name": "Consider periodic recording for resources to optimize bill"
+            "Section": "Consider periodic recording for resources to optimize bill",
+            "Service": "Config"
           },
           {
-            "Section": "Confirm-that-resources-are-present-in-central-aggregator",
-            "Name": "Confirm that resources are present in central aggregator"
+            "Section": "Confirm that resources are present in central aggregator",
+            "Service": "Config"
           }
         ],
         "Checks": [
@@ -299,63 +371,70 @@
         "Description": "GuardDuty in your AWS Account.",
         "Attributes": [
           {
-            "Section": "Central-Configuration-Organization",
-            "Name": "Enable as part of central configuration for Organization",
-            "Type": "Must"
+            "Section": "Enable as part of central configuration for Organization",
+            "Type": "Must",
+            "Service": "GuardDuty"
           },
           {
             "Section": "Threat Detection",
-            "Name": "Threat Detection",
-            "Type": "Must"
+            "Type": "Must",
+            "Service": "GuardDuty"
           },
           {
-            "Section": "RDS-Protection",
-            "Name": "RDS protection",
-            "Type": "Must"
+            "Section": "RDS protection",
+            "Type": "Must",
+            "Service": "RDS"
           },
           {
-            "Section": "Lambda-Protection",
-            "Name": "Lambda protection",
-            "Type": "Must"
+            "Section": "Lambda protection",
+            "Type": "Must",
+            "Service": "Lambda"
           },
           {
-            "Section": "S3-Protection",
-            "Name": "S3 protection",
-            "Type": "Must"
+            "Section": "S3 protection",
+            "Type": "Must",
+            "Service": "S3"
           },
           {
-            "Section": "Malware-Scanning",
-            "Name": "Malware Scanning",
-            "Type": "Must"
+            "Section": "Malware Scanning",
+            "Type": "Must",
+            "Service": "GuardDuty"
           },
           {
-            "Section": "Events-SIEM",
-            "Name": "Confirm that events are present in SIEM",
-            "Type": "Must"
+            "Section": "Confirm that events are present in SIEM",
+            "Type": "Must",
+            "Service": "GuardDuty"
           },
           {
-            "Section": "Filter-Useless-Findings",
-            "Name": "Apply suppression filters to disable useless findings",
-            "Type": "Must"
+            "Section": "Apply suppression filters to disable useless findings",
+            "Type": "Must",
+            "Service": "GuardDuty"
           },
           {
-            "Section": "IR-Events",
-            "Name": "Include in process of incident response based on events",
-            "Type": "Must"
+            "Section": "Include in process of incident response based on events",
+            "Type": "Must",
+            "Service": "GuardDuty"
           },
           {
-            "Section": "Runtime-Protection",
-            "Name": "Runtime protection",
-            "Type": "Optional"
+            "Section": "Runtime protection",
+            "Type": "Optional",
+            "SubSection": "Very new, needs testing"
           },
           {
-            "Section": "EKS-Protection",
-            "Name": "EKS protection (if EKS is used)",
-            "Type": "Optional"
+            "Section": "Runtime protection",
+            "Type": "Optional",
+            "SubSection": "As alternative - another runtime protection, if available"
+          },
+          {
+            "Section": "EKS protection (if EKS is used)",
+            "Type": "Optional",
+            "Service": "EKS"
           }
         ],
         "Checks": [
-          "guardduty_is_enabled"
+          "guardduty_is_enabled",
+          "guardduty_no_high_severity_findings",
+          "guardduty_centrally_managed"
         ]
       },
       {
@@ -364,20 +443,20 @@
         "Description": "R53 DNS Resolver Firewall in your AWS Account.",
         "Attributes": [
           {
-            "Section": "Apply-managed-domain-name-lists-for-resolver-in-block-mode",
-            "Name": "Apply managed domain name lists for resolver in block mode"
+            "Section": "Apply managed domain Section lists for resolver in block mode",
+            "Service": "Route53"
           },
           {
-            "Section": "Use-strictly-AWS-VPC-DNS-Resolver",
-            "Name": "Use strictly AWS VPC DNS Resolver"
+            "Section": "Use strictly AWS VPC DNS Resolver",
+            "Service": "Route53"
           },
           {
-            "Section": "Ban-outbound-DNS-calls-from-all-VPCs-to-ports-53",
-            "Name": "Ban outbound DNS calls from all VPCs to ports 53"
+            "Section": "Ban outbound DNS calls from all VPCs to ports 53",
+            "Service": "Route53"
           },
           {
-            "Section": "Apply-custom-threat-list-for-GuardDuty-to-alert-on-access-to-DoH-servers",
-            "Name": "Apply custom threat list for GuardDuty to alert on access to DoH servers"
+            "Section": "Apply custom threat list for GuardDuty to alert on access to DoH servers",
+            "Service": "GuardDuty"
           }
         ],
         "Checks": [
@@ -391,16 +470,16 @@
         "Description": "Shield advanced in your AWS Account.",
         "Attributes": [
           {
-            "Section": "Shield-Public-Facing-Account",
-            "Name": "Enable Shield Advanced subscription for public facing account"
+            "Section": "Enable Shield Advanced subscription for public facing account",
+            "Service": "Shield"
           },
           {
-            "Section": "Metrics-Centralized-Collector",
-            "Name": "Export metrics in centralized collector"
+            "Section": "Export metrics in centralized collector",
+            "Service": "CloudWatch"
           },
           {
-            "Section": "DDOS-Battle-Card",
-            "Name": "Create DDoS battle card with main info about protected services"
+            "Section": "Create DDoS battle card with main info about protected services",
+            "Service": "Shield"
           }
         ],
         "Checks": [
@@ -416,24 +495,68 @@
         "Description": "WAFv2 in your AWS Account.",
         "Attributes": [
           {
-            "Section": "WAF-Setup",
-            "Name": "Deploy WAF setup for each public web service"
+            "Section": "Deploy WAF setup for each public web service",
+            "SubSection": "CFD + ALB + secret rotation architecture",
+            "Type":"Must",
+            "Service": "WAF"
           },
           {
-            "Section": "Shield-Advanced-DDoS-Mitigation",
-            "Name": "Enable Shield Advanced automatic application layer DDoS mitigation"
+            "Section": "Deploy WAF setup for each public web service",
+            "SubSection": "Predefined set of managed rules",
+            "Type":"Must",
+            "Service": "WAF"
           },
           {
-            "Section": "R53-Health-Checks",
-            "Name": "Configure R53 health checks for all protected resources"
+            "Section": "Deploy WAF setup for each public web service",
+            "SubSection": "Global allow - and block-lists",
+            "Type":"Must",
+            "Service": "WAF"
           },
           {
-            "Section": "WAF-Logs-SIEM",
-            "Name": "Configure sensitive fields redaction and send WAF logs to SIEM"
+            "Section": "Deploy WAF setup for each public web service",
+            "SubSection": "Blanket rate-based rules",
+            "Type":"Must",
+            "Service": "WAF"
           },
           {
-            "Section": "Metrics-Centralized-Collector",
-            "Name": "Export metrics in centralized collector"
+            "Section": "Deploy WAF setup for each public web service",
+            "SubSection": "Service-unique exclusion rules",
+            "Type":"Must",
+            "Service": "WAF"
+          },
+          {
+            "Section": "Deploy WAF setup for each public web service",
+            "SubSection": "Additional managed rules",
+            "Type":"Discuss",
+            "Service": "WAF"
+          },
+          {
+            "Section": "Deploy WAF setup for each public web service",
+            "SubSection": "Scoped-down rate-based rules",
+            "Type":"Discuss",
+            "Service": "WAF"
+          },
+          {
+            "Section": "Enable Shield Advanced automatic application layer DDoS mitigation",
+            "SubSection": "For first 2 weeks - in COUNT mode",
+            "Service": "Shield"
+          },
+          {
+            "Section": "Enable Shield Advanced automatic application layer DDoS mitigation",
+            "SubSection": "After that - switch into BLOCK mode",
+            "Service": "Shield"
+          },
+          {
+            "Section": "Configure R53 health checks for all protected resources",
+            "Service": "Route53"
+          },
+          {
+            "Section": "Configure sensitive fields redaction and send WAF logs to SIEM",
+            "Service": "WAF"
+          },
+          {
+            "Section": "Export metrics in centralized collector",
+            "Service": "CloudWatch"
           }
         ],
         "Checks": [
