@@ -57,7 +57,7 @@ class Generic_Compliance_Requirement_Attribute(BaseModel):
     SubSection: Optional[str]
     SubGroup: Optional[str]
     Service: str
-    Soc_Type: Optional[str]
+    Type: Optional[str]
 
 
 class CIS_Requirement_Attribute_Profile(str):
