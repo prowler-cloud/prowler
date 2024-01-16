@@ -1,0 +1,445 @@
+{
+    "Framework": "AWS-Account-Security-Onboarding",
+    "Version": "",
+    "Provider": "AWS",
+    "Description": "Checklist when onboarding new AWS Accounts to existing AWS Organization.",
+    "Requirements": [
+      {
+        "Id": "deploy-an-account-from-predefined-IaC-template",
+        "Name": "Deploy an account from predefined IaC template",
+        "Description": "Deploy an account from predefined IaC template",
+        "Attributes": [
+          {
+            "Section": "Predefine-IAM-Roles",
+            "Name": "Predefine IAM Roles"
+          },
+          {
+            "Section": "Enabled-security-services",
+            "Name": "Enabled security services"
+          },
+          {
+            "Section": "IDC-integration-SSO-configuration",
+            "Name": "IDC integratio and SSO configuration for AWS Account"
+          },
+          {
+            "Section": "Organizarion-invitation",
+            "Name": "Organizarion invitation"
+          },
+          {
+            "Section": "Billing-emergency-and-security-contacts",
+            "Name": "Billing, emergency, and security contacts"
+          },
+          {
+            "Section": "Root-user-distribution-email-MFA",
+            "Name": "Root user have distribute email + MFA"
+          },
+          {
+            "Section": "S3-Block-Public-Access",
+            "Name": "S3 Block Public Access"
+          },
+          {
+            "Section": "Disable-AMI-public-sharing",
+            "Name": "Disable AMI public sharing"
+          }
+        ],
+        "Checks": []
+      },
+      {
+        "Id": "SPCS",
+        "Name": "SPCS",
+        "Description": "SPCS in your AWS Account.",
+        "Attributes": [
+          {
+            "Section": "SPCS-Based",
+            "Name": "Apply existing SPCS based on OU placement"
+          },
+          {
+            "Section": "Custom-SPCS",
+            "Name": "Add custom SPCS if required"
+          }
+        ],
+        "Checks": [
+          "iam_no_root_access_key"
+        ]
+      },
+      {
+        "Id": "Logging",
+        "Name": "Logging",
+        "Description": "Logging in your AWS Account.",
+        "Attributes": [
+          {
+            "Section": "DNS-Resolver-Queries-SIEM",
+            "Name": "Send DNS resolvers queries to SIEM"
+          },
+          {
+            "Section": "VPC-Flow-Logs",
+            "Name": "Send VPC flow logs (only denys) to S3 bucket"
+          },
+          {
+            "Section": "S3-Logs-Critical-Buckets",
+            "Name": "Send S3 access logs for critical buckets to separate S3 bucket"
+          },
+          {
+            "Section": "ALB-CFD-To-SIEM",
+            "Name": "Establish ready-to-be-enabled pipelines to deliver ALB and CFD to SIEM to toggle in case of emergency and investigations"
+          }
+        ],
+        "Checks": [
+            "cloudtrail_logs_s3_bucket_access_logging_enabled",
+            "cloudtrail_s3_dataevents_write_enabled",
+            "cloudtrail_cloudwatch_logging_enabled"
+        ]
+      },
+      {
+        "Id": "Alerting",
+        "Name": "Alerting",
+        "Description": "Enable alerts in your AWS Account.",
+        "Attributes": [
+          {
+            "Section": "Guardutty",
+            "Name": "GuardDuty"
+          },
+          {
+            "Section": "Cloudtrail",
+            "Name": "Cloudtrail"
+          },
+          {
+            "Section": "Cost-Anomaly",
+            "Name": "Cost-Anomaly"
+          },
+          {
+            "Section": "SecurityHub",
+            "Name": "SecurityHub"
+          },
+          {
+            "Section": "WAF",
+            "Name": "WAF"
+          },
+          {
+            "Section": "Shield",
+            "Name": "Shield"
+          },
+          {
+            "Section": "R53-DNS-Resolver",
+            "Name": "R53-DNS-Resolver"
+          },
+          {
+            "Section": "Vulnerability-Scanning",
+            "Name": "Vulnerability-Scanning"
+          },
+          {
+            "Section": "Prod",
+            "Name": "Prod"
+          },
+          {
+            "Section": "QA",
+            "Name": "QA"
+          }
+        ],
+        "Checks": [
+          "guardduty_is_enabled",
+          "guardduty_no_high_severity_findings",
+          "route53_domains_privacy_protection_enabled",
+          "securityhub_enabled",
+          "elbv2_waf_acl_attached",
+          "apigateway_restapi_waf_acl_attached",
+          "shield_advanced_protection_in_associated_elastic_ips",
+          "shield_advanced_protection_in_classic_load_balancers",
+          "shield_advanced_protection_in_cloudfront_distributions",
+          "shield_advanced_protection_in_global_accelerators",
+          "shield_advanced_protection_in_internet_facing_load_balancers",
+          "shield_advanced_protection_in_route53_hosted_zones",
+          "ecr_repositories_scan_images_on_push_enabled",
+          "ecr_repositories_scan_vulnerabilities_in_latest_image"
+        ]
+      },
+      {
+        "Id": "Budget-Alarms",
+        "Name": "Budget-Alarms",
+        "Description": "Budget Alarms for your AWS Account.",
+        "Attributes": [
+          {
+            "Section": "Prod",
+            "Name": "Prod"
+          },
+          {
+            "Section": "QA",
+            "Name": "QA"
+          }
+        ],
+        "Checks": []
+      },
+      {
+        "Id": "IAM-Access-Analyzer",
+        "Name": "IAM access analyzer",
+        "Description": "IAM access analyzer in your AWS Account.",
+        "Attributes": [
+          {
+            "Section": "Analyzer-Regions",
+            "Name": "Create analyzers in each active regions"
+          },
+          {
+            "Section": "Verify-that-events-are-present-in-SecurityHub-aggregated-view",
+            "Name": "Verify that events are present in SecurityHub aggregated view"
+          }
+        ],
+        "Checks": [
+          "securityhub_enabled"
+        ]
+      },
+      {
+        "Id": "Macie",
+        "Name": "Macie",
+        "Description": "Macie in your AWS Account.",
+        "Attributes": [
+          {
+            "Section": "Critical-Buckets",
+            "Name": "Consider enabling for critical buckets only"
+          }
+        ],
+        "Checks": [
+          "macie_is_enabled"
+        ]
+      },
+      {
+        "Id": "Vulnerability-Scanning",
+        "Name": "Vulnerability Scanning",
+        "Description": "Vulnearbility Scanning in your AWS Account.",
+        "Attributes": [
+          {
+            "Section": "EC2-used-as-servers",
+            "Name": "Apply-existing-SPCS-based-on-OU-placement"
+          },
+          {
+            "Section": "ECR-used-as-docker-image-hub",
+            "Name": "ECR used as docker image hub"
+          }
+        ],
+        "Checks": [
+          "inspector2_findings_exist",
+          "ecr_repositories_scan_images_on_push_enabled",
+          "ecr_repositories_lifecycle_policy_enabled",
+          "ecr_repositories_scan_vulnerabilities_in_latest_image"
+        ]
+      },
+      {
+        "Id": "AWS-Clousdtrail",
+        "Name": "AWS Cloustrail",
+        "Description": "Cloudtrail in your AWS Account.",
+        "Attributes": [
+          {
+            "Section": "Organization-Trail",
+            "Name": "Enable as part of Organization trail"
+          },
+          {
+            "Section": "Confirm-Logs-S3-SIEM",
+            "Name": "Confirm that logs are present in S3 bucket and SIEM"
+          }
+        ],
+        "Checks": [
+          "cloudtrail_cloudwatch_logging_enabled",
+          "cloudtrail_logs_s3_bucket_access_logging_enabled"
+        ]
+      },
+      {
+        "Id": "Enable-AWS-SecurityHub",
+        "Name": "Enable AWS SecurityHub",
+        "Description": "SecurityHub in your AWS Account.",
+        "Attributes": [
+          {
+            "Section": "Alert-Critical-Findings",
+            "Name": "Deploy solution to alert on at least critical new findings"
+          },
+          {
+            "Section": "Central-Configuration-Organization",
+            "Name": "Apply SecurityHub Central Configuration for Organization"
+          },
+          {
+            "Section": "Standard-Controls",
+            "Name": "Enable/disable additional standards and controls"
+          },
+          {
+            "Section": "Visible-Aggregated-View",
+            "Name": "Confirm that findings are being visible in the aggregated view"
+          },
+          {
+            "Section": "No-Critical-Findings",
+            "Name": "Ensure that there are no critical (and considered critical) findings present in account"
+          }
+        ],
+        "Checks": [
+          "securityhub_enabled"
+        ]
+      },
+      {
+        "Id": "Enable-AWS-Config",
+        "Name": "Enable AWS Config",
+        "Description": "AWS Config in your AWS Account.",
+        "Attributes": [
+          {
+            "Section": "Enable-continuous-recording-for-most-of-the-resources",
+            "Name": "Enable continuous recording for most of the resources"
+          },
+          {
+            "Section": "Consider-periodic-recording-for-resources-to-optimize-bill",
+            "Name": "Consider periodic recording for resources to optimize bill"
+          },
+          {
+            "Section": "Confirm-that-resources-are-present-in-central-aggregator",
+            "Name": "Confirm that resources are present in central aggregator"
+          }
+        ],
+        "Checks": [
+          "config_recorder_all_regions_enabled"
+        ]
+      },
+      {
+        "Id": "Enable-GuardDuty",
+        "Name": "Enable AWS GuardDuty",
+        "Description": "GuardDuty in your AWS Account.",
+        "Attributes": [
+          {
+            "Section": "Central-Configuration-Organization",
+            "Name": "Enable as part of central configuration for Organization",
+            "Type": "Must"
+          },
+          {
+            "Section": "Threat Detection",
+            "Name": "Threat Detection",
+            "Type": "Must"
+          },
+          {
+            "Section": "RDS-Protection",
+            "Name": "RDS protection",
+            "Type": "Must"
+          },
+          {
+            "Section": "Lambda-Protection",
+            "Name": "Lambda protection",
+            "Type": "Must"
+          },
+          {
+            "Section": "S3-Protection",
+            "Name": "S3 protection",
+            "Type": "Must"
+          },
+          {
+            "Section": "Malware-Scanning",
+            "Name": "Malware Scanning",
+            "Type": "Must"
+          },
+          {
+            "Section": "Events-SIEM",
+            "Name": "Confirm that events are present in SIEM",
+            "Type": "Must"
+          },
+          {
+            "Section": "Filter-Useless-Findings",
+            "Name": "Apply suppression filters to disable useless findings",
+            "Type": "Must"
+          },
+          {
+            "Section": "IR-Events",
+            "Name": "Include in process of incident response based on events",
+            "Type": "Must"
+          },
+          {
+            "Section": "Runtime-Protection",
+            "Name": "Runtime protection",
+            "Type": "Optional"
+          },
+          {
+            "Section": "EKS-Protection",
+            "Name": "EKS protection (if EKS is used)",
+            "Type": "Optional"
+          }
+        ],
+        "Checks": [
+          "guardduty_is_enabled"
+        ]
+      },
+      {
+        "Id": "R53-DNS-Resolver-Firewall",
+        "Name": "R53 DNS Resolver Firewall",
+        "Description": "R53 DNS Resolver Firewall in your AWS Account.",
+        "Attributes": [
+          {
+            "Section": "Apply-managed-domain-name-lists-for-resolver-in-block-mode",
+            "Name": "Apply managed domain name lists for resolver in block mode"
+          },
+          {
+            "Section": "Use-strictly-AWS-VPC-DNS-Resolver",
+            "Name": "Use strictly AWS VPC DNS Resolver"
+          },
+          {
+            "Section": "Ban-outbound-DNS-calls-from-all-VPCs-to-ports-53",
+            "Name": "Ban outbound DNS calls from all VPCs to ports 53"
+          },
+          {
+            "Section": "Apply-custom-threat-list-for-GuardDuty-to-alert-on-access-to-DoH-servers",
+            "Name": "Apply custom threat list for GuardDuty to alert on access to DoH servers"
+          }
+        ],
+        "Checks": [
+          "route53_domains_privacy_protection_enabled",
+          "route53_domains_transferlock_enabled"
+        ]
+      },
+      {
+        "Id": "Shield-Advanced",
+        "Name": "Shield Advanced",
+        "Description": "Shield advanced in your AWS Account.",
+        "Attributes": [
+          {
+            "Section": "Shield-Public-Facing-Account",
+            "Name": "Enable Shield Advanced subscription for public facing account"
+          },
+          {
+            "Section": "Metrics-Centralized-Collector",
+            "Name": "Export metrics in centralized collector"
+          },
+          {
+            "Section": "DDOS-Battle-Card",
+            "Name": "Create DDoS battle card with main info about protected services"
+          }
+        ],
+        "Checks": [
+          "shield_advanced_protection_in_route53_hosted_zones",
+          "shield_advanced_protection_in_classic_load_balancers",
+          "shield_advanced_protection_in_internet_facing_load_balancers",
+          "shield_advanced_protection_in_cloudfront_distributions"
+        ]
+      },
+      {
+        "Id": "WAFv2",
+        "Name": "WAFv2",
+        "Description": "WAFv2 in your AWS Account.",
+        "Attributes": [
+          {
+            "Section": "WAF-Setup",
+            "Name": "Deploy WAF setup for each public web service"
+          },
+          {
+            "Section": "Shield-Advanced-DDoS-Mitigation",
+            "Name": "Enable Shield Advanced automatic application layer DDoS mitigation"
+          },
+          {
+            "Section": "R53-Health-Checks",
+            "Name": "Configure R53 health checks for all protected resources"
+          },
+          {
+            "Section": "WAF-Logs-SIEM",
+            "Name": "Configure sensitive fields redaction and send WAF logs to SIEM"
+          },
+          {
+            "Section": "Metrics-Centralized-Collector",
+            "Name": "Export metrics in centralized collector"
+          }
+        ],
+        "Checks": [
+          "apigateway_restapi_waf_acl_attached",
+          "elbv2_waf_acl_attached"
+        ]
+      }
+    ]
+}

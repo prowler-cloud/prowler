@@ -52,12 +52,15 @@ class ENS_Requirement_Attribute(BaseModel):
 class Generic_Compliance_Requirement_Attribute(BaseModel):
     """Generic Compliance Requirement Attribute"""
 
-    ItemId: str
+    ItemId: Optional[str]
     Section: Optional[str]
     SubSection: Optional[str]
     SubGroup: Optional[str]
-    Service: str
+    Service: Optional[str]
     Soc_Type: Optional[str]
+    Control: Optional[str]
+    Name: Optional[str]
+    Type: Optional[str]
 
 
 class CIS_Requirement_Attribute_Profile(str):
