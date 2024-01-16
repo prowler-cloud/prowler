@@ -44,7 +44,7 @@ jobs:
           poetry publish
       # Create pull request with new version
       - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v4
+        uses: peter-evans/create-pull-request@v5
         with:
           token: ${{ secrets.PROWLER_ACCESS_TOKEN }}
           commit-message: "chore(release): update Prowler Version to ${{ env.RELEASE_TAG }}."
