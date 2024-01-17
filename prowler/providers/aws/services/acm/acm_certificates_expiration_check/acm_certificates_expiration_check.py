@@ -19,7 +19,6 @@ class acm_certificates_expiration_check(Check):
                 report.resource_tags = certificate.tags
             else:
                 report.status = "FAIL"
-
                 if certificate.expiration_days < 0:
                     report.status_extended = f"ACM Certificate {certificate.id} for {certificate.name} has expired ({abs(certificate.expiration_days)} days ago)."
                 else:
