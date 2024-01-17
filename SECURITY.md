@@ -14,7 +14,7 @@ As an **AWS Partner** and we have passed the [AWS Foundation Technical Review (F
 
 If you would like to report a vulnerability or have a security concern regarding Prowler Open Source or ProwlerPro service, please submit the information by contacting to help@prowler.pro.
 
-The information you share with Verica as part of this process is kept confidential within Verica and the Prowler team. We will only share this information with a third party if the vulnerability you report is found to affect a third-party product, in which case we will share this information with the third-party product's author or manufacturer. Otherwise, we will only share this information as permitted by you.
+The information you share with ProwlerPro as part of this process is kept confidential within ProwlerPro. We will only share this information with a third party if the vulnerability you report is found to affect a third-party product, in which case we will share this information with the third-party product's author or manufacturer. Otherwise, we will only share this information as permitted by you.
 
 We will review the submitted report, and assign it a tracking number. We will then respond to you, acknowledging receipt of the report, and outline the next steps in the process.
 
