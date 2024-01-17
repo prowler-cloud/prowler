@@ -315,7 +315,6 @@ def fill_compliance(output_options, finding, audit_info, file_descriptors):
                     for requirement in compliance.Requirements:
                         requirement_description = requirement.Description
                         requirement_id = requirement.Id
-                        requirement_name = requirement.Name
                         for attribute in requirement.Attributes:
                             compliance_row = Check_Output_CSV_Generic_Compliance(
                                 Provider=finding.check_metadata.Provider,
@@ -326,7 +325,6 @@ def fill_compliance(output_options, finding, audit_info, file_descriptors):
                                     output_options.unix_timestamp, timestamp
                                 ),
                                 Requirements_Id=requirement_id,
-                                Requirements_Name=requirement_name,
                                 Requirements_Description=requirement_description,
                                 Requirements_Attributes_ItemId=attribute.ItemId,
                                 Requirements_Attributes_Section=attribute.Section,
