@@ -491,7 +491,7 @@
       "Attributes": [
         {
           "Section": "IAM Access Analyzer",
-          "Service": "IAM"
+          "Service": "IAM Access Analyzer"
         }
       ],
       "Checks": [
@@ -949,7 +949,7 @@
       "Attributes": [
         {
           "Section": "Shield Advanced",
-          "Service": "Shield"
+          "Service": "Shield Advanced"
         }
       ],
       "Checks": [
@@ -967,7 +967,7 @@
       "Attributes": [
         {
           "Section": "Shield Advanced",
-          "Service": "CloudWatch",
+          "Service": "Shield Advanced",
           "Type": "Manual"
         }
       ],
@@ -979,7 +979,7 @@
       "Attributes": [
         {
           "Section": "Shield Advanced",
-          "Service": "Shield"
+          "Service": "Shield Advanced"
         }
       ],
       "Checks": [
@@ -1108,7 +1108,7 @@
       "Attributes": [
         {
           "Section": "WAFv2",
-          "Service": "Shield",
+          "Service": "Shield Advanced",
           "Type": "Manual"
         }
       ],
@@ -1144,11 +1144,12 @@
       "Attributes": [
         {
           "Section": "WAFv2",
-          "Service": "CloudWatch",
-          "Type": "Manual"
+          "Service": "CloudWatch"
         }
       ],
-      "Checks": []
+      "Checks": [
+        "wafv2_webacl_logging_enabled"
+      ]
     }
   ]
 }
