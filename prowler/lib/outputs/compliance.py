@@ -326,7 +326,6 @@ def fill_compliance(output_options, finding, audit_info, file_descriptors):
                                 ),
                                 Requirements_Id=requirement_id,
                                 Requirements_Description=requirement_description,
-                                Requirements_Attributes_ItemId=attribute.ItemId,
                                 Requirements_Attributes_Section=attribute.Section,
                                 Requirements_Attributes_SubSection=attribute.SubSection,
                                 Requirements_Attributes_SubGroup=attribute.SubGroup,

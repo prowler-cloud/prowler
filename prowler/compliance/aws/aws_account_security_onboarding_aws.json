@@ -26,11 +26,15 @@
       "Attributes": [
         {
           "Section": "Deploy account from predefined IaC template",
-          "Service": "Security",
-          "Type": "Manual"
+          "Service": "SecurityHub"
         }
       ],
-      "Checks": []
+      "Checks": [
+        "securityhub_enabled",
+        "guardduty_is_enabled",
+        "accessanalyzer_enabled",
+        "macie_is_enabled"
+      ]
     },
     {
       "Id": "IDC integration, SSO configuration",
@@ -38,7 +42,7 @@
       "Attributes": [
         {
           "Section": "Deploy account from predefined IaC template",
-          "Service": "Config",
+          "Service": "IAM Identity Center",
           "Type": "Manual"
         }
       ],
@@ -71,7 +75,7 @@
       ]
     },
     {
-      "Id": "Root user - distribution emal + MFA",
+      "Id": "Root user - distribution email + MFA",
       "Description": "Check if root user has distribution email and MFA enabled",
       "Attributes": [
         {
@@ -80,11 +84,12 @@
         }
       ],
       "Checks": [
-        "iam_root_mfa_enabled"
+        "iam_root_mfa_enabled",
+        "iam_root_hardware_mfa_enabled"
       ]
     },
     {
-      "Id": "S3 Block Public Acces",
+      "Id": "S3 Block Public Access",
       "Description": "Block public access to S3 buckets",
       "Attributes": [
         {
@@ -93,7 +98,9 @@
         }
       ],
       "Checks": [
-        "cloudtrail_logs_s3_bucket_is_not_publicly_accessible"
+        "s3_account_level_public_access_blocks",
+        "s3_bucket_public_access",
+        "s3_bucket_level_public_access_block"
       ]
     },
     {
@@ -159,7 +166,8 @@
         }
       ],
       "Checks": [
-        "iam_no_root_access_key"
+        "iam_no_root_access_key",
+        "iam_avoid_root_usage"
       ]
     },
     {
@@ -192,11 +200,12 @@
       "Attributes": [
         {
           "Section": "Logging",
-          "Service": "VPC",
-          "Type": "Manual"
+          "Service": "VPC"
         }
       ],
-      "Checks": []
+      "Checks": [
+        "vpc_flow_logs_enabled"
+      ]
     },
     {
       "Id": "Send S3 access logs for critical buckets to separate S3 bucket",
@@ -231,11 +240,13 @@
         {
           "Section": "Alerting",
           "SubSection": "GuardDuty",
-          "Service": "GuardDuty",
-          "Type": "Manual"
+          "Service": "GuardDuty"
         }
       ],
-      "Checks": []
+      "Checks": [
+        "guardduty_is_enabled",
+        "guardduty_is_enabled"
+      ]
     },
     {
       "Id": "Alerts based on aggregated findings with severity Medium and below",
@@ -257,11 +268,12 @@
         {
           "Section": "Alerting",
           "SubSection": "CloudTrail",
-          "Service": "CloudTrail",
-          "Type": "Manual"
+          "Service": "CloudTrail"
         }
       ],
-      "Checks": []
+      "Checks": [
+        "cloudwatch_log_metric_filter_root_usage"
+      ]
     },
     {
       "Id": "Critical alert on cloudtrail settings changes",
@@ -284,11 +296,12 @@
         {
           "Section": "Alerting",
           "SubSection": "CloudTrail",
-          "Service": "CloudTrail",
-          "Type": "Manual"
+          "Service": "CloudTrail"
         }
       ],
-      "Checks": []
+      "Checks": [
+        "cloudwatch_log_metric_filter_authentication_failures"
+      ]
     },
     {
       "Id": "Alert on IAM user changes",
@@ -521,11 +534,12 @@
         {
           "Section": "Vulnerability Scanning",
           "SubSection": "EC2 used as servers",
-          "Service": "EC2",
-          "Type": "Manual"
+          "Service": "EC2"
         }
       ],
-      "Checks": []
+      "Checks": [
+        "inspector2_findings_exist"
+      ]
     },
     {
       "Id": "Export scan results as metrics in centralized collector",
@@ -534,11 +548,12 @@
         {
           "Section": "Vulnerability Scanning",
           "SubSection": "EC2 used as servers",
-          "Service": "EC2",
-          "Type": "Manual"
+          "Service": "EC2"
         }
       ],
-      "Checks": []
+      "Checks": [
+        "guardduty_centrally_managed"
+      ]
     },
     {
       "Id": "Scan images for vulnerability on upload to ECR",
@@ -553,7 +568,8 @@
       "Checks": [
         "inspector2_findings_exist",
         "ecr_registry_scan_images_on_push_enabled",
-        "ecr_repositories_scan_vulnerabilities_in_latest_image"
+        "ecr_repositories_scan_vulnerabilities_in_latest_image",
+        "ecr_repositories_scan_images_on_push_enabled"
       ]
     },
     {
@@ -567,7 +583,7 @@
         }
       ],
       "Checks": [
-        "ecr_repositories_lifecycle_policy_enabled"
+        "ecr_repositories_scan_vulnerabilities_in_latest_image"
       ]
     },
     {
@@ -593,7 +609,6 @@
         }
       ],
       "Checks": [
-        "cloudtrail_is_enabled",
         "cloudtrail_multi_region_enabled",
         "cloudtrail_multi_region_enabled_logging_management_events"
       ]
@@ -709,11 +724,12 @@
       "Attributes": [
         {
           "Section": "Enable AWS Config",
-          "Service": "Config",
-          "Type": "Manual"
+          "Service": "Config"
         }
       ],
-      "Checks": []
+      "Checks": [
+        "config_recorder_all_regions_enabled"
+      ]
     },
     {
       "Id": "Enable as part of central configuration for Organization",
@@ -806,8 +822,8 @@
       ]
     },
     {
-      "Id": "Conducting a Comprehensive Scan for Malicious Software",
-      "Description": "Performing an In-Depth Inspection for Malicious Software",
+      "Id": "Confirm that events are present in SIEM",
+      "Description": "Confirm that events are present in SIEM",
       "Attributes": [
         {
           "Section": "Enable GuardDuty",
@@ -851,28 +867,11 @@
       ]
     },
     {
-      "Id": "Very new, needs testing",
+      "Id": "Runtime protection",
       "Description": "Brand new and in need of thorough testing.",
       "Attributes": [
         {
           "Section": "Enable GuardDuty",
-          "SubSection": "Runtime protection",
-          "Service": "GuardDuty",
-          "Type": "Optional"
-        }
-      ],
-      "Checks": [
-        "guardduty_is_enabled",
-        "guardduty_no_high_severity_findings"
-      ]
-    },
-    {
-      "Id": "As alternative - another runtime protection, if available",
-      "Description": "If another runtime protection option is available, consider it as an alternative.",
-      "Attributes": [
-        {
-          "Section": "Enable GuardDuty",
-          "SubSection": "Runtime protection",
           "Service": "GuardDuty",
           "Type": "Optional"
         }
@@ -914,13 +913,11 @@
       "Attributes": [
         {
           "Section": "R53 DNS Resolver Firewall",
-          "Service": "Route53"
+          "Service": "Route53",
+          "Type": "Manual"
         }
       ],
-      "Checks": [
-        "route53_domains_privacy_protection_enabled",
-        "route53_domains_transferlock_enabled"
-      ]
+      "Checks": []
     },
     {
       "Id": "Ban outbound DNS calls from all VPCs to ports 53",
@@ -928,13 +925,11 @@
       "Attributes": [
         {
           "Section": "R53 DNS Resolver Firewall",
-          "Service": "Route53"
+          "Service": "Route53",
+          "Type": "Manual"
         }
       ],
-      "Checks": [
-        "route53_domains_privacy_protection_enabled",
-        "route53_domains_transferlock_enabled"
-      ]
+      "Checks": []
     },
     {
       "Id": "Apply custom threat list for GuardDuty to alert on access to DoH servers",
@@ -942,13 +937,11 @@
       "Attributes": [
         {
           "Section": "R53 DNS Resolver Firewall",
-          "Service": "Route53"
+          "Service": "Route53",
+          "Type": "Manual"
         }
       ],
-      "Checks": [
-        "route53_domains_privacy_protection_enabled",
-        "route53_domains_transferlock_enabled"
-      ]
+      "Checks": []
     },
     {
       "Id": "Enable Shield Advanced subscription for public facing account",
@@ -963,7 +956,9 @@
         "shield_advanced_protection_in_route53_hosted_zones",
         "shield_advanced_protection_in_classic_load_balancers",
         "shield_advanced_protection_in_internet_facing_load_balancers",
-        "shield_advanced_protection_in_cloudfront_distributions"
+        "shield_advanced_protection_in_cloudfront_distributions",
+        "shield_advanced_protection_in_associated_elastic_ips",
+        "shield_advanced_protection_in_global_accelerators"
       ]
     },
     {
@@ -972,15 +967,11 @@
       "Attributes": [
         {
           "Section": "Shield Advanced",
-          "Service": "CloudWatch"
+          "Service": "CloudWatch",
+          "Type": "Manual"
         }
       ],
-      "Checks": [
-        "shield_advanced_protection_in_route53_hosted_zones",
-        "shield_advanced_protection_in_classic_load_balancers",
-        "shield_advanced_protection_in_internet_facing_load_balancers",
-        "shield_advanced_protection_in_cloudfront_distributions"
-      ]
+      "Checks": []
     },
     {
       "Id": "Create DDoS battle card with main info about protected services",
@@ -995,7 +986,9 @@
         "shield_advanced_protection_in_route53_hosted_zones",
         "shield_advanced_protection_in_classic_load_balancers",
         "shield_advanced_protection_in_internet_facing_load_balancers",
-        "shield_advanced_protection_in_cloudfront_distributions"
+        "shield_advanced_protection_in_cloudfront_distributions",
+        "shield_advanced_protection_in_associated_elastic_ips",
+        "shield_advanced_protection_in_global_accelerators"
       ]
     },
     {
@@ -1005,11 +998,15 @@
         {
           "Section": "WAFv2",
           "SubSection": "Deploy WAF setup for each public web service",
-          "Service": "WAF",
+          "Service": "WAFv2",
           "Type": "Must"
         }
       ],
-      "Checks": []
+      "Checks": [
+        "apigateway_restapi_waf_acl_attached",
+        "cloudfront_distributions_using_waf",
+        "elbv2_waf_acl_attached"
+      ]
     },
     {
       "Id": "Predefined set of managed rules",
@@ -1018,11 +1015,15 @@
         {
           "Section": "WAFv2",
           "SubSection": "Deploy WAF setup for each public web service",
-          "Service": "WAF",
+          "Service": "WAFv2",
           "Type": "Must"
         }
       ],
-      "Checks": []
+      "Checks": [
+        "apigateway_restapi_waf_acl_attached",
+        "cloudfront_distributions_using_waf",
+        "elbv2_waf_acl_attached"
+      ]
     },
     {
       "Id": "Global allow - and block-lists",
@@ -1031,11 +1032,15 @@
         {
           "Section": "WAFv2",
           "SubSection": "Deploy WAF setup for each public web service",
-          "Service": "WAF",
+          "Service": "WAFv2",
           "Type": "Must"
         }
       ],
-      "Checks": []
+      "Checks": [
+        "apigateway_restapi_waf_acl_attached",
+        "cloudfront_distributions_using_waf",
+        "elbv2_waf_acl_attached"
+      ]
     },
     {
       "Id": "Blanket rate-based rules",
@@ -1044,7 +1049,7 @@
         {
           "Section": "WAFv2",
           "SubSection": "Deploy WAF setup for each public web service",
-          "Service": "WAF",
+          "Service": "WAFv2",
           "Type": "Must"
         }
       ],
@@ -1057,11 +1062,15 @@
         {
           "Section": "WAFv2",
           "SubSection": "Deploy WAF setup for each public web service",
-          "Service": "WAF",
+          "Service": "WAFv2",
           "Type": "Must"
         }
       ],
-      "Checks": []
+      "Checks": [
+        "apigateway_restapi_waf_acl_attached",
+        "cloudfront_distributions_using_waf",
+        "elbv2_waf_acl_attached"
+      ]
     },
     {
       "Id": "Additional managed rules",
@@ -1070,7 +1079,7 @@
         {
           "Section": "WAFv2",
           "SubSection": "Deploy WAF setup for each public web service",
-          "Service": "WAF",
+          "Service": "WAFv2",
           "Type": "Discuss"
         }
       ],
@@ -1083,32 +1092,22 @@
         {
           "Section": "WAFv2",
           "SubSection": "Deploy WAF setup for each public web service",
-          "Service": "WAF",
+          "Service": "WAFv2",
           "Type": "Discuss"
         }
       ],
-      "Checks": []
+      "Checks": [
+        "apigateway_restapi_waf_acl_attached",
+        "cloudfront_distributions_using_waf",
+        "elbv2_waf_acl_attached"
+      ]
     },
     {
-      "Id": "For first 2 weeks - in COUNT mode",
-      "Description": "During the initial two-week period, operating in COUNT mode.",
+      "Id": "Enable Shield Advanced automatic application layer DDoS mitigation",
+      "Description": "Activate automatic application layer Distributed Denial of Service (DDoS) mitigation within Shield Advanced.",
       "Attributes": [
         {
           "Section": "WAFv2",
-          "SubSection": "Enable Shield Advanced automatic application layer DDoS mitigation",
-          "Service": "Shield",
-          "Type": "Manual"
-        }
-      ],
-      "Checks": []
-    },
-    {
-      "Id": "After that - switch into BLOCK mode",
-      "Description": "Following that, transition into BLOCK mode.",
-      "Attributes": [
-        {
-          "Section": "WAFv2",
-          "SubSection": "Enable Shield Advanced automatic application layer DDoS mitigation",
           "Service": "Shield",
           "Type": "Manual"
         }
@@ -1133,7 +1132,7 @@
       "Attributes": [
         {
           "Section": "WAFv2",
-          "Service": "WAF",
+          "Service": "WAFv2",
           "Type": "Manual"
         }
       ],
