@@ -453,12 +453,29 @@ class IAM(AWSService):
                                     document=inline_user_policy_doc,
                                 )
                             )
-
+                        except ClientError as error:
+                            if error.response["Error"]["Code"] == "NoSuchEntity":
+                                logger.warning(
+                                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                                )
+                            else:
+                                logger.error(
+                                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                                )
                         except Exception as error:
                             logger.error(
                                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                             )
                 user.inline_policies = inline_user_policies
+            except ClientError as error:
+                if error.response["Error"]["Code"] == "NoSuchEntity":
+                    logger.warning(
+                        f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
+                else:
+                    logger.error(
+                        f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
             except Exception as error:
                 logger.error(
                     f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
