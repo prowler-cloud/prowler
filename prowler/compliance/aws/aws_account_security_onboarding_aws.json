@@ -123,11 +123,12 @@
         {
           "Section": "SCPs",
           "SubSection": "Apply existing SCPs based on OU placement",
-          "Service": "IAM",
-          "Type": "Manual"
+          "Service": "IAM"
         }
       ],
-      "Checks": []
+      "Checks": [
+        "organizations_scp_check_deny_regions"
+      ]
     },
     {
       "Id": "Block tampering with security-related settings and services",
