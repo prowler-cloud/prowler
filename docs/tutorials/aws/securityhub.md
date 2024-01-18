@@ -34,7 +34,7 @@ or for only one filtered region like eu-west-1:
 prowler --security-hub --region eu-west-1
 ```
 
-> **Note 1**: It is recommended to send only fails to Security Hub and that is possible adding `-q/--quiet` to the command. You can also use the `--send-sh-only-fails` argument to the command to save all the findings in the Prowler outputs but just to send only FAIL findings to AWS Security Hub.
+> **Note 1**: It is recommended to send only fails to Security Hub and that is possible adding `-q/--quiet` to the command. You can use, instead of the `-q/--quiet` argument, the `--send-sh-only-fails` argument to save all the findings in the Prowler outputs but just to send FAIL findings to AWS Security Hub.
 
 > **Note 2**: Since Prowler perform checks to all regions by default you may need to filter by region when running Security Hub integration, as shown in the example above. Remember to enable Security Hub in the region or regions you need by calling `aws securityhub enable-security-hub --region <region>` and run Prowler with the option `-f/--region <region>` (if no region is used it will try to push findings in all regions hubs). Prowler will send findings to the Security Hub on the region where the scanned resource is located.
 
@@ -63,7 +63,7 @@ When using Security Hub it is recommended to send only the failed findings gener
 prowler --security-hub --quiet
 ```
 
-You can also use the `--send-sh-only-fails` argument to the command to save all the findings in the Prowler outputs but just to send only FAIL findings to AWS Security Hub:
+You can use, instead of the `-q/--quiet` argument, the `--send-sh-only-fails` argument to save all the findings in the Prowler outputs but just to send FAIL findings to AWS Security Hub:
 
 ```sh
 prowler --security-hub --send-sh-only-fails
