@@ -1,0 +1,36 @@
+{
+  "Provider": "kubernetes",
+  "CheckID": "kubelet_manage_iptables",
+  "CheckTitle": "Ensure that the kubelet --make-iptables-util-chains argument is set to true",
+  "CheckType": [
+    "Security",
+    "Configuration"
+  ],
+  "ServiceName": "kubelet",
+  "SubServiceName": "Iptables Management",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "KubernetesKubelet",
+  "Description": "This check ensures that the Kubelet is configured to manage iptables, which keeps the iptables configuration in sync with the dynamic pod network configuration. Allowing the Kubelet to manage iptables helps to avoid network communication issues between pods/containers.",
+  "Risk": "If kubelet does not manage iptables, manual configurations might conflict with dynamic pod networking, causing communication issues.",
+  "RelatedUrl": "https://kubernetes.io/docs/admin/kubelet/",
+  "Remediation": {
+    "Code": {
+      "CLI": "Set the --make-iptables-util-chains argument in the kubelet service file on each worker node to true.",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable kubelet management of iptables for consistent network configuration.",
+      "Url": "https://kubernetes.io/docs/admin/kubelet/"
+    }
+  },
+  "Categories": [
+    "Network Security",
+    "Node Management"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "If you are using another iptables management solution, ensure it is compatible with the kubelet's management of iptables."
+}

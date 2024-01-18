@@ -1,0 +1,36 @@
+{
+  "Provider": "kubernetes",
+  "CheckID": "kubelet_rotate_certificates",
+  "CheckTitle": "Ensure that the kubelet client certificate rotation is enabled",
+  "CheckType": [
+    "Security",
+    "Configuration"
+  ],
+  "ServiceName": "kubelet",
+  "SubServiceName": "Certificate Rotation",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "KubernetesKubelet",
+  "Description": "This check ensures that the kubelet client certificate rotation is enabled, allowing for automated periodic rotation of credentials, thereby addressing availability concerns in the security triad. This is crucial for avoiding downtime due to expired certificates.",
+  "Risk": "Not enabling kubelet client certificate rotation may lead to service interruptions due to expired certificates, compromising the availability of the node.",
+  "RelatedUrl": "https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet-tls-bootstrapping/#kubelet-configuration",
+  "Remediation": {
+    "Code": {
+      "CLI": "Ensure that the kubelet is configured with --rotate-certificates set to true or omitted (to use default).",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable kubelet client certificate rotation for automated renewal of credentials.",
+      "Url": "https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet-tls-bootstrapping/"
+    }
+  },
+  "Categories": [
+    "Data Security",
+    "Network Security"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Applicable if kubelets receive certificates from the API server. If using an external authority/tool for certificates, ensure rotation is handled appropriately."
+}

@@ -1,0 +1,36 @@
+{
+  "Provider": "kubernetes",
+  "CheckID": "kubelet_streaming_connection_timeout",
+  "CheckTitle": "Ensure that the kubelet --streaming-connection-idle-timeout argument is not set to 0",
+  "CheckType": [
+    "Security",
+    "Configuration"
+  ],
+  "ServiceName": "kubelet",
+  "SubServiceName": "Streaming Connection Timeout",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "KubernetesKubelet",
+  "Description": "This check ensures that the Kubelet is configured with a non-zero timeout for streaming connections. Setting a non-zero timeout helps protect against Denial-of-Service attacks and resource exhaustion due to idle connections.",
+  "Risk": "A zero timeout on streaming connections can lead to Denial-of-Service attacks and resource exhaustion.",
+  "RelatedUrl": "https://kubernetes.io/docs/admin/kubelet/",
+  "Remediation": {
+    "Code": {
+      "CLI": "Set the --streaming-connection-idle-timeout argument in the kubelet service file on each worker node to a non-zero value.",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Configure a non-zero timeout for streaming connections in kubelet to enhance node security.",
+      "Url": "https://kubernetes.io/docs/admin/kubelet/"
+    }
+  },
+  "Categories": [
+    "Node Security",
+    "Denial-of-Service Prevention"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Consider your environment's specific use cases to set an appropriate timeout value. The default value is 4 hours."
+}

@@ -1,0 +1,36 @@
+{
+  "Provider": "kubernetes",
+  "CheckID": "kubelet_authorization_mode",
+  "CheckTitle": "Ensure that the kubelet --authorization-mode argument is not set to AlwaysAllow",
+  "CheckType": [
+    "Security",
+    "Configuration"
+  ],
+  "ServiceName": "kubelet",
+  "SubServiceName": "Authorization Mode",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "KubernetesKubelet",
+  "Description": "This check ensures that kubelets are not set to use the 'AlwaysAllow' authorization mode, which would allow all authenticated requests without explicit authorization.",
+  "Risk": "Setting --authorization-mode to AlwaysAllow can lead to unauthorized access to kubelet services.",
+  "RelatedUrl": "https://kubernetes.io/docs/admin/kubelet-authentication-authorization/#kubelet-authentication",
+  "Remediation": {
+    "Code": {
+      "CLI": "Edit the kubelet service file on each worker node to set --authorization-mode to Webhook.",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Ensure kubelet is configured with an authorization mode other than AlwaysAllow.",
+      "Url": "https://kubernetes.io/docs/admin/kubelet/"
+    }
+  },
+  "Categories": [
+    "Security",
+    "Node Management"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Verify the authorization mode in both kubelet service files and configuration files."
+}

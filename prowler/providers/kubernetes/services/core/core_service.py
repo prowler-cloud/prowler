@@ -15,6 +15,8 @@ class Core(KubernetesService):
 
         self.pods = {}
         self.__get_pods__()
+        self.config_maps = []
+        self.__list_config_maps__()
 
     def __get_pods__(self):
         try:
@@ -57,6 +59,24 @@ class Core(KubernetesService):
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def __list_config_maps__(self):
+        try:
+            response = self.client.list_config_map_for_all_namespaces()
+            for cm in response.items:
+                configmap_model = ConfigMap(
+                    name=cm.metadata.name,
+                    namespace=cm.metadata.namespace,
+                    uid=cm.metadata.uid,
+                    data=cm.data,
+                    labels=cm.metadata.labels,
+                    annotations=cm.metadata.annotations,
+                )
+                self.config_maps.append(configmap_model)
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
 
 class Container(BaseModel):
     name: str
@@ -78,3 +98,12 @@ class Pod(BaseModel):
     pod_ip: Optional[str]
     host_ip: Optional[str]
     containers: Optional[dict]
+
+
+class ConfigMap(BaseModel):
+    name: str
+    namespace: str
+    uid: str
+    data: Optional[dict]
+    labels: Optional[dict]
+    annotations: Optional[dict]
