@@ -1,27 +1,76 @@
 # AWS Security Hub Integration
 
-Prowler supports natively and as **official integration** sending findings to [AWS Security Hub](https://aws.amazon.com/security-hub). This integration allows Prowler to import its findings to AWS Security Hub.
+Prowler supports natively and as **official integration** sending findings to [AWS Security Hub](https://aws.amazon.com/security-hub). This integration allows **Prowler** to import its findings to AWS Security Hub.
 
-With Security Hub, you now have a single place that aggregates, organizes, and prioritizes your security alerts, or findings, from multiple AWS services, such as Amazon GuardDuty, Amazon Inspector, Amazon Macie, AWS Identity and Access Management (IAM) Access Analyzer, and AWS Firewall Manager, as well as from AWS Partner solutions and from Prowler for free.
 
-Before sending findings to Prowler, you will need to perform next steps:
+Before sending findings, you will need to enable AWS Security Hub and the **Prowler** integration.
 
-1. Since Security Hub is a region based service, enable it in the region or regions you require. Use the AWS Management Console or using the AWS CLI with this command if you have enough permissions:
-    - `aws securityhub enable-security-hub --region <region>`.
-    > For this command to work you will need the `securityhub:EnableSecurityHub` permission.
+## Enable AWS Security Hub
 
-2. Enable Prowler as partner integration. You can enable it using the AWS Management Console or using the AWS CLI with this command if you have enough permissions:
-    - Using the AWS CLI:
+To enable the integration you have to perform the following steps, in _at least_ one AWS region of a given AWS account, to enable **AWS Security Hub** and **Prowler** as a partner integration.
 
-    `aws securityhub enable-import-findings-for-product --region <region> --product-arn arn:aws:securityhub:<region>::product/prowler/prowler`
-    > You will need to change also the AWS region also within the ARN.
+Since **AWS Security Hub** is a region based service, you will need to enable it in the region or regions you require. You can configure it using the AWS Management Console or the AWS CLI.
 
-    - Using the AWS Management Console:
-     ![Screenshot 2020-10-29 at 10 26 02 PM](https://user-images.githubusercontent.com/3985464/97634660-5ade3400-1a36-11eb-9a92-4a45cc98c158.png)
+> Take into account that enabling this integration will incur in costs in AWS Security Hub, please refer to its pricing [here](https://aws.amazon.com/security-hub/pricing/) for more information.
 
-3. Allow Prowler to import its findings to AWS Security Hub by adding the policy below to the role or user running Prowler:
-    - [prowler-security-hub.json](https://github.com/prowler-cloud/prowler/blob/master/permissions/prowler-security-hub.json)
+### Using the AWS Management Console
 
+#### Enable AWS Security Hub
+
+If you have currently AWS Security Hub enabled you can skip to the [next section](#enable-prowler-integration).
+
+1. Open the **AWS Security Hub** console at https://console.aws.amazon.com/securityhub/.
+
+2. When you open the Security Hub console for the first time make sure that you are in the region you want to enable, then choose **Go to Security Hub**.
+![](./img/enable.png)
+
+3. On the next page, the Security standards section lists the security standards that Security Hub supports. Select the check box for a standard to enable it, and clear the check box to disable it.
+
+4. Choose **Enable Security Hub**.
+![](./img/enable-2.png)
+
+#### Enable Prowler Integration
+
+If you have currently the Prowler integration enabled in AWS Security Hub you can skip to the [next section](#send-findings) and start sending findings.
+
+Once **AWS Security Hub** is enabled you will need to enable **Prowler** as partner integration to allow **Prowler** to send findings to your **AWS Security Hub**.
+
+1. Open the **AWS Security Hub** console at https://console.aws.amazon.com/securityhub/.
+
+2. Select the **Integrations** tab in the right-side menu bar.
+![](./img/enable-partner-integration.png)
+
+3. Search for _Prowler_ in the text search box and the **Prowler** integration will appear.
+
+4. Once there, click on **Accept Findings** to allow **AWS Security Hub** to receive findings from **Prowler**.
+![](./img/enable-partner-integration-2.png)
+
+5. A new modal will appear to confirm that you are enabling the **Prowler** integration.
+![](./img/enable-partner-integration-3.png)
+
+6. Right after click on **Accept Findings**, you will see that the integration is enabled in **AWS Security Hub**.
+![](./img/enable-partner-integration-4.png)
+
+### Using the AWS CLI
+
+To enable **AWS Security Hub** and the **Prowler** integration you have to run the following commands using the AWS CLI:
+
+```shell
+aws securityhub enable-security-hub --region <region>
+```
+> For this command to work you will need the `securityhub:EnableSecurityHub` permission.
+> You will need to set the AWS region where you want to enable AWS Security Hub.
+
+Once **AWS Security Hub** is enabled you will need to enable **Prowler** as partner integration to allow **Prowler** to send findings to your AWS Security Hub. You have to run the following commands using the AWS CLI:
+
+```shell
+aws securityhub enable-import-findings-for-product --region eu-west-1 --product-arn arn:aws:securityhub:<region>::product/prowler/prowler
+```
+> You will need to set the AWS region where you want to enable the integration and also the AWS region also within the ARN.
+> For this command to work you will need the `securityhub:securityhub:EnableImportFindingsForProduct` permission.
+
+
+## Send Findings
 Once it is enabled, it is as simple as running the command below (for all regions):
 
 ```sh
@@ -40,9 +89,21 @@ prowler --security-hub --region eu-west-1
 
 > **Note 3**: To have updated findings in Security Hub you have to run Prowler periodically. Once a day or every certain amount of hours.
 
-Once you run findings for first time you will be able to see Prowler findings in Findings section:
+### See you Prowler findings in AWS Security Hub
 
-![Screenshot 2020-10-29 at 10 29 05 PM](https://user-images.githubusercontent.com/3985464/97634676-66c9f600-1a36-11eb-9341-70feb06f6331.png)
+Once configured the **AWS Security Hub** in your next scan you will receive the **Prowler** findings in the AWS regions configured. To review those findings in **AWS Security Hub**:
+
+1. Open the **AWS Security Hub** console at https://console.aws.amazon.com/securityhub/.
+
+2. Select the **Findings** tab in the right-side menu bar.
+![](./img/findings.png)
+
+3. Use the search box filters and use the **Product Name** filter with the value _Prowler_ to see the findings sent from **Prowler**.
+
+4. Then, you can click on the check **Title** to see the details and the history of a finding.
+![](./img/finding-details.png)
+
+As you can see in the related requirements section, in the detailed view of the findings, **Prowler** also sends compliance information related to every finding.
 
 ## Send findings to Security Hub assuming an IAM Role
 
@@ -57,7 +118,7 @@ prowler --security-hub --role arn:aws:iam::123456789012:role/ProwlerExecutionRol
 
 ## Send only failed findings to Security Hub
 
-When using Security Hub it is recommended to send only the failed findings generated. To follow that recommendation you could add the `-q` flag to the Prowler command:
+When using the **AWS Security Hub** integration you can send only the `FAIL` findings generated by **Prowler**. Therefore, the **AWS Security Hub** usage costs eventually would be lower. To follow that recommendation you could add the `-q/--quiet` flag to the Prowler command:
 
 ```sh
 prowler --security-hub --quiet
