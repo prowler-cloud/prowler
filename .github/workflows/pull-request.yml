@@ -20,7 +20,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Test if changes are in not ignored paths
         id: are-non-ignored-files-changed
-        uses: tj-actions/changed-files@v41
+        uses: tj-actions/changed-files@v42
         with:
           files: ./**
           files_ignore: |
