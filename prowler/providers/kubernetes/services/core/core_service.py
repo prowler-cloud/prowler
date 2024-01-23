@@ -23,7 +23,13 @@ class Core(KubernetesService):
             pods = self.client.list_pod_for_all_namespaces()
             for pod in pods.items:
                 pod_containers = {}
-                for container in pod.spec.containers:
+                for container in (
+                    pod.spec.containers + pod.spec.init_containers
+                    if pod.spec.init_containers
+                    else [] + pod.spec.ephemeral_containers
+                    if pod.spec.ephemeral_containers
+                    else []
+                ):
                     pod_containers[container.name] = Container(
                         name=container.name,
                         image=container.image,
@@ -52,6 +58,9 @@ class Core(KubernetesService):
                     status_phase=pod.status.phase,
                     pod_ip=pod.status.pod_ip,
                     host_ip=pod.status.host_ip,
+                    host_pid=pod.spec.host_pid,
+                    host_ipc=pod.spec.host_ipc,
+                    host_network=pod.spec.host_network,
                     containers=pod_containers,
                 )
         except Exception as error:
@@ -97,6 +106,9 @@ class Pod(BaseModel):
     status_phase: Optional[str]
     pod_ip: Optional[str]
     host_ip: Optional[str]
+    host_pid: Optional[str]
+    host_ipc: Optional[str]
+    host_network: Optional[str]
     containers: Optional[dict]
 
 

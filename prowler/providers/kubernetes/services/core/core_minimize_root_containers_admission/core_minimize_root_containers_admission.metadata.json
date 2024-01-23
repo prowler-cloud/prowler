@@ -1,0 +1,36 @@
+{
+  "Provider": "kubernetes",
+  "CheckID": "core_minimize_root_containers_admission",
+  "CheckTitle": "Minimize the admission of root containers",
+  "CheckType": [
+    "Security",
+    "Configuration"
+  ],
+  "ServiceName": "Core",
+  "SubServiceName": "Root User Control",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "KubernetesPod",
+  "Description": "This check ensures that Kubernetes clusters are configured to minimize the admission of containers running as the root user. Running containers as root increases the risk of container breakout and should be restricted.",
+  "Risk": "Allowing containers to run as root can lead to elevated risk of security breaches and container breakout.",
+  "RelatedUrl": "https://kubernetes.io/docs/concepts/security/pod-security-standards/",
+  "Remediation": {
+    "Code": {
+      "CLI": "Implement admission control policies in each namespace to restrict the creation of root containers. Use MustRunAsNonRoot or MustRunAs with a UID range excluding 0.",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Restrict the use of root containers through admission control policies.",
+      "Url": "https://kubernetes.io/docs/concepts/security/pod-security-standards/"
+    }
+  },
+  "Categories": [
+    "Container Security",
+    "Best Practices"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Exceptions for root containers should be clearly defined and monitored."
+}
