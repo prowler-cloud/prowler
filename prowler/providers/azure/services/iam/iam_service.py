@@ -19,10 +19,10 @@ class IAM(AzureService):
         for subscription, client in self.clients.items():
             try:
                 roles.update({subscription: []})
-                for role in client.role_definitions.list(
+                all_roles = client.role_definitions.list(
                     scope=f"/subscriptions/{self.subscriptions[subscription]}",
-                    filter="type eq 'CustomRole'",
-                ):
+                )
+                for role in all_roles:
                     roles[subscription].append(
                         Role(
                             id=role.id,
