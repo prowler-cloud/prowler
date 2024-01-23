@@ -1,0 +1,36 @@
+{
+  "Provider": "kubernetes",
+  "CheckID": "rbac_minimize_pv_creation_access",
+  "CheckTitle": "Minimize access to create persistent volumes",
+  "CheckType": [
+    "Security",
+    "Configuration"
+  ],
+  "ServiceName": "RBAC",
+  "SubServiceName": "Persistent Volume Management",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "PersistentVolume",
+  "Description": "This check ensures that the ability to create persistent volumes in Kubernetes is restricted to authorized users only. Limiting this capability helps prevent privilege escalation scenarios through the creation of hostPath volumes.",
+  "Risk": "Excessive permissions to create persistent volumes can lead to unauthorized access to sensitive host files, overriding the restrictions imposed by Pod Security Admission policies.",
+  "RelatedUrl": "https://kubernetes.io/docs/concepts/security/rbac-good-practices/#persistent-volume-creation",
+  "Remediation": {
+    "Code": {
+      "CLI": "Review and update RBAC configurations to restrict creation access to PersistentVolume objects. Ensure that only trusted users have the required permissions.",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Restrict access to create persistent volumes in the cluster.",
+      "Url": "https://kubernetes.io/docs/concepts/security/rbac-good-practices/#persistent-volume-creation"
+    }
+  },
+  "Categories": [
+    "Access Control",
+    "Privilege Management"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Carefully evaluate which users or service accounts require the ability to create PersistentVolumes and restrict access accordingly."
+}
