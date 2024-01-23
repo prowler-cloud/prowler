@@ -71,7 +71,7 @@ pytest = "7.4.4"
 pytest-cov = "4.1.0"
 pytest-randomly = "3.15.0"
 pytest-xdist = "3.5.0"
-safety = "2.3.5"
+safety = "3.0.1"
 vulture = "2.10"
 
 [tool.poetry.scripts]
