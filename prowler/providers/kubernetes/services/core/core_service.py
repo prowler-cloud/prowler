@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Any, List, Optional
 
 from kubernetes import client
 from pydantic import BaseModel
@@ -61,6 +61,7 @@ class Core(KubernetesService):
                     host_pid=pod.spec.host_pid,
                     host_ipc=pod.spec.host_ipc,
                     host_network=pod.spec.host_network,
+                    security_context=pod.spec.security_context,
                     containers=pod_containers,
                 )
         except Exception as error:
@@ -109,6 +110,7 @@ class Pod(BaseModel):
     host_pid: Optional[str]
     host_ipc: Optional[str]
     host_network: Optional[str]
+    security_context: Optional[Any]
     containers: Optional[dict]
 
 
