@@ -6,7 +6,7 @@
     "Security",
     "Configuration"
   ],
-  "ServiceName": "Container Security",
+  "ServiceName": "Core",
   "SubServiceName": "Host Network Namespace",
   "ResourceIdTemplate": "",
   "Severity": "high",

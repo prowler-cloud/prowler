@@ -6,7 +6,7 @@
     "Security",
     "Configuration"
   ],
-  "ServiceName": "Container Security",
+  "ServiceName": "Core",
   "SubServiceName": "Capability Assignment",
   "ResourceIdTemplate": "",
   "Severity": "high",

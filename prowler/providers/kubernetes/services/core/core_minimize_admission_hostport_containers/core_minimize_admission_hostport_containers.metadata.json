@@ -6,7 +6,7 @@
     "Security",
     "Configuration"
   ],
-  "ServiceName": "Network Policy",
+  "ServiceName": "Core",
   "SubServiceName": "HostPorts",
   "ResourceIdTemplate": "",
   "Severity": "high",
