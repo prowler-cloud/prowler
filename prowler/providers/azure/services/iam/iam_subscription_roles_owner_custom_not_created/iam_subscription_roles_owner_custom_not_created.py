@@ -10,7 +10,6 @@ class iam_subscription_roles_owner_custom_not_created(Check):
         for subscription, roles in iam_client.roles.items():
             for role in roles:
                 if role.type == "CustomRole":
-                    print(role.name)
                     report = Check_Report_Azure(self.metadata())
                     report.subscription = subscription
                     report.resource_id = role.id
