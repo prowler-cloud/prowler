@@ -1,9 +1,10 @@
+import asyncio
 import sys
 from os import getenv
 
 from azure.identity import DefaultAzureCredential, InteractiveBrowserCredential
 from azure.mgmt.subscription import SubscriptionClient
-from msgraph.core import GraphClient
+from msgraph import GraphServiceClient
 
 from prowler.lib.logger import logger
 from prowler.providers.azure.lib.audit_info.models import Azure_Identity_Info
@@ -111,11 +112,15 @@ class Azure_Provider:
                 logger.info(
                     "Trying to retrieve tenant domain from AAD to populate identity structure ..."
                 )
-                client = GraphClient(credential=credentials)
-                domain_result = client.get("/domains").json()
-                if "value" in domain_result:
-                    if "id" in domain_result["value"][0]:
-                        identity.domain = domain_result["value"][0]["id"]
+                client = GraphServiceClient(credentials=credentials)
+
+                async def get_domain():
+                    domain_result = await client.domains.get()
+                    if getattr(domain_result, "value"):
+                        if getattr(domain_result.value[0], "id"):
+                            identity.domain = domain_result.value[0].id
+
+                asyncio.run(get_domain())
             except Exception as error:
                 logger.error(
                     "Provided identity does not have permissions to access AAD to retrieve tenant domain"
@@ -137,10 +142,16 @@ class Azure_Provider:
                     logger.info(
                         "Trying to retrieve user information from AAD to populate identity structure ..."
                     )
-                    client = GraphClient(credential=credentials)
-                    user_name = client.get("/me").json()
-                    if "userPrincipalName" in user_name:
-                        identity.identity_id = user_name
+                    client = GraphServiceClient(credentials=credentials)
+
+                    async def me():
+                        me = await client.me.get()
+                        if me:
+                            if getattr(me, "user_principal_name"):
+                                identity.identity_id = me.user_principal_name
+                                print(me.user_principal_name)
+
+                    asyncio.run(me())
 
                 except Exception as error:
                     logger.error(
