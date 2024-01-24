@@ -97,6 +97,10 @@ def mock_recover_checks_from_azure_provider(*_):
             "/root_dir/fake_path/iam/iam_subscription_roles_owner_custom_not_created",
         ),
         (
+            "iam_custom_role_permits_administering_resource_locks",
+            "/root_dir/fake_path/iam/iam_custom_role_permits_administering_resource_locks",
+        ),
+        (
             "storage_default_network_access_rule_is_denied",
             "/root_dir/fake_path/storage/storage_default_network_access_rule_is_denied",
         ),
