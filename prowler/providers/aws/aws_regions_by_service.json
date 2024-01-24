@@ -7503,6 +7503,7 @@
       "regions": {
         "aws": [
           "us-east-1",
+          "us-east-2",
           "us-west-2"
         ],
         "aws-cn": [],
