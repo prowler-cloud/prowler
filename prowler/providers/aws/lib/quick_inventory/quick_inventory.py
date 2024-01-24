@@ -211,9 +211,13 @@ def create_inventory_table(resources: list, resources_in_region: dict) -> dict:
 
 def create_output(resources: list, audit_info: AWS_Audit_Info, args):
     json_output = []
-    output_file = (
-        f"prowler-inventory-{audit_info.audited_account}-{output_file_timestamp}"
-    )
+    # Check if custom output filename was input, if not, set the default
+    if not hasattr(args, "output_filename") or args.output_filename is None:
+        output_file = (
+            f"prowler-inventory-{audit_info.audited_account}-{output_file_timestamp}"
+        )
+    else:
+        output_file = args.output_filename
 
     for item in sorted(resources, key=lambda d: d["arn"]):
         resource = {}
