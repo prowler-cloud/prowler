@@ -8,22 +8,22 @@ class iam_subscription_roles_owner_custom_not_created(Check):
     def execute(self) -> Check_Report_Azure:
         findings = []
         for subscription, roles in iam_client.roles.items():
+            roles = [role for role in roles if role.type == "CustomRole"]
             for role in roles:
-                if role.type == "CustomRole":
-                    report = Check_Report_Azure(self.metadata())
-                    report.subscription = subscription
-                    report.resource_id = role.id
-                    report.resource_name = role.name
-                    report.status = "PASS"
-                    report.status_extended = f"Role {role.name} from subscription {subscription} is not a custom owner role."
-                    for scope in role.assignable_scopes:
-                        if search("^/.*", scope):
-                            for permission_item in role.permissions:
-                                for action in permission_item.actions:
-                                    if action == "*":
-                                        report.status = "FAIL"
-                                        report.status_extended = f"Role {role.name} from subscription {subscription} is a custom owner role."
-                                        break
+                report = Check_Report_Azure(self.metadata())
+                report.subscription = subscription
+                report.resource_id = role.id
+                report.resource_name = role.name
+                report.status = "PASS"
+                report.status_extended = f"Role {role.name} from subscription {subscription} is not a custom owner role."
+                for scope in role.assignable_scopes:
+                    if search("^/.*", scope):
+                        for permission_item in role.permissions:
+                            for action in permission_item.actions:
+                                if action == "*":
+                                    report.status = "FAIL"
+                                    report.status_extended = f"Role {role.name} from subscription {subscription} is a custom owner role."
+                                    break
 
-                    findings.append(report)
+                findings.append(report)
         return findings
