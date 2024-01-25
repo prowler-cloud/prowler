@@ -9929,6 +9929,17 @@
         ]
       }
     },
+    "supplychain": {
+      "regions": {
+        "aws": [
+          "eu-central-1",
+          "us-east-1",
+          "us-west-2"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
     "support": {
       "regions": {
         "aws": [
