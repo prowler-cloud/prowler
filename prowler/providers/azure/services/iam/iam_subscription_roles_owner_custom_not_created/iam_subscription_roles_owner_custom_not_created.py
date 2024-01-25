@@ -7,8 +7,7 @@ from prowler.providers.azure.services.iam.iam_client import iam_client
 class iam_subscription_roles_owner_custom_not_created(Check):
     def execute(self) -> Check_Report_Azure:
         findings = []
-        for subscription, roles in iam_client.roles.items():
-            roles = [role for role in roles if role.type == "CustomRole"]
+        for subscription, roles in iam_client.custom_roles.items():
             for role in roles:
                 report = Check_Report_Azure(self.metadata())
                 report.subscription = subscription
