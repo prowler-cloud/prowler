@@ -10,7 +10,7 @@
   "ResourceType": "AzureRole",
   "Description": "Ensure a Custom Role is Assigned Permissions for Administering Resource Locks",
   "Risk": "Resouce locks administration is a critical task that should be preformed from a custom role with the appropriate permissions. This ensures that only authorized users can administer resource locks.",
-  "RelatedUrl": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/AccessControl/resource-lock-custom-role.html",
+  "RelatedUrl": "https://learn.microsoft.com/en-us/azure/azure-resource-manager/management/lock-resources?tabs=json",
   "Remediation": {
     "Code": {
       "CLI": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/AccessControl/resource-lock-custom-role.html",

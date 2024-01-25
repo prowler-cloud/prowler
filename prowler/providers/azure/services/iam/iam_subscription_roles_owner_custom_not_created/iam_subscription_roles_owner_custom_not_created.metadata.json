@@ -10,7 +10,7 @@
   "ResourceType": "AzureRole",
   "Description": "Ensure that no custom subscription owner roles are created",
   "Risk": "Subscription ownership should not include permission to create custom owner roles. The principle of least privilege should be followed and only necessary privileges should be assigned instead of allowing full administrative access.",
-  "RelatedUrl": "",
+  "RelatedUrl": "https://learn.microsoft.com/en-us/azure/role-based-access-control/custom-roles",
   "Remediation": {
     "Code": {
       "CLI": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/AccessControl/remove-custom-owner-roles.html",
