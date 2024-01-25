@@ -35,9 +35,14 @@ class Test_iam_custom_role_has_permissions_to_administer_resource_locks:
                     id=str(uuid4()),
                     name=role_name,
                     type="CustomRole",
-                    assignable_scopes=["/.*"],
+                    assignable_scopes=["/.*", "/test"],
                     permissions=[
-                        Permission(actions=["Microsoft.Authorization/locks/*"])
+                        Permission(
+                            actions=[
+                                "Microsoft.Authorization/locks/*",
+                                "microsoft.aadiam/azureADMetrics/read",
+                            ]
+                        )
                     ],
                 )
             ]
