@@ -4,8 +4,7 @@ from uuid import uuid4
 from azure.mgmt.authorization.v2022_04_01.models import Permission
 
 from prowler.providers.azure.services.iam.iam_service import Role
-
-AZURE_SUSCRIPTION = str(uuid4())
+from tests.providers.azure.azure_fixtures import AZURE_SUSCRIPTION
 
 
 class Test_iam_subscription_roles_owner_custom_not_created:
