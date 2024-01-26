@@ -16,7 +16,7 @@
         "CLI": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/SecurityCenter/automatic-provisioning-of-monitoring-agent.html",
         "NativeIaC": "",
         "Other": "",
-        "Terraform": "https://docs.bridgecrew.io/docs/ensure-that-azure-defender-is-set-to-on-for-app-service#terraform"
+        "Terraform": ""
       },
       "Recommendation": {
         "Text": "Ensure comprehensive visibility into possible security vulnerabilities, including missing updates, misconfigured operating system security settings, and active threats, allowing for timely mitigation and improved overall security posture",
