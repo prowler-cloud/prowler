@@ -33,9 +33,8 @@ class Defender(AzureService):
                         }
                     )
             except Exception as error:
-                logger.error(f"Subscription name: {subscription}")
                 logger.error(
-                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    f"Subscription name: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         return pricings
     
@@ -51,6 +50,7 @@ class Defender(AzureService):
                         {
                             ap.name: AutoProvisioningSetting(
                                 resource_id=ap.id,
+                                resource_name=ap.name,
                                 resource_type=ap.type,
                                 auto_provision=ap.auto_provision,
                             )
@@ -71,5 +71,6 @@ class Defender_Pricing(BaseModel):
 
 class AutoProvisioningSetting(BaseModel):
     resource_id: str
+    resource_name: str
     resource_type: str
     auto_provision: str
