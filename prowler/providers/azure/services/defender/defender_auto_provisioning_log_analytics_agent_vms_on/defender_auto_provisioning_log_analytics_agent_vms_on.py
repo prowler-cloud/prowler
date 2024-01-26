@@ -17,7 +17,7 @@ class defender_auto_provisioning_log_analytics_agent_vms_on(Check):
             for ap in auto_provisioning_settings:
                 if auto_provisioning_settings[ap].auto_provision != "On":
                     report.status = "FAIL"
-                    report.status_extended = f"Defenter Auto Provisioning Log Analytics Agents from subscription {subscription} is set to OFF."
+                    report.status_extended = f"Defender Auto Provisioning Log Analytics Agents from subscription {subscription} is set to OFF."
 
             findings.append(report)
 
