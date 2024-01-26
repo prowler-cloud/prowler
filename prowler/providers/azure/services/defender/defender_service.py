@@ -14,7 +14,6 @@ class Defender(AzureService):
 
         self.pricings = self.__get_pricings__()
         self.auto_provisioning_settings = self.__get_auto_provisioning_settings__()
-        self.assessments = self.__get_assessments__()
 
     def __get_pricings__(self):
         logger.info("Defender - Getting pricings...")
