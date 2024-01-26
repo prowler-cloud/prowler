@@ -1,0 +1,32 @@
+{
+  "Provider": "azure",
+  "CheckID": "storage_key_rotation_90_days",
+  "CheckTitle": "Ensure that 'Enable key rotation reminders' is enabled for each Storage Account",
+  "CheckType": [],
+  "ServiceName": "storage",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "AzureStorageAccount",
+  "Description": "Ensure that 'Enable key rotation reminders' is enabled for each Storage Account",
+  "Risk": "TLS versions 1.0 and 1.1 are known to be susceptible to certain Common Vulnerabilities and Exposures (CVE) weaknesses and attacks such as POODLE and BEAST",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "https://learn.microsoft.com/en-us/azure/storage/common/storage-account-keys-manage?tabs=azure-portal",
+      "NativeIaC": "",
+      "Other": "https://www.tenable.com/audits/items/CIS_Microsoft_Azure_Foundations_v1.5.0_L1.audit:5c2be112f94eebb430bfd55752740ab4",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Ensure that all your Microsoft Azure Storage accounts are using the latest available version of the TLS protocol.",
+      "Url": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/StorageAccounts/regenerate-storage-account-access-keys-periodically.html#"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

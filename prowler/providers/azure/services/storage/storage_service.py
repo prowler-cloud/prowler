@@ -31,12 +31,12 @@ class Storage(AzureService):
                             network_rule_set=storage_account.network_rule_set,
                             encryption_type=storage_account.encryption.key_source,
                             minimum_tls_version=storage_account.minimum_tls_version,
+                            key_expiration_period_in_days=storage_account.key_policy.key_expiration_period_in_days,
                         )
                     )
             except Exception as error:
-                logger.error(f"Subscription name: {subscription}")
                 logger.error(
-                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    f"Subscription name: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         return storage_accounts
 
@@ -51,23 +51,4 @@ class Storage_Account:
     network_rule_set: NetworkRuleSet
     encryption_type: str
     minimum_tls_version: str
-
-    def __init__(
-        self,
-        id,
-        name,
-        enable_https_traffic_only,
-        infrastructure_encryption,
-        allow_blob_public_access,
-        network_rule_set,
-        encryption_type,
-        minimum_tls_version,
-    ):
-        self.id = id
-        self.name = name
-        self.enable_https_traffic_only = enable_https_traffic_only
-        self.infrastructure_encryption = infrastructure_encryption
-        self.allow_blob_public_access = allow_blob_public_access
-        self.network_rule_set = network_rule_set
-        self.encryption_type = encryption_type
-        self.minimum_tls_version = minimum_tls_version
+    key_expiration_period_in_days: str = None

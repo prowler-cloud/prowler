@@ -41,6 +41,13 @@ expected_packages = [
         ispkg=False,
     ),
     ModuleInfo(
+        module_finder=FileFinder(
+            "/root_dir/prowler/providers/azure/services/storage/storage_key_rotation_90_days"
+        ),
+        name="prowler.providers.azure.services.storage.storage_key_rotation_90_days.storage_key_rotation_90_days",
+        ispkg=False,
+    ),
+    ModuleInfo(
         module_finder=FileFinder("/root_dir/prowler/providers/azure/services/storage"),
         name="prowler.providers.azure.services.storage.storage_ensure_encryption_with_customer_managed_keys",
         ispkg=True,
@@ -66,6 +73,13 @@ def mock_list_modules(*_):
                 "/root_dir/prowler/providers/azure/services/storage/storage_ensure_minimum_tls_version_12"
             ),
             name="prowler.providers.azure.services.storage.storage_ensure_minimum_tls_version_12.storage_ensure_minimum_tls_version_12",
+            ispkg=False,
+        ),
+        ModuleInfo(
+            module_finder=FileFinder(
+                "/root_dir/prowler/providers/azure/services/storage/storage_key_rotation_90_days"
+            ),
+            name="prowler.providers.azure.services.storage.storage_key_rotation_90_days.storage_key_rotation_90_days",
             ispkg=False,
         ),
         ModuleInfo(
@@ -446,6 +460,10 @@ class Test_Check:
             (
                 "storage_ensure_minimum_tls_version_12",
                 "/root_dir/prowler/providers/azure/services/storage/storage_ensure_minimum_tls_version_12",
+            ),
+            (
+                "storage_key_rotation_90_days",
+                "/root_dir/prowler/providers/azure/services/storage/storage_key_rotation_90_days",
             ),
             (
                 "storage_ensure_encryption_with_customer_managed_keys",
