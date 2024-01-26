@@ -20,7 +20,7 @@
       },
       "Recommendation": {
         "Text": "Ensure comprehensive visibility into possible security vulnerabilities, including missing updates, misconfigured operating system security settings, and active threats, allowing for timely mitigation and improved overall security posture",
-        "Url": ""
+        "Url": "https://learn.microsoft.com/en-us/azure/defender-for-cloud/monitoring-components"
       }
     },
     "Categories": [],
