@@ -28,3 +28,19 @@ class Azure_Audit_Info:
     audit_metadata: Optional[Any]
     audit_config: dict
     azure_region_config: Azure_Region_Config
+
+    def __init__(
+        self,
+        credentials,
+        identity,
+        audit_metadata,
+        audit_resources,
+        audit_config,
+        azure_region_config,
+    ):
+        self.credentials = credentials
+        self.identity = identity
+        self.audit_metadata = audit_metadata
+        self.audit_resources = audit_resources
+        self.audit_config = audit_config
+        self.azure_region_config = azure_region_config
