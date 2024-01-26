@@ -12,7 +12,7 @@ class defender_auto_provisioning_log_analytics_agent_vms_on(Check):
             report.subscription = subscription
             report.resource_name = "Defender Auto Provisioning Log Analytics Agents On"
             report.resource_id = auto_provisioning_settings["default"].resource_id
-            report.status_extended = f"Defenter Auto Provisioning Log Analytics Agents from subscription {subscription} is set to ON."
+            report.status_extended = f"Defender Auto Provisioning Log Analytics Agents from subscription {subscription} is set to ON."
 
             for ap in auto_provisioning_settings:
                 if auto_provisioning_settings[ap].auto_provision != "On":
