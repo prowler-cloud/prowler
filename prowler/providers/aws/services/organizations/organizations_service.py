@@ -104,13 +104,11 @@ class Organizations(AWSService):
                     for policy in page["Policies"]:
                         policy_id = policy.get("Id")
                         policy_content = self.__describe_policy__(policy_id)
-                        policy_targets = self.__list_targets_for_policy__(
-                            policy.get("Id")
-                        )
+                        policy_targets = self.__list_targets_for_policy__(policy_id)
                         self.policies.append(
                             Policy(
                                 arn=policy.get("Arn"),
-                                id=policy.get("Id"),
+                                id=policy_id,
                                 type=policy.get("Type"),
                                 aws_managed=policy.get("AwsManaged"),
                                 content=policy_content,
