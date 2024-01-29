@@ -13,6 +13,7 @@ class Defender(AzureService):
         super().__init__(SecurityCenter, audit_info)
 
         self.pricings = self.__get_pricings__()
+        self.auto_provisioning_settings = self.__get_auto_provisioning_settings__()
 
     def __get_pricings__(self):
         logger.info("Defender - Getting pricings...")
@@ -32,14 +33,45 @@ class Defender(AzureService):
                         }
                     )
             except Exception as error:
+                logger.error(
+                    f"Subscription name: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+        return pricings
+
+    def __get_auto_provisioning_settings__(self):
+        logger.info("Defender - Getting auto provisioning settings...")
+        auto_provisioning = {}
+        for subscription, client in self.clients.items():
+            try:
+                auto_provisioning_settings = client.auto_provisioning_settings.list()
+                auto_provisioning.update({subscription: {}})
+                for ap in auto_provisioning_settings:
+                    auto_provisioning[subscription].update(
+                        {
+                            ap.name: AutoProvisioningSetting(
+                                resource_id=ap.id,
+                                resource_name=ap.name,
+                                resource_type=ap.type,
+                                auto_provision=ap.auto_provision,
+                            )
+                        }
+                    )
+            except Exception as error:
                 logger.error(f"Subscription name: {subscription}")
                 logger.error(
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
-        return pricings
+        return auto_provisioning
 
 
 class Defender_Pricing(BaseModel):
     resource_id: str
     pricing_tier: str
     free_trial_remaining_time: timedelta
+
+
+class AutoProvisioningSetting(BaseModel):
+    resource_id: str
+    resource_name: str
+    resource_type: str
+    auto_provision: str

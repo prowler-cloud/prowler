@@ -40,6 +40,7 @@ class Test_storage_default_network_access_rule_is_denied:
                     network_rule_set=NetworkRuleSet(default_action="Allow"),
                     encryption_type=None,
                     minimum_tls_version=None,
+                    key_expiration_period_in_days=None,
                 )
             ]
         }
@@ -79,6 +80,7 @@ class Test_storage_default_network_access_rule_is_denied:
                     network_rule_set=NetworkRuleSet(default_action="Deny"),
                     encryption_type=None,
                     minimum_tls_version=None,
+                    key_expiration_period_in_days=None,
                 )
             ]
         }

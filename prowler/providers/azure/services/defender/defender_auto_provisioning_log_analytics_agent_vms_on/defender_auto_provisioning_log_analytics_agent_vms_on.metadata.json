@@ -1,0 +1,30 @@
+{
+  "Provider": "azure",
+  "CheckID": "defender_auto_provisioning_log_analytics_agent_vms_on",
+  "CheckTitle": "Ensure that Auto provisioning of 'Log Analytics agent for Azure VMs' is Set to 'On'",
+  "CheckType": [],
+  "ServiceName": "defender",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "AzureDefenderPlan",
+  "Description": "Ensure that Auto provisioning of 'Log Analytics agent for Azure VMs' is Set to 'On'. The Microsoft Monitoring Agent scans for various security-related configurations and events such as system updates, OS vulnerabilities, endpoint protection, and provides alerts.",
+  "Risk": "Missing critical security information about your Azure VMs, such as security alerts, security recommendations, and change tracking.",
+  "RelatedUrl": "https://docs.microsoft.com/en-us/azure/security-center/security-center-data-security",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/SecurityCenter/automatic-provisioning-of-monitoring-agent.html",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Ensure comprehensive visibility into possible security vulnerabilities, including missing updates, misconfigured operating system security settings, and active threats, allowing for timely mitigation and improved overall security posture",
+      "Url": "https://learn.microsoft.com/en-us/azure/defender-for-cloud/monitoring-components"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

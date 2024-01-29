@@ -38,6 +38,7 @@ class Test_storage_infrastructure_encryption_is_enabled:
                     network_rule_set=None,
                     encryption_type="None",
                     minimum_tls_version="TLS1_1",
+                    key_expiration_period_in_days=None,
                 )
             ]
         }
@@ -77,6 +78,7 @@ class Test_storage_infrastructure_encryption_is_enabled:
                     network_rule_set=None,
                     encryption_type="None",
                     minimum_tls_version="TLS1_1",
+                    key_expiration_period_in_days=None,
                 )
             ]
         }

@@ -38,6 +38,7 @@ class Test_storage_blob_public_access_level_is_disabled:
                     network_rule_set=None,
                     encryption_type=None,
                     minimum_tls_version=None,
+                    key_expiration_period_in_days=None,
                 )
             ]
         }
@@ -77,6 +78,7 @@ class Test_storage_blob_public_access_level_is_disabled:
                     network_rule_set=None,
                     encryption_type=None,
                     minimum_tls_version=None,
+                    key_expiration_period_in_days=None,
                 )
             ]
         }
