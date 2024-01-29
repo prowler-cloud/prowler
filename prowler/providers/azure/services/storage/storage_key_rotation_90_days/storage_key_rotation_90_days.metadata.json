@@ -20,7 +20,7 @@
     },
     "Recommendation": {
       "Text": "Ensure that Azure Storage account access keys are regenerated every 90 days in order to decrease the likelihood of accidental exposures and protect your storage account resources against unauthorized access.",
-      "Url": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/StorageAccounts/regenerate-storage-account-access-keys-periodically.html#"
+      "Url": "https://learn.microsoft.com/en-us/azure/storage/common/storage-account-create?tabs=azure-portal#regenerate-storage-access-keys"
     }
   },
   "Categories": [
