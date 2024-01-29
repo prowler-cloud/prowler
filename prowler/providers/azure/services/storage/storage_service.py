@@ -2,6 +2,7 @@ from dataclasses import dataclass
 
 from azure.mgmt.storage import StorageManagementClient
 from azure.mgmt.storage.v2022_09_01.models import NetworkRuleSet
+from azure.mgmt.storage.v2023_01_01.models import PrivateEndpointConnection
 
 from prowler.lib.logger import logger
 from prowler.providers.azure.lib.service.service import AzureService
@@ -31,6 +32,7 @@ class Storage(AzureService):
                             network_rule_set=storage_account.network_rule_set,
                             encryption_type=storage_account.encryption.key_source,
                             minimum_tls_version=storage_account.minimum_tls_version,
+                            private_endpoint_connections=storage_account.private_endpoint_connections,
                         )
                     )
             except Exception as error:
@@ -51,3 +53,4 @@ class Storage_Account:
     network_rule_set: NetworkRuleSet
     encryption_type: str
     minimum_tls_version: str
+    private_endpoint_connections: PrivateEndpointConnection = None
