@@ -41,6 +41,7 @@ class Test_storage_ensure_azure_services_are_trusted_to_access_is_enabled:
                     encryption_type=None,
                     minimum_tls_version=None,
                     key_expiration_period_in_days=None,
+                    private_endpoint_connections=None,
                 )
             ]
         }
@@ -81,6 +82,7 @@ class Test_storage_ensure_azure_services_are_trusted_to_access_is_enabled:
                     encryption_type=None,
                     minimum_tls_version=None,
                     key_expiration_period_in_days=None,
+                    private_endpoint_connections=None,
                 )
             ]
         }

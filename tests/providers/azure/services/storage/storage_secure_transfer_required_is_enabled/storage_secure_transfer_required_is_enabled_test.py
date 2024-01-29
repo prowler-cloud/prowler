@@ -39,6 +39,7 @@ class Test_storage_secure_transfer_required_is_enabled:
                     encryption_type="None",
                     minimum_tls_version="TLS1_1",
                     key_expiration_period_in_days=None,
+                    private_endpoint_connections=None,
                 )
             ]
         }
@@ -79,6 +80,7 @@ class Test_storage_secure_transfer_required_is_enabled:
                     encryption_type="None",
                     minimum_tls_version="TLS1_1",
                     key_expiration_period_in_days=None,
+                    private_endpoint_connections=None,
                 )
             ]
         }

@@ -39,6 +39,7 @@ class Test_storage_blob_public_access_level_is_disabled:
                     encryption_type=None,
                     minimum_tls_version=None,
                     key_expiration_period_in_days=None,
+                    private_endpoint_connections=None,
                 )
             ]
         }
@@ -79,6 +80,7 @@ class Test_storage_blob_public_access_level_is_disabled:
                     encryption_type=None,
                     minimum_tls_version=None,
                     key_expiration_period_in_days=None,
+                    private_endpoint_connections=None,
                 )
             ]
         }

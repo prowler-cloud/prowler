@@ -8,24 +8,24 @@ from prowler.providers.azure.services.storage.storage_service import Storage_Acc
 AZURE_SUSCRIPTION = str(uuid4())
 
 
-class Test_storage_ensure_private_endpoints_used_to_access_storage_accounts:
-    def test_storage_ensure_private_endpoints_used_to_access_storage_accounts(self):
+class Test_storage_ensure_private_endpoints_in_storage_accounts:
+    def test_storage_ensure_private_endpoints_in_storage_accounts(self):
         storage_client = mock.MagicMock
         storage_client.storage_accounts = {}
 
         with mock.patch(
-            "prowler.providers.azure.services.storage.storage_ensure_private_endpoints_used_to_access_storage_accounts.storage_ensure_private_endpoints_used_to_access_storage_accounts.storage_client",
+            "prowler.providers.azure.services.storage.storage_ensure_private_endpoints_in_storage_accounts.storage_ensure_private_endpoints_in_storage_accounts.storage_client",
             new=storage_client,
         ):
-            from prowler.providers.azure.services.storage.storage_ensure_private_endpoints_used_to_access_storage_accounts.storage_ensure_private_endpoints_used_to_access_storage_accounts import (
-                storage_ensure_private_endpoints_used_to_access_storage_accounts,
+            from prowler.providers.azure.services.storage.storage_ensure_private_endpoints_in_storage_accounts.storage_ensure_private_endpoints_in_storage_accounts import (
+                storage_ensure_private_endpoints_in_storage_accounts,
             )
 
-            check = storage_ensure_private_endpoints_used_to_access_storage_accounts()
+            check = storage_ensure_private_endpoints_in_storage_accounts()
             result = check.execute()
             assert len(result) == 0
 
-    def test_storage_ensure_private_endpoints_used_to_access_storage_accounts_no_endpoints(
+    def test_storage_ensure_private_endpoints_in_storage_accounts_no_endpoints(
         self,
     ):
         storage_account_id = str(uuid4())
@@ -42,20 +42,21 @@ class Test_storage_ensure_private_endpoints_used_to_access_storage_accounts:
                     network_rule_set=None,
                     encryption_type="None",
                     minimum_tls_version=None,
+                    key_expiration_period_in_days=None,
                     private_endpoint_connections=None,
                 )
             ]
         }
 
         with mock.patch(
-            "prowler.providers.azure.services.storage.storage_ensure_private_endpoints_used_to_access_storage_accounts.storage_ensure_private_endpoints_used_to_access_storage_accounts.storage_client",
+            "prowler.providers.azure.services.storage.storage_ensure_private_endpoints_in_storage_accounts.storage_ensure_private_endpoints_in_storage_accounts.storage_client",
             new=storage_client,
         ):
-            from prowler.providers.azure.services.storage.storage_ensure_private_endpoints_used_to_access_storage_accounts.storage_ensure_private_endpoints_used_to_access_storage_accounts import (
-                storage_ensure_private_endpoints_used_to_access_storage_accounts,
+            from prowler.providers.azure.services.storage.storage_ensure_private_endpoints_in_storage_accounts.storage_ensure_private_endpoints_in_storage_accounts import (
+                storage_ensure_private_endpoints_in_storage_accounts,
             )
 
-            check = storage_ensure_private_endpoints_used_to_access_storage_accounts()
+            check = storage_ensure_private_endpoints_in_storage_accounts()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
@@ -67,7 +68,7 @@ class Test_storage_ensure_private_endpoints_used_to_access_storage_accounts:
             assert result[0].resource_name == storage_account_name
             assert result[0].resource_id == storage_account_id
 
-    def test_storage_ensure_private_endpoints_used_to_access_storage_accounts_has_endpoints(
+    def test_storage_ensure_private_endpoints_in_storage_accounts_has_endpoints(
         self,
     ):
         storage_account_id = str(uuid4())
@@ -84,20 +85,21 @@ class Test_storage_ensure_private_endpoints_used_to_access_storage_accounts:
                     network_rule_set=None,
                     encryption_type="None",
                     minimum_tls_version=None,
+                    key_expiration_period_in_days=None,
                     private_endpoint_connections=PrivateEndpointConnection(),
                 )
             ]
         }
 
         with mock.patch(
-            "prowler.providers.azure.services.storage.storage_ensure_private_endpoints_used_to_access_storage_accounts.storage_ensure_private_endpoints_used_to_access_storage_accounts.storage_client",
+            "prowler.providers.azure.services.storage.storage_ensure_private_endpoints_in_storage_accounts.storage_ensure_private_endpoints_in_storage_accounts.storage_client",
             new=storage_client,
         ):
-            from prowler.providers.azure.services.storage.storage_ensure_private_endpoints_used_to_access_storage_accounts.storage_ensure_private_endpoints_used_to_access_storage_accounts import (
-                storage_ensure_private_endpoints_used_to_access_storage_accounts,
+            from prowler.providers.azure.services.storage.storage_ensure_private_endpoints_in_storage_accounts.storage_ensure_private_endpoints_in_storage_accounts import (
+                storage_ensure_private_endpoints_in_storage_accounts,
             )
 
-            check = storage_ensure_private_endpoints_used_to_access_storage_accounts()
+            check = storage_ensure_private_endpoints_in_storage_accounts()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"

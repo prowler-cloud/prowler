@@ -39,6 +39,7 @@ class Test_storage_ensure_encryption_with_customer_managed_keys:
                     encryption_type="None",
                     minimum_tls_version=None,
                     key_expiration_period_in_days=None,
+                    private_endpoint_connections=None,
                 )
             ]
         }
@@ -79,6 +80,7 @@ class Test_storage_ensure_encryption_with_customer_managed_keys:
                     encryption_type="Microsoft.Keyvault",
                     minimum_tls_version=None,
                     key_expiration_period_in_days=None,
+                    private_endpoint_connections=None,
                 )
             ]
         }

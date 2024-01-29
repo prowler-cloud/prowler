@@ -1,6 +1,6 @@
 {
   "Provider": "azure",
-  "CheckID": "storage_ensure_private_endpoints_used_to_access_storage_accounts",
+  "CheckID": "storage_ensure_private_endpoints_in_storage_accounts",
   "CheckTitle": "Ensure Private Endpoints are used to access Storage Accounts",
   "CheckType": [],
   "ServiceName": "storage",
