@@ -39,6 +39,7 @@ class Test_storage_key_rotation_90_dayss:
                     encryption_type="None",
                     minimum_tls_version="TLS1_1",
                     key_expiration_period_in_days=expiration_days,
+                    private_endpoint_connections=None,
                 )
             ]
         }
@@ -80,6 +81,7 @@ class Test_storage_key_rotation_90_dayss:
                     encryption_type="None",
                     minimum_tls_version="TLS1_2",
                     key_expiration_period_in_days=expiration_days,
+                    private_endpoint_connections=None,
                 )
             ]
         }
@@ -120,6 +122,7 @@ class Test_storage_key_rotation_90_dayss:
                     encryption_type="None",
                     minimum_tls_version="TLS1_2",
                     key_expiration_period_in_days=None,
+                    private_endpoint_connections=None,
                 )
             ]
         }

@@ -41,6 +41,7 @@ class Test_storage_default_network_access_rule_is_denied:
                     encryption_type=None,
                     minimum_tls_version=None,
                     key_expiration_period_in_days=None,
+                    private_endpoint_connections=None,
                 )
             ]
         }
@@ -81,6 +82,7 @@ class Test_storage_default_network_access_rule_is_denied:
                     encryption_type=None,
                     minimum_tls_version=None,
                     key_expiration_period_in_days=None,
+                    private_endpoint_connections=None,
                 )
             ]
         }
