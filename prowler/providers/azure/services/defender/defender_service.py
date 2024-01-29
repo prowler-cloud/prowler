@@ -37,7 +37,7 @@ class Defender(AzureService):
                     f"Subscription name: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         return pricings
-    
+
     def __get_auto_provisioning_settings__(self):
         logger.info("Defender - Getting auto provisioning settings...")
         auto_provisioning = {}
@@ -68,6 +68,7 @@ class Defender_Pricing(BaseModel):
     resource_id: str
     pricing_tier: str
     free_trial_remaining_time: timedelta
+
 
 class AutoProvisioningSetting(BaseModel):
     resource_id: str
