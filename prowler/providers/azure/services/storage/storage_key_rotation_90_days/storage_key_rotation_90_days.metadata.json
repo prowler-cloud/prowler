@@ -1,21 +1,21 @@
 {
   "Provider": "azure",
   "CheckID": "storage_key_rotation_90_days",
-  "CheckTitle": "Ensure that 'Enable key rotation reminders' is enabled for each Storage Account",
+  "CheckTitle": "Ensure that Storage Account Access Keys are Periodically Regenerated",
   "CheckType": [],
   "ServiceName": "storage",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AzureStorageAccount",
-  "Description": "Ensure that 'Enable key rotation reminders' is enabled for each Storage Account",
-  "Risk": "If the 'Enable key rotation reminders' option is not enabled for your Azure Storage accounts, you will not receive notifications when your storage account access keys are about to expire. This may lead to accidental exposures and unauthorized access to your storage account resources.",
+  "Description": "Ensure that Storage Account Access Keys are Periodically Regenerated",
+  "Risk": "If the access keys are not regenerated periodically, the likelihood of accidental exposures increases, which can lead to unauthorized access to your storage account resources.",
   "RelatedUrl": "https://learn.microsoft.com/en-us/azure/storage/common/storage-account-keys-manage?tabs=azure-portal",
   "Remediation": {
     "Code": {
-      "CLI": "https://learn.microsoft.com/en-us/azure/storage/common/storage-account-keys-manage?tabs=azure-portal",
+      "CLI": "",
       "NativeIaC": "",
-      "Other": "https://www.tenable.com/audits/items/CIS_Microsoft_Azure_Foundations_v1.5.0_L1.audit:5c2be112f94eebb430bfd55752740ab4",
+      "Other": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/StorageAccounts/regenerate-storage-account-access-keys-periodically.html#",
       "Terraform": ""
     },
     "Recommendation": {
