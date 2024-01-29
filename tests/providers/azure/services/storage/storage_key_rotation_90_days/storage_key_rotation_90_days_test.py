@@ -119,6 +119,7 @@ class Test_storage_key_rotation_90_dayss:
                     network_rule_set=None,
                     encryption_type="None",
                     minimum_tls_version="TLS1_2",
+                    key_expiration_period_in_days=None,
                 )
             ]
         }

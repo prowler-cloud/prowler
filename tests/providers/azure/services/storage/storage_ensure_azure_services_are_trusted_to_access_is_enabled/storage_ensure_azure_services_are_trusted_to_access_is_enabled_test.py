@@ -40,6 +40,7 @@ class Test_storage_ensure_azure_services_are_trusted_to_access_is_enabled:
                     network_rule_set=NetworkRuleSet(bypass=[None]),
                     encryption_type=None,
                     minimum_tls_version=None,
+                    key_expiration_period_in_days=None,
                 )
             ]
         }
@@ -79,6 +80,7 @@ class Test_storage_ensure_azure_services_are_trusted_to_access_is_enabled:
                     network_rule_set=NetworkRuleSet(bypass=["AzureServices"]),
                     encryption_type=None,
                     minimum_tls_version=None,
+                    key_expiration_period_in_days=None,
                 )
             ]
         }

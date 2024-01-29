@@ -51,4 +51,4 @@ class Storage_Account:
     network_rule_set: NetworkRuleSet
     encryption_type: str
     minimum_tls_version: str
-    key_expiration_period_in_days: str = None
+    key_expiration_period_in_days: str
