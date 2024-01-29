@@ -1,0 +1,30 @@
+{
+  "Provider": "azure",
+  "CheckID": "defender_ensure_apply_system_updates_is_completed",
+  "CheckTitle": "Ensure that Microsoft Defender Recommendation for 'Apply system updates' status is 'Completed'",
+  "CheckType": [],
+  "ServiceName": "defender",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "AzureDefenderRecommendation",
+  "Description": "Microsoft Defender Recommendation for 'Apply system updates' status is 'Completed'. Microsoft Defender for Endpoint can help you to manage the updates and patches for your Azure VMs. It can automatically install critical updates and patches for your Azure VMs. This ensures that your Azure VMs are protected against the latest security threats. Microsoft Defender for Endpoint can also help you to monitor the update status of your Azure VMs. It can alert you if your Azure VMs are missing critical updates and patches. This ensures that your Azure VMs are always up-to-date and protected against the latest security threats.",
+  "Risk": "If you do not apply system updates, your Azure VMs may be vulnerable to the latest security threats. This can lead to a security breach.",
+  "RelatedUrl": "https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-posture-vulnerability-management#pv-7-rapidly-and-automatically-remediate-software-vulnerabilities",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/SecurityCenter/monitor-system-updates.html",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Follow the Microsoft documentation to enable automatic updates and patchs or use your custom tool to manage automatic updates and patches.",
+      "Url": "https://learn.microsoft.com/en-us/azure/virtual-machines/updates-maintenance-overview"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
