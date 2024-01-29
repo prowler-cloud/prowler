@@ -67,21 +67,3 @@ class SQL_Server:
     administrators: ServerExternalAdministrator
     auditing_policies: ServerBlobAuditingPolicy
     firewall_rules: FirewallRule
-
-    def __init__(
-        self,
-        id,
-        name,
-        public_network_access,
-        minimal_tls_version,
-        administrators,
-        auditing_policies,
-        firewall_rules,
-    ):
-        self.id = id
-        self.name = name
-        self.public_network_access = public_network_access
-        self.minimal_tls_version = minimal_tls_version
-        self.administrators = administrators
-        self.auditing_policies = auditing_policies
-        self.firewall_rules = firewall_rules

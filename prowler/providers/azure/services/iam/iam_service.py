@@ -60,10 +60,3 @@ class Role:
     type: str
     assignable_scopes: list[str]
     permissions: list[Permission]
-
-    def __init__(self, id, name, type, assignable_scopes, permissions):
-        self.id = id
-        self.name = name
-        self.type = type
-        self.assignable_scopes = assignable_scopes
-        self.permissions = permissions

@@ -98,7 +98,7 @@ class Test_storage_key_rotation_90_dayss:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Storage account {storage_account_name} from subscription {AZURE_SUSCRIPTION} has a valid key expiration period of {expiration_days} days."
+                == f"Storage account {storage_account_name} from subscription {AZURE_SUSCRIPTION} has a key expiration period of {expiration_days} days."
             )
             assert result[0].subscription == AZURE_SUSCRIPTION
             assert result[0].resource_name == storage_account_name
