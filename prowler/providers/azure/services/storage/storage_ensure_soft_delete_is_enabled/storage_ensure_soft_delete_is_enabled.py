@@ -11,13 +11,15 @@ class storage_ensure_soft_delete_is_enabled(Check):
                 report.subscription = subscription
                 report.resource_name = storage_account.name
                 report.resource_id = storage_account.id
-                print("oka")
-                if storage_account.private_endpoint_connections:
+                if (
+                    storage_account.blob_properties.container_delete_retention_policy.enabled
+                ):
                     report.status = "PASS"
-                    report.status_extended = f"Storage account {storage_account.name} from subscription {subscription} has private endpoint connections."
+                    report.status_extended = f"Storage account {storage_account.name} from subscription {subscription} has soft delete enabled."
                 else:
                     report.status = "FAIL"
-                    report.status_extended = f"Storage account {storage_account.name} from subscription {subscription} does not have private endpoint connections."
+                    report.status_extended = f"Storage account {storage_account.name} from subscription {subscription} has soft delete disabled."
+
                 findings.append(report)
 
         return findings

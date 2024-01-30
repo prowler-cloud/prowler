@@ -1,9 +1,11 @@
 from dataclasses import dataclass
 
 from azure.mgmt.storage import StorageManagementClient
-from azure.mgmt.storage.v2022_09_01.models import NetworkRuleSet
-from azure.mgmt.storage.v2023_01_01.models import PrivateEndpointConnection
-from azure.storage.common.models import DeleteRetentionPolicy
+from azure.mgmt.storage.v2022_09_01.models import (
+    DeleteRetentionPolicy,
+    NetworkRuleSet,
+    PrivateEndpointConnection,
+)
 
 from prowler.lib.logger import logger
 from prowler.providers.azure.lib.service.service import AzureService
@@ -53,23 +55,24 @@ class Storage(AzureService):
 
     def __get_blob_properties__(self):
         logger.info("Storage - Getting blob properties...")
-        for subscription, client in self.clients.items():
-            try:
-                for account in self.storage_accounts:
+        try:
+            for subscription, accounts in self.storage_accounts.items():
+                client = self.clients[subscription]
+                for account in accounts:
                     properties = client.blob_services.get_service_properties(
                         account.resouce_group_name, account.name
                     )
                     account.blob_properties = Blob_Properties(
                         id=properties.id,
                         name=properties.name,
+                        type=properties.type,
                         default_service_version=properties.default_service_version,
                         container_delete_retention_policy=properties.container_delete_retention_policy,
                     )
-
-            except Exception as error:
-                logger.error(
-                    f"Subscription name: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                )
+        except Exception as error:
+            logger.error(
+                f"Subscription name: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
 
 
 @dataclass
@@ -85,6 +88,7 @@ class Blob_Properties:
 class Storage_Account:
     id: str
     name: str
+    resouce_group_name: str
     enable_https_traffic_only: bool
     infrastructure_encryption: bool
     allow_blob_public_access: bool
