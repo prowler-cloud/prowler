@@ -10,7 +10,8 @@
       "Attributes": [
         {
           "Section": "Deploy account from predefined IaC template",
-          "Service": "IAM"
+          "Service": "IAM",
+          "Type": "Automated"
         }
       ],
       "Checks": [
@@ -26,7 +27,8 @@
       "Attributes": [
         {
           "Section": "Deploy account from predefined IaC template",
-          "Service": "SecurityHub"
+          "Service": "SecurityServices",
+          "Type": "Automated"
         }
       ],
       "Checks": [
@@ -66,7 +68,8 @@
       "Attributes": [
         {
           "Section": "Deploy account from predefined IaC template",
-          "Service": "Billing"
+          "Service": "Billing",
+          "Type": "Automated"
         }
       ],
       "Checks": [
@@ -80,7 +83,8 @@
       "Attributes": [
         {
           "Section": "Deploy account from predefined IaC template",
-          "Service": "IAM"
+          "Service": "IAM",
+          "Type": "Automated"
         }
       ],
       "Checks": [
@@ -94,7 +98,8 @@
       "Attributes": [
         {
           "Section": "Deploy account from predefined IaC template",
-          "Service": "S3"
+          "Service": "S3",
+          "Type": "Automated"
         }
       ],
       "Checks": [
@@ -109,7 +114,8 @@
       "Attributes": [
         {
           "Section": "Deploy account from predefined IaC template",
-          "Service": "EC2"
+          "Service": "EC2",
+          "Type": "Automated"
         }
       ],
       "Checks": [
@@ -123,7 +129,8 @@
         {
           "Section": "SCPs",
           "SubSection": "Apply existing SCPs based on OU placement",
-          "Service": "IAM"
+          "Service": "IAM",
+          "Type": "Automated"
         }
       ],
       "Checks": [
@@ -163,7 +170,8 @@
         {
           "Section": "SCPs",
           "SubSection": "Apply existing SCPs based on OU placement",
-          "Service": "IAM"
+          "Service": "IAM",
+          "Type": "Automated"
         }
       ],
       "Checks": [
@@ -189,7 +197,7 @@
       "Attributes": [
         {
           "Section": "Logging",
-          "Service": "DNS",
+          "Service": "Logging",
           "Type": "Manual"
         }
       ],
@@ -201,7 +209,8 @@
       "Attributes": [
         {
           "Section": "Logging",
-          "Service": "VPC"
+          "Service": "Logging",
+          "Type": "Automated"
         }
       ],
       "Checks": [
@@ -214,7 +223,8 @@
       "Attributes": [
         {
           "Section": "Logging",
-          "Service": "S3"
+          "Service": "Logging",
+          "Type": "Automated"
         }
       ],
       "Checks": [
@@ -228,7 +238,7 @@
       "Attributes": [
         {
           "Section": "Logging",
-          "Service": "IAM",
+          "Service": "Logging",
           "Type": "Manual"
         }
       ],
@@ -241,7 +251,8 @@
         {
           "Section": "Alerting",
           "SubSection": "GuardDuty",
-          "Service": "GuardDuty"
+          "Service": "GuardDuty",
+          "Type": "Automated"
         }
       ],
       "Checks": [
@@ -269,7 +280,8 @@
         {
           "Section": "Alerting",
           "SubSection": "CloudTrail",
-          "Service": "CloudTrail"
+          "Service": "CloudTrail",
+          "Type": "Automated"
         }
       ],
       "Checks": [
@@ -283,7 +295,8 @@
         {
           "Section": "Alerting",
           "SubSection": "CloudTrail",
-          "Service": "CloudTrail"
+          "Service": "CloudTrail",
+          "Type": "Automated"
         }
       ],
       "Checks": [
@@ -297,7 +310,8 @@
         {
           "Section": "Alerting",
           "SubSection": "CloudTrail",
-          "Service": "CloudTrail"
+          "Service": "CloudTrail",
+          "Type": "Automated"
         }
       ],
       "Checks": [
@@ -492,7 +506,8 @@
       "Attributes": [
         {
           "Section": "IAM Access Analyzer",
-          "Service": "IAM Access Analyzer"
+          "Service": "IAM Access Analyzer",
+          "Type": "Automated"
         }
       ],
       "Checks": [
@@ -506,7 +521,8 @@
       "Attributes": [
         {
           "Section": "IAM Access Analyzer",
-          "Service": "SecurityHub"
+          "Service": "SecurityHub",
+          "Type": "Automated"
         }
       ],
       "Checks": [
@@ -521,7 +537,8 @@
       "Attributes": [
         {
           "Section": "Macie",
-          "Service": "Macie"
+          "Service": "Macie",
+          "Type": "Automated"
         }
       ],
       "Checks": [
@@ -535,7 +552,8 @@
         {
           "Section": "Vulnerability Scanning",
           "SubSection": "EC2 used as servers",
-          "Service": "EC2"
+          "Service": "EC2",
+          "Type": "Automated"
         }
       ],
       "Checks": [
@@ -549,7 +567,8 @@
         {
           "Section": "Vulnerability Scanning",
           "SubSection": "EC2 used as servers",
-          "Service": "EC2"
+          "Service": "EC2",
+          "Type": "Automated"
         }
       ],
       "Checks": [
@@ -563,7 +582,8 @@
         {
           "Section": "Vulnerability Scanning",
           "SubSection": "ECR used as docker images hub",
-          "Service": "ECR"
+          "Service": "ECR",
+          "Type": "Automated"
         }
       ],
       "Checks": [
@@ -580,7 +600,8 @@
         {
           "Section": "Vulnerability Scanning",
           "SubSection": "ECR used as docker images hub",
-          "Service": "ECR"
+          "Service": "ECR",
+          "Type": "Automated"
         }
       ],
       "Checks": [
@@ -606,7 +627,8 @@
       "Attributes": [
         {
           "Section": "AWS Cloudtrail",
-          "Service": "CloudTrail"
+          "Service": "CloudTrail",
+          "Type": "Automated"
         }
       ],
       "Checks": [
@@ -620,7 +642,8 @@
       "Attributes": [
         {
           "Section": "AWS Cloudtrail",
-          "Service": "CloudTrail"
+          "Service": "CloudTrail",
+          "Type": "Automated"
         }
       ],
       "Checks": [
@@ -635,7 +658,8 @@
       "Attributes": [
         {
           "Section": "Enable AWS SecurityHub",
-          "Service": "SecurityHub"
+          "Service": "SecurityHub",
+          "Type": "Automated"
         }
       ],
       "Checks": [
@@ -648,7 +672,8 @@
       "Attributes": [
         {
           "Section": "Enable AWS SecurityHub",
-          "Service": "SecurityHub"
+          "Service": "SecurityHub",
+          "Type": "Automated"
         }
       ],
       "Checks": [
@@ -661,7 +686,8 @@
       "Attributes": [
         {
           "Section": "Enable AWS SecurityHub",
-          "Service": "SecurityHub"
+          "Service": "SecurityHub",
+          "Type": "Automated"
         }
       ],
       "Checks": [
@@ -674,7 +700,8 @@
       "Attributes": [
         {
           "Section": "Enable AWS SecurityHub",
-          "Service": "SecurityHub"
+          "Service": "SecurityHub",
+          "Type": "Automated"
         }
       ],
       "Checks": [
@@ -687,7 +714,8 @@
       "Attributes": [
         {
           "Section": "Enable AWS SecurityHub",
-          "Service": "SecurityHub"
+          "Service": "SecurityHub",
+          "Type": "Automated"
         }
       ],
       "Checks": [
@@ -700,7 +728,8 @@
       "Attributes": [
         {
           "Section": "Enable AWS Config",
-          "Service": "Config"
+          "Service": "Config",
+          "Type": "Automated"
         }
       ],
       "Checks": [
@@ -725,7 +754,8 @@
       "Attributes": [
         {
           "Section": "Enable AWS Config",
-          "Service": "Config"
+          "Service": "Config",
+          "Type": "Automated"
         }
       ],
       "Checks": [
@@ -900,7 +930,8 @@
       "Attributes": [
         {
           "Section": "R53 DNS Resolver Firewall",
-          "Service": "Route53"
+          "Service": "Route53",
+          "Type": "Automated"
         }
       ],
       "Checks": [
@@ -950,7 +981,8 @@
       "Attributes": [
         {
           "Section": "Shield Advanced",
-          "Service": "Shield Advanced"
+          "Service": "Shield Advanced",
+          "Type": "Automated"
         }
       ],
       "Checks": [
@@ -980,7 +1012,8 @@
       "Attributes": [
         {
           "Section": "Shield Advanced",
-          "Service": "Shield Advanced"
+          "Service": "Shield Advanced",
+          "Type": "Automated"
         }
       ],
       "Checks": [
@@ -1145,7 +1178,8 @@
       "Attributes": [
         {
           "Section": "WAFv2",
-          "Service": "CloudWatch"
+          "Service": "CloudWatch",
+          "Type": "Automated"
         }
       ],
       "Checks": [
