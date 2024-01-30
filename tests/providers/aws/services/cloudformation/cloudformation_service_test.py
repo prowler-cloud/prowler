@@ -5,7 +5,7 @@ from unittest.mock import patch
 import boto3
 import botocore
 from dateutil.tz import tzutc
-from moto import mock_cloudformation
+from moto import mock_aws
 
 from prowler.providers.aws.services.cloudformation.cloudformation_service import (
     CloudFormation,
@@ -135,7 +135,7 @@ def mock_generate_regional_clients(service, audit_info):
 )
 class Test_CloudFormation_Service:
     # Test CloudFormation Client
-    @mock_cloudformation
+    @mock_aws
     def test__get_client__(self):
         cloudformation = CloudFormation(
             set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
@@ -146,7 +146,7 @@ class Test_CloudFormation_Service:
         )
 
     # Test CloudFormation Service
-    @mock_cloudformation
+    @mock_aws
     def test__get_service__(self):
         cloudformation = CloudFormation(
             set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
@@ -157,14 +157,14 @@ class Test_CloudFormation_Service:
         )
 
     # Test CloudFormation Session
-    @mock_cloudformation
+    @mock_aws
     def test__get_session__(self):
         cloudformation = CloudFormation(
             set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         )
         assert cloudformation.session.__class__.__name__ == "Session"
 
-    @mock_cloudformation
+    @mock_aws
     def test__describe_stacks__(self):
         cloudformation_client = boto3.client(
             "cloudformation", region_name=AWS_REGION_EU_WEST_1

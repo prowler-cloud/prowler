@@ -2,7 +2,7 @@ from unittest import mock
 
 from boto3 import client
 from mock import patch
-from moto import mock_cloudtrail, mock_s3
+from moto import mock_aws
 
 from prowler.providers.aws.services.awslambda.awslambda_service import Function
 from tests.providers.aws.audit_info_utils import (
@@ -27,7 +27,7 @@ def mock_generate_regional_clients(service, audit_info):
     new=mock_generate_regional_clients,
 )
 class Test_awslambda_function_invoke_api_operations_cloudtrail_logging_enabled:
-    @mock_cloudtrail
+    @mock_aws
     def test_no_functions(self):
         lambda_client = mock.MagicMock
         lambda_client.functions = {}
@@ -58,8 +58,8 @@ class Test_awslambda_function_invoke_api_operations_cloudtrail_logging_enabled:
 
             assert len(result) == 0
 
-    @mock_cloudtrail
-    @mock_s3
+    @mock_aws
+    @mock_aws
     def test_lambda_not_recorded_by_cloudtrail(self):
         # Lambda Client
         lambda_client = mock.MagicMock
@@ -121,8 +121,8 @@ class Test_awslambda_function_invoke_api_operations_cloudtrail_logging_enabled:
             )
             assert result[0].resource_tags == []
 
-    @mock_cloudtrail
-    @mock_s3
+    @mock_aws
+    @mock_aws
     def test_lambda_recorded_by_cloudtrail_classic_event_selector(self):
         # Lambda Client
         lambda_client = mock.MagicMock
@@ -196,8 +196,8 @@ class Test_awslambda_function_invoke_api_operations_cloudtrail_logging_enabled:
             )
             assert result[0].resource_tags == []
 
-    @mock_cloudtrail
-    @mock_s3
+    @mock_aws
+    @mock_aws
     def test_lambda_recorded_by_cloudtrail_advanced_event_selector(self):
         # Lambda Client
         lambda_client = mock.MagicMock
@@ -274,8 +274,8 @@ class Test_awslambda_function_invoke_api_operations_cloudtrail_logging_enabled:
             )
             assert result[0].resource_tags == []
 
-    @mock_cloudtrail
-    @mock_s3
+    @mock_aws
+    @mock_aws
     def test_all_lambdas_recorded_by_cloudtrail(self):
         # Lambda Client
         lambda_client = mock.MagicMock

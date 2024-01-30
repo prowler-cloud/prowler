@@ -1,5 +1,5 @@
 from boto3 import client, resource
-from moto import mock_ec2, mock_elbv2
+from moto import mock_aws
 
 from prowler.providers.aws.services.elbv2.elbv2_service import ELBv2
 from tests.providers.aws.audit_info_utils import (
@@ -13,7 +13,7 @@ from tests.providers.aws.audit_info_utils import (
 
 class Test_ELBv2_Service:
     # Test ELBv2 Service
-    @mock_elbv2
+    @mock_aws
     def test_service(self):
         # ELBv2 client for this test class
         audit_info = set_mocked_aws_audit_info(
@@ -23,7 +23,7 @@ class Test_ELBv2_Service:
         assert elbv2.service == "elbv2"
 
     # Test ELBv2 Client
-    @mock_elbv2
+    @mock_aws
     def test_client(self):
         # ELBv2 client for this test class
         audit_info = set_mocked_aws_audit_info(
@@ -34,7 +34,7 @@ class Test_ELBv2_Service:
             assert regional_client.__class__.__name__ == "ElasticLoadBalancingv2"
 
     # Test ELBv2 Session
-    @mock_elbv2
+    @mock_aws
     def test__get_session__(self):
         # ELBv2 client for this test class
         audit_info = set_mocked_aws_audit_info(
@@ -44,8 +44,8 @@ class Test_ELBv2_Service:
         assert elbv2.session.__class__.__name__ == "Session"
 
     # Test ELBv2 Describe Load Balancers
-    @mock_ec2
-    @mock_elbv2
+    @mock_aws
+    @mock_aws
     def test__describe_load_balancers__(self):
         conn = client("elbv2", region_name=AWS_REGION_EU_WEST_1)
         ec2 = resource("ec2", region_name=AWS_REGION_EU_WEST_1)
@@ -83,8 +83,8 @@ class Test_ELBv2_Service:
         assert elbv2.loadbalancersv2[0].arn == lb["LoadBalancerArn"]
 
     # Test ELBv2 Describe Listeners
-    @mock_ec2
-    @mock_elbv2
+    @mock_aws
+    @mock_aws
     def test__describe_listeners__(self):
         conn = client("elbv2", region_name=AWS_REGION_EU_WEST_1)
         ec2 = resource("ec2", region_name=AWS_REGION_EU_WEST_1)
@@ -136,8 +136,8 @@ class Test_ELBv2_Service:
         assert elbv2.loadbalancersv2[0].listeners[0].port == 443
 
     # Test ELBv2 Describe Load Balancers Attributes
-    @mock_ec2
-    @mock_elbv2
+    @mock_aws
+    @mock_aws
     def test__describe_load_balancer_attributes__(self):
         conn = client("elbv2", region_name=AWS_REGION_EU_WEST_1)
         ec2 = resource("ec2", region_name=AWS_REGION_EU_WEST_1)
@@ -188,8 +188,8 @@ class Test_ELBv2_Service:
         assert elbv2.loadbalancersv2[0].drop_invalid_header_fields == "false"
 
     # Test ELBv2 Describe Load Balancers Attributes
-    @mock_ec2
-    @mock_elbv2
+    @mock_aws
+    @mock_aws
     def test__describe_rules__(self):
         conn = client("elbv2", region_name=AWS_REGION_EU_WEST_1)
         ec2 = resource("ec2", region_name=AWS_REGION_EU_WEST_1)

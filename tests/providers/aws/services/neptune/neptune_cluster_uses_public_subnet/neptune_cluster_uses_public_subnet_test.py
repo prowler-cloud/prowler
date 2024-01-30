@@ -2,7 +2,7 @@ from unittest import mock
 
 from boto3 import client
 from mock import MagicMock, patch
-from moto import mock_ec2, mock_neptune
+from moto import mock_aws
 
 from prowler.providers.aws.services.neptune.neptune_service import Neptune
 from prowler.providers.aws.services.vpc.vpc_service import VpcSubnet
@@ -27,8 +27,8 @@ VPC_ID = "vpc-12345678901234567"
 # Patch every AWS call using Boto3
 @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
 class Test_neptune_cluster_uses_public_subnet:
-    @mock_neptune
-    @mock_ec2
+    @mock_aws
+    @mock_aws
     def test_neptune_no_clusters(self):
         # Mock VPC Service
         vpc_client = MagicMock
@@ -54,7 +54,7 @@ class Test_neptune_cluster_uses_public_subnet:
             result = check.execute()
             assert len(result) == 0
 
-    @mock_neptune
+    @mock_aws
     def test_neptune_clusters_using_private_subnets(self):
         # Mock VPC Service
         vpc_client = MagicMock
@@ -135,7 +135,7 @@ class Test_neptune_cluster_uses_public_subnet:
             assert result[0].resource_arn == cluster_arn
             assert result[0].resource_tags == NEPTUNE_CLUSTER_TAGS
 
-    @mock_neptune
+    @mock_aws
     def test_neptune_clusters_using_public_subnets(self):
         # Mock VPC Service
         vpc_client = MagicMock

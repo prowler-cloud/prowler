@@ -2,7 +2,7 @@ from re import search
 from unittest import mock
 
 from boto3 import client
-from moto import mock_s3
+from moto import mock_aws
 
 from tests.providers.aws.audit_info_utils import (
     AWS_REGION_US_EAST_1,
@@ -11,7 +11,7 @@ from tests.providers.aws.audit_info_utils import (
 
 
 class Test_s3_bucket_object_lock:
-    @mock_s3
+    @mock_aws
     def test_no_buckets(self):
         from prowler.providers.aws.services.s3.s3_service import S3
 
@@ -35,7 +35,7 @@ class Test_s3_bucket_object_lock:
 
                 assert len(result) == 0
 
-    @mock_s3
+    @mock_aws
     def test_bucket_no_object_lock(self):
         s3_client_us_east_1 = client("s3", region_name=AWS_REGION_US_EAST_1)
         bucket_name_us = "bucket_test_us"
@@ -75,7 +75,7 @@ class Test_s3_bucket_object_lock:
                 assert result[0].region == AWS_REGION_US_EAST_1
                 assert result[0].resource_tags == []
 
-    @mock_s3
+    @mock_aws
     def test_bucket_object_lock_enabled(self):
         s3_client_us_east_1 = client("s3", region_name=AWS_REGION_US_EAST_1)
         bucket_name_us = "bucket_test_us"

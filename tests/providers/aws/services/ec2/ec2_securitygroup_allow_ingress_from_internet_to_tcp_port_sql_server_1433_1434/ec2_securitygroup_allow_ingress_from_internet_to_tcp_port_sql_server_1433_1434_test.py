@@ -1,7 +1,7 @@
 from unittest import mock
 
 from boto3 import client, resource
-from moto import mock_ec2
+from moto import mock_aws
 
 from prowler.providers.aws.services.vpc.vpc_service import VPC
 from tests.providers.aws.audit_info_utils import (
@@ -12,7 +12,7 @@ from tests.providers.aws.audit_info_utils import (
 
 
 class Test_ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_sql_server_1433_1434:
-    @mock_ec2
+    @mock_aws
     def test_ec2_default_sgs(self):
         # Create EC2 Mocked Resources
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
@@ -51,7 +51,7 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_sql_server_
             assert result[1].status == "PASS"
             assert result[2].status == "PASS"
 
-    @mock_ec2
+    @mock_aws
     def test_ec2_non_compliant_default_sg(self):
         # Create EC2 Mocked Resources
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
@@ -117,7 +117,7 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_sql_server_
                     assert sg.resource_details == default_sg_name
                     assert sg.resource_tags == []
 
-    @mock_ec2
+    @mock_aws
     def test_ec2_compliant_default_sg(self):
         # Create EC2 Mocked Resources
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
@@ -183,7 +183,7 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_sql_server_
                     assert sg.resource_details == default_sg_name
                     assert sg.resource_tags == []
 
-    @mock_ec2
+    @mock_aws
     def test_ec2_default_sgs_ignoring(self):
         # Create EC2 Mocked Resources
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
@@ -218,7 +218,7 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_sql_server_
 
             assert len(result) == 0
 
-    @mock_ec2
+    @mock_aws
     def test_ec2_default_sgs_ignoring_vpc_in_use(self):
         # Create EC2 Mocked Resources
         ec2 = resource("ec2", region_name=AWS_REGION_US_EAST_1)

@@ -1,7 +1,7 @@
 from unittest import mock
 
 from boto3 import client
-from moto import mock_cloudtrail, mock_s3
+from moto import mock_aws
 
 from tests.providers.aws.audit_info_utils import (
     AWS_ACCOUNT_NUMBER,
@@ -11,8 +11,8 @@ from tests.providers.aws.audit_info_utils import (
 
 
 class Test_cloudtrail_s3_dataevents_read_enabled:
-    @mock_cloudtrail
-    @mock_s3
+    @mock_aws
+    @mock_aws
     def test_trail_without_data_events(self):
         cloudtrail_client_us_east_1 = client(
             "cloudtrail", region_name=AWS_REGION_US_EAST_1
@@ -61,8 +61,8 @@ class Test_cloudtrail_s3_dataevents_read_enabled:
             assert result[0].resource_tags == []
             assert result[0].region == AWS_REGION_US_EAST_1
 
-    @mock_cloudtrail
-    @mock_s3
+    @mock_aws
+    @mock_aws
     def test_trail_without_data_events_ignoring(self):
         from prowler.providers.aws.services.cloudtrail.cloudtrail_service import (
             Cloudtrail,
@@ -92,8 +92,8 @@ class Test_cloudtrail_s3_dataevents_read_enabled:
 
             assert len(result) == 0
 
-    @mock_cloudtrail
-    @mock_s3
+    @mock_aws
+    @mock_aws
     def test_trail_without_data_events_ignoring_with_buckets(self):
         s3_client_us_east_1 = client("s3", region_name=AWS_REGION_US_EAST_1)
         bucket_name_us = "bucket_test_us"
@@ -136,8 +136,8 @@ class Test_cloudtrail_s3_dataevents_read_enabled:
             assert result[0].resource_tags == []
             assert result[0].region == AWS_REGION_US_EAST_1
 
-    @mock_cloudtrail
-    @mock_s3
+    @mock_aws
+    @mock_aws
     def test_trail_without_s3_data_events(self):
         cloudtrail_client_us_east_1 = client(
             "cloudtrail", region_name=AWS_REGION_US_EAST_1
@@ -198,8 +198,8 @@ class Test_cloudtrail_s3_dataevents_read_enabled:
             assert result[0].resource_tags == []
             assert result[0].region == AWS_REGION_US_EAST_1
 
-    @mock_cloudtrail
-    @mock_s3
+    @mock_aws
+    @mock_aws
     def test_trail_with_s3_classic_data_events(self):
         cloudtrail_client_us_east_1 = client(
             "cloudtrail", region_name=AWS_REGION_US_EAST_1
@@ -260,8 +260,8 @@ class Test_cloudtrail_s3_dataevents_read_enabled:
             assert result[0].resource_tags == []
             assert result[0].region == AWS_REGION_US_EAST_1
 
-    @mock_cloudtrail
-    @mock_s3
+    @mock_aws
+    @mock_aws
     def test_trail_with_s3_advanced_data_events(self):
         cloudtrail_client_us_east_1 = client(
             "cloudtrail", region_name=AWS_REGION_US_EAST_1
@@ -322,8 +322,8 @@ class Test_cloudtrail_s3_dataevents_read_enabled:
             assert result[0].resource_tags == []
             assert result[0].region == AWS_REGION_US_EAST_1
 
-    @mock_cloudtrail
-    @mock_s3
+    @mock_aws
+    @mock_aws
     def test_trail_with_s3_three_colons(self):
         cloudtrail_client_us_east_1 = client(
             "cloudtrail", region_name=AWS_REGION_US_EAST_1

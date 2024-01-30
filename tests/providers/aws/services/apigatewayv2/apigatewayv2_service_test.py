@@ -1,7 +1,7 @@
 import botocore
 from boto3 import client
 from mock import patch
-from moto import mock_apigatewayv2
+from moto import mock_aws
 
 from prowler.providers.aws.services.apigatewayv2.apigatewayv2_service import (
     ApiGatewayV2,
@@ -42,7 +42,7 @@ def mock_make_api_call(self, operation_name, kwarg):
 @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
 class Test_ApiGatewayV2_Service:
     # Test ApiGatewayV2 Service
-    @mock_apigatewayv2
+    @mock_aws
     def test_service(self):
         # ApiGatewayV2 client for this test class
         audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
@@ -50,7 +50,7 @@ class Test_ApiGatewayV2_Service:
         assert apigatewayv2.service == "apigatewayv2"
 
     # Test ApiGatewayV2 Client
-    @mock_apigatewayv2
+    @mock_aws
     def test_client(self):
         # ApiGatewayV2 client for this test class
         audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
@@ -59,7 +59,7 @@ class Test_ApiGatewayV2_Service:
             assert regional_client.__class__.__name__ == "ApiGatewayV2"
 
     # Test ApiGatewayV2 Session
-    @mock_apigatewayv2
+    @mock_aws
     def test__get_session__(self):
         # ApiGatewayV2 client for this test class
         audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
@@ -67,7 +67,7 @@ class Test_ApiGatewayV2_Service:
         assert apigatewayv2.session.__class__.__name__ == "Session"
 
     # Test ApiGatewayV2 Session
-    @mock_apigatewayv2
+    @mock_aws
     def test_audited_account(self):
         # ApiGatewayV2 client for this test class
         audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
@@ -75,7 +75,7 @@ class Test_ApiGatewayV2_Service:
         assert apigatewayv2.audited_account == AWS_ACCOUNT_NUMBER
 
     # Test ApiGatewayV2 Get APIs
-    @mock_apigatewayv2
+    @mock_aws
     def test__get_apis__(self):
         # Generate ApiGatewayV2 Client
         apigatewayv2_client = client("apigatewayv2", region_name=AWS_REGION_US_EAST_1)
@@ -90,7 +90,7 @@ class Test_ApiGatewayV2_Service:
         assert apigatewayv2.apis[0].tags == [{"test": "test"}]
 
     # Test ApiGatewayV2 Get Authorizers
-    @mock_apigatewayv2
+    @mock_aws
     def test__get_authorizers__(self):
         # Generate ApiGatewayV2 Client
         apigatewayv2_client = client("apigatewayv2", region_name=AWS_REGION_US_EAST_1)
@@ -110,7 +110,7 @@ class Test_ApiGatewayV2_Service:
         assert apigatewayv2.apis[0].authorizer is True
 
     # Test ApiGatewayV2 Get Stages
-    @mock_apigatewayv2
+    @mock_aws
     def test__get_stages__(self):
         # Generate ApiGatewayV2 Client
         apigatewayv2_client = client("apigatewayv2", region_name=AWS_REGION_US_EAST_1)

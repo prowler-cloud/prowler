@@ -1,7 +1,7 @@
 from unittest import mock
 
 from boto3 import client, resource
-from moto import mock_ec2, mock_elb
+from moto import mock_aws
 
 from tests.providers.aws.audit_info_utils import (
     AWS_REGION_EU_WEST_1,
@@ -15,7 +15,7 @@ elb_arn = f"arn:aws:elasticloadbalancing:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUM
 
 
 class Test_elb_insecure_ssl_ciphers:
-    @mock_elb
+    @mock_aws
     def test_elb_no_balancers(self):
         from prowler.providers.aws.services.elb.elb_service import ELB
 
@@ -38,8 +38,8 @@ class Test_elb_insecure_ssl_ciphers:
 
             assert len(result) == 0
 
-    @mock_ec2
-    @mock_elb
+    @mock_aws
+    @mock_aws
     def test_elb_listener_with_secure_policy(self):
         elb = client("elb", region_name=AWS_REGION_EU_WEST_1)
         ec2 = resource("ec2", region_name=AWS_REGION_EU_WEST_1)
@@ -94,8 +94,8 @@ class Test_elb_insecure_ssl_ciphers:
             assert result[0].resource_arn == elb_arn
             assert result[0].region == AWS_REGION_EU_WEST_1
 
-    @mock_ec2
-    @mock_elb
+    @mock_aws
+    @mock_aws
     def test_elb_with_HTTPS_listener(self):
         elb = client("elb", region_name=AWS_REGION_EU_WEST_1)
         ec2 = resource("ec2", region_name=AWS_REGION_EU_WEST_1)

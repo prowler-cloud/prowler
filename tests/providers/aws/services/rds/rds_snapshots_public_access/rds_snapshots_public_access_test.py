@@ -3,7 +3,7 @@ from unittest import mock
 
 import botocore
 from boto3 import client
-from moto import mock_rds
+from moto import mock_aws
 
 from tests.providers.aws.audit_info_utils import (
     AWS_ACCOUNT_NUMBER,
@@ -39,7 +39,7 @@ def mock_make_api_call(self, operation_name, kwarg):
 
 
 class Test_rds_snapshots_public_access:
-    @mock_rds
+    @mock_aws
     @mock.patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
     def test_rds_no_snapshots(self):
         from prowler.providers.aws.services.rds.rds_service import RDS
@@ -64,7 +64,7 @@ class Test_rds_snapshots_public_access:
 
                 assert len(result) == 0
 
-    @mock_rds
+    @mock_aws
     @mock.patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
     def test_rds_private_snapshot(self):
         conn = client("rds", region_name=AWS_REGION_US_EAST_1)
@@ -108,7 +108,7 @@ class Test_rds_snapshots_public_access:
                 )
                 assert result[0].resource_id == "snapshot-1"
 
-    @mock_rds
+    @mock_aws
     @mock.patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
     def test_rds_public_snapshot(self):
         conn = client("rds", region_name=AWS_REGION_US_EAST_1)
@@ -159,7 +159,7 @@ class Test_rds_snapshots_public_access:
                 )
                 assert result[0].resource_tags == []
 
-    @mock_rds
+    @mock_aws
     @mock.patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
     def test_rds_cluster_private_snapshot(self):
         conn = client("rds", region_name=AWS_REGION_US_EAST_1)
@@ -209,7 +209,7 @@ class Test_rds_snapshots_public_access:
                 )
                 assert result[0].resource_tags == []
 
-    @mock_rds
+    @mock_aws
     @mock.patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
     def test_rds_cluster_public_snapshot(self):
         conn = client("rds", region_name=AWS_REGION_US_EAST_1)

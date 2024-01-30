@@ -6,7 +6,7 @@ from pkgutil import ModuleInfo
 from boto3 import client
 from fixtures.bulk_checks_metadata import test_bulk_checks_metadata
 from mock import patch
-from moto import mock_s3
+from moto import mock_aws
 
 from prowler.lib.check.check import (
     exclude_checks_to_run,
@@ -330,7 +330,7 @@ class Test_Check:
             provider = test["input"]["provider"]
             assert parse_checks_from_file(check_file, provider) == test["expected"]
 
-    @mock_s3
+    @mock_aws
     def test_parse_checks_from_folder(self):
         test_checks_folder = (
             f"{pathlib.Path().absolute()}/tests/lib/check/fixtures/checks_folder"

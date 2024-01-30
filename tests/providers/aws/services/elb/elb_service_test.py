@@ -1,5 +1,5 @@
 from boto3 import client, resource
-from moto import mock_ec2, mock_elb
+from moto import mock_aws
 
 from prowler.providers.aws.services.elb.elb_service import ELB
 from tests.providers.aws.audit_info_utils import (
@@ -11,7 +11,7 @@ from tests.providers.aws.audit_info_utils import (
 
 class Test_ELB_Service:
     # Test ELB Service
-    @mock_elb
+    @mock_aws
     def test_service(self):
         # ELB client for this test class
         audit_info = set_mocked_aws_audit_info()
@@ -19,7 +19,7 @@ class Test_ELB_Service:
         assert elb.service == "elb"
 
     # Test ELB Client
-    @mock_elb
+    @mock_aws
     def test_client(self):
         # ELB client for this test class
         audit_info = set_mocked_aws_audit_info()
@@ -28,7 +28,7 @@ class Test_ELB_Service:
             assert regional_client.__class__.__name__ == "ElasticLoadBalancing"
 
     # Test ELB Session
-    @mock_elb
+    @mock_aws
     def test__get_session__(self):
         # ELB client for this test class
         audit_info = set_mocked_aws_audit_info()
@@ -36,8 +36,8 @@ class Test_ELB_Service:
         assert elb.session.__class__.__name__ == "Session"
 
     # Test ELB Describe Load Balancers
-    @mock_ec2
-    @mock_elb
+    @mock_aws
+    @mock_aws
     def test__describe_load_balancers__(self):
         elb = client("elb", region_name=AWS_REGION_US_EAST_1)
         ec2 = resource("ec2", region_name=AWS_REGION_US_EAST_1)
@@ -69,8 +69,8 @@ class Test_ELB_Service:
         )
 
     # Test ELB Describe Load Balancers Attributes
-    @mock_ec2
-    @mock_elb
+    @mock_aws
+    @mock_aws
     def test__describe_load_balancer_attributes__(self):
         elb = client("elb", region_name=AWS_REGION_US_EAST_1)
         ec2 = resource("ec2", region_name=AWS_REGION_US_EAST_1)

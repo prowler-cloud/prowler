@@ -1,7 +1,7 @@
 import json
 
 import boto3
-from moto import mock_iam, mock_organizations, mock_sts
+from moto import mock_aws
 
 from prowler.providers.aws.lib.organizations.organizations import (
     get_organizations_metadata,
@@ -11,9 +11,9 @@ AWS_ACCOUNT_NUMBER = "123456789012"
 
 
 class Test_AWS_Organizations:
-    @mock_organizations
-    @mock_sts
-    @mock_iam
+    @mock_aws
+    @mock_aws
+    @mock_aws
     def test_organizations(self):
         client = boto3.client("organizations", region_name="us-east-1")
         iam_client = boto3.client("iam", region_name="us-east-1")

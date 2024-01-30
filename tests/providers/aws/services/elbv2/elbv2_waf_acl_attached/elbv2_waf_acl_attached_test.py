@@ -3,7 +3,7 @@ from unittest import mock
 
 import botocore
 from boto3 import client, resource
-from moto import mock_ec2, mock_elbv2, mock_wafv2
+from moto import mock_aws
 
 from tests.providers.aws.audit_info_utils import (
     AWS_REGION_EU_WEST_1,
@@ -36,8 +36,8 @@ def mock_make_api_call(self, operation_name, kwarg):
 
 
 class Test_elbv2_waf_acl_attached:
-    @mock_wafv2
-    @mock_elbv2
+    @mock_aws
+    @mock_aws
     def test_elb_no_balancers(self):
         from prowler.providers.aws.services.elbv2.elbv2_service import ELBv2
         from prowler.providers.aws.services.waf.waf_service import WAF
@@ -72,9 +72,9 @@ class Test_elbv2_waf_acl_attached:
 
             assert len(result) == 0
 
-    @mock_wafv2
-    @mock_ec2
-    @mock_elbv2
+    @mock_aws
+    @mock_aws
+    @mock_aws
     def test_elbv2_without_WAF(self):
         conn = client("elbv2", region_name=AWS_REGION_EU_WEST_1)
         ec2 = resource("ec2", region_name=AWS_REGION_EU_WEST_1)
@@ -152,9 +152,9 @@ class Test_elbv2_waf_acl_attached:
             assert result[0].resource_id == "my-lb"
             assert result[0].resource_arn == lb["LoadBalancerArn"]
 
-    @mock_wafv2
-    @mock_ec2
-    @mock_elbv2
+    @mock_aws
+    @mock_aws
+    @mock_aws
     def test_elbv2_with_WAF(self):
         conn = client("elbv2", region_name=AWS_REGION_EU_WEST_1)
         ec2 = resource("ec2", region_name=AWS_REGION_EU_WEST_1)

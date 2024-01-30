@@ -2,7 +2,7 @@ from re import search
 from unittest import mock
 
 from boto3 import client
-from moto import mock_iam
+from moto import mock_aws
 
 from tests.providers.aws.audit_info_utils import (
     AWS_REGION_US_EAST_1,
@@ -20,7 +20,7 @@ class Test_iam_root_mfa_enabled_test:
         set_mocked_aws_audit_info,
     )
 
-    @mock_iam
+    @mock_aws
     def test_root_mfa_not_enabled(self):
         iam_client = client("iam")
         user = "test-user"
@@ -55,7 +55,7 @@ class Test_iam_root_mfa_enabled_test:
             assert result[0].resource_id == "<root_account>"
             assert result[0].resource_arn == service_client.credential_report[0]["arn"]
 
-    @mock_iam
+    @mock_aws
     def test_root_mfa_enabled(self):
         iam_client = client("iam")
         user = "test-user"

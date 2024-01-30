@@ -1,7 +1,7 @@
 from unittest import mock
 
 from boto3 import client
-from moto import mock_ec2
+from moto import mock_aws
 
 from tests.providers.aws.audit_info_utils import (
     AWS_REGION_EU_WEST_1,
@@ -11,7 +11,7 @@ from tests.providers.aws.audit_info_utils import (
 
 
 class Test_ec2_securitygroup_allow_wide_open_public_ipv4:
-    @mock_ec2
+    @mock_aws
     def test_ec2_default_sgs(self):
         # Create EC2 Mocked Resources
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
@@ -45,7 +45,7 @@ class Test_ec2_securitygroup_allow_wide_open_public_ipv4:
             assert result[1].status == "PASS"
             assert result[2].status == "PASS"
 
-    @mock_ec2
+    @mock_aws
     def test_ec2_default_sg_with_RFC1918_address(self):
         # Create EC2 Mocked Resources
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
@@ -104,7 +104,7 @@ class Test_ec2_securitygroup_allow_wide_open_public_ipv4:
                     assert sg.resource_details == default_sg_name
                     assert sg.resource_tags == []
 
-    @mock_ec2
+    @mock_aws
     def test_ec2_default_sg_with_non_RFC1918_address(self):
         # Create EC2 Mocked Resources
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)

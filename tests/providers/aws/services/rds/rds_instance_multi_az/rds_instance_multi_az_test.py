@@ -3,7 +3,7 @@ from unittest import mock
 
 import botocore
 from boto3 import client
-from moto import mock_rds
+from moto import mock_aws
 
 from prowler.providers.aws.services.rds.rds_service import DBCluster, DBInstance
 from tests.providers.aws.audit_info_utils import (
@@ -32,7 +32,7 @@ def mock_make_api_call(self, operation_name, kwarg):
 
 @mock.patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
 class Test_rds_instance_multi_az:
-    @mock_rds
+    @mock_aws
     def test_rds_no_instances(self):
         from prowler.providers.aws.services.rds.rds_service import RDS
 
@@ -56,7 +56,7 @@ class Test_rds_instance_multi_az:
 
                 assert len(result) == 0
 
-    @mock_rds
+    @mock_aws
     def test_rds_instance_no_multi_az(self):
         conn = client("rds", region_name=AWS_REGION_US_EAST_1)
         conn.create_db_instance(
@@ -100,7 +100,7 @@ class Test_rds_instance_multi_az:
                 )
                 assert result[0].resource_tags == []
 
-    @mock_rds
+    @mock_aws
     def test_rds_instance_multi_az(self):
         conn = client("rds", region_name=AWS_REGION_US_EAST_1)
         conn.create_db_instance(

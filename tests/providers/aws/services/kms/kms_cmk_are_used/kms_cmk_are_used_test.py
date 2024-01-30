@@ -1,7 +1,7 @@
 from unittest import mock
 
 from boto3 import client
-from moto import mock_kms
+from moto import mock_aws
 
 from tests.providers.aws.audit_info_utils import (
     AWS_REGION_US_EAST_1,
@@ -10,7 +10,7 @@ from tests.providers.aws.audit_info_utils import (
 
 
 class Test_kms_cmk_are_used:
-    @mock_kms
+    @mock_aws
     def test_kms_no_keys(self):
         from prowler.providers.aws.services.kms.kms_service import KMS
 
@@ -33,7 +33,7 @@ class Test_kms_cmk_are_used:
 
             assert len(result) == 0
 
-    @mock_kms
+    @mock_aws
     def test_kms_cmk_are_used(self):
         # Generate KMS Client
         kms_client = client("kms", region_name=AWS_REGION_US_EAST_1)
@@ -65,7 +65,7 @@ class Test_kms_cmk_are_used:
             assert result[0].resource_id == key["KeyId"]
             assert result[0].resource_arn == key["Arn"]
 
-    @mock_kms
+    @mock_aws
     def test_kms_key_with_deletion(self):
         # Generate KMS Client
         kms_client = client("kms", region_name=AWS_REGION_US_EAST_1)
@@ -101,7 +101,7 @@ class Test_kms_cmk_are_used:
             assert result[0].resource_id == key["KeyId"]
             assert result[0].resource_arn == key["Arn"]
 
-    @mock_kms
+    @mock_aws
     def test_kms_disabled_key(self):
         # Generate KMS Client
         kms_client = client("kms", region_name=AWS_REGION_US_EAST_1)

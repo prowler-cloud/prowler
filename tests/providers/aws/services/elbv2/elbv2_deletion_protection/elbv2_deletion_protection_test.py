@@ -2,7 +2,7 @@ from re import search
 from unittest import mock
 
 from boto3 import client, resource
-from moto import mock_ec2, mock_elbv2
+from moto import mock_aws
 
 from tests.providers.aws.audit_info_utils import (
     AWS_REGION_EU_WEST_1,
@@ -14,7 +14,7 @@ from tests.providers.aws.audit_info_utils import (
 
 
 class Test_elbv2_deletion_protection:
-    @mock_elbv2
+    @mock_aws
     def test_elb_no_balancers(self):
         from prowler.providers.aws.services.elbv2.elbv2_service import ELBv2
 
@@ -37,8 +37,8 @@ class Test_elbv2_deletion_protection:
 
             assert len(result) == 0
 
-    @mock_ec2
-    @mock_elbv2
+    @mock_aws
+    @mock_aws
     def test_elbv2_without_deletion_protection(self):
         conn = client("elbv2", region_name=AWS_REGION_EU_WEST_1)
         ec2 = resource("ec2", region_name=AWS_REGION_EU_WEST_1)
@@ -100,8 +100,8 @@ class Test_elbv2_deletion_protection:
             assert result[0].resource_id == "my-lb"
             assert result[0].resource_arn == lb["LoadBalancerArn"]
 
-    @mock_ec2
-    @mock_elbv2
+    @mock_aws
+    @mock_aws
     def test_elbv2_with_deletion_protection(self):
         conn = client("elbv2", region_name=AWS_REGION_EU_WEST_1)
         ec2 = resource("ec2", region_name=AWS_REGION_EU_WEST_1)

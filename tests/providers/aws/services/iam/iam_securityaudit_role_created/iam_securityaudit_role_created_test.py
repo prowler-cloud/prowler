@@ -3,7 +3,7 @@ from re import search
 from unittest import mock
 
 from boto3 import client
-from moto import mock_iam
+from moto import mock_aws
 
 from prowler.providers.aws.services.iam.iam_service import IAM
 from tests.providers.aws.audit_info_utils import (
@@ -13,7 +13,7 @@ from tests.providers.aws.audit_info_utils import (
 
 
 class Test_iam_securityaudit_role_created:
-    @mock_iam
+    @mock_aws
     def test_securityaudit_role_created(self):
         audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
         iam = client("iam")
@@ -60,7 +60,7 @@ class Test_iam_securityaudit_role_created:
                 assert result[0].resource_arn == "arn:aws:iam::aws:policy/SecurityAudit"
                 assert result[0].region == "us-east-1"
 
-    @mock_iam
+    @mock_aws
     def test_no_securityaudit_role_created(self):
         audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
 

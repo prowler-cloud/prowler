@@ -1,7 +1,7 @@
 from unittest import mock
 
 from boto3 import client, resource
-from moto import mock_ec2
+from moto import mock_aws
 
 from tests.providers.aws.audit_info_utils import (
     AWS_ACCOUNT_NUMBER,
@@ -12,7 +12,7 @@ from tests.providers.aws.audit_info_utils import (
 
 
 class Test_vpc_flow_logs_enabled:
-    @mock_ec2
+    @mock_aws
     def test_vpc_only_default_vpcs(self):
         from prowler.providers.aws.services.vpc.vpc_service import VPC
 
@@ -37,7 +37,7 @@ class Test_vpc_flow_logs_enabled:
 
             assert len(result) == 2  # Number of AWS regions, one default VPC per region
 
-    @mock_ec2
+    @mock_aws
     def test_vpc_with_flow_logs(self):
         from prowler.providers.aws.services.vpc.vpc_service import VPC
 
@@ -95,7 +95,7 @@ class Test_vpc_flow_logs_enabled:
                     )
                     assert result.resource_id == vpc["VpcId"]
 
-    @mock_ec2
+    @mock_aws
     def test_vpc_without_flow_logs(self):
         from prowler.providers.aws.services.vpc.vpc_service import VPC
 
@@ -133,7 +133,7 @@ class Test_vpc_flow_logs_enabled:
                     )
                     assert result.resource_id == vpc["VpcId"]
 
-    @mock_ec2
+    @mock_aws
     def test_vpc_without_flow_logs_ignoring(self):
         from prowler.providers.aws.services.vpc.vpc_service import VPC
 
@@ -164,7 +164,7 @@ class Test_vpc_flow_logs_enabled:
 
             assert len(result) == 0
 
-    @mock_ec2
+    @mock_aws
     def test_vpc_without_flow_logs_ignoring_in_use(self):
         from prowler.providers.aws.services.vpc.vpc_service import VPC
 

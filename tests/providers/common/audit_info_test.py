@@ -3,7 +3,7 @@ import botocore
 import pytest
 from boto3 import session
 from mock import patch
-from moto import mock_ec2, mock_resourcegroupstaggingapi
+from moto import mock_aws, mock_resourcegroupstaggingapi
 
 from prowler.config.config import default_config_file_path
 from prowler.providers.aws.lib.audit_info.models import AWS_Assume_Role, AWS_Audit_Info
@@ -280,7 +280,7 @@ class Test_Set_Audit_Info:
         assert isinstance(audit_info, GCP_Audit_Info)
 
     @mock_resourcegroupstaggingapi
-    @mock_ec2
+    @mock_aws
     def test_get_tagged_resources(self):
         with patch(
             "prowler.providers.common.audit_info.current_audit_info",
@@ -328,7 +328,7 @@ class Test_Set_Audit_Info:
                 get_tagged_resources(["MY_TAG1=MY_VALUE1"], mock_audit_info)
             )
 
-    @mock_ec2
+    @mock_aws
     @patch(
         "prowler.providers.common.audit_info.validate_aws_credentials",
         new=mock_validate_credentials,

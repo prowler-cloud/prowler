@@ -1,7 +1,7 @@
 from unittest import mock
 
 from boto3 import client, resource
-from moto import mock_ec2
+from moto import mock_aws
 
 from tests.providers.aws.audit_info_utils import (
     AWS_REGION_EU_WEST_1,
@@ -13,7 +13,7 @@ EXAMPLE_AMI_ID = "ami-12c6146b"
 
 
 class Test_ec2_securitygroup_from_launch_wizard:
-    @mock_ec2
+    @mock_aws
     def test_ec2_default_sgs(self):
         # Create EC2 Mocked Resources
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
@@ -47,7 +47,7 @@ class Test_ec2_securitygroup_from_launch_wizard:
             assert result[1].status == "PASS"
             assert result[2].status == "PASS"
 
-    @mock_ec2
+    @mock_aws
     def test_ec2_launch_wizard_sg(self):
         # Create EC2 Mocked Resources
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
@@ -96,7 +96,7 @@ class Test_ec2_securitygroup_from_launch_wizard:
                     )
                     assert sg.resource_details == sg_name
 
-    @mock_ec2
+    @mock_aws
     def test_ec2_compliant_default_sg(self):
         # Create EC2 Mocked Resources
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)

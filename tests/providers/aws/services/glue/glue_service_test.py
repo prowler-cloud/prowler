@@ -1,7 +1,7 @@
 from unittest.mock import patch
 
 import botocore
-from moto import mock_glue
+from moto import mock_aws
 
 from prowler.providers.aws.services.glue.glue_service import Glue
 from tests.providers.aws.audit_info_utils import (
@@ -120,7 +120,7 @@ def mock_generate_regional_clients(service, audit_info):
 )
 class Test_Glue_Service:
     # Test Glue Service
-    @mock_glue
+    @mock_aws
     def test_service(self):
         # Glue client for this test class
         audit_info = set_mocked_aws_audit_info()
@@ -128,7 +128,7 @@ class Test_Glue_Service:
         assert glue.service == "glue"
 
     # Test Glue Client
-    @mock_glue
+    @mock_aws
     def test_client(self):
         # Glue client for this test class
         audit_info = set_mocked_aws_audit_info()
@@ -137,7 +137,7 @@ class Test_Glue_Service:
             assert regional_client.__class__.__name__ == "Glue"
 
     # Test Glue Session
-    @mock_glue
+    @mock_aws
     def test__get_session__(self):
         # Glue client for this test class
         audit_info = set_mocked_aws_audit_info()
@@ -145,7 +145,7 @@ class Test_Glue_Service:
         assert glue.session.__class__.__name__ == "Session"
 
     # Test Glue Session
-    @mock_glue
+    @mock_aws
     def test_audited_account(self):
         # Glue client for this test class
         audit_info = set_mocked_aws_audit_info()
@@ -153,7 +153,7 @@ class Test_Glue_Service:
         assert glue.audited_account == AWS_ACCOUNT_NUMBER
 
     # Test Glue Search Tables
-    @mock_glue
+    @mock_aws
     def test__search_tables__(self):
         audit_info = set_mocked_aws_audit_info()
         glue = Glue(audit_info)
@@ -164,7 +164,7 @@ class Test_Glue_Service:
         assert glue.tables[0].region == AWS_REGION_US_EAST_1
 
     # Test Glue Get Connections
-    @mock_glue
+    @mock_aws
     def test__get_connections__(self):
         audit_info = set_mocked_aws_audit_info()
         glue = Glue(audit_info)
@@ -181,7 +181,7 @@ class Test_Glue_Service:
         assert glue.connections[0].region == AWS_REGION_US_EAST_1
 
     # Test Glue Get Catalog Encryption
-    @mock_glue
+    @mock_aws
     def test__get_data_catalog_encryption_settings__(self):
         audit_info = set_mocked_aws_audit_info()
         glue = Glue(audit_info)
@@ -193,7 +193,7 @@ class Test_Glue_Service:
         assert glue.catalog_encryption_settings[0].region == AWS_REGION_US_EAST_1
 
     # Test Glue Get Dev Endpoints
-    @mock_glue
+    @mock_aws
     def test__get_dev_endpoints__(self):
         audit_info = set_mocked_aws_audit_info()
         glue = Glue(audit_info)
@@ -203,7 +203,7 @@ class Test_Glue_Service:
         assert glue.dev_endpoints[0].region == AWS_REGION_US_EAST_1
 
     # Test Glue Get Security Configs
-    @mock_glue
+    @mock_aws
     def test__get_security_configurations__(self):
         audit_info = set_mocked_aws_audit_info()
         glue = Glue(audit_info)
@@ -215,7 +215,7 @@ class Test_Glue_Service:
         assert glue.security_configs[0].region == AWS_REGION_US_EAST_1
 
     # Test Glue Get Security Configs
-    @mock_glue
+    @mock_aws
     def test__get_jobs__(self):
         audit_info = set_mocked_aws_audit_info()
         glue = Glue(audit_info)

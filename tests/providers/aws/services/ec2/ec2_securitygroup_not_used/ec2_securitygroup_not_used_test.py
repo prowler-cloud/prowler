@@ -2,7 +2,7 @@ from re import search
 from unittest import mock
 
 from boto3 import client, resource
-from moto import mock_ec2, mock_iam, mock_lambda
+from moto import mock_aws
 
 from tests.providers.aws.audit_info_utils import (
     AWS_ACCOUNT_NUMBER,
@@ -14,8 +14,8 @@ EXAMPLE_AMI_ID = "ami-12c6146b"
 
 
 class Test_ec2_securitygroup_not_used:
-    @mock_ec2
-    @mock_lambda
+    @mock_aws
+    @mock_aws
     def test_ec2_default_sgs(self):
         # Create EC2 Mocked Resources
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
@@ -49,8 +49,8 @@ class Test_ec2_securitygroup_not_used:
             # Default sg per region are excluded
             assert len(result) == 0
 
-    @mock_ec2
-    @mock_lambda
+    @mock_aws
+    @mock_aws
     def test_ec2_unused_sg(self):
         # Create EC2 Mocked Resources
         ec2 = resource("ec2", AWS_REGION_US_EAST_1)
@@ -102,8 +102,8 @@ class Test_ec2_securitygroup_not_used:
             assert result[0].resource_details == sg_name
             assert result[0].resource_tags == []
 
-    @mock_ec2
-    @mock_lambda
+    @mock_aws
+    @mock_aws
     def test_ec2_used_default_sg(self):
         # Create EC2 Mocked Resources
         ec2 = resource("ec2", AWS_REGION_US_EAST_1)
@@ -161,9 +161,9 @@ class Test_ec2_securitygroup_not_used:
             assert result[0].resource_details == sg_name
             assert result[0].resource_tags == []
 
-    @mock_ec2
-    @mock_lambda
-    @mock_iam
+    @mock_aws
+    @mock_aws
+    @mock_aws
     def test_ec2_used_default_sg_by_lambda(self):
         # Create EC2 Mocked Resources
         ec2 = resource("ec2", AWS_REGION_US_EAST_1)
@@ -245,8 +245,8 @@ class Test_ec2_securitygroup_not_used:
             assert result[0].resource_details == sg_name
             assert result[0].resource_tags == []
 
-    @mock_ec2
-    @mock_lambda
+    @mock_aws
+    @mock_aws
     def test_ec2_associated_sg(self):
         # Create EC2 Mocked Resources
         ec2 = resource("ec2", AWS_REGION_US_EAST_1)

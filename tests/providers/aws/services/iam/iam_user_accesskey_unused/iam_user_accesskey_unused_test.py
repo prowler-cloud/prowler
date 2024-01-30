@@ -2,7 +2,7 @@ import datetime
 from unittest import mock
 
 from boto3 import client
-from moto import mock_iam
+from moto import mock_aws
 
 from tests.providers.aws.audit_info_utils import (
     AWS_REGION_US_EAST_1,
@@ -14,7 +14,7 @@ AWS_REGION = "us-east-1"
 
 
 class Test_iam_user_accesskey_unused_test:
-    @mock_iam
+    @mock_aws
     def test_user_no_access_keys(self):
         iam_client = client("iam")
         user = "test-user"
@@ -57,7 +57,7 @@ class Test_iam_user_accesskey_unused_test:
                 assert result[0].resource_arn == arn
                 assert result[0].region == AWS_REGION_US_EAST_1
 
-    @mock_iam
+    @mock_aws
     def test_user_access_key_1_not_used(self):
         credentials_last_rotated = (
             datetime.datetime.now() - datetime.timedelta(days=100)
@@ -101,7 +101,7 @@ class Test_iam_user_accesskey_unused_test:
                 assert result[0].resource_arn == arn
                 assert result[0].region == AWS_REGION_US_EAST_1
 
-    @mock_iam
+    @mock_aws
     def test_user_access_key_2_not_used(self):
         credentials_last_rotated = (
             datetime.datetime.now() - datetime.timedelta(days=100)
@@ -145,7 +145,7 @@ class Test_iam_user_accesskey_unused_test:
                 assert result[0].resource_arn == arn
                 assert result[0].region == AWS_REGION_US_EAST_1
 
-    @mock_iam
+    @mock_aws
     def test_user_both_access_keys_not_used(self):
         credentials_last_rotated = (
             datetime.datetime.now() - datetime.timedelta(days=100)
@@ -203,7 +203,7 @@ class Test_iam_user_accesskey_unused_test:
                 assert result[1].resource_arn == arn
                 assert result[1].region == AWS_REGION
 
-    @mock_iam
+    @mock_aws
     def test_user_both_access_keys_used(self):
         credentials_last_rotated = (
             datetime.datetime.now() - datetime.timedelta(days=10)

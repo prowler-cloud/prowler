@@ -1,5 +1,5 @@
 from boto3 import client
-from moto import mock_cloudtrail, mock_s3
+from moto import mock_aws
 
 from prowler.providers.aws.services.cloudtrail.cloudtrail_service import Cloudtrail
 from tests.providers.aws.audit_info_utils import (
@@ -12,7 +12,7 @@ from tests.providers.aws.audit_info_utils import (
 
 class Test_Cloudtrail_Service:
     # Test Cloudtrail Service
-    @mock_cloudtrail
+    @mock_aws
     def test_service(self):
         audit_info = set_mocked_aws_audit_info(
             [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
@@ -21,7 +21,7 @@ class Test_Cloudtrail_Service:
         assert cloudtrail.service == "cloudtrail"
 
     # Test Cloudtrail client
-    @mock_cloudtrail
+    @mock_aws
     def test_client(self):
         audit_info = set_mocked_aws_audit_info(
             [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
@@ -31,7 +31,7 @@ class Test_Cloudtrail_Service:
             assert regional_client.__class__.__name__ == "CloudTrail"
 
     # Test Cloudtrail session
-    @mock_cloudtrail
+    @mock_aws
     def test__get_session__(self):
         audit_info = set_mocked_aws_audit_info(
             [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
@@ -40,7 +40,7 @@ class Test_Cloudtrail_Service:
         assert cloudtrail.session.__class__.__name__ == "Session"
 
     # Test Cloudtrail Session
-    @mock_cloudtrail
+    @mock_aws
     def test_audited_account(self):
         audit_info = set_mocked_aws_audit_info(
             [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
@@ -48,8 +48,8 @@ class Test_Cloudtrail_Service:
         cloudtrail = Cloudtrail(audit_info)
         assert cloudtrail.audited_account == AWS_ACCOUNT_NUMBER
 
-    @mock_cloudtrail
-    @mock_s3
+    @mock_aws
+    @mock_aws
     def test_describe_trails(self):
         cloudtrail_client_us_east_1 = client(
             "cloudtrail", region_name=AWS_REGION_US_EAST_1
@@ -112,8 +112,8 @@ class Test_Cloudtrail_Service:
                     {"Key": "test", "Value": "test"},
                 ]
 
-    @mock_cloudtrail
-    @mock_s3
+    @mock_aws
+    @mock_aws
     def test_status_trails(self):
         cloudtrail_client_us_east_1 = client(
             "cloudtrail", region_name=AWS_REGION_US_EAST_1
@@ -158,8 +158,8 @@ class Test_Cloudtrail_Service:
                     assert not trail.latest_cloudwatch_delivery_time
                     assert trail.s3_bucket == bucket_name_us
 
-    @mock_cloudtrail
-    @mock_s3
+    @mock_aws
+    @mock_aws
     def test_get_classic_event_selectors(self):
         cloudtrail_client_us_east_1 = client(
             "cloudtrail", region_name=AWS_REGION_US_EAST_1
@@ -207,8 +207,8 @@ class Test_Cloudtrail_Service:
                     )
                     assert not trail.data_events[0].is_advanced
 
-    @mock_cloudtrail
-    @mock_s3
+    @mock_aws
+    @mock_aws
     def test_get_advanced_event_selectors(self):
         cloudtrail_client_us_east_1 = client(
             "cloudtrail", region_name=AWS_REGION_US_EAST_1

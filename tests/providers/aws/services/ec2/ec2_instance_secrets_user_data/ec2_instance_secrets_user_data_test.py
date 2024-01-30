@@ -3,7 +3,7 @@ from pathlib import Path
 from unittest import mock
 
 from boto3 import resource
-from moto import mock_ec2
+from moto import mock_aws
 
 from tests.providers.aws.audit_info_utils import (
     AWS_REGION_EU_WEST_1,
@@ -18,7 +18,7 @@ FIXTURES_DIR_NAME = "fixtures"
 
 
 class Test_ec2_instance_secrets_user_data:
-    @mock_ec2
+    @mock_aws
     def test_no_ec2(self):
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
@@ -43,7 +43,7 @@ class Test_ec2_instance_secrets_user_data:
 
             assert len(result) == 0
 
-    @mock_ec2
+    @mock_aws
     def test_one_ec2_with_no_secrets(self):
         ec2 = resource("ec2", region_name=AWS_REGION_US_EAST_1)
         instance = ec2.create_instances(
@@ -87,7 +87,7 @@ class Test_ec2_instance_secrets_user_data:
             assert result[0].resource_tags is None
             assert result[0].region == AWS_REGION_US_EAST_1
 
-    @mock_ec2
+    @mock_aws
     def test_one_ec2_with_secrets(self):
         ec2 = resource("ec2", region_name=AWS_REGION_US_EAST_1)
         instance = ec2.create_instances(
@@ -131,7 +131,7 @@ class Test_ec2_instance_secrets_user_data:
             assert result[0].resource_tags is None
             assert result[0].region == AWS_REGION_US_EAST_1
 
-    @mock_ec2
+    @mock_aws
     def test_one_ec2_file_with_secrets(self):
         # Include launch_configurations to check
         f = open(
@@ -178,7 +178,7 @@ class Test_ec2_instance_secrets_user_data:
             assert result[0].resource_tags is None
             assert result[0].region == AWS_REGION_US_EAST_1
 
-    @mock_ec2
+    @mock_aws
     def test_one_launch_configurations_without_user_data(self):
         ec2 = resource("ec2", region_name=AWS_REGION_US_EAST_1)
         instance = ec2.create_instances(
@@ -219,7 +219,7 @@ class Test_ec2_instance_secrets_user_data:
             assert result[0].resource_tags is None
             assert result[0].region == AWS_REGION_US_EAST_1
 
-    @mock_ec2
+    @mock_aws
     def test_one_ec2_file_with_secrets_gzip(self):
         # Include launch_configurations to check
         f = open(

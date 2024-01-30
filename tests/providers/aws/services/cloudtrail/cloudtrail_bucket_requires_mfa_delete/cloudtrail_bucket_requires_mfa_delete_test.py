@@ -3,7 +3,7 @@ from unittest.mock import patch
 
 import botocore
 from boto3 import client
-from moto import mock_cloudtrail, mock_iam, mock_s3
+from moto import mock_aws
 
 from prowler.providers.aws.services.cloudtrail.cloudtrail_service import Cloudtrail
 from prowler.providers.aws.services.s3.s3_service import S3
@@ -18,7 +18,7 @@ make_api_call = botocore.client.BaseClient._make_api_call
 
 
 class Test_cloudtrail_bucket_requires_mfa_delete:
-    @mock_cloudtrail
+    @mock_aws
     def test_no_trails(self):
         current_audit_info = set_mocked_aws_audit_info(
             [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
@@ -40,8 +40,8 @@ class Test_cloudtrail_bucket_requires_mfa_delete:
             result = check.execute()
             assert len(result) == 0
 
-    @mock_cloudtrail
-    @mock_s3
+    @mock_aws
+    @mock_aws
     def test_trails_with_no_mfa_bucket(self):
         current_audit_info = set_mocked_aws_audit_info(
             [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
@@ -99,9 +99,9 @@ class Test_cloudtrail_bucket_requires_mfa_delete:
             return {"MFADelete": "Enabled", "Status": "Enabled"}
         return make_api_call(self, operation_name, kwarg)
 
-    @mock_cloudtrail
-    @mock_s3
-    @mock_iam
+    @mock_aws
+    @mock_aws
+    @mock_aws
     # Patch with mock_make_api_call_getbucketversioning_mfadelete_enabled:
     @patch(
         "botocore.client.BaseClient._make_api_call",
@@ -153,8 +153,8 @@ class Test_cloudtrail_bucket_requires_mfa_delete:
             assert result[0].resource_arn == trail_us["TrailARN"]
             assert result[0].resource_tags == []
 
-    @mock_cloudtrail
-    @mock_s3
+    @mock_aws
+    @mock_aws
     def test_trails_with_no_mfa_bucket_cross(self):
         current_audit_info = set_mocked_aws_audit_info(
             [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
@@ -204,9 +204,9 @@ class Test_cloudtrail_bucket_requires_mfa_delete:
             assert result[0].resource_arn == trail_us["TrailARN"]
             assert result[0].resource_tags == []
 
-    @mock_cloudtrail
-    @mock_s3
-    @mock_iam
+    @mock_aws
+    @mock_aws
+    @mock_aws
     # Patch with mock_make_api_call_getbucketversioning_mfadelete_enabled:
     @patch(
         "botocore.client.BaseClient._make_api_call",

@@ -2,7 +2,7 @@ from re import search
 
 import boto3
 from mock import patch
-from moto import mock_iam, mock_sts
+from moto import mock_aws
 
 from prowler.providers.aws.aws_provider import (
     AWS_Provider,
@@ -29,8 +29,8 @@ from tests.providers.aws.audit_info_utils import (
 
 
 class Test_AWS_Provider:
-    @mock_iam
-    @mock_sts
+    @mock_aws
+    @mock_aws
     def test_aws_provider_user_without_mfa(self):
         # sessionName = "ProwlerAssessmentSession"
         # Boto 3 client to create our user
@@ -79,8 +79,8 @@ class Test_AWS_Provider:
                 role_session_name="ProwlerAssessmentSession",
             )
 
-    @mock_iam
-    @mock_sts
+    @mock_aws
+    @mock_aws
     def test_aws_provider_user_with_mfa(self):
         # Boto 3 client to create our user
         iam_client = boto3.client("iam", region_name=AWS_REGION_US_EAST_1)
@@ -129,8 +129,8 @@ class Test_AWS_Provider:
                 role_session_name="ProwlerAssessmentSession",
             )
 
-    @mock_iam
-    @mock_sts
+    @mock_aws
+    @mock_aws
     def test_aws_provider_assume_role_with_mfa(self):
         # Variables
         role_name = "test-role"
@@ -208,8 +208,8 @@ class Test_AWS_Provider:
                 assume_role_response["AssumedRoleUser"]["AssumedRoleId"]
             ) == 21 + 1 + len(sessionName)
 
-    @mock_iam
-    @mock_sts
+    @mock_aws
+    @mock_aws
     def test_aws_provider_assume_role_without_mfa(self):
         # Variables
         role_name = "test-role"
@@ -279,8 +279,8 @@ class Test_AWS_Provider:
             assume_role_response["AssumedRoleUser"]["AssumedRoleId"]
         ) == 21 + 1 + len(sessionName)
 
-    @mock_iam
-    @mock_sts
+    @mock_aws
+    @mock_aws
     def test_assume_role_with_sts_endpoint_region(self):
         # Variables
         role_name = "test-role"
