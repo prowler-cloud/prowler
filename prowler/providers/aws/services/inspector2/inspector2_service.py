@@ -24,6 +24,7 @@ class Inspector2(AWSService):
             self.inspectors.append(
                 Inspector(
                     id=self.audited_account,
+                    arn=f"arn:{self.audited_partition}:inspector2:{regional_client.region}:{self.audited_account}:inspector2",
                     status=batch_get_account_status.get("state").get("status"),
                     region=regional_client.region,
                 )
@@ -80,6 +81,7 @@ class InspectorFinding(BaseModel):
 
 class Inspector(BaseModel):
     id: str
+    arn: str
     region: str
     status: str
     findings: list[InspectorFinding] = []
