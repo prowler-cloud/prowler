@@ -1587,13 +1587,13 @@ min-versions = ["babel (==2.9.0)", "click (==7.0)", "colorama (==0.4)", "ghp-imp
 
 [[package]]
 name = "mkdocs-material"
-version = "9.5.4"
+version = "9.5.6"
 description = "Documentation that simply works"
 optional = true
 python-versions = ">=3.8"
 files = [
-    {file = "mkdocs_material-9.5.4-py3-none-any.whl", hash = "sha256:efd7cc8ae03296d728da9bd38f4db8b07ab61f9738a0cbd0dfaf2a15a50e7343"},
-    {file = "mkdocs_material-9.5.4.tar.gz", hash = "sha256:3d196ee67fad16b2df1a458d650a8ac1890294eaae368d26cee71bc24ad41c40"},
+    {file = "mkdocs_material-9.5.6-py3-none-any.whl", hash = "sha256:e115b90fccf5cd7f5d15b0c2f8e6246b21041628b8f590630e7fca66ed7fcf6c"},
+    {file = "mkdocs_material-9.5.6.tar.gz", hash = "sha256:5b24df36d8ac6cecd611241ce6f6423ccde3e1ad89f8360c3f76d5565fc2d82a"},
 ]
 
 [package.dependencies]
@@ -1611,7 +1611,7 @@ requests = ">=2.26,<3.0"
 
 [package.extras]
 git = ["mkdocs-git-committers-plugin-2 (>=1.1,<2.0)", "mkdocs-git-revision-date-localized-plugin (>=1.2,<2.0)"]
-imaging = ["cairosvg (>=2.6,<3.0)", "pillow (>=9.4,<10.0)"]
+imaging = ["cairosvg (>=2.6,<3.0)", "pillow (>=10.2,<11.0)"]
 recommended = ["mkdocs-minify-plugin (>=0.7,<1.0)", "mkdocs-redirects (>=1.2,<2.0)", "mkdocs-rss-plugin (>=1.6,<2.0)"]
 
 [[package]]
@@ -3366,4 +3366,4 @@ docs = ["mkdocs", "mkdocs-material"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.12"
-content-hash = "88d960751c89fd61f056819ace411a768ade53105f4eb44222f04ca6ef775615"
+content-hash = "002286855c4fae550222268dc43da4d7200a412c1bbed75bfe16494272759371"
