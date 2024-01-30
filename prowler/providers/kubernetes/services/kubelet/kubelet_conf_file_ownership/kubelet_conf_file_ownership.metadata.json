@@ -1,0 +1,36 @@
+{
+  "Provider": "kubernetes",
+  "CheckID": "kubelet_conf_file_ownership",
+  "CheckTitle": "Ensure kubelet.conf file ownership is set to root:root",
+  "CheckType": [
+    "Security",
+    "Configuration"
+  ],
+  "ServiceName": "kubelet",
+  "SubServiceName": "Config File Ownership",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "KubernetesWorkerNode",
+  "Description": "Ensure that the kubelet.conf file, which is the kubeconfig file for the node, has its file ownership set to root:root. This check verifies the proper ownership settings to maintain the security and integrity of the node's configuration.",
+  "Risk": "Incorrect file ownership settings on kubelet.conf can lead to unauthorized access and potential security vulnerabilities.",
+  "RelatedUrl": "https://kubernetes.io/docs/admin/kubelet/",
+  "Remediation": {
+    "Code": {
+      "CLI": "Set kubelet.conf file ownership to root:root by running 'chown root:root /etc/kubernetes/kubelet.conf' on each worker node.",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Ensure kubelet.conf file ownership is correctly set to protect the node's configuration.",
+      "Url": "https://kubernetes.io/docs/admin/kubelet/"
+    }
+  },
+  "Categories": [
+    "Node Security",
+    "Compliance"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Regular checks of kubelet.conf file ownership are essential for maintaining node security."
+}

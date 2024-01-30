@@ -1,0 +1,36 @@
+{
+  "Provider": "kubernetes",
+  "CheckID": "kubelet_config_yaml_permissions",
+  "CheckTitle": "Validate kubelet config.yaml File Permissions",
+  "CheckType": [
+    "Security",
+    "Configuration"
+  ],
+  "ServiceName": "kubelet",
+  "SubServiceName": "Config File Permissions",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "KubernetesWorkerNode",
+  "Description": "Ensure that if the kubelet refers to a configuration file with the --config argument, that file has permissions of 600 or more restrictive. The kubelet config file contains various critical parameters for the kubelet service on worker nodes, and its permissions should be strictly controlled.",
+  "Risk": "Improper file permissions on kubelet config.yaml can expose sensitive data or allow unauthorized modifications.",
+  "RelatedUrl": "https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/",
+  "Remediation": {
+    "Code": {
+      "CLI": "Set kubelet config.yaml file permissions to 600 using 'chmod 600 /var/lib/kubelet/config.yaml' on each worker node.",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Secure the kubelet configuration by enforcing strict file permissions.",
+      "Url": "https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/"
+    }
+  },
+  "Categories": [
+    "Node Security",
+    "Compliance"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Regularly verify the file permissions of kubelet config files to ensure they are not altered unexpectedly."
+}

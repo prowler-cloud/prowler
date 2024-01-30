@@ -1,0 +1,36 @@
+{
+  "Provider": "kubernetes",
+  "CheckID": "kubelet_service_file_permissions",
+  "CheckTitle": "Ensure that the kubelet service file permissions are set to 600 or more restrictive",
+  "CheckType": [
+    "Security",
+    "Configuration"
+  ],
+  "ServiceName": "kubelet",
+  "SubServiceName": "Kubelet Service File Permission",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "KubernetesNode",
+  "Description": "This check ensures that the kubelet service file on worker nodes has permissions set to 600 or more restrictive, limiting the file's write access to only system administrators. This measure is crucial to maintain the integrity and security of the kubelet service configuration.",
+  "Risk": "Improper file permissions on the kubelet service file could lead to unauthorized modifications, compromising node security and stability.",
+  "RelatedUrl": "https://kubernetes.io/docs/admin/kubelet/",
+  "Remediation": {
+    "Code": {
+      "CLI": "Change the kubelet service file permissions to 600 or more restrictive using chmod. Example: chmod 600 /etc/systemd/system/kubelet.service.d/kubeadm.conf",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Ensure the kubelet service file is securely configured with restrictive permissions.",
+      "Url": "https://kubernetes.io/docs/setup/independent/create-cluster-kubeadm/#44-joining-your-nodes"
+    }
+  },
+  "Categories": [
+    "Node Security",
+    "Configuration Management"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "The file location may vary based on the Kubernetes installation and should be verified for each cluster."
+}
