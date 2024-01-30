@@ -92,6 +92,7 @@ class Storage_Account:
     blob_properties: str = {}
 
 
+@dataclass
 class Blob_Properties:
     id: str
     name: str
