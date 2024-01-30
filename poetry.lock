@@ -1643,19 +1643,19 @@ test = ["pytest", "pytest-cov"]
 
 [[package]]
 name = "moto"
-version = "4.2.13"
+version = "5.0.0"
 description = ""
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.8"
 files = [
-    {file = "moto-4.2.13-py2.py3-none-any.whl", hash = "sha256:93e0fd13b624bd79115494f833308c3641b2be0fc9f4f18aa9264aa01f6168e0"},
-    {file = "moto-4.2.13.tar.gz", hash = "sha256:01aef6a489a725c8d725bd3dc6f70ff1bedaee3e2641752e4b471ff0ede4b4d7"},
+    {file = "moto-5.0.0-py2.py3-none-any.whl", hash = "sha256:1d01de681da1453335ec09ba43db521e577cbd58d25ddfb61e5965534b8be539"},
+    {file = "moto-5.0.0.tar.gz", hash = "sha256:4a94a147ee70e85e0842da8d1093728c66085165775d1d302f0f77538bf92b95"},
 ]
 
 [package.dependencies]
 aws-xray-sdk = {version = ">=0.93,<0.96 || >0.96", optional = true, markers = "extra == \"all\""}
 boto3 = ">=1.9.201"
-botocore = ">=1.12.201"
+botocore = ">=1.14.0"
 cfn-lint = {version = ">=0.40.0", optional = true, markers = "extra == \"all\""}
 cryptography = ">=3.3.1"
 docker = {version = ">=3.0.0", optional = true, markers = "extra == \"all\""}
@@ -1671,7 +1671,7 @@ python-dateutil = ">=2.1,<3.0.0"
 python-jose = {version = ">=3.1.0,<4.0.0", extras = ["cryptography"], optional = true, markers = "extra == \"all\""}
 PyYAML = {version = ">=5.1", optional = true, markers = "extra == \"all\""}
 requests = ">=2.5"
-responses = ">=0.13.0"
+responses = ">=0.15.0"
 setuptools = {version = "*", optional = true, markers = "extra == \"all\""}
 sshpubkeys = {version = ">=3.1.0", optional = true, markers = "extra == \"all\""}
 werkzeug = ">=0.5,<2.2.0 || >2.2.0,<2.2.1 || >2.2.1"
@@ -1686,18 +1686,13 @@ awslambda = ["docker (>=3.0.0)"]
 batch = ["docker (>=3.0.0)"]
 cloudformation = ["PyYAML (>=5.1)", "aws-xray-sdk (>=0.93,!=0.96)", "cfn-lint (>=0.40.0)", "docker (>=3.0.0)", "ecdsa (!=0.15)", "graphql-core", "jsondiff (>=1.1.2)", "openapi-spec-validator (>=0.5.0)", "py-partiql-parser (==0.5.0)", "pyparsing (>=3.0.7)", "python-jose[cryptography] (>=3.1.0,<4.0.0)", "setuptools", "sshpubkeys (>=3.1.0)"]
 cognitoidp = ["ecdsa (!=0.15)", "python-jose[cryptography] (>=3.1.0,<4.0.0)"]
-ds = ["sshpubkeys (>=3.1.0)"]
 dynamodb = ["docker (>=3.0.0)", "py-partiql-parser (==0.5.0)"]
 dynamodbstreams = ["docker (>=3.0.0)", "py-partiql-parser (==0.5.0)"]
-ebs = ["sshpubkeys (>=3.1.0)"]
 ec2 = ["sshpubkeys (>=3.1.0)"]
-efs = ["sshpubkeys (>=3.1.0)"]
-eks = ["sshpubkeys (>=3.1.0)"]
 glue = ["pyparsing (>=3.0.7)"]
 iotdata = ["jsondiff (>=1.1.2)"]
 proxy = ["PyYAML (>=5.1)", "aws-xray-sdk (>=0.93,!=0.96)", "cfn-lint (>=0.40.0)", "docker (>=2.5.1)", "ecdsa (!=0.15)", "graphql-core", "jsondiff (>=1.1.2)", "multipart", "openapi-spec-validator (>=0.5.0)", "py-partiql-parser (==0.5.0)", "pyparsing (>=3.0.7)", "python-jose[cryptography] (>=3.1.0,<4.0.0)", "setuptools", "sshpubkeys (>=3.1.0)"]
-resourcegroupstaggingapi = ["PyYAML (>=5.1)", "cfn-lint (>=0.40.0)", "docker (>=3.0.0)", "ecdsa (!=0.15)", "graphql-core", "jsondiff (>=1.1.2)", "openapi-spec-validator (>=0.5.0)", "py-partiql-parser (==0.5.0)", "pyparsing (>=3.0.7)", "python-jose[cryptography] (>=3.1.0,<4.0.0)", "sshpubkeys (>=3.1.0)"]
-route53resolver = ["sshpubkeys (>=3.1.0)"]
+resourcegroupstaggingapi = ["PyYAML (>=5.1)", "cfn-lint (>=0.40.0)", "docker (>=3.0.0)", "ecdsa (!=0.15)", "graphql-core", "jsondiff (>=1.1.2)", "openapi-spec-validator (>=0.5.0)", "py-partiql-parser (==0.5.0)", "pyparsing (>=3.0.7)", "python-jose[cryptography] (>=3.1.0,<4.0.0)"]
 s3 = ["PyYAML (>=5.1)", "py-partiql-parser (==0.5.0)"]
 s3crc32c = ["PyYAML (>=5.1)", "crc32c", "py-partiql-parser (==0.5.0)"]
 server = ["PyYAML (>=5.1)", "aws-xray-sdk (>=0.93,!=0.96)", "cfn-lint (>=0.40.0)", "docker (>=3.0.0)", "ecdsa (!=0.15)", "flask (!=2.2.0,!=2.2.1)", "flask-cors", "graphql-core", "jsondiff (>=1.1.2)", "openapi-spec-validator (>=0.5.0)", "py-partiql-parser (==0.5.0)", "pyparsing (>=3.0.7)", "python-jose[cryptography] (>=3.1.0,<4.0.0)", "setuptools", "sshpubkeys (>=3.1.0)"]
@@ -3366,4 +3361,4 @@ docs = ["mkdocs", "mkdocs-material"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.12"
-content-hash = "88d960751c89fd61f056819ace411a768ade53105f4eb44222f04ca6ef775615"
+content-hash = "47ba0e3ba19660a1b27d28b73794ac90915709e298f73f5c4bc2e2e4a96ce095"
