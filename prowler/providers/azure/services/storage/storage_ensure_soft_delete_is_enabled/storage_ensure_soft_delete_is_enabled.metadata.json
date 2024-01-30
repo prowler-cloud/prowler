@@ -1,7 +1,7 @@
 {
   "Provider": "azure",
   "CheckID": "storage_ensure_soft_delete_is_enabled",
-  "CheckTitle": "",
+  "CheckTitle": "Ensure Soft Delete is Enabled for Azure Containers and Blob Storage",
   "CheckType": [],
   "ServiceName": "storage",
   "SubServiceName": "",
