@@ -12,7 +12,7 @@ DETECTOR_ID = str(uuid4())
 DETECTOR_ARN = f"arn:aws:guardduty:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:detector/{DETECTOR_ID}"
 
 
-class Test_:
+class Test_guardduty_is_enabled:
     def test_no_detectors(self):
         guardduty_client = mock.MagicMock
         guardduty_client.region = AWS_REGION_EU_WEST_1
