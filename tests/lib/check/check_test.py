@@ -55,6 +55,13 @@ expected_packages = [
         ispkg=False,
     ),
     ModuleInfo(
+        module_finder=FileFinder(
+            "/root_dir/prowler/providers/azure/services/storage/storage_ensure_soft_delete_is_enabled"
+        ),
+        name="prowler.providers.azure.services.storage.storage_ensure_soft_delete_is_enabled.storage_ensure_soft_delete_is_enabled",
+        ispkg=False,
+    ),
+    ModuleInfo(
         module_finder=FileFinder("/root_dir/prowler/providers/azure/services/storage"),
         name="prowler.providers.azure.services.storage.storage_ensure_encryption_with_customer_managed_keys",
         ispkg=True,
@@ -94,6 +101,13 @@ def mock_list_modules(*_):
                 "/root_dir/prowler/providers/azure/services/storage/storage_ensure_private_endpoints_in_storage_accounts"
             ),
             name="prowler.providers.azure.services.storage.storage_ensure_private_endpoints_in_storage_accounts.storage_ensure_private_endpoints_in_storage_accounts",
+            ispkg=False,
+        ),
+        ModuleInfo(
+            module_finder=FileFinder(
+                "/root_dir/prowler/providers/azure/services/storage/storage_ensure_soft_delete_is_enabled"
+            ),
+            name="prowler.providers.azure.services.storage.storage_ensure_soft_delete_is_enabled.storage_ensure_soft_delete_is_enabled",
             ispkg=False,
         ),
         ModuleInfo(
@@ -482,6 +496,10 @@ class Test_Check:
             (
                 "storage_ensure_private_endpoints_in_storage_accounts",
                 "/root_dir/prowler/providers/azure/services/storage/storage_ensure_private_endpoints_in_storage_accounts",
+            ),
+            (
+                "storage_ensure_soft_delete_is_enabled",
+                "/root_dir/prowler/providers/azure/services/storage/storage_ensure_soft_delete_is_enabled",
             ),
             (
                 "storage_ensure_encryption_with_customer_managed_keys",

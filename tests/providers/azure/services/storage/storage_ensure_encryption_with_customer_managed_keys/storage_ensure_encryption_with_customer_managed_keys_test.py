@@ -32,6 +32,7 @@ class Test_storage_ensure_encryption_with_customer_managed_keys:
                 Storage_Account(
                     id=storage_account_id,
                     name=storage_account_name,
+                    resouce_group_name=None,
                     enable_https_traffic_only=False,
                     infrastructure_encryption=False,
                     allow_blob_public_access=None,
@@ -73,6 +74,7 @@ class Test_storage_ensure_encryption_with_customer_managed_keys:
                 Storage_Account(
                     id=storage_account_id,
                     name=storage_account_name,
+                    resouce_group_name=None,
                     enable_https_traffic_only=False,
                     infrastructure_encryption=False,
                     allow_blob_public_access=None,
