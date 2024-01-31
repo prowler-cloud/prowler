@@ -2,9 +2,11 @@ from dataclasses import dataclass
 
 from azure.mgmt.sql import SqlManagementClient
 from azure.mgmt.sql.models import (
+    EncryptionProtector,
     FirewallRule,
     ServerBlobAuditingPolicy,
     ServerExternalAdministrator,
+    TransparentDataEncryption,
 )
 
 from prowler.lib.logger import logger
@@ -16,6 +18,7 @@ class SQLServer(AzureService):
     def __init__(self, audit_info):
         super().__init__(SqlManagementClient, audit_info)
         self.sql_servers = self.__get_sql_servers__()
+        self.__get_databases__()
 
     def __get_sql_servers__(self):
         logger.info("SQL Server - Getting SQL servers...")
@@ -24,6 +27,7 @@ class SQLServer(AzureService):
             try:
                 sql_servers.update({subscription: []})
                 sql_servers_list = client.servers.list()
+                print(subscription)
                 for sql_server in sql_servers_list:
                     resource_group = self.__get_resource_group__(sql_server.id)
                     auditing_policies = (
@@ -35,6 +39,9 @@ class SQLServer(AzureService):
                     firewall_rules = client.firewall_rules.list_by_server(
                         resource_group_name=resource_group, server_name=sql_server.name
                     )
+                    encryption_protector = self.__get_enctyption_protectors__(
+                        subscription, resource_group, sql_server.name
+                    )
                     sql_servers[subscription].append(
                         SQL_Server(
                             id=sql_server.id,
@@ -44,18 +51,82 @@ class SQLServer(AzureService):
                             administrators=sql_server.administrators,
                             auditing_policies=auditing_policies,
                             firewall_rules=firewall_rules,
+                            encryption_protector=encryption_protector,
                         )
                     )
             except Exception as error:
-                logger.error(f"Subscription name: {subscription}")
                 logger.error(
-                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    f"Subscription name: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         return sql_servers
 
     def __get_resource_group__(self, id):
         resource_group = id.split("/")[4]
         return resource_group
+
+    def __get_transparent_data_encryption__(
+        self, subscription, resource_group, server_name, database_name
+    ):
+        client = self.clients[subscription]
+        tde_encrypted = client.transparent_data_encryptions.get(
+            resource_group_name=resource_group,
+            server_name=server_name,
+            database_name=database_name,
+            transparent_data_encryption_name="current",
+        )
+        return tde_encrypted
+
+    def __get_enctyption_protectors__(self, subscription, resource_group, server_name):
+        client = self.clients[subscription]
+        encryption_protectors = client.encryption_protectors.get(
+            resource_group_name=resource_group,
+            server_name=server_name,
+            encryption_protector_name="current",
+        )
+        return encryption_protectors
+
+    def __get_databases__(self):
+        logger.info("SQL Server - Getting server databases...")
+
+        try:
+            for subscription, sql_servers in self.sql_servers.items():
+                client = self.clients[subscription]
+                for sql_server in sql_servers:
+                    sql_server.databases = []
+                    resource_group = self.__get_resource_group__(sql_server.id)
+                    server_name = sql_server.name
+                    databases_server = client.databases.list_by_server(
+                        resource_group_name=resource_group,
+                        server_name=server_name,
+                    )
+                    for database in databases_server:
+                        tde_encrypted = self.__get_transparent_data_encryption__(
+                            subscription, resource_group, server_name, database.name
+                        )
+                        sql_server.databases.append(
+                            DatabaseServer(
+                                id=database.id,
+                                name=database.name,
+                                type=database.type,
+                                location=database.location,
+                                managed_by=database.managed_by,
+                                tde_encryption=tde_encrypted,
+                            )
+                        )
+        except Exception as error:
+            logger.error(
+                f"Subscription name: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+
+@dataclass
+class DatabaseServer:
+    id: str
+    name: str
+    type: str
+    location: str
+    managed_by: str
+    tde_encryption: TransparentDataEncryption
 
 
 @dataclass
@@ -67,3 +138,5 @@ class SQL_Server:
     administrators: ServerExternalAdministrator
     auditing_policies: ServerBlobAuditingPolicy
     firewall_rules: FirewallRule
+    encryption_protector: EncryptionProtector
+    databases: list[DatabaseServer] = None
