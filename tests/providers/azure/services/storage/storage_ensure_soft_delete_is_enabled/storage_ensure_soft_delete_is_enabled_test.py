@@ -28,6 +28,42 @@ class Test_storage_ensure_soft_delete_is_enabled:
             result = check.execute()
             assert len(result) == 0
 
+    def test_storage_no_blob_properties(self):
+        storage_account_id = str(uuid4())
+        storage_account_name = "Test Storage Account"
+        storage_client = mock.MagicMock
+        storage_account_blob_properties = None
+        storage_client.storage_accounts = {
+            AZURE_SUSCRIPTION: [
+                Storage_Account(
+                    id=storage_account_id,
+                    name=storage_account_name,
+                    resouce_group_name=None,
+                    enable_https_traffic_only=False,
+                    infrastructure_encryption=False,
+                    allow_blob_public_access=None,
+                    network_rule_set=None,
+                    encryption_type="None",
+                    minimum_tls_version=None,
+                    key_expiration_period_in_days=None,
+                    private_endpoint_connections=None,
+                    blob_properties=storage_account_blob_properties,
+                )
+            ]
+        }
+
+        with mock.patch(
+            "prowler.providers.azure.services.storage.storage_ensure_soft_delete_is_enabled.storage_ensure_soft_delete_is_enabled.storage_client",
+            new=storage_client,
+        ):
+            from prowler.providers.azure.services.storage.storage_ensure_soft_delete_is_enabled.storage_ensure_soft_delete_is_enabled import (
+                storage_ensure_soft_delete_is_enabled,
+            )
+
+            check = storage_ensure_soft_delete_is_enabled()
+            result = check.execute()
+            assert len(result) == 0
+
     def test_storage_ensure_soft_delete_is_disabled(
         self,
     ):
