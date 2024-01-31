@@ -68,6 +68,11 @@ class RDS(AWSService):
                                         for item in instance["DBParameterGroups"]
                                     ],
                                     multi_az=instance["MultiAZ"],
+                                    security_groups=[
+                                        sg["VpcSecurityGroupId"]
+                                        for sg in instance["VpcSecurityGroups"]
+                                        if sg["Status"] == "active"
+                                    ],
                                     cluster_id=instance.get("DBClusterIdentifier"),
                                     cluster_arn=f"arn:{self.audited_partition}:rds:{regional_client.region}:{self.audited_account}:cluster:{instance.get('DBClusterIdentifier')}",
                                     region=regional_client.region,
@@ -295,6 +300,7 @@ class DBInstance(BaseModel):
     multi_az: bool
     parameter_groups: list[str] = []
     parameters: list[dict] = []
+    security_groups: list[str] = []
     cluster_id: Optional[str]
     cluster_arn: Optional[str]
     region: str
