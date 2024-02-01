@@ -1,0 +1,30 @@
+{
+  "Provider": "azure",
+  "CheckID": "sqlserver_tde_encrypted",
+  "CheckTitle": "Ensure SQL server's Transparent Data Encryption (TDE) protector is encrypted",
+  "CheckType": [],
+  "ServiceName": "sqlserver",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "SQLServer",
+  "Description": "Enable Transparent Data Encryption on every SQL server.",
+  "Risk": "Azure SQL Database transparent data encryption helps protect against the threat of malicious activity by performing real-time encryption and decryption of the database, associated backups, and transaction log files at rest without requiring changes to the application.",
+  "RelatedUrl": "https://docs.microsoft.com/en-us/sql/relational-databases/security/encryption/transparent-data-encryption-with-azure-sql-database",
+  "Remediation": {
+    "Code": {
+      "CLI": "az sql db tde show --resource-group resourceGroup --server dbServerName --database dbName --query status",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/Sql/data-encryption.html#",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "1. Go to SQL databases 2. For each DB instance 3. Click on Transparent data encryption 4. Set Data encryption to On",
+      "Url": "https://learn.microsoft.com/en-us/azure/azure-sql/database/transparent-data-encryption-byok-overview?view=azuresql"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

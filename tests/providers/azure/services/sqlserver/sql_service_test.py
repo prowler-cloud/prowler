@@ -1,5 +1,7 @@
 from unittest.mock import patch
 
+from azure.mgmt.sql.models import EncryptionProtector, TransparentDataEncryption
+
 from prowler.providers.azure.services.sqlserver.sqlserver_service import (
     DatabaseServer,
     SQL_Server,
@@ -18,7 +20,7 @@ def mock_sqlserver_get_sql_servers(_):
         type="type",
         location="location",
         managed_by="managed_by",
-        tde_encryption=None,
+        tde_encryption=TransparentDataEncryption(status="Disabled"),
     )
     return {
         AZURE_SUSCRIPTION: [
@@ -30,7 +32,9 @@ def mock_sqlserver_get_sql_servers(_):
                 administrators=None,
                 auditing_policies=None,
                 firewall_rules=None,
-                encryption_protector=None,
+                encryption_protector=EncryptionProtector(
+                    server_key_type="AzureKeyVault"
+                ),
                 databases=[database],
             )
         ]
@@ -56,7 +60,7 @@ class Test_SqlServer_Service:
             type="type",
             location="location",
             managed_by="managed_by",
-            tde_encryption=None,
+            tde_encryption=TransparentDataEncryption(status="Disabled"),
         )
         sql_server = SQLServer(set_mocked_azure_audit_info())
         assert (
@@ -76,7 +80,12 @@ class Test_SqlServer_Service:
         assert sql_server.sql_servers[AZURE_SUSCRIPTION][0].administrators is None
         assert sql_server.sql_servers[AZURE_SUSCRIPTION][0].auditing_policies is None
         assert sql_server.sql_servers[AZURE_SUSCRIPTION][0].firewall_rules is None
-        assert sql_server.sql_servers[AZURE_SUSCRIPTION][0].encryption_protector is None
+        assert (
+            sql_server.sql_servers[AZURE_SUSCRIPTION][
+                0
+            ].encryption_protector.__class__.__name__
+            == "EncryptionProtector"
+        )
         assert sql_server.sql_servers[AZURE_SUSCRIPTION][0].databases == [database]
 
     def test__get_databases__(self):
@@ -97,6 +106,38 @@ class Test_SqlServer_Service:
             == "managed_by"
         )
         assert (
-            sql_server.sql_servers[AZURE_SUSCRIPTION][0].databases[0].tde_encryption
-            is None
+            sql_server.sql_servers[AZURE_SUSCRIPTION][0]
+            .databases[0]
+            .tde_encryption.__class__.__name__
+            == "TransparentDataEncryption"
+        )
+
+    def test__get_transparent_data_encryption__(self):
+        sql_server = SQLServer(set_mocked_azure_audit_info())
+        assert (
+            sql_server.sql_servers[AZURE_SUSCRIPTION][0]
+            .databases[0]
+            .tde_encryption.__class__.__name__
+            == "TransparentDataEncryption"
+        )
+        assert (
+            sql_server.sql_servers[AZURE_SUSCRIPTION][0]
+            .databases[0]
+            .tde_encryption.status
+            == "Disabled"
+        )
+
+    def test__get_encryption_protectors__(self):
+        sql_server = SQLServer(set_mocked_azure_audit_info())
+        assert (
+            sql_server.sql_servers[AZURE_SUSCRIPTION][
+                0
+            ].encryption_protector.__class__.__name__
+            == "EncryptionProtector"
+        )
+        assert (
+            sql_server.sql_servers[AZURE_SUSCRIPTION][
+                0
+            ].encryption_protector.server_key_type
+            == "AzureKeyVault"
         )
