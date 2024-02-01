@@ -138,5 +138,5 @@ class SQL_Server:
     administrators: ServerExternalAdministrator
     auditing_policies: ServerBlobAuditingPolicy
     firewall_rules: FirewallRule
-    encryption_protector: EncryptionProtector
+    encryption_protector: EncryptionProtector = None
     databases: list[DatabaseServer] = None

@@ -16,7 +16,10 @@ class sqlserver_tde_encrypted_with_cmk(Check):
                     report.resource_name = sql_server.name
                     report.resource_id = sql_server.id
                     found_disabled = False
-                    if sql_server.encryption_protector.type == "ServiceManaged":
+                    if (
+                        sql_server.encryption_protector.server_key_type
+                        == "AzureKeyVault"
+                    ):
                         for database in databases:
                             if found_disabled:
                                 break
