@@ -534,8 +534,8 @@ class Test_Check:
                 "/root_dir/prowler/providers/azure/services/storage/storage_ensure_encryption_with_customer_managed_keys",
             ),
             (
-                "test_recover_checks_from_provider",
-                "/root_dir/prowler/providers/azure/services/sqlserver/test_recover_checks_from_provider",
+                "sqlserver_tde_encrypted_with_cmk",
+                "/root_dir/prowler/providers/azure/services/sqlserver/sqlserver_tde_encrypted_with_cmk",
             ),
         ]
         returned_checks = recover_checks_from_provider(provider, service)
