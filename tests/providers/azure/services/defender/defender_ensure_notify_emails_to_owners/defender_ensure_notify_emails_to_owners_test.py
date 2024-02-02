@@ -35,8 +35,8 @@ class Test_defender_ensure_notify_emails_to_owners:
                     phone="",
                     alert_notifications_minimal_severity="High",
                     alert_notifications_state="On",
-                    roles_notified=["Contributor"],
-                    roles_notified_state="On",
+                    notified_roles=["Contributor"],
+                    notified_roles_state="On",
                 )
             }
         }
@@ -72,8 +72,8 @@ class Test_defender_ensure_notify_emails_to_owners:
                     phone="",
                     alert_notifications_minimal_severity="High",
                     alert_notifications_state="On",
-                    roles_notified=["Owner", "Contributor"],
-                    roles_notified_state="Off",
+                    notified_roles=["Owner", "Contributor"],
+                    notified_roles_state="Off",
                 )
             }
         }
@@ -109,8 +109,8 @@ class Test_defender_ensure_notify_emails_to_owners:
                     phone="",
                     alert_notifications_minimal_severity="High",
                     alert_notifications_state="On",
-                    roles_notified=["Owner", "Contributor"],
-                    roles_notified_state="On",
+                    notified_roles=["Owner", "Contributor"],
+                    notified_roles_state="On",
                 )
             }
         }

@@ -106,8 +106,8 @@ class Defender(AzureService):
                             phone=security_contact_default.phone,
                             alert_notifications_minimal_severity=security_contact_default.alert_notifications.minimal_severity,
                             alert_notifications_state=security_contact_default.alert_notifications.state,
-                            roles_notified=security_contact_default.notifications_by_role.roles,
-                            roles_notified_state=security_contact_default.notifications_by_role.state,
+                            notified_roles=security_contact_default.notifications_by_role.roles,
+                            notified_roles_state=security_contact_default.notifications_by_role.state,
                         )
                     }
                 )
@@ -143,5 +143,5 @@ class Defender_Security_Contacts(BaseModel):
     phone: str
     alert_notifications_minimal_severity: str
     alert_notifications_state: str
-    roles_notified: list[str]
-    roles_notified_state: str
+    notified_roles: list[str]
+    notified_roles_state: str

@@ -60,8 +60,8 @@ def mock_defender_get_security_contacts(_):
                 phone="666666666",
                 alert_notifications_minimal_severity="High",
                 alert_notifications_state="On",
-                roles_notified=["Owner", "Contributor"],
-                roles_notified_state="On",
+                notified_roles=["Owner", "Contributor"],
+                notified_roles_state="On",
             )
         }
     }
@@ -180,10 +180,10 @@ class Test_Defender_Service:
         )
         assert defender.security_contacts[AZURE_SUSCRIPTION][
             "default"
-        ].roles_notified == ["Owner", "Contributor"]
+        ].notified_roles == ["Owner", "Contributor"]
         assert (
             defender.security_contacts[AZURE_SUSCRIPTION][
                 "default"
-            ].roles_notified_state
+            ].notified_roles_state
             == "On"
         )

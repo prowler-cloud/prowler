@@ -23,8 +23,8 @@ class defender_ensure_notify_emails_to_owners(Check):
                 )
 
                 if (
-                    contact_info.roles_notified_state != "On"
-                    or "Owner" not in contact_info.roles_notified
+                    contact_info.notified_roles_state != "On"
+                    or "Owner" not in contact_info.notified_roles
                 ):
                     report.status = "FAIL"
                     report.status_extended = f"The Owner role is not notified for subscription {subscription_name}."
