@@ -26,7 +26,6 @@ class SQLServer(AzureService):
             try:
                 sql_servers.update({subscription: []})
                 sql_servers_list = client.servers.list()
-                print(subscription)
                 for sql_server in sql_servers_list:
                     resource_group = self.__get_resource_group__(sql_server.id)
                     auditing_policies = (

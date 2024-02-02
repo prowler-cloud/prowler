@@ -11,7 +11,7 @@ from prowler.providers.azure.services.sqlserver.sqlserver_service import (
 AZURE_SUSCRIPTION = str(uuid4())
 
 
-class Test_defender_ensure_defender_for_storage_is_on:
+class Test_sqlserver_tde_encrypted_with_cmk:
     def test_no_sql_servers(self):
         sqlserver_client = mock.MagicMock
         sqlserver_client.sql_servers = {}

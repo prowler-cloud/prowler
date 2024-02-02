@@ -13,7 +13,7 @@
   "RelatedUrl": "https://docs.microsoft.com/en-us/sql/relational-databases/security/encryption/transparent-data-encryption-with-azure-sql-database",
   "Remediation": {
     "Code": {
-      "CLI": "az sql db tde show --resource-group resourceGroup --server dbServerName --database dbName --query status",
+      "CLI": "az sql db tde set --resource-group resourceGroup --server dbServerName --database dbName --status Enabled",
       "NativeIaC": "",
       "Other": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/Sql/data-encryption.html#",
       "Terraform": ""
