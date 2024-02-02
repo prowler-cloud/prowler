@@ -18,10 +18,10 @@ class sqlserver_tde_encryption_enabled(Check):
                         report.resource_id = database.id
                         if database.tde_encryption.status == "Enabled":
                             report.status = "PASS"
-                            report.status_extended = f"Database {database.name} from SQL Server{sql_server.name} from subscription {subscription} has TDE enabled"
+                            report.status_extended = f"Database {database.name} from SQL Server {sql_server.name} from subscription {subscription} has TDE enabled"
                         else:
                             report.status = "FAIL"
-                            report.status_extended = f"Database {database.name} from SQL Server{sql_server.name} from subscription {subscription} has TDE disabled"
+                            report.status_extended = f"Database {database.name} from SQL Server {sql_server.name} from subscription {subscription} has TDE disabled"
                         findings.append(report)
 
         return findings

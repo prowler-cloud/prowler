@@ -103,7 +103,7 @@ class Test_sqlserver_tde_encryption_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Database {database_name} from SQL Server{sql_server_name} from subscription {AZURE_SUSCRIPTION} has TDE disabled"
+                == f"Database {database_name} from SQL Server {sql_server_name} from subscription {AZURE_SUSCRIPTION} has TDE disabled"
             )
             assert result[0].subscription == AZURE_SUSCRIPTION
             assert result[0].resource_name == database_name
@@ -153,7 +153,7 @@ class Test_sqlserver_tde_encryption_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Database {database_name} from SQL Server{sql_server_name} from subscription {AZURE_SUSCRIPTION} has TDE enabled"
+                == f"Database {database_name} from SQL Server {sql_server_name} from subscription {AZURE_SUSCRIPTION} has TDE enabled"
             )
             assert result[0].subscription == AZURE_SUSCRIPTION
             assert result[0].resource_name == database_name
