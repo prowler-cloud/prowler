@@ -15,6 +15,7 @@ class Defender(AzureService):
         self.pricings = self.__get_pricings__()
         self.auto_provisioning_settings = self.__get_auto_provisioning_settings__()
         self.assessments = self.__get_assessments__()
+        self.settings = self.__get_settings__()
 
     def __get_pricings__(self):
         logger.info("Defender - Getting pricings...")
@@ -89,6 +90,30 @@ class Defender(AzureService):
                 )
         return assessments
 
+    def __get_settings__(self):
+        logger.info("Defender - Getting settings...")
+        settings = {}
+        for subscription_name, client in self.clients.items():
+            try:
+                settings_list = client.settings.list()
+                settings.update({subscription_name: {}})
+                for setting in settings_list:
+                    settings[subscription_name].update(
+                        {
+                            setting.name: Defender_Settings(
+                                resource_id=setting.id,
+                                resource_type=setting.type,
+                                kind=setting.kind,
+                                enabled=setting.enabled,
+                            )
+                        }
+                    )
+            except Exception as error:
+                logger.error(
+                    f"Subscription name: {subscription_name} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+        return settings
+
 
 class Defender_Pricing(BaseModel):
     resource_id: str
@@ -107,3 +132,10 @@ class Defender_Assessments(BaseModel):
     resource_id: str
     resource_name: str
     status: str
+
+
+class Defender_Settings(BaseModel):
+    resource_id: str
+    resource_type: str
+    kind: str
+    enabled: bool
