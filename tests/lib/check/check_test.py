@@ -101,6 +101,20 @@ expected_packages = [
         name="prowler.providers.azure.services.sqlserver.sqlserver_tde_encryption_enabled.sqlserver_tde_encryption_enabled",
         ispkg=False,
     ),
+    ModuleInfo(
+        module_finder=FileFinder(
+            "/root_dir/prowler/providers/azure/services/sqlserver"
+        ),
+        name="prowler.providers.azure.services.sqlserver.sqlserver_auditing_retention_90_days",
+        ispkg=True,
+    ),
+    ModuleInfo(
+        module_finder=FileFinder(
+            "/root_dir/prowler/providers/azure/services/sqlserver/sqlserver_auditing_retention_90_days"
+        ),
+        name="prowler.providers.azure.services.sqlserver.sqlserver_auditing_retention_90_days.sqlserver_auditing_retention_90_days",
+        ispkg=False,
+    ),
 ]
 
 
@@ -178,6 +192,20 @@ def mock_list_modules(*_):
                 "/root_dir/prowler/providers/azure/services/sqlserver/sqlserver_tde_encryption_enabled"
             ),
             name="prowler.providers.azure.services.sqlserver.sqlserver_tde_encryption_enabled.sqlserver_tde_encryption_enabled",
+            ispkg=False,
+        ),
+        ModuleInfo(
+            module_finder=FileFinder(
+                "/root_dir/prowler/providers/azure/services/sqlserver"
+            ),
+            name="prowler.providers.azure.services.sqlserver.sqlserver_auditing_retention_90_days",
+            ispkg=True,
+        ),
+        ModuleInfo(
+            module_finder=FileFinder(
+                "/root_dir/prowler/providers/azure/services/sqlserver/sqlserver_auditing_retention_90_days"
+            ),
+            name="prowler.providers.azure.services.sqlserver.sqlserver_auditing_retention_90_days.sqlserver_auditing_retention_90_days",
             ispkg=False,
         ),
     ]
@@ -568,6 +596,10 @@ class Test_Check:
             (
                 "sqlserver_tde_encryption_enabled",
                 "/root_dir/prowler/providers/azure/services/sqlserver/sqlserver_tde_encryption_enabled",
+            ),
+            (
+                "sqlserver_auditing_retention_90_days",
+                "/root_dir/prowler/providers/azure/services/sqlserver/sqlserver_auditing_retention_90_days",
             ),
         ]
         returned_checks = recover_checks_from_provider(provider, service)
