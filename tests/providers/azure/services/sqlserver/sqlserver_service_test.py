@@ -141,3 +141,8 @@ class Test_SqlServer_Service:
             ].encryption_protector.server_key_type
             == "AzureKeyVault"
         )
+
+    def test__get_resource_group__(self):
+        id = "/subscriptions/subscription_id/resourceGroups/resource_group/providers/Microsoft.Sql/servers/sql_server"
+        sql_server = SQLServer(set_mocked_azure_audit_info())
+        assert sql_server.__get_resource_group__(id) == "resource_group"
