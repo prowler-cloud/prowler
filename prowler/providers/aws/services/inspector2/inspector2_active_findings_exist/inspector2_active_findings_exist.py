@@ -9,7 +9,7 @@ class inspector2_active_findings_exist(Check):
         findings = []
         for inspector in inspector2_client.inspectors:
             report = Check_Report_AWS(self.metadata())
-            report.resource_id = inspector2_client.audited_account
+            report.resource_id = inspector.id
             report.resource_arn = inspector.arn
             report.region = inspector.region
             if inspector.status == "ENABLED":
