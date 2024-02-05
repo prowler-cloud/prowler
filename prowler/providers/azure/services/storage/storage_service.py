@@ -32,6 +32,11 @@ class Storage(AzureService):
                         resouce_group_name = parts[resouce_name_index]
                     else:
                         resouce_group_name = None
+                    key_expiration_period_in_days = None
+                    if storage_account.key_policy:
+                        key_expiration_period_in_days = (
+                            storage_account.key_policy.key_expiration_period_in_days
+                        )
                     storage_accounts[subscription].append(
                         Storage_Account(
                             id=storage_account.id,
@@ -44,7 +49,7 @@ class Storage(AzureService):
                             encryption_type=storage_account.encryption.key_source,
                             minimum_tls_version=storage_account.minimum_tls_version,
                             private_endpoint_connections=storage_account.private_endpoint_connections,
-                            key_expiration_period_in_days=storage_account.key_policy.key_expiration_period_in_days,
+                            key_expiration_period_in_days=key_expiration_period_in_days,
                         )
                     )
             except Exception as error:
