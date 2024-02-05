@@ -32,12 +32,15 @@ class Test_storage_blob_public_access_level_is_disabled:
                 Storage_Account(
                     id=storage_account_id,
                     name=storage_account_name,
+                    resouce_group_name=None,
                     enable_https_traffic_only=False,
                     infrastructure_encryption=False,
                     allow_blob_public_access=True,
                     network_rule_set=None,
                     encryption_type=None,
                     minimum_tls_version=None,
+                    key_expiration_period_in_days=None,
+                    private_endpoint_connections=None,
                 )
             ]
         }
@@ -71,12 +74,15 @@ class Test_storage_blob_public_access_level_is_disabled:
                 Storage_Account(
                     id=storage_account_id,
                     name=storage_account_name,
+                    resouce_group_name=None,
                     enable_https_traffic_only=False,
                     infrastructure_encryption=False,
                     allow_blob_public_access=False,
                     network_rule_set=None,
                     encryption_type=None,
                     minimum_tls_version=None,
+                    key_expiration_period_in_days=None,
+                    private_endpoint_connections=None,
                 )
             ]
         }

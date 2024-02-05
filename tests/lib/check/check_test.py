@@ -41,6 +41,27 @@ expected_packages = [
         ispkg=False,
     ),
     ModuleInfo(
+        module_finder=FileFinder(
+            "/root_dir/prowler/providers/azure/services/storage/storage_key_rotation_90_days"
+        ),
+        name="prowler.providers.azure.services.storage.storage_key_rotation_90_days.storage_key_rotation_90_days",
+        ispkg=False,
+    ),
+    ModuleInfo(
+        module_finder=FileFinder(
+            "/root_dir/prowler/providers/azure/services/storage/storage_ensure_private_endpoints_in_storage_accounts"
+        ),
+        name="prowler.providers.azure.services.storage.storage_ensure_private_endpoints_in_storage_accounts.storage_ensure_private_endpoints_in_storage_accounts",
+        ispkg=False,
+    ),
+    ModuleInfo(
+        module_finder=FileFinder(
+            "/root_dir/prowler/providers/azure/services/storage/storage_ensure_soft_delete_is_enabled"
+        ),
+        name="prowler.providers.azure.services.storage.storage_ensure_soft_delete_is_enabled.storage_ensure_soft_delete_is_enabled",
+        ispkg=False,
+    ),
+    ModuleInfo(
         module_finder=FileFinder("/root_dir/prowler/providers/azure/services/storage"),
         name="prowler.providers.azure.services.storage.storage_ensure_encryption_with_customer_managed_keys",
         ispkg=True,
@@ -50,6 +71,34 @@ expected_packages = [
             "/root_dir/prowler/providers/azure/services/storage/storage_ensure_encryption_with_customer_managed_keys"
         ),
         name="prowler.providers.azure.services.storage.storage_ensure_encryption_with_customer_managed_keys.storage_ensure_encryption_with_customer_managed_keys",
+        ispkg=False,
+    ),
+    ModuleInfo(
+        module_finder=FileFinder(
+            "/root_dir/prowler/providers/azure/services/sqlserver"
+        ),
+        name="prowler.providers.azure.services.sqlserver.sqlserver_tde_encrypted_with_cmk",
+        ispkg=True,
+    ),
+    ModuleInfo(
+        module_finder=FileFinder(
+            "/root_dir/prowler/providers/azure/services/sqlserver/sqlserver_tde_encrypted_with_cmk"
+        ),
+        name="prowler.providers.azure.services.sqlserver.sqlserver_tde_encrypted_with_cmk.sqlserver_tde_encrypted_with_cmk",
+        ispkg=False,
+    ),
+    ModuleInfo(
+        module_finder=FileFinder(
+            "/root_dir/prowler/providers/azure/services/sqlserver"
+        ),
+        name="prowler.providers.azure.services.sqlserver.sqlserver_tde_encryption_enabled",
+        ispkg=True,
+    ),
+    ModuleInfo(
+        module_finder=FileFinder(
+            "/root_dir/prowler/providers/azure/services/sqlserver/sqlserver_tde_encryption_enabled"
+        ),
+        name="prowler.providers.azure.services.sqlserver.sqlserver_tde_encryption_enabled.sqlserver_tde_encryption_enabled",
         ispkg=False,
     ),
 ]
@@ -70,6 +119,27 @@ def mock_list_modules(*_):
         ),
         ModuleInfo(
             module_finder=FileFinder(
+                "/root_dir/prowler/providers/azure/services/storage/storage_key_rotation_90_days"
+            ),
+            name="prowler.providers.azure.services.storage.storage_key_rotation_90_days.storage_key_rotation_90_days",
+            ispkg=False,
+        ),
+        ModuleInfo(
+            module_finder=FileFinder(
+                "/root_dir/prowler/providers/azure/services/storage/storage_ensure_private_endpoints_in_storage_accounts"
+            ),
+            name="prowler.providers.azure.services.storage.storage_ensure_private_endpoints_in_storage_accounts.storage_ensure_private_endpoints_in_storage_accounts",
+            ispkg=False,
+        ),
+        ModuleInfo(
+            module_finder=FileFinder(
+                "/root_dir/prowler/providers/azure/services/storage/storage_ensure_soft_delete_is_enabled"
+            ),
+            name="prowler.providers.azure.services.storage.storage_ensure_soft_delete_is_enabled.storage_ensure_soft_delete_is_enabled",
+            ispkg=False,
+        ),
+        ModuleInfo(
+            module_finder=FileFinder(
                 "/root_dir/prowler/providers/azure/services/storage"
             ),
             name="prowler.providers.azure.services.storage.storage_ensure_encryption_with_customer_managed_keys",
@@ -80,6 +150,34 @@ def mock_list_modules(*_):
                 "/root_dir/prowler/providers/azure/services/storage/storage_ensure_encryption_with_customer_managed_keys"
             ),
             name="prowler.providers.azure.services.storage.storage_ensure_encryption_with_customer_managed_keys.storage_ensure_encryption_with_customer_managed_keys",
+            ispkg=False,
+        ),
+        ModuleInfo(
+            module_finder=FileFinder(
+                "/root_dir/prowler/providers/azure/services/sqlserver"
+            ),
+            name="prowler.providers.azure.services.sqlserver.sqlserver_tde_encrypted_with_cmk",
+            ispkg=True,
+        ),
+        ModuleInfo(
+            module_finder=FileFinder(
+                "/root_dir/prowler/providers/azure/services/sqlserver/sqlserver_tde_encrypted_with_cmk"
+            ),
+            name="prowler.providers.azure.services.sqlserver.sqlserver_tde_encrypted_with_cmk.sqlserver_tde_encrypted_with_cmk",
+            ispkg=False,
+        ),
+        ModuleInfo(
+            module_finder=FileFinder(
+                "/root_dir/prowler/providers/azure/services/sqlserver"
+            ),
+            name="prowler.providers.azure.services.sqlserver.sqlserver_tde_encryption_enabled",
+            ispkg=True,
+        ),
+        ModuleInfo(
+            module_finder=FileFinder(
+                "/root_dir/prowler/providers/azure/services/sqlserver/sqlserver_tde_encryption_enabled"
+            ),
+            name="prowler.providers.azure.services.sqlserver.sqlserver_tde_encryption_enabled.sqlserver_tde_encryption_enabled",
             ispkg=False,
         ),
     ]
@@ -95,6 +193,10 @@ def mock_recover_checks_from_azure_provider(*_):
         (
             "iam_subscription_roles_owner_custom_not_created",
             "/root_dir/fake_path/iam/iam_subscription_roles_owner_custom_not_created",
+        ),
+        (
+            "iam_custom_role_has_permissions_to_administer_resource_locks",
+            "/root_dir/fake_path/iam/iam_custom_role_has_permissions_to_administer_resource_locks",
         ),
         (
             "storage_default_network_access_rule_is_denied",
@@ -444,8 +546,28 @@ class Test_Check:
                 "/root_dir/prowler/providers/azure/services/storage/storage_ensure_minimum_tls_version_12",
             ),
             (
+                "storage_key_rotation_90_days",
+                "/root_dir/prowler/providers/azure/services/storage/storage_key_rotation_90_days",
+            ),
+            (
+                "storage_ensure_private_endpoints_in_storage_accounts",
+                "/root_dir/prowler/providers/azure/services/storage/storage_ensure_private_endpoints_in_storage_accounts",
+            ),
+            (
+                "storage_ensure_soft_delete_is_enabled",
+                "/root_dir/prowler/providers/azure/services/storage/storage_ensure_soft_delete_is_enabled",
+            ),
+            (
                 "storage_ensure_encryption_with_customer_managed_keys",
                 "/root_dir/prowler/providers/azure/services/storage/storage_ensure_encryption_with_customer_managed_keys",
+            ),
+            (
+                "sqlserver_tde_encrypted_with_cmk",
+                "/root_dir/prowler/providers/azure/services/sqlserver/sqlserver_tde_encrypted_with_cmk",
+            ),
+            (
+                "sqlserver_tde_encryption_enabled",
+                "/root_dir/prowler/providers/azure/services/sqlserver/sqlserver_tde_encryption_enabled",
             ),
         ]
         returned_checks = recover_checks_from_provider(provider, service)

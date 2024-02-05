@@ -34,12 +34,15 @@ class Test_storage_ensure_azure_services_are_trusted_to_access_is_enabled:
                 Storage_Account(
                     id=storage_account_id,
                     name=storage_account_name,
+                    resouce_group_name=None,
                     enable_https_traffic_only=False,
                     infrastructure_encryption=False,
                     allow_blob_public_access=None,
                     network_rule_set=NetworkRuleSet(bypass=[None]),
                     encryption_type=None,
                     minimum_tls_version=None,
+                    key_expiration_period_in_days=None,
+                    private_endpoint_connections=None,
                 )
             ]
         }
@@ -73,12 +76,15 @@ class Test_storage_ensure_azure_services_are_trusted_to_access_is_enabled:
                 Storage_Account(
                     id=storage_account_id,
                     name=storage_account_name,
+                    resouce_group_name=None,
                     enable_https_traffic_only=False,
                     infrastructure_encryption=False,
                     allow_blob_public_access=None,
                     network_rule_set=NetworkRuleSet(bypass=["AzureServices"]),
                     encryption_type=None,
                     minimum_tls_version=None,
+                    key_expiration_period_in_days=None,
+                    private_endpoint_connections=None,
                 )
             ]
         }
