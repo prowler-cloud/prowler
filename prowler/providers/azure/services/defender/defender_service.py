@@ -26,7 +26,7 @@ class Defender(AzureService):
                 for pricing in pricings_list.value:
                     pricings[subscription_name].update(
                         {
-                            pricing.name: Defender_Pricing(
+                            pricing.name: Pricing(
                                 resource_id=pricing.id,
                                 pricing_tier=pricing.pricing_tier,
                                 free_trial_remaining_time=pricing.free_trial_remaining_time,
@@ -76,7 +76,7 @@ class Defender(AzureService):
                 for assessment in assessments_list:
                     assessments[subscription_name].update(
                         {
-                            assessment.display_name: Defender_Assessments(
+                            assessment.display_name: Assesment(
                                 resource_id=assessment.id,
                                 resource_name=assessment.name,
                                 status=assessment.status.code,
@@ -90,7 +90,7 @@ class Defender(AzureService):
         return assessments
 
 
-class Defender_Pricing(BaseModel):
+class Pricing(BaseModel):
     resource_id: str
     pricing_tier: str
     free_trial_remaining_time: timedelta
@@ -103,7 +103,7 @@ class AutoProvisioningSetting(BaseModel):
     auto_provision: str
 
 
-class Defender_Assessments(BaseModel):
+class Assesment(BaseModel):
     resource_id: str
     resource_name: str
     status: str

@@ -7,8 +7,8 @@ from azure.mgmt.sql.models import (
 )
 
 from prowler.providers.azure.services.sqlserver.sqlserver_service import (
-    DatabaseServer,
-    SQL_Server,
+    Database,
+    Server,
     SQLServer,
 )
 from tests.providers.azure.azure_fixtures import (
@@ -18,7 +18,7 @@ from tests.providers.azure.azure_fixtures import (
 
 
 def mock_sqlserver_get_sql_servers(_):
-    database = DatabaseServer(
+    database = Database(
         id="id",
         name="name",
         type="type",
@@ -28,7 +28,7 @@ def mock_sqlserver_get_sql_servers(_):
     )
     return {
         AZURE_SUSCRIPTION: [
-            SQL_Server(
+            Server(
                 id="id",
                 name="name",
                 public_network_access="public_network_access",
@@ -61,7 +61,7 @@ class Test_SqlServer_Service:
         )
 
     def test__get_sql_servers__(self):
-        database = DatabaseServer(
+        database = Database(
             id="id",
             name="name",
             type="type",
@@ -71,8 +71,7 @@ class Test_SqlServer_Service:
         )
         sql_server = SQLServer(set_mocked_azure_audit_info())
         assert (
-            sql_server.sql_servers[AZURE_SUSCRIPTION][0].__class__.__name__
-            == "SQL_Server"
+            sql_server.sql_servers[AZURE_SUSCRIPTION][0].__class__.__name__ == "Server"
         )
         assert sql_server.sql_servers[AZURE_SUSCRIPTION][0].id == "id"
         assert sql_server.sql_servers[AZURE_SUSCRIPTION][0].name == "name"
@@ -105,7 +104,7 @@ class Test_SqlServer_Service:
         sql_server = SQLServer(set_mocked_azure_audit_info())
         assert (
             sql_server.sql_servers[AZURE_SUSCRIPTION][0].databases[0].__class__.__name__
-            == "DatabaseServer"
+            == "Database"
         )
         assert sql_server.sql_servers[AZURE_SUSCRIPTION][0].databases[0].id == "id"
         assert sql_server.sql_servers[AZURE_SUSCRIPTION][0].databases[0].name == "name"

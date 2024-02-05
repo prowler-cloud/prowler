@@ -1,7 +1,7 @@
 from unittest import mock
 from uuid import uuid4
 
-from prowler.providers.azure.services.defender.defender_service import Defender_Pricing
+from prowler.providers.azure.services.defender.defender_service import Pricing
 
 AZURE_SUSCRIPTION = str(uuid4())
 
@@ -28,7 +28,7 @@ class Test_defender_ensure_defender_for_cosmosdb_is_on:
         defender_client = mock.MagicMock
         defender_client.pricings = {
             AZURE_SUSCRIPTION: {
-                "CosmosDbs": Defender_Pricing(
+                "CosmosDbs": Pricing(
                     resource_id=resource_id,
                     pricing_tier="Not Standard",
                     free_trial_remaining_time=0,
@@ -61,7 +61,7 @@ class Test_defender_ensure_defender_for_cosmosdb_is_on:
         defender_client = mock.MagicMock
         defender_client.pricings = {
             AZURE_SUSCRIPTION: {
-                "CosmosDbs": Defender_Pricing(
+                "CosmosDbs": Pricing(
                     resource_id=resource_id,
                     pricing_tier="Standard",
                     free_trial_remaining_time=0,

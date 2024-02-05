@@ -1,9 +1,7 @@
 from unittest import mock
 from uuid import uuid4
 
-from prowler.providers.azure.services.defender.defender_service import (
-    Defender_Assessments,
-)
+from prowler.providers.azure.services.defender.defender_service import Assesment
 from tests.providers.azure.azure_fixtures import AZURE_SUSCRIPTION
 
 
@@ -29,7 +27,7 @@ class Test_defender_auto_provisioning_vulnerabilty_assessments_machines_on:
         defender_client = mock.MagicMock
         defender_client.assessments = {
             AZURE_SUSCRIPTION: {
-                "Machines should have a vulnerability assessment solution": Defender_Assessments(
+                "Machines should have a vulnerability assessment solution": Assesment(
                     resource_id=resource_id,
                     resource_name="vm1",
                     status="Unhealthy",
@@ -62,7 +60,7 @@ class Test_defender_auto_provisioning_vulnerabilty_assessments_machines_on:
         defender_client = mock.MagicMock
         defender_client.assessments = {
             AZURE_SUSCRIPTION: {
-                "Machines should have a vulnerability assessment solution": Defender_Assessments(
+                "Machines should have a vulnerability assessment solution": Assesment(
                     resource_id=resource_id,
                     resource_name="vm1",
                     status="Healthy",

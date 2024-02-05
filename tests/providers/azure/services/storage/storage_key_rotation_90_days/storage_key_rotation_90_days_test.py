@@ -1,7 +1,7 @@
 from unittest import mock
 from uuid import uuid4
 
-from prowler.providers.azure.services.storage.storage_service import Storage_Account
+from prowler.providers.azure.services.storage.storage_service import Account
 from tests.providers.azure.azure_fixtures import AZURE_SUSCRIPTION
 
 
@@ -29,7 +29,7 @@ class Test_storage_key_rotation_90_dayss:
         storage_client = mock.MagicMock
         storage_client.storage_accounts = {
             AZURE_SUSCRIPTION: [
-                Storage_Account(
+                Account(
                     id=storage_account_id,
                     name=storage_account_name,
                     resouce_group_name=None,
@@ -72,7 +72,7 @@ class Test_storage_key_rotation_90_dayss:
         storage_client = mock.MagicMock
         storage_client.storage_accounts = {
             AZURE_SUSCRIPTION: [
-                Storage_Account(
+                Account(
                     id=storage_account_id,
                     name=storage_account_name,
                     resouce_group_name=None,
@@ -114,7 +114,7 @@ class Test_storage_key_rotation_90_dayss:
         storage_client = mock.MagicMock
         storage_client.storage_accounts = {
             AZURE_SUSCRIPTION: [
-                Storage_Account(
+                Account(
                     id=storage_account_id,
                     name=storage_account_name,
                     resouce_group_name=None,

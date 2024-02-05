@@ -3,7 +3,7 @@ from uuid import uuid4
 
 from azure.mgmt.storage.v2022_09_01.models import NetworkRuleSet
 
-from prowler.providers.azure.services.storage.storage_service import Storage_Account
+from prowler.providers.azure.services.storage.storage_service import Account
 
 AZURE_SUSCRIPTION = str(uuid4())
 
@@ -31,7 +31,7 @@ class Test_storage_ensure_azure_services_are_trusted_to_access_is_enabled:
         storage_client = mock.MagicMock
         storage_client.storage_accounts = {
             AZURE_SUSCRIPTION: [
-                Storage_Account(
+                Account(
                     id=storage_account_id,
                     name=storage_account_name,
                     resouce_group_name=None,
@@ -73,7 +73,7 @@ class Test_storage_ensure_azure_services_are_trusted_to_access_is_enabled:
         storage_client = mock.MagicMock
         storage_client.storage_accounts = {
             AZURE_SUSCRIPTION: [
-                Storage_Account(
+                Account(
                     id=storage_account_id,
                     name=storage_account_name,
                     resouce_group_name=None,

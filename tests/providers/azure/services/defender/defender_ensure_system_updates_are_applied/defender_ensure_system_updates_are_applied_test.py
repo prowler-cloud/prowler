@@ -1,9 +1,7 @@
 from unittest import mock
 from uuid import uuid4
 
-from prowler.providers.azure.services.defender.defender_service import (
-    Defender_Assessments,
-)
+from prowler.providers.azure.services.defender.defender_service import Assesment
 from tests.providers.azure.azure_fixtures import AZURE_SUSCRIPTION
 
 
@@ -29,17 +27,17 @@ class Test_defender_ensure_system_updates_are_applied:
         defender_client = mock.MagicMock
         defender_client.assessments = {
             AZURE_SUSCRIPTION: {
-                "Log Analytics agent should be installed on virtual machines": Defender_Assessments(
+                "Log Analytics agent should be installed on virtual machines": Assesment(
                     resource_id=resource_id,
                     resource_name="vm1",
                     status="Unhealthy",
                 ),
-                "Machines should be configured to periodically check for missing system updates": Defender_Assessments(
+                "Machines should be configured to periodically check for missing system updates": Assesment(
                     resource_id=resource_id,
                     resource_name="vm1",
                     status="Healthy",
                 ),
-                "System updates should be installed on your machines": Defender_Assessments(
+                "System updates should be installed on your machines": Assesment(
                     resource_id=resource_id,
                     resource_name="vm1",
                     status="Healthy",
@@ -74,17 +72,17 @@ class Test_defender_ensure_system_updates_are_applied:
         defender_client = mock.MagicMock
         defender_client.assessments = {
             AZURE_SUSCRIPTION: {
-                "Log Analytics agent should be installed on virtual machines": Defender_Assessments(
+                "Log Analytics agent should be installed on virtual machines": Assesment(
                     resource_id=resource_id,
                     resource_name="vm1",
                     status="Healthy",
                 ),
-                "Machines should be configured to periodically check for missing system updates": Defender_Assessments(
+                "Machines should be configured to periodically check for missing system updates": Assesment(
                     resource_id=resource_id,
                     resource_name="vm1",
                     status="Unhealthy",
                 ),
-                "System updates should be installed on your machines": Defender_Assessments(
+                "System updates should be installed on your machines": Assesment(
                     resource_id=resource_id,
                     resource_name="vm1",
                     status="Healthy",
@@ -117,17 +115,17 @@ class Test_defender_ensure_system_updates_are_applied:
         defender_client = mock.MagicMock
         defender_client.assessments = {
             AZURE_SUSCRIPTION: {
-                "Log Analytics agent should be installed on virtual machines": Defender_Assessments(
+                "Log Analytics agent should be installed on virtual machines": Assesment(
                     resource_id=resource_id,
                     resource_name="vm1",
                     status="Healthy",
                 ),
-                "Machines should be configured to periodically check for missing system updates": Defender_Assessments(
+                "Machines should be configured to periodically check for missing system updates": Assesment(
                     resource_id=resource_id,
                     resource_name="vm1",
                     status="Healthy",
                 ),
-                "System updates should be installed on your machines": Defender_Assessments(
+                "System updates should be installed on your machines": Assesment(
                     resource_id=resource_id,
                     resource_name="vm1",
                     status="Unhealthy",
@@ -162,17 +160,17 @@ class Test_defender_ensure_system_updates_are_applied:
         defender_client = mock.MagicMock
         defender_client.assessments = {
             AZURE_SUSCRIPTION: {
-                "Log Analytics agent should be installed on virtual machines": Defender_Assessments(
+                "Log Analytics agent should be installed on virtual machines": Assesment(
                     resource_id=resource_id,
                     resource_name="vm1",
                     status="Healthy",
                 ),
-                "Machines should be configured to periodically check for missing system updates": Defender_Assessments(
+                "Machines should be configured to periodically check for missing system updates": Assesment(
                     resource_id=resource_id,
                     resource_name="vm1",
                     status="Healthy",
                 ),
-                "System updates should be installed on your machines": Defender_Assessments(
+                "System updates should be installed on your machines": Assesment(
                     resource_id=resource_id,
                     resource_name="vm1",
                     status="Healthy",

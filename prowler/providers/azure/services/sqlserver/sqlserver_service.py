@@ -45,7 +45,7 @@ class SQLServer(AzureService):
                         subscription, resource_group, sql_server.name
                     )
                     sql_servers[subscription].append(
-                        SQL_Server(
+                        Server(
                             id=sql_server.id,
                             name=sql_server.name,
                             public_network_access=sql_server.public_network_access,
@@ -105,7 +105,7 @@ class SQLServer(AzureService):
                     subscription, resource_group, server_name, database.name
                 )
                 databases.append(
-                    DatabaseServer(
+                    Database(
                         id=database.id,
                         name=database.name,
                         type=database.type,
@@ -133,7 +133,7 @@ class SQLServer(AzureService):
 
 
 @dataclass
-class DatabaseServer:
+class Database:
     id: str
     name: str
     type: str
@@ -143,7 +143,7 @@ class DatabaseServer:
 
 
 @dataclass
-class SQL_Server:
+class Server:
     id: str
     name: str
     public_network_access: str
@@ -152,5 +152,5 @@ class SQL_Server:
     auditing_policies: ServerBlobAuditingPolicy
     firewall_rules: FirewallRule
     encryption_protector: EncryptionProtector = None
-    databases: list[DatabaseServer] = None
+    databases: list[Database] = None
     vulnerability_assessment: ServerVulnerabilityAssessment = None

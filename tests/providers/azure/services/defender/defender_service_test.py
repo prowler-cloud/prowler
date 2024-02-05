@@ -2,10 +2,10 @@ from datetime import timedelta
 from unittest.mock import patch
 
 from prowler.providers.azure.services.defender.defender_service import (
+    Assesment,
     AutoProvisioningSetting,
     Defender,
-    Defender_Assessments,
-    Defender_Pricing,
+    Pricing,
 )
 from tests.providers.azure.azure_fixtures import (
     AZURE_SUSCRIPTION,
@@ -16,7 +16,7 @@ from tests.providers.azure.azure_fixtures import (
 def mock_defender_get_pricings(_):
     return {
         AZURE_SUSCRIPTION: {
-            "Standard": Defender_Pricing(
+            "Standard": Pricing(
                 resource_id="resource_id",
                 pricing_tier="pricing_tier",
                 free_trial_remaining_time=timedelta(days=1),
@@ -41,7 +41,7 @@ def mock_defender_get_auto_provisioning_settings(_):
 def mock_defender_get_assessments(_):
     return {
         AZURE_SUSCRIPTION: {
-            "default": Defender_Assessments(
+            "default": Assesment(
                 resource_id="/subscriptions/resource_id",
                 resource_name="default",
                 status="Healthy",

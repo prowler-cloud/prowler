@@ -3,7 +3,7 @@ from uuid import uuid4
 
 from azure.mgmt.sql.models import FirewallRule
 
-from prowler.providers.azure.services.sqlserver.sqlserver_service import SQL_Server
+from prowler.providers.azure.services.sqlserver.sqlserver_service import Server
 
 AZURE_SUSCRIPTION = str(uuid4())
 
@@ -31,7 +31,7 @@ class Test_sqlserver_unrestricted_inbound_access:
         sql_server_id = str(uuid4())
         sqlserver_client.sql_servers = {
             AZURE_SUSCRIPTION: [
-                SQL_Server(
+                Server(
                     id=sql_server_id,
                     name=sql_server_name,
                     public_network_access="",
@@ -73,7 +73,7 @@ class Test_sqlserver_unrestricted_inbound_access:
         sql_server_id = str(uuid4())
         sqlserver_client.sql_servers = {
             AZURE_SUSCRIPTION: [
-                SQL_Server(
+                Server(
                     id=sql_server_id,
                     name=sql_server_name,
                     public_network_access="",

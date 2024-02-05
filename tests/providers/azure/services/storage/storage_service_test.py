@@ -1,9 +1,9 @@
 from unittest.mock import patch
 
 from prowler.providers.azure.services.storage.storage_service import (
-    Blob_Properties,
+    Account,
+    BlobProperties,
     Storage,
-    Storage_Account,
 )
 from tests.providers.azure.azure_fixtures import (
     AZURE_SUSCRIPTION,
@@ -12,7 +12,7 @@ from tests.providers.azure.azure_fixtures import (
 
 
 def mock_storage_get_storage_accounts(_):
-    blob_properties = Blob_Properties(
+    blob_properties = BlobProperties(
         id="id",
         name="name",
         type="type",
@@ -21,7 +21,7 @@ def mock_storage_get_storage_accounts(_):
     )
     return {
         AZURE_SUSCRIPTION: [
-            Storage_Account(
+            Account(
                 id="id",
                 name="name",
                 resouce_group_name=None,
@@ -55,7 +55,7 @@ class Test_Storage_Service:
         storage = Storage(set_mocked_azure_audit_info())
         assert (
             storage.storage_accounts[AZURE_SUSCRIPTION][0].__class__.__name__
-            == "Storage_Account"
+            == "Account"
         )
         assert storage.storage_accounts[AZURE_SUSCRIPTION][0].id == "id"
         assert storage.storage_accounts[AZURE_SUSCRIPTION][0].name == "name"
@@ -87,7 +87,7 @@ class Test_Storage_Service:
         )
         assert storage.storage_accounts[AZURE_SUSCRIPTION][
             0
-        ].blob_properties == Blob_Properties(
+        ].blob_properties == BlobProperties(
             id="id",
             name="name",
             type="type",
@@ -101,7 +101,7 @@ class Test_Storage_Service:
             storage.storage_accounts[AZURE_SUSCRIPTION][
                 0
             ].blob_properties.__class__.__name__
-            == "Blob_Properties"
+            == "BlobProperties"
         )
         assert storage.storage_accounts[AZURE_SUSCRIPTION][0].blob_properties.id == "id"
         assert (

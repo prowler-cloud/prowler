@@ -4,8 +4,8 @@ from uuid import uuid4
 from azure.mgmt.sql.models import TransparentDataEncryption
 
 from prowler.providers.azure.services.sqlserver.sqlserver_service import (
-    DatabaseServer,
-    SQL_Server,
+    Database,
+    Server,
 )
 
 AZURE_SUSCRIPTION = str(uuid4())
@@ -34,7 +34,7 @@ class Test_sqlserver_tde_encryption_enabled:
         sql_server_id = str(uuid4())
         sqlserver_client.sql_servers = {
             AZURE_SUSCRIPTION: [
-                SQL_Server(
+                Server(
                     id=sql_server_id,
                     name=sql_server_name,
                     public_network_access="",
@@ -65,7 +65,7 @@ class Test_sqlserver_tde_encryption_enabled:
         sql_server_id = str(uuid4())
         database_name = "Database Name"
         database_id = str(uuid4())
-        database = DatabaseServer(
+        database = Database(
             id=database_id,
             name=database_name,
             type="type",
@@ -75,7 +75,7 @@ class Test_sqlserver_tde_encryption_enabled:
         )
         sqlserver_client.sql_servers = {
             AZURE_SUSCRIPTION: [
-                SQL_Server(
+                Server(
                     id=sql_server_id,
                     name=sql_server_name,
                     public_network_access="",
@@ -115,7 +115,7 @@ class Test_sqlserver_tde_encryption_enabled:
         sql_server_id = str(uuid4())
         database_name = "Database Name"
         database_id = str(uuid4())
-        database = DatabaseServer(
+        database = Database(
             id=database_id,
             name=database_name,
             type="type",
@@ -125,7 +125,7 @@ class Test_sqlserver_tde_encryption_enabled:
         )
         sqlserver_client.sql_servers = {
             AZURE_SUSCRIPTION: [
-                SQL_Server(
+                Server(
                     id=sql_server_id,
                     name=sql_server_name,
                     public_network_access="",
