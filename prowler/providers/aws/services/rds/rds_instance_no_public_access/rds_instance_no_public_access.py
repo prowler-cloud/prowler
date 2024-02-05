@@ -22,13 +22,13 @@ class rds_instance_no_public_access(Check):
                     report.status = "PASS"
                     report.status_extended = f"RDS Instance {db_instance.id} is public but filtered with security groups."
                     for security_group in ec2_client.security_groups:
-                        print(security_group)
                         if (
                             security_group.id in db_instance.security_groups
                             and security_group.public_ports
                         ):
                             report.status = "FAIL"
                             report.status_extended = f"RDS Instance {db_instance.id} is set as publicly accessible."
+                            break
             findings.append(report)
 
         return findings
