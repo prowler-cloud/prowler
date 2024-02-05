@@ -51,19 +51,6 @@ def mock_defender_get_assessments(_):
     }
 
 
-
-def mock_defender_get_settings(_):
-    return {
-        AZURE_SUSCRIPTION: {
-            "MCAS": Defender_Settings(
-                resource_id="/subscriptions/resource_id",
-                resource_type="Microsoft.Security/locations/settings",
-                kind="DataExportSettings",
-                enabled=True,
-            )
-        }
-    }
-
 def mock_defender_get_security_contacts(_):
     return {
         AZURE_SUBSCRIPTION: {
