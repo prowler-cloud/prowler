@@ -13,7 +13,7 @@
   "RelatedUrl": "https://docs.microsoft.com/en-us/azure/sql-database/sql-database-auditing",
   "Remediation": {
     "Code": {
-      "CLI": "Set-AzSqlServerAudit -ResourceGroupName <resource group name> -ServerName SQL_Server_name -RetentionInDays <Number of Days to retain the audit logs, should be more than 90 days> -LogAnalyticsTargetState Enabled -WorkspaceResourceId '/subscriptions/subscription_ID/resourceGroups/insights-integration/providers/Microsoft.OperationalInsights/workspaces/workspace_name'",
+      "CLI": "Set-AzSqlServerAudit -ResourceGroupName resource_group_name -ServerName SQL_Server_name -RetentionInDays 100 -LogAnalyticsTargetState Enabled -WorkspaceResourceId '/subscriptions/subscription_ID/resourceGroups/insights-integration/providers/Microsoft.OperationalInsights/workspaces/workspace_name'",
       "NativeIaC": "",
       "Other": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/Sql/auditing-retention.html#",
       "Terraform": "https://docs.bridgecrew.io/docs/bc_azr_logging_3"
