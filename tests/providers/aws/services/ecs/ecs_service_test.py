@@ -1,7 +1,7 @@
 from unittest.mock import patch
 
 from boto3 import client
-from moto import mock_ecs
+from moto import mock_aws
 
 from prowler.providers.aws.services.ecs.ecs_service import ECS
 from tests.providers.aws.audit_info_utils import (
@@ -43,7 +43,7 @@ class Test_ECS_Service:
         assert ecs.session.__class__.__name__ == "Session"
 
     # Test list ECS task definitions
-    @mock_ecs
+    @mock_aws
     def test__list_task_definitions__(self):
         ecs_client = client("ecs", region_name=AWS_REGION_EU_WEST_1)
 
@@ -72,7 +72,7 @@ class Test_ECS_Service:
         )
         assert ecs.task_definitions[0].environment_variables == []
 
-    @mock_ecs
+    @mock_aws
     # Test describe ECS task definitions
     def test__describe_task_definitions__(self):
         ecs_client = client("ecs", region_name=AWS_REGION_EU_WEST_1)

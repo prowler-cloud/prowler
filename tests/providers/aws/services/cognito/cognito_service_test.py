@@ -1,5 +1,5 @@
 from boto3 import client
-from moto import mock_cognitoidp
+from moto import mock_aws
 
 from prowler.providers.aws.services.cognito.cognito_service import CognitoIDP
 from tests.providers.aws.audit_info_utils import (
@@ -12,7 +12,7 @@ from tests.providers.aws.audit_info_utils import (
 
 class Test_Cognito_Service:
     # Test Cognito Service
-    @mock_cognitoidp
+    @mock_aws
     def test_service(self):
         audit_info = set_mocked_aws_audit_info(
             audited_regions=[AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
@@ -21,7 +21,7 @@ class Test_Cognito_Service:
         assert cognito.service == "cognito-idp"
 
     # Test Cognito client
-    @mock_cognitoidp
+    @mock_aws
     def test_client(self):
         audit_info = set_mocked_aws_audit_info(
             audited_regions=[AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
@@ -31,7 +31,7 @@ class Test_Cognito_Service:
             assert regional_client.__class__.__name__ == "CognitoIdentityProvider"
 
     # Test Cognito session
-    @mock_cognitoidp
+    @mock_aws
     def test__get_session__(self):
         audit_info = set_mocked_aws_audit_info(
             audited_regions=[AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
@@ -40,7 +40,7 @@ class Test_Cognito_Service:
         assert cognito.session.__class__.__name__ == "Session"
 
     # Test Cognito Session
-    @mock_cognitoidp
+    @mock_aws
     def test_audited_account(self):
         audit_info = set_mocked_aws_audit_info(
             audited_regions=[AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
@@ -48,7 +48,7 @@ class Test_Cognito_Service:
         cognito = CognitoIDP(audit_info)
         assert cognito.audited_account == AWS_ACCOUNT_NUMBER
 
-    @mock_cognitoidp
+    @mock_aws
     def test_list_user_pools(self):
         user_pool_name_1 = "user_pool_test_1"
         user_pool_name_2 = "user_pool_test_2"
@@ -67,7 +67,7 @@ class Test_Cognito_Service:
             )
             assert user_pool.region == "eu-west-1" or user_pool.region == "us-east-1"
 
-    @mock_cognitoidp
+    @mock_aws
     def test_describe_user_pools(self):
         user_pool_name_1 = "user_pool_test_1"
         audit_info = set_mocked_aws_audit_info(
@@ -88,7 +88,7 @@ class Test_Cognito_Service:
             assert user_pool.advanced_security_mode is not None
             assert user_pool.tags is not None
 
-    @mock_cognitoidp
+    @mock_aws
     def test_get_user_pool_mfa_config(self):
         user_pool_name_1 = "user_pool_test_1"
         audit_info = set_mocked_aws_audit_info(

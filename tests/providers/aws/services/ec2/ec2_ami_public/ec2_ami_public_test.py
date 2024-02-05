@@ -1,7 +1,7 @@
 from unittest import mock
 
 from boto3 import client, resource
-from moto import mock_ec2
+from moto import mock_aws
 
 from tests.providers.aws.audit_info_utils import (
     AWS_REGION_EU_WEST_1,
@@ -13,7 +13,7 @@ EXAMPLE_AMI_ID = "ami-12c6146b"
 
 
 class Test_ec2_ami_public:
-    @mock_ec2
+    @mock_aws
     def test_no_amis(self):
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
@@ -38,7 +38,7 @@ class Test_ec2_ami_public:
 
             assert len(result) == 0
 
-    @mock_ec2
+    @mock_aws
     def test_one_private_ami(self):
         ec2 = client("ec2", region_name=AWS_REGION_US_EAST_1)
 
@@ -81,7 +81,7 @@ class Test_ec2_ami_public:
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_tags == []
 
-    @mock_ec2
+    @mock_aws
     def test_one_public_ami(self):
         ec2 = client("ec2", region_name=AWS_REGION_US_EAST_1)
 

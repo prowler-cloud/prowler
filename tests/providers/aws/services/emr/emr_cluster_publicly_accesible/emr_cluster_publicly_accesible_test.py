@@ -2,7 +2,7 @@ from unittest import mock
 from uuid import uuid4
 
 from boto3 import resource
-from moto import mock_ec2
+from moto import mock_aws
 
 from prowler.providers.aws.services.emr.emr_service import Cluster, ClusterStatus, Node
 from tests.providers.aws.audit_info_utils import (
@@ -37,7 +37,7 @@ class Test_emr_cluster_publicly_accesible:
 
             assert len(result) == 0
 
-    @mock_ec2
+    @mock_aws
     def test_clusters_master_public_sg(self):
         # EC2 Client
         ec2 = resource("ec2", AWS_REGION_EU_WEST_1)
@@ -105,7 +105,7 @@ class Test_emr_cluster_publicly_accesible:
                 == f"EMR Cluster {cluster_id} is publicly accessible through the following Security Groups: Master Node {master_expected_public_sgs}"
             )
 
-    @mock_ec2
+    @mock_aws
     def test_clusters_master_private_sg(self):
         # EC2 Client
         ec2 = resource("ec2", AWS_REGION_EU_WEST_1)
@@ -171,7 +171,7 @@ class Test_emr_cluster_publicly_accesible:
                 == f"EMR Cluster {cluster_id} is not publicly accessible."
             )
 
-    @mock_ec2
+    @mock_aws
     def test_clusters_master_private_slave_public_sg(self):
         # EC2 Client
         ec2 = resource("ec2", AWS_REGION_EU_WEST_1)
@@ -254,7 +254,7 @@ class Test_emr_cluster_publicly_accesible:
                 == f"EMR Cluster {cluster_id} is publicly accessible through the following Security Groups: Slaves Nodes {slave_expected_public_sgs}"
             )
 
-    @mock_ec2
+    @mock_aws
     def test_clusters_master_public_slave_private_two_sg(self):
         # EC2 Client
         ec2 = resource("ec2", AWS_REGION_EU_WEST_1)
@@ -340,7 +340,7 @@ class Test_emr_cluster_publicly_accesible:
                 == f"EMR Cluster {cluster_id} is publicly accessible through the following Security Groups: Master Node {master_expected_public_sgs}"
             )
 
-    @mock_ec2
+    @mock_aws
     def test_clusters_master_private_slave_public_sg_none_additional_sgs(self):
         # EC2 Client
         ec2 = resource("ec2", AWS_REGION_EU_WEST_1)

@@ -1,7 +1,7 @@
 from unittest import mock
 
 from boto3 import resource
-from moto import mock_ec2
+from moto import mock_aws
 
 from prowler.providers.aws.services.ssm.ssm_service import ManagedInstance
 from tests.providers.aws.audit_info_utils import (
@@ -15,7 +15,7 @@ EXAMPLE_AMI_ID = "ami-12c6146b"
 
 
 class Test_ec2_instance_managed_by_ssm_test:
-    @mock_ec2
+    @mock_aws
     def test_ec2_no_instances(self):
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
@@ -49,7 +49,7 @@ class Test_ec2_instance_managed_by_ssm_test:
 
             assert len(result) == 0
 
-    @mock_ec2
+    @mock_aws
     def test_ec2_instance_managed_by_ssm_non_compliance_instance(self):
         ssm_client = mock.MagicMock
         ssm_client.managed_instances = {}
@@ -102,7 +102,7 @@ class Test_ec2_instance_managed_by_ssm_test:
             )
             assert result[0].resource_id == instance.id
 
-    @mock_ec2
+    @mock_aws
     def test_ec2_instance_managed_by_ssm_compliance_instance(self):
         ec2 = resource("ec2", region_name=AWS_REGION_US_EAST_1)
         instance = ec2.create_instances(

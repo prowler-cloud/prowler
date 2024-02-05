@@ -3,7 +3,7 @@ from re import search
 from unittest import mock
 
 from boto3 import client
-from moto import mock_iam
+from moto import mock_aws
 
 from tests.providers.aws.audit_info_utils import (
     AWS_ACCOUNT_NUMBER,
@@ -91,7 +91,7 @@ class Test_iam_policy_allows_privilege_escalation:
         set_mocked_aws_audit_info,
     )
 
-    # @mock_iam
+    # @mock_aws
     # def test_iam_policy_allows_privilege_escalation_sts(self):
     #     iam_client = client("iam", region_name=AWS_REGION_US_EAST_1)
     #     policy_name = "policy1"
@@ -128,7 +128,7 @@ class Test_iam_policy_allows_privilege_escalation:
     #         assert result[0].resource_id == policy_name
     #         assert result[0].resource_arn == policy_arn
 
-    @mock_iam
+    @mock_aws
     def test_iam_policy_not_allows_privilege_escalation(self):
         iam_client = client("iam", region_name=AWS_REGION_US_EAST_1)
         policy_name = "policy1"
@@ -172,7 +172,7 @@ class Test_iam_policy_allows_privilege_escalation:
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_tags == []
 
-    @mock_iam
+    @mock_aws
     def test_iam_policy_not_allows_privilege_escalation_glue_GetDevEndpoints(self):
         iam_client = client("iam", region_name=AWS_REGION_US_EAST_1)
         policy_name = "policy1"
@@ -220,7 +220,7 @@ class Test_iam_policy_allows_privilege_escalation:
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_tags == []
 
-    @mock_iam
+    @mock_aws
     def test_iam_policy_not_allows_privilege_escalation_dynamodb_PutItem(self):
         iam_client = client("iam", region_name=AWS_REGION_US_EAST_1)
         policy_name = "policy1"
@@ -279,7 +279,7 @@ class Test_iam_policy_allows_privilege_escalation:
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_tags == []
 
-    @mock_iam
+    @mock_aws
     def test_iam_policy_allows_privilege_escalation_iam_all_and_ec2_RunInstances(
         self,
     ):
@@ -337,7 +337,7 @@ class Test_iam_policy_allows_privilege_escalation:
             assert search("iam:PassRole", result[0].status_extended)
             assert search("ec2:RunInstances", result[0].status_extended)
 
-    @mock_iam
+    @mock_aws
     def test_iam_policy_allows_privilege_escalation_iam_PassRole(
         self,
     ):
@@ -387,7 +387,7 @@ class Test_iam_policy_allows_privilege_escalation:
             )
             assert search("iam:PassRole", result[0].status_extended)
 
-    @mock_iam
+    @mock_aws
     def test_iam_policy_allows_privilege_escalation_two_combinations(
         self,
     ):
@@ -459,7 +459,7 @@ class Test_iam_policy_allows_privilege_escalation:
             assert search("lambda:CreateFunction", result[0].status_extended)
             assert search("ec2:RunInstances", result[0].status_extended)
 
-    @mock_iam
+    @mock_aws
     def test_iam_policy_allows_privilege_escalation_iam_PassRole_and_other_actions(
         self,
     ):
@@ -514,7 +514,7 @@ class Test_iam_policy_allows_privilege_escalation:
             )
             assert search("iam:PassRole", result[0].status_extended)
 
-    @mock_iam
+    @mock_aws
     def test_iam_policy_allows_privilege_escalation_policies_combination(
         self,
     ):
@@ -573,7 +573,7 @@ class Test_iam_policy_allows_privilege_escalation:
                 # Delete each IAM policy after the test
                 iam_client.delete_policy(PolicyArn=policy_arn)
 
-    @mock_iam
+    @mock_aws
     def test_iam_policy_allows_privilege_escalation_two_policies_one_good_one_bad(
         self,
     ):
@@ -666,7 +666,7 @@ class Test_iam_policy_allows_privilege_escalation:
                     assert search("lambda:InvokeFunction", finding.status_extended)
                     assert search("lambda:CreateFunction", finding.status_extended)
 
-    @mock_iam
+    @mock_aws
     def test_iam_policy_allows_privilege_escalation_two_bad_policies(
         self,
     ):
@@ -771,7 +771,7 @@ class Test_iam_policy_allows_privilege_escalation:
                     assert search("lambda:InvokeFunction", finding.status_extended)
                     assert search("lambda:CreateFunction", finding.status_extended)
 
-    @mock_iam
+    @mock_aws
     def test_iam_policy_allows_privilege_escalation_over_permissive_policy(
         self,
     ):
@@ -837,7 +837,7 @@ class Test_iam_policy_allows_privilege_escalation:
                     assert search("iam:PassRole", finding.status_extended)
                     assert search("ec2:RunInstances", finding.status_extended)
 
-    @mock_iam
+    @mock_aws
     def test_iam_policy_allows_privilege_escalation_administrator_policy(
         self,
     ):
@@ -895,7 +895,7 @@ class Test_iam_policy_allows_privilege_escalation:
                         ]:
                             assert search(permission, finding.status_extended)
 
-    @mock_iam
+    @mock_aws
     def test_iam_policy_allows_privilege_escalation_iam_put(
         self,
     ):
@@ -948,7 +948,7 @@ class Test_iam_policy_allows_privilege_escalation:
                     )
                     assert search("iam:Put*", finding.status_extended)
 
-    @mock_iam
+    @mock_aws
     def test_iam_policy_allows_privilege_escalation_iam_wildcard(
         self,
     ):
@@ -1001,7 +1001,7 @@ class Test_iam_policy_allows_privilege_escalation:
                     )
                     assert search("iam:*", finding.status_extended)
 
-    @mock_iam
+    @mock_aws
     def test_iam_policy_not_allows_privilege_escalation_custom_policy(
         self,
     ):

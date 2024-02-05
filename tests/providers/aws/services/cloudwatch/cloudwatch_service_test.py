@@ -1,5 +1,5 @@
 from boto3 import client
-from moto import mock_cloudwatch, mock_logs
+from moto import mock_aws
 
 from prowler.providers.aws.services.cloudwatch.cloudwatch_service import (
     CloudWatch,
@@ -14,7 +14,7 @@ from tests.providers.aws.audit_info_utils import (
 
 class Test_CloudWatch_Service:
     # Test CloudWatch Service
-    @mock_cloudwatch
+    @mock_aws
     def test_service(self):
         # CloudWatch client for this test class
         audit_info = set_mocked_aws_audit_info(
@@ -24,7 +24,7 @@ class Test_CloudWatch_Service:
         assert cloudwatch.service == "cloudwatch"
 
     # Test CloudWatch Client
-    @mock_cloudwatch
+    @mock_aws
     def test_client(self):
         # CloudWatch client for this test class
         audit_info = set_mocked_aws_audit_info(
@@ -35,7 +35,7 @@ class Test_CloudWatch_Service:
             assert client_.__class__.__name__ == "CloudWatch"
 
     # Test CloudWatch Session
-    @mock_cloudwatch
+    @mock_aws
     def test__get_session__(self):
         # CloudWatch client for this test class
         audit_info = set_mocked_aws_audit_info(
@@ -45,7 +45,7 @@ class Test_CloudWatch_Service:
         assert cloudwatch.session.__class__.__name__ == "Session"
 
     # Test CloudWatch Session
-    @mock_cloudwatch
+    @mock_aws
     def test_audited_account(self):
         # CloudWatch client for this test class
         audit_info = set_mocked_aws_audit_info(
@@ -55,7 +55,7 @@ class Test_CloudWatch_Service:
         assert cloudwatch.audited_account == AWS_ACCOUNT_NUMBER
 
     # Test Logs Service
-    @mock_logs
+    @mock_aws
     def test_logs_service(self):
         # Logs client for this test class
         audit_info = set_mocked_aws_audit_info(
@@ -65,7 +65,7 @@ class Test_CloudWatch_Service:
         assert logs.service == "logs"
 
     # Test Logs Client
-    @mock_logs
+    @mock_aws
     def test_logs_client(self):
         # Logs client for this test class
         audit_info = set_mocked_aws_audit_info(
@@ -76,7 +76,7 @@ class Test_CloudWatch_Service:
             assert client_.__class__.__name__ == "CloudWatchLogs"
 
     # Test Logs Session
-    @mock_logs
+    @mock_aws
     def test__logs_get_session__(self):
         # Logs client for this test class
         audit_info = set_mocked_aws_audit_info(
@@ -86,7 +86,7 @@ class Test_CloudWatch_Service:
         assert logs.session.__class__.__name__ == "Session"
 
     # Test Logs Session
-    @mock_logs
+    @mock_aws
     def test_logs_audited_account(self):
         # Logs client for this test class
         audit_info = set_mocked_aws_audit_info(
@@ -96,7 +96,7 @@ class Test_CloudWatch_Service:
         assert logs.audited_account == AWS_ACCOUNT_NUMBER
 
     # Test CloudWatch Alarms
-    @mock_cloudwatch
+    @mock_aws
     def test__describe_alarms__(self):
         # CloudWatch client for this test class
         cw_client = client("cloudwatch", region_name=AWS_REGION_US_EAST_1)
@@ -135,7 +135,7 @@ class Test_CloudWatch_Service:
         ]
 
     # Test Logs Filters
-    @mock_logs
+    @mock_aws
     def test__describe_metric_filters__(self):
         # Logs client for this test class
         logs_client = client("logs", region_name=AWS_REGION_US_EAST_1)
@@ -163,7 +163,7 @@ class Test_CloudWatch_Service:
         assert logs.metric_filters[0].region == AWS_REGION_US_EAST_1
 
     # Test Logs Filters
-    @mock_logs
+    @mock_aws
     def test__describe_log_groups__(self):
         # Logs client for this test class
         logs_client = client("logs", region_name=AWS_REGION_US_EAST_1)
@@ -193,7 +193,7 @@ class Test_CloudWatch_Service:
             {"tag_key_1": "tag_value_1", "tag_key_2": "tag_value_2"}
         ]
 
-    @mock_logs
+    @mock_aws
     def test__describe_log_groups__never_expire(self):
         # Logs client for this test class
         logs_client = client("logs", region_name=AWS_REGION_US_EAST_1)

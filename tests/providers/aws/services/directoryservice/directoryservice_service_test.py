@@ -2,7 +2,7 @@ from datetime import datetime
 from unittest.mock import patch
 
 import botocore
-from moto import mock_ds
+from moto import mock_aws
 
 from prowler.providers.aws.services.directoryservice.directoryservice_service import (
     AuthenticationProtocol,
@@ -119,7 +119,7 @@ def mock_generate_regional_clients(service, audit_info):
 )
 class Test_DirectoryService_Service:
     # Test DirectoryService Client
-    @mock_ds
+    @mock_aws
     def test__get_client__(self):
         directoryservice = DirectoryService(
             set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
@@ -130,7 +130,7 @@ class Test_DirectoryService_Service:
         )
 
     # Test DirectoryService Session
-    @mock_ds
+    @mock_aws
     def test__get_session__(self):
         directoryservice = DirectoryService(
             set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
@@ -138,14 +138,14 @@ class Test_DirectoryService_Service:
         assert directoryservice.session.__class__.__name__ == "Session"
 
     # Test DirectoryService Service
-    @mock_ds
+    @mock_aws
     def test__get_service__(self):
         directoryservice = DirectoryService(
             set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
         )
         assert directoryservice.service == "ds"
 
-    @mock_ds
+    @mock_aws
     def test__describe_directories__(self):
         # Set partition for the service
         directoryservice = DirectoryService(

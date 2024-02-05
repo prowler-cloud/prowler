@@ -6,7 +6,7 @@ from pkgutil import ModuleInfo
 from boto3 import client
 from fixtures.bulk_checks_metadata import test_bulk_checks_metadata
 from mock import patch
-from moto import mock_s3
+from moto import mock_aws
 
 from prowler.lib.check.check import (
     exclude_checks_to_run,
@@ -73,6 +73,62 @@ expected_packages = [
         name="prowler.providers.azure.services.storage.storage_ensure_encryption_with_customer_managed_keys.storage_ensure_encryption_with_customer_managed_keys",
         ispkg=False,
     ),
+    ModuleInfo(
+        module_finder=FileFinder(
+            "/root_dir/prowler/providers/azure/services/sqlserver"
+        ),
+        name="prowler.providers.azure.services.sqlserver.sqlserver_tde_encrypted_with_cmk",
+        ispkg=True,
+    ),
+    ModuleInfo(
+        module_finder=FileFinder(
+            "/root_dir/prowler/providers/azure/services/sqlserver/sqlserver_tde_encrypted_with_cmk"
+        ),
+        name="prowler.providers.azure.services.sqlserver.sqlserver_tde_encrypted_with_cmk.sqlserver_tde_encrypted_with_cmk",
+        ispkg=False,
+    ),
+    ModuleInfo(
+        module_finder=FileFinder(
+            "/root_dir/prowler/providers/azure/services/sqlserver"
+        ),
+        name="prowler.providers.azure.services.sqlserver.sqlserver_tde_encryption_enabled",
+        ispkg=True,
+    ),
+    ModuleInfo(
+        module_finder=FileFinder(
+            "/root_dir/prowler/providers/azure/services/sqlserver/sqlserver_tde_encryption_enabled"
+        ),
+        name="prowler.providers.azure.services.sqlserver.sqlserver_tde_encryption_enabled.sqlserver_tde_encryption_enabled",
+        ispkg=False,
+    ),
+    ModuleInfo(
+        module_finder=FileFinder(
+            "/root_dir/prowler/providers/azure/services/sqlserver"
+        ),
+        name="prowler.providers.azure.services.sqlserver.sqlserver_auditing_retention_90_days",
+        ispkg=True,
+    ),
+    ModuleInfo(
+        module_finder=FileFinder(
+            "/root_dir/prowler/providers/azure/services/sqlserver/sqlserver_auditing_retention_90_days"
+        ),
+        name="prowler.providers.azure.services.sqlserver.sqlserver_auditing_retention_90_days.sqlserver_auditing_retention_90_days",
+        ispkg=False,
+    ),
+    ModuleInfo(
+        module_finder=FileFinder(
+            "/root_dir/prowler/providers/azure/services/sqlserver"
+        ),
+        name="prowler.providers.azure.services.sqlserver.sqlserver_vulnerability_assessment_enabled",
+        ispkg=True,
+    ),
+    ModuleInfo(
+        module_finder=FileFinder(
+            "/root_dir/prowler/providers/azure/services/sqlserver/sqlserver_vulnerability_assessment_enabled"
+        ),
+        name="prowler.providers.azure.services.sqlserver.sqlserver_vulnerability_assessment_enabled.sqlserver_vulnerability_assessment_enabled",
+        ispkg=False,
+    ),
 ]
 
 
@@ -122,6 +178,62 @@ def mock_list_modules(*_):
                 "/root_dir/prowler/providers/azure/services/storage/storage_ensure_encryption_with_customer_managed_keys"
             ),
             name="prowler.providers.azure.services.storage.storage_ensure_encryption_with_customer_managed_keys.storage_ensure_encryption_with_customer_managed_keys",
+            ispkg=False,
+        ),
+        ModuleInfo(
+            module_finder=FileFinder(
+                "/root_dir/prowler/providers/azure/services/sqlserver"
+            ),
+            name="prowler.providers.azure.services.sqlserver.sqlserver_tde_encrypted_with_cmk",
+            ispkg=True,
+        ),
+        ModuleInfo(
+            module_finder=FileFinder(
+                "/root_dir/prowler/providers/azure/services/sqlserver/sqlserver_tde_encrypted_with_cmk"
+            ),
+            name="prowler.providers.azure.services.sqlserver.sqlserver_tde_encrypted_with_cmk.sqlserver_tde_encrypted_with_cmk",
+            ispkg=False,
+        ),
+        ModuleInfo(
+            module_finder=FileFinder(
+                "/root_dir/prowler/providers/azure/services/sqlserver"
+            ),
+            name="prowler.providers.azure.services.sqlserver.sqlserver_tde_encryption_enabled",
+            ispkg=True,
+        ),
+        ModuleInfo(
+            module_finder=FileFinder(
+                "/root_dir/prowler/providers/azure/services/sqlserver/sqlserver_tde_encryption_enabled"
+            ),
+            name="prowler.providers.azure.services.sqlserver.sqlserver_tde_encryption_enabled.sqlserver_tde_encryption_enabled",
+            ispkg=False,
+        ),
+        ModuleInfo(
+            module_finder=FileFinder(
+                "/root_dir/prowler/providers/azure/services/sqlserver"
+            ),
+            name="prowler.providers.azure.services.sqlserver.sqlserver_auditing_retention_90_days",
+            ispkg=True,
+        ),
+        ModuleInfo(
+            module_finder=FileFinder(
+                "/root_dir/prowler/providers/azure/services/sqlserver/sqlserver_auditing_retention_90_days"
+            ),
+            name="prowler.providers.azure.services.sqlserver.sqlserver_auditing_retention_90_days.sqlserver_auditing_retention_90_days",
+            ispkg=False,
+        ),
+        ModuleInfo(
+            module_finder=FileFinder(
+                "/root_dir/prowler/providers/azure/services/sqlserver"
+            ),
+            name="prowler.providers.azure.services.sqlserver.sqlserver_vulnerability_assessment_enabled",
+            ispkg=True,
+        ),
+        ModuleInfo(
+            module_finder=FileFinder(
+                "/root_dir/prowler/providers/azure/services/sqlserver/sqlserver_vulnerability_assessment_enabled"
+            ),
+            name="prowler.providers.azure.services.sqlserver.sqlserver_vulnerability_assessment_enabled.sqlserver_vulnerability_assessment_enabled",
             ispkg=False,
         ),
     ]
@@ -344,7 +456,7 @@ class Test_Check:
             provider = test["input"]["provider"]
             assert parse_checks_from_file(check_file, provider) == test["expected"]
 
-    @mock_s3
+    @mock_aws
     def test_parse_checks_from_folder(self):
         test_checks_folder = (
             f"{pathlib.Path().absolute()}/tests/lib/check/fixtures/checks_folder"
@@ -504,6 +616,22 @@ class Test_Check:
             (
                 "storage_ensure_encryption_with_customer_managed_keys",
                 "/root_dir/prowler/providers/azure/services/storage/storage_ensure_encryption_with_customer_managed_keys",
+            ),
+            (
+                "sqlserver_tde_encrypted_with_cmk",
+                "/root_dir/prowler/providers/azure/services/sqlserver/sqlserver_tde_encrypted_with_cmk",
+            ),
+            (
+                "sqlserver_tde_encryption_enabled",
+                "/root_dir/prowler/providers/azure/services/sqlserver/sqlserver_tde_encryption_enabled",
+            ),
+            (
+                "sqlserver_auditing_retention_90_days",
+                "/root_dir/prowler/providers/azure/services/sqlserver/sqlserver_auditing_retention_90_days",
+            ),
+            (
+                "sqlserver_vulnerability_assessment_enabled",
+                "/root_dir/prowler/providers/azure/services/sqlserver/sqlserver_vulnerability_assessment_enabled",
             ),
         ]
         returned_checks = recover_checks_from_provider(provider, service)

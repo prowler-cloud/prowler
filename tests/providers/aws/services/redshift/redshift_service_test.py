@@ -3,7 +3,7 @@ from uuid import uuid4
 
 import botocore
 from boto3 import client
-from moto import mock_redshift
+from moto import mock_aws
 
 from prowler.providers.aws.services.redshift.redshift_service import Redshift
 from tests.providers.aws.audit_info_utils import (
@@ -79,7 +79,7 @@ class Test_Redshift_Service:
         redshift = Redshift(audit_info)
         assert redshift.session.__class__.__name__ == "Session"
 
-    @mock_redshift
+    @mock_aws
     def test_describe_clusters(self):
         redshift_client = client("redshift", region_name=AWS_REGION_EU_WEST_1)
         response = redshift_client.create_cluster(
@@ -113,7 +113,7 @@ class Test_Redshift_Service:
             {"Key": "test", "Value": "test"},
         ]
 
-    @mock_redshift
+    @mock_aws
     def test_describe_logging_status(self):
         redshift_client = client("redshift", region_name=AWS_REGION_EU_WEST_1)
         response = redshift_client.create_cluster(
@@ -143,7 +143,7 @@ class Test_Redshift_Service:
         assert redshift.clusters[0].logging_enabled
         assert redshift.clusters[0].bucket == test_bucket_name
 
-    @mock_redshift
+    @mock_aws
     def test_describe_describe_cluster_snapshot(self):
         redshift_client = client("redshift", region_name=AWS_REGION_EU_WEST_1)
         response = redshift_client.create_cluster(

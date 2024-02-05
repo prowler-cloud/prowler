@@ -1,7 +1,7 @@
 from unittest import mock
 
 from boto3 import client
-from moto import mock_ec2
+from moto import mock_aws
 
 from tests.providers.aws.audit_info_utils import (
     AWS_ACCOUNT_NUMBER,
@@ -14,7 +14,7 @@ EXAMPLE_AMI_ID = "ami-12c6146b"
 
 
 class Test_ec2_elastic_ip_shodan:
-    @mock_ec2
+    @mock_aws
     def test_ec2_one_instances_no_public_ip(self):
         # Create EC2 Mocked Resources
         ec2_client = client("ec2", AWS_REGION_US_EAST_1)
@@ -45,7 +45,7 @@ class Test_ec2_elastic_ip_shodan:
 
             assert len(result) == 0
 
-    @mock_ec2
+    @mock_aws
     def test_ec2_one_unattached_eip(self):
         # Create EC2 Mocked Resources
         ec2_client = client("ec2", AWS_REGION_US_EAST_1)
@@ -76,7 +76,7 @@ class Test_ec2_elastic_ip_shodan:
 
             assert len(result) == 0
 
-    @mock_ec2
+    @mock_aws
     def test_ec2_one_attached_eip_no_shodan_api_key(self):
         # Create EC2 Mocked Resources
         ec2_client = client("ec2", AWS_REGION_US_EAST_1)
@@ -114,7 +114,7 @@ class Test_ec2_elastic_ip_shodan:
 
             assert len(result) == 0
 
-    @mock_ec2
+    @mock_aws
     def test_ec2_one_attached_eip_shodan_api_key(self):
         # Create EC2 Mocked Resources
         ec2_client = client("ec2", AWS_REGION_US_EAST_1)

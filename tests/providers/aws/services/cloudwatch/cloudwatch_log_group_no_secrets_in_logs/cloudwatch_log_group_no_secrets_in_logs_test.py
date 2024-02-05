@@ -2,7 +2,7 @@ from re import search
 from unittest import mock
 
 from boto3 import client
-from moto import mock_logs
+from moto import mock_aws
 from moto.core.utils import unix_time_millis
 
 from tests.providers.aws.audit_info_utils import (
@@ -47,7 +47,7 @@ class Test_cloudwatch_log_group_no_secrets_in_logs:
 
             assert len(result) == 0
 
-    @mock_logs
+    @mock_aws
     def test_cloudwatch_log_group_without_secrets(self):
         # Generate Logs Client
         logs_client = client("logs", region_name=AWS_REGION_US_EAST_1)
@@ -100,7 +100,7 @@ class Test_cloudwatch_log_group_no_secrets_in_logs:
             assert result[0].status_extended == "No secrets found in test log group."
             assert result[0].resource_id == "test"
 
-    @mock_logs
+    @mock_aws
     def test_cloudwatch_log_group_with_secrets(self):
         # Generate Logs Client
         logs_client = client("logs", region_name=AWS_REGION_US_EAST_1)

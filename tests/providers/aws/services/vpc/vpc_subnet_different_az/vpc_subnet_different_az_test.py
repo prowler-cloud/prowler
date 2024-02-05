@@ -1,7 +1,7 @@
 from unittest import mock
 
 from boto3 import client
-from moto import mock_ec2
+from moto import mock_aws
 
 from tests.providers.aws.audit_info_utils import (
     AWS_REGION_US_EAST_1,
@@ -10,7 +10,7 @@ from tests.providers.aws.audit_info_utils import (
 
 
 class Test_vpc_subnet_different_az:
-    @mock_ec2
+    @mock_aws
     def test_vpc_subnet_different_az(self):
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
         vpc = ec2_client.create_vpc(
@@ -75,7 +75,7 @@ class Test_vpc_subnet_different_az:
                 if not found:
                     assert False
 
-    @mock_ec2
+    @mock_aws
     def test_vpc_subnet_same_az(self):
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
         vpc = ec2_client.create_vpc(
@@ -129,7 +129,7 @@ class Test_vpc_subnet_different_az:
                 if not found:
                     assert False
 
-    @mock_ec2
+    @mock_aws
     def test_vpc_no_subnets(self):
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
         vpc = ec2_client.create_vpc(

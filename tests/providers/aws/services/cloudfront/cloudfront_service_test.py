@@ -2,7 +2,7 @@ from unittest.mock import patch
 
 import botocore
 from boto3 import client
-from moto import mock_cloudfront
+from moto import mock_aws
 
 from prowler.providers.aws.services.cloudfront.cloudfront_service import (
     CloudFront,
@@ -151,30 +151,30 @@ def mock_make_api_call(self, operation_name, kwarg):
 @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
 class Test_CloudFront_Service:
     # Test CloudFront Client
-    @mock_cloudfront
+    @mock_aws
     def test__get_client__(self):
         cloudfront = CloudFront(set_mocked_aws_audit_info())
         assert cloudfront.client.__class__.__name__ == "CloudFront"
 
     # Test CloudFront Session
-    @mock_cloudfront
+    @mock_aws
     def test__get_session__(self):
         cloudfront = CloudFront(set_mocked_aws_audit_info())
         assert cloudfront.session.__class__.__name__ == "Session"
 
     # Test CloudFront Service
-    @mock_cloudfront
+    @mock_aws
     def test__get_service__(self):
         cloudfront = CloudFront(set_mocked_aws_audit_info())
         assert cloudfront.service == "cloudfront"
 
-    @mock_cloudfront
+    @mock_aws
     def test__list_distributions__zero(self):
         cloudfront = CloudFront(set_mocked_aws_audit_info())
 
         assert len(cloudfront.distributions) == 0
 
-    @mock_cloudfront
+    @mock_aws
     def test__list_distributions__complete(self):
         cloudfront_client = client("cloudfront")
         config = example_distribution_config("ref")

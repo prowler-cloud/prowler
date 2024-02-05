@@ -4,7 +4,7 @@ from uuid import uuid4
 
 import botocore
 from boto3 import client
-from moto import mock_sqs
+from moto import mock_aws
 
 from prowler.providers.aws.services.sqs.sqs_service import SQS
 from tests.providers.aws.audit_info_utils import (
@@ -72,7 +72,7 @@ class Test_SQS_Service:
         sqs = SQS(audit_info)
         assert sqs.session.__class__.__name__ == "Session"
 
-    @mock_sqs
+    @mock_aws
     # Test SQS list queues
     def test__list_queues__(self):
         sqs_client = client("sqs", region_name=AWS_REGION_EU_WEST_1)
@@ -90,7 +90,7 @@ class Test_SQS_Service:
 
     # moto does not properly mock this and is hardcoded to return 1000 queues
     # so this test currently always fails
-    # @mock_sqs
+    # @mock_aws
     # # Test SQS list queues for over 1000 queues
     # def test__list_queues__pagination_over_a_thousand(self):
     #     sqs_client = client("sqs", region_name=AWS_REGION_EU_WEST_1)
@@ -100,7 +100,7 @@ class Test_SQS_Service:
     #     sqs = SQS(audit_info)
     #     assert len(sqs.queues) > 1000
 
-    @mock_sqs
+    @mock_aws
     # Test SQS list queues
     def test__get_queue_attributes__(self):
         sqs_client = client("sqs", region_name=AWS_REGION_EU_WEST_1)

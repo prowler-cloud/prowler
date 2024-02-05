@@ -3,7 +3,7 @@ from pathlib import Path
 
 import boto3
 from mock import MagicMock
-from moto import mock_s3
+from moto import mock_aws
 
 from prowler.config.config import csv_file_suffix
 from prowler.providers.aws.lib.s3.s3 import get_s3_object_path, send_to_s3_bucket
@@ -21,7 +21,7 @@ OUTPUT_MODE_CIS_1_4_AWS = "cis_1.4_aws"
 
 
 class TestS3:
-    @mock_s3
+    @mock_aws
     def test_send_to_s3_bucket(self):
         # Mock Audit Info
         audit_info = MagicMock()
@@ -60,7 +60,7 @@ class TestS3:
             == "binary/octet-stream"
         )
 
-    @mock_s3
+    @mock_aws
     def test_send_to_s3_bucket_compliance(self):
         # Mock Audit Info
         audit_info = MagicMock()

@@ -1,7 +1,7 @@
 from unittest import mock
 
 from boto3 import client
-from moto import mock_iam
+from moto import mock_aws
 
 from tests.providers.aws.audit_info_utils import (
     AWS_REGION_US_EAST_1,
@@ -10,7 +10,7 @@ from tests.providers.aws.audit_info_utils import (
 
 
 class Test_iam_check_saml_providers_sts:
-    @mock_iam
+    @mock_aws
     def test_iam_check_saml_providers_sts(self):
         iam_client = client("iam")
         xml_template = r"""<EntityDescriptor

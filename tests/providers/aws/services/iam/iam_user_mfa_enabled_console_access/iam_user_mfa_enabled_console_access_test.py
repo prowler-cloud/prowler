@@ -1,7 +1,7 @@
 from unittest import mock
 
 from boto3 import client
-from moto import mock_iam
+from moto import mock_aws
 
 from tests.providers.aws.audit_info_utils import (
     AWS_REGION_US_EAST_1,
@@ -19,7 +19,7 @@ class Test_iam_user_mfa_enabled_console_access_test:
         set_mocked_aws_audit_info,
     )
 
-    @mock_iam
+    @mock_aws
     def test_root_user_not_password_console_enabled(self):
         iam_client = client("iam")
         user = "test-user"
@@ -52,7 +52,7 @@ class Test_iam_user_mfa_enabled_console_access_test:
             assert result[0].resource_id == user
             assert result[0].resource_arn == arn
 
-    @mock_iam
+    @mock_aws
     def test_user_not_password_console_enabled(self):
         iam_client = client("iam")
         user = "test-user"
@@ -85,7 +85,7 @@ class Test_iam_user_mfa_enabled_console_access_test:
             assert result[0].resource_id == user
             assert result[0].resource_arn == arn
 
-    @mock_iam
+    @mock_aws
     def test_user_password_console_and_mfa_enabled(self):
         iam_client = client("iam")
         user = "test-user"
@@ -119,7 +119,7 @@ class Test_iam_user_mfa_enabled_console_access_test:
             assert result[0].resource_id == user
             assert result[0].resource_arn == arn
 
-    @mock_iam
+    @mock_aws
     def test_user_password_console_enabled_and_mfa_not_enabled(self):
         iam_client = client("iam")
         user = "test-user"
