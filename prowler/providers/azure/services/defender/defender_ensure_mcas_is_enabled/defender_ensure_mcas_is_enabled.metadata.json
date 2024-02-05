@@ -20,7 +20,7 @@
     },
     "Recommendation": {
       "Text": "1. From Azure Home select the Portal Menu. 2. Select Microsoft Defender for Cloud. 3. Select Environment Settings blade. 4. Select the subscription. 5. Check App Service Defender Plan to On. 6. Select Save.",
-      "Url": ""
+      "Url": "https://docs.microsoft.com/en-us/rest/api/securitycenter/settings/list"
     }
   },
   "Categories": [],
