@@ -2,8 +2,7 @@ from unittest import mock
 from uuid import uuid4
 
 from prowler.providers.azure.services.defender.defender_service import Defender_Settings
-
-AZURE_SUSCRIPTION = str(uuid4())
+from tests.providers.azure.azure_fixtures import AZURE_SUSCRIPTION
 
 
 class Test_defender_ensure_wdatp_is_enabled:
@@ -85,8 +84,32 @@ class Test_defender_ensure_wdatp_is_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Microsoft Defender for Endpoint integration is enabled for susbscription {AZURE_SUSCRIPTION}."
+                == f"Microsoft Defender for Endpoint integration is enabled for subscription {AZURE_SUSCRIPTION}."
             )
             assert result[0].subscription == AZURE_SUSCRIPTION
             assert result[0].resource_name == "WDATP"
             assert result[0].resource_id == resource_id
+
+    def test_defender_wdatp_no_settings(self):
+        defender_client = mock.MagicMock
+        defender_client.settings = {AZURE_SUSCRIPTION: {}}
+
+        with mock.patch(
+            "prowler.providers.azure.services.defender.defender_ensure_wdatp_is_enabled.defender_ensure_wdatp_is_enabled.defender_client",
+            new=defender_client,
+        ):
+            from prowler.providers.azure.services.defender.defender_ensure_wdatp_is_enabled.defender_ensure_wdatp_is_enabled import (
+                defender_ensure_wdatp_is_enabled,
+            )
+
+            check = defender_ensure_wdatp_is_enabled()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert (
+                result[0].status_extended
+                == f"Microsoft Defender for Endpoint integration not exists for subscription {AZURE_SUSCRIPTION}."
+            )
+            assert result[0].subscription == AZURE_SUSCRIPTION
+            assert result[0].resource_name == "WDATP"
+            assert result[0].resource_id == "N/A"
