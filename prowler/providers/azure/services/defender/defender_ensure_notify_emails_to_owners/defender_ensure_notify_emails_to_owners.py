@@ -11,12 +11,12 @@ class defender_ensure_notify_emails_to_owners(Check):
             security_contacts,
         ) in defender_client.security_contacts.items():
 
-            for contac_name, contact_info in security_contacts.items():
+            for contact_name, contact_info in security_contacts.items():
 
                 report = Check_Report_Azure(self.metadata())
                 report.status = "PASS"
                 report.subscription = subscription_name
-                report.resource_name = contac_name
+                report.resource_name = contact_name
                 report.resource_id = contact_info.resource_id
                 report.status_extended = (
                     f"The Owner role is notified for subscription {subscription_name}."

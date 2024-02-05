@@ -20,7 +20,7 @@
     },
     "Recommendation": {
       "Text": "1. From Azure Home select the Portal Menu 2. Select Microsoft Defender for Cloud 3. Click on Environment Settings 4. Click on the appropriate Management Group, Subscription, or Workspace 5. Click on Email notifications 6. In the drop down of the All users with the following roles field select Owner 7. Click Save",
-      "Url": ""
+      "Url": "https://docs.microsoft.com/en-us/rest/api/securitycenter/securitycontacts/list"
     }
   },
   "Categories": [],
