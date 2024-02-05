@@ -1,7 +1,6 @@
-
 <p align="center">
-  <img align="center" src="https://github.com/prowler-cloud/prowler/assets/3985464/383e8b8b-43b2-497f-9752-6c6b791752cf?raw=True#gh-light-mode-only" width="350" height="115">
   <img align="center" src="https://github.com/prowler-cloud/prowler/assets/38561120/23bc50e6-687d-4011-a45f-192358714b8b?raw=True#gh-dark-mode-only" width="15%" height="15%">
+  <img align="center" src="https://github.com/prowler-cloud/prowler/assets/3985464/383e8b8b-43b2-497f-9752-6c6b791752cf?raw=True#gh-light-mode-only" width="350" height="115">
 </p>
 <p align="center">
   <b><i>Prowler SaaS </b> and <b>Prowler Open Source</b> are as dynamic and adaptable as the environment they’re meant to protect. Trusted by the leaders in security. 
