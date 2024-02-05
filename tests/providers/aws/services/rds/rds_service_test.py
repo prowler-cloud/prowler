@@ -191,7 +191,7 @@ class Test_RDS_Service:
             AllocatedStorage=10,
             Engine="postgres",
             DatabaseName="staging-postgres",
-            StorageEncrypted=False,
+            StorageEncrypted=True,
             DeletionProtection=True,
             PubliclyAccessible=False,
             AutoMinorVersionUpgrade=False,
@@ -220,7 +220,7 @@ class Test_RDS_Service:
         )
         assert rds.db_clusters[db_cluster_arn].status == "available"
         assert not rds.db_clusters[db_cluster_arn].public
-        assert not rds.db_clusters[db_cluster_arn].encrypted
+        assert rds.db_clusters[db_cluster_arn].encrypted
         assert rds.db_clusters[db_cluster_arn].backup_retention_period == 1
         assert rds.db_clusters[db_cluster_arn].cloudwatch_logs == ["audit", "error"]
         assert rds.db_clusters[db_cluster_arn].deletion_protection
