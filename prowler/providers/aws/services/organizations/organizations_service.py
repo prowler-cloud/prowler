@@ -151,9 +151,11 @@ class Organizations(AWSService):
         logger.info("Organizations - List Targets for policy: %s ...", policy_id)
 
         try:
-            targets_for_policy = self.client.list_targets_for_policy(
-                PolicyId=policy_id
-            )["Targets"]
+            targets_for_policy = []
+            if policy_id:
+                targets_for_policy = self.client.list_targets_for_policy(
+                    PolicyId=policy_id
+                )["Targets"]
         except Exception as error:
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
