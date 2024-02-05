@@ -101,6 +101,20 @@ expected_packages = [
         name="prowler.providers.azure.services.sqlserver.sqlserver_tde_encryption_enabled.sqlserver_tde_encryption_enabled",
         ispkg=False,
     ),
+    ModuleInfo(
+        module_finder=FileFinder(
+            "/root_dir/prowler/providers/azure/services/sqlserver"
+        ),
+        name="prowler.providers.azure.services.sqlserver.sqlserver_vulnerability_assessment_enabled",
+        ispkg=True,
+    ),
+    ModuleInfo(
+        module_finder=FileFinder(
+            "/root_dir/prowler/providers/azure/services/sqlserver/sqlserver_vulnerability_assessment_enabled"
+        ),
+        name="prowler.providers.azure.services.sqlserver.sqlserver_vulnerability_assessment_enabled.sqlserver_vulnerability_assessment_enabled",
+        ispkg=False,
+    ),
 ]
 
 
@@ -178,6 +192,20 @@ def mock_list_modules(*_):
                 "/root_dir/prowler/providers/azure/services/sqlserver/sqlserver_tde_encryption_enabled"
             ),
             name="prowler.providers.azure.services.sqlserver.sqlserver_tde_encryption_enabled.sqlserver_tde_encryption_enabled",
+            ispkg=False,
+        ),
+        ModuleInfo(
+            module_finder=FileFinder(
+                "/root_dir/prowler/providers/azure/services/sqlserver"
+            ),
+            name="prowler.providers.azure.services.sqlserver.sqlserver_vulnerability_assessment_enabled",
+            ispkg=True,
+        ),
+        ModuleInfo(
+            module_finder=FileFinder(
+                "/root_dir/prowler/providers/azure/services/sqlserver/sqlserver_vulnerability_assessment_enabled"
+            ),
+            name="prowler.providers.azure.services.sqlserver.sqlserver_vulnerability_assessment_enabled.sqlserver_vulnerability_assessment_enabled",
             ispkg=False,
         ),
     ]
@@ -568,6 +596,10 @@ class Test_Check:
             (
                 "sqlserver_tde_encryption_enabled",
                 "/root_dir/prowler/providers/azure/services/sqlserver/sqlserver_tde_encryption_enabled",
+            ),
+            (
+                "sqlserver_vulnerability_assessment_enabled",
+                "/root_dir/prowler/providers/azure/services/sqlserver/sqlserver_vulnerability_assessment_enabled",
             ),
         ]
         returned_checks = recover_checks_from_provider(provider, service)

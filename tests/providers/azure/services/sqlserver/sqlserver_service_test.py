@@ -1,6 +1,10 @@
 from unittest.mock import patch
 
-from azure.mgmt.sql.models import EncryptionProtector, TransparentDataEncryption
+from azure.mgmt.sql.models import (
+    EncryptionProtector,
+    ServerVulnerabilityAssessment,
+    TransparentDataEncryption,
+)
 
 from prowler.providers.azure.services.sqlserver.sqlserver_service import (
     DatabaseServer,
@@ -36,6 +40,9 @@ def mock_sqlserver_get_sql_servers(_):
                     server_key_type="AzureKeyVault"
                 ),
                 databases=[database],
+                vulnerability_assessment=ServerVulnerabilityAssessment(
+                    storage_container_path="/subcription_id/resource_group/sql_server"
+                ),
             )
         ]
     }
@@ -87,6 +94,12 @@ class Test_SqlServer_Service:
             == "EncryptionProtector"
         )
         assert sql_server.sql_servers[AZURE_SUSCRIPTION][0].databases == [database]
+        assert (
+            sql_server.sql_servers[AZURE_SUSCRIPTION][
+                0
+            ].vulnerability_assessment.__class__.__name__
+            == "ServerVulnerabilityAssessment"
+        )
 
     def test__get_databases__(self):
         sql_server = SQLServer(set_mocked_azure_audit_info())
@@ -146,3 +159,19 @@ class Test_SqlServer_Service:
         id = "/subscriptions/subscription_id/resourceGroups/resource_group/providers/Microsoft.Sql/servers/sql_server"
         sql_server = SQLServer(set_mocked_azure_audit_info())
         assert sql_server.__get_resource_group__(id) == "resource_group"
+
+    def test__get_vulnerability_assessment__(self):
+        sql_server = SQLServer(set_mocked_azure_audit_info())
+        storage_container_path = "/subcription_id/resource_group/sql_server"
+        assert (
+            sql_server.sql_servers[AZURE_SUSCRIPTION][
+                0
+            ].vulnerability_assessment.__class__.__name__
+            == "ServerVulnerabilityAssessment"
+        )
+        assert (
+            sql_server.sql_servers[AZURE_SUSCRIPTION][
+                0
+            ].vulnerability_assessment.storage_container_path
+            == storage_container_path
+        )
