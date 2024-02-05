@@ -15,6 +15,7 @@ class Defender(AzureService):
         self.pricings = self.__get_pricings__()
         self.auto_provisioning_settings = self.__get_auto_provisioning_settings__()
         self.assessments = self.__get_assessments__()
+        self.security_contacts = self.__get_security_contacts__()
 
     def __get_pricings__(self):
         logger.info("Defender - Getting pricings...")
@@ -89,6 +90,33 @@ class Defender(AzureService):
                 )
         return assessments
 
+    def __get_security_contacts__(self):
+        logger.info("Defender - Getting security contacts...")
+        security_contacts = {}
+        for subscription_name, client in self.clients.items():
+            try:
+                # TODO: List all security contacts. For now, the list method is not working.
+                security_contact_default = client.security_contacts.get("default")
+                security_contacts.update({subscription_name: {}})
+                security_contacts[subscription_name].update(
+                    {
+                        security_contact_default.name: SecurityContacts(
+                            resource_id=security_contact_default.id,
+                            emails=security_contact_default.emails,
+                            phone=security_contact_default.phone,
+                            alert_notifications_minimal_severity=security_contact_default.alert_notifications.minimal_severity,
+                            alert_notifications_state=security_contact_default.alert_notifications.state,
+                            notified_roles=security_contact_default.notifications_by_role.roles,
+                            notified_roles_state=security_contact_default.notifications_by_role.state,
+                        )
+                    }
+                )
+            except Exception as error:
+                logger.error(
+                    f"Subscription name: {subscription_name} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+        return security_contacts
+
 
 class Pricing(BaseModel):
     resource_id: str
@@ -107,3 +135,13 @@ class Assesment(BaseModel):
     resource_id: str
     resource_name: str
     status: str
+
+
+class SecurityContacts(BaseModel):
+    resource_id: str
+    emails: str
+    phone: str
+    alert_notifications_minimal_severity: str
+    alert_notifications_state: str
+    notified_roles: list[str]
+    notified_roles_state: str
