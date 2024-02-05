@@ -6,6 +6,7 @@ from prowler.providers.azure.services.defender.defender_service import (
     Defender,
     Defender_Assessments,
     Defender_Pricing,
+    Defender_Security_Contacts,
 )
 from tests.providers.azure.azure_fixtures import (
     AZURE_SUSCRIPTION,
@@ -50,6 +51,22 @@ def mock_defender_get_assessments(_):
     }
 
 
+def mock_defender_get_security_contacts(_):
+    return {
+        AZURE_SUSCRIPTION: {
+            "default": Defender_Security_Contacts(
+                resource_id="/subscriptions/resource_id",
+                emails="user@user.com, test@test.es",
+                phone="666666666",
+                alert_notifications_minimal_severity="High",
+                alert_notifications_state="On",
+                notified_roles=["Owner", "Contributor"],
+                notified_roles_state="On",
+            )
+        }
+    }
+
+
 @patch(
     "prowler.providers.azure.services.defender.defender_service.Defender.__get_pricings__",
     new=mock_defender_get_pricings,
@@ -61,6 +78,10 @@ def mock_defender_get_assessments(_):
 @patch(
     "prowler.providers.azure.services.defender.defender_service.Defender.__get_assessments__",
     new=mock_defender_get_assessments,
+)
+@patch(
+    "prowler.providers.azure.services.defender.defender_service.Defender.__get_security_contacts__",
+    new=mock_defender_get_security_contacts,
 )
 class Test_Defender_Service:
     def test__get_client__(self):
@@ -129,3 +150,40 @@ class Test_Defender_Service:
             == "default"
         )
         assert defender.assessments[AZURE_SUSCRIPTION]["default"].status == "Healthy"
+
+    def test__get_security_contacts__(self):
+        defender = Defender(set_mocked_azure_audit_info())
+        assert len(defender.security_contacts) == 1
+        assert (
+            defender.security_contacts[AZURE_SUSCRIPTION]["default"].resource_id
+            == "/subscriptions/resource_id"
+        )
+        assert (
+            defender.security_contacts[AZURE_SUSCRIPTION]["default"].emails
+            == "user@user.com, test@test.es"
+        )
+        assert (
+            defender.security_contacts[AZURE_SUSCRIPTION]["default"].phone
+            == "666666666"
+        )
+        assert (
+            defender.security_contacts[AZURE_SUSCRIPTION][
+                "default"
+            ].alert_notifications_minimal_severity
+            == "High"
+        )
+        assert (
+            defender.security_contacts[AZURE_SUSCRIPTION][
+                "default"
+            ].alert_notifications_state
+            == "On"
+        )
+        assert defender.security_contacts[AZURE_SUSCRIPTION][
+            "default"
+        ].notified_roles == ["Owner", "Contributor"]
+        assert (
+            defender.security_contacts[AZURE_SUSCRIPTION][
+                "default"
+            ].notified_roles_state
+            == "On"
+        )
