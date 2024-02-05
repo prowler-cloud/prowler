@@ -99,7 +99,6 @@ class Test_cloudtrail_bucket_requires_mfa_delete:
         return make_api_call(self, operation_name, kwarg)
 
     @mock_aws
-    @mock_aws
     # Patch with mock_make_api_call_getbucketversioning_mfadelete_enabled:
     @patch(
         "botocore.client.BaseClient._make_api_call",
@@ -201,7 +200,6 @@ class Test_cloudtrail_bucket_requires_mfa_delete:
             assert result[0].resource_arn == trail_us["TrailARN"]
             assert result[0].resource_tags == []
 
-    @mock_aws
     @mock_aws
     # Patch with mock_make_api_call_getbucketversioning_mfadelete_enabled:
     @patch(

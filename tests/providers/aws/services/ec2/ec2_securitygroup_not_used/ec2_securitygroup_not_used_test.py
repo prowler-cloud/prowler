@@ -159,7 +159,6 @@ class Test_ec2_securitygroup_not_used:
             assert result[0].resource_tags == []
 
     @mock_aws
-    @mock_aws
     def test_ec2_used_default_sg_by_lambda(self):
         # Create EC2 Mocked Resources
         ec2 = resource("ec2", AWS_REGION_US_EAST_1)

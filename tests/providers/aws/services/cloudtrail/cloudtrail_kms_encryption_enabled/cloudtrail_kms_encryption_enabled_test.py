@@ -83,7 +83,6 @@ class Test_cloudtrail_kms_encryption_enabled:
             assert result[0].region == AWS_REGION_US_EAST_1
 
     @mock_aws
-    @mock_aws
     def test_trail_kms(self):
         cloudtrail_client_us_east_1 = client(
             "cloudtrail", region_name=AWS_REGION_US_EAST_1
