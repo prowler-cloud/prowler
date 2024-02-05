@@ -105,6 +105,20 @@ expected_packages = [
         module_finder=FileFinder(
             "/root_dir/prowler/providers/azure/services/sqlserver"
         ),
+        name="prowler.providers.azure.services.sqlserver.sqlserver_auditing_retention_90_days",
+        ispkg=True,
+    ),
+    ModuleInfo(
+        module_finder=FileFinder(
+            "/root_dir/prowler/providers/azure/services/sqlserver/sqlserver_auditing_retention_90_days"
+        ),
+        name="prowler.providers.azure.services.sqlserver.sqlserver_auditing_retention_90_days.sqlserver_auditing_retention_90_days",
+        ispkg=False,
+    ),
+    ModuleInfo(
+        module_finder=FileFinder(
+            "/root_dir/prowler/providers/azure/services/sqlserver"
+        ),
         name="prowler.providers.azure.services.sqlserver.sqlserver_vulnerability_assessment_enabled",
         ispkg=True,
     ),
@@ -192,6 +206,20 @@ def mock_list_modules(*_):
                 "/root_dir/prowler/providers/azure/services/sqlserver/sqlserver_tde_encryption_enabled"
             ),
             name="prowler.providers.azure.services.sqlserver.sqlserver_tde_encryption_enabled.sqlserver_tde_encryption_enabled",
+            ispkg=False,
+        ),
+        ModuleInfo(
+            module_finder=FileFinder(
+                "/root_dir/prowler/providers/azure/services/sqlserver"
+            ),
+            name="prowler.providers.azure.services.sqlserver.sqlserver_auditing_retention_90_days",
+            ispkg=True,
+        ),
+        ModuleInfo(
+            module_finder=FileFinder(
+                "/root_dir/prowler/providers/azure/services/sqlserver/sqlserver_auditing_retention_90_days"
+            ),
+            name="prowler.providers.azure.services.sqlserver.sqlserver_auditing_retention_90_days.sqlserver_auditing_retention_90_days",
             ispkg=False,
         ),
         ModuleInfo(
@@ -596,6 +624,10 @@ class Test_Check:
             (
                 "sqlserver_tde_encryption_enabled",
                 "/root_dir/prowler/providers/azure/services/sqlserver/sqlserver_tde_encryption_enabled",
+            ),
+            (
+                "sqlserver_vulnerability_assessment_enabled",
+                "/root_dir/prowler/providers/azure/services/sqlserver/sqlserver_auditing_retention_90_days",
             ),
             (
                 "sqlserver_vulnerability_assessment_enabled",
