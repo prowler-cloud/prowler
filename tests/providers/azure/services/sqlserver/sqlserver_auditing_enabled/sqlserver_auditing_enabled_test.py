@@ -8,8 +8,7 @@ from azure.mgmt.sql.models import (
 )
 
 from prowler.providers.azure.services.sqlserver.sqlserver_service import SQL_Server
-
-AZURE_SUSCRIPTION = str(uuid4())
+from tests.providers.azure.azure_fixtures import AZURE_SUSCRIPTION
 
 
 class Test_sqlserver_auditing_enabled:
