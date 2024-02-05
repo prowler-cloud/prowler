@@ -3,7 +3,7 @@ import re
 import boto3
 import botocore
 from mock import patch
-from moto import mock_iam, mock_sts
+from moto import mock_aws
 
 from prowler.providers.aws.lib.arn.arn import parse_iam_credentials_arn
 from prowler.providers.aws.lib.credentials.credentials import (
@@ -41,8 +41,7 @@ def mock_get_caller_identity_gov_cloud(self, operation_name, kwarg):
 
 
 class Test_AWS_Credentials:
-    @mock_sts
-    @mock_iam
+    @mock_aws
     def test_validate_credentials_commercial_partition_with_regions(self):
         # AWS Region for AWS COMMERCIAL
         aws_region = "eu-west-1"
@@ -77,8 +76,7 @@ class Test_AWS_Credentials:
         assert re.match("[0-9a-zA-Z]{20}", get_caller_identity["UserId"])
         assert get_caller_identity["Account"] == AWS_ACCOUNT_NUMBER
 
-    @mock_sts
-    @mock_iam
+    @mock_aws
     def test_validate_credentials_commercial_partition_with_regions_none_and_profile_region_so_profile_region(
         self,
     ):
@@ -115,8 +113,7 @@ class Test_AWS_Credentials:
         assert re.match("[0-9a-zA-Z]{20}", get_caller_identity["UserId"])
         assert get_caller_identity["Account"] == AWS_ACCOUNT_NUMBER
 
-    @mock_sts
-    @mock_iam
+    @mock_aws
     def test_validate_credentials_commercial_partition_with_0_regions_and_profile_region_so_profile_region(
         self,
     ):
@@ -153,8 +150,7 @@ class Test_AWS_Credentials:
         assert re.match("[0-9a-zA-Z]{20}", get_caller_identity["UserId"])
         assert get_caller_identity["Account"] == AWS_ACCOUNT_NUMBER
 
-    @mock_sts
-    @mock_iam
+    @mock_aws
     def test_validate_credentials_commercial_partition_without_regions_and_profile_region_so_us_east_1(
         self,
     ):
@@ -191,8 +187,7 @@ class Test_AWS_Credentials:
         assert re.match("[0-9a-zA-Z]{20}", get_caller_identity["UserId"])
         assert get_caller_identity["Account"] == AWS_ACCOUNT_NUMBER
 
-    @mock_sts
-    @mock_iam
+    @mock_aws
     def test_validate_credentials_commercial_partition_with_regions_none_and_profile_region_but_sts_endpoint_region(
         self,
     ):
@@ -232,8 +227,7 @@ class Test_AWS_Credentials:
         assert re.match("[0-9a-zA-Z]{20}", get_caller_identity["UserId"])
         assert get_caller_identity["Account"] == AWS_ACCOUNT_NUMBER
 
-    @mock_sts
-    @mock_iam
+    @mock_aws
     def test_validate_credentials_china_partition_without_regions_and_profile_region_so_us_east_1(
         self,
     ):
@@ -270,8 +264,7 @@ class Test_AWS_Credentials:
         assert re.match("[0-9a-zA-Z]{20}", get_caller_identity["UserId"])
         assert get_caller_identity["Account"] == AWS_ACCOUNT_NUMBER
 
-    @mock_sts
-    @mock_iam
+    @mock_aws
     @patch(
         "botocore.client.BaseClient._make_api_call", new=mock_get_caller_identity_china
     )
@@ -312,8 +305,7 @@ class Test_AWS_Credentials:
         assert re.match("[0-9a-zA-Z]{20}", get_caller_identity["UserId"])
         assert get_caller_identity["Account"] == AWS_ACCOUNT_NUMBER
 
-    @mock_sts
-    @mock_iam
+    @mock_aws
     @patch(
         "botocore.client.BaseClient._make_api_call", new=mock_get_caller_identity_china
     )
@@ -359,8 +351,7 @@ class Test_AWS_Credentials:
         assert re.match("[0-9a-zA-Z]{20}", get_caller_identity["UserId"])
         assert get_caller_identity["Account"] == AWS_ACCOUNT_NUMBER
 
-    @mock_sts
-    @mock_iam
+    @mock_aws
     @patch(
         "botocore.client.BaseClient._make_api_call",
         new=mock_get_caller_identity_gov_cloud,
@@ -402,8 +393,7 @@ class Test_AWS_Credentials:
         assert re.match("[0-9a-zA-Z]{20}", get_caller_identity["UserId"])
         assert get_caller_identity["Account"] == AWS_ACCOUNT_NUMBER
 
-    @mock_sts
-    @mock_iam
+    @mock_aws
     @patch(
         "botocore.client.BaseClient._make_api_call",
         new=mock_get_caller_identity_gov_cloud,
@@ -450,8 +440,7 @@ class Test_AWS_Credentials:
         assert re.match("[0-9a-zA-Z]{20}", get_caller_identity["UserId"])
         assert get_caller_identity["Account"] == AWS_ACCOUNT_NUMBER
 
-    @mock_iam
-    @mock_sts
+    @mock_aws
     def test_create_sts_session(self):
         aws_region = "eu-west-1"
         # Create a mock IAM user
@@ -474,8 +463,7 @@ class Test_AWS_Credentials:
         assert sts_client._endpoint._endpoint_prefix == "sts"
         assert sts_client._endpoint.host == f"https://sts.{aws_region}.amazonaws.com"
 
-    @mock_iam
-    @mock_sts
+    @mock_aws
     def test_create_sts_session_gov_cloud(self):
         aws_region = "us-gov-east-1"
         # Create a mock IAM user
@@ -498,8 +486,7 @@ class Test_AWS_Credentials:
         assert sts_client._endpoint._endpoint_prefix == "sts"
         assert sts_client._endpoint.host == f"https://sts.{aws_region}.amazonaws.com"
 
-    @mock_iam
-    @mock_sts
+    @mock_aws
     def test_create_sts_session_china(self):
         aws_region = "cn-north-1"
         # Create a mock IAM user

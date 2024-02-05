@@ -7,7 +7,7 @@ from unittest.mock import patch
 
 import mock
 from boto3 import client, resource
-from moto import mock_iam, mock_lambda, mock_s3
+from moto import mock_aws
 
 from prowler.providers.aws.services.awslambda.awslambda_service import AuthType, Lambda
 from tests.providers.aws.audit_info_utils import (
@@ -85,9 +85,7 @@ class Test_Lambda_Service:
         awslambda = Lambda(set_mocked_aws_audit_info([AWS_REGION_US_EAST_1]))
         assert awslambda.service == "lambda"
 
-    @mock_lambda
-    @mock_iam
-    @mock_s3
+    @mock_aws
     def test__list_functions__(self):
         # Create IAM Lambda Role
         iam_client = client("iam", region_name=AWS_REGION_EU_WEST_1)

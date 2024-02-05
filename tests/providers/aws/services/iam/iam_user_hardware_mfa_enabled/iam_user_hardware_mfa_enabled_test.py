@@ -2,7 +2,7 @@ from re import search
 from unittest import mock
 
 from boto3 import client
-from moto import mock_iam
+from moto import mock_aws
 
 from tests.providers.aws.audit_info_utils import (
     AWS_REGION_US_EAST_1,
@@ -20,7 +20,7 @@ class Test_iam_user_hardware_mfa_enabled_test:
         set_mocked_aws_audit_info,
     )
 
-    @mock_iam
+    @mock_aws
     def test_user_no_mfa_devices(self):
         iam_client = client("iam")
         user = "test-user"
@@ -53,7 +53,7 @@ class Test_iam_user_hardware_mfa_enabled_test:
             assert result[0].resource_id == user
             assert result[0].resource_arn == arn
 
-    @mock_iam
+    @mock_aws
     def test_user_virtual_mfa_devices(self):
         iam_client = client("iam")
         user = "test-user"
@@ -92,7 +92,7 @@ class Test_iam_user_hardware_mfa_enabled_test:
             assert result[0].resource_id == user
             assert result[0].resource_arn == arn
 
-    @mock_iam
+    @mock_aws
     def test_user_virtual_sms_mfa_devices(self):
         iam_client = client("iam")
         user = "test-user"

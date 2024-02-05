@@ -3,7 +3,7 @@ import zipfile
 from unittest.mock import patch
 
 from boto3 import client, resource
-from moto import mock_ec2, mock_iam, mock_lambda, mock_s3, mock_secretsmanager
+from moto import mock_aws
 
 from prowler.providers.aws.services.secretsmanager.secretsmanager_service import (
     SecretsManager,
@@ -30,7 +30,7 @@ def mock_generate_regional_clients(service, audit_info):
 )
 class Test_SecretsManager_Service:
     # Test SecretsManager Client
-    @mock_secretsmanager
+    @mock_aws
     def test__get_client__(self):
         audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         secretsmanager = SecretsManager(audit_info)
@@ -40,24 +40,20 @@ class Test_SecretsManager_Service:
         )
 
     # Test SecretsManager Session
-    @mock_secretsmanager
+    @mock_aws
     def test__get_session__(self):
         audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         secretsmanager = SecretsManager(audit_info)
         assert secretsmanager.session.__class__.__name__ == "Session"
 
     # Test SecretsManager Service
-    @mock_secretsmanager
+    @mock_aws
     def test__get_service__(self):
         audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         secretsmanager = SecretsManager(audit_info)
         assert secretsmanager.service == "secretsmanager"
 
-    @mock_secretsmanager
-    @mock_lambda
-    @mock_ec2
-    @mock_iam
-    @mock_s3
+    @mock_aws
     def test__list_secrets__(self):
         secretsmanager_client = client(
             "secretsmanager", region_name=AWS_REGION_EU_WEST_1

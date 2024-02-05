@@ -1,7 +1,7 @@
 import yaml
 from boto3 import resource
 from mock import MagicMock
-from moto import mock_dynamodb, mock_s3
+from moto import mock_aws
 
 from prowler.providers.aws.lib.allowlist.allowlist import (
     allowlist_findings,
@@ -25,7 +25,7 @@ from tests.providers.aws.audit_info_utils import (
 
 class Test_Allowlist:
     # Test S3 allowlist
-    @mock_s3
+    @mock_aws
     def test_s3_allowlist(self):
         audit_info = set_mocked_aws_audit_info()
         # Create bucket and upload allowlist yaml
@@ -44,7 +44,7 @@ class Test_Allowlist:
             )
 
     # Test DynamoDB allowlist
-    @mock_dynamodb
+    @mock_aws
     def test_dynamo_allowlist(self):
         audit_info = set_mocked_aws_audit_info()
         # Create table and put item
@@ -88,7 +88,7 @@ class Test_Allowlist:
             )["Accounts"]["*"]["Checks"]["iam_user_hardware_mfa_enabled"]["Resources"]
         )
 
-    @mock_dynamodb
+    @mock_aws
     def test_dynamo_allowlist_with_tags(self):
         audit_info = set_mocked_aws_audit_info()
         # Create table and put item

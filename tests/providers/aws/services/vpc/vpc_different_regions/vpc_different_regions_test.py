@@ -1,7 +1,7 @@
 from unittest import mock
 
 from boto3 import client
-from moto import mock_ec2
+from moto import mock_aws
 
 from tests.providers.aws.audit_info_utils import (
     AWS_ACCOUNT_ARN,
@@ -13,7 +13,7 @@ from tests.providers.aws.audit_info_utils import (
 
 
 class Test_vpc_different_regions:
-    @mock_ec2
+    @mock_aws
     def test_no_vpcs(self):
         from prowler.providers.aws.services.vpc.vpc_service import VPC
 
@@ -42,7 +42,7 @@ class Test_vpc_different_regions:
 
                 assert len(result) == 0
 
-    @mock_ec2
+    @mock_aws
     def test_vpc_different_regions(self):
         # VPC Region 1
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
@@ -83,7 +83,7 @@ class Test_vpc_different_regions:
                 assert result[0].resource_arn == AWS_ACCOUNT_ARN
                 assert result[0].resource_tags == []
 
-    @mock_ec2
+    @mock_aws
     def test_vpc_only_one_region(self):
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
         # VPC Region 1

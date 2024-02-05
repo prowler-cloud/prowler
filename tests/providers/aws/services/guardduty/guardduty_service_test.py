@@ -3,7 +3,7 @@ from unittest.mock import patch
 
 import botocore
 from boto3 import client
-from moto import mock_guardduty
+from moto import mock_aws
 
 from prowler.providers.aws.services.guardduty.guardduty_service import GuardDuty
 from tests.providers.aws.audit_info_utils import (
@@ -83,7 +83,7 @@ class Test_GuardDuty_Service:
         guardduty = GuardDuty(audit_info)
         assert guardduty.session.__class__.__name__ == "Session"
 
-    @mock_guardduty
+    @mock_aws
     # Test GuardDuty session
     def test__list_detectors__(self):
         guardduty_client = client("guardduty", region_name=AWS_REGION_EU_WEST_1)
@@ -105,7 +105,7 @@ class Test_GuardDuty_Service:
         assert guardduty.detectors[0].region == AWS_REGION_EU_WEST_1
         assert guardduty.detectors[0].tags == [{"test": "test"}]
 
-    @mock_guardduty
+    @mock_aws
     # Test GuardDuty session
     def test__get_detector__(self):
         guardduty_client = client("guardduty", region_name=AWS_REGION_EU_WEST_1)
@@ -127,7 +127,7 @@ class Test_GuardDuty_Service:
         assert guardduty.detectors[0].region == AWS_REGION_EU_WEST_1
         assert guardduty.detectors[0].tags == [{"test": "test"}]
 
-    @mock_guardduty
+    @mock_aws
     # Test GuardDuty session
     def test__list_findings__(self):
         guardduty_client = client("guardduty", region_name=AWS_REGION_EU_WEST_1)
@@ -149,7 +149,7 @@ class Test_GuardDuty_Service:
         assert guardduty.detectors[0].region == AWS_REGION_EU_WEST_1
         assert guardduty.detectors[0].tags == [{"test": "test"}]
 
-    @mock_guardduty
+    @mock_aws
     def test__list_members__(self):
         guardduty_client = client("guardduty", region_name=AWS_REGION_EU_WEST_1)
         response = guardduty_client.create_detector(Enable=True)
@@ -170,7 +170,7 @@ class Test_GuardDuty_Service:
         assert guardduty.detectors[0].region == AWS_REGION_EU_WEST_1
         assert guardduty.detectors[0].tags == [{"test": "test"}]
 
-    @mock_guardduty
+    @mock_aws
     # Test GuardDuty session
     def test__get_administrator_account__(self):
         guardduty_client = client("guardduty", region_name=AWS_REGION_EU_WEST_1)

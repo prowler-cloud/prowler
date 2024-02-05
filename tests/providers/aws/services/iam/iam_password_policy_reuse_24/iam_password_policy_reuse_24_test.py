@@ -1,7 +1,7 @@
 from unittest import mock
 
 from boto3 import client
-from moto import mock_iam
+from moto import mock_aws
 
 from tests.providers.aws.audit_info_utils import (
     AWS_ACCOUNT_ARN,
@@ -19,7 +19,7 @@ class Test_iam_password_policy_reuse_24:
         set_mocked_aws_audit_info,
     )
 
-    @mock_iam
+    @mock_aws
     def test_iam_password_policy_reuse_prevention_equal_24(self):
         iam_client = client("iam")
         # update password policy
@@ -52,7 +52,7 @@ class Test_iam_password_policy_reuse_24:
             assert result[0].resource_arn == AWS_ACCOUNT_ARN
             assert result[0].region == AWS_REGION_US_EAST_1
 
-    @mock_iam
+    @mock_aws
     def test_iam_password_policy_reuse_prevention_less_24(self):
         iam_client = client("iam")
         # update password policy

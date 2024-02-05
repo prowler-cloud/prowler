@@ -2,7 +2,7 @@ from json import dumps
 from unittest import mock
 
 from boto3 import client
-from moto import mock_iam
+from moto import mock_aws
 
 from prowler.providers.aws.services.iam.iam_service import Role
 from tests.providers.aws.audit_info_utils import (
@@ -15,7 +15,7 @@ AWS_ACCOUNT_ID = "123456789012"
 
 
 class Test_iam_role_cross_service_confused_deputy_prevention:
-    @mock_iam
+    @mock_aws
     def test_no_roles(self):
         from prowler.providers.aws.services.iam.iam_service import IAM
 
@@ -37,7 +37,7 @@ class Test_iam_role_cross_service_confused_deputy_prevention:
             result = check.execute()
             assert len(result) == 0
 
-    @mock_iam
+    @mock_aws
     def test_only_aws_service_linked_roles(self):
         iam_client = mock.MagicMock
         iam_client.roles = []
@@ -78,7 +78,7 @@ class Test_iam_role_cross_service_confused_deputy_prevention:
             result = check.execute()
             assert len(result) == 0
 
-    @mock_iam
+    @mock_aws
     def test_iam_service_role_without_cross_service_confused_deputy_prevention(self):
         iam_client = client("iam", region_name=AWS_REGION)
         policy_document = {
@@ -123,7 +123,7 @@ class Test_iam_role_cross_service_confused_deputy_prevention:
             assert result[0].resource_id == "test"
             assert result[0].resource_arn == response["Role"]["Arn"]
 
-    @mock_iam
+    @mock_aws
     def test_iam_service_role_with_cross_service_confused_deputy_prevention(self):
         iam_client = client("iam", region_name=AWS_REGION)
         policy_document = {
@@ -171,7 +171,7 @@ class Test_iam_role_cross_service_confused_deputy_prevention:
             assert result[0].resource_id == "test"
             assert result[0].resource_arn == response["Role"]["Arn"]
 
-    @mock_iam
+    @mock_aws
     def test_iam_service_role_with_cross_service_confused_deputy_prevention_stringlike(
         self,
     ):
@@ -221,7 +221,7 @@ class Test_iam_role_cross_service_confused_deputy_prevention:
             assert result[0].resource_id == "test"
             assert result[0].resource_arn == response["Role"]["Arn"]
 
-    @mock_iam
+    @mock_aws
     def test_iam_service_role_with_cross_service_confused_deputy_prevention_PrincipalAccount(
         self,
     ):
@@ -271,7 +271,7 @@ class Test_iam_role_cross_service_confused_deputy_prevention:
             assert result[0].resource_id == "test"
             assert result[0].resource_arn == response["Role"]["Arn"]
 
-    @mock_iam
+    @mock_aws
     def test_iam_service_role_with_cross_service_confused_deputy_prevention_ResourceAccount(
         self,
     ):

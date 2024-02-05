@@ -3,7 +3,7 @@ from unittest import mock
 import botocore
 from boto3 import client
 from mock import patch
-from moto import mock_apigatewayv2
+from moto import mock_aws
 
 from tests.providers.aws.audit_info_utils import (
     AWS_REGION_US_EAST_1,
@@ -39,7 +39,7 @@ def mock_make_api_call(self, operation_name, kwarg):
 
 @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
 class Test_apigatewayv2_api_access_logging_enabled:
-    @mock_apigatewayv2
+    @mock_aws
     def test_apigateway_no_apis(self):
         from prowler.providers.aws.services.apigatewayv2.apigatewayv2_service import (
             ApiGatewayV2,
@@ -66,7 +66,7 @@ class Test_apigatewayv2_api_access_logging_enabled:
 
             assert len(result) == 0
 
-    @mock_apigatewayv2
+    @mock_aws
     def test_apigateway_one_api_with_logging_in_stage(self):
         # Create ApiGatewayV2 Mocked Resources
         apigatewayv2_client = client("apigatewayv2", region_name=AWS_REGION_US_EAST_1)

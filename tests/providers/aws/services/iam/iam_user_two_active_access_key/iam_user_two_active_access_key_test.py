@@ -2,7 +2,7 @@ from re import search
 from unittest import mock
 
 from boto3 import client
-from moto import mock_iam
+from moto import mock_aws
 
 from tests.providers.aws.audit_info_utils import (
     AWS_REGION_US_EAST_1,
@@ -20,7 +20,7 @@ class Test_iam_user_two_active_access_key:
         set_mocked_aws_audit_info,
     )
 
-    @mock_iam
+    @mock_aws
     def test_iam_user_two_active_access_key(self):
         # Create IAM Mocked Resources
         iam_client = client("iam")
@@ -61,7 +61,7 @@ class Test_iam_user_two_active_access_key:
                 f"User {user} has 2 active access keys.", result[0].status_extended
             )
 
-    @mock_iam
+    @mock_aws
     def test_iam_user_one_active_access_key(self):
         # Create IAM User
         iam_client = client("iam")
@@ -98,7 +98,7 @@ class Test_iam_user_two_active_access_key:
                 result[0].status_extended,
             )
 
-    @mock_iam
+    @mock_aws
     def test_iam_user_without_active_access_key(self):
         # Create IAM User
         iam_client = client("iam")
@@ -133,7 +133,7 @@ class Test_iam_user_two_active_access_key:
                 result[0].status_extended,
             )
 
-    @mock_iam
+    @mock_aws
     def test_iam_no_users(self):
         from prowler.providers.aws.services.iam.iam_service import IAM
 

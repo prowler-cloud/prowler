@@ -1,7 +1,7 @@
 from unittest import mock
 
 from boto3 import client
-from moto import mock_ec2
+from moto import mock_aws
 
 from tests.providers.aws.audit_info_utils import (
     AWS_REGION_EU_WEST_1,
@@ -11,7 +11,7 @@ from tests.providers.aws.audit_info_utils import (
 
 
 class Test_ec2_networkacl_allow_ingress_any_port:
-    @mock_ec2
+    @mock_aws
     def test_ec2_default_nacls(self):
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
@@ -37,7 +37,7 @@ class Test_ec2_networkacl_allow_ingress_any_port:
             # One default nacl per region
             assert len(result) == 2
 
-    @mock_ec2
+    @mock_aws
     def test_ec2_non_default_compliant_nacl(self):
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
@@ -72,7 +72,7 @@ class Test_ec2_networkacl_allow_ingress_any_port:
                 == f"Network ACL {result[0].resource_id} has every port open to the Internet."
             )
 
-    @mock_ec2
+    @mock_aws
     def test_ec2_non_compliant_nacl(self):
         # Create EC2 Mocked Resources
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
@@ -127,7 +127,7 @@ class Test_ec2_networkacl_allow_ingress_any_port:
                         == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION_US_EAST_1}:{current_audit_info.audited_account}:network-acl/{nacl_id}"
                     )
 
-    @mock_ec2
+    @mock_aws
     def test_ec2_compliant_nacl(self):
         # Create EC2 Mocked Resources
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
@@ -182,7 +182,7 @@ class Test_ec2_networkacl_allow_ingress_any_port:
                         == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION_US_EAST_1}:{current_audit_info.audited_account}:network-acl/{nacl_id}"
                     )
 
-    @mock_ec2
+    @mock_aws
     def test_ec2_non_compliant_nacl_ignoring(self):
         # Create EC2 Mocked Resources
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
@@ -223,7 +223,7 @@ class Test_ec2_networkacl_allow_ingress_any_port:
 
             assert len(result) == 0
 
-    @mock_ec2
+    @mock_aws
     def test_ec2_non_compliant_nacl_ignoring_with_sgs(self):
         # Create EC2 Mocked Resources
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)

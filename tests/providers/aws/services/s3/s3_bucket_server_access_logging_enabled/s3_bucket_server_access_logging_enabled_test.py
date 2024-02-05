@@ -2,7 +2,7 @@ from re import search
 from unittest import mock
 
 from boto3 import client
-from moto import mock_s3
+from moto import mock_aws
 
 from tests.providers.aws.audit_info_utils import (
     AWS_REGION_US_EAST_1,
@@ -11,7 +11,7 @@ from tests.providers.aws.audit_info_utils import (
 
 
 class Test_s3_bucket_server_access_logging_enabled:
-    @mock_s3
+    @mock_aws
     def test_bucket_no_logging(self):
         s3_client_us_east_1 = client("s3", region_name=AWS_REGION_US_EAST_1)
         bucket_name_us = "bucket_test_us"
@@ -49,7 +49,7 @@ class Test_s3_bucket_server_access_logging_enabled:
                     == f"arn:{audit_info.audited_partition}:s3:::{bucket_name_us}"
                 )
 
-    @mock_s3
+    @mock_aws
     def test_bucket_with_logging(self):
         s3_client_us_east_1 = client("s3", region_name=AWS_REGION_US_EAST_1)
         bucket_name_us = "bucket_test_us"

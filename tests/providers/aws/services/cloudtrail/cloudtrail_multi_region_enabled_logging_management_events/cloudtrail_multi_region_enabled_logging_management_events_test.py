@@ -1,7 +1,7 @@
 from unittest import mock
 
 from boto3 import client
-from moto import mock_cloudtrail, mock_s3
+from moto import mock_aws
 
 from tests.providers.aws.audit_info_utils import (
     AWS_ACCOUNT_ARN,
@@ -12,7 +12,7 @@ from tests.providers.aws.audit_info_utils import (
 
 
 class Test_cloudtrail_multi_region_enabled_logging_management_events:
-    @mock_cloudtrail
+    @mock_aws
     def test_no_trails(self):
         from prowler.providers.aws.services.cloudtrail.cloudtrail_service import (
             Cloudtrail,
@@ -45,8 +45,7 @@ class Test_cloudtrail_multi_region_enabled_logging_management_events:
                     == "No trail found with multi-region enabled and logging management events."
                 )
 
-    @mock_cloudtrail
-    @mock_s3
+    @mock_aws
     def test_compliant_trail_advanced_event_selector(self):
         cloudtrail_client_us_east_1 = client(
             "cloudtrail", region_name=AWS_REGION_US_EAST_1
@@ -102,8 +101,7 @@ class Test_cloudtrail_multi_region_enabled_logging_management_events:
                     == f"Trail {trail_name_us} from home region {AWS_REGION_US_EAST_1} is multi-region, is logging and have management events enabled."
                 )
 
-    @mock_cloudtrail
-    @mock_s3
+    @mock_aws
     def test_non_compliant_trail_advanced_event_selector(self):
         cloudtrail_client_us_east_1 = client(
             "cloudtrail", region_name=AWS_REGION_US_EAST_1
@@ -159,8 +157,7 @@ class Test_cloudtrail_multi_region_enabled_logging_management_events:
                     == "No trail found with multi-region enabled and logging management events."
                 )
 
-    @mock_cloudtrail
-    @mock_s3
+    @mock_aws
     def test_compliant_trail_classic_event_selector(self):
         cloudtrail_client_us_east_1 = client(
             "cloudtrail", region_name=AWS_REGION_US_EAST_1
@@ -215,8 +212,7 @@ class Test_cloudtrail_multi_region_enabled_logging_management_events:
                     == f"Trail {trail_name_us} from home region {AWS_REGION_US_EAST_1} is multi-region, is logging and have management events enabled."
                 )
 
-    @mock_cloudtrail
-    @mock_s3
+    @mock_aws
     def test_non_compliant_trail_classic_event_selector(self):
         cloudtrail_client_us_east_1 = client(
             "cloudtrail", region_name=AWS_REGION_US_EAST_1

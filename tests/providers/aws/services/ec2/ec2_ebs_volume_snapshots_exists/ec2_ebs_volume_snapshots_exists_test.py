@@ -2,7 +2,7 @@ from unittest import mock
 
 from boto3 import resource
 from mock import patch
-from moto import mock_ec2
+from moto import mock_aws
 
 from tests.providers.aws.audit_info_utils import (
     AWS_ACCOUNT_NUMBER,
@@ -26,7 +26,7 @@ def mock_generate_regional_clients(service, audit_info):
     new=mock_generate_regional_clients,
 )
 class Test_ec2_ebs_volume_snapshots_exists:
-    @mock_ec2
+    @mock_aws
     def test_no_volumes(self):
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
@@ -51,7 +51,7 @@ class Test_ec2_ebs_volume_snapshots_exists:
 
             assert len(result) == 0
 
-    @mock_ec2
+    @mock_aws
     def test_ec2_volume_without_snapshots(self):
         ec2 = resource("ec2", region_name=AWS_REGION_US_EAST_1)
         volume = ec2.create_volume(Size=80, AvailabilityZone=AWS_REGION_US_EAST_1_AZA)
@@ -88,7 +88,7 @@ class Test_ec2_ebs_volume_snapshots_exists:
             assert result[0].resource_tags is None
             assert result[0].region == AWS_REGION_US_EAST_1
 
-    @mock_ec2
+    @mock_aws
     def test_ec2_volume_with_snapshot(self):
         # Create EC2 Mocked Resources
         ec2 = resource("ec2", region_name=AWS_REGION_US_EAST_1)
@@ -128,7 +128,7 @@ class Test_ec2_ebs_volume_snapshots_exists:
             assert result[0].resource_tags is None
             assert result[0].region == AWS_REGION_US_EAST_1
 
-    @mock_ec2
+    @mock_aws
     def test_ec2_volume_with_and_without_snapshot(self):
         # Create EC2 Mocked Resources
         ec2 = resource("ec2", region_name=AWS_REGION_US_EAST_1)

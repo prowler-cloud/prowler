@@ -2,7 +2,7 @@ import json
 from unittest import mock
 
 from boto3 import client
-from moto import mock_ec2
+from moto import mock_aws
 
 from tests.providers.aws.audit_info_utils import (
     AWS_ACCOUNT_NUMBER,
@@ -15,7 +15,7 @@ NON_TRUSTED_AWS_ACCOUNT_NUMBER = "000011112222"
 
 
 class Test_vpc_endpoint_connections_trust_boundaries:
-    @mock_ec2
+    @mock_aws
     def test_vpc_no_endpoints(self):
         from prowler.providers.aws.services.vpc.vpc_service import VPC
 
@@ -41,7 +41,7 @@ class Test_vpc_endpoint_connections_trust_boundaries:
 
                 assert len(result) == 0
 
-    @mock_ec2
+    @mock_aws
     def test_vpc_aws_endpoint(self):
         # Create VPC Mocked Resources
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
@@ -80,7 +80,7 @@ class Test_vpc_endpoint_connections_trust_boundaries:
 
                 assert len(result) == 0
 
-    @mock_ec2
+    @mock_aws
     def test_vpc_endpoint_with_full_access(self):
         # Create VPC Mocked Resources
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
@@ -141,7 +141,7 @@ class Test_vpc_endpoint_connections_trust_boundaries:
                 )
                 assert result[0].region == AWS_REGION_US_EAST_1
 
-    @mock_ec2
+    @mock_aws
     def test_vpc_endpoint_with_trusted_account_arn(self):
         # Create VPC Mocked Resources
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
@@ -203,7 +203,7 @@ class Test_vpc_endpoint_connections_trust_boundaries:
                 )
                 assert result[0].region == AWS_REGION_US_EAST_1
 
-    @mock_ec2
+    @mock_aws
     def test_vpc_endpoint_with_trusted_account_id(self):
         # Create VPC Mocked Resources
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
@@ -263,7 +263,7 @@ class Test_vpc_endpoint_connections_trust_boundaries:
                 )
                 assert result[0].region == AWS_REGION_US_EAST_1
 
-    @mock_ec2
+    @mock_aws
     def test_vpc_endpoint_with_untrusted_account(self):
         # Create VPC Mocked Resources
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
@@ -325,7 +325,7 @@ class Test_vpc_endpoint_connections_trust_boundaries:
                     == vpc_endpoint["VpcEndpoint"]["VpcEndpointId"]
                 )
 
-    @mock_ec2
+    @mock_aws
     def test_vpc_endpoint_with_config_trusted_account_with_arn(self):
         # Create VPC Mocked Resources
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
@@ -390,7 +390,7 @@ class Test_vpc_endpoint_connections_trust_boundaries:
                 )
                 assert result[0].region == AWS_REGION_US_EAST_1
 
-    @mock_ec2
+    @mock_aws
     def test_vpc_endpoint_with_config_trusted_account(self):
         # Create VPC Mocked Resources
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
@@ -453,7 +453,7 @@ class Test_vpc_endpoint_connections_trust_boundaries:
                 )
                 assert result[0].region == AWS_REGION_US_EAST_1
 
-    @mock_ec2
+    @mock_aws
     def test_vpc_endpoint_with_two_account_ids_one_trusted_one_not(self):
         # Create VPC Mocked Resources
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
@@ -518,7 +518,7 @@ class Test_vpc_endpoint_connections_trust_boundaries:
                 )
                 assert result[0].region == AWS_REGION_US_EAST_1
 
-    @mock_ec2
+    @mock_aws
     def test_vpc_endpoint_with_aws_principal_all(self):
         # Create VPC Mocked Resources
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
@@ -578,7 +578,7 @@ class Test_vpc_endpoint_connections_trust_boundaries:
                 )
                 assert result[0].region == AWS_REGION_US_EAST_1
 
-    @mock_ec2
+    @mock_aws
     def test_vpc_endpoint_with_aws_principal_all_but_restricted_condition_with_SourceAccount(
         self,
     ):
@@ -645,7 +645,7 @@ class Test_vpc_endpoint_connections_trust_boundaries:
                 )
                 assert result[0].region == AWS_REGION_US_EAST_1
 
-    @mock_ec2
+    @mock_aws
     def test_vpc_endpoint_with_aws_principal_all_but_restricted_condition_with_PrincipalAccount(
         self,
     ):

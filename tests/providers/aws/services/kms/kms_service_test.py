@@ -1,7 +1,7 @@
 import json
 
 from boto3 import client
-from moto import mock_kms
+from moto import mock_aws
 
 from prowler.providers.aws.services.kms.kms_service import KMS
 from tests.providers.aws.audit_info_utils import (
@@ -14,7 +14,7 @@ from tests.providers.aws.audit_info_utils import (
 class Test_ACM_Service:
 
     # Test KMS Service
-    @mock_kms
+    @mock_aws
     def test_service(self):
         # KMS client for this test class
         audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
@@ -22,7 +22,7 @@ class Test_ACM_Service:
         assert kms.service == "kms"
 
     # Test KMS Client
-    @mock_kms
+    @mock_aws
     def test_client(self):
         # KMS client for this test class
         audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
@@ -31,7 +31,7 @@ class Test_ACM_Service:
             assert regional_client.__class__.__name__ == "KMS"
 
     # Test KMS Session
-    @mock_kms
+    @mock_aws
     def test__get_session__(self):
         # KMS client for this test class
         audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
@@ -39,7 +39,7 @@ class Test_ACM_Service:
         assert kms.session.__class__.__name__ == "Session"
 
     # Test KMS Session
-    @mock_kms
+    @mock_aws
     def test_audited_account(self):
         # KMS client for this test class
         audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
@@ -47,7 +47,7 @@ class Test_ACM_Service:
         assert kms.audited_account == AWS_ACCOUNT_NUMBER
 
     # Test KMS List Keys
-    @mock_kms
+    @mock_aws
     def test__list_keys__(self):
         # Generate KMS Client
         kms_client = client("kms", region_name=AWS_REGION_US_EAST_1)
@@ -62,7 +62,7 @@ class Test_ACM_Service:
         assert kms.keys[1].arn == key2["Arn"]
 
     # Test KMS Describe Keys
-    @mock_kms
+    @mock_aws
     def test__describe_key__(self):
         # Generate KMS Client
         kms_client = client("kms", region_name=AWS_REGION_US_EAST_1)
@@ -85,7 +85,7 @@ class Test_ACM_Service:
         ]
 
     # Test KMS Get rotation status
-    @mock_kms
+    @mock_aws
     def test__get_key_rotation_status__(self):
         # Generate KMS Client
         kms_client = client("kms", region_name=AWS_REGION_US_EAST_1)
@@ -103,7 +103,7 @@ class Test_ACM_Service:
         assert kms.keys[1].rotation_enabled is True
 
     # Test KMS Key policy
-    @mock_kms
+    @mock_aws
     def test__get_key_policy__(self):
         public_policy = json.dumps(
             {

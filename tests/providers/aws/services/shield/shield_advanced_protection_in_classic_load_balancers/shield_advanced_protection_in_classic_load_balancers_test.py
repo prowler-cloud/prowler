@@ -1,7 +1,7 @@
 from unittest import mock
 
 from boto3 import client, resource
-from moto import mock_ec2, mock_elb
+from moto import mock_aws
 
 from prowler.providers.aws.services.shield.shield_service import Protection
 from tests.providers.aws.audit_info_utils import (
@@ -12,8 +12,7 @@ from tests.providers.aws.audit_info_utils import (
 
 
 class Test_shield_advanced_protection_in_classic_load_balancers:
-    @mock_elb
-    @mock_ec2
+    @mock_aws
     def test_no_shield_not_active(self):
         # Shield Client
         shield_client = mock.MagicMock
@@ -41,8 +40,7 @@ class Test_shield_advanced_protection_in_classic_load_balancers:
 
             assert len(result) == 0
 
-    @mock_ec2
-    @mock_elb
+    @mock_aws
     def test_shield_enabled_elb_protected(self):
         # ELB Client
         elb = client("elb", region_name=AWS_REGION_EU_WEST_1)
@@ -109,8 +107,7 @@ class Test_shield_advanced_protection_in_classic_load_balancers:
                 == f"ELB {elb_name} is protected by AWS Shield Advanced."
             )
 
-    @mock_elb
-    @mock_ec2
+    @mock_aws
     def test_shield_enabled_elb_not_protected(self):
         # ELB Client
         elb = client("elb", region_name=AWS_REGION_EU_WEST_1)
@@ -168,8 +165,7 @@ class Test_shield_advanced_protection_in_classic_load_balancers:
                 == f"ELB {elb_name} is not protected by AWS Shield Advanced."
             )
 
-    @mock_elb
-    @mock_ec2
+    @mock_aws
     def test_shield_disabled_elb_not_protected(self):
         # ELB Client
         elb = client("elb", region_name=AWS_REGION_EU_WEST_1)

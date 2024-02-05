@@ -3,7 +3,7 @@ from unittest.mock import patch
 import botocore
 import yaml
 from boto3 import client
-from moto import mock_ssm
+from moto import mock_aws
 
 from prowler.providers.aws.services.ssm.ssm_service import SSM, ResourceStatus
 from tests.providers.aws.audit_info_utils import (
@@ -134,24 +134,24 @@ mainSteps:
 )
 class Test_SSM_Service:
     # Test SSM Client
-    @mock_ssm
+    @mock_aws
     def test__get_client__(self):
         ssm = SSM(set_mocked_aws_audit_info([AWS_REGION_US_EAST_1]))
         assert ssm.regional_clients[AWS_REGION_US_EAST_1].__class__.__name__ == "SSM"
 
     # Test SSM Session
-    @mock_ssm
+    @mock_aws
     def test__get_session__(self):
         ssm = SSM(set_mocked_aws_audit_info([AWS_REGION_US_EAST_1]))
         assert ssm.session.__class__.__name__ == "Session"
 
     # Test SSM Service
-    @mock_ssm
+    @mock_aws
     def test__get_service__(self):
         ssm = SSM(set_mocked_aws_audit_info([AWS_REGION_US_EAST_1]))
         assert ssm.service == "ssm"
 
-    @mock_ssm
+    @mock_aws
     def test__list_documents__(self):
         # Create SSM Document
         ssm_client = client("ssm", region_name=AWS_REGION_US_EAST_1)
@@ -188,7 +188,7 @@ class Test_SSM_Service:
         assert ssm.documents[document_arn].content == yaml.safe_load(ssm_document_yaml)
         assert ssm.documents[document_arn].account_owners == [AWS_ACCOUNT_NUMBER]
 
-    @mock_ssm
+    @mock_aws
     def test__list_resource_compliance_summaries__(self):
         ssm = SSM(set_mocked_aws_audit_info([AWS_REGION_US_EAST_1]))
         instance_id = "i-1234567890abcdef0"

@@ -1,5 +1,5 @@
 from boto3 import client
-from moto import mock_config
+from moto import mock_aws
 
 from prowler.providers.aws.services.config.config_service import Config
 from tests.providers.aws.audit_info_utils import (
@@ -12,7 +12,7 @@ from tests.providers.aws.audit_info_utils import (
 
 class Test_Config_Service:
     # Test Config Service
-    @mock_config
+    @mock_aws
     def test_service(self):
         # Config client for this test class
         audit_info = set_mocked_aws_audit_info(
@@ -22,7 +22,7 @@ class Test_Config_Service:
         assert config.service == "config"
 
     # Test Config Client
-    @mock_config
+    @mock_aws
     def test_client(self):
         # Config client for this test class
         audit_info = set_mocked_aws_audit_info(
@@ -33,7 +33,7 @@ class Test_Config_Service:
             assert regional_client.__class__.__name__ == "ConfigService"
 
     # Test Config Session
-    @mock_config
+    @mock_aws
     def test__get_session__(self):
         # Config client for this test class
         audit_info = set_mocked_aws_audit_info(
@@ -43,7 +43,7 @@ class Test_Config_Service:
         assert config.session.__class__.__name__ == "Session"
 
     # Test Config Session
-    @mock_config
+    @mock_aws
     def test_audited_account(self):
         # Config client for this test class
         audit_info = set_mocked_aws_audit_info(
@@ -53,7 +53,7 @@ class Test_Config_Service:
         assert config.audited_account == AWS_ACCOUNT_NUMBER
 
     # Test Config Get Rest APIs
-    @mock_config
+    @mock_aws
     def test__describe_configuration_recorder_status__(self):
         # Generate Config Client
         config_client = client("config", region_name=AWS_REGION_US_EAST_1)

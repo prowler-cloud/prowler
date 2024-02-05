@@ -1,5 +1,5 @@
 from boto3 import client
-from moto import mock_dax, mock_dynamodb
+from moto import mock_aws
 
 from prowler.providers.aws.services.dynamodb.dynamodb_service import DAX, DynamoDB
 from tests.providers.aws.audit_info_utils import (
@@ -11,7 +11,7 @@ from tests.providers.aws.audit_info_utils import (
 
 class Test_DynamoDB_Service:
     # Test Dynamo Service
-    @mock_dynamodb
+    @mock_aws
     def test_service(self):
         # Dynamo client for this test class
         audit_info = set_mocked_aws_audit_info()
@@ -19,7 +19,7 @@ class Test_DynamoDB_Service:
         assert dynamodb.service == "dynamodb"
 
     # Test Dynamo Client
-    @mock_dynamodb
+    @mock_aws
     def test_client(self):
         # Dynamo client for this test class
         audit_info = set_mocked_aws_audit_info()
@@ -28,7 +28,7 @@ class Test_DynamoDB_Service:
             assert regional_client.__class__.__name__ == "DynamoDB"
 
     # Test Dynamo Session
-    @mock_dynamodb
+    @mock_aws
     def test__get_session__(self):
         # Dynamo client for this test class
         audit_info = set_mocked_aws_audit_info()
@@ -36,7 +36,7 @@ class Test_DynamoDB_Service:
         assert dynamodb.session.__class__.__name__ == "Session"
 
     # Test Dynamo Session
-    @mock_dynamodb
+    @mock_aws
     def test_audited_account(self):
         # Dynamo client for this test class
         audit_info = set_mocked_aws_audit_info()
@@ -44,7 +44,7 @@ class Test_DynamoDB_Service:
         assert dynamodb.audited_account == AWS_ACCOUNT_NUMBER
 
     # Test DynamoDB List Tables
-    @mock_dynamodb
+    @mock_aws
     def test__list_tables__(self):
         # Generate DynamoDB Client
         dynamodb_client = client("dynamodb", region_name=AWS_REGION_US_EAST_1)
@@ -83,7 +83,7 @@ class Test_DynamoDB_Service:
         assert dynamo.tables[1].region == AWS_REGION_US_EAST_1
 
     # Test DynamoDB Describe Table
-    @mock_dynamodb
+    @mock_aws
     def test__describe_table__(self):
         # Generate DynamoDB Client
         dynamodb_client = client("dynamodb", region_name=AWS_REGION_US_EAST_1)
@@ -115,7 +115,7 @@ class Test_DynamoDB_Service:
         ]
 
     # Test DynamoDB Describe Continuous Backups
-    @mock_dynamodb
+    @mock_aws
     def test__describe_continuous_backups__(self):
         # Generate DynamoDB Client
         dynamodb_client = client("dynamodb", region_name=AWS_REGION_US_EAST_1)
@@ -146,7 +146,7 @@ class Test_DynamoDB_Service:
         assert dynamo.tables[0].region == AWS_REGION_US_EAST_1
 
     # Test DAX Describe Clusters
-    @mock_dax
+    @mock_aws
     def test__describe_clusters__(self):
         # Generate DAX Client
         dax_client = client("dax", region_name=AWS_REGION_US_EAST_1)

@@ -1,7 +1,7 @@
 from unittest import mock
 
 from boto3 import client, resource
-from moto import mock_ec2
+from moto import mock_aws
 
 from prowler.providers.aws.services.dlm.dlm_service import LifecyclePolicy
 from tests.providers.aws.audit_info_utils import (
@@ -15,7 +15,7 @@ LIFECYCLE_POLICY_ID = "policy-XXXXXXXXXXXX"
 
 
 class Test_dlm_ebs_snapshot_lifecycle_policy_exists:
-    @mock_ec2
+    @mock_aws
     def test_no_ebs_snapshot_no_lifecycle_policies(self):
         # DLM Mock Client
         dlm_client = mock.MagicMock
@@ -48,7 +48,7 @@ class Test_dlm_ebs_snapshot_lifecycle_policy_exists:
             result = check.execute()
             assert len(result) == 0
 
-    @mock_ec2
+    @mock_aws
     def test_one_ebs_snapshot_and_dlm_lifecycle_policy(self):
         # Generate EC2 Client
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
@@ -113,7 +113,7 @@ class Test_dlm_ebs_snapshot_lifecycle_policy_exists:
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
             assert result[0].resource_arn == AWS_ACCOUNT_ARN
 
-    @mock_ec2
+    @mock_aws
     def test_one_ebs_snapshot_and_no_dlm_lifecycle_policy(self):
         # Generate EC2 Client
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
@@ -166,7 +166,7 @@ class Test_dlm_ebs_snapshot_lifecycle_policy_exists:
             result = check.execute()
             assert len(result) == 0
 
-    @mock_ec2
+    @mock_aws
     def test_no_ebs_snapshot_and_dlm_lifecycle_policy(self):
         # DLM Mock Client
         dlm_client = mock.MagicMock

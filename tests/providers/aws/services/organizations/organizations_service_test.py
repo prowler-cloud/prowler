@@ -1,7 +1,7 @@
 import json
 
 from boto3 import client
-from moto import mock_organizations
+from moto import mock_aws
 
 from prowler.providers.aws.services.organizations.organizations_service import (
     Organizations,
@@ -17,13 +17,13 @@ def scp_restrict_regions_with_deny():
 
 
 class Test_Organizations_Service:
-    @mock_organizations
+    @mock_aws
     def test_service(self):
         audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         organizations = Organizations(audit_info)
         assert organizations.service == "organizations"
 
-    @mock_organizations
+    @mock_aws
     def test__describe_organization__(self):
         # Create Organization
         conn = client("organizations", region_name=AWS_REGION_EU_WEST_1)
@@ -42,7 +42,7 @@ class Test_Organizations_Service:
         assert organizations.organizations[0].status == "ACTIVE"
         assert organizations.organizations[0].delegated_administrators == []
 
-    @mock_organizations
+    @mock_aws
     def test__list_policies__(self):
         # Create Policy
         conn = client("organizations", region_name=AWS_REGION_EU_WEST_1)

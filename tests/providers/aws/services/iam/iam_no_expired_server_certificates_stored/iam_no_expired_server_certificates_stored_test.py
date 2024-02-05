@@ -2,7 +2,7 @@ from re import search
 from unittest import mock
 
 from boto3 import client
-from moto import mock_iam
+from moto import mock_aws
 
 from tests.providers.aws.audit_info_utils import (
     AWS_REGION_US_EAST_1,
@@ -11,7 +11,7 @@ from tests.providers.aws.audit_info_utils import (
 
 
 class Test_iam_no_expired_server_certificates_stored_test:
-    @mock_iam
+    @mock_aws
     def test_no_certificates(self):
         from prowler.providers.aws.services.iam.iam_service import IAM
 
@@ -34,7 +34,7 @@ class Test_iam_no_expired_server_certificates_stored_test:
 
                 assert len(result) == 0
 
-    @mock_iam
+    @mock_aws
     def test_expired_certificate(self):
         iam_client = client("iam")
         # moto creates an expired certificate by default

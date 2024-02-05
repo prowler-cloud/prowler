@@ -1,7 +1,7 @@
 from unittest import mock
 
 from boto3 import client
-from moto import mock_cloudtrail, mock_s3
+from moto import mock_aws
 
 from prowler.providers.aws.services.cloudtrail.cloudtrail_service import Cloudtrail
 from tests.providers.aws.audit_info_utils import (
@@ -12,7 +12,7 @@ from tests.providers.aws.audit_info_utils import (
 
 
 class Test_cloudtrail_insights_exist:
-    @mock_cloudtrail
+    @mock_aws
     def test_no_trails(self):
         current_audit_info = set_mocked_aws_audit_info(
             [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
@@ -35,8 +35,7 @@ class Test_cloudtrail_insights_exist:
                 result = check.execute()
                 assert len(result) == 0
 
-    @mock_cloudtrail
-    @mock_s3
+    @mock_aws
     def test_trails_with_no_insight_selector(self):
         current_audit_info = set_mocked_aws_audit_info(
             [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
@@ -81,8 +80,7 @@ class Test_cloudtrail_insights_exist:
                 assert result[0].resource_arn == trail_us["TrailARN"]
                 assert result[0].resource_tags == []
 
-    @mock_cloudtrail
-    @mock_s3
+    @mock_aws
     def test_trails_with_insight_selector(self):
         current_audit_info = set_mocked_aws_audit_info(
             [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]

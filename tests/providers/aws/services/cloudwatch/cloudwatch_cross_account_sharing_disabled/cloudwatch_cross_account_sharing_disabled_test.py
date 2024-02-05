@@ -1,7 +1,7 @@
 from unittest import mock
 
 from boto3 import client
-from moto import mock_iam
+from moto import mock_aws
 
 from tests.providers.aws.audit_info_utils import (
     AWS_ACCOUNT_NUMBER,
@@ -12,7 +12,7 @@ from tests.providers.aws.audit_info_utils import (
 
 
 class Test_cloudwatch_cross_account_sharing_disabled:
-    @mock_iam
+    @mock_aws
     def test_cloudwatch_without_cross_account_role(self):
         from prowler.providers.aws.services.iam.iam_service import IAM
 
@@ -53,7 +53,7 @@ class Test_cloudwatch_cross_account_sharing_disabled:
             )
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
 
-    @mock_iam
+    @mock_aws
     def test_cloudwatch_log_group_with_cross_account_role(self):
         # Generate Logs Client
         iam_client = client("iam", region_name=AWS_REGION_US_EAST_1)

@@ -1,7 +1,7 @@
 from unittest import mock
 
 from boto3 import client
-from moto import mock_logs
+from moto import mock_aws
 
 from tests.providers.aws.audit_info_utils import (
     AWS_REGION_EU_WEST_1,
@@ -45,7 +45,7 @@ class Test_cloudwatch_log_group_kms_encryption_enabled:
 
             assert len(result) == 0
 
-    @mock_logs
+    @mock_aws
     def test_cloudwatch_log_group_without_kms_key(self):
         # Generate Logs Client
         logs_client = client("logs", region_name=AWS_REGION_US_EAST_1)
@@ -93,7 +93,7 @@ class Test_cloudwatch_log_group_kms_encryption_enabled:
             )
             assert result[0].resource_id == "test"
 
-    @mock_logs
+    @mock_aws
     def test_cloudwatch_log_group_with_kms_key(self):
         # Generate Logs Client
         logs_client = client("logs", region_name=AWS_REGION_US_EAST_1)

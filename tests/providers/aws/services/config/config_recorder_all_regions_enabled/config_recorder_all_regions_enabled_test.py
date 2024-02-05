@@ -1,7 +1,7 @@
 from unittest import mock
 
 from boto3 import client
-from moto import mock_config
+from moto import mock_aws
 
 from tests.providers.aws.audit_info_utils import (
     AWS_ACCOUNT_ARN,
@@ -14,7 +14,7 @@ from tests.providers.aws.audit_info_utils import (
 
 
 class Test_config_recorder_all_regions_enabled:
-    @mock_config
+    @mock_aws
     def test_config_no_recorders(self):
         from prowler.providers.aws.services.config.config_service import Config
 
@@ -48,7 +48,7 @@ class Test_config_recorder_all_regions_enabled:
             assert result[0].resource_arn == AWS_ACCOUNT_ARN
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
 
-    @mock_config
+    @mock_aws
     def test_config_one_recoder_disabled(self):
         # Create Config Mocked Resources
         config_client = client("config", region_name=AWS_REGION_US_EAST_1)
@@ -87,7 +87,7 @@ class Test_config_recorder_all_regions_enabled:
                     assert recorder.resource_arn == AWS_ACCOUNT_ARN
                     assert recorder.region == AWS_REGION_US_EAST_1
 
-    @mock_config
+    @mock_aws
     def test_config_one_recoder_enabled(self):
         # Create Config Mocked Resources
         config_client = client("config", region_name=AWS_REGION_US_EAST_1)
@@ -131,7 +131,7 @@ class Test_config_recorder_all_regions_enabled:
                     assert recorder.resource_arn == AWS_ACCOUNT_ARN
                     assert recorder.region == AWS_REGION_US_EAST_1
 
-    @mock_config
+    @mock_aws
     def test_config_one_recorder_disabled_allowlisted(self):
         # Create Config Mocked Resources
         config_client = client("config", region_name=AWS_REGION_US_EAST_1)
