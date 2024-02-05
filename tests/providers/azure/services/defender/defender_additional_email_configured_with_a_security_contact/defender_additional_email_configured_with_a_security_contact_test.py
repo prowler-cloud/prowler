@@ -1,10 +1,8 @@
 from unittest import mock
 from uuid import uuid4
 
-from prowler.providers.azure.services.defender.defender_service import (
-    Defender_Security_Contacts,
-)
-from tests.providers.azure.azure_fixtures import AZURE_SUSCRIPTION
+from prowler.providers.azure.services.defender.defender_service import SecurityContacts
+from tests.providers.azure.azure_fixtures import AZURE_SUBSCRIPTION
 
 
 class Test_defender_additional_email_configured_with_a_security_contact:
@@ -28,8 +26,8 @@ class Test_defender_additional_email_configured_with_a_security_contact:
         resource_id = str(uuid4())
         defender_client = mock.MagicMock
         defender_client.security_contacts = {
-            AZURE_SUSCRIPTION: {
-                "default": Defender_Security_Contacts(
+            AZURE_SUBSCRIPTION: {
+                "default": SecurityContacts(
                     resource_id=resource_id,
                     emails="",
                     phone="",
@@ -55,9 +53,9 @@ class Test_defender_additional_email_configured_with_a_security_contact:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"There is not another correct email configured for susbscription {AZURE_SUSCRIPTION}."
+                == f"There is not another correct email configured for susbscription {AZURE_SUBSCRIPTION}."
             )
-            assert result[0].subscription == AZURE_SUSCRIPTION
+            assert result[0].subscription == AZURE_SUBSCRIPTION
             assert result[0].resource_name == "default"
             assert result[0].resource_id == resource_id
 
@@ -65,8 +63,8 @@ class Test_defender_additional_email_configured_with_a_security_contact:
         resource_id = str(uuid4())
         defender_client = mock.MagicMock
         defender_client.security_contacts = {
-            AZURE_SUSCRIPTION: {
-                "default": Defender_Security_Contacts(
+            AZURE_SUBSCRIPTION: {
+                "default": SecurityContacts(
                     resource_id=resource_id,
                     emails="bad_email",
                     phone="",
@@ -92,9 +90,9 @@ class Test_defender_additional_email_configured_with_a_security_contact:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"There is not another correct email configured for susbscription {AZURE_SUSCRIPTION}."
+                == f"There is not another correct email configured for susbscription {AZURE_SUBSCRIPTION}."
             )
-            assert result[0].subscription == AZURE_SUSCRIPTION
+            assert result[0].subscription == AZURE_SUBSCRIPTION
             assert result[0].resource_name == "default"
             assert result[0].resource_id == resource_id
 
@@ -102,8 +100,8 @@ class Test_defender_additional_email_configured_with_a_security_contact:
         resource_id = str(uuid4())
         defender_client = mock.MagicMock
         defender_client.security_contacts = {
-            AZURE_SUSCRIPTION: {
-                "default": Defender_Security_Contacts(
+            AZURE_SUBSCRIPTION: {
+                "default": SecurityContacts(
                     resource_id=resource_id,
                     emails="test@test.es,   test@test.email.com",
                     phone="",
@@ -129,9 +127,9 @@ class Test_defender_additional_email_configured_with_a_security_contact:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"There is not another correct email configured for susbscription {AZURE_SUSCRIPTION}."
+                == f"There is not another correct email configured for susbscription {AZURE_SUBSCRIPTION}."
             )
-            assert result[0].subscription == AZURE_SUSCRIPTION
+            assert result[0].subscription == AZURE_SUBSCRIPTION
             assert result[0].resource_name == "default"
             assert result[0].resource_id == resource_id
 
@@ -139,8 +137,8 @@ class Test_defender_additional_email_configured_with_a_security_contact:
         resource_id = str(uuid4())
         defender_client = mock.MagicMock
         defender_client.security_contacts = {
-            AZURE_SUSCRIPTION: {
-                "default": Defender_Security_Contacts(
+            AZURE_SUBSCRIPTION: {
+                "default": SecurityContacts(
                     resource_id=resource_id,
                     emails="test@test.com",
                     phone="",
@@ -166,9 +164,9 @@ class Test_defender_additional_email_configured_with_a_security_contact:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"There is another correct email configured for susbscription {AZURE_SUSCRIPTION}."
+                == f"There is another correct email configured for susbscription {AZURE_SUBSCRIPTION}."
             )
-            assert result[0].subscription == AZURE_SUSCRIPTION
+            assert result[0].subscription == AZURE_SUBSCRIPTION
             assert result[0].resource_name == "default"
             assert result[0].resource_id == resource_id
 
@@ -176,8 +174,8 @@ class Test_defender_additional_email_configured_with_a_security_contact:
         resource_id = str(uuid4())
         defender_client = mock.MagicMock
         defender_client.security_contacts = {
-            AZURE_SUSCRIPTION: {
-                "default": Defender_Security_Contacts(
+            AZURE_SUBSCRIPTION: {
+                "default": SecurityContacts(
                     resource_id=resource_id,
                     emails="test@test.mail.es; bad_mail",
                     phone="",
@@ -203,8 +201,8 @@ class Test_defender_additional_email_configured_with_a_security_contact:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"There is another correct email configured for susbscription {AZURE_SUSCRIPTION}."
+                == f"There is another correct email configured for susbscription {AZURE_SUBSCRIPTION}."
             )
-            assert result[0].subscription == AZURE_SUSCRIPTION
+            assert result[0].subscription == AZURE_SUBSCRIPTION
             assert result[0].resource_name == "default"
             assert result[0].resource_id == resource_id

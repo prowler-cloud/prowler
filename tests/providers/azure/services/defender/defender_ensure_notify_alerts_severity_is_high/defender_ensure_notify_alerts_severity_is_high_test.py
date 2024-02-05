@@ -1,10 +1,8 @@
 from unittest import mock
 from uuid import uuid4
 
-from prowler.providers.azure.services.defender.defender_service import (
-    Defender_Security_Contacts,
-)
-from tests.providers.azure.azure_fixtures import AZURE_SUSCRIPTION
+from prowler.providers.azure.services.defender.defender_service import SecurityContacts
+from tests.providers.azure.azure_fixtures import AZURE_SUBSCRIPTION
 
 
 class Test_defender_ensure_notify_alerts_severity_is_high:
@@ -28,8 +26,8 @@ class Test_defender_ensure_notify_alerts_severity_is_high:
         resource_id = str(uuid4())
         defender_client = mock.MagicMock
         defender_client.security_contacts = {
-            AZURE_SUSCRIPTION: {
-                "default": Defender_Security_Contacts(
+            AZURE_SUBSCRIPTION: {
+                "default": SecurityContacts(
                     resource_id=resource_id,
                     emails="",
                     phone="",
@@ -55,9 +53,9 @@ class Test_defender_ensure_notify_alerts_severity_is_high:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Notifiy alerts are not enabled for severity high in susbscription {AZURE_SUSCRIPTION}."
+                == f"Notifiy alerts are not enabled for severity high in susbscription {AZURE_SUBSCRIPTION}."
             )
-            assert result[0].subscription == AZURE_SUSCRIPTION
+            assert result[0].subscription == AZURE_SUBSCRIPTION
             assert result[0].resource_name == "default"
             assert result[0].resource_id == resource_id
 
@@ -65,8 +63,8 @@ class Test_defender_ensure_notify_alerts_severity_is_high:
         resource_id = str(uuid4())
         defender_client = mock.MagicMock
         defender_client.security_contacts = {
-            AZURE_SUSCRIPTION: {
-                "default": Defender_Security_Contacts(
+            AZURE_SUBSCRIPTION: {
+                "default": SecurityContacts(
                     resource_id=resource_id,
                     emails="",
                     phone="",
@@ -92,8 +90,8 @@ class Test_defender_ensure_notify_alerts_severity_is_high:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Notifiy alerts are enabled for severity high in susbscription {AZURE_SUSCRIPTION}."
+                == f"Notifiy alerts are enabled for severity high in susbscription {AZURE_SUBSCRIPTION}."
             )
-            assert result[0].subscription == AZURE_SUSCRIPTION
+            assert result[0].subscription == AZURE_SUBSCRIPTION
             assert result[0].resource_name == "default"
             assert result[0].resource_id == resource_id

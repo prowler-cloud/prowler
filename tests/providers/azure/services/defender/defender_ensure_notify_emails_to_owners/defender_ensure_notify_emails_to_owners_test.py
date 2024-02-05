@@ -1,10 +1,8 @@
 from unittest import mock
 from uuid import uuid4
 
-from prowler.providers.azure.services.defender.defender_service import (
-    Defender_Security_Contacts,
-)
-from tests.providers.azure.azure_fixtures import AZURE_SUSCRIPTION
+from prowler.providers.azure.services.defender.defender_service import SecurityContacts
+from tests.providers.azure.azure_fixtures import AZURE_SUBSCRIPTION
 
 
 class Test_defender_ensure_notify_emails_to_owners:
@@ -28,8 +26,8 @@ class Test_defender_ensure_notify_emails_to_owners:
         resource_id = str(uuid4())
         defender_client = mock.MagicMock
         defender_client.security_contacts = {
-            AZURE_SUSCRIPTION: {
-                "default": Defender_Security_Contacts(
+            AZURE_SUBSCRIPTION: {
+                "default": SecurityContacts(
                     resource_id=resource_id,
                     emails="",
                     phone="",
@@ -55,9 +53,9 @@ class Test_defender_ensure_notify_emails_to_owners:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"The Owner role is not notified for subscription {AZURE_SUSCRIPTION}."
+                == f"The Owner role is not notified for subscription {AZURE_SUBSCRIPTION}."
             )
-            assert result[0].subscription == AZURE_SUSCRIPTION
+            assert result[0].subscription == AZURE_SUBSCRIPTION
             assert result[0].resource_name == "default"
             assert result[0].resource_id == resource_id
 
@@ -65,8 +63,8 @@ class Test_defender_ensure_notify_emails_to_owners:
         resource_id = str(uuid4())
         defender_client = mock.MagicMock
         defender_client.security_contacts = {
-            AZURE_SUSCRIPTION: {
-                "default": Defender_Security_Contacts(
+            AZURE_SUBSCRIPTION: {
+                "default": SecurityContacts(
                     resource_id=resource_id,
                     emails="",
                     phone="",
@@ -92,9 +90,9 @@ class Test_defender_ensure_notify_emails_to_owners:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"The Owner role is not notified for subscription {AZURE_SUSCRIPTION}."
+                == f"The Owner role is not notified for subscription {AZURE_SUBSCRIPTION}."
             )
-            assert result[0].subscription == AZURE_SUSCRIPTION
+            assert result[0].subscription == AZURE_SUBSCRIPTION
             assert result[0].resource_name == "default"
             assert result[0].resource_id == resource_id
 
@@ -102,8 +100,8 @@ class Test_defender_ensure_notify_emails_to_owners:
         resource_id = str(uuid4())
         defender_client = mock.MagicMock
         defender_client.security_contacts = {
-            AZURE_SUSCRIPTION: {
-                "default": Defender_Security_Contacts(
+            AZURE_SUBSCRIPTION: {
+                "default": SecurityContacts(
                     resource_id=resource_id,
                     emails="test@test.es",
                     phone="",
@@ -129,8 +127,8 @@ class Test_defender_ensure_notify_emails_to_owners:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"The Owner role is notified for subscription {AZURE_SUSCRIPTION}."
+                == f"The Owner role is notified for subscription {AZURE_SUBSCRIPTION}."
             )
-            assert result[0].subscription == AZURE_SUSCRIPTION
+            assert result[0].subscription == AZURE_SUBSCRIPTION
             assert result[0].resource_name == "default"
             assert result[0].resource_id == resource_id
