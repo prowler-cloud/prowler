@@ -14,7 +14,7 @@ class defender_ensure_wdatp_is_enabled(Check):
             report.status = "FAIL"
             report.subscription = subscription_name
             report.resource_name = "WDATP"
-            report.resource_id = "N/A"
+            report.resource_id = "WDATP"
             report.status_extended = f"Microsoft Defender for Endpoint integration not exists for subscription {subscription_name}."
             if "WDATP" in settings:
                 report.status_extended = f"Microsoft Defender for Endpoint integration is disabeld for subscription {subscription_name}."

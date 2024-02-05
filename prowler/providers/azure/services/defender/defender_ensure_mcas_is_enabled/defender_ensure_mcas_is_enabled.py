@@ -14,7 +14,7 @@ class defender_ensure_mcas_is_enabled(Check):
             report.status = "FAIL"
             report.subscription = subscription_name
             report.resource_name = "MCAS"
-            report.resource_id = "N/A"
+            report.resource_id = "MCAS"
             report.status_extended = f"Microsoft Defender for Cloud Apps not exists for subscription {subscription_name}."
             if "MCAS" in settings:
                 report.resource_id = settings["MCAS"].resource_id
