@@ -57,7 +57,7 @@ docs = ["mkdocs", "mkdocs-material"]
 
 [tool.poetry.group.dev.dependencies]
 bandit = "1.7.6"
-black = "22.12.0"
+black = "24.1.1"
 coverage = "7.4.0"
 docker = "7.0.0"
 flake8 = "7.0.0"
