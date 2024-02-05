@@ -21,7 +21,7 @@ class Test_iam_support_role_created:
         set_mocked_aws_audit_info,
     )
 
-    @mock_aws
+    @mock_aws(config={"iam": {"load_aws_managed_policies": True}})
     def test_support_role_created(self):
         iam = client("iam")
         role_name = "test_support"
@@ -70,7 +70,7 @@ class Test_iam_support_role_created:
                 == "arn:aws:iam::aws:policy/aws-service-role/AWSSupportServiceRolePolicy"
             )
 
-    @mock_aws
+    @mock_aws(config={"iam": {"load_aws_managed_policies": True}})
     def test_no_support_role_created(self):
         current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
         from prowler.providers.aws.services.iam.iam_service import IAM

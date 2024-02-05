@@ -15,7 +15,7 @@ AWS_ACCOUNT_ID = "123456789012"
 
 
 class Test_iam_role_administratoraccess_policy:
-    @mock_aws
+    @mock_aws(config={"iam": {"load_aws_managed_policies": True}})
     def test_no_roles(self):
         from prowler.providers.aws.services.iam.iam_service import IAM
 
@@ -36,7 +36,7 @@ class Test_iam_role_administratoraccess_policy:
             result = check.execute()
             assert len(result) == 0
 
-    @mock_aws
+    @mock_aws(config={"iam": {"load_aws_managed_policies": True}})
     def test_role_without_administratoraccess_policy(self):
         iam = client("iam")
         role_name = "test"
@@ -81,7 +81,7 @@ class Test_iam_role_administratoraccess_policy:
             assert result[0].resource_arn == response["Role"]["Arn"]
             assert result[0].resource_tags == []
 
-    @mock_aws
+    @mock_aws(config={"iam": {"load_aws_managed_policies": True}})
     def test_role_with_securityaudit_policy(self):
         iam = client("iam")
         role_name = "test"
@@ -130,7 +130,7 @@ class Test_iam_role_administratoraccess_policy:
             assert result[0].resource_arn == response["Role"]["Arn"]
             assert result[0].resource_tags == []
 
-    @mock_aws
+    @mock_aws(config={"iam": {"load_aws_managed_policies": True}})
     def test_role_with_administratoraccess_policy(self):
         iam = client("iam")
         role_name = "test"
@@ -179,7 +179,7 @@ class Test_iam_role_administratoraccess_policy:
             assert result[0].resource_arn == response["Role"]["Arn"]
             assert result[0].resource_tags == []
 
-    @mock_aws
+    @mock_aws(config={"iam": {"load_aws_managed_policies": True}})
     def test_asterisk_principal_role_with_administratoraccess_policy(self):
         iam = client("iam")
         role_name = "test"
@@ -228,7 +228,7 @@ class Test_iam_role_administratoraccess_policy:
             assert result[0].resource_arn == response["Role"]["Arn"]
             assert result[0].resource_tags == []
 
-    @mock_aws
+    @mock_aws(config={"iam": {"load_aws_managed_policies": True}})
     def test_only_aws_service_linked_roles(self):
         iam_client = mock.MagicMock
         iam_client.roles = []

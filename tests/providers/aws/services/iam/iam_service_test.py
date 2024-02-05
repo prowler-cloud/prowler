@@ -564,7 +564,7 @@ class Test_IAM_Service:
         )
 
     # Test IAM List Attached Role Policies
-    @mock_aws
+    @mock_aws(config={"iam": {"load_aws_managed_policies": True}})
     def test__list_attached_role_policies__(self):
         iam = client("iam")
         role_name = "test"
@@ -600,7 +600,7 @@ class Test_IAM_Service:
             == READ_ONLY_ACCESS_POLICY_ARN
         )
 
-    @mock_aws
+    @mock_aws(config={"iam": {"load_aws_managed_policies": True}})
     def test__get_entities_attached_to_support_roles__no_roles(self):
         iam_client = client("iam")
         _ = iam_client.list_entities_for_policy(
@@ -612,7 +612,7 @@ class Test_IAM_Service:
         iam = IAM(audit_info)
         assert len(iam.entities_role_attached_to_support_policy) == 0
 
-    @mock_aws
+    @mock_aws(config={"iam": {"load_aws_managed_policies": True}})
     def test__get_entities_attached_to_support_roles__(self):
         iam_client = client("iam")
         role_name = "test_support"
@@ -656,7 +656,7 @@ class Test_IAM_Service:
         iam = IAM(audit_info)
         assert len(iam.entities_role_attached_to_securityaudit_policy) == 0
 
-    @mock_aws
+    @mock_aws(config={"iam": {"load_aws_managed_policies": True}})
     def test__get_entities_attached_to_securityaudit_roles__(self):
         iam_client = client("iam")
         role_name = "test_securityaudit"
