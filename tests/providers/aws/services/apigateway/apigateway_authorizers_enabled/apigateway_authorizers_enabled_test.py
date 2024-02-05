@@ -41,7 +41,6 @@ class Test_apigateway_restapi_authorizers_enabled:
 
     @mock_aws
     @mock_aws
-    @mock_aws
     def test_apigateway_one_rest_api_with_lambda_authorizer(self):
         # Create APIGateway Mocked Resources
         apigateway_client = client("apigateway", region_name=AWS_REGION_US_EAST_1)
@@ -154,7 +153,6 @@ class Test_apigateway_restapi_authorizers_enabled:
 
     @mock_aws
     @mock_aws
-    @mock_aws
     def test_apigateway_one_rest_api_without_api_or_methods_authorizer(self):
         # Create APIGateway Mocked Resources
         apigateway_client = client("apigateway", region_name=AWS_REGION_US_EAST_1)
@@ -217,7 +215,6 @@ class Test_apigateway_restapi_authorizers_enabled:
 
     @mock_aws
     @mock_aws
-    @mock_aws
     def test_apigateway_one_rest_api_without_api_auth_but_one_method_auth(self):
         # Create APIGateway Mocked Resources
         apigateway_client = client("apigateway", region_name=AWS_REGION_US_EAST_1)
@@ -278,7 +275,6 @@ class Test_apigateway_restapi_authorizers_enabled:
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_tags == [{}]
 
-    @mock_aws
     @mock_aws
     @mock_aws
     def test_apigateway_one_rest_api_without_api_auth_but_methods_auth_and_not(self):
@@ -350,7 +346,6 @@ class Test_apigateway_restapi_authorizers_enabled:
 
     @mock_aws
     @mock_aws
-    @mock_aws
     def test_apigateway_one_rest_api_without_api_auth_but_methods_not_auth_and_auth(
         self,
     ):
@@ -420,7 +415,6 @@ class Test_apigateway_restapi_authorizers_enabled:
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_tags == [{}]
 
-    @mock_aws
     @mock_aws
     @mock_aws
     def test_apigateway_one_rest_api_without_authorizers_with_various_resources_without_endpoints(

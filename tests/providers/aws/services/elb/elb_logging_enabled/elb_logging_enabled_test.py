@@ -42,7 +42,6 @@ class Test_elb_logging_enabled:
             assert len(result) == 0
 
     @mock_aws
-    @mock_aws
     def test_elb_without_access_log(self):
         elb = client("elb", region_name=AWS_REGION)
         ec2 = resource("ec2", region_name=AWS_REGION)
@@ -89,7 +88,6 @@ class Test_elb_logging_enabled:
             assert result[0].resource_id == "my-lb"
             assert result[0].resource_arn == elb_arn
 
-    @mock_aws
     @mock_aws
     def test_elb_with_deletion_protection(self):
         elb = client("elb", region_name=AWS_REGION)

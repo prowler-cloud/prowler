@@ -39,7 +39,6 @@ class Test_elb_insecure_ssl_ciphers:
             assert len(result) == 0
 
     @mock_aws
-    @mock_aws
     def test_elb_listener_with_secure_policy(self):
         elb = client("elb", region_name=AWS_REGION_EU_WEST_1)
         ec2 = resource("ec2", region_name=AWS_REGION_EU_WEST_1)
@@ -94,7 +93,6 @@ class Test_elb_insecure_ssl_ciphers:
             assert result[0].resource_arn == elb_arn
             assert result[0].region == AWS_REGION_EU_WEST_1
 
-    @mock_aws
     @mock_aws
     def test_elb_with_HTTPS_listener(self):
         elb = client("elb", region_name=AWS_REGION_EU_WEST_1)

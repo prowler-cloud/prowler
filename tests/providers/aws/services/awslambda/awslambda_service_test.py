@@ -87,7 +87,6 @@ class Test_Lambda_Service:
 
     @mock_aws
     @mock_aws
-    @mock_aws
     def test__list_functions__(self):
         # Create IAM Lambda Role
         iam_client = client("iam", region_name=AWS_REGION_EU_WEST_1)

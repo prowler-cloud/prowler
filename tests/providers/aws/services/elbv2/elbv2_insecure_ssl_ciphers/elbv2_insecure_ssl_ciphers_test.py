@@ -38,7 +38,6 @@ class Test_elbv2_insecure_ssl_ciphers:
             assert len(result) == 0
 
     @mock_aws
-    @mock_aws
     def test_elbv2_listener_with_secure_policy(self):
         conn = client("elbv2", region_name=AWS_REGION_EU_WEST_1)
         ec2 = resource("ec2", region_name=AWS_REGION_EU_WEST_1)
@@ -117,7 +116,6 @@ class Test_elbv2_insecure_ssl_ciphers:
             assert result[0].resource_id == "my-lb"
             assert result[0].resource_arn == lb["LoadBalancerArn"]
 
-    @mock_aws
     @mock_aws
     def test_elbv2_with_HTTPS_listener(self):
         conn = client("elbv2", region_name=AWS_REGION_EU_WEST_1)

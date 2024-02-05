@@ -13,7 +13,6 @@ from tests.providers.aws.audit_info_utils import (
 
 class Test_s3_bucket_public_write_acl:
     @mock_aws
-    @mock_aws
     def test_no_buckets(self):
         from prowler.providers.aws.services.s3.s3_service import S3, S3Control
 
@@ -41,7 +40,6 @@ class Test_s3_bucket_public_write_acl:
 
                     assert len(result) == 0
 
-    @mock_aws
     @mock_aws
     def test_bucket_account_public_block_without_buckets(self):
         # Generate S3Control Client
@@ -89,7 +87,6 @@ class Test_s3_bucket_public_write_acl:
                     assert result[0].resource_arn == AWS_ACCOUNT_ARN
                     assert result[0].region == AWS_REGION_US_EAST_1
 
-    @mock_aws
     @mock_aws
     def test_bucket_account_public_block(self):
         s3_client = client("s3", region_name=AWS_REGION_US_EAST_1)
@@ -140,7 +137,6 @@ class Test_s3_bucket_public_write_acl:
                     assert result[0].resource_arn == AWS_ACCOUNT_ARN
                     assert result[0].region == AWS_REGION_US_EAST_1
 
-    @mock_aws
     @mock_aws
     def test_bucket_public_block(self):
         s3_client = client("s3", region_name=AWS_REGION_US_EAST_1)
@@ -203,7 +199,6 @@ class Test_s3_bucket_public_write_acl:
                     )
                     assert result[0].region == AWS_REGION_US_EAST_1
 
-    @mock_aws
     @mock_aws
     def test_bucket_public_write_ACL_AllUsers_WRITE(self):
         s3_client = client("s3", region_name=AWS_REGION_US_EAST_1)
@@ -284,7 +279,6 @@ class Test_s3_bucket_public_write_acl:
                     assert result[0].region == AWS_REGION_US_EAST_1
 
     @mock_aws
-    @mock_aws
     def test_bucket_public_write_ACL_AllUsers_WRITE_ACP(self):
         s3_client = client("s3", region_name=AWS_REGION_US_EAST_1)
         bucket_name_us = "bucket_test_us"
@@ -363,7 +357,6 @@ class Test_s3_bucket_public_write_acl:
                     )
                     assert result[0].region == AWS_REGION_US_EAST_1
 
-    @mock_aws
     @mock_aws
     def test_bucket_public_write_ACL_AllUsers_FULL_CONTROL(self):
         s3_client = client("s3", region_name=AWS_REGION_US_EAST_1)
@@ -444,7 +437,6 @@ class Test_s3_bucket_public_write_acl:
                     assert result[0].region == AWS_REGION_US_EAST_1
 
     @mock_aws
-    @mock_aws
     def test_bucket_public_write_ACL_AuthenticatedUsers_WRITE(self):
         s3_client = client("s3", region_name=AWS_REGION_US_EAST_1)
         bucket_name_us = "bucket_test_us"
@@ -524,7 +516,6 @@ class Test_s3_bucket_public_write_acl:
                     assert result[0].region == AWS_REGION_US_EAST_1
 
     @mock_aws
-    @mock_aws
     def test_bucket_public_write_ACL_AuthenticatedUsers_WRITE_ACP(self):
         s3_client = client("s3", region_name=AWS_REGION_US_EAST_1)
         bucket_name_us = "bucket_test_us"
@@ -603,7 +594,6 @@ class Test_s3_bucket_public_write_acl:
                     )
                     assert result[0].region == AWS_REGION_US_EAST_1
 
-    @mock_aws
     @mock_aws
     def test_bucket_public_write_ACL_AuthenticatedUsers_FULL_CONTROL(self):
         s3_client = client("s3", region_name=AWS_REGION_US_EAST_1)

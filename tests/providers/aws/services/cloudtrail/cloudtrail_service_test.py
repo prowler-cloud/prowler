@@ -49,7 +49,6 @@ class Test_Cloudtrail_Service:
         assert cloudtrail.audited_account == AWS_ACCOUNT_NUMBER
 
     @mock_aws
-    @mock_aws
     def test_describe_trails(self):
         cloudtrail_client_us_east_1 = client(
             "cloudtrail", region_name=AWS_REGION_US_EAST_1
@@ -113,7 +112,6 @@ class Test_Cloudtrail_Service:
                 ]
 
     @mock_aws
-    @mock_aws
     def test_status_trails(self):
         cloudtrail_client_us_east_1 = client(
             "cloudtrail", region_name=AWS_REGION_US_EAST_1
@@ -158,7 +156,6 @@ class Test_Cloudtrail_Service:
                     assert not trail.latest_cloudwatch_delivery_time
                     assert trail.s3_bucket == bucket_name_us
 
-    @mock_aws
     @mock_aws
     def test_get_classic_event_selectors(self):
         cloudtrail_client_us_east_1 = client(
@@ -207,7 +204,6 @@ class Test_Cloudtrail_Service:
                     )
                     assert not trail.data_events[0].is_advanced
 
-    @mock_aws
     @mock_aws
     def test_get_advanced_event_selectors(self):
         cloudtrail_client_us_east_1 = client(

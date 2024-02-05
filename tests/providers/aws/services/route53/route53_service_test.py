@@ -54,7 +54,6 @@ class Test_Route53_Service:
         assert route53.service == "route53"
 
     @mock_aws
-    @mock_aws
     def test__list_hosted_zones__private_with_logging(self):
         # Create Hosted Zone
         r53_client = client("route53", region_name=AWS_REGION_US_EAST_1)
@@ -99,7 +98,6 @@ class Test_Route53_Service:
         ]
 
     @mock_aws
-    @mock_aws
     def test__list_hosted_zones__public_with_logging(self):
         # Create Hosted Zone
         r53_client = client("route53", region_name=AWS_REGION_US_EAST_1)
@@ -141,7 +139,6 @@ class Test_Route53_Service:
         assert route53.hosted_zones[hosted_zone_id].region == AWS_REGION_US_EAST_1
 
     @mock_aws
-    @mock_aws
     def test__list_hosted_zones__private_without_logging(self):
         # Create Hosted Zone
         r53_client = client("route53", region_name=AWS_REGION_US_EAST_1)
@@ -168,7 +165,6 @@ class Test_Route53_Service:
         assert not route53.hosted_zones[hosted_zone_id].logging_config
         assert route53.hosted_zones[hosted_zone_id].region == AWS_REGION_US_EAST_1
 
-    @mock_aws
     @mock_aws
     def test__list_hosted_zones__public_without_logging(self):
         # Create Hosted Zone

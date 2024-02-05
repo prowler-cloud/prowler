@@ -41,7 +41,6 @@ class Test_cloudtrail_bucket_requires_mfa_delete:
             assert len(result) == 0
 
     @mock_aws
-    @mock_aws
     def test_trails_with_no_mfa_bucket(self):
         current_audit_info = set_mocked_aws_audit_info(
             [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
@@ -101,7 +100,6 @@ class Test_cloudtrail_bucket_requires_mfa_delete:
 
     @mock_aws
     @mock_aws
-    @mock_aws
     # Patch with mock_make_api_call_getbucketversioning_mfadelete_enabled:
     @patch(
         "botocore.client.BaseClient._make_api_call",
@@ -154,7 +152,6 @@ class Test_cloudtrail_bucket_requires_mfa_delete:
             assert result[0].resource_tags == []
 
     @mock_aws
-    @mock_aws
     def test_trails_with_no_mfa_bucket_cross(self):
         current_audit_info = set_mocked_aws_audit_info(
             [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
@@ -204,7 +201,6 @@ class Test_cloudtrail_bucket_requires_mfa_delete:
             assert result[0].resource_arn == trail_us["TrailARN"]
             assert result[0].resource_tags == []
 
-    @mock_aws
     @mock_aws
     @mock_aws
     # Patch with mock_make_api_call_getbucketversioning_mfadelete_enabled:

@@ -54,10 +54,6 @@ class Test_SecretsManager_Service:
         assert secretsmanager.service == "secretsmanager"
 
     @mock_aws
-    @mock_aws
-    @mock_aws
-    @mock_aws
-    @mock_aws
     def test__list_secrets__(self):
         secretsmanager_client = client(
             "secretsmanager", region_name=AWS_REGION_EU_WEST_1

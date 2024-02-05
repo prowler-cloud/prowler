@@ -66,7 +66,6 @@ class Test_cloudtrail_multi_region_enabled:
                         assert report.resource_tags == []
 
     @mock_aws
-    @mock_aws
     def test_various_trails_no_logging(self):
         cloudtrail_client_us_east_1 = client(
             "cloudtrail", region_name=AWS_REGION_US_EAST_1
@@ -142,7 +141,6 @@ class Test_cloudtrail_multi_region_enabled:
                         )
                         assert report.resource_tags == []
 
-    @mock_aws
     @mock_aws
     def test_various_trails_with_and_without_logging(self):
         cloudtrail_client_us_east_1 = client(
@@ -220,7 +218,6 @@ class Test_cloudtrail_multi_region_enabled:
                         assert report.resource_tags == []
                         assert report.region == AWS_REGION_EU_WEST_1
 
-    @mock_aws
     @mock_aws
     def test_trail_multiregion_logging_and_single_region_not_logging(self):
         cloudtrail_client_us_east_1 = client(

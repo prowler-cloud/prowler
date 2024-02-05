@@ -28,7 +28,6 @@ VPC_ID = "vpc-12345678901234567"
 @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
 class Test_neptune_cluster_uses_public_subnet:
     @mock_aws
-    @mock_aws
     def test_neptune_no_clusters(self):
         # Mock VPC Service
         vpc_client = MagicMock

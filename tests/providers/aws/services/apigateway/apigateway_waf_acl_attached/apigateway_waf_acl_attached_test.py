@@ -39,7 +39,6 @@ class Test_apigateway_restapi_waf_acl_attached:
             assert len(result) == 0
 
     @mock_aws
-    @mock_aws
     def test_apigateway_one_rest_api_with_waf(self):
         # Create APIGateway Mocked Resources
         apigateway_client = client("apigateway", region_name=AWS_REGION_US_EAST_1)

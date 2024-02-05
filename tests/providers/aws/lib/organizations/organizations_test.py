@@ -13,7 +13,6 @@ AWS_ACCOUNT_NUMBER = "123456789012"
 class Test_AWS_Organizations:
     @mock_aws
     @mock_aws
-    @mock_aws
     def test_organizations(self):
         client = boto3.client("organizations", region_name="us-east-1")
         iam_client = boto3.client("iam", region_name="us-east-1")

@@ -59,7 +59,6 @@ class Test_awslambda_function_invoke_api_operations_cloudtrail_logging_enabled:
             assert len(result) == 0
 
     @mock_aws
-    @mock_aws
     def test_lambda_not_recorded_by_cloudtrail(self):
         # Lambda Client
         lambda_client = mock.MagicMock
@@ -121,7 +120,6 @@ class Test_awslambda_function_invoke_api_operations_cloudtrail_logging_enabled:
             )
             assert result[0].resource_tags == []
 
-    @mock_aws
     @mock_aws
     def test_lambda_recorded_by_cloudtrail_classic_event_selector(self):
         # Lambda Client
@@ -196,7 +194,6 @@ class Test_awslambda_function_invoke_api_operations_cloudtrail_logging_enabled:
             )
             assert result[0].resource_tags == []
 
-    @mock_aws
     @mock_aws
     def test_lambda_recorded_by_cloudtrail_advanced_event_selector(self):
         # Lambda Client
@@ -274,7 +271,6 @@ class Test_awslambda_function_invoke_api_operations_cloudtrail_logging_enabled:
             )
             assert result[0].resource_tags == []
 
-    @mock_aws
     @mock_aws
     def test_all_lambdas_recorded_by_cloudtrail(self):
         # Lambda Client

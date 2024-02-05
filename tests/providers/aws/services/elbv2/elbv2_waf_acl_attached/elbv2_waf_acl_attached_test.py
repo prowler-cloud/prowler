@@ -37,7 +37,6 @@ def mock_make_api_call(self, operation_name, kwarg):
 
 class Test_elbv2_waf_acl_attached:
     @mock_aws
-    @mock_aws
     def test_elb_no_balancers(self):
         from prowler.providers.aws.services.elbv2.elbv2_service import ELBv2
         from prowler.providers.aws.services.waf.waf_service import WAF
@@ -72,7 +71,6 @@ class Test_elbv2_waf_acl_attached:
 
             assert len(result) == 0
 
-    @mock_aws
     @mock_aws
     @mock_aws
     def test_elbv2_without_WAF(self):
@@ -152,7 +150,6 @@ class Test_elbv2_waf_acl_attached:
             assert result[0].resource_id == "my-lb"
             assert result[0].resource_arn == lb["LoadBalancerArn"]
 
-    @mock_aws
     @mock_aws
     @mock_aws
     def test_elbv2_with_WAF(self):

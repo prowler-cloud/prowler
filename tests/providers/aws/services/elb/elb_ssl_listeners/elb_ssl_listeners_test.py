@@ -42,7 +42,6 @@ class Test_elb_ssl_listeners:
             assert len(result) == 0
 
     @mock_aws
-    @mock_aws
     def test_elb_with_HTTP_listener(self):
         elb = client("elb", region_name=AWS_REGION)
         ec2 = resource("ec2", region_name=AWS_REGION)
@@ -86,7 +85,6 @@ class Test_elb_ssl_listeners:
             assert result[0].resource_id == "my-lb"
             assert result[0].resource_arn == elb_arn
 
-    @mock_aws
     @mock_aws
     def test_elb_with_HTTPS_listener(self):
         elb = client("elb", region_name=AWS_REGION)

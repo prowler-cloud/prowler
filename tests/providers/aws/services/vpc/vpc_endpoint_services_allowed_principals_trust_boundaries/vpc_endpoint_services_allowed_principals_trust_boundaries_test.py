@@ -44,7 +44,6 @@ class Test_vpc_endpoint_services_allowed_principals_trust_boundaries:
                 assert len(result) == 0
 
     @mock_aws
-    @mock_aws
     def test_vpc_endpoint_service_without_allowed_principals(self):
         # Create VPC Mocked Resources
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
@@ -107,7 +106,6 @@ class Test_vpc_endpoint_services_allowed_principals_trust_boundaries:
                 assert result[0].resource_tags == []
                 assert result[0].region == AWS_REGION_US_EAST_1
 
-    @mock_aws
     @mock_aws
     def test_vpc_endpoint_service_with_allowed_principal_account_arn(self):
         # Create VPC Mocked Resources
@@ -177,7 +175,6 @@ class Test_vpc_endpoint_services_allowed_principals_trust_boundaries:
                 assert result[0].region == AWS_REGION_US_EAST_1
 
     @mock_aws
-    @mock_aws
     def test_vpc_endpoint_service_with_allowed_principal_account_number(self):
         # Create VPC Mocked Resources
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
@@ -246,7 +243,6 @@ class Test_vpc_endpoint_services_allowed_principals_trust_boundaries:
                 assert result[0].region == AWS_REGION_US_EAST_1
 
     @mock_aws
-    @mock_aws
     def test_vpc_endpoint_service_with_principal_not_allowed(self):
         # Create VPC Mocked Resources
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
@@ -314,7 +310,6 @@ class Test_vpc_endpoint_services_allowed_principals_trust_boundaries:
                 assert result[0].resource_tags == []
                 assert result[0].region == AWS_REGION_US_EAST_1
 
-    @mock_aws
     @mock_aws
     def test_vpc_endpoint_service_with_principal_different_than_account_but_allowed_in_config(
         self,

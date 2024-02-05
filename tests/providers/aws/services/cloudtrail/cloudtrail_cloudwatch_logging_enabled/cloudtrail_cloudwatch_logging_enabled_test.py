@@ -14,7 +14,6 @@ from tests.providers.aws.audit_info_utils import (
 
 class Test_cloudtrail_cloudwatch_logging_enabled:
     @mock_aws
-    @mock_aws
     def test_no_trails(self):
         current_audit_info = set_mocked_aws_audit_info(
             [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
@@ -41,7 +40,6 @@ class Test_cloudtrail_cloudwatch_logging_enabled:
                 result = check.execute()
                 assert len(result) == 0
 
-    @mock_aws
     @mock_aws
     def test_trails_sending_logs_during_and_not_last_day(self):
         cloudtrail_client_us_east_1 = client(
@@ -130,7 +128,6 @@ class Test_cloudtrail_cloudwatch_logging_enabled:
                         assert report.region == AWS_REGION_EU_WEST_1
 
     @mock_aws
-    @mock_aws
     def test_multi_region_and_single_region_logging_and_not(self):
         cloudtrail_client_us_east_1 = client(
             "cloudtrail", region_name=AWS_REGION_US_EAST_1
@@ -218,7 +215,6 @@ class Test_cloudtrail_cloudwatch_logging_enabled:
                         )
                         assert report.resource_tags == []
 
-    @mock_aws
     @mock_aws
     def test_trails_sending_and_not_sending_logs(self):
         cloudtrail_client_us_east_1 = client(

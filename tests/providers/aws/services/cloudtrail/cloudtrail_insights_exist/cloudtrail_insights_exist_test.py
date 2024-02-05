@@ -36,7 +36,6 @@ class Test_cloudtrail_insights_exist:
                 assert len(result) == 0
 
     @mock_aws
-    @mock_aws
     def test_trails_with_no_insight_selector(self):
         current_audit_info = set_mocked_aws_audit_info(
             [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
@@ -81,7 +80,6 @@ class Test_cloudtrail_insights_exist:
                 assert result[0].resource_arn == trail_us["TrailARN"]
                 assert result[0].resource_tags == []
 
-    @mock_aws
     @mock_aws
     def test_trails_with_insight_selector(self):
         current_audit_info = set_mocked_aws_audit_info(

@@ -45,7 +45,6 @@ class Test_ELBv2_Service:
 
     # Test ELBv2 Describe Load Balancers
     @mock_aws
-    @mock_aws
     def test__describe_load_balancers__(self):
         conn = client("elbv2", region_name=AWS_REGION_EU_WEST_1)
         ec2 = resource("ec2", region_name=AWS_REGION_EU_WEST_1)
@@ -83,7 +82,6 @@ class Test_ELBv2_Service:
         assert elbv2.loadbalancersv2[0].arn == lb["LoadBalancerArn"]
 
     # Test ELBv2 Describe Listeners
-    @mock_aws
     @mock_aws
     def test__describe_listeners__(self):
         conn = client("elbv2", region_name=AWS_REGION_EU_WEST_1)
@@ -137,7 +135,6 @@ class Test_ELBv2_Service:
 
     # Test ELBv2 Describe Load Balancers Attributes
     @mock_aws
-    @mock_aws
     def test__describe_load_balancer_attributes__(self):
         conn = client("elbv2", region_name=AWS_REGION_EU_WEST_1)
         ec2 = resource("ec2", region_name=AWS_REGION_EU_WEST_1)
@@ -188,7 +185,6 @@ class Test_ELBv2_Service:
         assert elbv2.loadbalancersv2[0].drop_invalid_header_fields == "false"
 
     # Test ELBv2 Describe Load Balancers Attributes
-    @mock_aws
     @mock_aws
     def test__describe_rules__(self):
         conn = client("elbv2", region_name=AWS_REGION_EU_WEST_1)

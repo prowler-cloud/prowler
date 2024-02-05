@@ -12,7 +12,6 @@ from tests.providers.aws.audit_info_utils import (
 
 class Test_s3_bucket_policy_public_write_access:
     @mock_aws
-    @mock_aws
     def test_bucket_no_policy(self):
         s3_client_us_east_1 = client("s3", region_name=AWS_REGION_US_EAST_1)
         bucket_name_us = "bucket_test_us"
@@ -51,7 +50,6 @@ class Test_s3_bucket_policy_public_write_access:
                 )
                 assert result[0].region == AWS_REGION_US_EAST_1
 
-    @mock_aws
     @mock_aws
     def test_bucket_policy_but_account_RestrictPublicBuckets(self):
         s3_client_us_east_1 = client("s3", region_name=AWS_REGION_US_EAST_1)
@@ -113,7 +111,6 @@ class Test_s3_bucket_policy_public_write_access:
                 )
                 assert result[0].region == AWS_REGION_US_EAST_1
 
-    @mock_aws
     @mock_aws
     def test_bucket_policy_but_bucket_RestrictPublicBuckets(self):
         s3_client_us_east_1 = client("s3", region_name=AWS_REGION_US_EAST_1)
@@ -187,7 +184,6 @@ class Test_s3_bucket_policy_public_write_access:
 
     @mock_aws
     @mock_aws
-    @mock_aws
     def test_bucket_comply_policy(self):
         s3_client_us_east_1 = client("s3", region_name=AWS_REGION_US_EAST_1)
         bucket_name_us = "bucket_test_us"
@@ -249,7 +245,6 @@ class Test_s3_bucket_policy_public_write_access:
                 )
                 assert result[0].region == AWS_REGION_US_EAST_1
 
-    @mock_aws
     @mock_aws
     @mock_aws
     def test_bucket_public_write_policy(self):

@@ -13,7 +13,6 @@ from tests.providers.aws.audit_info_utils import (
 
 class Test_cloudtrail_kms_encryption_enabled:
     @mock_aws
-    @mock_aws
     def test_no_trails(self):
         from prowler.providers.aws.services.cloudtrail.cloudtrail_service import (
             Cloudtrail,
@@ -38,7 +37,6 @@ class Test_cloudtrail_kms_encryption_enabled:
 
             assert len(result) == 0
 
-    @mock_aws
     @mock_aws
     def test_trail_no_kms(self):
         cloudtrail_client_us_east_1 = client(
@@ -84,7 +82,6 @@ class Test_cloudtrail_kms_encryption_enabled:
             assert result[0].resource_tags == []
             assert result[0].region == AWS_REGION_US_EAST_1
 
-    @mock_aws
     @mock_aws
     @mock_aws
     def test_trail_kms(self):

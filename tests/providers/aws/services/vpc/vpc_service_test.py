@@ -241,7 +241,6 @@ class Test_VPC_Service:
 
     # Test VPC Describe VPC Endpoint Services
     @mock_aws
-    @mock_aws
     def test__describe_vpc_endpoint_services__(self):
         # Generate VPC Client
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)

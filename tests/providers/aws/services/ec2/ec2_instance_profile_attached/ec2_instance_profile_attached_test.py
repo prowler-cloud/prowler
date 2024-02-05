@@ -40,7 +40,6 @@ class Test_ec2_instance_profile_attached:
             assert len(result) == 0
 
     @mock_aws
-    @mock_aws
     def test_one_compliant_ec2(self):
         iam = client("iam", "us-west-1")
         profile_name = "fake_profile"

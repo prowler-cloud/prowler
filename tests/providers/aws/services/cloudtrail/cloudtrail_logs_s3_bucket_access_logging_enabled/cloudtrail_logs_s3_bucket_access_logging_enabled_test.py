@@ -13,7 +13,6 @@ from tests.providers.aws.audit_info_utils import (
 
 class Test_cloudtrail_logs_s3_bucket_access_logging_enabled:
     @mock_aws
-    @mock_aws
     def test_no_trails(self):
         from prowler.providers.aws.services.cloudtrail.cloudtrail_service import (
             Cloudtrail,
@@ -44,7 +43,6 @@ class Test_cloudtrail_logs_s3_bucket_access_logging_enabled:
 
             assert len(result) == 0
 
-    @mock_aws
     @mock_aws
     def test_bucket_not_logging(self):
         cloudtrail_client_us_east_1 = client(
@@ -96,7 +94,6 @@ class Test_cloudtrail_logs_s3_bucket_access_logging_enabled:
             assert result[0].resource_tags == []
             assert result[0].region == AWS_REGION_US_EAST_1
 
-    @mock_aws
     @mock_aws
     def test_bucket_logging(self):
         cloudtrail_client_us_east_1 = client(
@@ -168,7 +165,6 @@ class Test_cloudtrail_logs_s3_bucket_access_logging_enabled:
             assert result[0].resource_tags == []
             assert result[0].region == AWS_REGION_US_EAST_1
 
-    @mock_aws
     @mock_aws
     def test_bucket_cross_account(self):
         cloudtrail_client_us_east_1 = client(

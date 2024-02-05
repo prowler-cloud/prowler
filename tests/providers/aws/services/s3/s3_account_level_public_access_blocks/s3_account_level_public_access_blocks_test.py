@@ -13,7 +13,6 @@ from tests.providers.aws.audit_info_utils import (
 
 class Test_s3_account_level_public_access_blocks:
     @mock_aws
-    @mock_aws
     def test_bucket_account_public_block(self):
         # Generate S3Control Client
         s3control_client = client("s3control", region_name=AWS_REGION_US_EAST_1)
@@ -59,7 +58,6 @@ class Test_s3_account_level_public_access_blocks:
             assert result[0].region == AWS_REGION_US_EAST_1
 
     @mock_aws
-    @mock_aws
     def test_bucket_without_account_public_block(self):
         # Generate S3Control Client
         s3control_client = client("s3control", region_name=AWS_REGION_US_EAST_1)
@@ -104,7 +102,6 @@ class Test_s3_account_level_public_access_blocks:
             assert result[0].resource_arn == AWS_ACCOUNT_ARN
             assert result[0].region == AWS_REGION_US_EAST_1
 
-    @mock_aws
     @mock_aws
     def test_bucket_without_account_public_block_ignoring(self):
         # Generate S3Control Client

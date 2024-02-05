@@ -15,7 +15,6 @@ EXAMPLE_AMI_ID = "ami-12c6146b"
 
 class Test_ec2_securitygroup_not_used:
     @mock_aws
-    @mock_aws
     def test_ec2_default_sgs(self):
         # Create EC2 Mocked Resources
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
@@ -49,7 +48,6 @@ class Test_ec2_securitygroup_not_used:
             # Default sg per region are excluded
             assert len(result) == 0
 
-    @mock_aws
     @mock_aws
     def test_ec2_unused_sg(self):
         # Create EC2 Mocked Resources
@@ -102,7 +100,6 @@ class Test_ec2_securitygroup_not_used:
             assert result[0].resource_details == sg_name
             assert result[0].resource_tags == []
 
-    @mock_aws
     @mock_aws
     def test_ec2_used_default_sg(self):
         # Create EC2 Mocked Resources
@@ -161,7 +158,6 @@ class Test_ec2_securitygroup_not_used:
             assert result[0].resource_details == sg_name
             assert result[0].resource_tags == []
 
-    @mock_aws
     @mock_aws
     @mock_aws
     def test_ec2_used_default_sg_by_lambda(self):
@@ -245,7 +241,6 @@ class Test_ec2_securitygroup_not_used:
             assert result[0].resource_details == sg_name
             assert result[0].resource_tags == []
 
-    @mock_aws
     @mock_aws
     def test_ec2_associated_sg(self):
         # Create EC2 Mocked Resources

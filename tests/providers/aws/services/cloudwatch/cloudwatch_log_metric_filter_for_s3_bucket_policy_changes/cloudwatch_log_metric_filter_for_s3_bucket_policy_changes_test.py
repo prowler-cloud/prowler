@@ -15,7 +15,6 @@ from tests.providers.aws.audit_info_utils import (
 class Test_cloudwatch_log_metric_filter_for_s3_bucket_policy_changes:
     @mock_aws
     @mock_aws
-    @mock_aws
     def test_cloudwatch_no_log_groups(self):
         from prowler.providers.aws.services.cloudtrail.cloudtrail_service import (
             Cloudtrail,
@@ -70,8 +69,6 @@ class Test_cloudwatch_log_metric_filter_for_s3_bucket_policy_changes:
             assert result[0].resource_arn == AWS_ACCOUNT_ARN
             assert result[0].region == AWS_REGION_EU_WEST_1
 
-    @mock_aws
-    @mock_aws
     @mock_aws
     @mock_aws
     def test_cloudwatch_trail_no_log_group(self):
@@ -133,8 +130,6 @@ class Test_cloudwatch_log_metric_filter_for_s3_bucket_policy_changes:
             assert result[0].resource_arn == AWS_ACCOUNT_ARN
             assert result[0].region == AWS_REGION_EU_WEST_1
 
-    @mock_aws
-    @mock_aws
     @mock_aws
     @mock_aws
     def test_cloudwatch_trail_with_log_group(self):
@@ -202,8 +197,6 @@ class Test_cloudwatch_log_metric_filter_for_s3_bucket_policy_changes:
             assert result[0].resource_arn == AWS_ACCOUNT_ARN
             assert result[0].region == AWS_REGION_EU_WEST_1
 
-    @mock_aws
-    @mock_aws
     @mock_aws
     @mock_aws
     def test_cloudwatch_trail_with_log_group_with_metric(self):
@@ -286,8 +279,6 @@ class Test_cloudwatch_log_metric_filter_for_s3_bucket_policy_changes:
             )
             assert result[0].region == AWS_REGION_US_EAST_1
 
-    @mock_aws
-    @mock_aws
     @mock_aws
     @mock_aws
     def test_cloudwatch_trail_with_log_group_with_metric_and_alarm(self):
@@ -384,8 +375,6 @@ class Test_cloudwatch_log_metric_filter_for_s3_bucket_policy_changes:
 
     @mock_aws
     @mock_aws
-    @mock_aws
-    @mock_aws
     def test_cloudwatch_trail_with_log_group_with_metric_and_alarm_with_quotes(self):
         cloudtrail_client = client("cloudtrail", region_name=AWS_REGION_US_EAST_1)
         cloudwatch_client = client("cloudwatch", region_name=AWS_REGION_US_EAST_1)
@@ -478,8 +467,6 @@ class Test_cloudwatch_log_metric_filter_for_s3_bucket_policy_changes:
             )
             assert result[0].region == AWS_REGION_US_EAST_1
 
-    @mock_aws
-    @mock_aws
     @mock_aws
     @mock_aws
     def test_cloudwatch_trail_with_log_group_with_metric_and_alarm_with_newlines(self):

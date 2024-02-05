@@ -46,7 +46,6 @@ class Test_cloudtrail_multi_region_enabled_logging_management_events:
                 )
 
     @mock_aws
-    @mock_aws
     def test_compliant_trail_advanced_event_selector(self):
         cloudtrail_client_us_east_1 = client(
             "cloudtrail", region_name=AWS_REGION_US_EAST_1
@@ -102,7 +101,6 @@ class Test_cloudtrail_multi_region_enabled_logging_management_events:
                     == f"Trail {trail_name_us} from home region {AWS_REGION_US_EAST_1} is multi-region, is logging and have management events enabled."
                 )
 
-    @mock_aws
     @mock_aws
     def test_non_compliant_trail_advanced_event_selector(self):
         cloudtrail_client_us_east_1 = client(
@@ -160,7 +158,6 @@ class Test_cloudtrail_multi_region_enabled_logging_management_events:
                 )
 
     @mock_aws
-    @mock_aws
     def test_compliant_trail_classic_event_selector(self):
         cloudtrail_client_us_east_1 = client(
             "cloudtrail", region_name=AWS_REGION_US_EAST_1
@@ -215,7 +212,6 @@ class Test_cloudtrail_multi_region_enabled_logging_management_events:
                     == f"Trail {trail_name_us} from home region {AWS_REGION_US_EAST_1} is multi-region, is logging and have management events enabled."
                 )
 
-    @mock_aws
     @mock_aws
     def test_non_compliant_trail_classic_event_selector(self):
         cloudtrail_client_us_east_1 = client(

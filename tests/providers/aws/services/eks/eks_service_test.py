@@ -50,7 +50,6 @@ class Test_EKS_Service:
 
     # Test EKS list clusters
     @mock_aws
-    @mock_aws
     def test__list_clusters(self):
         ec2_client = client("ec2", region_name=AWS_REGION_EU_WEST_1)
         eks_client = client("eks", region_name=AWS_REGION_EU_WEST_1)
@@ -82,7 +81,6 @@ class Test_EKS_Service:
         assert eks.clusters[0].tags == [{"test": "test"}]
 
     # Test EKS describe clusters
-    @mock_aws
     @mock_aws
     def test__describe_clusters(self):
         ec2_client = client("ec2", region_name=AWS_REGION_EU_WEST_1)

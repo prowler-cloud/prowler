@@ -40,7 +40,6 @@ class Test_ec2_instance_internet_facing_with_instance_profile:
             assert len(result) == 0
 
     @mock_aws
-    @mock_aws
     def test_one_compliant_ec2(self):
         iam = client("iam", "us-west-1")
         profile_name = "fake_profile"
@@ -97,7 +96,6 @@ class Test_ec2_instance_internet_facing_with_instance_profile:
                 == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION_US_EAST_1}:{current_audit_info.audited_account}:instance/{instance.id}"
             )
 
-    @mock_aws
     @mock_aws
     def test_one_non_compliant_ec2(self):
         iam = client("iam", "us-west-1")

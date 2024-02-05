@@ -13,7 +13,6 @@ from tests.providers.aws.audit_info_utils import (
 
 class Test_cloudtrail_log_file_validation_enabled:
     @mock_aws
-    @mock_aws
     def test_no_trails(self):
         from prowler.providers.aws.services.cloudtrail.cloudtrail_service import (
             Cloudtrail,
@@ -38,7 +37,6 @@ class Test_cloudtrail_log_file_validation_enabled:
 
             assert len(result) == 0
 
-    @mock_aws
     @mock_aws
     def test_no_logging_validation(self):
         cloudtrail_client_us_east_1 = client(
@@ -80,7 +78,6 @@ class Test_cloudtrail_log_file_validation_enabled:
             assert result[0].resource_tags == []
             assert result[0].region == AWS_REGION_US_EAST_1
 
-    @mock_aws
     @mock_aws
     def test_various_trails_with_and_without_logging_validation(self):
         cloudtrail_client_us_east_1 = client(

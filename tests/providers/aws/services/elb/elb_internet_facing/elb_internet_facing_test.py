@@ -42,7 +42,6 @@ class Test_elb_request_smugling:
             assert len(result) == 0
 
     @mock_aws
-    @mock_aws
     def test_elb_private(self):
         elb = client("elb", region_name=AWS_REGION)
         ec2 = resource("ec2", region_name=AWS_REGION)
@@ -87,7 +86,6 @@ class Test_elb_request_smugling:
             assert result[0].resource_arn == elb_arn
             assert result[0].region == AWS_REGION_EU_WEST_1
 
-    @mock_aws
     @mock_aws
     def test_elb_with_deletion_protection(self):
         elb = client("elb", region_name=AWS_REGION)

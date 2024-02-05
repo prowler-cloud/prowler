@@ -13,7 +13,6 @@ from tests.providers.aws.audit_info_utils import (
 
 class Test_shield_advanced_protection_in_classic_load_balancers:
     @mock_aws
-    @mock_aws
     def test_no_shield_not_active(self):
         # Shield Client
         shield_client = mock.MagicMock
@@ -41,7 +40,6 @@ class Test_shield_advanced_protection_in_classic_load_balancers:
 
             assert len(result) == 0
 
-    @mock_aws
     @mock_aws
     def test_shield_enabled_elb_protected(self):
         # ELB Client
@@ -110,7 +108,6 @@ class Test_shield_advanced_protection_in_classic_load_balancers:
             )
 
     @mock_aws
-    @mock_aws
     def test_shield_enabled_elb_not_protected(self):
         # ELB Client
         elb = client("elb", region_name=AWS_REGION_EU_WEST_1)
@@ -168,7 +165,6 @@ class Test_shield_advanced_protection_in_classic_load_balancers:
                 == f"ELB {elb_name} is not protected by AWS Shield Advanced."
             )
 
-    @mock_aws
     @mock_aws
     def test_shield_disabled_elb_not_protected(self):
         # ELB Client
