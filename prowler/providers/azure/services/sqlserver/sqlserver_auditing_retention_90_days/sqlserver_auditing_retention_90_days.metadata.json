@@ -1,0 +1,30 @@
+{
+  "Provider": "azure",
+  "CheckID": "sqlserver_auditing_retention_90_days",
+  "CheckTitle": "Ensure that 'Auditing' Retention is 'greater than 90 days'",
+  "CheckType": [],
+  "ServiceName": "sqlserver",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "SQLServer",
+  "Description": "SQL Server Audit Retention should be configured to be greater than 90 days.",
+  "Risk": "Audit Logs can be used to check for anomalies and give insight into suspected breaches or misuse of information and access.",
+  "RelatedUrl": "https://docs.microsoft.com/en-us/azure/sql-database/sql-database-auditing",
+  "Remediation": {
+    "Code": {
+      "CLI": "Set-AzSqlServerAudit -ResourceGroupName resource_group_name -ServerName SQL_Server_name -RetentionInDays 100 -LogAnalyticsTargetState Enabled -WorkspaceResourceId '/subscriptions/subscription_ID/resourceGroups/insights-integration/providers/Microsoft.OperationalInsights/workspaces/workspace_name'",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/Sql/auditing-retention.html#",
+      "Terraform": "https://docs.bridgecrew.io/docs/bc_azr_logging_3"
+    },
+    "Recommendation": {
+      "Text": "1. Go to SQL servers 2. For each server instance 3. Click on Auditing 4. If storage is selected, expand Advanced properties 5. Set the Retention (days) setting greater than 90 days or 0 for unlimited retention. 6. Select Save",
+      "Url": "https://learn.microsoft.com/en-us/purview/audit-log-retention-policies"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
