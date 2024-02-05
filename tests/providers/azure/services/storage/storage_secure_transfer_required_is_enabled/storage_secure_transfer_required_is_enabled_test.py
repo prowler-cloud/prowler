@@ -32,6 +32,7 @@ class Test_storage_secure_transfer_required_is_enabled:
                 Storage_Account(
                     id=storage_account_id,
                     name=storage_account_name,
+                    resouce_group_name=None,
                     enable_https_traffic_only=False,
                     infrastructure_encryption=False,
                     allow_blob_public_access=None,
@@ -73,6 +74,7 @@ class Test_storage_secure_transfer_required_is_enabled:
                 Storage_Account(
                     id=storage_account_id,
                     name=storage_account_name,
+                    resouce_group_name=None,
                     enable_https_traffic_only=True,
                     infrastructure_encryption=True,
                     allow_blob_public_access=None,
