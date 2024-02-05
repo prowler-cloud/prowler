@@ -2,7 +2,7 @@ from unittest import mock
 from uuid import uuid4
 
 from prowler.providers.azure.services.storage.storage_service import Account
-from tests.providers.azure.azure_fixtures import AZURE_SUSCRIPTION
+from tests.providers.azure.azure_fixtures import AZURE_SUBSCRIPTION
 
 
 class Test_storage_key_rotation_90_dayss:
@@ -28,7 +28,7 @@ class Test_storage_key_rotation_90_dayss:
         expiration_days = 91
         storage_client = mock.MagicMock
         storage_client.storage_accounts = {
-            AZURE_SUSCRIPTION: [
+            AZURE_SUBSCRIPTION: [
                 Account(
                     id=storage_account_id,
                     name=storage_account_name,
@@ -59,9 +59,9 @@ class Test_storage_key_rotation_90_dayss:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Storage account {storage_account_name} from subscription {AZURE_SUSCRIPTION} has an invalid key expiration period of {expiration_days} days."
+                == f"Storage account {storage_account_name} from subscription {AZURE_SUBSCRIPTION} has an invalid key expiration period of {expiration_days} days."
             )
-            assert result[0].subscription == AZURE_SUSCRIPTION
+            assert result[0].subscription == AZURE_SUBSCRIPTION
             assert result[0].resource_name == storage_account_name
             assert result[0].resource_id == storage_account_id
 
@@ -71,7 +71,7 @@ class Test_storage_key_rotation_90_dayss:
         expiration_days = 90
         storage_client = mock.MagicMock
         storage_client.storage_accounts = {
-            AZURE_SUSCRIPTION: [
+            AZURE_SUBSCRIPTION: [
                 Account(
                     id=storage_account_id,
                     name=storage_account_name,
@@ -102,9 +102,9 @@ class Test_storage_key_rotation_90_dayss:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Storage account {storage_account_name} from subscription {AZURE_SUSCRIPTION} has a key expiration period of {expiration_days} days."
+                == f"Storage account {storage_account_name} from subscription {AZURE_SUBSCRIPTION} has a key expiration period of {expiration_days} days."
             )
-            assert result[0].subscription == AZURE_SUSCRIPTION
+            assert result[0].subscription == AZURE_SUBSCRIPTION
             assert result[0].resource_name == storage_account_name
             assert result[0].resource_id == storage_account_id
 
@@ -113,7 +113,7 @@ class Test_storage_key_rotation_90_dayss:
         storage_account_name = "Test Storage Account"
         storage_client = mock.MagicMock
         storage_client.storage_accounts = {
-            AZURE_SUSCRIPTION: [
+            AZURE_SUBSCRIPTION: [
                 Account(
                     id=storage_account_id,
                     name=storage_account_name,
@@ -144,8 +144,8 @@ class Test_storage_key_rotation_90_dayss:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Storage account {storage_account_name} from subscription {AZURE_SUSCRIPTION} has no key expiration period set."
+                == f"Storage account {storage_account_name} from subscription {AZURE_SUBSCRIPTION} has no key expiration period set."
             )
-            assert result[0].subscription == AZURE_SUSCRIPTION
+            assert result[0].subscription == AZURE_SUBSCRIPTION
             assert result[0].resource_name == storage_account_name
             assert result[0].resource_id == storage_account_id

@@ -4,7 +4,7 @@ from uuid import uuid4
 from azure.mgmt.sql.models import ServerBlobAuditingPolicy
 
 from prowler.providers.azure.services.sqlserver.sqlserver_service import Server
-from tests.providers.azure.azure_fixtures import AZURE_SUSCRIPTION
+from tests.providers.azure.azure_fixtures import AZURE_SUBSCRIPTION
 
 
 class Test_sqlserver_auditing_retention_90_days:
@@ -29,7 +29,7 @@ class Test_sqlserver_auditing_retention_90_days:
         sql_server_name = "SQL Server Name"
         sql_server_id = str(uuid4())
         sqlserver_client.sql_servers = {
-            AZURE_SUSCRIPTION: [
+            AZURE_SUBSCRIPTION: [
                 Server(
                     id=sql_server_id,
                     name=sql_server_name,
@@ -58,9 +58,9 @@ class Test_sqlserver_auditing_retention_90_days:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"SQL Server {sql_server_name} from subscription {AZURE_SUSCRIPTION} has auditing disabled."
+                == f"SQL Server {sql_server_name} from subscription {AZURE_SUBSCRIPTION} has auditing disabled."
             )
-            assert result[0].subscription == AZURE_SUSCRIPTION
+            assert result[0].subscription == AZURE_SUBSCRIPTION
             assert result[0].resource_name == sql_server_name
             assert result[0].resource_id == sql_server_id
 
@@ -69,7 +69,7 @@ class Test_sqlserver_auditing_retention_90_days:
         sql_server_name = "SQL Server Name"
         sql_server_id = str(uuid4())
         sqlserver_client.sql_servers = {
-            AZURE_SUSCRIPTION: [
+            AZURE_SUBSCRIPTION: [
                 Server(
                     id=sql_server_id,
                     name=sql_server_name,
@@ -100,9 +100,9 @@ class Test_sqlserver_auditing_retention_90_days:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"SQL Server {sql_server_name} from subscription {AZURE_SUSCRIPTION} has auditing retention less than 91 days."
+                == f"SQL Server {sql_server_name} from subscription {AZURE_SUBSCRIPTION} has auditing retention less than 91 days."
             )
-            assert result[0].subscription == AZURE_SUSCRIPTION
+            assert result[0].subscription == AZURE_SUBSCRIPTION
             assert result[0].resource_name == sql_server_name
             assert result[0].resource_id == sql_server_id
 
@@ -111,7 +111,7 @@ class Test_sqlserver_auditing_retention_90_days:
         sql_server_name = "SQL Server Name"
         sql_server_id = str(uuid4())
         sqlserver_client.sql_servers = {
-            AZURE_SUSCRIPTION: [
+            AZURE_SUBSCRIPTION: [
                 Server(
                     id=sql_server_id,
                     name=sql_server_name,
@@ -142,9 +142,9 @@ class Test_sqlserver_auditing_retention_90_days:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"SQL Server {sql_server_name} from subscription {AZURE_SUSCRIPTION} has auditing retention greater than 90 days."
+                == f"SQL Server {sql_server_name} from subscription {AZURE_SUBSCRIPTION} has auditing retention greater than 90 days."
             )
-            assert result[0].subscription == AZURE_SUSCRIPTION
+            assert result[0].subscription == AZURE_SUBSCRIPTION
             assert result[0].resource_name == sql_server_name
             assert result[0].resource_id == sql_server_id
 
@@ -155,7 +155,7 @@ class Test_sqlserver_auditing_retention_90_days:
         sql_server_name = "SQL Server Name"
         sql_server_id = str(uuid4())
         sqlserver_client.sql_servers = {
-            AZURE_SUSCRIPTION: [
+            AZURE_SUBSCRIPTION: [
                 Server(
                     id=sql_server_id,
                     name=sql_server_name,
@@ -187,9 +187,9 @@ class Test_sqlserver_auditing_retention_90_days:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"SQL Server {sql_server_name} from subscription {AZURE_SUSCRIPTION} has auditing retention greater than 90 days."
+                == f"SQL Server {sql_server_name} from subscription {AZURE_SUBSCRIPTION} has auditing retention greater than 90 days."
             )
-            assert result[0].subscription == AZURE_SUSCRIPTION
+            assert result[0].subscription == AZURE_SUBSCRIPTION
             assert result[0].resource_name == sql_server_name
             assert result[0].resource_id == sql_server_id
 
@@ -200,7 +200,7 @@ class Test_sqlserver_auditing_retention_90_days:
         sql_server_name = "SQL Server Name"
         sql_server_id = str(uuid4())
         sqlserver_client.sql_servers = {
-            AZURE_SUSCRIPTION: [
+            AZURE_SUBSCRIPTION: [
                 Server(
                     id=sql_server_id,
                     name=sql_server_name,
@@ -232,8 +232,8 @@ class Test_sqlserver_auditing_retention_90_days:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"SQL Server {sql_server_name} from subscription {AZURE_SUSCRIPTION} has auditing retention less than 91 days."
+                == f"SQL Server {sql_server_name} from subscription {AZURE_SUBSCRIPTION} has auditing retention less than 91 days."
             )
-            assert result[0].subscription == AZURE_SUSCRIPTION
+            assert result[0].subscription == AZURE_SUBSCRIPTION
             assert result[0].resource_name == sql_server_name
             assert result[0].resource_id == sql_server_id

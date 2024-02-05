@@ -3,7 +3,7 @@ from uuid import uuid4
 
 from prowler.providers.azure.services.storage.storage_service import Account
 
-AZURE_SUSCRIPTION = str(uuid4())
+AZURE_SUBSCRIPTION = str(uuid4())
 
 
 class Test_storage_ensure_minimum_tls_version_12:
@@ -28,7 +28,7 @@ class Test_storage_ensure_minimum_tls_version_12:
         storage_account_name = "Test Storage Account"
         storage_client = mock.MagicMock
         storage_client.storage_accounts = {
-            AZURE_SUSCRIPTION: [
+            AZURE_SUBSCRIPTION: [
                 Account(
                     id=storage_account_id,
                     name=storage_account_name,
@@ -59,9 +59,9 @@ class Test_storage_ensure_minimum_tls_version_12:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Storage account {storage_account_name} from subscription {AZURE_SUSCRIPTION} does not have TLS version set to 1.2."
+                == f"Storage account {storage_account_name} from subscription {AZURE_SUBSCRIPTION} does not have TLS version set to 1.2."
             )
-            assert result[0].subscription == AZURE_SUSCRIPTION
+            assert result[0].subscription == AZURE_SUBSCRIPTION
             assert result[0].resource_name == storage_account_name
             assert result[0].resource_id == storage_account_id
 
@@ -70,7 +70,7 @@ class Test_storage_ensure_minimum_tls_version_12:
         storage_account_name = "Test Storage Account"
         storage_client = mock.MagicMock
         storage_client.storage_accounts = {
-            AZURE_SUSCRIPTION: [
+            AZURE_SUBSCRIPTION: [
                 Account(
                     id=storage_account_id,
                     name=storage_account_name,
@@ -101,8 +101,8 @@ class Test_storage_ensure_minimum_tls_version_12:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Storage account {storage_account_name} from subscription {AZURE_SUSCRIPTION} has TLS version set to 1.2."
+                == f"Storage account {storage_account_name} from subscription {AZURE_SUBSCRIPTION} has TLS version set to 1.2."
             )
-            assert result[0].subscription == AZURE_SUSCRIPTION
+            assert result[0].subscription == AZURE_SUBSCRIPTION
             assert result[0].resource_name == storage_account_name
             assert result[0].resource_id == storage_account_id

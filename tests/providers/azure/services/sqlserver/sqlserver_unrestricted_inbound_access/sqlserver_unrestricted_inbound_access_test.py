@@ -5,7 +5,7 @@ from azure.mgmt.sql.models import FirewallRule
 
 from prowler.providers.azure.services.sqlserver.sqlserver_service import Server
 
-AZURE_SUSCRIPTION = str(uuid4())
+AZURE_SUBSCRIPTION = str(uuid4())
 
 
 class Test_sqlserver_unrestricted_inbound_access:
@@ -30,7 +30,7 @@ class Test_sqlserver_unrestricted_inbound_access:
         sql_server_name = "SQL Server Name"
         sql_server_id = str(uuid4())
         sqlserver_client.sql_servers = {
-            AZURE_SUSCRIPTION: [
+            AZURE_SUBSCRIPTION: [
                 Server(
                     id=sql_server_id,
                     name=sql_server_name,
@@ -61,9 +61,9 @@ class Test_sqlserver_unrestricted_inbound_access:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"SQL Server {sql_server_name} from subscription {AZURE_SUSCRIPTION} has firewall rules allowing 0.0.0.0-255.255.255.255."
+                == f"SQL Server {sql_server_name} from subscription {AZURE_SUBSCRIPTION} has firewall rules allowing 0.0.0.0-255.255.255.255."
             )
-            assert result[0].subscription == AZURE_SUSCRIPTION
+            assert result[0].subscription == AZURE_SUBSCRIPTION
             assert result[0].resource_name == sql_server_name
             assert result[0].resource_id == sql_server_id
 
@@ -72,7 +72,7 @@ class Test_sqlserver_unrestricted_inbound_access:
         sql_server_name = "SQL Server Name"
         sql_server_id = str(uuid4())
         sqlserver_client.sql_servers = {
-            AZURE_SUSCRIPTION: [
+            AZURE_SUBSCRIPTION: [
                 Server(
                     id=sql_server_id,
                     name=sql_server_name,
@@ -103,8 +103,8 @@ class Test_sqlserver_unrestricted_inbound_access:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"SQL Server {sql_server_name} from subscription {AZURE_SUSCRIPTION} does not have firewall rules allowing 0.0.0.0-255.255.255.255."
+                == f"SQL Server {sql_server_name} from subscription {AZURE_SUBSCRIPTION} does not have firewall rules allowing 0.0.0.0-255.255.255.255."
             )
-            assert result[0].subscription == AZURE_SUSCRIPTION
+            assert result[0].subscription == AZURE_SUBSCRIPTION
             assert result[0].resource_name == sql_server_name
             assert result[0].resource_id == sql_server_id
