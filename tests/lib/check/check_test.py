@@ -626,15 +626,12 @@ class Test_Check:
                 "/root_dir/prowler/providers/azure/services/sqlserver/sqlserver_tde_encryption_enabled",
             ),
             (
-                "sqlserver_vulnerability_assessment_enabled",
+                "sqlserver_auditing_retention_90_days",
                 "/root_dir/prowler/providers/azure/services/sqlserver/sqlserver_auditing_retention_90_days",
             ),
             (
                 "sqlserver_vulnerability_assessment_enabled",
                 "/root_dir/prowler/providers/azure/services/sqlserver/sqlserver_vulnerability_assessment_enabled",
-            ),
-                "sqlserver_auditing_retention_90_days",
-                "/root_dir/prowler/providers/azure/services/sqlserver/sqlserver_auditing_retention_90_days",
             ),
         ]
         returned_checks = recover_checks_from_provider(provider, service)
