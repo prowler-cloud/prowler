@@ -1,7 +1,7 @@
 from unittest.mock import patch
 
 from boto3 import client
-from moto import mock_ec2, mock_eks
+from moto import mock_aws
 
 from prowler.providers.aws.services.eks.eks_service import EKS
 from tests.providers.aws.audit_info_utils import (
@@ -49,8 +49,7 @@ class Test_EKS_Service:
         assert eks.session.__class__.__name__ == "Session"
 
     # Test EKS list clusters
-    @mock_ec2
-    @mock_eks
+    @mock_aws
     def test__list_clusters(self):
         ec2_client = client("ec2", region_name=AWS_REGION_EU_WEST_1)
         eks_client = client("eks", region_name=AWS_REGION_EU_WEST_1)
@@ -82,8 +81,7 @@ class Test_EKS_Service:
         assert eks.clusters[0].tags == [{"test": "test"}]
 
     # Test EKS describe clusters
-    @mock_ec2
-    @mock_eks
+    @mock_aws
     def test__describe_clusters(self):
         ec2_client = client("ec2", region_name=AWS_REGION_EU_WEST_1)
         eks_client = client("eks", region_name=AWS_REGION_EU_WEST_1)

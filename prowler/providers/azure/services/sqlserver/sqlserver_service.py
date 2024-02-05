@@ -6,6 +6,7 @@ from azure.mgmt.sql.models import (
     FirewallRule,
     ServerBlobAuditingPolicy,
     ServerExternalAdministrator,
+    ServerVulnerabilityAssessment,
     TransparentDataEncryption,
 )
 
@@ -40,8 +41,11 @@ class SQLServer(AzureService):
                     encryption_protector = self.__get_enctyption_protectors__(
                         subscription, resource_group, sql_server.name
                     )
+                    vulnerability_assessment = self.__get_vulnerability_assesments__(
+                        subscription, resource_group, sql_server.name
+                    )
                     sql_servers[subscription].append(
-                        SQL_Server(
+                        Server(
                             id=sql_server.id,
                             name=sql_server.name,
                             public_network_access=sql_server.public_network_access,
@@ -53,6 +57,7 @@ class SQLServer(AzureService):
                             databases=self.__get_databases__(
                                 subscription, resource_group, sql_server.name
                             ),
+                            vulnerability_assessment=vulnerability_assessment,
                         )
                     )
             except Exception as error:
@@ -100,7 +105,7 @@ class SQLServer(AzureService):
                     subscription, resource_group, server_name, database.name
                 )
                 databases.append(
-                    DatabaseServer(
+                    Database(
                         id=database.id,
                         name=database.name,
                         type=database.type,
@@ -115,9 +120,20 @@ class SQLServer(AzureService):
             )
         return databases
 
+    def __get_vulnerability_assesments__(
+        self, subscription, resource_group, server_name
+    ):
+        client = self.clients[subscription]
+        vulnerability_assessment = client.server_vulnerability_assessments.get(
+            resource_group_name=resource_group,
+            server_name=server_name,
+            vulnerability_assessment_name="default",
+        )
+        return vulnerability_assessment
+
 
 @dataclass
-class DatabaseServer:
+class Database:
     id: str
     name: str
     type: str
@@ -127,7 +143,7 @@ class DatabaseServer:
 
 
 @dataclass
-class SQL_Server:
+class Server:
     id: str
     name: str
     public_network_access: str
@@ -136,4 +152,5 @@ class SQL_Server:
     auditing_policies: ServerBlobAuditingPolicy
     firewall_rules: FirewallRule
     encryption_protector: EncryptionProtector = None
-    databases: list[DatabaseServer] = None
+    databases: list[Database] = None
+    vulnerability_assessment: ServerVulnerabilityAssessment = None

@@ -1,7 +1,7 @@
 from unittest import mock
 
 from boto3 import client
-from moto import mock_ec2
+from moto import mock_aws
 
 from tests.providers.aws.audit_info_utils import (
     AWS_REGION_US_EAST_1,
@@ -10,7 +10,7 @@ from tests.providers.aws.audit_info_utils import (
 
 
 class Test_vpc_subnet_no_public_ip_by_default:
-    @mock_ec2
+    @mock_aws
     def test_vpc_with_map_ip_on_launch(self):
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
         vpc = ec2_client.create_vpc(
@@ -62,7 +62,7 @@ class Test_vpc_subnet_no_public_ip_by_default:
                             == "VPC subnet subnet_name assigns public IP by default."
                         )
 
-    @mock_ec2
+    @mock_aws
     def test_vpc_without_map_ip_on_launch(self):
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
         vpc = ec2_client.create_vpc(

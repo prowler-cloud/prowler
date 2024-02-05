@@ -2,7 +2,7 @@ import json
 from unittest import mock
 
 from boto3 import client
-from moto import mock_kms
+from moto import mock_aws
 
 from tests.providers.aws.audit_info_utils import (
     AWS_REGION_US_EAST_1,
@@ -11,7 +11,7 @@ from tests.providers.aws.audit_info_utils import (
 
 
 class Test_kms_key_not_publicly_accessible:
-    @mock_kms
+    @mock_aws
     def test_no_kms_keys(self):
         from prowler.providers.aws.services.kms.kms_service import KMS
 
@@ -34,7 +34,7 @@ class Test_kms_key_not_publicly_accessible:
 
             assert len(result) == 0
 
-    @mock_kms
+    @mock_aws
     def test_kms_key_not_publicly_accessible(self):
         # Generate KMS Client
         kms_client = client("kms", region_name=AWS_REGION_US_EAST_1)
@@ -69,7 +69,7 @@ class Test_kms_key_not_publicly_accessible:
             assert result[0].resource_id == key["KeyId"]
             assert result[0].resource_arn == key["Arn"]
 
-    @mock_kms
+    @mock_aws
     def test_kms_key_public_accessible(self):
         # Generate KMS Client
         kms_client = client("kms", region_name=AWS_REGION_US_EAST_1)
@@ -120,7 +120,7 @@ class Test_kms_key_not_publicly_accessible:
             assert result[0].resource_id == key["KeyId"]
             assert result[0].resource_arn == key["Arn"]
 
-    @mock_kms
+    @mock_aws
     def test_kms_key_empty_principal(self):
         # Generate KMS Client
         kms_client = client("kms", region_name=AWS_REGION_US_EAST_1)

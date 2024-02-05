@@ -2,7 +2,7 @@ from unittest import mock
 
 from boto3 import client, resource
 from mock import patch
-from moto import mock_ec2, mock_elbv2
+from moto import mock_aws
 
 from prowler.providers.aws.services.shield.shield_service import Protection
 from tests.providers.aws.audit_info_utils import (
@@ -26,8 +26,7 @@ def mock_generate_regional_clients(service, audit_info):
     new=mock_generate_regional_clients,
 )
 class Test_shield_advanced_protection_in_internet_facing_load_balancers:
-    @mock_ec2
-    @mock_elbv2
+    @mock_aws
     def test_no_shield_not_active(self):
         # Shield Client
         shield_client = mock.MagicMock
@@ -55,8 +54,7 @@ class Test_shield_advanced_protection_in_internet_facing_load_balancers:
 
             assert len(result) == 0
 
-    @mock_ec2
-    @mock_elbv2
+    @mock_aws
     def test_shield_enabled_elbv2_internet_facing_protected(self):
         # ELBv2 Client
         conn = client("elbv2", region_name=AWS_REGION_EU_WEST_1)
@@ -131,8 +129,7 @@ class Test_shield_advanced_protection_in_internet_facing_load_balancers:
                 == f"ELBv2 ALB {lb_name} is protected by AWS Shield Advanced."
             )
 
-    @mock_ec2
-    @mock_elbv2
+    @mock_aws
     def test_shield_enabled_elbv2_internal_protected(self):
         # ELBv2 Client
         conn = client("elbv2", region_name=AWS_REGION_EU_WEST_1)
@@ -199,8 +196,7 @@ class Test_shield_advanced_protection_in_internet_facing_load_balancers:
 
             assert len(result) == 0
 
-    @mock_ec2
-    @mock_elbv2
+    @mock_aws
     def test_shield_enabled_elbv2_internet_facing_not_protected(self):
         # ELBv2 Client
         conn = client("elbv2", region_name=AWS_REGION_EU_WEST_1)
@@ -266,8 +262,7 @@ class Test_shield_advanced_protection_in_internet_facing_load_balancers:
                 == f"ELBv2 ALB {lb_name} is not protected by AWS Shield Advanced."
             )
 
-    @mock_ec2
-    @mock_elbv2
+    @mock_aws
     def test_shield_disabled_elbv2_internet_facing_not_protected(self):
         # ELBv2 Client
         conn = client("elbv2", region_name=AWS_REGION_EU_WEST_1)

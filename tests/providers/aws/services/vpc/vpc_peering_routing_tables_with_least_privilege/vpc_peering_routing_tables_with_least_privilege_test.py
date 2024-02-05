@@ -1,7 +1,7 @@
 from unittest import mock
 
 from boto3 import client, resource
-from moto import mock_ec2
+from moto import mock_aws
 
 from tests.providers.aws.audit_info_utils import (
     AWS_REGION_US_EAST_1,
@@ -10,7 +10,7 @@ from tests.providers.aws.audit_info_utils import (
 
 
 class Test_vpc_peering_routing_tables_with_least_privilege:
-    @mock_ec2
+    @mock_aws
     def test_vpc_no_peering_connections(self):
         from prowler.providers.aws.services.vpc.vpc_service import VPC
 
@@ -34,7 +34,7 @@ class Test_vpc_peering_routing_tables_with_least_privilege:
 
                 assert len(result) == 0
 
-    @mock_ec2
+    @mock_aws
     def test_vpc_comply_peering_connection_(self):
         # Create VPC Mocked Resources
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
@@ -101,7 +101,7 @@ class Test_vpc_peering_routing_tables_with_least_privilege:
                 assert result[0].resource_id == vpc_pcx_id
                 assert result[0].region == AWS_REGION_US_EAST_1
 
-    @mock_ec2
+    @mock_aws
     def test_vpc_comply_peering_connection_edge_case(self):
         # Create VPC Mocked Resources
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
@@ -166,7 +166,7 @@ class Test_vpc_peering_routing_tables_with_least_privilege:
                 assert result[0].resource_id == vpc_pcx_id
                 assert result[0].region == AWS_REGION_US_EAST_1
 
-    @mock_ec2
+    @mock_aws
     def test_vpc_not_comply_peering_connection_(self):
         # Create VPC Mocked Resources
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)

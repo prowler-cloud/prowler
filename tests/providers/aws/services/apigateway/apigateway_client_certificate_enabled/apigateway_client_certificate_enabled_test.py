@@ -1,7 +1,7 @@
 from unittest import mock
 
 from boto3 import client
-from moto import mock_apigateway
+from moto import mock_aws
 
 from prowler.providers.aws.services.apigateway.apigateway_service import Stage
 from tests.providers.aws.audit_info_utils import (
@@ -12,7 +12,7 @@ from tests.providers.aws.audit_info_utils import (
 
 
 class Test_apigateway_restapi_client_certificate_enabled:
-    @mock_apigateway
+    @mock_aws
     def test_apigateway_no_stages(self):
         # Create APIGateway Mocked Resources
         apigateway_client = client("apigateway", region_name=AWS_REGION_US_EAST_1)
@@ -45,7 +45,7 @@ class Test_apigateway_restapi_client_certificate_enabled:
 
             assert len(result) == 0
 
-    @mock_apigateway
+    @mock_aws
     def test_apigateway_one_stage_without_certificate(self):
         # Create APIGateway Mocked Resources
         apigateway_client = client("apigateway", region_name=AWS_REGION_US_EAST_1)
@@ -117,7 +117,7 @@ class Test_apigateway_restapi_client_certificate_enabled:
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_tags == [None]
 
-    @mock_apigateway
+    @mock_aws
     def test_apigateway_one_stage_with_certificate(self):
         # Create APIGateway Mocked Resources
         apigateway_client = client("apigateway", region_name=AWS_REGION_US_EAST_1)

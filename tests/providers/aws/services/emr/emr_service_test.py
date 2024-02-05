@@ -3,7 +3,7 @@ from unittest.mock import patch
 
 import botocore
 from boto3 import client
-from moto import mock_emr
+from moto import mock_aws
 
 from prowler.providers.aws.services.emr.emr_service import EMR, ClusterStatus
 from tests.providers.aws.audit_info_utils import (
@@ -51,25 +51,25 @@ def mock_generate_regional_clients(service, audit_info):
 @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
 class Test_EMR_Service:
     # Test EMR Client
-    @mock_emr
+    @mock_aws
     def test__get_client__(self):
         emr = EMR(set_mocked_aws_audit_info())
         assert emr.regional_clients[AWS_REGION_EU_WEST_1].__class__.__name__ == "EMR"
 
     # Test EMR Session
-    @mock_emr
+    @mock_aws
     def test__get_session__(self):
         emr = EMR(set_mocked_aws_audit_info())
         assert emr.session.__class__.__name__ == "Session"
 
     # Test EMR Service
-    @mock_emr
+    @mock_aws
     def test__get_service__(self):
         emr = EMR(set_mocked_aws_audit_info())
         assert emr.service == "emr"
 
     # Test __list_clusters__ and __describe_cluster__
-    @mock_emr
+    @mock_aws
     def test__list_clusters__(self):
         # Create EMR Cluster
         emr_client = client("emr", region_name=AWS_REGION_EU_WEST_1)
@@ -113,7 +113,7 @@ class Test_EMR_Service:
             {"Key": "test", "Value": "test"},
         ]
 
-    @mock_emr
+    @mock_aws
     def test__get_block_public_access_configuration__(self):
         emr = EMR(set_mocked_aws_audit_info())
 

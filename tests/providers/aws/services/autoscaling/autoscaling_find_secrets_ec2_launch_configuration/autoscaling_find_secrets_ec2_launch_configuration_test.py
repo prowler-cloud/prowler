@@ -3,7 +3,7 @@ from pathlib import Path
 from unittest import mock
 
 from boto3 import client
-from moto import mock_autoscaling
+from moto import mock_aws
 
 from tests.providers.aws.audit_info_utils import (
     AWS_REGION_US_EAST_1,
@@ -15,7 +15,7 @@ FIXTURES_DIR_NAME = "fixtures"
 
 
 class Test_autoscaling_find_secrets_ec2_launch_configuration:
-    @mock_autoscaling
+    @mock_aws
     def test_no_autoscaling(self):
         autoscaling_client = client("autoscaling", region_name=AWS_REGION_US_EAST_1)
         autoscaling_client.launch_configurations = []
@@ -43,7 +43,7 @@ class Test_autoscaling_find_secrets_ec2_launch_configuration:
 
             assert len(result) == 0
 
-    @mock_autoscaling
+    @mock_aws
     def test_one_autoscaling_with_no_secrets(self):
         # Include launch_configurations to check
         launch_configuration_name = "tester"
@@ -90,7 +90,7 @@ class Test_autoscaling_find_secrets_ec2_launch_configuration:
             assert result[0].resource_arn == launch_configuration_arn
             assert result[0].region == AWS_REGION_US_EAST_1
 
-    @mock_autoscaling
+    @mock_aws
     def test_one_autoscaling_with_secrets(self):
         # Include launch_configurations to check
         launch_configuration_name = "tester"
@@ -137,7 +137,7 @@ class Test_autoscaling_find_secrets_ec2_launch_configuration:
             assert result[0].resource_arn == launch_configuration_arn
             assert result[0].region == AWS_REGION_US_EAST_1
 
-    @mock_autoscaling
+    @mock_aws
     def test_one_autoscaling_file_with_secrets(self):
         # Include launch_configurations to check
         f = open(
@@ -189,7 +189,7 @@ class Test_autoscaling_find_secrets_ec2_launch_configuration:
             assert result[0].resource_arn == launch_configuration_arn
             assert result[0].region == AWS_REGION_US_EAST_1
 
-    @mock_autoscaling
+    @mock_aws
     def test_one_launch_configurations_without_user_data(self):
         # Include launch_configurations to check
         launch_configuration_name = "tester"
@@ -235,7 +235,7 @@ class Test_autoscaling_find_secrets_ec2_launch_configuration:
             assert result[0].resource_arn == launch_configuration_arn
             assert result[0].region == AWS_REGION_US_EAST_1
 
-    @mock_autoscaling
+    @mock_aws
     def test_one_autoscaling_file_with_secrets_gzip(self):
         # Include launch_configurations to check
         f = open(

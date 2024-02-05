@@ -3,7 +3,7 @@ from re import search
 from unittest import mock
 
 from boto3 import client
-from moto import mock_iam
+from moto import mock_aws
 
 from tests.providers.aws.audit_info_utils import (
     AWS_REGION_US_EAST_1,
@@ -12,7 +12,7 @@ from tests.providers.aws.audit_info_utils import (
 
 
 class Test_iam_no_custom_policy_permissive_role_assumption:
-    @mock_iam
+    @mock_aws
     def test_policy_allows_permissive_role_assumption_wildcard(self):
         iam_client = client("iam")
         policy_name = "policy1"
@@ -52,7 +52,7 @@ class Test_iam_no_custom_policy_permissive_role_assumption:
                 assert result[0].resource_arn == arn
                 assert result[0].resource_id == policy_name
 
-    @mock_iam
+    @mock_aws
     def test_policy_allows_permissive_role_assumption_no_wilcard(self):
         iam_client = client("iam")
         policy_name = "policy1"
@@ -92,7 +92,7 @@ class Test_iam_no_custom_policy_permissive_role_assumption:
                 assert result[0].resource_arn == arn
                 assert result[0].resource_id == policy_name
 
-    @mock_iam
+    @mock_aws
     def test_policy_assume_role_not_allow_permissive_role_assumption(self):
         iam_client = client("iam")
         policy_name = "policy1"
@@ -136,7 +136,7 @@ class Test_iam_no_custom_policy_permissive_role_assumption:
                 assert result[0].resource_arn == arn
                 assert result[0].resource_id == policy_name
 
-    @mock_iam
+    @mock_aws
     def test_policy_not_allow_permissive_role_assumption(self):
         iam_client = client("iam")
         policy_name = "policy1"
@@ -176,7 +176,7 @@ class Test_iam_no_custom_policy_permissive_role_assumption:
                 assert result[0].resource_arn == arn
                 assert result[0].resource_id == policy_name
 
-    @mock_iam
+    @mock_aws
     def test_policy_permissive_and_not_permissive(self):
         iam_client = client("iam")
         policy_name_non_permissive = "policy1"

@@ -2,7 +2,7 @@ from re import search
 from unittest import mock
 
 from boto3 import client, resource
-from moto import mock_ec2, mock_iam
+from moto import mock_aws
 
 from tests.providers.aws.audit_info_utils import (
     AWS_REGION_EU_WEST_1,
@@ -14,7 +14,7 @@ EXAMPLE_AMI_ID = "ami-12c6146b"
 
 
 class Test_ec2_instance_internet_facing_with_instance_profile:
-    @mock_ec2
+    @mock_aws
     def test_ec2_no_instances(self):
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
@@ -39,8 +39,7 @@ class Test_ec2_instance_internet_facing_with_instance_profile:
 
             assert len(result) == 0
 
-    @mock_iam
-    @mock_ec2
+    @mock_aws
     def test_one_compliant_ec2(self):
         iam = client("iam", "us-west-1")
         profile_name = "fake_profile"
@@ -97,8 +96,7 @@ class Test_ec2_instance_internet_facing_with_instance_profile:
                 == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION_US_EAST_1}:{current_audit_info.audited_account}:instance/{instance.id}"
             )
 
-    @mock_iam
-    @mock_ec2
+    @mock_aws
     def test_one_non_compliant_ec2(self):
         iam = client("iam", "us-west-1")
         profile_name = "fake_profile"

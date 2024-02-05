@@ -1,9 +1,9 @@
 from unittest import mock
 from uuid import uuid4
 
-from prowler.providers.azure.services.storage.storage_service import Storage_Account
+from prowler.providers.azure.services.storage.storage_service import Account
 
-AZURE_SUSCRIPTION = str(uuid4())
+AZURE_SUBSCRIPTION = str(uuid4())
 
 
 class Test_storage_blob_public_access_level_is_disabled:
@@ -28,8 +28,8 @@ class Test_storage_blob_public_access_level_is_disabled:
         storage_account_name = "Test Storage Account"
         storage_client = mock.MagicMock
         storage_client.storage_accounts = {
-            AZURE_SUSCRIPTION: [
-                Storage_Account(
+            AZURE_SUBSCRIPTION: [
+                Account(
                     id=storage_account_id,
                     name=storage_account_name,
                     resouce_group_name=None,
@@ -59,9 +59,9 @@ class Test_storage_blob_public_access_level_is_disabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Storage account {storage_account_name} from subscription {AZURE_SUSCRIPTION} has allow blob public access enabled."
+                == f"Storage account {storage_account_name} from subscription {AZURE_SUBSCRIPTION} has allow blob public access enabled."
             )
-            assert result[0].subscription == AZURE_SUSCRIPTION
+            assert result[0].subscription == AZURE_SUBSCRIPTION
             assert result[0].resource_name == storage_account_name
             assert result[0].resource_id == storage_account_id
 
@@ -70,8 +70,8 @@ class Test_storage_blob_public_access_level_is_disabled:
         storage_account_name = "Test Storage Account"
         storage_client = mock.MagicMock
         storage_client.storage_accounts = {
-            AZURE_SUSCRIPTION: [
-                Storage_Account(
+            AZURE_SUBSCRIPTION: [
+                Account(
                     id=storage_account_id,
                     name=storage_account_name,
                     resouce_group_name=None,
@@ -101,8 +101,8 @@ class Test_storage_blob_public_access_level_is_disabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Storage account {storage_account_name} from subscription {AZURE_SUSCRIPTION} has allow blob public access disabled."
+                == f"Storage account {storage_account_name} from subscription {AZURE_SUBSCRIPTION} has allow blob public access disabled."
             )
-            assert result[0].subscription == AZURE_SUSCRIPTION
+            assert result[0].subscription == AZURE_SUBSCRIPTION
             assert result[0].resource_name == storage_account_name
             assert result[0].resource_id == storage_account_id

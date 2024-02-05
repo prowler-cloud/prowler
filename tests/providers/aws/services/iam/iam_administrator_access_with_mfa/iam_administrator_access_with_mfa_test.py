@@ -3,7 +3,7 @@ from re import search
 from unittest import mock
 
 from boto3 import client
-from moto import mock_iam
+from moto import mock_aws
 
 from tests.providers.aws.audit_info_utils import (
     AWS_REGION_US_EAST_1,
@@ -12,7 +12,7 @@ from tests.providers.aws.audit_info_utils import (
 
 
 class Test_iam_administrator_access_with_mfa_test:
-    @mock_iam
+    @mock_aws(config={"iam": {"load_aws_managed_policies": True}})
     def test_group_with_no_policies(self):
         iam = client("iam")
         group_name = "test-group"
@@ -45,7 +45,7 @@ class Test_iam_administrator_access_with_mfa_test:
                     f"Group {group_name} has no policies.", result[0].status_extended
                 )
 
-    @mock_iam
+    @mock_aws(config={"iam": {"load_aws_managed_policies": True}})
     def test_group_non_administrative_policy(self):
         iam = client("iam")
         group_name = "test-group"
@@ -89,7 +89,7 @@ class Test_iam_administrator_access_with_mfa_test:
                     result[0].status_extended,
                 )
 
-    @mock_iam
+    @mock_aws(config={"iam": {"load_aws_managed_policies": True}})
     def test_admin_policy_no_users(self):
         iam = client("iam")
         group_name = "test-group"
@@ -127,7 +127,7 @@ class Test_iam_administrator_access_with_mfa_test:
                     result[0].status_extended,
                 )
 
-    @mock_iam
+    @mock_aws(config={"iam": {"load_aws_managed_policies": True}})
     def test_admin_policy_with_user_without_mfa(self):
         iam = client("iam")
         group_name = "test-group"
@@ -167,7 +167,7 @@ class Test_iam_administrator_access_with_mfa_test:
                     result[0].status_extended,
                 )
 
-    @mock_iam
+    @mock_aws(config={"iam": {"load_aws_managed_policies": True}})
     def test_various_policies_with_users_with_and_without_mfa(self):
         iam = client("iam")
         group_name = "test-group"

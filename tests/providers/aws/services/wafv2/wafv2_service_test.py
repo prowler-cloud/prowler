@@ -1,5 +1,5 @@
 from boto3 import client, resource
-from moto import mock_ec2, mock_elbv2, mock_wafv2
+from moto import mock_aws
 
 from prowler.providers.aws.services.wafv2.wafv2_service import WAFv2
 from tests.providers.aws.audit_info_utils import (
@@ -10,7 +10,7 @@ from tests.providers.aws.audit_info_utils import (
 
 class Test_WAFv2_Service:
     # Test WAFv2 Service
-    @mock_wafv2
+    @mock_aws
     def test_service(self):
         # WAFv2 client for this test class
         audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
@@ -18,7 +18,7 @@ class Test_WAFv2_Service:
         assert wafv2.service == "wafv2"
 
     # Test WAFv2 Client
-    @mock_wafv2
+    @mock_aws
     def test_client(self):
         # WAFv2 client for this test class
         audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
@@ -27,7 +27,7 @@ class Test_WAFv2_Service:
             assert regional_client.__class__.__name__ == "WAFV2"
 
     # Test WAFv2 Session
-    @mock_wafv2
+    @mock_aws
     def test__get_session__(self):
         # WAFv2 client for this test class
         audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
@@ -35,7 +35,7 @@ class Test_WAFv2_Service:
         assert wafv2.session.__class__.__name__ == "Session"
 
     # Test WAFv2 Describe Web ACLs
-    @mock_wafv2
+    @mock_aws
     def test__list_web_acls__(self):
         wafv2 = client("wafv2", region_name=AWS_REGION_EU_WEST_1)
         waf = wafv2.create_web_acl(
@@ -58,9 +58,7 @@ class Test_WAFv2_Service:
         assert wafv2.web_acls[0].id == waf["Id"]
 
     # Test WAFv2 Describe Web ACLs Resources
-    @mock_ec2
-    @mock_elbv2
-    @mock_wafv2
+    @mock_aws
     def test__list_resources_for_web_acl__(self):
         wafv2 = client("wafv2", region_name=AWS_REGION_EU_WEST_1)
         conn = client("elbv2", region_name=AWS_REGION_EU_WEST_1)

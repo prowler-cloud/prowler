@@ -2,7 +2,7 @@ from re import search
 from unittest import mock
 
 from boto3 import client, resource
-from moto import mock_ec2
+from moto import mock_aws
 
 from tests.providers.aws.audit_info_utils import (
     AWS_REGION_EU_WEST_1,
@@ -14,7 +14,7 @@ EXAMPLE_AMI_ID = "ami-12c6146b"
 
 
 class Test_ec2_elastic_ip_unassigned:
-    @mock_ec2
+    @mock_aws
     def test_no_eips(self):
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
@@ -39,7 +39,7 @@ class Test_ec2_elastic_ip_unassigned:
 
             assert len(result) == 0
 
-    @mock_ec2
+    @mock_aws
     def test_eip_unassociated(self):
         # Create EC2 Mocked Resources
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
@@ -81,7 +81,7 @@ class Test_ec2_elastic_ip_unassigned:
                 == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION_US_EAST_1}:{current_audit_info.audited_account}:eip-allocation/{allocation_id}"
             )
 
-    @mock_ec2
+    @mock_aws
     def test_eip_associated(self):
         # Create EC2 Mocked Resources
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)

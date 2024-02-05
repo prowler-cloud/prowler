@@ -3,7 +3,7 @@ from unittest.mock import patch
 
 import botocore
 from boto3 import client
-from moto import mock_ecr
+from moto import mock_aws
 
 from prowler.providers.aws.services.ecr.ecr_service import ECR, ScanningRule
 from tests.providers.aws.audit_info_utils import (
@@ -117,7 +117,7 @@ class Test_ECR_Service:
         assert ecr.session.__class__.__name__ == "Session"
 
     # Test describe ECR repositories
-    @mock_ecr
+    @mock_aws
     def test__describe_registries_and_repositories__(self):
         ecr_client = client("ecr", region_name=AWS_REGION_EU_WEST_1)
         ecr_client.create_repository(
@@ -143,7 +143,7 @@ class Test_ECR_Service:
         ]
 
     # Test describe ECR repository policies
-    @mock_ecr
+    @mock_aws
     def test__describe_repository_policies__(self):
         ecr_client = client("ecr", region_name=AWS_REGION_EU_WEST_1)
         ecr_client.create_repository(
@@ -189,7 +189,7 @@ class Test_ECR_Service:
         )
 
     # Test describe ECR repository lifecycle policies
-    @mock_ecr
+    @mock_aws
     def test__get_lifecycle_policies__(self):
         ecr_client = client("ecr", region_name=AWS_REGION_EU_WEST_1)
         ecr_client.create_repository(
@@ -206,7 +206,7 @@ class Test_ECR_Service:
         assert ecr.registries[AWS_REGION_EU_WEST_1].repositories[0].lifecycle_policy
 
     # Test get image details
-    @mock_ecr
+    @mock_aws
     def test__get_image_details__(self):
         ecr_client = client("ecr", region_name=AWS_REGION_EU_WEST_1)
         ecr_client.create_repository(
@@ -319,7 +319,7 @@ class Test_ECR_Service:
         )
 
     # Test get ECR Registries Scanning Configuration
-    @mock_ecr
+    @mock_aws
     def test__get_registry_scanning_configuration__(self):
         audit_info = set_mocked_aws_audit_info()
         ecr = ECR(audit_info)

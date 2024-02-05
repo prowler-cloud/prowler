@@ -2,7 +2,7 @@ from json import dumps
 from unittest import mock
 
 from boto3 import client
-from moto import mock_iam
+from moto import mock_aws
 
 from tests.providers.aws.audit_info_utils import (
     AWS_ACCOUNT_NUMBER,
@@ -12,7 +12,7 @@ from tests.providers.aws.audit_info_utils import (
 
 
 class Test_iam_policy_attached_only_to_group_or_roles:
-    @mock_iam
+    @mock_aws
     def test_iam_user_attached_policy(self):
         result = []
         iam_client = client("iam")
@@ -58,7 +58,7 @@ class Test_iam_policy_attached_only_to_group_or_roles:
                 == f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:user/{user}"
             )
 
-    @mock_iam
+    @mock_aws
     def test_iam_user_attached_and_inline_policy(self):
         result = []
         iam_client = client("iam")
@@ -116,7 +116,7 @@ class Test_iam_policy_attached_only_to_group_or_roles:
                 == f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:user/{user}"
             )
 
-    @mock_iam
+    @mock_aws
     def test_iam_user_inline_policy(self):
         result = []
         iam_client = client("iam")
@@ -161,7 +161,7 @@ class Test_iam_policy_attached_only_to_group_or_roles:
                 == f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:user/{user}"
             )
 
-    @mock_iam
+    @mock_aws
     def test_iam_user_no_policies(self):
         result = []
         iam_client = client("iam")

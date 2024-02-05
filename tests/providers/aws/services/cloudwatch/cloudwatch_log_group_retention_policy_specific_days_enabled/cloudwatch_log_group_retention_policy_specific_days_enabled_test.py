@@ -1,7 +1,7 @@
 from unittest import mock
 
 from boto3 import client
-from moto import mock_logs
+from moto import mock_aws
 
 from tests.providers.aws.audit_info_utils import (
     AWS_ACCOUNT_NUMBER,
@@ -47,7 +47,7 @@ class Test_cloudwatch_log_group_retention_policy_specific_days_enabled:
 
             assert len(result) == 0
 
-    @mock_logs
+    @mock_aws
     def test_cloudwatch_log_group_without_retention_days_never_expires(self):
         # Generate Logs Client
         logs_client = client("logs", region_name=AWS_REGION_US_EAST_1)
@@ -100,7 +100,7 @@ class Test_cloudwatch_log_group_retention_policy_specific_days_enabled:
             )
             assert result[0].region == AWS_REGION_US_EAST_1
 
-    @mock_logs
+    @mock_aws
     def test_cloudwatch_log_group_with_compliant_retention_days(self):
         # Generate Logs Client
         logs_client = client("logs", region_name=AWS_REGION_US_EAST_1)
@@ -154,7 +154,7 @@ class Test_cloudwatch_log_group_retention_policy_specific_days_enabled:
             )
             assert result[0].region == AWS_REGION_US_EAST_1
 
-    @mock_logs
+    @mock_aws
     def test_cloudwatch_log_group_with_no_compliant_retention_days(self):
         # Generate Logs Client
         logs_client = client("logs", region_name=AWS_REGION_US_EAST_1)

@@ -1,10 +1,8 @@
 from unittest import mock
 from uuid import uuid4
 
-from prowler.providers.azure.services.defender.defender_service import (
-    Defender_Assessments,
-)
-from tests.providers.azure.azure_fixtures import AZURE_SUSCRIPTION
+from prowler.providers.azure.services.defender.defender_service import Assesment
+from tests.providers.azure.azure_fixtures import AZURE_SUBSCRIPTION
 
 
 class Test_defender_ensure_system_updates_are_applied:
@@ -28,18 +26,18 @@ class Test_defender_ensure_system_updates_are_applied:
         resource_id = str(uuid4())
         defender_client = mock.MagicMock
         defender_client.assessments = {
-            AZURE_SUSCRIPTION: {
-                "Log Analytics agent should be installed on virtual machines": Defender_Assessments(
+            AZURE_SUBSCRIPTION: {
+                "Log Analytics agent should be installed on virtual machines": Assesment(
                     resource_id=resource_id,
                     resource_name="vm1",
                     status="Unhealthy",
                 ),
-                "Machines should be configured to periodically check for missing system updates": Defender_Assessments(
+                "Machines should be configured to periodically check for missing system updates": Assesment(
                     resource_id=resource_id,
                     resource_name="vm1",
                     status="Healthy",
                 ),
-                "System updates should be installed on your machines": Defender_Assessments(
+                "System updates should be installed on your machines": Assesment(
                     resource_id=resource_id,
                     resource_name="vm1",
                     status="Healthy",
@@ -61,9 +59,9 @@ class Test_defender_ensure_system_updates_are_applied:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"System updates are not applied for all the VMs in the subscription {AZURE_SUSCRIPTION}."
+                == f"System updates are not applied for all the VMs in the subscription {AZURE_SUBSCRIPTION}."
             )
-            assert result[0].subscription == AZURE_SUSCRIPTION
+            assert result[0].subscription == AZURE_SUBSCRIPTION
             assert result[0].resource_name == "vm1"
             assert result[0].resource_id == resource_id
 
@@ -73,18 +71,18 @@ class Test_defender_ensure_system_updates_are_applied:
         resource_id = str(uuid4())
         defender_client = mock.MagicMock
         defender_client.assessments = {
-            AZURE_SUSCRIPTION: {
-                "Log Analytics agent should be installed on virtual machines": Defender_Assessments(
+            AZURE_SUBSCRIPTION: {
+                "Log Analytics agent should be installed on virtual machines": Assesment(
                     resource_id=resource_id,
                     resource_name="vm1",
                     status="Healthy",
                 ),
-                "Machines should be configured to periodically check for missing system updates": Defender_Assessments(
+                "Machines should be configured to periodically check for missing system updates": Assesment(
                     resource_id=resource_id,
                     resource_name="vm1",
                     status="Unhealthy",
                 ),
-                "System updates should be installed on your machines": Defender_Assessments(
+                "System updates should be installed on your machines": Assesment(
                     resource_id=resource_id,
                     resource_name="vm1",
                     status="Healthy",
@@ -106,9 +104,9 @@ class Test_defender_ensure_system_updates_are_applied:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"System updates are not applied for all the VMs in the subscription {AZURE_SUSCRIPTION}."
+                == f"System updates are not applied for all the VMs in the subscription {AZURE_SUBSCRIPTION}."
             )
-            assert result[0].subscription == AZURE_SUSCRIPTION
+            assert result[0].subscription == AZURE_SUBSCRIPTION
             assert result[0].resource_name == "vm1"
             assert result[0].resource_id == resource_id
 
@@ -116,18 +114,18 @@ class Test_defender_ensure_system_updates_are_applied:
         resource_id = str(uuid4())
         defender_client = mock.MagicMock
         defender_client.assessments = {
-            AZURE_SUSCRIPTION: {
-                "Log Analytics agent should be installed on virtual machines": Defender_Assessments(
+            AZURE_SUBSCRIPTION: {
+                "Log Analytics agent should be installed on virtual machines": Assesment(
                     resource_id=resource_id,
                     resource_name="vm1",
                     status="Healthy",
                 ),
-                "Machines should be configured to periodically check for missing system updates": Defender_Assessments(
+                "Machines should be configured to periodically check for missing system updates": Assesment(
                     resource_id=resource_id,
                     resource_name="vm1",
                     status="Healthy",
                 ),
-                "System updates should be installed on your machines": Defender_Assessments(
+                "System updates should be installed on your machines": Assesment(
                     resource_id=resource_id,
                     resource_name="vm1",
                     status="Unhealthy",
@@ -149,9 +147,9 @@ class Test_defender_ensure_system_updates_are_applied:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"System updates are not applied for all the VMs in the subscription {AZURE_SUSCRIPTION}."
+                == f"System updates are not applied for all the VMs in the subscription {AZURE_SUBSCRIPTION}."
             )
-            assert result[0].subscription == AZURE_SUSCRIPTION
+            assert result[0].subscription == AZURE_SUBSCRIPTION
             assert result[0].resource_name == "vm1"
             assert result[0].resource_id == resource_id
 
@@ -161,18 +159,18 @@ class Test_defender_ensure_system_updates_are_applied:
         resource_id = str(uuid4())
         defender_client = mock.MagicMock
         defender_client.assessments = {
-            AZURE_SUSCRIPTION: {
-                "Log Analytics agent should be installed on virtual machines": Defender_Assessments(
+            AZURE_SUBSCRIPTION: {
+                "Log Analytics agent should be installed on virtual machines": Assesment(
                     resource_id=resource_id,
                     resource_name="vm1",
                     status="Healthy",
                 ),
-                "Machines should be configured to periodically check for missing system updates": Defender_Assessments(
+                "Machines should be configured to periodically check for missing system updates": Assesment(
                     resource_id=resource_id,
                     resource_name="vm1",
                     status="Healthy",
                 ),
-                "System updates should be installed on your machines": Defender_Assessments(
+                "System updates should be installed on your machines": Assesment(
                     resource_id=resource_id,
                     resource_name="vm1",
                     status="Healthy",
@@ -194,8 +192,8 @@ class Test_defender_ensure_system_updates_are_applied:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"System updates are applied for all the VMs in the subscription {AZURE_SUSCRIPTION}."
+                == f"System updates are applied for all the VMs in the subscription {AZURE_SUBSCRIPTION}."
             )
-            assert result[0].subscription == AZURE_SUSCRIPTION
+            assert result[0].subscription == AZURE_SUBSCRIPTION
             assert result[0].resource_name == "vm1"
             assert result[0].resource_id == resource_id

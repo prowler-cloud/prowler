@@ -32,8 +32,13 @@ class Storage(AzureService):
                         resouce_group_name = parts[resouce_name_index]
                     else:
                         resouce_group_name = None
+                    key_expiration_period_in_days = None
+                    if storage_account.key_policy:
+                        key_expiration_period_in_days = (
+                            storage_account.key_policy.key_expiration_period_in_days
+                        )
                     storage_accounts[subscription].append(
-                        Storage_Account(
+                        Account(
                             id=storage_account.id,
                             name=storage_account.name,
                             resouce_group_name=resouce_group_name,
@@ -44,7 +49,7 @@ class Storage(AzureService):
                             encryption_type=storage_account.encryption.key_source,
                             minimum_tls_version=storage_account.minimum_tls_version,
                             private_endpoint_connections=storage_account.private_endpoint_connections,
-                            key_expiration_period_in_days=storage_account.key_policy.key_expiration_period_in_days,
+                            key_expiration_period_in_days=key_expiration_period_in_days,
                         )
                     )
             except Exception as error:
@@ -62,7 +67,7 @@ class Storage(AzureService):
                     properties = client.blob_services.get_service_properties(
                         account.resouce_group_name, account.name
                     )
-                    account.blob_properties = Blob_Properties(
+                    account.blob_properties = BlobProperties(
                         id=properties.id,
                         name=properties.name,
                         type=properties.type,
@@ -76,7 +81,7 @@ class Storage(AzureService):
 
 
 @dataclass
-class Blob_Properties:
+class BlobProperties:
     id: str
     name: str
     type: str
@@ -85,7 +90,7 @@ class Blob_Properties:
 
 
 @dataclass
-class Storage_Account:
+class Account:
     id: str
     name: str
     resouce_group_name: str
@@ -97,4 +102,4 @@ class Storage_Account:
     minimum_tls_version: str
     private_endpoint_connections: PrivateEndpointConnection
     key_expiration_period_in_days: str
-    blob_properties: Blob_Properties = None
+    blob_properties: BlobProperties = None

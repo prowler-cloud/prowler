@@ -2,7 +2,7 @@ from unittest import mock
 
 from boto3 import resource
 from mock import patch
-from moto import mock_ec2
+from moto import mock_aws
 
 from tests.providers.aws.audit_info_utils import (
     AWS_REGION_EU_WEST_1,
@@ -24,7 +24,7 @@ def mock_generate_regional_clients(service, audit_info):
     new=mock_generate_regional_clients,
 )
 class Test_ec2_ebs_snapshots_encrypted:
-    @mock_ec2
+    @mock_aws
     def test_ec2_default_snapshots(self):
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
@@ -50,7 +50,7 @@ class Test_ec2_ebs_snapshots_encrypted:
             # Default snapshots
             assert len(result) == 561
 
-    @mock_ec2
+    @mock_aws
     def test_ec2_unencrypted_snapshot(self):
         # Create EC2 Mocked Resources
         ec2 = resource("ec2", region_name=AWS_REGION_US_EAST_1)
@@ -95,7 +95,7 @@ class Test_ec2_ebs_snapshots_encrypted:
                         == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION_US_EAST_1}:{current_audit_info.audited_account}:snapshot/{snapshot.id}"
                     )
 
-    @mock_ec2
+    @mock_aws
     def test_ec2_encrypted_snapshot(self):
         # Create EC2 Mocked Resources
         ec2 = resource("ec2", region_name=AWS_REGION_US_EAST_1)

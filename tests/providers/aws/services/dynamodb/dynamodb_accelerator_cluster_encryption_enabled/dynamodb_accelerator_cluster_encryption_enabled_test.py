@@ -2,7 +2,7 @@ from re import search
 from unittest import mock
 
 from boto3 import client
-from moto import mock_dax
+from moto import mock_aws
 
 from tests.providers.aws.audit_info_utils import (
     AWS_ACCOUNT_NUMBER,
@@ -13,7 +13,7 @@ from tests.providers.aws.audit_info_utils import (
 
 
 class Test_dynamodb_accelerator_cluster_encryption_enabled:
-    @mock_dax
+    @mock_aws
     def test_dax_no_clusters(self):
         from prowler.providers.aws.services.dynamodb.dynamodb_service import DAX
 
@@ -38,7 +38,7 @@ class Test_dynamodb_accelerator_cluster_encryption_enabled:
 
             assert len(result) == 0
 
-    @mock_dax
+    @mock_aws
     def test_dax_cluster_no_encryption(self):
         dax_client = client("dax", region_name=AWS_REGION_US_EAST_1)
         iam_role_arn = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:role/aws-service-role/dax.amazonaws.com/AWSServiceRoleForDAX"
@@ -80,7 +80,7 @@ class Test_dynamodb_accelerator_cluster_encryption_enabled:
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_tags == []
 
-    @mock_dax
+    @mock_aws
     def test_dax_cluster_with_encryption(self):
         dax_client = client("dax", region_name=AWS_REGION_US_EAST_1)
         iam_role_arn = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:role/aws-service-role/dax.amazonaws.com/AWSServiceRoleForDAX"

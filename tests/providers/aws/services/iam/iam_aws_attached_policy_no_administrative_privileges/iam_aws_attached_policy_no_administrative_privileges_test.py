@@ -2,7 +2,7 @@ from re import search
 from unittest import mock
 
 from boto3 import client
-from moto import mock_iam
+from moto import mock_aws
 
 from tests.providers.aws.audit_info_utils import (
     AWS_REGION_US_EAST_1,
@@ -11,7 +11,7 @@ from tests.providers.aws.audit_info_utils import (
 
 
 class Test_iam_aws_attached_policy_no_administrative_privileges_test:
-    @mock_iam
+    @mock_aws(config={"iam": {"load_aws_managed_policies": True}})
     def test_policy_with_administrative_privileges(self):
         iam_client = client("iam")
 
@@ -49,7 +49,7 @@ class Test_iam_aws_attached_policy_no_administrative_privileges_test:
                         result.status_extended,
                     )
 
-    @mock_iam
+    @mock_aws(config={"iam": {"load_aws_managed_policies": True}})
     def test_policy_non_administrative(self):
         iam_client = client("iam")
 
@@ -88,7 +88,7 @@ class Test_iam_aws_attached_policy_no_administrative_privileges_test:
                         result.status_extended,
                     )
 
-    @mock_iam
+    @mock_aws(config={"iam": {"load_aws_managed_policies": True}})
     def test_policy_administrative_and_non_administrative(self):
         iam_client = client("iam")
 

@@ -2,7 +2,7 @@ from re import search
 from unittest import mock
 
 from boto3 import client
-from moto import mock_organizations
+from moto import mock_aws
 
 from prowler.providers.aws.services.organizations.organizations_service import (
     Organizations,
@@ -14,7 +14,7 @@ from tests.providers.aws.audit_info_utils import (
 
 
 class Test_organizations_delegated_administrators:
-    @mock_organizations
+    @mock_aws
     def test_no_organization(self):
         audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         audit_info.audit_config = {"organizations_trusted_delegated_administrators": []}
@@ -36,7 +36,7 @@ class Test_organizations_delegated_administrators:
 
                 assert len(result) == 0
 
-    @mock_organizations
+    @mock_aws
     def test_organization_no_delegations(self):
         audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         audit_info.audit_config = {"organizations_trusted_delegated_administrators": []}
@@ -71,7 +71,7 @@ class Test_organizations_delegated_administrators:
                 )
                 assert result[0].region == AWS_REGION_EU_WEST_1
 
-    @mock_organizations
+    @mock_aws
     def test_organization_trusted_delegated(self):
         audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
@@ -122,7 +122,7 @@ class Test_organizations_delegated_administrators:
                 )
                 assert result[0].region == AWS_REGION_EU_WEST_1
 
-    @mock_organizations
+    @mock_aws
     def test_organization_untrusted_delegated(self):
         audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 

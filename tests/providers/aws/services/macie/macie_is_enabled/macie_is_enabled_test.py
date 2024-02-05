@@ -1,6 +1,6 @@
 from unittest import mock
 
-from moto import mock_s3
+from moto import mock_aws
 
 from prowler.providers.aws.services.macie.macie_service import Session
 from prowler.providers.aws.services.s3.s3_service import Bucket
@@ -12,7 +12,7 @@ from tests.providers.aws.audit_info_utils import (
 
 
 class Test_macie_is_enabled:
-    @mock_s3
+    @mock_aws
     def test_macie_disabled(self):
         s3_client = mock.MagicMock
         s3_client.audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
@@ -54,7 +54,7 @@ class Test_macie_is_enabled:
             assert result[0].status_extended == "Macie is not enabled."
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
 
-    @mock_s3
+    @mock_aws
     def test_macie_enabled(self):
         s3_client = mock.MagicMock
         s3_client.audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
@@ -96,7 +96,7 @@ class Test_macie_is_enabled:
             assert result[0].status_extended == "Macie is enabled."
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
 
-    @mock_s3
+    @mock_aws
     def test_macie_suspended_ignored(self):
         s3_client = mock.MagicMock
         s3_client.audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
@@ -137,7 +137,7 @@ class Test_macie_is_enabled:
 
             assert len(result) == 0
 
-    @mock_s3
+    @mock_aws
     def test_macie_suspended_ignored_with_buckets(self):
         s3_client = mock.MagicMock
         s3_client.regions_with_buckets = [AWS_REGION_EU_WEST_1]
@@ -189,7 +189,7 @@ class Test_macie_is_enabled:
             )
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
 
-    @mock_s3
+    @mock_aws
     def test_macie_suspended(self):
         s3_client = mock.MagicMock
         s3_client.audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])

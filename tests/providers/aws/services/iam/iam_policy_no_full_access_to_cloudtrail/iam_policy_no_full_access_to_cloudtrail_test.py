@@ -2,7 +2,7 @@ from json import dumps
 from unittest import mock
 
 from boto3 import client
-from moto import mock_iam
+from moto import mock_aws
 
 from prowler.providers.aws.services.iam.iam_service import IAM
 from tests.providers.aws.audit_info_utils import (
@@ -12,7 +12,7 @@ from tests.providers.aws.audit_info_utils import (
 
 
 class Test_iam_policy_no_full_access_to_cloudtrail:
-    @mock_iam
+    @mock_aws
     def test_policy_full_access_to_cloudtrail(self):
         audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
         iam_client = client("iam")
@@ -51,7 +51,7 @@ class Test_iam_policy_no_full_access_to_cloudtrail:
                 assert result[0].resource_arn == arn
                 assert result[0].region == "us-east-1"
 
-    @mock_iam
+    @mock_aws
     def test_policy_no_full_access_to_cloudtrail(self):
         audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
         iam_client = client("iam")
@@ -90,7 +90,7 @@ class Test_iam_policy_no_full_access_to_cloudtrail:
                 assert result[0].resource_arn == arn
                 assert result[0].region == "us-east-1"
 
-    @mock_iam
+    @mock_aws
     def test_policy_mixed(self):
         audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
         iam_client = client("iam")
