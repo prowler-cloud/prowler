@@ -2,7 +2,7 @@ from re import search
 from unittest import mock
 
 from boto3 import client
-from moto import mock_iam
+from moto import mock_aws
 
 from tests.providers.aws.audit_info_utils import (
     AWS_REGION_US_EAST_1,
@@ -11,7 +11,7 @@ from tests.providers.aws.audit_info_utils import (
 
 
 class Test_iam_no_root_access_key_test:
-    @mock_iam
+    @mock_aws
     def test_iam_root_no_access_keys(self):
         iam_client = client("iam")
         user = "test"
@@ -54,7 +54,7 @@ class Test_iam_no_root_access_key_test:
                     == "arn:aws:iam::123456789012:user/<root_account>"
                 )
 
-    @mock_iam
+    @mock_aws
     def test_iam_root_access_key_1(self):
         iam_client = client("iam")
         user = "test"
@@ -97,7 +97,7 @@ class Test_iam_no_root_access_key_test:
                     == "arn:aws:iam::123456789012:user/<root_account>"
                 )
 
-    @mock_iam
+    @mock_aws
     def test_iam_root_access_key_2(self):
         iam_client = client("iam")
         user = "test"
@@ -140,7 +140,7 @@ class Test_iam_no_root_access_key_test:
                     == "arn:aws:iam::123456789012:user/<root_account>"
                 )
 
-    @mock_iam
+    @mock_aws
     def test_iam_root_both_access_keys(self):
         iam_client = client("iam")
         user = "test"

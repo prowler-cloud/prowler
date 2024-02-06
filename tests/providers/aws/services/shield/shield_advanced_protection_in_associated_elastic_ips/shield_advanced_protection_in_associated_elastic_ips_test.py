@@ -2,7 +2,7 @@ from unittest import mock
 
 from boto3 import client
 from mock import patch
-from moto import mock_ec2
+from moto import mock_aws
 
 from prowler.providers.aws.services.shield.shield_service import Protection
 from tests.providers.aws.audit_info_utils import (
@@ -27,7 +27,7 @@ def mock_generate_regional_clients(service, audit_info):
     new=mock_generate_regional_clients,
 )
 class Test_shield_advanced_protection_in_associated_elastic_ips:
-    @mock_ec2
+    @mock_aws
     def test_no_shield_not_active(self):
         # Shield Client
         shield_client = mock.MagicMock
@@ -55,7 +55,7 @@ class Test_shield_advanced_protection_in_associated_elastic_ips:
 
             assert len(result) == 0
 
-    @mock_ec2
+    @mock_aws
     def test_shield_enabled_ip_protected(self):
         # EC2 Client
         ec2_client = client("ec2", region_name=AWS_REGION_EU_WEST_1)
@@ -108,7 +108,7 @@ class Test_shield_advanced_protection_in_associated_elastic_ips:
                 == f"Elastic IP {allocation_id} is protected by AWS Shield Advanced."
             )
 
-    @mock_ec2
+    @mock_aws
     def test_shield_enabled_ip_not_protected(self):
         # EC2 Client
         ec2_client = client("ec2", region_name=AWS_REGION_EU_WEST_1)
@@ -152,7 +152,7 @@ class Test_shield_advanced_protection_in_associated_elastic_ips:
                 == f"Elastic IP {allocation_id} is not protected by AWS Shield Advanced."
             )
 
-    @mock_ec2
+    @mock_aws
     def test_shield_disabled_ip_not_protected(self):
         # EC2 Client
         ec2_client = client("ec2", region_name=AWS_REGION_EU_WEST_1)

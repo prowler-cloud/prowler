@@ -1,7 +1,7 @@
 from unittest import mock
 
 from boto3 import client
-from moto import mock_ec2
+from moto import mock_aws
 
 from tests.providers.aws.audit_info_utils import (
     AWS_REGION_EU_WEST_1,
@@ -11,7 +11,7 @@ from tests.providers.aws.audit_info_utils import (
 
 
 class Test_ec2_securitygroup_with_many_ingress_egress_rules:
-    @mock_ec2
+    @mock_aws
     def test_ec2_default_sgs(self):
         # Create EC2 Mocked Resources
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
@@ -46,7 +46,7 @@ class Test_ec2_securitygroup_with_many_ingress_egress_rules:
             assert result[1].status == "PASS"
             assert result[2].status == "PASS"
 
-    @mock_ec2
+    @mock_aws
     def test_ec2_non_compliant_default_sg(self):
         # Create EC2 Mocked Resources
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
@@ -109,7 +109,7 @@ class Test_ec2_securitygroup_with_many_ingress_egress_rules:
                     assert sg.resource_details == default_sg_name
                     assert sg.resource_tags == []
 
-    @mock_ec2
+    @mock_aws
     def test_ec2_compliant_default_sg(self):
         # Create EC2 Mocked Resources
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)

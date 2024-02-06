@@ -1,7 +1,7 @@
 import botocore
 from boto3 import client
 from mock import patch
-from moto import mock_neptune
+from moto import mock_aws
 
 from prowler.providers.aws.services.neptune.neptune_service import Cluster, Neptune
 from tests.providers.aws.audit_info_utils import (
@@ -85,35 +85,35 @@ def mock_generate_regional_clients(service, audit_info):
 @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
 class Test_Neptune_Service:
     # Test Neptune Service
-    @mock_neptune
+    @mock_aws
     def test_service(self):
         audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
         neptune = Neptune(audit_info)
         assert neptune.service == "neptune"
 
     # Test Neptune Client]
-    @mock_neptune
+    @mock_aws
     def test_client(self):
         audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
         neptune = Neptune(audit_info)
         assert neptune.client.__class__.__name__ == "Neptune"
 
     # Test Neptune Session
-    @mock_neptune
+    @mock_aws
     def test__get_session__(self):
         audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
         neptune = Neptune(audit_info)
         assert neptune.session.__class__.__name__ == "Session"
 
     # Test Neptune Session
-    @mock_neptune
+    @mock_aws
     def test_audited_account(self):
         audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
         neptune = Neptune(audit_info)
         assert neptune.audited_account == AWS_ACCOUNT_NUMBER
 
     # Test Neptune Get Neptune Contacts
-    @mock_neptune
+    @mock_aws
     def test_describe_db_clusters(self):
         # Neptune client
         neptune_client = client("neptune", region_name=AWS_REGION_US_EAST_1)

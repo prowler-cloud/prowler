@@ -38,7 +38,7 @@ boto3 = "1.26.165"
 botocore = "1.29.165"
 colorama = "0.4.6"
 detect-secrets = "1.4.0"
-google-api-python-client = "2.113.0"
+google-api-python-client = "2.116.0"
 google-auth-httplib2 = ">=0.1,<0.3"
 jsonschema = "4.21.1"
 mkdocs = {version = "1.5.3", optional = true}
@@ -57,13 +57,13 @@ docs = ["mkdocs", "mkdocs-material"]
 
 [tool.poetry.group.dev.dependencies]
 bandit = "1.7.6"
-black = "22.12.0"
-coverage = "7.4.0"
+black = "24.1.1"
+coverage = "7.4.1"
 docker = "7.0.0"
 flake8 = "7.0.0"
 freezegun = "1.4.0"
 mock = "5.1.0"
-moto = {extras = ["all"], version = "4.2.13"}
+moto = {extras = ["all"], version = "5.0.1"}
 openapi-schema-validator = "0.6.2"
 openapi-spec-validator = "0.7.1"
 pylint = "3.0.3"

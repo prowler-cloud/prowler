@@ -2,7 +2,7 @@ from re import search
 from unittest import mock
 
 from boto3 import client
-from moto import mock_organizations
+from moto import mock_aws
 
 from prowler.providers.aws.services.organizations.organizations_service import (
     Organizations,
@@ -15,7 +15,7 @@ from tests.providers.aws.audit_info_utils import (
 
 
 class Test_organizations_account_part_of_organizations:
-    @mock_organizations
+    @mock_aws
     def test_no_organization(self):
         audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
@@ -45,7 +45,7 @@ class Test_organizations_account_part_of_organizations:
                 assert result[0].resource_arn == AWS_ACCOUNT_ARN
                 assert result[0].region == AWS_REGION_EU_WEST_1
 
-    @mock_organizations
+    @mock_aws
     def test_organization(self):
         audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 

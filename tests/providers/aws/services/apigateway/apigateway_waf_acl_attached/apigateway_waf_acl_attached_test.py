@@ -1,7 +1,7 @@
 from unittest import mock
 
 from boto3 import client
-from moto import mock_apigateway, mock_wafv2
+from moto import mock_aws
 
 from tests.providers.aws.audit_info_utils import (
     AWS_REGION_EU_WEST_1,
@@ -11,7 +11,7 @@ from tests.providers.aws.audit_info_utils import (
 
 
 class Test_apigateway_restapi_waf_acl_attached:
-    @mock_apigateway
+    @mock_aws
     def test_apigateway_no_rest_apis(self):
         from prowler.providers.aws.services.apigateway.apigateway_service import (
             APIGateway,
@@ -38,8 +38,7 @@ class Test_apigateway_restapi_waf_acl_attached:
 
             assert len(result) == 0
 
-    @mock_apigateway
-    @mock_wafv2
+    @mock_aws
     def test_apigateway_one_rest_api_with_waf(self):
         # Create APIGateway Mocked Resources
         apigateway_client = client("apigateway", region_name=AWS_REGION_US_EAST_1)
@@ -126,7 +125,7 @@ class Test_apigateway_restapi_waf_acl_attached:
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_tags == [None]
 
-    @mock_apigateway
+    @mock_aws
     def test_apigateway_one_rest_api_without_waf(self):
         # Create APIGateway Mocked Resources
         apigateway_client = client("apigateway", region_name=AWS_REGION_US_EAST_1)

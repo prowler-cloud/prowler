@@ -1,7 +1,7 @@
 from unittest import mock
 
 from boto3 import resource
-from moto import mock_ec2
+from moto import mock_aws
 
 from tests.providers.aws.audit_info_utils import (
     AWS_REGION_EU_WEST_1,
@@ -13,7 +13,7 @@ EXAMPLE_AMI_ID = "ami-12c6146b"
 
 
 class Test_ec2_instance_detailed_monitoring_enabled:
-    @mock_ec2
+    @mock_aws
     def test_ec2_no_instances(self):
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
@@ -38,7 +38,7 @@ class Test_ec2_instance_detailed_monitoring_enabled:
 
             assert len(result) == 0
 
-    @mock_ec2
+    @mock_aws
     def test_instance_with_enhanced_monitoring_disabled(self):
         ec2 = resource("ec2", region_name=AWS_REGION_US_EAST_1)
         instance = ec2.create_instances(
@@ -83,7 +83,7 @@ class Test_ec2_instance_detailed_monitoring_enabled:
                 == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION_US_EAST_1}:{current_audit_info.audited_account}:instance/{instance.id}"
             )
 
-    @mock_ec2
+    @mock_aws
     def test_instance_with_enhanced_monitoring_enabled(self):
         ec2 = resource("ec2", region_name=AWS_REGION_US_EAST_1)
         instance = ec2.create_instances(

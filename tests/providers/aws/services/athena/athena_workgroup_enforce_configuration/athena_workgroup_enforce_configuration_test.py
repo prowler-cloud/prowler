@@ -1,7 +1,7 @@
 from unittest import mock
 
 from mock import patch
-from moto import mock_athena
+from moto import mock_aws
 
 from tests.providers.aws.audit_info_utils import (
     AWS_ACCOUNT_NUMBER,
@@ -15,7 +15,7 @@ ATHENA_PRIMARY_WORKGROUP_ARN = f"arn:aws:athena:{AWS_REGION_EU_WEST_1}:{AWS_ACCO
 
 
 class Test_athena_workgroup_enforce_configuration:
-    @mock_athena
+    @mock_aws
     def test_primary_workgroup_configuration_not_enforced(self):
         from prowler.providers.aws.services.athena.athena_service import Athena
 
@@ -46,7 +46,7 @@ class Test_athena_workgroup_enforce_configuration:
             assert result[0].region == AWS_REGION_EU_WEST_1
             assert result[0].resource_tags == []
 
-    @mock_athena
+    @mock_aws
     def test_primary_workgroup_configuration_not_enforced_ignoring(self):
         from prowler.providers.aws.services.athena.athena_service import Athena
 
@@ -69,7 +69,7 @@ class Test_athena_workgroup_enforce_configuration:
 
             assert len(result) == 0
 
-    @mock_athena
+    @mock_aws
     # We mock the get_work_group to return a workgroup not enforcing configuration
     @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
     def test_primary_workgroup_configuration_enforced(self):

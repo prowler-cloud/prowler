@@ -2,7 +2,7 @@ from re import search
 from unittest import mock
 
 from boto3 import client
-from moto import mock_cloudtrail, mock_s3
+from moto import mock_aws
 
 from tests.providers.aws.audit_info_utils import (
     AWS_ACCOUNT_NUMBER,
@@ -13,7 +13,7 @@ from tests.providers.aws.audit_info_utils import (
 
 
 class Test_cloudtrail_multi_region_enabled:
-    @mock_cloudtrail
+    @mock_aws
     def test_no_trails(self):
         from prowler.providers.aws.services.cloudtrail.cloudtrail_service import (
             Cloudtrail,
@@ -65,8 +65,7 @@ class Test_cloudtrail_multi_region_enabled:
                         )
                         assert report.resource_tags == []
 
-    @mock_cloudtrail
-    @mock_s3
+    @mock_aws
     def test_various_trails_no_logging(self):
         cloudtrail_client_us_east_1 = client(
             "cloudtrail", region_name=AWS_REGION_US_EAST_1
@@ -142,8 +141,7 @@ class Test_cloudtrail_multi_region_enabled:
                         )
                         assert report.resource_tags == []
 
-    @mock_cloudtrail
-    @mock_s3
+    @mock_aws
     def test_various_trails_with_and_without_logging(self):
         cloudtrail_client_us_east_1 = client(
             "cloudtrail", region_name=AWS_REGION_US_EAST_1
@@ -220,8 +218,7 @@ class Test_cloudtrail_multi_region_enabled:
                         assert report.resource_tags == []
                         assert report.region == AWS_REGION_EU_WEST_1
 
-    @mock_cloudtrail
-    @mock_s3
+    @mock_aws
     def test_trail_multiregion_logging_and_single_region_not_logging(self):
         cloudtrail_client_us_east_1 = client(
             "cloudtrail", region_name=AWS_REGION_US_EAST_1

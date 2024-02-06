@@ -2,21 +2,23 @@ from datetime import timedelta
 from unittest.mock import patch
 
 from prowler.providers.azure.services.defender.defender_service import (
+    Assesment,
     AutoProvisioningSetting,
     Defender,
-    Defender_Assessments,
-    Defender_Pricing,
+    Pricing,
+    SecurityContacts,
+    Setting,
 )
 from tests.providers.azure.azure_fixtures import (
-    AZURE_SUSCRIPTION,
+    AZURE_SUBSCRIPTION,
     set_mocked_azure_audit_info,
 )
 
 
 def mock_defender_get_pricings(_):
     return {
-        AZURE_SUSCRIPTION: {
-            "Standard": Defender_Pricing(
+        AZURE_SUBSCRIPTION: {
+            "Standard": Pricing(
                 resource_id="resource_id",
                 pricing_tier="pricing_tier",
                 free_trial_remaining_time=timedelta(days=1),
@@ -27,7 +29,7 @@ def mock_defender_get_pricings(_):
 
 def mock_defender_get_auto_provisioning_settings(_):
     return {
-        AZURE_SUSCRIPTION: {
+        AZURE_SUBSCRIPTION: {
             "default": AutoProvisioningSetting(
                 resource_id="/subscriptions/resource_id",
                 resource_name="default",
@@ -40,11 +42,40 @@ def mock_defender_get_auto_provisioning_settings(_):
 
 def mock_defender_get_assessments(_):
     return {
-        AZURE_SUSCRIPTION: {
-            "default": Defender_Assessments(
+        AZURE_SUBSCRIPTION: {
+            "default": Assesment(
                 resource_id="/subscriptions/resource_id",
                 resource_name="default",
                 status="Healthy",
+            )
+        }
+    }
+
+
+def mock_defender_get_security_contacts(_):
+    return {
+        AZURE_SUBSCRIPTION: {
+            "default": SecurityContacts(
+                resource_id="/subscriptions/resource_id",
+                emails="user@user.com, test@test.es",
+                phone="666666666",
+                alert_notifications_minimal_severity="High",
+                alert_notifications_state="On",
+                notified_roles=["Owner", "Contributor"],
+                notified_roles_state="On",
+            )
+        }
+    }
+
+
+def mock_defender_get_settings(_):
+    return {
+        AZURE_SUBSCRIPTION: {
+            "MCAS": Setting(
+                resource_id="/subscriptions/resource_id",
+                resource_type="Microsoft.Security/locations/settings",
+                kind="DataExportSettings",
+                enabled=True,
             )
         }
     }
@@ -62,11 +93,19 @@ def mock_defender_get_assessments(_):
     "prowler.providers.azure.services.defender.defender_service.Defender.__get_assessments__",
     new=mock_defender_get_assessments,
 )
+@patch(
+    "prowler.providers.azure.services.defender.defender_service.Defender.__get_settings__",
+    new=mock_defender_get_settings,
+)
+@patch(
+    "prowler.providers.azure.services.defender.defender_service.Defender.__get_security_contacts__",
+    new=mock_defender_get_security_contacts,
+)
 class Test_Defender_Service:
     def test__get_client__(self):
         defender = Defender(set_mocked_azure_audit_info())
         assert (
-            defender.clients[AZURE_SUSCRIPTION].__class__.__name__ == "SecurityCenter"
+            defender.clients[AZURE_SUBSCRIPTION].__class__.__name__ == "SecurityCenter"
         )
 
     def test__get_subscriptions__(self):
@@ -78,14 +117,14 @@ class Test_Defender_Service:
         defender = Defender(set_mocked_azure_audit_info())
         assert len(defender.pricings) == 1
         assert (
-            defender.pricings[AZURE_SUSCRIPTION]["Standard"].resource_id
+            defender.pricings[AZURE_SUBSCRIPTION]["Standard"].resource_id
             == "resource_id"
         )
         assert (
-            defender.pricings[AZURE_SUSCRIPTION]["Standard"].pricing_tier
+            defender.pricings[AZURE_SUBSCRIPTION]["Standard"].pricing_tier
             == "pricing_tier"
         )
-        assert defender.pricings[AZURE_SUSCRIPTION][
+        assert defender.pricings[AZURE_SUBSCRIPTION][
             "Standard"
         ].free_trial_remaining_time == timedelta(days=1)
 
@@ -93,25 +132,25 @@ class Test_Defender_Service:
         defender = Defender(set_mocked_azure_audit_info())
         assert len(defender.auto_provisioning_settings) == 1
         assert (
-            defender.auto_provisioning_settings[AZURE_SUSCRIPTION][
+            defender.auto_provisioning_settings[AZURE_SUBSCRIPTION][
                 "default"
             ].resource_id
             == "/subscriptions/resource_id"
         )
         assert (
-            defender.auto_provisioning_settings[AZURE_SUSCRIPTION][
+            defender.auto_provisioning_settings[AZURE_SUBSCRIPTION][
                 "default"
             ].resource_name
             == "default"
         )
         assert (
-            defender.auto_provisioning_settings[AZURE_SUSCRIPTION][
+            defender.auto_provisioning_settings[AZURE_SUBSCRIPTION][
                 "default"
             ].resource_type
             == "Microsoft.Security/autoProvisioningSettings"
         )
         assert (
-            defender.auto_provisioning_settings[AZURE_SUSCRIPTION][
+            defender.auto_provisioning_settings[AZURE_SUBSCRIPTION][
                 "default"
             ].auto_provision
             == "On"
@@ -121,11 +160,64 @@ class Test_Defender_Service:
         defender = Defender(set_mocked_azure_audit_info())
         assert len(defender.assessments) == 1
         assert (
-            defender.assessments[AZURE_SUSCRIPTION]["default"].resource_id
+            defender.assessments[AZURE_SUBSCRIPTION]["default"].resource_id
             == "/subscriptions/resource_id"
         )
         assert (
-            defender.assessments[AZURE_SUSCRIPTION]["default"].resource_name
+            defender.assessments[AZURE_SUBSCRIPTION]["default"].resource_name
             == "default"
         )
-        assert defender.assessments[AZURE_SUSCRIPTION]["default"].status == "Healthy"
+        assert defender.assessments[AZURE_SUBSCRIPTION]["default"].status == "Healthy"
+
+    def test__get_settings__(self):
+        defender = Defender(set_mocked_azure_audit_info())
+        assert len(defender.settings) == 1
+        assert (
+            defender.settings[AZURE_SUBSCRIPTION]["MCAS"].resource_id
+            == "/subscriptions/resource_id"
+        )
+        assert (
+            defender.settings[AZURE_SUBSCRIPTION]["MCAS"].resource_type
+            == "Microsoft.Security/locations/settings"
+        )
+        assert (
+            defender.settings[AZURE_SUBSCRIPTION]["MCAS"].kind == "DataExportSettings"
+        )
+        assert defender.settings[AZURE_SUBSCRIPTION]["MCAS"].enabled
+
+    def test__get_security_contacts__(self):
+        defender = Defender(set_mocked_azure_audit_info())
+        assert len(defender.security_contacts) == 1
+        assert (
+            defender.security_contacts[AZURE_SUBSCRIPTION]["default"].resource_id
+            == "/subscriptions/resource_id"
+        )
+        assert (
+            defender.security_contacts[AZURE_SUBSCRIPTION]["default"].emails
+            == "user@user.com, test@test.es"
+        )
+        assert (
+            defender.security_contacts[AZURE_SUBSCRIPTION]["default"].phone
+            == "666666666"
+        )
+        assert (
+            defender.security_contacts[AZURE_SUBSCRIPTION][
+                "default"
+            ].alert_notifications_minimal_severity
+            == "High"
+        )
+        assert (
+            defender.security_contacts[AZURE_SUBSCRIPTION][
+                "default"
+            ].alert_notifications_state
+            == "On"
+        )
+        assert defender.security_contacts[AZURE_SUBSCRIPTION][
+            "default"
+        ].notified_roles == ["Owner", "Contributor"]
+        assert (
+            defender.security_contacts[AZURE_SUBSCRIPTION][
+                "default"
+            ].notified_roles_state
+            == "On"
+        )

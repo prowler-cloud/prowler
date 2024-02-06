@@ -1,14 +1,15 @@
 <p align="center">
-  <img align="center" src="https://github.com/prowler-cloud/prowler/blob/62c1ce73bbcdd6b9e5ba03dfcae26dfd165defd9/docs/img/prowler-pro-dark.png?raw=True#gh-dark-mode-only" width="150" height="36">
-  <img align="center" src="https://github.com/prowler-cloud/prowler/blob/62c1ce73bbcdd6b9e5ba03dfcae26dfd165defd9/docs/img/prowler-pro-light.png?raw=True#gh-light-mode-only" width="15%" height="15%">
+  <img align="center" src="https://github.com/prowler-cloud/prowler/blob/master/docs/img/prowler-logo-black.png?raw=True#gh-light-mode-only" width="350" height="115">
+  <img align="center" src="https://github.com/prowler-cloud/prowler/blob/master/docs/img/prowler-logo-white.png?raw=True#gh-dark-mode-only" width="350" height="115">
 </p>
 <p align="center">
-  <b><i>See all the things you and your team can do with ProwlerPro at <a href="https://prowler.pro">prowler.pro</a></i></b>
+  <b><i>Prowler SaaS </b> and <b>Prowler Open Source</b> are as dynamic and adaptable as the environment they’re meant to protect. Trusted by the leaders in security. 
 </p>
+<p align="center">
+<b>Learn more at <a href="https://prowler.com">prowler.com</i></b>
+</p>
+
 <hr>
-<p align="center">
-  <img src="https://user-images.githubusercontent.com/3985464/113734260-7ba06900-96fb-11eb-82bc-d4f68a1e2710.png" />
-</p>
 <p align="center">
   <a href="https://join.slack.com/t/prowler-workspace/shared_invite/zt-1hix76xsl-2uq222JIXrC7Q8It~9ZNog"><img alt="Slack Shield" src="https://img.shields.io/badge/slack-prowler-brightgreen.svg?logo=slack"></a>
   <a href="https://pypi.org/project/prowler/"><img alt="Python Version" src="https://img.shields.io/pypi/v/prowler.svg"></a>
@@ -30,6 +31,7 @@
   <a href="https://twitter.com/ToniBlyx"><img alt="Twitter" src="https://img.shields.io/twitter/follow/toniblyx?style=social"></a>
   <a href="https://twitter.com/prowlercloud"><img alt="Twitter" src="https://img.shields.io/twitter/follow/prowlercloud?style=social"></a>
 </p>
+<hr>
 
 # Description
 
@@ -39,9 +41,9 @@ It contains hundreds of controls covering CIS, NIST 800, NIST CSF, CISA, RBI, Fe
 
 | Provider | Checks | Services | [Compliance Frameworks](https://docs.prowler.cloud/en/latest/tutorials/compliance/) | [Categories](https://docs.prowler.cloud/en/latest/tutorials/misc/#categories) |
 |---|---|---|---|---|
-| AWS | 301 | 61 -> `prowler aws --list-services` | 25 -> `prowler aws --list-compliance` | 5 -> `prowler aws --list-categories` |
+| AWS | 301 | 61 -> `prowler aws --list-services` | 26 -> `prowler aws --list-compliance` | 6 -> `prowler aws --list-categories` |
 | GCP | 73 | 11 -> `prowler gcp --list-services` | 1 -> `prowler gcp --list-compliance` | 2 -> `prowler gcp --list-categories`|
-| Azure | 23 | 4 -> `prowler azure --list-services` | CIS soon | 1 -> `prowler azure --list-categories` |
+| Azure | 37 | 4 -> `prowler azure --list-services` | CIS soon | 1 -> `prowler azure --list-categories` |
 | Kubernetes | Work In Progress | - | CIS soon | - |
 
 # 📖 Documentation

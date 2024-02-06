@@ -4,7 +4,7 @@ from uuid import uuid4
 
 import botocore
 from boto3 import client
-from moto import mock_sns
+from moto import mock_aws
 
 from prowler.providers.aws.services.sns.sns_service import SNS
 from tests.providers.aws.audit_info_utils import (
@@ -70,7 +70,7 @@ class Test_SNS_Service:
         sns = SNS(audit_info)
         assert sns.session.__class__.__name__ == "Session"
 
-    @mock_sns
+    @mock_aws
     # Test SNS session
     def test__list_topics__(self):
         sns_client = client("sns", region_name=AWS_REGION_EU_WEST_1)
@@ -95,7 +95,7 @@ class Test_SNS_Service:
             {"Key": "test", "Value": "test"},
         ]
 
-    @mock_sns
+    @mock_aws
     # Test SNS session
     def test__get_topic_attributes__(self):
         sns_client = client("sns", region_name=AWS_REGION_EU_WEST_1)

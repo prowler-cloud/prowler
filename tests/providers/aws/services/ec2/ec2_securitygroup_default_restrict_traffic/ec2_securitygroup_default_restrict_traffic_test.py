@@ -1,7 +1,7 @@
 from unittest import mock
 
 from boto3 import client
-from moto import mock_ec2
+from moto import mock_aws
 
 from tests.providers.aws.audit_info_utils import (
     AWS_REGION_US_EAST_1,
@@ -10,7 +10,7 @@ from tests.providers.aws.audit_info_utils import (
 
 
 class Test_ec2_securitygroup_default_restrict_traffic:
-    @mock_ec2
+    @mock_aws
     def test_ec2_compliant_sg(self):
         # Create EC2 Mocked Resources
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
@@ -67,7 +67,7 @@ class Test_ec2_securitygroup_default_restrict_traffic:
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_id == default_sg_id
 
-    @mock_ec2
+    @mock_aws
     def test_ec2_non_compliant_sg_ingress_rule(self):
         # Create EC2 Mocked Resources
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
@@ -130,7 +130,7 @@ class Test_ec2_securitygroup_default_restrict_traffic:
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_id == default_sg_id
 
-    @mock_ec2
+    @mock_aws
     def test_ec2_non_compliant_sg_egress_rule(self):
         # Create EC2 Mocked Resources
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)

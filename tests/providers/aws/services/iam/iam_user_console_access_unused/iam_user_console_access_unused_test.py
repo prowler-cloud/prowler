@@ -2,7 +2,7 @@ import datetime
 from unittest import mock
 
 from boto3 import client
-from moto import mock_iam
+from moto import mock_aws
 
 from tests.providers.aws.audit_info_utils import (
     AWS_REGION_US_EAST_1,
@@ -14,7 +14,7 @@ AWS_REGION = "us-east-1"
 
 
 class Test_iam_user_console_access_unused_test:
-    @mock_iam
+    @mock_aws
     def test_iam_user_logged_45_days(self):
         password_last_used = (
             datetime.datetime.now() - datetime.timedelta(days=2)
@@ -54,7 +54,7 @@ class Test_iam_user_console_access_unused_test:
                 assert result[0].resource_arn == arn
                 assert result[0].region == AWS_REGION_US_EAST_1
 
-    @mock_iam
+    @mock_aws
     def test_iam_user_not_logged_45_days(self):
         password_last_used = (
             datetime.datetime.now() - datetime.timedelta(days=60)
@@ -94,7 +94,7 @@ class Test_iam_user_console_access_unused_test:
                 assert result[0].resource_arn == arn
                 assert result[0].region == AWS_REGION_US_EAST_1
 
-    @mock_iam
+    @mock_aws
     def test_iam_user_not_logged(self):
         iam_client = client("iam")
         user = "test-user"

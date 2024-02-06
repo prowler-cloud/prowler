@@ -3,7 +3,7 @@ from unittest.mock import patch
 
 import botocore
 from boto3 import client
-from moto import mock_efs
+from moto import mock_aws
 
 from prowler.providers.aws.services.efs.efs_service import EFS
 from tests.providers.aws.audit_info_utils import (
@@ -66,7 +66,7 @@ class Test_EFS:
         access_analyzer = EFS(set_mocked_aws_audit_info())
         assert access_analyzer.service == "efs"
 
-    @mock_efs
+    @mock_aws
     # Test EFS describe file systems
     def test__describe_file_systems__(self):
         efs_client = client("efs", AWS_REGION_EU_WEST_1)
@@ -85,7 +85,7 @@ class Test_EFS:
             {"Key": "test", "Value": "test"},
         ]
 
-    @mock_efs
+    @mock_aws
     # Test EFS describe file systems
     def test__describe_file_system_policies__(self):
         efs_client = client("efs", AWS_REGION_EU_WEST_1)

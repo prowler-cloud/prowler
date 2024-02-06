@@ -2,7 +2,7 @@ from unittest import mock
 from uuid import uuid4
 
 from boto3 import client
-from moto import mock_ec2
+from moto import mock_aws
 
 from prowler.providers.aws.services.vpc.vpc_service import VPC
 from prowler.providers.aws.services.workspaces.workspaces_service import WorkSpace
@@ -82,7 +82,7 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
                     assert result[0].resource_arn == WORKSPACE_ARN
                     assert result[0].region == AWS_REGION_EU_WEST_1
 
-    @mock_ec2
+    @mock_aws
     def test_workspaces_vpc_one_private_subnet(self):
         # EC2 Client
         ec2_client = client("ec2", region_name=AWS_REGION_EU_WEST_1)
@@ -150,7 +150,7 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
                     assert result[0].resource_arn == WORKSPACE_ARN
                     assert result[0].region == AWS_REGION_EU_WEST_1
 
-    @mock_ec2
+    @mock_aws
     def test_workspaces_vpc_two_private_subnet(self):
         # EC2 Client
         ec2_client = client("ec2", region_name=AWS_REGION_EU_WEST_1)
@@ -235,7 +235,7 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
                     assert result[0].resource_arn == WORKSPACE_ARN
                     assert result[0].region == AWS_REGION_EU_WEST_1
 
-    @mock_ec2
+    @mock_aws
     def test_workspaces_vpc_two_private_subnet_one_public(self):
         # EC2 Client
         ec2_client = client("ec2", region_name=AWS_REGION_EU_WEST_1)
@@ -339,7 +339,7 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
                     assert result[0].resource_arn == WORKSPACE_ARN
                     assert result[0].region == AWS_REGION_EU_WEST_1
 
-    @mock_ec2
+    @mock_aws
     def test_workspaces_vpc_two_private_subnet_one_public_and_nat(self):
         # EC2 Client
         ec2_client = client("ec2", region_name=AWS_REGION_EU_WEST_1)

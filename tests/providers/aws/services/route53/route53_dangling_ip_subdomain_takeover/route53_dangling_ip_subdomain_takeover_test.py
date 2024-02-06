@@ -2,7 +2,7 @@ from re import search
 from unittest import mock
 
 from boto3 import client, resource
-from moto import mock_ec2, mock_route53
+from moto import mock_aws
 
 from tests.providers.aws.audit_info_utils import (
     AWS_REGION_US_EAST_1,
@@ -11,8 +11,7 @@ from tests.providers.aws.audit_info_utils import (
 
 
 class Test_route53_dangling_ip_subdomain_takeover:
-    @mock_ec2
-    @mock_route53
+    @mock_aws
     def test_no_hosted_zones(self):
         from prowler.providers.aws.services.ec2.ec2_service import EC2
         from prowler.providers.aws.services.route53.route53_service import Route53
@@ -41,8 +40,7 @@ class Test_route53_dangling_ip_subdomain_takeover:
 
                     assert len(result) == 0
 
-    @mock_ec2
-    @mock_route53
+    @mock_aws
     def test_hosted_zone_no_records(self):
         conn = client("route53", region_name=AWS_REGION_US_EAST_1)
 
@@ -77,8 +75,7 @@ class Test_route53_dangling_ip_subdomain_takeover:
 
                     assert len(result) == 0
 
-    @mock_ec2
-    @mock_route53
+    @mock_aws
     def test_hosted_zone_private_record(self):
         conn = client("route53", region_name=AWS_REGION_US_EAST_1)
 
@@ -138,11 +135,10 @@ class Test_route53_dangling_ip_subdomain_takeover:
                     )
                     assert (
                         result[0].resource_arn
-                        == f"arn:{audit_info.audited_partition}:route53:::hostedzone/{zone_id.replace('/hostedzone/','')}"
+                        == f"arn:{audit_info.audited_partition}:route53:::hostedzone/{zone_id.replace('/hostedzone/', '')}"
                     )
 
-    @mock_ec2
-    @mock_route53
+    @mock_aws
     def test_hosted_zone_external_record(self):
         conn = client("route53", region_name=AWS_REGION_US_EAST_1)
 
@@ -202,11 +198,10 @@ class Test_route53_dangling_ip_subdomain_takeover:
                     )
                     assert (
                         result[0].resource_arn
-                        == f"arn:{audit_info.audited_partition}:route53:::hostedzone/{zone_id.replace('/hostedzone/','')}"
+                        == f"arn:{audit_info.audited_partition}:route53:::hostedzone/{zone_id.replace('/hostedzone/', '')}"
                     )
 
-    @mock_ec2
-    @mock_route53
+    @mock_aws
     def test_hosted_zone_dangling_public_record(self):
         conn = client("route53", region_name=AWS_REGION_US_EAST_1)
 
@@ -266,11 +261,10 @@ class Test_route53_dangling_ip_subdomain_takeover:
                     )
                     assert (
                         result[0].resource_arn
-                        == f"arn:{audit_info.audited_partition}:route53:::hostedzone/{zone_id.replace('/hostedzone/','')}"
+                        == f"arn:{audit_info.audited_partition}:route53:::hostedzone/{zone_id.replace('/hostedzone/', '')}"
                     )
 
-    @mock_ec2
-    @mock_route53
+    @mock_aws
     def test_hosted_zone_eip_record(self):
         conn = client("route53", region_name=AWS_REGION_US_EAST_1)
         ec2 = client("ec2", region_name=AWS_REGION_US_EAST_1)
@@ -333,11 +327,10 @@ class Test_route53_dangling_ip_subdomain_takeover:
                     )
                     assert (
                         result[0].resource_arn
-                        == f"arn:{audit_info.audited_partition}:route53:::hostedzone/{zone_id.replace('/hostedzone/','')}"
+                        == f"arn:{audit_info.audited_partition}:route53:::hostedzone/{zone_id.replace('/hostedzone/', '')}"
                     )
 
-    @mock_ec2
-    @mock_route53
+    @mock_aws
     def test_hosted_zone_eni_record(self):
         conn = client("route53", region_name=AWS_REGION_US_EAST_1)
         ec2 = resource("ec2", region_name=AWS_REGION_US_EAST_1)
@@ -406,5 +399,5 @@ class Test_route53_dangling_ip_subdomain_takeover:
                     )
                     assert (
                         result[0].resource_arn
-                        == f"arn:{audit_info.audited_partition}:route53:::hostedzone/{zone_id.replace('/hostedzone/','')}"
+                        == f"arn:{audit_info.audited_partition}:route53:::hostedzone/{zone_id.replace('/hostedzone/', '')}"
                     )

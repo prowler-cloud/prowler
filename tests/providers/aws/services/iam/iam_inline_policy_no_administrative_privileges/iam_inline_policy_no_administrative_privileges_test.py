@@ -2,7 +2,7 @@ from json import dumps
 from unittest import mock
 
 from boto3 import client
-from moto import mock_iam
+from moto import mock_aws
 
 from tests.providers.aws.audit_info_utils import (
     AWS_ACCOUNT_NUMBER,
@@ -34,7 +34,7 @@ ASSUME_ROLE_POLICY_DOCUMENT = {
 class Test_iam_inline_policy_no_administrative_privileges:
 
     # Groups
-    @mock_iam
+    @mock_aws
     def test_groups_no_inline_policies(self):
         # IAM Client
         iam_client = client("iam")
@@ -62,7 +62,7 @@ class Test_iam_inline_policy_no_administrative_privileges:
             results = check.execute()
             assert len(results) == 0
 
-    @mock_iam
+    @mock_aws
     def test_groups_admin_inline_policy(self):
         # IAM Client
         iam_client = client("iam")
@@ -106,7 +106,7 @@ class Test_iam_inline_policy_no_administrative_privileges:
                 == f"Inline policy {policy_name} for IAM identity {group_arn} allows '*:*' administrative privileges."
             )
 
-    @mock_iam
+    @mock_aws
     def test_groups_no_admin_inline_policy(self):
         # IAM Client
         iam_client = client("iam")
@@ -150,7 +150,7 @@ class Test_iam_inline_policy_no_administrative_privileges:
                 == f"Inline policy {policy_name} for IAM identity {group_arn} does not allow '*:*' administrative privileges."
             )
 
-    @mock_iam
+    @mock_aws
     def test_groups_admin_and_not_admin_inline_policies(self):
         # IAM Client
         iam_client = client("iam")
@@ -216,7 +216,7 @@ class Test_iam_inline_policy_no_administrative_privileges:
                     )
 
     # Roles
-    @mock_iam
+    @mock_aws
     def test_roles_no_inline_policies(self):
         # IAM Client
         iam_client = client("iam")
@@ -247,7 +247,7 @@ class Test_iam_inline_policy_no_administrative_privileges:
             results = check.execute()
             assert len(results) == 0
 
-    @mock_iam
+    @mock_aws
     def test_roles_admin_inline_policy(self):
         # IAM Client
         iam_client = client("iam")
@@ -294,7 +294,7 @@ class Test_iam_inline_policy_no_administrative_privileges:
                 == f"Inline policy {policy_name} for IAM identity {role_arn} allows '*:*' administrative privileges."
             )
 
-    @mock_iam
+    @mock_aws
     def test_roles_no_admin_inline_policy(self):
         # IAM Client
         iam_client = client("iam")
@@ -341,7 +341,7 @@ class Test_iam_inline_policy_no_administrative_privileges:
                 == f"Inline policy {policy_name} for IAM identity {role_arn} does not allow '*:*' administrative privileges."
             )
 
-    @mock_iam
+    @mock_aws
     def test_roles_admin_and_not_admin_inline_policies(self):
         # IAM Client
         iam_client = client("iam")
@@ -409,7 +409,7 @@ class Test_iam_inline_policy_no_administrative_privileges:
                     )
 
     # Users
-    @mock_iam
+    @mock_aws
     def test_users_no_inline_policies(self):
         # IAM Client
         iam_client = client("iam")
@@ -439,13 +439,15 @@ class Test_iam_inline_policy_no_administrative_privileges:
             results = check.execute()
             assert len(results) == 0
 
-    @mock_iam
+    @mock_aws
     def test_users_admin_inline_policy(self):
         # IAM Client
         iam_client = client("iam")
         # Create IAM User
         user_name = "test_user"
-        user_arn = iam_client.create_user(UserName=user_name,)[
+        user_arn = iam_client.create_user(
+            UserName=user_name,
+        )[
             "User"
         ]["Arn"]
 
@@ -485,13 +487,15 @@ class Test_iam_inline_policy_no_administrative_privileges:
                 == f"Inline policy {policy_name} for IAM identity {user_arn} allows '*:*' administrative privileges."
             )
 
-    @mock_iam
+    @mock_aws
     def test_users_no_admin_inline_policy(self):
         # IAM Client
         iam_client = client("iam")
         # Create IAM User
         user_name = "test_user"
-        user_arn = iam_client.create_user(UserName=user_name,)[
+        user_arn = iam_client.create_user(
+            UserName=user_name,
+        )[
             "User"
         ]["Arn"]
 
@@ -531,13 +535,15 @@ class Test_iam_inline_policy_no_administrative_privileges:
                 == f"Inline policy {policy_name} for IAM identity {user_arn} does not allow '*:*' administrative privileges."
             )
 
-    @mock_iam
+    @mock_aws
     def test_users_admin_and_not_admin_inline_policies(self):
         # IAM Client
         iam_client = client("iam")
         # Create IAM User
         user_name = "test_user"
-        user_arn = iam_client.create_user(UserName=user_name,)[
+        user_arn = iam_client.create_user(
+            UserName=user_name,
+        )[
             "User"
         ]["Arn"]
 

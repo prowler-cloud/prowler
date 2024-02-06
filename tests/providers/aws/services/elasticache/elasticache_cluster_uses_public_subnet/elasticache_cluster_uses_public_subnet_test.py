@@ -1,7 +1,7 @@
 from unittest import mock
 
 from mock import MagicMock, patch
-from moto import mock_ec2
+from moto import mock_aws
 
 from prowler.providers.aws.services.elasticache.elasticache_service import Cluster
 from prowler.providers.aws.services.vpc.vpc_service import VpcSubnet
@@ -27,7 +27,7 @@ VPC_ID = "vpc-12345678901234567"
 # Patch every AWS call using Boto3
 @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
 class Test_elasticache_cluster_uses_public_subnet:
-    @mock_ec2
+    @mock_aws
     def test_elasticache_no_clusters(self):
         # Mock VPC Service
         vpc_client = MagicMock

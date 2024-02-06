@@ -1,7 +1,7 @@
 from unittest import mock
 
 from boto3 import resource
-from moto import mock_ec2
+from moto import mock_aws
 
 from tests.providers.aws.audit_info_utils import (
     AWS_REGION_EU_WEST_1,
@@ -11,7 +11,7 @@ from tests.providers.aws.audit_info_utils import (
 
 
 class Test_ec2_ebs_volume_encryption:
-    @mock_ec2
+    @mock_aws
     def test_ec2_no_volumes(self):
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
@@ -36,7 +36,7 @@ class Test_ec2_ebs_volume_encryption:
 
             assert len(result) == 0
 
-    @mock_ec2
+    @mock_aws
     def test_ec2_unencrypted_volume(self):
         # Create EC2 Mocked Resources
         ec2 = resource("ec2", region_name=AWS_REGION_US_EAST_1)
@@ -77,7 +77,7 @@ class Test_ec2_ebs_volume_encryption:
                 == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION_US_EAST_1}:{current_audit_info.audited_account}:volume/{volume.id}"
             )
 
-    @mock_ec2
+    @mock_aws
     def test_ec2_encrypted_volume(self):
         # Create EC2 Mocked Resources
         ec2 = resource("ec2", region_name=AWS_REGION_US_EAST_1)

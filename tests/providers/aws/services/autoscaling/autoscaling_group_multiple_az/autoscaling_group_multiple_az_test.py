@@ -1,7 +1,7 @@
 from unittest import mock
 
 from boto3 import client
-from moto import mock_autoscaling
+from moto import mock_aws
 
 from tests.providers.aws.audit_info_utils import (
     AWS_REGION_US_EAST_1,
@@ -10,7 +10,7 @@ from tests.providers.aws.audit_info_utils import (
 
 
 class Test_autoscaling_group_multiple_az:
-    @mock_autoscaling
+    @mock_aws
     def test_no_autoscaling(self):
         autoscaling_client = client("autoscaling", region_name=AWS_REGION_US_EAST_1)
         autoscaling_client.groups = []
@@ -38,7 +38,7 @@ class Test_autoscaling_group_multiple_az:
 
             assert len(result) == 0
 
-    @mock_autoscaling
+    @mock_aws
     def test_groups_with_multi_az(self):
         autoscaling_client = client("autoscaling", region_name=AWS_REGION_US_EAST_1)
         autoscaling_client.create_launch_configuration(
@@ -94,7 +94,7 @@ class Test_autoscaling_group_multiple_az:
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_tags == []
 
-    @mock_autoscaling
+    @mock_aws
     def test_groups_with_single_az(self):
         autoscaling_client = client("autoscaling", region_name=AWS_REGION_US_EAST_1)
         autoscaling_client.create_launch_configuration(
@@ -149,7 +149,7 @@ class Test_autoscaling_group_multiple_az:
             assert result[0].resource_tags == []
             assert result[0].resource_arn == autoscaling_group_arn
 
-    @mock_autoscaling
+    @mock_aws
     def test_groups_witd_and_without(self):
         autoscaling_client = client("autoscaling", region_name=AWS_REGION_US_EAST_1)
         autoscaling_client.create_launch_configuration(

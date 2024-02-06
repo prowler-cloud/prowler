@@ -88,6 +88,6 @@ jobs:
           poetry run pytest -n auto --cov=./prowler --cov-report=xml tests
       - name: Upload coverage reports to Codecov
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}

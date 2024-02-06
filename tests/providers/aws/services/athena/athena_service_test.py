@@ -1,6 +1,6 @@
 from botocore.client import BaseClient
 from mock import patch
-from moto import mock_athena
+from moto import mock_aws
 
 from prowler.providers.aws.services.athena.athena_service import Athena
 from tests.providers.aws.audit_info_utils import (
@@ -54,7 +54,7 @@ def mock_generate_regional_clients(service, audit_info):
 )
 class Test_Athena_Service:
     # Test Athena Get Workgrups
-    @mock_athena
+    @mock_aws
     def test__get_workgroups__not_encrypted(self):
         default_workgroup_name = "primary"
         audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
@@ -78,7 +78,7 @@ class Test_Athena_Service:
     # Test Athena Get Workgrups
     # We mock the get_work_group to return an encrypted workgroup
     @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
-    @mock_athena
+    @mock_aws
     def test__get_workgroups__encrypted(self):
         default_workgroup_name = "primary"
         audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])

@@ -102,14 +102,13 @@ class Organizations(AWSService):
                 )
                 for page in list_policies_paginator.paginate(Filter=policy_type):
                     for policy in page["Policies"]:
-                        policy_content = self.__describe_policy__(policy.get("Id"))
-                        policy_targets = self.__list_targets_for_policy__(
-                            policy.get("Id")
-                        )
+                        policy_id = policy.get("Id")
+                        policy_content = self.__describe_policy__(policy_id)
+                        policy_targets = self.__list_targets_for_policy__(policy_id)
                         self.policies.append(
                             Policy(
                                 arn=policy.get("Arn"),
-                                id=policy.get("Id"),
+                                id=policy_id,
                                 type=policy.get("Type"),
                                 aws_managed=policy.get("AwsManaged"),
                                 content=policy_content,
@@ -134,23 +133,29 @@ class Organizations(AWSService):
 
         # This operation can be called only from the organization’s management account or by a member account that is a delegated administrator for an Amazon Web Services service.
         try:
-            policy_desc = self.client.describe_policy(PolicyId=policy_id)["Policy"]
-            policy_content = policy_desc["Content"]
-            policy_content_json = json.loads(policy_content)
+            policy_content = {}
+            if policy_id:
+                policy_content = (
+                    self.client.describe_policy(PolicyId=policy_id)
+                    .get("Policy", {})
+                    .get("Content", "")
+                )
         except Exception as error:
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
         finally:
-            return policy_content_json
+            return json.loads(policy_content)
 
     def __list_targets_for_policy__(self, policy_id):
         logger.info("Organizations - List Targets for policy: %s ...", policy_id)
 
         try:
-            targets_for_policy = self.client.list_targets_for_policy(
-                PolicyId=policy_id
-            )["Targets"]
+            targets_for_policy = []
+            if policy_id:
+                targets_for_policy = self.client.list_targets_for_policy(
+                    PolicyId=policy_id
+                )["Targets"]
         except Exception as error:
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

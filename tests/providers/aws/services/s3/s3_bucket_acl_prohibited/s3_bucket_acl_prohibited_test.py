@@ -2,7 +2,7 @@ from re import search
 from unittest import mock
 
 from boto3 import client
-from moto import mock_s3
+from moto import mock_aws
 
 from tests.providers.aws.audit_info_utils import (
     AWS_REGION_US_EAST_1,
@@ -11,7 +11,7 @@ from tests.providers.aws.audit_info_utils import (
 
 
 class Test_s3_bucket_acl_prohibited:
-    @mock_s3
+    @mock_aws
     def test_bucket_no_ownership(self):
         s3_client_us_east_1 = client("s3", region_name=AWS_REGION_US_EAST_1)
         bucket_name_us = "bucket_test_us"
@@ -50,7 +50,7 @@ class Test_s3_bucket_acl_prohibited:
                 )
                 assert result[0].region == AWS_REGION_US_EAST_1
 
-    @mock_s3
+    @mock_aws
     def test_bucket_without_ownership(self):
         s3_client_us_east_1 = client("s3", region_name=AWS_REGION_US_EAST_1)
         bucket_name_us = "bucket_test_us"
@@ -89,7 +89,7 @@ class Test_s3_bucket_acl_prohibited:
                 )
                 assert result[0].region == AWS_REGION_US_EAST_1
 
-    @mock_s3
+    @mock_aws
     def test_bucket_acl_disabled(self):
         s3_client_us_east_1 = client("s3", region_name=AWS_REGION_US_EAST_1)
         bucket_name_us = "bucket_test_us"

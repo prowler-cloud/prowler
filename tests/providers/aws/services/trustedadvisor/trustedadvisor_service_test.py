@@ -1,7 +1,7 @@
 from unittest.mock import patch
 
 import botocore
-from moto import mock_support
+from moto import mock_aws
 
 from prowler.providers.aws.services.trustedadvisor.trustedadvisor_service import (
     TrustedAdvisor,
@@ -56,7 +56,7 @@ class Test_TrustedAdvisor_Service:
         trustedadvisor = TrustedAdvisor(audit_info)
         assert trustedadvisor.session.__class__.__name__ == "Session"
 
-    @mock_support
+    @mock_aws
     # Test TrustedAdvisor session
     def test__describe_trusted_advisor_checks__(self):
         audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
