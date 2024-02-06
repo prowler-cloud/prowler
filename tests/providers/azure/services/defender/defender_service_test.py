@@ -7,6 +7,7 @@ from prowler.providers.azure.services.defender.defender_service import (
     Defender,
     Pricing,
     SecurityContacts,
+    Setting,
 )
 from tests.providers.azure.azure_fixtures import (
     AZURE_SUBSCRIPTION,
@@ -62,6 +63,19 @@ def mock_defender_get_security_contacts(_):
                 alert_notifications_state="On",
                 notified_roles=["Owner", "Contributor"],
                 notified_roles_state="On",
+            )
+        }
+    }
+
+
+def mock_defender_get_settings(_):
+    return {
+        AZURE_SUBSCRIPTION: {
+            "MCAS": Setting(
+                resource_id="/subscriptions/resource_id",
+                resource_type="Microsoft.Security/locations/settings",
+                kind="DataExportSettings",
+                enabled=True,
             )
         }
     }
@@ -159,15 +173,17 @@ class Test_Defender_Service:
         defender = Defender(set_mocked_azure_audit_info())
         assert len(defender.settings) == 1
         assert (
-            defender.settings[AZURE_SUSCRIPTION]["MCAS"].resource_id
+            defender.settings[AZURE_SUBSCRIPTION]["MCAS"].resource_id
             == "/subscriptions/resource_id"
         )
         assert (
-            defender.settings[AZURE_SUSCRIPTION]["MCAS"].resource_type
+            defender.settings[AZURE_SUBSCRIPTION]["MCAS"].resource_type
             == "Microsoft.Security/locations/settings"
         )
-        assert defender.settings[AZURE_SUSCRIPTION]["MCAS"].kind == "DataExportSettings"
-        assert defender.settings[AZURE_SUSCRIPTION]["MCAS"].enabled
+        assert (
+            defender.settings[AZURE_SUBSCRIPTION]["MCAS"].kind == "DataExportSettings"
+        )
+        assert defender.settings[AZURE_SUBSCRIPTION]["MCAS"].enabled
 
     def test__get_security_contacts__(self):
         defender = Defender(set_mocked_azure_audit_info())
