@@ -1,7 +1,7 @@
 from unittest import mock
 from uuid import uuid4
 
-from prowler.providers.azure.services.defender.defender_service import Defender_Settings
+from prowler.providers.azure.services.defender.defender_service import Setting
 from tests.providers.azure.azure_fixtures import AZURE_SUBSCRIPTION
 
 
@@ -27,7 +27,7 @@ class Test_defender_ensure_wdatp_is_enabled:
         defender_client = mock.MagicMock
         defender_client.settings = {
             AZURE_SUBSCRIPTION: {
-                "WDATP": Defender_Settings(
+                "WDATP": Setting(
                     resource_id=resource_id,
                     resource_type="Microsoft.Security/locations/settings",
                     kind="DataExportSettings",
@@ -61,7 +61,7 @@ class Test_defender_ensure_wdatp_is_enabled:
         defender_client = mock.MagicMock
         defender_client.settings = {
             AZURE_SUBSCRIPTION: {
-                "WDATP": Defender_Settings(
+                "WDATP": Setting(
                     resource_id=resource_id,
                     resource_type="Microsoft.Security/locations/settings",
                     kind="DataExportSettings",
@@ -112,4 +112,4 @@ class Test_defender_ensure_wdatp_is_enabled:
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION
             assert result[0].resource_name == "WDATP"
-            assert result[0].resource_id == "N/A"
+            assert result[0].resource_id == "WDATP"
