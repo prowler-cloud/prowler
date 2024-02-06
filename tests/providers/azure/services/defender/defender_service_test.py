@@ -7,6 +7,7 @@ from prowler.providers.azure.services.defender.defender_service import (
     Defender,
     Pricing,
     SecurityContacts,
+    Setting,
 )
 from tests.providers.azure.azure_fixtures import (
     AZURE_SUBSCRIPTION,
@@ -67,6 +68,19 @@ def mock_defender_get_security_contacts(_):
     }
 
 
+def mock_defender_get_settings(_):
+    return {
+        AZURE_SUBSCRIPTION: {
+            "MCAS": Setting(
+                resource_id="/subscriptions/resource_id",
+                resource_type="Microsoft.Security/locations/settings",
+                kind="DataExportSettings",
+                enabled=True,
+            )
+        }
+    }
+
+
 @patch(
     "prowler.providers.azure.services.defender.defender_service.Defender.__get_pricings__",
     new=mock_defender_get_pricings,
@@ -78,6 +92,10 @@ def mock_defender_get_security_contacts(_):
 @patch(
     "prowler.providers.azure.services.defender.defender_service.Defender.__get_assessments__",
     new=mock_defender_get_assessments,
+)
+@patch(
+    "prowler.providers.azure.services.defender.defender_service.Defender.__get_settings__",
+    new=mock_defender_get_settings,
 )
 @patch(
     "prowler.providers.azure.services.defender.defender_service.Defender.__get_security_contacts__",
@@ -150,6 +168,22 @@ class Test_Defender_Service:
             == "default"
         )
         assert defender.assessments[AZURE_SUBSCRIPTION]["default"].status == "Healthy"
+
+    def test__get_settings__(self):
+        defender = Defender(set_mocked_azure_audit_info())
+        assert len(defender.settings) == 1
+        assert (
+            defender.settings[AZURE_SUBSCRIPTION]["MCAS"].resource_id
+            == "/subscriptions/resource_id"
+        )
+        assert (
+            defender.settings[AZURE_SUBSCRIPTION]["MCAS"].resource_type
+            == "Microsoft.Security/locations/settings"
+        )
+        assert (
+            defender.settings[AZURE_SUBSCRIPTION]["MCAS"].kind == "DataExportSettings"
+        )
+        assert defender.settings[AZURE_SUBSCRIPTION]["MCAS"].enabled
 
     def test__get_security_contacts__(self):
         defender = Defender(set_mocked_azure_audit_info())

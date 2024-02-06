@@ -523,7 +523,7 @@ from unittest import mock
 from uuid import uuid4
 
 # Azure Constants
-AZURE_SUSCRIPTION = str(uuid4())
+AZURE_SUBSCRIPTION = str(uuid4())
 
 
 
@@ -542,7 +542,7 @@ class Test_defender_ensure_defender_for_arm_is_on:
 
         # Create the custom Defender object to be tested
         defender_client.pricings = {
-            AZURE_SUSCRIPTION: {
+            AZURE_SUBSCRIPTION: {
                 "Arm": Defender_Pricing(
                     resource_id=resource_id,
                     pricing_tier="Not Standard",
@@ -580,9 +580,9 @@ class Test_defender_ensure_defender_for_arm_is_on:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Defender plan Defender for ARM from subscription {AZURE_SUSCRIPTION} is set to OFF (pricing tier not standard)"
+                == f"Defender plan Defender for ARM from subscription {AZURE_SUBSCRIPTION} is set to OFF (pricing tier not standard)"
             )
-            assert result[0].subscription == AZURE_SUSCRIPTION
+            assert result[0].subscription == AZURE_SUBSCRIPTION
             assert result[0].resource_name == "Defender plan ARM"
             assert result[0].resource_id == resource_id
 ```
