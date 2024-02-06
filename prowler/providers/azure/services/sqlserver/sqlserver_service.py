@@ -161,4 +161,4 @@ class Server:
     encryption_protector: EncryptionProtector = None
     databases: list[Database] = None
     vulnerability_assessment: ServerVulnerabilityAssessment = None
-    security_alert_policies: ServerSecurityAlertPolicy
+    security_alert_policies: ServerSecurityAlertPolicy = None
