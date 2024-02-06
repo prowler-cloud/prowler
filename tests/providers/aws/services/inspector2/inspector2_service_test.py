@@ -101,7 +101,7 @@ class Test_Inspector2_Service:
         audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         inspector2 = Inspector2(audit_info)
         assert len(inspector2.inspectors) == 1
-        assert inspector2.inspectors[0].id == AWS_ACCOUNT_NUMBER
+        assert inspector2.inspectors[0].id == "Inspector2"
         assert inspector2.inspectors[0].region == AWS_REGION_EU_WEST_1
         assert inspector2.inspectors[0].status == "ENABLED"
 

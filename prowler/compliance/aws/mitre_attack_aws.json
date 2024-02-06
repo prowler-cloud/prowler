@@ -29,7 +29,8 @@
         "securityhub_enabled",
         "elbv2_waf_acl_attached",
         "guardduty_is_enabled",
-        "inspector2_findings_exist",
+        "inspector2_is_enabled",
+        "inspector2_active_findings_exist",
         "awslambda_function_not_publicly_accessible",
         "ec2_instance_public_ip"
       ],
@@ -576,7 +577,8 @@
         "config_recorder_all_regions_enabled",
         "securityhub_enabled",
         "guardduty_is_enabled",
-        "inspector2_findings_exist"
+        "inspector2_is_enabled",
+        "inspector2_active_findings_exist"
       ],
       "Attributes": [
         {
@@ -737,7 +739,8 @@
         "iam_user_hardware_mfa_enabled",
         "iam_user_mfa_enabled_console_access",
         "securityhub_enabled",
-        "inspector2_findings_exist"
+        "inspector2_is_enabled",
+        "inspector2_active_findings_exist"
       ],
       "Attributes": [
         {
@@ -1892,7 +1895,8 @@
         "networkfirewall_in_all_vpc",
         "elbv2_waf_acl_attached",
         "guardduty_is_enabled",
-        "inspector2_findings_exist",
+        "inspector2_is_enabled",
+        "inspector2_active_findings_exist",
         "ec2_networkacl_allow_ingress_any_port",
         "ec2_networkacl_allow_ingress_tcp_port_22",
         "ec2_networkacl_allow_ingress_tcp_port_3389",

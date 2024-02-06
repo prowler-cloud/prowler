@@ -814,7 +814,8 @@
         }
       ],
       "Checks": [
-        "inspector2_findings_exist"
+        "inspector2_is_enabled",
+        "inspector2_active_findings_exist"
       ]
     },
     {
@@ -1935,7 +1936,8 @@
         }
       ],
       "Checks": [
-        "inspector2_findings_exist"
+        "inspector2_is_enabled",
+        "inspector2_active_findings_exist"
       ]
     },
     {
@@ -2010,7 +2012,8 @@
         }
       ],
       "Checks": [
-        "inspector2_findings_exist"
+        "inspector2_is_enabled",
+        "inspector2_active_findings_exist"
       ]
     },
     {
