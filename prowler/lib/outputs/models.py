@@ -55,9 +55,9 @@ def generate_provider_output_csv(
             data["resource_name"] = finding.resource_name
             data["subscription"] = finding.subscription
             data["tenant_domain"] = audit_info.identity.domain
-            data[
-                "finding_unique_id"
-            ] = f"prowler-{provider}-{finding.check_metadata.CheckID}-{finding.subscription}-{finding.resource_id}"
+            data["finding_unique_id"] = (
+                f"prowler-{provider}-{finding.check_metadata.CheckID}-{finding.subscription}-{finding.resource_id}"
+            )
             data["compliance"] = unroll_dict(
                 get_check_compliance(finding, provider, output_options)
             )
@@ -68,9 +68,9 @@ def generate_provider_output_csv(
             data["resource_name"] = finding.resource_name
             data["project_id"] = finding.project_id
             data["location"] = finding.location.lower()
-            data[
-                "finding_unique_id"
-            ] = f"prowler-{provider}-{finding.check_metadata.CheckID}-{finding.project_id}-{finding.resource_id}"
+            data["finding_unique_id"] = (
+                f"prowler-{provider}-{finding.check_metadata.CheckID}-{finding.project_id}-{finding.resource_id}"
+            )
             data["compliance"] = unroll_dict(
                 get_check_compliance(finding, provider, output_options)
             )
@@ -82,9 +82,9 @@ def generate_provider_output_csv(
             data["region"] = finding.region
             data["resource_id"] = finding.resource_id
             data["resource_arn"] = finding.resource_arn
-            data[
-                "finding_unique_id"
-            ] = f"prowler-{provider}-{finding.check_metadata.CheckID}-{audit_info.audited_account}-{finding.region}-{finding.resource_id}"
+            data["finding_unique_id"] = (
+                f"prowler-{provider}-{finding.check_metadata.CheckID}-{audit_info.audited_account}-{finding.region}-{finding.resource_id}"
+            )
             data["compliance"] = unroll_dict(
                 get_check_compliance(finding, provider, output_options)
             )
