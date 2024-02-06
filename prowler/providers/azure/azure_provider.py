@@ -101,65 +101,57 @@ class Azure_Provider:
         subscription_ids,
     ):
         identity = Azure_Identity_Info()
-
         # If credentials comes from service principal or browser, if the required permissions are assigned
         # the identity can access AAD and retrieve the tenant domain name.
         # With cli also should be possible but right now it does not work, azure python package issue is coming
         # At the time of writting this with az cli creds is not working, despite that is included
         if sp_env_auth or browser_auth or az_cli_auth:
-            # Trying to recover tenant domain info
-            try:
-                logger.info(
-                    "Trying to retrieve tenant domain from AAD to populate identity structure ..."
-                )
-                client = GraphServiceClient(credentials=credentials)
 
-                async def get_domain():
+            async def get_azure_identity():
+                # Trying to recover tenant domain info
+                try:
+                    logger.info(
+                        "Trying to retrieve tenant domain from AAD to populate identity structure ..."
+                    )
+                    client = GraphServiceClient(credentials=credentials)
+
                     domain_result = await client.domains.get()
                     if getattr(domain_result, "value"):
                         if getattr(domain_result.value[0], "id"):
                             identity.domain = domain_result.value[0].id
 
-                asyncio.run(get_domain())
-            except Exception as error:
-                logger.error(
-                    "Provided identity does not have permissions to access AAD to retrieve tenant domain"
-                )
-                logger.error(
-                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
-                )
-            # since that exception is not considered as critical, we keep filling another identity fields
-            if sp_env_auth:
-                # The id of the sp can be retrieved from environment variables
-                identity.identity_id = getenv("AZURE_CLIENT_ID")
-                identity.identity_type = "Service Principal"
-            # Same here, if user can access AAD, some fields are retrieved if not, default value, for az cli
-            # should work but it doesn't, pending issue
-            else:
-                identity.identity_id = "Unknown user id (Missing AAD permissions)"
-                identity.identity_type = "User"
-                try:
-                    logger.info(
-                        "Trying to retrieve user information from AAD to populate identity structure ..."
+                except Exception as error:
+                    logger.error(
+                        f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
                     )
-                    client = GraphServiceClient(credentials=credentials)
+                # since that exception is not considered as critical, we keep filling another identity fields
+                if sp_env_auth:
+                    # The id of the sp can be retrieved from environment variables
+                    identity.identity_id = getenv("AZURE_CLIENT_ID")
+                    identity.identity_type = "Service Principal"
+                # Same here, if user can access AAD, some fields are retrieved if not, default value, for az cli
+                # should work but it doesn't, pending issue
+                else:
+                    identity.identity_id = "Unknown user id (Missing AAD permissions)"
+                    identity.identity_type = "User"
+                    try:
+                        logger.info(
+                            "Trying to retrieve user information from AAD to populate identity structure ..."
+                        )
+                        client = GraphServiceClient(credentials=credentials)
 
-                    async def me():
                         me = await client.me.get()
                         if me:
                             if getattr(me, "user_principal_name"):
                                 identity.identity_id = me.user_principal_name
-                                print(me.user_principal_name)
 
-                    asyncio.run(me())
+                    except Exception as error:
+                        logger.error(
+                            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+                        )
 
-                except Exception as error:
-                    logger.error(
-                        "Provided identity does not have permissions to access AAD to retrieve user's metadata"
-                    )
-                    logger.error(
-                        f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
-                    )
+            asyncio.run(get_azure_identity())
+
         # Managed identities only can be assigned resource, resource group and subscription scope permissions
         elif managed_entity_auth:
             identity.identity_id = "Default Managed Identity ID"
