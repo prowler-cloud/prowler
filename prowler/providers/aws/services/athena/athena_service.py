@@ -54,10 +54,8 @@ class Athena(AWSService):
                     )
 
                     wg_configuration = wg.get("WorkGroup").get("Configuration")
-                    self.workgroups[
-                        workgroup.arn
-                    ].enforce_workgroup_configuration = wg_configuration.get(
-                        "EnforceWorkGroupConfiguration", False
+                    self.workgroups[workgroup.arn].enforce_workgroup_configuration = (
+                        wg_configuration.get("EnforceWorkGroupConfiguration", False)
                     )
 
                     # We include an empty EncryptionConfiguration to handle if the workgroup does not have encryption configured
@@ -77,9 +75,9 @@ class Athena(AWSService):
                         encryption_configuration = EncryptionConfiguration(
                             encryption_option=encryption, encrypted=True
                         )
-                        self.workgroups[
-                            workgroup.arn
-                        ].encryption_configuration = encryption_configuration
+                        self.workgroups[workgroup.arn].encryption_configuration = (
+                            encryption_configuration
+                        )
                 except Exception as error:
                     logger.error(
                         f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

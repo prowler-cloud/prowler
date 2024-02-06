@@ -1,7 +1,7 @@
 repos:
   ## GENERAL
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.4.0
+    rev: v4.5.0
     hooks:
       - id: check-merge-conflict
       - id: check-yaml
@@ -15,7 +15,7 @@ repos:
 
   ## TOML
   - repo: https://github.com/macisamuele/language-formatters-pre-commit-hooks
-    rev: v2.10.0
+    rev: v2.12.0
     hooks:
       - id: pretty-format-toml
         args: [--autofix]
@@ -28,7 +28,7 @@ repos:
       - id: shellcheck
   ## PYTHON
   - repo: https://github.com/myint/autoflake
-    rev: v2.2.0
+    rev: v2.2.1
     hooks:
       - id: autoflake
         args:
@@ -39,25 +39,25 @@ repos:
           ]
 
   - repo: https://github.com/timothycrosley/isort
-    rev: 5.12.0
+    rev: 5.13.2
     hooks:
       - id: isort
         args: ["--profile", "black"]
 
   - repo: https://github.com/psf/black
-    rev: 22.12.0
+    rev: 24.1.1
     hooks:
       - id: black
 
   - repo: https://github.com/pycqa/flake8
-    rev: 6.1.0
+    rev: 7.0.0
     hooks:
       - id: flake8
         exclude: contrib
         args: ["--ignore=E266,W503,E203,E501,W605"]
 
   - repo: https://github.com/python-poetry/poetry
-    rev: 1.6.0 # add version here
+    rev: 1.7.0 # add version here
     hooks:
       - id: poetry-check
       - id: poetry-lock

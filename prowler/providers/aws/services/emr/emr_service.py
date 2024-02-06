@@ -108,9 +108,9 @@ class EMR(AWSService):
                     master_public_dns_name = cluster_info["Cluster"].get(
                         "MasterPublicDnsName"
                     )
-                    self.clusters[
-                        cluster.id
-                    ].master_public_dns_name = master_public_dns_name
+                    self.clusters[cluster.id].master_public_dns_name = (
+                        master_public_dns_name
+                    )
                     # Set cluster Public/Private
                     # Public EMR cluster have their DNS ending with .amazonaws.com
                     # while private ones have format of ip-xxx-xx-xx.us-east-1.compute.internal.
@@ -136,12 +136,12 @@ class EMR(AWSService):
                 regional_client.get_block_public_access_configuration()
             )
 
-            self.block_public_access_configuration[
-                regional_client.region
-            ] = BlockPublicAccessConfiguration(
-                block_public_security_group_rules=block_public_access_configuration[
-                    "BlockPublicAccessConfiguration"
-                ]["BlockPublicSecurityGroupRules"]
+            self.block_public_access_configuration[regional_client.region] = (
+                BlockPublicAccessConfiguration(
+                    block_public_security_group_rules=block_public_access_configuration[
+                        "BlockPublicAccessConfiguration"
+                    ]["BlockPublicSecurityGroupRules"]
+                )
             )
         except Exception as error:
             logger.error(
