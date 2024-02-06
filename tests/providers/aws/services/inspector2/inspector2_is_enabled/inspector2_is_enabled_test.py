@@ -68,12 +68,6 @@ class Test_inspector2_is_enabled:
     def test_enabled_no_finding(self):
         # Mock the inspector2 client
         inspector2_client = mock.MagicMock
-        awslambda_client = mock.MagicMock
-        ecr_client = mock.MagicMock
-        ec2_client = mock.MagicMock
-        ec2_client.audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
-        ecr_client.audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
-        awslambda_client.audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         inspector2_client.audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         inspector2_client.audited_account = AWS_ACCOUNT_NUMBER
         inspector2_client.audited_account_arn = (
@@ -99,32 +93,20 @@ class Test_inspector2_is_enabled:
                 "prowler.providers.aws.services.inspector2.inspector2_is_enabled.inspector2_is_enabled.inspector2_client",
                 new=inspector2_client,
             ):
-                with mock.patch(
-                    "prowler.providers.aws.services.inspector2.inspector2_is_enabled.inspector2_is_enabled.ecr_client",
-                    new=ecr_client,
-                ):
-                    with mock.patch(
-                        "prowler.providers.aws.services.inspector2.inspector2_is_enabled.inspector2_is_enabled.ec2_client",
-                        new=ec2_client,
-                    ):
-                        with mock.patch(
-                            "prowler.providers.aws.services.inspector2.inspector2_is_enabled.inspector2_is_enabled.awslambda_client",
-                            new=awslambda_client,
-                        ):
-                            # Test Check
-                            from prowler.providers.aws.services.inspector2.inspector2_is_enabled.inspector2_is_enabled import (
-                                inspector2_is_enabled,
-                            )
+                # Test Check
+                from prowler.providers.aws.services.inspector2.inspector2_is_enabled.inspector2_is_enabled import (
+                    inspector2_is_enabled,
+                )
 
-                            check = inspector2_is_enabled()
-                            result = check.execute()
+                check = inspector2_is_enabled()
+                result = check.execute()
 
-                            assert len(result) == 1
-                            assert result[0].status == "PASS"
-                            assert result[0].status_extended == "Inspector2 is enabled."
-                            assert result[0].resource_id == AWS_ACCOUNT_NUMBER
-                            assert (
-                                result[0].resource_arn
-                                == f"arn:aws:inspector2:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:inspector2"
-                            )
-                            assert result[0].region == AWS_REGION_EU_WEST_1
+                assert len(result) == 1
+                assert result[0].status == "PASS"
+                assert result[0].status_extended == "Inspector2 is enabled."
+                assert result[0].resource_id == AWS_ACCOUNT_NUMBER
+                assert (
+                    result[0].resource_arn
+                    == f"arn:aws:inspector2:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:inspector2"
+                )
+                assert result[0].region == AWS_REGION_EU_WEST_1
