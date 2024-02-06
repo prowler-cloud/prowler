@@ -101,7 +101,7 @@ class Defender(AzureService):
                 for setting in settings_list:
                     settings[subscription_name].update(
                         {
-                            setting.name: Defender_Settings(
+                            setting.name: Setting(
                                 resource_id=setting.id,
                                 resource_type=setting.type,
                                 kind=setting.kind,
