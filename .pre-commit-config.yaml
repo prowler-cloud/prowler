@@ -57,7 +57,7 @@ repos:
         args: ["--ignore=E266,W503,E203,E501,W605"]
 
   - repo: https://github.com/python-poetry/poetry
-    rev: 1.7.0 # add version here
+    rev: 1.7.0
     hooks:
       - id: poetry-check
       - id: poetry-lock
