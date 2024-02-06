@@ -6,6 +6,7 @@ from azure.mgmt.sql.models import (
     FirewallRule,
     ServerBlobAuditingPolicy,
     ServerExternalAdministrator,
+    ServerSecurityAlertPolicy,
     ServerVulnerabilityAssessment,
     TransparentDataEncryption,
 )
@@ -44,6 +45,11 @@ class SQLServer(AzureService):
                     vulnerability_assessment = self.__get_vulnerability_assesments__(
                         subscription, resource_group, sql_server.name
                     )
+                    security_alert_policies = client.server_security_alert_policies.get(
+                        resource_group_name=resource_group,
+                        server_name=sql_server.name,
+                        security_alert_policy_name="default",
+                    )
                     sql_servers[subscription].append(
                         Server(
                             id=sql_server.id,
@@ -58,6 +64,7 @@ class SQLServer(AzureService):
                                 subscription, resource_group, sql_server.name
                             ),
                             vulnerability_assessment=vulnerability_assessment,
+                            security_alert_policies=security_alert_policies,
                         )
                     )
             except Exception as error:
@@ -154,3 +161,4 @@ class Server:
     encryption_protector: EncryptionProtector = None
     databases: list[Database] = None
     vulnerability_assessment: ServerVulnerabilityAssessment = None
+    security_alert_policies: ServerSecurityAlertPolicy
