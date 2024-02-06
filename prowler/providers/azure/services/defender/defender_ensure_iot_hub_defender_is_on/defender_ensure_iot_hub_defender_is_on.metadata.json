@@ -1,0 +1,30 @@
+{
+  "Provider": "azure",
+  "CheckID": "defender_ensure_iot_hub_defender_is_on",
+  "CheckTitle": "Ensure That Microsoft Defender for IoT Hub Is Set To 'On'",
+  "CheckType": [],
+  "ServiceName": "defender",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "DefenderIoT",
+  "Description": "Microsoft Defender for IoT acts as a central security hub for IoT devices within your organization.",
+  "Risk": "IoT devices are very rarely patched and can be potential attack vectors for enterprise networks. Updating their network configuration to use a central security hub allows for detection of these breaches.",
+  "RelatedUrl": "https://azure.microsoft.com/en-us/services/iot-defender/#overview",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "https://www.tenable.com/audits/items/CIS_Microsoft_Azure_Foundations_v2.0.0_L2.audit:0bc2bddfb06eea523c102f4a5eafff3a",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "1. Go to IoT Hub. 2. Select a IoT Hub to validate. 3. Select Overview in Defender for IoT. 4. Click on Secure your IoT solution, and complete the onboarding.",
+      "Url": "https://learn.microsoft.com/en-us/azure/defender-for-iot/device-builders/quickstart-onboard-iot-hub"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Enabling Microsoft Defender for IoT will incur additional charges dependent on the level of usage."
+}
