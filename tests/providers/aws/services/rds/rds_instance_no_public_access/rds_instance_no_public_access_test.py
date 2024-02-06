@@ -174,6 +174,7 @@ class Test_rds_instance_no_public_access:
             VpcSecurityGroupIds=[default_sg_id],
         )
 
+        from prowler.providers.aws.services.ec2.ec2_service import EC2
         from prowler.providers.aws.services.rds.rds_service import RDS
 
         audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
@@ -188,6 +189,9 @@ class Test_rds_instance_no_public_access:
             with mock.patch(
                 "prowler.providers.aws.services.rds.rds_instance_no_public_access.rds_instance_no_public_access.rds_client",
                 new=RDS(audit_info),
+            ), mock.patch(
+                "prowler.providers.aws.services.rds.rds_instance_no_public_access.rds_instance_no_public_access.ec2_client",
+                new=EC2(audit_info),
             ):
                 # Test Check
                 from prowler.providers.aws.services.rds.rds_instance_no_public_access.rds_instance_no_public_access import (
