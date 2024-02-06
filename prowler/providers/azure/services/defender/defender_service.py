@@ -162,7 +162,7 @@ class Assesment(BaseModel):
     status: str
 
 
-class Defender_Settings(BaseModel):
+class Setting(BaseModel):
     resource_id: str
     resource_type: str
     kind: str
