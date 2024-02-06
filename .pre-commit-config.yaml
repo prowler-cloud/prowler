@@ -86,12 +86,6 @@ repos:
         language: system
         stages: ["commit", "push"]
 
-      - id: pytest-check
-        name: pytest-check
-        entry: bash -c 'pytest tests -n auto'
-        language: system
-        files: '.*\.py'
-
       - id: bandit
         name: bandit
         description: "Bandit is a tool for finding common security issues in Python code"
