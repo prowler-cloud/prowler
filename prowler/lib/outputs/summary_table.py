@@ -96,8 +96,8 @@ def display_summary_table(
             print("\nOverview Results:")
             overview_table = [
                 [
-                    f"{Fore.RED}{round(fail_count/len(findings)*100, 2)}% ({fail_count}) Failed{Style.RESET_ALL}",
-                    f"{Fore.GREEN}{round(pass_count/len(findings)*100, 2)}% ({pass_count}) Passed{Style.RESET_ALL}",
+                    f"{Fore.RED}{round(fail_count / len(findings) * 100, 2)}% ({fail_count}) Failed{Style.RESET_ALL}",
+                    f"{Fore.GREEN}{round(pass_count / len(findings) * 100, 2)}% ({pass_count}) Passed{Style.RESET_ALL}",
                 ]
             ]
             print(tabulate(overview_table, tablefmt="rounded_grid"))

@@ -42,7 +42,7 @@ class awslambda_function_no_secrets_in_variables(Check):
                     environment_variable_names = list(function.environment.keys())
                     secrets_string = ", ".join(
                         [
-                            f"{secret['type']} in variable {environment_variable_names[int(secret['line_number'])-2]}"
+                            f"{secret['type']} in variable {environment_variable_names[int(secret['line_number']) - 2]}"
                             for secret in detect_secrets_output[temp_env_data_file.name]
                         ]
                     )
