@@ -46,7 +46,7 @@ mkdocs-material = {version = "9.5.6", optional = true}
 msgraph-sdk = "^1.0.0"
 msrestazure = "^0.6.4"
 pydantic = "1.10.14"
-python = ">=3.9,<3.12"
+python = ">=3.9,<3.13"
 schema = "0.7.5"
 shodan = "1.31.0"
 slack-sdk = "3.26.2"
