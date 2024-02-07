@@ -10,7 +10,7 @@
   "ResourceType": "SQLServer",
   "Description": "Ensure that Microsoft Defender for SQL is set to 'On' for critical SQL Servers",
   "Risk": "Microsoft Defender for SQL is a unified package for advanced SQL security capabilities. Microsoft Defender is available for Azure SQL Database, Azure SQL Managed  classifying sensitive data, surfacing and mitigating potential database vulnerabilities, and detecting anomalous activities that could indicate a threat to your database. It provides a single go-to location for enabling and managing these capabilities.",
-  "RelatedUrl": " https://docs.microsoft.com/en-us/azure/azure-sql/database/azure-defender-for-sql?view=azuresql",
+  "RelatedUrl": "https://docs.microsoft.com/en-us/azure/azure-sql/database/azure-defender-for-sql?view=azuresql",
   "Remediation": {
     "Code": {
       "CLI": "",
