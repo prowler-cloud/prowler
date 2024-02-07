@@ -530,7 +530,7 @@
       ]
     },
     {
-      "Id": "2.1.4",
+      "Id": "2.1.3",
       "Description": "Ensure all data in Amazon S3 has been discovered, classified and secured when required.",
       "Checks": [
         "macie_is_enabled"
@@ -551,7 +551,7 @@
       ]
     },
     {
-      "Id": "2.1.5",
+      "Id": "2.1.4",
       "Description": "Ensure that S3 Buckets are configured with 'Block public access (bucket settings)'",
       "Checks": [
         "s3_bucket_level_public_access_block",
