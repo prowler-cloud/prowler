@@ -133,14 +133,14 @@ expected_packages = [
         module_finder=FileFinder(
             "/root_dir/prowler/providers/azure/services/sqlserver"
         ),
-        name="prowler.providers.azure.services.sqlserver.sqlserver_periodic_recurring_scans_enabled",
+        name="prowler.providers.azure.services.sqlserver.sqlserver_va_periodic_recurring_scans_enabled",
         ispkg=True,
     ),
     ModuleInfo(
         module_finder=FileFinder(
-            "/root_dir/prowler/providers/azure/services/sqlserver/sqlserver_periodic_recurring_scans_enabled"
+            "/root_dir/prowler/providers/azure/services/sqlserver/sqlserver_va_periodic_recurring_scans_enabled"
         ),
-        name="prowler.providers.azure.services.sqlserver.sqlserver_periodic_recurring_scans_enabled.sqlserver_periodic_recurring_scans_enabled",
+        name="prowler.providers.azure.services.sqlserver.sqlserver_va_periodic_recurring_scans_enabled.sqlserver_va_periodic_recurring_scans_enabled",
         ispkg=False,
     ),
 ]
@@ -254,14 +254,14 @@ def mock_list_modules(*_):
             module_finder=FileFinder(
                 "/root_dir/prowler/providers/azure/services/sqlserver"
             ),
-            name="prowler.providers.azure.services.sqlserver.sqlserver_periodic_recurring_scans_enabled",
+            name="prowler.providers.azure.services.sqlserver.sqlserver_va_periodic_recurring_scans_enabled",
             ispkg=True,
         ),
         ModuleInfo(
             module_finder=FileFinder(
-                "/root_dir/prowler/providers/azure/services/sqlserver/sqlserver_periodic_recurring_scans_enabled"
+                "/root_dir/prowler/providers/azure/services/sqlserver/sqlserver_va_periodic_recurring_scans_enabled"
             ),
-            name="prowler.providers.azure.services.sqlserver.sqlserver_periodic_recurring_scans_enabled.sqlserver_periodic_recurring_scans_enabled",
+            name="prowler.providers.azure.services.sqlserver.sqlserver_va_periodic_recurring_scans_enabled.sqlserver_va_periodic_recurring_scans_enabled",
             ispkg=False,
         ),
     ]
@@ -662,8 +662,8 @@ class Test_Check:
                 "/root_dir/prowler/providers/azure/services/sqlserver/sqlserver_vulnerability_assessment_enabled",
             ),
             (
-                "sqlserver_periodic_recurring_scans_enabled",
-                "/root_dir/prowler/providers/azure/services/sqlserver/sqlserver_periodic_recurring_scans_enabled",
+                "sqlserver_va_periodic_recurring_scans_enabled",
+                "/root_dir/prowler/providers/azure/services/sqlserver/sqlserver_va_periodic_recurring_scans_enabled",
             ),
         ]
         returned_checks = recover_checks_from_provider(provider, service)

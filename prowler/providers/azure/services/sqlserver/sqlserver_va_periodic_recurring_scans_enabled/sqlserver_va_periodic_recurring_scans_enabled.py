@@ -2,7 +2,7 @@ from prowler.lib.check.models import Check, Check_Report_Azure
 from prowler.providers.azure.services.sqlserver.sqlserver_client import sqlserver_client
 
 
-class sqlserver_periodic_recurring_scans_enabled(Check):
+class sqlserver_va_periodic_recurring_scans_enabled(Check):
     def execute(self) -> Check_Report_Azure:
         findings = []
         for subscription, sql_servers in sqlserver_client.sql_servers.items():

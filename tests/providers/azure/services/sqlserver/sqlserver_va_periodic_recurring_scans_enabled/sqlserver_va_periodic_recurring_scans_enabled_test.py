@@ -11,20 +11,20 @@ from prowler.providers.azure.services.sqlserver.sqlserver_service import Server
 AZURE_SUBSCRIPTION = str(uuid4())
 
 
-class Test_sqlserver_periodic_recurring_scans_enabled:
+class Test_sqlserver_va_periodic_recurring_scans_enabled:
     def test_no_sql_servers(self):
         sqlserver_client = mock.MagicMock
         sqlserver_client.sql_servers = {}
 
         with mock.patch(
-            "prowler.providers.azure.services.sqlserver.sqlserver_periodic_recurring_scans_enabled.sqlserver_periodic_recurring_scans_enabled.sqlserver_client",
+            "prowler.providers.azure.services.sqlserver.sqlserver_va_periodic_recurring_scans_enabled.sqlserver_va_periodic_recurring_scans_enabled.sqlserver_client",
             new=sqlserver_client,
         ):
-            from prowler.providers.azure.services.sqlserver.sqlserver_periodic_recurring_scans_enabled.sqlserver_periodic_recurring_scans_enabled import (
-                sqlserver_periodic_recurring_scans_enabled,
+            from prowler.providers.azure.services.sqlserver.sqlserver_va_periodic_recurring_scans_enabled.sqlserver_va_periodic_recurring_scans_enabled import (
+                sqlserver_va_periodic_recurring_scans_enabled,
             )
 
-            check = sqlserver_periodic_recurring_scans_enabled()
+            check = sqlserver_va_periodic_recurring_scans_enabled()
             result = check.execute()
             assert len(result) == 0
 
@@ -50,14 +50,14 @@ class Test_sqlserver_periodic_recurring_scans_enabled:
         }
 
         with mock.patch(
-            "prowler.providers.azure.services.sqlserver.sqlserver_periodic_recurring_scans_enabled.sqlserver_periodic_recurring_scans_enabled.sqlserver_client",
+            "prowler.providers.azure.services.sqlserver.sqlserver_va_periodic_recurring_scans_enabled.sqlserver_va_periodic_recurring_scans_enabled.sqlserver_client",
             new=sqlserver_client,
         ):
-            from prowler.providers.azure.services.sqlserver.sqlserver_periodic_recurring_scans_enabled.sqlserver_periodic_recurring_scans_enabled import (
-                sqlserver_periodic_recurring_scans_enabled,
+            from prowler.providers.azure.services.sqlserver.sqlserver_va_periodic_recurring_scans_enabled.sqlserver_va_periodic_recurring_scans_enabled import (
+                sqlserver_va_periodic_recurring_scans_enabled,
             )
 
-            check = sqlserver_periodic_recurring_scans_enabled()
+            check = sqlserver_va_periodic_recurring_scans_enabled()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
@@ -93,14 +93,14 @@ class Test_sqlserver_periodic_recurring_scans_enabled:
         }
 
         with mock.patch(
-            "prowler.providers.azure.services.sqlserver.sqlserver_periodic_recurring_scans_enabled.sqlserver_periodic_recurring_scans_enabled.sqlserver_client",
+            "prowler.providers.azure.services.sqlserver.sqlserver_va_periodic_recurring_scans_enabled.sqlserver_va_periodic_recurring_scans_enabled.sqlserver_client",
             new=sqlserver_client,
         ):
-            from prowler.providers.azure.services.sqlserver.sqlserver_periodic_recurring_scans_enabled.sqlserver_periodic_recurring_scans_enabled import (
-                sqlserver_periodic_recurring_scans_enabled,
+            from prowler.providers.azure.services.sqlserver.sqlserver_va_periodic_recurring_scans_enabled.sqlserver_va_periodic_recurring_scans_enabled import (
+                sqlserver_va_periodic_recurring_scans_enabled,
             )
 
-            check = sqlserver_periodic_recurring_scans_enabled()
+            check = sqlserver_va_periodic_recurring_scans_enabled()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
@@ -139,14 +139,14 @@ class Test_sqlserver_periodic_recurring_scans_enabled:
         }
 
         with mock.patch(
-            "prowler.providers.azure.services.sqlserver.sqlserver_periodic_recurring_scans_enabled.sqlserver_periodic_recurring_scans_enabled.sqlserver_client",
+            "prowler.providers.azure.services.sqlserver.sqlserver_va_periodic_recurring_scans_enabled.sqlserver_va_periodic_recurring_scans_enabled.sqlserver_client",
             new=sqlserver_client,
         ):
-            from prowler.providers.azure.services.sqlserver.sqlserver_periodic_recurring_scans_enabled.sqlserver_periodic_recurring_scans_enabled import (
-                sqlserver_periodic_recurring_scans_enabled,
+            from prowler.providers.azure.services.sqlserver.sqlserver_va_periodic_recurring_scans_enabled.sqlserver_va_periodic_recurring_scans_enabled import (
+                sqlserver_va_periodic_recurring_scans_enabled,
             )
 
-            check = sqlserver_periodic_recurring_scans_enabled()
+            check = sqlserver_va_periodic_recurring_scans_enabled()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
@@ -185,14 +185,14 @@ class Test_sqlserver_periodic_recurring_scans_enabled:
         }
 
         with mock.patch(
-            "prowler.providers.azure.services.sqlserver.sqlserver_periodic_recurring_scans_enabled.sqlserver_periodic_recurring_scans_enabled.sqlserver_client",
+            "prowler.providers.azure.services.sqlserver.sqlserver_va_periodic_recurring_scans_enabled.sqlserver_va_periodic_recurring_scans_enabled.sqlserver_client",
             new=sqlserver_client,
         ):
-            from prowler.providers.azure.services.sqlserver.sqlserver_periodic_recurring_scans_enabled.sqlserver_periodic_recurring_scans_enabled import (
-                sqlserver_periodic_recurring_scans_enabled,
+            from prowler.providers.azure.services.sqlserver.sqlserver_va_periodic_recurring_scans_enabled.sqlserver_va_periodic_recurring_scans_enabled import (
+                sqlserver_va_periodic_recurring_scans_enabled,
             )
 
-            check = sqlserver_periodic_recurring_scans_enabled()
+            check = sqlserver_va_periodic_recurring_scans_enabled()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
