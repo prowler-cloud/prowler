@@ -4,7 +4,7 @@ from prowler.config.config import banner_color, orange_color, prowler_version, t
 
 
 def print_banner(args):
-    banner = f"""{banner_color}                         _
+    banner = rf"""{banner_color}                         _
  _ __  _ __ _____      _| | ___ _ __
 | '_ \| '__/ _ \ \ /\ / / |/ _ \ '__|
 | |_) | | | (_) \ V  V /| |  __/ |
