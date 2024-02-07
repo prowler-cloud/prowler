@@ -12,7 +12,9 @@ class sqlserver_auditing_retention_90_days(Check):
                 report.resource_name = sql_server.name
                 report.resource_id = sql_server.id
                 has_failed = False
+                has_policy = False
                 for policy in sql_server.auditing_policies:
+                    has_policy = True
                     if has_failed:
                         break
                     if policy.state == "Enabled":
@@ -27,7 +29,7 @@ class sqlserver_auditing_retention_90_days(Check):
                         report.status = "FAIL"
                         report.status_extended = f"SQL Server {sql_server.name} from subscription {subscription} has auditing disabled."
                         has_failed = True
-
-                findings.append(report)
+                if has_policy:
+                    findings.append(report)
 
         return findings
