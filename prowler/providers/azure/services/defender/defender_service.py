@@ -1,5 +1,6 @@
 from datetime import timedelta
 
+from azure.core.exceptions import HttpResponseError
 from azure.mgmt.security import SecurityCenter
 from pydantic import BaseModel
 
@@ -136,6 +137,13 @@ class Defender(AzureService):
                         )
                     }
                 )
+            except HttpResponseError as error:
+                if error.status_code == 404:
+                    security_contacts.update({subscription_name: {}})
+                else:
+                    logger.error(
+                        f"Subscription name: {subscription_name} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
             except Exception as error:
                 logger.error(
                     f"Subscription name: {subscription_name} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
