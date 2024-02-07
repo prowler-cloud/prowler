@@ -15,7 +15,7 @@
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "https://www.tenable.com/audits/items/CIS_Microsoft_Azure_Foundations_v2.0.0_L2.audit:0bc2bddfb06eea523c102f4a5eafff3a",
+      "Other": "",
       "Terraform": ""
     },
     "Recommendation": {
