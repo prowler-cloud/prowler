@@ -17,6 +17,7 @@ class Defender(AzureService):
         self.assessments = self.__get_assessments__()
         self.settings = self.__get_settings__()
         self.security_contacts = self.__get_security_contacts__()
+        self.iot_security_solutions = self.__get_iot_security_solutions__()
 
     def __get_pricings__(self):
         logger.info("Defender - Getting pricings...")
@@ -142,6 +143,30 @@ class Defender(AzureService):
                 )
         return security_contacts
 
+    def __get_iot_security_solutions__(self):
+        logger.info("Defender - Getting IoT Security Solutions...")
+        iot_security_solutions = {}
+        for subscription_name, client in self.clients.items():
+            try:
+                iot_security_solutions_list = (
+                    client.iot_security_solution.list_by_subscription()
+                )
+                iot_security_solutions.update({subscription_name: {}})
+                for iot_security_solution in iot_security_solutions_list:
+                    iot_security_solutions[subscription_name].update(
+                        {
+                            iot_security_solution.name: IoTSecuritySolution(
+                                resource_id=iot_security_solution.id,
+                                status=iot_security_solution.status,
+                            )
+                        }
+                    )
+            except Exception as error:
+                logger.error(
+                    f"Subscription name: {subscription_name} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+        return iot_security_solutions
+
 
 class Pricing(BaseModel):
     resource_id: str
@@ -177,3 +202,8 @@ class SecurityContacts(BaseModel):
     alert_notifications_state: str
     notified_roles: list[str]
     notified_roles_state: str
+
+
+class IoTSecuritySolution(BaseModel):
+    resource_id: str
+    status: str

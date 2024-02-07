@@ -5,6 +5,7 @@ from prowler.providers.azure.services.defender.defender_service import (
     Assesment,
     AutoProvisioningSetting,
     Defender,
+    IoTSecuritySolution,
     Pricing,
     SecurityContacts,
     Setting,
@@ -81,6 +82,17 @@ def mock_defender_get_settings(_):
     }
 
 
+def mock_defender_get_iot_security_solutions(_):
+    return {
+        AZURE_SUBSCRIPTION: {
+            "iot_sec_solution": IoTSecuritySolution(
+                resource_id="/subscriptions/resource_id",
+                status="Enabled",
+            )
+        }
+    }
+
+
 @patch(
     "prowler.providers.azure.services.defender.defender_service.Defender.__get_pricings__",
     new=mock_defender_get_pricings,
@@ -100,6 +112,10 @@ def mock_defender_get_settings(_):
 @patch(
     "prowler.providers.azure.services.defender.defender_service.Defender.__get_security_contacts__",
     new=mock_defender_get_security_contacts,
+)
+@patch(
+    "prowler.providers.azure.services.defender.defender_service.Defender.__get_iot_security_solutions__",
+    new=mock_defender_get_iot_security_solutions,
 )
 class Test_Defender_Service:
     def test__get_client__(self):
@@ -220,4 +236,20 @@ class Test_Defender_Service:
                 "default"
             ].notified_roles_state
             == "On"
+        )
+
+    def test__get_iot_security_solutions__(self):
+        defender = Defender(set_mocked_azure_audit_info())
+        assert len(defender.iot_security_solutions) == 1
+        assert (
+            defender.iot_security_solutions[AZURE_SUBSCRIPTION][
+                "iot_sec_solution"
+            ].resource_id
+            == "/subscriptions/resource_id"
+        )
+        assert (
+            defender.iot_security_solutions[AZURE_SUBSCRIPTION][
+                "iot_sec_solution"
+            ].status
+            == "Enabled"
         )
