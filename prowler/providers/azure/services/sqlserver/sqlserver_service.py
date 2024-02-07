@@ -6,6 +6,7 @@ from azure.mgmt.sql.models import (
     FirewallRule,
     ServerBlobAuditingPolicy,
     ServerExternalAdministrator,
+    ServerSecurityAlertPolicy,
     ServerVulnerabilityAssessment,
     TransparentDataEncryption,
 )
@@ -29,20 +30,22 @@ class SQLServer(AzureService):
                 sql_servers_list = client.servers.list()
                 for sql_server in sql_servers_list:
                     resource_group = self.__get_resource_group__(sql_server.id)
-                    auditing_policies = (
-                        client.server_blob_auditing_policies.list_by_server(
-                            resource_group_name=resource_group,
-                            server_name=sql_server.name,
-                        )
+                    auditing_policies = self.__get_server_blob_auditing_policies__(
+                        subscription, resource_group, sql_server.name
                     )
-                    firewall_rules = client.firewall_rules.list_by_server(
-                        resource_group_name=resource_group, server_name=sql_server.name
+                    firewall_rules = self.__get_firewall_rules__(
+                        subscription, resource_group, sql_server.name
                     )
                     encryption_protector = self.__get_enctyption_protectors__(
                         subscription, resource_group, sql_server.name
                     )
                     vulnerability_assessment = self.__get_vulnerability_assesments__(
                         subscription, resource_group, sql_server.name
+                    )
+                    security_alert_policies = (
+                        self.__get_server_security_alert_policies__(
+                            subscription, resource_group, sql_server.name
+                        )
                     )
                     sql_servers[subscription].append(
                         Server(
@@ -58,6 +61,7 @@ class SQLServer(AzureService):
                                 subscription, resource_group, sql_server.name
                             ),
                             vulnerability_assessment=vulnerability_assessment,
+                            security_alert_policies=security_alert_policies,
                         )
                     )
             except Exception as error:
@@ -131,6 +135,34 @@ class SQLServer(AzureService):
         )
         return vulnerability_assessment
 
+    def __get_server_blob_auditing_policies__(
+        self, subscription, resource_group, server_name
+    ):
+        client = self.clients[subscription]
+        auditing_policies = client.server_blob_auditing_policies.list_by_server(
+            resource_group_name=resource_group,
+            server_name=server_name,
+        )
+        return auditing_policies
+
+    def __get_firewall_rules__(self, subscription, resource_group, server_name):
+        client = self.clients[subscription]
+        firewall_rules = client.firewall_rules.list_by_server(
+            resource_group_name=resource_group, server_name=server_name
+        )
+        return firewall_rules
+
+    def __get_server_security_alert_policies__(
+        self, subscription, resource_group, server_name
+    ):
+        client = self.clients[subscription]
+        security_alert_policies = client.server_security_alert_policies.get(
+            resource_group_name=resource_group,
+            server_name=server_name,
+            security_alert_policy_name="default",
+        )
+        return security_alert_policies
+
 
 @dataclass
 class Database:
@@ -154,3 +186,4 @@ class Server:
     encryption_protector: EncryptionProtector = None
     databases: list[Database] = None
     vulnerability_assessment: ServerVulnerabilityAssessment = None
+    security_alert_policies: ServerSecurityAlertPolicy = None

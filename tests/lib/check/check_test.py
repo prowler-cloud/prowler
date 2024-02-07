@@ -129,6 +129,48 @@ expected_packages = [
         name="prowler.providers.azure.services.sqlserver.sqlserver_vulnerability_assessment_enabled.sqlserver_vulnerability_assessment_enabled",
         ispkg=False,
     ),
+    ModuleInfo(
+        module_finder=FileFinder(
+            "/root_dir/prowler/providers/azure/services/sqlserver"
+        ),
+        name="prowler.providers.azure.services.sqlserver.sqlserver_va_periodic_recurring_scans_enabled",
+        ispkg=True,
+    ),
+    ModuleInfo(
+        module_finder=FileFinder(
+            "/root_dir/prowler/providers/azure/services/sqlserver/sqlserver_va_periodic_recurring_scans_enabled"
+        ),
+        name="prowler.providers.azure.services.sqlserver.sqlserver_va_periodic_recurring_scans_enabled.sqlserver_va_periodic_recurring_scans_enabled",
+        ispkg=False,
+    ),
+    ModuleInfo(
+        module_finder=FileFinder(
+            "/root_dir/prowler/providers/azure/services/sqlserver"
+        ),
+        name="prowler.providers.azure.services.sqlserver.sqlserver_va_scan_reports_configured",
+        ispkg=True,
+    ),
+    ModuleInfo(
+        module_finder=FileFinder(
+            "/root_dir/prowler/providers/azure/services/sqlserver/sqlserver_va_scan_reports_configured"
+        ),
+        name="prowler.providers.azure.services.sqlserver.sqlserver_va_scan_reports_configured.sqlserver_va_scan_reports_configured",
+        ispkg=False,
+    ),
+    ModuleInfo(
+        module_finder=FileFinder(
+            "/root_dir/prowler/providers/azure/services/sqlserver"
+        ),
+        name="prowler.providers.azure.services.sqlserver.sqlserver_va_emails_notifications_admins_enabled",
+        ispkg=True,
+    ),
+    ModuleInfo(
+        module_finder=FileFinder(
+            "/root_dir/prowler/providers/azure/services/sqlserver/sqlserver_va_emails_notifications_admins_enabled"
+        ),
+        name="prowler.providers.azure.services.sqlserver.sqlserver_va_emails_notifications_admins_enabled.sqlserver_va_emails_notifications_admins_enabled",
+        ispkg=False,
+    ),
 ]
 
 
@@ -234,6 +276,48 @@ def mock_list_modules(*_):
                 "/root_dir/prowler/providers/azure/services/sqlserver/sqlserver_vulnerability_assessment_enabled"
             ),
             name="prowler.providers.azure.services.sqlserver.sqlserver_vulnerability_assessment_enabled.sqlserver_vulnerability_assessment_enabled",
+            ispkg=False,
+        ),
+        ModuleInfo(
+            module_finder=FileFinder(
+                "/root_dir/prowler/providers/azure/services/sqlserver"
+            ),
+            name="prowler.providers.azure.services.sqlserver.sqlserver_va_periodic_recurring_scans_enabled",
+            ispkg=True,
+        ),
+        ModuleInfo(
+            module_finder=FileFinder(
+                "/root_dir/prowler/providers/azure/services/sqlserver/sqlserver_va_periodic_recurring_scans_enabled"
+            ),
+            name="prowler.providers.azure.services.sqlserver.sqlserver_va_periodic_recurring_scans_enabled.sqlserver_va_periodic_recurring_scans_enabled",
+            ispkg=False,
+        ),
+        ModuleInfo(
+            module_finder=FileFinder(
+                "/root_dir/prowler/providers/azure/services/sqlserver"
+            ),
+            name="prowler.providers.azure.services.sqlserver.sqlserver_va_scan_reports_configured",
+            ispkg=True,
+        ),
+        ModuleInfo(
+            module_finder=FileFinder(
+                "/root_dir/prowler/providers/azure/services/sqlserver/sqlserver_va_scan_reports_configured"
+            ),
+            name="prowler.providers.azure.services.sqlserver.sqlserver_va_scan_reports_configured.sqlserver_va_scan_reports_configured",
+            ispkg=False,
+        ),
+        ModuleInfo(
+            module_finder=FileFinder(
+                "/root_dir/prowler/providers/azure/services/sqlserver"
+            ),
+            name="prowler.providers.azure.services.sqlserver.sqlserver_va_emails_notifications_admins_enabled",
+            ispkg=True,
+        ),
+        ModuleInfo(
+            module_finder=FileFinder(
+                "/root_dir/prowler/providers/azure/services/sqlserver/sqlserver_va_emails_notifications_admins_enabled"
+            ),
+            name="prowler.providers.azure.services.sqlserver.sqlserver_va_emails_notifications_admins_enabled.sqlserver_va_emails_notifications_admins_enabled",
             ispkg=False,
         ),
     ]
@@ -632,6 +716,18 @@ class Test_Check:
             (
                 "sqlserver_vulnerability_assessment_enabled",
                 "/root_dir/prowler/providers/azure/services/sqlserver/sqlserver_vulnerability_assessment_enabled",
+            ),
+            (
+                "sqlserver_va_periodic_recurring_scans_enabled",
+                "/root_dir/prowler/providers/azure/services/sqlserver/sqlserver_va_periodic_recurring_scans_enabled",
+            ),
+            (
+                "sqlserver_va_scan_reports_configured",
+                "/root_dir/prowler/providers/azure/services/sqlserver/sqlserver_va_scan_reports_configured",
+            ),
+            (
+                "sqlserver_va_emails_notifications_admins_enabled",
+                "/root_dir/prowler/providers/azure/services/sqlserver/sqlserver_va_emails_notifications_admins_enabled",
             ),
         ]
         returned_checks = recover_checks_from_provider(provider, service)

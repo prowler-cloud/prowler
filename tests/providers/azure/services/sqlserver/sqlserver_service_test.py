@@ -2,6 +2,9 @@ from unittest.mock import patch
 
 from azure.mgmt.sql.models import (
     EncryptionProtector,
+    FirewallRule,
+    ServerBlobAuditingPolicy,
+    ServerSecurityAlertPolicy,
     ServerVulnerabilityAssessment,
     TransparentDataEncryption,
 )
@@ -34,8 +37,8 @@ def mock_sqlserver_get_sql_servers(_):
                 public_network_access="public_network_access",
                 minimal_tls_version="minimal_tls_version",
                 administrators=None,
-                auditing_policies=None,
-                firewall_rules=None,
+                auditing_policies=ServerBlobAuditingPolicy(state="Disabled"),
+                firewall_rules=FirewallRule(name="name"),
                 encryption_protector=EncryptionProtector(
                     server_key_type="AzureKeyVault"
                 ),
@@ -43,6 +46,7 @@ def mock_sqlserver_get_sql_servers(_):
                 vulnerability_assessment=ServerVulnerabilityAssessment(
                     storage_container_path="/subcription_id/resource_group/sql_server"
                 ),
+                security_alert_policies=ServerSecurityAlertPolicy(state="Disabled"),
             )
         ]
     }
@@ -84,8 +88,18 @@ class Test_SqlServer_Service:
             == "minimal_tls_version"
         )
         assert sql_server.sql_servers[AZURE_SUBSCRIPTION][0].administrators is None
-        assert sql_server.sql_servers[AZURE_SUBSCRIPTION][0].auditing_policies is None
-        assert sql_server.sql_servers[AZURE_SUBSCRIPTION][0].firewall_rules is None
+        assert (
+            sql_server.sql_servers[AZURE_SUBSCRIPTION][
+                0
+            ].auditing_policies.__class__.__name__
+            == "ServerBlobAuditingPolicy"
+        )
+        assert (
+            sql_server.sql_servers[AZURE_SUBSCRIPTION][
+                0
+            ].firewall_rules.__class__.__name__
+            == "FirewallRule"
+        )
         assert (
             sql_server.sql_servers[AZURE_SUBSCRIPTION][
                 0
@@ -175,4 +189,50 @@ class Test_SqlServer_Service:
                 0
             ].vulnerability_assessment.storage_container_path
             == storage_container_path
+        )
+
+    def test__get_server_blob_auditing_policies__(self):
+        sql_server = SQLServer(set_mocked_azure_audit_info())
+        auditing_policies = ServerBlobAuditingPolicy(state="Disabled")
+        assert (
+            sql_server.sql_servers[AZURE_SUBSCRIPTION][
+                0
+            ].auditing_policies.__class__.__name__
+            == "ServerBlobAuditingPolicy"
+        )
+        assert (
+            sql_server.sql_servers[AZURE_SUBSCRIPTION][0].auditing_policies
+            == auditing_policies
+        )
+
+    def test__get_firewall_rules__(self):
+        sql_server = SQLServer(set_mocked_azure_audit_info())
+        firewall_rules = FirewallRule(name="name")
+        assert (
+            sql_server.sql_servers[AZURE_SUBSCRIPTION][
+                0
+            ].firewall_rules.__class__.__name__
+            == "FirewallRule"
+        )
+        assert (
+            sql_server.sql_servers[AZURE_SUBSCRIPTION][0].firewall_rules
+            == firewall_rules
+        )
+
+    def test__get_server_security_alert_policies__(self):
+        sql_server = SQLServer(set_mocked_azure_audit_info())
+        security_alert_policies = ServerSecurityAlertPolicy(state="Disabled")
+        assert (
+            sql_server.sql_servers[AZURE_SUBSCRIPTION][
+                0
+            ].security_alert_policies.__class__.__name__
+            == "ServerSecurityAlertPolicy"
+        )
+        assert (
+            sql_server.sql_servers[AZURE_SUBSCRIPTION][0].security_alert_policies
+            == security_alert_policies
+        )
+        assert (
+            sql_server.sql_servers[AZURE_SUBSCRIPTION][0].security_alert_policies.state
+            == "Disabled"
         )
