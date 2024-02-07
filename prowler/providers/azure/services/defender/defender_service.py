@@ -121,9 +121,9 @@ class Defender(AzureService):
         security_contacts = {}
         for subscription_name, client in self.clients.items():
             try:
+                security_contacts.update({subscription_name: {}})
                 # TODO: List all security contacts. For now, the list method is not working.
                 security_contact_default = client.security_contacts.get("default")
-                security_contacts.update({subscription_name: {}})
                 security_contacts[subscription_name].update(
                     {
                         security_contact_default.name: SecurityContacts(
@@ -139,7 +139,19 @@ class Defender(AzureService):
                 )
             except HttpResponseError as error:
                 if error.status_code == 404:
-                    security_contacts.update({subscription_name: {}})
+                    security_contacts[subscription_name].update(
+                        {
+                            "default": SecurityContacts(
+                                resource_id=f"/subscriptions/{self.subscriptions[subscription_name]}/providers/Microsoft.Security/securityContacts/default",
+                                emails="",
+                                phone="",
+                                alert_notifications_minimal_severity="",
+                                alert_notifications_state="",
+                                notified_roles=[""],
+                                notified_roles_state="",
+                            )
+                        }
+                    )
                 else:
                     logger.error(
                         f"Subscription name: {subscription_name} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
