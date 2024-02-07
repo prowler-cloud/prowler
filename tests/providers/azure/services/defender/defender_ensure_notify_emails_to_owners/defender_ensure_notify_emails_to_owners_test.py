@@ -6,7 +6,7 @@ from tests.providers.azure.azure_fixtures import AZURE_SUBSCRIPTION
 
 
 class Test_defender_ensure_notify_emails_to_owners:
-    def test_defender_no_notify_emails(self):
+    def test_defender_no_subscriptions(self):
         defender_client = mock.MagicMock
         defender_client.security_contacts = {}
 
@@ -132,3 +132,42 @@ class Test_defender_ensure_notify_emails_to_owners:
             assert result[0].subscription == AZURE_SUBSCRIPTION
             assert result[0].resource_name == "default"
             assert result[0].resource_id == resource_id
+
+    def test_defender_default_security_contact_not_found(self):
+        defender_client = mock.MagicMock
+        defender_client.security_contacts = {
+            AZURE_SUBSCRIPTION: {
+                "default": SecurityContacts(
+                    resource_id=f"/subscriptions/{AZURE_SUBSCRIPTION}/providers/Microsoft.Security/securityContacts/default",
+                    emails="",
+                    phone="",
+                    alert_notifications_minimal_severity="",
+                    alert_notifications_state="",
+                    notified_roles=[""],
+                    notified_roles_state="",
+                )
+            }
+        }
+
+        with mock.patch(
+            "prowler.providers.azure.services.defender.defender_ensure_notify_emails_to_owners.defender_ensure_notify_emails_to_owners.defender_client",
+            new=defender_client,
+        ):
+            from prowler.providers.azure.services.defender.defender_ensure_notify_emails_to_owners.defender_ensure_notify_emails_to_owners import (
+                defender_ensure_notify_emails_to_owners,
+            )
+
+            check = defender_ensure_notify_emails_to_owners()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert (
+                result[0].status_extended
+                == f"The Owner role is not notified for subscription {AZURE_SUBSCRIPTION}."
+            )
+            assert result[0].subscription == AZURE_SUBSCRIPTION
+            assert result[0].resource_name == "default"
+            assert (
+                result[0].resource_id
+                == f"/subscriptions/{AZURE_SUBSCRIPTION}/providers/Microsoft.Security/securityContacts/default"
+            )

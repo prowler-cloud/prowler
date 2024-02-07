@@ -6,7 +6,7 @@ from tests.providers.azure.azure_fixtures import AZURE_SUBSCRIPTION
 
 
 class Test_defender_additional_email_configured_with_a_security_contact:
-    def test_defender_no_notify_emails(self):
+    def test_defender_no_subscriptions(self):
         defender_client = mock.MagicMock
         defender_client.security_contacts = {}
 
@@ -206,3 +206,42 @@ class Test_defender_additional_email_configured_with_a_security_contact:
             assert result[0].subscription == AZURE_SUBSCRIPTION
             assert result[0].resource_name == "default"
             assert result[0].resource_id == resource_id
+
+    def test_defender_default_security_contact_not_found(self):
+        defender_client = mock.MagicMock
+        defender_client.security_contacts = {
+            AZURE_SUBSCRIPTION: {
+                "default": SecurityContacts(
+                    resource_id=f"/subscriptions/{AZURE_SUBSCRIPTION}/providers/Microsoft.Security/securityContacts/default",
+                    emails="",
+                    phone="",
+                    alert_notifications_minimal_severity="",
+                    alert_notifications_state="",
+                    notified_roles=[""],
+                    notified_roles_state="",
+                )
+            }
+        }
+
+        with mock.patch(
+            "prowler.providers.azure.services.defender.defender_additional_email_configured_with_a_security_contact.defender_additional_email_configured_with_a_security_contact.defender_client",
+            new=defender_client,
+        ):
+            from prowler.providers.azure.services.defender.defender_additional_email_configured_with_a_security_contact.defender_additional_email_configured_with_a_security_contact import (
+                defender_additional_email_configured_with_a_security_contact,
+            )
+
+            check = defender_additional_email_configured_with_a_security_contact()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert (
+                result[0].status_extended
+                == f"There is not another correct email configured for susbscription {AZURE_SUBSCRIPTION}."
+            )
+            assert result[0].subscription == AZURE_SUBSCRIPTION
+            assert result[0].resource_name == "default"
+            assert (
+                result[0].resource_id
+                == f"/subscriptions/{AZURE_SUBSCRIPTION}/providers/Microsoft.Security/securityContacts/default"
+            )
