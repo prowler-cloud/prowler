@@ -155,7 +155,7 @@ class Defender(AzureService):
                 for iot_security_solution in iot_security_solutions_list:
                     iot_security_solutions[subscription_name].update(
                         {
-                            iot_security_solution.name: IotSecuritySolution(
+                            iot_security_solution.name: IoTSecuritySolution(
                                 resource_id=iot_security_solution.id,
                                 status=iot_security_solution.status,
                             )
@@ -204,6 +204,6 @@ class SecurityContacts(BaseModel):
     notified_roles_state: str
 
 
-class IotSecuritySolution(BaseModel):
+class IoTSecuritySolution(BaseModel):
     resource_id: str
     status: str

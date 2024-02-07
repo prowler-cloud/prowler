@@ -5,7 +5,7 @@ from prowler.providers.azure.services.defender.defender_service import (
     Assesment,
     AutoProvisioningSetting,
     Defender,
-    IotSecuritySolution,
+    IoTSecuritySolution,
     Pricing,
     SecurityContacts,
     Setting,
@@ -85,7 +85,7 @@ def mock_defender_get_settings(_):
 def mock_defender_get_iot_security_solutions(_):
     return {
         AZURE_SUBSCRIPTION: {
-            "iot_sec_solution": IotSecuritySolution(
+            "iot_sec_solution": IoTSecuritySolution(
                 resource_id="/subscriptions/resource_id",
                 status="Enabled",
             )
