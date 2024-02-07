@@ -15,8 +15,8 @@
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "https://www.tenable.com/audits/items/CIS_Microsoft_Azure_Foundations_L2_v1.3.1.audit:7a3f11f12c52122fc23badc7c808ebe9",
-      "Terraform": "https://docs.bridgecrew.io/docs/ensure-that-va-setting-send-scan-reports-to-is-configured-for-a-sql-server"
+      "Other": "",
+      "Terraform": "https://docs.bridgecrew.io/docs/ensure-that-va-setting-send-scan-reports-to-is-configured-for-a-sql-server#terraform"
     },
     "Recommendation": {
       "Text": "1. Go to SQL servers 2. Select a server instance 3. Select Microsoft Defender for Cloud 4. Select Configure next to Enablement status 5. Set Microsoft Defender for SQL to On 6. Under Vulnerability Assessment Settings, select a Storage Account 7. Set Periodic recurring scans to On 8. Under Send scan reports to, provide email addresses for data owners and stakeholders 9. Click Save",

@@ -16,7 +16,7 @@
       "CLI": "",
       "NativeIaC": "",
       "Other": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/SecurityCenter/defender-azure-sql.html",
-      "Terraform": "https://docs.bridgecrew.io/docs/ensure-that-azure-defender-is-set-to-on-for-azure-sql-database-servers"
+      "Terraform": ""
     },
     "Recommendation": {
       "Text": "1. Go to SQL servers For each production SQL server instance: 2. Click Microsoft Defender for Cloud 3. Click Enable Microsoft Defender for SQL",

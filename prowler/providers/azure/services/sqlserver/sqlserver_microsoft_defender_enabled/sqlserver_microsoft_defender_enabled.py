@@ -7,7 +7,7 @@ class sqlserver_microsoft_defender_enabled(Check):
         findings = []
         for subscription, sql_servers in sqlserver_client.sql_servers.items():
             for sql_server in sql_servers:
-                if sql_server.security_alert_policies is not None:
+                if sql_server.security_alert_policies:
                     report = Check_Report_Azure(self.metadata())
                     report.subscription = subscription
                     report.resource_name = sql_server.name

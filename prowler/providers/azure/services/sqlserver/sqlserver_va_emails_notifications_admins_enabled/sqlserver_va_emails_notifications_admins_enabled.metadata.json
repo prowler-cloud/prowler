@@ -15,8 +15,8 @@
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "https://www.tenable.com/audits/items/CIS_Microsoft_Azure_Foundations_L2_v1.3.1.audit:c4e2d4019a12b8410b55a6cf2d838d7b",
-      "Terraform": "https://docs.bridgecrew.io/docs/ensure-that-va-setting-also-send-email-notifications-to-admins-and-subscription-owners-is-set-for-an-sql-server"
+      "Other": "",
+      "Terraform": "https://docs.bridgecrew.io/docs/ensure-that-va-setting-also-send-email-notifications-to-admins-and-subscription-owners-is-set-for-an-sql-server#terraform"
     },
     "Recommendation": {
       "Text": "1. Go to SQL servers 2. Select a server instance 3. Click on Security Center 4. Select Configure next to Enabled at subscription-level 5. In Section Vulnerability Assessment Settings, configure Storage Accounts if not already 6. Check/enable 'Also send email notifications to admins and subscription owners' 7. Click Save",

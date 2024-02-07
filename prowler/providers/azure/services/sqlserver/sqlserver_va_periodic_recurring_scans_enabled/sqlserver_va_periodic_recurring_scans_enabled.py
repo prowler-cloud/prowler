@@ -16,10 +16,12 @@ class sqlserver_va_periodic_recurring_scans_enabled(Check):
                 if (
                     sql_server.vulnerability_assessment
                     and sql_server.vulnerability_assessment.storage_container_path
-                    is not None
                 ):
                     report.status_extended = f"SQL Server {sql_server.name} from subscription {subscription} has vulnerability assessment enabled but no recurring scans."
-                    if sql_server.vulnerability_assessment.recurring_scans.is_enabled:
+                    if (
+                        sql_server.vulnerability_assessment.recurring_scans
+                        and sql_server.vulnerability_assessment.recurring_scans.is_enabled
+                    ):
                         report.status = "PASS"
                         report.status_extended = f"SQL Server {sql_server.name} from subscription {subscription} has periodic recurring scans enabled."
                 findings.append(report)

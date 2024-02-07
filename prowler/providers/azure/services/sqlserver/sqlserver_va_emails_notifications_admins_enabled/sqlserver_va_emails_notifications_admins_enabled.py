@@ -16,12 +16,10 @@ class sqlserver_va_emails_notifications_admins_enabled(Check):
                 if (
                     sql_server.vulnerability_assessment
                     and sql_server.vulnerability_assessment.storage_container_path
-                    is not None
                 ):
                     report.status_extended = f"SQL Server {sql_server.name} from subscription {subscription} has vulnerability assessment enabled but no scan reports configured for subscription admins."
                     if (
-                        sql_server.vulnerability_assessment.recurring_scans.email_subscription_admins
-                        is not None
+                        sql_server.vulnerability_assessment.recurring_scans
                         and sql_server.vulnerability_assessment.recurring_scans.email_subscription_admins
                     ):
                         report.status = "PASS"
