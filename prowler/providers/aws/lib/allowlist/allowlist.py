@@ -199,7 +199,11 @@ def is_allowlisted_in_check(
 
             allowlisted_regions = allowlisted_check_info.get("Regions")
             allowlisted_resources = allowlisted_check_info.get("Resources")
-            allowlisted_tags = allowlisted_check_info.get("Tags")
+            allowlisted_tags = allowlisted_check_info.get("Tags", "*")
+            # We need to set the allowlisted_tags if None, "" or [], so the falsy helps
+            if not allowlisted_tags:
+                allowlisted_tags = "*"
+
             # If there is a *, it affects to all checks
             if (
                 "*" == allowlisted_check
@@ -220,13 +224,15 @@ def is_allowlisted_in_check(
                 # For a finding to be allowlisted requires the following set to True:
                 # - allowlisted_in_check -> True
                 # - allowlisted_in_region -> True
-                # - allowlisted_in_tags -> True or allowlisted_in_resource -> True
+                # - allowlisted_in_tags -> True
+                # - allowlisted_in_resource -> True
                 # - excepted -> False
 
                 if (
                     allowlisted_in_check
                     and allowlisted_in_region
-                    and (allowlisted_in_tags or allowlisted_in_resource)
+                    and allowlisted_in_tags
+                    and allowlisted_in_resource
                 ):
                     is_check_allowlisted = True
 
