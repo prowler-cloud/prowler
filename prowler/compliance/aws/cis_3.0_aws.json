@@ -933,7 +933,7 @@
       "Id": "4.13",
       "Description": "Ensure route table changes are monitored",
       "Checks": [
-        "cloudwatch_changes_route_table_monitored"
+        "cloudwatch_changes_to_network_route_tables_alarm_configured"
       ],
       "Attributes": [
         {

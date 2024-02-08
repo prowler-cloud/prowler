@@ -11,7 +11,7 @@ from prowler.providers.aws.services.cloudwatch.lib.metric_filters import (
 from prowler.providers.aws.services.cloudwatch.logs_client import logs_client
 
 
-class cloudwatch_changes_route_table_monitored(Check):
+class cloudwatch_changes_to_network_route_tables_alarm_configured(Check):
     def execute(self):
         pattern = r"\$\.eventName\s*=\s*.?CreateRoute.+\$\.eventName\s*=\s*.?CreateRouteTable.+\$\.eventName\s*=\s*.?ReplaceRoute.+\$\.eventName\s*=\s*.?ReplaceRouteTableAssociation.+\$\.eventName\s*=\s*.?DeleteRouteTable.+\$\.eventName\s*=\s*.?DeleteRoute.+\$\.eventName\s*=\s*.?DisassociateRouteTable.?"
         findings = []

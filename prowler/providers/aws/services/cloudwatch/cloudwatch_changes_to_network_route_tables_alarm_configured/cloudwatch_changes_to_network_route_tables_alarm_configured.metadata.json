@@ -1,6 +1,6 @@
 {
   "Provider": "aws",
-  "CheckID": "cloudwatch_changes_route_table_monitored",
+  "CheckID": "cloudwatch_changes_to_network_route_tables_alarm_configured",
   "CheckTitle": "Ensure route table changes are monitored",
   "CheckType": [
     "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"

@@ -12,7 +12,7 @@ from tests.providers.aws.audit_info_utils import (
 )
 
 
-class Test_cloudwatch_changes_route_table_monitored:
+class Test_cloudwatch_changes_to_network_route_tables_alarm_configured:
     @mock_aws
     def test_cloudwatch_no_log_groups(self):
         from prowler.providers.aws.services.cloudtrail.cloudtrail_service import (
@@ -41,21 +41,21 @@ class Test_cloudwatch_changes_route_table_monitored:
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             new=current_audit_info,
         ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_route_table_monitored.cloudwatch_changes_route_table_monitored.logs_client",
+            "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_route_tables_alarm_configured.cloudwatch_changes_to_network_route_tables_alarm_configured.logs_client",
             new=Logs(current_audit_info),
         ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_route_table_monitored.cloudwatch_changes_route_table_monitored.cloudwatch_client",
+            "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_route_tables_alarm_configured.cloudwatch_changes_to_network_route_tables_alarm_configured.cloudwatch_client",
             new=CloudWatch(current_audit_info),
         ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_route_table_monitored.cloudwatch_changes_route_table_monitored.cloudtrail_client",
+            "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_route_tables_alarm_configured.cloudwatch_changes_to_network_route_tables_alarm_configured.cloudtrail_client",
             new=Cloudtrail(current_audit_info),
         ):
             # Test Check
-            from prowler.providers.aws.services.cloudwatch.cloudwatch_changes_route_table_monitored.cloudwatch_changes_route_table_monitored import (
-                cloudwatch_changes_route_table_monitored,
+            from prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_route_tables_alarm_configured.cloudwatch_changes_to_network_route_tables_alarm_configured import (
+                cloudwatch_changes_to_network_route_tables_alarm_configured,
             )
 
-            check = cloudwatch_changes_route_table_monitored()
+            check = cloudwatch_changes_to_network_route_tables_alarm_configured()
             result = check.execute()
 
             assert len(result) == 1
@@ -101,21 +101,21 @@ class Test_cloudwatch_changes_route_table_monitored:
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             new=current_audit_info,
         ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_route_table_monitored.cloudwatch_changes_route_table_monitored.logs_client",
+            "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_route_tables_alarm_configured.cloudwatch_changes_to_network_route_tables_alarm_configured.logs_client",
             new=Logs(current_audit_info),
         ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_route_table_monitored.cloudwatch_changes_route_table_monitored.cloudwatch_client",
+            "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_route_tables_alarm_configured.cloudwatch_changes_to_network_route_tables_alarm_configured.cloudwatch_client",
             new=CloudWatch(current_audit_info),
         ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_route_table_monitored.cloudwatch_changes_route_table_monitored.cloudtrail_client",
+            "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_route_tables_alarm_configured.cloudwatch_changes_to_network_route_tables_alarm_configured.cloudtrail_client",
             new=Cloudtrail(current_audit_info),
         ):
             # Test Check
-            from prowler.providers.aws.services.cloudwatch.cloudwatch_changes_route_table_monitored.cloudwatch_changes_route_table_monitored import (
-                cloudwatch_changes_route_table_monitored,
+            from prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_route_tables_alarm_configured.cloudwatch_changes_to_network_route_tables_alarm_configured import (
+                cloudwatch_changes_to_network_route_tables_alarm_configured,
             )
 
-            check = cloudwatch_changes_route_table_monitored()
+            check = cloudwatch_changes_to_network_route_tables_alarm_configured()
             result = check.execute()
 
             assert len(result) == 1
@@ -167,21 +167,21 @@ class Test_cloudwatch_changes_route_table_monitored:
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             new=current_audit_info,
         ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_route_table_monitored.cloudwatch_changes_route_table_monitored.logs_client",
+            "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_route_tables_alarm_configured.cloudwatch_changes_to_network_route_tables_alarm_configured.logs_client",
             new=Logs(current_audit_info),
         ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_route_table_monitored.cloudwatch_changes_route_table_monitored.cloudwatch_client",
+            "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_route_tables_alarm_configured.cloudwatch_changes_to_network_route_tables_alarm_configured.cloudwatch_client",
             new=CloudWatch(current_audit_info),
         ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_route_table_monitored.cloudwatch_changes_route_table_monitored.cloudtrail_client",
+            "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_route_tables_alarm_configured.cloudwatch_changes_to_network_route_tables_alarm_configured.cloudtrail_client",
             new=Cloudtrail(current_audit_info),
         ):
             # Test Check
-            from prowler.providers.aws.services.cloudwatch.cloudwatch_changes_route_table_monitored.cloudwatch_changes_route_table_monitored import (
-                cloudwatch_changes_route_table_monitored,
+            from prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_route_tables_alarm_configured.cloudwatch_changes_to_network_route_tables_alarm_configured import (
+                cloudwatch_changes_to_network_route_tables_alarm_configured,
             )
 
-            check = cloudwatch_changes_route_table_monitored()
+            check = cloudwatch_changes_to_network_route_tables_alarm_configured()
             result = check.execute()
 
             assert len(result) == 1
@@ -245,21 +245,21 @@ class Test_cloudwatch_changes_route_table_monitored:
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             new=current_audit_info,
         ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_route_table_monitored.cloudwatch_changes_route_table_monitored.logs_client",
+            "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_route_tables_alarm_configured.cloudwatch_changes_to_network_route_tables_alarm_configured.logs_client",
             new=Logs(current_audit_info),
         ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_route_table_monitored.cloudwatch_changes_route_table_monitored.cloudwatch_client",
+            "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_route_tables_alarm_configured.cloudwatch_changes_to_network_route_tables_alarm_configured.cloudwatch_client",
             new=CloudWatch(current_audit_info),
         ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_route_table_monitored.cloudwatch_changes_route_table_monitored.cloudtrail_client",
+            "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_route_tables_alarm_configured.cloudwatch_changes_to_network_route_tables_alarm_configured.cloudtrail_client",
             new=Cloudtrail(current_audit_info),
         ):
             # Test Check
-            from prowler.providers.aws.services.cloudwatch.cloudwatch_changes_route_table_monitored.cloudwatch_changes_route_table_monitored import (
-                cloudwatch_changes_route_table_monitored,
+            from prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_route_tables_alarm_configured.cloudwatch_changes_to_network_route_tables_alarm_configured import (
+                cloudwatch_changes_to_network_route_tables_alarm_configured,
             )
 
-            check = cloudwatch_changes_route_table_monitored()
+            check = cloudwatch_changes_to_network_route_tables_alarm_configured()
             result = check.execute()
 
             assert len(result) == 1
@@ -338,21 +338,21 @@ class Test_cloudwatch_changes_route_table_monitored:
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             new=current_audit_info,
         ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_route_table_monitored.cloudwatch_changes_route_table_monitored.logs_client",
+            "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_route_tables_alarm_configured.cloudwatch_changes_to_network_route_tables_alarm_configured.logs_client",
             new=Logs(current_audit_info),
         ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_route_table_monitored.cloudwatch_changes_route_table_monitored.cloudwatch_client",
+            "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_route_tables_alarm_configured.cloudwatch_changes_to_network_route_tables_alarm_configured.cloudwatch_client",
             new=CloudWatch(current_audit_info),
         ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_route_table_monitored.cloudwatch_changes_route_table_monitored.cloudtrail_client",
+            "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_route_tables_alarm_configured.cloudwatch_changes_to_network_route_tables_alarm_configured.cloudtrail_client",
             new=Cloudtrail(current_audit_info),
         ):
             # Test Check
-            from prowler.providers.aws.services.cloudwatch.cloudwatch_changes_route_table_monitored.cloudwatch_changes_route_table_monitored import (
-                cloudwatch_changes_route_table_monitored,
+            from prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_route_tables_alarm_configured.cloudwatch_changes_to_network_route_tables_alarm_configured import (
+                cloudwatch_changes_to_network_route_tables_alarm_configured,
             )
 
-            check = cloudwatch_changes_route_table_monitored()
+            check = cloudwatch_changes_to_network_route_tables_alarm_configured()
             result = check.execute()
 
             assert len(result) == 1
@@ -431,21 +431,21 @@ class Test_cloudwatch_changes_route_table_monitored:
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             new=current_audit_info,
         ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_route_table_monitored.cloudwatch_changes_route_table_monitored.logs_client",
+            "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_route_tables_alarm_configured.cloudwatch_changes_to_network_route_tables_alarm_configured.logs_client",
             new=Logs(current_audit_info),
         ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_route_table_monitored.cloudwatch_changes_route_table_monitored.cloudwatch_client",
+            "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_route_tables_alarm_configured.cloudwatch_changes_to_network_route_tables_alarm_configured.cloudwatch_client",
             new=CloudWatch(current_audit_info),
         ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_route_table_monitored.cloudwatch_changes_route_table_monitored.cloudtrail_client",
+            "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_route_tables_alarm_configured.cloudwatch_changes_to_network_route_tables_alarm_configured.cloudtrail_client",
             new=Cloudtrail(current_audit_info),
         ):
             # Test Check
-            from prowler.providers.aws.services.cloudwatch.cloudwatch_changes_route_table_monitored.cloudwatch_changes_route_table_monitored import (
-                cloudwatch_changes_route_table_monitored,
+            from prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_route_tables_alarm_configured.cloudwatch_changes_to_network_route_tables_alarm_configured import (
+                cloudwatch_changes_to_network_route_tables_alarm_configured,
             )
 
-            check = cloudwatch_changes_route_table_monitored()
+            check = cloudwatch_changes_to_network_route_tables_alarm_configured()
             result = check.execute()
 
             assert len(result) == 1
@@ -524,21 +524,21 @@ class Test_cloudwatch_changes_route_table_monitored:
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             new=current_audit_info,
         ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_route_table_monitored.cloudwatch_changes_route_table_monitored.logs_client",
+            "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_route_tables_alarm_configured.cloudwatch_changes_to_network_route_tables_alarm_configured.logs_client",
             new=Logs(current_audit_info),
         ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_route_table_monitored.cloudwatch_changes_route_table_monitored.cloudwatch_client",
+            "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_route_tables_alarm_configured.cloudwatch_changes_to_network_route_tables_alarm_configured.cloudwatch_client",
             new=CloudWatch(current_audit_info),
         ), mock.patch(
-            "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_route_table_monitored.cloudwatch_changes_route_table_monitored.cloudtrail_client",
+            "prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_route_tables_alarm_configured.cloudwatch_changes_to_network_route_tables_alarm_configured.cloudtrail_client",
             new=Cloudtrail(current_audit_info),
         ):
             # Test Check
-            from prowler.providers.aws.services.cloudwatch.cloudwatch_changes_route_table_monitored.cloudwatch_changes_route_table_monitored import (
-                cloudwatch_changes_route_table_monitored,
+            from prowler.providers.aws.services.cloudwatch.cloudwatch_changes_to_network_route_tables_alarm_configured.cloudwatch_changes_to_network_route_tables_alarm_configured import (
+                cloudwatch_changes_to_network_route_tables_alarm_configured,
             )
 
-            check = cloudwatch_changes_route_table_monitored()
+            check = cloudwatch_changes_to_network_route_tables_alarm_configured()
             result = check.execute()
 
             assert len(result) == 1
