@@ -815,7 +815,7 @@
       "Checks": [
         "cloudwatch_changes_to_network_acls_alarm_configured",
         "cloudwatch_changes_to_network_gateways_alarm_configured",
-        "cloudwatch_changes_to_network_route_tables_alarm_configured",
+        "cloudwatch_changes_route_table_monitored",
         "cloudwatch_changes_to_vpcs_alarm_configured",
         "guardduty_is_enabled",
         "securityhub_enabled"
@@ -855,7 +855,7 @@
         "cloudtrail_cloudwatch_logging_enabled",
         "cloudwatch_changes_to_network_acls_alarm_configured",
         "cloudwatch_changes_to_network_gateways_alarm_configured",
-        "cloudwatch_changes_to_network_route_tables_alarm_configured",
+        "cloudwatch_changes_route_table_monitored",
         "cloudwatch_changes_to_vpcs_alarm_configured",
         "elbv2_logging_enabled",
         "elb_logging_enabled",

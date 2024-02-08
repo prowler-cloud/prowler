@@ -458,8 +458,8 @@ def mock_recover_checks_from_aws_provider_cloudwatch_service(*_):
             "/root_dir/cloudwatch/cloudwatch_changes_to_network_gateways_alarm_configured",
         ),
         (
-            "cloudwatch_changes_to_network_route_tables_alarm_configured",
-            "/root_dir/fake_path/cloudwatch/cloudwatch_changes_to_network_route_tables_alarm_configured",
+            "cloudwatch_changes_route_table_monitored",
+            "/root_dir/fake_path/cloudwatch/cloudwatch_changes_route_table_monitored",
         ),
     ]
 
@@ -846,7 +846,7 @@ class Test_Check:
         expected_checks = [
             "cloudwatch_changes_to_network_acls_alarm_configured",
             "cloudwatch_changes_to_network_gateways_alarm_configured",
-            "cloudwatch_changes_to_network_route_tables_alarm_configured",
+            "cloudwatch_changes_route_table_monitored",
         ]
         recovered_checks = get_checks_from_input_arn(audit_resources, provider)
         assert recovered_checks == expected_checks

@@ -49,7 +49,7 @@ checks_v3_to_v2_mapping = {
     "cloudtrail_s3_dataevents_write_enabled": "extra725",
     "cloudwatch_changes_to_network_acls_alarm_configured": "check311",
     "cloudwatch_changes_to_network_gateways_alarm_configured": "check312",
-    "cloudwatch_changes_to_network_route_tables_alarm_configured": "check313",
+    "cloudwatch_changes_route_table_monitored": "check313",
     "cloudwatch_changes_to_vpcs_alarm_configured": "check314",
     "cloudwatch_cross_account_sharing_disabled": "extra7144",
     "cloudwatch_log_group_kms_encryption_enabled": "extra7164",

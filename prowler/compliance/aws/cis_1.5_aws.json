@@ -977,7 +977,7 @@
       "Id": "4.13",
       "Description": "Ensure a log metric filter and alarm exist for route table changes",
       "Checks": [
-        "cloudwatch_changes_to_network_route_tables_alarm_configured"
+        "cloudwatch_changes_route_table_monitored"
       ],
       "Attributes": [
         {
