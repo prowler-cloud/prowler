@@ -2,6 +2,9 @@
   "Provider": "aws",
   "CheckID": "inspector2_active_findings_exist",
   "CheckTitle": "Check if Inspector2 findings exist",
+  "CheckAliases": [
+    "inspector2_findings_exist"
+  ],
   "CheckType": [],
   "ServiceName": "inspector2",
   "SubServiceName": "",
