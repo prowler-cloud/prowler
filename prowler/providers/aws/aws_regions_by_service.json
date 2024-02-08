@@ -2237,6 +2237,15 @@
         "aws-us-gov": []
       }
     },
+    "codewhisperer": {
+      "regions": {
+        "aws": [
+          "us-east-1"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
     "cognito": {
       "regions": {
         "aws": [
