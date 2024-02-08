@@ -217,7 +217,7 @@ def print_categories(categories: set):
     singular_string = f"\nThere is {Fore.YELLOW}{categories_num}{Style.RESET_ALL} available category.\n"
 
     message = plural_string if categories_num > 1 else singular_string
-    for category in categories:
+    for category in sorted(categories):
         print(f"- {category}")
 
     print(message)
@@ -246,7 +246,7 @@ def print_compliance_frameworks(
     singular_string = f"\nThere is {Fore.YELLOW}{frameworks_num}{Style.RESET_ALL} available Compliance Framework.\n"
     message = plural_string if frameworks_num > 1 else singular_string
 
-    for framework in bulk_compliance_frameworks.keys():
+    for framework in sorted(bulk_compliance_frameworks.keys()):
         print(f"- {framework}")
 
     print(message)
