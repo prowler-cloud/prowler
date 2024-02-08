@@ -261,6 +261,39 @@ class Test_Allowlist:
             "",
         )
 
+    def test_is_allowlisted_with_default_allowlist_with_tags(self):
+        allowlist = {
+            "Accounts": {
+                "*": {
+                    "Checks": {
+                        "*": {
+                            "Regions": ["*"],
+                            "Resources": ["*"],
+                            "Tags": ["Compliance=allow"],
+                        }
+                    }
+                }
+            }
+        }
+
+        assert is_allowlisted(
+            allowlist,
+            AWS_ACCOUNT_NUMBER,
+            "athena_1",
+            AWS_REGION_US_EAST_1,
+            "prowler",
+            "Compliance=allow",
+        )
+
+        assert not is_allowlisted(
+            allowlist,
+            AWS_ACCOUNT_NUMBER,
+            "athena_1",
+            AWS_REGION_US_EAST_1,
+            "prowler",
+            "Compliance=deny",
+        )
+
     def test_is_allowlisted(self):
         # Allowlist example
         allowlist = {
