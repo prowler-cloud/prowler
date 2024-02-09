@@ -18,7 +18,13 @@ def mock_mysql_get_servers(_):
                 resource_id="/subscriptions/resource_id",
                 location="location",
                 version="version",
-                resource_group="resource_group",
+                configurations={
+                    "test": Configuration(
+                        resource_id="/subscriptions/test/resource_id",
+                        description="description",
+                        value="value",
+                    )
+                },
             )
         }
     }
@@ -26,14 +32,11 @@ def mock_mysql_get_servers(_):
 
 def mock_mysql_get_configurations(_):
     return {
-        AZURE_SUBSCRIPTION: {
-            "test": Configuration(
-                resource_id="/subscriptions/resource_id",
-                server_name="test",
-                description="description",
-                value="value",
-            )
-        }
+        "test": Configuration(
+            resource_id="/subscriptions/resource_id",
+            description="description",
+            value="value",
+        )
     }
 
 
@@ -66,20 +69,25 @@ class Test_MySQL_Service:
         )
         assert mysql.servers[AZURE_SUBSCRIPTION]["test"].location == "location"
         assert mysql.servers[AZURE_SUBSCRIPTION]["test"].version == "version"
+        assert len(mysql.servers[AZURE_SUBSCRIPTION]["test"].configurations) == 1
         assert (
-            mysql.servers[AZURE_SUBSCRIPTION]["test"].resource_group == "resource_group"
+            mysql.servers[AZURE_SUBSCRIPTION]["test"].configurations["test"].resource_id
+            == "/subscriptions/test/resource_id"
+        )
+        assert (
+            mysql.servers[AZURE_SUBSCRIPTION]["test"].configurations["test"].description
+            == "description"
+        )
+        assert (
+            mysql.servers[AZURE_SUBSCRIPTION]["test"].configurations["test"].value
+            == "value"
         )
 
     def test__get_configurations__(self):
         mysql = MySQL(set_mocked_azure_audit_info())
-        assert len(mysql.configurations) == 1
-        assert (
-            mysql.configurations[AZURE_SUBSCRIPTION]["test"].resource_id
-            == "/subscriptions/resource_id"
-        )
-        assert mysql.configurations[AZURE_SUBSCRIPTION]["test"].server_name == "test"
-        assert (
-            mysql.configurations[AZURE_SUBSCRIPTION]["test"].description
-            == "description"
-        )
-        assert mysql.configurations[AZURE_SUBSCRIPTION]["test"].value == "value"
+        configurations = mysql.__get_configurations__()
+
+        assert len(configurations) == 1
+        assert configurations["test"].resource_id == "/subscriptions/resource_id"
+        assert configurations["test"].description == "description"
+        assert configurations["test"].value == "value"
