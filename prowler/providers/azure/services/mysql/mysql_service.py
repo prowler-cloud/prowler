@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from azure.mgmt.rdbms.mysql import MySQLManagementClient
+from azure.mgmt.rdbms.mysql_flexibleservers import MySQLManagementClient
 
 from prowler.lib.logger import logger
 from prowler.providers.azure.lib.service.service import AzureService
@@ -12,6 +12,7 @@ class MySQL(AzureService):
         super().__init__(MySQLManagementClient, audit_info)
 
         self.servers = self.__get_servers__()
+        self.configurations = self.__get_configurations__()
 
     def __get_servers__(self):
         logger.info("MySQL - Getting servers...")
@@ -27,8 +28,7 @@ class MySQL(AzureService):
                                 resource_id=server.id,
                                 location=server.location,
                                 version=server.version,
-                                ssl_enforcement=server.ssl_enforcement,
-                                minimal_tls_version=server.minimal_tls_version,
+                                resource_group=server.id.split("/")[4],
                             )
                         }
                     )
@@ -38,11 +38,46 @@ class MySQL(AzureService):
                 )
         return servers
 
+    def __get_configurations__(self):
+        logger.info("MySQL - Getting configurations...")
+        configurations = {}
+        for subscription_name, client in self.clients.items():
+            for server_name, server in self.servers[subscription_name].items():
+                try:
+                    configurations_list = client.configurations.list_by_server(
+                        resource_group_name=server.resource_group,
+                        server_name=server_name,
+                    )
+                    configurations.update({subscription_name: {}})
+                    for configuration in configurations_list:
+                        configurations[subscription_name].update(
+                            {
+                                configuration.name: Configuration(
+                                    resource_id=configuration.id,
+                                    server_name=server_name,
+                                    description=configuration.description,
+                                    value=configuration.value,
+                                )
+                            }
+                        )
+                except Exception as error:
+                    logger.error(
+                        f"Subscription name: {subscription_name} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
+        return configurations
+
 
 @dataclass
 class Server:
     resource_id: str
     location: str
     version: str
-    ssl_enforcement: str
-    minimal_tls_version: str
+    resource_group: str
+
+
+@dataclass
+class Configuration:
+    resource_id: str
+    server_name: str
+    description: str
+    value: str
