@@ -48,6 +48,7 @@ class Rbac(KubernetesService):
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+            return []
 
     def __list_role_bindings__(self):
         try:
@@ -76,6 +77,7 @@ class Rbac(KubernetesService):
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+            return []
 
     def __list_roles__(self):
         try:
@@ -100,6 +102,7 @@ class Rbac(KubernetesService):
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+            return []
 
     def __list_cluster_roles__(self):
         try:
@@ -124,6 +127,7 @@ class Rbac(KubernetesService):
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+            return []
 
 
 class Subject(BaseModel):
