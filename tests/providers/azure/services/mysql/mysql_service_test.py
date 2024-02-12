@@ -2,8 +2,8 @@ from unittest.mock import patch
 
 from prowler.providers.azure.services.mysql.mysql_service import (
     Configuration,
+    FlexibleServer,
     MySQL,
-    Server,
 )
 from tests.providers.azure.azure_fixtures import (
     AZURE_SUBSCRIPTION,
@@ -14,7 +14,7 @@ from tests.providers.azure.azure_fixtures import (
 def mock_mysql_get_servers(_):
     return {
         AZURE_SUBSCRIPTION: {
-            "test": Server(
+            "test": FlexibleServer(
                 resource_id="/subscriptions/resource_id",
                 location="location",
                 version="version",
@@ -41,7 +41,7 @@ def mock_mysql_get_configurations(_):
 
 
 @patch(
-    "prowler.providers.azure.services.mysql.mysql_service.MySQL.__get_servers__",
+    "prowler.providers.azure.services.mysql.mysql_service.MySQL.__get_flexible_servers__",
     new=mock_mysql_get_servers,
 )
 @patch(
@@ -60,26 +60,34 @@ class Test_MySQL_Service:
         mysql = MySQL(set_mocked_azure_audit_info())
         assert mysql.subscriptions.__class__.__name__ == "dict"
 
-    def test__get_servers__(self):
+    def test__get_flexible_servers__(self):
         mysql = MySQL(set_mocked_azure_audit_info())
-        assert len(mysql.servers) == 1
+        assert len(mysql.flexible_servers) == 1
         assert (
-            mysql.servers[AZURE_SUBSCRIPTION]["test"].resource_id
+            mysql.flexible_servers[AZURE_SUBSCRIPTION]["test"].resource_id
             == "/subscriptions/resource_id"
         )
-        assert mysql.servers[AZURE_SUBSCRIPTION]["test"].location == "location"
-        assert mysql.servers[AZURE_SUBSCRIPTION]["test"].version == "version"
-        assert len(mysql.servers[AZURE_SUBSCRIPTION]["test"].configurations) == 1
+        assert mysql.flexible_servers[AZURE_SUBSCRIPTION]["test"].location == "location"
+        assert mysql.flexible_servers[AZURE_SUBSCRIPTION]["test"].version == "version"
         assert (
-            mysql.servers[AZURE_SUBSCRIPTION]["test"].configurations["test"].resource_id
+            len(mysql.flexible_servers[AZURE_SUBSCRIPTION]["test"].configurations) == 1
+        )
+        assert (
+            mysql.flexible_servers[AZURE_SUBSCRIPTION]["test"]
+            .configurations["test"]
+            .resource_id
             == "/subscriptions/test/resource_id"
         )
         assert (
-            mysql.servers[AZURE_SUBSCRIPTION]["test"].configurations["test"].description
+            mysql.flexible_servers[AZURE_SUBSCRIPTION]["test"]
+            .configurations["test"]
+            .description
             == "description"
         )
         assert (
-            mysql.servers[AZURE_SUBSCRIPTION]["test"].configurations["test"].value
+            mysql.flexible_servers[AZURE_SUBSCRIPTION]["test"]
+            .configurations["test"]
+            .value
             == "value"
         )
 

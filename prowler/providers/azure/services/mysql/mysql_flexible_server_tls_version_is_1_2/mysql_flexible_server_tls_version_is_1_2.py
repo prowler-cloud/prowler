@@ -2,14 +2,14 @@ from prowler.lib.check.models import Check, Check_Report_Azure
 from prowler.providers.azure.services.mysql.mysql_client import mysql_client
 
 
-class mysql_tls_version_is_1_2(Check):
+class mysql_flexible_server_tls_version_is_1_2(Check):
     def execute(self) -> Check_Report_Azure:
         findings = []
 
         for (
             subscription_name,
             servers,
-        ) in mysql_client.servers.items():
+        ) in mysql_client.flexible_servers.items():
             for (
                 server_name,
                 server,
@@ -20,7 +20,9 @@ class mysql_tls_version_is_1_2(Check):
                     report.status = "PASS"
                     report.subscription = subscription_name
                     report.resource_name = server_name
-                    report.resource_id = server.resource_id
+                    report.resource_id = server.configurations[
+                        "tls_version"
+                    ].resource_id
                     report.status_extended = f"TLS version is {server.configurations['tls_version'].value} in server {server_name} in subscription {subscription_name}. This version of TLS is considered secure."
 
                     if (

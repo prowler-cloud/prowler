@@ -1,6 +1,6 @@
 {
   "Provider": "azure",
-  "CheckID": "mysql_ssl_connection_enabled",
+  "CheckID": "mysql_flexible_server_ssl_connection_enabled",
   "CheckTitle": "Ensure 'Enforce SSL connection' is set to 'Enabled' for Standard MySQL Database Server",
   "CheckType": [],
   "ServiceName": "mysql",

@@ -11,9 +11,9 @@ class MySQL(AzureService):
     def __init__(self, audit_info):
         super().__init__(MySQLManagementClient, audit_info)
 
-        self.servers = self.__get_servers__()
+        self.flexible_servers = self.__get_flexible_servers__()
 
-    def __get_servers__(self):
+    def __get_flexible_servers__(self):
         logger.info("MySQL - Getting servers...")
         servers = {}
         for subscription_name, client in self.clients.items():
@@ -23,7 +23,7 @@ class MySQL(AzureService):
                 for server in servers_list:
                     servers[subscription_name].update(
                         {
-                            server.name: Server(
+                            server.name: FlexibleServer(
                                 resource_id=server.id,
                                 location=server.location,
                                 version=server.version,
@@ -64,7 +64,7 @@ class MySQL(AzureService):
 
 
 @dataclass
-class Server:
+class FlexibleServer:
     resource_id: str
     location: str
     version: str

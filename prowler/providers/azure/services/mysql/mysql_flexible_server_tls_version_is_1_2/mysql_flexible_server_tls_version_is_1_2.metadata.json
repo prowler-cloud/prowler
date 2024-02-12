@@ -1,6 +1,6 @@
 {
   "Provider": "azure",
-  "CheckID": "mysql_tls_version_is_1_2",
+  "CheckID": "mysql_flexible_server_tls_version_is_1_2",
   "CheckTitle": "Ensure 'TLS Version' is set to 'TLSV1.2' for MySQL flexible Database Server",
   "CheckType": [],
   "ServiceName": "mysql",
