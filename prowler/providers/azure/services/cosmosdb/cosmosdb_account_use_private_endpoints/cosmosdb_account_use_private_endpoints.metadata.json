@@ -1,6 +1,6 @@
 {
   "Provider": "azure",
-  "CheckID": "cosmosdb_use_private_endpoints",
+  "CheckID": "cosmosdb_account_use_private_endpoints",
   "CheckTitle": "Ensure That Private Endpoints Are Used Where Possible",
   "CheckType": [],
   "ServiceName": "cosmosdb",

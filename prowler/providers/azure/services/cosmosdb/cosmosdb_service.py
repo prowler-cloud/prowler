@@ -30,6 +30,7 @@ class CosmosDB(AzureService):
                             tags=account.tags,
                             is_virtual_network_filter_enabled=account.is_virtual_network_filter_enabled,
                             private_endpoint_connections=account.private_endpoint_connections,
+                            disable_local_auth=account.disable_local_auth,
                         )
                     )
             except Exception as error:
@@ -49,3 +50,4 @@ class Account:
     tags: dict
     is_virtual_network_filter_enabled: bool
     private_endpoint_connections: list[PrivateEndpointConnection] = None
+    disable_local_auth: bool = None

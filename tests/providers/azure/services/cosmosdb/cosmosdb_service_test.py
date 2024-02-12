@@ -18,6 +18,7 @@ def mock_cosmosdb_get_accounts(_):
                 type=None,
                 tags=None,
                 is_virtual_network_filter_enabled=None,
+                disable_local_auth=None,
             )
         ]
     }
@@ -48,3 +49,4 @@ class Test_CosmosDB_Service:
             account.accounts[AZURE_SUBSCRIPTION][0].is_virtual_network_filter_enabled
             is None
         )
+        assert account.accounts[AZURE_SUBSCRIPTION][0].disable_local_auth is None

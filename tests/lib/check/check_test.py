@@ -173,26 +173,38 @@ expected_packages = [
     ),
     ModuleInfo(
         module_finder=FileFinder("/root_dir/prowler/providers/azure/services/cosmosdb"),
-        name="prowler.providers.azure.services.cosmosdb.cosmosdb_firewall_use_selected_networks",
+        name="prowler.providers.azure.services.cosmosdb.cosmosdb_account_firewall_use_selected_networks",
         ispkg=True,
     ),
     ModuleInfo(
         module_finder=FileFinder(
-            "/root_dir/prowler/providers/azure/services/cosmosdb/cosmosdb_firewall_use_selected_networks"
+            "/root_dir/prowler/providers/azure/services/cosmosdb/cosmosdb_account_firewall_use_selected_networks"
         ),
-        name="prowler.providers.azure.services.cosmosdb.cosmosdb_firewall_use_selected_networks.cosmosdb_firewall_use_selected_networks",
+        name="prowler.providers.azure.services.cosmosdb.cosmosdb_account_firewall_use_selected_networks.cosmosdb_account_firewall_use_selected_networks",
         ispkg=False,
     ),
     ModuleInfo(
         module_finder=FileFinder("/root_dir/prowler/providers/azure/services/cosmosdb"),
-        name="prowler.providers.azure.services.cosmosdb.cosmosdb_use_private_endpoints",
+        name="prowler.providers.azure.services.cosmosdb.cosmosdb_account_use_private_endpoints",
         ispkg=True,
     ),
     ModuleInfo(
         module_finder=FileFinder(
-            "/root_dir/prowler/providers/azure/services/cosmosdb/cosmosdb_use_private_endpoints"
+            "/root_dir/prowler/providers/azure/services/cosmosdb/cosmosdb_account_use_private_endpoints"
         ),
-        name="prowler.providers.azure.services.cosmosdb.cosmosdb_use_private_endpoints.cosmosdb_use_private_endpoints",
+        name="prowler.providers.azure.services.cosmosdb.cosmosdb_account_use_private_endpoints.cosmosdb_account_use_private_endpoints",
+        ispkg=False,
+    ),
+    ModuleInfo(
+        module_finder=FileFinder("/root_dir/prowler/providers/azure/services/cosmosdb"),
+        name="prowler.providers.azure.services.cosmosdb.cosmosdb_account_use_aad_and_rbac",
+        ispkg=True,
+    ),
+    ModuleInfo(
+        module_finder=FileFinder(
+            "/root_dir/prowler/providers/azure/services/cosmosdb/cosmosdb_account_use_aad_and_rbac"
+        ),
+        name="prowler.providers.azure.services.cosmosdb.cosmosdb_account_use_aad_and_rbac.cosmosdb_account_use_aad_and_rbac",
         ispkg=False,
     ),
 ]
@@ -348,28 +360,42 @@ def mock_list_modules(*_):
             module_finder=FileFinder(
                 "/root_dir/prowler/providers/azure/services/cosmosdb"
             ),
-            name="prowler.providers.azure.services.cosmosdb.cosmosdb_firewall_use_selected_networks",
+            name="prowler.providers.azure.services.cosmosdb.cosmosdb_account_firewall_use_selected_networks",
             ispkg=True,
         ),
         ModuleInfo(
             module_finder=FileFinder(
-                "/root_dir/prowler/providers/azure/services/cosmosdb/cosmosdb_firewall_use_selected_networks"
+                "/root_dir/prowler/providers/azure/services/cosmosdb/cosmosdb_account_firewall_use_selected_networks"
             ),
-            name="prowler.providers.azure.services.cosmosdb.cosmosdb_firewall_use_selected_networks.cosmosdb_firewall_use_selected_networks",
+            name="prowler.providers.azure.services.cosmosdb.cosmosdb_account_firewall_use_selected_networks.cosmosdb_account_firewall_use_selected_networks",
             ispkg=False,
         ),
         ModuleInfo(
             module_finder=FileFinder(
                 "/root_dir/prowler/providers/azure/services/cosmosdb"
             ),
-            name="prowler.providers.azure.services.cosmosdb.cosmosdb_use_private_endpoints",
+            name="prowler.providers.azure.services.cosmosdb.cosmosdb_account_use_private_endpoints",
             ispkg=True,
         ),
         ModuleInfo(
             module_finder=FileFinder(
-                "/root_dir/prowler/providers/azure/services/cosmosdb/cosmosdb_use_private_endpoints"
+                "/root_dir/prowler/providers/azure/services/cosmosdb/cosmosdb_account_use_private_endpoints"
             ),
-            name="prowler.providers.azure.services.cosmosdb.cosmosdb_use_private_endpoints.cosmosdb_use_private_endpoints",
+            name="prowler.providers.azure.services.cosmosdb.cosmosdb_account_use_private_endpoints.cosmosdb_account_use_private_endpoints",
+            ispkg=False,
+        ),
+        ModuleInfo(
+            module_finder=FileFinder(
+                "/root_dir/prowler/providers/azure/services/cosmosdb"
+            ),
+            name="prowler.providers.azure.services.cosmosdb.cosmosdb_account_use_aad_and_rbac",
+            ispkg=True,
+        ),
+        ModuleInfo(
+            module_finder=FileFinder(
+                "/root_dir/prowler/providers/azure/services/cosmosdb/cosmosdb_account_use_aad_and_rbac"
+            ),
+            name="prowler.providers.azure.services.cosmosdb.cosmosdb_account_use_aad_and_rbac.cosmosdb_account_use_aad_and_rbac",
             ispkg=False,
         ),
     ]
@@ -782,12 +808,16 @@ class Test_Check:
                 "/root_dir/prowler/providers/azure/services/sqlserver/sqlserver_va_emails_notifications_admins_enabled",
             ),
             (
-                "cosmosdb_firewall_use_selected_networks",
-                "/root_dir/prowler/providers/azure/services/cosmosdb/cosmosdb_firewall_use_selected_networks",
+                "cosmosdb_account_firewall_use_selected_networks",
+                "/root_dir/prowler/providers/azure/services/cosmosdb/cosmosdb_account_firewall_use_selected_networks",
             ),
             (
-                "cosmosdb_use_private_endpoints",
-                "/root_dir/prowler/providers/azure/services/cosmosdb/cosmosdb_use_private_endpoints",
+                "cosmosdb_account_use_private_endpoints",
+                "/root_dir/prowler/providers/azure/services/cosmosdb/cosmosdb_account_use_private_endpoints",
+            ),
+            (
+                "cosmosdb_account_use_aad_and_rbac",
+                "/root_dir/prowler/providers/azure/services/cosmosdb/cosmosdb_account_use_aad_and_rbac",
             ),
         ]
         returned_checks = recover_checks_from_provider(provider, service)
