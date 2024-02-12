@@ -49,6 +49,7 @@ class PostgreSQL(AzureService):
         require_secure_transport = client.configurations.get(
             resouce_group_name, server_name, "require_secure_transport"
         )
+        print(require_secure_transport.__dict__)
         return require_secure_transport.value
 
 
