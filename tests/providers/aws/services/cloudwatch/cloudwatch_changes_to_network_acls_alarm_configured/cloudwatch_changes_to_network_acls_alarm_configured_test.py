@@ -129,7 +129,7 @@ class Test_cloudwatch_changes_to_network_acls_alarm_configured:
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
             assert (
                 result[0].resource_arn
-                == f"arn:aws:logs:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:log-group"
+                == f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:log-group"
             )
             assert result[0].region == AWS_REGION_US_EAST_1
 
