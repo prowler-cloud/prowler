@@ -15,7 +15,7 @@ class trustedadvisor_premium_support_plan_subscribed(Check):
             )
             report.region = trustedadvisor_client.region
             report.resource_id = trustedadvisor_client.audited_account
-            report.resource_arn = trustedadvisor_client.audited_account_arn
+            report.resource_arn = f"arn:{trustedadvisor_client.audited_partition}:trusted-advisor:{trustedadvisor_client.region}:{trustedadvisor_client.audited_account}:account"
             if trustedadvisor_client.premium_support.enabled:
                 report.status = "PASS"
                 report.status_extended = (

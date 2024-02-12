@@ -10,7 +10,7 @@ class glue_data_catalogs_connection_passwords_encryption_enabled(Check):
             if encryption.tables or not glue_client.audit_info.ignore_unused_services:
                 report = Check_Report_AWS(self.metadata())
                 report.resource_id = glue_client.audited_account
-                report.resource_arn = glue_client.audited_account_arn
+                report.resource_arn = f"arn:{glue_client.audited_partition}:glue:{glue_client.region}:{glue_client.audited_account}:data-catalog"
                 report.region = encryption.region
                 report.status = "FAIL"
                 report.status_extended = (

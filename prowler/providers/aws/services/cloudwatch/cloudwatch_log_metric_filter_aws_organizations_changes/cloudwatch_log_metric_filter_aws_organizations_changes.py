@@ -21,8 +21,8 @@ class cloudwatch_log_metric_filter_aws_organizations_changes(Check):
             "No CloudWatch log groups found with metric filters or alarms associated."
         )
         report.region = cloudwatch_client.region
-        report.resource_id = cloudtrail_client.audited_account
-        report.resource_arn = cloudtrail_client.audited_account_arn
+        report.resource_id = logs_client.audited_account
+        report.resource_arn = f"arn:{logs_client.audited_partition}:logs:{logs_client.region}:{logs_client.audited_account}:log-group"
         report = check_cloudwatch_log_metric_filter(
             pattern,
             cloudtrail_client.trails,

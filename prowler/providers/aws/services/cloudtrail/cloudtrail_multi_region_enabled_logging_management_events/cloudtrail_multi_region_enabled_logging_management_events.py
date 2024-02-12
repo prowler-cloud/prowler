@@ -14,7 +14,7 @@ class cloudtrail_multi_region_enabled_logging_management_events(Check):
         )
         report.region = cloudtrail_client.region
         report.resource_id = cloudtrail_client.audited_account
-        report.resource_arn = cloudtrail_client.audited_account_arn
+        report.resource_arn = f"arn:{cloudtrail_client.audited_partition}:cloudtrail:{cloudtrail_client.region}:{cloudtrail_client.audited_account}:trail"
 
         for trail in cloudtrail_client.trails:
             if trail.is_logging:

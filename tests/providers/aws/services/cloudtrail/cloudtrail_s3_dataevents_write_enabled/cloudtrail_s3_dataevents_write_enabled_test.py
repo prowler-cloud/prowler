@@ -56,7 +56,10 @@ class Test_cloudtrail_s3_dataevents_write_enabled:
                 == "No CloudTrail trails have a data event to record all S3 object-level API operations."
             )
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
-            assert result[0].resource_arn == f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
+            assert (
+                result[0].resource_arn
+                == f"arn:aws:cloudtrail:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:trail"
+            )
             assert result[0].resource_tags == []
             assert result[0].region == AWS_REGION_US_EAST_1
 
@@ -117,7 +120,10 @@ class Test_cloudtrail_s3_dataevents_write_enabled:
                 == "No CloudTrail trails have a data event to record all S3 object-level API operations."
             )
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
-            assert result[0].resource_arn == f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
+            assert (
+                result[0].resource_arn
+                == f"arn:aws:cloudtrail:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:trail"
+            )
             assert result[0].resource_tags == []
             assert result[0].region == AWS_REGION_US_EAST_1
 
@@ -189,7 +195,10 @@ class Test_cloudtrail_s3_dataevents_write_enabled:
                 == "No CloudTrail trails have a data event to record all S3 object-level API operations."
             )
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
-            assert result[0].resource_arn == f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
+            assert (
+                result[0].resource_arn
+                == f"arn:aws:cloudtrail:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:trail"
+            )
             assert result[0].resource_tags == []
             assert result[0].region == AWS_REGION_US_EAST_1
 

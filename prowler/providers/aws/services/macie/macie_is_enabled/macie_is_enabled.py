@@ -9,7 +9,7 @@ class macie_is_enabled(Check):
         for session in macie_client.sessions:
             report = Check_Report_AWS(self.metadata())
             report.region = session.region
-            report.resource_arn = macie_client.audited_account_arn
+            report.resource_arn = f"arn:{macie_client.audited_partition}:macie:{macie_client.region}:{macie_client.audited_account}:session"
             report.resource_id = macie_client.audited_account
             if session.status == "ENABLED":
                 report.status = "PASS"
