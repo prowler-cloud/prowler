@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 
 from azure.mgmt.cosmosdb import CosmosDBManagementClient
+from azure.mgmt.cosmosdb.models import PrivateEndpointConnection
 
 from prowler.lib.logger import logger
 from prowler.providers.azure.lib.service.service import AzureService
@@ -28,6 +29,7 @@ class CosmosDB(AzureService):
                             type=account.type,
                             tags=account.tags,
                             is_virtual_network_filter_enabled=account.is_virtual_network_filter_enabled,
+                            private_endpoint_connections=account.private_endpoint_connections,
                         )
                     )
             except Exception as error:
@@ -46,3 +48,4 @@ class Account:
     type: str
     tags: dict
     is_virtual_network_filter_enabled: bool
+    private_endpoint_connections: list[PrivateEndpointConnection] = None

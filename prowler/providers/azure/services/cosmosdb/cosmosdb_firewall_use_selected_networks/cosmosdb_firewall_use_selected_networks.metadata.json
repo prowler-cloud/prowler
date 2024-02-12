@@ -3,7 +3,7 @@
   "CheckID": "cosmosdb_firewall_use_selected_networks",
   "CheckTitle": "Ensure That 'Firewalls & Networks' Is Limited to Use Selected Networks Instead of All Networks",
   "CheckType": [],
-  "ServiceName": "sqlserver",
+  "ServiceName": "cosmosdb",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",

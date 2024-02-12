@@ -183,6 +183,18 @@ expected_packages = [
         name="prowler.providers.azure.services.cosmosdb.cosmosdb_firewall_use_selected_networks.cosmosdb_firewall_use_selected_networks",
         ispkg=False,
     ),
+    ModuleInfo(
+        module_finder=FileFinder("/root_dir/prowler/providers/azure/services/cosmosdb"),
+        name="prowler.providers.azure.services.cosmosdb.cosmosdb_use_private_endpoints",
+        ispkg=True,
+    ),
+    ModuleInfo(
+        module_finder=FileFinder(
+            "/root_dir/prowler/providers/azure/services/cosmosdb/cosmosdb_use_private_endpoints"
+        ),
+        name="prowler.providers.azure.services.cosmosdb.cosmosdb_use_private_endpoints.cosmosdb_use_private_endpoints",
+        ispkg=False,
+    ),
 ]
 
 
@@ -344,6 +356,20 @@ def mock_list_modules(*_):
                 "/root_dir/prowler/providers/azure/services/cosmosdb/cosmosdb_firewall_use_selected_networks"
             ),
             name="prowler.providers.azure.services.cosmosdb.cosmosdb_firewall_use_selected_networks.cosmosdb_firewall_use_selected_networks",
+            ispkg=False,
+        ),
+        ModuleInfo(
+            module_finder=FileFinder(
+                "/root_dir/prowler/providers/azure/services/cosmosdb"
+            ),
+            name="prowler.providers.azure.services.cosmosdb.cosmosdb_use_private_endpoints",
+            ispkg=True,
+        ),
+        ModuleInfo(
+            module_finder=FileFinder(
+                "/root_dir/prowler/providers/azure/services/cosmosdb/cosmosdb_use_private_endpoints"
+            ),
+            name="prowler.providers.azure.services.cosmosdb.cosmosdb_use_private_endpoints.cosmosdb_use_private_endpoints",
             ispkg=False,
         ),
     ]
@@ -758,6 +784,10 @@ class Test_Check:
             (
                 "cosmosdb_firewall_use_selected_networks",
                 "/root_dir/prowler/providers/azure/services/cosmosdb/cosmosdb_firewall_use_selected_networks",
+            ),
+            (
+                "cosmosdb_use_private_endpoints",
+                "/root_dir/prowler/providers/azure/services/cosmosdb/cosmosdb_use_private_endpoints",
             ),
         ]
         returned_checks = recover_checks_from_provider(provider, service)
