@@ -1,26 +1,26 @@
 {
   "Provider": "azure",
   "CheckID": "postgresql_flexible_server_enforce_ssl_enabled",
-  "CheckTitle": "Ensure that Vulnerability Assessment (VA) is enabled on a SQL server by setting a Storage Account",
+  "CheckTitle": "Ensure 'Enforce SSL connection' is set to 'ENABLED' for PostgreSQL Database Server",
   "CheckType": [],
   "ServiceName": "postgresql",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "PostgreSQL",
-  "Description": "Enable Vulnerability Assessment (VA) service scans for critical SQL servers and corresponding SQL databases.",
-  "Risk": "The Vulnerability Assessment service scans databases for known security vulnerabilities and highlights deviations from best practices, such as misconfigurations, excessive permissions, and unprotected sensitive data. Results of the scan include actionable steps to resolve each issue and provide customized remediation scripts where applicable. Additionally, an assessment report can be customized by setting an acceptable baseline for permission configurations, feature configurations, and database settings.",
-  "RelatedUrl": "https://docs.microsoft.com/en-us/azure/sql-database/sql-vulnerability-assessment",
+  "Description": "Enable SSL connection on PostgreSQL Servers.",
+  "Risk": "SSL connectivity helps to provide a new layer of security by connecting database server to client applications using Secure Sockets Layer (SSL). Enforcing SSL connections between database server and client applications helps protect against 'man in the middle' attacks by encrypting the data stream between the server and application.",
+  "RelatedUrl": "https://learn.microsoft.com/en-us/azure/postgresql/single-server/concepts-ssl-connection-security",
   "Remediation": {
     "Code": {
-      "CLI": "Update-AzSqlServerVulnerabilityAssessmentSetting -ResourceGroupName resource_group_name -ServerName Server_Name -StorageAccountName Storage_Name_from_same_subscription_and_same_Location -ScanResultsContainerName vulnerability-assessment -RecurringScansInterval Weekly -EmailSubscriptionAdmins $true -NotificationEmail @('mail1@mail.com' , 'mail2@mail.com')",
+      "CLI": "az postgres server update --resource-group <resourceGroupName> --name <serverName> --ssl-enforcement Enabled",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/Sql/vulnerability-assessment-sql-servers.html#",
-      "Terraform": "https://docs.bridgecrew.io/docs/ensure-that-vulnerability-assessment-va-is-enabled-on-a-sql-server-by-setting-a-storage-account"
+      "Other": "https://docs.bridgecrew.io/docs/bc_azr_networking_10",
+      "Terraform": ""
     },
     "Recommendation": {
-      "Text": "1. Go to SQL servers 2. Select a server instance 3. Click on Security Center 4. Select Configure next to Enabled at subscription-level 5. In Section Vulnerability Assessment Settings, Click Select Storage account 6. Choose Storage Account (Existing or Create New). Click Ok 7. Click Save",
-      "Url": "https://learn.microsoft.com/en-us/azure/defender-for-cloud/sql-azure-vulnerability-assessment-enable"
+      "Text": "From Azure Portal 1. Login to Azure Portal using https://portal.azure.com 2. Go to Azure Database for PostgreSQL server 3. For each database, click on Connection security 4. In SSL settings, click on ENABLED to enforce SSL connections 5. Click Save From Azure CLI Use the below command to enforce ssl connection for PostgreSQL Database. az postgres server update --resource-group <resourceGroupName> --name <serverName> --ssl-enforcement Enabled From PowerShell Update-AzPostgreSqlServer -ResourceGroupName <ResourceGroupName > -ServerName <ServerName> -SslEnforcement Enabled",
+      "Url": "https://learn.microsoft.com/en-us/azure/postgresql/single-server/concepts-ssl-connection-security"
     }
   },
   "Categories": [],
