@@ -20,6 +20,7 @@ class Test_resourceexplorer2_indexes_found:
         resourceexplorer2_client.audited_account_arn = (
             f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
         )
+        resourceexplorer2_client.audited_partition = "aws"
         resourceexplorer2_client.region = AWS_REGION_US_EAST_1
         with mock.patch(
             "prowler.providers.aws.services.resourceexplorer2.resourceexplorer2_service.ResourceExplorer2",
@@ -38,7 +39,10 @@ class Test_resourceexplorer2_indexes_found:
             assert result[0].status == "FAIL"
             assert result[0].status_extended == "No Resource Explorer Indexes found."
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
-            assert result[0].resource_arn == f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
+            assert (
+                result[0].resource_arn
+                == f"arn:aws:resource-explorer:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:index"
+            )
             assert result[0].region == AWS_REGION_US_EAST_1
 
     def test_one_index_found(self):
