@@ -23,12 +23,16 @@ class PostgreSQL(AzureService):
                     require_secure_transport = self.__get_require_secure_transport__(
                         subscription, resource_group, postgresql_server.name
                     )
+                    log_checkpoints = self.__get_log_checkpoints__(
+                        subscription, resource_group, postgresql_server.name
+                    )
                     flexible_servers[subscription].append(
                         Server(
                             id=postgresql_server.id,
                             name=postgresql_server.name,
                             resource_group=resource_group,
                             require_secure_transport=require_secure_transport,
+                            log_checkpoints=log_checkpoints,
                         )
                     )
             except Exception as error:
@@ -50,6 +54,13 @@ class PostgreSQL(AzureService):
         )
         return require_secure_transport.value
 
+    def __get_log_checkpoints__(self, subscription, resouce_group_name, server_name):
+        client = self.clients[subscription]
+        log_checkpoints = client.configurations.get(
+            resouce_group_name, server_name, "log_checkpoints"
+        )
+        return log_checkpoints.value.upper()
+
 
 @dataclass
 class Server:
@@ -57,3 +68,4 @@ class Server:
     name: str
     resource_group: str
     require_secure_transport: str
+    log_checkpoints: str

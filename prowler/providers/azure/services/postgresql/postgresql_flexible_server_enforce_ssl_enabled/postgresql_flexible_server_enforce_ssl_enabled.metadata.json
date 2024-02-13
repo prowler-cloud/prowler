@@ -26,5 +26,5 @@
   "Categories": [],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "Enabling the Microsoft Defender for SQL features will incur additional costs for each SQL server."
+  "Notes": "."
 }
