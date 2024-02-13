@@ -29,6 +29,12 @@ class PostgreSQL(AzureService):
                     log_disconnections = self.__get_log_disconnections__(
                         subscription, resource_group, postgresql_server.name
                     )
+                    log_connections = self.__get_log_connections__(
+                        subscription, resource_group, postgresql_server.name
+                    )
+                    connection_throttling = self.__get_connection_throttling__(
+                        subscription, resource_group, postgresql_server.name
+                    )
                     flexible_servers[subscription].append(
                         Server(
                             id=postgresql_server.id,
@@ -36,7 +42,9 @@ class PostgreSQL(AzureService):
                             resource_group=resource_group,
                             require_secure_transport=require_secure_transport,
                             log_checkpoints=log_checkpoints,
+                            log_connections=log_connections,
                             log_disconnections=log_disconnections,
+                            connection_throttling=connection_throttling,
                         )
                     )
             except Exception as error:
@@ -65,12 +73,28 @@ class PostgreSQL(AzureService):
         )
         return log_checkpoints.value.upper()
 
+    def __get_log_connections__(self, subscription, resouce_group_name, server_name):
+        client = self.clients[subscription]
+        log_connections = client.configurations.get(
+            resouce_group_name, server_name, "log_connections"
+        )
+        return log_connections.value.upper()
+
     def __get_log_disconnections__(self, subscription, resouce_group_name, server_name):
         client = self.clients[subscription]
         log_disconnections = client.configurations.get(
             resouce_group_name, server_name, "log_disconnections"
         )
         return log_disconnections.value.upper()
+
+    def __get_connection_throttling__(
+        self, subscription, resouce_group_name, server_name
+    ):
+        client = self.clients[subscription]
+        connection_throttling = client.configurations.get(
+            resouce_group_name, server_name, "connection_throttle.enable"
+        )
+        return connection_throttling.value.upper()
 
 
 @dataclass
@@ -80,4 +104,6 @@ class Server:
     resource_group: str
     require_secure_transport: str
     log_checkpoints: str
+    log_connections: str
     log_disconnections: str
+    connection_throttling: str

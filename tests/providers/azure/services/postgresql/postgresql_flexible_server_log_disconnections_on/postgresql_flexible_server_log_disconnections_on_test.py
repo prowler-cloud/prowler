@@ -35,7 +35,9 @@ class Test_postgresql_flexible_server_log_disconnections_on:
                     resource_group="resource_group",
                     require_secure_transport="OFF",
                     log_checkpoints="OFF",
+                    log_connections="OFF",
                     log_disconnections="OFF",
+                    connection_throttling="OFF",
                 )
             ]
         }
@@ -72,7 +74,9 @@ class Test_postgresql_flexible_server_log_disconnections_on:
                     resource_group="resource_group",
                     require_secure_transport="OFF",
                     log_checkpoints="ON",
+                    log_connections="ON",
                     log_disconnections="ON",
+                    connection_throttling="ON",
                 )
             ]
         }

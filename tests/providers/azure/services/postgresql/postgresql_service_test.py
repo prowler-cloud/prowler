@@ -20,7 +20,9 @@ def mock_sqlserver_get_postgresql_flexible_servers(_):
                 resource_group="resource_group",
                 require_secure_transport="ON",
                 log_checkpoints="ON",
+                log_connections="ON",
                 log_disconnections="ON",
+                connection_throttling="ON",
             )
         ]
     }
@@ -67,8 +69,19 @@ class Test_SqlServer_Service:
         postgesql = PostgreSQL(set_mocked_azure_audit_info())
         assert postgesql.flexible_servers[AZURE_SUBSCRIPTION][0].log_checkpoints == "ON"
 
+    def test__get_log_connections__(self):
+        postgesql = PostgreSQL(set_mocked_azure_audit_info())
+        assert postgesql.flexible_servers[AZURE_SUBSCRIPTION][0].log_connections == "ON"
+
     def test__get_log_disconnections__(self):
         postgesql = PostgreSQL(set_mocked_azure_audit_info())
         assert (
             postgesql.flexible_servers[AZURE_SUBSCRIPTION][0].log_disconnections == "ON"
+        )
+
+    def test__get_connection_throttling__(self):
+        postgesql = PostgreSQL(set_mocked_azure_audit_info())
+        assert (
+            postgesql.flexible_servers[AZURE_SUBSCRIPTION][0].connection_throttling
+            == "ON"
         )
