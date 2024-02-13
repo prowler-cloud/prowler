@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "Microsoft.DBforMySQL/servers",
+  "ResourceType": "Microsoft.DBforMySQL/flexibleServers",
   "Description": "Enable audit_log_enabled on MySQL Servers.",
   "Risk": "Enabling audit_log_enabled helps MySQL Database to log items such as connection attempts to the server, DDL/DML access, and more. Log data can be used to identify, troubleshoot, and repair configuration errors and suboptimal performance.",
   "RelatedUrl": "https://docs.microsoft.com/en-us/azure/mysql/single-server/how-to-configure-audit-logs-portal",

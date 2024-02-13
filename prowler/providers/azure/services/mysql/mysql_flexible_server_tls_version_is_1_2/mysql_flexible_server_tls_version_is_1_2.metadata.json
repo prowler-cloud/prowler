@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "Microsoft.DBforMySQL/servers",
+  "ResourceType": "Microsoft.DBforMySQL/flexibleServers",
   "Description": "Ensure TLS version on MySQL flexible servers is set to the default value.",
   "Risk": "TLS connectivity helps to provide a new layer of security by connecting database server to client applications using Transport Layer Security (TLS). Enforcing TLS connections between database server and client applications helps protect against 'man in the middle' attacks by encrypting the data stream between the server and application.",
   "RelatedUrl": "https://docs.microsoft.com/en-us/azure/mysql/concepts-ssl-connection-security",
@@ -26,5 +26,5 @@
   "Categories": [],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "CIS Impact (a veces no esta)"
+  "Notes": ""
 }

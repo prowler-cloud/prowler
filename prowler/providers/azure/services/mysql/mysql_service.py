@@ -68,7 +68,7 @@ class FlexibleServer:
     resource_id: str
     location: str
     version: str
-    configurations: dict
+    configurations: dict[Configuration]
 
 
 @dataclass

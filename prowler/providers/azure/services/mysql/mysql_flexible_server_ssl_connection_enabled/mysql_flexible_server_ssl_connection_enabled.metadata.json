@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "Microsoft.DBforMySQL/servers",
+  "ResourceType": "Microsoft.DBforMySQL/flexibleServers",
   "Description": "Enable SSL connection on MYSQL Servers.",
   "Risk": "SSL connectivity helps to provide a new layer of security by connecting database server to client applications using Secure Sockets Layer (SSL). Enforcing SSL connections between database server and client applications helps protect against 'man in the middle' attacks by encrypting the data stream between the server and application.",
   "RelatedUrl": "https://learn.microsoft.com/en-us/azure/mysql/single-server/concepts-ssl-connection-security",

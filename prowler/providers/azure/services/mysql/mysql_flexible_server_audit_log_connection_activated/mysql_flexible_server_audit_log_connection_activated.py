@@ -15,7 +15,6 @@ class mysql_flexible_server_audit_log_connection_activated(Check):
                 server,
             ) in servers.items():
 
-                if "audit_log_events" in server.configurations:
                     report = Check_Report_Azure(self.metadata())
                     report.status = "PASS"
                     report.subscription = subscription_name
@@ -25,7 +24,7 @@ class mysql_flexible_server_audit_log_connection_activated(Check):
                     ].resource_id
                     report.status_extended = f"Audit log is enabled for server {server_name} in subscription {subscription_name}."
 
-                    if "CONNECTION" not in server.configurations[
+                    if "audit_log_events" not in server.configurations or "CONNECTION" not in server.configurations[
                         "audit_log_events"
                     ].value.split(","):
                         report.status = "FAIL"
