@@ -23,7 +23,7 @@ class AppInsights(AzureService):
                 components.update({subscription_name: {}})
 
                 for component in components_list:
-                    components.update(
+                    components[subscription_name].update(
                         {
                             component.app_id: Component(
                                 resource_id=component.id, resource_name=component.name
@@ -34,6 +34,8 @@ class AppInsights(AzureService):
                 logger.error(
                     f"Subscription name: {subscription_name} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
+
+        return components
 
 
 @dataclass

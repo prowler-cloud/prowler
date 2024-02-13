@@ -1,7 +1,7 @@
 {
   "Provider": "azure",
   "CheckID": "appinsights_ensure_is_configured",
-  "CheckTitle": "Ensure Application Insights are Configured",
+  "CheckTitle": "Ensure Application Insights are Configured.",
   "CheckType": [],
   "ServiceName": "appinsights",
   "SubServiceName": "",
@@ -19,7 +19,7 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "1. Navigate to Application Insights 2. Under the Basics tab within the PROJECT DETAILS section, select the Subscription 3. Select the Resource group 4. Within the INSTANCE DETAILS, enter a Name 5. Select a Region 6. Next to Resource Mode, select Workspace-based 7. Within the WORKSPACE DETAILS, select the Subscription for the log analytics workspace 8. Select the appropriate Log Analytics Workspace 9. Click Next:Tags > 10. Enter the appropriate Tags as Name, Value pairs. 11. Click Next:Review+Create 12. Click Create",
+      "Text": "1. Navigate to Application Insights 2. Under the Basics tab within the PROJECT DETAILS section, select the Subscription 3. Select the Resource group 4. Within the INSTANCE DETAILS, enter a Name 5. Select a Region 6. Next to Resource Mode, select Workspace-based 7. Within the WORKSPACE DETAILS, select the Subscription for the log analytics workspace 8. Select the appropriate Log Analytics Workspace 9. Click Next:Tags > 10. Enter the appropriate Tags as Name, Value pairs. 11. Click Next:Review+Create 12. Click Create.",
       "Url": ""
     }
   },
