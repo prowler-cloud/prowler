@@ -49,6 +49,9 @@ class PostgreSQL(AzureService):
                             log_disconnections=log_disconnections,
                             connection_throttling=connection_throttling,
                             log_retention_days=log_retention_days,
+                            firewall=self.__get_firewall__(
+                                subscription, resource_group, postgresql_server.name
+                            ),
                         )
                     )
             except Exception as error:
@@ -111,6 +114,29 @@ class PostgreSQL(AzureService):
             log_retention_days = None
         return log_retention_days
 
+    def __get_firewall__(self, subscription, resource_group, server_name):
+        client = self.clients[subscription]
+        firewall = client.firewall_rules.list_by_server(resource_group, server_name)
+        firewall_list = []
+        for rule in firewall:
+            firewall_list.append(
+                Firewall(
+                    id=rule.id,
+                    name=rule.name,
+                    start_ip=rule.start_ip_address,
+                    end_ip=rule.end_ip_address,
+                )
+            )
+        return firewall_list
+
+
+@dataclass
+class Firewall:
+    id: str
+    name: str
+    start_ip: str
+    end_ip: str
+
 
 @dataclass
 class Server:
@@ -123,3 +149,4 @@ class Server:
     log_disconnections: str
     connection_throttling: str
     log_retention_days: str
+    firewall: list[Firewall]

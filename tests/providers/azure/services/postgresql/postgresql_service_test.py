@@ -1,6 +1,7 @@
 from unittest.mock import patch
 
 from prowler.providers.azure.services.postgresql.postgresql_service import (
+    Firewall,
     PostgreSQL,
     Server,
 )
@@ -11,7 +12,12 @@ from tests.providers.azure.azure_fixtures import (
 
 
 def mock_sqlserver_get_postgresql_flexible_servers(_):
-
+    firewall = Firewall(
+        id="id",
+        name="name",
+        start_ip="start_ip",
+        end_ip="end_ip",
+    )
     return {
         AZURE_SUBSCRIPTION: [
             Server(
@@ -24,6 +30,7 @@ def mock_sqlserver_get_postgresql_flexible_servers(_):
                 log_disconnections="ON",
                 connection_throttling="ON",
                 log_retention_days="3",
+                firewall=[firewall],
             )
         ]
     }
@@ -91,4 +98,25 @@ class Test_SqlServer_Service:
         postgesql = PostgreSQL(set_mocked_azure_audit_info())
         assert (
             postgesql.flexible_servers[AZURE_SUBSCRIPTION][0].log_retention_days == "3"
+        )
+
+    def test__get_firewall__(self):
+        postgesql = PostgreSQL(set_mocked_azure_audit_info())
+        assert (
+            postgesql.flexible_servers[AZURE_SUBSCRIPTION][0]
+            .firewall[0]
+            .__class__.__name__
+            == "Firewall"
+        )
+        assert postgesql.flexible_servers[AZURE_SUBSCRIPTION][0].firewall[0].id == "id"
+        assert (
+            postgesql.flexible_servers[AZURE_SUBSCRIPTION][0].firewall[0].name == "name"
+        )
+        assert (
+            postgesql.flexible_servers[AZURE_SUBSCRIPTION][0].firewall[0].start_ip
+            == "start_ip"
+        )
+        assert (
+            postgesql.flexible_servers[AZURE_SUBSCRIPTION][0].firewall[0].end_ip
+            == "end_ip"
         )

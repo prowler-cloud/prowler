@@ -39,6 +39,7 @@ class Test_postgresql_flexible_server_log_retention_days_greater_3:
                     log_disconnections="OFF",
                     connection_throttling="OFF",
                     log_retention_days=None,
+                    firewall=None,
                 )
             ]
         }
@@ -80,6 +81,7 @@ class Test_postgresql_flexible_server_log_retention_days_greater_3:
                     log_disconnections="OFF",
                     connection_throttling="OFF",
                     log_retention_days=log_retention_days,
+                    firewall=None,
                 )
             ]
         }
@@ -121,6 +123,7 @@ class Test_postgresql_flexible_server_log_retention_days_greater_3:
                     log_disconnections="OFF",
                     connection_throttling="OFF",
                     log_retention_days=log_retention_days,
+                    firewall=None,
                 )
             ]
         }
@@ -162,6 +165,7 @@ class Test_postgresql_flexible_server_log_retention_days_greater_3:
                     log_disconnections="OFF",
                     connection_throttling="OFF",
                     log_retention_days=log_retention_days,
+                    firewall=None,
                 )
             ]
         }
