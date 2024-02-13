@@ -6,7 +6,7 @@ from prowler.lib.logger import logger
 from prowler.providers.azure.lib.service.service import AzureService
 
 
-########################## SQLServer
+########################## MySQL
 class MySQL(AzureService):
     def __init__(self, audit_info):
         super().__init__(MySQLManagementClient, audit_info)
