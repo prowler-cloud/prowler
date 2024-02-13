@@ -1,6 +1,6 @@
 from unittest.mock import patch
 
-from prowler.providers.azure.services.postgresql.postgresql_client import (
+from prowler.providers.azure.services.postgresql.postgresql_service import (
     PostgreSQL,
     Server,
 )

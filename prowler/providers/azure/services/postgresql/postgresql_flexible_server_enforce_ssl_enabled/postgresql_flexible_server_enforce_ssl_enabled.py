@@ -11,7 +11,6 @@ class postgresql_flexible_server_enforce_ssl_enabled(Check):
             subscription,
             flexible_servers,
         ) in postgresql_client.flexible_servers.items():
-            print(flexible_servers)
             for server in flexible_servers:
                 report = Check_Report_Azure(self.metadata())
                 report.subscription = subscription

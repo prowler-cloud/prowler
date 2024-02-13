@@ -23,7 +23,6 @@ class PostgreSQL(AzureService):
                     require_secure_transport = self.__get_require_secure_transport__(
                         subscription, resource_group, postgresql_server.name
                     )
-                    print(require_secure_transport)
                     flexible_servers[subscription].append(
                         Server(
                             id=postgresql_server.id,
@@ -49,7 +48,6 @@ class PostgreSQL(AzureService):
         require_secure_transport = client.configurations.get(
             resouce_group_name, server_name, "require_secure_transport"
         )
-        print(require_secure_transport.__dict__)
         return require_secure_transport.value
 
 
