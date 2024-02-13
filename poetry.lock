@@ -327,6 +327,22 @@ msal = ">=1.24.0,<2.0.0"
 msal-extensions = ">=0.3.0,<2.0.0"
 
 [[package]]
+name = "azure-mgmt-applicationinsights"
+version = "4.0.0"
+description = "Microsoft Azure Application Insights Management Client Library for Python"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "azure-mgmt-applicationinsights-4.0.0.zip", hash = "sha256:50c3db05573e0cc2d56314a0556fb346ef05ec489ac000f4d720d92c6b647e06"},
+    {file = "azure_mgmt_applicationinsights-4.0.0-py3-none-any.whl", hash = "sha256:2b1ffd9a0114974455795c73a3a5d17c849e32b961d707d2db393b99254b576f"},
+]
+
+[package.dependencies]
+azure-common = ">=1.1,<2.0"
+azure-mgmt-core = ">=1.3.2,<2.0.0"
+isodate = ">=0.6.1,<1.0.0"
+
+[[package]]
 name = "azure-mgmt-authorization"
 version = "4.0.0"
 description = "Microsoft Azure Authorization Management Client Library for Python"
@@ -649,17 +665,17 @@ pycparser = "*"
 
 [[package]]
 name = "cfn-lint"
-version = "0.85.0"
+version = "0.85.1"
 description = "Checks CloudFormation templates for practices and behaviour that could potentially be improved"
 optional = false
 python-versions = ">=3.8, <=4.0, !=4.0"
 files = [
-    {file = "cfn-lint-0.85.0.tar.gz", hash = "sha256:64d6e8d85cdc573b61add78f9ff95a142a1834edb4793d1291551f6d953f73fe"},
-    {file = "cfn_lint-0.85.0-py3-none-any.whl", hash = "sha256:e4849e1779bd1a9f4543617372708a20519b6d7cad5f980e20c6deaa227361a2"},
+    {file = "cfn-lint-0.85.1.tar.gz", hash = "sha256:f003603a6f13bcda125c60f5021fc19b96f18a27ebc44498947709cb7627d0d6"},
+    {file = "cfn_lint-0.85.1-py3-none-any.whl", hash = "sha256:5d5b31609ded0bc513f1c57c0dc0017ec1613c2b33ef8e74802149bedb01a3de"},
 ]
 
 [package.dependencies]
-aws-sam-translator = ">=1.83.0"
+aws-sam-translator = ">=1.84.0"
 jschema-to-python = ">=1.2.3,<1.3.0"
 jsonpatch = "*"
 jsonschema = ">=3.0,<5"
@@ -1264,13 +1280,13 @@ test = ["black", "coverage[toml]", "ddt (>=1.1.1,!=1.4.3)", "mock", "mypy", "pre
 
 [[package]]
 name = "google-api-core"
-version = "2.16.2"
+version = "2.17.0"
 description = "Google API client core library"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "google-api-core-2.16.2.tar.gz", hash = "sha256:032d37b45d1d6bdaf68fb11ff621e2593263a239fa9246e2e94325f9c47876d2"},
-    {file = "google_api_core-2.16.2-py3-none-any.whl", hash = "sha256:449ca0e3f14c179b4165b664256066c7861610f70b6ffe54bb01a04e9b466929"},
+    {file = "google-api-core-2.17.0.tar.gz", hash = "sha256:de7ef0450faec7c75e0aea313f29ac870fdc44cfaec9d6499a9a17305980ef66"},
+    {file = "google_api_core-2.17.0-py3-none-any.whl", hash = "sha256:08ed79ed8e93e329de5e3e7452746b734e6bf8438d8d64dd3319d21d3164890c"},
 ]
 
 [package.dependencies]
@@ -1932,13 +1948,13 @@ files = [
 
 [[package]]
 name = "microsoft-kiota-abstractions"
-version = "1.1.0"
+version = "1.2.0"
 description = "Core abstractions for kiota generated libraries in Python"
 optional = false
 python-versions = "*"
 files = [
-    {file = "microsoft_kiota_abstractions-1.1.0-py2.py3-none-any.whl", hash = "sha256:de076a12aed5d39d4eb2f4a36d483ba6a74086b1f4ef2d2ead54a6e1935d1af2"},
-    {file = "microsoft_kiota_abstractions-1.1.0.tar.gz", hash = "sha256:41609aa57518b0fe470a97c874ed31cfe0630162e7bef294e8a3fb63ce6d0568"},
+    {file = "microsoft_kiota_abstractions-1.2.0-py2.py3-none-any.whl", hash = "sha256:09061cec7e9c9da8bc3eced4488118c8b4a7ebd26aa8de2b46c43f07fee5610a"},
+    {file = "microsoft_kiota_abstractions-1.2.0.tar.gz", hash = "sha256:2b38241402995952c5598923391dcbb84bd97e48c0d76f93e2817c69ba19e3f6"},
 ]
 
 [package.dependencies]
@@ -1966,13 +1982,13 @@ opentelemetry-sdk = ">=1.20.0"
 
 [[package]]
 name = "microsoft-kiota-http"
-version = "1.2.1"
+version = "1.3.0"
 description = "Kiota http request adapter implementation for httpx library"
 optional = false
 python-versions = "*"
 files = [
-    {file = "microsoft_kiota_http-1.2.1-py2.py3-none-any.whl", hash = "sha256:9cadd2a36d0f933d59059814b4b8ba7fabaa28f7c2829e12951ce9e38d45f0cd"},
-    {file = "microsoft_kiota_http-1.2.1.tar.gz", hash = "sha256:d0dcff25cf456b8a3b23e4fd1866ffd669aaa0b9b26ef562ea58f698e4b7ad50"},
+    {file = "microsoft_kiota_http-1.3.0-py2.py3-none-any.whl", hash = "sha256:4be1fd892dcef31ecd8d616969e970437a0b6b98c3223980d6c4aa55582729aa"},
+    {file = "microsoft_kiota_http-1.3.0.tar.gz", hash = "sha256:ae97bbfe4544c94e43591b44c8a60791689f31f7d16a9154df7738e829a28481"},
 ]
 
 [package.dependencies]
@@ -3691,18 +3707,18 @@ contextlib2 = ">=0.5.5"
 
 [[package]]
 name = "setuptools"
-version = "69.0.3"
+version = "69.1.0"
 description = "Easily download, build, install, upgrade, and uninstall Python packages"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "setuptools-69.0.3-py3-none-any.whl", hash = "sha256:385eb4edd9c9d5c17540511303e39a147ce2fc04bc55289c322b9e5904fe2c05"},
-    {file = "setuptools-69.0.3.tar.gz", hash = "sha256:be1af57fc409f93647f2e8e4573a142ed38724b8cdd389706a867bb4efcf1e78"},
+    {file = "setuptools-69.1.0-py3-none-any.whl", hash = "sha256:c054629b81b946d63a9c6e732bc8b2513a7c3ea645f11d0139a2191d735c60c6"},
+    {file = "setuptools-69.1.0.tar.gz", hash = "sha256:850894c4195f09c4ed30dba56213bf7c3f21d86ed6bdaafb5df5972593bfc401"},
 ]
 
 [package.extras]
 docs = ["furo", "jaraco.packaging (>=9.3)", "jaraco.tidelift (>=1.4)", "pygments-github-lexers (==0.0.5)", "rst.linker (>=1.9)", "sphinx (<7.2.5)", "sphinx (>=3.5)", "sphinx-favicon", "sphinx-inline-tabs", "sphinx-lint", "sphinx-notfound-page (>=1,<2)", "sphinx-reredirects", "sphinxcontrib-towncrier"]
-testing = ["build[virtualenv]", "filelock (>=3.4.0)", "flake8-2020", "ini2toml[lite] (>=0.9)", "jaraco.develop (>=7.21)", "jaraco.envs (>=2.2)", "jaraco.path (>=3.2.0)", "pip (>=19.1)", "pytest (>=6)", "pytest-black (>=0.3.7)", "pytest-checkdocs (>=2.4)", "pytest-cov", "pytest-enabler (>=2.2)", "pytest-mypy (>=0.9.1)", "pytest-perf", "pytest-ruff", "pytest-timeout", "pytest-xdist", "tomli-w (>=1.0.0)", "virtualenv (>=13.0.0)", "wheel"]
+testing = ["build[virtualenv]", "filelock (>=3.4.0)", "flake8-2020", "ini2toml[lite] (>=0.9)", "jaraco.develop (>=7.21)", "jaraco.envs (>=2.2)", "jaraco.path (>=3.2.0)", "pip (>=19.1)", "pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-cov", "pytest-enabler (>=2.2)", "pytest-home (>=0.5)", "pytest-mypy (>=0.9.1)", "pytest-perf", "pytest-ruff (>=0.2.1)", "pytest-timeout", "pytest-xdist", "tomli-w (>=1.0.0)", "virtualenv (>=13.0.0)", "wheel"]
 testing-integration = ["build[virtualenv] (>=1.0.3)", "filelock (>=3.4.0)", "jaraco.envs (>=2.2)", "jaraco.path (>=3.2.0)", "packaging (>=23.1)", "pytest", "pytest-enabler", "pytest-xdist", "tomli", "virtualenv (>=13.0.0)", "wheel"]
 
 [[package]]
@@ -3787,13 +3803,13 @@ dev = ["twine", "wheel", "yapf"]
 
 [[package]]
 name = "std-uritemplate"
-version = "0.0.50"
+version = "0.0.52"
 description = "std-uritemplate implementation for Python"
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "std_uritemplate-0.0.50-py3-none-any.whl", hash = "sha256:1b5ae735ef12cce939080d306673e58d1cff1fd6e8a80765288210d4f01e30c4"},
-    {file = "std_uritemplate-0.0.50.tar.gz", hash = "sha256:65e30dc6d666fab96d5b8a43f7fe3a94711515d13148bedbe4dd364f701893e9"},
+    {file = "std_uritemplate-0.0.52-py3-none-any.whl", hash = "sha256:33beeee9d74800a7d13f99f9913d8b0225af37f96caf8922de05185ab86a431a"},
+    {file = "std_uritemplate-0.0.52.tar.gz", hash = "sha256:45b75ea1f7754f630a99590480d7c5473605a186cc0cef8d0f750d336a264f60"},
 ]
 
 [[package]]
@@ -3914,13 +3930,13 @@ files = [
 
 [[package]]
 name = "tzdata"
-version = "2023.4"
+version = "2024.1"
 description = "Provider of IANA time zone data"
 optional = false
 python-versions = ">=2"
 files = [
-    {file = "tzdata-2023.4-py2.py3-none-any.whl", hash = "sha256:aa3ace4329eeacda5b7beb7ea08ece826c28d761cda36e747cfbf97996d39bf3"},
-    {file = "tzdata-2023.4.tar.gz", hash = "sha256:dd54c94f294765522c77399649b4fefd95522479a664a0cec87f41bebc6148c9"},
+    {file = "tzdata-2024.1-py2.py3-none-any.whl", hash = "sha256:9068bc196136463f5245e51efda838afa15aaeca9903f49050dfa2679db4d252"},
+    {file = "tzdata-2024.1.tar.gz", hash = "sha256:2674120f8d891909751c38abcdfd386ac0a5a1127954fbc332af6b5ceae07efd"},
 ]
 
 [[package]]
@@ -4247,4 +4263,4 @@ docs = ["mkdocs", "mkdocs-material"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.13"
-content-hash = "7e7afa5379cd4418f746c558ac2eb81b079f8c20a91e90dcfed77dc12cfb5dc3"
+content-hash = "049233ef8c319d01581c3a438157135bd125635d6d9868ae34c960ce55ff769f"
