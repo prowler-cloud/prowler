@@ -13,6 +13,7 @@ class Test_drs_job_exist:
         drs_client.audited_account = AWS_ACCOUNT_NUMBER
         drs_client.audited_account_arn = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
         drs_client.region = AWS_REGION
+        drs_client.audited_partition = "aws"
         drs_client.drs_services = [
             DRSservice(
                 id="DRS",
@@ -47,7 +48,10 @@ class Test_drs_job_exist:
                 result[0].status_extended == "DRS is enabled for this region with jobs."
             )
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
-            assert result[0].resource_arn == f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
+            assert (
+                result[0].resource_arn
+                == f"arn:aws:drs:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:recovery-job"
+            )
             assert result[0].region == AWS_REGION
             assert result[0].resource_tags == []
 
@@ -56,6 +60,7 @@ class Test_drs_job_exist:
         drs_client.audited_account = AWS_ACCOUNT_NUMBER
         drs_client.audited_account_arn = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
         drs_client.region = AWS_REGION
+        drs_client.audited_partition = "aws"
         drs_client.drs_services = [
             DRSservice(
                 id="DRS",
@@ -83,7 +88,10 @@ class Test_drs_job_exist:
                 == "DRS is enabled for this region without jobs."
             )
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
-            assert result[0].resource_arn == f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
+            assert (
+                result[0].resource_arn
+                == f"arn:aws:drs:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:recovery-job"
+            )
             assert result[0].region == AWS_REGION
             assert result[0].resource_tags == []
 
@@ -92,6 +100,7 @@ class Test_drs_job_exist:
         drs_client.audited_account = AWS_ACCOUNT_NUMBER
         drs_client.audited_account_arn = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
         drs_client.region = AWS_REGION
+        drs_client.audited_partition = "aws"
         drs_client.drs_services = [
             DRSservice(
                 id="DRS",
@@ -116,7 +125,10 @@ class Test_drs_job_exist:
             assert result[0].status == "FAIL"
             assert result[0].status_extended == "DRS is not enabled for this region."
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
-            assert result[0].resource_arn == f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
+            assert (
+                result[0].resource_arn
+                == f"arn:aws:drs:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:recovery-job"
+            )
             assert result[0].region == AWS_REGION
             assert result[0].resource_tags == []
 
@@ -125,6 +137,7 @@ class Test_drs_job_exist:
         drs_client.audit_config = {"allowlist_non_default_regions": True}
         drs_client.audited_account = AWS_ACCOUNT_NUMBER
         drs_client.audited_account_arn = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
+        drs_client.audited_partition = "aws"
         drs_client.region = "eu-west-2"
         drs_client.drs_services = [
             DRSservice(
@@ -150,6 +163,9 @@ class Test_drs_job_exist:
             assert result[0].status == "WARNING"
             assert result[0].status_extended == "DRS is not enabled for this region."
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
-            assert result[0].resource_arn == f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
+            assert (
+                result[0].resource_arn
+                == f"arn:aws:drs:eu-west-2:{AWS_ACCOUNT_NUMBER}:recovery-job"
+            )
             assert result[0].region == AWS_REGION
             assert result[0].resource_tags == []

@@ -17,6 +17,7 @@ class Test_ssmincidents_enabled_with_plans:
     def test_ssmincidents_no_replicationset(self):
         ssmincidents_client = mock.MagicMock
         ssmincidents_client.audited_account = AWS_ACCOUNT_NUMBER
+        ssmincidents_client.audited_partition = "aws"
         ssmincidents_client.audited_account_arn = (
             f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
         )
@@ -40,7 +41,10 @@ class Test_ssmincidents_enabled_with_plans:
                 result[0].status_extended == "No SSM Incidents replication set exists."
             )
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
-            assert result[0].resource_arn == f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
+            assert (
+                result[0].resource_arn
+                == f"arn:{ssmincidents_client.audited_partition}:ssm-incidents:{ssmincidents_client.region}:{ssmincidents_client.audited_account}:replication-set"
+            )
             assert result[0].region == AWS_REGION_US_EAST_1
 
     def test_ssmincidents_replicationset_not_active(self):

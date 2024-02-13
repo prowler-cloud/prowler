@@ -23,6 +23,8 @@ class Test_macie_is_enabled:
         macie_client.audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         macie_client.audited_account = AWS_ACCOUNT_NUMBER
         macie_client.audited_account_arn = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
+        macie_client.audited_partition = "aws"
+        macie_client.region = AWS_REGION_EU_WEST_1
         macie_client.sessions = [
             Session(
                 status="DISABLED",
@@ -53,6 +55,10 @@ class Test_macie_is_enabled:
             assert result[0].status == "FAIL"
             assert result[0].status_extended == "Macie is not enabled."
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
+            assert (
+                result[0].resource_arn
+                == f"arn:aws:macie:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:session"
+            )
 
     @mock_aws
     def test_macie_enabled(self):
@@ -65,6 +71,8 @@ class Test_macie_is_enabled:
         macie_client.audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         macie_client.audited_account = AWS_ACCOUNT_NUMBER
         macie_client.audited_account_arn = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
+        macie_client.audited_partition = "aws"
+        macie_client.region = AWS_REGION_EU_WEST_1
         macie_client.sessions = [
             Session(
                 status="ENABLED",
@@ -95,6 +103,10 @@ class Test_macie_is_enabled:
             assert result[0].status == "PASS"
             assert result[0].status_extended == "Macie is enabled."
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
+            assert (
+                result[0].resource_arn
+                == f"arn:aws:macie:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:session"
+            )
 
     @mock_aws
     def test_macie_suspended_ignored(self):
@@ -107,6 +119,8 @@ class Test_macie_is_enabled:
         macie_client.audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         macie_client.audited_account = AWS_ACCOUNT_NUMBER
         macie_client.audited_account_arn = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
+        macie_client.audited_partition = "aws"
+        macie_client.region = AWS_REGION_EU_WEST_1
         macie_client.sessions = [
             Session(
                 status="PAUSED",
@@ -154,6 +168,8 @@ class Test_macie_is_enabled:
         macie_client.audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         macie_client.audited_account = AWS_ACCOUNT_NUMBER
         macie_client.audited_account_arn = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
+        macie_client.audited_partition = "aws"
+        macie_client.region = AWS_REGION_EU_WEST_1
         macie_client.sessions = [
             Session(
                 status="PAUSED",
@@ -188,6 +204,10 @@ class Test_macie_is_enabled:
                 result[0].status_extended == "Macie is currently in a SUSPENDED state."
             )
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
+            assert (
+                result[0].resource_arn
+                == f"arn:aws:macie:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:session"
+            )
 
     @mock_aws
     def test_macie_suspended(self):
@@ -198,6 +218,8 @@ class Test_macie_is_enabled:
         macie_client.audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         macie_client.audited_account = AWS_ACCOUNT_NUMBER
         macie_client.audited_account_arn = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
+        macie_client.audited_partition = "aws"
+        macie_client.region = AWS_REGION_EU_WEST_1
         macie_client.sessions = [
             Session(
                 status="PAUSED",
@@ -230,3 +252,7 @@ class Test_macie_is_enabled:
                 result[0].status_extended == "Macie is currently in a SUSPENDED state."
             )
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
+            assert (
+                result[0].resource_arn
+                == f"arn:aws:macie:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:session"
+            )
