@@ -373,6 +373,22 @@ files = [
 azure-core = ">=1.26.2,<2.0.0"
 
 [[package]]
+name = "azure-mgmt-cosmosdb"
+version = "9.4.0"
+description = "Microsoft Azure Cosmos DB Management Client Library for Python"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "azure-mgmt-cosmosdb-9.4.0.tar.gz", hash = "sha256:cabb821cd446b09e73d24c31c287a60fcc3623488f1ffa9335c692267e79c341"},
+    {file = "azure_mgmt_cosmosdb-9.4.0-py3-none-any.whl", hash = "sha256:8ce9ab58df018980c4cf8defb38022fa5f2a9dcbccdeb73e952374cbaff919c5"},
+]
+
+[package.dependencies]
+azure-common = ">=1.1,<2.0"
+azure-mgmt-core = ">=1.3.2,<2.0.0"
+isodate = ">=0.6.1,<1.0.0"
+
+[[package]]
 name = "azure-mgmt-security"
 version = "6.0.0"
 description = "Microsoft Azure Security Center Management Client Library for Python"
@@ -4221,4 +4237,4 @@ docs = ["mkdocs", "mkdocs-material"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.13"
-content-hash = "e07cca1a69753a598ad37052f19c8c839d52d6bffa7bdd9ee86e088a49870d61"
+content-hash = "9db98b41290bacf3b089ef0ca385fd5a2f9b040d1b12de4161c27e5f0152d25b"
