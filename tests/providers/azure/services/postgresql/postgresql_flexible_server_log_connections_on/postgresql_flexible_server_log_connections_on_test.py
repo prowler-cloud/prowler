@@ -38,6 +38,7 @@ class Test_postgresql_flexible_server_log_connections_on:
                     log_connections="OFF",
                     log_disconnections="OFF",
                     connection_throttling="ON",
+                    log_retention_days="3",
                 )
             ]
         }
@@ -77,6 +78,7 @@ class Test_postgresql_flexible_server_log_connections_on:
                     log_connections="ON",
                     log_disconnections="ON",
                     connection_throttling="ON",
+                    log_retention_days="3",
                 )
             ]
         }

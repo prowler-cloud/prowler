@@ -35,6 +35,9 @@ class PostgreSQL(AzureService):
                     connection_throttling = self.__get_connection_throttling__(
                         subscription, resource_group, postgresql_server.name
                     )
+                    log_retention_days = self.__get_log_retention_days__(
+                        subscription, resource_group, postgresql_server.name
+                    )
                     flexible_servers[subscription].append(
                         Server(
                             id=postgresql_server.id,
@@ -45,6 +48,7 @@ class PostgreSQL(AzureService):
                             log_connections=log_connections,
                             log_disconnections=log_disconnections,
                             connection_throttling=connection_throttling,
+                            log_retention_days=log_retention_days,
                         )
                     )
             except Exception as error:
@@ -96,6 +100,17 @@ class PostgreSQL(AzureService):
         )
         return connection_throttling.value.upper()
 
+    def __get_log_retention_days__(self, subscription, resouce_group_name, server_name):
+        client = self.clients[subscription]
+        try:
+            log_retention_days = client.configurations.get(
+                resouce_group_name, server_name, "log_retention_days"
+            )
+            log_retention_days = log_retention_days.value
+        except Exception:
+            log_retention_days = None
+        return log_retention_days
+
 
 @dataclass
 class Server:
@@ -107,3 +122,4 @@ class Server:
     log_connections: str
     log_disconnections: str
     connection_throttling: str
+    log_retention_days: str

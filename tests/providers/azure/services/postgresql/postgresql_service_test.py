@@ -23,6 +23,7 @@ def mock_sqlserver_get_postgresql_flexible_servers(_):
                 log_connections="ON",
                 log_disconnections="ON",
                 connection_throttling="ON",
+                log_retention_days="3",
             )
         ]
     }
@@ -84,4 +85,10 @@ class Test_SqlServer_Service:
         assert (
             postgesql.flexible_servers[AZURE_SUBSCRIPTION][0].connection_throttling
             == "ON"
+        )
+
+    def test__get_log_retention_days__(self):
+        postgesql = PostgreSQL(set_mocked_azure_audit_info())
+        assert (
+            postgesql.flexible_servers[AZURE_SUBSCRIPTION][0].log_retention_days == "3"
         )
