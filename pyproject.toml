@@ -39,11 +39,11 @@ boto3 = "1.26.165"
 botocore = "1.29.165"
 colorama = "0.4.6"
 detect-secrets = "1.4.0"
-google-api-python-client = "2.116.0"
+google-api-python-client = "2.117.0"
 google-auth-httplib2 = ">=0.1,<0.3"
 jsonschema = "4.21.1"
 mkdocs = {version = "1.5.3", optional = true}
-mkdocs-material = {version = "9.5.6", optional = true}
+mkdocs-material = {version = "9.5.9", optional = true}
 msgraph-sdk = "^1.0.0"
 msrestazure = "^0.6.4"
 pydantic = "1.10.14"
@@ -57,8 +57,8 @@ tabulate = "0.9.0"
 docs = ["mkdocs", "mkdocs-material"]
 
 [tool.poetry.group.dev.dependencies]
-bandit = "1.7.6"
-black = "24.1.1"
+bandit = "1.7.7"
+black = "24.2.0"
 coverage = "7.4.1"
 docker = "7.0.0"
 flake8 = "7.0.0"
