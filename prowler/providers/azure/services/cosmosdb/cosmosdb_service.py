@@ -50,4 +50,4 @@ class Account:
     tags: dict
     is_virtual_network_filter_enabled: bool
     private_endpoint_connections: list[PrivateEndpointConnection] = None
-    disable_local_auth: bool = None
+    disable_local_auth: bool = False
