@@ -127,7 +127,7 @@ class Test_mysql_flexible_server_ssl_connection_enabled:
                 == f"SSL connection is disabled for server {server_name} in subscription {AZURE_SUBSCRIPTION}."
             )
 
-    def test_mysql_ssl_connection_not_configured(self):
+    def test_mysql_ssl_connection_no_configuration(self):
         server_name = str(uuid4())
         mysql_client = mock.MagicMock
         mysql_client.flexible_servers = {
@@ -151,7 +151,15 @@ class Test_mysql_flexible_server_ssl_connection_enabled:
 
             check = mysql_flexible_server_ssl_connection_enabled()
             result = check.execute()
-            assert len(result) == 0
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert result[0].subscription == AZURE_SUBSCRIPTION
+            assert result[0].resource_name == server_name
+            assert result[0].resource_id == server_name
+            assert (
+                result[0].status_extended
+                == f"SSL connection is disabled for server {server_name} in subscription {AZURE_SUBSCRIPTION}."
+            )
 
     def test_mysql_ssl_connection_enabled_and_disabled(self):
         server_name_1 = str(uuid4())

@@ -64,15 +64,15 @@ class MySQL(AzureService):
 
 
 @dataclass
+class Configuration:
+    resource_id: str
+    description: str
+    value: str
+
+
+@dataclass
 class FlexibleServer:
     resource_id: str
     location: str
     version: str
     configurations: dict[Configuration]
-
-
-@dataclass
-class Configuration:
-    resource_id: str
-    description: str
-    value: str
