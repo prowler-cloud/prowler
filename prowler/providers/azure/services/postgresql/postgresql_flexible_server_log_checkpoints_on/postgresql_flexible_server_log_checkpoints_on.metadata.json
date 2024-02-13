@@ -13,7 +13,7 @@
   "RelatedUrl": " https://docs.microsoft.com/en-us/rest/api/postgresql/singleserver/configurations/list-by-server",
   "Remediation": {
     "Code": {
-      "CLI": "az postgres server configuration show --resource-group <resourceGroupName> --server-name <serverName> --name log_checkpoints",
+      "CLI": "az postgres server configuration set --resource-group <resourceGroupName> --server-name <serverName> --name log_checkpoints --value on",
       "NativeIaC": "",
       "Other": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/PostgreSQL/log-checkpoints.html#",
       "Terraform": "https://docs.bridgecrew.io/docs/bc_azr_networking_11#terraform"

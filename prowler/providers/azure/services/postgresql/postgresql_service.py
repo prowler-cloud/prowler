@@ -26,6 +26,9 @@ class PostgreSQL(AzureService):
                     log_checkpoints = self.__get_log_checkpoints__(
                         subscription, resource_group, postgresql_server.name
                     )
+                    log_disconnections = self.__get_log_disconnections__(
+                        subscription, resource_group, postgresql_server.name
+                    )
                     flexible_servers[subscription].append(
                         Server(
                             id=postgresql_server.id,
@@ -33,6 +36,7 @@ class PostgreSQL(AzureService):
                             resource_group=resource_group,
                             require_secure_transport=require_secure_transport,
                             log_checkpoints=log_checkpoints,
+                            log_disconnections=log_disconnections,
                         )
                     )
             except Exception as error:
@@ -52,7 +56,7 @@ class PostgreSQL(AzureService):
         require_secure_transport = client.configurations.get(
             resouce_group_name, server_name, "require_secure_transport"
         )
-        return require_secure_transport.value
+        return require_secure_transport.value.upper()
 
     def __get_log_checkpoints__(self, subscription, resouce_group_name, server_name):
         client = self.clients[subscription]
@@ -60,6 +64,13 @@ class PostgreSQL(AzureService):
             resouce_group_name, server_name, "log_checkpoints"
         )
         return log_checkpoints.value.upper()
+
+    def __get_log_disconnections__(self, subscription, resouce_group_name, server_name):
+        client = self.clients[subscription]
+        log_disconnections = client.configurations.get(
+            resouce_group_name, server_name, "log_disconnections"
+        )
+        return log_disconnections.value.upper()
 
 
 @dataclass
@@ -69,3 +80,4 @@ class Server:
     resource_group: str
     require_secure_transport: str
     log_checkpoints: str
+    log_disconnections: str
