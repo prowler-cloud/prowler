@@ -1,7 +1,7 @@
 {
   "Provider": "aws",
   "CheckID": "cloudwatch_changes_to_network_route_tables_alarm_configured",
-  "CheckTitle": "Ensure a log metric filter and alarm exist for route table changes.",
+  "CheckTitle": "Ensure route table changes are monitored",
   "CheckType": [
     "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
   ],
@@ -10,8 +10,8 @@
   "ResourceIdTemplate": "arn:partition:cloudwatch:region:account-id:certificate/resource-id",
   "Severity": "medium",
   "ResourceType": "AwsCloudTrailTrail",
-  "Description": "Ensure a log metric filter and alarm exist for route table changes.",
-  "Risk": "Monitoring unauthorized API calls will help reveal application errors and may reduce time to detect malicious activity.",
+  "Description": "Real-time monitoring of API calls can be achieved by directing Cloud Trail Logs to CloudWatch Logs, or an external Security information and event management (SIEM)environment, and establishing corresponding metric filters and alarms. Routing tablesare used to route network traffic between subnets and to network gateways. It isrecommended that a metric filter and alarm be established for changes to route tables.",
+  "Risk": "CloudWatch is an AWS native service that allows you to ob serve and monitor resources and applications. CloudTrail Logs can also be sent to an external Security informationand event management (SIEM) environment for monitoring and alerting.Monitoring changes to route tables will help ensure that all VPC traffic flows through anexpected path and prevent any accidental or intentional modifications that may lead touncontrolled network traffic. An alarm should be triggered every time an AWS API call isperformed to create, replace, delete, or disassociate a Route Table.",
   "RelatedUrl": "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudwatch-alarms-for-cloudtrail.html",
   "Remediation": {
     "Code": {
@@ -21,12 +21,12 @@
       "Terraform": "https://docs.bridgecrew.io/docs/monitoring_13#fix---buildtime"
     },
     "Recommendation": {
-      "Text": "It is recommended that a metric filter and alarm be established for unauthorized requests.",
+      "Text": "If you are using CloudTrails and CloudWatch, perform the following to setup the metric filter, alarm, SNS topic, and subscription: 1. Create a metric filter based on filter pattern provided which checks for route table changes and the <cloudtrail_log_group_name> taken from audit step 1. aws logs put-metric-filter --log-group-name <cloudtrail_log_group_name> -- filter-name `<route_table_changes_metric>` --metric-transformations metricName= `<route_table_changes_metric>` ,metricNamespace='CISBenchmark',metricValue=1 --filter-pattern '{ ($.eventName = CreateRoute) || ($.eventName = CreateRouteTable) || ($.eventName = ReplaceRoute) || ($.eventName = ReplaceRouteTableAssociation) || ($.eventName = DeleteRouteTable) || ($.eventName = DeleteRoute) || ($.eventName = DisassociateRouteTable) }' Note: You can choose your own metricName and metricNamespace strings. Using the same metricNamespace for all Foundations Benchmark metrics will group them together. 2. Create an SNS topic that the alarm will notify aws sns create-topic --name <sns_topic_name> Note: you can execute this command once and then re-use the same topic for all monitoring alarms. 3. Create an SNS subscription to the topic created in step 2 aws sns subscribe --topic-arn <sns_topic_arn> --protocol <protocol_for_sns> - -notification-endpoint <sns_subscription_endpoints> Note: you can execute this command once and then re-use the SNS subscription for all monitoring alarms. 4. Create an alarm that is associated with the CloudWatch Logs Metric Filter created in step 1 and an SNS topic created in step 2 aws cloudwatch put-metric-alarm --alarm-name `<route_table_changes_alarm>` --metric-name `<route_table_changes_metric>` --statistic Sum --period 300 - -threshold 1 --comparison-operator GreaterThanOrEqualToThreshold -- evaluation-periods 1 --namespace 'CISBenchmark' --alarm-actions <sns_topic_arn>",
       "Url": "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudwatch-alarms-for-cloudtrail.html"
     }
   },
   "Categories": [],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "Logging and Monitoring"
+  "Notes": ""
 }

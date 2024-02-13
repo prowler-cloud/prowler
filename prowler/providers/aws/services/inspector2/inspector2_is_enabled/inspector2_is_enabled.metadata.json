@@ -2,6 +2,9 @@
   "Provider": "aws",
   "CheckID": "inspector2_is_enabled",
   "CheckTitle": "Check if Inspector2 is enabled",
+  "CheckAliases": [
+    "inspector2_findings_exist"
+  ],
   "CheckType": [],
   "ServiceName": "inspector2",
   "SubServiceName": "",

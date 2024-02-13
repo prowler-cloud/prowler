@@ -313,7 +313,14 @@ class TestCheckLoader:
 
     def test_update_checks_to_execute_with_aliases(self):
         checks_to_execute = {"renamed_check"}
-        check_aliases = {"renamed_check": "check_name"}
+        check_aliases = {"renamed_check": ["check_name"]}
         assert {"check_name"} == update_checks_to_execute_with_aliases(
+            checks_to_execute, check_aliases
+        )
+
+    def test_update_checks_to_execute_with_multiple_aliases(self):
+        checks_to_execute = {"renamed_check"}
+        check_aliases = {"renamed_check": ["check1_name", "check2_name"]}
+        assert {"check1_name", "check2_name"} == update_checks_to_execute_with_aliases(
             checks_to_execute, check_aliases
         )

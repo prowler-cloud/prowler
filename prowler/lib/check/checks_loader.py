@@ -34,7 +34,9 @@ def load_checks_to_execute(
         for check, metadata in bulk_checks_metadata.items():
             # Aliases
             for alias in metadata.CheckAliases:
-                check_aliases[alias] = check
+                if alias not in check_aliases:
+                    check_aliases[alias] = []
+                check_aliases[alias].append(check)
 
             # Severities
             if metadata.Severity:
@@ -110,15 +112,20 @@ def update_checks_to_execute_with_aliases(
 ) -> set:
     """update_checks_to_execute_with_aliases returns the checks_to_execute updated using the check aliases."""
     # Verify if any input check is an alias of another check
-    for input_check in checks_to_execute:
-        if (
-            input_check in check_aliases
-            and check_aliases[input_check] not in checks_to_execute
-        ):
-            # Remove input check name and add the real one
-            checks_to_execute.remove(input_check)
-            checks_to_execute.add(check_aliases[input_check])
-            print(
-                f"\nUsing alias {Fore.YELLOW}{input_check}{Style.RESET_ALL} for check {Fore.YELLOW}{check_aliases[input_check]}{Style.RESET_ALL}...\n"
-            )
-    return checks_to_execute
+    try:
+        new_checks_to_execute = checks_to_execute.copy()
+        for input_check in checks_to_execute:
+            if input_check in check_aliases:
+                # Remove input check name and add the real one
+                new_checks_to_execute.remove(input_check)
+                for alias in check_aliases[input_check]:
+                    if alias not in new_checks_to_execute:
+                        new_checks_to_execute.add(alias)
+                        print(
+                            f"\nUsing alias {Fore.YELLOW}{input_check}{Style.RESET_ALL} for check {Fore.YELLOW}{alias}{Style.RESET_ALL}..."
+                        )
+        return new_checks_to_execute
+    except Exception as error:
+        logger.error(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+        )

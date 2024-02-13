@@ -152,5 +152,5 @@ class BackupReportPlan(BaseModel):
     arn: str
     region: str
     name: str
-    last_attempted_execution_date: datetime
+    last_attempted_execution_date: Optional[datetime]
     last_successful_execution_date: Optional[datetime]

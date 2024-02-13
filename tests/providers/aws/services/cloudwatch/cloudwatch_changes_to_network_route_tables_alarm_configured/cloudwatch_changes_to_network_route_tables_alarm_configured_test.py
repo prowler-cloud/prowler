@@ -209,7 +209,7 @@ class Test_cloudwatch_changes_to_network_route_tables_alarm_configured:
         logs_client.put_metric_filter(
             logGroupName="/log-group/test",
             filterName="test-filter",
-            filterPattern="{($.eventName = CreateRoute) || ($.eventName = CreateRouteTable) || ($.eventName = ReplaceRoute) || ($.eventName = ReplaceRouteTableAssociation)|| ($.eventName = DeleteRouteTable) || ($.eventName = DeleteRoute) || ($.eventName = DisassociateRouteTable) }",
+            filterPattern="{($.eventSource = ec2.amazonaws.com) && ($.eventName = CreateRoute) || ($.eventName = CreateRouteTable) || ($.eventName = ReplaceRoute) || ($.eventName = ReplaceRouteTableAssociation)|| ($.eventName = DeleteRouteTable) || ($.eventName = DeleteRoute) || ($.eventName = DisassociateRouteTable) }",
             metricTransformations=[
                 {
                     "metricName": "my-metric",
@@ -291,7 +291,7 @@ class Test_cloudwatch_changes_to_network_route_tables_alarm_configured:
         logs_client.put_metric_filter(
             logGroupName="/log-group/test",
             filterName="test-filter",
-            filterPattern="{($.eventName = CreateRoute) || ($.eventName = CreateRouteTable) || ($.eventName = ReplaceRoute) || ($.eventName = ReplaceRouteTableAssociation)|| ($.eventName = DeleteRouteTable) || ($.eventName = DeleteRoute) || ($.eventName = DisassociateRouteTable) }",
+            filterPattern="{($.eventSource = ec2.amazonaws.com) && ($.eventName = CreateRoute) || ($.eventName = CreateRouteTable) || ($.eventName = ReplaceRoute) || ($.eventName = ReplaceRouteTableAssociation)|| ($.eventName = DeleteRouteTable) || ($.eventName = DeleteRoute) || ($.eventName = DisassociateRouteTable) }",
             metricTransformations=[
                 {
                     "metricName": "my-metric",
@@ -384,7 +384,7 @@ class Test_cloudwatch_changes_to_network_route_tables_alarm_configured:
         logs_client.put_metric_filter(
             logGroupName="/log-group/test",
             filterName="test-filter",
-            filterPattern='{($.eventName = "CreateRoute") || ($.eventName = "CreateRouteTable") || ($.eventName = "ReplaceRoute") || ($.eventName = "ReplaceRouteTableAssociation")|| ($.eventName = "DeleteRouteTable") || ($.eventName = "DeleteRoute") || ($.eventName = "DisassociateRouteTable") }',
+            filterPattern='{($.eventSource = ec2.amazonaws.com) && ($.eventName = CreateRoute) || ($.eventName = "CreateRouteTable") || ($.eventName = "ReplaceRoute") || ($.eventName = "ReplaceRouteTableAssociation")|| ($.eventName = "DeleteRouteTable") || ($.eventName = "DeleteRoute") || ($.eventName = "DisassociateRouteTable") }',
             metricTransformations=[
                 {
                     "metricName": "my-metric",
@@ -477,7 +477,7 @@ class Test_cloudwatch_changes_to_network_route_tables_alarm_configured:
         logs_client.put_metric_filter(
             logGroupName="/log-group/test",
             filterName="test-filter",
-            filterPattern='{($.eventName = "CreateRoute") ||\n ($.eventName = "CreateRouteTable") ||\n ($.eventName = "ReplaceRoute") ||\n ($.eventName = "ReplaceRouteTableAssociation")||\n ($.eventName = "DeleteRouteTable") ||\n ($.eventName = "DeleteRoute") ||\n ($.eventName = "DisassociateRouteTable") }',
+            filterPattern='{($.eventSource = ec2.amazonaws.com) && ($.eventName = CreateRoute) ||\n ($.eventName = "CreateRouteTable") ||\n ($.eventName = "ReplaceRoute") ||\n ($.eventName = "ReplaceRouteTableAssociation")||\n ($.eventName = "DeleteRouteTable") ||\n ($.eventName = "DeleteRoute") ||\n ($.eventName = "DisassociateRouteTable") }',
             metricTransformations=[
                 {
                     "metricName": "my-metric",
