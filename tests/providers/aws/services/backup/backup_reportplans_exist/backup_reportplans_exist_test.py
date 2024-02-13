@@ -35,6 +35,7 @@ class Test_backup_reportplans_exist:
         backup_client.audited_account = AWS_ACCOUNT_NUMBER
         backup_client.audited_account_arn = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
         backup_client.region = AWS_REGION
+        backup_client.audited_partition = "aws"
         backup_plan_id = str(uuid4()).upper()
         backup_plan_arn = (
             f"arn:aws:backup:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:plan:{backup_plan_id}"
@@ -67,7 +68,10 @@ class Test_backup_reportplans_exist:
             assert result[0].status == "FAIL"
             assert result[0].status_extended == "No Backup Report Plan exist."
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
-            assert result[0].resource_arn == f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
+            assert (
+                result[0].resource_arn
+                == f"arn:aws:backup:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:report-plan"
+            )
             assert result[0].region == AWS_REGION
 
     def test_one_backup_report_plan(self):

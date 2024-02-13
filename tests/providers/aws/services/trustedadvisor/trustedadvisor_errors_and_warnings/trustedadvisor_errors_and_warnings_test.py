@@ -20,6 +20,7 @@ class Test_trustedadvisor_errors_and_warnings:
         trustedadvisor_client.premium_support = PremiumSupport(enabled=False)
         trustedadvisor_client.audited_account = AWS_ACCOUNT_NUMBER
         trustedadvisor_client.audited_account_arn = AWS_ACCOUNT_ARN
+        trustedadvisor_client.audited_partition = "aws"
         trustedadvisor_client.region = AWS_REGION_US_EAST_1
         with mock.patch(
             "prowler.providers.aws.services.trustedadvisor.trustedadvisor_service.TrustedAdvisor",
@@ -39,7 +40,10 @@ class Test_trustedadvisor_errors_and_warnings:
             )
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
-            assert result[0].resource_arn == AWS_ACCOUNT_ARN
+            assert (
+                result[0].resource_arn
+                == f"arn:aws:trusted-advisor:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:account"
+            )
 
     def test_trustedadvisor_all_passed_checks(self):
         trustedadvisor_client = mock.MagicMock
