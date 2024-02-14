@@ -18,6 +18,7 @@ class network_rdp_internet_access_restricted(Check):
                     and rule.protocol in ["TCP", "*"]
                     and rule.source_address_prefix in ["Internet", "*", "0.0.0.0/0"]
                     and rule.access == "Allow"
+                    and rule.direction == "Inbound"
                     for rule in security_group.security_rules
                 )
                 if rule_fail_condition:
