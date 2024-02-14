@@ -25,11 +25,10 @@ class Network(AzureService):
                             id=security_group.id,
                             name=security_group.name,
                             location=security_group.location,
-                            subscription=subscription,
-                            security_rules=security_group.security_rules
+                            security_rules=security_group.security_rules,
                         )
                     )
-                    
+
             except Exception as error:
                 logger.error(
                     f"Subscription name: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -42,5 +41,4 @@ class SecurityGroup:
     id: str
     name: str
     location: str
-    subscription: str
-    security_rules: list 
+    security_rules: list
