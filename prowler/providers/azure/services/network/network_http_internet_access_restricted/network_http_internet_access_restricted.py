@@ -12,7 +12,7 @@ class network_http_internet_access_restricted(Check):
                 report.resource_name = security_group.name
                 report.resource_id = security_group.id
                 report.status = "PASS"
-                report.status_extended = f"Security Group {security_group.name} from subscription {subscription} has UDP internet access restricted."
+                report.status_extended = f"Security Group {security_group.name} from subscription {subscription} has HTTP internet access restricted."
                 rule_fail_condition = any(
                     rule.destination_port_range == "80"
                     and rule.protocol in ["TCP", "*"]
@@ -23,7 +23,7 @@ class network_http_internet_access_restricted(Check):
                 )
                 if rule_fail_condition:
                     report.status = "FAIL"
-                    report.status_extended = f"Security Group {security_group.name} from subscription {subscription} has UDP internet access allowed."
+                    report.status_extended = f"Security Group {security_group.name} from subscription {subscription} has HTTP internet access allowed."
                 findings.append(report)
 
         return findings
