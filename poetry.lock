@@ -359,6 +359,22 @@ azure-mgmt-core = ">=1.3.2,<2.0.0"
 isodate = ">=0.6.1,<1.0.0"
 
 [[package]]
+name = "azure-mgmt-compute"
+version = "30.5.0"
+description = "Microsoft Azure Compute Management Client Library for Python"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "azure-mgmt-compute-30.5.0.tar.gz", hash = "sha256:ed3ea34b799db0d52ee55e2f1ab4b0f09fa4a08f35e061ecb9aad9fb5a218844"},
+    {file = "azure_mgmt_compute-30.5.0-py3-none-any.whl", hash = "sha256:b65a6c1e22be7334604257d8d9f96a9c6dc4c6d4869f95d0d551c7c8170a2e71"},
+]
+
+[package.dependencies]
+azure-common = ">=1.1,<2.0"
+azure-mgmt-core = ">=1.3.2,<2.0.0"
+isodate = ">=0.6.1,<1.0.0"
+
+[[package]]
 name = "azure-mgmt-core"
 version = "1.4.0"
 description = "Microsoft Azure Management Core Library for Python"
@@ -4237,4 +4253,4 @@ docs = ["mkdocs", "mkdocs-material"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.13"
-content-hash = "9db98b41290bacf3b089ef0ca385fd5a2f9b040d1b12de4161c27e5f0152d25b"
+content-hash = "e63104666dc869e0819591ab8de93d812405389a300ca828e2443e921b80b558"
