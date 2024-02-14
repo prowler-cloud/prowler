@@ -61,7 +61,7 @@ class Test_network_rdp_internet_access_restricted:
             assert result[0].resource_name == security_group_name
             assert result[0].resource_id == security_group_id
 
-    def test_network_security_groups_invalid_security_rules(self):
+    def test_network_security_groups_valid_security_rules(self):
         network_client = mock.MagicMock
         security_group_name = "Security Group Name"
         security_group_id = str(uuid4())
@@ -74,7 +74,7 @@ class Test_network_rdp_internet_access_restricted:
                     location="location",
                     security_rules=[
                         SecurityRule(
-                            destination_port_range="3389",
+                            destination_port_range="3388",
                             protocol="TCP",
                             source_address_prefix="Internet",
                             access="Allow",
@@ -95,10 +95,10 @@ class Test_network_rdp_internet_access_restricted:
             check = network_rdp_internet_access_restricted()
             result = check.execute()
             assert len(result) == 1
-            assert result[0].status == "FAIL"
+            assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Security Group {security_group_name} from subscription {AZURE_SUBSCRIPTION} has RDP internet access allowed."
+                == f"Security Group {security_group_name} from subscription {AZURE_SUBSCRIPTION} has RDP internet access restricted."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION
             assert result[0].resource_name == security_group_name
