@@ -8,20 +8,20 @@ from prowler.providers.azure.services.mysql.mysql_service import (
 from tests.providers.azure.azure_fixtures import AZURE_SUBSCRIPTION
 
 
-class Test_mysql_flexible_server_tls_version_is_1_2:
+class Test_mysql_flexible_server_minimum_tls_version_12:
     def test_mysql_no_subscriptions(self):
         mysql_client = mock.MagicMock
         mysql_client.flexible_servers = {}
 
         with mock.patch(
-            "prowler.providers.azure.services.mysql.mysql_flexible_server_tls_version_is_1_2.mysql_flexible_server_tls_version_is_1_2.mysql_client",
+            "prowler.providers.azure.services.mysql.mysql_flexible_server_minimum_tls_version_12.mysql_flexible_server_minimum_tls_version_12.mysql_client",
             new=mysql_client,
         ):
-            from prowler.providers.azure.services.mysql.mysql_flexible_server_tls_version_is_1_2.mysql_flexible_server_tls_version_is_1_2 import (
-                mysql_flexible_server_tls_version_is_1_2,
+            from prowler.providers.azure.services.mysql.mysql_flexible_server_minimum_tls_version_12.mysql_flexible_server_minimum_tls_version_12 import (
+                mysql_flexible_server_minimum_tls_version_12,
             )
 
-            check = mysql_flexible_server_tls_version_is_1_2()
+            check = mysql_flexible_server_minimum_tls_version_12()
             result = check.execute()
             assert len(result) == 0
 
@@ -30,18 +30,51 @@ class Test_mysql_flexible_server_tls_version_is_1_2:
         mysql_client.flexible_servers = {AZURE_SUBSCRIPTION: {}}
 
         with mock.patch(
-            "prowler.providers.azure.services.mysql.mysql_flexible_server_tls_version_is_1_2.mysql_flexible_server_tls_version_is_1_2.mysql_client",
+            "prowler.providers.azure.services.mysql.mysql_flexible_server_minimum_tls_version_12.mysql_flexible_server_minimum_tls_version_12.mysql_client",
             new=mysql_client,
         ):
-            from prowler.providers.azure.services.mysql.mysql_flexible_server_tls_version_is_1_2.mysql_flexible_server_tls_version_is_1_2 import (
-                mysql_flexible_server_tls_version_is_1_2,
+            from prowler.providers.azure.services.mysql.mysql_flexible_server_minimum_tls_version_12.mysql_flexible_server_minimum_tls_version_12 import (
+                mysql_flexible_server_minimum_tls_version_12,
             )
 
-            check = mysql_flexible_server_tls_version_is_1_2()
+            check = mysql_flexible_server_minimum_tls_version_12()
             result = check.execute()
             assert len(result) == 0
 
-    def test_mysql_flexible_server_tls_version_is_1_2(self):
+    def test_mysql_no_tls_configuration(self):
+        server_name = str(uuid4())
+        mysql_client = mock.MagicMock
+        mysql_client.flexible_servers = {
+            AZURE_SUBSCRIPTION: {
+                server_name: FlexibleServer(
+                    resource_id="/subscriptions/resource_id",
+                    location="location",
+                    version="version",
+                    configurations={},
+                )
+            }
+        }
+        with mock.patch(
+            "prowler.providers.azure.services.mysql.mysql_flexible_server_minimum_tls_version_12.mysql_flexible_server_minimum_tls_version_12.mysql_client",
+            new=mysql_client,
+        ):
+            from prowler.providers.azure.services.mysql.mysql_flexible_server_minimum_tls_version_12.mysql_flexible_server_minimum_tls_version_12 import (
+                mysql_flexible_server_minimum_tls_version_12,
+            )
+
+            check = mysql_flexible_server_minimum_tls_version_12()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert result[0].subscription == AZURE_SUBSCRIPTION
+            assert result[0].resource_name == server_name
+            assert result[0].resource_id == server_name
+            assert (
+                result[0].status_extended
+                == f"TLS version is not configured in server {server_name} in subscription {AZURE_SUBSCRIPTION}."
+            )
+
+    def test_mysql_flexible_server_minimum_tls_version_12(self):
         server_name = str(uuid4())
         mysql_client = mock.MagicMock
         mysql_client.flexible_servers = {
@@ -61,14 +94,14 @@ class Test_mysql_flexible_server_tls_version_is_1_2:
             }
         }
         with mock.patch(
-            "prowler.providers.azure.services.mysql.mysql_flexible_server_tls_version_is_1_2.mysql_flexible_server_tls_version_is_1_2.mysql_client",
+            "prowler.providers.azure.services.mysql.mysql_flexible_server_minimum_tls_version_12.mysql_flexible_server_minimum_tls_version_12.mysql_client",
             new=mysql_client,
         ):
-            from prowler.providers.azure.services.mysql.mysql_flexible_server_tls_version_is_1_2.mysql_flexible_server_tls_version_is_1_2 import (
-                mysql_flexible_server_tls_version_is_1_2,
+            from prowler.providers.azure.services.mysql.mysql_flexible_server_minimum_tls_version_12.mysql_flexible_server_minimum_tls_version_12 import (
+                mysql_flexible_server_minimum_tls_version_12,
             )
 
-            check = mysql_flexible_server_tls_version_is_1_2()
+            check = mysql_flexible_server_minimum_tls_version_12()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
@@ -103,14 +136,14 @@ class Test_mysql_flexible_server_tls_version_is_1_2:
             }
         }
         with mock.patch(
-            "prowler.providers.azure.services.mysql.mysql_flexible_server_tls_version_is_1_2.mysql_flexible_server_tls_version_is_1_2.mysql_client",
+            "prowler.providers.azure.services.mysql.mysql_flexible_server_minimum_tls_version_12.mysql_flexible_server_minimum_tls_version_12.mysql_client",
             new=mysql_client,
         ):
-            from prowler.providers.azure.services.mysql.mysql_flexible_server_tls_version_is_1_2.mysql_flexible_server_tls_version_is_1_2 import (
-                mysql_flexible_server_tls_version_is_1_2,
+            from prowler.providers.azure.services.mysql.mysql_flexible_server_minimum_tls_version_12.mysql_flexible_server_minimum_tls_version_12 import (
+                mysql_flexible_server_minimum_tls_version_12,
             )
 
-            check = mysql_flexible_server_tls_version_is_1_2()
+            check = mysql_flexible_server_minimum_tls_version_12()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
@@ -145,14 +178,14 @@ class Test_mysql_flexible_server_tls_version_is_1_2:
             }
         }
         with mock.patch(
-            "prowler.providers.azure.services.mysql.mysql_flexible_server_tls_version_is_1_2.mysql_flexible_server_tls_version_is_1_2.mysql_client",
+            "prowler.providers.azure.services.mysql.mysql_flexible_server_minimum_tls_version_12.mysql_flexible_server_minimum_tls_version_12.mysql_client",
             new=mysql_client,
         ):
-            from prowler.providers.azure.services.mysql.mysql_flexible_server_tls_version_is_1_2.mysql_flexible_server_tls_version_is_1_2 import (
-                mysql_flexible_server_tls_version_is_1_2,
+            from prowler.providers.azure.services.mysql.mysql_flexible_server_minimum_tls_version_12.mysql_flexible_server_minimum_tls_version_12 import (
+                mysql_flexible_server_minimum_tls_version_12,
             )
 
-            check = mysql_flexible_server_tls_version_is_1_2()
+            check = mysql_flexible_server_minimum_tls_version_12()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
@@ -164,7 +197,7 @@ class Test_mysql_flexible_server_tls_version_is_1_2:
             )
             assert (
                 result[0].status_extended
-                == f"TLS version is TLSv1.1 in server {server_name} in subscription {AZURE_SUBSCRIPTION}. This version of TLS is considered insecure."
+                == f"TLS version is TLSv1.1 in server {server_name} in subscription {AZURE_SUBSCRIPTION}. There is at leat one version of TLS that is considered insecure."
             )
 
     def test_mysql_tls_version_is_1_1_and_1_3(self):
@@ -187,17 +220,17 @@ class Test_mysql_flexible_server_tls_version_is_1_2:
             }
         }
         with mock.patch(
-            "prowler.providers.azure.services.mysql.mysql_flexible_server_tls_version_is_1_2.mysql_flexible_server_tls_version_is_1_2.mysql_client",
+            "prowler.providers.azure.services.mysql.mysql_flexible_server_minimum_tls_version_12.mysql_flexible_server_minimum_tls_version_12.mysql_client",
             new=mysql_client,
         ):
-            from prowler.providers.azure.services.mysql.mysql_flexible_server_tls_version_is_1_2.mysql_flexible_server_tls_version_is_1_2 import (
-                mysql_flexible_server_tls_version_is_1_2,
+            from prowler.providers.azure.services.mysql.mysql_flexible_server_minimum_tls_version_12.mysql_flexible_server_minimum_tls_version_12 import (
+                mysql_flexible_server_minimum_tls_version_12,
             )
 
-            check = mysql_flexible_server_tls_version_is_1_2()
+            check = mysql_flexible_server_minimum_tls_version_12()
             result = check.execute()
             assert len(result) == 1
-            assert result[0].status == "PASS"
+            assert result[0].status == "FAIL"
             assert result[0].subscription == AZURE_SUBSCRIPTION
             assert result[0].resource_name == server_name
             assert (
@@ -206,5 +239,5 @@ class Test_mysql_flexible_server_tls_version_is_1_2:
             )
             assert (
                 result[0].status_extended
-                == f"TLS version is TLSv1.1,TLSv1.3 in server {server_name} in subscription {AZURE_SUBSCRIPTION}. This version of TLS is considered secure."
+                == f"TLS version is TLSv1.1,TLSv1.3 in server {server_name} in subscription {AZURE_SUBSCRIPTION}. There is at leat one version of TLS that is considered insecure."
             )
