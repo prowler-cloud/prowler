@@ -1,0 +1,30 @@
+documentation:
+- changed-files:
+  - any-glob-to-any-file: 'docs/**'
+
+provider/aws:
+- changed-files:
+  - any-glob-to-any-file: 'prowler/providers/aws/**'
+  - any-glob-to-any-file: 'prowler/providers/aws/**'
+
+
+provider/azure:
+- changed-files:
+  - any-glob-to-any-file: 'prowler/providers/azure/**'
+  - any-glob-to-any-file: 'prowler/providers/azure/**'
+
+
+provider/azure:
+- changed-files:
+  - any-glob-to-any-file: 'prowler/providers/gcp/**'
+  - any-glob-to-any-file: 'prowler/providers/gcp/**'
+
+
+provider/kubernetes:
+- changed-files:
+  - any-glob-to-any-file: 'prowler/providers/kubernetes/**'
+  - any-glob-to-any-file: 'tests/providers/kubernetes/**'
+
+github_actions:
+- changed-files:
+  - any-glob-to-any-file: '.github/workflows/*'
