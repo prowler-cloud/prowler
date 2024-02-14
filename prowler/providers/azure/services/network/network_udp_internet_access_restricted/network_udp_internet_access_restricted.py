@@ -13,8 +13,6 @@ class network_udp_internet_access_restricted(Check):
                 report.resource_id = security_group.id
                 report.status = "PASS"
                 report.status_extended = f"Security Group {security_group.name} from subscription {subscription} has UDP internet access restricted."
-                for rule in security_group.security_rules:
-                    print(rule)
                 rule_fail_condition = any(
                     rule.protocol in ["UDP"]
                     and rule.source_address_prefix in ["Internet", "*", "0.0.0.0/0"]
