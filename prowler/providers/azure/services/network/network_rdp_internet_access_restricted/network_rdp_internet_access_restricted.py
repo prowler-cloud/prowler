@@ -12,17 +12,19 @@ class network_rdp_internet_access_restricted(Check):
                 report.resource_name = security_group.name
                 report.resource_id = security_group.id
                 report.status = "PASS"
-                report.status_extended = f"SQL Server {security_group.name} from subscription {subscription} has rdp internet access restricted."
-                rule_fails_condition = any(
+                report.status_extended = f"Security Group {security_group.name} from subscription {subscription} has RDP internet access restricted."
+                for rule in security_group.security_rules:
+                    print(rule.__class__)
+                rule_fail_condition = any(
                     rule.destination_port_range == "3389"
                     and rule.protocol in ["TCP", "*"]
                     and rule.source_address_prefix in ["Internet", "*", "0.0.0.0/0"]
                     and rule.access == "Allow"
                     for rule in security_group.security_rules
                 )
-                if rule_fails_condition:
+                if rule_fail_condition:
                     report.status = "FAIL"
-                    report.status_extended = f"SQL Server {security_group.name} from subscription {subscription} has RDP internet access allowed."
+                    report.status_extended = f"Security Group {security_group.name} from subscription {subscription} has RDP internet access allowed."
                 findings.append(report)
 
         return findings
