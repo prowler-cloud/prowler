@@ -13,8 +13,6 @@ class network_rdp_internet_access_restricted(Check):
                 report.resource_id = security_group.id
                 report.status = "PASS"
                 report.status_extended = f"Security Group {security_group.name} from subscription {subscription} has RDP internet access restricted."
-                for rule in security_group.security_rules:
-                    print(rule.__class__)
                 rule_fail_condition = any(
                     rule.destination_port_range == "3389"
                     and rule.protocol in ["TCP", "*"]
