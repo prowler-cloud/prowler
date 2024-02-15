@@ -26,13 +26,13 @@ class Network(AzureService):
                 security_groups.update({subscription: []})
                 security_groups_list = client.network_security_groups.list_all()
                 available_locations = {}
+                network_watchers = self.__get_network_watchers__(client, subscription)
                 for security_group in security_groups_list:
                     subscription_id = security_group.id.split("/")[2]
                     if subscription_id not in available_locations:
                         available_locations[subscription_id] = (
                             self.__get_subscription_locations__(subscription_id)
                         )
-                for security_group in security_groups_list:
                     subscription_locations = available_locations[subscription_id]
                     security_groups[subscription].append(
                         SecurityGroup(
@@ -40,9 +40,7 @@ class Network(AzureService):
                             name=security_group.name,
                             location=security_group.location,
                             security_rules=security_group.security_rules,
-                            network_watchers=self.__get_network_watchers__(
-                                client, subscription
-                            ),
+                            network_watchers=network_watchers,
                             subscription_locations=subscription_locations,
                         )
                     )
