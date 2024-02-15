@@ -1,0 +1,30 @@
+{
+  "Provider": "azure",
+  "CheckID": "network_bastion_exists",
+  "CheckTitle": "Ensure that Network Security Group Flow Log retention period is 'greater than 90 days'",
+  "CheckType": [],
+  "ServiceName": "network",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Network",
+  "Description": "Network Security Group Flow Logs should be enabled and the retention period set to greater than or equal to 90 days.",
+  "Risk": "Flow logs enable capturing information about IP traffic flowing in and out of network security groups. Logs can be used to check for anomalies and give insight into suspected breaches.",
+  "RelatedUrl": " https://docs.microsoft.com/en-us/azure/network-watcher/network-watcher-nsg-flow-logging-overview",
+  "Remediation": {
+    "Code": {
+      "CLI": "az network watcher flow-log configure --nsg <NameorID of the Network Security Group> --enabled true --resource-group <resourceGroupName> --retention 91 -- storage-account <NameorID of the storage account to save flow logs>",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/Network/sufficient-nsg-flow-log-retention-period.html",
+      "Terraform": "https://docs.bridgecrew.io/docs/bc_azr_logging_1#terraform"
+    },
+    "Recommendation": {
+      "Text": "From Azure Portal 1. Go to Network Watcher 2. Select NSG flow logs blade in the Logs section 3. Select each Network Security Group from the list 4. Ensure Status is set to On 5. Ensure Retention (days) setting greater than 90 days 6. Select your storage account in the Storage account field 7. Select Save From Azure CLI Enable the NSG flow logs and set the Retention (days) to greater than or equal to 90 days. az network watcher flow-log configure --nsg <NameorID of the Network Security Group> --enabled true --resource-group <resourceGroupName> --retention 91 --storage-account <NameorID of the storage account to save flow logs>",
+      "Url": "https://docs.microsoft.com/en-us/cli/azure/network/watcher/flow-log?view=azure-cli-latest"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This will keep IP traffic logs for longer than 90 days. As a level 2, first determine your need to retain data, then apply your selection here. As this is data stored for longer, your monthly storage costs will increase depending on your data use."
+}

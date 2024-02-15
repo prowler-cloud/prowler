@@ -17,6 +17,7 @@ class Network(AzureService):
     def __init__(self, audit_info):
         super().__init__(NetworkManagementClient, audit_info)
         self.security_groups = self.__get_security_groups__()
+        self.bastion_hosts = self.__get_bastion_hosts__()
 
     def __get_security_groups__(self):
         logger.info("SQL Server - Getting Network Security Groups...")
@@ -85,6 +86,35 @@ class Network(AzureService):
             for flow_log in flow_logs_nw:
                 flow_logs.append(flow_log)
         return flow_logs
+
+    def __get_bastion_hosts__(self):
+        logger.info("SQL Server - Getting Bastion Hosts...")
+        bastion_hosts = {}
+        for subscription, client in self.clients.items():
+            try:
+                bastion_hosts.update({subscription: []})
+                bastion_hosts_list = client.bastion_hosts.list()
+                for bastion_host in bastion_hosts_list:
+                    bastion_hosts[subscription].append(
+                        BastionHost(
+                            id=bastion_host.id,
+                            name=bastion_host.name,
+                            location=bastion_host.location,
+                        )
+                    )
+
+            except Exception as error:
+                logger.error(
+                    f"Subscription name: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+        return bastion_hosts
+
+
+@dataclass
+class BastionHost:
+    id: str
+    name: str
+    location: str
 
 
 @dataclass
