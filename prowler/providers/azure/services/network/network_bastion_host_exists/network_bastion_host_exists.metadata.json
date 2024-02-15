@@ -1,6 +1,6 @@
 {
   "Provider": "azure",
-  "CheckID": "network_bastion_exists",
+  "CheckID": "network_bastion_host_exists",
   "CheckTitle": "Ensure an Azure Bastion Host Exists",
   "CheckType": [],
   "ServiceName": "network",

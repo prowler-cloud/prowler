@@ -3,6 +3,7 @@ from unittest.mock import patch
 from azure.mgmt.network.models import FlowLog, NetworkWatcher
 
 from prowler.providers.azure.services.network.network_service import (
+    BastionHost,
     Network,
     SecurityGroup,
 )
@@ -34,9 +35,25 @@ def mock_sqlserver_get_security_groups(_):
     }
 
 
+def mock_sqlserver_get_bastion_hosts(_):
+    return {
+        AZURE_SUBSCRIPTION: [
+            BastionHost(
+                id="id",
+                name="name",
+                location="location",
+            )
+        ]
+    }
+
+
 @patch(
     "prowler.providers.azure.services.network.network_service.Network.__get_security_groups__",
     new=mock_sqlserver_get_security_groups,
+)
+@patch(
+    "prowler.providers.azure.services.network.network_service.Network.__get_bastion_hosts__",
+    new=mock_sqlserver_get_bastion_hosts,
 )
 class Test_Network_Service:
     def test__get_client__(self):
@@ -99,3 +116,13 @@ class Test_Network_Service:
             network.security_groups[AZURE_SUBSCRIPTION][0].flow_logs[0].retention_policy
             == 90
         )
+
+    def __get_bastion_hosts__(self):
+        network = Network(set_mocked_azure_audit_info())
+        assert (
+            network.bastion_hosts[AZURE_SUBSCRIPTION][0].__class__.__name__
+            == "BastionHost"
+        )
+        assert network.bastion_hosts[AZURE_SUBSCRIPTION][0].id == "id"
+        assert network.bastion_hosts[AZURE_SUBSCRIPTION][0].name == "name"
+        assert network.bastion_hosts[AZURE_SUBSCRIPTION][0].location == "location"
