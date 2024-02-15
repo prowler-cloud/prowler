@@ -37,6 +37,8 @@ class Test_network_rdp_internet_access_restricted:
                     name=security_group_name,
                     location="location",
                     security_rules=[],
+                    network_watchers=None,
+                    subscription_locations=None,
                 )
             ]
         }
@@ -80,6 +82,8 @@ class Test_network_rdp_internet_access_restricted:
                             access="Allow",
                         )
                     ],
+                    network_watchers=None,
+                    subscription_locations=None,
                 )
             ]
         }

@@ -37,6 +37,8 @@ class Test_network_http_internet_access_restricted:
                     name=security_group_name,
                     location="location",
                     security_rules=[],
+                    network_watchers=None,
+                    subscription_locations=None,
                 )
             ]
         }
@@ -81,6 +83,8 @@ class Test_network_http_internet_access_restricted:
                             direction="Inbound",
                         )
                     ],
+                    network_watchers=None,
+                    subscription_locations=None,
                 )
             ]
         }
@@ -125,6 +129,8 @@ class Test_network_http_internet_access_restricted:
                             direction="Inbound",
                         )
                     ],
+                    network_watchers=None,
+                    subscription_locations=None,
                 )
             ]
         }

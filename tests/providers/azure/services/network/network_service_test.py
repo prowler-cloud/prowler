@@ -1,5 +1,7 @@
 from unittest.mock import patch
 
+from azure.mgmt.network.models import NetworkWatcher
+
 from prowler.providers.azure.services.network.network_service import (
     Network,
     SecurityGroup,
@@ -11,6 +13,12 @@ from tests.providers.azure.azure_fixtures import (
 
 
 def mock_sqlserver_get_security_groups(_):
+    network_watchers = [
+        NetworkWatcher(
+            id="id",
+            location="location",
+        )
+    ]
     return {
         AZURE_SUBSCRIPTION: [
             SecurityGroup(
@@ -18,6 +26,8 @@ def mock_sqlserver_get_security_groups(_):
                 name="name",
                 location="location",
                 security_rules=[],
+                network_watchers=network_watchers,
+                subscription_locations=["location"],
             )
         ]
     }
@@ -45,3 +55,26 @@ class Test_Network_Service:
         assert network.security_groups[AZURE_SUBSCRIPTION][0].name == "name"
         assert network.security_groups[AZURE_SUBSCRIPTION][0].location == "location"
         assert network.security_groups[AZURE_SUBSCRIPTION][0].security_rules == []
+
+    def test__get_network_watchers__(self):
+        network = Network(set_mocked_azure_audit_info())
+        assert (
+            network.security_groups[AZURE_SUBSCRIPTION][0]
+            .network_watchers[0]
+            .__class__.__name__
+            == "NetworkWatcher"
+        )
+        assert (
+            network.security_groups[AZURE_SUBSCRIPTION][0].network_watchers[0].id
+            == "id"
+        )
+        assert (
+            network.security_groups[AZURE_SUBSCRIPTION][0].network_watchers[0].location
+            == "location"
+        )
+
+    def test__get_subscription_locations__(self):
+        network = Network(set_mocked_azure_audit_info())
+        assert network.security_groups[AZURE_SUBSCRIPTION][
+            0
+        ].subscription_locations == ["location"]
