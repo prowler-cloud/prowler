@@ -69,8 +69,11 @@ class Provider_Output_Options:
         if arguments.output_directory:
             if not isdir(arguments.output_directory):
                 if arguments.output_modes:
-                    # exist_ok is set to True not to raise FileExistsError
-                    makedirs(arguments.output_directory, exist_ok=True)
+                    makedirs(arguments.output_directory)
+            if not isdir(arguments.output_directory + "/compliance"):
+                if arguments.output_modes:
+                    makedirs(arguments.output_directory + "/compliance")
+
 
 class Azure_Output_Options(Provider_Output_Options):
     def __init__(self, arguments, audit_info, mutelist_file, bulk_checks_metadata):

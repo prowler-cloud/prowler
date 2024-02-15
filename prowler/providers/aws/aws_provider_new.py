@@ -2,8 +2,6 @@ import os
 import pathlib
 import sys
 from argparse import Namespace
-from dataclasses import dataclass
-from datetime import datetime
 from typing import Any, Optional
 
 from boto3 import client, session
@@ -14,11 +12,20 @@ from colorama import Fore, Style
 
 from prowler.config.config import aws_services_json_file
 from prowler.lib.check.check import list_modules, recover_checks_from_service
+from prowler.lib.ui.live_display import live_display
 from prowler.lib.logger import logger
 from prowler.lib.utils.utils import open_file, parse_json_file
 from prowler.providers.aws.config import (
     AWS_STS_GLOBAL_ENDPOINT_REGION,
     BOTO3_USER_AGENT_EXTRA,
+)
+from prowler.providers.aws.models import (
+    AWSOrganizationsInfo,
+    AWSCredentials,
+    AWSAssumeRole,
+    AWSAssumeRoleConfiguration,
+    AWSIdentityInfo,
+    AWSSession,
 )
 from prowler.providers.aws.lib.arn.arn import parse_iam_credentials_arn
 from prowler.providers.aws.lib.credentials.credentials import (
@@ -29,57 +36,6 @@ from prowler.providers.aws.lib.organizations.organizations import (
     get_organizations_metadata,
 )
 from prowler.providers.common.provider import Provider
-
-
-@dataclass
-class AWSOrganizationsInfo:
-    account_details_email: str
-    account_details_name: str
-    account_details_arn: str
-    account_details_org: str
-    account_details_tags: str
-
-
-@dataclass
-class AWSCredentials:
-    aws_access_key_id: str
-    aws_session_token: str
-    aws_secret_access_key: str
-    expiration: datetime
-
-
-@dataclass
-class AWSAssumeRole:
-    role_arn: str
-    session_duration: int
-    external_id: str
-    mfa_enabled: bool
-
-
-@dataclass
-class AWSAssumeRoleConfiguration:
-    assumed_role_info: AWSAssumeRole
-    assumed_role_credentials: AWSCredentials
-
-
-@dataclass
-class AWSIdentityInfo:
-    account: str
-    account_arn: str
-    user_id: str
-    partition: str
-    identity_arn: str
-    profile: str
-    profile_region: str
-    audited_regions: list
-
-
-@dataclass
-class AWSSession:
-    session: session.Session
-    session_config: Config
-    original_session: None
-
 
 class AwsProvider(Provider):
     session: AWSSession = AWSSession(
@@ -328,45 +284,7 @@ class AwsProvider(Provider):
     # This method is called "adding ()" to the name, so it cannot accept arguments
     # https://github.com/boto/botocore/blob/098cc255f81a25b852e1ecdeb7adebd94c7b1b73/botocore/credentials.py#L570
     def refresh_credentials(self):
-        logger.info("Refreshing assumed credentials...")
-
-        response = self.__assume_role__(self.aws_session, self.role_info)
-        refreshed_credentials = dict(
-            # Keys of the dict has to be the same as those that are being searched in the parent class
-            # https://github.com/boto/botocore/blob/098cc255f81a25b852e1ecdeb7adebd94c7b1b73/botocore/credentials.py#L609
-            access_key=response["Credentials"]["AccessKeyId"],
-            secret_key=response["Credentials"]["SecretAccessKey"],
-            token=response["Credentials"]["SessionToken"],
-            expiry_time=response["Credentials"]["Expiration"].isoformat(),
-        )
-        logger.info("Refreshed Credentials:")
-        logger.info(refreshed_credentials)
-        return refreshed_credentials
-
-    def print_credentials(self):
-        # Beautify audited regions, set "all" if there is no filter region
-        regions = (
-            ", ".join(self.identity.audited_regions)
-            if self.identity.audited_regions is not None
-            else "all"
-        )
-        # Beautify audited profile, set "default" if there is no profile set
-        profile = (
-            self.identity.profile if self.identity.profile is not None else "default"
-        )
-
-        report = f"""
-This report is being generated using credentials below:
-
-AWS-CLI Profile: {Fore.YELLOW}[{profile}]{Style.RESET_ALL} AWS Filter Region: {Fore.YELLOW}[{regions}]{Style.RESET_ALL}
-AWS Account: {Fore.YELLOW}[{self.identity.account}]{Style.RESET_ALL} UserId: {Fore.YELLOW}[{self.identity.user_id}]{Style.RESET_ALL}
-Caller Identity ARN: {Fore.YELLOW}[{ self.identity.identity_arn}]{Style.RESET_ALL}
-"""
-        # If -A is set, print Assumed Role ARN
-        if self.assumed_role.assumed_role_info.role_arn is not None:
-            report += f"""Assumed Role ARN: {Fore.YELLOW}[{self.assumed_role.assumed_role_info.role_arn}]{Style.RESET_ALL}
-        """
-        print(report)
+        live_display.print_aws_credentials(self.identity, self.assumed_role.assumed_role_info)
 
     def generate_regional_clients(
         self, service: str, global_service: bool = False

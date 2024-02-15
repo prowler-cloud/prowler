@@ -5,7 +5,6 @@ from colorama import Fore, Style
 
 from prowler.config.config import load_and_validate_config_file
 from prowler.lib.logger import logger
-from prowler.lib.ui.live_display import live_display
 from prowler.providers.aws.aws_provider import (
     AWS_Provider,
     assume_role,
