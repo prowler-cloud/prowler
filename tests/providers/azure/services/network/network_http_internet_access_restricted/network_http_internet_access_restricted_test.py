@@ -39,6 +39,7 @@ class Test_network_http_internet_access_restricted:
                     security_rules=[],
                     network_watchers=None,
                     subscription_locations=None,
+                    flow_logs=None,
                 )
             ]
         }
@@ -85,6 +86,7 @@ class Test_network_http_internet_access_restricted:
                     ],
                     network_watchers=None,
                     subscription_locations=None,
+                    flow_logs=None,
                 )
             ]
         }
@@ -131,6 +133,7 @@ class Test_network_http_internet_access_restricted:
                     ],
                     network_watchers=None,
                     subscription_locations=None,
+                    flow_logs=None,
                 )
             ]
         }

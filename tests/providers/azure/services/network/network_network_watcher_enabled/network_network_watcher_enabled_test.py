@@ -39,6 +39,7 @@ class Test_network_network_watcher_enabled:
                     security_rules=[],
                     network_watchers=[],
                     subscription_locations=["location"],
+                    flow_logs=None,
                 )
             ]
         }
@@ -77,6 +78,7 @@ class Test_network_network_watcher_enabled:
                     security_rules=None,
                     network_watchers=[NetworkWatcher(location="location2")],
                     subscription_locations=["location", "location2"],
+                    flow_logs=None,
                 )
             ]
         }
@@ -115,6 +117,7 @@ class Test_network_network_watcher_enabled:
                     security_rules=None,
                     network_watchers=[NetworkWatcher(location="location")],
                     subscription_locations=["location"],
+                    flow_logs=None,
                 )
             ]
         }

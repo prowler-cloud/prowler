@@ -1,6 +1,6 @@
 from unittest.mock import patch
 
-from azure.mgmt.network.models import NetworkWatcher
+from azure.mgmt.network.models import FlowLog, NetworkWatcher
 
 from prowler.providers.azure.services.network.network_service import (
     Network,
@@ -28,6 +28,7 @@ def mock_sqlserver_get_security_groups(_):
                 security_rules=[],
                 network_watchers=network_watchers,
                 subscription_locations=["location"],
+                flow_logs=[FlowLog(enabled=True, retention_policy=90)],
             )
         ]
     }
@@ -78,3 +79,23 @@ class Test_Network_Service:
         assert network.security_groups[AZURE_SUBSCRIPTION][
             0
         ].subscription_locations == ["location"]
+
+    def __get_flow_logs__(self):
+        network = Network(set_mocked_azure_audit_info())
+        nw_name = "name"
+        assert (
+            network.security_groups[AZURE_SUBSCRIPTION][0]
+            .flow_logs[nw_name][0]
+            .__class__.__name__
+            == "FlowLog"
+        )
+        assert network.security_groups[AZURE_SUBSCRIPTION][0].flow_logs == [
+            FlowLog(enabled=True, retention_policy=90)
+        ]
+        assert (
+            network.security_groups[AZURE_SUBSCRIPTION][0].flow_logs[0].enabled is True
+        )
+        assert (
+            network.security_groups[AZURE_SUBSCRIPTION][0].flow_logs[0].retention_policy
+            == 90
+        )

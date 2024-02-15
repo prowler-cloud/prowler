@@ -42,6 +42,7 @@ class Network(AzureService):
                             security_rules=security_group.security_rules,
                             network_watchers=network_watchers,
                             subscription_locations=subscription_locations,
+                            flow_logs=self.__get_flow_logs__(subscription),
                         )
                     )
 
@@ -73,6 +74,18 @@ class Network(AzureService):
 
         return subscription_locations
 
+    def __get_flow_logs__(self, subscription):
+        logger.info("SQL Server - Getting Flow Logs...")
+        client = self.clients[subscription]
+        network_watchers = self.__get_network_watchers__(client, subscription)
+        flow_logs = []
+        resource_group = "NetworkWatcherRG"
+        for network_watcher in network_watchers:
+            flow_logs_nw = client.flow_logs.list(resource_group, network_watcher.name)
+            for flow_log in flow_logs_nw:
+                flow_logs.append(flow_log)
+        return flow_logs
+
 
 @dataclass
 class SecurityGroup:
@@ -82,3 +95,4 @@ class SecurityGroup:
     security_rules: list
     network_watchers: list[NetworkWatcher]
     subscription_locations: list
+    flow_logs: list
