@@ -13,7 +13,7 @@ from tests.providers.azure.azure_fixtures import (
 )
 
 
-def mock_sqlserver_get_security_groups(_):
+def mock_network_get_security_groups(_):
     network_watchers = [
         NetworkWatcher(
             id="id",
@@ -35,7 +35,7 @@ def mock_sqlserver_get_security_groups(_):
     }
 
 
-def mock_sqlserver_get_bastion_hosts(_):
+def mock_network_get_bastion_hosts(_):
     return {
         AZURE_SUBSCRIPTION: [
             BastionHost(
@@ -49,11 +49,11 @@ def mock_sqlserver_get_bastion_hosts(_):
 
 @patch(
     "prowler.providers.azure.services.network.network_service.Network.__get_security_groups__",
-    new=mock_sqlserver_get_security_groups,
+    new=mock_network_get_security_groups,
 )
 @patch(
     "prowler.providers.azure.services.network.network_service.Network.__get_bastion_hosts__",
-    new=mock_sqlserver_get_bastion_hosts,
+    new=mock_network_get_bastion_hosts,
 )
 class Test_Network_Service:
     def test__get_client__(self):

@@ -1,25 +1,22 @@
 from dataclasses import dataclass
 
 import requests
-from azure.identity import DefaultAzureCredential
 from azure.mgmt.network import NetworkManagementClient
 from azure.mgmt.network.models import NetworkWatcher
 
 from prowler.lib.logger import logger
 from prowler.providers.azure.lib.service.service import AzureService
 
-credential = DefaultAzureCredential()
-token = credential.get_token("https://management.azure.com/.default").token
-
 
 ########################## SQLServer
 class Network(AzureService):
     def __init__(self, audit_info):
         super().__init__(NetworkManagementClient, audit_info)
-        self.security_groups = self.__get_security_groups__()
+        self.token = self.__get_token__(audit_info)
+        self.security_groups = self.__get_security_groups__(self.token)
         self.bastion_hosts = self.__get_bastion_hosts__()
 
-    def __get_security_groups__(self):
+    def __get_security_groups__(self, token):
         logger.info("SQL Server - Getting Network Security Groups...")
         security_groups = {}
         for subscription, client in self.clients.items():
@@ -32,7 +29,7 @@ class Network(AzureService):
                     subscription_id = security_group.id.split("/")[2]
                     if subscription_id not in available_locations:
                         available_locations[subscription_id] = (
-                            self.__get_subscription_locations__(subscription_id)
+                            self.__get_subscription_locations__(subscription_id, token)
                         )
                     subscription_locations = available_locations[subscription_id]
                     security_groups[subscription].append(
@@ -59,7 +56,7 @@ class Network(AzureService):
         network_watchers = client.network_watchers.list_all()
         return network_watchers
 
-    def __get_subscription_locations__(self, subscription_id):
+    def __get_subscription_locations__(self, subscription_id, token):
         logger.info("SQL Server - Getting Subscription Locations...")
         subscription_locations = []
         url = f"https://management.azure.com/subscriptions/{subscription_id}/locations?api-version=2022-12-01"
@@ -108,6 +105,12 @@ class Network(AzureService):
                     f"Subscription name: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         return bastion_hosts
+
+    def __get_token__(self, audit_info):
+        token = audit_info.credentials.get_token(
+            "https://management.azure.com/.default"
+        ).token
+        return token
 
 
 @dataclass
