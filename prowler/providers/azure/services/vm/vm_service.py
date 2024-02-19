@@ -56,6 +56,8 @@ class VirtualMachines(AzureService):
                         vms_attached.append(disk.managed_by)
                     if disk.managed_by_extended:
                         vms_attached.extend(disk.managed_by_extended)
+                    if not disk.encryption.type:
+                        disk.encryption.type = ""
                     disks[subscription_name].update(
                         {
                             disk.unique_id: Disk(
