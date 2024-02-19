@@ -214,20 +214,18 @@ class Azure_Provider:
     def get_region_config(self):
         return self.region_config
 
-    def get_locations(self):
+    def get_locations(self, credentials, region_config):
         subscriptions_client = SubscriptionClient(
-            credential=self.credentials,
-            base_url=self.region_config["base_url"],
-            credential_scopes=self.region_config["credential_scopes"],
+            credential=credentials,
+            base_url=region_config["base_url"],
+            credential_scopes=region_config["credential_scopes"],
         )
         list_subscriptions = subscriptions_client.subscriptions.list()
         list_subscriptions_ids = [
             subscription.subscription_id for subscription in list_subscriptions
         ]
         locations = {}
-        token = self.credentials.get_token(
-            "https://management.azure.com/.default"
-        ).token
+        token = credentials.get_token("https://management.azure.com/.default").token
         for subscription_id in list_subscriptions_ids:
             locations.update({subscription_id: []})
             url = f"https://management.azure.com/subscriptions/{subscription_id}/locations?api-version=2022-12-01"
