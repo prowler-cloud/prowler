@@ -74,6 +74,7 @@ nav:
       - Testing:
           - Unit Tests: developer-guide/unit-testing.md
           - Integration Tests: developer-guide/integration-testing.md
+      - Debugging: developer-guide/debugging.md
   - Security: security.md
   - Contact Us: contact.md
   - Troubleshooting: troubleshooting.md

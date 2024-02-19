@@ -71,14 +71,21 @@ To use each one you need to pass the proper flag to the execution. Prowler fro A
 
 #### Azure Active Directory scope
 
-Azure Active Directory (AAD) permissions required by the tool are the following:
+Microsoft Entra ID (AAD earlier) permissions required by the tool are the following:
 
 - `Directory.Read.All`
 - `Policy.Read.All`
 
 The best way to assign it is through the azure web console:
 
-![AAD Permissions](../img/AAD-permissions.png)
+1. Access to Microsoft Entra ID, then go to "App registrations" and register a new application
+  ![Register an Application page](../img/register-application.png)
+2. Once your application is registered, select "API permissions" blade and add the needed permissions:
+    - `Directory.Read.All`
+    - `Policy.Read.All`
+
+    ![EntraID Permissions](../img/AAD-permissions.png)
+
 
 #### Subscriptions scope
 
@@ -86,6 +93,17 @@ Regarding the subscription scope, Prowler by default scans all the subscriptions
 
 - `Security Reader`
 - `Reader`
+
+To assign this roles, follow the instructions:
+
+1. Access your subscription, then select your subscription and select "Access control (IAM)". In the overview, select "Roles"
+  ![IAM Page](../img/page-IAM.png)
+2. Click on Add and select 'Add role assigment'
+3. In the bar, search `Security Reader` and select it.
+4. In the Members blade, select a member.
+5. Review + assign to apply the new role
+
+*Repeat these steps for `Reader`role*
 
 ## Google Cloud
 
