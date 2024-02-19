@@ -16,13 +16,17 @@ class vm_ensure_using_managed_disks(Check):
                 report.status_extended = f"VM {vm.resource_name} is using managed disks in subscription {subscription_name}"
 
                 using_managed_disks = (
-                    True if vm.storage_profile.os_disk.managed_disk else False
+                    True
+                    if vm.storage_profile.os_disk
+                    and vm.storage_profile.os_disk.managed_disk
+                    else False
                 )
 
-                for data_disk in vm.storage_profile.data_disks:
-                    if not data_disk.managed_disk:
-                        using_managed_disks = False
-                        break
+                if using_managed_disks and vm.storage_profile.data_disks:
+                    for data_disk in vm.storage_profile.data_disks:
+                        if not data_disk.managed_disk:
+                            using_managed_disks = False
+                            break
 
                 if not using_managed_disks:
                     report.status = "FAIL"
