@@ -14,8 +14,11 @@ class Test_network_udp_internet_access_restricted:
         network_client.security_groups = {}
 
         with mock.patch(
-            "prowler.providers.azure.services.network.network_udp_internet_access_restricted.network_udp_internet_access_restricted.network_client",
+            "prowler.providers.azure.services.network.network_service.Network",
             new=network_client,
+        ) as service_client, mock.patch(
+            "prowler.providers.azure.services.network.network_client.network_client",
+            new=service_client,
         ):
             from prowler.providers.azure.services.network.network_udp_internet_access_restricted.network_udp_internet_access_restricted import (
                 network_udp_internet_access_restricted,
@@ -37,16 +40,17 @@ class Test_network_udp_internet_access_restricted:
                     name=security_group_name,
                     location="location",
                     security_rules=[],
-                    network_watchers=None,
                     subscription_locations=None,
-                    flow_logs=None,
                 )
             ]
         }
 
         with mock.patch(
-            "prowler.providers.azure.services.network.network_udp_internet_access_restricted.network_udp_internet_access_restricted.network_client",
+            "prowler.providers.azure.services.network.network_service.Network",
             new=network_client,
+        ) as service_client, mock.patch(
+            "prowler.providers.azure.services.network.network_client.network_client",
+            new=service_client,
         ):
             from prowler.providers.azure.services.network.network_udp_internet_access_restricted.network_udp_internet_access_restricted import (
                 network_udp_internet_access_restricted,
@@ -83,16 +87,17 @@ class Test_network_udp_internet_access_restricted:
                             direction="Inbound",
                         )
                     ],
-                    network_watchers=None,
                     subscription_locations=None,
-                    flow_logs=None,
                 )
             ]
         }
 
         with mock.patch(
-            "prowler.providers.azure.services.network.network_udp_internet_access_restricted.network_udp_internet_access_restricted.network_client",
+            "prowler.providers.azure.services.network.network_service.Network",
             new=network_client,
+        ) as service_client, mock.patch(
+            "prowler.providers.azure.services.network.network_client.network_client",
+            new=service_client,
         ):
             from prowler.providers.azure.services.network.network_udp_internet_access_restricted.network_udp_internet_access_restricted import (
                 network_udp_internet_access_restricted,
@@ -129,16 +134,17 @@ class Test_network_udp_internet_access_restricted:
                             direction="Inbound",
                         )
                     ],
-                    network_watchers=None,
                     subscription_locations=None,
-                    flow_logs=None,
                 )
             ]
         }
 
         with mock.patch(
-            "prowler.providers.azure.services.network.network_udp_internet_access_restricted.network_udp_internet_access_restricted.network_client",
+            "prowler.providers.azure.services.network.network_service.Network",
             new=network_client,
+        ) as service_client, mock.patch(
+            "prowler.providers.azure.services.network.network_client.network_client",
+            new=service_client,
         ):
             from prowler.providers.azure.services.network.network_udp_internet_access_restricted.network_udp_internet_access_restricted import (
                 network_udp_internet_access_restricted,

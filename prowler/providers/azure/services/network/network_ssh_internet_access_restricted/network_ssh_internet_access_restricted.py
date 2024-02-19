@@ -14,7 +14,14 @@ class network_ssh_internet_access_restricted(Check):
                 report.status = "PASS"
                 report.status_extended = f"Security Group {security_group.name} from subscription {subscription} has SSH internet access restricted."
                 rule_fail_condition = any(
-                    rule.destination_port_range == "22"
+                    (
+                        rule.destination_port_range == "22"
+                        or (
+                            "-" in rule.destination_port_range
+                            and int(rule.destination_port_range.split("-")[0]) <= 22
+                            and int(rule.destination_port_range.split("-")[1]) >= 22
+                        )
+                    )
                     and rule.protocol in ["TCP", "*"]
                     and rule.source_address_prefix in ["Internet", "*", "0.0.0.0/0"]
                     and rule.access == "Allow"

@@ -12,8 +12,11 @@ class Test_network_bastion_host_exists:
         network_client.bastion_hosts = {AZURE_SUBSCRIPTION: []}
 
         with mock.patch(
-            "prowler.providers.azure.services.network.network_bastion_host_exists.network_bastion_host_exists.network_client",
+            "prowler.providers.azure.services.network.network_service.Network",
             new=network_client,
+        ) as service_client, mock.patch(
+            "prowler.providers.azure.services.network.network_client.network_client",
+            new=service_client,
         ):
             from prowler.providers.azure.services.network.network_bastion_host_exists.network_bastion_host_exists import (
                 network_bastion_host_exists,
@@ -47,8 +50,11 @@ class Test_network_bastion_host_exists:
         }
 
         with mock.patch(
-            "prowler.providers.azure.services.network.network_bastion_host_exists.network_bastion_host_exists.network_client",
+            "prowler.providers.azure.services.network.network_service.Network",
             new=network_client,
+        ) as service_client, mock.patch(
+            "prowler.providers.azure.services.network.network_client.network_client",
+            new=service_client,
         ):
             from prowler.providers.azure.services.network.network_bastion_host_exists.network_bastion_host_exists import (
                 network_bastion_host_exists,
@@ -60,8 +66,8 @@ class Test_network_bastion_host_exists:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Bastion Host from subscription {AZURE_SUBSCRIPTION} exists"
+                == f"Bastion Host from subscription {AZURE_SUBSCRIPTION} available are: {bastion_host_name}"
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION
             assert result[0].resource_name == "Bastion Host"
-            assert result[0].resource_id == "N/A"
+            assert result[0].resource_id == bastion_host_id
