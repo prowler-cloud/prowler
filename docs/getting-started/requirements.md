@@ -101,7 +101,7 @@ To assign this roles, follow the instructions:
 2. Click on Add and select 'Add role assigment'
 3. In the bar, search `Security Reader` and select it.
 4. In the Members blade, select a member.
-5. Review + assign to apply the new role
+5. Review + assign to apply the new role.
 
 *Repeat these steps for `Reader`role*
 
