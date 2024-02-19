@@ -37,7 +37,7 @@ class Test_AppInsights_Service:
         app_insights = AppInsights(set_mocked_azure_audit_info())
         assert app_insights.subscriptions.__class__.__name__ == "dict"
 
-    def test__get_componentes(self):
+    def test__get_components__(self):
         appinsights = AppInsights(set_mocked_azure_audit_info())
         assert len(appinsights.components) == 1
         assert (
