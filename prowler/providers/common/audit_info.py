@@ -330,6 +330,7 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
             base_url=region_config["base_url"],
             credential_scopes=region_config["credential_scopes"],
         )
+        azure_audit_info.locations = azure_provider.get_locations()
 
         if not arguments.get("only_logs"):
             self.print_azure_credentials(azure_audit_info)

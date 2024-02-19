@@ -36,6 +36,7 @@ class Test_network_watcher_enabled:
         security_group_id = str(uuid4())
         network_watcher_name = "Network Watcher Name"
         network_watcher_id = str(uuid4)
+        locations = ["location"]
 
         network_client.security_groups = {
             AZURE_SUBSCRIPTION: [
@@ -44,7 +45,7 @@ class Test_network_watcher_enabled:
                     name=security_group_name,
                     location="location",
                     security_rules=[],
-                    subscription_locations=["location"],
+                    subscription_locations=locations,
                 )
             ]
         }
@@ -77,7 +78,7 @@ class Test_network_watcher_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Security Group {security_group_name} from subscription {AZURE_SUBSCRIPTION} has Network Watcher disabled for the following locations: {{'location'}}."
+                == f"Security Group {security_group_name} from subscription {AZURE_SUBSCRIPTION} has Network Watcher disabled for the location {locations[0]}."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION
             assert result[0].resource_name == security_group_name
@@ -130,7 +131,7 @@ class Test_network_watcher_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Security Group {security_group_name} from subscription {AZURE_SUBSCRIPTION} has Network Watcher enabled."
+                == f"Security Group {security_group_name} from subscription {AZURE_SUBSCRIPTION} has Network Watcher enabled for the location location."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION
             assert result[0].resource_name == security_group_name

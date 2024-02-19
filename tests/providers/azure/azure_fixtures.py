@@ -37,5 +37,6 @@ def set_mocked_azure_audit_info(
         audit_resources=None,
         audit_config=audit_config,
         azure_region_config=azure_region_config,
+        locations=None,
     )
     return audit_info

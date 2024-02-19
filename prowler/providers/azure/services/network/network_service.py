@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 
-import requests
 from azure.mgmt.network import NetworkManagementClient
 
 from prowler.lib.logger import logger
@@ -11,26 +10,20 @@ from prowler.providers.azure.lib.service.service import AzureService
 class Network(AzureService):
     def __init__(self, audit_info):
         super().__init__(NetworkManagementClient, audit_info)
-        self.token = self.__get_token__(audit_info)
-        self.security_groups = self.__get_security_groups__(self.token)
+        self.security_groups = self.__get_security_groups__(audit_info)
         self.bastion_hosts = self.__get_bastion_hosts__()
         self.network_watchers = self.__get_network_watchers__()
 
-    def __get_security_groups__(self, token):
+    def __get_security_groups__(self, audit_info):
         logger.info("Network - Getting Network Security Groups...")
         security_groups = {}
         for subscription, client in self.clients.items():
             try:
                 security_groups.update({subscription: []})
                 security_groups_list = client.network_security_groups.list_all()
-                available_locations = {}
                 for security_group in security_groups_list:
                     subscription_id = security_group.id.split("/")[2]
-                    if subscription_id not in available_locations:
-                        available_locations[subscription_id] = (
-                            self.__get_subscription_locations__(subscription_id, token)
-                        )
-                    subscription_locations = available_locations[subscription_id]
+                    subscription_locations = audit_info.locations[subscription_id]
                     security_groups[subscription].append(
                         SecurityGroup(
                             id=security_group.id,
@@ -73,22 +66,6 @@ class Network(AzureService):
                 )
         return network_watchers
 
-    def __get_subscription_locations__(self, subscription_id, token):
-        logger.info("Network - Getting Subscription Locations...")
-        subscription_locations = []
-        url = f"https://management.azure.com/subscriptions/{subscription_id}/locations?api-version=2022-12-01"
-        headers = {
-            "Authorization": f"Bearer {token}",
-            "Content-Type": "application/json",
-        }
-        response = requests.get(url, headers=headers)
-        if response.status_code == 200:
-            data = response.json()
-            for location in data["value"]:
-                subscription_locations.append(location["name"])
-
-        return subscription_locations
-
     def __get_flow_logs__(self, subscription, network_watcher_name):
         logger.info("Network - Getting Flow Logs...")
         client = self.clients[subscription]
@@ -117,12 +94,6 @@ class Network(AzureService):
                     f"Subscription name: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         return bastion_hosts
-
-    def __get_token__(self, audit_info):
-        token = audit_info.credentials.get_token(
-            "https://management.azure.com/.default"
-        ).token
-        return token
 
 
 @dataclass

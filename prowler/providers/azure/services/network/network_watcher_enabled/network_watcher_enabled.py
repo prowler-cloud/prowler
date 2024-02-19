@@ -15,14 +15,15 @@ class network_watcher_enabled(Check):
                 report.subscription = subscription
                 report.resource_name = security_group.name
                 report.resource_id = security_group.id
-                report.status = "PASS"
-                report.status_extended = f"Security Group {security_group.name} from subscription {subscription} has Network Watcher enabled."
-                disabled_locations = set(security_group.subscription_locations) - set(
-                    nw_locations
-                )
-                if disabled_locations:
-                    report.status = "FAIL"
-                    report.status_extended = f"Security Group {security_group.name} from subscription {subscription} has Network Watcher disabled for the following locations: {disabled_locations}."
-                findings.append(report)
+                for location in security_group.subscription_locations:
+                    if location not in nw_locations:
+                        report.status = "FAIL"
+                        report.status_extended = f"Security Group {security_group.name} from subscription {subscription} has Network Watcher disabled for the location {location}."
+                        findings.append(report)
+                        break
+                    else:
+                        report.status = "PASS"
+                        report.status_extended = f"Security Group {security_group.name} from subscription {subscription} has Network Watcher enabled for the location {location}."
+                        findings.append(report)
 
         return findings
