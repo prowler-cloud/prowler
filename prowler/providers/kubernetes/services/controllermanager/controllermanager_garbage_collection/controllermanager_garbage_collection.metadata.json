@@ -23,7 +23,7 @@
     },
     "Recommendation": {
       "Text": "Review and adjust the --terminated-pod-gc-threshold argument in the kube-controller-manager to ensure efficient garbage collection and optimal resource utilization.",
-      "Url": "https://kubernetes.io/docs/admin/kube-controller-manager/"
+      "Url": "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-controller-manager/"
     }
   },
   "Categories": [
