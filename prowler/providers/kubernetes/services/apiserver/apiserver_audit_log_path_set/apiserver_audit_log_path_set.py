@@ -16,12 +16,14 @@ class apiserver_audit_log_path_set(Check):
             report.status_extended = (
                 f"Audit log path is set in the API server in pod {pod.name}."
             )
-
             audit_log_path_set = False
             for container in pod.containers.values():
+                audit_log_path_set = False
                 # Check if "--audit-log-path" is set
                 if "--audit-log-path" in str(container.command):
                     audit_log_path_set = True
+                    break
+                if not audit_log_path_set:
                     break
 
             if not audit_log_path_set:

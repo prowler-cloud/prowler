@@ -23,7 +23,7 @@
     },
     "Recommendation": {
       "Text": "Configure the API server audit log file size limit to 100 MB or as per your organization's requirements.",
-      "Url": "https://kubernetes.io/docs/admin/kube-apiserver/"
+      "Url": "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/"
     }
   },
   "Categories": [
