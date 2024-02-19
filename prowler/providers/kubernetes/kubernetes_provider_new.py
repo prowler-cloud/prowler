@@ -1,5 +1,6 @@
 import os
 import sys
+from argparse import Namespace
 from typing import Any, Optional
 
 from colorama import Fore, Style
@@ -17,9 +18,8 @@ class KubernetesProvider(Provider):
     audit_metadata: Optional[Any]
     audit_config: Optional[dict]
 
-    def __init__(self, arguments: dict):
+    def __init__(self, arguments: Namespace):
         logger.info("Instantiating Kubernetes Provider ...")
-
         self.api_client, self.context = self.setup_session(
             arguments.kubeconfig_file, arguments.context
         )
