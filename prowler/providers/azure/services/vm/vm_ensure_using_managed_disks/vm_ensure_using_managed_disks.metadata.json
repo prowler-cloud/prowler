@@ -1,0 +1,30 @@
+{
+  "Provider": "azure",
+  "CheckID": "vm_ensure_using_managed_disks",
+  "CheckTitle": "Ensure Virtual Machines are utilizing Managed Disks",
+  "CheckType": [],
+  "ServiceName": "vm",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Microsoft.Compute/virtualMachines",
+  "Description": "Migrate blob-based VHDs to Managed Disks on Virtual Machines to exploit the default features of this configuration. The features include: 1. Default Disk Encryption 2. Resilience, as Microsoft will managed the disk storage and move around if underlying hardware goes faulty 3. Reduction of costs over storage accounts",
+  "Risk": "Managed disks are by default encrypted on the underlying hardware, so no additional encryption is required for basic protection. It is available if additional encryption is required. Managed disks are by design more resilient that storage accounts. For ARM-deployed Virtual Machines, Azure Adviser will at some point recommend moving VHDs to managed disks both from a security and cost management perspective.",
+  "RelatedUrl": "https://learn.microsoft.com/en-us/azure/virtual-machines/unmanaged-disks-deprecation",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/VirtualMachines/managed-disks-in-use.html",
+      "Terraform": "https://docs.bridgecrew.io/docs/ensure-virtual-machines-are-utilizing-managed-disks#terraform>"
+    },
+    "Recommendation": {
+      "Text": "There are additional costs for managed disks based off of disk space allocated. When converting to managed disks, VMs will be powered off and back on.",
+      "Url": "https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-data-protection#dp-4-enable-data-at-rest-encryption-by-default"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "There are additional costs for managed disks based off of disk space allocated. When converting to managed disks, VMs will be powered off and back on."
+}
