@@ -29,6 +29,7 @@ def set_mocked_azure_audit_info(
     ),
     audit_config: dict = None,
     azure_region_config: Azure_Region_Config = Azure_Region_Config(),
+    locations: list = None,
 ):
     audit_info = Azure_Audit_Info(
         credentials=credentials,
@@ -37,6 +38,6 @@ def set_mocked_azure_audit_info(
         audit_resources=None,
         audit_config=audit_config,
         azure_region_config=azure_region_config,
-        locations=None,
+        locations=locations,
     )
     return audit_info

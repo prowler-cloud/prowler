@@ -78,6 +78,7 @@ class Test_Slack_Integration:
             audit_metadata=None,
             audit_config=None,
             azure_region_config=Azure_Region_Config(),
+            locations=None,
         )
         assert create_message_identity("aws", aws_audit_info) == (
             f"AWS Account *{aws_audit_info.audited_account}*",
