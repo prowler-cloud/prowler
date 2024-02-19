@@ -16,7 +16,7 @@ class vm_ensure_unattached_disks_encrypted_with_cmk(Check):
                     report.resource_id = disk.resource_id
                     report.status_extended = f"Disk '{disk_id}' is encrypted with a customer-managed key in subscription {subscription_name}."
 
-                    if disk.encryption_type != "EncryptionAtRestWithCustomerKey":
+                    if disk.encryption_type == "EncryptionAtRestWithPlatformKey":
                         report.status = "FAIL"
                         report.status_extended = f"Disk '{disk_id}' is not encrypted with a customer-managed key in subscription {subscription_name}."
 
