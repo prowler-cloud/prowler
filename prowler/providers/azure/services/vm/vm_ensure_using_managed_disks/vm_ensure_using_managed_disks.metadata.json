@@ -16,7 +16,7 @@
       "CLI": "",
       "NativeIaC": "",
       "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/VirtualMachines/managed-disks-in-use.html",
-      "Terraform": "https://docs.bridgecrew.io/docs/ensure-virtual-machines-are-utilizing-managed-disks#terraform>"
+      "Terraform": "https://docs.bridgecrew.io/docs/ensure-virtual-machines-are-utilizing-managed-disks#terraform"
     },
     "Recommendation": {
       "Text": "There are additional costs for managed disks based off of disk space allocated. When converting to managed disks, VMs will be powered off and back on.",
