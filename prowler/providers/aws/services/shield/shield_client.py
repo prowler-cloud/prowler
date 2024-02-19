@@ -1,4 +1,4 @@
-from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
 from prowler.providers.aws.services.shield.shield_service import Shield
+from prowler.providers.common.common import get_global_provider
 
-shield_client = Shield(current_audit_info)
+shield_client = Shield(get_global_provider())

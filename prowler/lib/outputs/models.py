@@ -10,7 +10,7 @@ from prowler.config.config import prowler_version, timestamp
 from prowler.lib.check.models import Remediation
 from prowler.lib.logger import logger
 from prowler.lib.utils.utils import outputs_unix_timestamp
-from prowler.providers.aws.lib.audit_info.models import AWS_Organizations_Info
+from prowler.providers.aws.lib.audit_info.models import AWSOrganizationsInfo
 
 
 def get_check_compliance(finding, provider, output_options) -> dict:
@@ -483,7 +483,7 @@ class Aws_Check_Output_JSON(Check_Output_JSON):
 
     Profile: str = ""
     AccountId: str = ""
-    OrganizationsInfo: Optional[AWS_Organizations_Info]
+    OrganizationsInfo: Optional[AWSOrganizationsInfo]
     Region: str = ""
     ResourceId: str = ""
     ResourceArn: str = ""

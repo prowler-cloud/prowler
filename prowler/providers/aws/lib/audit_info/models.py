@@ -7,7 +7,7 @@ from botocore.config import Config
 
 
 @dataclass
-class AWS_Credentials:
+class AWSCredentials:
     aws_access_key_id: str
     aws_session_token: str
     aws_secret_access_key: str
@@ -15,7 +15,7 @@ class AWS_Credentials:
 
 
 @dataclass
-class AWS_Assume_Role:
+class AWSAssumeRole:
     role_arn: str
     session_duration: int
     external_id: str
@@ -23,7 +23,7 @@ class AWS_Assume_Role:
 
 
 @dataclass
-class AWS_Organizations_Info:
+class AWSOrganizationsInfo:
     account_details_email: str
     account_details_name: str
     account_details_arn: str
@@ -44,12 +44,12 @@ class AWS_Audit_Info:
     audited_partition: str
     profile: str
     profile_region: str
-    credentials: AWS_Credentials
+    credentials: AWSCredentials
     mfa_enabled: bool
-    assumed_role_info: AWS_Assume_Role
+    assumed_role_info: AWSAssumeRole
     audited_regions: list
     audit_resources: list
-    organizations_metadata: AWS_Organizations_Info
-    audit_metadata: Optional[Any] = None
+    organizations_metadata: AWSOrganizationsInfo
+    audit_metadata: Optional[Any]
     audit_config: Optional[dict] = None
     ignore_unused_services: bool = False

@@ -1,6 +1,6 @@
-from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
 from prowler.providers.aws.services.networkfirewall.networkfirewall_service import (
     NetworkFirewall,
 )
+from prowler.providers.common.common import get_global_provider
 
-networkfirewall_client = NetworkFirewall(current_audit_info)
+networkfirewall_client = NetworkFirewall(get_global_provider())
