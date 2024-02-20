@@ -1,6 +1,6 @@
 {
   "Provider": "azure",
-  "CheckID": "vm_ensure_disks_encrypted_with_cmk",
+  "CheckID": "vm_ensure_attached_disks_encrypted_with_cmk",
   "CheckTitle": "Ensure that 'OS and Data' disks are encrypted with Customer Managed Key (CMK)",
   "CheckType": [],
   "ServiceName": "vm",

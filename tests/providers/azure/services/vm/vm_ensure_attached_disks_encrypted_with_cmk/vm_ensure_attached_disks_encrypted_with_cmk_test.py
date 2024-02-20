@@ -5,20 +5,20 @@ from prowler.providers.azure.services.vm.vm_service import Disk
 from tests.providers.azure.azure_fixtures import AZURE_SUBSCRIPTION
 
 
-class Test_vm_ensure_disks_encrypted_with_cmk:
+class Test_vm_ensure_attached_disks_encrypted_with_cmk:
     def test_vm_no_subscriptions(self):
         vm_client = mock.MagicMock
         vm_client.disks = {}
 
         with mock.patch(
-            "prowler.providers.azure.services.vm.vm_ensure_disks_encrypted_with_cmk.vm_ensure_disks_encrypted_with_cmk.vm_client",
+            "prowler.providers.azure.services.vm.vm_ensure_attached_disks_encrypted_with_cmk.vm_ensure_attached_disks_encrypted_with_cmk.vm_client",
             new=vm_client,
         ):
-            from prowler.providers.azure.services.vm.vm_ensure_disks_encrypted_with_cmk.vm_ensure_disks_encrypted_with_cmk import (
-                vm_ensure_disks_encrypted_with_cmk,
+            from prowler.providers.azure.services.vm.vm_ensure_attached_disks_encrypted_with_cmk.vm_ensure_attached_disks_encrypted_with_cmk import (
+                vm_ensure_attached_disks_encrypted_with_cmk,
             )
 
-            check = vm_ensure_disks_encrypted_with_cmk()
+            check = vm_ensure_attached_disks_encrypted_with_cmk()
             result = check.execute()
             assert len(result) == 0
 
@@ -27,14 +27,14 @@ class Test_vm_ensure_disks_encrypted_with_cmk:
         vm_client.disks = {AZURE_SUBSCRIPTION: {}}
 
         with mock.patch(
-            "prowler.providers.azure.services.vm.vm_ensure_disks_encrypted_with_cmk.vm_ensure_disks_encrypted_with_cmk.vm_client",
+            "prowler.providers.azure.services.vm.vm_ensure_attached_disks_encrypted_with_cmk.vm_ensure_attached_disks_encrypted_with_cmk.vm_client",
             new=vm_client,
         ):
-            from prowler.providers.azure.services.vm.vm_ensure_disks_encrypted_with_cmk.vm_ensure_disks_encrypted_with_cmk import (
-                vm_ensure_disks_encrypted_with_cmk,
+            from prowler.providers.azure.services.vm.vm_ensure_attached_disks_encrypted_with_cmk.vm_ensure_attached_disks_encrypted_with_cmk import (
+                vm_ensure_attached_disks_encrypted_with_cmk,
             )
 
-            check = vm_ensure_disks_encrypted_with_cmk()
+            check = vm_ensure_attached_disks_encrypted_with_cmk()
             result = check.execute()
             assert len(result) == 0
 
@@ -54,14 +54,14 @@ class Test_vm_ensure_disks_encrypted_with_cmk:
         }
 
         with mock.patch(
-            "prowler.providers.azure.services.vm.vm_ensure_disks_encrypted_with_cmk.vm_ensure_disks_encrypted_with_cmk.vm_client",
+            "prowler.providers.azure.services.vm.vm_ensure_attached_disks_encrypted_with_cmk.vm_ensure_attached_disks_encrypted_with_cmk.vm_client",
             new=vm_client,
         ):
-            from prowler.providers.azure.services.vm.vm_ensure_disks_encrypted_with_cmk.vm_ensure_disks_encrypted_with_cmk import (
-                vm_ensure_disks_encrypted_with_cmk,
+            from prowler.providers.azure.services.vm.vm_ensure_attached_disks_encrypted_with_cmk.vm_ensure_attached_disks_encrypted_with_cmk import (
+                vm_ensure_attached_disks_encrypted_with_cmk,
             )
 
-            check = vm_ensure_disks_encrypted_with_cmk()
+            check = vm_ensure_attached_disks_encrypted_with_cmk()
             result = check.execute()
             assert len(result) == 1
             assert result[0].subscription == AZURE_SUBSCRIPTION
@@ -89,14 +89,14 @@ class Test_vm_ensure_disks_encrypted_with_cmk:
         }
 
         with mock.patch(
-            "prowler.providers.azure.services.vm.vm_ensure_disks_encrypted_with_cmk.vm_ensure_disks_encrypted_with_cmk.vm_client",
+            "prowler.providers.azure.services.vm.vm_ensure_attached_disks_encrypted_with_cmk.vm_ensure_attached_disks_encrypted_with_cmk.vm_client",
             new=vm_client,
         ):
-            from prowler.providers.azure.services.vm.vm_ensure_disks_encrypted_with_cmk.vm_ensure_disks_encrypted_with_cmk import (
-                vm_ensure_disks_encrypted_with_cmk,
+            from prowler.providers.azure.services.vm.vm_ensure_attached_disks_encrypted_with_cmk.vm_ensure_attached_disks_encrypted_with_cmk import (
+                vm_ensure_attached_disks_encrypted_with_cmk,
             )
 
-            check = vm_ensure_disks_encrypted_with_cmk()
+            check = vm_ensure_attached_disks_encrypted_with_cmk()
             result = check.execute()
             assert len(result) == 1
             assert result[0].subscription == AZURE_SUBSCRIPTION
@@ -132,14 +132,14 @@ class Test_vm_ensure_disks_encrypted_with_cmk:
         }
 
         with mock.patch(
-            "prowler.providers.azure.services.vm.vm_ensure_disks_encrypted_with_cmk.vm_ensure_disks_encrypted_with_cmk.vm_client",
+            "prowler.providers.azure.services.vm.vm_ensure_attached_disks_encrypted_with_cmk.vm_ensure_attached_disks_encrypted_with_cmk.vm_client",
             new=vm_client,
         ):
-            from prowler.providers.azure.services.vm.vm_ensure_disks_encrypted_with_cmk.vm_ensure_disks_encrypted_with_cmk import (
-                vm_ensure_disks_encrypted_with_cmk,
+            from prowler.providers.azure.services.vm.vm_ensure_attached_disks_encrypted_with_cmk.vm_ensure_attached_disks_encrypted_with_cmk import (
+                vm_ensure_attached_disks_encrypted_with_cmk,
             )
 
-            check = vm_ensure_disks_encrypted_with_cmk()
+            check = vm_ensure_attached_disks_encrypted_with_cmk()
             result = check.execute()
             assert len(result) == 2
             assert result[0].subscription == AZURE_SUBSCRIPTION
@@ -174,13 +174,13 @@ class Test_vm_ensure_disks_encrypted_with_cmk:
         }
 
         with mock.patch(
-            "prowler.providers.azure.services.vm.vm_ensure_disks_encrypted_with_cmk.vm_ensure_disks_encrypted_with_cmk.vm_client",
+            "prowler.providers.azure.services.vm.vm_ensure_attached_disks_encrypted_with_cmk.vm_ensure_attached_disks_encrypted_with_cmk.vm_client",
             new=vm_client,
         ):
-            from prowler.providers.azure.services.vm.vm_ensure_disks_encrypted_with_cmk.vm_ensure_disks_encrypted_with_cmk import (
-                vm_ensure_disks_encrypted_with_cmk,
+            from prowler.providers.azure.services.vm.vm_ensure_attached_disks_encrypted_with_cmk.vm_ensure_attached_disks_encrypted_with_cmk import (
+                vm_ensure_attached_disks_encrypted_with_cmk,
             )
 
-            check = vm_ensure_disks_encrypted_with_cmk()
+            check = vm_ensure_attached_disks_encrypted_with_cmk()
             result = check.execute()
             assert len(result) == 0

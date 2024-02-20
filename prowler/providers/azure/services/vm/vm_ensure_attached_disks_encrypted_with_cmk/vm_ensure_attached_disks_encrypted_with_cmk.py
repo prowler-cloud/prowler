@@ -2,7 +2,7 @@ from prowler.lib.check.models import Check, Check_Report_Azure
 from prowler.providers.azure.services.vm.vm_client import vm_client
 
 
-class vm_ensure_disks_encrypted_with_cmk(Check):
+class vm_ensure_attached_disks_encrypted_with_cmk(Check):
     def execute(self) -> Check_Report_Azure:
         findings = []
 
