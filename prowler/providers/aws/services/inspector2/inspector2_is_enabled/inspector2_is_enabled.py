@@ -18,6 +18,7 @@ class inspector2_is_enabled(Check):
             if inspector.status == "ENABLED":
                 report.status = "PASS"
                 report.status_extended = "Inspector2 is enabled."
+                findings.append(report)
             else:
                 if inspector2_client.audit_info.ignore_unused_services:
                     funtions_in_region = False
@@ -35,6 +36,6 @@ class inspector2_is_enabled(Check):
                 ):
                     report.status = "FAIL"
                     report.status_extended = "Inspector2 is not enabled."
-            findings.append(report)
+                    findings.append(report)
 
         return findings

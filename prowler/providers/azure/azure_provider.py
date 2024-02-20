@@ -2,6 +2,7 @@ import asyncio
 import sys
 from os import getenv
 
+import requests
 from azure.identity import DefaultAzureCredential, InteractiveBrowserCredential
 from azure.mgmt.subscription import SubscriptionClient
 from msgraph import GraphServiceClient
@@ -212,3 +213,31 @@ class Azure_Provider:
 
     def get_region_config(self):
         return self.region_config
+
+    def get_locations(self, credentials, region_config):
+        locations = None
+        if credentials and region_config:
+            subscriptions_client = SubscriptionClient(
+                credential=credentials,
+                base_url=region_config["base_url"],
+                credential_scopes=region_config["credential_scopes"],
+            )
+            list_subscriptions = subscriptions_client.subscriptions.list()
+            list_subscriptions_ids = [
+                subscription.subscription_id for subscription in list_subscriptions
+            ]
+            locations = {}
+            token = credentials.get_token("https://management.azure.com/.default").token
+            for subscription_id in list_subscriptions_ids:
+                locations.update({subscription_id: []})
+                url = f"https://management.azure.com/subscriptions/{subscription_id}/locations?api-version=2022-12-01"
+                headers = {
+                    "Authorization": f"Bearer {token}",
+                    "Content-Type": "application/json",
+                }
+                response = requests.get(url, headers=headers)
+                if response.status_code == 200:
+                    data = response.json()
+                    for location in data["value"]:
+                        locations[subscription_id].append(location["name"])
+        return locations
