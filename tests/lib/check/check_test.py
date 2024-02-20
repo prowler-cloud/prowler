@@ -172,39 +172,17 @@ expected_packages = [
         ispkg=False,
     ),
     ModuleInfo(
-        module_finder=FileFinder("/root_dir/prowler/providers/azure/services/cosmosdb"),
-        name="prowler.providers.azure.services.cosmosdb.cosmosdb_account_firewall_use_selected_networks",
+        module_finder=FileFinder(
+            "/root_dir/prowler/providers/azure/services/postgresql"
+        ),
+        name="prowler.providers.azure.services.postgresql.postgresql_flexible_server_enforce_ssl_enabled",
         ispkg=True,
     ),
     ModuleInfo(
         module_finder=FileFinder(
-            "/root_dir/prowler/providers/azure/services/cosmosdb/cosmosdb_account_firewall_use_selected_networks"
+            "/root_dir/prowler/providers/azure/services/postgresql/postgresql_flexible_server_enforce_ssl_enabled"
         ),
-        name="prowler.providers.azure.services.cosmosdb.cosmosdb_account_firewall_use_selected_networks.cosmosdb_account_firewall_use_selected_networks",
-        ispkg=False,
-    ),
-    ModuleInfo(
-        module_finder=FileFinder("/root_dir/prowler/providers/azure/services/cosmosdb"),
-        name="prowler.providers.azure.services.cosmosdb.cosmosdb_account_use_private_endpoints",
-        ispkg=True,
-    ),
-    ModuleInfo(
-        module_finder=FileFinder(
-            "/root_dir/prowler/providers/azure/services/cosmosdb/cosmosdb_account_use_private_endpoints"
-        ),
-        name="prowler.providers.azure.services.cosmosdb.cosmosdb_account_use_private_endpoints.cosmosdb_account_use_private_endpoints",
-        ispkg=False,
-    ),
-    ModuleInfo(
-        module_finder=FileFinder("/root_dir/prowler/providers/azure/services/cosmosdb"),
-        name="prowler.providers.azure.services.cosmosdb.cosmosdb_account_use_aad_and_rbac",
-        ispkg=True,
-    ),
-    ModuleInfo(
-        module_finder=FileFinder(
-            "/root_dir/prowler/providers/azure/services/cosmosdb/cosmosdb_account_use_aad_and_rbac"
-        ),
-        name="prowler.providers.azure.services.cosmosdb.cosmosdb_account_use_aad_and_rbac.cosmosdb_account_use_aad_and_rbac",
+        name="prowler.providers.azure.services.postgresql.postgresql_flexible_server_enforce_ssl_enabled.postgresql_flexible_server_enforce_ssl_enabled",
         ispkg=False,
     ),
 ]
@@ -358,44 +336,16 @@ def mock_list_modules(*_):
         ),
         ModuleInfo(
             module_finder=FileFinder(
-                "/root_dir/prowler/providers/azure/services/cosmosdb"
+                "/root_dir/prowler/providers/azure/services/postgresql"
             ),
-            name="prowler.providers.azure.services.cosmosdb.cosmosdb_account_firewall_use_selected_networks",
+            name="prowler.providers.azure.services.postgresql.postgresql_flexible_server_enforce_ssl_enabled",
             ispkg=True,
         ),
         ModuleInfo(
             module_finder=FileFinder(
-                "/root_dir/prowler/providers/azure/services/cosmosdb/cosmosdb_account_firewall_use_selected_networks"
+                "/root_dir/prowler/providers/azure/services/postgresql/postgresql_flexible_server_enforce_ssl_enabled"
             ),
-            name="prowler.providers.azure.services.cosmosdb.cosmosdb_account_firewall_use_selected_networks.cosmosdb_account_firewall_use_selected_networks",
-            ispkg=False,
-        ),
-        ModuleInfo(
-            module_finder=FileFinder(
-                "/root_dir/prowler/providers/azure/services/cosmosdb"
-            ),
-            name="prowler.providers.azure.services.cosmosdb.cosmosdb_account_use_private_endpoints",
-            ispkg=True,
-        ),
-        ModuleInfo(
-            module_finder=FileFinder(
-                "/root_dir/prowler/providers/azure/services/cosmosdb/cosmosdb_account_use_private_endpoints"
-            ),
-            name="prowler.providers.azure.services.cosmosdb.cosmosdb_account_use_private_endpoints.cosmosdb_account_use_private_endpoints",
-            ispkg=False,
-        ),
-        ModuleInfo(
-            module_finder=FileFinder(
-                "/root_dir/prowler/providers/azure/services/cosmosdb"
-            ),
-            name="prowler.providers.azure.services.cosmosdb.cosmosdb_account_use_aad_and_rbac",
-            ispkg=True,
-        ),
-        ModuleInfo(
-            module_finder=FileFinder(
-                "/root_dir/prowler/providers/azure/services/cosmosdb/cosmosdb_account_use_aad_and_rbac"
-            ),
-            name="prowler.providers.azure.services.cosmosdb.cosmosdb_account_use_aad_and_rbac.cosmosdb_account_use_aad_and_rbac",
+            name="prowler.providers.azure.services.postgresql.postgresql_flexible_server_enforce_ssl_enabled.postgresql_flexible_server_enforce_ssl_enabled",
             ispkg=False,
         ),
     ]
@@ -808,16 +758,8 @@ class Test_Check:
                 "/root_dir/prowler/providers/azure/services/sqlserver/sqlserver_va_emails_notifications_admins_enabled",
             ),
             (
-                "cosmosdb_account_firewall_use_selected_networks",
-                "/root_dir/prowler/providers/azure/services/cosmosdb/cosmosdb_account_firewall_use_selected_networks",
-            ),
-            (
-                "cosmosdb_account_use_private_endpoints",
-                "/root_dir/prowler/providers/azure/services/cosmosdb/cosmosdb_account_use_private_endpoints",
-            ),
-            (
-                "cosmosdb_account_use_aad_and_rbac",
-                "/root_dir/prowler/providers/azure/services/cosmosdb/cosmosdb_account_use_aad_and_rbac",
+                "postgresql_flexible_server_enforce_ssl_enabled",
+                "/root_dir/prowler/providers/azure/services/postgresql/postgresql_flexible_server_enforce_ssl_enabled",
             ),
         ]
         returned_checks = recover_checks_from_provider(provider, service)

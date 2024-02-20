@@ -31,6 +31,7 @@ azure-identity = "1.15.0"
 azure-mgmt-applicationinsights = "4.0.0"
 azure-mgmt-authorization = "4.0.0"
 azure-mgmt-compute = "30.5.0"
+azure-mgmt-rdbms = "10.1.0"
 azure-mgmt-cosmosdb = "9.4.0"
 azure-mgmt-security = "6.0.0"
 azure-mgmt-sql = "3.0.1"
@@ -72,6 +73,7 @@ openapi-spec-validator = "0.7.1"
 pylint = "3.0.3"
 pytest = "8.0.0"
 pytest-cov = "4.1.0"
+pytest-env = "1.1.3"
 pytest-randomly = "3.15.0"
 pytest-xdist = "3.5.0"
 safety = "3.0.1"
@@ -97,3 +99,11 @@ search = 'prowler_version = "{current_version}"'
 pythonpath = [
   "."
 ]
+
+[tool.pytest_env]
+# For Moto and Boto3 while testing AWS
+AWS_ACCESS_KEY_ID = 'testing'
+AWS_DEFAULT_REGION = 'us-east-1'
+AWS_SECRET_ACCESS_KEY = 'testing'
+AWS_SECURITY_TOKEN = 'testing'
+AWS_SESSION_TOKEN = 'testing'
