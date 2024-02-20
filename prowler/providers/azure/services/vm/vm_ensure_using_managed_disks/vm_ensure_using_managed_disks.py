@@ -17,14 +17,17 @@ class vm_ensure_using_managed_disks(Check):
 
                 using_managed_disks = (
                     True
-                    if vm.storage_profile.os_disk
-                    and vm.storage_profile.os_disk.managed_disk
+                    if vm.storage_profile
+                    and getattr(vm.storage_profile, "os_disk", False)
+                    and getattr(vm.storage_profile.os_disk, "managed_disk", False)
                     else False
                 )
 
-                if using_managed_disks and vm.storage_profile.data_disks:
+                if using_managed_disks and getattr(
+                    vm.storage_profile, "data_disks", False
+                ):
                     for data_disk in vm.storage_profile.data_disks:
-                        if not data_disk.managed_disk:
+                        if not getattr(data_disk, "managed_disk", False):
                             using_managed_disks = False
                             break
 
