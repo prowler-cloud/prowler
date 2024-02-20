@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import Optional
 
 from azure.mgmt.compute import ComputeManagementClient
 from azure.mgmt.compute.models import StorageProfile
@@ -31,7 +30,7 @@ class VirtualMachines(AzureService):
                             vm.vm_id: VirtualMachine(
                                 resource_id=vm.id,
                                 resource_name=vm.name,
-                                storage_profile=getattr(vm, "storage_profile"),
+                                storage_profile=vm.storage_profile,
                             )
                         }
                     )
@@ -63,9 +62,7 @@ class VirtualMachines(AzureService):
                                 resource_id=disk.id,
                                 resource_name=disk.name,
                                 vms_attached=vms_attached,
-                                encryption_type=getattr(
-                                    getattr(disk, "encryption"), "type"
-                                ),
+                                encryption_type=getattr(disk.encryption, "type", ""),
                             )
                         }
                     )
@@ -81,7 +78,7 @@ class VirtualMachines(AzureService):
 class VirtualMachine:
     resource_id: str
     resource_name: str
-    storage_profile: Optional[StorageProfile]
+    storage_profile: StorageProfile
 
 
 @dataclass
@@ -89,4 +86,4 @@ class Disk:
     resource_id: str
     resource_name: str
     vms_attached: list[str]
-    encryption_type: Optional[str]
+    encryption_type: str
