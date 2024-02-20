@@ -30,7 +30,7 @@ class VirtualMachines(AzureService):
                             vm.vm_id: VirtualMachine(
                                 resource_id=vm.id,
                                 resource_name=vm.name,
-                                storage_profile=vm.storage_profile,
+                                storage_profile=getattr(vm, "storage_profile", None),
                             )
                         }
                     )
@@ -62,7 +62,9 @@ class VirtualMachines(AzureService):
                                 resource_id=disk.id,
                                 resource_name=disk.name,
                                 vms_attached=vms_attached,
-                                encryption_type=getattr(disk.encryption, "type", ""),
+                                encryption_type=getattr(
+                                    getattr(disk, "encryption", None), "type", None
+                                ),
                             )
                         }
                     )
