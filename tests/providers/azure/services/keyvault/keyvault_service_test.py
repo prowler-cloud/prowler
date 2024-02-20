@@ -32,7 +32,7 @@ def mock_keyvault_get_key_vaults(_):
 
 
 @patch(
-    "prowler.providers.azure.services.keyvault.keyvault_service.Storage.__get_key_vaults__",
+    "prowler.providers.azure.services.keyvault.keyvault_service.KeyVault.__get_key_vaults__",
     new=mock_keyvault_get_key_vaults,
 )
 class Test_keyvault_service:
@@ -46,25 +46,26 @@ class Test_keyvault_service:
     def test__get_key_vaults__(self):
         keyvault = KeyVault(set_mocked_azure_audit_info())
         assert (
-            keyvault.keyvaults[AZURE_SUBSCRIPTION][0].__class__.__name__
+            keyvault.key_vaults[AZURE_SUBSCRIPTION][0].__class__.__name__
             == "KeyVaultInfo"
         )
-        assert keyvault.keyvaults[AZURE_SUBSCRIPTION][0].id == "id"
-        assert keyvault.keyvaults[AZURE_SUBSCRIPTION][0].name == "name"
-        assert keyvault.keyvaults[AZURE_SUBSCRIPTION][0].location == "location"
+        assert keyvault.key_vaults[AZURE_SUBSCRIPTION][0].id == "id"
+        assert keyvault.key_vaults[AZURE_SUBSCRIPTION][0].name == "name"
+        assert keyvault.key_vaults[AZURE_SUBSCRIPTION][0].location == "location"
         assert (
-            keyvault.keyvaults[AZURE_SUBSCRIPTION][0].resource_group == "resource_group"
+            keyvault.key_vaults[AZURE_SUBSCRIPTION][0].resource_group
+            == "resource_group"
         )
-        assert keyvault.keyvaults[AZURE_SUBSCRIPTION][0].properties is None
+        assert keyvault.key_vaults[AZURE_SUBSCRIPTION][0].properties is None
 
     def test__get_keys__(self):
         keyvault = KeyVault(set_mocked_azure_audit_info())
         assert (
-            keyvault.keyvaults[AZURE_SUBSCRIPTION][0].keys[0].__class__.__name__
+            keyvault.key_vaults[AZURE_SUBSCRIPTION][0].keys[0].__class__.__name__
             == "Key"
         )
-        assert keyvault.keyvaults[AZURE_SUBSCRIPTION][0].keys[0].id == "id"
-        assert keyvault.keyvaults[AZURE_SUBSCRIPTION][0].keys[0].name == "name"
-        assert keyvault.keyvaults[AZURE_SUBSCRIPTION][0].keys[0].enabled is True
-        assert keyvault.keyvaults[AZURE_SUBSCRIPTION][0].keys[0].location == "location"
-        assert keyvault.keyvaults[AZURE_SUBSCRIPTION][0].keys[0].attributes is None
+        assert keyvault.key_vaults[AZURE_SUBSCRIPTION][0].keys[0].id == "id"
+        assert keyvault.key_vaults[AZURE_SUBSCRIPTION][0].keys[0].name == "name"
+        assert keyvault.key_vaults[AZURE_SUBSCRIPTION][0].keys[0].enabled is True
+        assert keyvault.key_vaults[AZURE_SUBSCRIPTION][0].keys[0].location == "location"
+        assert keyvault.key_vaults[AZURE_SUBSCRIPTION][0].keys[0].attributes is None

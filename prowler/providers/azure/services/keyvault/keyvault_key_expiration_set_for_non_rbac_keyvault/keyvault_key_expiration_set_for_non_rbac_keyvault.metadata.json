@@ -1,15 +1,15 @@
 {
   "Provider": "azure",
-  "CheckID": "keyvault_key_expiration_set_for_rbac_keyvault",
-  "CheckTitle": "Ensure that the Expiration Date is set for all Keys in RBAC Key Vaults",
+  "CheckID": "keyvault_key_expiration_set_for_non_rbac_keyvault",
+  "CheckTitle": "Ensure that the Expiration Date is set for all Keys in Non-RBAC Key Vaults.",
   "CheckType": [],
   "ServiceName": "keyvault",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "KeyVault",
-  "Description": "Ensure that all Keys in Role Based Access Control (RBAC) Azure Key Vaults have an expiration date set",
-  "Risk": "Azure Key Vault enables users to store and use cryptographic keys within the Microsoft Azure environment. The exp (expiration date) attribute identifies the expiration date on or after which the key MUST NOT be used for encryption of new data, wrapping of new keys, and signing. By default, keys never expire. It is thus recommended that keys be rotated in the key vault and set an explicit expiration date for all keys to help enforce the key rotation. This ensures that the keys cannot be used beyond their assigned lifetimes.",
+  "Description": "Ensure that all Keys in Non Role Based Access Control (RBAC) Azure Key Vaults have an expiration date set.",
+  "Risk": "Azure Key Vault enables users to store and use cryptographic keys within the Microsoft Azure environment. The exp (expiration date) attribute identifies the expiration date on or after which the key MUST NOT be used for a cryptographic operation. By default, keys never expire. It is thus recommended that keys be rotated in the key vault and set an explicit expiration date for all keys. This ensures that the keys cannot be used beyond their assigned lifetimes.",
   "RelatedUrl": "https://docs.microsoft.com/en-us/azure/key-vault/key-vault-whatis",
   "Remediation": {
     "Code": {
