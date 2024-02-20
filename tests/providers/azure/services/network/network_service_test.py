@@ -22,7 +22,6 @@ def mock_network_get_security_groups(_, token):
                 name="name",
                 location="location",
                 security_rules=[],
-                subscription_locations=["location"],
             )
         ]
     }
@@ -83,9 +82,6 @@ class Test_Network_Service:
         assert network.security_groups[AZURE_SUBSCRIPTION][0].name == "name"
         assert network.security_groups[AZURE_SUBSCRIPTION][0].location == "location"
         assert network.security_groups[AZURE_SUBSCRIPTION][0].security_rules == []
-        assert network.security_groups[AZURE_SUBSCRIPTION][
-            0
-        ].subscription_locations == ["location"]
 
     def test__get_network_watchers__(self):
         network = Network(set_mocked_azure_audit_info())
@@ -99,12 +95,6 @@ class Test_Network_Service:
         assert network.network_watchers[AZURE_SUBSCRIPTION][0].flow_logs == [
             FlowLog(enabled=True, retention_policy=90)
         ]
-
-    def test__get_subscription_locations__(self):
-        network = Network(set_mocked_azure_audit_info())
-        assert network.security_groups[AZURE_SUBSCRIPTION][
-            0
-        ].subscription_locations == ["location"]
 
     def __get_flow_logs__(self):
         network = Network(set_mocked_azure_audit_info())
@@ -137,7 +127,3 @@ class Test_Network_Service:
         assert network.bastion_hosts[AZURE_SUBSCRIPTION][0].id == "id"
         assert network.bastion_hosts[AZURE_SUBSCRIPTION][0].name == "name"
         assert network.bastion_hosts[AZURE_SUBSCRIPTION][0].location == "location"
-
-    def __get_token__(self, audit_info):
-        token = audit_info.credentials.get_token()
-        return token

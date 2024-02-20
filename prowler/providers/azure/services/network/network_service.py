@@ -10,11 +10,11 @@ from prowler.providers.azure.lib.service.service import AzureService
 class Network(AzureService):
     def __init__(self, audit_info):
         super().__init__(NetworkManagementClient, audit_info)
-        self.security_groups = self.__get_security_groups__(audit_info)
+        self.security_groups = self.__get_security_groups__()
         self.bastion_hosts = self.__get_bastion_hosts__()
         self.network_watchers = self.__get_network_watchers__()
 
-    def __get_security_groups__(self, audit_info):
+    def __get_security_groups__(self):
         logger.info("Network - Getting Network Security Groups...")
         security_groups = {}
         for subscription, client in self.clients.items():
@@ -22,15 +22,12 @@ class Network(AzureService):
                 security_groups.update({subscription: []})
                 security_groups_list = client.network_security_groups.list_all()
                 for security_group in security_groups_list:
-                    subscription_id = security_group.id.split("/")[2]
-                    subscription_locations = audit_info.locations[subscription_id]
                     security_groups[subscription].append(
                         SecurityGroup(
                             id=security_group.id,
                             name=security_group.name,
                             location=security_group.location,
                             security_rules=security_group.security_rules,
-                            subscription_locations=subscription_locations,
                         )
                     )
 
@@ -117,4 +114,3 @@ class SecurityGroup:
     name: str
     location: str
     security_rules: list
-    subscription_locations: list

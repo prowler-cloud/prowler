@@ -9,21 +9,18 @@ class network_watcher_enabled(Check):
         for subscription, network_watchers in network_client.network_watchers.items():
             for network_watcher in network_watchers:
                 nw_locations.append(network_watcher.location)
-        for subscription, security_groups in network_client.security_groups.items():
-            for security_group in security_groups:
-                report = Check_Report_Azure(self.metadata())
-                report.subscription = subscription
-                report.resource_name = security_group.name
-                report.resource_id = security_group.id
-                for location in security_group.subscription_locations:
-                    if location not in nw_locations:
-                        report.status = "FAIL"
-                        report.status_extended = f"Security Group {security_group.name} from subscription {subscription} has Network Watcher disabled for the location {location}."
-                        findings.append(report)
-                        break
-                    else:
-                        report.status = "PASS"
-                        report.status_extended = f"Security Group {security_group.name} from subscription {subscription} has Network Watcher enabled for the location {location}."
-                        findings.append(report)
+        for subscription, location in network_client.locations.items():
+            report = Check_Report_Azure(self.metadata())
+            report.subscription = subscription
+            report.resource_name = "Network Watcher"
+            report.resource_id = f"/subscriptions/{subscription}/providers/Microsoft.Network/networkWatchers/{location}"
+            if location not in nw_locations:
+                report.status = "FAIL"
+                report.status_extended = f"Network Watcher is not enabled for the location {location} in subscription {subscription}."
+                findings.append(report)
+            else:
+                report.status = "PASS"
+                report.status_extended = f"Network Watcher is enabled for the location {location} in subscription {subscription}."
+                findings.append(report)
 
         return findings
