@@ -28,12 +28,14 @@ class KeyVault(AzureService):
                     ).properties
                     keyvaults[subscription].append(
                         KeyVaultInfo(
+                            id=keyvault.id,
                             name=keyvault_name,
                             location=keyvault.location,
                             resource_group=resource_group,
                             properties=keyvault_properties,
                             keys=[
                                 Key(
+                                    id=key.id,
                                     name=key.name,
                                     enabled=key.attributes.enabled,
                                     location=key.location,
@@ -54,6 +56,7 @@ class KeyVault(AzureService):
 
 @dataclass
 class Key:
+    id: str
     name: str
     enabled: bool
     location: str
@@ -62,6 +65,7 @@ class Key:
 
 @dataclass
 class KeyVaultInfo:
+    id: str
     name: str
     location: str
     resource_group: str
