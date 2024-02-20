@@ -1,17 +1,16 @@
 from unittest import mock
 from uuid import uuid4
 
-from prowler.providers.azure.services.network.network_service import (
-    NetworkWatcher,
-    SecurityGroup,
-)
+from prowler.providers.azure.services.network.network_service import NetworkWatcher
 
 AZURE_SUBSCRIPTION = str(uuid4())
 
 
 class Test_network_watcher_enabled:
-    def test_no_security_groups_network_watchers(self):
+    def test_no_network_watchers(self):
         network_client = mock.MagicMock
+        locations = []
+        network_client.locations = {AZURE_SUBSCRIPTION: locations}
         network_client.security_groups = {}
         network_client.network_watchers = {}
 
@@ -30,25 +29,12 @@ class Test_network_watcher_enabled:
             result = check.execute()
             assert len(result) == 0
 
-    def test_network_security_groups_invalid_network_watchers(self):
+    def test_network_invalid_network_watchers(self):
         network_client = mock.MagicMock
-        security_group_name = "Security Group Name"
-        security_group_id = str(uuid4())
-        network_watcher_name = "Network Watcher Name"
-        network_watcher_id = str(uuid4)
         locations = ["location"]
-
-        network_client.security_groups = {
-            AZURE_SUBSCRIPTION: [
-                SecurityGroup(
-                    id=security_group_id,
-                    name=security_group_name,
-                    location="location",
-                    security_rules=[],
-                    subscription_locations=locations,
-                )
-            ]
-        }
+        network_client.locations = {AZURE_SUBSCRIPTION: locations}
+        network_watcher_name = "Network Watcher"
+        network_watcher_id = f"/subscriptions/{AZURE_SUBSCRIPTION}/providers/Microsoft.Network/networkWatchers/{locations[0]}"
 
         network_client.network_watchers = {
             AZURE_SUBSCRIPTION: [
@@ -78,30 +64,18 @@ class Test_network_watcher_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Security Group {security_group_name} from subscription {AZURE_SUBSCRIPTION} has Network Watcher disabled for the location {locations[0]}."
+                == f"Network Watcher is not enabled for the location {locations[0]} in subscription {AZURE_SUBSCRIPTION}."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION
-            assert result[0].resource_name == security_group_name
-            assert result[0].resource_id == security_group_id
+            assert result[0].resource_name == network_watcher_name
+            assert result[0].resource_id == network_watcher_id
 
-    def test_network_security_groups_valid_network_watchers(self):
+    def test_network_valid_network_watchers(self):
         network_client = mock.MagicMock
-        security_group_name = "Security Group Name"
-        security_group_id = str(uuid4())
-        network_watcher_name = "Network Watcher Name"
-        network_watcher_id = str(uuid4)
-
-        network_client.security_groups = {
-            AZURE_SUBSCRIPTION: [
-                SecurityGroup(
-                    id=security_group_id,
-                    name=security_group_name,
-                    location="location",
-                    security_rules=[],
-                    subscription_locations=["location"],
-                )
-            ]
-        }
+        locations = ["location"]
+        network_client.locations = {AZURE_SUBSCRIPTION: locations}
+        network_watcher_name = "Network Watcher"
+        network_watcher_id = f"/subscriptions/{AZURE_SUBSCRIPTION}/providers/Microsoft.Network/networkWatchers/{locations[0]}"
 
         network_client.network_watchers = {
             AZURE_SUBSCRIPTION: [
@@ -131,8 +105,8 @@ class Test_network_watcher_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Security Group {security_group_name} from subscription {AZURE_SUBSCRIPTION} has Network Watcher enabled for the location location."
+                == f"Network Watcher is enabled for the location {locations[0]} in subscription {AZURE_SUBSCRIPTION}."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION
-            assert result[0].resource_name == security_group_name
-            assert result[0].resource_id == security_group_id
+            assert result[0].resource_name == network_watcher_name
+            assert result[0].resource_id == network_watcher_id

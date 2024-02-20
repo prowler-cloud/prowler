@@ -14,7 +14,7 @@ from tests.providers.azure.azure_fixtures import (
 )
 
 
-def mock_network_get_security_groups(_, token):
+def mock_network_get_security_groups(_):
     return {
         AZURE_SUBSCRIPTION: [
             SecurityGroup(
