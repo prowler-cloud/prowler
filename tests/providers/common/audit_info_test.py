@@ -34,6 +34,7 @@ mock_azure_audit_info = Azure_Audit_Info(
     audit_resources=None,
     audit_config=None,
     azure_region_config=Azure_Region_Config(),
+    locations=None,
 )
 
 mock_set_audit_info = Audit_Info()

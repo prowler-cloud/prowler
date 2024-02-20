@@ -1,0 +1,31 @@
+{
+    "Provider": "azure",
+    "CheckID": "network_rdp_internet_access_restricted",
+    "CheckTitle": "Ensure that RDP access from the Internet is evaluated and restricted",
+    "CheckType": [],
+    "ServiceName": "network",
+    "SubServiceName": "",
+    "ResourceIdTemplate": "",
+    "Severity": "high",
+    "ResourceType": "Network",
+    "Description": "Network security groups should be periodically evaluated for port misconfigurations. Where certain ports and protocols may be exposed to the Internet, they should be evaluated for necessity and restricted wherever they are not explicitly required.",
+    "Risk": "The potential security problem with using RDP over the Internet is that attackers can use various brute force techniques to gain access to Azure Virtual Machines. Once the attackers gain access, they can use a virtual machine as a launch point for compromising other machines on an Azure Virtual Network or even attack networked devices outside of Azure.",
+    "RelatedUrl": "https://docs.microsoft.com/en-us/azure/security/azure-security-network-security-best-practices#disable-rdpssh-access-to-azure-virtual-machines",
+    "Remediation": {
+      "Code": {
+        "CLI": "",
+        "NativeIaC": "",
+        "Other": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/Network/unrestricted-rdp-access.html#",
+        "Terraform": "https://docs.bridgecrew.io/docs/bc_azr_networking_2#terraform"
+      },
+      "Recommendation": {
+        "Text": "Where RDP is not explicitly required and narrowly configured for resources attached to the Network Security Group, Internet-level access to your Azure resources should be restricted or eliminated. For internal access to relevant resources, configure an encrypted network tunnel such as: ExpressRoute Site-to-site VPN Point-to-site VPN",
+        "Url": "https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-network-security#ns-1-establish-network-segmentation-boundaries"
+      }
+    },
+    "Categories": [],
+    "DependsOn": [],
+    "RelatedTo": [],
+    "Notes": ""
+  }
+  
