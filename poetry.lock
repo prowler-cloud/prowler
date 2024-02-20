@@ -389,6 +389,22 @@ azure-mgmt-core = ">=1.3.2,<2.0.0"
 isodate = ">=0.6.1,<1.0.0"
 
 [[package]]
+name = "azure-mgmt-keyvault"
+version = "10.3.0"
+description = "Microsoft Azure Key Vault Management Client Library for Python"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "azure-mgmt-keyvault-10.3.0.tar.gz", hash = "sha256:183b4164cf1868b8ea7efeaa98edad7d2a4e14a9bd977c2818b12b75150cd2a2"},
+    {file = "azure_mgmt_keyvault-10.3.0-py3-none-any.whl", hash = "sha256:3410cf6c703e9570ed3c8e9716e483c02b1804adde6ab437ddc8feac4545acd6"},
+]
+
+[package.dependencies]
+azure-common = ">=1.1,<2.0"
+azure-mgmt-core = ">=1.3.2,<2.0.0"
+isodate = ">=0.6.1,<1.0.0"
+
+[[package]]
 name = "azure-mgmt-rdbms"
 version = "10.1.0"
 description = "Microsoft Azure RDBMS Management Client Library for Python"
@@ -4230,4 +4246,4 @@ docs = ["mkdocs", "mkdocs-material"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.13"
-content-hash = "05b5db268ce271d509506f1afc3222e42d7ee6df3e255671ffd78582a0fc4829"
+content-hash = "46533efd88faed84bc413a9603bc50a26d89fe7d194e0360eb3f2c88cc31daeb"
