@@ -176,7 +176,7 @@ class Test_inspector2_active_findings_exist:
                 assert result[0].status == "FAIL"
                 assert (
                     result[0].status_extended
-                    == "There are 1 ACTIVE Inspector2 findings."
+                    == "There are 1 active Inspector2 findings."
                 )
                 assert result[0].resource_id == AWS_ACCOUNT_NUMBER
                 assert (
@@ -242,7 +242,7 @@ class Test_inspector2_active_findings_exist:
                 assert result[0].status == "FAIL"
                 assert (
                     result[0].status_extended
-                    == "There are 1 ACTIVE Inspector2 findings."
+                    == "There are 1 active Inspector2 findings."
                 )
                 assert result[0].resource_id == AWS_ACCOUNT_NUMBER
                 assert (
