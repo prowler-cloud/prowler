@@ -1,0 +1,30 @@
+{
+  "Provider": "azure",
+  "CheckID": "monitor_ensure_diagnostic_setting_appropiate",
+  "CheckTitle": "Ensure Diagnostic Setting captures appropriate categories",
+  "CheckType": [],
+  "ServiceName": "monitor",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Monitor",
+  "Description": "Prerequisite: A Diagnostic Setting must exist. If a Diagnostic Setting does not exist, the navigation and options within this recommendation will not be available. Please review the recommendation at the beginning of this subsection titled: 'Ensure that a 'Diagnostic Setting' exists.' The diagnostic setting should be configured to log the appropriate activities from the control/management plane.",
+  "Risk": "A diagnostic setting controls how the diagnostic log is exported. Capturing the diagnostic setting categories for appropriate control/management plane activities allows proper alerting.",
+  "RelatedUrl": "https://learn.microsoft.com/en-us/azure/azure-monitor/essentials/diagnostic-settings",
+  "Remediation": {
+    "Code": {
+      "CLI": "az monitor diagnostic-settings subscription list --subscription <subscription ID>",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/Monitor/diagnostic-setting-categories.html",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "1. Go to Azure Monitor 2. Click Activity log 3. Click on Export Activity Logs 4. Select the Subscription from the drop down menu 5. Click on Add diagnostic setting 6. Enter a name for your new Diagnostic Setting 7. Check the following categories: Administrative, Alert, Policy, and Security 8. Choose the destination details according to your organization's needs.",
+      "Url": ""
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
