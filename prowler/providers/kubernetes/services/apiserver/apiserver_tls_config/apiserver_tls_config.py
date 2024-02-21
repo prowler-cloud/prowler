@@ -14,22 +14,17 @@ class apiserver_tls_config(Check):
             report.resource_id = pod.uid
             report.status = "PASS"
             report.status_extended = (
-                "TLS certificate and key are set appropriately in pod {pod.name}."
+                f"TLS certificate and key are set appropriately in pod {pod.name}."
             )
-            tls_config_set = False
             for container in pod.containers.values():
                 # Check if both "--tls-cert-file" and "--tls-private-key-file" are set
-                if "--tls-cert-file" in str(
+                if "--tls-cert-file" not in str(
                     container.command
-                ) and "--tls-private-key-file" in str(container.command):
-                    tls_config_set = True
-                    break
-
-            if not tls_config_set:
-                report.status = "FAIL"
-                report.status_extended = (
-                    "TLS certificate and/or key are not set in pod {pod.name}."
-                )
+                ) or "--tls-private-key-file" not in str(container.command):
+                    report.status = "FAIL"
+                    report.status_extended = (
+                        f"TLS certificate and/or key are not set in pod {pod.name}."
+                    )
 
             findings.append(report)
         return findings

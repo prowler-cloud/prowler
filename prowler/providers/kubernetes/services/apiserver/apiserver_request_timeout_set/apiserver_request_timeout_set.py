@@ -16,17 +16,13 @@ class apiserver_request_timeout_set(Check):
             report.status_extended = (
                 f"Request timeout is set appropriately in pod {pod.name}."
             )
-            request_timeout_set = False
             for container in pod.containers.values():
                 # Check if "--request-timeout" is set to an appropriate value
-                if "--request-timeout" in str(container.command):
+                if "--request-timeout" not in str(container.command):
                     # Assuming the value is valid, e.g., '300s' or '1m'
-                    request_timeout_set = True
+                    report.status = "FAIL"
+                    report.status_extended = f"Request timeout is not set or not set appropriately in pod {pod.name}."
                     break
-
-            if not request_timeout_set:
-                report.status = "FAIL"
-                report.status_extended = f"Request timeout is not set or not set appropriately in pod {pod.name}."
 
             findings.append(report)
         return findings
