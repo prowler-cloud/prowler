@@ -40,9 +40,6 @@ class Monitor(AzureService):
                             log_analytics_destination_type=setting.log_analytics_destination_type,
                         )
                     )
-                    for i in range(0, 6):
-                        print(setting.logs[i].enabled)
-                        print(setting.logs[i].category)
 
             except Exception as error:
                 logger.error(
