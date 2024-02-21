@@ -9,8 +9,8 @@ from prowler.providers.azure.lib.service.service import AzureService
 
 ########################## Defender
 class Defender(AzureService):
-    def __init__(self, audit_info):
-        super().__init__(SecurityCenter, audit_info)
+    def __init__(self, provider):
+        super().__init__(SecurityCenter, provider)
 
         self.pricings = self.__get_pricings__()
 

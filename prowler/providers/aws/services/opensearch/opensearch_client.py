@@ -1,6 +1,6 @@
-from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
 from prowler.providers.aws.services.opensearch.opensearch_service import (
     OpenSearchService,
 )
+from prowler.providers.common.common import get_global_provider
 
-opensearch_client = OpenSearchService(current_audit_info)
+opensearch_client = OpenSearchService(get_global_provider())

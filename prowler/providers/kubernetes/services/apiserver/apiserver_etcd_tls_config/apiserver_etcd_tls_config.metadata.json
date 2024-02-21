@@ -13,7 +13,7 @@
   "ResourceType": "KubernetesAPIServer",
   "Description": "This check ensures that the Kubernetes API server is configured with TLS encryption for etcd client connections, using --etcd-certfile and --etcd-keyfile arguments. Setting up TLS for etcd is crucial for securing the sensitive data stored in etcd as it's the primary datastore for Kubernetes.",
   "Risk": "Without TLS encryption, data stored in etcd is susceptible to eavesdropping and man-in-the-middle attacks, potentially leading to data breaches.",
-  "RelatedUrl": "https://coreos.com/etcd/docs/latest/op-guide/security.html",
+  "RelatedUrl": "https://kubernetes.io/docs/tasks/administer-cluster/configure-upgrade-etcd/",
   "Remediation": {
     "Code": {
       "CLI": "Edit the kube-apiserver configuration to include TLS parameters for etcd connection. Example: --etcd-certfile=<path/to/client-certificate-file> --etcd-keyfile=<path/to/client-key-file>",
@@ -23,7 +23,7 @@
     },
     "Recommendation": {
       "Text": "Enable TLS encryption for etcd client connections to secure sensitive data.",
-      "Url": "https://kubernetes.io/docs/admin/kube-apiserver/"
+      "Url": "https://kubernetes.io/docs/tasks/administer-cluster/configure-upgrade-etcd/#limiting-access-of-etcd-clusters"
     }
   },
   "Categories": [

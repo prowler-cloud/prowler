@@ -13,8 +13,8 @@ from prowler.providers.azure.lib.service.service import AzureService
 
 ########################## SQLServer
 class SQLServer(AzureService):
-    def __init__(self, audit_info):
-        super().__init__(SqlManagementClient, audit_info)
+    def __init__(self, provider):
+        super().__init__(SqlManagementClient, provider)
         self.sql_servers = self.__get_sql_servers__()
 
     def __get_sql_servers__(self):

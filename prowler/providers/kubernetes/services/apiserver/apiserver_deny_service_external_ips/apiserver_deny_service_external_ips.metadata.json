@@ -23,7 +23,7 @@
     },
     "Recommendation": {
       "Text": "Enable the DenyServiceExternalIPs admission controller by setting the '--disable-admission-plugins' argument in the kube-apiserver configuration.",
-      "Url": "https://kubernetes.io/docs/admin/kube-apiserver/"
+      "Url": "https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#how-do-i-turn-off-an-admission-controller"
     }
   },
   "Categories": [

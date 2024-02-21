@@ -6,9 +6,9 @@ from prowler.providers.aws.lib.service.service import AWSService
 
 ################## Macie
 class Macie(AWSService):
-    def __init__(self, audit_info):
+    def __init__(self, provider):
         # Call AWSService's __init__
-        super().__init__("macie2", audit_info)
+        super().__init__("macie2", provider)
         self.sessions = []
         self.__threading_call__(self.__get_macie_session__)
 

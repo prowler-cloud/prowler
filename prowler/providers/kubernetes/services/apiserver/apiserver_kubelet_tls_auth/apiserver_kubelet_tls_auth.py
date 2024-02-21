@@ -21,5 +21,6 @@ class apiserver_kubelet_tls_auth(Check):
 
                     report.status = "FAIL"
                     report.status_extended = f"API Server is missing kubelet TLS authentication arguments in pod {pod.name}."
+                    break
             findings.append(report)
         return findings

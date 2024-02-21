@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
 
-class CloudProvider(ABC):
+class Provider(ABC):
     @abstractmethod
     def setup_session(self):
         pass

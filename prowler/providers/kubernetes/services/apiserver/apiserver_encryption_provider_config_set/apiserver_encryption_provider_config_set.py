@@ -17,11 +17,11 @@ class apiserver_encryption_provider_config_set(Check):
                 f"Encryption provider config is set appropriately in pod {pod.name}."
             )
 
-            encryption_provider_config_set = False
+            encryption_provider_config_set = True
             for container in pod.containers.values():
                 # Check if "--encryption-provider-config" is set
-                if "--encryption-provider-config" in str(container.command):
-                    encryption_provider_config_set = True
+                if "--encryption-provider-config" not in str(container.command):
+                    encryption_provider_config_set = False
                     break
 
             if not encryption_provider_config_set:
