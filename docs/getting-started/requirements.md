@@ -79,19 +79,23 @@ Microsoft Entra ID (AAD earlier) permissions required by the tool are the follow
 The best way to assign it is through the azure web console:
 
 1. Access to Microsoft Entra ID
-2. Go to "App registrations" and register a new application
+2. In the left menu bar, go to "App registrations"
+3. Once there, in the menu bar click on "+ New registration" to register a new application
+4. Fill the "Name, select the "Supported account types" and click on "Register. You will be redirected to the applications page.
   ![Register an Application page](../img/register-application.png)
-3. Once your application is registered, select "API permissions" blade
-4. Add the needed permissions:
+4. Select the new application
+5. In the left menu bar, select "API permissions"
+6. Then click on "+ Add a permission" and select "Microsoft Graph"
+7. Once in the "Microsoft Graph" view, select "Application permissions"
+8. Finally, search for "Directory" and "Policy" and select the following permissions:
     - `Directory.Read.All`
     - `Policy.Read.All`
-
     ![EntraID Permissions](../img/AAD-permissions.png)
 
 
 #### Subscriptions scope
 
-Regarding the subscription scope, Prowler by default scans all the subscriptions that is able to list, so it is required to add the following RBAC builtin roles per subscription  to the entity that is going to be assumed by the tool:
+Regarding the subscription scope, Prowler by default scans all the subscriptions that is able to list, so it is required to add the following RBAC builtin roles per subscription to the entity that is going to be assumed by the tool:
 
 - `Security Reader`
 - `Reader`
@@ -102,12 +106,12 @@ To assign this roles, follow the instructions:
 2. Select "Access control (IAM)".
 3. In the overview, select "Roles"
   ![IAM Page](../img/page-IAM.png)
-4. Click on Add and select 'Add role assigment'
-5. In the bar, search `Security Reader` and select it.
-6. In the Members blade, select a member.
-7. Review + assign to apply the new role.
+4. Click on "+ Add" and select "Add role assignment"
+5. In the search bar, type `Security Reader`, select it and click on "Next"
+6. In the Members tab, click on "+ Select members" and add the members you want to assign this role.
+7. Click on "Review + assign" to apply the new role.
 
-*Repeat these steps for `Reader`role*
+*Repeat these steps for `Reader` role*
 
 ## Google Cloud
 
