@@ -38,8 +38,8 @@
 `Prowler` is an Open Source security tool to perform AWS, GCP and Azure security best practices assessments, audits, incident response, continuous monitoring, hardening and forensics readiness.
 
 It contains hundreds of controls covering CIS, NIST 800, NIST CSF, CISA, RBI, FedRAMP, PCI-DSS, GDPR, HIPAA, FFIEC, SOC2, GXP, AWS Well-Architected Framework Security Pillar, AWS Foundational Technical Review (FTR), ENS (Spanish National Security Scheme) and your custom security frameworks.
-
-| Provider | Checks | Services | [Compliance Frameworks](https://docs.prowler.cloud/en/latest/tutorials/compliance/) | [Categories](https://docs.prowler.cloud/en/latest/tutorials/misc/#categories) |
+https://docs.prowler.com/projects/prowler-open-source/en/latest/
+| Provider | Checks | Services | [Compliance Frameworks](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/compliance/) | [Categories](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/misc/#categories) |
 |---|---|---|---|---|
 | AWS | 302 | 61 -> `prowler aws --list-services` | 27 -> `prowler aws --list-compliance` | 6 -> `prowler aws --list-categories` |
 | GCP | 73 | 11 -> `prowler gcp --list-services` | 1 -> `prowler gcp --list-compliance` | 2 -> `prowler gcp --list-categories`|
@@ -48,7 +48,7 @@ It contains hundreds of controls covering CIS, NIST 800, NIST CSF, CISA, RBI, Fe
 
 # 📖 Documentation
 
-The full documentation can now be found at [https://docs.prowler.cloud](https://docs.prowler.cloud)
+The full documentation can now be found at [https://docs.prowler.pro](https://docs.prowler.com/projects/prowler-open-source/en/latest/)
 
 ## Looking for Prowler v2 documentation?
 For Prowler v2 Documentation, please go to https://github.com/prowler-cloud/prowler/tree/2.12.1.
@@ -62,7 +62,7 @@ Prowler is available as a project in [PyPI](https://pypi.org/project/prowler-clo
 pip install prowler
 prowler -v
 ```
-More details at https://docs.prowler.cloud
+More details at [https://docs.prowler.pro](https://docs.prowler.com/projects/prowler-open-source/en/latest/)
 
 ## Containers
 
