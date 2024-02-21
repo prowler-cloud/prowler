@@ -1,0 +1,30 @@
+{
+  "Provider": "azure",
+  "CheckID": "keyvault_rbac_enabled",
+  "CheckTitle": "Enable Role Based Access Control for Azure Key Vault",
+  "CheckType": [],
+  "ServiceName": "keyvault",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "KeyVault",
+  "Description": "WARNING: Role assignments disappear when a Key Vault has been deleted (soft-delete) and recovered. Afterwards it will be required to recreate all role assignments. This is a limitation of the soft-delete feature across all Azure services.",
+  "Risk": "The new RBAC permissions model for Key Vaults enables a much finer grained access control for key vault secrets, keys, certificates, etc., than the vault access policy. This in turn will permit the use of privileged identity management over these roles, thus securing the key vaults with JIT Access management.",
+  "RelatedUrl": "https://docs.microsoft.com/en-gb/azure/key-vault/general/rbac-migration#vault-access-policy-to-azure-rbac-migration-steps",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "https://www.tenable.com/policies/cloud-security/AC_AZURE_0552",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "From Azure Portal Key Vaults can be configured to use Azure role-based access control on creation. For existing Key Vaults: 1. From Azure Home open the Portal Menu in the top left corner 2. Select Key Vaults 3. Select a Key Vault to audit 4. Select Access configuration 5. Set the Permission model radio button to Azure role-based access control, taking note of the warning message 6. Click Save 7. Select Access Control (IAM) 8. Select the Role Assignments tab 9. Reapply permissions as needed to groups or users",
+      "Url": "https://docs.microsoft.com/en-gb/azure/role-based-access-control/role-assignments-portal?tabs=current"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Implementation needs to be properly designed from the ground up, as this is a fundamental change to the way key vaults are accessed/managed. Changing permissions to key vaults will result in loss of service as permissions are re-applied. For the least amount of downtime, map your current groups and users to their corresponding permission needs."
+}
