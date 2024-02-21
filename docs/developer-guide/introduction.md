@@ -1,6 +1,6 @@
 # Developer Guide
 
-You can extend Prowler in many different ways, in most cases you will want to create your own checks and compliance security frameworks, here is where you can learn about how to get started with it. We also include how to create custom outputs, integrations and more.
+You can extend Prowler Open Source in many different ways, in most cases you will want to create your own checks and compliance security frameworks, here is where you can learn about how to get started with it. We also include how to create custom outputs, integrations and more.
 
 ## Get the code and install all dependencies
 

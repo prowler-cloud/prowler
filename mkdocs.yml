@@ -1,15 +1,15 @@
 # Project information
-site_name: Prowler Documentation
-site_url: https://docs.prowler.pro/
+site_name: Prowler Open Source Documentation
+site_url: https://docs.prowler.com/
 site_description: >-
-  Prowler Documentation Site
+  Prowler Open Source Documentation
 
 # Theme Configuration
 theme:
   language: en
-  logo: img/prowler-logo.png
+  logo: img/prowler-logo-white.png
   name: material
-  favicon: img/prowler-icon.svg
+  favicon: favicon.ico
   features:
     - navigation.tabs
     - navigation.tabs.sticky
@@ -79,7 +79,7 @@ nav:
   - Contact Us: contact.md
   - Troubleshooting: troubleshooting.md
   - About: about.md
-  - ProwlerPro: https://prowler.pro
+  - Prowler SaaS: https://prowler.com
 # Customization
 extra:
   consent:
@@ -121,8 +121,8 @@ markdown_extensions:
   - pymdownx.caret
   - pymdownx.details
   - pymdownx.emoji:
-      emoji_generator: !!python/name:materialx.emoji.to_svg
-      emoji_index: !!python/name:materialx.emoji.twemoji
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
   - pymdownx.highlight:
       anchor_linenums: true
   - pymdownx.inlinehilite
