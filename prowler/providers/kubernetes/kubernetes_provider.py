@@ -7,11 +7,7 @@ from prowler.lib.logger import logger
 
 
 class Kubernetes_Provider:
-    def __init__(
-        self,
-        kubeconfig_file: str,
-        context: str,
-    ):
+    def __init__(self, kubeconfig_file: str, context: str, namespace: str):
         logger.info("Instantiating Kubernetes Provider ...")
         self.api_client, self.context = self.__set_credentials__(
             kubeconfig_file, context
@@ -19,15 +15,27 @@ class Kubernetes_Provider:
         if not self.api_client:
             logger.critical("Failed to set up a Kubernetes session.")
             sys.exit(1)
+        if not namespace:
+            self.namespaces = self.get_all_namespaces()
+        else:
+            self.namespaces = [namespace]
 
-    def __set_credentials__(self, kubeconfig_file, context):
+    def __set_credentials__(self, kubeconfig_file, input_context):
         try:
             if kubeconfig_file:
                 # Use kubeconfig file if provided
                 config.load_kube_config(
-                    config_file=os.path.abspath(kubeconfig_file), context=context
+                    config_file=os.path.abspath(kubeconfig_file), context=input_context
                 )
-                context = config.list_kube_config_contexts()[0][0]
+                # Set context if input in argument
+                if input_context:
+                    contexts = config.list_kube_config_contexts()[0]
+                    for context_item in contexts:
+                        if context_item["name"] == input_context:
+                            context = context_item
+                else:
+                    # Get active context
+                    context = config.list_kube_config_contexts()[1]
             else:
                 # Otherwise try to load in-cluster config
                 config.load_incluster_config()
@@ -47,6 +55,18 @@ class Kubernetes_Provider:
 
     def get_credentials(self):
         return self.api_client, self.context
+
+    def get_all_namespaces(self):
+        """This function retrieves a list of all namespaces from a Kubernetes cluster."""
+        try:
+            v1 = client.CoreV1Api()
+            namespace_list = v1.list_namespace()
+            namespaces = [item.metadata.name for item in namespace_list.items]
+            return namespaces
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
 
     def search_and_save_roles(
         self, roles: list, role_bindings, context_user: str, role_binding_type: str

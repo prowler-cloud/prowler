@@ -6,7 +6,7 @@
     "Security",
     "Configuration"
   ],
-  "ServiceName": "Core",
+  "ServiceName": "core",
   "SubServiceName": "Capability Control",
   "ResourceIdTemplate": "",
   "Severity": "high",

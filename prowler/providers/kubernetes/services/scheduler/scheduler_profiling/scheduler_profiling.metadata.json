@@ -6,7 +6,7 @@
     "Cluster Performance",
     "Cluster Security"
   ],
-  "ServiceName": "kube-scheduler",
+  "ServiceName": "scheduler",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",

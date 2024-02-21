@@ -6,7 +6,7 @@
     "Security",
     "Configuration"
   ],
-  "ServiceName": "Core",
+  "ServiceName": "core",
   "SubServiceName": "Privilege Escalation Control",
   "ResourceIdTemplate": "",
   "Severity": "high",

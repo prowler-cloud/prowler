@@ -6,7 +6,7 @@
     "Security",
     "Configuration"
   ],
-  "ServiceName": "Core",
+  "ServiceName": "core",
   "SubServiceName": "Seccomp Profile",
   "ResourceIdTemplate": "",
   "Severity": "high",

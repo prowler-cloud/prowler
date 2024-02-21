@@ -6,7 +6,7 @@
     "Security",
     "Configuration"
   ],
-  "ServiceName": "Core",
+  "ServiceName": "core",
   "SubServiceName": "Host Network Namespace",
   "ResourceIdTemplate": "",
   "Severity": "high",

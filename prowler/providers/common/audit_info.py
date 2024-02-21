@@ -66,14 +66,13 @@ GCP Account: {Fore.YELLOW}[{profile}]{Style.RESET_ALL}  GCP Project IDs: {Fore.Y
         # Get the current context
         cluster_name = self.context.get("context").get("cluster")
         user_name = self.context.get("context").get("user")
-        namespace = self.context.get("namespace", "default")
         roles = self.get_context_user_roles()
         roles_str = ", ".join(roles) if roles else "No associated Roles"
 
         report = f"""
 This report is being generated using the Kubernetes configuration below:
 
-Kubernetes Cluster: {Fore.YELLOW}[{cluster_name}]{Style.RESET_ALL}  User: {Fore.YELLOW}[{user_name}]{Style.RESET_ALL}  Namespace: {Fore.YELLOW}[{namespace}]{Style.RESET_ALL}  Roles: {Fore.YELLOW}[{roles_str}]{Style.RESET_ALL}
+Kubernetes Cluster: {Fore.YELLOW}[{cluster_name}]{Style.RESET_ALL}  User: {Fore.YELLOW}[{user_name}]{Style.RESET_ALL}  Namespaces: {Fore.YELLOW}[{', '.join(self.namespaces)}]{Style.RESET_ALL}  Roles: {Fore.YELLOW}[{roles_str}]{Style.RESET_ALL}
 """
         print(report)
 
@@ -386,7 +385,10 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
         logger.info("Checking if any context is set ...")
         context = arguments.get("context")
 
-        kubernetes_provider = Kubernetes_Provider(kubeconfig_file, context)
+        logger.info("Checking if any namespace is set ...")
+        namespace = arguments.get("namespace")
+
+        kubernetes_provider = Kubernetes_Provider(kubeconfig_file, context, namespace)
 
         (
             kubernetes_audit_info.api_client,
