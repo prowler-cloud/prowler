@@ -1,7 +1,11 @@
 from dataclasses import dataclass
 
 from azure.mgmt.keyvault import KeyVaultManagementClient
-from azure.mgmt.keyvault.v2023_07_01.models import KeyAttributes, VaultProperties
+from azure.mgmt.keyvault.v2023_07_01.models import (
+    KeyAttributes,
+    SecretAttributes,
+    VaultProperties,
+)
 
 from prowler.lib.logger import logger
 from prowler.providers.azure.lib.service.service import AzureService
@@ -29,6 +33,9 @@ class KeyVault(AzureService):
                     keys = self.__get_keys__(
                         subscription, resource_group, keyvault_name
                     )
+                    secrets = self.__get_secrets__(
+                        subscription, resource_group, keyvault_name
+                    )
                     key_vaults[subscription].append(
                         KeyVaultInfo(
                             id=keyvault.id,
@@ -37,6 +44,7 @@ class KeyVault(AzureService):
                             resource_group=resource_group,
                             properties=keyvault_properties,
                             keys=keys,
+                            secrets=secrets,
                         )
                     )
             except Exception as error:
@@ -56,9 +64,9 @@ class KeyVault(AzureService):
                     Key(
                         id=key.id,
                         name=key.name,
-                        enabled=key.properties.enabled,
+                        enabled=key.attributes.enabled,
                         location=key.location,
-                        attributes=key.properties,
+                        attributes=key.attributes,
                     )
                 )
         except Exception as error:
@@ -66,6 +74,28 @@ class KeyVault(AzureService):
                 f"Subscription name: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
         return keys
+
+    def __get_secrets__(self, subscription, resource_group, keyvault_name):
+        logger.info(f"KeyVault - Getting secrets for {keyvault_name}...")
+        secrets = []
+        try:
+            client = self.clients[subscription]
+            secrets_list = client.secrets.list(resource_group, keyvault_name)
+            for secret in secrets_list:
+                secrets.append(
+                    Secret(
+                        id=secret.id,
+                        name=secret.name,
+                        enabled=secret.properties.attributes.enabled,
+                        location=secret.location,
+                        attributes=secret.properties.attributes,
+                    )
+                )
+        except Exception as error:
+            logger.error(
+                f"Subscription name: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return secrets
 
 
 @dataclass
@@ -78,6 +108,15 @@ class Key:
 
 
 @dataclass
+class Secret:
+    id: str
+    name: str
+    enabled: bool
+    location: str
+    attributes: SecretAttributes
+
+
+@dataclass
 class KeyVaultInfo:
     id: str
     name: str
@@ -85,3 +124,4 @@ class KeyVaultInfo:
     resource_group: str
     properties: VaultProperties
     keys: list[Key] = None
+    secrets: list[Secret] = None
