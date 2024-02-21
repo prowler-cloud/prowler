@@ -1,0 +1,36 @@
+{
+  "Provider": "kubernetes",
+  "CheckID": "apiserver_auth_mode_not_always_allow",
+  "CheckTitle": "Ensure that the --authorization-mode argument is not set to AlwaysAllow",
+  "CheckType": [
+    "Security",
+    "Configuration"
+  ],
+  "ServiceName": "apiserver",
+  "SubServiceName": "Authorization",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "KubernetesAPIServer",
+  "Description": "This check ensures that the Kubernetes API server is not configured to always authorize all requests. The 'AlwaysAllow' mode bypasses all authorization checks, which should not be used on production clusters.",
+  "Risk": "If set to AlwaysAllow, the API server would authorize all requests, potentially leading to unauthorized access and security vulnerabilities.",
+  "RelatedUrl": "https://kubernetes.io/docs/reference/access-authn-authz/authorization/#using-flags-for-your-authorization-module",
+  "Remediation": {
+    "Code": {
+      "CLI": "Set the --authorization-mode argument in the kube-apiserver configuration to a secure mode such as RBAC. Example: --authorization-mode=RBAC",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Ensure the API server is using a secure authorization mode, such as RBAC, and not set to AlwaysAllow.",
+      "Url": "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/"
+    }
+  },
+  "Categories": [
+    "Access Control",
+    "Cluster Security"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "By default, AlwaysAllow is not enabled in kube-apiserver. It's crucial to maintain this setting for the security of the cluster."
+}

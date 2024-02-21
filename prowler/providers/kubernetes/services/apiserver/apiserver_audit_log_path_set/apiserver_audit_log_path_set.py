@@ -4,7 +4,7 @@ from prowler.providers.kubernetes.services.apiserver.apiserver_client import (
 )
 
 
-class apiserver_anonymous_requests(Check):
+class apiserver_audit_log_path_set(Check):
     def execute(self) -> Check_Report_Kubernetes:
         findings = []
         for pod in apiserver_client.apiserver_pods:
@@ -14,14 +14,21 @@ class apiserver_anonymous_requests(Check):
             report.resource_id = pod.uid
             report.status = "PASS"
             report.status_extended = (
-                f"API Server does not have anonymous-auth enabled in pod {pod.name}."
+                f"Audit log path is set in the API server in pod {pod.name}."
             )
+            audit_log_path_set = False
             for container in pod.containers.values():
-                if "--anonymous-auth=true" in container.command:
+                audit_log_path_set = False
+                # Check if "--audit-log-path" is set
+                if "--audit-log-path" in str(container.command):
+                    audit_log_path_set = True
+                    break
+                if not audit_log_path_set:
+                    break
 
-                    report.status = "FAIL"
-                    report.status_extended = (
-                        f"API Server has anonymous-auth enabled in pod {pod.name}."
-                    )
+            if not audit_log_path_set:
+                report.status = "FAIL"
+                report.status_extended = f"Audit log path is not set in pod {pod.name}."
+
             findings.append(report)
         return findings
