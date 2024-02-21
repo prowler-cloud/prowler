@@ -38,6 +38,7 @@ class Test_keyvault_key_expiration_set_for_non_rbac_keyvault:
                         tenant_id="tenantid", sku="sku", enable_rbac_authorization=False
                     ),
                     keys=[],
+                    secrets=[],
                 )
             ]
         }
@@ -63,7 +64,7 @@ class Test_keyvault_key_expiration_set_for_non_rbac_keyvault:
             name="name",
             enabled=True,
             location="location",
-            attributes=KeyAttributes(expires=None, enabled=False),
+            attributes=KeyAttributes(expires=None, enabled=True),
         )
         keyvault_client.key_vaults = {
             AZURE_SUBSCRIPTION: [
@@ -76,6 +77,7 @@ class Test_keyvault_key_expiration_set_for_non_rbac_keyvault:
                         tenant_id="tenantid", sku="sku", enable_rbac_authorization=False
                     ),
                     keys=[key],
+                    secrets=[],
                 )
             ]
         }
@@ -122,6 +124,7 @@ class Test_keyvault_key_expiration_set_for_non_rbac_keyvault:
                         tenant_id="tenantid", sku="sku", enable_rbac_authorization=False
                     ),
                     keys=[key],
+                    secrets=[],
                 )
             ]
         }

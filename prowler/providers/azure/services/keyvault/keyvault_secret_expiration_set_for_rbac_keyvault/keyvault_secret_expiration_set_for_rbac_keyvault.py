@@ -7,7 +7,7 @@ class keyvault_secret_expiration_set_for_rbac_keyvault(Check):
         findings = []
         for subscription, key_vaults in keyvault_client.key_vaults.items():
             for keyvault in key_vaults:
-                if keyvault.properties.enable_rbac_authorization and keyvault.keys:
+                if keyvault.properties.enable_rbac_authorization and keyvault.secrets:
                     report = Check_Report_Azure(self.metadata())
                     report.subscription = subscription
                     report.resource_name = keyvault.name
