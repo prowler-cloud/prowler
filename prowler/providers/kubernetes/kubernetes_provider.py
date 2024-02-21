@@ -7,7 +7,7 @@ from prowler.lib.logger import logger
 
 
 class Kubernetes_Provider:
-    def __init__(self, kubeconfig_file: str, context: str, namespace: str):
+    def __init__(self, kubeconfig_file: str, context: str, namespaces: str):
         logger.info("Instantiating Kubernetes Provider ...")
         self.api_client, self.context = self.__set_credentials__(
             kubeconfig_file, context
@@ -15,10 +15,10 @@ class Kubernetes_Provider:
         if not self.api_client:
             logger.critical("Failed to set up a Kubernetes session.")
             sys.exit(1)
-        if not namespace:
+        if not namespaces:
             self.namespaces = self.get_all_namespaces()
         else:
-            self.namespaces = [namespace]
+            self.namespaces = namespaces
 
     def __set_credentials__(self, kubeconfig_file, input_context):
         try:

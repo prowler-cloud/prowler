@@ -24,10 +24,10 @@ class KubernetesProvider(CloudProvider):
         self.api_client, self.context = self.setup_session(
             arguments.kubeconfig_file, arguments.context
         )
-        if not arguments.namespace:
+        if not arguments.namespaces:
             self.namespaces = self.get_all_namespaces()
         else:
-            self.namespaces = [arguments.namespace]
+            self.namespaces = arguments.namespaces
 
         if not self.api_client:
             logger.critical("Failed to set up a Kubernetes session.")

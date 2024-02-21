@@ -20,8 +20,8 @@ def init_parser(self):
         help="The name of the kubeconfig context to use. By default, current_context from config file will be used.",
     )
     k8s_auth_subparser.add_argument(
-        "--namespace",
-        nargs="?",
-        metavar="NAMESPACE",
-        help="The namespace to use for the Kubernetes resources. By default, Prowler will scan all namespaces available.",
+        "--namespaces",
+        nargs="+",
+        metavar="NAMESPACES",
+        help="The namespaces where to scan for the Kubernetes resources. By default, Prowler will scan all namespaces available.",
     )
