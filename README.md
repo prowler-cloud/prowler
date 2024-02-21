@@ -8,6 +8,12 @@
 <p align="center">
 <b>Learn more at <a href="https://prowler.com">prowler.com</i></b>
 </p>
+  
+<p align="center">
+<a href="https://join.slack.com/t/prowler-workspace/shared_invite/zt-1hix76xsl-2uq222JIXrC7Q8It~9ZNog"><img width="30" height="30" alt="Prowler community on Slack" src="https://github.com/prowler-cloud/prowler/assets/3985464/3617e470-670c-47c9-9794-ce895ebdb627"></a>
+  <br>
+<a href="https://join.slack.com/t/prowler-workspace/shared_invite/zt-1hix76xsl-2uq222JIXrC7Q8It~9ZNog">Join our Prowler community!</a>
+</p>
 
 <hr>
 <p align="center">
