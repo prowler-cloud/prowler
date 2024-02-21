@@ -15,7 +15,7 @@
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "https://www.tenable.com/policies/cloud-security/AC_AZURE_0552",
+      "Other": "",
       "Terraform": ""
     },
     "Recommendation": {
