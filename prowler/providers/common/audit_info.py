@@ -330,6 +330,9 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
             base_url=region_config["base_url"],
             credential_scopes=region_config["credential_scopes"],
         )
+        azure_audit_info.locations = azure_provider.get_locations(
+            azure_audit_info.credentials, region_config
+        )
 
         if not arguments.get("only_logs"):
             self.print_azure_credentials(azure_audit_info)
@@ -386,7 +389,7 @@ def set_provider_audit_info(provider: str, arguments: dict):
 
 def set_provider_execution_parameters(provider: str, audit_info):
     """
-    set_provider_audit_info configures automatically the audit execution based on the selected provider and returns the checks that are going to be executed.
+    set_provider_execution_parameters" configures automatically the audit execution based on the selected provider and returns the checks that are going to be executed.
     """
     try:
         set_provider_execution_parameters_function = (
