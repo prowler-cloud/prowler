@@ -23,12 +23,20 @@ class apiserver_namespace_lifecycle_plugin(Check):
                 # Check if "--enable-admission-plugins" includes "NamespaceLifecycle"
                 # and "--disable-admission-plugins" does not include "NamespaceLifecycle"
                 for command in container.command:
-                    if command.startswith("--enable-admission-plugins"):
-                        if "NamespaceLifecycle" in (command.split("=")[1]):
-                            namespace_lifecycle_plugin_set = True
-                    elif command.startswith("--disable-admission-plugins"):
-                        if "NamespaceLifecycle" in (command.split("=")[1]):
-                            namespace_lifecycle_plugin_set = False
+                    command = command.split("=")
+                    flag = command[0]
+                    value = command[1]
+
+                    if (
+                        flag == "--enable-admission-plugins"
+                        and "NamespaceLifecycle" in value
+                    ):
+                        namespace_lifecycle_plugin_set = True
+                    elif (
+                        flag == "--disable-admission-plugins"
+                        and "NamespaceLifecycle" in value
+                    ):
+                        namespace_lifecycle_plugin_set = False
                 if not namespace_lifecycle_plugin_set:
                     break
 
