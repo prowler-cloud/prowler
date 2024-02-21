@@ -1,0 +1,36 @@
+{
+  "Provider": "kubernetes",
+  "CheckID": "apiserver_kubelet_tls_auth",
+  "CheckTitle": "Ensure that the --kubelet-client-certificate and --kubelet-client-key arguments are set as appropriate",
+  "CheckType": [
+    "Security",
+    "Configuration"
+  ],
+  "ServiceName": "apiserver",
+  "SubServiceName": "TLS Authentication",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "KubernetesAPIServer",
+  "Description": "This check ensures that the Kubernetes API server is set up with certificate-based authentication to the kubelet. This setup requires the --kubelet-client-certificate and --kubelet-client-key arguments in the kube-apiserver configuration to be set, ensuring secure communication between the API server and kubelets.",
+  "Risk": "Without certificate-based authentication to kubelets, requests from the apiserver are treated as anonymous, which could lead to unauthorized access and manipulation of node resources.",
+  "RelatedUrl": "https://kubernetes.io/docs/setup/best-practices/certificates/",
+  "Remediation": {
+    "Code": {
+      "CLI": "Set the --kubelet-client-certificate and --kubelet-client-key arguments in the kube-apiserver configuration. Example: --kubelet-client-certificate=/path/to/client-certificate-file --kubelet-client-key=/path/to/client-key-file",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable TLS authentication between the apiserver and kubelets by specifying the client certificate and key in the kube-apiserver configuration.",
+      "Url": "https://kubernetes.io/docs/setup/best-practices/certificates/#configure-certificates-manually"
+    }
+  },
+  "Categories": [
+    "Cluster Security",
+    "Communication Security"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "By default, the kube-apiserver does not authenticate to kubelets using certificates. Enabling this increases the security posture of the cluster."
+}

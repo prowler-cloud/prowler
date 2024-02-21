@@ -4,7 +4,7 @@ from prowler.providers.kubernetes.services.apiserver.apiserver_client import (
 )
 
 
-class apiserver_audit_log_path_set(Check):
+class apiserver_kubelet_cert_auth(Check):
     def execute(self) -> Check_Report_Kubernetes:
         findings = []
         for pod in apiserver_client.apiserver_pods:
@@ -13,21 +13,11 @@ class apiserver_audit_log_path_set(Check):
             report.resource_name = pod.name
             report.resource_id = pod.uid
             report.status = "PASS"
-            report.status_extended = (
-                f"Audit log path is set in the API server in pod {pod.name}."
-            )
-            audit_log_path_set = False
+            report.status_extended = f"API Server has appropriate kubelet certificate authority configured in pod {pod.name}."
             for container in pod.containers.values():
-                audit_log_path_set = False
-                # Check if "--audit-log-path" is set
-                if "--audit-log-path" in str(container.command):
-                    audit_log_path_set = True
-                if not audit_log_path_set:
+                if "--kubelet-certificate-authority" not in str(container.command):
+                    report.status = "FAIL"
+                    report.status_extended = f"API Server is missing kubelet certificate authority configuration in pod {pod.name}."
                     break
-
-            if not audit_log_path_set:
-                report.status = "FAIL"
-                report.status_extended = f"Audit log path is not set in pod {pod.name}."
-
             findings.append(report)
         return findings

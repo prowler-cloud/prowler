@@ -4,7 +4,7 @@ from prowler.providers.kubernetes.services.apiserver.apiserver_client import (
 )
 
 
-class apiserver_always_pull_images_plugin(Check):
+class apiserver_deny_service_external_ips(Check):
     def execute(self) -> Check_Report_Kubernetes:
         findings = []
         for pod in apiserver_client.apiserver_pods:
@@ -13,21 +13,18 @@ class apiserver_always_pull_images_plugin(Check):
             report.resource_name = pod.name
             report.resource_id = pod.uid
             report.status = "PASS"
-            report.status_extended = (
-                f"AlwaysPullImages admission control plugin is set in pod {pod.name}."
-            )
-            plugin_set = False
+            report.status_extended = f"API Server has DenyServiceExternalIPs admission controller enabled in pod {pod.name}."
+            deny_service_external_ips = False
             for container in pod.containers.values():
-                plugin_set = False
+                deny_service_external_ips = False
                 for command in container.command:
-                    if command.startswith("--enable-admission-plugins"):
-                        if "AlwaysPullImages" in command:
-                            plugin_set = True
-                            break
-                if not plugin_set:
+                    if command.startswith("--disable-admission-plugins"):
+                        if "DenyServiceExternalIPs" in (command.split("=")[1]):
+                            deny_service_external_ips = True
+                if not deny_service_external_ips:
                     break
-            if not plugin_set:
+            if not deny_service_external_ips:
                 report.status = "FAIL"
-                report.status_extended = f"AlwaysPullImages admission control plugin is not set in pod {pod.name}."
+                report.status_extended = f"API Server does not have DenyServiceExternalIPs enabled in pod {pod.name}."
             findings.append(report)
         return findings

@@ -1,0 +1,36 @@
+{
+  "Provider": "kubernetes",
+  "CheckID": "apiserver_client_ca_file_set",
+  "CheckTitle": "Ensure that the --client-ca-file argument is set as appropriate",
+  "CheckType": [
+    "Security",
+    "Configuration"
+  ],
+  "ServiceName": "apiserver",
+  "SubServiceName": "TLS Authentication",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "KubernetesAPIServer",
+  "Description": "This check ensures that the Kubernetes API server is configured with the --client-ca-file argument, specifying the CA file for client authentication. This setting enables the API server to authenticate clients using certificates signed by the CA and is crucial for secure communication.",
+  "Risk": "If the client CA file is not set, the API server may not properly authenticate clients, potentially leading to unauthorized access.",
+  "RelatedUrl": "https://kubernetes.io/docs/setup/best-practices/certificates/",
+  "Remediation": {
+    "Code": {
+      "CLI": "Edit the kube-apiserver configuration to include the --client-ca-file parameter with the appropriate CA file. Example: --client-ca-file=<path/to/client-ca-file>",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Ensure the API server is configured with a client CA file for secure client authentication.",
+      "Url": "https://kubernetes.io/docs/setup/best-practices/certificates/#certificate-paths"
+    }
+  },
+  "Categories": [
+    "Access Control",
+    "TLS Configuration"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "The client CA file is a critical component of TLS authentication and should be properly managed and securely stored."
+}
