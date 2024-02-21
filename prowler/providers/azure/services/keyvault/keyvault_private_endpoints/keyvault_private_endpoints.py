@@ -1,0 +1,25 @@
+from prowler.lib.check.models import Check, Check_Report_Azure
+from prowler.providers.azure.services.keyvault.keyvault_client import keyvault_client
+
+
+class keyvault_private_endpoints(Check):
+    def execute(self) -> Check_Report_Azure:
+        findings = []
+        for subscription, key_vaults in keyvault_client.key_vaults.items():
+            for keyvault in key_vaults:
+                report = Check_Report_Azure(self.metadata())
+                report.subscription = subscription
+                report.resource_name = keyvault.name
+                report.resource_id = keyvault.id
+                report.status = "FAIL"
+                report.status_extended = f"Keyvault {keyvault.name} from subscription {subscription} is not using private endpoints."
+                if keyvault.properties.private_endpoint_connections:
+                    print(
+                        keyvault.properties.private_endpoint_connections[
+                            0
+                        ].__class__.__name__
+                    )
+                    report.status = "PASS"
+                    report.status_extended = f"Keyvault {keyvault.name} from subscription {subscription} is using private endpoints."
+                findings.append(report)
+        return findings
