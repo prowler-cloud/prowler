@@ -12,11 +12,11 @@ from prowler.providers.aws.lib.service.service import AWSService
 
 ################## S3
 class S3(AWSService):
-    def __init__(self, audit_info):
+    def __init__(self, provider):
         # Call AWSService's __init__
-        super().__init__(__class__.__name__, audit_info)
+        super().__init__(__class__.__name__, provider)
         self.regions_with_buckets = []
-        self.buckets = self.__list_buckets__(audit_info)
+        self.buckets = self.__list_buckets__(provider)
         self.__threading_call__(self.__get_bucket_versioning__)
         self.__threading_call__(self.__get_bucket_logging__)
         self.__threading_call__(self.__get_bucket_policy__)
@@ -37,7 +37,7 @@ class S3(AWSService):
         for t in threads:
             t.join()
 
-    def __list_buckets__(self, audit_info):
+    def __list_buckets__(self, provider):
         logger.info("S3 - Listing buckets...")
         buckets = []
         try:
@@ -58,8 +58,8 @@ class S3(AWSService):
                     ):
                         self.regions_with_buckets.append(bucket_region)
                         # Check if there are filter regions
-                        if audit_info.audited_regions:
-                            if bucket_region in audit_info.audited_regions:
+                        if provider.identity.audited_regions:
+                            if bucket_region in provider.identity.audited_regions:
                                 buckets.append(
                                     Bucket(
                                         name=bucket["Name"],
@@ -344,9 +344,9 @@ class S3(AWSService):
 
 ################## S3Control
 class S3Control(AWSService):
-    def __init__(self, audit_info):
+    def __init__(self, provider):
         # Call AWSService's __init__
-        super().__init__(__class__.__name__, audit_info, global_service=True)
+        super().__init__(__class__.__name__, provider, global_service=True)
         self.account_public_access_block = self.__get_public_access_block__()
 
     def __get_public_access_block__(self):

@@ -13,7 +13,7 @@
   "ResourceType": "KubernetesAPIServer",
   "Description": "This check ensures that the Kubernetes API server is configured to include 'Node' in its --authorization-mode argument. This mode restricts kubelets to only read objects associated with their nodes, enhancing security.",
   "Risk": "If the Node authorization mode is not included, kubelets may have broader access than necessary, which can pose a security risk.",
-  "RelatedUrl": "https://kubernetes.io/docs/admin/authorization/node/",
+  "RelatedUrl": "https://kubernetes.io/docs/reference/access-authn-authz/node/",
   "Remediation": {
     "Code": {
       "CLI": "Edit the kube-apiserver configuration to include Node in the --authorization-mode argument. Example: --authorization-mode=Node,RBAC",
@@ -23,7 +23,7 @@
     },
     "Recommendation": {
       "Text": "Configure the API server to use Node authorization mode along with other modes like RBAC to restrict kubelet access to the necessary resources.",
-      "Url": "https://kubernetes.io/docs/admin/kube-apiserver/"
+      "Url": "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/"
     }
   },
   "Categories": [

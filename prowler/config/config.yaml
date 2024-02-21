@@ -95,3 +95,11 @@ gcp:
 
 # Kubernetes Configuration
 kubernetes:
+
+  # Kubernetes API Server
+  # apiserver_audit_log_maxbackup_set
+  audit_log_maxbackup: 10
+  # apiserver_audit_log_maxsize_set
+  audit_log_maxsize: 100
+  # apiserver_audit_log_maxage_set
+  audit_log_maxage: 30

@@ -13,7 +13,7 @@
   "ResourceType": "KubernetesAPIServer",
   "Description": "This check ensures that the Kubernetes API server is not configured to always authorize all requests. The 'AlwaysAllow' mode bypasses all authorization checks, which should not be used on production clusters.",
   "Risk": "If set to AlwaysAllow, the API server would authorize all requests, potentially leading to unauthorized access and security vulnerabilities.",
-  "RelatedUrl": "https://kubernetes.io/docs/admin/authorization/",
+  "RelatedUrl": "https://kubernetes.io/docs/reference/access-authn-authz/authorization/#using-flags-for-your-authorization-module",
   "Remediation": {
     "Code": {
       "CLI": "Set the --authorization-mode argument in the kube-apiserver configuration to a secure mode such as RBAC. Example: --authorization-mode=RBAC",
@@ -23,7 +23,7 @@
     },
     "Recommendation": {
       "Text": "Ensure the API server is using a secure authorization mode, such as RBAC, and not set to AlwaysAllow.",
-      "Url": "https://kubernetes.io/docs/admin/kube-apiserver/"
+      "Url": "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/"
     }
   },
   "Categories": [
