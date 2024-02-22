@@ -12,13 +12,14 @@ class controllermanager_bind_address(Check):
             report.namespace = pod.namespace
             report.resource_name = pod.name
             report.resource_id = pod.uid
-            report.status = "FAIL"
-            report.status_extended = f"Controller Manager is not bound to the loopback address in pod {pod.name}."
+            report.status = "PASS"
+            report.status_extended = f"Controller Manager is bound to the loopback address in pod {pod.name}."
             for container in pod.containers.values():
-                if "--bind-address=127.0.0.1" in str(
+                if "--bind-address=127.0.0.1" not in str(
                     container.command
-                ) or "--address=127.0.0.1" in str(container.command):
-                    report.status = "PASS"
-                    report.status_extended = f"Controller Manager is bound to the loopback address in pod {pod.name}."
+                ) and "--address=127.0.0.1" not in str(container.command):
+                    report.status = "FAIL"
+                    report.status_extended = f"Controller Manager is not bound to the loopback address in pod {pod.name}."
+                    break
             findings.append(report)
         return findings

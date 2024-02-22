@@ -12,15 +12,21 @@ class controllermanager_rotate_kubelet_server_cert(Check):
             report.namespace = pod.namespace
             report.resource_name = pod.name
             report.resource_id = pod.uid
-            report.status = "FAIL"
-            report.status_extended = f"Controller Manager does not have RotateKubeletServerCertificate set to true in pod {pod.name}."
+            report.status = "PASS"
+            report.status_extended = f"Controller Manager has RotateKubeletServerCertificate set to true in pod {pod.name}."
+            kubelete_server_cert = True
             for container in pod.containers.values():
+                kubelete_server_cert = True
                 for command in container.command:
                     if command.startswith("--feature-gates"):
                         if "RotateKubeletServerCertificate=true" in (
                             command.split("=")[1]
                         ):
-                            report.status = "PASS"
-                            report.status_extended = f"Controller Manager has RotateKubeletServerCertificate set to true in pod {pod.name}."
+                            kubelete_server_cert = False
+                if not kubelete_server_cert:
+                    break
+            if not kubelete_server_cert:
+                report.status = "FAIL"
+                report.status_extended = f"Controller Manager does not have RotateKubeletServerCertificate set to true in pod {pod.name}."
             findings.append(report)
         return findings
