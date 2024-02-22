@@ -40,7 +40,12 @@ class monitor_diagnostic_setting_with_appropriate_categories(Check):
                         report.status = "PASS"
                         report.status_extended = f"There is at least one diagnostic setting capturing appropiate categories in subscription {subscription_name}."
                         break
-                if report.status == "PASS":
+                if (
+                    administrative_enabled
+                    and security_enabled
+                    and service_health_enabled
+                    and alert_enabled
+                ):
                     break
 
             findings.append(report)
