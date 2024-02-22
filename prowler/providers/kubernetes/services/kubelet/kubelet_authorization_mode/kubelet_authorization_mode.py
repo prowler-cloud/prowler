@@ -1,5 +1,3 @@
-import yaml
-
 from prowler.lib.check.models import Check, Check_Report_Kubernetes
 from prowler.providers.kubernetes.services.kubelet.kubelet_client import kubelet_client
 
@@ -8,7 +6,7 @@ class kubelet_authorization_mode(Check):
     def execute(self) -> Check_Report_Kubernetes:
         findings = []
         for cm in kubelet_client.kubelet_config_maps:
-            authorization = yaml.safe_load(cm.data["kubelet"])["authorization"]
+            authorization = cm.kubelet_args["authorization"]
             report = Check_Report_Kubernetes(self.metadata())
             report.namespace = cm.namespace
             report.resource_name = cm.name

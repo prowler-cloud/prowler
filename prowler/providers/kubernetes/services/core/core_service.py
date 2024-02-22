@@ -106,4 +106,5 @@ class ConfigMap(BaseModel):
     uid: str
     data: Optional[dict]
     labels: Optional[dict]
+    kubelet_args: list = []
     annotations: Optional[dict]

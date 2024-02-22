@@ -1,5 +1,3 @@
-import yaml
-
 from prowler.lib.check.models import Check, Check_Report_Kubernetes
 from prowler.providers.kubernetes.services.kubelet.kubelet_client import kubelet_client
 
@@ -8,7 +6,7 @@ class kubelet_disable_anonymous_auth(Check):
     def execute(self) -> Check_Report_Kubernetes:
         findings = []
         for cm in kubelet_client.kubelet_config_maps:
-            authentication = yaml.safe_load(cm.data["kubelet"])["authentication"]
+            authentication = cm.kubelet_args["authentication"]
             report = Check_Report_Kubernetes(self.metadata())
             report.namespace = cm.namespace
             report.resource_name = cm.name

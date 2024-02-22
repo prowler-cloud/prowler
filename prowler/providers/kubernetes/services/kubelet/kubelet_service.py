@@ -1,3 +1,5 @@
+import yaml
+
 from prowler.lib.logger import logger
 from prowler.providers.kubernetes.lib.service.service import KubernetesService
 from prowler.providers.kubernetes.services.core.core_client import core_client
@@ -16,6 +18,7 @@ class Kubelet(KubernetesService):
             kubelet_config_maps = []
             for cm in self.client.config_maps:
                 if cm.name.startswith("kubelet-config"):
+                    cm.kubelet_args = yaml.safe_load(cm.data["kubelet"])
                     kubelet_config_maps.append(cm)
             return kubelet_config_maps
         except Exception as error:
