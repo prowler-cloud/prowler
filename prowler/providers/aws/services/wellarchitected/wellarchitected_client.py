@@ -1,6 +1,6 @@
-from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
 from prowler.providers.aws.services.wellarchitected.wellarchitected_service import (
     WellArchitected,
 )
+from prowler.providers.common.common import get_global_provider
 
-wellarchitected_client = WellArchitected(current_audit_info)
+wellarchitected_client = WellArchitected(get_global_provider())

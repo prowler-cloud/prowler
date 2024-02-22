@@ -13,7 +13,7 @@
   "ResourceType": "KubernetesAPIServer",
   "Description": "This check verifies that the NamespaceLifecycle admission control plugin is enabled in the Kubernetes API server. This plugin prevents the creation of objects in non-existent or terminating namespaces, enforcing the integrity of the namespace lifecycle and availability of new objects.",
   "Risk": "Without NamespaceLifecycle, objects may be created in namespaces that are being terminated, potentially leading to inconsistencies and resource conflicts.",
-  "RelatedUrl": "https://kubernetes.io/docs/admin/admission-controllers/#namespacelifecycle",
+  "RelatedUrl": "https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/",
   "Remediation": {
     "Code": {
       "CLI": "Edit the kube-apiserver configuration to ensure that NamespaceLifecycle is included in the --enable-admission-plugins argument. Remove the plugin from --disable-admission-plugins if present.",
@@ -23,7 +23,7 @@
     },
     "Recommendation": {
       "Text": "Enable the NamespaceLifecycle admission control plugin in the API server to enforce proper namespace management.",
-      "Url": "https://kubernetes.io/docs/admin/kube-apiserver/"
+      "Url": "https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#namespacelifecycle"
     }
   },
   "Categories": [

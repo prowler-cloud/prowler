@@ -1,6 +1,6 @@
-from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
 from prowler.providers.aws.services.secretsmanager.secretsmanager_service import (
     SecretsManager,
 )
+from prowler.providers.common.common import get_global_provider
 
-secretsmanager_client = SecretsManager(current_audit_info)
+secretsmanager_client = SecretsManager(get_global_provider())

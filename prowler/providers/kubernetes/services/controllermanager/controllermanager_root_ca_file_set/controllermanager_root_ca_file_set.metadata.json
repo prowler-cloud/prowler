@@ -13,7 +13,7 @@
   "ResourceType": "KubernetesControllerManager",
   "Description": "This check verifies that the Kubernetes Controller Manager is configured with the --root-ca-file argument set to a certificate bundle file, allowing pods to verify the API server's serving certificate.",
   "Risk": "Not setting the root CA file can expose pods to man-in-the-middle attacks due to unverified TLS connections to the API server.",
-  "RelatedUrl": "https://github.com/kubernetes/kubernetes/issues/11000",
+  "RelatedUrl": "https://kubernetes.io/docs/setup/best-practices/certificates/",
   "Remediation": {
     "Code": {
       "CLI": "Edit the controller-manager manifest to set the --root-ca-file argument to the appropriate certificate bundle file.",
@@ -23,7 +23,7 @@
     },
     "Recommendation": {
       "Text": "Configure the Controller Manager with a root CA file to enhance security for pods communicating with the API server.",
-      "Url": "https://kubernetes.io/docs/admin/kube-controller-manager/"
+      "Url": "https://kubernetes.io/docs/setup/best-practices/certificates/#certificate-paths"
     }
   },
   "Categories": [

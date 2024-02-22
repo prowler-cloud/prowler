@@ -13,7 +13,7 @@
   "ResourceType": "KubernetesControllerManager",
   "Description": "This check ensures that the Kubernetes Controller Manager is configured with the RotateKubeletServerCertificate argument set to true, enabling automated rotation of kubelet server certificates.",
   "Risk": "Not enabling kubelet server certificate rotation could lead to downtime due to expired certificates.",
-  "RelatedUrl": "https://kubernetes.io/docs/admin/kubelet-tls-bootstrapping/#approval-controller",
+  "RelatedUrl": "https://kubernetes.io/docs/tasks/tls/certificate-rotation/",
   "Remediation": {
     "Code": {
       "CLI": "Edit the controller-manager manifest to include RotateKubeletServerCertificate=true in the --feature-gates parameter.",
@@ -23,7 +23,7 @@
     },
     "Recommendation": {
       "Text": "Enable kubelet server certificate rotation in the Controller Manager for automated certificate management.",
-      "Url": "https://kubernetes.io/docs/admin/kube-controller-manager/"
+      "Url": "https://kubernetes.io/docs/tasks/tls/certificate-rotation/#understanding-the-certificate-rotation-configuration"
     }
   },
   "Categories": [

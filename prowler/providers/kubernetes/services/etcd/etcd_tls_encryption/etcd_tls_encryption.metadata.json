@@ -13,7 +13,7 @@
   "ResourceType": "Etcd",
   "Description": "This check verifies that the etcd service in a Kubernetes cluster is configured with appropriate TLS encryption settings. etcd, being a key value store for all Kubernetes REST API objects, should have its communication encrypted to protect these sensitive objects in transit.",
   "Risk": "Without proper TLS configuration, data stored in etcd can be susceptible to interception and unauthorized access, posing a significant security risk to the entire Kubernetes cluster.",
-  "RelatedUrl": "https://coreos.com/etcd/docs/latest/op-guide/security.html",
+  "RelatedUrl": "https://etcd.io/docs/latest/op-guide/security/",
   "Remediation": {
     "Code": {
       "CLI": "Edit the etcd pod specification file /etc/kubernetes/manifests/etcd.yaml on the master node and set the --cert-file and --key-file arguments appropriately.",
@@ -23,7 +23,7 @@
     },
     "Recommendation": {
       "Text": "Ensure that the etcd service is configured with TLS encryption for secure communication. The --cert-file and --key-file arguments should point to a valid TLS certificate and key.",
-      "Url": "https://kubernetes.io/docs/admin/etcd/"
+      "Url": "https://kubernetes.io/docs/tasks/administer-cluster/configure-upgrade-etcd/"
     }
   },
   "Categories": [
