@@ -13,7 +13,7 @@
   "RelatedUrl": "https://docs.microsoft.com/en-us/azure/private-link/private-endpoint-overview",
   "Remediation": {
     "Code": {
-      "CLI": "az keyvault private-endpoint-connection show -g <resourceGroup> --vault-name <keyVaultName>",
+      "CLI": "",
       "NativeIaC": "",
       "Other": "",
       "Terraform": ""

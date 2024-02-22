@@ -1,5 +1,7 @@
 from dataclasses import dataclass
 
+from azure.core.exceptions import HttpResponseError
+from azure.keyvault.keys import KeyClient
 from azure.mgmt.keyvault import KeyVaultManagementClient
 from azure.mgmt.keyvault.v2023_07_01.models import (
     KeyAttributes,
@@ -15,9 +17,9 @@ from prowler.providers.azure.lib.service.service import AzureService
 class KeyVault(AzureService):
     def __init__(self, audit_info):
         super().__init__(KeyVaultManagementClient, audit_info)
-        self.key_vaults = self.__get_key_vaults__()
+        self.key_vaults = self.__get_key_vaults__(audit_info)
 
-    def __get_key_vaults__(self):
+    def __get_key_vaults__(self, audit_info):
         logger.info("KeyVault - Getting key_vaults...")
         key_vaults = {}
         for subscription, client in self.clients.items():
@@ -31,16 +33,16 @@ class KeyVault(AzureService):
                         resource_group, keyvault_name
                     ).properties
                     keys = self.__get_keys__(
-                        subscription, resource_group, keyvault_name
+                        subscription, resource_group, keyvault_name, audit_info
                     )
                     secrets = self.__get_secrets__(
                         subscription, resource_group, keyvault_name
                     )
                     key_vaults[subscription].append(
                         KeyVaultInfo(
-                            id=keyvault.id,
-                            name=keyvault_name,
-                            location=keyvault.location,
+                            id=getattr(keyvault, "id", None),
+                            name=getattr(keyvault, "name", None),
+                            location=getattr(keyvault, "location", None),
                             resource_group=resource_group,
                             properties=keyvault_properties,
                             keys=keys,
@@ -53,7 +55,7 @@ class KeyVault(AzureService):
                 )
         return key_vaults
 
-    def __get_keys__(self, subscription, resource_group, keyvault_name):
+    def __get_keys__(self, subscription, resource_group, keyvault_name, audit_info):
         logger.info(f"KeyVault - Getting keys for {keyvault_name}...")
         keys = []
         try:
@@ -62,16 +64,34 @@ class KeyVault(AzureService):
             for key in keys_list:
                 keys.append(
                     Key(
-                        id=key.id,
-                        name=key.name,
-                        enabled=key.attributes.enabled,
-                        location=key.location,
-                        attributes=key.attributes,
+                        id=getattr(key, "id", None),
+                        name=getattr(key, "name", None),
+                        enabled=getattr(key.attributes, "enabled", None),
+                        location=getattr(key, "location", None),
+                        attributes=getattr(key, "attributes", None),
+                        rotation_policy=None,
                     )
                 )
         except Exception as error:
             logger.error(
                 f"Subscription name: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+        try:
+            key_client = KeyClient(
+                vault_url=f"https://{keyvault_name}.vault.azure.net/",
+                credential=audit_info.credentials,
+            )
+            properties = key_client.list_properties_of_keys()
+            for prop in properties:
+                policy = key_client.get_key_rotation_policy(prop.name)
+                for key in keys:
+                    if key.name == prop.name:
+                        key.rotation_policy = policy
+
+        except HttpResponseError:
+            logger.info(
+                f"Subscription name: {subscription} -- has no access policy configured for keyvault {keyvault_name}"
             )
         return keys
 
@@ -84,11 +104,11 @@ class KeyVault(AzureService):
             for secret in secrets_list:
                 secrets.append(
                     Secret(
-                        id=secret.id,
-                        name=secret.name,
-                        enabled=secret.properties.attributes.enabled,
-                        location=secret.location,
-                        attributes=secret.properties.attributes,
+                        id=getattr(secret, "id", None),
+                        name=getattr(secret, "name", None),
+                        enabled=getattr(secret.properties.attributes, "enabled", None),
+                        location=getattr(secret, "location", None),
+                        attributes=getattr(secret.properties, "attributes", None),
                     )
                 )
         except Exception as error:
@@ -105,6 +125,7 @@ class Key:
     enabled: bool
     location: str
     attributes: KeyAttributes
+    rotation_policy: str = None
 
 
 @dataclass

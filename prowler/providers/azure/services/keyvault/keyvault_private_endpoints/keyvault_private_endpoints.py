@@ -14,11 +14,6 @@ class keyvault_private_endpoints(Check):
                 report.status = "FAIL"
                 report.status_extended = f"Keyvault {keyvault.name} from subscription {subscription} is not using private endpoints."
                 if keyvault.properties.private_endpoint_connections:
-                    print(
-                        keyvault.properties.private_endpoint_connections[
-                            0
-                        ].__class__.__name__
-                    )
                     report.status = "PASS"
                     report.status_extended = f"Keyvault {keyvault.name} from subscription {subscription} is using private endpoints."
                 findings.append(report)

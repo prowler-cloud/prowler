@@ -12,7 +12,7 @@ from tests.providers.azure.azure_fixtures import (
 )
 
 
-def mock_keyvault_get_key_vaults(_):
+def mock_keyvault_get_key_vaults(_, __):
     keyvault_info = KeyVaultInfo(
         id="id",
         name="name",
@@ -26,6 +26,7 @@ def mock_keyvault_get_key_vaults(_):
                 enabled=True,
                 location="location",
                 attributes=None,
+                rotation_policy=None,
             )
         ],
         secrets=[
@@ -79,6 +80,9 @@ class Test_keyvault_service:
         assert keyvault.key_vaults[AZURE_SUBSCRIPTION][0].keys[0].enabled is True
         assert keyvault.key_vaults[AZURE_SUBSCRIPTION][0].keys[0].location == "location"
         assert keyvault.key_vaults[AZURE_SUBSCRIPTION][0].keys[0].attributes is None
+        assert (
+            keyvault.key_vaults[AZURE_SUBSCRIPTION][0].keys[0].rotation_policy is None
+        )
 
     def test__get_secrets__(self):
         keyvault = KeyVault(set_mocked_azure_audit_info())

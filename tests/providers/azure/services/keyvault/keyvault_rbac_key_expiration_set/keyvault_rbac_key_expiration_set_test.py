@@ -8,20 +8,20 @@ from prowler.providers.azure.services.keyvault.keyvault_service import Key, KeyV
 AZURE_SUBSCRIPTION = str(uuid4())
 
 
-class Test_keyvault_key_expiration_set_for_rbac_keyvault:
+class Test_keyvault_rbac_key_expiration_set:
     def test_no_key_vaults(self):
         keyvault_client = mock.MagicMock
         keyvault_client.key_vaults = {}
 
         with mock.patch(
-            "prowler.providers.azure.services.keyvault.keyvault_key_expiration_set_for_rbac_keyvault.keyvault_key_expiration_set_for_rbac_keyvault.keyvault_client",
+            "prowler.providers.azure.services.keyvault.keyvault_rbac_key_expiration_set.keyvault_rbac_key_expiration_set.keyvault_client",
             new=keyvault_client,
         ):
-            from prowler.providers.azure.services.keyvault.keyvault_key_expiration_set_for_rbac_keyvault.keyvault_key_expiration_set_for_rbac_keyvault import (
-                keyvault_key_expiration_set_for_rbac_keyvault,
+            from prowler.providers.azure.services.keyvault.keyvault_rbac_key_expiration_set.keyvault_rbac_key_expiration_set import (
+                keyvault_rbac_key_expiration_set,
             )
 
-            check = keyvault_key_expiration_set_for_rbac_keyvault()
+            check = keyvault_rbac_key_expiration_set()
             result = check.execute()
             assert len(result) == 0
 
@@ -44,14 +44,14 @@ class Test_keyvault_key_expiration_set_for_rbac_keyvault:
         }
 
         with mock.patch(
-            "prowler.providers.azure.services.keyvault.keyvault_key_expiration_set_for_rbac_keyvault.keyvault_key_expiration_set_for_rbac_keyvault.keyvault_client",
+            "prowler.providers.azure.services.keyvault.keyvault_rbac_key_expiration_set.keyvault_rbac_key_expiration_set.keyvault_client",
             new=keyvault_client,
         ):
-            from prowler.providers.azure.services.keyvault.keyvault_key_expiration_set_for_rbac_keyvault.keyvault_key_expiration_set_for_rbac_keyvault import (
-                keyvault_key_expiration_set_for_rbac_keyvault,
+            from prowler.providers.azure.services.keyvault.keyvault_rbac_key_expiration_set.keyvault_rbac_key_expiration_set import (
+                keyvault_rbac_key_expiration_set,
             )
 
-            check = keyvault_key_expiration_set_for_rbac_keyvault()
+            check = keyvault_rbac_key_expiration_set()
             result = check.execute()
             assert len(result) == 0
 
@@ -59,9 +59,10 @@ class Test_keyvault_key_expiration_set_for_rbac_keyvault:
         keyvault_client = mock.MagicMock
         keyvault_name = "Keyvault Name"
         keyvault_id = str(uuid4())
+        key_name = "Key Name"
         key = Key(
             id="id",
-            name="name",
+            name=key_name,
             enabled=True,
             location="location",
             attributes=KeyAttributes(expires=None, enabled=True),
@@ -83,20 +84,20 @@ class Test_keyvault_key_expiration_set_for_rbac_keyvault:
         }
 
         with mock.patch(
-            "prowler.providers.azure.services.keyvault.keyvault_key_expiration_set_for_rbac_keyvault.keyvault_key_expiration_set_for_rbac_keyvault.keyvault_client",
+            "prowler.providers.azure.services.keyvault.keyvault_rbac_key_expiration_set.keyvault_rbac_key_expiration_set.keyvault_client",
             new=keyvault_client,
         ):
-            from prowler.providers.azure.services.keyvault.keyvault_key_expiration_set_for_rbac_keyvault.keyvault_key_expiration_set_for_rbac_keyvault import (
-                keyvault_key_expiration_set_for_rbac_keyvault,
+            from prowler.providers.azure.services.keyvault.keyvault_rbac_key_expiration_set.keyvault_rbac_key_expiration_set import (
+                keyvault_rbac_key_expiration_set,
             )
 
-            check = keyvault_key_expiration_set_for_rbac_keyvault()
+            check = keyvault_rbac_key_expiration_set()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Keyvault {keyvault_name} from subscription {AZURE_SUBSCRIPTION} has a key without expiration date set."
+                == f"Keyvault {keyvault_name} from subscription {AZURE_SUBSCRIPTION} has the key {key_name} without expiration date set."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION
             assert result[0].resource_name == keyvault_name
@@ -130,14 +131,14 @@ class Test_keyvault_key_expiration_set_for_rbac_keyvault:
         }
 
         with mock.patch(
-            "prowler.providers.azure.services.keyvault.keyvault_key_expiration_set_for_rbac_keyvault.keyvault_key_expiration_set_for_rbac_keyvault.keyvault_client",
+            "prowler.providers.azure.services.keyvault.keyvault_rbac_key_expiration_set.keyvault_rbac_key_expiration_set.keyvault_client",
             new=keyvault_client,
         ):
-            from prowler.providers.azure.services.keyvault.keyvault_key_expiration_set_for_rbac_keyvault.keyvault_key_expiration_set_for_rbac_keyvault import (
-                keyvault_key_expiration_set_for_rbac_keyvault,
+            from prowler.providers.azure.services.keyvault.keyvault_rbac_key_expiration_set.keyvault_rbac_key_expiration_set import (
+                keyvault_rbac_key_expiration_set,
             )
 
-            check = keyvault_key_expiration_set_for_rbac_keyvault()
+            check = keyvault_rbac_key_expiration_set()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
