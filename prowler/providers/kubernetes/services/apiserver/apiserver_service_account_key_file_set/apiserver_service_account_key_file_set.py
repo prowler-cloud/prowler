@@ -24,6 +24,7 @@ class apiserver_service_account_key_file_set(Check):
                     report.status_extended = (
                         f"Service account key file is not set in pod {pod.name}."
                     )
+                    break
 
             findings.append(report)
         return findings

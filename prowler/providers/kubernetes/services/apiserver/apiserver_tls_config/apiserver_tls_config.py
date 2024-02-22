@@ -25,6 +25,7 @@ class apiserver_tls_config(Check):
                     report.status_extended = (
                         f"TLS certificate and/or key are not set in pod {pod.name}."
                     )
+                    break
 
             findings.append(report)
         return findings
