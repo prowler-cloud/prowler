@@ -4,7 +4,7 @@
   "CheckTitle": "Ensure Diagnostic Setting captures appropriate categories",
   "CheckType": [],
   "ServiceName": "monitor",
-  "SubServiceName": "",
+  "SubServiceName": "Configuring Diagnostic Settings",
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Monitor",
@@ -26,5 +26,5 @@
   "Categories": [],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": ""
+  "Notes": "When the diagnostic setting is created using Azure Portal, by default no categories are selected."
 }
