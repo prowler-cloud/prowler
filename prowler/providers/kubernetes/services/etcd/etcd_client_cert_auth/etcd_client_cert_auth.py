@@ -15,7 +15,7 @@ class etcd_client_cert_auth(Check):
                 f"Etcd has client certificate authentication enabled in pod {pod.name}."
             )
             for container in pod.containers.values():
-                if "--client-cert-auth=true" not in str(
+                if "--client-cert-auth" not in str(
                     container.command
                 ) and "--client-cert-auth=true" not in str(container.command):
                     report.status = "FAIL"
