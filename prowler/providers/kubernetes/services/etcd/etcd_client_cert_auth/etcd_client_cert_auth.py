@@ -10,12 +10,16 @@ class etcd_client_cert_auth(Check):
             report.namespace = pod.namespace
             report.resource_name = pod.name
             report.resource_id = pod.uid
-            report.status = "FAIL"
-            report.status_extended = f"Etcd does not have client certificate authentication enabled in pod {pod.name}."
+            report.status = "PASS"
+            report.status_extended = (
+                f"Etcd has client certificate authentication enabled in pod {pod.name}."
+            )
             for container in pod.containers.values():
-                if "--client-cert-auth=true" in str(container.command):
-
-                    report.status = "PASS"
-                    report.status_extended = f"Etcd has client certificate authentication enabled in pod {pod.name}."
+                if "--client-cert-auth" not in str(
+                    container.command
+                ) and "--client-cert-auth=true" not in str(container.command):
+                    report.status = "FAIL"
+                    report.status_extended = f"Etcd does not have client certificate authentication enabled in pod {pod.name}."
+                    break
             findings.append(report)
         return findings
