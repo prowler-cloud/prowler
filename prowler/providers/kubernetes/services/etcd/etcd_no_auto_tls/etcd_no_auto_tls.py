@@ -13,7 +13,7 @@ class etcd_no_auto_tls(Check):
             report.status = "PASS"
             report.status_extended = f"Etcd is not configured to use self-signed certificates for TLS in pod {pod.name}."
             for container in pod.containers.values():
-                if "--auto-tls" in str(container.command) and "--auto-tls=true" in str(
+                if "--auto-tls" in str(container.command) or "--auto-tls=true" in str(
                     container.command
                 ):
                     report.status = "FAIL"
