@@ -269,4 +269,4 @@ prowler gcp --project-ids <Project ID 1> <Project ID 2> ... <Project ID N>
 See more details about GCP Authentication in [Requirements](getting-started/requirements.md)
 
 ## Prowler v2 Documentation
-For **Prowler v2 Documentation**, please go [here](https://github.com/prowler-cloud/prowler/tree/2.12.0) to the branch and its README.md.
+For **Prowler v2 Documentation**, please check it out [here](https://github.com/prowler-cloud/prowler/blob/8818f47333a0c1c1a457453c87af0ea5b89a385f/README.md).
