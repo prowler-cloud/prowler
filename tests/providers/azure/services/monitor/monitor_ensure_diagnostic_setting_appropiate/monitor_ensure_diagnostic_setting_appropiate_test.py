@@ -60,7 +60,20 @@ class Test_monitor_ensure_diagnostic_setting_appropiate:
                         mock.MagicMock(category="Autoscale", enabled=False),
                         mock.MagicMock(category="ResourceHealth", enabled=False),
                     ],
-                )
+                ),
+                DiagnosticSetting(
+                    id="id2",
+                    logs=[
+                        mock.MagicMock(category="Administrative", enabled=False),
+                        mock.MagicMock(category="Security", enabled=True),
+                        mock.MagicMock(category="ServiceHealth", enabled=False),
+                        mock.MagicMock(category="Alert", enabled=True),
+                        mock.MagicMock(category="Recommendation", enabled=False),
+                        mock.MagicMock(category="Policy", enabled=True),
+                        mock.MagicMock(category="Autoscale", enabled=False),
+                        mock.MagicMock(category="ResourceHealth", enabled=False),
+                    ],
+                ),
             ]
         }
 
