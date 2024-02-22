@@ -421,22 +421,6 @@ azure-mgmt-core = ">=1.3.2,<2.0.0"
 isodate = ">=0.6.1,<1.0.0"
 
 [[package]]
-name = "azure-mgmt-network"
-version = "25.2.0"
-description = "Microsoft Azure Network Management Client Library for Python"
-optional = false
-python-versions = ">=3.7"
-files = [
-    {file = "azure-mgmt-network-25.2.0.tar.gz", hash = "sha256:114c4292d223b1d1e247b41af65b8d5a3793567e6adbfa230772055223f4182a"},
-    {file = "azure_mgmt_network-25.2.0-py3-none-any.whl", hash = "sha256:c76181e79d689df40b8160c4ffa8dd2bbf6ba064ed4d164fdefd8fb53b781641"},
-]
-
-[package.dependencies]
-azure-common = ">=1.1,<2.0"
-azure-mgmt-core = ">=1.3.2,<2.0.0"
-isodate = ">=0.6.1,<1.0.0"
-
-[[package]]
 name = "azure-mgmt-rdbms"
 version = "10.1.0"
 description = "Microsoft Azure RDBMS Management Client Library for Python"
@@ -4278,4 +4262,4 @@ docs = ["mkdocs", "mkdocs-material"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.13"
-content-hash = "1116fd815b7d9ef52dbeaa62a06537e22cdd6614431d837a95a4b07c42fc1fbd"
+content-hash = "e4b0d4b1cafe9d33d37a513c0913dc8d200db6a1097ae5848f03f839c7e865b8"
