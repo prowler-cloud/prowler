@@ -1,0 +1,36 @@
+{
+  "Provider": "kubernetes",
+  "CheckID": "apiserver_no_always_admit_plugin",
+  "CheckTitle": "Ensure that the admission control plugin AlwaysAdmit is not set",
+  "CheckType": [
+    "Security",
+    "Configuration"
+  ],
+  "ServiceName": "apiserver",
+  "SubServiceName": "Admission Control",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "KubernetesAPIServer",
+  "Description": "This check verifies that the Kubernetes API server is not configured with the AlwaysAdmit admission control plugin. The AlwaysAdmit plugin allows all requests without any filtering, which is a security risk and is deprecated.",
+  "Risk": "Enabling AlwaysAdmit permits all requests by default, bypassing other admission control checks, which can lead to unauthorized access.",
+  "RelatedUrl": "https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/",
+  "Remediation": {
+    "Code": {
+      "CLI": "Edit the kube-apiserver configuration to ensure that AlwaysAdmit is not included in the --enable-admission-plugins argument. Remove the plugin if it exists.",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Ensure the API server does not use the AlwaysAdmit admission control plugin to maintain proper security checks for all requests.",
+      "Url": "https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#alwaysadmit"
+    }
+  },
+  "Categories": [
+    "Access Control",
+    "Deprecated Features"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "AlwaysAdmit is deprecated and should not be used. Ensure it is removed from the API server configuration."
+}
