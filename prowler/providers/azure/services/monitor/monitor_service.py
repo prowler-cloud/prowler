@@ -1,6 +1,6 @@
+from dataclasses import dataclass
+
 from azure.mgmt.monitor import MonitorManagementClient
-from azure.mgmt.monitor.models import LogSettings
-from pydantic import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.providers.azure.lib.service.service import AzureService
@@ -37,12 +37,7 @@ class Monitor(AzureService):
         return diagnostics_settings
 
 
-# @dataclass
-# class DiagnosticSetting:
-#    id: str
-#    logs: list
-
-
-class DiagnosticSetting(BaseModel):
+@dataclass
+class DiagnosticSetting:
     id: str
-    logs: LogSettings
+    logs: list
