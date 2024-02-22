@@ -12,13 +12,16 @@ class controllermanager_disable_profiling(Check):
             report.namespace = pod.namespace
             report.resource_name = pod.name
             report.resource_id = pod.uid
-            report.status = "FAIL"
+            report.status = "PASS"
             report.status_extended = (
-                f"Controller Manager has profiling enabled in pod {pod.name}."
+                f"Controller Manager does not have profiling enabled in pod {pod.name}."
             )
             for container in pod.containers.values():
-                if "--profiling=false" in str(container.command):
-                    report.status = "PASS"
-                    report.status_extended = f"Controller Manager does not have profiling enabled in pod {pod.name}."
+                if "--profiling=false" not in str(container.command):
+                    report.status = "FAIL"
+                    report.status_extended = (
+                        f"Controller Manager has profiling enabled in pod {pod.name}."
+                    )
+                    break
             findings.append(report)
         return findings

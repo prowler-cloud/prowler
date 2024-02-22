@@ -1,6 +1,6 @@
-from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
 from prowler.providers.aws.services.globalaccelerator.globalaccelerator_service import (
     GlobalAccelerator,
 )
+from prowler.providers.common.common import get_global_provider
 
-globalaccelerator_client = GlobalAccelerator(current_audit_info)
+globalaccelerator_client = GlobalAccelerator(get_global_provider())

@@ -23,7 +23,7 @@
     },
     "Recommendation": {
       "Text": "Ensure that the API server is configured with RBAC authorization mode for enhanced security and access control.",
-      "Url": "https://kubernetes.io/docs/admin/kube-apiserver/"
+      "Url": "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/"
     }
   },
   "Categories": [

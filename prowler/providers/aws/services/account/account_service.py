@@ -9,9 +9,9 @@ from prowler.providers.aws.lib.service.service import AWSService
 
 
 class Account(AWSService):
-    def __init__(self, audit_info):
+    def __init__(self, provider):
         # Call AWSService's __init__
-        super().__init__(__class__.__name__, audit_info)
+        super().__init__(__class__.__name__, provider)
         self.number_of_contacts = 4
         self.contact_base = self.__get_contact_information__()
         self.contacts_billing = self.__get_alternate_contact__("BILLING")
