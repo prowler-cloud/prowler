@@ -1,0 +1,36 @@
+{
+  "Provider": "kubernetes",
+  "CheckID": "scheduler_bind_address",
+  "CheckTitle": "Ensure that the --bind-address argument is set to 127.0.0.1 for the Scheduler",
+  "CheckType": [
+    "Security",
+    "Configuration"
+  ],
+  "ServiceName": "scheduler",
+  "SubServiceName": "Bind Address Configuration",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "KubernetesScheduler",
+  "Description": "This check ensures that the Kubernetes Scheduler is bound to the loopback address (127.0.0.1) to minimize the cluster's attack surface. Binding to the loopback address prevents unauthorized network access to the Scheduler's health and metrics information.",
+  "Risk": "Binding the Scheduler to a non-loopback address exposes sensitive health and metrics information without authentication or encryption.",
+  "RelatedUrl": "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-scheduler/",
+  "Remediation": {
+    "Code": {
+      "CLI": "Edit the kube-scheduler configuration to set --bind-address to 127.0.0.1.",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Bind the Scheduler to the loopback address for enhanced security.",
+      "Url": "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-scheduler/"
+    }
+  },
+  "Categories": [
+    "Network Security",
+    "Configuration Management"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Ensure compatibility with the Kubernetes version in use, as command-line flags may differ."
+}

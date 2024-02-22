@@ -1,0 +1,36 @@
+{
+  "Provider": "kubernetes",
+  "CheckID": "etcd_peer_tls_config",
+  "CheckTitle": "Ensure that the --peer-cert-file and --peer-key-file arguments are set as appropriate for etcd",
+  "CheckType": [
+    "Security",
+    "Configuration"
+  ],
+  "ServiceName": "etcd",
+  "SubServiceName": "Peer TLS Configuration",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "EtcdService",
+  "Description": "This check ensures that etcd is configured to use TLS encryption for peer connections, which is crucial for securing sensitive data stored in etcd. It verifies the presence of peer certificate and key file arguments in etcd configuration.",
+  "Risk": "Not configuring TLS for peer connections in etcd can lead to potential data breaches and unauthorized access.",
+  "RelatedUrl": "https://etcd.io/docs/latest/op-guide/security/",
+  "Remediation": {
+    "Code": {
+      "CLI": "Configure peer TLS encryption by editing the etcd pod specification file with appropriate certificate and key files. Example: --peer-client-file=</path/to/peer-cert-file> --peer-key-file=</path/to/peer-key-file>.",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Secure etcd peer connections with TLS encryption.",
+      "Url": "https://kubernetes.io/docs/tasks/administer-cluster/configure-upgrade-etcd/#securing-communication"
+    }
+  },
+  "Categories": [
+    "Data Security",
+    "Network Security"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check is only applicable for etcd clusters. For single etcd server setups, this recommendation does not apply."
+}
