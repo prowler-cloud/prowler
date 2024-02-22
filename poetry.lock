@@ -327,6 +327,24 @@ msal = ">=1.24.0,<2.0.0"
 msal-extensions = ">=0.3.0,<2.0.0"
 
 [[package]]
+name = "azure-keyvault-keys"
+version = "4.8.0"
+description = "Microsoft Azure Key Vault Keys Client Library for Python"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "azure-keyvault-keys-4.8.0.zip", hash = "sha256:6c0bb2f783202a34a3e5ec74866e6212e591ac7124f03b9669d1b09b68224bc4"},
+    {file = "azure_keyvault_keys-4.8.0-py3-none-any.whl", hash = "sha256:d1080fa1ffcb3bc16fc3a6b7acce63c8f0e81ad0b498673b2871b162396674f0"},
+]
+
+[package.dependencies]
+azure-common = ">=1.1,<2.0"
+azure-core = ">=1.24.0,<2.0.0"
+cryptography = ">=2.1.4"
+isodate = ">=0.6.1"
+typing-extensions = ">=4.0.1"
+
+[[package]]
 name = "azure-mgmt-applicationinsights"
 version = "4.0.0"
 description = "Microsoft Azure Application Insights Management Client Library for Python"
@@ -4278,4 +4296,4 @@ docs = ["mkdocs", "mkdocs-material"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.13"
-content-hash = "0bfe61aab7a7053c341319b1c680f3b3f01015ad9729f46f2e83762a11d77ed8"
+content-hash = "c96bde2ca078425ea19f4bd72822c01f594af325612b9b79c765757a7b58543e"
