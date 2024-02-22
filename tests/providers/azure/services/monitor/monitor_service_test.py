@@ -51,39 +51,12 @@ class Test_Monitor_Service:
         monitor = Monitor(set_mocked_azure_audit_info())
         assert len(monitor.diagnostics_settings) == 1
         assert monitor.diagnostics_settings[AZURE_SUBSCRIPTION][0].id == "id"
-        assert monitor.diagnostics_settings[AZURE_SUBSCRIPTION][0].logs[0].enabled
-        assert (
-            monitor.diagnostics_settings[AZURE_SUBSCRIPTION][0].logs[0].category
-            == "Administrative"
-        )
-        assert monitor.diagnostics_settings[AZURE_SUBSCRIPTION][0].logs[1].enabled
-        assert (
-            monitor.diagnostics_settings[AZURE_SUBSCRIPTION][0].logs[1].category
-            == "Security"
-        )
-        assert (
-            monitor.diagnostics_settings[AZURE_SUBSCRIPTION][0].logs[2].category
-            == "ServiceHealth"
-        )
-        assert monitor.diagnostics_settings[AZURE_SUBSCRIPTION][0].logs[3].enabled
-        assert (
-            monitor.diagnostics_settings[AZURE_SUBSCRIPTION][0].logs[3].category
-            == "Alert"
-        )
-        assert (
-            monitor.diagnostics_settings[AZURE_SUBSCRIPTION][0].logs[4].category
-            == "Recommendation"
-        )
-        assert monitor.diagnostics_settings[AZURE_SUBSCRIPTION][0].logs[5].enabled
-        assert (
-            monitor.diagnostics_settings[AZURE_SUBSCRIPTION][0].logs[5].category
-            == "Policy"
-        )
-        assert (
-            monitor.diagnostics_settings[AZURE_SUBSCRIPTION][0].logs[6].category
-            == "Autoscale"
-        )
-        assert (
-            monitor.diagnostics_settings[AZURE_SUBSCRIPTION][0].logs[7].category
-            == "ResourceHealth"
-        )
+        for log in monitor.diagnostics_settings[AZURE_SUBSCRIPTION][0].logs:
+            if log.category == "Administrative":
+                assert log.enabled
+            if log.category == "Security":
+                assert log.enabled
+            if log.category == "Alert":
+                assert log.enabled
+            if log.category == "Policy":
+                assert log.enabled

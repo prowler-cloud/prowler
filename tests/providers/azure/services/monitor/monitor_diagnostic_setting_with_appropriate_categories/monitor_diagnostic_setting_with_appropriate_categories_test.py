@@ -4,20 +4,23 @@ from prowler.providers.azure.services.monitor.monitor_service import DiagnosticS
 from tests.providers.azure.azure_fixtures import AZURE_SUBSCRIPTION
 
 
-class Test_monitor_ensure_diagnostic_setting_appropiate:
-    def test_monitor_ensure_diagnostic_setting_appropiate_no_subscriptions(self):
+class Test_monitor_diagnostic_setting_with_appropriate_categories:
+    def test_monitor_diagnostic_setting_with_appropriate_categories_no_subscriptions(
+        self,
+    ):
         monitor_client = mock.MagicMock
         monitor_client.diagnostics_settings = {}
 
         with mock.patch(
-            "prowler.providers.azure.services.monitor.monitor_ensure_diagnostic_setting_appropiate.monitor_ensure_diagnostic_setting_appropiate.monitor_client",
+            "prowler.providers.azure.services.monitor.monitor_diagnostic_setting_with_appropriate_categories.monitor_diagnostic_setting_with_appropriate_categories.monitor_client",
             new=monitor_client,
         ):
+
             from prowler.providers.azure.services.monitor.monitor_diagnostic_setting_with_appropriate_categories.monitor_diagnostic_setting_with_appropriate_categories import (
-                monitor_ensure_diagnostic_setting_appropiate,
+                monitor_diagnostic_setting_with_appropriate_categories,
             )
 
-            check = monitor_ensure_diagnostic_setting_appropiate()
+            check = monitor_diagnostic_setting_with_appropriate_categories()
             result = check.execute()
             assert len(result) == 0
 
@@ -25,14 +28,14 @@ class Test_monitor_ensure_diagnostic_setting_appropiate:
         monitor_client = mock.MagicMock
         monitor_client.diagnostics_settings = {AZURE_SUBSCRIPTION: []}
         with mock.patch(
-            "prowler.providers.azure.services.monitor.monitor_ensure_diagnostic_setting_appropiate.monitor_ensure_diagnostic_setting_appropiate.monitor_client",
+            "prowler.providers.azure.services.monitor.monitor_diagnostic_setting_with_appropriate_categories.monitor_diagnostic_setting_with_appropriate_categories.monitor_client",
             new=monitor_client,
         ):
             from prowler.providers.azure.services.monitor.monitor_diagnostic_setting_with_appropriate_categories.monitor_diagnostic_setting_with_appropriate_categories import (
-                monitor_ensure_diagnostic_setting_appropiate,
+                monitor_diagnostic_setting_with_appropriate_categories,
             )
 
-            check = monitor_ensure_diagnostic_setting_appropiate()
+            check = monitor_diagnostic_setting_with_appropriate_categories()
             result = check.execute()
             assert len(result) == 1
             assert result[0].subscription == AZURE_SUBSCRIPTION
@@ -78,14 +81,14 @@ class Test_monitor_ensure_diagnostic_setting_appropiate:
         }
 
         with mock.patch(
-            "prowler.providers.azure.services.monitor.monitor_ensure_diagnostic_setting_appropiate.monitor_ensure_diagnostic_setting_appropiate.monitor_client",
+            "prowler.providers.azure.services.monitor.monitor_diagnostic_setting_with_appropriate_categories.monitor_diagnostic_setting_with_appropriate_categories.monitor_client",
             new=monitor_client,
         ):
             from prowler.providers.azure.services.monitor.monitor_diagnostic_setting_with_appropriate_categories.monitor_diagnostic_setting_with_appropriate_categories import (
-                monitor_ensure_diagnostic_setting_appropiate,
+                monitor_diagnostic_setting_with_appropriate_categories,
             )
 
-            check = monitor_ensure_diagnostic_setting_appropiate()
+            check = monitor_diagnostic_setting_with_appropriate_categories()
             result = check.execute()
             assert len(result) == 1
             assert result[0].subscription == AZURE_SUBSCRIPTION
