@@ -13,7 +13,7 @@
   "ResourceType": "EtcdService",
   "Description": "This check ensures that client authentication is enabled for the etcd service, which is a key-value store used by Kubernetes for persistent storage of all REST API objects. Enabling client authentication helps in securing access to etcd.",
   "Risk": "If --client-cert-auth is not set to true, etcd service may be accessible by unauthenticated clients, posing a significant security risk.",
-  "RelatedUrl": "https://etcd.io/docs/v3.2/op-guide/security/",
+  "RelatedUrl": "https://etcd.io/docs/latest/op-guide/security/",
   "Remediation": {
     "Code": {
       "CLI": "Edit the etcd pod specification file to set --client-cert-auth to true. Example: --client-cert-auth=\"true\".",
