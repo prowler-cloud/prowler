@@ -19,7 +19,7 @@ class controllermanager_rotate_kubelet_server_cert(Check):
                 kubelete_server_cert = True
                 for command in container.command:
                     if command.startswith("--feature-gates"):
-                        if "RotateKubeletServerCertificate=true" in (
+                        if "RotateKubeletServerCertificate=true" not in (
                             command.split("=")[1]
                         ):
                             kubelete_server_cert = False
