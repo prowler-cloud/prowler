@@ -10,9 +10,9 @@ from prowler.providers.aws.lib.service.service import AWSService
 
 ################## FMS
 class FMS(AWSService):
-    def __init__(self, audit_info):
+    def __init__(self, provider):
         # # Call AWSService's __init__
-        super().__init__(__class__.__name__, audit_info, global_service=True)
+        super().__init__(__class__.__name__, provider, global_service=True)
         self.fms_admin_account = True
         self.fms_policies = []
         self.__list_policies__()

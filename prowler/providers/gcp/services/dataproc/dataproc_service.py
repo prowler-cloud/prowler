@@ -7,8 +7,8 @@ from prowler.providers.gcp.services.compute.compute_client import compute_client
 
 ################## Dataproc
 class Dataproc(GCPService):
-    def __init__(self, audit_info):
-        super().__init__(__class__.__name__, audit_info)
+    def __init__(self, provider):
+        super().__init__(__class__.__name__, provider)
         self.regions = compute_client.regions
         self.clusters = []
         self.__threading_call__(self.__get_clusters__, self.regions)

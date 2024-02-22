@@ -14,15 +14,21 @@ class apiserver_audit_log_maxsize_set(Check):
             report.resource_id = pod.uid
             report.status = "PASS"
             report.status_extended = f"Audit log max size is set appropriately in the API server in pod {pod.name}."
-
             audit_log_maxsize_set = False
             for container in pod.containers.values():
+                audit_log_maxsize_set = False
                 # Check if "--audit-log-maxsize" is set to 100 MB or as appropriate
                 for command in container.command:
                     if command.startswith("--audit-log-maxsize"):
-                        if int(command.split("=")[1]) >= 100:
+                        if int(
+                            command.split("=")[1]
+                        ) == apiserver_client.audit_config.get(
+                            "audit_log_maxsize", 100
+                        ):
                             audit_log_maxsize_set = True
                             break
+                if not audit_log_maxsize_set:
+                    break
 
             if not audit_log_maxsize_set:
                 report.status = "FAIL"

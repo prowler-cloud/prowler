@@ -22,5 +22,6 @@ class apiserver_no_token_auth_file(Check):
                     report.status_extended = (
                         f"API Server has token-auth-file enabled in pod {pod.name}."
                     )
+                    break
             findings.append(report)
         return findings

@@ -17,18 +17,14 @@ class apiserver_service_account_key_file_set(Check):
                 f"Service account key file is set appropriately in pod {pod.name}."
             )
 
-            service_account_key_file_set = False
             for container in pod.containers.values():
                 # Check if "--service-account-key-file" is set
-                if "--service-account-key-file" in str(container.command):
-                    service_account_key_file_set = True
+                if "--service-account-key-file" not in str(container.command):
+                    report.status = "FAIL"
+                    report.status_extended = (
+                        f"Service account key file is not set in pod {pod.name}."
+                    )
                     break
-
-            if not service_account_key_file_set:
-                report.status = "FAIL"
-                report.status_extended = (
-                    f"Service account key file is not set in pod {pod.name}."
-                )
 
             findings.append(report)
         return findings

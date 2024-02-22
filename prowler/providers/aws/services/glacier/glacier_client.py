@@ -1,4 +1,4 @@
-from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
 from prowler.providers.aws.services.glacier.glacier_service import Glacier
+from prowler.providers.common.common import get_global_provider
 
-glacier_client = Glacier(current_audit_info)
+glacier_client = Glacier(get_global_provider())

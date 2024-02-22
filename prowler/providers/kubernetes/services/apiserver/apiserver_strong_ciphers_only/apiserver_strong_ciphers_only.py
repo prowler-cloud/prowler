@@ -16,6 +16,7 @@ class apiserver_strong_ciphers_only(Check):
             report.status_extended = f"API Server is configured with strong cryptographic ciphers in pod {pod.name}."
             strong_ciphers_set = True
             for container in pod.containers.values():
+                strong_ciphers_set = True
                 # Check if strong ciphers are set in "--tls-cipher-suites"
                 for command in container.command:
                     if command.startswith("--tls-cipher-suites"):
@@ -27,6 +28,8 @@ class apiserver_strong_ciphers_only(Check):
                             ]:
                                 strong_ciphers_set = False
                                 break
+                if not strong_ciphers_set:
+                    break
 
             if not strong_ciphers_set:
                 report.status = "FAIL"

@@ -23,7 +23,7 @@
     },
     "Recommendation": {
       "Text": "Enable audit logging in the API server by specifying a valid path for --audit-log-path to ensure comprehensive activity logging within the cluster.",
-      "Url": "https://kubernetes.io/docs/admin/kube-apiserver/"
+      "Url": "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/"
     }
   },
   "Categories": [
