@@ -19,6 +19,7 @@ class apiserver_namespace_lifecycle_plugin(Check):
 
             namespace_lifecycle_plugin_set = False
             for container in pod.containers.values():
+                namespace_lifecycle_plugin_set = False
                 # Check if "--enable-admission-plugins" includes "NamespaceLifecycle"
                 # and "--disable-admission-plugins" does not include "NamespaceLifecycle"
                 for command in container.command:
@@ -28,6 +29,8 @@ class apiserver_namespace_lifecycle_plugin(Check):
                     elif command.startswith("--disable-admission-plugins"):
                         if "NamespaceLifecycle" in (command.split("=")[1]):
                             namespace_lifecycle_plugin_set = False
+                if not namespace_lifecycle_plugin_set:
+                    break
 
             if not namespace_lifecycle_plugin_set:
                 report.status = "FAIL"

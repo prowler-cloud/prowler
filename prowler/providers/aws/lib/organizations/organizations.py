@@ -3,12 +3,12 @@ import sys
 from boto3 import client
 
 from prowler.lib.logger import logger
-from prowler.providers.aws.lib.audit_info.models import AWS_Organizations_Info
+from prowler.providers.aws.lib.audit_info.models import AWSOrganizationsInfo
 
 
 def get_organizations_metadata(
     metadata_account: str, assumed_credentials: dict
-) -> AWS_Organizations_Info:
+) -> AWSOrganizationsInfo:
     try:
         organizations_client = client(
             "organizations",
@@ -30,7 +30,7 @@ def get_organizations_metadata(
         account_details_tags = ""
         for tag in list_tags_for_resource["Tags"]:
             account_details_tags += tag["Key"] + ":" + tag["Value"] + ","
-        organizations_info = AWS_Organizations_Info(
+        organizations_info = AWSOrganizationsInfo(
             account_details_email=organizations_metadata["Account"]["Email"],
             account_details_name=organizations_metadata["Account"]["Name"],
             account_details_arn=organizations_metadata["Account"]["Arn"],

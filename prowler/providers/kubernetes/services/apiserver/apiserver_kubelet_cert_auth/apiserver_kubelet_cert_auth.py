@@ -16,8 +16,8 @@ class apiserver_kubelet_cert_auth(Check):
             report.status_extended = f"API Server has appropriate kubelet certificate authority configured in pod {pod.name}."
             for container in pod.containers.values():
                 if "--kubelet-certificate-authority" not in str(container.command):
-
                     report.status = "FAIL"
                     report.status_extended = f"API Server is missing kubelet certificate authority configuration in pod {pod.name}."
+                    break
             findings.append(report)
         return findings

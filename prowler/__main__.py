@@ -39,7 +39,6 @@ from prowler.lib.outputs.json import close_json
 from prowler.lib.outputs.outputs import extract_findings_statistics
 from prowler.lib.outputs.slack import send_slack_message
 from prowler.lib.outputs.summary_table import display_summary_table
-from prowler.providers.aws.aws_provider import get_available_aws_service_regions
 from prowler.providers.aws.lib.s3.s3 import send_to_s3_bucket
 from prowler.providers.aws.lib.security_hub.security_hub import (
     batch_send_to_security_hub,
@@ -52,7 +51,10 @@ from prowler.providers.common.audit_info import (
     set_provider_execution_parameters,
 )
 from prowler.providers.common.clean import clean_provider_local_output_directories
-from prowler.providers.common.common import set_global_provider_object
+from prowler.providers.common.common import (
+    get_global_provider,
+    set_global_provider_object,
+)
 from prowler.providers.common.mutelist import set_provider_mutelist
 from prowler.providers.common.outputs import set_provider_output_options
 from prowler.providers.common.quick_inventory import run_provider_quick_inventory
@@ -263,9 +265,10 @@ def prowler():
             f"{Style.BRIGHT}\nSending findings to AWS Security Hub, please wait...{Style.RESET_ALL}"
         )
         # Verify where AWS Security Hub is enabled
+        global_provider = get_global_provider()
         aws_security_enabled_regions = []
         security_hub_regions = (
-            get_available_aws_service_regions("securityhub", audit_info)
+            global_provider.get_available_aws_service_regions("securityhub")
             if not audit_info.audited_regions
             else audit_info.audited_regions
         )

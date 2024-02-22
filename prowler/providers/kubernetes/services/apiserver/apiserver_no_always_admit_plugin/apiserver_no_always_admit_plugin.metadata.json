@@ -13,7 +13,7 @@
   "ResourceType": "KubernetesAPIServer",
   "Description": "This check verifies that the Kubernetes API server is not configured with the AlwaysAdmit admission control plugin. The AlwaysAdmit plugin allows all requests without any filtering, which is a security risk and is deprecated.",
   "Risk": "Enabling AlwaysAdmit permits all requests by default, bypassing other admission control checks, which can lead to unauthorized access.",
-  "RelatedUrl": "https://kubernetes.io/docs/admin/admission-controllers/#alwaysadmit",
+  "RelatedUrl": "https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/",
   "Remediation": {
     "Code": {
       "CLI": "Edit the kube-apiserver configuration to ensure that AlwaysAdmit is not included in the --enable-admission-plugins argument. Remove the plugin if it exists.",
@@ -23,7 +23,7 @@
     },
     "Recommendation": {
       "Text": "Ensure the API server does not use the AlwaysAdmit admission control plugin to maintain proper security checks for all requests.",
-      "Url": "https://kubernetes.io/docs/admin/kube-apiserver/"
+      "Url": "https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#alwaysadmit"
     }
   },
   "Categories": [

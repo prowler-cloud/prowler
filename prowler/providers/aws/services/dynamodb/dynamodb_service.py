@@ -10,9 +10,9 @@ from prowler.providers.aws.lib.service.service import AWSService
 
 ################## DynamoDB
 class DynamoDB(AWSService):
-    def __init__(self, audit_info):
+    def __init__(self, provider):
         # Call AWSService's __init__
-        super().__init__(__class__.__name__, audit_info)
+        super().__init__(__class__.__name__, provider)
         self.tables = []
         self.__threading_call__(self.__list_tables__)
         self.__describe_table__()
@@ -121,9 +121,9 @@ class DynamoDB(AWSService):
 
 ################## DynamoDB DAX
 class DAX(AWSService):
-    def __init__(self, audit_info):
+    def __init__(self, provider):
         # Call AWSService's __init__
-        super().__init__(__class__.__name__, audit_info)
+        super().__init__(__class__.__name__, provider)
         self.clusters = []
         self.__threading_call__(self.__describe_clusters__)
         self.__list_tags_for_resource__()

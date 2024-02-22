@@ -16,9 +16,11 @@ class apiserver_client_ca_file_set(Check):
             report.status_extended = f"Client CA file is set appropriately in the API server in pod {pod.name}."
             client_ca_file_set = False
             for container in pod.containers.values():
+                client_ca_file_set = False
                 # Check if "--client-ca-file" is set
                 if "--client-ca-file" in str(container.command):
                     client_ca_file_set = True
+                if not client_ca_file_set:
                     break
 
             if not client_ca_file_set:
