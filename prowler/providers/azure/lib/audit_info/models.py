@@ -28,6 +28,7 @@ class Azure_Audit_Info:
     audit_metadata: Optional[Any]
     audit_config: dict
     azure_region_config: Azure_Region_Config
+    locations: list[str]
 
     def __init__(
         self,
@@ -37,6 +38,7 @@ class Azure_Audit_Info:
         audit_resources,
         audit_config,
         azure_region_config,
+        locations,
     ):
         self.credentials = credentials
         self.identity = identity
@@ -44,3 +46,4 @@ class Azure_Audit_Info:
         self.audit_resources = audit_resources
         self.audit_config = audit_config
         self.azure_region_config = azure_region_config
+        self.locations = locations

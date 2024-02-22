@@ -101,7 +101,7 @@ All the checks MUST fill the `report.status` and `report.status_extended` with t
 
 - Status -- `report.status`
     - `PASS` --> If the check is passing against the configured value.
-    - `FAIL` --> If the check is passing against the configured value.
+    - `FAIL` --> If the check is failing against the configured value.
     - `INFO` --> This value cannot be used unless a manual operation is required in order to determine if the `report.status` is whether `PASS` or `FAIL`.
 - Status Extended -- `report.status_extended`
     - MUST end in a dot `.`
