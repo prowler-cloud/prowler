@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 
 from azure.mgmt.monitor import MonitorManagementClient
+from azure.mgmt.monitor.models import LogSettings
 
 from prowler.lib.logger import logger
 from prowler.providers.azure.lib.service.service import AzureService
@@ -40,4 +41,4 @@ class Monitor(AzureService):
 @dataclass
 class DiagnosticSetting:
     id: str
-    logs: list
+    logs: LogSettings

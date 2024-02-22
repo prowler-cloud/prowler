@@ -15,7 +15,7 @@
     "Code": {
       "CLI": "az monitor diagnostic-settings subscription create --subscription <subscription id> --name <diagnostic settings name> --location <location> <[- -event-hub <event hub ID> --event-hub-auth-rule <event hub auth rule ID>] [-- storage-account <storage account ID>] [--workspace <log analytics workspace ID>] --logs '[{category:Security,enabled:true},{category:Administrative,enabled:true},{ca tegory:Alert,enabled:true},{category:Policy,enabled:true}]'>",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/Monitor/diagnostic-setting-categories.html",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/Monitor/diagnostic-setting-categories.html",
       "Terraform": ""
     },
     "Recommendation": {
