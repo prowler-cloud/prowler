@@ -1,4 +1,4 @@
-**Prowler** is an Open Source security tool to perform AWS, Azure and Google Cloud security best practices assessments, audits, incident response, continuous monitoring, hardening and forensics readiness. We have Prowler CLI (Command Line Lnterface) that we call Prowler Open Source and a Service on top of it that we call <a href="https://prowler.com">Prowler SaaS</a>.
+**Prowler** is an Open Source security tool to perform AWS, Azure and Google Cloud security best practices assessments, audits, incident response, continuous monitoring, hardening and forensics readiness. We have Prowler CLI (Command Line Interface) that we call Prowler Open Source and a service on top of it that we call <a href="https://prowler.com">Prowler SaaS</a>.
 
 ![Prowler Execution](img/short-display.png)
 
