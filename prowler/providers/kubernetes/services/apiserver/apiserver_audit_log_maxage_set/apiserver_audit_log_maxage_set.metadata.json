@@ -23,7 +23,7 @@
     },
     "Recommendation": {
       "Text": "Configure the API server audit log retention period to retain logs for at least 30 days or as per your organization's requirements.",
-      "Url": "https://kubernetes.io/docs/admin/kube-apiserver/"
+      "Url": "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/"
     }
   },
   "Categories": [

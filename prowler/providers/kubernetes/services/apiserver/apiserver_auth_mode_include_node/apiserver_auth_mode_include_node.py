@@ -16,12 +16,18 @@ class apiserver_auth_mode_include_node(Check):
             report.status_extended = (
                 f"API Server authorization mode includes Node in pod {pod.name}."
             )
+            node_auth_mode_set = False
             for container in pod.containers.values():
+                node_auth_mode_set = False
                 for command in container.command:
                     if command.startswith("--authorization-mode"):
-                        if "Node" not in (command.split("=")[1]):
-
-                            report.status = "FAIL"
-                            report.status_extended = f"API Server authorization mode does not include Node in pod {pod.name}."
+                        if "Node" in (command.split("=")[1]):
+                            node_auth_mode_set = True
+                            break
+                if not node_auth_mode_set:
+                    break
+            if not node_auth_mode_set:
+                report.status = "FAIL"
+                report.status_extended = f"API Server authorization mode does not include Node in pod {pod.name}."
             findings.append(report)
         return findings

@@ -18,11 +18,14 @@ class apiserver_node_restriction_plugin(Check):
             )
             node_restriction_plugin_set = False
             for container in pod.containers.values():
+                node_restriction_plugin_set = False
                 # Check if "--enable-admission-plugins" includes "NodeRestriction"
                 for command in container.command:
                     if command.startswith("--enable-admission-plugins"):
                         if "NodeRestriction" in (command.split("=")[1]):
                             node_restriction_plugin_set = True
+                if not node_restriction_plugin_set:
+                    break
 
             if not node_restriction_plugin_set:
                 report.status = "FAIL"

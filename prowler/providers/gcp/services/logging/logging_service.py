@@ -6,8 +6,8 @@ from prowler.providers.gcp.lib.service.service import GCPService
 
 ################## Logging
 class Logging(GCPService):
-    def __init__(self, audit_info):
-        super().__init__(__class__.__name__, audit_info, api_version="v2")
+    def __init__(self, provider):
+        super().__init__(__class__.__name__, provider, api_version="v2")
         self.sinks = []
         self.metrics = []
         self.__get_sinks__()

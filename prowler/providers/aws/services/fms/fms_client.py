@@ -1,4 +1,4 @@
-from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
 from prowler.providers.aws.services.fms.fms_service import FMS
+from prowler.providers.common.common import get_global_provider
 
-fms_client = FMS(current_audit_info)
+fms_client = FMS(get_global_provider())

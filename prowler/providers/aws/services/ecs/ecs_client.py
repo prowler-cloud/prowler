@@ -1,4 +1,4 @@
-from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
 from prowler.providers.aws.services.ecs.ecs_service import ECS
+from prowler.providers.common.common import get_global_provider
 
-ecs_client = ECS(current_audit_info)
+ecs_client = ECS(get_global_provider())

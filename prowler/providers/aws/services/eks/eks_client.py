@@ -1,4 +1,4 @@
-from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
 from prowler.providers.aws.services.eks.eks_service import EKS
+from prowler.providers.common.common import get_global_provider
 
-eks_client = EKS(current_audit_info)
+eks_client = EKS(get_global_provider())

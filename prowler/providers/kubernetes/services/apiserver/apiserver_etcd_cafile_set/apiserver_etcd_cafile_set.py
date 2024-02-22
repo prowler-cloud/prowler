@@ -16,11 +16,11 @@ class apiserver_etcd_cafile_set(Check):
             report.status_extended = (
                 f"etcd CA file is set appropriately in pod {pod.name}."
             )
-            etcd_cafile_set = False
+            etcd_cafile_set = True
             for container in pod.containers.values():
                 # Check if "--etcd-cafile" is set
-                if "--etcd-cafile" in str(container.command):
-                    etcd_cafile_set = True
+                if "--etcd-cafile" not in str(container.command):
+                    etcd_cafile_set = False
                     break
 
             if not etcd_cafile_set:

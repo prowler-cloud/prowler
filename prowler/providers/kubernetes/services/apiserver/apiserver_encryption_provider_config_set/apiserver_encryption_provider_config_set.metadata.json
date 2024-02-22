@@ -23,7 +23,7 @@
     },
     "Recommendation": {
       "Text": "Configure and enable encryption for data at rest in etcd using a suitable EncryptionConfig file.",
-      "Url": "https://kubernetes.io/docs/admin/kube-apiserver/"
+      "Url": "https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/#determining-whether-encryption-at-rest-is-already-enabled"
     }
   },
   "Categories": [
