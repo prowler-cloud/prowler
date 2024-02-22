@@ -13,7 +13,7 @@ class Test_monitor_ensure_diagnostic_setting_appropiate:
             "prowler.providers.azure.services.monitor.monitor_ensure_diagnostic_setting_appropiate.monitor_ensure_diagnostic_setting_appropiate.monitor_client",
             new=monitor_client,
         ):
-            from prowler.providers.azure.services.monitor.monitor_ensure_diagnostic_setting_appropiate.monitor_ensure_diagnostic_setting_appropiate import (
+            from prowler.providers.azure.services.monitor.monitor_diagnostic_setting_with_appropriate_categories.monitor_diagnostic_setting_with_appropriate_categories import (
                 monitor_ensure_diagnostic_setting_appropiate,
             )
 
@@ -28,7 +28,7 @@ class Test_monitor_ensure_diagnostic_setting_appropiate:
             "prowler.providers.azure.services.monitor.monitor_ensure_diagnostic_setting_appropiate.monitor_ensure_diagnostic_setting_appropiate.monitor_client",
             new=monitor_client,
         ):
-            from prowler.providers.azure.services.monitor.monitor_ensure_diagnostic_setting_appropiate.monitor_ensure_diagnostic_setting_appropiate import (
+            from prowler.providers.azure.services.monitor.monitor_diagnostic_setting_with_appropriate_categories.monitor_diagnostic_setting_with_appropriate_categories import (
                 monitor_ensure_diagnostic_setting_appropiate,
             )
 
@@ -50,26 +50,16 @@ class Test_monitor_ensure_diagnostic_setting_appropiate:
             AZURE_SUBSCRIPTION: [
                 DiagnosticSetting(
                     id="id",
-                    name="name",
-                    type="type",
-                    event_hub_authorization_rule_id="event_hub_authorization_rule_id",
-                    event_hub_name="event_hub_name",
-                    metrics="metrics",
                     logs=[
-                        mock.MagicMock(enabled=True),
-                        mock.MagicMock(enabled=True),
-                        mock.MagicMock(enabled=True),
-                        mock.MagicMock(enabled=True),
-                        mock.MagicMock(enabled=False),
-                        mock.MagicMock(enabled=True),
-                        mock.MagicMock(enabled=False),
-                        mock.MagicMock(enabled=False),
+                        mock.MagicMock(category="Administrative", enabled=True),
+                        mock.MagicMock(category="Security", enabled=True),
+                        mock.MagicMock(category="ServiceHealth", enabled=False),
+                        mock.MagicMock(category="Alert", enabled=True),
+                        mock.MagicMock(category="Recommendation", enabled=False),
+                        mock.MagicMock(category="Policy", enabled=True),
+                        mock.MagicMock(category="Autoscale", enabled=False),
+                        mock.MagicMock(category="ResourceHealth", enabled=False),
                     ],
-                    workspace_id="workspace_id",
-                    storage_account_id="storage_account_id",
-                    service_bus_rule_id="service_bus_rule_id",
-                    marketplace_partner_id="marketplace_partner_id",
-                    log_analytics_destination_type="log_analytics_destination_type",
                 )
             ]
         }
@@ -78,7 +68,7 @@ class Test_monitor_ensure_diagnostic_setting_appropiate:
             "prowler.providers.azure.services.monitor.monitor_ensure_diagnostic_setting_appropiate.monitor_ensure_diagnostic_setting_appropiate.monitor_client",
             new=monitor_client,
         ):
-            from prowler.providers.azure.services.monitor.monitor_ensure_diagnostic_setting_appropiate.monitor_ensure_diagnostic_setting_appropiate import (
+            from prowler.providers.azure.services.monitor.monitor_diagnostic_setting_with_appropriate_categories.monitor_diagnostic_setting_with_appropriate_categories import (
                 monitor_ensure_diagnostic_setting_appropiate,
             )
 

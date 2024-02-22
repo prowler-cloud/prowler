@@ -1,6 +1,6 @@
 {
   "Provider": "azure",
-  "CheckID": "monitor_ensure_diagnostic_setting_appropiate",
+  "CheckID": "monitor_diagnostic_setting_with_appropriate_categories",
   "CheckTitle": "Ensure Diagnostic Setting captures appropriate categories",
   "CheckType": [],
   "ServiceName": "monitor",
@@ -13,14 +13,14 @@
   "RelatedUrl": "https://learn.microsoft.com/en-us/azure/azure-monitor/essentials/diagnostic-settings",
   "Remediation": {
     "Code": {
-      "CLI": "az monitor diagnostic-settings subscription list --subscription <subscription ID>",
+      "CLI": "az monitor diagnostic-settings subscription create --subscription <subscription id> --name <diagnostic settings name> --location <location> <[- -event-hub <event hub ID> --event-hub-auth-rule <event hub auth rule ID>] [-- storage-account <storage account ID>] [--workspace <log analytics workspace ID>] --logs '[{category:Security,enabled:true},{category:Administrative,enabled:true},{ca tegory:Alert,enabled:true},{category:Policy,enabled:true}]'>",
       "NativeIaC": "",
       "Other": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/Monitor/diagnostic-setting-categories.html",
       "Terraform": ""
     },
     "Recommendation": {
       "Text": "1. Go to Azure Monitor 2. Click Activity log 3. Click on Export Activity Logs 4. Select the Subscription from the drop down menu 5. Click on Add diagnostic setting 6. Enter a name for your new Diagnostic Setting 7. Check the following categories: Administrative, Alert, Policy, and Security 8. Choose the destination details according to your organization's needs.",
-      "Url": ""
+      "Url": "https://learn.microsoft.com/en-us/azure/storage/common/manage-storage-analytics-logs?toc=%2Fazure%2Fstorage%2Fblobs%2Ftoc.json&bc=%2Fazure%2Fstorage%2Fblobs%2Fbreadcrumb%2Ftoc.json&tabs=azure-portal"
     }
   },
   "Categories": [],
