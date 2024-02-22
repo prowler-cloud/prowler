@@ -21,14 +21,14 @@ class etcd_unique_ca(Check):
             report.namespace = pod.namespace
             report.resource_name = pod.name
             report.resource_id = pod.uid
-            report.status = "PASS"
-            report.status_extended = f"Etcd uses a unique CA separate from the Kubernetes cluster CA in pod {pod.name}."
+            report.status = "MANUAL"
+            report.status_extended = f"Etcd uses a different CA file from the Kubernetes cluster CA in pod {pod.name}, but verify if the content is the same."
             for container in pod.containers.values():
                 for command in container.command:
                     if command.startswith("--trusted-ca-file"):
                         etcd_ca_files.append(command.split("=")[1])
             if any(ca in etcd_ca_files for ca in apiserver_ca_files):
                 report.status = "FAIL"
-                report.status_extended = f"Etcd does not use a unique CA, which could compromise its security in pod {pod.name}."
+                report.status_extended = f"Etcd does not use a unique CA file, which could compromise its security in pod {pod.name}."
             findings.append(report)
         return findings
