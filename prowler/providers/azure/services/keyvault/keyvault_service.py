@@ -90,7 +90,7 @@ class KeyVault(AzureService):
                         key.rotation_policy = policy
 
         except HttpResponseError:
-            logger.info(
+            logger.error(
                 f"Subscription name: {subscription} -- has no access policy configured for keyvault {keyvault_name}"
             )
         return keys
