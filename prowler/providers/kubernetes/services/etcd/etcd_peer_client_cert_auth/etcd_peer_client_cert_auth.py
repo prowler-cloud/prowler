@@ -13,7 +13,9 @@ class etcd_peer_client_cert_auth(Check):
             report.status = "PASS"
             report.status_extended = f"Etcd is configured for peer client certificate authentication in pod {pod.name}."
             for container in pod.containers.values():
-                if "--peer-client-cert-auth=true" not in str(container.command):
+                if "--peer-client-cert-auth" not in str(
+                    container.command
+                ) and "--peer-client-cert-auth=true" not in str(container.command):
                     report.status = "FAIL"
                     report.status_extended = f"Etcd does not have peer client certificate authentication configured in pod {pod.name}."
                     break
