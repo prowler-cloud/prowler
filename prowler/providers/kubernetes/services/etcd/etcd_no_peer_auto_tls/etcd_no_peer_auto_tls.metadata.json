@@ -13,7 +13,7 @@
   "ResourceType": "EtcdService",
   "Description": "This check ensures that etcd is not configured to use automatically generated self-signed certificates for TLS connections between peers. Using self-signed certificates for peer authentication is discouraged in a production environment.",
   "Risk": "Using self-signed certificates can lead to insecure communications between etcd peers, compromising data security.",
-  "RelatedUrl": "https://kubernetes.io/docs/tasks/administer-cluster/configure-upgrade-etcd/",
+  "RelatedUrl": "https://etcd.io/docs/v3.2/op-guide/security/",
   "Remediation": {
     "Code": {
       "CLI": "Configure etcd to avoid using self-signed certificates for peer connections by editing the etcd pod specification file with the --peer-auto-tls parameter set to false. Example: --peer-auto-tls=false.",
