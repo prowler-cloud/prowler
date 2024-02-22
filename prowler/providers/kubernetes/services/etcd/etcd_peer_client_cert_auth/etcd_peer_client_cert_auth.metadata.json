@@ -13,7 +13,7 @@
   "ResourceType": "EtcdService",
   "Description": "This check ensures that etcd is configured for peer authentication by verifying that the --peer-client-cert-auth argument is set to true. This configuration is crucial to ensure that etcd peers in the cluster are authenticated and secure.",
   "Risk": "Failing to configure peer client authentication can lead to unauthorized access to the etcd cluster, compromising sensitive data.",
-  "RelatedUrl": "https://coreos.com/etcd/docs/latest/op-guide/security.html",
+  "RelatedUrl": "https://kubernetes.io/docs/tasks/administer-cluster/configure-upgrade-etcd/",
   "Remediation": {
     "Code": {
       "CLI": "Configure peer client certificate authentication by editing the etcd pod specification file with the --peer-client-cert-auth parameter set to true. Example: --peer-client-cert-auth=true.",
@@ -23,7 +23,7 @@
     },
     "Recommendation": {
       "Text": "Ensure etcd is configured for peer client certificate authentication.",
-      "Url": "https://coreos.com/etcd/docs/latest/op-guide/security.html"
+      "Url": "https://kubernetes.io/docs/tasks/administer-cluster/configure-upgrade-etcd/#limiting-access-of-etcd-clusters"
     }
   },
   "Categories": [

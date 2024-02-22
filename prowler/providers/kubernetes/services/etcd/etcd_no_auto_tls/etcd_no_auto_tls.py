@@ -18,5 +18,6 @@ class etcd_no_auto_tls(Check):
                 ):
                     report.status = "FAIL"
                     report.status_extended = f"Etcd is configured to use self-signed certificates for TLS in pod {pod.name}."
+                    break
             findings.append(report)
         return findings

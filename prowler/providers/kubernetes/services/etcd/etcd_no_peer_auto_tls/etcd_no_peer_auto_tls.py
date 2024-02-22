@@ -18,5 +18,6 @@ class etcd_no_peer_auto_tls(Check):
                 ) and "--peer-auto-tls=true" in str(container.command):
                     report.status = "FAIL"
                     report.status_extended = f"Etcd is using automatically generated self-signed certificates for TLS connections in pod {pod.name}."
+                    break
             findings.append(report)
         return findings

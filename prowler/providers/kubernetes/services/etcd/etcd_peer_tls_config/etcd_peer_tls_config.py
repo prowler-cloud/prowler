@@ -10,14 +10,16 @@ class etcd_peer_tls_config(Check):
             report.namespace = pod.namespace
             report.resource_name = pod.name
             report.resource_id = pod.uid
-            report.status = "FAIL"
-            report.status_extended = f"Etcd does not have TLS configured for peer connections in pod {pod.name}."
+            report.status = "PASS"
+            report.status_extended = (
+                f"Etcd is configured with TLS for peer connections in pod {pod.name}."
+            )
             for container in pod.containers.values():
-                if "--peer-cert-file" in str(
+                if "--peer-cert-file" not in str(
                     container.command
-                ) and "--peer-key-file" in str(container.command):
-
-                    report.status = "PASS"
-                    report.status_extended = f"Etcd is configured with TLS for peer connections in pod {pod.name}."
+                ) or "--peer-key-file" not in str(container.command):
+                    report.status = "FAIL"
+                    report.status_extended = f"Etcd does not have TLS configured for peer connections in pod {pod.name}."
+                    break
             findings.append(report)
         return findings

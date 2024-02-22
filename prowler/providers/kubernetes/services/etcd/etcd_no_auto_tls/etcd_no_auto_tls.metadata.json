@@ -13,7 +13,7 @@
   "ResourceType": "EtcdService",
   "Description": "This check ensures that etcd does not use self-signed certificates for TLS, which are less secure than certificates from a trusted authority. Avoiding self-signed certificates enhances the security of etcd.",
   "Risk": "Using --auto-tls=true may result in the use of self-signed certificates, reducing the overall security of the etcd service.",
-  "RelatedUrl": "https://coreos.com/etcd/docs/latest/op-guide/security.html",
+  "RelatedUrl": "https://kubernetes.io/docs/tasks/tls/managing-tls-in-a-cluster/",
   "Remediation": {
     "Code": {
       "CLI": "Edit the etcd pod specification file to set --auto-tls to false or remove the parameter. Example: --auto-tls=false.",
@@ -23,7 +23,7 @@
     },
     "Recommendation": {
       "Text": "Ensure etcd is not using self-signed certificates for TLS.",
-      "Url": "https://coreos.com/etcd/docs/latest/op-guide/security.html"
+      "Url": "https://kubernetes.io/docs/tasks/tls/managing-tls-in-a-cluster/"
     }
   },
   "Categories": [
