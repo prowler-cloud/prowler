@@ -90,5 +90,10 @@ aws:
 # Azure Configuration
 azure:
 
+  # Languages apps latest versions
+  php_latest_version: "8.2"
+  python_latest_version: "3.12"
+  java_latest_version: "java17"
+
 # GCP Configuration
 gcp:
