@@ -121,9 +121,7 @@ class Kubernetes_Output_Options(Provider_Output_Options):
             not hasattr(arguments, "output_filename")
             or arguments.output_filename is None
         ):
-            self.output_filename = (
-                f"prowler-output-{audit_info.context['name']}-{output_file_timestamp}"
-            )
+            self.output_filename = f"prowler-output-hola-{output_file_timestamp}"
         else:
             self.output_filename = arguments.output_filename
 
