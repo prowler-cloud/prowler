@@ -1,0 +1,30 @@
+{
+  "Provider": "azure",
+  "CheckID": "app_register_with_entra_is_enabled",
+  "CheckTitle": "Ensure that Register with Azure Active Directory is enabled on App Service",
+  "CheckType": [],
+  "ServiceName": "app",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Microsoft.Web/sites",
+  "Description": "Managed service identity in App Service provides more security by eliminating secrets from the app, such as credentials in the connection strings. When registering with Azure Active Directory in App Service, the app will connect to other Azure services securely without the need for usernames and passwords.",
+  "Risk": "App Service provides a highly scalable, self-patching web hosting service in Azure. It also provides a managed identity for apps, which is a turn-key solution for securing access to Azure SQL Database and other Azure services.",
+  "RelatedUrl": "https://learn.microsoft.com/en-us/azure/app-service/configure-authentication-provider-aad?tabs=workforce-tenant",
+  "Remediation": {
+    "Code": {
+      "CLI": "az webapp identity assign --resource-group <RESOURCE_GROUP_NAME> --name <APP_NAME>",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/AppService/enable-registration-with-microsoft-entra-id.html",
+      "Terraform": "https://docs.bridgecrew.io/docs/bc_azr_iam_1#terraform"
+    },
+    "Recommendation": {
+      "Text": "1. Login to Azure Portal using https://portal.azure.com 2. Go to App Services 3. Click on each App 4. Under Setting section, Click on Identity 5. Under the System assigned pane, set Status to On",
+      "Url": "https://learn.microsoft.com/en-us/azure/app-service/scenario-secure-app-authentication-app-service"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "By default, Managed service identity via Azure AD is disabled."
+}
