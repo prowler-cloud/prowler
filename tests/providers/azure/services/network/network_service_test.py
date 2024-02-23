@@ -6,6 +6,7 @@ from prowler.providers.azure.services.network.network_service import (
     BastionHost,
     Network,
     NetworkWatcher,
+    PublicIp,
     SecurityGroup,
 )
 from tests.providers.azure.azure_fixtures import (
@@ -52,6 +53,19 @@ def mock_network_get_network_watchers(_):
     }
 
 
+def mock_network_get_public_ip_addresses(_):
+    return {
+        AZURE_SUBSCRIPTION: [
+            PublicIp(
+                id="id",
+                name="name",
+                location="location",
+                ip_address="ip_address",
+            )
+        ]
+    }
+
+
 @patch(
     "prowler.providers.azure.services.network.network_service.Network.__get_security_groups__",
     new=mock_network_get_security_groups,
@@ -63,6 +77,10 @@ def mock_network_get_network_watchers(_):
 @patch(
     "prowler.providers.azure.services.network.network_service.Network.__get_network_watchers__",
     new=mock_network_get_network_watchers,
+)
+@patch(
+    "prowler.providers.azure.services.network.network_service.Network.__get_public_ip_addresses__",
+    new=mock_network_get_public_ip_addresses,
 )
 class Test_Network_Service:
     def test__get_client__(self):
@@ -127,3 +145,17 @@ class Test_Network_Service:
         assert network.bastion_hosts[AZURE_SUBSCRIPTION][0].id == "id"
         assert network.bastion_hosts[AZURE_SUBSCRIPTION][0].name == "name"
         assert network.bastion_hosts[AZURE_SUBSCRIPTION][0].location == "location"
+
+    def __get_public_ip_addresses__(self):
+        network = Network(set_mocked_azure_audit_info())
+        assert (
+            network.public_ip_addresses[AZURE_SUBSCRIPTION][0].__class__.__name__
+            == "PublicIp"
+        )
+        assert network.public_ip_addresses[AZURE_SUBSCRIPTION][0].id == "id"
+        assert network.public_ip_addresses[AZURE_SUBSCRIPTION][0].name == "name"
+        assert network.public_ip_addresses[AZURE_SUBSCRIPTION][0].location == "location"
+        assert (
+            network.public_ip_addresses[AZURE_SUBSCRIPTION][0].ip_address
+            == "ip_address"
+        )
