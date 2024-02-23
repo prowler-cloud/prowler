@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 
 from azure.mgmt.web import WebSiteManagementClient
+from azure.mgmt.web.models import ManagedServiceIdentity, SiteConfigResource
 
 from prowler.lib.logger import logger
 from prowler.providers.azure.lib.audit_info.models import Azure_Audit_Info
@@ -30,28 +31,6 @@ class App(AzureService):
                         "platform",
                         None,
                     )
-                    configurations = client.web_apps.get_configuration(
-                        resource_group_name=app.resource_group, name=app.name
-                    )
-                    client_cert_enabled = getattr(app, "client_cert_enabled", False)
-                    client_cert_mode = getattr(app, "client_cert_mode", "Ignore")
-
-                    if (
-                        not client_cert_enabled
-                        and client_cert_mode == "OptionalInteractiveUser"
-                    ):
-                        client_cert_mode = "Ignore"
-                    elif (
-                        client_cert_enabled
-                        and client_cert_mode == "OptionalInteractiveUser"
-                    ):
-                        client_cert_mode = "Optional"
-                    elif client_cert_enabled and client_cert_mode == "Optional":
-                        client_cert_mode = "Allow"
-                    elif client_cert_enabled and client_cert_mode == "Required":
-                        client_cert_mode = "Required"
-                    else:
-                        client_cert_mode = "Ignore"
 
                     apps[subscription_name].update(
                         {
@@ -62,11 +41,16 @@ class App(AzureService):
                                     if platform_auth
                                     else False
                                 ),
-                                min_tls_version=getattr(
-                                    configurations, "min_tls_version", None
+                                configurations=client.web_apps.get_configuration(
+                                    resource_group_name=app.resource_group,
+                                    name=app.name,
                                 ),
-                                client_cert_mode=client_cert_mode,
+                                client_cert_mode=self.__get_client_cert_mode__(
+                                    getattr(app, "client_cert_enabled", False),
+                                    getattr(app, "client_cert_mode", "Ignore"),
+                                ),
                                 https_only=getattr(app, "https_only", False),
+                                identity=getattr(app, "identity", None),
                             )
                         }
                     )
@@ -77,11 +61,29 @@ class App(AzureService):
 
         return apps
 
+    def __get_client_cert_mode__(
+        self, client_cert_enabled: bool, client_cert_mode: str
+    ):
+        cert_mode = "Ignore"
+        if not client_cert_enabled and client_cert_mode == "OptionalInteractiveUser":
+            cert_mode = "Ignore"
+        elif client_cert_enabled and client_cert_mode == "OptionalInteractiveUser":
+            cert_mode = "Optional"
+        elif client_cert_enabled and client_cert_mode == "Optional":
+            cert_mode = "Allow"
+        elif client_cert_enabled and client_cert_mode == "Required":
+            cert_mode = "Required"
+        else:
+            cert_mode = "Ignore"
+
+        return cert_mode
+
 
 @dataclass
 class WebApp:
     resource_id: str
-    auth_enabled: bool
-    min_tls_version: str
-    client_cert_mode: str
+    configurations: SiteConfigResource
+    identity: ManagedServiceIdentity
+    client_cert_mode: str = "Ignore"
+    auth_enabled: bool = False
     https_only: bool = False
