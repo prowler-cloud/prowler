@@ -28,6 +28,7 @@ class Monitor(AzureService):
                         DiagnosticSetting(
                             id=setting.id,
                             logs=setting.logs,
+                            storage_account_id=setting.storage_account_id,
                         )
                     )
 
@@ -41,4 +42,5 @@ class Monitor(AzureService):
 @dataclass
 class DiagnosticSetting:
     id: str
+    storage_account_id: str
     logs: LogSettings

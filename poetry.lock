@@ -389,6 +389,22 @@ azure-mgmt-core = ">=1.3.2,<2.0.0"
 isodate = ">=0.6.1,<1.0.0"
 
 [[package]]
+name = "azure-mgmt-monitor"
+version = "6.0.2"
+description = "Microsoft Azure Monitor Client Library for Python"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "azure-mgmt-monitor-6.0.2.tar.gz", hash = "sha256:5ffbf500e499ab7912b1ba6d26cef26480d9ae411532019bb78d72562196e07b"},
+    {file = "azure_mgmt_monitor-6.0.2-py3-none-any.whl", hash = "sha256:fe4cf41e6680b74a228f81451dc5522656d599c6f343ecf702fc790fda9a357b"},
+]
+
+[package.dependencies]
+azure-common = ">=1.1,<2.0"
+azure-mgmt-core = ">=1.3.2,<2.0.0"
+isodate = ">=0.6.1,<1.0.0"
+
+[[package]]
 name = "azure-mgmt-security"
 version = "6.0.0"
 description = "Microsoft Azure Security Center Management Client Library for Python"
@@ -4237,4 +4253,4 @@ docs = ["mkdocs", "mkdocs-material"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.13"
-content-hash = "9db98b41290bacf3b089ef0ca385fd5a2f9b040d1b12de4161c27e5f0152d25b"
+content-hash = "ad5fd4a2732b7ff5d1963678860a305f844a449fe30a67d7f9d9c4feb103688f"
