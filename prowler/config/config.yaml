@@ -89,6 +89,9 @@ aws:
 
 # Azure Configuration
 azure:
+  # Azure Network Configuration
+  # azure.network_public_ip_shodan
+  shodan_api_key: null
 
 # GCP Configuration
 gcp:

@@ -201,6 +201,7 @@ class Test_Common_Output_Options:
         arguments.verbose = True
         arguments.only_logs = False
         arguments.unix_timestamp = False
+        arguments.shodan = "test-api-key"
 
         # Mock Azure Audit Info
         audit_info = self.set_mocked_azure_audit_info()
@@ -241,6 +242,7 @@ class Test_Common_Output_Options:
         arguments.verbose = True
         arguments.only_logs = False
         arguments.unix_timestamp = False
+        arguments.shodan = "test-api-key"
 
         # Mock Azure Audit Info
         audit_info = self.set_mocked_azure_audit_info()

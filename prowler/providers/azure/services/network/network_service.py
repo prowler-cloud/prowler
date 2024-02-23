@@ -10,9 +10,11 @@ from prowler.providers.azure.lib.service.service import AzureService
 class Network(AzureService):
     def __init__(self, audit_info):
         super().__init__(NetworkManagementClient, audit_info)
+        self.audit_info = audit_info
         self.security_groups = self.__get_security_groups__()
         self.bastion_hosts = self.__get_bastion_hosts__()
         self.network_watchers = self.__get_network_watchers__()
+        self.public_ip_addresses = self.__get_public_ip_addresses__()
 
     def __get_security_groups__(self):
         logger.info("Network - Getting Network Security Groups...")
@@ -92,6 +94,29 @@ class Network(AzureService):
                 )
         return bastion_hosts
 
+    def __get_public_ip_addresses__(self):
+        logger.info("Network - Getting Public IP Addresses...")
+        public_ip_addresses = {}
+        for subscription, client in self.clients.items():
+            try:
+                public_ip_addresses.update({subscription: []})
+                public_ip_addresses_list = client.public_ip_addresses.list_all()
+                for public_ip_address in public_ip_addresses_list:
+                    public_ip_addresses[subscription].append(
+                        PublicIp(
+                            id=public_ip_address.id,
+                            name=public_ip_address.name,
+                            location=public_ip_address.location,
+                            ip_address=public_ip_address.ip_address,
+                        )
+                    )
+
+            except Exception as error:
+                logger.error(
+                    f"Subscription name: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+        return public_ip_addresses
+
 
 @dataclass
 class BastionHost:
@@ -114,3 +139,11 @@ class SecurityGroup:
     name: str
     location: str
     security_rules: list
+
+
+@dataclass
+class PublicIp:
+    id: str
+    name: str
+    location: str
+    ip_address: str

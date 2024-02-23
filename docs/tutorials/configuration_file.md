@@ -37,6 +37,11 @@ The following list includes all the AWS checks with configurable variables that 
 ## Azure
 
 ### Configurable Checks
+The following list includes all the Azure checks with configurable variables that can be changed in the configuration yaml file:
+
+| Check Name                                                    | Value                                            | Type            |
+|---------------------------------------------------------------|--------------------------------------------------|-----------------|
+| `network_public_ip_shodan`                                   | `shodan_api_key`                    | String         |
 
 ## GCP
 
@@ -126,6 +131,9 @@ aws:
 
 # Azure Configuration
 azure:
+  # Azure Network Configuration
+  # azure.network_public_ip_shodan
+  shodan_api_key: null
 
 # GCP Configuration
 gcp:
