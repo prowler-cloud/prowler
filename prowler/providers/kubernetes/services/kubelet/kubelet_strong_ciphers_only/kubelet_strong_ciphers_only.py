@@ -24,7 +24,7 @@ class kubelet_strong_ciphers_only(Check):
                 report.status = "MANUAL"
                 report.status_extended = f"Kubelet does not have the argument `tlsCipherSuites` in config file {cm.name}, verify it in the node's cm.kubelet_args."
             else:
-                if set(cm.kubelet_args["tlsCipherSuites"]) <= set(strong_ciphers):
+                if cm.kubelet_args["tlsCipherSuites"].issubset(strong_ciphers):
                     report.status = "PASS"
                     report.status_extended = f"Kubelet is configured with strong cryptographic ciphers in config file {cm.name}."
                 else:

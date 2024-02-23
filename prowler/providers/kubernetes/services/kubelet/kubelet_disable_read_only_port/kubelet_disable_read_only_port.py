@@ -14,7 +14,7 @@ class kubelet_disable_read_only_port(Check):
                 report.status = "MANUAL"
                 report.status_extended = f"Kubelet does not have the argument `readOnlyPort` in config file {cm.name}, verify it in the node's cm.kubelet_args."
             else:
-                if cm.kubelet_args["readOnlyPort"] == 0:
+                if cm.kubelet_args.get("readOnlyPort") == 0:
                     report.status = "PASS"
                     report.status_extended = f"Kubelet has the read-only port disabled in config file {cm.name}."
                 else:

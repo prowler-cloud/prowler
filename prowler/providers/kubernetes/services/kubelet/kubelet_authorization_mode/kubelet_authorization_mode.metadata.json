@@ -23,7 +23,7 @@
     },
     "Recommendation": {
       "Text": "Ensure kubelet is configured with an authorization mode other than AlwaysAllow.",
-      "Url": "hhttps://kubernetes.io/docs/reference/access-authn-authz/kubelet-authn-authz/#kubelet-authorization"
+      "Url": "https://kubernetes.io/docs/reference/access-authn-authz/kubelet-authn-authz/#kubelet-authorization"
     }
   },
   "Categories": [

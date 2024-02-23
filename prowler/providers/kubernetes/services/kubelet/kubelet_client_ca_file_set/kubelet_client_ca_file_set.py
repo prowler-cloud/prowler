@@ -6,7 +6,7 @@ class kubelet_client_ca_file_set(Check):
     def execute(self) -> Check_Report_Kubernetes:
         findings = []
         for cm in kubelet_client.kubelet_config_maps:
-            authentication = cm.kubelet_args["authentication"]
+            authentication = cm.kubelet_args.get("authentication", {})
             report = Check_Report_Kubernetes(self.metadata())
             report.namespace = cm.namespace
             report.resource_name = cm.name
@@ -15,7 +15,7 @@ class kubelet_client_ca_file_set(Check):
             report.status_extended = (
                 f"Kubelet is missing the client CA file in config file {cm.name}."
             )
-            if "clientCAFile" in authentication["x509"]:
+            if "clientCAFile" in authentication.get("x509", {}):
                 report.status = "PASS"
                 report.status_extended = f"Kubelet has the client CA file configured appropriately in config file {cm.name}."
             findings.append(report)

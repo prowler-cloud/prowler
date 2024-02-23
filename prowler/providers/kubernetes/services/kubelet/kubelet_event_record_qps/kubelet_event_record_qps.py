@@ -14,7 +14,7 @@ class kubelet_event_record_qps(Check):
                 report.status = "MANUAL"
                 report.status_extended = f"Kubelet does not have the argument `eventRecordQPS` in config file {cm.name}, verify it in the node's cm.kubelet_args."
             else:
-                if cm.kubelet_args["streamingConnectionIdleTimeout"] > 0:
+                if cm.kubelet_args.get("streamingConnectionIdleTimeout") > 0:
                     report.status = "PASS"
                     report.status_extended = f"Kubelet has an appropriate eventRecordQPS setting in config file {cm.name}."
                 else:

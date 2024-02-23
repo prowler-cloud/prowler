@@ -13,7 +13,7 @@ class kubelet_authorization_mode(Check):
             report.resource_id = cm.uid
             report.status = "PASS"
             report.status_extended = f"Kubelet is not using 'AlwaysAllow' as the authorization mode in config file {cm.name}."
-            if authorization["mode"] == "AlwaysAllow":
+            if authorization.get("mode") == "AlwaysAllow":
                 report.status = "FAIL"
                 report.status_extended = f"Kubelet is incorrectly set to use 'AlwaysAllow' as the authorization mode in config file {cm.name}."
             findings.append(report)
