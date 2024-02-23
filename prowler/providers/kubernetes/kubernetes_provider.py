@@ -79,14 +79,15 @@ class Kubernetes_Provider:
         """
         try:
             v1 = client.CoreV1Api()
-            namespace_list = v1.list_namespace()
+            namespace_list = v1.list_namespace(timeout_seconds=2, _request_timeout=2)
             namespaces = [item.metadata.name for item in namespace_list.items]
             logger.info("All namespaces retrieved successfully.")
             return namespaces
         except Exception as error:
-            logger.error(
+            logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+            sys.exit()
 
     def search_and_save_roles(
         self, roles: list, role_bindings, context_user: str, role_binding_type: str
