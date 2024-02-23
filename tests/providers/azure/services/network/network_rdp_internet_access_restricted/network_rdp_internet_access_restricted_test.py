@@ -4,8 +4,7 @@ from uuid import uuid4
 from azure.mgmt.network.models._models import SecurityRule
 
 from prowler.providers.azure.services.network.network_service import SecurityGroup
-
-AZURE_SUBSCRIPTION = str(uuid4())
+from tests.providers.azure.azure_fixtures import AZURE_SUBSCRIPTION
 
 
 class Test_network_rdp_internet_access_restricted:

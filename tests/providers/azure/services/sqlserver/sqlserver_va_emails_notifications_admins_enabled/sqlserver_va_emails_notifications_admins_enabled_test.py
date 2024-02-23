@@ -7,8 +7,7 @@ from azure.mgmt.sql.models import (
 )
 
 from prowler.providers.azure.services.sqlserver.sqlserver_service import Server
-
-AZURE_SUBSCRIPTION = str(uuid4())
+from tests.providers.azure.azure_fixtures import AZURE_SUBSCRIPTION
 
 
 class Test_sqlserver_va_emails_notifications_admins_enabled:

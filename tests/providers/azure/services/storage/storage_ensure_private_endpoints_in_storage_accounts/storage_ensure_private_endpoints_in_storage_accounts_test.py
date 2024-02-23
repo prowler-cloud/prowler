@@ -4,8 +4,7 @@ from uuid import uuid4
 from azure.mgmt.storage.v2023_01_01.models import PrivateEndpointConnection
 
 from prowler.providers.azure.services.storage.storage_service import Account
-
-AZURE_SUBSCRIPTION = str(uuid4())
+from tests.providers.azure.azure_fixtures import AZURE_SUBSCRIPTION
 
 
 class Test_storage_ensure_private_endpoints_in_storage_accounts:

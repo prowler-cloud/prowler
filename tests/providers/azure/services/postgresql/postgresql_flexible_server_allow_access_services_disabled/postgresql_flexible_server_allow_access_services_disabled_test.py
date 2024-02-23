@@ -5,8 +5,7 @@ from prowler.providers.azure.services.postgresql.postgresql_service import (
     Firewall,
     Server,
 )
-
-AZURE_SUBSCRIPTION = str(uuid4())
+from tests.providers.azure.azure_fixtures import AZURE_SUBSCRIPTION
 
 
 class Test_postgresql_flexible_server_allow_access_services_disabled:

@@ -4,8 +4,7 @@ from uuid import uuid4
 from azure.mgmt.storage.v2022_09_01.models import NetworkRuleSet
 
 from prowler.providers.azure.services.storage.storage_service import Account
-
-AZURE_SUBSCRIPTION = str(uuid4())
+from tests.providers.azure.azure_fixtures import AZURE_SUBSCRIPTION
 
 
 class Test_storage_default_network_access_rule_is_denied:

@@ -2,8 +2,7 @@ from unittest import mock
 from uuid import uuid4
 
 from prowler.providers.azure.services.postgresql.postgresql_service import Server
-
-AZURE_SUBSCRIPTION = str(uuid4())
+from tests.providers.azure.azure_fixtures import AZURE_SUBSCRIPTION
 
 
 class Test_postgresql_flexible_server_enforce_ssl_enabled:
