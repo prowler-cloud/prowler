@@ -22,7 +22,7 @@ packages = [
   {include = "prowler"}
 ]
 readme = "README.md"
-version = "3.13.0"
+version = "3.14.0"
 
 [tool.poetry.dependencies]
 alive-progress = "3.1.5"
@@ -30,8 +30,11 @@ awsipranges = "0.3.3"
 azure-identity = "1.15.0"
 azure-mgmt-applicationinsights = "4.0.0"
 azure-mgmt-authorization = "4.0.0"
+azure-mgmt-compute = "30.5.0"
 azure-mgmt-cosmosdb = "9.4.0"
-azure-mgmt-monitor = "^6.0.2"
+azure-mgmt-monitor = "6.0.2"
+azure-mgmt-network = "25.2.0"
+azure-mgmt-rdbms = "10.1.0"
 azure-mgmt-security = "6.0.0"
 azure-mgmt-sql = "3.0.1"
 azure-mgmt-storage = "21.1.0"
@@ -41,22 +44,17 @@ boto3 = "1.26.165"
 botocore = "1.29.165"
 colorama = "0.4.6"
 detect-secrets = "1.4.0"
-google-api-python-client = "2.117.0"
+google-api-python-client = "2.118.0"
 google-auth-httplib2 = ">=0.1,<0.3"
 jsonschema = "4.21.1"
-mkdocs = {version = "1.5.3", optional = true}
-mkdocs-material = {version = "9.5.9", optional = true}
 msgraph-sdk = "^1.0.0"
 msrestazure = "^0.6.4"
 pydantic = "1.10.14"
 python = ">=3.9,<3.13"
 schema = "0.7.5"
 shodan = "1.31.0"
-slack-sdk = "3.26.2"
+slack-sdk = "3.27.0"
 tabulate = "0.9.0"
-
-[tool.poetry.extras]
-docs = ["mkdocs", "mkdocs-material"]
 
 [tool.poetry.group.dev.dependencies]
 bandit = "1.7.7"
@@ -66,16 +64,22 @@ docker = "7.0.0"
 flake8 = "7.0.0"
 freezegun = "1.4.0"
 mock = "5.1.0"
-moto = {extras = ["all"], version = "5.0.1"}
+moto = {extras = ["all"], version = "5.0.2"}
 openapi-schema-validator = "0.6.2"
 openapi-spec-validator = "0.7.1"
 pylint = "3.0.3"
-pytest = "8.0.0"
+pytest = "8.0.1"
 pytest-cov = "4.1.0"
+pytest-env = "1.1.3"
 pytest-randomly = "3.15.0"
 pytest-xdist = "3.5.0"
 safety = "3.0.1"
 vulture = "2.11"
+
+[tool.poetry.group.docs.dependencies]
+mkdocs = "1.5.3"
+mkdocs-git-revision-date-localized-plugin = "1.2.4"
+mkdocs-material = "9.5.10"
 
 [tool.poetry.scripts]
 prowler = "prowler.__main__:prowler"
@@ -97,3 +101,11 @@ search = 'prowler_version = "{current_version}"'
 pythonpath = [
   "."
 ]
+
+[tool.pytest_env]
+# For Moto and Boto3 while testing AWS
+AWS_ACCESS_KEY_ID = 'testing'
+AWS_DEFAULT_REGION = 'us-east-1'
+AWS_SECRET_ACCESS_KEY = 'testing'
+AWS_SECURITY_TOKEN = 'testing'
+AWS_SESSION_TOKEN = 'testing'

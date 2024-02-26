@@ -1,0 +1,30 @@
+{
+  "Provider": "azure",
+  "CheckID": "postgresql_flexible_server_log_checkpoints_on",
+  "CheckTitle": "Ensure Server Parameter 'log_checkpoints' is set to 'ON' for PostgreSQL Database Server",
+  "CheckType": [],
+  "ServiceName": "postgresql",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "PostgreSQL",
+  "Description": "Enable log_checkpoints on PostgreSQL Servers.",
+  "Risk": "Enabling log_checkpoints helps the PostgreSQL Database to Log each checkpoint in turn generates query and error logs. However, access to transaction logs is not supported. Query and error logs can be used to identify, troubleshoot, and repair configuration errors and sub-optimal performance.",
+  "RelatedUrl": " https://docs.microsoft.com/en-us/rest/api/postgresql/singleserver/configurations/list-by-server",
+  "Remediation": {
+    "Code": {
+      "CLI": "az postgres server configuration set --resource-group <resourceGroupName> --server-name <serverName> --name log_checkpoints --value on",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/PostgreSQL/log-checkpoints.html#",
+      "Terraform": "https://docs.bridgecrew.io/docs/bc_azr_networking_11#terraform"
+    },
+    "Recommendation": {
+      "Text": "From Azure Portal 1. From Azure Home select the Portal Menu. 2. Go to Azure Database for PostgreSQL servers. 3. For each database, click on Server parameters. 4. Search for log_checkpoints. 5. Click ON and save. From Azure CLI Use the below command to update log_checkpoints configuration. az postgres server configuration set --resource-group <resourceGroupName> -- server-name <serverName> --name log_checkpoints --value on From PowerShell Update-AzPostgreSqlConfiguration -ResourceGroupName <ResourceGroupName> - ServerName <ServerName> -Name log_checkpoints -Value on",
+      "Url": "https://docs.microsoft.com/en-us/azure/postgresql/howto-configure-server-parameters-using-portal"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

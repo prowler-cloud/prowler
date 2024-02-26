@@ -1,38 +1,13 @@
-<p href="https://github.com/prowler-cloud/prowler">
-<img align="right" src="./img/prowler-logo.png" height="100">
-</p>
-<br>
+**Prowler** is an Open Source security tool to perform AWS, Azure and Google Cloud security best practices assessments, audits, incident response, continuous monitoring, hardening and forensics readiness. We have Prowler CLI (Command Line Interface) that we call Prowler Open Source and a service on top of it that we call <a href="https://prowler.com">Prowler SaaS</a>.
 
-# Prowler Documentation
+![Prowler Execution](img/short-display.png)
 
-**Welcome to [Prowler Open Source v3](https://github.com/prowler-cloud/prowler/) Documentation!** 📄
-
-For **Prowler v2 Documentation**, please go [here](https://github.com/prowler-cloud/prowler/tree/2.12.0) to the branch and its README.md.
-
-- You are currently in the **Getting Started** section where you can find general information and requirements to help you start with the tool.
-- In the [Tutorials](./tutorials/misc.md) section you will see how to take advantage of all the features in Prowler.
-- In the [Contact Us](./contact.md) section you can find how to reach us out in case of technical issues.
-- In the [About](./about.md) section you will find more information about the Prowler team and license.
-
-## About Prowler
-
-**Prowler** is an Open Source security tool to perform AWS, Azure and Google Cloud security best practices assessments, audits, incident response, continuous monitoring, hardening and forensics readiness.
-
-It contains hundreds of controls covering CIS, PCI-DSS, ISO27001, GDPR, HIPAA, FFIEC, SOC2, AWS FTR, ENS and custom security frameworks.
-
-[![Twitter URL](https://img.shields.io/twitter/url/https/twitter.com/prowlercloud.svg?style=social&label=Follow%20%40prowlercloud)](https://twitter.com/prowlercloud)
-
-## About ProwlerPro
-
-<a href="https://prowler.pro"><img align="right" src="./img/prowler-pro-light.png" width="350"></a> **ProwlerPro** gives you the benefits of Prowler Open Source plus continuous monitoring, faster execution, personalized support, visualization of your data with dashboards, alerts and much more.
-Visit <a href="https://prowler.pro">prowler.pro</a> for more info.
-
+Prowler offers hundreds of controls covering more than 25 standards and compliance frameworks like CIS, PCI-DSS, ISO27001, GDPR, HIPAA, FFIEC, SOC2, AWS FTR, ENS and custom security frameworks.
 
 ## Quick Start
 ### Installation
 
-Prowler is available as a project in [PyPI](https://pypi.org/project/prowler-cloud/), thus can be installed using pip with `Python >= 3.9`:
-
+Prowler is available as a project in [PyPI](https://pypi.org/project/prowler/), thus can be installed using pip with `Python >= 3.9`:
 
 === "Generic"
 
@@ -149,7 +124,8 @@ Prowler is available as a project in [PyPI](https://pypi.org/project/prowler-clo
     prowler -v
     ```
 
-    > To download the results from AWS CloudShell, select Actions -> Download File and add the full path of each file. For the CSV file it will be something like `/home/cloudshell-user/output/prowler-output-123456789012-20221220191331.csv`
+    ???+ note
+        To download the results from AWS CloudShell, select Actions -> Download File and add the full path of each file. For the CSV file it will be something like `/home/cloudshell-user/output/prowler-output-123456789012-20221220191331.csv`
 
 === "Azure CloudShell"
 
@@ -184,14 +160,18 @@ You can run Prowler from your workstation, an EC2 instance, Fargate or any other
 ![Architecture](img/architecture.png)
 ## Basic Usage
 
-To run Prowler, you will need to specify the provider (e.g aws, gcp or azure):
-> If no provider specified, AWS will be used for backward compatibility with most of v2 options.
+To run Prowler, you will need to specify the provider (e.g `aws`, `gcp` or `azure`):
+
+???+ note
+    If no provider specified, AWS will be used for backward compatibility with most of v2 options.
 
 ```console
 prowler <provider>
 ```
 ![Prowler Execution](img/short-display.png)
-> Running the `prowler` command without options will use your environment variable credentials, see [Requirements](./getting-started/requirements.md) section to review the credentials settings.
+
+???+ note
+    Running the `prowler` command without options will use your environment variable credentials, see [Requirements](./getting-started/requirements.md) section to review the credentials settings.
 
 If you miss the former output you can use `--verbose` but Prowler v3 is smoking fast, so you won't see much ;)
 
@@ -242,7 +222,9 @@ Use a custom AWS profile with `-p`/`--profile` and/or AWS regions which you want
 ```console
 prowler aws --profile custom-profile -f us-east-1 eu-south-2
 ```
-> By default, `prowler` will scan all AWS regions.
+
+???+ note
+    By default, `prowler` will scan all AWS regions.
 
 See more details about AWS Authentication in [Requirements](getting-started/requirements.md)
 
@@ -292,3 +274,6 @@ prowler gcp --project-ids <Project ID 1> <Project ID 2> ... <Project ID N>
 ```
 
 See more details about GCP Authentication in [Requirements](getting-started/requirements.md)
+
+## Prowler v2 Documentation
+For **Prowler v2 Documentation**, please check it out [here](https://github.com/prowler-cloud/prowler/blob/8818f47333a0c1c1a457453c87af0ea5b89a385f/README.md).

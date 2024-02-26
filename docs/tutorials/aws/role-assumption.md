@@ -30,15 +30,15 @@ Prowler can use your custom Role Session name with:
 prowler aws --role-session-name <role_session_name>
 ```
 
-> It defaults to `ProwlerAssessmentSession`
+???+ note
+    It defaults to `ProwlerAssessmentSession`.
 
 ## STS Endpoint Region
 
 If you are using Prowler in AWS regions that are not enabled by default you need to use the argument `--sts-endpoint-region` to point the AWS STS API calls `assume-role` and `get-caller-identity` to the non-default region, e.g.: `prowler aws --sts-endpoint-region eu-south-2`.
 
-> Since v3.11.0, Prowler uses a regional token in STS sessions so it can scan all AWS regions without needing the `--sts-endpoint-region` argument.
-
-> Make sure that you have enabled the AWS Region you want to scan in BOTH AWS Accounts (assumed role account and account from which you assume the role).
+???+ note
+    Since v3.11.0, Prowler uses a regional token in STS sessions so it can scan all AWS regions without needing the `--sts-endpoint-region` argument. Make sure that you have enabled the AWS Region you want to scan in **BOTH** AWS Accounts (assumed role account and account from which you assume the role).
 
 ## Role MFA
 
@@ -51,6 +51,7 @@ If your IAM Role has MFA configured you can use `--mfa` along with  `-R`/`--role
 
 To create a role to be assumed in one or multiple accounts you can use either as CloudFormation Stack or StackSet the following [template](https://github.com/prowler-cloud/prowler/blob/master/permissions/create_role_to_assume_cfn.yaml) and adapt it.
 
-> _NOTE 1 about Session Duration_: Depending on the amount of checks you run and the size of your infrastructure, Prowler may require more than 1 hour to finish. Use option `-T <seconds>` to allow up to 12h (43200 seconds). To allow more than 1h you need to modify _"Maximum CLI/API session duration"_ for that particular role, read more [here](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use.html#id_roles_use_view-role-max-session).
+???+ note "About Session Duration"
+    Depending on the amount of checks you run and the size of your infrastructure, Prowler may require more than 1 hour to finish. Use option `-T <seconds>` to allow up to 12h (43200 seconds). To allow more than 1h you need to modify _"Maximum CLI/API session duration"_ for that particular role, read more [here](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use.html#id_roles_use_view-role-max-session).
 
-> _NOTE 2 about Session Duration_: Bear in mind that if you are using roles assumed by role chaining there is a hard limit of 1 hour so consider not using role chaining if possible, read more about that, in foot note 1 below the table [here](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use.html).
+    Bear in mind that if you are using roles assumed by role chaining there is a hard limit of 1 hour so consider not using role chaining if possible, read more about that, in foot note 1 below the table [here](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use.html).
