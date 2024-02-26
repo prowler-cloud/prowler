@@ -21,7 +21,7 @@ class Test_network_public_ip_shodan:
                 network_public_ip_shodan,
             )
 
-            network_client.audit_info.audit_config = {"shodan_api_key": "api_key"}
+            network_client.audit_config = {"shodan_api_key": "api_key"}
 
             check = network_public_ip_shodan()
             result = check.execute()
@@ -64,7 +64,7 @@ class Test_network_public_ip_shodan:
                 network_public_ip_shodan,
             )
 
-            network_client.audit_info.audit_config = {"shodan_api_key": "api_key"}
+            network_client.audit_config = {"shodan_api_key": "api_key"}
             check = network_public_ip_shodan()
             result = check.execute()
             assert len(result) == 1
