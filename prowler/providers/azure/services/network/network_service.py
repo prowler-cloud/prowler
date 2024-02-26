@@ -10,7 +10,6 @@ from prowler.providers.azure.lib.service.service import AzureService
 class Network(AzureService):
     def __init__(self, audit_info):
         super().__init__(NetworkManagementClient, audit_info)
-        self.audit_info = audit_info
         self.security_groups = self.__get_security_groups__()
         self.bastion_hosts = self.__get_bastion_hosts__()
         self.network_watchers = self.__get_network_watchers__()

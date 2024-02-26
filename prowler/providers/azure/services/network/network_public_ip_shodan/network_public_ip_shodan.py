@@ -8,7 +8,7 @@ from prowler.providers.azure.services.network.network_client import network_clie
 class network_public_ip_shodan(Check):
     def execute(self):
         findings = []
-        shodan_api_key = network_client.audit_info.audit_config.get("shodan_api_key")
+        shodan_api_key = network_client.audit_config.get("shodan_api_key")
         if shodan_api_key:
             api = shodan.Shodan(shodan_api_key)
             for subscription, public_ips in network_client.public_ip_addresses.items():
@@ -26,7 +26,7 @@ class network_public_ip_shodan(Check):
                         if "No information available for that IP" in error.value:
                             report.status = "PASS"
                             report.status_extended = (
-                                f"Elastic IP {ip.ip_address} is not listed in Shodan."
+                                f"Public IP {ip.ip_address} is not listed in Shodan."
                             )
                             findings.append(report)
                             continue
