@@ -26,6 +26,7 @@ def mock_monitor_get_diagnostics_settings(_):
                     mock.MagicMock(category="Autoscale", enabled=False),
                     mock.MagicMock(category="ResourceHealth", enabled=False),
                 ],
+                storage_account_id="/subscriptions/1234a5-123a-123a-123a-1234567890ab/resourceGroups/rg/providers/Microsoft.Storage/storageAccounts/storageaccountname",
             )
         ]
     }
@@ -51,12 +52,51 @@ class Test_Monitor_Service:
         monitor = Monitor(set_mocked_azure_audit_info())
         assert len(monitor.diagnostics_settings) == 1
         assert monitor.diagnostics_settings[AZURE_SUBSCRIPTION][0].id == "id"
-        for log in monitor.diagnostics_settings[AZURE_SUBSCRIPTION][0].logs:
-            if log.category == "Administrative":
-                assert log.enabled
-            if log.category == "Security":
-                assert log.enabled
-            if log.category == "Alert":
-                assert log.enabled
-            if log.category == "Policy":
-                assert log.enabled
+        assert (
+            monitor.diagnostics_settings[AZURE_SUBSCRIPTION][0].logs[0].enabled is True
+        )
+        assert (
+            monitor.diagnostics_settings[AZURE_SUBSCRIPTION][0].logs[0].category
+            == "Administrative"
+        )
+        assert (
+            monitor.diagnostics_settings[AZURE_SUBSCRIPTION][0].logs[1].enabled is True
+        )
+        assert (
+            monitor.diagnostics_settings[AZURE_SUBSCRIPTION][0].logs[1].category
+            == "Security"
+        )
+        assert (
+            monitor.diagnostics_settings[AZURE_SUBSCRIPTION][0].logs[2].category
+            == "ServiceHealth"
+        )
+        assert (
+            monitor.diagnostics_settings[AZURE_SUBSCRIPTION][0].logs[3].enabled is True
+        )
+        assert (
+            monitor.diagnostics_settings[AZURE_SUBSCRIPTION][0].logs[3].category
+            == "Alert"
+        )
+        assert (
+            monitor.diagnostics_settings[AZURE_SUBSCRIPTION][0].logs[4].category
+            == "Recommendation"
+        )
+        assert (
+            monitor.diagnostics_settings[AZURE_SUBSCRIPTION][0].logs[5].enabled is True
+        )
+        assert (
+            monitor.diagnostics_settings[AZURE_SUBSCRIPTION][0].logs[5].category
+            == "Policy"
+        )
+        assert (
+            monitor.diagnostics_settings[AZURE_SUBSCRIPTION][0].logs[6].category
+            == "Autoscale"
+        )
+        assert (
+            monitor.diagnostics_settings[AZURE_SUBSCRIPTION][0].logs[7].category
+            == "ResourceHealth"
+        )
+        assert (
+            monitor.diagnostics_settings[AZURE_SUBSCRIPTION][0].storage_account_id
+            == "/subscriptions/1234a5-123a-123a-123a-1234567890ab/resourceGroups/rg/providers/Microsoft.Storage/storageAccounts/storageaccountname"
+        )
