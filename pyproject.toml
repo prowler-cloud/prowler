@@ -28,12 +28,14 @@ version = "3.14.0"
 alive-progress = "3.1.5"
 awsipranges = "0.3.3"
 azure-identity = "1.15.0"
+azure-keyvault-keys = "4.8.0"
 azure-mgmt-applicationinsights = "4.0.0"
 azure-mgmt-authorization = "4.0.0"
 azure-mgmt-compute = "30.5.0"
 azure-mgmt-cosmosdb = "9.4.0"
 azure-mgmt-monitor = "6.0.2"
-azure-mgmt-network = "25.2.0"
+azure-mgmt-keyvault = "10.3.0"
+azure-mgmt-network = "25.3.0"
 azure-mgmt-rdbms = "10.1.0"
 azure-mgmt-security = "6.0.0"
 azure-mgmt-sql = "3.0.1"
@@ -76,10 +78,14 @@ pytest-xdist = "3.5.0"
 safety = "3.0.1"
 vulture = "2.11"
 
+[tool.poetry.group.docs]
+optional = true
+
 [tool.poetry.group.docs.dependencies]
 mkdocs = "1.5.3"
 mkdocs-git-revision-date-localized-plugin = "1.2.4"
 mkdocs-material = "9.5.10"
+mkdocs-material-extensions = "1.3.1"
 
 [tool.poetry.scripts]
 prowler = "prowler.__main__:prowler"
