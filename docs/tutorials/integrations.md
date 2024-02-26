@@ -10,7 +10,9 @@ prowler <provider> --slack
 
 ![Prowler Slack Message](img/slack-prowler-message.png)
 
-> Slack integration needs SLACK_API_TOKEN and SLACK_CHANNEL_ID environment variables.
+???+ note
+    Slack integration needs SLACK_API_TOKEN and SLACK_CHANNEL_ID environment variables.
+
 ### Configuration
 
 To configure the Slack Integration, follow the next steps:
