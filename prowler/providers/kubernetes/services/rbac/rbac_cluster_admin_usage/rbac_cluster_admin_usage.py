@@ -11,7 +11,7 @@ class rbac_cluster_admin_usage(Check):
             if binding.roleRef.name == "cluster-admin":
                 report = Check_Report_Kubernetes(self.metadata())
                 report.namespace = (
-                    "kube-system"
+                    "cluster-wide"
                     if not binding.metadata.namespace
                     else binding.metadata.namespace
                 )
