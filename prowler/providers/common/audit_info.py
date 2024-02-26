@@ -21,6 +21,7 @@ from prowler.providers.aws.lib.credentials.credentials import (
 )
 from prowler.providers.aws.lib.organizations.organizations import (
     get_organizations_metadata,
+    parse_organizations_metadata,
 )
 from prowler.providers.aws.lib.resource_api_tagging.resource_api_tagging import (
     get_tagged_resources,
@@ -228,17 +229,53 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
 
             else:
                 logger.info(
-                    f"Getting organizations metadata for account {organizations_role_arn}"
+                    f"Getting organizations metadata for account with IAM Role ARN {organizations_role_arn}"
                 )
                 assumed_credentials = assume_role(
                     aws_provider.aws_session,
                     aws_provider.role_info,
                     sts_endpoint_region,
                 )
-                current_audit_info.organizations_metadata = get_organizations_metadata(
-                    current_audit_info.audited_account, assumed_credentials
+                organizations_metadata, list_tags_for_resource = (
+                    get_organizations_metadata(
+                        current_audit_info.audited_account, assumed_credentials
+                    )
                 )
-                logger.info("Organizations metadata retrieved")
+                current_audit_info.organizations_metadata = (
+                    parse_organizations_metadata(
+                        organizations_metadata, list_tags_for_resource
+                    )
+                )
+                logger.info(
+                    f"Organizations metadata retrieved with IAM Role ARN {organizations_role_arn}"
+                )
+        else:
+            try:
+                logger.info(
+                    "Getting organizations metadata for account if it is a delegated administrator"
+                )
+                organizations_metadata, list_tags_for_resource = (
+                    get_organizations_metadata(
+                        aws_account_id=current_audit_info.audited_account,
+                        session=current_audit_info.audit_session,
+                    )
+                )
+                if organizations_metadata:
+                    current_audit_info.organizations_metadata = (
+                        parse_organizations_metadata(
+                            organizations_metadata, list_tags_for_resource
+                        )
+                    )
+
+                    logger.info(
+                        "Organizations metadata retrieved as a delegated administrator"
+                    )
+            except Exception as error:
+                # If the account is not a delegated administrator for AWS Organizations a credentials error will be thrown
+                # Since it is a permission issue for an optional we'll raise a warning
+                logger.warning(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
 
         # Setting default region of session
         if current_audit_info.audit_session.region_name:
