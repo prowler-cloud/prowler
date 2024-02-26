@@ -12,7 +12,7 @@ class kubelet_manage_iptables(Check):
             report.resource_id = cm.uid
             if "makeIPTablesUtilChains" not in cm.kubelet_args:
                 report.status = "MANUAL"
-                report.status_extended = f"Kubelet does not have the argument `makeIPTablesUtilChains` in config file {cm.name}, verify it in the node's cm.kubelet_args."
+                report.status_extended = f"Kubelet does not have the argument `makeIPTablesUtilChains` in config file {cm.name}, verify it in the node's arguments."
             else:
                 if cm.kubelet_args["makeIPTablesUtilChains"]:
                     report.status = "PASS"
