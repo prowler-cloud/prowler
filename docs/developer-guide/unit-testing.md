@@ -389,7 +389,7 @@ with mock.patch(
     "prowler.providers.<provider>.lib.audit_info.audit_info.audit_info",
     new=audit_info,
 ), mock.patch(
-    "prowler.providers.aws.services.<service>.<check>.<check>.<service>_client",
+    "prowler.providers.<provider>.services.<service>.<check>.<check>.<service>_client",
     new=<SERVICE>(audit_info),
 ):
 ```
@@ -411,10 +411,10 @@ with mock.patch(
     "prowler.providers.<provider>.lib.audit_info.audit_info.audit_info",
     new=audit_info,
 ), mock.patch(
-    "prowler.providers.aws.services.<service>.<SERVICE>",
+    "prowler.providers.<provider>.services.<service>.<SERVICE>",
     new=<SERVICE>(audit_info),
 ) as service_client, mock.patch(
-    "prowler.providers.aws.services.<service>.<service>_client.<service>_client",
+    "prowler.providers.<provider>.services.<service>.<service>_client.<service>_client",
     new=service_client,
 ):
 ```

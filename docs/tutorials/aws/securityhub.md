@@ -115,7 +115,8 @@ When you are auditing a multi-account AWS environment, you can send findings to 
 prowler --security-hub --role arn:aws:iam::123456789012:role/ProwlerExecutionRole
 ```
 
-> Remember that the used role needs to have permissions to send findings to Security Hub. To get more information about the permissions required, please refer to the following IAM policy [prowler-security-hub.json](https://github.com/prowler-cloud/prowler/blob/master/permissions/prowler-security-hub.json)
+???+ note
+    Remember that the used role needs to have permissions to send findings to Security Hub. To get more information about the permissions required, please refer to the following IAM policy [prowler-security-hub.json](https://github.com/prowler-cloud/prowler/blob/master/permissions/prowler-security-hub.json)
 
 
 ## Send only failed findings to Security Hub
