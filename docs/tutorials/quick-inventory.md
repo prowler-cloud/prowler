@@ -1,14 +1,18 @@
 # Quick Inventory
 
 Prowler allows you to execute a quick inventory to extract the number of resources in your provider.
-> Currently, it is only available for AWS provider.
+
+???+ note
+    Currently, it is only available for AWS provider.
 
 
 - You can use option `-i`/`--quick-inventory` to execute it:
 ```sh
 prowler <provider> -i
 ```
-> By default, it extracts resources from all the regions, you could use `-f`/`--filter-region` to specify the regions to execute the analysis.
+
+???+ note
+    By default, it extracts resources from all the regions, you could use `-f`/`--filter-region` to specify the regions to execute the analysis.
 
 - This feature specify both the number of resources for each service and for each resource type.
 

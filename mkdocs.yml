@@ -19,6 +19,11 @@ theme:
     primary: black
     accent: green
 
+plugins:
+  - search
+  - git-revision-date-localized:
+      enable_creation_date: true
+
 edit_uri: "https://github.com/prowler-cloud/prowler/tree/master/docs"
 # Prowler OSS Repository
 repo_url: https://github.com/prowler-cloud/prowler/
@@ -80,6 +85,7 @@ nav:
   - Troubleshooting: troubleshooting.md
   - About: about.md
   - Prowler SaaS: https://prowler.com
+
 # Customization
 extra:
   consent:
@@ -103,11 +109,15 @@ extra:
       link: https://twitter.com/prowlercloud
 
 # Copyright
-copyright: Copyright &copy; 2024 Toni de la Fuente, Maintained by the Prowler Team at ProwlerPro, Inc.</a>
+copyright: >
+  Copyright &copy; <script>document.write(new Date().getFullYear())</script> Toni de la Fuente, Maintained by the Prowler Team at ProwlerPro, Inc.</a>
+  </br><a href="#__consent">Change cookie settings</a>
 
 markdown_extensions:
   - abbr
   - admonition
+  - pymdownx.details
+  - pymdownx.superfences
   - attr_list
   - def_list
   - footnotes
