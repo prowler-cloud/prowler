@@ -4,7 +4,7 @@ from prowler.providers.gcp.services.serviceusage.serviceusage_client import (
 )
 
 
-class serviceusage_cloudasset_inventory_enabled(Check):
+class iam_cloud_asset_inventory_enabled(Check):
     def execute(self) -> Check_Report_GCP:
         findings = []
         for project_id in serviceusage_client.project_ids:
