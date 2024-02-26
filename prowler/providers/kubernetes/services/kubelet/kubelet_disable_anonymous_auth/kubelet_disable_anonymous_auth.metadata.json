@@ -1,0 +1,36 @@
+{
+  "Provider": "kubernetes",
+  "CheckID": "kubelet_disable_anonymous_auth",
+  "CheckTitle": "Ensure that the --anonymous-auth argument is set to false",
+  "CheckType": [
+    "Security",
+    "Configuration"
+  ],
+  "ServiceName": "kubelet",
+  "SubServiceName": "Authentication Configuration",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "KubernetesKubelet",
+  "Description": "This check ensures that anonymous requests to the Kubelet server are disabled by setting the --anonymous-auth argument to false. Disabling anonymous requests enhances the security by ensuring that all requests are authenticated and authorized.",
+  "Risk": "Enabling anonymous requests can lead to unauthorized access to Kubelet APIs and potentially sensitive cluster data.",
+  "RelatedUrl": "https://kubernetes.io/docs/reference/access-authn-authz/kubelet-authn-authz/#kubelet-authorization",
+  "Remediation": {
+    "Code": {
+      "CLI": "Edit the kubelet configuration file or service file to set the --anonymous-auth argument to false. For service file: systemctl daemon-reload; systemctl restart kubelet.service",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Ensure that anonymous requests to the Kubelet server are disabled for enhanced cluster security.",
+      "Url": "https://kubernetes.io/docs/reference/access-authn-authz/kubelet-authn-authz/"
+    }
+  },
+  "Categories": [
+    "Security",
+    "Configuration Management"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Regularly review Kubelet configurations to ensure compliance with security best practices."
+}

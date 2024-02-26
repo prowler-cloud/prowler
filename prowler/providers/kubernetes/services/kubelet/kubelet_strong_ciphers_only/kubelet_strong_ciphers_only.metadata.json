@@ -1,0 +1,36 @@
+{
+  "Provider": "kubernetes",
+  "CheckID": "kubelet_strong_ciphers_only",
+  "CheckTitle": "Ensure that the Kubelet only makes use of Strong Cryptographic Ciphers",
+  "CheckType": [
+    "Security",
+    "Configuration"
+  ],
+  "ServiceName": "kubelet",
+  "SubServiceName": "TLS Cipher Configuration",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "KubernetesKubelet",
+  "Description": "This check verifies that the kubelet is configured to use only strong cryptographic ciphers. Ensuring the use of strong ciphers is essential to minimize the risk of vulnerabilities and enhance the security of TLS connections to the kubelet.",
+  "Risk": "Using weak ciphers can expose the kubelet to cryptographic attacks, compromising the security of data in transit.",
+  "RelatedUrl": "https://kubernetes.io/docs/reference/access-authn-authz/kubelet-tls-bootstrapping/",
+  "Remediation": {
+    "Code": {
+      "CLI": "Configure the kubelet to use only strong cryptographic ciphers by setting the --tls-cipher-suites parameter. Example: --tls-cipher-suites=TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,...",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Restrict the kubelet to only use strong cryptographic ciphers for enhanced security.",
+      "Url": "https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/#options"
+    }
+  },
+  "Categories": [
+    "Data Security",
+    "Network Security"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This list of ciphers may need to be updated based on evolving security standards and client compatibility."
+}

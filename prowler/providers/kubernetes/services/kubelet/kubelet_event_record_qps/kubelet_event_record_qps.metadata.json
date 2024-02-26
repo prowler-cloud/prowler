@@ -1,0 +1,36 @@
+{
+  "Provider": "kubernetes",
+  "CheckID": "kubelet_event_record_qps",
+  "CheckTitle": "Ensure that the kubelet eventRecordQPS argument is set to an appropriate level",
+  "CheckType": [
+    "Security",
+    "Configuration"
+  ],
+  "ServiceName": "kubelet",
+  "SubServiceName": "Event Recording",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "KubernetesKubelet",
+  "Description": "This check ensures that the Kubelet is configured with an appropriate eventRecordQPS level. The eventRecordQPS parameter limits the rate at which events are gathered, ensuring important security events are not missed while preventing potential denial-of-service conditions.",
+  "Risk": "An inappropriate eventRecordQPS setting could lead to missing vital security events or DoS conditions.",
+  "RelatedUrl": "https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/",
+  "Remediation": {
+    "Code": {
+      "CLI": "Set the eventRecordQPS argument in the kubelet configuration file to an appropriate level that balances event capture with system performance.",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Configure kubelet with a balanced eventRecordQPS setting for effective event capture without causing DoS conditions.",
+      "Url": "https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/#options"
+    }
+  },
+  "Categories": [
+    "Event Logging",
+    "System Performance"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Consider the specific needs and capacity of your environment when setting eventRecordQPS."
+}
