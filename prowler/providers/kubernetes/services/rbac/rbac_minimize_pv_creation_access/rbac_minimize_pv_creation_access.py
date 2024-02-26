@@ -9,14 +9,16 @@ class rbac_minimize_pv_creation_access(Check):
         for crb in rbac_client.cluster_role_bindings:
             for subject in crb.subjects:
                 if subject.kind in ["User", "Group"]:
+                    persistent_volume_access = False
                     report = Check_Report_Kubernetes(self.metadata())
                     report.namespace = "cluster-wide"
                     report.resource_name = subject.name
                     report.resource_id = subject.uid if hasattr(subject, "uid") else ""
                     report.status = "PASS"
                     report.status_extended = f"User or group '{subject.name}' does not have access to create PersistentVolumes."
-                    findings.append(report)
                     for cr in rbac_client.cluster_roles:
+                        if persistent_volume_access:
+                            break
                         if cr.metadata.name == crb.roleRef.name:
                             if cr.rules:
                                 for rule in cr.rules:
@@ -26,15 +28,10 @@ class rbac_minimize_pv_creation_access(Check):
                                         and rule.verbs
                                         and "create" in rule.verbs
                                     ):
-                                        report.namespace = "cluster-wide"
-                                        report.resource_name = subject.name
-                                        report.resource_id = (
-                                            subject.uid
-                                            if hasattr(subject, "uid")
-                                            else ""
-                                        )
+                                        persistent_volume_access = True
                                         report.status = "FAIL"
                                         report.status_extended = f"User or group '{subject.name}' has access to create PersistentVolumes."
-                                        findings.append(report)
+                                        break
+                    findings.append(report)
 
         return findings
