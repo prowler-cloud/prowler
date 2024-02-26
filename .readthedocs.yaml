@@ -22,6 +22,7 @@ build:
       # Install dependencies with 'docs' dependency group
       # https://python-poetry.org/docs/managing-dependencies/#dependency-groups
       - poetry install --only=docs
+      - pip list
 
 mkdocs:
   configuration: mkdocs.yml
