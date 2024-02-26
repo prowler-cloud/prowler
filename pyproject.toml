@@ -46,9 +46,6 @@ detect-secrets = "1.4.0"
 google-api-python-client = "2.118.0"
 google-auth-httplib2 = ">=0.1,<0.3"
 jsonschema = "4.21.1"
-mkdocs = {version = "1.5.3", optional = true}
-mkdocs-git-revision-date-localized-plugin = {version = "1.2.4", optional = true}
-mkdocs-material = {version = "9.5.10", optional = true}
 msgraph-sdk = "^1.0.0"
 msrestazure = "^0.6.4"
 pydantic = "1.10.14"
@@ -57,9 +54,6 @@ schema = "0.7.5"
 shodan = "1.31.0"
 slack-sdk = "3.27.0"
 tabulate = "0.9.0"
-
-[tool.poetry.extras]
-docs = ["mkdocs", "mkdocs-material", "mkdocs-git-revision-date-localized-plugin"]
 
 [tool.poetry.group.dev.dependencies]
 bandit = "1.7.7"
@@ -80,6 +74,11 @@ pytest-randomly = "3.15.0"
 pytest-xdist = "3.5.0"
 safety = "3.0.1"
 vulture = "2.11"
+
+[tool.poetry.group.docs.dependencies]
+mkdocs = "1.5.3"
+mkdocs-git-revision-date-localized-plugin = "1.2.4"
+mkdocs-material = "9.5.10"
 
 [tool.poetry.scripts]
 prowler = "prowler.__main__:prowler"
