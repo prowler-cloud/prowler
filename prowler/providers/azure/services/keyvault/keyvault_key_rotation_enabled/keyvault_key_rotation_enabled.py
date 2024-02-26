@@ -15,6 +15,7 @@ class keyvault_key_rotation_enabled(Check):
                     for key in keyvault.keys:
                         if (
                             key.rotation_policy
+                            and key.rotation_policy.lifetime_actions
                             and key.rotation_policy.lifetime_actions[0].action
                             == "Rotate"
                         ):

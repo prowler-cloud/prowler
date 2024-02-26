@@ -105,7 +105,7 @@ class KeyVault(AzureService):
                     Secret(
                         id=getattr(secret, "id", ""),
                         name=getattr(secret, "name", ""),
-                        enabled=getattr(secret.properties.attributes, "enabled", ""),
+                        enabled=getattr(secret.properties.attributes, "enabled", False),
                         location=getattr(secret, "location", ""),
                         attributes=getattr(secret.properties, "attributes", None),
                     )
