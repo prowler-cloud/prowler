@@ -15,7 +15,7 @@ class kubelet_disable_anonymous_auth(Check):
             report.status_extended = (
                 f"Kubelet has anonymous access enabled in config file {cm.name}."
             )
-            if not authentication.get("anonymous", {}).get("enabled", True):
+            if not authentication.get("anonymous", {}).get("enabled", False):
                 report.status = "PASS"
                 report.status_extended = f"Kubelet does not have anonymous access enabled in config file {cm.name}."
             findings.append(report)
