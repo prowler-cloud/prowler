@@ -15,6 +15,10 @@ build:
       # https://python-poetry.org/docs/#installing-manually
       - python -m pip install poetry
     post_install:
+      # Install dependencies with 'docs' dependency group
+      # https://python-poetry.org/docs/managing-dependencies/#dependency-groups
+      # VIRTUAL_ENV needs to be set manually for now.
+      # See https://github.com/readthedocs/readthedocs.org/pull/11152/
       - VIRTUAL_ENV=${READTHEDOCS_VIRTUALENV_PATH} python -m poetry install --only=docs
 
 mkdocs:
