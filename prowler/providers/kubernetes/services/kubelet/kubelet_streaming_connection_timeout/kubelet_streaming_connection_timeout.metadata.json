@@ -13,7 +13,7 @@
   "ResourceType": "KubernetesKubelet",
   "Description": "This check ensures that the Kubelet is configured with a non-zero timeout for streaming connections. Setting a non-zero timeout helps protect against Denial-of-Service attacks and resource exhaustion due to idle connections.",
   "Risk": "A zero timeout on streaming connections can lead to Denial-of-Service attacks and resource exhaustion.",
-  "RelatedUrl": "https://kubernetes.io/docs/admin/kubelet/",
+  "RelatedUrl": "https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/",
   "Remediation": {
     "Code": {
       "CLI": "Set the --streaming-connection-idle-timeout argument in the kubelet service file on each worker node to a non-zero value.",
@@ -23,7 +23,7 @@
     },
     "Recommendation": {
       "Text": "Configure a non-zero timeout for streaming connections in kubelet to enhance node security.",
-      "Url": "https://kubernetes.io/docs/admin/kubelet/"
+      "Url": "https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/#options"
     }
   },
   "Categories": [
