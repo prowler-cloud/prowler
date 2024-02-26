@@ -8,7 +8,8 @@ If you have AWS Organizations enabled, Prowler can get your account details like
 
 In order to do that you can use the argument `-O`/`--organizations-role <organizations_role_arn>`. If this argument is not present Prowler will try to fetch that information automatically if the AWS account is a delegated administrator for the AWS Organization.
 
-> Refer [here](https://docs.aws.amazon.com/organizations/latest/userguide/orgs_delegate_policies.html) for more information about AWS Organizations delegated administrator.
+???+ note
+    Refer [here](https://docs.aws.amazon.com/organizations/latest/userguide/orgs_delegate_policies.html) for more information about AWS Organizations delegated administrator.
 
 See the following sample command:
 
