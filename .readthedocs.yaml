@@ -15,9 +15,10 @@ build:
       # https://python-poetry.org/docs/#installing-manually
       - pip install poetry
       # Tell poetry to not use a virtual environment
-      - poetry config virtualenvs.create false
+      - poetry config virtualenvs.create false --local
       - pip list
     post_install:
+      - poetry config --list
       - pip list
       # Install dependencies with 'docs' dependency group
       # https://python-poetry.org/docs/managing-dependencies/#dependency-groups
