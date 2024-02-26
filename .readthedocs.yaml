@@ -13,16 +13,18 @@ build:
     post_create_environment:
       # Install poetry
       # https://python-poetry.org/docs/#installing-manually
-      - pip install poetry
+      - pip install poetry poetry-plugin-export
       # Tell poetry to not use a virtual environment
-      - poetry config virtualenvs.create false --local
+      - poetry config virtualenvs.create false
       - pip list
     post_install:
+      - poetry export -f requirements.txt --without-hashes --only docs -o only-docs.txt
+      - pip install --requirement only-docs.txt
       - poetry config --list
       - pip list
       # Install dependencies with 'docs' dependency group
       # https://python-poetry.org/docs/managing-dependencies/#dependency-groups
-      - poetry install --with docs
+      - poetry install --only=docs
       - pip list
 
 mkdocs:
