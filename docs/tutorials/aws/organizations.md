@@ -16,7 +16,8 @@ See the following sample command:
 prowler aws \
   -O arn:aws:iam::<management_organizations_account_id>:role/<role_name>
 ```
-> Make sure the role in your AWS Organizations management account has the permissions `organizations:DescribeAccount` and `organizations:ListTagsForResource`.
+???+ note
+    Make sure the role in your AWS Organizations management account has the permissions `organizations:DescribeAccount` and `organizations:ListTagsForResource`.
 
 Prowler will scan the AWS account and get the account details from AWS Organizations.
 
@@ -62,4 +63,6 @@ If you want to run Prowler across all accounts of AWS Organizations you can do t
     done
     ```
 
-> Using the same for loop it can be scanned a list of accounts with a variable like `ACCOUNTS_LIST='11111111111 2222222222 333333333'`
+???+ note
+    Using the same for loop it can be scanned a list of accounts with a variable like:
+    </br>`ACCOUNTS_LIST='11111111111 2222222222 333333333'`

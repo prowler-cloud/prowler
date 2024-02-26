@@ -113,7 +113,8 @@ You will need to pass the S3 URI where your Allowlist YAML file was uploaded to 
 ```
 prowler aws -w s3://<bucket>/<prefix>/allowlist.yaml
 ```
-> Make sure that the used AWS credentials have s3:GetObject permissions in the S3 path where the allowlist file is located.
+???+ note
+    Make sure that the used AWS credentials have s3:GetObject permissions in the S3 path where the allowlist file is located.
 
 ### AWS DynamoDB Table ARN
 
@@ -138,7 +139,8 @@ The following example will allowlist all resources in all accounts for the EC2 c
 
 <img src="../img/allowlist-row.png"/>
 
-> Make sure that the used AWS credentials have `dynamodb:PartiQLSelect` permissions in the table.
+???+ note
+    Make sure that the used AWS credentials have `dynamodb:PartiQLSelect` permissions in the table.
 
 ### AWS Lambda ARN
 

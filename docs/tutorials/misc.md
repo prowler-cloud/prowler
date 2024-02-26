@@ -61,21 +61,26 @@ Prowler allows you to include your custom checks with the flag:
 ```console
 prowler <provider> -x/--checks-folder <custom_checks_folder>
 ```
-> S3 URIs are also supported as folders for custom checks, e.g. s3://bucket/prefix/checks_folder/. Make sure that the used credentials have s3:GetObject permissions in the S3 path where the custom checks are located.
+
+???+ note
+    S3 URIs are also supported as folders for custom checks, e.g. `s3://bucket/prefix/checks_folder/`. Make sure that the used credentials have `s3:GetObject` permissions in the S3 path where the custom checks are located.
 
 The custom checks folder must contain one subfolder per check, each subfolder must be named as the check and must contain:
 
 - An empty `__init__.py`: to make Python treat this check folder as a package.
 - A `check_name.py` containing the check's logic.
 - A `check_name.metadata.json` containing the check's metadata.
->The check name must start with the service name followed by an underscore (e.g., ec2_instance_public_ip).
+
+???+ note
+    The check name must start with the service name followed by an underscore (e.g., ec2_instance_public_ip).
 
 To see more information about how to write checks see the [Developer Guide](../developer-guide/checks.md#create-a-new-check-for-a-provider).
 
-> If you want to run ONLY your custom check(s), import it with -x (--checks-folder) and then run it with -c (--checks), e.g.:
-```console
-prowler aws -x s3://bucket/prowler/providers/aws/services/s3/s3_bucket_policy/ -c s3_bucket_policy
-```
+???+ note
+    If you want to run ONLY your custom check(s), import it with -x (--checks-folder) and then run it with -c (--checks), e.g.:
+    ```console
+    prowler aws -x s3://bucket/prowler/providers/aws/services/s3/s3_bucket_policy/ -c s3_bucket_policy
+    ```
 
 ## Severities
 Each of Prowler's checks has a severity, which can be:

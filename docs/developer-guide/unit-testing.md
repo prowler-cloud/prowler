@@ -40,13 +40,15 @@ Other commands to run tests:
 - Run tests for a provider service: `pytest -n auto -vvv -s -x tests/providers/<provider>/services/<service>`
 - Run tests for a provider check: `pytest -n auto -vvv -s -x tests/providers/<provider>/services/<service>/<check>`
 
-> Refer to the [pytest documentation](https://docs.pytest.org/en/7.1.x/getting-started.html) documentation for more information.
+???+ note
+    Refer to the [pytest documentation](https://docs.pytest.org/en/7.1.x/getting-started.html) documentation for more information.
 
 ## AWS
 
 For the AWS provider we have ways to test a Prowler check based on the following criteria:
 
-> Note: We use and contribute to the [Moto](https://github.com/getmoto/moto) library which allows us to easily mock out tests based on AWS infrastructure. **It's awesome!**
+???+ note
+    We use and contribute to the [Moto](https://github.com/getmoto/moto) library which allows us to easily mock out tests based on AWS infrastructure. **It's awesome!**
 
 - AWS API calls covered by [Moto](https://github.com/getmoto/moto):
     - Service tests with `@mock_<service>`
@@ -195,7 +197,8 @@ class Test_iam_password_policy_uppercase:
 
 If the IAM service for the check's we want to test is not covered by Moto, we have to inject the objects in the service client using [MagicMock](https://docs.python.org/3/library/unittest.mock.html#unittest.mock.MagicMock). As we have pointed above, we cannot instantiate the service since it will make real calls to the AWS APIs.
 
-> The following example uses the IAM GetAccountPasswordPolicy which is covered by Moto but this is only for demonstration purposes.
+???+ note
+    The following example uses the IAM GetAccountPasswordPolicy which is covered by Moto but this is only for demonstration purposes.
 
 The following code shows how to use MagicMock to create the service objects.
 
@@ -325,7 +328,8 @@ class Test_iam_password_policy_uppercase:
 
 Note that this does not use Moto, to keep it simple, but if you use any `moto`-decorators in addition to the patch, the call to `orig(self, operation_name, kwarg)` will be intercepted by Moto.
 
-> The above code comes from here https://docs.getmoto.org/en/latest/docs/services/patching_other_services.html
+???+ note
+    The above code comes from here https://docs.getmoto.org/en/latest/docs/services/patching_other_services.html
 
 #### Mocking more than one service
 
