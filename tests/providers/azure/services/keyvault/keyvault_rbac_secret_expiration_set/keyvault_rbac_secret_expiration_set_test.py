@@ -68,7 +68,7 @@ class Test_keyvault_rbac_secret_expiration_set:
             name=secret_name,
             enabled=True,
             location="location",
-            attributes=SecretAttributes(expires=None, enabled=True),
+            attributes=SecretAttributes(expires=None),
         )
         keyvault_client.key_vaults = {
             AZURE_SUBSCRIPTION: [
@@ -117,14 +117,14 @@ class Test_keyvault_rbac_secret_expiration_set:
             name=secret1_name,
             enabled=True,
             location="location",
-            attributes=SecretAttributes(expires=None, enabled=True),
+            attributes=SecretAttributes(expires=None),
         )
         secret2 = Secret(
             id="id",
             name=secret2_name,
             enabled=True,
             location="location",
-            attributes=SecretAttributes(expires=84934, enabled=True),
+            attributes=SecretAttributes(expires=84934),
         )
         keyvault_client.key_vaults = {
             AZURE_SUBSCRIPTION: [
@@ -169,9 +169,9 @@ class Test_keyvault_rbac_secret_expiration_set:
         secret = Secret(
             id="id",
             name="name",
-            enabled=True,
+            enabled=False,
             location="location",
-            attributes=SecretAttributes(expires=None, enabled=False),
+            attributes=SecretAttributes(expires=None),
         )
         keyvault_client.key_vaults = {
             AZURE_SUBSCRIPTION: [

@@ -13,13 +13,13 @@ class keyvault_key_rotation_enabled(Check):
                     report.resource_name = keyvault.name
                     report.resource_id = keyvault.id
                     for key in keyvault.keys:
-                        if key.rotation_policy:
-                            if (
-                                key.rotation_policy.lifetime_actions[0].action
-                                == "Rotate"
-                            ):
-                                report.status = "PASS"
-                                report.status_extended = f"Keyvault {keyvault.name} from subscription {subscription} has the key {key.name} with rotation policy set."
+                        if (
+                            key.rotation_policy
+                            and key.rotation_policy.lifetime_actions[0].action
+                            == "Rotate"
+                        ):
+                            report.status = "PASS"
+                            report.status_extended = f"Keyvault {keyvault.name} from subscription {subscription} has the key {key.name} with rotation policy set."
                         else:
                             report.status = "FAIL"
                             report.status_extended = f"Keyvault {keyvault.name} from subscription {subscription} has the key {key.name} without rotation policy set."

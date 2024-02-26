@@ -40,9 +40,9 @@ class KeyVault(AzureService):
                     )
                     key_vaults[subscription].append(
                         KeyVaultInfo(
-                            id=getattr(keyvault, "id", None),
-                            name=getattr(keyvault, "name", None),
-                            location=getattr(keyvault, "location", None),
+                            id=getattr(keyvault, "id", ""),
+                            name=getattr(keyvault, "name", ""),
+                            location=getattr(keyvault, "location", ""),
                             resource_group=resource_group,
                             properties=keyvault_properties,
                             keys=keys,
@@ -64,12 +64,11 @@ class KeyVault(AzureService):
             for key in keys_list:
                 keys.append(
                     Key(
-                        id=getattr(key, "id", None),
-                        name=getattr(key, "name", None),
-                        enabled=getattr(key.attributes, "enabled", None),
-                        location=getattr(key, "location", None),
+                        id=getattr(key, "id", ""),
+                        name=getattr(key, "name", ""),
+                        enabled=getattr(key.attributes, "enabled", False),
+                        location=getattr(key, "location", ""),
                         attributes=getattr(key, "attributes", None),
-                        rotation_policy=None,
                     )
                 )
         except Exception as error:
@@ -104,10 +103,10 @@ class KeyVault(AzureService):
             for secret in secrets_list:
                 secrets.append(
                     Secret(
-                        id=getattr(secret, "id", None),
-                        name=getattr(secret, "name", None),
-                        enabled=getattr(secret.properties.attributes, "enabled", None),
-                        location=getattr(secret, "location", None),
+                        id=getattr(secret, "id", ""),
+                        name=getattr(secret, "name", ""),
+                        enabled=getattr(secret.properties.attributes, "enabled", ""),
+                        location=getattr(secret, "location", ""),
                         attributes=getattr(secret.properties, "attributes", None),
                     )
                 )

@@ -13,7 +13,10 @@ class keyvault_rbac_enabled(Check):
                 report.resource_id = keyvault.id
                 report.status = "FAIL"
                 report.status_extended = f"Keyvault {keyvault.name} from subscription {subscription} is not using RBAC for access control."
-                if keyvault.properties.enable_rbac_authorization:
+                if (
+                    keyvault.properties
+                    and keyvault.properties.enable_rbac_authorization
+                ):
                     report.status = "PASS"
                     report.status_extended = f"Keyvault {keyvault.name} from subscription {subscription} is using RBAC for access control."
                 findings.append(report)
