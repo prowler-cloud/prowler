@@ -17,8 +17,8 @@ class rbac_minimize_secret_access(Check):
             )
 
             for rule in cr.rules:
-                if (rule.resources and "pods" in rule.resources) and (
-                    rule.verbs and "create" in rule.verbs
+                if (rule.resources and "secret" in rule.resources) and (
+                    any(verb in rule.verbs for verb in ["get", "list", "watch"])
                 ):
                     report.status = "FAIL"
                     report.status_extended = (
