@@ -52,7 +52,7 @@ def parse_organizations_metadata(metadata: dict, tags: dict) -> AWS_Organization
             account_details_name=account_details.get("Name", ""),
             account_details_arn=account_details.get("Arn", ""),
             account_details_org=account_details.get("Arn", "").split("/")[1],
-            account_details_tags=account_details_tags,
+            account_details_tags=account_details_tags.rstrip(","),
         )
         return organizations_info
     except Exception as error:

@@ -3,19 +3,23 @@ import json
 import boto3
 from moto import mock_aws
 
+from prowler.providers.aws.lib.audit_info.models import AWS_Organizations_Info
 from prowler.providers.aws.lib.organizations.organizations import (
     get_organizations_metadata,
+    parse_organizations_metadata,
 )
-
-AWS_ACCOUNT_NUMBER = "123456789012"
+from tests.providers.aws.audit_info_utils import (
+    AWS_ACCOUNT_NUMBER,
+    AWS_REGION_US_EAST_1,
+)
 
 
 class Test_AWS_Organizations:
     @mock_aws
     def test_organizations(self):
-        client = boto3.client("organizations", region_name="us-east-1")
-        iam_client = boto3.client("iam", region_name="us-east-1")
-        sts_client = boto3.client("sts", region_name="us-east-1")
+        client = boto3.client("organizations", region_name=AWS_REGION_US_EAST_1)
+        iam_client = boto3.client("iam", region_name=AWS_REGION_US_EAST_1)
+        sts_client = boto3.client("sts", region_name=AWS_REGION_US_EAST_1)
 
         mockname = "mock-account"
         mockdomain = "moto-example.org"
@@ -47,7 +51,8 @@ class Test_AWS_Organizations:
             RoleArn=iam_role_arn, RoleSessionName=session_name
         )
 
-        org = get_organizations_metadata(account_id, assumed_role)
+        metadata, tags = get_organizations_metadata(account_id, assumed_role)
+        org = parse_organizations_metadata(metadata, tags)
 
         assert org.account_details_email == mockemail
         assert org.account_details_name == mockname
@@ -57,3 +62,25 @@ class Test_AWS_Organizations:
         )
         assert org.account_details_org == org_id
         assert org.account_details_tags == "key:value,"
+
+    def test_parse_organizations_metadata(self):
+        tags = {"Tags": [{"Key": "test-key", "Value": "test-value"}]}
+        name = "test-name"
+        email = "test-email"
+        organization_name = "test-org"
+        arn = f"arn:aws:organizations::{AWS_ACCOUNT_NUMBER}:organization/{organization_name}"
+        metadata = {
+            "Account": {
+                "Name": name,
+                "Email": email,
+                "Arn": arn,
+            }
+        }
+        org = parse_organizations_metadata(metadata, tags)
+
+        assert isinstance(org, AWS_Organizations_Info)
+        assert org.account_details_email == email
+        assert org.account_details_name == name
+        assert org.account_details_arn == arn
+        assert org.account_details_org == organization_name
+        assert org.account_details_tags == "test-key:test-value"
