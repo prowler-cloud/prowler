@@ -1,0 +1,30 @@
+{
+  "Provider": "azure",
+  "CheckID": "monitor_ensure_storage_container_with_activity_log_private",
+  "CheckTitle": "Ensure Diagnostic Setting captures appropriate categories",
+  "CheckType": [],
+  "ServiceName": "monitor",
+  "SubServiceName": "Configuring Diagnostic Settings",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Monitor",
+  "Description": "The storage account container containing the activity log export should not be publicly accessible.",
+  "Risk": "Allowing public access to activity log content may aid an adversary in identifying weaknesses in the affected account's use or configuration.",
+  "RelatedUrl": "https://learn.microsoft.com/en-us/azure/azure-monitor/essentials/diagnostic-settings",
+  "Remediation": {
+    "Code": {
+      "CLI": "az storage container set-permission --name insights-activity-logs --account-name <Storage Account Name> --sas-token <SAS token> --public-access off",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/Monitor/check-for-publicly-accessible-activity-log-storage-container.html",
+      "Terraform": "https://docs.bridgecrew.io/docs/ensure-the-storage-container-storing-the-activity-logs-is-not-publicly-accessible"
+    },
+    "Recommendation": {
+      "Text": "1. From Azure Home select the Portal Menu 2. Search for Storage Accounts to access Storage account blade 3. Click on the storage account name 4. Click on Configuration under settings 5. Select Enabled under 'Allow Blob public access'",
+      "Url": "https://learn.microsoft.com/en-us/python/api/azure-mgmt-monitor/azure.mgmt.monitor.v2021_05_01_preview.operations.diagnosticsettingsoperations?view=azure-python"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Configuring container Access policy to private will remove access from the container for everyone except owners of the storage account. Access policy needs to be set explicitly in order to allow access to other desired users."
+}
