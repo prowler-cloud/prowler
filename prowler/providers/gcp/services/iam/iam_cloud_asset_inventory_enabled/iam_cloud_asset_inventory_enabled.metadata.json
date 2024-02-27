@@ -1,10 +1,10 @@
 {
   "Provider": "gcp",
-  "CheckID": "serviceusage_cloudasset_inventory_enabled",
+  "CheckID": "iam_cloud_asset_inventory_enabled",
   "CheckTitle": "Ensure Cloud Asset Inventory Is Enabled",
   "CheckType": [],
-  "ServiceName": "serviceusage",
-  "SubServiceName": "",
+  "ServiceName": "iam",
+  "SubServiceName": "Asset Inventory",
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Service",
