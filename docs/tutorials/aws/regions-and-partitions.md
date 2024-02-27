@@ -6,10 +6,13 @@ By default Prowler is able to scan the following AWS partitions:
 - China: `aws-cn`
 - GovCloud (US): `aws-us-gov`
 
-> To check the available regions for each partition and service please refer to the following document [aws_regions_by_service.json](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/aws/aws_regions_by_service.json)
+???+ note
+    To check the available regions for each partition and service please refer to the following document [aws_regions_by_service.json](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/aws/aws_regions_by_service.json)
 
 It is important to take into consideration that to scan the China (`aws-cn`) or GovCloud (`aws-us-gov`) partitions it is either required to have a valid region for that partition in your AWS credentials or to specify the regions you want to audit for that partition using the `-f/--region` flag.
-> Please, refer to https://boto3.amazonaws.com/v1/documentation/api/latest/guide/credentials.html#configuring-credentials for more information about the AWS credentials configuration.
+
+???+ note
+    Please, refer to https://boto3.amazonaws.com/v1/documentation/api/latest/guide/credentials.html#configuring-credentials for more information about the AWS credentials configuration.
 
 Prowler can scan specific region(s) with:
 ```console
@@ -34,7 +37,8 @@ aws_access_key_id = XXXXXXXXXXXXXXXXXXX
 aws_secret_access_key = XXXXXXXXXXXXXXXXXXX
 region = cn-north-1
 ```
-> With this option all the partition regions will be scanned without the need of use the `-f/--region` flag
+???+ note
+    With this option all the partition regions will be scanned without the need of use the `-f/--region` flag
 
 
 ## AWS GovCloud (US)
@@ -52,7 +56,8 @@ aws_access_key_id = XXXXXXXXXXXXXXXXXXX
 aws_secret_access_key = XXXXXXXXXXXXXXXXXXX
 region = us-gov-east-1
 ```
-> With this option all the partition regions will be scanned without the need of use the `-f/--region` flag
+???+ note
+    With this option all the partition regions will be scanned without the need of use the `-f/--region` flag
 
 
 ## AWS ISO (US & Europe)

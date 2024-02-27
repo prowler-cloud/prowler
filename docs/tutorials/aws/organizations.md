@@ -11,7 +11,9 @@ In order to do that you can use the option `-O`/`--organizations-role <organizat
 prowler aws \
   -O arn:aws:iam::<management_organizations_account_id>:role/<role_name>
 ```
-> Make sure the role in your AWS Organizations management account has the permissions `organizations:ListAccounts*` and `organizations:ListTagsForResource`.
+
+???+ note
+    Make sure the role in your AWS Organizations management account has the permissions `organizations:ListAccounts*` and `organizations:ListTagsForResource`.
 
 In that command Prowler will scan the account and getting the account details from the AWS Organizations management account assuming a role and creating two reports with those details in JSON and CSV.
 
@@ -55,4 +57,6 @@ If you want to run Prowler across all accounts of AWS Organizations you can do t
     done
     ```
 
-> Using the same for loop it can be scanned a list of accounts with a variable like `ACCOUNTS_LIST='11111111111 2222222222 333333333'`
+???+ note
+    Using the same for loop it can be scanned a list of accounts with a variable like:
+    </br>`ACCOUNTS_LIST='11111111111 2222222222 333333333'`

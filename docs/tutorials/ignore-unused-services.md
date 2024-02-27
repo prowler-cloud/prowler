@@ -1,6 +1,7 @@
 # Ignore Unused Services
 
-> Currently only available on the AWS provider.
+???+ note
+    Currently only available on the AWS provider.
 
 Prowler allows you to ignore unused services findings, so you can reduce the number of findings in Prowler's reports.
 

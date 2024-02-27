@@ -101,7 +101,7 @@ All the checks MUST fill the `report.status` and `report.status_extended` with t
 
 - Status -- `report.status`
     - `PASS` --> If the check is passing against the configured value.
-    - `FAIL` --> If the check is passing against the configured value.
+    - `FAIL` --> If the check is failing against the configured value.
     - `INFO` --> This value cannot be used unless a manual operation is required in order to determine if the `report.status` is whether `PASS` or `FAIL`.
 - Status Extended -- `report.status_extended`
     - MUST end in a dot `.`
@@ -196,14 +196,17 @@ aws:
 As you can see in the above code, within the service client, in this case the `ec2_client`, there is an object called `audit_config` which is a Python dictionary containing the values read from the configuration file.
 
 In order to use it, you have to check first if the value is present in the configuration file. If the value is not present, you can create it in the `config.yaml` file and then, read it from the check.
-> It is mandatory to always use the `dictionary.get(value, default)` syntax to set a default value in the case the configuration value is not present.
+
+???+ note
+    It is mandatory to always use the `dictionary.get(value, default)` syntax to set a default value in the case the configuration value is not present.
 
 
 ## Check Metadata
 
 Each Prowler check has metadata associated which is stored at the same level of the check's folder in a file called A `check_name.metadata.json` containing the check's metadata.
 
-> We are going to include comments in this example metadata JSON but they cannot be included because the JSON format does not allow comments.
+???+ note
+    We are going to include comments in this example metadata JSON but they cannot be included because the JSON format does not allow comments.
 
 ```json
 {

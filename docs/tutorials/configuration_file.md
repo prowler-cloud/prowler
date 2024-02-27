@@ -51,7 +51,9 @@ The following list includes all the Azure checks with configurable variables tha
 ### Configurable Checks
 
 ## Config YAML File Structure
-> This is the new Prowler configuration file format. The old one without provider keys is still compatible just for the AWS provider.
+
+???+ note
+    This is the new Prowler configuration file format. The old one without provider keys is still compatible just for the AWS provider.
 
 ```yaml title="config.yaml"
 # AWS Configuration
