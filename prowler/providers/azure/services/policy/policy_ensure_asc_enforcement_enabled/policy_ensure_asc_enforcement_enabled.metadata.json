@@ -1,0 +1,30 @@
+{
+  "Provider": "azure",
+  "CheckID": "policy_ensure_asc_enforcement_enabled",
+  "CheckTitle": "Ensure Any of the ASC Default Policy Settings are Not Set to 'Disabled'",
+  "CheckType": [],
+  "ServiceName": "policy",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "'Microsoft.Authorization/policyAssignments'",
+  "Description": "None of the settings offered by ASC Default policy should be set to effect Disabled.",
+  "Risk": "A security policy defines the desired configuration of your workloads and helps ensure compliance with company or regulatory security requirements. ASC Default policy is associated with every subscription by default. ASC default policy assignment is a set of security recommendations based on best practices. Enabling recommendations in ASC default policy ensures that Azure security center provides the ability to monitor all of the supported recommendations and optionally allow automated action for a few of the supported recommendations.",
+  "RelatedUrl": "https://learn.microsoft.com/en-us/azure/defender-for-cloud/security-policy-concept",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "1. From Azure Home select the Portal Menu 2. Select Policy 3. Select ASC Default for each subscription 4. Click on 'view Assignment' 5. Click on 'Edit assignment' 6. Ensure Policy Enforcement is Enabled 7. Click 'Review + Save'",
+      "Url": "https://learn.microsoft.com/en-us/azure/defender-for-cloud/implement-security-recommendations"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
