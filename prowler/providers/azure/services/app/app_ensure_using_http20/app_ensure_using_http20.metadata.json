@@ -20,7 +20,7 @@
     },
     "Recommendation": {
       "Text": "1. Login to Azure Portal using https://portal.azure.com 2. Go to App Services 3. Click on each App 4. Under Setting section, Click on Configuration 5. Set HTTP version to 2.0 under General settings",
-      "Url": ""
+      "Url": "https://azure.microsoft.com/en-us/blog/announcing-http-2-support-in-azure-app-service/"
     }
   },
   "Categories": [],
