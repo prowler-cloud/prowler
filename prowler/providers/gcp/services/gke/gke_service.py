@@ -10,7 +10,7 @@ class GKE(GCPService):
         super().__init__("container", audit_info, api_version="v1beta1")
         self.locations = []
         self.__get_locations__()
-        self.clusters = []
+        self.clusters = {}
         self.__threading_call__(self.__get_clusters__, self.locations)
 
     def __get_locations__(self):
@@ -55,15 +55,13 @@ class GKE(GCPService):
                             project_id=location.project_id,
                         )
                     )
-                self.clusters.append(
-                    Cluster(
-                        name=cluster["name"],
-                        id=cluster["id"],
-                        location=cluster["location"],
-                        service_account=cluster["nodeConfig"]["serviceAccount"],
-                        node_pools=node_pools,
-                        project_id=location.project_id,
-                    )
+                self.clusters[cluster["id"]] = Cluster(
+                    name=cluster["name"],
+                    id=cluster["id"],
+                    location=cluster["location"],
+                    service_account=cluster["nodeConfig"]["serviceAccount"],
+                    node_pools=node_pools,
+                    project_id=location.project_id,
                 )
         except Exception as error:
             logger.error(

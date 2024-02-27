@@ -23,7 +23,7 @@
     },
     "Recommendation": {
       "Text": "Enable vulnerability scanning for images stored in GCR using GCR Container Analysis or a third-party provider.",
-      "Url": "https://console.cloud.google.com/gcr"
+      "Url": "https://cloud.google.com/container-registry/docs/container-best-practices"
     }
   },
   "Categories": [

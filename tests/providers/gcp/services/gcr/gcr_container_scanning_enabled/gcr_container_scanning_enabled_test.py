@@ -1,4 +1,3 @@
-from re import search
 from unittest import mock
 
 from prowler.providers.gcp.services.serviceusage.serviceusage_service import Service
@@ -25,9 +24,9 @@ class Test_gcr_container_scanning_enabled:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert search(
-                f"GCR Container Analysis is not enabled in project {GCP_PROJECT_ID}",
-                result[0].status_extended,
+            assert (
+                result[0].status_extended
+                == f"GCR Container Analysis is not enabled in project {GCP_PROJECT_ID}"
             )
             assert result[0].resource_id == "containerscanning.googleapis.com"
             assert result[0].project_id == GCP_PROJECT_ID
@@ -60,9 +59,9 @@ class Test_gcr_container_scanning_enabled:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
-            assert search(
-                f"GCR Container Analysis is enabled in project {GCP_PROJECT_ID}",
-                result[0].status_extended,
+            assert (
+                result[0].status_extended
+                == f"GCR Container Analysis is enabled in project {GCP_PROJECT_ID}"
             )
             assert result[0].resource_id == "containerscanning.googleapis.com"
             assert result[0].project_id == GCP_PROJECT_ID

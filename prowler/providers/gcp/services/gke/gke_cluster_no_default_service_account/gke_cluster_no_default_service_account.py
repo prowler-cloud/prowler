@@ -5,7 +5,7 @@ from prowler.providers.gcp.services.gke.gke_client import gke_client
 class gke_cluster_no_default_service_account(Check):
     def execute(self) -> Check_Report_GCP:
         findings = []
-        for cluster in gke_client.clusters:
+        for cluster in gke_client.clusters.values():
             report = Check_Report_GCP(self.metadata())
             report.project_id = cluster.project_id
             report.resource_id = cluster.id

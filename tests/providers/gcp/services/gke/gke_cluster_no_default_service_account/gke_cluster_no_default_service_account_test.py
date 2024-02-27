@@ -1,4 +1,3 @@
-from re import search
 from unittest import mock
 
 from prowler.providers.gcp.services.gke.gke_service import Cluster, NodePool
@@ -52,11 +51,14 @@ class Test_gke_cluster_no_default_service_account:
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert search(
-                f"GKE cluster {cluster.name} is using the Compute Engine default service account.",
-                result[0].status_extended,
+            assert (
+                result[0].status_extended
+                == f"GKE cluster {cluster.name} is using the Compute Engine default service account."
             )
+            assert result[0].project_id == cluster.project_id
             assert result[0].resource_id == cluster.id
+            assert result[0].resource_name == cluster.name
+            assert result[0].location == cluster.location
 
     def test_one_cluster_without_node_pool_without_default_sa(self):
 
@@ -87,11 +89,14 @@ class Test_gke_cluster_no_default_service_account:
 
             assert len(result) == 1
             assert result[0].status == "PASS"
-            assert search(
-                f"GKE cluster {cluster.name} is not using the Compute Engine default service account.",
-                result[0].status_extended,
+            assert (
+                result[0].status_extended
+                == f"GKE cluster {cluster.name} is not using the Compute Engine default service account."
             )
+            assert result[0].project_id == cluster.project_id
             assert result[0].resource_id == cluster.id
+            assert result[0].resource_name == cluster.name
+            assert result[0].location == cluster.location
 
     def test_one_cluster_with_node_pool_with_default_sa(self):
 
@@ -129,11 +134,14 @@ class Test_gke_cluster_no_default_service_account:
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert search(
-                f"GKE cluster {cluster.name} is using the Compute Engine default service account.",
-                result[0].status_extended,
+            assert (
+                result[0].status_extended
+                == f"GKE cluster {cluster.name} is using the Compute Engine default service account."
             )
+            assert result[0].project_id == cluster.project_id
             assert result[0].resource_id == cluster.id
+            assert result[0].resource_name == cluster.name
+            assert result[0].location == cluster.location
 
     def test_one_cluster_with_node_pool_with_non_default_sa(self):
 
@@ -171,8 +179,11 @@ class Test_gke_cluster_no_default_service_account:
 
             assert len(result) == 1
             assert result[0].status == "PASS"
-            assert search(
-                f"GKE cluster {cluster.name} is not using the Compute Engine default service account.",
-                result[0].status_extended,
+            assert (
+                result[0].status_extended
+                == f"GKE cluster {cluster.name} is not using the Compute Engine default service account."
             )
+            assert result[0].project_id == cluster.project_id
             assert result[0].resource_id == cluster.id
+            assert result[0].resource_name == cluster.name
+            assert result[0].location == cluster.location
