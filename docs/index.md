@@ -124,7 +124,8 @@ Prowler is available as a project in [PyPI](https://pypi.org/project/prowler/), 
     prowler -v
     ```
 
-    > To download the results from AWS CloudShell, select Actions -> Download File and add the full path of each file. For the CSV file it will be something like `/home/cloudshell-user/output/prowler-output-123456789012-20221220191331.csv`
+    ???+ note
+        To download the results from AWS CloudShell, select Actions -> Download File and add the full path of each file. For the CSV file it will be something like `/home/cloudshell-user/output/prowler-output-123456789012-20221220191331.csv`
 
 === "Azure CloudShell"
 
@@ -159,14 +160,18 @@ You can run Prowler from your workstation, an EC2 instance, Fargate or any other
 ![Architecture](img/architecture.png)
 ## Basic Usage
 
-To run Prowler, you will need to specify the provider (e.g aws, gcp or azure):
-> If no provider specified, AWS will be used for backward compatibility with most of v2 options.
+To run Prowler, you will need to specify the provider (e.g `aws`, `gcp` or `azure`):
+
+???+ note
+    If no provider specified, AWS will be used for backward compatibility with most of v2 options.
 
 ```console
 prowler <provider>
 ```
 ![Prowler Execution](img/short-display.png)
-> Running the `prowler` command without options will use your environment variable credentials, see [Requirements](./getting-started/requirements.md) section to review the credentials settings.
+
+???+ note
+    Running the `prowler` command without options will use your environment variable credentials, see [Requirements](./getting-started/requirements.md) section to review the credentials settings.
 
 If you miss the former output you can use `--verbose` but Prowler v3 is smoking fast, so you won't see much ;)
 
@@ -217,7 +222,9 @@ Use a custom AWS profile with `-p`/`--profile` and/or AWS regions which you want
 ```console
 prowler aws --profile custom-profile -f us-east-1 eu-south-2
 ```
-> By default, `prowler` will scan all AWS regions.
+
+???+ note
+    By default, `prowler` will scan all AWS regions.
 
 See more details about AWS Authentication in [Requirements](getting-started/requirements.md)
 

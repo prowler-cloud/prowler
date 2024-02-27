@@ -93,5 +93,13 @@ azure:
   # azure.network_public_ip_shodan
   shodan_api_key: null
 
+  # Azure App Service
+  # azure.app_ensure_php_version_is_latest
+  php_latest_version: "8.2"
+  # azure.app_ensure_python_version_is_latest
+  python_latest_version: "3.12"
+  # azure.app_ensure_java_version_is_latest
+  java_latest_version: "17"
+
 # GCP Configuration
 gcp:

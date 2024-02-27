@@ -10,7 +10,8 @@ This can help for really large accounts, but please be aware of AWS API rate lim
 
 For information on Prowler's retrier configuration please refer to this [page](https://docs.prowler.cloud/en/latest/tutorials/aws/boto3-configuration/).
 
-> Note: You might need to increase the `--aws-retries-max-attempts` parameter from the default value of 3. The retrier follows an exponential backoff strategy.
+???+ note
+    You might need to increase the `--aws-retries-max-attempts` parameter from the default value of 3. The retrier follows an exponential backoff strategy.
 
 ## Linux
 
