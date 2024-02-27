@@ -5,22 +5,22 @@ from prowler.providers.azure.services.storage.storage_service import Account
 from tests.providers.azure.azure_fixtures import AZURE_SUBSCRIPTION
 
 
-class Test_monitor_ensure_storage_container_with_activity_log_private:
-    def test_monitor_ensure_storage_container_with_activity_log_private_no_subscriptions(
+class Test_monitor_storage_container_with_activity_logs_is_private:
+    def test_monitor_storage_container_with_activity_logs_is_private_no_subscriptions(
         self,
     ):
         monitor_client = mock.MagicMock
         monitor_client.diagnostics_settings = {}
 
         with mock.patch(
-            "prowler.providers.azure.services.monitor.monitor_ensure_storage_container_with_activity_log_private.monitor_ensure_storage_container_with_activity_log_private.monitor_client",
+            "prowler.providers.azure.services.monitor.monitor_storage_container_with_activity_logs_is_private.monitor_storage_container_with_activity_logs_is_private.monitor_client",
             new=monitor_client,
         ):
-            from prowler.providers.azure.services.monitor.monitor_ensure_storage_container_with_activity_log_private.monitor_ensure_storage_container_with_activity_log_private import (
-                monitor_ensure_storage_container_with_activity_log_private,
+            from prowler.providers.azure.services.monitor.monitor_storage_container_with_activity_logs_is_private.monitor_storage_container_with_activity_logs_is_private import (
+                monitor_storage_container_with_activity_logs_is_private,
             )
 
-            check = monitor_ensure_storage_container_with_activity_log_private()
+            check = monitor_storage_container_with_activity_logs_is_private()
             result = check.execute()
             assert len(result) == 0
 
@@ -28,14 +28,14 @@ class Test_monitor_ensure_storage_container_with_activity_log_private:
         monitor_client = mock.MagicMock
         monitor_client.diagnostics_settings = {AZURE_SUBSCRIPTION: []}
         with mock.patch(
-            "prowler.providers.azure.services.monitor.monitor_ensure_storage_container_with_activity_log_private.monitor_ensure_storage_container_with_activity_log_private.monitor_client",
+            "prowler.providers.azure.services.monitor.monitor_storage_container_with_activity_logs_is_private.monitor_storage_container_with_activity_logs_is_private.monitor_client",
             new=monitor_client,
         ):
-            from prowler.providers.azure.services.monitor.monitor_ensure_storage_container_with_activity_log_private.monitor_ensure_storage_container_with_activity_log_private import (
-                monitor_ensure_storage_container_with_activity_log_private,
+            from prowler.providers.azure.services.monitor.monitor_storage_container_with_activity_logs_is_private.monitor_storage_container_with_activity_logs_is_private import (
+                monitor_storage_container_with_activity_logs_is_private,
             )
 
-            check = monitor_ensure_storage_container_with_activity_log_private()
+            check = monitor_storage_container_with_activity_logs_is_private()
             result = check.execute()
             assert len(result) == 1
             assert result[0].subscription == AZURE_SUBSCRIPTION
@@ -126,18 +126,18 @@ class Test_monitor_ensure_storage_container_with_activity_log_private:
         }
 
         with mock.patch(
-            "prowler.providers.azure.services.monitor.monitor_ensure_storage_container_with_activity_log_private.monitor_ensure_storage_container_with_activity_log_private.monitor_client",
+            "prowler.providers.azure.services.monitor.monitor_storage_container_with_activity_logs_is_private.monitor_storage_container_with_activity_logs_is_private.monitor_client",
             new=monitor_client,
         ):
             with mock.patch(
-                "prowler.providers.azure.services.monitor.monitor_ensure_storage_container_with_activity_log_private.monitor_ensure_storage_container_with_activity_log_private.storage_client",
+                "prowler.providers.azure.services.monitor.monitor_storage_container_with_activity_logs_is_private.monitor_storage_container_with_activity_logs_is_private.storage_client",
                 new=storage_client,
             ):
-                from prowler.providers.azure.services.monitor.monitor_ensure_storage_container_with_activity_log_private.monitor_ensure_storage_container_with_activity_log_private import (
-                    monitor_ensure_storage_container_with_activity_log_private,
+                from prowler.providers.azure.services.monitor.monitor_storage_container_with_activity_logs_is_private.monitor_storage_container_with_activity_logs_is_private import (
+                    monitor_storage_container_with_activity_logs_is_private,
                 )
 
-                check = monitor_ensure_storage_container_with_activity_log_private()
+                check = monitor_storage_container_with_activity_logs_is_private()
                 result = check.execute()
                 assert len(result) == 1
                 assert result[0].subscription == AZURE_SUBSCRIPTION

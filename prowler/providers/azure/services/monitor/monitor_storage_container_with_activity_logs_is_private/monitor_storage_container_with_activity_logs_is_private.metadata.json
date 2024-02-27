@@ -1,10 +1,10 @@
 {
   "Provider": "azure",
-  "CheckID": "monitor_ensure_storage_container_with_activity_log_private",
-  "CheckTitle": "Ensure Diagnostic Setting captures appropriate categories",
+  "CheckID": "monitor_storage_container_with_activity_logs_is_private",
+  "CheckTitle": "Ensure the Storage Container Storing the Activity Logs is not Publicly Accessible",
   "CheckType": [],
   "ServiceName": "monitor",
-  "SubServiceName": "Configuring Diagnostic Settings",
+  "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Monitor",
@@ -13,14 +13,14 @@
   "RelatedUrl": "https://learn.microsoft.com/en-us/azure/azure-monitor/essentials/diagnostic-settings",
   "Remediation": {
     "Code": {
-      "CLI": "az storage container set-permission --name insights-activity-logs --account-name <Storage Account Name> --sas-token <SAS token> --public-access off",
+      "CLI": "az storage container set-permission --name insights-activity-logs --account-name <Storage Account Name> --public-access off",
       "NativeIaC": "",
       "Other": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/Monitor/check-for-publicly-accessible-activity-log-storage-container.html",
-      "Terraform": "https://docs.bridgecrew.io/docs/ensure-the-storage-container-storing-the-activity-logs-is-not-publicly-accessible"
+      "Terraform": "https://docs.bridgecrew.io/docs/ensure-the-storage-container-storing-the-activity-logs-is-not-publicly-accessible#terraform"
     },
     "Recommendation": {
       "Text": "1. From Azure Home select the Portal Menu 2. Search for Storage Accounts to access Storage account blade 3. Click on the storage account name 4. Click on Configuration under settings 5. Select Enabled under 'Allow Blob public access'",
-      "Url": "https://learn.microsoft.com/en-us/python/api/azure-mgmt-monitor/azure.mgmt.monitor.v2021_05_01_preview.operations.diagnosticsettingsoperations?view=azure-python"
+      "Url": "https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-network-security#ns-2-secure-cloud-services-with-network-controls"
     }
   },
   "Categories": [],

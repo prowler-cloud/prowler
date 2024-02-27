@@ -3,7 +3,7 @@ from prowler.providers.azure.services.monitor.monitor_client import monitor_clie
 from prowler.providers.azure.services.storage.storage_client import storage_client
 
 
-class monitor_ensure_storage_container_with_activity_log_private(Check):
+class monitor_storage_container_with_activity_logs_is_private(Check):
     def execute(self) -> Check_Report_Azure:
         findings = []
 
