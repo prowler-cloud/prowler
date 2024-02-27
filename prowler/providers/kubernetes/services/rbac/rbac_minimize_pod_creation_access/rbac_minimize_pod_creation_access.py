@@ -1,12 +1,18 @@
 from prowler.lib.check.models import Check, Check_Report_Kubernetes
+from prowler.providers.kubernetes.services.rbac.lib.role_permissions import (
+    is_rule_allowing_permisions,
+)
 from prowler.providers.kubernetes.services.rbac.rbac_client import rbac_client
+
+verbs = ["create"]
+resources = ["pods"]
 
 
 class rbac_minimize_pod_creation_access(Check):
     def execute(self) -> Check_Report_Kubernetes:
         findings = []
         # Check ClusterRoleBindings for pod create access
-        for cr in rbac_client.cluster_roles:
+        for cr in rbac_client.cluster_roles.values():
             report = Check_Report_Kubernetes(self.metadata())
             report.namespace = "cluster-wide"
             report.resource_name = cr.metadata.name
@@ -15,20 +21,15 @@ class rbac_minimize_pod_creation_access(Check):
             report.status_extended = (
                 f"ClusterRole {cr.metadata.name} does not have pod create access."
             )
-
-            for rule in cr.rules:
-                if (rule.resources and "pods" in rule.resources) and (
-                    rule.verbs and "create" in rule.verbs
-                ):
-                    report.status = "FAIL"
-                    report.status_extended = (
-                        f"ClusterRole {cr.metadata.name} has pod create access."
-                    )
-                    break
+            if is_rule_allowing_permisions(cr.rules, resources, verbs):
+                report.status = "FAIL"
+                report.status_extended = (
+                    f"ClusterRole {cr.metadata.name} has pod create access."
+                )
             findings.append(report)
 
         # Check RoleBindings for pod create access
-        for role in rbac_client.roles:
+        for role in rbac_client.roles.values():
             report = Check_Report_Kubernetes(self.metadata())
             report.namespace = role.metadata.namespace
             report.resource_name = role.metadata.name
@@ -38,15 +39,11 @@ class rbac_minimize_pod_creation_access(Check):
                 f"Role {role.metadata.name} does not have pod create access."
             )
 
-            for rule in role.rules:
-                if (rule.resources and "pods" in rule.resources) and (
-                    rule.verbs and "create" in rule.verbs
-                ):
-                    report.status = "FAIL"
-                    report.status_extended = (
-                        f"Role {role.metadata.name} has pod create access."
-                    )
-                    break
+            if is_rule_allowing_permisions(role.rules, resources, verbs):
+                report.status = "FAIL"
+                report.status_extended = (
+                    f"Role {role.metadata.name} has pod create access."
+                )
             findings.append(report)
 
         return findings
