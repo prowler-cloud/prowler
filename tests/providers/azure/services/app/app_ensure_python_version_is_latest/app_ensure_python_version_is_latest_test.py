@@ -98,7 +98,7 @@ class Test_app_ensure_python_version_is_latest:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Python version is set to 3.12 for app 'app_id-1' in subscription '{AZURE_SUBSCRIPTION}'."
+                == f"Python version is set to '3.12' for app 'app_id-1' in subscription '{AZURE_SUBSCRIPTION}'."
             )
             assert result[0].resource_id == resource_id
             assert result[0].resource_name == "app_id-1"
@@ -136,7 +136,7 @@ class Test_app_ensure_python_version_is_latest:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Python version is not set to 3.12 for app 'app_id-1' in subscription '{AZURE_SUBSCRIPTION}'."
+                == f"Python version is 'python|3.10', the latest version that you could use is the '3.12' version, for app 'app_id-1' in subscription '{AZURE_SUBSCRIPTION}'."
             )
             assert result[0].resource_id == resource_id
             assert result[0].resource_name == "app_id-1"
