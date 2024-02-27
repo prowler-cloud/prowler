@@ -61,7 +61,7 @@ class Test_AWS_Organizations:
             == f"arn:aws:organizations::{AWS_ACCOUNT_NUMBER}:account/{org_id}/{account_id}"
         )
         assert org.account_details_org == org_id
-        assert org.account_details_tags == "key:value,"
+        assert org.account_details_tags == "key:value"
 
     def test_parse_organizations_metadata(self):
         tags = {"Tags": [{"Key": "test-key", "Value": "test-value"}]}
