@@ -6,7 +6,7 @@ from prowler.providers.gcp.services.serviceusage.serviceusage_service import Ser
 GCP_PROJECT_ID = "123456789012"
 
 
-class Test_serviceusage_cloudasset_inventory_enabled:
+class Test_gcr_container_scanning_enabled:
     def test_serviceusage_no_active_services(self):
         serviceusage_client = mock.MagicMock
         serviceusage_client.active_services = {}
@@ -14,24 +14,24 @@ class Test_serviceusage_cloudasset_inventory_enabled:
         serviceusage_client.region = "global"
 
         with mock.patch(
-            "prowler.providers.gcp.services.serviceusage.serviceusage_cloudasset_inventory_enabled.serviceusage_cloudasset_inventory_enabled.serviceusage_client",
+            "prowler.providers.gcp.services.gcr.gcr_container_scanning_enabled.gcr_container_scanning_enabled.serviceusage_client",
             new=serviceusage_client,
         ):
-            from prowler.providers.gcp.services.serviceusage.serviceusage_cloudasset_inventory_enabled.serviceusage_cloudasset_inventory_enabled import (
-                serviceusage_cloudasset_inventory_enabled,
+            from prowler.providers.gcp.services.gcr.gcr_container_scanning_enabled.gcr_container_scanning_enabled import (
+                gcr_container_scanning_enabled,
             )
 
-            check = serviceusage_cloudasset_inventory_enabled()
+            check = gcr_container_scanning_enabled()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert search(
-                f"Cloud Asset Inventory is not enabled in project {GCP_PROJECT_ID}",
+                f"GCR Container Analysis is not enabled in project {GCP_PROJECT_ID}",
                 result[0].status_extended,
             )
-            assert result[0].resource_id == "cloudasset.googleapis.com"
+            assert result[0].resource_id == "containerscanning.googleapis.com"
             assert result[0].project_id == GCP_PROJECT_ID
-            assert result[0].resource_name == "Cloud Asset Inventory"
+            assert result[0].resource_name == "GCR Container Analysis"
             assert result[0].location == serviceusage_client.region
 
     def test_serviceusage_active_cloudasset(self):
@@ -39,8 +39,8 @@ class Test_serviceusage_cloudasset_inventory_enabled:
         serviceusage_client.active_services = {
             GCP_PROJECT_ID: [
                 Service(
-                    name="cloudasset.googleapis.com",
-                    title="Cloud Asset Inventory",
+                    name="containerscanning.googleapis.com",
+                    title="GCR Container Analysis",
                     project_id=GCP_PROJECT_ID,
                 )
             ]
@@ -49,22 +49,22 @@ class Test_serviceusage_cloudasset_inventory_enabled:
         serviceusage_client.region = "global"
 
         with mock.patch(
-            "prowler.providers.gcp.services.serviceusage.serviceusage_cloudasset_inventory_enabled.serviceusage_cloudasset_inventory_enabled.serviceusage_client",
+            "prowler.providers.gcp.services.gcr.gcr_container_scanning_enabled.gcr_container_scanning_enabled.serviceusage_client",
             new=serviceusage_client,
         ):
-            from prowler.providers.gcp.services.serviceusage.serviceusage_cloudasset_inventory_enabled.serviceusage_cloudasset_inventory_enabled import (
-                serviceusage_cloudasset_inventory_enabled,
+            from prowler.providers.gcp.services.gcr.gcr_container_scanning_enabled.gcr_container_scanning_enabled import (
+                gcr_container_scanning_enabled,
             )
 
-            check = serviceusage_cloudasset_inventory_enabled()
+            check = gcr_container_scanning_enabled()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert search(
-                f"Cloud Asset Inventory is enabled in project {GCP_PROJECT_ID}",
+                f"GCR Container Analysis is enabled in project {GCP_PROJECT_ID}",
                 result[0].status_extended,
             )
-            assert result[0].resource_id == "cloudasset.googleapis.com"
+            assert result[0].resource_id == "containerscanning.googleapis.com"
             assert result[0].project_id == GCP_PROJECT_ID
-            assert result[0].resource_name == "Cloud Asset Inventory"
+            assert result[0].resource_name == "GCR Container Analysis"
             assert result[0].location == serviceusage_client.region
