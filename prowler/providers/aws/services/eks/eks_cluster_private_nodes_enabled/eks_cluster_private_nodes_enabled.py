@@ -15,7 +15,7 @@ class eks_cluster_private_nodes_enabled(Check):
             report.status_extended = (
                 f"EKS cluster {cluster.name} is created with private nodes."
             )
-            if not cluster.endpoint_private_access or not cluster.public_access_cidrs:
+            if not cluster.endpoint_private_access:
                 report.status = "FAIL"
                 report.status_extended = f"Cluster endpoint private access is not enabled for EKS cluster {cluster.name}."
             findings.append(report)

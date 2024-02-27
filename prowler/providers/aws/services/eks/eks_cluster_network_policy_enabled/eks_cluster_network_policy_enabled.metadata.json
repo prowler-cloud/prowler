@@ -16,10 +16,10 @@
   "RelatedUrl": "https://docs.aws.amazon.com/eks/latest/userguide/eks-networking-add-ons.html",
   "Remediation": {
     "Code": {
-      "CLI": "Utilize Calico or other network policy engine to segment and isolate your traffic.",
+      "CLI": "",
       "NativeIaC": "",
       "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/EKS/security-groups.html",
-      "Terraform": ""
+      "Terraform": "https://docs.bridgecrew.io/docs/bc_aws_kubernetes_1#terraform"
     },
     "Recommendation": {
       "Text": "Enable and configure Network Policy to enhance network security within the EKS cluster.",
