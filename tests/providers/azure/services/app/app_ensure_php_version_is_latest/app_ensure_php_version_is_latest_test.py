@@ -98,7 +98,7 @@ class Test_app_ensure_php_version_is_latest:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"PHP version is not set to 8.2 for app 'app_id-1' in subscription '{AZURE_SUBSCRIPTION}'."
+                == f"PHP version is set to 'php|8.0', the latest version that you could use is the '8.2' version, for app 'app_id-1' in subscription '{AZURE_SUBSCRIPTION}'."
             )
             assert result[0].resource_id == resource_id
             assert result[0].resource_name == "app_id-1"
@@ -136,7 +136,7 @@ class Test_app_ensure_php_version_is_latest:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"PHP version is set to 8.2 for app 'app_id-1' in subscription '{AZURE_SUBSCRIPTION}'."
+                == f"PHP version is set to '8.2' for app 'app_id-1' in subscription '{AZURE_SUBSCRIPTION}'."
             )
             assert result[0].resource_id == resource_id
             assert result[0].resource_name == "app_id-1"
