@@ -1,4 +1,4 @@
-def check_role_permissions(rules, resources, verbs):
+def is_rule_allowing_permisions(rules, resources, verbs):
     """
     Check Kubernetes role permissions.
 

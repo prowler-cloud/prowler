@@ -1,14 +1,17 @@
 from prowler.lib.check.models import Check, Check_Report_Kubernetes
 from prowler.providers.kubernetes.services.rbac.lib.role_permissions import (
-    check_role_permissions,
+    is_rule_allowing_permisions,
 )
 from prowler.providers.kubernetes.services.rbac.rbac_client import rbac_client
+
+verbs = ["update", "patch"]
+resources = ["certificatesigningrequests/approval"]
 
 
 class rbac_minimize_csr_approval_access(Check):
     def execute(self) -> Check_Report_Kubernetes:
         findings = []
-        for crb in rbac_client.cluster_role_bindings:
+        for crb in rbac_client.cluster_role_bindings.values():
             for subject in crb.subjects:
                 if subject.kind in ["User", "Group"]:
                     report = Check_Report_Kubernetes(self.metadata())
@@ -17,12 +20,12 @@ class rbac_minimize_csr_approval_access(Check):
                     report.resource_id = subject.uid if hasattr(subject, "uid") else ""
                     report.status = "PASS"
                     report.status_extended = f"User or group '{subject.name}' does not have access to update the CSR approval sub-resource."
-                    for cr in rbac_client.cluster_roles:
+                    for cr in rbac_client.cluster_roles.values():
                         if cr.metadata.name == crb.roleRef.name:
-                            if check_role_permissions(
+                            if is_rule_allowing_permisions(
                                 cr.rules,
-                                ["certificatesigningrequests/approval"],
-                                ["update", "patch"],
+                                resources,
+                                verbs,
                             ):
                                 report.status = "FAIL"
                                 report.status_extended = f"User or group '{subject.name}' has access to update the CSR approval sub-resource."
