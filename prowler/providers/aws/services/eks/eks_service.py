@@ -55,6 +55,13 @@ class EKS(AWSService):
                         ][0]["enabled"],
                     )
                 if (
+                    "clusterSecurityGroupId"
+                    in describe_cluster["cluster"]["resourcesVpcConfig"]
+                ):
+                    cluster.security_group_id = describe_cluster["cluster"][
+                        "resourcesVpcConfig"
+                    ]["clusterSecurityGroupId"]
+                if (
                     "endpointPublicAccess"
                     in describe_cluster["cluster"]["resourcesVpcConfig"]
                 ):
@@ -95,6 +102,7 @@ class EKSCluster(BaseModel):
     arn: str
     region: str
     logging: EKSClusterLoggingEntity = None
+    security_group_id: str = None
     endpoint_public_access: bool = None
     endpoint_private_access: bool = None
     public_access_cidrs: list[str] = None
