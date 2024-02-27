@@ -20,7 +20,7 @@ class Rbac(KubernetesService):
 
     def __list_cluster_role_bindings__(self):
         try:
-            bindings_list = []
+            bindings = {}
             for binding in self.client.list_cluster_role_binding().items:
                 # For each binding, create a ClusterRoleBinding object and append it to the list
                 formatted_binding = {
@@ -42,16 +42,17 @@ class Rbac(KubernetesService):
                         "apiGroup": binding.role_ref.api_group,
                     },
                 }
-                bindings_list.append(ClusterRoleBinding(**formatted_binding))
-            return bindings_list
+                bindings[binding.metadata.uid] = ClusterRoleBinding(**formatted_binding)
+            return bindings
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+            return []
 
     def __list_role_bindings__(self):
         try:
-            role_bindings_list = []
+            role_bindings = {}
             for binding in self.client.list_role_binding_for_all_namespaces().items:
                 formatted_binding = {
                     "metadata": binding.metadata,
@@ -70,16 +71,17 @@ class Rbac(KubernetesService):
                         "apiGroup": binding.role_ref.api_group,
                     },
                 }
-                role_bindings_list.append(RoleBinding(**formatted_binding))
-            return role_bindings_list
+                role_bindings[binding.metadata.uid] = RoleBinding(**formatted_binding)
+            return role_bindings
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+            return []
 
     def __list_roles__(self):
         try:
-            roles_list = []
+            roles = {}
             for role in self.client.list_role_for_all_namespaces().items:
                 formatted_role = {
                     "uid": role.metadata.uid,
@@ -94,16 +96,17 @@ class Rbac(KubernetesService):
                         for rule in role.rules
                     ],
                 }
-                roles_list.append(Role(**formatted_role))
-            return roles_list
+                roles[role.metadata.uid] = Role(**formatted_role)
+            return roles
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+            return []
 
     def __list_cluster_roles__(self):
         try:
-            cluster_roles_list = []
+            cluster_roles = {}
             for role in self.client.list_cluster_role().items:
                 formatted_role = {
                     "uid": role.metadata.uid,
@@ -118,12 +121,13 @@ class Rbac(KubernetesService):
                         for rule in role.rules
                     ],
                 }
-                cluster_roles_list.append(ClusterRole(**formatted_role))
-            return cluster_roles_list
+                cluster_roles[role.metadata.uid] = ClusterRole(**formatted_role)
+            return cluster_roles
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+            return []
 
 
 class Subject(BaseModel):

@@ -6,8 +6,8 @@ from prowler.providers.gcp.lib.service.service import GCPService
 
 ################## CloudResourceManager
 class CloudResourceManager(GCPService):
-    def __init__(self, audit_info):
-        super().__init__(__class__.__name__, audit_info)
+    def __init__(self, provider):
+        super().__init__(__class__.__name__, provider)
 
         self.bindings = []
         self.projects = []

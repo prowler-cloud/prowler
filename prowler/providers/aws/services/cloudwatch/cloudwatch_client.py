@@ -1,4 +1,4 @@
-from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
 from prowler.providers.aws.services.cloudwatch.cloudwatch_service import CloudWatch
+from prowler.providers.common.common import get_global_provider
 
-cloudwatch_client = CloudWatch(current_audit_info)
+cloudwatch_client = CloudWatch(get_global_provider())

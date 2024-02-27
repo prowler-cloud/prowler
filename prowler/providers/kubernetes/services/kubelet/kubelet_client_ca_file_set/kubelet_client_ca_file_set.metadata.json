@@ -13,7 +13,7 @@
   "ResourceType": "KubernetesKubelet",
   "Description": "This check verifies that the kubelet is configured with the --client-ca-file argument to enable authentication using certificates. This configuration is essential to secure the connections from the apiserver to the kubelet.",
   "Risk": "If --client-ca-file is not set, the apiserver cannot authenticate the kubelet, potentially leading to man-in-the-middle attacks.",
-  "RelatedUrl": "https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet-authentication-authorization/",
+  "RelatedUrl": "https://kubernetes.io/docs/reference/access-authn-authz/kubelet-authn-authz/",
   "Remediation": {
     "Code": {
       "CLI": "Set the --client-ca-file argument in the kubelet service file on each worker node to the path of the client CA file.",
@@ -23,7 +23,7 @@
     },
     "Recommendation": {
       "Text": "Configure Kubelet with a client CA file for secure authentication.",
-      "Url": "https://kubernetes.io/docs/admin/kubelet/"
+      "Url": "https://kubernetes.io/docs/reference/access-authn-authz/kubelet-authn-authz/#kubelet-authorization"
     }
   },
   "Categories": [

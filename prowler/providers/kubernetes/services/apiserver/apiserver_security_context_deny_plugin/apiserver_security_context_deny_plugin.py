@@ -15,12 +15,16 @@ class apiserver_security_context_deny_plugin(Check):
             security_context_deny_set = False
             pod_security_policy_set = False
             for container in pod.containers.values():
+                pod_security_policy_set = False
+                security_context_deny_set = False
                 for command in container.command:
                     if command.startswith("--enable-admission-plugins"):
                         if "SecurityContextDeny" in (command.split("=")[1]):
                             security_context_deny_set = True
                         if "PodSecurityPolicy" in (command.split("=")[1]):
                             pod_security_policy_set = True
+                if not pod_security_policy_set or not security_context_deny_set:
+                    break
 
             if pod_security_policy_set:
                 report.status = "PASS"

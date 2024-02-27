@@ -13,7 +13,7 @@
   "ResourceType": "KubernetesKubelet",
   "Description": "This check ensures that the kubelet client certificate rotation is enabled, allowing for automated periodic rotation of credentials, thereby addressing availability concerns in the security triad. This is crucial for avoiding downtime due to expired certificates.",
   "Risk": "Not enabling kubelet client certificate rotation may lead to service interruptions due to expired certificates, compromising the availability of the node.",
-  "RelatedUrl": "https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet-tls-bootstrapping/#kubelet-configuration",
+  "RelatedUrl": "https://kubernetes.io/docs/reference/access-authn-authz/kubelet-tls-bootstrapping/",
   "Remediation": {
     "Code": {
       "CLI": "Ensure that the kubelet is configured with --rotate-certificates set to true or omitted (to use default).",
@@ -23,7 +23,7 @@
     },
     "Recommendation": {
       "Text": "Enable kubelet client certificate rotation for automated renewal of credentials.",
-      "Url": "https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet-tls-bootstrapping/"
+      "Url": "https://kubernetes.io/docs/reference/access-authn-authz/kubelet-tls-bootstrapping/#certificate-rotation"
     }
   },
   "Categories": [

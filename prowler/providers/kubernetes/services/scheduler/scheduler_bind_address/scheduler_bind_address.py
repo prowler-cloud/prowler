@@ -12,15 +12,14 @@ class scheduler_bind_address(Check):
             report.namespace = pod.namespace
             report.resource_name = pod.name
             report.resource_id = pod.uid
-            report.status = "FAIL"
+            report.status = "PASS"
             report.status_extended = (
-                f"Scheduler is not bound to the loopback address in pod {pod.name}."
+                f"Scheduler is bound to the loopback address in pod {pod.name}."
             )
             for container in pod.containers.values():
-                if "--bind-address=127.0.0.1" in str(container.command):
-                    report.status = "PASS"
-                    report.status_extended = (
-                        f"Scheduler is bound to the loopback address in pod {pod.name}."
-                    )
+                if "--bind-address=127.0.0.1" not in str(container.command):
+                    report.status = "FAIL"
+                    report.status_extended = f"Scheduler is not bound to the loopback address in pod {pod.name}."
+                    break
             findings.append(report)
         return findings

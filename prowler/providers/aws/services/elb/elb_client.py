@@ -1,4 +1,4 @@
-from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
 from prowler.providers.aws.services.elb.elb_service import ELB
+from prowler.providers.common.common import get_global_provider
 
-elb_client = ELB(current_audit_info)
+elb_client = ELB(get_global_provider())

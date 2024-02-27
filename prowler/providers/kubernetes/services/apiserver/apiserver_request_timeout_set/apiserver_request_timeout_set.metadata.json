@@ -13,7 +13,7 @@
   "ResourceType": "KubernetesAPIServer",
   "Description": "This check verifies that the Kubernetes API server is configured with an appropriate global request timeout. Setting a suitable --request-timeout value ensures the API server can handle requests efficiently without exhausting resources, especially in cases of slower connections or high-volume data requests.",
   "Risk": "An inadequately set request timeout may lead to inefficient handling of API requests, either by timing out too quickly on slow connections or by allowing requests to consume excessive resources, leading to potential Denial-of-Service attacks.",
-  "RelatedUrl": "https://github.com/kubernetes/kubernetes/pull/51415",
+  "RelatedUrl": "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/",
   "Remediation": {
     "Code": {
       "CLI": "Edit the kube-apiserver configuration to set the --request-timeout argument to an appropriate value based on your environment. Example: --request-timeout=300s",
@@ -23,7 +23,7 @@
     },
     "Recommendation": {
       "Text": "Set the API server request timeout to a value that balances resource usage efficiency and the needs of your environment, considering connection speeds and data volumes.",
-      "Url": "https://kubernetes.io/docs/admin/kube-apiserver/"
+      "Url": "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/#options"
     }
   },
   "Categories": [

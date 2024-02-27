@@ -10,9 +10,9 @@ from prowler.providers.aws.lib.service.service import AWSService
 
 ################################ ECS
 class ECS(AWSService):
-    def __init__(self, audit_info):
+    def __init__(self, provider):
         # Call AWSService's __init__
-        super().__init__(__class__.__name__, audit_info)
+        super().__init__(__class__.__name__, provider)
         self.task_definitions = []
         self.__threading_call__(self.__list_task_definitions__)
         self.__describe_task_definition__()

@@ -1,4 +1,4 @@
-from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
 from prowler.providers.aws.services.waf.waf_service import WAF
+from prowler.providers.common.common import get_global_provider
 
-waf_client = WAF(current_audit_info)
+waf_client = WAF(get_global_provider())
