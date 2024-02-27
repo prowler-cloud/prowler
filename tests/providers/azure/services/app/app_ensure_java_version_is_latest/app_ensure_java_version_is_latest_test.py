@@ -100,7 +100,7 @@ class Test_app_ensure_java_version_is_latest:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Java version is set to 17 for app 'app_id-1' in subscription '{AZURE_SUBSCRIPTION}'."
+                == f"Java version is set to 'java 17' for app 'app_id-1' in subscription '{AZURE_SUBSCRIPTION}'."
             )
             assert result[0].resource_id == resource_id
             assert result[0].resource_name == "app_id-1"
@@ -140,7 +140,7 @@ class Test_app_ensure_java_version_is_latest:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Java version is not set to 17 for app 'app_id-1' in subscription '{AZURE_SUBSCRIPTION}'."
+                == f"Java version is set to 'Tomcat|9.0-java11', but should be set to 'java 17' for app 'app_id-1' in subscription '{AZURE_SUBSCRIPTION}'."
             )
             assert result[0].resource_id == resource_id
             assert result[0].resource_name == "app_id-1"
@@ -180,7 +180,7 @@ class Test_app_ensure_java_version_is_latest:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Java version is set to 17 for app 'app_id-1' in subscription '{AZURE_SUBSCRIPTION}'."
+                == f"Java version is set to 'java 17' for app 'app_id-1' in subscription '{AZURE_SUBSCRIPTION}'."
             )
             assert result[0].resource_id == resource_id
             assert result[0].resource_name == "app_id-1"
@@ -220,7 +220,7 @@ class Test_app_ensure_java_version_is_latest:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Java version is not set to 17 for app 'app_id-1' in subscription '{AZURE_SUBSCRIPTION}'."
+                == f"Java version is set to 'java11', but should be set to 'java 17' for app 'app_id-1' in subscription '{AZURE_SUBSCRIPTION}'."
             )
             assert result[0].resource_id == resource_id
             assert result[0].resource_name == "app_id-1"
