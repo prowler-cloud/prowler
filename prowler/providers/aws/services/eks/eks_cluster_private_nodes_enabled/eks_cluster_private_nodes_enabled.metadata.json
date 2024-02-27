@@ -27,8 +27,7 @@
     }
   },
   "Categories": [
-    "Network Security",
-    "Compliance"
+    "internet-exposed"
   ],
   "DependsOn": [],
   "RelatedTo": [],
