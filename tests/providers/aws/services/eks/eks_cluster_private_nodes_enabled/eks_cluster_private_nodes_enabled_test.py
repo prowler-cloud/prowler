@@ -1,12 +1,15 @@
 from unittest import mock
 
 from prowler.providers.aws.services.eks.eks_service import EKSCluster
-
-AWS_REGION = "eu-west-1"
-AWS_ACCOUNT_NUMBER = "123456789012"
+from tests.providers.aws.audit_info_utils import (
+    AWS_ACCOUNT_NUMBER,
+    AWS_REGION_EU_WEST_1,
+)
 
 cluster_name = "cluster_test"
-cluster_arn = f"arn:aws:eks:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:cluster/{cluster_name}"
+cluster_arn = (
+    f"arn:aws:eks:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:cluster/{cluster_name}"
+)
 
 
 class Test_eks_cluster_private_nodes_enabled:
@@ -32,7 +35,7 @@ class Test_eks_cluster_private_nodes_enabled:
             EKSCluster(
                 name=cluster_name,
                 arn=cluster_arn,
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
                 logging=None,
                 public_access_cidrs=["203.0.113.5/32"],
                 endpoint_private_access=True,
@@ -58,7 +61,7 @@ class Test_eks_cluster_private_nodes_enabled:
             assert result[0].resource_id == cluster_name
             assert result[0].resource_arn == cluster_arn
             assert result[0].resource_tags == []
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1
 
     def test_endpoint_without_private_nodes(self):
         eks_client = mock.MagicMock
@@ -67,7 +70,7 @@ class Test_eks_cluster_private_nodes_enabled:
             EKSCluster(
                 name=cluster_name,
                 arn=cluster_arn,
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
                 logging=None,
                 endpoint_private_access=False,
             )
@@ -92,4 +95,4 @@ class Test_eks_cluster_private_nodes_enabled:
             assert result[0].resource_id == cluster_name
             assert result[0].resource_arn == cluster_arn
             assert result[0].resource_tags == []
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1
