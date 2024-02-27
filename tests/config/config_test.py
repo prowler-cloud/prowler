@@ -51,6 +51,8 @@ config_aws = {
     "organizations_trusted_delegated_administrators": [],
 }
 
+config_azure = {"shodan_api_key": None}
+
 
 class Test_Config:
     def test_get_aws_available_regions(self):
@@ -184,7 +186,7 @@ class Test_Config:
         config_test_file = f"{path}/fixtures/config.yaml"
         provider = "azure"
 
-        assert load_and_validate_config_file(provider, config_test_file) is None
+        assert load_and_validate_config_file(provider, config_test_file) == config_azure
 
     def test_load_and_validate_config_file_old_format(self):
         path = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))

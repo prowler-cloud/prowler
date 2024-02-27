@@ -122,6 +122,7 @@ class Test_Parser:
         assert not parsed.sp_env_auth
         assert not parsed.browser_auth
         assert not parsed.managed_identity_auth
+        assert not parsed.shodan
 
     def test_default_parser_no_arguments_gcp(self):
         provider = "gcp"
@@ -1051,6 +1052,20 @@ class Test_Parser:
         parsed = self.parser.parse(command)
         assert parsed.provider == "azure"
         assert parsed.az_cli_auth
+
+    def test_azure_parser_shodan_short(self):
+        argument = "-N"
+        shodan_api_key = str(uuid.uuid4())
+        command = [prowler_command, "azure", argument, shodan_api_key]
+        parsed = self.parser.parse(command)
+        assert parsed.shodan == shodan_api_key
+
+    def test_azure_parser_shodan_long(self):
+        argument = "--shodan"
+        shodan_api_key = str(uuid.uuid4())
+        command = [prowler_command, "azure", argument, shodan_api_key]
+        parsed = self.parser.parse(command)
+        assert parsed.shodan == shodan_api_key
 
     def test_parser_azure_auth_managed_identity(self):
         argument = "--managed-identity-auth"

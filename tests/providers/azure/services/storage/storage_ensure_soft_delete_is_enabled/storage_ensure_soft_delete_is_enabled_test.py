@@ -7,8 +7,7 @@ from prowler.providers.azure.services.storage.storage_service import (
     Account,
     BlobProperties,
 )
-
-AZURE_SUBSCRIPTION = str(uuid4())
+from tests.providers.azure.azure_fixtures import AZURE_SUBSCRIPTION
 
 
 class Test_storage_ensure_soft_delete_is_enabled:

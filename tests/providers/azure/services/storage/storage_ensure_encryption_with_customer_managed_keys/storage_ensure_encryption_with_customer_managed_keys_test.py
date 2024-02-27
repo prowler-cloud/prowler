@@ -2,8 +2,7 @@ from unittest import mock
 from uuid import uuid4
 
 from prowler.providers.azure.services.storage.storage_service import Account
-
-AZURE_SUBSCRIPTION = str(uuid4())
+from tests.providers.azure.azure_fixtures import AZURE_SUBSCRIPTION
 
 
 class Test_storage_ensure_encryption_with_customer_managed_keys:

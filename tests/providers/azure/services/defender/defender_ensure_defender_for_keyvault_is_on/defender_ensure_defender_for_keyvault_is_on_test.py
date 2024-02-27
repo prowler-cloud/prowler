@@ -2,8 +2,7 @@ from unittest import mock
 from uuid import uuid4
 
 from prowler.providers.azure.services.defender.defender_service import Pricing
-
-AZURE_SUBSCRIPTION = str(uuid4())
+from tests.providers.azure.azure_fixtures import AZURE_SUBSCRIPTION
 
 
 class Test_defender_ensure_defender_for_keyvault_is_on:

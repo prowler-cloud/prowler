@@ -41,6 +41,7 @@ The following list includes all the Azure checks with configurable variables tha
 
 | Check Name                                                    | Value                                            | Type            |
 |---------------------------------------------------------------|--------------------------------------------------|-----------------|
+| `network_public_ip_shodan`                                   | `shodan_api_key`                    | String         |
 | `app_ensure_php_version_is_latest`                            | `php_latest_version`                             | String          |
 | `app_ensure_python_version_is_latest`                         | `python_latest_version`                          | String          |
 | `app_ensure_java_version_is_latest`                           | `java_latest_version`                            | String          |
@@ -136,6 +137,9 @@ aws:
 
 # Azure Configuration
 azure:
+  # Azure Network Configuration
+  # azure.network_public_ip_shodan
+  shodan_api_key: null
 
   # Azure App Configuration
   # azure.app_ensure_php_version_is_latest
