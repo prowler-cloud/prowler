@@ -26,7 +26,7 @@ class Test_iam_cloud_asset_inventory_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Cloud Asset Inventory is not enabled in project {GCP_PROJECT_ID}"
+                == f"Cloud Asset Inventory is not enabled in project {GCP_PROJECT_ID}."
             )
             assert result[0].resource_id == "cloudasset.googleapis.com"
             assert result[0].project_id == GCP_PROJECT_ID
@@ -61,7 +61,7 @@ class Test_iam_cloud_asset_inventory_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Cloud Asset Inventory is enabled in project {GCP_PROJECT_ID}"
+                == f"Cloud Asset Inventory is enabled in project {GCP_PROJECT_ID}."
             )
             assert result[0].resource_id == "cloudasset.googleapis.com"
             assert result[0].project_id == GCP_PROJECT_ID
