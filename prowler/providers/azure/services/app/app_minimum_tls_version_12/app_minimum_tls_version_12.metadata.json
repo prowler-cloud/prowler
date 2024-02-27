@@ -1,0 +1,30 @@
+{
+  "Provider": "azure",
+  "CheckID": "app_minimum_tls_version_12",
+  "CheckTitle": "Ensure Web App is using the latest version of TLS encryption",
+  "CheckType": [],
+  "ServiceName": "app",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Microsoft.Web/sites/config",
+  "Description": "The TLS (Transport Layer Security) protocol secures transmission of data over the internet using standard encryption technology. Encryption should be set with the latest version of TLS. App service allows TLS 1.2 by default, which is the recommended TLS level by industry standards such as PCI DSS.",
+  "Risk": "App service currently allows the web app to set TLS versions 1.0, 1.1 and 1.2. It is highly recommended to use the latest TLS 1.2 version for web app secure connections.",
+  "RelatedUrl": "https://learn.microsoft.com/en-us/azure/app-service/configure-ssl-bindings#enforce-tls-versions",
+  "Remediation": {
+    "Code": {
+      "CLI": "az webapp config set --resource-group <RESOURCE_GROUP_NAME> --name <APP_NAME> --min-tls-version 1.2",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/AppService/latest-version-of-tls-encryption-in-use.html",
+      "Terraform": "https://docs.bridgecrew.io/docs/bc_azr_networking_6#terraform"
+    },
+    "Recommendation": {
+      "Text": "1. Login to Azure Portal using https://portal.azure.com 2. Go to App Services 3. Click on each App 4. Under Setting section, Click on TLS/SSL settings 5. Under the Bindings pane, ensure that Minimum TLS Version set to 1.2 under Protocol Settings",
+      "Url": "https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-data-protection#dp-3-encrypt-sensitive-data-in-transit"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "By default, TLS Version feature will be set to 1.2 when a new app is created using the command-line tool or Azure Portal console."
+}

@@ -18,6 +18,8 @@ class AzureService:
         self.subscriptions = audit_info.identity.subscriptions
         self.locations = audit_info.locations
 
+        self.audit_config = audit_info.audit_config
+
     def __set_clients__(self, subscriptions, credentials, service, region_config):
         clients = {}
         try:

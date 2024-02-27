@@ -550,6 +550,22 @@ azure-mgmt-core = ">=1.3.2,<2.0.0"
 msrest = ">=0.7.1"
 
 [[package]]
+name = "azure-mgmt-web"
+version = "7.2.0"
+description = "Microsoft Azure Web Apps Management Client Library for Python"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "azure-mgmt-web-7.2.0.tar.gz", hash = "sha256:efcfe6f7f520ed0abcfe86517e1c8cf02a712f737a3db0db7cb46c6d647981ed"},
+    {file = "azure_mgmt_web-7.2.0-py3-none-any.whl", hash = "sha256:28e88602ad9d6d03ed3ba89f966f478b6148e28d292d165e5f371c92c59621df"},
+]
+
+[package.dependencies]
+azure-common = ">=1.1,<2.0"
+azure-mgmt-core = ">=1.3.2,<2.0.0"
+isodate = ">=0.6.1,<1.0.0"
+
+[[package]]
 name = "azure-storage-blob"
 version = "12.19.0"
 description = "Microsoft Azure Blob Storage Client Library for Python"
@@ -4377,4 +4393,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.13"
-content-hash = "e25fa1004f59cdb59302a8ce727499fd432c24bb1462dbc7a10ab62035f9445f"
+content-hash = "ab8c8f47bee7e9efdfcb3c736ccd97ea74cd8c601168541e64e3c2c486b9ae58"
