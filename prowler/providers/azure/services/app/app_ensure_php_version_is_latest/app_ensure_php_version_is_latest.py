@@ -13,9 +13,8 @@ class app_ensure_php_version_is_latest(Check):
             for app_name, app in apps.items():
                 framework = getattr(app.configurations, "linux_fx_version", "")
 
-                if (
-                    "php" in framework.lower()
-                    or getattr(app.configurations, "php_version", "")
+                if "php" in framework.lower() or getattr(
+                    app.configurations, "php_version", ""
                 ):
                     report = Check_Report_Azure(self.metadata())
                     report.status = "FAIL"

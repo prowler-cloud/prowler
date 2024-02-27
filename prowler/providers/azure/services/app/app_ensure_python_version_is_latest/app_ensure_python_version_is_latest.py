@@ -13,9 +13,8 @@ class app_ensure_python_version_is_latest(Check):
             for app_name, app in apps.items():
                 framework = getattr(app.configurations, "linux_fx_version", "")
 
-                if (
-                    "python" in framework.lower()
-                    or getattr(app.configurations, "python_version", "")
+                if "python" in framework.lower() or getattr(
+                    app.configurations, "python_version", ""
                 ):
                     report = Check_Report_Azure(self.metadata())
                     report.status = "FAIL"
