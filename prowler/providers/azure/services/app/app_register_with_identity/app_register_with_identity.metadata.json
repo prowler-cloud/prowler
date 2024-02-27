@@ -1,6 +1,6 @@
 {
   "Provider": "azure",
-  "CheckID": "app_register_with_entra_is_enabled",
+  "CheckID": "app_register_with_identity",
   "CheckTitle": "Ensure that Register with Azure Active Directory is enabled on App Service",
   "CheckType": [],
   "ServiceName": "app",

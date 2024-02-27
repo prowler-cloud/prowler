@@ -5,20 +5,20 @@ from prowler.providers.azure.services.app.app_service import WebApp
 from tests.providers.azure.azure_fixtures import AZURE_SUBSCRIPTION
 
 
-class Test_app_register_with_entra_is_enabled:
+class Test_app_register_with_identity:
     def test_app_no_subscriptions(self):
         app_client = mock.MagicMock
         app_client.apps = {}
 
         with mock.patch(
-            "prowler.providers.azure.services.app.app_register_with_entra_is_enabled.app_register_with_entra_is_enabled.app_client",
+            "prowler.providers.azure.services.app.app_register_with_identity.app_register_with_identity.app_client",
             new=app_client,
         ):
-            from prowler.providers.azure.services.app.app_register_with_entra_is_enabled.app_register_with_entra_is_enabled import (
-                app_register_with_entra_is_enabled,
+            from prowler.providers.azure.services.app.app_register_with_identity.app_register_with_identity import (
+                app_register_with_identity,
             )
 
-            check = app_register_with_entra_is_enabled()
+            check = app_register_with_identity()
             result = check.execute()
             assert len(result) == 0
 
@@ -27,14 +27,14 @@ class Test_app_register_with_entra_is_enabled:
         app_client.apps = {AZURE_SUBSCRIPTION: {}}
 
         with mock.patch(
-            "prowler.providers.azure.services.app.app_register_with_entra_is_enabled.app_register_with_entra_is_enabled.app_client",
+            "prowler.providers.azure.services.app.app_register_with_identity.app_register_with_identity.app_client",
             new=app_client,
         ):
-            from prowler.providers.azure.services.app.app_register_with_entra_is_enabled.app_register_with_entra_is_enabled import (
-                app_register_with_entra_is_enabled,
+            from prowler.providers.azure.services.app.app_register_with_identity.app_register_with_identity import (
+                app_register_with_identity,
             )
 
-            check = app_register_with_entra_is_enabled()
+            check = app_register_with_identity()
             result = check.execute()
             assert len(result) == 0
 
@@ -55,14 +55,14 @@ class Test_app_register_with_entra_is_enabled:
         }
 
         with mock.patch(
-            "prowler.providers.azure.services.app.app_register_with_entra_is_enabled.app_register_with_entra_is_enabled.app_client",
+            "prowler.providers.azure.services.app.app_register_with_identity.app_register_with_identity.app_client",
             new=app_client,
         ):
-            from prowler.providers.azure.services.app.app_register_with_entra_is_enabled.app_register_with_entra_is_enabled import (
-                app_register_with_entra_is_enabled,
+            from prowler.providers.azure.services.app.app_register_with_identity.app_register_with_identity import (
+                app_register_with_identity,
             )
 
-            check = app_register_with_entra_is_enabled()
+            check = app_register_with_identity()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
@@ -91,14 +91,14 @@ class Test_app_register_with_entra_is_enabled:
         }
 
         with mock.patch(
-            "prowler.providers.azure.services.app.app_register_with_entra_is_enabled.app_register_with_entra_is_enabled.app_client",
+            "prowler.providers.azure.services.app.app_register_with_identity.app_register_with_identity.app_client",
             new=app_client,
         ):
-            from prowler.providers.azure.services.app.app_register_with_entra_is_enabled.app_register_with_entra_is_enabled import (
-                app_register_with_entra_is_enabled,
+            from prowler.providers.azure.services.app.app_register_with_identity.app_register_with_identity import (
+                app_register_with_identity,
             )
 
-            check = app_register_with_entra_is_enabled()
+            check = app_register_with_identity()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"

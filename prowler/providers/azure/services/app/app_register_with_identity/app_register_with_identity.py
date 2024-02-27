@@ -2,7 +2,7 @@ from prowler.lib.check.models import Check, Check_Report_Azure
 from prowler.providers.azure.services.app.app_client import app_client
 
 
-class app_register_with_entra_is_enabled(Check):
+class app_register_with_identity(Check):
     def execute(self) -> Check_Report_Azure:
         findings = []
 
