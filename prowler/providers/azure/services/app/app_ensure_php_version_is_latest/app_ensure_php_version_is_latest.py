@@ -15,18 +15,24 @@ class app_ensure_php_version_is_latest(Check):
 
                 if "php" in framework.lower():
                     report = Check_Report_Azure(self.metadata())
-                    report.status = "PASS"
+                    report.status = "FAIL"
                     report.subscription = subscription_name
                     report.resource_name = app_name
                     report.resource_id = app.resource_id
+
                     php_latest_version = app_client.audit_config.get(
                         "php_latest_version", "8.2"
                     )
-                    report.status_extended = f"PHP version is set to {php_latest_version} for app '{app_name}' in subscription '{subscription_name}'."
 
-                    if php_latest_version not in framework:
-                        report.status = "FAIL"
-                        report.status_extended = f"PHP version is not set to {php_latest_version} for app '{app_name}' in subscription '{subscription_name}'."
+                    report.status_extended = f"PHP version is set to '{framework}', the latest version that you could use is the '{php_latest_version}' version, for app '{app_name}' in subscription '{subscription_name}'."
+
+                    if (
+                        f"php{php_latest_version}" in framework
+                        or getattr(app.configurations, "php_version", None)
+                        == php_latest_version
+                    ):
+                        report.status = "PASS"
+                        report.status_extended = f"PHP version is set to '{php_latest_version}' for app '{app_name}' in subscription '{subscription_name}'."
 
                     findings.append(report)
 
