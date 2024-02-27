@@ -19,7 +19,7 @@
       "Terraform": "https://docs.bridgecrew.io/docs/bc_azr_networking_5#terraform"
     },
     "Recommendation": {
-      "Text": "<CIS Remediation>",
+      "Text": "1. Login to Azure Portal using https://portal.azure.com 2. Go to App Services 3. Click on each App 4. Under Setting section, Click on Configuration 5. In the General Settings section, set the HTTPS Only to On 6. Click Save",
       "Url": "https://learn.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-data-protection#dp-3-encrypt-sensitive-data-in-transit"
     }
   },
