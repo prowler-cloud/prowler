@@ -70,11 +70,20 @@ class ECR(AWSService):
             if regional_client.region in self.registries:
                 for repository in self.registries[regional_client.region].repositories:
                     client = self.regional_clients[repository.region]
-                    policy = client.get_repository_policy(
-                        repositoryName=repository.name
-                    )
-                    if "policyText" in policy:
-                        repository.policy = loads(policy["policyText"])
+                    try:
+                        policy = client.get_repository_policy(
+                            repositoryName=repository.name
+                        )
+                        if "policyText" in policy:
+                            repository.policy = loads(policy["policyText"])
+                    except ClientError as error:
+                        if (
+                            error.response["Error"]["Code"]
+                            == "RepositoryPolicyNotFoundException"
+                        ):
+                            logger.warning(
+                                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                            )
 
         except Exception as error:
             if "RepositoryPolicyNotFoundException" not in str(error):
