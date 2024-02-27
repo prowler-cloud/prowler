@@ -1,7 +1,7 @@
 {
   "Provider": "aws",
   "CheckID": "eks_cluster_private_nodes_enabled",
-  "CheckTitle": "Ensure Clusters are Created with Private Nodes",
+  "CheckTitle": "Ensure Clusters are created with Private Nodes",
   "CheckType": [
     "Security",
     "Configuration"
