@@ -26,10 +26,7 @@
       "Url": "https://cloud.google.com/artifact-analysis/docs/container-scanning-overview"
     }
   },
-  "Categories": [
-    "Container Security",
-    "Compliance"
-  ],
+  "Categories": [],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "By default, AR Container Analysis is disabled."
