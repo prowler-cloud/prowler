@@ -1,0 +1,36 @@
+{
+  "Provider": "kubernetes",
+  "CheckID": "rbac_minimize_node_proxy_subresource_access",
+  "CheckTitle": "Minimize access to the proxy sub-resource of nodes",
+  "CheckType": [
+    "Security",
+    "Configuration"
+  ],
+  "ServiceName": "RBAC",
+  "SubServiceName": "Node Management",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "NodeProxySubResource",
+  "Description": "This check ensures that access to the proxy sub-resource of node objects is restricted. Access to this sub-resource can grant privileges to use the Kubelet API directly, bypassing Kubernetes API controls like audit logging and admission control, potentially leading to privilege escalation.",
+  "Risk": "Unauthorized access to the proxy sub-resource of node objects can lead to significant security vulnerabilities, including privilege escalation.",
+  "RelatedUrl": "https://kubernetes.io/docs/concepts/security/rbac-good-practices/#access-to-proxy-subresource-of-nodes",
+  "Remediation": {
+    "Code": {
+      "CLI": "Review and update RBAC configurations to restrict access to the proxy sub-resource of node objects. Ensure that only trusted users have the required permissions.",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Restrict access to the proxy sub-resource of node objects in the cluster.",
+      "Url": "https://kubernetes.io/docs/concepts/security/rbac-good-practices/#access-to-proxy-subresource-of-nodes"
+    }
+  },
+  "Categories": [
+    "Access Control",
+    "Privilege Management"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Carefully evaluate which users or service accounts require the ability to access the proxy sub-resource of node objects."
+}
