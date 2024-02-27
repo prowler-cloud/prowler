@@ -22,7 +22,7 @@ class Test_app_ensure_http_is_redirected_to_https:
             result = check.execute()
             assert len(result) == 0
 
-    def test_app_subscriptions_empty(self):
+    def test_app_subscriptions_empty_empty(self):
         app_client = mock.MagicMock
         app_client.apps = {AZURE_SUBSCRIPTION: {}}
 
