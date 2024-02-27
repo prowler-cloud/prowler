@@ -1,4 +1,7 @@
 from prowler.lib.check.models import Check, Check_Report_Kubernetes
+from prowler.providers.kubernetes.services.rbac.lib.role_permissions import (
+    check_role_permissions,
+)
 from prowler.providers.kubernetes.services.rbac.rbac_client import rbac_client
 
 
@@ -15,16 +18,11 @@ class rbac_minimize_pod_creation_access(Check):
             report.status_extended = (
                 f"ClusterRole {cr.metadata.name} does not have pod create access."
             )
-
-            for rule in cr.rules:
-                if (rule.resources and "pods" in rule.resources) and (
-                    rule.verbs and "create" in rule.verbs
-                ):
-                    report.status = "FAIL"
-                    report.status_extended = (
-                        f"ClusterRole {cr.metadata.name} has pod create access."
-                    )
-                    break
+            if check_role_permissions(cr.rules, ["pods"], ["create"]):
+                report.status = "FAIL"
+                report.status_extended = (
+                    f"ClusterRole {cr.metadata.name} has pod create access."
+                )
             findings.append(report)
 
         # Check RoleBindings for pod create access
@@ -38,15 +36,11 @@ class rbac_minimize_pod_creation_access(Check):
                 f"Role {role.metadata.name} does not have pod create access."
             )
 
-            for rule in role.rules:
-                if (rule.resources and "pods" in rule.resources) and (
-                    rule.verbs and "create" in rule.verbs
-                ):
-                    report.status = "FAIL"
-                    report.status_extended = (
-                        f"Role {role.metadata.name} has pod create access."
-                    )
-                    break
+            if check_role_permissions(role.rules, ["pods"], ["create"]):
+                report.status = "FAIL"
+                report.status_extended = (
+                    f"Role {role.metadata.name} has pod create access."
+                )
             findings.append(report)
 
         return findings

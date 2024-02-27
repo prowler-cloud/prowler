@@ -24,7 +24,6 @@ class rbac_minimize_wildcard_use_roles(Check):
                     report.status_extended = (
                         f"ClusterRole {cr.metadata.name} uses wildcards."
                     )
-                    break
             findings.append(report)
 
         # Check Roles for wildcards
@@ -46,7 +45,6 @@ class rbac_minimize_wildcard_use_roles(Check):
                     report.status_extended = (
                         f"Role {role.metadata.name} uses wildcards."
                     )
-                    break
             findings.append(report)
 
         return findings
