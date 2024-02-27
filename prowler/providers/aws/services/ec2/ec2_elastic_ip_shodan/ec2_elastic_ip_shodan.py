@@ -37,6 +37,6 @@ class ec2_elastic_ip_shodan(Check):
 
         else:
             logger.error(
-                "ERROR: No Shodan API Key -- Please input a Shodan API Key with -N/--shodan or in config.yaml"
+                "No Shodan API Key -- Please input a Shodan API Key with -N/--shodan or in config.yaml"
             )
         return findings
