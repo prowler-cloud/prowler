@@ -1,4 +1,4 @@
-from logging import WARNING
+from logging import ERROR, WARNING
 from os import path
 
 import botocore
@@ -158,10 +158,13 @@ class Test_SecurityHub:
                 session,
                 AWS_ACCOUNT_NUMBER,
             )
-            assert (
-                f"An error occurred ({error_code}) when calling the DescribeHub operation: {error_message}"
-                in caplog.text
-            )
+            assert caplog.record_tuples == [
+                (
+                    "root",
+                    WARNING,
+                    f"ClientError -- [68]: An error occurred ({error_code}) when calling the {operation_name} operation: {error_message}",
+                )
+            ]
 
     def test_verify_security_hub_integration_enabled_per_region_prowler_not_subscribed(
         self, caplog
@@ -181,11 +184,13 @@ class Test_SecurityHub:
                 session,
                 AWS_ACCOUNT_NUMBER,
             )
-
-            assert (
-                f"Security Hub is enabled in {AWS_REGION_EU_WEST_1} but Prowler integration does not accept findings. More info: https://docs.prowler.cloud/en/latest/tutorials/aws/securityhub/"
-                in caplog.text
-            )
+            assert caplog.record_tuples == [
+                (
+                    "root",
+                    WARNING,
+                    f"Security Hub is enabled in {AWS_REGION_EU_WEST_1} but Prowler integration does not accept findings. More info: https://docs.prowler.cloud/en/latest/tutorials/aws/securityhub/",
+                )
+            ]
 
     def test_verify_security_hub_integration_enabled_per_region_another_ClientError(
         self, caplog
@@ -213,10 +218,13 @@ class Test_SecurityHub:
                 session,
                 AWS_ACCOUNT_NUMBER,
             )
-            assert (
-                f"An error occurred ({error_code}) when calling the DescribeHub operation: {error_message}"
-                in caplog.text
-            )
+            assert caplog.record_tuples == [
+                (
+                    "root",
+                    ERROR,
+                    f"ClientError -- [68]: An error occurred ({error_code}) when calling the {operation_name} operation: {error_message}",
+                )
+            ]
 
     def test_verify_security_hub_integration_enabled_per_region_another_Exception(
         self, caplog
@@ -236,7 +244,13 @@ class Test_SecurityHub:
                 session,
                 AWS_ACCOUNT_NUMBER,
             )
-            assert error_message in caplog.text
+            assert caplog.record_tuples == [
+                (
+                    "root",
+                    ERROR,
+                    f"Exception -- [68]: {error_message}",
+                )
+            ]
 
     def test_prepare_security_hub_findings_enabled_region_not_quiet(self):
         enabled_regions = [AWS_REGION_EU_WEST_1]
