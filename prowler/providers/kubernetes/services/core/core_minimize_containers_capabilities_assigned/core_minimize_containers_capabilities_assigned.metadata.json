@@ -16,8 +16,8 @@
   "RelatedUrl": "https://kubernetes.io/docs/concepts/security/pod-security-standards/",
   "Remediation": {
     "Code": {
-      "CLI": "Implement policies in each namespace to ensure containers drop all capabilities, unless specifically required for their operation.",
-      "NativeIaC": "",
+      "CLI": "",
+      "NativeIaC": "https://docs.bridgecrew.io/docs/bc_k8s_34#kubernetes",
       "Other": "",
       "Terraform": ""
     },

@@ -16,7 +16,7 @@
   "RelatedUrl": "https://kubernetes.io/docs/concepts/security/pod-security-standards/",
   "Remediation": {
     "Code": {
-      "CLI": "Implement admission control policies in each namespace to prevent containers from being assigned capabilities beyond the default set.",
+      "CLI": "",
       "NativeIaC": "",
       "Other": "",
       "Terraform": ""

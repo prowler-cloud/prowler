@@ -16,8 +16,8 @@
   "RelatedUrl": "https://kubernetes.io/docs/tasks/configure-pod-container/create-hostprocess-pod/",
   "Remediation": {
     "Code": {
-      "CLI": "Implement policies in each namespace to ensure Windows containers do not use hostProcess, unless specifically required for their operation.",
-      "NativeIaC": "",
+      "CLI": "",
+      "NativeIaC": "https://docs.bridgecrew.io/docs/bc_k8s_1#kubernetes",
       "Other": "",
       "Terraform": ""
     },

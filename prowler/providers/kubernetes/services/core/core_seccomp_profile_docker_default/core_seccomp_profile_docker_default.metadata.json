@@ -16,8 +16,8 @@
   "RelatedUrl": "https://kubernetes.io/docs/tutorials/clusters/seccomp/",
   "Remediation": {
     "Code": {
-      "CLI": "Modify pod definitions to include a securityContext with seccompProfile set to RuntimeDefault. Example: securityContext: { seccompProfile: { type: RuntimeDefault } }",
-      "NativeIaC": "",
+      "CLI": "",
+      "NativeIaC": "https://docs.bridgecrew.io/docs/bc_k8s_30#kubernetes",
       "Other": "",
       "Terraform": ""
     },

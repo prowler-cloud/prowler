@@ -16,8 +16,8 @@
   "RelatedUrl": "https://kubernetes.io/docs/concepts/security/pod-security-standards/",
   "Remediation": {
     "Code": {
-      "CLI": "Implement admission control policies in each namespace to restrict the creation of containers with hostIPC set to true.",
-      "NativeIaC": "",
+      "CLI": "",
+      "NativeIaC": "https://docs.bridgecrew.io/docs/bc_k8s_3#kubernetes",
       "Other": "",
       "Terraform": ""
     },
