@@ -81,44 +81,6 @@ class Core(KubernetesService):
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __list_nodes__(self):
-        try:
-            response = self.client.list_node()
-            self.nodes = []
-            for node in response.items:
-                node_model = Node(
-                    name=node.metadata.name,
-                    uid=node.metadata.uid,
-                    namespace=node.metadata.namespace
-                    if node.metadata.namespace
-                    else "cluster-wide",
-                    labels=node.metadata.labels,
-                    annotations=node.metadata.annotations,
-                    unschedulable=node.spec.unschedulable,
-                    node_info=node.status.node_info.to_dict()
-                    if node.status.node_info
-                    else None,
-                )
-                self.nodes.append(node_model)
-        except Exception as error:
-            logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
-
-    def __in_worker_node__(self):
-        try:
-            hostname = socket.gethostname()
-            for node in self.nodes:
-                if hostname == node.name:
-                    node.inside = True
-                    return True
-            return False
-
-        except Exception as error:
-            logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
-
     def __list_config_maps__(self):
         try:
             response = self.client.list_config_map_for_all_namespaces()
