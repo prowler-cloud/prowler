@@ -44,15 +44,7 @@ class Audit_Info:
 
     def print_gcp_credentials(self, audit_info: GCP_Audit_Info):
         # Beautify audited profile, set "default" if there is no profile set
-        try:
-            getattr(audit_info.credentials, "_service_account_email")
-            profile = (
-                audit_info.credentials._service_account_email
-                if audit_info.credentials._service_account_email is not None
-                else "default"
-            )
-        except AttributeError:
-            profile = "default"
+        profile = getattr(audit_info.credentials, "_service_account_email", "default")
 
         report = f"""
 This report is being generated using credentials below:

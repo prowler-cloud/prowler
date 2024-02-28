@@ -18,9 +18,6 @@ class GCP_Provider:
         self.credentials, self.default_project_id = self.__set_credentials__(
             credentials_file
         )
-        if not self.default_project_id:
-            logger.critical("No Project ID associated to Google Credentials.")
-            sys.exit(1)
 
         self.project_ids = []
         accessible_projects = self.get_project_ids()
@@ -40,6 +37,10 @@ class GCP_Provider:
         else:
             # If not projects were input, all accessible projects are scanned by default
             self.project_ids = accessible_projects
+
+        # Set Default Project ID if not set in credentials
+        if not self.default_project_id:
+            self.default_project_id = self.project_ids[0]
 
     def __set_credentials__(self, credentials_file):
         try:
