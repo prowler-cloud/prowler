@@ -6,7 +6,7 @@
     "Resource Management",
     "Performance Optimization"
   ],
-  "ServiceName": "kube-controller-manager",
+  "ServiceName": "controller-manager",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",

@@ -1145,6 +1145,14 @@ class Test_Parser:
         assert parsed.provider == "kubernetes"
         assert parsed.context == context
 
+    def test_parser_kubernetes_auth_namespace(self):
+        argument = "--namespaces"
+        namespaces = ["default", "kube-system"]
+        command = [prowler_command, "kubernetes", argument, namespaces]
+        parsed = self.parser.parse(command)
+        assert parsed.provider == "kubernetes"
+        assert parsed.namespaces == namespaces
+
     def test_validate_azure_region_valid_regions(self):
         expected_regions = [
             "AzureChinaCloud",

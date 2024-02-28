@@ -6,7 +6,7 @@
     "Security",
     "Configuration"
   ],
-  "ServiceName": "Core",
+  "ServiceName": "core",
   "SubServiceName": "Host IPC Namespace",
   "ResourceIdTemplate": "",
   "Severity": "high",

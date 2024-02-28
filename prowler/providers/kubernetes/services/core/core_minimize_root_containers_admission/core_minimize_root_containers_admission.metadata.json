@@ -6,7 +6,7 @@
     "Security",
     "Configuration"
   ],
-  "ServiceName": "Core",
+  "ServiceName": "core",
   "SubServiceName": "Root User Control",
   "ResourceIdTemplate": "",
   "Severity": "high",

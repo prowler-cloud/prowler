@@ -15,7 +15,7 @@ class Core(KubernetesService):
     def __init__(self, audit_info):
         super().__init__(audit_info)
         self.client = client.CoreV1Api(self.api_client)
-
+        self.namespaces = audit_info.namespaces
         self.pods = {}
         self.__get_pods__()
         self.config_maps = {}
@@ -26,55 +26,56 @@ class Core(KubernetesService):
 
     def __get_pods__(self):
         try:
-            pods = self.client.list_pod_for_all_namespaces()
-            for pod in pods.items:
-                pod_containers = {}
-                containers = pod.spec.containers if pod.spec.containers else []
-                init_containers = (
-                    pod.spec.init_containers if pod.spec.init_containers else []
-                )
-                ephemeral_containers = (
-                    pod.spec.ephemeral_containers
-                    if pod.spec.ephemeral_containers
-                    else []
-                )
-
-                for container in containers + init_containers + ephemeral_containers:
-                    pod_containers[container.name] = Container(
-                        name=container.name,
-                        image=container.image,
-                        command=container.command if container.command else None,
-                        ports=[
-                            {"containerPort": port.container_port}
-                            for port in container.ports
-                        ]
-                        if container.ports
-                        else None,
-                        env=[
-                            {"name": env.name, "value": env.value}
-                            for env in container.env
-                        ]
-                        if container.env
-                        else None,
-                        security_context=container.security_context,
+            for namespace in self.namespaces:
+                pods = self.client.list_namespaced_pod(namespace)
+                for pod in pods.items:
+                    pod_containers = {}
+                    containers = pod.spec.containers if pod.spec.containers else []
+                    init_containers = (
+                        pod.spec.init_containers if pod.spec.init_containers else []
                     )
-                self.pods[pod.metadata.uid] = Pod(
-                    name=pod.metadata.name,
-                    uid=pod.metadata.uid,
-                    namespace=pod.metadata.namespace,
-                    labels=pod.metadata.labels,
-                    annotations=pod.metadata.annotations,
-                    node_name=pod.spec.node_name,
-                    service_account=pod.spec.service_account_name,
-                    status_phase=pod.status.phase,
-                    pod_ip=pod.status.pod_ip,
-                    host_ip=pod.status.host_ip,
-                    host_pid=pod.spec.host_pid,
-                    host_ipc=pod.spec.host_ipc,
-                    host_network=pod.spec.host_network,
-                    security_context=pod.spec.security_context,
-                    containers=pod_containers,
-                )
+                    ephemeral_containers = (
+                        pod.spec.ephemeral_containers
+                        if pod.spec.ephemeral_containers
+                        else []
+                    )
+    
+                    for container in containers + init_containers + ephemeral_containers:
+                        pod_containers[container.name] = Container(
+                            name=container.name,
+                            image=container.image,
+                            command=container.command if container.command else None,
+                            ports=[
+                                {"containerPort": port.container_port}
+                                for port in container.ports
+                            ]
+                            if container.ports
+                            else None,
+                            env=[
+                                {"name": env.name, "value": env.value}
+                                for env in container.env
+                            ]
+                            if container.env
+                            else None,
+                            security_context=container.security_context,
+                        )
+                    self.pods[pod.metadata.uid] = Pod(
+                        name=pod.metadata.name,
+                        uid=pod.metadata.uid,
+                        namespace=pod.metadata.namespace,
+                        labels=pod.metadata.labels,
+                        annotations=pod.metadata.annotations,
+                        node_name=pod.spec.node_name,
+                        service_account=pod.spec.service_account_name,
+                        status_phase=pod.status.phase,
+                        pod_ip=pod.status.pod_ip,
+                        host_ip=pod.status.host_ip,
+                        host_pid=pod.spec.host_pid,
+                        host_ipc=pod.spec.host_ipc,
+                        host_network=pod.spec.host_network,
+                        security_context=pod.spec.security_context,
+                        containers=pod_containers,
+                    )
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
