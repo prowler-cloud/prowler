@@ -75,7 +75,6 @@ class Core(KubernetesService):
                     security_context=pod.spec.security_context,
                     containers=pod_containers,
                 )
-                self.config_maps.append(configmap_model)
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
