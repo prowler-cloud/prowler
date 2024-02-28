@@ -20,7 +20,7 @@ class Core(KubernetesService):
         self.__get_pods__()
         self.config_maps = {}
         self.__list_config_maps__()
-        self.nodes = []
+        self.nodes = {}
         self.__list_nodes__()
         self.in_worker_node = self.__in_worker_node__()
 
@@ -100,7 +100,6 @@ class Core(KubernetesService):
     def __list_nodes__(self):
         try:
             response = self.client.list_node()
-            self.nodes = []
             for node in response.items:
                 node_model = Node(
                     name=node.metadata.name,
@@ -115,7 +114,7 @@ class Core(KubernetesService):
                     if node.status.node_info
                     else None,
                 )
-                self.nodes.append(node_model)
+                self.nodes[node.metadata.uid] = node_model
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -124,7 +123,7 @@ class Core(KubernetesService):
     def __in_worker_node__(self):
         try:
             hostname = socket.gethostname()
-            for node in self.nodes:
+            for node in self.nodes.values():
                 if hostname == node.name:
                     node.inside = True
                     return True

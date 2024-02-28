@@ -6,7 +6,7 @@ from prowler.providers.kubernetes.services.core.core_client import core_client
 class kubelet_conf_file_ownership(Check):
     def execute(self) -> Check_Report_Kubernetes:
         findings = []
-        for node in core_client.nodes:
+        for node in core_client.nodes.values():
             report = Check_Report_Kubernetes(self.metadata())
             report.namespace = node.namespace
             report.resource_name = node.name
