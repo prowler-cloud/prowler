@@ -12,7 +12,7 @@ class core_minimize_allowPrivilegeEscalation_containers(Check):
             report.resource_id = pod.uid
             report.status = "PASS"
             report.status_extended = (
-                f"Pod {pod.name} does not allow privilege escalation."
+                f"Pod {pod.name} does not allow for privilege escalation."
             )
 
             for container in pod.containers.values():
