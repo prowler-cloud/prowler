@@ -114,6 +114,7 @@ class KubernetesProvider(Provider):
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+            return "default"
 
     def print_credentials(self):
         # Get the current context
