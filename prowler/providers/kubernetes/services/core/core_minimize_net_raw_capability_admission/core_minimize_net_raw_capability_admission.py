@@ -12,15 +12,15 @@ class core_minimize_net_raw_capability_admission(Check):
             report.resource_id = pod.uid
             report.status = "PASS"
             report.status_extended = f"Pod {pod.name} does not have NET_RAW capability."
-
             for container in pod.containers.values():
-                if "security_context" in container and container[
-                    "security_context"
-                ].get("capabilities"):
-                    if "NET_RAW" in container.security_context.capabilities.add:
-                        report.status = "FAIL"
-                        report.status_extended = f"Pod {pod.name} has NET_RAW capability in container {container.name}."
-                        break
+                if (
+                    container.security_context
+                    and container.security_context.capabilities
+                    and "NET_RAW" in container.security_context.capabilities.add
+                ):
+                    report.status = "FAIL"
+                    report.status_extended = f"Pod {pod.name} has NET_RAW capability in container {container.name}."
+                    break
 
             findings.append(report)
 

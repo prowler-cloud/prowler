@@ -17,7 +17,7 @@ class core_minimize_admission_windows_hostprocess_containers(Check):
 
             for container in pod.containers.values():
                 if (
-                    "security_context" in container
+                    container.security_context
                     and container.security_context.windows_options
                     and container.security_context.windows_options.host_process
                 ):

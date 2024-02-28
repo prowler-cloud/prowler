@@ -20,7 +20,6 @@ class core_seccomp_profile_docker_default(Check):
                     f"Pod {pod.name} has docker/default seccomp profile enabled."
                 )
             else:
-
                 report.status = "FAIL"
                 report.status_extended = f"Pod {pod.name} does not have docker/default seccomp profile enabled."
             findings.append(report)

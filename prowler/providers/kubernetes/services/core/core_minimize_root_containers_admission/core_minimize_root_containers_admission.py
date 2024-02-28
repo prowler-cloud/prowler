@@ -15,8 +15,8 @@ class core_minimize_root_containers_admission(Check):
 
             for container in pod.containers.values():
                 if (
-                    "security_context" in container
-                    and container["security_context"].get("run_as_user") == 0
+                    container.security_context
+                    and container.security_context.run_as_user == 0
                 ):
                     report.status = "FAIL"
                     report.status_extended = f"Pod {pod.name} is running as root user in container {container.name}."

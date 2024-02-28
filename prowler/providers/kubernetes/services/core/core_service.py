@@ -1,6 +1,8 @@
-from typing import Any, List, Optional
+from dataclasses import dataclass
+from typing import List, Optional
 
 from kubernetes import client
+from kubernetes.client.models import V1PodSecurityContext, V1SecurityContext
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
@@ -23,13 +25,17 @@ class Core(KubernetesService):
             pods = self.client.list_pod_for_all_namespaces()
             for pod in pods.items:
                 pod_containers = {}
-                for container in (
-                    pod.spec.containers + pod.spec.init_containers
-                    if pod.spec.init_containers
-                    else [] + pod.spec.ephemeral_containers
+                containers = pod.spec.containers if pod.spec.containers else []
+                init_containers = (
+                    pod.spec.init_containers if pod.spec.init_containers else []
+                )
+                ephemeral_containers = (
+                    pod.spec.ephemeral_containers
                     if pod.spec.ephemeral_containers
                     else []
-                ):
+                )
+
+                for container in containers + init_containers + ephemeral_containers:
                     pod_containers[container.name] = Container(
                         name=container.name,
                         image=container.image,
@@ -46,6 +52,7 @@ class Core(KubernetesService):
                         ]
                         if container.env
                         else None,
+                        security_context=container.security_context,
                     )
                 self.pods[pod.metadata.uid] = Pod(
                     name=pod.metadata.name,
@@ -87,15 +94,18 @@ class Core(KubernetesService):
             )
 
 
-class Container(BaseModel):
+@dataclass
+class Container:
     name: str
     image: str
     command: Optional[List[str]]
     ports: Optional[List[dict]]
     env: Optional[List[dict]]
+    security_context: Optional[V1SecurityContext]
 
 
-class Pod(BaseModel):
+@dataclass
+class Pod:
     name: str
     uid: str
     namespace: str
@@ -109,7 +119,7 @@ class Pod(BaseModel):
     host_pid: Optional[str]
     host_ipc: Optional[str]
     host_network: Optional[str]
-    security_context: Optional[Any]
+    security_context: Optional[V1PodSecurityContext]
     containers: Optional[dict]
 
 

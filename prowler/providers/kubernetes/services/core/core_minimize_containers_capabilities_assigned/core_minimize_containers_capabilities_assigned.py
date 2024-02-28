@@ -16,9 +16,10 @@ class core_minimize_containers_capabilities_assigned(Check):
             )
 
             for container in pod.containers.values():
-                if "security_context" in container and container[
-                    "security_context"
-                ].get("capabilities"):
+                if (
+                    container.security_context
+                    and container.security_context.capabilities
+                ):
                     if (
                         container.security_context.capabilities.add
                         or not container.security_context.capabilities.drop
