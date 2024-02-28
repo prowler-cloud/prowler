@@ -136,7 +136,11 @@ class KubernetesProvider(Provider):
             sys.exit(1)
 
     def get_pod_current_namespace(self):
-        """Retrieve the current namespace from the pod's mounted service account info."""
+        """
+        Retrieves the current namespace from the pod's mounted service account info.
+        Returns:
+            str: The current namespace.
+        """
         try:
             with open(
                 "/var/run/secrets/kubernetes.io/serviceaccount/namespace", "r"
@@ -149,7 +153,9 @@ class KubernetesProvider(Provider):
             return "default"
 
     def print_credentials(self):
-        # Get the current context
+        """
+        Prints the Kubernetes credentials.
+        """
         if self.context.get("name") == "In-Cluster":
             report = f"""
 This report is being generated using the Kubernetes configuration below:
