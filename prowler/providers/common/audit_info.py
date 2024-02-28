@@ -46,10 +46,8 @@ class Audit_Info:
         # Beautify audited profile, set "default" if there is no profile set
         try:
             getattr(audit_info.credentials, "_service_account_email")
-            profile = (
-                audit_info.credentials._service_account_email
-                if audit_info.credentials._service_account_email is not None
-                else "default"
+            profile = getattr(
+                audit_info.credentials, "_service_account_email", "default"
             )
         except AttributeError:
             profile = "default"
