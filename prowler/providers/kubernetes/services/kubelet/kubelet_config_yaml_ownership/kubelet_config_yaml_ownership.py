@@ -1,5 +1,5 @@
 from prowler.lib.check.models import Check, Check_Report_Kubernetes
-from prowler.lib.utils.utils import get_file_permissions
+from prowler.lib.utils.utils import is_owned_by_root
 from prowler.providers.kubernetes.services.core.core_client import core_client
 
 
@@ -15,7 +15,7 @@ class kubelet_config_yaml_ownership(Check):
             if node.inside:
                 report.status = "PASS"
                 report.status_extended = f"kubelet config.yaml file ownership is set to root:root in Node {node.name}."
-                if get_file_permissions("/var/lib/kubelet/config.yaml") > 0o600:
+                if not is_owned_by_root("/var/lib/kubelet/config.yaml"):
                     report.status = "FAIL"
                     report.status_extended = f"kubelet config.yaml file ownership is set to root:root in Node {node.name}."
             else:

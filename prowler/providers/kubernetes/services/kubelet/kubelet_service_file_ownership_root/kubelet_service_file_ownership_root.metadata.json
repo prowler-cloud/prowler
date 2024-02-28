@@ -13,17 +13,17 @@
   "ResourceType": "KubernetesWorkerNode",
   "Description": "This check ensures that the kubelet service file on each Node is owned by root. Proper file ownership is critical for the security and integrity of the kubelet service configuration.",
   "Risk": "Incorrect ownership settings can lead to unauthorized modifications, potentially compromising the security and functionality of the kubelet service.",
-  "RelatedUrl": "https://kubernetes.io/docs/admin/kubelet/",
+  "RelatedUrl": "https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/kubelet-integration/",
   "Remediation": {
     "Code": {
-      "CLI": "Ensure the kubelet service file is owned by root:root by running 'chown root:root /etc/systemd/system/kubelet.service.d/kubeadm.conf' on each worker node.",
+      "CLI": "chown root:root /etc/systemd/system/kubelet.service.d/kubeadm.conf",
       "NativeIaC": "",
       "Other": "",
       "Terraform": ""
     },
     "Recommendation": {
       "Text": "Set the kubelet service file ownership to root:root to maintain its integrity.",
-      "Url": "https://kubernetes.io/docs/admin/kubelet/"
+      "Url": "https://kubernetes.io/docs/reference/setup-tools/kubeadm/kubeadm-config/"
     }
   },
   "Categories": [

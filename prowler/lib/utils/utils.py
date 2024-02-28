@@ -116,7 +116,7 @@ def get_file_permissions(file_path):
         return permissions
     except Exception as e:
         logger.error(
-            f"{file_path}: {e.__class__.__name__}[{e.__traceback__.tb_lineno}]"
+            f"{file_path}: {e.__class__.__name__}[{e.__traceback__.tb_lineno}]: {e}"
         )
 
 
@@ -134,11 +134,11 @@ def is_owned_by_root(file_path):
 
     except FileNotFoundError as e:
         logger.error(
-            f"{file_path}: {e.__class__.__name__}[{e.__traceback__.tb_lineno}]"
+            f"{file_path}: {e.__class__.__name__}[{e.__traceback__.tb_lineno}]: {e}"
         )
         return False
     except Exception as e:
         logger.error(
-            f"{file_path}: {e.__class__.__name__}[{e.__traceback__.tb_lineno}]"
+            f"{file_path}: {e.__class__.__name__}[{e.__traceback__.tb_lineno}]: {e}"
         )
         return False

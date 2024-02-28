@@ -16,7 +16,7 @@
   "RelatedUrl": "https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/",
   "Remediation": {
     "Code": {
-      "CLI": "Set kubelet config.yaml file ownership to root:root using 'chown root:root /var/lib/kubelet/config.yaml' on each worker node.",
+      "CLI": "chown root:root /var/lib/kubelet/config.yaml",
       "NativeIaC": "",
       "Other": "",
       "Terraform": ""
