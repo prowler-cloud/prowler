@@ -1,0 +1,36 @@
+{
+  "Provider": "kubernetes",
+  "CheckID": "core_seccomp_profile_docker_default",
+  "CheckTitle": "Ensure that the seccomp profile is set to docker/default in your pod definitions",
+  "CheckType": [
+    "Security",
+    "Configuration"
+  ],
+  "ServiceName": "Core",
+  "SubServiceName": "Seccomp Profile",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "KubernetesPod",
+  "Description": "This check verifies that the docker/default seccomp profile is enabled in pod definitions. Enabling seccomp profiles helps restrict the set of system calls applications can make, enhancing the security of workloads in the cluster.",
+  "Risk": "Not using or incorrectly configuring seccomp profiles can leave containers with broader permissions, increasing the risk of malicious actions.",
+  "RelatedUrl": "https://kubernetes.io/docs/tutorials/clusters/seccomp/",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "https://docs.bridgecrew.io/docs/bc_k8s_30#kubernetes",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Implement the docker/default seccomp profile in pod definitions for enhanced container security.",
+      "Url": "https://docs.docker.com/engine/security/seccomp/"
+    }
+  },
+  "Categories": [
+    "Container Security",
+    "Best Practices"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "The docker/default seccomp profile may need to be adjusted if it's too restrictive for certain applications."
+}

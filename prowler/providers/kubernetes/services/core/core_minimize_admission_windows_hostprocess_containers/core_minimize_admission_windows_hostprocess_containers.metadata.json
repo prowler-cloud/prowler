@@ -1,0 +1,36 @@
+{
+  "Provider": "kubernetes",
+  "CheckID": "core_minimize_admission_windows_hostprocess_containers",
+  "CheckTitle": "Minimize the admission of Windows HostProcess Containers",
+  "CheckType": [
+    "Security",
+    "Configuration"
+  ],
+  "ServiceName": "Core",
+  "SubServiceName": "Windows HostProcess Containers",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "KubernetesPod",
+  "Description": "This check ensures that Kubernetes clusters are configured to minimize the admission of Windows containers with the hostProcess flag set to true, thus reducing the risk of privilege escalation and security breaches.",
+  "Risk": "Allowing Windows containers with hostProcess can lead to increased security risks due to privileged access to Windows nodes.",
+  "RelatedUrl": "https://kubernetes.io/docs/tasks/configure-pod-container/create-hostprocess-pod/",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "https://docs.bridgecrew.io/docs/bc_k8s_1#kubernetes",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Restrict the use of Windows HostProcess containers unless essential for their operation.",
+      "Url": "https://kubernetes.io/docs/tasks/configure-pod-container/create-hostprocess-pod/"
+    }
+  },
+  "Categories": [
+    "Container Security",
+    "Best Practices"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Carefully review the need for HostProcess containers in Windows environments and restrict their use."
+}

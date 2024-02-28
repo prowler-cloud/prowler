@@ -1,0 +1,36 @@
+{
+  "Provider": "kubernetes",
+  "CheckID": "core_minimize_containers_capabilities_assigned",
+  "CheckTitle": "Minimize the admission of containers with capabilities assigned",
+  "CheckType": [
+    "Security",
+    "Configuration"
+  ],
+  "ServiceName": "Core",
+  "SubServiceName": "Capability Assignment",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "KubernetesPod",
+  "Description": "This check ensures that Kubernetes clusters are configured to minimize the admission of containers with Linux capabilities assigned, adhering to the principle of least privilege and reducing the risk of privilege escalation.",
+  "Risk": "Assigning unnecessary Linux capabilities to containers increases the risk of privilege escalation and security breaches.",
+  "RelatedUrl": "https://kubernetes.io/docs/concepts/security/pod-security-standards/",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "https://docs.bridgecrew.io/docs/bc_k8s_34#kubernetes",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Restrict the assignment of Linux capabilities to containers unless essential for their operation.",
+      "Url": "https://kubernetes.io/docs/concepts/security/pod-security-standards/"
+    }
+  },
+  "Categories": [
+    "Container Security",
+    "Best Practices"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Review the use of capabilities in applications and ensure that only necessary capabilities are assigned."
+}

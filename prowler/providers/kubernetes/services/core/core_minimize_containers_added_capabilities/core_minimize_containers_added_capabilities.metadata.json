@@ -1,0 +1,36 @@
+{
+  "Provider": "kubernetes",
+  "CheckID": "core_minimize_containers_added_capabilities",
+  "CheckTitle": "Minimize the admission of containers with added capabilities",
+  "CheckType": [
+    "Security",
+    "Configuration"
+  ],
+  "ServiceName": "Core",
+  "SubServiceName": "Capability Management",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "KubernetesPod",
+  "Description": "This check ensures that Kubernetes clusters are configured to minimize the admission of containers with capabilities assigned beyond the default set, mitigating the risks of container breakout attacks.",
+  "Risk": "Allowing containers with additional capabilities increases the risk of security breaches and container breakout attacks.",
+  "RelatedUrl": "https://kubernetes.io/docs/concepts/security/pod-security-standards/",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Restrict the addition of extra capabilities to containers through admission control policies.",
+      "Url": "https://kubernetes.io/docs/concepts/security/pod-security-standards/"
+    }
+  },
+  "Categories": [
+    "Container Security",
+    "Best Practices"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Exceptions for adding capabilities should be explicitly defined and monitored."
+}

@@ -1,0 +1,36 @@
+{
+  "Provider": "kubernetes",
+  "CheckID": "core_minimize_hostNetwork_containers",
+  "CheckTitle": "Minimize the admission of containers wishing to share the host network namespace",
+  "CheckType": [
+    "Security",
+    "Configuration"
+  ],
+  "ServiceName": "Core",
+  "SubServiceName": "Host Network Namespace",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "KubernetesPod",
+  "Description": "This check ensures that Kubernetes clusters are configured to minimize the admission of containers that share the host's network namespace. Containers with hostNetwork can access local network traffic and other pods, potentially leading to security risks.",
+  "Risk": "Allowing containers to share the host's network namespace without strict control can lead to security risks and potential network breaches.",
+  "RelatedUrl": "https://kubernetes.io/docs/concepts/security/pod-security-standards/",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "https://docs.bridgecrew.io/docs/bc_k8s_4#kubernetes",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Restrict the use of hostNetwork in containers through admission control policies.",
+      "Url": "https://kubernetes.io/docs/concepts/security/pod-security-standards/"
+    }
+  },
+  "Categories": [
+    "Container Security",
+    "Best Practices"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Exceptions for hostNetwork containers should be clearly defined and monitored."
+}

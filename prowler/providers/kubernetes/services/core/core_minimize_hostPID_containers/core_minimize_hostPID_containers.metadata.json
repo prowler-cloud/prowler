@@ -1,0 +1,36 @@
+{
+  "Provider": "kubernetes",
+  "CheckID": "core_minimize_hostPID_containers",
+  "CheckTitle": "Minimize the admission of containers wishing to share the host process ID namespace",
+  "CheckType": [
+    "Security",
+    "Configuration"
+  ],
+  "ServiceName": "Core",
+  "SubServiceName": "Host PID Namespace",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "KubernetesPod",
+  "Description": "This check ensures that Kubernetes clusters are configured to minimize the admission of containers that share the host's process ID namespace. Containers with hostPID can inspect and interact with processes outside of the container, potentially leading to privilege escalation.",
+  "Risk": "Allowing containers to share the host's PID namespace without strict control can lead to security risks and potential privilege escalations.",
+  "RelatedUrl": "https://kubernetes.io/docs/concepts/security/pod-security-standards/",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "https://docs.bridgecrew.io/docs/bc_k8s_1#kubernetes",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Restrict the use of hostPID in containers through admission control policies.",
+      "Url": "https://kubernetes.io/docs/concepts/security/pod-security-standards/"
+    }
+  },
+  "Categories": [
+    "Container Security",
+    "Best Practices"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Exceptions for hostPID containers should be clearly defined and monitored."
+}
