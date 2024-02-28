@@ -27,10 +27,17 @@ class Kubernetes_Provider:
                 config.load_kube_config(
                     config_file=os.path.abspath(kubeconfig_file), context=context
                 )
+                context = config.list_kube_config_contexts()[0][0]
             else:
                 # Otherwise try to load in-cluster config
                 config.load_incluster_config()
-            context = config.list_kube_config_contexts()[0][0]
+                context = {
+                    "name": "In-Cluster",
+                    "context": {
+                        "cluster": "in-cluster",  # Placeholder, as the real cluster name is not available
+                        "user": "service-account-name",  # Also a placeholder
+                    },
+                }
             return client.ApiClient(), context
         except Exception as error:
             logger.critical(

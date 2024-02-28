@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: prowler
+spec:
+  containers:
+  - name: prowler
+    image: docker.io/prowler/kubernetes
+    command: ["prowler"]
+    args: ["kubernetes"]
+    imagePullPolicy: Never

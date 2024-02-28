@@ -37,10 +37,17 @@ class KubernetesProvider(Provider):
                 config.load_kube_config(
                     config_file=os.path.abspath(kubeconfig_file), context=context
                 )
+                context = config.list_kube_config_contexts()[0][0]
             else:
                 # Otherwise try to load in-cluster config
                 config.load_incluster_config()
-            context = config.list_kube_config_contexts()[0][0]
+                context = {
+                    "name": "In-Cluster",
+                    "context": {
+                        "cluster": "in-cluster",  # Placeholder, as the real cluster name is not available
+                        "user": "service-account-name",  # Also a placeholder
+                    },
+                }
             return client.ApiClient(), context
         except Exception as error:
             logger.critical(
@@ -96,18 +103,38 @@ class KubernetesProvider(Provider):
             )
             sys.exit(1)
 
+    def get_pod_current_namespace(self):
+        """Retrieve the current namespace from the pod's mounted service account info."""
+        try:
+            with open(
+                "/var/run/secrets/kubernetes.io/serviceaccount/namespace", "r"
+            ) as f:
+                return f.read().strip()
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            return "default"
+
     def print_credentials(self):
-
         # Get the current context
-        cluster_name = self.context.get("context").get("cluster")
-        user_name = self.context.get("context").get("user")
-        namespace = self.context.get("namespace", "default")
-        roles = self.get_context_user_roles()
-        roles_str = ", ".join(roles) if roles else "No associated Roles"
+        if self.context.get("name") == "In-Cluster":
+            report = f"""
+This report is being generated using the Kubernetes configuration below:
 
-        report = f"""
+Kubernetes Pod: {Fore.YELLOW}[prowler]{Style.RESET_ALL}  Namespace: {Fore.YELLOW}[{self.get_pod_current_namespace()}]{Style.RESET_ALL}
+"""
+            print(report)
+        else:
+            cluster_name = self.context.get("context").get("cluster")
+            user_name = self.context.get("context").get("user")
+            namespace = self.context.get("namespace", "default")
+            roles = self.get_context_user_roles()
+            roles_str = ", ".join(roles) if roles else "No associated Roles"
+
+            report = f"""
 This report is being generated using the Kubernetes configuration below:
 
 Kubernetes Cluster: {Fore.YELLOW}[{cluster_name}]{Style.RESET_ALL}  User: {Fore.YELLOW}[{user_name}]{Style.RESET_ALL}  Namespace: {Fore.YELLOW}[{namespace}]{Style.RESET_ALL}  Roles: {Fore.YELLOW}[{roles_str}]{Style.RESET_ALL}
 """
-        print(report)
+            print(report)
