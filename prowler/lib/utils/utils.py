@@ -106,7 +106,16 @@ def outputs_unix_timestamp(is_unix_timestamp: bool, timestamp: datetime):
     return timestamp
 
 
-def get_file_permissions(file_path):
+def get_file_permissions(file_path: str) -> str:
+    """
+    Retrieves the permissions of a file.
+
+    Args:
+        file_path (str): The path to the file.
+
+    Returns:
+        Optional[str]: The file permissions in octal format, or None if an error occurs.
+    """
     try:
         # Get file status
         file_stat = os.stat(file_path)
@@ -120,7 +129,16 @@ def get_file_permissions(file_path):
         )
 
 
-def is_owned_by_root(file_path):
+def is_owned_by_root(file_path: str) -> bool:
+    """
+    Checks if a file is owned by the root user and group.
+
+    Args:
+        file_path (str): The path to the file.
+
+    Returns:
+        bool: True if owned by root, False otherwise.
+    """
     try:
         # Get the file's status
         file_stat = os.stat(file_path)
