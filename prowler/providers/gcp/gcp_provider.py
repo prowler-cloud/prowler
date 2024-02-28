@@ -38,10 +38,6 @@ class GCP_Provider:
             # If not projects were input, all accessible projects are scanned by default
             self.project_ids = accessible_projects
 
-        # Set Default Project ID if not set in credentials
-        if not self.default_project_id:
-            self.default_project_id = self.project_ids[0]
-
     def __set_credentials__(self, credentials_file):
         try:
             if credentials_file:
