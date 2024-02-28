@@ -11,7 +11,7 @@ class kubelet_config_yaml_permissions(Check):
             report.namespace = node.namespace
             report.resource_name = node.name
             report.resource_id = node.uid
-            # It can only be checked if Prowler is being executed inside a worker node
+            # It can only be checked if Prowler is being executed inside a worker node or if the file is the default one
             if node.inside:
                 if not get_file_permissions("/var/lib/kubelet/config.yaml"):
                     report.status = "MANUAL"

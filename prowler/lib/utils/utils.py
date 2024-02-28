@@ -139,7 +139,7 @@ def is_owned_by_root(file_path: str) -> bool:
         file_path (str): The path to the file.
 
     Returns:
-        bool: True if owned by root, False otherwise.
+        bool: True if owned by root, False otherwise or None if file does not exist.
     """
     try:
         # Get the file's status
@@ -156,7 +156,7 @@ def is_owned_by_root(file_path: str) -> bool:
         logger.error(
             f"{file_path}: {e.__class__.__name__}[{e.__traceback__.tb_lineno}]: {e}"
         )
-        return False
+        return None
     except Exception as e:
         logger.error(
             f"{file_path}: {e.__class__.__name__}[{e.__traceback__.tb_lineno}]: {e}"
