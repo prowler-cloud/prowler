@@ -125,7 +125,7 @@ All the checks MUST fill the `report.resource_id` and `report.resource_arn` with
     - Resource ARN -- `report.resource_arn`
         - AWS Account --> Root ARN `arn:aws:iam::123456789012:root`
         - AWS Resource --> Resource ARN
-        - Root resource --> Root ARN `arn:aws:iam::123456789012:root`
+        - Root resource --> Root ARN `f"arn:{service_client.audited_partition}:<service_name>:{service_client.region}:{service_client.audited_account}:<resource_type>"`
 - GCP
     - Resource ID -- `report.resource_id`
         - GCP Resource --> Resource ID
