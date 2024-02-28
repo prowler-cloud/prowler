@@ -11,9 +11,9 @@ from prowler.providers.aws.lib.service.service import AWSService
 
 ################## CloudWatch
 class CloudWatch(AWSService):
-    def __init__(self, audit_info):
+    def __init__(self, provider):
         # Call AWSService's __init__
-        super().__init__(__class__.__name__, audit_info)
+        super().__init__(__class__.__name__, provider)
         self.metric_alarms = []
         self.__threading_call__(self.__describe_alarms__)
         self.__list_tags_for_resource__()
@@ -64,16 +64,16 @@ class CloudWatch(AWSService):
 
 ################## CloudWatch Logs
 class Logs(AWSService):
-    def __init__(self, audit_info):
+    def __init__(self, provider):
         # Call AWSService's __init__
-        super().__init__(__class__.__name__, audit_info)
+        super().__init__(__class__.__name__, provider)
         self.metric_filters = []
         self.log_groups = []
         self.__threading_call__(self.__describe_metric_filters__)
         self.__threading_call__(self.__describe_log_groups__)
         if (
             "cloudwatch_log_group_no_secrets_in_logs"
-            in audit_info.audit_metadata.expected_checks
+            in provider.audit_metadata.expected_checks
         ):
             self.events_per_log_group_threshold = (
                 1000  # The threshold for number of events to return per log group.

@@ -8,8 +8,8 @@ from prowler.providers.gcp.lib.service.service import GCPService
 
 ################## CloudStorage
 class CloudStorage(GCPService):
-    def __init__(self, audit_info):
-        super().__init__("storage", audit_info)
+    def __init__(self, provider):
+        super().__init__("storage", provider)
         self.buckets = []
         self.__get_buckets__()
 

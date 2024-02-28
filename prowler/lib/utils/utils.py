@@ -10,6 +10,7 @@ from io import TextIOWrapper
 from ipaddress import ip_address
 from os.path import exists
 from time import mktime
+from typing import Optional
 
 from detect_secrets import SecretsCollection
 from detect_secrets.settings import default_settings
@@ -106,7 +107,16 @@ def outputs_unix_timestamp(is_unix_timestamp: bool, timestamp: datetime):
     return timestamp
 
 
-def get_file_permissions(file_path):
+def get_file_permissions(file_path: str) -> Optional[str]:
+    """
+    Retrieves the permissions of a file.
+
+    Args:
+        file_path (str): The path to the file.
+
+    Returns:
+        Optional[str]: The file permissions in octal format, or None if an error occurs.
+    """
     try:
         # Get file status
         file_stat = os.stat(file_path)
@@ -116,11 +126,21 @@ def get_file_permissions(file_path):
         return permissions
     except Exception as e:
         logger.error(
-            f"{file_path}: {e.__class__.__name__}[{e.__traceback__.tb_lineno}]"
+            f"{file_path}: {e.__class__.__name__}[{e.__traceback__.tb_lineno}]: {e}"
         )
+        return None
 
 
-def is_owned_by_root(file_path):
+def is_owned_by_root(file_path: str) -> bool:
+    """
+    Checks if a file is owned by the root user and group.
+
+    Args:
+        file_path (str): The path to the file.
+
+    Returns:
+        bool: True if owned by root, False otherwise or None if file does not exist.
+    """
     try:
         # Get the file's status
         file_stat = os.stat(file_path)
@@ -134,11 +154,11 @@ def is_owned_by_root(file_path):
 
     except FileNotFoundError as e:
         logger.error(
-            f"{file_path}: {e.__class__.__name__}[{e.__traceback__.tb_lineno}]"
+            f"{file_path}: {e.__class__.__name__}[{e.__traceback__.tb_lineno}]: {e}"
         )
-        return False
+        return None
     except Exception as e:
         logger.error(
-            f"{file_path}: {e.__class__.__name__}[{e.__traceback__.tb_lineno}]"
+            f"{file_path}: {e.__class__.__name__}[{e.__traceback__.tb_lineno}]: {e}"
         )
         return False

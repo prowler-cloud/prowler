@@ -6,7 +6,7 @@
     "Security",
     "Configuration"
   ],
-  "ServiceName": "core",
+  "ServiceName": "Core",
   "SubServiceName": "Root User Control",
   "ResourceIdTemplate": "",
   "Severity": "high",
@@ -16,8 +16,8 @@
   "RelatedUrl": "https://kubernetes.io/docs/concepts/security/pod-security-standards/",
   "Remediation": {
     "Code": {
-      "CLI": "Implement admission control policies in each namespace to restrict the creation of root containers. Use MustRunAsNonRoot or MustRunAs with a UID range excluding 0.",
-      "NativeIaC": "",
+      "CLI": "",
+      "NativeIaC": "https://docs.bridgecrew.io/docs/bc_k8s_5#kubernetes",
       "Other": "",
       "Terraform": ""
     },

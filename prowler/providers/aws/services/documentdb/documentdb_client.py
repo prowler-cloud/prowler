@@ -1,4 +1,4 @@
-from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
 from prowler.providers.aws.services.documentdb.documentdb_service import DocumentDB
+from prowler.providers.common.common import get_global_provider
 
-documentdb_client = DocumentDB(current_audit_info)
+documentdb_client = DocumentDB(get_global_provider())

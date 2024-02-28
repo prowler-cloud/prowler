@@ -6,7 +6,7 @@ class rbac_minimize_wildcard_use_roles(Check):
     def execute(self) -> Check_Report_Kubernetes:
         findings = []
         # Check ClusterRoles for wildcards
-        for cr in rbac_client.cluster_roles:
+        for cr in rbac_client.cluster_roles.values():
             report = Check_Report_Kubernetes(self.metadata())
             report.namespace = "cluster-wide"
             report.resource_name = cr.metadata.name
@@ -24,11 +24,10 @@ class rbac_minimize_wildcard_use_roles(Check):
                     report.status_extended = (
                         f"ClusterRole {cr.metadata.name} uses wildcards."
                     )
-                    break
             findings.append(report)
 
         # Check Roles for wildcards
-        for role in rbac_client.roles:
+        for role in rbac_client.roles.values():
             report = Check_Report_Kubernetes(self.metadata())
             report.namespace = role.metadata.namespace
             report.resource_name = role.metadata.name
@@ -46,7 +45,6 @@ class rbac_minimize_wildcard_use_roles(Check):
                     report.status_extended = (
                         f"Role {role.metadata.name} uses wildcards."
                     )
-                    break
             findings.append(report)
 
         return findings

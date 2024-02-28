@@ -6,8 +6,8 @@ from prowler.providers.gcp.lib.service.service import GCPService
 
 ################## CloudSQL
 class CloudSQL(GCPService):
-    def __init__(self, audit_info):
-        super().__init__("sqladmin", audit_info)
+    def __init__(self, provider):
+        super().__init__("sqladmin", provider)
         self.instances = []
         self.__get_instances__()
 

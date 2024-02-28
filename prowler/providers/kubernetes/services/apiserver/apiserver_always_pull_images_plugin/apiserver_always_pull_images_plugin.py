@@ -18,11 +18,14 @@ class apiserver_always_pull_images_plugin(Check):
             )
             plugin_set = False
             for container in pod.containers.values():
+                plugin_set = False
                 for command in container.command:
                     if command.startswith("--enable-admission-plugins"):
                         if "AlwaysPullImages" in command:
                             plugin_set = True
                             break
+                if not plugin_set:
+                    break
             if not plugin_set:
                 report.status = "FAIL"
                 report.status_extended = f"AlwaysPullImages admission control plugin is not set in pod {pod.name}."

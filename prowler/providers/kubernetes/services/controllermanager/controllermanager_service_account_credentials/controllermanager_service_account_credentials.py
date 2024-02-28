@@ -12,11 +12,14 @@ class controllermanager_service_account_credentials(Check):
             report.namespace = pod.namespace
             report.resource_name = pod.name
             report.resource_id = pod.uid
-            report.status = "FAIL"
-            report.status_extended = f"Controller Manager is using service account credentials in pod {pod.name}."
+            report.status = "PASS"
+            report.status_extended = f"Controller Manager is not using service account credentials in pod {pod.name}."
             for container in pod.containers.values():
-                if "--use-service-account-credentials=true" in str(container.command):
-                    report.status = "PASS"
-                    report.status_extended = f"Controller Manager is not using service account credentials in pod {pod.name}."
+                if "--use-service-account-credentials=true" not in str(
+                    container.command
+                ):
+                    report.status = "FAIL"
+                    report.status_extended = f"Controller Manager is using service account credentials in pod {pod.name}."
+                    break
             findings.append(report)
         return findings

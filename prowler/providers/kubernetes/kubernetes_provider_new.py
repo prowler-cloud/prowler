@@ -1,15 +1,17 @@
 import os
 import sys
+from argparse import Namespace
 from typing import Any, Optional
 
 from colorama import Fore, Style
 from kubernetes import client, config
 
 from prowler.lib.logger import logger
-from prowler.providers.common.provider import CloudProvider
+from prowler.providers.common.provider import Provider
 
 
-class KubernetesProvider(CloudProvider):
+class KubernetesProvider(Provider):
+    # TODO change class name from Provider to Provider
     api_client: Any
     context: dict
     namespaces: list
@@ -17,15 +19,8 @@ class KubernetesProvider(CloudProvider):
     audit_metadata: Optional[Any]
     audit_config: Optional[dict]
 
-    def __init__(self, arguments: dict):
-        """
-        Initializes the KubernetesProvider instance.
-
-        Args:
-            arguments (dict): A dictionary containing configuration arguments.
-        """
+    def __init__(self, arguments: Namespace):
         logger.info("Instantiating Kubernetes Provider ...")
-
         self.api_client, self.context = self.setup_session(
             arguments.kubeconfig_file, arguments.context
         )
@@ -58,21 +53,15 @@ class KubernetesProvider(CloudProvider):
                 config.load_kube_config(
                     config_file=os.path.abspath(kubeconfig_file), context=input_context
                 )
-                if input_context:
-                    contexts = config.list_kube_config_contexts()[0]
-                    for context_item in contexts:
-                        if context_item["name"] == input_context:
-                            context = context_item
-                else:
-                    context = config.list_kube_config_contexts()[1]
+                context = config.list_kube_config_contexts()[0][0]
             else:
                 logger.info("Using in-cluster config")
                 config.load_incluster_config()
                 context = {
                     "name": "In-Cluster",
                     "context": {
-                        "cluster": "in-cluster",
-                        "user": "service-account-name",
+                        "cluster": "in-cluster",  # Placeholder, as the real cluster name is not available
+                        "user": "service-account-name",  # Also a placeholder
                     },
                 }
             return client.ApiClient(), context
@@ -146,32 +135,8 @@ class KubernetesProvider(CloudProvider):
             )
             sys.exit(1)
 
-    def get_all_namespaces(self):
-        """
-        Retrieves all namespaces.
-
-        Returns:
-            list: A list containing all namespace names.
-        """
-        try:
-            v1 = client.CoreV1Api()
-            namespace_list = v1.list_namespace(timeout_seconds=2, _request_timeout=2)
-            namespaces = [item.metadata.name for item in namespace_list.items]
-            logger.info("All namespaces retrieved successfully.")
-            return namespaces
-        except Exception as error:
-            logger.critical(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
-            sys.exit()
-
     def get_pod_current_namespace(self):
-        """
-        Retrieves the current namespace from the pod's mounted service account info.
-
-        Returns:
-            str: The current namespace.
-        """
+        """Retrieve the current namespace from the pod's mounted service account info."""
         try:
             with open(
                 "/var/run/secrets/kubernetes.io/serviceaccount/namespace", "r"
@@ -181,11 +146,10 @@ class KubernetesProvider(CloudProvider):
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+            return "default"
 
     def print_credentials(self):
-        """
-        Prints the Kubernetes credentials.
-        """
+        # Get the current context
         if self.context.get("name") == "In-Cluster":
             report = f"""
 This report is being generated using the Kubernetes configuration below:
@@ -196,12 +160,13 @@ Kubernetes Pod: {Fore.YELLOW}[prowler]{Style.RESET_ALL}  Namespace: {Fore.YELLOW
         else:
             cluster_name = self.context.get("context").get("cluster")
             user_name = self.context.get("context").get("user")
+            namespace = self.context.get("namespace", "default")
             roles = self.get_context_user_roles()
             roles_str = ", ".join(roles) if roles else "No associated Roles"
 
             report = f"""
 This report is being generated using the Kubernetes configuration below:
 
-Kubernetes Cluster: {Fore.YELLOW}[{cluster_name}]{Style.RESET_ALL}  User: {Fore.YELLOW}[{user_name}]{Style.RESET_ALL}  Namespaces: {Fore.YELLOW}[{', '.join(self.namespaces)}]{Style.RESET_ALL}  Roles: {Fore.YELLOW}[{roles_str}]{Style.RESET_ALL}
+Kubernetes Pod: {Fore.YELLOW}[prowler]{Style.RESET_ALL}  Namespace: {Fore.YELLOW}[{self.get_pod_current_namespace()}]{Style.RESET_ALL}
 """
             print(report)

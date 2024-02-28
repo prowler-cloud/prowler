@@ -13,10 +13,10 @@
   "ResourceType": "KubernetesNode",
   "Description": "This check ensures that the kubelet service file on worker nodes has permissions set to 600 or more restrictive, limiting the file's write access to only system administrators. This measure is crucial to maintain the integrity and security of the kubelet service configuration.",
   "Risk": "Improper file permissions on the kubelet service file could lead to unauthorized modifications, compromising node security and stability.",
-  "RelatedUrl": "https://kubernetes.io/docs/admin/kubelet/",
+  "RelatedUrl": "https://kubernetes.io/docs/reference/setup-tools/kubeadm/kubeadm-config/",
   "Remediation": {
     "Code": {
-      "CLI": "Change the kubelet service file permissions to 600 or more restrictive using chmod. Example: chmod 600 /etc/systemd/system/kubelet.service.d/kubeadm.conf",
+      "CLI": "chmod 600 /etc/systemd/system/kubelet.service.d/kubeadm.conf",
       "NativeIaC": "",
       "Other": "",
       "Terraform": ""

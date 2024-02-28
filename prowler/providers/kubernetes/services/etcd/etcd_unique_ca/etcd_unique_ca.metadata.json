@@ -13,7 +13,7 @@
   "ResourceType": "EtcdService",
   "Description": "This check ensures that etcd uses a unique Certificate Authority (CA) separate from the one used for the overall Kubernetes cluster. This practice enhances the security by restricting access to the etcd database only to clients and peers with certificates issued by the dedicated etcd CA.",
   "Risk": "Using the same CA for etcd and the Kubernetes cluster can expose etcd to unauthorized access if any certificate issued by the Kubernetes CA is compromised.",
-  "RelatedUrl": "https://coreos.com/etcd/docs/latest/op-guide/security.html",
+  "RelatedUrl": "https://etcd.io/docs/latest/op-guide/security/",
   "Remediation": {
     "Code": {
       "CLI": "Configure etcd to use a unique CA by setting the --trusted-ca-file parameter in the etcd pod specification to point to the dedicated etcd CA file. Example: --trusted-ca-file=</path/to/etcd-ca-file>.",
@@ -23,7 +23,7 @@
     },
     "Recommendation": {
       "Text": "Ensure etcd uses a unique CA separate from the Kubernetes cluster CA.",
-      "Url": "https://coreos.com/etcd/docs/latest/op-guide/security.html"
+      "Url": "https://kubernetes.io/docs/tasks/administer-cluster/configure-upgrade-etcd/#limiting-access-of-etcd-clusters"
     }
   },
   "Categories": [

@@ -13,7 +13,7 @@
   "ResourceType": "KubernetesAPIServer",
   "Description": "This check ensures that profiling is disabled in the Kubernetes API server. Profiling generates extensive data about the system's performance and operations, which, if not needed, should be disabled to reduce the attack surface.",
   "Risk": "Enabled profiling can potentially expose detailed system and program data, which might be exploited for malicious purposes.",
-  "RelatedUrl": "https://github.com/kubernetes/community/blob/master/contributors/devel/profiling.md",
+  "RelatedUrl": "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/",
   "Remediation": {
     "Code": {
       "CLI": "Edit the kube-apiserver configuration to set the --profiling argument to false. Example: --profiling=false",
@@ -23,7 +23,7 @@
     },
     "Recommendation": {
       "Text": "Disable profiling in the API server unless it is necessary for troubleshooting performance bottlenecks.",
-      "Url": "https://kubernetes.io/docs/admin/kube-apiserver/"
+      "Url": "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/"
     }
   },
   "Categories": [

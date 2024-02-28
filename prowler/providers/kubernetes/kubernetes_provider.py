@@ -36,15 +36,7 @@ class Kubernetes_Provider:
                 config.load_kube_config(
                     config_file=os.path.abspath(kubeconfig_file), context=input_context
                 )
-                # Set context if input in argument
-                if input_context:
-                    contexts = config.list_kube_config_contexts()[0]
-                    for context_item in contexts:
-                        if context_item["name"] == input_context:
-                            context = context_item
-                else:
-                    # Get active context
-                    context = config.list_kube_config_contexts()[1]
+                context = config.list_kube_config_contexts()[0][0]
             else:
                 # Otherwise try to load in-cluster config
                 logger.info("Loading in-cluster config ...")

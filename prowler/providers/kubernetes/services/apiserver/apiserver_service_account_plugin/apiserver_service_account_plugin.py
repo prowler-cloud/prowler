@@ -19,6 +19,7 @@ class apiserver_service_account_plugin(Check):
 
             service_account_plugin_set = False
             for container in pod.containers.values():
+                service_account_plugin_set = False
                 # Check if "--enable-admission-plugins" includes "ServiceAccount"
                 # and "--disable-admission-plugins" does not include "ServiceAccount"
                 for command in container.command:
@@ -28,6 +29,8 @@ class apiserver_service_account_plugin(Check):
                     elif command.startswith("--disable-admission-plugins"):
                         if "ServiceAccount" in (command.split("=")[1]):
                             service_account_plugin_set = False
+                if not service_account_plugin_set:
+                    break
 
             if not service_account_plugin_set:
                 report.status = "FAIL"

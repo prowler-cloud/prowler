@@ -8,7 +8,7 @@ from prowler.providers.aws.config import AWS_STS_GLOBAL_ENDPOINT_REGION
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 
 
-def validate_aws_credentials(
+def validate_AWSCredentials(
     session: session, input_regions: list, sts_endpoint_region: str = None
 ) -> dict:
     try:
@@ -38,7 +38,7 @@ def validate_aws_credentials(
         return caller_identity
 
 
-def print_aws_credentials(audit_info: AWS_Audit_Info):
+def print_AWSCredentials(audit_info: AWS_Audit_Info):
     # Beautify audited regions, set "all" if there is no filter region
     regions = (
         ", ".join(audit_info.audited_regions)
