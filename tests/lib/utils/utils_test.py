@@ -148,6 +148,7 @@ class TestFilePermissions:
         permissions = get_file_permissions(temp_file.name)
         assert permissions == "0o644"
         os.unlink(temp_file.name)
+        assert not get_file_permissions("not_existing_file")
 
     def test_is_owned_by_root(self):
         # Create a temporary file with known permissions
@@ -158,3 +159,5 @@ class TestFilePermissions:
         is_root = is_owned_by_root(temp_file.name)
         assert not is_root
         os.unlink(temp_file.name)
+        assert not is_owned_by_root("not_existing_file")
+        assert is_owned_by_root("/etc/passwd")

@@ -10,6 +10,7 @@ from io import TextIOWrapper
 from ipaddress import ip_address
 from os.path import exists
 from time import mktime
+from typing import Optional
 
 from detect_secrets import SecretsCollection
 from detect_secrets.settings import default_settings
@@ -106,7 +107,7 @@ def outputs_unix_timestamp(is_unix_timestamp: bool, timestamp: datetime):
     return timestamp
 
 
-def get_file_permissions(file_path: str) -> str:
+def get_file_permissions(file_path: str) -> Optional[str]:
     """
     Retrieves the permissions of a file.
 
@@ -127,6 +128,7 @@ def get_file_permissions(file_path: str) -> str:
         logger.error(
             f"{file_path}: {e.__class__.__name__}[{e.__traceback__.tb_lineno}]: {e}"
         )
+        return None
 
 
 def is_owned_by_root(file_path: str) -> bool:

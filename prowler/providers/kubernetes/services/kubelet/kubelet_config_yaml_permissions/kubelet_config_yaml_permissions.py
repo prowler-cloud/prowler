@@ -13,11 +13,15 @@ class kubelet_config_yaml_permissions(Check):
             report.resource_id = node.uid
             # It can only be checked if Prowler is being executed inside a worker node
             if node.inside:
-                report.status = "PASS"
-                report.status_extended = f"kubelet config.yaml file permissions are set to 600 or more restrictive in Node {node.name}."
-                if get_file_permissions("/var/lib/kubelet/config.yaml") > 0o600:
-                    report.status = "FAIL"
-                    report.status_extended = f"kubelet config.yaml file permissions are not set to 600 or more restrictive in Node {node.name}."
+                if not get_file_permissions("/var/lib/kubelet/config.yaml"):
+                    report.status = "MANUAL"
+                    report.status_extended = f"Kubelet config.yaml file not found in Node {node.name}, please verify kubelet config.yaml file permissions manually."
+                else:
+                    report.status = "PASS"
+                    report.status_extended = f"kubelet config.yaml file permissions are set to 600 or more restrictive in Node {node.name}."
+                    if get_file_permissions("/var/lib/kubelet/config.yaml") > 0o600:
+                        report.status = "FAIL"
+                        report.status_extended = f"kubelet config.yaml file permissions are not set to 600 or more restrictive in Node {node.name}."
             else:
                 report.status = "MANUAL"
                 report.status_extended = f"Prowler is not being executed inside Node {node.name}, please verify kubelet config.yaml file permissions manually."

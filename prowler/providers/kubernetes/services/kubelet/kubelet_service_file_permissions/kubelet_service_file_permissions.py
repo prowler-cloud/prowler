@@ -13,16 +13,22 @@ class kubelet_service_file_permissions(Check):
             report.resource_id = node.uid
             # It can only be checked if Prowler is being executed inside a worker node
             if node.inside:
-                report.status = "PASS"
-                report.status_extended = f"Kubelet service file permissions are set to 600 or more restrictive in Node {node.name}."
-                if (
-                    get_file_permissions(
-                        "/etc/systemd/system/kubelet.service.d/kubeadm.conf"
-                    )
-                    > 0o600
+                if not get_file_permissions(
+                    "/etc/systemd/system/kubelet.service.d/kubeadm.conf"
                 ):
-                    report.status = "FAIL"
-                    report.status_extended = f"Kubelet service file permissions are not set to 600 or more restrictive in Node {node.name}."
+                    report.status = "MANUAL"
+                    report.status_extended = f"Kubelet service file not found in Node {node.name}, please verify Kubelet service file permissions manually."
+                else:
+                    report.status = "PASS"
+                    report.status_extended = f"Kubelet service file permissions are set to 600 or more restrictive in Node {node.name}."
+                    if (
+                        get_file_permissions(
+                            "/etc/systemd/system/kubelet.service.d/kubeadm.conf"
+                        )
+                        > 0o600
+                    ):
+                        report.status = "FAIL"
+                        report.status_extended = f"Kubelet service file permissions are not set to 600 or more restrictive in Node {node.name}."
             else:
                 report.status = "MANUAL"
                 report.status_extended = f"Prowler is not being executed inside Node {node.name}, please verify Kubelet service file permissions manually."
