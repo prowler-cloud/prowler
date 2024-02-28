@@ -12,7 +12,7 @@ class core_minimize_admission_windows_hostprocess_containers(Check):
             report.resource_id = pod.uid
             report.status = "PASS"
             report.status_extended = (
-                f"Pod {pod.name} does not has the ability to run a Windows HostProcess."
+                f"Pod {pod.name} does not have the ability to run a Windows HostProcess."
             )
 
             for container in pod.containers.values():
