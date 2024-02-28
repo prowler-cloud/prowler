@@ -142,9 +142,10 @@ class Test_SecurityHub:
             "prowler.providers.aws.lib.security_hub.security_hub.session.Session.client",
         ) as mock_security_hub:
             error_message = f"Account {AWS_ACCOUNT_NUMBER} is not subscribed to AWS Security Hub in region {AWS_REGION_EU_WEST_1}"
+            error_code = "InvalidAccessException"
             error_response = {
                 "Error": {
-                    "Code": "InvalidAccessException",
+                    "Code": error_code,
                     "Message": error_message,
                 }
             }
@@ -157,8 +158,10 @@ class Test_SecurityHub:
                 session,
                 AWS_ACCOUNT_NUMBER,
             )
-
-            assert error_message in caplog.text
+            assert (
+                f"An error occurred ({error_code}) when calling the DescribeHub operation: {error_message}"
+                in caplog.text
+            )
 
     def test_verify_security_hub_integration_enabled_per_region_prowler_not_subscribed(
         self, caplog
@@ -183,6 +186,57 @@ class Test_SecurityHub:
                 f"Security Hub is enabled in {AWS_REGION_EU_WEST_1} but Prowler integration does not accept findings. More info: https://docs.prowler.cloud/en/latest/tutorials/aws/securityhub/"
                 in caplog.text
             )
+
+    def test_verify_security_hub_integration_enabled_per_region_another_ClientError(
+        self, caplog
+    ):
+        caplog.set_level(WARNING)
+        session = self.set_mocked_session(AWS_REGION_EU_WEST_1)
+
+        with patch(
+            "prowler.providers.aws.lib.security_hub.security_hub.session.Session.client",
+        ) as mock_security_hub:
+            error_message = f"Another exception in region {AWS_REGION_EU_WEST_1}"
+            error_code = "AnotherException"
+            error_response = {
+                "Error": {
+                    "Code": error_code,
+                    "Message": error_message,
+                }
+            }
+            operation_name = "DescribeHub"
+            mock_security_hub.side_effect = ClientError(error_response, operation_name)
+
+            assert not verify_security_hub_integration_enabled_per_region(
+                AWS_COMMERCIAL_PARTITION,
+                AWS_REGION_EU_WEST_1,
+                session,
+                AWS_ACCOUNT_NUMBER,
+            )
+            assert (
+                f"An error occurred ({error_code}) when calling the DescribeHub operation: {error_message}"
+                in caplog.text
+            )
+
+    def test_verify_security_hub_integration_enabled_per_region_another_Exception(
+        self, caplog
+    ):
+        caplog.set_level(WARNING)
+        session = self.set_mocked_session(AWS_REGION_EU_WEST_1)
+
+        with patch(
+            "prowler.providers.aws.lib.security_hub.security_hub.session.Session.client",
+        ) as mock_security_hub:
+            error_message = f"Another exception in region {AWS_REGION_EU_WEST_1}"
+            mock_security_hub.side_effect = Exception(error_message)
+
+            assert not verify_security_hub_integration_enabled_per_region(
+                AWS_COMMERCIAL_PARTITION,
+                AWS_REGION_EU_WEST_1,
+                session,
+                AWS_ACCOUNT_NUMBER,
+            )
+            assert error_message in caplog.text
 
     def test_prepare_security_hub_findings_enabled_region_not_quiet(self):
         enabled_regions = [AWS_REGION_EU_WEST_1]

@@ -90,11 +90,11 @@ def verify_security_hub_integration_enabled_per_region(
             in error_message
         ):
             logger.warning(
-                f"{client_error.__class__.__name__} -- [{client_error.__traceback__.tb_lineno}]:{error_message}"
+                f"{client_error.__class__.__name__} -- [{client_error.__traceback__.tb_lineno}]:{client_error}"
             )
         else:
             logger.error(
-                f"{client_error.__class__.__name__} -- [{client_error.__traceback__.tb_lineno}]:{client_error} in region {region}"
+                f"{client_error.__class__.__name__} -- [{client_error.__traceback__.tb_lineno}]:{client_error}"
             )
     except Exception as error:
         logger.error(
