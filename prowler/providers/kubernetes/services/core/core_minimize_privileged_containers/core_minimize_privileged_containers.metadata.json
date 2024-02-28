@@ -6,7 +6,7 @@
     "Security",
     "Configuration"
   ],
-  "ServiceName": "Core",
+  "ServiceName": "core",
   "SubServiceName": "Privileged Containers",
   "ResourceIdTemplate": "",
   "Severity": "high",
