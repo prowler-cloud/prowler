@@ -370,9 +370,9 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
         context = arguments.get("context")
 
         logger.info("Checking if any namespace is set ...")
-        namespace = arguments.get("namespace")
+        namespaces = arguments.get("namespaces")
 
-        kubernetes_provider = Kubernetes_Provider(kubeconfig_file, context, namespace)
+        kubernetes_provider = Kubernetes_Provider(kubeconfig_file, context, namespaces)
 
         (
             kubernetes_audit_info.api_client,

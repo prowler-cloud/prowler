@@ -11,7 +11,6 @@ from prowler.providers.common.provider import Provider
 
 
 class KubernetesProvider(Provider):
-    # TODO change class name from Provider to Provider
     api_client: Any
     context: dict
     namespaces: list
