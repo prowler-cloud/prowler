@@ -6,21 +6,16 @@ class core_minimize_hostNetwork_containers(Check):
     def execute(self) -> Check_Report_Kubernetes:
         findings = []
         for pod in core_client.pods.values():
+            report = Check_Report_Kubernetes(self.metadata())
+            report.namespace = pod.namespace
+            report.resource_name = pod.name
+            report.resource_id = pod.uid
             if pod.host_network:
-                report = Check_Report_Kubernetes(self.metadata())
-                report.namespace = pod.namespace
-                report.resource_name = pod.name
-                report.resource_id = pod.uid
                 report.status = "FAIL"
                 report.status_extended = f"Pod {pod.name} is using hostNetwork."
-                findings.append(report)
             else:
-                report = Check_Report_Kubernetes(self.metadata())
-                report.namespace = pod.namespace
-                report.resource_name = pod.name
-                report.resource_id = pod.uid
                 report.status = "PASS"
                 report.status_extended = f"Pod {pod.name} is not using hostNetwork."
-                findings.append(report)
+            findings.append(report)
 
         return findings
