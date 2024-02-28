@@ -16,8 +16,8 @@
   "RelatedUrl": "https://kubernetes.io/docs/concepts/security/pod-security-standards/",
   "Remediation": {
     "Code": {
-      "CLI": "Implement policies in each namespace to restrict the use of HostPorts in container configurations.",
-      "NativeIaC": "",
+      "CLI": "",
+      "NativeIaC": "https://docs.bridgecrew.io/docs/bc_k8s_25#kubernetes",
       "Other": "",
       "Terraform": ""
     },
