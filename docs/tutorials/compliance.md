@@ -7,6 +7,7 @@ In order to see which compliance frameworks are cover by Prowler, you can use op
 prowler <provider> --list-compliance
 ```
 Currently, the available frameworks are:
+
 - `aws_account_security_onboarding_aws`
 - `aws_audit_manager_control_tower_guardrails_aws`
 - `aws_foundational_security_best_practices_aws`
