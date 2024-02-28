@@ -22,7 +22,7 @@ class Core(KubernetesService):
         self.__list_config_maps__()
         self.nodes = {}
         self.__list_nodes__()
-        self.in_worker_node = self.__in_worker_node__()
+        self.__in_worker_node__()
 
     def __get_pods__(self):
         try:
@@ -126,8 +126,6 @@ class Core(KubernetesService):
             for node in self.nodes.values():
                 if hostname == node.name:
                     node.inside = True
-                    return True
-            return False
 
         except Exception as error:
             logger.error(
