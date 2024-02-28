@@ -6,18 +6,22 @@ from prowler.providers.kubernetes.services.core.core_client import core_client
 class kubelet_conf_file_ownership(Check):
     def execute(self) -> Check_Report_Kubernetes:
         findings = []
-        for node in core_client.nodes:
+        for node in core_client.nodes.values():
             report = Check_Report_Kubernetes(self.metadata())
             report.namespace = node.namespace
             report.resource_name = node.name
             report.resource_id = node.uid
-            # It can only be checked if Prowler is being executed inside a worker node
+            # It can only be checked if Prowler is being executed inside a worker node or if the file is the default one
             if node.inside:
-                report.status = "PASS"
-                report.status_extended = f"kubelet.conf file ownership is set to root:root in Node {node.name}."
-                if not is_owned_by_root("/etc/kubernetes/kubelet.conf"):
-                    report.status = "FAIL"
-                    report.status_extended = f"kubelet.conf file ownership is not set to root:root in Node {node.name}."
+                if is_owned_by_root("/etc/kubernetes/kubelet.conf") is None:
+                    report.status = "MANUAL"
+                    report.status_extended = f"kubelet.conf file not found in Node {node.name}, please verify kubelet.conf file ownership manually."
+                else:
+                    report.status = "PASS"
+                    report.status_extended = f"kubelet.conf file ownership is set to root:root in Node {node.name}."
+                    if not is_owned_by_root("/etc/kubernetes/kubelet.conf"):
+                        report.status = "FAIL"
+                        report.status_extended = f"kubelet.conf file ownership is not set to root:root in Node {node.name}."
             else:
                 report.status = "MANUAL"
                 report.status_extended = f"Prowler is not being executed inside Node {node.name}, please verify kubelet.conf file ownership manually."

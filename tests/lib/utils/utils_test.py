@@ -9,7 +9,9 @@ from mock import patch
 from prowler.lib.utils.utils import (
     detect_secrets_scan,
     file_exists,
+    get_file_permissions,
     hash_sha512,
+    is_owned_by_root,
     open_file,
     outputs_unix_timestamp,
     parse_json_file,
@@ -135,3 +137,27 @@ class Test_outputs_unix_timestamp:
     def test_outputs_unix_timestamp_true(self):
         time = datetime.now()
         assert outputs_unix_timestamp(True, time) == mktime(time.timetuple())
+
+
+class TestFilePermissions:
+    def test_get_file_permissions(self):
+        # Create a temporary file with known permissions
+        temp_file = tempfile.NamedTemporaryFile(delete=False)
+        temp_file.close()
+        os.chmod(temp_file.name, 0o644)  # Set permissions to 644 (-rw-r--r--)
+        permissions = get_file_permissions(temp_file.name)
+        assert permissions == "0o644"
+        os.unlink(temp_file.name)
+        assert not get_file_permissions("not_existing_file")
+
+    def test_is_owned_by_root(self):
+        # Create a temporary file with known permissions
+        temp_file = tempfile.NamedTemporaryFile(delete=False)
+        temp_file.close()
+        os.chmod(temp_file.name, 0o644)  # Set permissions to 644 (-rw-r--r--)
+        # Check ownership for the temporary file
+        is_root = is_owned_by_root(temp_file.name)
+        assert not is_root
+        os.unlink(temp_file.name)
+        assert not is_owned_by_root("not_existing_file")
+        assert is_owned_by_root("/etc/passwd")

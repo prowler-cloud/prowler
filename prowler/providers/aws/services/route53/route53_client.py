@@ -1,4 +1,4 @@
-from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
 from prowler.providers.aws.services.route53.route53_service import Route53
+from prowler.providers.common.common import get_global_provider
 
-route53_client = Route53(current_audit_info)
+route53_client = Route53(get_global_provider())

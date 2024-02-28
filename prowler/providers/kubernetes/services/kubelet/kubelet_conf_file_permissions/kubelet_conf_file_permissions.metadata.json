@@ -13,17 +13,17 @@
   "ResourceType": "KubernetesWorkerNode",
   "Description": "Ensure that the kubelet.conf file, which is the kubeconfig file for the node, has permissions set to 600 or more restrictive. This ensures the integrity and security of the node's configuration.",
   "Risk": "Improper permissions on kubelet.conf can expose sensitive configuration data, potentially leading to cluster security compromises.",
-  "RelatedUrl": "https://kubernetes.io/docs/admin/kubelet/",
+  "RelatedUrl": "https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/kubelet-integration/",
   "Remediation": {
     "Code": {
-      "CLI": "Set kubelet.conf file permissions to 600 by running 'chmod 600 /etc/kubernetes/kubelet.conf' on each worker node.",
+      "CLI": "chmod 600 /etc/kubernetes/kubelet.conf",
       "NativeIaC": "",
       "Other": "",
       "Terraform": ""
     },
     "Recommendation": {
       "Text": "Ensure kubelet.conf file permissions are correctly set to protect the node's configuration.",
-      "Url": "https://kubernetes.io/docs/admin/kubelet/"
+      "Url": "https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/"
     }
   },
   "Categories": [

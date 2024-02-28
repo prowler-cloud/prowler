@@ -8,8 +8,8 @@ from prowler.providers.gcp.lib.service.service import GCPService
 
 ################## KMS
 class KMS(GCPService):
-    def __init__(self, audit_info):
-        super().__init__("cloudkms", audit_info)
+    def __init__(self, provider):
+        super().__init__("cloudkms", provider)
         self.locations = []
         self.key_rings = []
         self.crypto_keys = []

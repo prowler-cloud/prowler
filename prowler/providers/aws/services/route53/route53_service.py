@@ -9,9 +9,9 @@ from prowler.providers.aws.lib.service.service import AWSService
 
 ################## Route53
 class Route53(AWSService):
-    def __init__(self, audit_info):
+    def __init__(self, provider):
         # Call AWSService's __init__
-        super().__init__(__class__.__name__, audit_info, global_service=True)
+        super().__init__(__class__.__name__, provider, global_service=True)
         self.hosted_zones = {}
         self.record_sets = []
         self.__list_hosted_zones__()
@@ -139,11 +139,11 @@ class RecordSet(BaseModel):
 
 ################## Route53Domains
 class Route53Domains(AWSService):
-    def __init__(self, audit_info):
+    def __init__(self, provider):
         # Call AWSService's __init__
-        super().__init__(__class__.__name__, audit_info)
+        super().__init__(__class__.__name__, provider)
         self.domains = {}
-        if audit_info.audited_partition == "aws":
+        if self.audited_partition == "aws":
             # Route53Domains is a global service that supports endpoints in multiple AWS Regions
             # but you must specify the US East (N. Virginia) Region to create, update, or otherwise work with domains.
             self.region = "us-east-1"

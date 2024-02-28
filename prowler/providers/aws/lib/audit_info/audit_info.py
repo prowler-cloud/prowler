@@ -2,7 +2,7 @@ from boto3 import session
 from botocore.config import Config
 
 from prowler.providers.aws.config import BOTO3_USER_AGENT_EXTRA
-from prowler.providers.aws.lib.audit_info.models import AWS_Assume_Role, AWS_Audit_Info
+from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info, AWSAssumeRole
 
 # Default Current Audit Info
 current_audit_info = AWS_Audit_Info(
@@ -25,7 +25,7 @@ current_audit_info = AWS_Audit_Info(
     profile=None,
     profile_region=None,
     credentials=None,
-    assumed_role_info=AWS_Assume_Role(
+    assumed_role_info=AWSAssumeRole(
         role_arn=None,
         session_duration=None,
         external_id=None,

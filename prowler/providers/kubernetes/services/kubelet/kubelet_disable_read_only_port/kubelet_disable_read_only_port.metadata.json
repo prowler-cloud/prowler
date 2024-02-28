@@ -13,7 +13,7 @@
   "ResourceType": "KubernetesKubelet",
   "Description": "This check ensures that the read-only port of the Kubelet is disabled by verifying that the --read-only-port argument is set to 0. Disabling the read-only port is crucial to prevent unauthenticated access to sensitive cluster data.",
   "Risk": "If the read-only port is open, it could allow unauthenticated access to sensitive cluster information.",
-  "RelatedUrl": "https://kubernetes.io/docs/admin/kubelet/",
+  "RelatedUrl": "https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/",
   "Remediation": {
     "Code": {
       "CLI": "Set the --read-only-port argument in the kubelet service file on each worker node to 0.",
@@ -23,7 +23,7 @@
     },
     "Recommendation": {
       "Text": "Disable the read-only port in the kubelet for enhanced cluster security.",
-      "Url": "https://kubernetes.io/docs/admin/kubelet/"
+      "Url": "https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/#options"
     }
   },
   "Categories": [

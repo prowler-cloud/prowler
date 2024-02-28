@@ -16,12 +16,19 @@ class apiserver_audit_log_maxbackup_set(Check):
             report.status_extended = f"Audit log max backup is set appropriately in the API server in pod {pod.name}."
             audit_log_maxbackup_set = False
             for container in pod.containers.values():
+                audit_log_maxbackup_set = False
                 # Check if "--audit-log-maxbackup" is set to 10 or as appropriate
                 for command in container.command:
                     if command.startswith("--audit-log-maxbackup"):
-                        if int(command.split("=")[1]) >= 10:
+                        if int(
+                            command.split("=")[1]
+                        ) == apiserver_client.audit_config.get(
+                            "audit_log_maxbackup", 10
+                        ):
                             audit_log_maxbackup_set = True
                             break
+                if not audit_log_maxbackup_set:
+                    break
 
             if not audit_log_maxbackup_set:
                 report.status = "FAIL"

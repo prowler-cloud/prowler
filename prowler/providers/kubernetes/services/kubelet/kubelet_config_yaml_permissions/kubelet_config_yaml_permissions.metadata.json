@@ -16,7 +16,7 @@
   "RelatedUrl": "https://kubernetes.io/docs/tasks/administer-cluster/kubelet-config-file/",
   "Remediation": {
     "Code": {
-      "CLI": "Set kubelet config.yaml file permissions to 600 using 'chmod 600 /var/lib/kubelet/config.yaml' on each worker node.",
+      "CLI": "chmod 600 /var/lib/kubelet/config.yaml",
       "NativeIaC": "",
       "Other": "",
       "Terraform": ""

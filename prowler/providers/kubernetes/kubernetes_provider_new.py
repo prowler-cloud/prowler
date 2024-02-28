@@ -1,25 +1,25 @@
 import os
 import sys
+from argparse import Namespace
 from typing import Any, Optional
 
 from colorama import Fore, Style
 from kubernetes import client, config
 
 from prowler.lib.logger import logger
-from prowler.providers.common.provider import CloudProvider
+from prowler.providers.common.provider import Provider
 
 
-class KubernetesProvider(CloudProvider):
-    # TODO change class name from CloudProvider to Provider
+class KubernetesProvider(Provider):
+    # TODO change class name from Provider to Provider
     api_client: Any
     context: dict
     audit_resources: Optional[Any]
     audit_metadata: Optional[Any]
     audit_config: Optional[dict]
 
-    def __init__(self, arguments: dict):
+    def __init__(self, arguments: Namespace):
         logger.info("Instantiating Kubernetes Provider ...")
-
         self.api_client, self.context = self.setup_session(
             arguments.kubeconfig_file, arguments.context
         )

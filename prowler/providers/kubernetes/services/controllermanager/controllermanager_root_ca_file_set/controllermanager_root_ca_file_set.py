@@ -12,13 +12,12 @@ class controllermanager_root_ca_file_set(Check):
             report.namespace = pod.namespace
             report.resource_name = pod.name
             report.resource_id = pod.uid
-            report.status = "FAIL"
-            report.status_extended = (
-                f"Controller Manager has the root CA file set in pod {pod.name}."
-            )
+            report.status = "PASS"
+            report.status_extended = f"Controller Manager does not have the root CA file set in pod {pod.name}."
             for container in pod.containers.values():
-                if "--root-ca-file=" in str(container.command):
-                    report.status = "PASS"
-                    report.status_extended = f"Controller Manager does not have the root CA file set in pod {pod.name}."
+                if "--root-ca-file=" not in str(container.command):
+                    report.status = "FAIL"
+                    report.status_extended = f"Controller Manager has the root CA file set in pod {pod.name}."
+                    break
             findings.append(report)
         return findings
