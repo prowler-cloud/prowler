@@ -14,6 +14,7 @@ class EMR(AWSService):
     def __init__(self, audit_info):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, audit_info)
+        self.cluster_arn_template = f"arn:{self.audited_partition}:elasticmapreduce:{self.region}:{self.audited_account}:cluster"
         self.clusters = {}
         self.block_public_access_configuration = {}
         self.__threading_call__(self.__list_clusters__)

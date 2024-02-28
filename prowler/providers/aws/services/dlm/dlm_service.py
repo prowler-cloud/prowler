@@ -9,6 +9,7 @@ class DLM(AWSService):
     def __init__(self, audit_info):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, audit_info)
+        self.lifecycle_policy_arn_template = f"arn:{self.audited_partition}:dlm:{self.region}:{self.audited_account}:policy"
         self.lifecycle_policies = {}
         self.__threading_call__(self.__get_lifecycle_policies__)
 

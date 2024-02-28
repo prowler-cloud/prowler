@@ -17,7 +17,7 @@ class backup_plans_exist(Check):
             report = Check_Report_AWS(self.metadata())
             report.status = "FAIL"
             report.status_extended = "No Backup Plan exist."
-            report.resource_arn = f"arn:{backup_client.audited_partition}:backup:{backup_client.region}:{backup_client.audited_account}:backup-plan"
+            report.resource_arn = backup_client.backup_plan_arn_template
             report.resource_id = backup_client.audited_account
             report.region = backup_client.region
             findings.append(report)

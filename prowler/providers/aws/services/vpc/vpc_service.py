@@ -14,6 +14,9 @@ class VPC(AWSService):
     def __init__(self, audit_info):
         # Call AWSService's __init__
         super().__init__("ec2", audit_info)
+        self.vpc_arn_template = (
+            f"arn:{self.audited_partition}:ec2:{self.region}:{self.audited_account}:vpc"
+        )
         self.vpcs = {}
         self.vpc_peering_connections = []
         self.vpc_endpoints = []

@@ -22,7 +22,7 @@ class cloudwatch_changes_to_network_acls_alarm_configured(Check):
         )
         report.region = cloudwatch_client.region
         report.resource_id = logs_client.audited_account
-        report.resource_arn = f"arn:{logs_client.audited_partition}:logs:{logs_client.region}:{logs_client.audited_account}:log-group"
+        report.resource_arn = logs_client.log_group_arn_template
         report = check_cloudwatch_log_metric_filter(
             pattern,
             cloudtrail_client.trails,

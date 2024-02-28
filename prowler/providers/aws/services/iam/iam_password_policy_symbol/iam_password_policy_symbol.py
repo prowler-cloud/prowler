@@ -7,7 +7,7 @@ class iam_password_policy_symbol(Check):
         findings = []
         report = Check_Report_AWS(self.metadata())
         report.region = iam_client.region
-        report.resource_arn = f"arn:{iam_client.audited_partition}:iam:{iam_client.region}:{iam_client.audited_account}:password-policy"
+        report.resource_arn = iam_client.password_policy_arn_template
         report.resource_id = iam_client.audited_account
         # Check if password policy exists
         if iam_client.password_policy:

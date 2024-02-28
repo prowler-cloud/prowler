@@ -9,6 +9,7 @@ class Macie(AWSService):
     def __init__(self, audit_info):
         # Call AWSService's __init__
         super().__init__("macie2", audit_info)
+        self.session_arn_template = f"arn:{self.audited_partition}:macie:{self.region}:{self.audited_account}:session"
         self.sessions = []
         self.__threading_call__(self.__get_macie_session__)
 

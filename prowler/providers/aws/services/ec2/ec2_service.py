@@ -15,6 +15,7 @@ class EC2(AWSService):
     def __init__(self, audit_info):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, audit_info)
+        self.volume_arn_template = f"arn:{self.audited_partition}:ec2:{self.region}:{self.audited_account}:volume"
         self.instances = []
         self.__threading_call__(self.__describe_instances__)
         self.__threading_call__(self.__get_instance_user_data__, self.instances)

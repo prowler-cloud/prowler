@@ -14,6 +14,7 @@ class Cloudtrail(AWSService):
     def __init__(self, audit_info):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, audit_info)
+        self.trail_arn_template = f"arn:{self.audited_partition}:cloudtrail:{self.region}:{self.audited_account}:trail"
         self.trails = []
         self.__threading_call__(self.__get_trails__)
         self.__get_trail_status__()
