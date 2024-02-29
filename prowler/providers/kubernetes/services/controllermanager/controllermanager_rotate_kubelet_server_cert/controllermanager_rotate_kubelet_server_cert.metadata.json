@@ -2,12 +2,9 @@
   "Provider": "kubernetes",
   "CheckID": "controllermanager_rotate_kubelet_server_cert",
   "CheckTitle": "Ensure that the RotateKubeletServerCertificate argument is set to true",
-  "CheckType": [
-    "Security",
-    "Configuration"
-  ],
+  "CheckType": [],
   "ServiceName": "controller-manager",
-  "SubServiceName": "Kubelet Server Certificate Rotation",
+  "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "KubernetesControllerManager",
@@ -16,8 +13,8 @@
   "RelatedUrl": "https://kubernetes.io/docs/tasks/tls/certificate-rotation/",
   "Remediation": {
     "Code": {
-      "CLI": "Edit the controller-manager manifest to include RotateKubeletServerCertificate=true in the --feature-gates parameter.",
-      "NativeIaC": "",
+      "CLI": "--feature-gates='RotateKubeletServerCertificate=true'",
+      "NativeIaC": "https://docs.bridgecrew.io/docs/ensure-that-the-rotatekubeletservercertificate-argument-is-set-to-true-for-controller-manager#kubernetes",
       "Other": "",
       "Terraform": ""
     },
@@ -27,8 +24,7 @@
     }
   },
   "Categories": [
-    "Data Security",
-    "Configuration Management"
+    "encryption"
   ],
   "DependsOn": [],
   "RelatedTo": [],

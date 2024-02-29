@@ -2,12 +2,9 @@
   "Provider": "kubernetes",
   "CheckID": "etcd_no_auto_tls",
   "CheckTitle": "Ensure that the --auto-tls argument is not set to true for etcd",
-  "CheckType": [
-    "Security",
-    "Configuration"
-  ],
+  "CheckType": [],
   "ServiceName": "etcd",
-  "SubServiceName": "TLS Configuration",
+  "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "EtcdService",
@@ -16,8 +13,8 @@
   "RelatedUrl": "https://etcd.io/docs/latest/op-guide/security/",
   "Remediation": {
     "Code": {
-      "CLI": "Edit the etcd pod specification file to set --auto-tls to false or remove the parameter. Example: --auto-tls=false.",
-      "NativeIaC": "",
+      "CLI": "--auto-tls=false",
+      "NativeIaC": "https://docs.bridgecrew.io/docs/ensure-that-the-auto-tls-argument-is-not-set-to-true",
       "Other": "",
       "Terraform": ""
     },
@@ -27,8 +24,8 @@
     }
   },
   "Categories": [
-    "Data Security",
-    "Network Security"
+    "encryption",
+    "internet-exposed"
   ],
   "DependsOn": [],
   "RelatedTo": [],

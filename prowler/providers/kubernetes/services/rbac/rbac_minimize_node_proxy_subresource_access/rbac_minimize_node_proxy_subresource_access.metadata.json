@@ -2,12 +2,9 @@
   "Provider": "kubernetes",
   "CheckID": "rbac_minimize_node_proxy_subresource_access",
   "CheckTitle": "Minimize access to the proxy sub-resource of nodes",
-  "CheckType": [
-    "Security",
-    "Configuration"
-  ],
+  "CheckType": [],
   "ServiceName": "RBAC",
-  "SubServiceName": "Node Management",
+  "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "NodeProxySubResource",
@@ -16,7 +13,7 @@
   "RelatedUrl": "https://kubernetes.io/docs/concepts/security/rbac-good-practices/#access-to-proxy-subresource-of-nodes",
   "Remediation": {
     "Code": {
-      "CLI": "Review and update RBAC configurations to restrict access to the proxy sub-resource of node objects. Ensure that only trusted users have the required permissions.",
+      "CLI": "",
       "NativeIaC": "",
       "Other": "",
       "Terraform": ""
@@ -27,8 +24,7 @@
     }
   },
   "Categories": [
-    "Access Control",
-    "Privilege Management"
+    "trustboundaries"
   ],
   "DependsOn": [],
   "RelatedTo": [],

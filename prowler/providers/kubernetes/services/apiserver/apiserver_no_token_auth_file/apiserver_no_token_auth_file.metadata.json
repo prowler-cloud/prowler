@@ -2,12 +2,9 @@
   "Provider": "kubernetes",
   "CheckID": "apiserver_no_token_auth_file",
   "CheckTitle": "Ensure that the --token-auth-file parameter is not set",
-  "CheckType": [
-    "Security",
-    "Configuration"
-  ],
+  "CheckType": [],
   "ServiceName": "apiserver",
-  "SubServiceName": "Authentication",
+  "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "KubernetesAPIServer",
@@ -16,8 +13,8 @@
   "RelatedUrl": "https://kubernetes.io/docs/reference/access-authn-authz/authentication/",
   "Remediation": {
     "Code": {
-      "CLI": "Remove the --token-auth-file parameter from the kube-apiserver configuration. Edit /etc/kubernetes/manifests/kube-apiserver.yaml on the master node and remove the --token-auth-file=<filename> parameter.",
-      "NativeIaC": "",
+      "CLI": "",
+      "NativeIaC": "https://docs.bridgecrew.io/docs/ensure-that-the-token-auth-file-parameter-is-not-set",
       "Other": "",
       "Terraform": ""
     },
@@ -27,8 +24,7 @@
     }
   },
   "Categories": [
-    "Access Control",
-    "Security Best Practices"
+    "trustboundaries"
   ],
   "DependsOn": [],
   "RelatedTo": [],

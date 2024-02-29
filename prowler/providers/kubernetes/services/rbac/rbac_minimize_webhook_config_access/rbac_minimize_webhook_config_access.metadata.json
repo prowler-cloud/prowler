@@ -2,12 +2,9 @@
   "Provider": "kubernetes",
   "CheckID": "rbac_minimize_webhook_config_access",
   "CheckTitle": "Minimize access to webhook configuration objects",
-  "CheckType": [
-    "Security",
-    "Configuration"
-  ],
+  "CheckType": [],
   "ServiceName": "RBAC",
-  "SubServiceName": "Webhook Configuration",
+  "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "WebhookConfiguration",
@@ -16,8 +13,8 @@
   "RelatedUrl": "https://kubernetes.io/docs/concepts/security/rbac-good-practices/#control-admission-webhooks",
   "Remediation": {
     "Code": {
-      "CLI": "Review and update RBAC configurations to restrict access to validatingwebhookconfigurations and mutatingwebhookconfigurations. Ensure only trusted users or service accounts have necessary permissions.",
-      "NativeIaC": "",
+      "CLI": "",
+      "NativeIaC": "https://docs.bridgecrew.io/docs/ensure-clusterroles-that-grant-control-over-validating-or-mutating-admission-webhook-configurations-are-minimized",
       "Other": "",
       "Terraform": ""
     },
@@ -27,8 +24,7 @@
     }
   },
   "Categories": [
-    "Access Control",
-    "Configuration Management"
+    "trustboundaries"
   ],
   "DependsOn": [],
   "RelatedTo": [],

@@ -2,12 +2,9 @@
   "Provider": "kubernetes",
   "CheckID": "kubelet_streaming_connection_timeout",
   "CheckTitle": "Ensure that the kubelet --streaming-connection-idle-timeout argument is not set to 0",
-  "CheckType": [
-    "Security",
-    "Configuration"
-  ],
+  "CheckType": [],
   "ServiceName": "kubelet",
-  "SubServiceName": "Streaming Connection Timeout",
+  "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "KubernetesKubelet",
@@ -16,8 +13,8 @@
   "RelatedUrl": "https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/",
   "Remediation": {
     "Code": {
-      "CLI": "Set the --streaming-connection-idle-timeout argument in the kubelet service file on each worker node to a non-zero value.",
-      "NativeIaC": "",
+      "CLI": "--streaming-connection-idle-timeout=<non-zero value>",
+      "NativeIaC": "https://docs.bridgecrew.io/docs/ensure-that-the-streaming-connection-idle-timeout-argument-is-not-set-to-0",
       "Other": "",
       "Terraform": ""
     },
@@ -27,8 +24,7 @@
     }
   },
   "Categories": [
-    "Node Security",
-    "Denial-of-Service Prevention"
+    "node-security"
   ],
   "DependsOn": [],
   "RelatedTo": [],

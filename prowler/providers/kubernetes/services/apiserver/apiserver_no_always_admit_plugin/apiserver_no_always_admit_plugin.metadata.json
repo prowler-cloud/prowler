@@ -2,12 +2,9 @@
   "Provider": "kubernetes",
   "CheckID": "apiserver_no_always_admit_plugin",
   "CheckTitle": "Ensure that the admission control plugin AlwaysAdmit is not set",
-  "CheckType": [
-    "Security",
-    "Configuration"
-  ],
+  "CheckType": [],
   "ServiceName": "apiserver",
-  "SubServiceName": "Admission Control",
+  "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "KubernetesAPIServer",
@@ -16,8 +13,8 @@
   "RelatedUrl": "https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/",
   "Remediation": {
     "Code": {
-      "CLI": "Edit the kube-apiserver configuration to ensure that AlwaysAdmit is not included in the --enable-admission-plugins argument. Remove the plugin if it exists.",
-      "NativeIaC": "",
+      "CLI": "--disable-admission-plugins=...,AlwaysAdmit,...",
+      "NativeIaC": "https://docs.bridgecrew.io/docs/ensure-that-the-admission-control-plugin-alwaysadmit-is-not-set",
       "Other": "",
       "Terraform": ""
     },
@@ -27,8 +24,7 @@
     }
   },
   "Categories": [
-    "Access Control",
-    "Deprecated Features"
+    "trustboundaries"
   ],
   "DependsOn": [],
   "RelatedTo": [],

@@ -2,12 +2,9 @@
   "Provider": "kubernetes",
   "CheckID": "kubelet_rotate_certificates",
   "CheckTitle": "Ensure that the kubelet client certificate rotation is enabled",
-  "CheckType": [
-    "Security",
-    "Configuration"
-  ],
+  "CheckType": [],
   "ServiceName": "kubelet",
-  "SubServiceName": "Certificate Rotation",
+  "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "KubernetesKubelet",
@@ -16,8 +13,8 @@
   "RelatedUrl": "https://kubernetes.io/docs/reference/access-authn-authz/kubelet-tls-bootstrapping/",
   "Remediation": {
     "Code": {
-      "CLI": "Ensure that the kubelet is configured with --rotate-certificates set to true or omitted (to use default).",
-      "NativeIaC": "",
+      "CLI": "--rotate-certificates=true",
+      "NativeIaC": "https://docs.bridgecrew.io/docs/ensure-that-the-rotate-certificates-argument-is-not-set-to-false",
       "Other": "",
       "Terraform": ""
     },
@@ -27,8 +24,8 @@
     }
   },
   "Categories": [
-    "Data Security",
-    "Network Security"
+    "encryption",
+    "internet-exposed"
   ],
   "DependsOn": [],
   "RelatedTo": [],

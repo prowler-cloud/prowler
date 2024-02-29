@@ -2,12 +2,9 @@
   "Provider": "kubernetes",
   "CheckID": "apiserver_strong_ciphers_only",
   "CheckTitle": "Ensure that the API Server only makes use of Strong Cryptographic Ciphers",
-  "CheckType": [
-    "Security",
-    "Configuration"
-  ],
+  "CheckType": [],
   "ServiceName": "apiserver",
-  "SubServiceName": "TLS Cipher Configuration",
+  "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "KubernetesAPIServer",
@@ -16,8 +13,8 @@
   "RelatedUrl": "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/",
   "Remediation": {
     "Code": {
-      "CLI": "Edit the kube-apiserver configuration to include only strong cryptographic ciphers in the --tls-cipher-suites parameter. Example: --tls-cipher-suites=TLS_AES_128_GCM_SHA256,...",
-      "NativeIaC": "",
+      "CLI": "--tls-cipher-suites=TLS_AES_128_GCM_SHA256,...",
+      "NativeIaC": "https://docs.bridgecrew.io/docs/ensure-that-the-kubelet-only-makes-use-of-strong-cryptographic-ciphers#kubernetes",
       "Other": "",
       "Terraform": ""
     },
@@ -27,8 +24,8 @@
     }
   },
   "Categories": [
-    "Data Security",
-    "Network Security"
+    "encryption",
+    "internet-exposed"
   ],
   "DependsOn": [],
   "RelatedTo": [],

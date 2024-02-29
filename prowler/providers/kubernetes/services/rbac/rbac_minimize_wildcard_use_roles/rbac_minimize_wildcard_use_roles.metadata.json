@@ -2,12 +2,9 @@
   "Provider": "kubernetes",
   "CheckID": "rbac_minimize_wildcard_use_roles",
   "CheckTitle": "Minimize wildcard use in Roles and ClusterRoles",
-  "CheckType": [
-    "Security",
-    "Configuration"
-  ],
+  "CheckType": [],
   "ServiceName": "RBAC",
-  "SubServiceName": "Roles Management",
+  "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Role/ClusterRole",
@@ -16,8 +13,8 @@
   "RelatedUrl": "https://kubernetes.io/docs/reference/access-authn-authz/rbac/",
   "Remediation": {
     "Code": {
-      "CLI": "Review and update Roles and ClusterRoles to replace wildcards with specific resource names and actions. Use `kubectl get roles --all-namespaces -o yaml` and `kubectl get clusterroles -o yaml` to list current configurations.",
-      "NativeIaC": "",
+      "CLI": "",
+      "NativeIaC": "https://docs.bridgecrew.io/docs/ensure-minimized-wildcard-use-in-roles-and-clusterroles",
       "Other": "",
       "Terraform": ""
     },
@@ -27,8 +24,7 @@
     }
   },
   "Categories": [
-    "Access Control",
-    "Policy Management"
+    "trustboundaries"
   ],
   "DependsOn": [],
   "RelatedTo": [],

@@ -2,12 +2,9 @@
   "Provider": "kubernetes",
   "CheckID": "core_minimize_net_raw_capability_admission",
   "CheckTitle": "Minimize the admission of containers with the NET_RAW capability",
-  "CheckType": [
-    "Security",
-    "Configuration"
-  ],
+  "CheckType": [],
   "ServiceName": "core",
-  "SubServiceName": "Capability Control",
+  "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "KubernetesPod",
@@ -27,8 +24,7 @@
     }
   },
   "Categories": [
-    "Container Security",
-    "Best Practices"
+    "container-security"
   ],
   "DependsOn": [],
   "RelatedTo": [],
