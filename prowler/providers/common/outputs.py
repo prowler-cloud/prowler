@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from os import makedirs
 from os.path import isdir
 
-from prowler.config.config import change_config_var, output_file_timestamp
+from prowler.config.config import output_file_timestamp
 from prowler.lib.logger import logger
 
 
@@ -76,28 +76,28 @@ class Provider_Output_Options:
 
 
 class Azure_Output_Options(Provider_Output_Options):
-    def __init__(self, arguments, audit_info, mutelist_file, bulk_checks_metadata):
+    def __init__(self, arguments, identity, mutelist_file, bulk_checks_metadata):
         # First call Provider_Output_Options init
         super().__init__(arguments, mutelist_file, bulk_checks_metadata)
 
         # Confire Shodan API
-        if arguments.shodan:
-            audit_info = change_config_var(
-                "shodan_api_key", arguments.shodan, audit_info
-            )
+        # TODO: review shodan for the new AWS provider
+        # if arguments.shodan:
+        #     audit_info = change_config_var(
+        #         "shodan_api_key", arguments.shodan, audit_info
+        #     )
 
         # Check if custom output filename was input, if not, set the default
         if (
             not hasattr(arguments, "output_filename")
             or arguments.output_filename is None
         ):
-            if (
-                audit_info.identity.domain
-                != "Unknown tenant domain (missing AAD permissions)"
-            ):
-                self.output_filename = f"prowler-output-{audit_info.identity.domain}-{output_file_timestamp}"
+            if identity.domain != "Unknown tenant domain (missing AAD permissions)":
+                self.output_filename = (
+                    f"prowler-output-{identity.domain}-{output_file_timestamp}"
+                )
             else:
-                self.output_filename = f"prowler-output-{'-'.join(audit_info.identity.tenant_ids)}-{output_file_timestamp}"
+                self.output_filename = f"prowler-output-{'-'.join(identity.tenant_ids)}-{output_file_timestamp}"
         else:
             self.output_filename = arguments.output_filename
 

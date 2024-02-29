@@ -1,5 +1,5 @@
 from prowler.lib.logger import logger
-from prowler.providers.azure.azure_provider_new import AzureProvider
+from prowler.providers.azure.azure_provider import AzureProvider
 
 
 class AzureService:
@@ -16,9 +16,6 @@ class AzureService:
         )
 
         self.subscriptions = provider.identity.subscriptions
-        # TODO: review locations
-        self.locations = provider.locations
-
         self.audit_config = provider.audit_config
 
     def __set_clients__(self, subscriptions, session, service, region_config):

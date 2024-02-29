@@ -1,4 +1,4 @@
-from prowler.providers.azure.lib.audit_info.audit_info import azure_audit_info
 from prowler.providers.azure.services.monitor.monitor_service import Monitor
+from prowler.providers.common.common import get_global_provider
 
-monitor_client = Monitor(azure_audit_info)
+monitor_client = Monitor(get_global_provider())

@@ -1,4 +1,4 @@
-from prowler.providers.azure.lib.audit_info.audit_info import azure_audit_info
 from prowler.providers.azure.services.network.network_service import Network
+from prowler.providers.common.common import get_global_provider
 
-network_client = Network(azure_audit_info)
+network_client = Network(get_global_provider())
