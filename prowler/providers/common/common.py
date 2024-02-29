@@ -34,7 +34,7 @@ def set_global_provider_object(arguments):
     global global_provider
     # make here dynamic import
     common_import_path = (
-        f"prowler.providers.{arguments.provider}.{arguments.provider}_provider_new"
+        f"prowler.providers.{arguments.provider}.{arguments.provider}_provider"
     )
     provider_class = f"{arguments.provider.capitalize()}Provider"
     global_provider = getattr(import_module(common_import_path), provider_class)(

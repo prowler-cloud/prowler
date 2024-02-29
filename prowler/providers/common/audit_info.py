@@ -9,8 +9,6 @@ from prowler.providers.aws.aws_provider import (
     AWS_Provider,
     assume_role,
     get_aws_enabled_regions,
-    get_checks_from_input_arn,
-    get_regions_from_audit_resources,
 )
 from prowler.providers.aws.lib.arn.arn import parse_iam_credentials_arn
 from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
@@ -307,19 +305,19 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
 
         return current_audit_info
 
-    def set_aws_execution_parameters(self, provider, audit_info) -> list[str]:
-        # Once the audit_info is set and we have the eventual checks from arn, it is time to exclude the others
-        try:
-            if audit_info.audit_resources:
-                audit_info.audited_regions = get_regions_from_audit_resources(
-                    audit_info.audit_resources
-                )
-                return get_checks_from_input_arn(audit_info.audit_resources, provider)
-        except Exception as error:
-            logger.critical(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
-            sys.exit(1)
+    # def set_aws_execution_parameters(self, provider, audit_info) -> list[str]:
+    #     # Once the audit_info is set and we have the eventual checks from arn, it is time to exclude the others
+    #     try:
+    #         if audit_info.audit_resources:
+    #             audit_info.audited_regions = get_regions_from_audit_resources(
+    #                 audit_info.audit_resources
+    #             )
+    # return get_checks_from_input_arn(audit_info.audit_resources, provider)
+    #     except Exception as error:
+    #         logger.critical(
+    #             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+    #         )
+    #         sys.exit(1)
 
     def set_azure_audit_info(self, arguments) -> Azure_Audit_Info:
         """

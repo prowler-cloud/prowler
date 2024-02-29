@@ -23,6 +23,7 @@ from prowler.providers.aws.lib.credentials.credentials import (
     create_sts_session,
     validate_AWSCredentials,
 )
+from prowler.providers.aws.lib.mutelist.mutelist import parse_mutelist_file
 from prowler.providers.aws.lib.organizations.organizations import (
     get_organizations_metadata,
 )
@@ -38,6 +39,7 @@ from prowler.providers.common.provider import Provider
 
 
 class AwsProvider(Provider):
+    provider: str = "aws"
     session: AWSSession = AWSSession(
         session=None, session_config=None, original_session=None
     )
@@ -369,34 +371,18 @@ Caller Identity ARN: {Fore.YELLOW}[{self.identity.identity_arn}]{Style.RESET_ALL
             regions = json_regions
         return regions
 
-    def get_aws_available_regions():
-        try:
-            actual_directory = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))
-            with open_file(f"{actual_directory}/{aws_services_json_file}") as f:
-                data = parse_json_file(f)
-
-            regions = set()
-            for service in data["services"].values():
-                for partition in service["regions"]:
-                    for item in service["regions"][partition]:
-                        regions.add(item)
-            return list(regions)
-        except Exception as error:
-            logger.error(f"{error.__class__.__name__}: {error}")
-            return []
-
     # TODO: why do we need the provider as an argument if this is only for AWS?
     # Remove if not needed
-    def get_checks_from_input_arn(audit_resources: list, provider: str) -> set:
+    def get_checks_from_input_arn(self) -> set:
         """get_checks_from_input_arn gets the list of checks from the input arns"""
         checks_from_arn = set()
         is_subservice_in_checks = False
         # Handle if there are audit resources so only their services are executed
-        if audit_resources:
+        if self.audit_resources:
             services_without_subservices = ["guardduty", "kms", "s3", "elb", "efs"]
             service_list = set()
             sub_service_list = set()
-            for resource in audit_resources:
+            for resource in self.audit_resources:
                 service = resource.split(":")[2]
                 sub_service = resource.split(":")[5].split("/")[0].replace("-", "_")
                 # WAF Services does not have checks
@@ -412,7 +398,7 @@ Caller Identity ARN: {Fore.YELLOW}[{self.identity.identity_arn}]{Style.RESET_ALL
                         service = "cloudwatch"
                     # Check if Prowler has checks in service
                     try:
-                        list_modules(provider, service)
+                        list_modules(self.provider, service)
                     except ModuleNotFoundError:
                         # Service is not supported
                         pass
@@ -435,7 +421,7 @@ Caller Identity ARN: {Fore.YELLOW}[{self.identity.identity_arn}]{Style.RESET_ALL
                         sub_service_list.add(sub_service)
                     else:
                         sub_service_list.add(service)
-            checks = recover_checks_from_service(service_list, provider)
+            checks = recover_checks_from_service(service_list, self.provider)
 
             # Filter only checks with audited subservices
             for check in checks:
@@ -602,3 +588,46 @@ Caller Identity ARN: {Fore.YELLOW}[{self.identity.identity_arn}]{Style.RESET_ALL
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
         return enabled_regions
+
+    def get_checks_to_execute_by_audit_resources(self) -> set[str]:
+        # Once the audit_info is set and we have the eventual checks from arn, it is time to exclude the others
+        try:
+            checks = set()
+            if self.audit_resources:
+                self.identity.audited_regions = self.get_regions_from_audit_resources(
+                    self.audit_resources
+                )
+                checks = self.get_checks_from_input_arn()
+            return checks
+        except Exception as error:
+            logger.critical(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            sys.exit(1)
+
+    def get_mutelist(self, mutelist_file):
+        # Parse content from Mute List file and get it, if necessary, from S3
+        if mutelist_file:
+            mutelist_file = parse_mutelist_file(
+                self.session.session, self.identity.account, mutelist_file
+            )
+        else:
+            mutelist_file = None
+        return mutelist_file
+
+
+def get_aws_available_regions():
+    try:
+        actual_directory = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))
+        with open_file(f"{actual_directory}/{aws_services_json_file}") as f:
+            data = parse_json_file(f)
+
+        regions = set()
+        for service in data["services"].values():
+            for partition in service["regions"]:
+                for item in service["regions"][partition]:
+                    regions.add(item)
+        return list(regions)
+    except Exception as error:
+        logger.error(f"{error.__class__.__name__}: {error}")
+        return []

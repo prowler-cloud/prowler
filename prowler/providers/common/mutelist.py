@@ -2,7 +2,6 @@ import importlib
 import sys
 
 from prowler.lib.logger import logger
-from prowler.providers.aws.lib.mutelist.mutelist import parse_mutelist_file
 
 
 def set_provider_mutelist(provider, audit_info, args):
@@ -24,12 +23,3 @@ def set_provider_mutelist(provider, audit_info, args):
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
         )
         sys.exit(1)
-
-
-def set_aws_mutelist(audit_info, mutelist_file):
-    # Parse content from Mute List file and get it, if necessary, from S3
-    if mutelist_file:
-        mutelist_file = parse_mutelist_file(audit_info, mutelist_file)
-    else:
-        mutelist_file = None
-    return mutelist_file

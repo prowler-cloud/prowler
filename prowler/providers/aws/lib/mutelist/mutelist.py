@@ -32,22 +32,20 @@ mutelist_schema = Schema(
 )
 
 
-def parse_mutelist_file(audit_info, mutelist_file):
+def parse_mutelist_file(session, aws_account, mutelist_file):
     try:
         # Check if file is a S3 URI
         if re.search("^s3://([^/]+)/(.*?([^/]+))$", mutelist_file):
             bucket = mutelist_file.split("/")[2]
             key = ("/").join(mutelist_file.split("/")[3:])
-            s3_client = audit_info.audit_session.client("s3")
+            s3_client = session.client("s3")
             mutelist = yaml.safe_load(
                 s3_client.get_object(Bucket=bucket, Key=key)["Body"]
             )["Mute List"]
         # Check if file is a Lambda Function ARN
         elif re.search(r"^arn:(\w+):lambda:", mutelist_file):
             lambda_region = mutelist_file.split(":")[3]
-            lambda_client = audit_info.audit_session.client(
-                "lambda", region_name=lambda_region
-            )
+            lambda_client = session.client("lambda", region_name=lambda_region)
             lambda_response = lambda_client.invoke(
                 FunctionName=mutelist_file, InvocationType="RequestResponse"
             )
@@ -60,23 +58,17 @@ def parse_mutelist_file(audit_info, mutelist_file):
         ):
             mutelist = {"Accounts": {}}
             table_region = mutelist_file.split(":")[3]
-            dynamodb_resource = audit_info.audit_session.resource(
-                "dynamodb", region_name=table_region
-            )
+            dynamodb_resource = session.resource("dynamodb", region_name=table_region)
             dynamo_table = dynamodb_resource.Table(mutelist_file.split("/")[1])
             response = dynamo_table.scan(
-                FilterExpression=Attr("Accounts").is_in(
-                    [audit_info.audited_account, "*"]
-                )
+                FilterExpression=Attr("Accounts").is_in([aws_account, "*"])
             )
             dynamodb_items = response["Items"]
             # Paginate through all results
             while "LastEvaluatedKey" in dynamodb_items:
                 response = dynamo_table.scan(
                     ExclusiveStartKey=response["LastEvaluatedKey"],
-                    FilterExpression=Attr("Accounts").is_in(
-                        [audit_info.audited_account, "*"]
-                    ),
+                    FilterExpression=Attr("Accounts").is_in([aws_account, "*"]),
                 )
                 dynamodb_items.update(response["Items"])
             for item in dynamodb_items:
