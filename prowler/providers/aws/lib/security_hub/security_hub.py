@@ -1,4 +1,5 @@
 from boto3 import session
+from botocore.client import ClientError
 
 from prowler.config.config import timestamp_utc
 from prowler.lib.logger import logger
@@ -11,7 +12,7 @@ SECURITY_HUB_MAX_BATCH = 100
 
 
 def prepare_security_hub_findings(
-    findings: [], audit_info: AWS_Audit_Info, output_options, enabled_regions: []
+    findings: list, audit_info: AWS_Audit_Info, output_options, enabled_regions: list
 ) -> dict:
     security_hub_findings_per_region = {}
 
@@ -29,7 +30,11 @@ def prepare_security_hub_findings(
             continue
 
         # Handle status filters, if any
-        if not output_options.status or finding.status in output_options.status:
+        if (
+            not output_options.status
+            or finding.status in output_options.status
+            or output_options.send_sh_only_fails
+        ):
             continue
 
         # Get the finding region
@@ -70,15 +75,32 @@ def verify_security_hub_integration_enabled_per_region(
         if security_hub_prowler_integration_arn not in str(
             security_hub_client.list_enabled_products_for_import()
         ):
-            logger.error(
+            logger.warning(
                 f"Security Hub is enabled in {region} but Prowler integration does not accept findings. More info: https://docs.prowler.cloud/en/latest/tutorials/aws/securityhub/"
             )
         else:
             prowler_integration_enabled = True
 
+    # Handle all the permissions / configuration errors
+    except ClientError as client_error:
+        # Check if Account is subscribed to Security Hub
+        error_code = client_error.response["Error"]["Code"]
+        error_message = client_error.response["Error"]["Message"]
+        if (
+            error_code == "InvalidAccessException"
+            and f"Account {aws_account_number} is not subscribed to AWS Security Hub in region {region}"
+            in error_message
+        ):
+            logger.warning(
+                f"{client_error.__class__.__name__} -- [{client_error.__traceback__.tb_lineno}]: {client_error}"
+            )
+        else:
+            logger.error(
+                f"{client_error.__class__.__name__} -- [{client_error.__traceback__.tb_lineno}]: {client_error}"
+            )
     except Exception as error:
         logger.error(
-            f"{error.__class__.__name__} -- [{error.__traceback__.tb_lineno}]:{error} in region {region}"
+            f"{error.__class__.__name__} -- [{error.__traceback__.tb_lineno}]: {error}"
         )
 
     finally:
@@ -167,7 +189,7 @@ def resolve_security_hub_previous_findings(
 
 
 def __send_findings_to_security_hub__(
-    findings: [dict], region: str, security_hub_client
+    findings: list[dict], region: str, security_hub_client
 ):
     """Private function send_findings_to_security_hub chunks the findings in groups of 100 findings and send them to AWS Security Hub. It returns the number of sent findings."""
     success_count = 0

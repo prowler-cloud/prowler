@@ -1,6 +1,6 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.lib.policy_condition_parser.policy_condition_parser import (
-    is_account_only_allowed_in_condition,
+    is_condition_block_restrictive,
 )
 from prowler.providers.aws.services.iam.iam_client import iam_client
 
@@ -30,7 +30,7 @@ class iam_role_cross_service_confused_deputy_prevention(Check):
                         and "Service" in statement["Principal"]
                         # Check to see if the appropriate condition statements have been implemented
                         and "Condition" in statement
-                        and is_account_only_allowed_in_condition(
+                        and is_condition_block_restrictive(
                             statement["Condition"], iam_client.audited_account
                         )
                     ):

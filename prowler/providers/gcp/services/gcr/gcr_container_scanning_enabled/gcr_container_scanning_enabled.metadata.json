@@ -1,0 +1,33 @@
+{
+  "Provider": "gcp",
+  "CheckID": "gcr_container_scanning_enabled",
+  "CheckTitle": "Ensure Image Vulnerability Scanning using GCR Container Scanning or a third-party provider",
+  "CheckType": [
+    "Security",
+    "Configuration"
+  ],
+  "ServiceName": "Google Container Registry (GCR)",
+  "SubServiceName": "Container Scanning",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Service",
+  "Description": "Scan images stored in Google Container Registry (GCR) for vulnerabilities using GCR Container Scanning or a third-party provider. This helps identify and mitigate security risks associated with known vulnerabilities in container images.",
+  "Risk": "Without image vulnerability scanning, container images stored in GCR may contain known vulnerabilities, increasing the risk of exploitation by malicious actors.",
+  "RelatedUrl": "https://cloud.google.com/container-registry/docs/container-analysis",
+  "Remediation": {
+    "Code": {
+      "CLI": "gcloud services enable containerscanning.googleapis.com",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": "https://docs.bridgecrew.io/docs/ensure-gcp-gcr-container-vulnerability-scanning-is-enabled#terraform"
+    },
+    "Recommendation": {
+      "Text": "Enable vulnerability scanning for images stored in GCR using GCR Container Scanning or a third-party provider.",
+      "Url": "https://cloud.google.com/container-registry/docs/container-best-practices"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "By default, GCR Container Scanning is disabled."
+}

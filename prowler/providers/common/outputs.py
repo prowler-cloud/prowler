@@ -69,16 +69,22 @@ class Provider_Output_Options:
         if arguments.output_directory:
             if not isdir(arguments.output_directory):
                 if arguments.output_modes:
-                    makedirs(arguments.output_directory)
+                    makedirs(arguments.output_directory, exist_ok=True)
             if not isdir(arguments.output_directory + "/compliance"):
                 if arguments.output_modes:
-                    makedirs(arguments.output_directory + "/compliance")
+                    makedirs(arguments.output_directory + "/compliance", exist_ok=True)
 
 
 class Azure_Output_Options(Provider_Output_Options):
     def __init__(self, arguments, audit_info, mutelist_file, bulk_checks_metadata):
         # First call Provider_Output_Options init
         super().__init__(arguments, mutelist_file, bulk_checks_metadata)
+
+        # Confire Shodan API
+        if arguments.shodan:
+            audit_info = change_config_var(
+                "shodan_api_key", arguments.shodan, audit_info
+            )
 
         # Check if custom output filename was input, if not, set the default
         if (
@@ -106,7 +112,7 @@ class Gcp_Output_Options(Provider_Output_Options):
             not hasattr(arguments, "output_filename")
             or arguments.output_filename is None
         ):
-            self.output_filename = f"prowler-output-{audit_info.default_project_id}-{output_file_timestamp}"
+            self.output_filename = f"prowler-output-{getattr(audit_info.credentials, '_service_account_email', 'default')}-{output_file_timestamp}"
         else:
             self.output_filename = arguments.output_filename
 
@@ -152,6 +158,7 @@ class Aws_Output_Options(Provider_Output_Options):
 
         # Security Hub Outputs
         self.security_hub_enabled = arguments.security_hub
+        self.send_sh_only_fails = arguments.send_sh_only_fails
         if arguments.security_hub:
             if not self.output_modes:
                 self.output_modes = ["json-asff"]

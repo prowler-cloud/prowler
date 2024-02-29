@@ -1,0 +1,30 @@
+{
+  "Provider": "gcp",
+  "CheckID": "iam_cloud_asset_inventory_enabled",
+  "CheckTitle": "Ensure Cloud Asset Inventory Is Enabled",
+  "CheckType": [],
+  "ServiceName": "iam",
+  "SubServiceName": "Asset Inventory",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Service",
+  "Description": "GCP Cloud Asset Inventory is services that provides a historical view of GCP resources and IAM policies through a time-series database. The information recorded includes metadata on Google Cloud resources, metadata on policies set on Google Cloud projects or resources, and runtime information gathered within a Google Cloud resource.",
+  "Risk": "Gaining insight into Google Cloud resources and policies is vital for tasks such as DevOps, security analytics, multi-cluster and fleet management, auditing, and governance. With Cloud Asset Inventory you can discover, monitor, and analyze all GCP assets in one place, achieving a better understanding of all your cloud assets across projects and services.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "gcloud services enable cloudasset.googleapis.com",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudAPI/enabled-cloud-asset-inventory.html",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Ensure that Cloud Asset Inventory is enabled for all your GCP projects in order to efficiently manage the history and the inventory of your cloud resources. Google Cloud Asset Inventory is a fully managed metadata inventory service that allows you to view, monitor, analyze, and gain insights for your Google Cloud and Anthos assets. Cloud Asset Inventory is disabled by default in each GCP project.",
+      "Url": "https://cloud.google.com/asset-inventory/docs"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

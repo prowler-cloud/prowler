@@ -1,49 +1,20 @@
 from json import dumps
 from unittest import mock
 
-from boto3 import client, session
-from moto import mock_iam
+from boto3 import client
+from moto import mock_aws
 
-from prowler.providers.aws.lib.audit_info.audit_info import AWS_Audit_Info
 from prowler.providers.aws.services.iam.iam_service import IAM
-from prowler.providers.common.models import Audit_Metadata
+from tests.providers.aws.audit_info_utils import (
+    AWS_REGION_US_EAST_1,
+    set_mocked_aws_audit_info,
+)
 
 
 class Test_iam_policy_no_full_access_to_kms:
-    # Mocked Audit Info
-    def set_mocked_audit_info(self):
-        audit_info = AWS_Audit_Info(
-            session_config=None,
-            original_session=None,
-            audit_session=session.Session(
-                profile_name=None,
-                botocore_session=None,
-            ),
-            audited_account=None,
-            audited_account_arn=None,
-            audited_user_id=None,
-            audited_partition="aws",
-            audited_identity_arn=None,
-            profile=None,
-            profile_region="us-east-1",
-            credentials=None,
-            assumed_role_info=None,
-            audited_regions=None,
-            organizations_metadata=None,
-            audit_resources=None,
-            mfa_enabled=False,
-            audit_metadata=Audit_Metadata(
-                services_scanned=0,
-                expected_checks=[],
-                completed_checks=0,
-                audit_progress=0,
-            ),
-        )
-        return audit_info
-
-    @mock_iam
+    @mock_aws
     def test_policy_full_access_to_kms(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
         iam_client = client("iam")
         policy_name = "policy_kms_full"
         policy_document_full_access = {
@@ -80,9 +51,9 @@ class Test_iam_policy_no_full_access_to_kms:
                 assert result[0].resource_arn == arn
                 assert result[0].region == "us-east-1"
 
-    @mock_iam
+    @mock_aws
     def test_policy_no_full_access_to_kms(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
         iam_client = client("iam")
         policy_name = "policy_no_kms_full"
         policy_document_full_access = {
@@ -119,9 +90,9 @@ class Test_iam_policy_no_full_access_to_kms:
                 assert result[0].resource_arn == arn
                 assert result[0].region == "us-east-1"
 
-    @mock_iam
+    @mock_aws
     def test_policy_mixed(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
         iam_client = client("iam")
         policy_name = "policy_mixed"
         policy_document_full_access = {

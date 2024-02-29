@@ -15,6 +15,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -95,6 +96,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -137,6 +139,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -319,6 +322,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -397,6 +401,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "me-central-1",
           "me-south-1",
           "sa-east-1",
           "us-east-1",
@@ -429,6 +434,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -471,6 +477,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -715,6 +722,7 @@
           "ap-southeast-1",
           "ap-southeast-2",
           "ap-southeast-3",
+          "ap-southeast-4",
           "ca-central-1",
           "eu-central-1",
           "eu-central-2",
@@ -724,6 +732,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "il-central-1",
           "me-central-1",
           "me-south-1",
           "sa-east-1",
@@ -776,6 +785,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -818,6 +828,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -939,6 +950,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -981,6 +993,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -1034,6 +1047,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -1059,6 +1073,17 @@
           "us-gov-east-1",
           "us-gov-west-1"
         ]
+      }
+    },
+    "b2bi": {
+      "regions": {
+        "aws": [
+          "us-east-1",
+          "us-east-2",
+          "us-west-2"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "backup": {
@@ -1191,6 +1216,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -1228,7 +1254,9 @@
           "us-west-2"
         ],
         "aws-cn": [],
-        "aws-us-gov": []
+        "aws-us-gov": [
+          "us-gov-west-1"
+        ]
       }
     },
     "billingconductor": {
@@ -1463,6 +1491,25 @@
         "aws-us-gov": []
       }
     },
+    "cleanroomsml": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "eu-central-1",
+          "eu-north-1",
+          "eu-west-1",
+          "eu-west-2",
+          "us-east-1",
+          "us-east-2",
+          "us-west-2"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
     "cloud9": {
       "regions": {
         "aws": [
@@ -1481,6 +1528,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "il-central-1",
           "me-south-1",
           "sa-east-1",
           "us-east-1",
@@ -1507,6 +1555,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -1632,6 +1681,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -1674,6 +1724,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -1707,6 +1758,7 @@
           "ap-northeast-2",
           "ap-northeast-3",
           "ap-south-1",
+          "ap-south-2",
           "ap-southeast-1",
           "ap-southeast-2",
           "ap-southeast-3",
@@ -1801,6 +1853,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -1830,7 +1883,9 @@
     },
     "cloudtrail-data": {
       "regions": {
-        "aws": [],
+        "aws": [
+          "me-central-1"
+        ],
         "aws-cn": [],
         "aws-us-gov": []
       }
@@ -1850,6 +1905,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -2004,6 +2060,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -2183,15 +2240,58 @@
         "aws-us-gov": []
       }
     },
-    "cognito-identity": {
+    "codewhisperer": {
       "regions": {
         "aws": [
+          "us-east-1"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
+    "cognito": {
+      "regions": {
+        "aws": [
+          "af-south-1",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
           "ap-south-1",
           "ap-southeast-1",
           "ap-southeast-2",
+          "ap-southeast-3",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-north-1",
+          "eu-south-1",
+          "eu-west-1",
+          "eu-west-2",
+          "eu-west-3",
+          "il-central-1",
+          "me-south-1",
+          "sa-east-1",
+          "us-east-1",
+          "us-east-2",
+          "us-west-1",
+          "us-west-2"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": [
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "cognito-identity": {
+      "regions": {
+        "aws": [
+          "af-south-1",
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-northeast-3",
+          "ap-south-1",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "ap-southeast-3",
           "ca-central-1",
           "eu-central-1",
           "eu-north-1",
@@ -2218,12 +2318,14 @@
     "cognito-idp": {
       "regions": {
         "aws": [
+          "af-south-1",
           "ap-northeast-1",
           "ap-northeast-2",
           "ap-northeast-3",
           "ap-south-1",
           "ap-southeast-1",
           "ap-southeast-2",
+          "ap-southeast-3",
           "ca-central-1",
           "eu-central-1",
           "eu-north-1",
@@ -2360,6 +2462,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -2513,6 +2616,15 @@
         ]
       }
     },
+    "cost-optimization-hub": {
+      "regions": {
+        "aws": [
+          "us-east-1"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
     "costexplorer": {
       "regions": {
         "aws": [
@@ -2632,6 +2744,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -2663,12 +2776,14 @@
       "regions": {
         "aws": [
           "ap-northeast-1",
+          "ap-northeast-2",
           "ap-southeast-1",
           "ap-southeast-2",
           "ca-central-1",
           "eu-central-1",
           "eu-north-1",
           "eu-west-1",
+          "eu-west-2",
           "sa-east-1",
           "us-east-1",
           "us-east-2",
@@ -2705,17 +2820,6 @@
     "deepcomposer": {
       "regions": {
         "aws": [
-          "us-east-1"
-        ],
-        "aws-cn": [],
-        "aws-us-gov": []
-      }
-    },
-    "deeplens": {
-      "regions": {
-        "aws": [
-          "ap-northeast-1",
-          "eu-central-1",
           "us-east-1"
         ],
         "aws-cn": [],
@@ -2811,6 +2915,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -2868,6 +2973,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -2876,6 +2982,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "il-central-1",
           "me-central-1",
           "me-south-1",
           "sa-east-1",
@@ -2909,6 +3016,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -3000,7 +3108,10 @@
           "us-west-2"
         ],
         "aws-cn": [],
-        "aws-us-gov": []
+        "aws-us-gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
       }
     },
     "ds": {
@@ -3018,6 +3129,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -3060,6 +3172,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -3102,6 +3215,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -3144,6 +3258,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -3186,6 +3301,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -3228,6 +3344,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -3280,6 +3397,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -3322,6 +3440,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -3364,6 +3483,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -3389,6 +3509,43 @@
           "us-gov-east-1",
           "us-gov-west-1"
         ]
+      }
+    },
+    "eks-auth": {
+      "regions": {
+        "aws": [
+          "af-south-1",
+          "ap-east-1",
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-northeast-3",
+          "ap-south-1",
+          "ap-south-2",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "ap-southeast-3",
+          "ap-southeast-4",
+          "ca-central-1",
+          "ca-west-1",
+          "eu-central-1",
+          "eu-central-2",
+          "eu-north-1",
+          "eu-south-1",
+          "eu-south-2",
+          "eu-west-1",
+          "eu-west-2",
+          "eu-west-3",
+          "il-central-1",
+          "me-central-1",
+          "me-south-1",
+          "sa-east-1",
+          "us-east-1",
+          "us-east-2",
+          "us-west-1",
+          "us-west-2"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "elastic-inference": {
@@ -3420,6 +3577,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -3515,6 +3673,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -3557,6 +3716,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -3599,6 +3759,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -3679,9 +3840,11 @@
           "eu-central-1",
           "eu-north-1",
           "eu-south-1",
+          "eu-south-2",
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "me-central-1",
           "me-south-1",
           "sa-east-1",
           "us-east-1",
@@ -3693,7 +3856,10 @@
           "cn-north-1",
           "cn-northwest-1"
         ],
-        "aws-us-gov": []
+        "aws-us-gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
       }
     },
     "entityresolution": {
@@ -3729,6 +3895,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -3771,6 +3938,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -3813,6 +3981,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -3872,6 +4041,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -3963,6 +4133,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -4271,19 +4442,30 @@
     "fsx-openzfs": {
       "regions": {
         "aws": [
+          "af-south-1",
           "ap-east-1",
           "ap-northeast-1",
           "ap-northeast-2",
+          "ap-northeast-3",
           "ap-south-1",
+          "ap-south-2",
           "ap-southeast-1",
           "ap-southeast-2",
+          "ap-southeast-3",
           "ca-central-1",
           "eu-central-1",
           "eu-north-1",
+          "eu-south-1",
           "eu-west-1",
           "eu-west-2",
+          "eu-west-3",
+          "il-central-1",
+          "me-central-1",
+          "me-south-1",
+          "sa-east-1",
           "us-east-1",
           "us-east-2",
+          "us-west-1",
           "us-west-2"
         ],
         "aws-cn": [],
@@ -4451,6 +4633,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -4622,6 +4805,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -4670,6 +4854,7 @@
           "eu-west-2",
           "eu-west-3",
           "il-central-1",
+          "me-central-1",
           "me-south-1",
           "sa-east-1",
           "us-east-1",
@@ -4699,6 +4884,7 @@
           "ap-southeast-1",
           "ap-southeast-2",
           "ap-southeast-3",
+          "ap-southeast-4",
           "ca-central-1",
           "eu-central-1",
           "eu-central-2",
@@ -4708,6 +4894,7 @@
           "eu-west-2",
           "eu-west-3",
           "il-central-1",
+          "me-central-1",
           "me-south-1",
           "sa-east-1",
           "us-east-1",
@@ -4740,6 +4927,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -4806,7 +4994,7 @@
         ]
       }
     },
-    "inspector2": {
+    "inspector-scan": {
       "regions": {
         "aws": [
           "af-south-1",
@@ -4834,6 +5022,43 @@
           "us-west-2"
         ],
         "aws-cn": [],
+        "aws-us-gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
+      }
+    },
+    "inspector2": {
+      "regions": {
+        "aws": [
+          "af-south-1",
+          "ap-east-1",
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-northeast-3",
+          "ap-south-1",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "ap-southeast-3",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-central-2",
+          "eu-north-1",
+          "eu-south-1",
+          "eu-west-1",
+          "eu-west-2",
+          "eu-west-3",
+          "me-south-1",
+          "sa-east-1",
+          "us-east-1",
+          "us-east-2",
+          "us-west-1",
+          "us-west-2"
+        ],
+        "aws-cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
         "aws-us-gov": [
           "us-gov-east-1",
           "us-gov-west-1"
@@ -5218,7 +5443,9 @@
           "us-east-1",
           "us-west-2"
         ],
-        "aws-cn": [],
+        "aws-cn": [
+          "cn-north-1"
+        ],
         "aws-us-gov": [
           "us-gov-west-1"
         ]
@@ -5402,6 +5629,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -5512,6 +5740,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -5596,6 +5825,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -5636,10 +5866,13 @@
           "ap-southeast-1",
           "ap-southeast-2",
           "ap-southeast-3",
+          "ap-southeast-4",
           "ca-central-1",
           "eu-central-1",
+          "eu-central-2",
           "eu-north-1",
           "eu-south-1",
+          "eu-south-2",
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
@@ -5674,10 +5907,13 @@
           "ap-southeast-1",
           "ap-southeast-2",
           "ap-southeast-3",
+          "ap-southeast-4",
           "ca-central-1",
           "eu-central-1",
+          "eu-central-2",
           "eu-north-1",
           "eu-south-1",
+          "eu-south-2",
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
@@ -5812,6 +6048,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -5912,6 +6149,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -6011,16 +6249,22 @@
     "m2": {
       "regions": {
         "aws": [
+          "af-south-1",
           "ap-northeast-1",
           "ap-northeast-2",
+          "ap-northeast-3",
           "ap-south-1",
           "ap-southeast-1",
           "ap-southeast-2",
           "ca-central-1",
           "eu-central-1",
+          "eu-north-1",
+          "eu-south-1",
+          "eu-south-2",
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "il-central-1",
           "sa-east-1",
           "us-east-1",
           "us-east-2",
@@ -6175,6 +6419,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -6270,14 +6515,17 @@
           "ap-northeast-2",
           "ap-northeast-3",
           "ap-south-1",
+          "ap-south-2",
           "ap-southeast-1",
           "ap-southeast-2",
+          "ap-southeast-4",
           "ca-central-1",
           "eu-central-1",
           "eu-north-1",
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "me-central-1",
           "sa-east-1",
           "us-east-1",
           "us-east-2",
@@ -6328,6 +6576,7 @@
           "ap-south-1",
           "ap-southeast-1",
           "ap-southeast-2",
+          "ap-southeast-4",
           "ca-central-1",
           "eu-central-1",
           "eu-north-1",
@@ -6352,6 +6601,7 @@
           "ap-south-1",
           "ap-southeast-1",
           "ap-southeast-2",
+          "ap-southeast-4",
           "ca-central-1",
           "eu-central-1",
           "eu-north-1",
@@ -6377,6 +6627,7 @@
           "ap-south-1",
           "ap-southeast-1",
           "ap-southeast-2",
+          "ap-southeast-4",
           "ca-central-1",
           "eu-central-1",
           "eu-north-1",
@@ -6398,9 +6649,12 @@
         "aws": [
           "ap-northeast-1",
           "ap-northeast-2",
+          "ap-northeast-3",
           "ap-south-1",
           "ap-southeast-1",
           "ap-southeast-2",
+          "ap-southeast-4",
+          "ca-central-1",
           "eu-central-1",
           "eu-north-1",
           "eu-west-1",
@@ -6708,6 +6962,7 @@
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "il-central-1",
           "me-central-1",
           "me-south-1",
           "sa-east-1",
@@ -6796,6 +7051,21 @@
         ]
       }
     },
+    "neptune-graph": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-southeast-1",
+          "eu-central-1",
+          "eu-west-1",
+          "us-east-1",
+          "us-east-2",
+          "us-west-2"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
     "network-firewall": {
       "regions": {
         "aws": [
@@ -6865,6 +7135,32 @@
           "us-gov-east-1",
           "us-gov-west-1"
         ]
+      }
+    },
+    "networkmonitor": {
+      "regions": {
+        "aws": [
+          "ap-east-1",
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-south-1",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-north-1",
+          "eu-west-1",
+          "eu-west-2",
+          "eu-west-3",
+          "me-south-1",
+          "sa-east-1",
+          "us-east-1",
+          "us-east-2",
+          "us-west-1",
+          "us-west-2"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "nimble": {
@@ -6937,6 +7233,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -6991,6 +7288,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -7123,6 +7421,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -7160,8 +7459,10 @@
           "ap-southeast-2",
           "ca-central-1",
           "eu-central-1",
+          "eu-north-1",
           "eu-west-1",
           "eu-west-2",
+          "sa-east-1",
           "us-east-1",
           "us-east-2",
           "us-west-1",
@@ -7224,6 +7525,7 @@
       "regions": {
         "aws": [
           "us-east-1",
+          "us-east-2",
           "us-west-2"
         ],
         "aws-cn": [],
@@ -7301,6 +7603,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -7381,19 +7684,37 @@
     "pinpoint-sms-voice-v2": {
       "regions": {
         "aws": [
+          "af-south-1",
           "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-northeast-3",
           "ap-south-1",
+          "ap-south-2",
           "ap-southeast-1",
           "ap-southeast-2",
+          "ap-southeast-3",
+          "ap-southeast-4",
           "ca-central-1",
           "eu-central-1",
+          "eu-central-2",
+          "eu-north-1",
+          "eu-south-1",
+          "eu-south-2",
           "eu-west-1",
           "eu-west-2",
+          "eu-west-3",
+          "il-central-1",
+          "me-central-1",
+          "me-south-1",
+          "sa-east-1",
           "us-east-1",
+          "us-east-2",
+          "us-west-1",
           "us-west-2"
         ],
         "aws-cn": [],
         "aws-us-gov": [
+          "us-gov-east-1",
           "us-gov-west-1"
         ]
       }
@@ -7428,7 +7749,10 @@
           "us-west-1",
           "us-west-2"
         ],
-        "aws-cn": [],
+        "aws-cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
         "aws-us-gov": []
       }
     },
@@ -7492,6 +7816,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -7606,7 +7931,9 @@
           "us-east-2",
           "us-west-2"
         ],
-        "aws-cn": [],
+        "aws-cn": [
+          "cn-north-1"
+        ],
         "aws-us-gov": [
           "us-gov-west-1"
         ]
@@ -7627,6 +7954,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -7669,6 +7997,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -7711,6 +8040,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -7784,6 +8114,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -7826,6 +8157,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -7853,6 +8185,23 @@
         ]
       }
     },
+    "redshift-serverless": {
+      "regions": {
+        "aws": [
+          "ap-south-1",
+          "ca-central-1",
+          "eu-west-3",
+          "us-east-1",
+          "us-east-2",
+          "us-west-1",
+          "us-west-2"
+        ],
+        "aws-cn": [
+          "cn-north-1"
+        ],
+        "aws-us-gov": []
+      }
+    },
     "rekognition": {
       "regions": {
         "aws": [
@@ -7875,6 +8224,16 @@
         "aws-us-gov": [
           "us-gov-west-1"
         ]
+      }
+    },
+    "repostspace": {
+      "regions": {
+        "aws": [
+          "eu-central-1",
+          "us-west-2"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "resiliencehub": {
@@ -7950,6 +8309,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -7992,6 +8352,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -8045,16 +8406,22 @@
           "ap-northeast-2",
           "ap-northeast-3",
           "ap-south-1",
+          "ap-south-2",
           "ap-southeast-1",
           "ap-southeast-2",
           "ap-southeast-3",
+          "ap-southeast-4",
           "ca-central-1",
           "eu-central-1",
+          "eu-central-2",
           "eu-north-1",
           "eu-south-1",
+          "eu-south-2",
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "il-central-1",
+          "me-central-1",
           "me-south-1",
           "sa-east-1",
           "us-east-1",
@@ -8103,7 +8470,10 @@
           "us-west-2"
         ],
         "aws-cn": [],
-        "aws-us-gov": []
+        "aws-us-gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
       }
     },
     "route53": {
@@ -8121,45 +8491,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
-          "eu-central-1",
-          "eu-central-2",
-          "eu-north-1",
-          "eu-south-1",
-          "eu-south-2",
-          "eu-west-1",
-          "eu-west-2",
-          "eu-west-3",
-          "il-central-1",
-          "me-central-1",
-          "me-south-1",
-          "sa-east-1",
-          "us-east-1",
-          "us-east-2",
-          "us-west-1",
-          "us-west-2"
-        ],
-        "aws-cn": [
-          "cn-north-1",
-          "cn-northwest-1"
-        ],
-        "aws-us-gov": []
-      }
-    },
-    "route53-application-recovery-controller": {
-      "regions": {
-        "aws": [
-          "af-south-1",
-          "ap-east-1",
-          "ap-northeast-1",
-          "ap-northeast-2",
-          "ap-northeast-3",
-          "ap-south-1",
-          "ap-south-2",
-          "ap-southeast-1",
-          "ap-southeast-2",
-          "ap-southeast-3",
-          "ap-southeast-4",
-          "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -8217,6 +8549,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -8277,6 +8610,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -8384,6 +8718,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -8427,6 +8762,7 @@
           "eu-central-1",
           "eu-north-1",
           "eu-south-1",
+          "eu-south-2",
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
@@ -8468,6 +8804,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -8510,6 +8847,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -8552,6 +8890,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -8681,6 +9020,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -8723,6 +9063,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -8822,6 +9163,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -8906,6 +9248,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -8945,6 +9288,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -9231,6 +9575,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -9273,6 +9618,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -9315,6 +9661,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -9441,6 +9788,7 @@
           "eu-west-2",
           "eu-west-3",
           "il-central-1",
+          "me-central-1",
           "me-south-1",
           "sa-east-1",
           "us-east-1",
@@ -9473,6 +9821,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -9557,6 +9906,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -9584,6 +9934,17 @@
         ]
       }
     },
+    "supplychain": {
+      "regions": {
+        "aws": [
+          "eu-central-1",
+          "us-east-1",
+          "us-west-2"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
     "support": {
       "regions": {
         "aws": [
@@ -9599,6 +9960,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -9652,6 +10014,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -9694,6 +10057,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -9745,6 +10109,21 @@
         ]
       }
     },
+    "thinclient": {
+      "regions": {
+        "aws": [
+          "ap-south-1",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-west-1",
+          "eu-west-2",
+          "us-east-1",
+          "us-west-2"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
     "timestream": {
       "regions": {
         "aws": [
@@ -9782,10 +10161,14 @@
     "tnb": {
       "regions": {
         "aws": [
+          "ap-northeast-2",
           "ap-southeast-2",
           "ca-central-1",
           "eu-central-1",
+          "eu-north-1",
+          "eu-south-2",
           "eu-west-3",
+          "sa-east-1",
           "us-east-1",
           "us-west-2"
         ],
@@ -9883,6 +10266,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -9951,6 +10335,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -9982,12 +10367,18 @@
       "regions": {
         "aws": [
           "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-south-1",
           "ap-southeast-1",
           "ap-southeast-2",
+          "ap-southeast-3",
           "ca-central-1",
           "eu-central-1",
+          "eu-north-1",
+          "eu-south-1",
           "eu-west-1",
           "eu-west-2",
+          "il-central-1",
           "sa-east-1",
           "us-east-1",
           "us-east-2",
@@ -9995,7 +10386,10 @@
           "us-west-2"
         ],
         "aws-cn": [],
-        "aws-us-gov": []
+        "aws-us-gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
       }
     },
     "verifiedpermissions": {
@@ -10099,6 +10493,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -10160,6 +10555,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -10400,7 +10796,10 @@
       "regions": {
         "aws": [
           "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-southeast-1",
           "ap-southeast-2",
+          "ca-central-1",
           "eu-central-1",
           "eu-west-2",
           "us-east-1",
@@ -10506,6 +10905,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",

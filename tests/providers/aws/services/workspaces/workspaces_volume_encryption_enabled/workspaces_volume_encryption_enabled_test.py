@@ -3,13 +3,13 @@ from unittest import mock
 from uuid import uuid4
 
 from prowler.providers.aws.services.workspaces.workspaces_service import WorkSpace
-
-AWS_REGION = "eu-west-1"
-AWS_ACCOUNT_NUMBER = "123456789012"
-WORKSPACE_ID = str(uuid4())
-WORKSPACE_ARN = (
-    f"arn:aws:workspaces:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:workspace/{WORKSPACE_ID}"
+from tests.providers.aws.audit_info_utils import (
+    AWS_ACCOUNT_NUMBER,
+    AWS_REGION_EU_WEST_1,
 )
+
+WORKSPACE_ID = str(uuid4())
+WORKSPACE_ARN = f"arn:aws:workspaces:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:workspace/{WORKSPACE_ID}"
 
 
 class Test_workspaces_volume_encryption_enabled:
@@ -38,7 +38,7 @@ class Test_workspaces_volume_encryption_enabled:
             WorkSpace(
                 id=WORKSPACE_ID,
                 arn=WORKSPACE_ARN,
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
                 user_volume_encryption_enabled=True,
                 root_volume_encryption_enabled=True,
                 subnet_id="subnet-12345678",
@@ -64,7 +64,7 @@ class Test_workspaces_volume_encryption_enabled:
             )
             assert result[0].resource_id == WORKSPACE_ID
             assert result[0].resource_arn == WORKSPACE_ARN
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1
 
     def test_workspaces_user_not_encrypted(self):
         workspaces_client = mock.MagicMock
@@ -73,7 +73,7 @@ class Test_workspaces_volume_encryption_enabled:
             WorkSpace(
                 id=WORKSPACE_ID,
                 arn=WORKSPACE_ARN,
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
                 user_volume_encryption_enabled=False,
                 root_volume_encryption_enabled=True,
                 subnet_id="subnet-12345678",
@@ -97,7 +97,7 @@ class Test_workspaces_volume_encryption_enabled:
             assert search("user unencrypted volumes", result[0].status_extended)
             assert result[0].resource_id == WORKSPACE_ID
             assert result[0].resource_arn == WORKSPACE_ARN
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1
 
     def test_workspaces_root_not_encrypted(self):
         workspaces_client = mock.MagicMock
@@ -106,7 +106,7 @@ class Test_workspaces_volume_encryption_enabled:
             WorkSpace(
                 id=WORKSPACE_ID,
                 arn=WORKSPACE_ARN,
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
                 user_volume_encryption_enabled=True,
                 root_volume_encryption_enabled=False,
                 subnet_id="subnet-12345678",
@@ -130,7 +130,7 @@ class Test_workspaces_volume_encryption_enabled:
             assert search("root unencrypted volumes", result[0].status_extended)
             assert result[0].resource_id == WORKSPACE_ID
             assert result[0].resource_arn == WORKSPACE_ARN
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1
 
     def test_workspaces_user_and_root_not_encrypted(self):
         workspaces_client = mock.MagicMock
@@ -139,7 +139,7 @@ class Test_workspaces_volume_encryption_enabled:
             WorkSpace(
                 id=WORKSPACE_ID,
                 arn=WORKSPACE_ARN,
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
                 user_volume_encryption_enabled=False,
                 root_volume_encryption_enabled=False,
                 subnet_id="subnet-12345678",
@@ -165,4 +165,4 @@ class Test_workspaces_volume_encryption_enabled:
             )
             assert result[0].resource_id == WORKSPACE_ID
             assert result[0].resource_arn == WORKSPACE_ARN
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1

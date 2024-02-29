@@ -38,6 +38,9 @@ Mute List:
             - "aws-controltower-ReadOnlyExecutionRole"
             - "AWSControlTower_VPCFlowLogsRole"
             - "AWSControlTowerExecution"
+            - "AWSAFTAdmin"
+            - "AWSAFTExecution"
+            - "AWSAFTService"
         "iam_policy_*":
           Regions:
             - "*"

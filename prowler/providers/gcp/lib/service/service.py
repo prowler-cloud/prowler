@@ -26,7 +26,9 @@ class GCPService:
         self.api_version = api_version
         self.default_project_id = provider.default_project_id
         self.region = region
-        self.client = self.__generate_client__(service, api_version, self.credentials)
+        self.client = self.__generate_client__(
+            self.service, api_version, self.credentials
+        )
         # Only project ids that have their API enabled will be scanned
         self.project_ids = self.__is_api_active__(provider.project_ids)
 
@@ -60,7 +62,7 @@ class GCPService:
                     project_ids.append(project_id)
                 else:
                     print(
-                        f"\n{Fore.YELLOW}{self.service} API {Style.RESET_ALL}has not been used in project {project_id} before or it is disabled.\nEnable it by visiting https://console.developers.google.com/apis/api/dataproc.googleapis.com/overview?project={project_id} then retry."
+                        f"\n{Fore.YELLOW}{self.service} API {Style.RESET_ALL}has not been used in project {project_id} before or it is disabled.\nEnable it by visiting https://console.developers.google.com/apis/api/{self.service}.googleapis.com/overview?project={project_id} then retry."
                     )
             except Exception as error:
                 logger.error(

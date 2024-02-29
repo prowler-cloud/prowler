@@ -3,10 +3,10 @@ import pathlib
 from importlib.machinery import FileFinder
 from pkgutil import ModuleInfo
 
-from boto3 import client, session
+from boto3 import client
 from fixtures.bulk_checks_metadata import test_bulk_checks_metadata
 from mock import patch
-from moto import mock_s3
+from moto import mock_aws
 
 from prowler.lib.check.check import (
     exclude_checks_to_run,
@@ -27,8 +27,7 @@ from prowler.providers.aws.aws_provider import (
     get_checks_from_input_arn,
     get_regions_from_audit_resources,
 )
-from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
-from prowler.providers.common.models import Audit_Metadata
+from tests.providers.aws.audit_info_utils import set_mocked_aws_audit_info
 
 AWS_ACCOUNT_NUMBER = "123456789012"
 AWS_REGION = "us-east-1"
@@ -42,6 +41,27 @@ expected_packages = [
         ispkg=False,
     ),
     ModuleInfo(
+        module_finder=FileFinder(
+            "/root_dir/prowler/providers/azure/services/storage/storage_key_rotation_90_days"
+        ),
+        name="prowler.providers.azure.services.storage.storage_key_rotation_90_days.storage_key_rotation_90_days",
+        ispkg=False,
+    ),
+    ModuleInfo(
+        module_finder=FileFinder(
+            "/root_dir/prowler/providers/azure/services/storage/storage_ensure_private_endpoints_in_storage_accounts"
+        ),
+        name="prowler.providers.azure.services.storage.storage_ensure_private_endpoints_in_storage_accounts.storage_ensure_private_endpoints_in_storage_accounts",
+        ispkg=False,
+    ),
+    ModuleInfo(
+        module_finder=FileFinder(
+            "/root_dir/prowler/providers/azure/services/storage/storage_ensure_soft_delete_is_enabled"
+        ),
+        name="prowler.providers.azure.services.storage.storage_ensure_soft_delete_is_enabled.storage_ensure_soft_delete_is_enabled",
+        ispkg=False,
+    ),
+    ModuleInfo(
         module_finder=FileFinder("/root_dir/prowler/providers/azure/services/storage"),
         name="prowler.providers.azure.services.storage.storage_ensure_encryption_with_customer_managed_keys",
         ispkg=True,
@@ -51,6 +71,118 @@ expected_packages = [
             "/root_dir/prowler/providers/azure/services/storage/storage_ensure_encryption_with_customer_managed_keys"
         ),
         name="prowler.providers.azure.services.storage.storage_ensure_encryption_with_customer_managed_keys.storage_ensure_encryption_with_customer_managed_keys",
+        ispkg=False,
+    ),
+    ModuleInfo(
+        module_finder=FileFinder(
+            "/root_dir/prowler/providers/azure/services/sqlserver"
+        ),
+        name="prowler.providers.azure.services.sqlserver.sqlserver_tde_encrypted_with_cmk",
+        ispkg=True,
+    ),
+    ModuleInfo(
+        module_finder=FileFinder(
+            "/root_dir/prowler/providers/azure/services/sqlserver/sqlserver_tde_encrypted_with_cmk"
+        ),
+        name="prowler.providers.azure.services.sqlserver.sqlserver_tde_encrypted_with_cmk.sqlserver_tde_encrypted_with_cmk",
+        ispkg=False,
+    ),
+    ModuleInfo(
+        module_finder=FileFinder(
+            "/root_dir/prowler/providers/azure/services/sqlserver"
+        ),
+        name="prowler.providers.azure.services.sqlserver.sqlserver_tde_encryption_enabled",
+        ispkg=True,
+    ),
+    ModuleInfo(
+        module_finder=FileFinder(
+            "/root_dir/prowler/providers/azure/services/sqlserver/sqlserver_tde_encryption_enabled"
+        ),
+        name="prowler.providers.azure.services.sqlserver.sqlserver_tde_encryption_enabled.sqlserver_tde_encryption_enabled",
+        ispkg=False,
+    ),
+    ModuleInfo(
+        module_finder=FileFinder(
+            "/root_dir/prowler/providers/azure/services/sqlserver"
+        ),
+        name="prowler.providers.azure.services.sqlserver.sqlserver_auditing_retention_90_days",
+        ispkg=True,
+    ),
+    ModuleInfo(
+        module_finder=FileFinder(
+            "/root_dir/prowler/providers/azure/services/sqlserver/sqlserver_auditing_retention_90_days"
+        ),
+        name="prowler.providers.azure.services.sqlserver.sqlserver_auditing_retention_90_days.sqlserver_auditing_retention_90_days",
+        ispkg=False,
+    ),
+    ModuleInfo(
+        module_finder=FileFinder(
+            "/root_dir/prowler/providers/azure/services/sqlserver"
+        ),
+        name="prowler.providers.azure.services.sqlserver.sqlserver_vulnerability_assessment_enabled",
+        ispkg=True,
+    ),
+    ModuleInfo(
+        module_finder=FileFinder(
+            "/root_dir/prowler/providers/azure/services/sqlserver/sqlserver_vulnerability_assessment_enabled"
+        ),
+        name="prowler.providers.azure.services.sqlserver.sqlserver_vulnerability_assessment_enabled.sqlserver_vulnerability_assessment_enabled",
+        ispkg=False,
+    ),
+    ModuleInfo(
+        module_finder=FileFinder(
+            "/root_dir/prowler/providers/azure/services/sqlserver"
+        ),
+        name="prowler.providers.azure.services.sqlserver.sqlserver_va_periodic_recurring_scans_enabled",
+        ispkg=True,
+    ),
+    ModuleInfo(
+        module_finder=FileFinder(
+            "/root_dir/prowler/providers/azure/services/sqlserver/sqlserver_va_periodic_recurring_scans_enabled"
+        ),
+        name="prowler.providers.azure.services.sqlserver.sqlserver_va_periodic_recurring_scans_enabled.sqlserver_va_periodic_recurring_scans_enabled",
+        ispkg=False,
+    ),
+    ModuleInfo(
+        module_finder=FileFinder(
+            "/root_dir/prowler/providers/azure/services/sqlserver"
+        ),
+        name="prowler.providers.azure.services.sqlserver.sqlserver_va_scan_reports_configured",
+        ispkg=True,
+    ),
+    ModuleInfo(
+        module_finder=FileFinder(
+            "/root_dir/prowler/providers/azure/services/sqlserver/sqlserver_va_scan_reports_configured"
+        ),
+        name="prowler.providers.azure.services.sqlserver.sqlserver_va_scan_reports_configured.sqlserver_va_scan_reports_configured",
+        ispkg=False,
+    ),
+    ModuleInfo(
+        module_finder=FileFinder(
+            "/root_dir/prowler/providers/azure/services/sqlserver"
+        ),
+        name="prowler.providers.azure.services.sqlserver.sqlserver_va_emails_notifications_admins_enabled",
+        ispkg=True,
+    ),
+    ModuleInfo(
+        module_finder=FileFinder(
+            "/root_dir/prowler/providers/azure/services/sqlserver/sqlserver_va_emails_notifications_admins_enabled"
+        ),
+        name="prowler.providers.azure.services.sqlserver.sqlserver_va_emails_notifications_admins_enabled.sqlserver_va_emails_notifications_admins_enabled",
+        ispkg=False,
+    ),
+    ModuleInfo(
+        module_finder=FileFinder(
+            "/root_dir/prowler/providers/azure/services/postgresql"
+        ),
+        name="prowler.providers.azure.services.postgresql.postgresql_flexible_server_enforce_ssl_enabled",
+        ispkg=True,
+    ),
+    ModuleInfo(
+        module_finder=FileFinder(
+            "/root_dir/prowler/providers/azure/services/postgresql/postgresql_flexible_server_enforce_ssl_enabled"
+        ),
+        name="prowler.providers.azure.services.postgresql.postgresql_flexible_server_enforce_ssl_enabled.postgresql_flexible_server_enforce_ssl_enabled",
         ispkg=False,
     ),
 ]
@@ -71,6 +203,27 @@ def mock_list_modules(*_):
         ),
         ModuleInfo(
             module_finder=FileFinder(
+                "/root_dir/prowler/providers/azure/services/storage/storage_key_rotation_90_days"
+            ),
+            name="prowler.providers.azure.services.storage.storage_key_rotation_90_days.storage_key_rotation_90_days",
+            ispkg=False,
+        ),
+        ModuleInfo(
+            module_finder=FileFinder(
+                "/root_dir/prowler/providers/azure/services/storage/storage_ensure_private_endpoints_in_storage_accounts"
+            ),
+            name="prowler.providers.azure.services.storage.storage_ensure_private_endpoints_in_storage_accounts.storage_ensure_private_endpoints_in_storage_accounts",
+            ispkg=False,
+        ),
+        ModuleInfo(
+            module_finder=FileFinder(
+                "/root_dir/prowler/providers/azure/services/storage/storage_ensure_soft_delete_is_enabled"
+            ),
+            name="prowler.providers.azure.services.storage.storage_ensure_soft_delete_is_enabled.storage_ensure_soft_delete_is_enabled",
+            ispkg=False,
+        ),
+        ModuleInfo(
+            module_finder=FileFinder(
                 "/root_dir/prowler/providers/azure/services/storage"
             ),
             name="prowler.providers.azure.services.storage.storage_ensure_encryption_with_customer_managed_keys",
@@ -81,6 +234,118 @@ def mock_list_modules(*_):
                 "/root_dir/prowler/providers/azure/services/storage/storage_ensure_encryption_with_customer_managed_keys"
             ),
             name="prowler.providers.azure.services.storage.storage_ensure_encryption_with_customer_managed_keys.storage_ensure_encryption_with_customer_managed_keys",
+            ispkg=False,
+        ),
+        ModuleInfo(
+            module_finder=FileFinder(
+                "/root_dir/prowler/providers/azure/services/sqlserver"
+            ),
+            name="prowler.providers.azure.services.sqlserver.sqlserver_tde_encrypted_with_cmk",
+            ispkg=True,
+        ),
+        ModuleInfo(
+            module_finder=FileFinder(
+                "/root_dir/prowler/providers/azure/services/sqlserver/sqlserver_tde_encrypted_with_cmk"
+            ),
+            name="prowler.providers.azure.services.sqlserver.sqlserver_tde_encrypted_with_cmk.sqlserver_tde_encrypted_with_cmk",
+            ispkg=False,
+        ),
+        ModuleInfo(
+            module_finder=FileFinder(
+                "/root_dir/prowler/providers/azure/services/sqlserver"
+            ),
+            name="prowler.providers.azure.services.sqlserver.sqlserver_tde_encryption_enabled",
+            ispkg=True,
+        ),
+        ModuleInfo(
+            module_finder=FileFinder(
+                "/root_dir/prowler/providers/azure/services/sqlserver/sqlserver_tde_encryption_enabled"
+            ),
+            name="prowler.providers.azure.services.sqlserver.sqlserver_tde_encryption_enabled.sqlserver_tde_encryption_enabled",
+            ispkg=False,
+        ),
+        ModuleInfo(
+            module_finder=FileFinder(
+                "/root_dir/prowler/providers/azure/services/sqlserver"
+            ),
+            name="prowler.providers.azure.services.sqlserver.sqlserver_auditing_retention_90_days",
+            ispkg=True,
+        ),
+        ModuleInfo(
+            module_finder=FileFinder(
+                "/root_dir/prowler/providers/azure/services/sqlserver/sqlserver_auditing_retention_90_days"
+            ),
+            name="prowler.providers.azure.services.sqlserver.sqlserver_auditing_retention_90_days.sqlserver_auditing_retention_90_days",
+            ispkg=False,
+        ),
+        ModuleInfo(
+            module_finder=FileFinder(
+                "/root_dir/prowler/providers/azure/services/sqlserver"
+            ),
+            name="prowler.providers.azure.services.sqlserver.sqlserver_vulnerability_assessment_enabled",
+            ispkg=True,
+        ),
+        ModuleInfo(
+            module_finder=FileFinder(
+                "/root_dir/prowler/providers/azure/services/sqlserver/sqlserver_vulnerability_assessment_enabled"
+            ),
+            name="prowler.providers.azure.services.sqlserver.sqlserver_vulnerability_assessment_enabled.sqlserver_vulnerability_assessment_enabled",
+            ispkg=False,
+        ),
+        ModuleInfo(
+            module_finder=FileFinder(
+                "/root_dir/prowler/providers/azure/services/sqlserver"
+            ),
+            name="prowler.providers.azure.services.sqlserver.sqlserver_va_periodic_recurring_scans_enabled",
+            ispkg=True,
+        ),
+        ModuleInfo(
+            module_finder=FileFinder(
+                "/root_dir/prowler/providers/azure/services/sqlserver/sqlserver_va_periodic_recurring_scans_enabled"
+            ),
+            name="prowler.providers.azure.services.sqlserver.sqlserver_va_periodic_recurring_scans_enabled.sqlserver_va_periodic_recurring_scans_enabled",
+            ispkg=False,
+        ),
+        ModuleInfo(
+            module_finder=FileFinder(
+                "/root_dir/prowler/providers/azure/services/sqlserver"
+            ),
+            name="prowler.providers.azure.services.sqlserver.sqlserver_va_scan_reports_configured",
+            ispkg=True,
+        ),
+        ModuleInfo(
+            module_finder=FileFinder(
+                "/root_dir/prowler/providers/azure/services/sqlserver/sqlserver_va_scan_reports_configured"
+            ),
+            name="prowler.providers.azure.services.sqlserver.sqlserver_va_scan_reports_configured.sqlserver_va_scan_reports_configured",
+            ispkg=False,
+        ),
+        ModuleInfo(
+            module_finder=FileFinder(
+                "/root_dir/prowler/providers/azure/services/sqlserver"
+            ),
+            name="prowler.providers.azure.services.sqlserver.sqlserver_va_emails_notifications_admins_enabled",
+            ispkg=True,
+        ),
+        ModuleInfo(
+            module_finder=FileFinder(
+                "/root_dir/prowler/providers/azure/services/sqlserver/sqlserver_va_emails_notifications_admins_enabled"
+            ),
+            name="prowler.providers.azure.services.sqlserver.sqlserver_va_emails_notifications_admins_enabled.sqlserver_va_emails_notifications_admins_enabled",
+            ispkg=False,
+        ),
+        ModuleInfo(
+            module_finder=FileFinder(
+                "/root_dir/prowler/providers/azure/services/postgresql"
+            ),
+            name="prowler.providers.azure.services.postgresql.postgresql_flexible_server_enforce_ssl_enabled",
+            ispkg=True,
+        ),
+        ModuleInfo(
+            module_finder=FileFinder(
+                "/root_dir/prowler/providers/azure/services/postgresql/postgresql_flexible_server_enforce_ssl_enabled"
+            ),
+            name="prowler.providers.azure.services.postgresql.postgresql_flexible_server_enforce_ssl_enabled.postgresql_flexible_server_enforce_ssl_enabled",
             ispkg=False,
         ),
     ]
@@ -96,6 +361,10 @@ def mock_recover_checks_from_azure_provider(*_):
         (
             "iam_subscription_roles_owner_custom_not_created",
             "/root_dir/fake_path/iam/iam_subscription_roles_owner_custom_not_created",
+        ),
+        (
+            "iam_custom_role_has_permissions_to_administer_resource_locks",
+            "/root_dir/fake_path/iam/iam_custom_role_has_permissions_to_administer_resource_locks",
         ),
         (
             "storage_default_network_access_rule_is_denied",
@@ -257,37 +526,11 @@ def mock_recover_checks_from_aws_provider_rds_service(*_):
     ]
 
 
-class Test_Check:
-    def set_mocked_audit_info(self):
-        audit_info = AWS_Audit_Info(
-            session_config=None,
-            original_session=None,
-            audit_session=session.Session(
-                profile_name=None,
-                botocore_session=None,
-            ),
-            audited_account=AWS_ACCOUNT_NUMBER,
-            audited_account_arn=f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root",
-            audited_user_id=None,
-            audited_partition="aws",
-            audited_identity_arn=None,
-            profile=None,
-            profile_region=None,
-            credentials=None,
-            assumed_role_info=None,
-            audited_regions=None,
-            organizations_metadata=None,
-            audit_resources=None,
-            mfa_enabled=False,
-            audit_metadata=Audit_Metadata(
-                services_scanned=0,
-                expected_checks=[],
-                completed_checks=0,
-                audit_progress=0,
-            ),
-        )
-        return audit_info
+def mock_recover_checks_from_aws_provider_cognito_service(*_):
+    return []
 
+
+class Test_Check:
     def test_load_check_metadata(self):
         test_cases = [
             {
@@ -325,7 +568,7 @@ class Test_Check:
             provider = test["input"]["provider"]
             assert parse_checks_from_file(check_file, provider) == test["expected"]
 
-    @mock_s3
+    @mock_aws
     def test_parse_checks_from_folder(self):
         test_checks_folder = (
             f"{pathlib.Path().absolute()}/tests/lib/check/fixtures/checks_folder"
@@ -363,7 +606,7 @@ class Test_Check:
             provider = test["input"]["provider"]
             assert (
                 parse_checks_from_folder(
-                    self.set_mocked_audit_info(), check_folder, provider
+                    set_mocked_aws_audit_info(), check_folder, provider
                 )
                 == test["expected"]
             )
@@ -471,8 +714,52 @@ class Test_Check:
                 "/root_dir/prowler/providers/azure/services/storage/storage_ensure_minimum_tls_version_12",
             ),
             (
+                "storage_key_rotation_90_days",
+                "/root_dir/prowler/providers/azure/services/storage/storage_key_rotation_90_days",
+            ),
+            (
+                "storage_ensure_private_endpoints_in_storage_accounts",
+                "/root_dir/prowler/providers/azure/services/storage/storage_ensure_private_endpoints_in_storage_accounts",
+            ),
+            (
+                "storage_ensure_soft_delete_is_enabled",
+                "/root_dir/prowler/providers/azure/services/storage/storage_ensure_soft_delete_is_enabled",
+            ),
+            (
                 "storage_ensure_encryption_with_customer_managed_keys",
                 "/root_dir/prowler/providers/azure/services/storage/storage_ensure_encryption_with_customer_managed_keys",
+            ),
+            (
+                "sqlserver_tde_encrypted_with_cmk",
+                "/root_dir/prowler/providers/azure/services/sqlserver/sqlserver_tde_encrypted_with_cmk",
+            ),
+            (
+                "sqlserver_tde_encryption_enabled",
+                "/root_dir/prowler/providers/azure/services/sqlserver/sqlserver_tde_encryption_enabled",
+            ),
+            (
+                "sqlserver_auditing_retention_90_days",
+                "/root_dir/prowler/providers/azure/services/sqlserver/sqlserver_auditing_retention_90_days",
+            ),
+            (
+                "sqlserver_vulnerability_assessment_enabled",
+                "/root_dir/prowler/providers/azure/services/sqlserver/sqlserver_vulnerability_assessment_enabled",
+            ),
+            (
+                "sqlserver_va_periodic_recurring_scans_enabled",
+                "/root_dir/prowler/providers/azure/services/sqlserver/sqlserver_va_periodic_recurring_scans_enabled",
+            ),
+            (
+                "sqlserver_va_scan_reports_configured",
+                "/root_dir/prowler/providers/azure/services/sqlserver/sqlserver_va_scan_reports_configured",
+            ),
+            (
+                "sqlserver_va_emails_notifications_admins_enabled",
+                "/root_dir/prowler/providers/azure/services/sqlserver/sqlserver_va_emails_notifications_admins_enabled",
+            ),
+            (
+                "postgresql_flexible_server_enforce_ssl_enabled",
+                "/root_dir/prowler/providers/azure/services/postgresql/postgresql_flexible_server_enforce_ssl_enabled",
             ),
         ]
         returned_checks = recover_checks_from_provider(provider, service)
@@ -593,6 +880,19 @@ class Test_Check:
             "cloudwatch_changes_to_network_gateways_alarm_configured",
             "cloudwatch_changes_to_network_route_tables_alarm_configured",
         ]
+        recovered_checks = get_checks_from_input_arn(audit_resources, provider)
+        assert recovered_checks == expected_checks
+
+    @patch(
+        "prowler.lib.check.check.recover_checks_from_provider",
+        new=mock_recover_checks_from_aws_provider_cognito_service,
+    )
+    def test_get_checks_from_input_arn_cognito(self):
+        audit_resources = [
+            f"arn:aws:cognito-idp:us-east-1:{AWS_ACCOUNT_NUMBER}:userpool/test"
+        ]
+        provider = "aws"
+        expected_checks = []
         recovered_checks = get_checks_from_input_arn(audit_resources, provider)
         assert recovered_checks == expected_checks
 

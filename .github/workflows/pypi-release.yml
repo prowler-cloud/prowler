@@ -16,7 +16,7 @@ jobs:
     name: Release Prowler to PyPI
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           ref: ${{ env.GITHUB_BRANCH }}
       - name: Install dependencies
@@ -24,7 +24,7 @@ jobs:
           pipx install poetry
           pipx inject poetry poetry-bumpversion
       - name: setup python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: 3.9
           cache: 'poetry'
@@ -44,7 +44,7 @@ jobs:
           poetry publish
       # Create pull request with new version
       - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v4
+        uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.PROWLER_ACCESS_TOKEN }}
           commit-message: "chore(release): update Prowler Version to ${{ env.RELEASE_TAG }}."

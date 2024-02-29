@@ -37,13 +37,24 @@ The following list includes all the AWS checks with configurable variables that 
 ## Azure
 
 ### Configurable Checks
+The following list includes all the Azure checks with configurable variables that can be changed in the configuration yaml file:
+
+| Check Name                                                    | Value                                            | Type            |
+|---------------------------------------------------------------|--------------------------------------------------|-----------------|
+| `network_public_ip_shodan`                                   | `shodan_api_key`                    | String         |
+| `app_ensure_php_version_is_latest`                            | `php_latest_version`                             | String          |
+| `app_ensure_python_version_is_latest`                         | `python_latest_version`                          | String          |
+| `app_ensure_java_version_is_latest`                           | `java_latest_version`                            | String          |
+
 
 ## GCP
 
 ### Configurable Checks
 
 ## Config YAML File Structure
-> This is the new Prowler configuration file format. The old one without provider keys is still compatible just for the AWS provider.
+
+???+ note
+    This is the new Prowler configuration file format. The old one without provider keys is still compatible just for the AWS provider.
 
 ```yaml title="config.yaml"
 # AWS Configuration
@@ -126,6 +137,17 @@ aws:
 
 # Azure Configuration
 azure:
+  # Azure Network Configuration
+  # azure.network_public_ip_shodan
+  shodan_api_key: null
+
+  # Azure App Configuration
+  # azure.app_ensure_php_version_is_latest
+  php_latest_version: "8.2"
+  # azure.app_ensure_python_version_is_latest
+  python_latest_version: "3.12"
+  # azure.app_ensure_java_version_is_latest
+  java_latest_version: "17"
 
 # GCP Configuration
 gcp:

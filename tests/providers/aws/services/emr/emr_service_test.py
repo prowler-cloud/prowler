@@ -2,17 +2,15 @@ from datetime import datetime
 from unittest.mock import patch
 
 import botocore
-from boto3 import client, session
-from moto import mock_emr
-from moto.core import DEFAULT_ACCOUNT_ID
+from boto3 import client
+from moto import mock_aws
 
-from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.aws.services.emr.emr_service import EMR, ClusterStatus
-from prowler.providers.common.models import Audit_Metadata
-
-# Mock Test Region
-AWS_REGION = "eu-west-1"
-
+from tests.providers.aws.audit_info_utils import (
+    AWS_ACCOUNT_NUMBER,
+    AWS_REGION_EU_WEST_1,
+    set_mocked_aws_audit_info,
+)
 
 # Mocking Access Analyzer Calls
 make_api_call = botocore.client.BaseClient._make_api_call
@@ -38,10 +36,12 @@ def mock_make_api_call(self, operation_name, kwarg):
 
 
 # Mock generate_regional_clients()
-def mock_generate_regional_clients(service, audit_info, _):
-    regional_client = audit_info.audit_session.client(service, region_name=AWS_REGION)
-    regional_client.region = AWS_REGION
-    return {AWS_REGION: regional_client}
+def mock_generate_regional_clients(service, audit_info):
+    regional_client = audit_info.audit_session.client(
+        service, region_name=AWS_REGION_EU_WEST_1
+    )
+    regional_client.region = AWS_REGION_EU_WEST_1
+    return {AWS_REGION_EU_WEST_1: regional_client}
 
 
 @patch(
@@ -50,59 +50,29 @@ def mock_generate_regional_clients(service, audit_info, _):
 )
 @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
 class Test_EMR_Service:
-    def set_mocked_audit_info(self):
-        audit_info = AWS_Audit_Info(
-            session_config=None,
-            original_session=None,
-            audit_session=session.Session(
-                profile_name=None,
-                botocore_session=None,
-            ),
-            audited_account=DEFAULT_ACCOUNT_ID,
-            audited_account_arn=f"arn:aws:iam::{DEFAULT_ACCOUNT_ID}:root",
-            audited_user_id=None,
-            audited_partition="aws",
-            audited_identity_arn=None,
-            profile=None,
-            profile_region=None,
-            credentials=None,
-            assumed_role_info=None,
-            audited_regions=None,
-            organizations_metadata=None,
-            audit_resources=None,
-            mfa_enabled=False,
-            audit_metadata=Audit_Metadata(
-                services_scanned=0,
-                expected_checks=[],
-                completed_checks=0,
-                audit_progress=0,
-            ),
-        )
-        return audit_info
-
     # Test EMR Client
-    @mock_emr
+    @mock_aws
     def test__get_client__(self):
-        emr = EMR(self.set_mocked_audit_info())
-        assert emr.regional_clients[AWS_REGION].__class__.__name__ == "EMR"
+        emr = EMR(set_mocked_aws_audit_info())
+        assert emr.regional_clients[AWS_REGION_EU_WEST_1].__class__.__name__ == "EMR"
 
     # Test EMR Session
-    @mock_emr
+    @mock_aws
     def test__get_session__(self):
-        emr = EMR(self.set_mocked_audit_info())
+        emr = EMR(set_mocked_aws_audit_info())
         assert emr.session.__class__.__name__ == "Session"
 
     # Test EMR Service
-    @mock_emr
+    @mock_aws
     def test__get_service__(self):
-        emr = EMR(self.set_mocked_audit_info())
+        emr = EMR(set_mocked_aws_audit_info())
         assert emr.service == "emr"
 
     # Test __list_clusters__ and __describe_cluster__
-    @mock_emr
+    @mock_aws
     def test__list_clusters__(self):
         # Create EMR Cluster
-        emr_client = client("emr", region_name=AWS_REGION)
+        emr_client = client("emr", region_name=AWS_REGION_EU_WEST_1)
         cluster_name = "test-cluster"
         run_job_flow_args = dict(
             Instances={
@@ -123,7 +93,7 @@ class Test_EMR_Service:
         )
         cluster_id = emr_client.run_job_flow(**run_job_flow_args)["JobFlowId"]
         # EMR Class
-        emr = EMR(self.set_mocked_audit_info())
+        emr = EMR(set_mocked_aws_audit_info())
 
         assert len(emr.clusters) == 1
         assert emr.clusters[cluster_id].id == cluster_id
@@ -131,9 +101,9 @@ class Test_EMR_Service:
         assert emr.clusters[cluster_id].status == ClusterStatus.WAITING
         assert (
             emr.clusters[cluster_id].arn
-            == f"arn:aws:elasticmapreduce:{AWS_REGION}:{DEFAULT_ACCOUNT_ID}:cluster/{cluster_id}"
+            == f"arn:aws:elasticmapreduce:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:cluster/{cluster_id}"
         )
-        assert emr.clusters[cluster_id].region == AWS_REGION
+        assert emr.clusters[cluster_id].region == AWS_REGION_EU_WEST_1
         assert (
             emr.clusters[cluster_id].master_public_dns_name
             == "ec2-184-0-0-1.us-west-1.compute.amazonaws.com"
@@ -143,11 +113,11 @@ class Test_EMR_Service:
             {"Key": "test", "Value": "test"},
         ]
 
-    @mock_emr
+    @mock_aws
     def test__get_block_public_access_configuration__(self):
-        emr = EMR(self.set_mocked_audit_info())
+        emr = EMR(set_mocked_aws_audit_info())
 
         assert len(emr.block_public_access_configuration) == 1
         assert emr.block_public_access_configuration[
-            AWS_REGION
+            AWS_REGION_EU_WEST_1
         ].block_public_security_group_rules

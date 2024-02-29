@@ -218,9 +218,9 @@ class LogGroup(BaseModel):
     never_expire: bool
     kms_id: Optional[str]
     region: str
-    log_streams: dict[
-        str, list[str]
-    ] = {}  # Log stream name as the key, array of events as the value
+    log_streams: dict[str, list[str]] = (
+        {}
+    )  # Log stream name as the key, array of events as the value
     tags: Optional[list] = []
 
 

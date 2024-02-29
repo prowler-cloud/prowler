@@ -1,14 +1,14 @@
 from unittest.mock import patch
 
-from boto3 import client, session
-from moto import mock_ec2, mock_eks
+from boto3 import client
+from moto import mock_aws
 
-from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.aws.services.eks.eks_service import EKS
-from prowler.providers.common.models import Audit_Metadata
-
-AWS_ACCOUNT_NUMBER = "123456789012"
-AWS_REGION = "eu-west-1"
+from tests.providers.aws.audit_info_utils import (
+    AWS_ACCOUNT_NUMBER,
+    AWS_REGION_EU_WEST_1,
+    set_mocked_aws_audit_info,
+)
 
 cluster_name = "test"
 cidr_block_vpc = "10.0.0.0/16"
@@ -16,10 +16,12 @@ cidr_block_subnet_1 = "10.0.0.0/22"
 cidr_block_subnet_2 = "10.0.4.0/22"
 
 
-def mock_generate_regional_clients(service, audit_info, _):
-    regional_client = audit_info.audit_session.client(service, region_name=AWS_REGION)
-    regional_client.region = AWS_REGION
-    return {AWS_REGION: regional_client}
+def mock_generate_regional_clients(service, audit_info):
+    regional_client = audit_info.audit_session.client(
+        service, region_name=AWS_REGION_EU_WEST_1
+    )
+    regional_client.region = AWS_REGION_EU_WEST_1
+    return {AWS_REGION_EU_WEST_1: regional_client}
 
 
 @patch(
@@ -27,62 +29,30 @@ def mock_generate_regional_clients(service, audit_info, _):
     new=mock_generate_regional_clients,
 )
 class Test_EKS_Service:
-    # Mocked Audit Info
-    def set_mocked_audit_info(self):
-        audit_info = AWS_Audit_Info(
-            session_config=None,
-            original_session=None,
-            audit_session=session.Session(
-                profile_name=None,
-                botocore_session=None,
-            ),
-            audited_account=AWS_ACCOUNT_NUMBER,
-            audited_account_arn=f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root",
-            audited_user_id=None,
-            audited_partition="aws",
-            audited_identity_arn=None,
-            profile=None,
-            profile_region=None,
-            credentials=None,
-            assumed_role_info=None,
-            audited_regions=None,
-            organizations_metadata=None,
-            audit_resources=None,
-            mfa_enabled=False,
-            audit_metadata=Audit_Metadata(
-                services_scanned=0,
-                expected_checks=[],
-                completed_checks=0,
-                audit_progress=0,
-            ),
-        )
-        return audit_info
-
     # Test EKS Service
     def test_service(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info()
         eks = EKS(audit_info)
         assert eks.service == "eks"
 
     # Test EKS client
     def test_client(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info()
         eks = EKS(audit_info)
         for reg_client in eks.regional_clients.values():
             assert reg_client.__class__.__name__ == "EKS"
 
     # Test EKS session
     def test__get_session__(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info()
         eks = EKS(audit_info)
         assert eks.session.__class__.__name__ == "Session"
 
     # Test EKS list clusters
-    @mock_ec2
-    @mock_eks
+    @mock_aws
     def test__list_clusters(self):
-        ec2_client = client("ec2", region_name=AWS_REGION)
-        eks_client = client("eks", region_name=AWS_REGION)
+        ec2_client = client("ec2", region_name=AWS_REGION_EU_WEST_1)
+        eks_client = client("eks", region_name=AWS_REGION_EU_WEST_1)
         vpc = ec2_client.create_vpc(CidrBlock=cidr_block_vpc)
         subnet1 = ec2_client.create_subnet(
             VpcId=vpc["Vpc"]["VpcId"], CidrBlock=cidr_block_subnet_1
@@ -103,19 +73,18 @@ class Test_EKS_Service:
             roleArn=f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:role/eks-service-role-AWSServiceRoleForAmazonEKS-J7ONKE3BQ4PI",
             tags={"test": "test"},
         )
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info()
         eks = EKS(audit_info)
         assert len(eks.clusters) == 1
         assert eks.clusters[0].name == cluster_name
-        assert eks.clusters[0].region == AWS_REGION
+        assert eks.clusters[0].region == AWS_REGION_EU_WEST_1
         assert eks.clusters[0].tags == [{"test": "test"}]
 
     # Test EKS describe clusters
-    @mock_ec2
-    @mock_eks
+    @mock_aws
     def test__describe_clusters(self):
-        ec2_client = client("ec2", region_name=AWS_REGION)
-        eks_client = client("eks", region_name=AWS_REGION)
+        ec2_client = client("ec2", region_name=AWS_REGION_EU_WEST_1)
+        eks_client = client("eks", region_name=AWS_REGION_EU_WEST_1)
         vpc = ec2_client.create_vpc(CidrBlock=cidr_block_vpc)
         subnet1 = ec2_client.create_subnet(
             VpcId=vpc["Vpc"]["VpcId"], CidrBlock=cidr_block_subnet_1
@@ -157,11 +126,11 @@ class Test_EKS_Service:
                 },
             ],
         )
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info()
         eks = EKS(audit_info)
         assert len(eks.clusters) == 1
         assert eks.clusters[0].name == cluster_name
-        assert eks.clusters[0].region == AWS_REGION
+        assert eks.clusters[0].region == AWS_REGION_EU_WEST_1
         assert eks.clusters[0].arn == cluster["cluster"]["arn"]
         assert eks.clusters[0].logging.types == ["api"]
         assert eks.clusters[0].logging.enabled

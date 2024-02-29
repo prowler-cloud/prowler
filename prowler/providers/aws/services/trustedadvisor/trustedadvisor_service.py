@@ -34,9 +34,9 @@ class TrustedAdvisor(AWSService):
     def __describe_trusted_advisor_checks__(self):
         logger.info("TrustedAdvisor - Describing Checks...")
         try:
-            for check in self.client.describe_trusted_advisor_checks(language="en")[
-                "checks"
-            ]:
+            for check in self.client.describe_trusted_advisor_checks(language="en").get(
+                "checks", []
+            ):
                 self.checks.append(
                     Check(
                         id=check["id"],

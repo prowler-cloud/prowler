@@ -1,9 +1,8 @@
 import yaml
-from boto3 import resource, session
+from boto3 import resource
 from mock import MagicMock
-from moto import mock_dynamodb, mock_s3
+from moto import mock_aws
 
-from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.aws.lib.mutelist.mutelist import (
     is_excepted,
     is_muted,
@@ -14,50 +13,21 @@ from prowler.providers.aws.lib.mutelist.mutelist import (
     mutelist_findings,
     parse_mutelist_file,
 )
-from prowler.providers.common.models import Audit_Metadata
 from tests.providers.aws.audit_info_utils import (
     AWS_ACCOUNT_NUMBER,
+    AWS_REGION_EU_CENTRAL_1,
+    AWS_REGION_EU_SOUTH_3,
     AWS_REGION_EU_WEST_1,
     AWS_REGION_US_EAST_1,
+    set_mocked_aws_audit_info,
 )
 
 
-class Test_Mutelist:
-    # Mocked Audit Info
-    def set_mocked_audit_info(self):
-        audit_info = AWS_Audit_Info(
-            session_config=None,
-            original_session=None,
-            audit_session=session.Session(
-                profile_name=None,
-                botocore_session=None,
-            ),
-            audited_account=AWS_ACCOUNT_NUMBER,
-            audited_account_arn=f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root",
-            audited_user_id=None,
-            audited_partition="aws",
-            audited_identity_arn=None,
-            profile=None,
-            profile_region=None,
-            credentials=None,
-            assumed_role_info=None,
-            audited_regions=None,
-            organizations_metadata=None,
-            audit_resources=None,
-            mfa_enabled=False,
-            audit_metadata=Audit_Metadata(
-                services_scanned=0,
-                expected_checks=[],
-                completed_checks=0,
-                audit_progress=0,
-            ),
-        )
-        return audit_info
-
+class Test_Allowlist:
     # Test S3 mutelist
-    @mock_s3
+    @mock_aws
     def test_s3_mutelist(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info()
         # Create bucket and upload mutelist yaml
         s3_resource = resource("s3", region_name=AWS_REGION_US_EAST_1)
         s3_resource.create_bucket(Bucket="test-mutelist")
@@ -74,9 +44,9 @@ class Test_Mutelist:
             )
 
     # Test DynamoDB mutelist
-    @mock_dynamodb
+    @mock_aws
     def test_dynamo_mutelist(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info()
         # Create table and put item
         dynamodb_resource = resource("dynamodb", region_name=AWS_REGION_US_EAST_1)
         table_name = "test-mutelist"
@@ -118,9 +88,9 @@ class Test_Mutelist:
             )["Accounts"]["*"]["Checks"]["iam_user_hardware_mfa_enabled"]["Resources"]
         )
 
-    @mock_dynamodb
+    @mock_aws
     def test_dynamo_mutelist_with_tags(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info()
         # Create table and put item
         dynamodb_resource = resource("dynamodb", region_name=AWS_REGION_US_EAST_1)
         table_name = "test-mutelist"
@@ -163,10 +133,9 @@ class Test_Mutelist:
             )["Accounts"]["*"]["Checks"]["*"]["Tags"]
         )
 
-    # Mutelist tests
-
-    def test_mutelist_findings(self):
-        # Mutelist example
+    # Allowlist tests
+    def test_mutelist_findings_only_wildcard(self):
+        # Allowlist example
         mutelist = {
             "Accounts": {
                 "*": {
@@ -195,6 +164,44 @@ class Test_Mutelist:
         muted_findings = mutelist_findings(mutelist, AWS_ACCOUNT_NUMBER, check_findings)
         assert len(muted_findings) == 1
         assert muted_findings[0].status == "MUTED"
+
+    def test_mutelist_all_exceptions_empty(self):
+        # Allowlist example
+        mutelist = {
+            "Accounts": {
+                "*": {
+                    "Checks": {
+                        "*": {
+                            "Tags": ["*"],
+                            "Regions": [AWS_REGION_US_EAST_1],
+                            "Resources": ["*"],
+                            "Exceptions": {
+                                "Tags": [],
+                                "Regions": [],
+                                "Accounts": [],
+                                "Resources": [],
+                            },
+                        }
+                    }
+                }
+            }
+        }
+
+        # Check Findings
+        check_findings = []
+        finding_1 = MagicMock
+        finding_1.check_metadata = MagicMock
+        finding_1.check_metadata.CheckID = "check_test"
+        finding_1.status = "FAIL"
+        finding_1.region = AWS_REGION_US_EAST_1
+        finding_1.resource_id = "prowler"
+        finding_1.resource_tags = []
+
+        check_findings.append(finding_1)
+
+        muted_findings = mutelist_findings(mutelist, AWS_ACCOUNT_NUMBER, check_findings)
+        assert len(muted_findings) == 1
+        assert muted_findings[0].status == "WARNING"
 
     def test_is_muted_with_everything_excepted(self):
         mutelist = {
@@ -235,12 +242,6 @@ class Test_Mutelist:
                             "Tags": ["*"],
                             "Regions": ["*"],
                             "Resources": ["*"],
-                            "Exceptions": {
-                                "Tags": [],
-                                "Regions": [],
-                                "Accounts": [],
-                                "Resources": [],
-                            },
                         }
                     }
                 }
@@ -256,8 +257,41 @@ class Test_Mutelist:
             "",
         )
 
+    def test_is_muted_with_default_mutelist_with_tags(self):
+        mutelist = {
+            "Accounts": {
+                "*": {
+                    "Checks": {
+                        "*": {
+                            "Regions": ["*"],
+                            "Resources": ["*"],
+                            "Tags": ["Compliance=allow"],
+                        }
+                    }
+                }
+            }
+        }
+
+        assert is_muted(
+            mutelist,
+            AWS_ACCOUNT_NUMBER,
+            "athena_1",
+            AWS_REGION_US_EAST_1,
+            "prowler",
+            "Compliance=allow",
+        )
+
+        assert not is_muted(
+            mutelist,
+            AWS_ACCOUNT_NUMBER,
+            "athena_1",
+            AWS_REGION_US_EAST_1,
+            "prowler",
+            "Compliance=deny",
+        )
+
     def test_is_muted(self):
-        # Mutelist example
+        # Allowlist example
         mutelist = {
             "Accounts": {
                 "*": {
@@ -472,6 +506,155 @@ class Test_Mutelist:
             is_muted(
                 mutelist, AWS_ACCOUNT_NUMBER, "check_test", "us-east-2", "test", ""
             )
+        )
+
+    def test_is_muted_all_and_single_account_with_different_resources(self):
+        # Allowlist example
+        mutelist = {
+            "Accounts": {
+                "*": {
+                    "Checks": {
+                        "check_test_1": {
+                            "Regions": ["*"],
+                            "Resources": ["resource_1", "resource_2"],
+                        },
+                    }
+                },
+                AWS_ACCOUNT_NUMBER: {
+                    "Checks": {
+                        "check_test_1": {
+                            "Regions": ["*"],
+                            "Resources": ["resource_3"],
+                        }
+                    }
+                },
+            }
+        }
+
+        assert is_muted(
+            mutelist,
+            "111122223333",
+            "check_test_1",
+            AWS_REGION_US_EAST_1,
+            "resource_1",
+            "",
+        )
+
+        assert is_muted(
+            mutelist,
+            "111122223333",
+            "check_test_1",
+            AWS_REGION_US_EAST_1,
+            "resource_2",
+            "",
+        )
+
+        assert not is_muted(
+            mutelist,
+            "111122223333",
+            "check_test_1",
+            AWS_REGION_US_EAST_1,
+            "resource_3",
+            "",
+        )
+
+        assert is_muted(
+            mutelist,
+            AWS_ACCOUNT_NUMBER,
+            "check_test_1",
+            AWS_REGION_US_EAST_1,
+            "resource_3",
+            "",
+        )
+
+        assert is_muted(
+            mutelist,
+            AWS_ACCOUNT_NUMBER,
+            "check_test_1",
+            AWS_REGION_US_EAST_1,
+            "resource_2",
+            "",
+        )
+
+    def test_is_muted_all_and_single_account_with_different_resources_and_exceptions(
+        self,
+    ):
+        # Allowlist example
+        mutelist = {
+            "Accounts": {
+                "*": {
+                    "Checks": {
+                        "check_test_1": {
+                            "Regions": ["*"],
+                            "Resources": ["resource_1", "resource_2"],
+                            "Exceptions": {"Regions": [AWS_REGION_US_EAST_1]},
+                        },
+                    }
+                },
+                AWS_ACCOUNT_NUMBER: {
+                    "Checks": {
+                        "check_test_1": {
+                            "Regions": ["*"],
+                            "Resources": ["resource_3"],
+                            "Exceptions": {"Regions": [AWS_REGION_EU_WEST_1]},
+                        }
+                    }
+                },
+            }
+        }
+
+        assert not is_muted(
+            mutelist,
+            AWS_ACCOUNT_NUMBER,
+            "check_test_1",
+            AWS_REGION_US_EAST_1,
+            "resource_2",
+            "",
+        )
+
+        assert not is_muted(
+            mutelist,
+            "111122223333",
+            "check_test_1",
+            AWS_REGION_US_EAST_1,
+            "resource_1",
+            "",
+        )
+
+        assert is_muted(
+            mutelist,
+            "111122223333",
+            "check_test_1",
+            AWS_REGION_EU_WEST_1,
+            "resource_2",
+            "",
+        )
+
+        assert not is_muted(
+            mutelist,
+            "111122223333",
+            "check_test_1",
+            AWS_REGION_US_EAST_1,
+            "resource_3",
+            "",
+        )
+
+        assert is_muted(
+            mutelist,
+            AWS_ACCOUNT_NUMBER,
+            "check_test_1",
+            AWS_REGION_US_EAST_1,
+            "resource_3",
+            "",
+        )
+
+        assert not is_muted(
+            mutelist,
+            AWS_ACCOUNT_NUMBER,
+            "check_test_1",
+            AWS_REGION_EU_WEST_1,
+            "resource_3",
+            "",
         )
 
     def test_is_muted_single_account(self):
@@ -747,6 +930,111 @@ class Test_Mutelist:
             )
         )
 
+    def test_is_muted_specific_account_with_other_account_excepted(self):
+        # Allowlist example
+        mutelist = {
+            "Accounts": {
+                AWS_ACCOUNT_NUMBER: {
+                    "Checks": {
+                        "check_test": {
+                            "Regions": [AWS_REGION_EU_WEST_1],
+                            "Resources": ["*"],
+                            "Tags": [],
+                            "Exceptions": {"Accounts": ["111122223333"]},
+                        }
+                    }
+                }
+            }
+        }
+
+        assert is_muted(
+            mutelist,
+            AWS_ACCOUNT_NUMBER,
+            "check_test",
+            AWS_REGION_EU_WEST_1,
+            "prowler",
+            "environment=dev",
+        )
+
+        assert not is_muted(
+            mutelist,
+            "111122223333",
+            "check_test",
+            AWS_REGION_EU_WEST_1,
+            "prowler",
+            "environment=dev",
+        )
+
+    def test_is_muted_complex_mutelist(self):
+        # Allowlist example
+        mutelist = {
+            "Accounts": {
+                "*": {
+                    "Checks": {
+                        "s3_bucket_object_versioning": {
+                            "Regions": [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1],
+                            "Resources": ["ci-logs", "logs", ".+-logs"],
+                        },
+                        "ecs_task_definitions_no_environment_secrets": {
+                            "Regions": ["*"],
+                            "Resources": ["*"],
+                            "Exceptions": {
+                                "Accounts": [AWS_ACCOUNT_NUMBER],
+                                "Regions": [
+                                    AWS_REGION_EU_WEST_1,
+                                    AWS_REGION_EU_SOUTH_3,
+                                ],
+                            },
+                        },
+                        "*": {
+                            "Regions": ["*"],
+                            "Resources": ["*"],
+                            "Tags": ["environment=dev"],
+                        },
+                    }
+                },
+                AWS_ACCOUNT_NUMBER: {
+                    "Checks": {
+                        "*": {
+                            "Regions": ["*"],
+                            "Resources": ["*"],
+                            "Exceptions": {
+                                "Resources": ["test"],
+                                "Tags": ["environment=prod"],
+                            },
+                        }
+                    }
+                },
+            }
+        }
+
+        assert is_muted(
+            mutelist,
+            AWS_ACCOUNT_NUMBER,
+            "test_check",
+            AWS_REGION_EU_WEST_1,
+            "prowler-logs",
+            "environment=dev",
+        )
+
+        assert is_muted(
+            mutelist,
+            AWS_ACCOUNT_NUMBER,
+            "ecs_task_definitions_no_environment_secrets",
+            AWS_REGION_EU_WEST_1,
+            "prowler",
+            "environment=dev",
+        )
+
+        assert is_muted(
+            mutelist,
+            AWS_ACCOUNT_NUMBER,
+            "s3_bucket_object_versioning",
+            AWS_REGION_EU_WEST_1,
+            "prowler-logs",
+            "environment=dev",
+        )
+
     def test_is_muted_in_tags(self):
         mutelist_tags = ["environment=dev", "project=prowler"]
 
@@ -821,6 +1109,107 @@ class Test_Mutelist:
             "environment=test",
         )
 
+    def test_is_excepted_only_in_account(self):
+        # Allowlist example
+        exceptions = {
+            "Accounts": [AWS_ACCOUNT_NUMBER],
+            "Regions": [],
+            "Resources": [],
+            "Tags": [],
+        }
+
+        assert is_excepted(
+            exceptions,
+            AWS_ACCOUNT_NUMBER,
+            "eu-central-1",
+            "test",
+            "environment=test",
+        )
+
+    def test_is_excepted_only_in_region(self):
+        # Allowlist example
+        exceptions = {
+            "Accounts": [],
+            "Regions": [AWS_REGION_EU_CENTRAL_1, AWS_REGION_EU_SOUTH_3],
+            "Resources": [],
+            "Tags": [],
+        }
+
+        assert is_excepted(
+            exceptions,
+            AWS_ACCOUNT_NUMBER,
+            AWS_REGION_EU_CENTRAL_1,
+            "test",
+            "environment=test",
+        )
+
+    def test_is_excepted_only_in_resources(self):
+        # Allowlist example
+        exceptions = {
+            "Accounts": [],
+            "Regions": [],
+            "Resources": ["resource_1"],
+            "Tags": [],
+        }
+
+        assert is_excepted(
+            exceptions,
+            AWS_ACCOUNT_NUMBER,
+            AWS_REGION_EU_CENTRAL_1,
+            "resource_1",
+            "environment=test",
+        )
+
+    def test_is_excepted_only_in_tags(self):
+        # Allowlist example
+        exceptions = {
+            "Accounts": [],
+            "Regions": [],
+            "Resources": [],
+            "Tags": ["environment=test"],
+        }
+
+        assert is_excepted(
+            exceptions,
+            AWS_ACCOUNT_NUMBER,
+            AWS_REGION_EU_CENTRAL_1,
+            "resource_1",
+            "environment=test",
+        )
+
+    def test_is_excepted_in_account_and_tags(self):
+        # Allowlist example
+        exceptions = {
+            "Accounts": [AWS_ACCOUNT_NUMBER],
+            "Regions": [],
+            "Resources": [],
+            "Tags": ["environment=test"],
+        }
+
+        assert is_excepted(
+            exceptions,
+            AWS_ACCOUNT_NUMBER,
+            AWS_REGION_EU_CENTRAL_1,
+            "resource_1",
+            "environment=test",
+        )
+
+        assert not is_excepted(
+            exceptions,
+            "111122223333",
+            AWS_REGION_EU_CENTRAL_1,
+            "resource_1",
+            "environment=test",
+        )
+
+        assert not is_excepted(
+            exceptions,
+            "111122223333",
+            AWS_REGION_EU_CENTRAL_1,
+            "resource_1",
+            "environment=dev",
+        )
+
     def test_is_excepted_all_wildcard(self):
         exceptions = {
             "Accounts": ["*"],
@@ -865,6 +1254,22 @@ class Test_Mutelist:
             "eu-south-3",
             "test",
             "environment=pro",
+        )
+
+    def test_is_excepted_all_empty(self):
+        exceptions = {
+            "Accounts": [],
+            "Regions": [],
+            "Resources": [],
+            "Tags": [],
+        }
+
+        assert not is_excepted(
+            exceptions,
+            AWS_ACCOUNT_NUMBER,
+            "eu-south-2",
+            "test",
+            "environment=test",
         )
 
     def test_is_muted_in_resource(self):

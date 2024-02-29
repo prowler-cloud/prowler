@@ -1,5 +1,3 @@
-import sys
-
 from prowler.config.config import (
     csv_file_suffix,
     html_file_suffix,
@@ -29,7 +27,7 @@ def send_to_s3_bucket(
         else:  # Compliance output mode
             filename = f"{output_filename}_{output_mode}{csv_file_suffix}"
 
-        logger.info(f"Sending outputs to S3 bucket {output_bucket_name}")
+        logger.info(f"Sending output file {filename} to S3 bucket {output_bucket_name}")
         # File location
         file_name = output_directory + "/" + filename
 
@@ -41,10 +39,9 @@ def send_to_s3_bucket(
         s3_client.upload_file(file_name, output_bucket_name, object_name)
 
     except Exception as error:
-        logger.critical(
+        logger.error(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
         )
-        sys.exit(1)
 
 
 def get_s3_object_path(output_directory: str) -> str:

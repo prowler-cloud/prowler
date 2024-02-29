@@ -28,6 +28,7 @@ class S3(AWSService):
         self.__threading_call__(self.__get_bucket_tagging__)
 
     # In the S3 service we override the "__threading_call__" method because we spawn a process per bucket instead of per region
+    # TODO: Replace the above function with the service __threading_call__ using the buckets as the iterator
     def __threading_call__(self, call):
         threads = []
         for bucket in self.buckets:
@@ -101,6 +102,15 @@ class S3(AWSService):
             if "MFADelete" in bucket_versioning:
                 if "Enabled" == bucket_versioning["MFADelete"]:
                     bucket.mfa_delete = True
+        except ClientError as error:
+            if error.response["Error"]["Code"] == "NoSuchBucket":
+                logger.warning(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+            else:
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
         except Exception as error:
             if bucket.region:
                 logger.error(
@@ -153,6 +163,15 @@ class S3(AWSService):
                 bucket.logging_target_bucket = bucket_logging["LoggingEnabled"][
                     "TargetBucket"
                 ]
+        except ClientError as error:
+            if error.response["Error"]["Code"] == "NoSuchBucket":
+                logger.warning(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+            else:
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
         except Exception as error:
             if regional_client:
                 logger.error(
@@ -224,6 +243,15 @@ class S3(AWSService):
                     grantee.permission = grant["Permission"]
                 grantees.append(grantee)
             bucket.acl_grantees = grantees
+        except ClientError as error:
+            if error.response["Error"]["Code"] == "NoSuchBucket":
+                logger.warning(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+            else:
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
         except Exception as error:
             if regional_client:
                 logger.error(
@@ -241,18 +269,26 @@ class S3(AWSService):
             bucket.policy = json.loads(
                 regional_client.get_bucket_policy(Bucket=bucket.name)["Policy"]
             )
-        except Exception as error:
-            if "NoSuchBucketPolicy" in str(error):
+        except ClientError as error:
+            if error.response["Error"]["Code"] == "NoSuchBucketPolicy":
                 bucket.policy = {}
+            elif error.response["Error"]["Code"] == "NoSuchBucket":
+                logger.warning(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
             else:
-                if regional_client:
-                    logger.error(
-                        f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                    )
-                else:
-                    logger.error(
-                        f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                    )
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+        except Exception as error:
+            if regional_client:
+                logger.error(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+            else:
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
 
     def __get_bucket_ownership_controls__(self, bucket):
         logger.info("S3 - Get buckets ownership controls...")

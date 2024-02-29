@@ -1,6 +1,6 @@
 from unittest import mock
 
-GCP_PROJECT_ID = "123456789012"
+from tests.providers.gcp.lib.audit_info_utils import GCP_PROJECT_ID
 
 
 class Test_compute_instance_default_service_account_in_use_with_full_api_access:

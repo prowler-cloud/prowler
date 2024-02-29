@@ -1,55 +1,22 @@
 from unittest import mock
 
-from boto3 import client, session
-from moto import mock_s3, mock_s3control
+from boto3 import client
+from moto import mock_aws
 
-from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
-from prowler.providers.common.models import Audit_Metadata
-
-AWS_ACCOUNT_NUMBER = "123456789012"
-AWS_ACCOUNT_ARN = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
-AWS_REGION = "us-east-1"
+from tests.providers.aws.audit_info_utils import (
+    AWS_ACCOUNT_ARN,
+    AWS_ACCOUNT_NUMBER,
+    AWS_REGION_US_EAST_1,
+    set_mocked_aws_audit_info,
+)
 
 
 class Test_s3_bucket_public_write_acl:
-    # Mocked Audit Info
-    def set_mocked_audit_info(self):
-        audit_info = AWS_Audit_Info(
-            session_config=None,
-            original_session=None,
-            audit_session=session.Session(
-                profile_name=None,
-                botocore_session=None,
-                region_name=AWS_REGION,
-            ),
-            audited_account=AWS_ACCOUNT_NUMBER,
-            audited_account_arn=AWS_ACCOUNT_ARN,
-            audited_user_id=None,
-            audited_partition="aws",
-            audited_identity_arn=None,
-            profile=None,
-            profile_region=AWS_REGION,
-            credentials=None,
-            assumed_role_info=None,
-            audited_regions=None,
-            organizations_metadata=None,
-            audit_resources=None,
-            mfa_enabled=False,
-            audit_metadata=Audit_Metadata(
-                services_scanned=0,
-                expected_checks=[],
-                completed_checks=0,
-                audit_progress=0,
-            ),
-        )
-        return audit_info
-
-    @mock_s3
-    @mock_s3control
+    @mock_aws
     def test_no_buckets(self):
         from prowler.providers.aws.services.s3.s3_service import S3, S3Control
 
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -73,11 +40,10 @@ class Test_s3_bucket_public_write_acl:
 
                     assert len(result) == 0
 
-    @mock_s3
-    @mock_s3control
+    @mock_aws
     def test_bucket_account_public_block_without_buckets(self):
         # Generate S3Control Client
-        s3control_client = client("s3control", region_name=AWS_REGION)
+        s3control_client = client("s3control", region_name=AWS_REGION_US_EAST_1)
         s3control_client.put_public_access_block(
             AccountId=AWS_ACCOUNT_NUMBER,
             PublicAccessBlockConfiguration={
@@ -89,7 +55,7 @@ class Test_s3_bucket_public_write_acl:
         )
         from prowler.providers.aws.services.s3.s3_service import S3, S3Control
 
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -119,16 +85,15 @@ class Test_s3_bucket_public_write_acl:
                     )
                     assert result[0].resource_id == AWS_ACCOUNT_NUMBER
                     assert result[0].resource_arn == AWS_ACCOUNT_ARN
-                    assert result[0].region == AWS_REGION
+                    assert result[0].region == AWS_REGION_US_EAST_1
 
-    @mock_s3
-    @mock_s3control
+    @mock_aws
     def test_bucket_account_public_block(self):
-        s3_client = client("s3", region_name=AWS_REGION)
+        s3_client = client("s3", region_name=AWS_REGION_US_EAST_1)
         bucket_name_us = "bucket_test_us"
         s3_client.create_bucket(Bucket=bucket_name_us)
         # Generate S3Control Client
-        s3control_client = client("s3control", region_name=AWS_REGION)
+        s3control_client = client("s3control", region_name=AWS_REGION_US_EAST_1)
         s3control_client.put_public_access_block(
             AccountId=AWS_ACCOUNT_NUMBER,
             PublicAccessBlockConfiguration={
@@ -140,7 +105,7 @@ class Test_s3_bucket_public_write_acl:
         )
         from prowler.providers.aws.services.s3.s3_service import S3, S3Control
 
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -170,16 +135,15 @@ class Test_s3_bucket_public_write_acl:
                     )
                     assert result[0].resource_id == AWS_ACCOUNT_NUMBER
                     assert result[0].resource_arn == AWS_ACCOUNT_ARN
-                    assert result[0].region == AWS_REGION
+                    assert result[0].region == AWS_REGION_US_EAST_1
 
-    @mock_s3
-    @mock_s3control
+    @mock_aws
     def test_bucket_public_block(self):
-        s3_client = client("s3", region_name=AWS_REGION)
+        s3_client = client("s3", region_name=AWS_REGION_US_EAST_1)
         bucket_name_us = "bucket_test_us"
         s3_client.create_bucket(Bucket=bucket_name_us)
         # Generate S3Control Client
-        s3control_client = client("s3control", region_name=AWS_REGION)
+        s3control_client = client("s3control", region_name=AWS_REGION_US_EAST_1)
         s3control_client.put_public_access_block(
             AccountId=AWS_ACCOUNT_NUMBER,
             PublicAccessBlockConfiguration={
@@ -200,7 +164,7 @@ class Test_s3_bucket_public_write_acl:
         )
         from prowler.providers.aws.services.s3.s3_service import S3, S3Control
 
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -233,17 +197,16 @@ class Test_s3_bucket_public_write_acl:
                         result[0].resource_arn
                         == f"arn:{audit_info.audited_partition}:s3:::{bucket_name_us}"
                     )
-                    assert result[0].region == AWS_REGION
+                    assert result[0].region == AWS_REGION_US_EAST_1
 
-    @mock_s3
-    @mock_s3control
+    @mock_aws
     def test_bucket_public_write_ACL_AllUsers_WRITE(self):
-        s3_client = client("s3", region_name=AWS_REGION)
+        s3_client = client("s3", region_name=AWS_REGION_US_EAST_1)
         bucket_name_us = "bucket_test_us"
         s3_client.create_bucket(Bucket=bucket_name_us)
         bucket_owner = s3_client.get_bucket_acl(Bucket=bucket_name_us)["Owner"]
         # Generate S3Control Client
-        s3control_client = client("s3control", region_name=AWS_REGION)
+        s3control_client = client("s3control", region_name=AWS_REGION_US_EAST_1)
         s3control_client.put_public_access_block(
             AccountId=AWS_ACCOUNT_NUMBER,
             PublicAccessBlockConfiguration={
@@ -279,7 +242,7 @@ class Test_s3_bucket_public_write_acl:
         )
         from prowler.providers.aws.services.s3.s3_service import S3, S3Control
 
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -313,17 +276,16 @@ class Test_s3_bucket_public_write_acl:
                         result[0].resource_arn
                         == f"arn:{audit_info.audited_partition}:s3:::{bucket_name_us}"
                     )
-                    assert result[0].region == AWS_REGION
+                    assert result[0].region == AWS_REGION_US_EAST_1
 
-    @mock_s3
-    @mock_s3control
+    @mock_aws
     def test_bucket_public_write_ACL_AllUsers_WRITE_ACP(self):
-        s3_client = client("s3", region_name=AWS_REGION)
+        s3_client = client("s3", region_name=AWS_REGION_US_EAST_1)
         bucket_name_us = "bucket_test_us"
         s3_client.create_bucket(Bucket=bucket_name_us)
         bucket_owner = s3_client.get_bucket_acl(Bucket=bucket_name_us)["Owner"]
         # Generate S3Control Client
-        s3control_client = client("s3control", region_name=AWS_REGION)
+        s3control_client = client("s3control", region_name=AWS_REGION_US_EAST_1)
         s3control_client.put_public_access_block(
             AccountId=AWS_ACCOUNT_NUMBER,
             PublicAccessBlockConfiguration={
@@ -359,7 +321,7 @@ class Test_s3_bucket_public_write_acl:
         )
         from prowler.providers.aws.services.s3.s3_service import S3, S3Control
 
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -393,17 +355,16 @@ class Test_s3_bucket_public_write_acl:
                         result[0].resource_arn
                         == f"arn:{audit_info.audited_partition}:s3:::{bucket_name_us}"
                     )
-                    assert result[0].region == AWS_REGION
+                    assert result[0].region == AWS_REGION_US_EAST_1
 
-    @mock_s3
-    @mock_s3control
+    @mock_aws
     def test_bucket_public_write_ACL_AllUsers_FULL_CONTROL(self):
-        s3_client = client("s3", region_name=AWS_REGION)
+        s3_client = client("s3", region_name=AWS_REGION_US_EAST_1)
         bucket_name_us = "bucket_test_us"
         s3_client.create_bucket(Bucket=bucket_name_us)
         bucket_owner = s3_client.get_bucket_acl(Bucket=bucket_name_us)["Owner"]
         # Generate S3Control Client
-        s3control_client = client("s3control", region_name=AWS_REGION)
+        s3control_client = client("s3control", region_name=AWS_REGION_US_EAST_1)
         s3control_client.put_public_access_block(
             AccountId=AWS_ACCOUNT_NUMBER,
             PublicAccessBlockConfiguration={
@@ -439,7 +400,7 @@ class Test_s3_bucket_public_write_acl:
         )
         from prowler.providers.aws.services.s3.s3_service import S3, S3Control
 
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -473,17 +434,16 @@ class Test_s3_bucket_public_write_acl:
                         result[0].resource_arn
                         == f"arn:{audit_info.audited_partition}:s3:::{bucket_name_us}"
                     )
-                    assert result[0].region == AWS_REGION
+                    assert result[0].region == AWS_REGION_US_EAST_1
 
-    @mock_s3
-    @mock_s3control
+    @mock_aws
     def test_bucket_public_write_ACL_AuthenticatedUsers_WRITE(self):
-        s3_client = client("s3", region_name=AWS_REGION)
+        s3_client = client("s3", region_name=AWS_REGION_US_EAST_1)
         bucket_name_us = "bucket_test_us"
         s3_client.create_bucket(Bucket=bucket_name_us)
         bucket_owner = s3_client.get_bucket_acl(Bucket=bucket_name_us)["Owner"]
         # Generate S3Control Client
-        s3control_client = client("s3control", region_name=AWS_REGION)
+        s3control_client = client("s3control", region_name=AWS_REGION_US_EAST_1)
         s3control_client.put_public_access_block(
             AccountId=AWS_ACCOUNT_NUMBER,
             PublicAccessBlockConfiguration={
@@ -519,7 +479,7 @@ class Test_s3_bucket_public_write_acl:
         )
         from prowler.providers.aws.services.s3.s3_service import S3, S3Control
 
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -553,17 +513,16 @@ class Test_s3_bucket_public_write_acl:
                         result[0].resource_arn
                         == f"arn:{audit_info.audited_partition}:s3:::{bucket_name_us}"
                     )
-                    assert result[0].region == AWS_REGION
+                    assert result[0].region == AWS_REGION_US_EAST_1
 
-    @mock_s3
-    @mock_s3control
+    @mock_aws
     def test_bucket_public_write_ACL_AuthenticatedUsers_WRITE_ACP(self):
-        s3_client = client("s3", region_name=AWS_REGION)
+        s3_client = client("s3", region_name=AWS_REGION_US_EAST_1)
         bucket_name_us = "bucket_test_us"
         s3_client.create_bucket(Bucket=bucket_name_us)
         bucket_owner = s3_client.get_bucket_acl(Bucket=bucket_name_us)["Owner"]
         # Generate S3Control Client
-        s3control_client = client("s3control", region_name=AWS_REGION)
+        s3control_client = client("s3control", region_name=AWS_REGION_US_EAST_1)
         s3control_client.put_public_access_block(
             AccountId=AWS_ACCOUNT_NUMBER,
             PublicAccessBlockConfiguration={
@@ -599,7 +558,7 @@ class Test_s3_bucket_public_write_acl:
         )
         from prowler.providers.aws.services.s3.s3_service import S3, S3Control
 
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -633,17 +592,16 @@ class Test_s3_bucket_public_write_acl:
                         result[0].resource_arn
                         == f"arn:{audit_info.audited_partition}:s3:::{bucket_name_us}"
                     )
-                    assert result[0].region == AWS_REGION
+                    assert result[0].region == AWS_REGION_US_EAST_1
 
-    @mock_s3
-    @mock_s3control
+    @mock_aws
     def test_bucket_public_write_ACL_AuthenticatedUsers_FULL_CONTROL(self):
-        s3_client = client("s3", region_name=AWS_REGION)
+        s3_client = client("s3", region_name=AWS_REGION_US_EAST_1)
         bucket_name_us = "bucket_test_us"
         s3_client.create_bucket(Bucket=bucket_name_us)
         bucket_owner = s3_client.get_bucket_acl(Bucket=bucket_name_us)["Owner"]
         # Generate S3Control Client
-        s3control_client = client("s3control", region_name=AWS_REGION)
+        s3control_client = client("s3control", region_name=AWS_REGION_US_EAST_1)
         s3control_client.put_public_access_block(
             AccountId=AWS_ACCOUNT_NUMBER,
             PublicAccessBlockConfiguration={
@@ -679,7 +637,7 @@ class Test_s3_bucket_public_write_acl:
         )
         from prowler.providers.aws.services.s3.s3_service import S3, S3Control
 
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -713,4 +671,4 @@ class Test_s3_bucket_public_write_acl:
                         result[0].resource_arn
                         == f"arn:{audit_info.audited_partition}:s3:::{bucket_name_us}"
                     )
-                    assert result[0].region == AWS_REGION
+                    assert result[0].region == AWS_REGION_US_EAST_1

@@ -13,7 +13,7 @@ def send_slack_message(token, channel, stats, provider, audit_info):
         response = client.chat_postMessage(
             username="Prowler",
             icon_url=square_logo_img,
-            channel="#" + channel,
+            channel=f"#{channel}",
             blocks=create_message_blocks(identity, logo, stats),
         )
         return response
@@ -35,7 +35,7 @@ def create_message_identity(provider, audit_info):
         elif provider == "azure":
             printed_subscriptions = []
             for key, value in audit_info.identity.subscriptions.items():
-                intermediate = "- *" + key + ": " + value + "*\n"
+                intermediate = f"- *{key}: {value}*\n"
                 printed_subscriptions.append(intermediate)
             identity = f"Azure Subscriptions:\n{''.join(printed_subscriptions)}"
             logo = azure_logo
@@ -66,14 +66,14 @@ def create_message_blocks(identity, logo, stats):
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": f"\n:white_check_mark: *{stats['total_pass']} Passed findings* ({round(stats['total_pass']/stats['findings_count']*100,2)}%)\n",
+                    "text": f"\n:white_check_mark: *{stats['total_pass']} Passed findings* ({round(stats['total_pass'] / stats['findings_count'] * 100 , 2)}%)\n",
                 },
             },
             {
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": f"\n:x: *{stats['total_fail']} Failed findings* ({round(stats['total_fail']/stats['findings_count']*100,2)}%)\n ",
+                    "text": f"\n:x: *{stats['total_fail']} Failed findings* ({round(stats['total_fail'] / stats['findings_count'] * 100 , 2)}%)\n ",
                 },
             },
             {

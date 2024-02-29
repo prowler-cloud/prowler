@@ -68,6 +68,11 @@ class RDS(AWSService):
                                         for item in instance["DBParameterGroups"]
                                     ],
                                     multi_az=instance["MultiAZ"],
+                                    security_groups=[
+                                        sg["VpcSecurityGroupId"]
+                                        for sg in instance["VpcSecurityGroups"]
+                                        if sg["Status"] == "active"
+                                    ],
                                     cluster_id=instance.get("DBClusterIdentifier"),
                                     cluster_arn=f"arn:{self.audited_partition}:rds:{regional_client.region}:{self.audited_account}:cluster:{instance.get('DBClusterIdentifier')}",
                                     region=regional_client.region,
@@ -232,7 +237,15 @@ class RDS(AWSService):
                     for att in response["DBClusterSnapshotAttributes"]:
                         if "all" in att["AttributeValues"]:
                             snapshot.public = True
-
+        except ClientError as error:
+            if error.response["Error"]["Code"] == "DBClusterSnapshotNotFoundFault":
+                logger.warning(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+            else:
+                logger.error(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -287,6 +300,7 @@ class DBInstance(BaseModel):
     multi_az: bool
     parameter_groups: list[str] = []
     parameters: list[dict] = []
+    security_groups: list[str] = []
     cluster_id: Optional[str]
     cluster_arn: Optional[str]
     region: str

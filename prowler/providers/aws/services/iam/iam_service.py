@@ -453,12 +453,29 @@ class IAM(AWSService):
                                     document=inline_user_policy_doc,
                                 )
                             )
-
+                        except ClientError as error:
+                            if error.response["Error"]["Code"] == "NoSuchEntity":
+                                logger.warning(
+                                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                                )
+                            else:
+                                logger.error(
+                                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                                )
                         except Exception as error:
                             logger.error(
                                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                             )
                 user.inline_policies = inline_user_policies
+            except ClientError as error:
+                if error.response["Error"]["Code"] == "NoSuchEntity":
+                    logger.warning(
+                        f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
+                else:
+                    logger.error(
+                        f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
             except Exception as error:
                 logger.error(
                     f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -494,11 +511,30 @@ class IAM(AWSService):
                                     document=inline_group_policy_doc,
                                 )
                             )
+                        except ClientError as error:
+                            if error.response["Error"]["Code"] == "NoSuchEntity":
+                                logger.warning(
+                                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                                )
+                            else:
+                                logger.error(
+                                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                                )
+
                         except Exception as error:
                             logger.error(
                                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                             )
                 group.inline_policies = inline_group_policies
+            except ClientError as error:
+                if error.response["Error"]["Code"] == "NoSuchEntity":
+                    logger.warning(
+                        f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
+                else:
+                    logger.error(
+                        f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
 
             except Exception as error:
                 logger.error(
@@ -600,9 +636,9 @@ class IAM(AWSService):
                                 entity=policy["PolicyId"],
                                 version_id=policy["DefaultVersionId"],
                                 type="Custom" if scope == "Local" else "AWS",
-                                attached=True
-                                if policy["AttachmentCount"] > 0
-                                else False,
+                                attached=(
+                                    True if policy["AttachmentCount"] > 0 else False
+                                ),
                             )
                         )
         except Exception as error:
@@ -831,9 +867,9 @@ class IAM(AWSService):
                     services_accessed > 0 and access_keys_number > 0
                 )
 
-                self.user_temporary_credentials_usage[
-                    user_data
-                ] = temporary_credentials_usage
+                self.user_temporary_credentials_usage[user_data] = (
+                    temporary_credentials_usage
+                )
 
         except Exception as error:
             logger.error(

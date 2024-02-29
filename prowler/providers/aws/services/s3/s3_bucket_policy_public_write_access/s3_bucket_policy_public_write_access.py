@@ -46,9 +46,24 @@ class s3_bucket_policy_public_write_access(Check):
                             and "*" in str(statement["Principal"])
                         )
                         and (
-                            "s3:PutObject" in statement["Action"]
-                            or "*" in statement["Action"]
-                            or "s3:*" in statement["Action"]
+                            (
+                                isinstance(statement["Action"], list)
+                                and (
+                                    "s3:PutObject" in statement["Action"]
+                                    or "*" in statement["Action"]
+                                    or "s3:*" in statement["Action"]
+                                    or "s3:Put*" in statement["Action"]
+                                )
+                            )
+                            or (
+                                isinstance(statement["Action"], str)
+                                and (
+                                    "s3:PutObject" == statement["Action"]
+                                    or "*" == statement["Action"]
+                                    or "s3:*" == statement["Action"]
+                                    or "s3:Put*" == statement["Action"]
+                                )
+                            )
                         )
                     ):
                         report.status = "FAIL"

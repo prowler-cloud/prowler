@@ -87,12 +87,12 @@ class Route53(AWSService):
                 )
                 for page in list_query_logging_configs_paginator.paginate():
                     for logging_config in page["QueryLoggingConfigs"]:
-                        self.hosted_zones[
-                            hosted_zone.id
-                        ].logging_config = LoggingConfig(
-                            cloudwatch_log_group_arn=logging_config[
-                                "CloudWatchLogsLogGroupArn"
-                            ]
+                        self.hosted_zones[hosted_zone.id].logging_config = (
+                            LoggingConfig(
+                                cloudwatch_log_group_arn=logging_config[
+                                    "CloudWatchLogsLogGroupArn"
+                                ]
+                            )
                         )
 
         except Exception as error:

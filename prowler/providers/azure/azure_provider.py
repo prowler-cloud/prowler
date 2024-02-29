@@ -1,9 +1,11 @@
+import asyncio
 import sys
 from os import getenv
 
+import requests
 from azure.identity import DefaultAzureCredential, InteractiveBrowserCredential
 from azure.mgmt.subscription import SubscriptionClient
-from msgraph.core import GraphClient
+from msgraph import GraphServiceClient
 
 from prowler.lib.logger import logger
 from prowler.providers.azure.lib.audit_info.models import AzureIdentityInfo
@@ -106,49 +108,52 @@ class Azure_Provider:
         # With cli also should be possible but right now it does not work, azure python package issue is coming
         # At the time of writting this with az cli creds is not working, despite that is included
         if sp_env_auth or browser_auth or az_cli_auth:
-            # Trying to recover tenant domain info
-            try:
-                logger.info(
-                    "Trying to retrieve tenant domain from AAD to populate identity structure ..."
-                )
-                client = GraphClient(credential=credentials)
-                domain_result = client.get("/domains").json()
-                if "value" in domain_result:
-                    if "id" in domain_result["value"][0]:
-                        identity.domain = domain_result["value"][0]["id"]
-            except Exception as error:
-                logger.error(
-                    "Provided identity does not have permissions to access AAD to retrieve tenant domain"
-                )
-                logger.error(
-                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
-                )
-            # since that exception is not considered as critical, we keep filling another identity fields
-            if sp_env_auth:
-                # The id of the sp can be retrieved from environment variables
-                identity.identity_id = getenv("AZURE_CLIENT_ID")
-                identity.identity_type = "Service Principal"
-            # Same here, if user can access AAD, some fields are retrieved if not, default value, for az cli
-            # should work but it doesn't, pending issue
-            else:
-                identity.identity_id = "Unknown user id (Missing AAD permissions)"
-                identity.identity_type = "User"
+
+            async def get_azure_identity():
+                # Trying to recover tenant domain info
                 try:
                     logger.info(
-                        "Trying to retrieve user information from AAD to populate identity structure ..."
+                        "Trying to retrieve tenant domain from AAD to populate identity structure ..."
                     )
-                    client = GraphClient(credential=credentials)
-                    user_name = client.get("/me").json()
-                    if "userPrincipalName" in user_name:
-                        identity.identity_id = user_name
+                    client = GraphServiceClient(credentials=credentials)
+
+                    domain_result = await client.domains.get()
+                    if getattr(domain_result, "value"):
+                        if getattr(domain_result.value[0], "id"):
+                            identity.domain = domain_result.value[0].id
 
                 except Exception as error:
                     logger.error(
-                        "Provided identity does not have permissions to access AAD to retrieve user's metadata"
-                    )
-                    logger.error(
                         f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
                     )
+                # since that exception is not considered as critical, we keep filling another identity fields
+                if sp_env_auth:
+                    # The id of the sp can be retrieved from environment variables
+                    identity.identity_id = getenv("AZURE_CLIENT_ID")
+                    identity.identity_type = "Service Principal"
+                # Same here, if user can access AAD, some fields are retrieved if not, default value, for az cli
+                # should work but it doesn't, pending issue
+                else:
+                    identity.identity_id = "Unknown user id (Missing AAD permissions)"
+                    identity.identity_type = "User"
+                    try:
+                        logger.info(
+                            "Trying to retrieve user information from AAD to populate identity structure ..."
+                        )
+                        client = GraphServiceClient(credentials=credentials)
+
+                        me = await client.me.get()
+                        if me:
+                            if getattr(me, "user_principal_name"):
+                                identity.identity_id = me.user_principal_name
+
+                    except Exception as error:
+                        logger.error(
+                            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+                        )
+
+            asyncio.run(get_azure_identity())
+
         # Managed identities only can be assigned resource, resource group and subscription scope permissions
         elif managed_entity_auth:
             identity.identity_id = "Default Managed Identity ID"
@@ -209,3 +214,31 @@ class Azure_Provider:
 
     def get_region_config(self):
         return self.region_config
+
+    def get_locations(self, credentials, region_config):
+        locations = None
+        if credentials and region_config:
+            subscriptions_client = SubscriptionClient(
+                credential=credentials,
+                base_url=region_config["base_url"],
+                credential_scopes=region_config["credential_scopes"],
+            )
+            list_subscriptions = subscriptions_client.subscriptions.list()
+            list_subscriptions_ids = [
+                subscription.subscription_id for subscription in list_subscriptions
+            ]
+            locations = {}
+            token = credentials.get_token("https://management.azure.com/.default").token
+            for subscription_id in list_subscriptions_ids:
+                locations.update({subscription_id: []})
+                url = f"https://management.azure.com/subscriptions/{subscription_id}/locations?api-version=2022-12-01"
+                headers = {
+                    "Authorization": f"Bearer {token}",
+                    "Content-Type": "application/json",
+                }
+                response = requests.get(url, headers=headers)
+                if response.status_code == 200:
+                    data = response.json()
+                    for location in data["value"]:
+                        locations[subscription_id].append(location["name"])
+        return locations

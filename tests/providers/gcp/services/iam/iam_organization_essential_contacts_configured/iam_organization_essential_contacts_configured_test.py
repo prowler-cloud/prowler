@@ -3,8 +3,6 @@ from unittest import mock
 
 from prowler.providers.gcp.services.iam.iam_service import Organization
 
-GCP_PROJECT_ID = "123456789012"
-
 
 class Test_iam_organization_essential_contacts_configured:
     def test_iam_no_organizations(self):

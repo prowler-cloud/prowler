@@ -1,83 +1,52 @@
 import json
 
-from boto3 import client, session
-from moto import mock_s3, mock_s3control
+from boto3 import client
+from moto import mock_aws
 
-from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.aws.services.s3.s3_service import S3, S3Control
-from prowler.providers.common.models import Audit_Metadata
-
-AWS_ACCOUNT_NUMBER = "123456789012"
-AWS_REGION = "us-east-1"
+from tests.providers.aws.audit_info_utils import (
+    AWS_ACCOUNT_NUMBER,
+    AWS_REGION_US_EAST_1,
+    set_mocked_aws_audit_info,
+)
 
 
 class Test_S3_Service:
-    # Mocked Audit Info
-    def set_mocked_audit_info(self):
-        audit_info = AWS_Audit_Info(
-            session_config=None,
-            original_session=None,
-            audit_session=session.Session(
-                profile_name=None,
-                botocore_session=None,
-                region_name=AWS_REGION,
-            ),
-            audited_account=AWS_ACCOUNT_NUMBER,
-            audited_account_arn=f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root",
-            audited_user_id=None,
-            audited_partition="aws",
-            audited_identity_arn=None,
-            profile=None,
-            profile_region=None,
-            credentials=None,
-            assumed_role_info=None,
-            audited_regions=None,
-            organizations_metadata=None,
-            audit_resources=None,
-            mfa_enabled=False,
-            audit_metadata=Audit_Metadata(
-                services_scanned=0,
-                expected_checks=[],
-                completed_checks=0,
-                audit_progress=0,
-            ),
-        )
-        return audit_info
 
     # Test S3 Service
-    @mock_s3
+    @mock_aws
     def test_service(self):
         # S3 client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
         s3 = S3(audit_info)
         assert s3.service == "s3"
 
     # Test S3 Client
-    @mock_s3
+    @mock_aws
     def test_client(self):
         # S3 client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
         s3 = S3(audit_info)
         assert s3.client.__class__.__name__ == "S3"
 
     # Test S3 Session
-    @mock_s3
+    @mock_aws
     def test__get_session__(self):
         # S3 client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
         s3 = S3(audit_info)
         assert s3.session.__class__.__name__ == "Session"
 
     # Test S3 Session
-    @mock_s3
+    @mock_aws
     def test_audited_account(self):
         # S3 client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
         s3 = S3(audit_info)
         assert s3.audited_account == AWS_ACCOUNT_NUMBER
 
     # Test S3 List Buckets
-    @mock_s3
+    @mock_aws
     def test__list_buckets__(self):
         # Generate S3 Client
         s3_client = client("s3")
@@ -86,7 +55,7 @@ class Test_S3_Service:
         s3_client.create_bucket(Bucket=bucket_name)
 
         # S3 client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
         s3 = S3(audit_info)
 
         assert len(s3.buckets) == 1
@@ -98,7 +67,7 @@ class Test_S3_Service:
         assert not s3.buckets[0].object_lock
 
     # Test S3 Get Bucket Versioning
-    @mock_s3
+    @mock_aws
     def test__get_bucket_versioning__(self):
         # Generate S3 Client
         s3_client = client("s3")
@@ -111,7 +80,7 @@ class Test_S3_Service:
             VersioningConfiguration={"MFADelete": "Disabled", "Status": "Enabled"},
         )
         # S3 client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
         s3 = S3(audit_info)
         assert len(s3.buckets) == 1
         assert s3.buckets[0].name == bucket_name
@@ -122,7 +91,7 @@ class Test_S3_Service:
         assert s3.buckets[0].versioning is True
 
     # Test S3 Get Bucket ACL
-    @mock_s3
+    @mock_aws
     def test__get_bucket_acl__(self):
         s3_client = client("s3")
         bucket_name = "test-bucket"
@@ -144,7 +113,7 @@ class Test_S3_Service:
             },
             Bucket=bucket_name,
         )
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
         s3 = S3(audit_info)
         assert len(s3.buckets) == 1
         assert s3.buckets[0].name == bucket_name
@@ -161,7 +130,7 @@ class Test_S3_Service:
         )
 
     # Test S3 Get Bucket Logging
-    @mock_s3
+    @mock_aws
     def test__get_bucket_logging__(self):
         # Generate S3 Client
         s3_client = client("s3")
@@ -224,7 +193,7 @@ class Test_S3_Service:
             },
         )
         # S3 client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
         s3 = S3(audit_info)
         assert len(s3.buckets) == 1
         assert s3.buckets[0].name == bucket_name
@@ -235,7 +204,7 @@ class Test_S3_Service:
         assert s3.buckets[0].logging is True
 
     # Test S3 Get Bucket Policy
-    @mock_s3
+    @mock_aws
     def test__get_bucket_policy__(self):
         s3_client = client("s3")
         bucket_name = "test-bucket"
@@ -245,7 +214,7 @@ class Test_S3_Service:
             Bucket=bucket_name,
             Policy=ssl_policy,
         )
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
         s3 = S3(audit_info)
         assert len(s3.buckets) == 1
         assert s3.buckets[0].name == bucket_name
@@ -256,7 +225,7 @@ class Test_S3_Service:
         assert s3.buckets[0].policy == json.loads(ssl_policy)
 
     # Test S3 Get Bucket Encryption
-    @mock_s3
+    @mock_aws
     def test__get_bucket_encryption__(self):
         # Generate S3 Client
         s3_client = client("s3")
@@ -278,7 +247,7 @@ class Test_S3_Service:
             Bucket=bucket_name, ServerSideEncryptionConfiguration=sse_config
         )
         # S3 client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
         s3 = S3(audit_info)
         assert len(s3.buckets) == 1
         assert s3.buckets[0].name == bucket_name
@@ -289,7 +258,7 @@ class Test_S3_Service:
         assert s3.buckets[0].encryption == "aws:kms"
 
     # Test S3 Get Bucket Ownership Controls
-    @mock_s3
+    @mock_aws
     def test__get_bucket_ownership_controls__(self):
         # Generate S3 Client
         s3_client = client("s3")
@@ -300,7 +269,7 @@ class Test_S3_Service:
         )
 
         # S3 client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
         s3 = S3(audit_info)
         assert len(s3.buckets) == 1
         assert s3.buckets[0].name == bucket_name
@@ -311,7 +280,7 @@ class Test_S3_Service:
         assert s3.buckets[0].ownership == "BucketOwnerEnforced"
 
     # Test S3 Get Public Access Block
-    @mock_s3
+    @mock_aws
     def test__get_public_access_block__(self):
         # Generate S3 Client
         s3_client = client("s3")
@@ -330,7 +299,7 @@ class Test_S3_Service:
             },
         )
         # S3 client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
         s3 = S3(audit_info)
         assert len(s3.buckets) == 1
         assert s3.buckets[0].name == bucket_name
@@ -344,7 +313,7 @@ class Test_S3_Service:
         assert s3.buckets[0].public_access_block.restrict_public_buckets
 
     # Test S3 Get Bucket Tagging
-    @mock_s3
+    @mock_aws
     def test__get_bucket_tagging__(self):
         # Generate S3 Client
         s3_client = client("s3")
@@ -360,7 +329,7 @@ class Test_S3_Service:
             },
         )
         # S3 client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
         s3 = S3(audit_info)
 
         assert len(s3.buckets) == 1
@@ -369,10 +338,10 @@ class Test_S3_Service:
         ]
 
     # Test S3 Control Account Get Public Access Block
-    @mock_s3control
+    @mock_aws
     def test__get_public_access_block__s3_control(self):
         # Generate S3Control Client
-        s3control_client = client("s3control", region_name=AWS_REGION)
+        s3control_client = client("s3control", region_name=AWS_REGION_US_EAST_1)
         s3control_client.put_public_access_block(
             AccountId=AWS_ACCOUNT_NUMBER,
             PublicAccessBlockConfiguration={
@@ -383,7 +352,7 @@ class Test_S3_Service:
             },
         )
         # S3 client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
         s3control = S3Control(audit_info)
         assert s3control.account_public_access_block.block_public_acls
         assert s3control.account_public_access_block.ignore_public_acls
@@ -391,7 +360,7 @@ class Test_S3_Service:
         assert s3control.account_public_access_block.restrict_public_buckets
 
     # Test S3 Get Bucket Object Lock
-    @mock_s3
+    @mock_aws
     def test__get_object_lock_configuration__(self):
         # Generate S3 Client
         s3_client = client("s3")
@@ -404,7 +373,7 @@ class Test_S3_Service:
         )
 
         # S3 client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
         s3 = S3(audit_info)
         assert len(s3.buckets) == 1
         assert s3.buckets[0].name == bucket_name

@@ -1,13 +1,13 @@
 from unittest import mock
 
-from moto.core import DEFAULT_ACCOUNT_ID
-
 from prowler.providers.aws.services.route53.route53_service import (
     HostedZone,
     LoggingConfig,
 )
-
-AWS_REGION = "us-east-1"
+from tests.providers.aws.audit_info_utils import (
+    AWS_ACCOUNT_NUMBER,
+    AWS_REGION_US_EAST_1,
+)
 
 
 class Test_route53_public_hosted_zones_cloudwatch_logging_enabled:
@@ -37,16 +37,14 @@ class Test_route53_public_hosted_zones_cloudwatch_logging_enabled:
         hosted_zone_name = "test-domain.com"
         hosted_zone_id = "ABCDEF12345678"
         log_group_name = "test-log-group"
-        log_group_arn = (
-            f"rn:aws:logs:{AWS_REGION}:{DEFAULT_ACCOUNT_ID}:log-group:{log_group_name}"
-        )
+        log_group_arn = f"rn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:log-group:{log_group_name}"
         route53.hosted_zones = {
             hosted_zone_name: HostedZone(
                 name=hosted_zone_name,
                 arn=f"arn:aws:route53:::{hosted_zone_id}",
                 id=hosted_zone_id,
                 private_zone=False,
-                region=AWS_REGION,
+                region=AWS_REGION_US_EAST_1,
                 logging_config=LoggingConfig(cloudwatch_log_group_arn=log_group_arn),
             )
         }
@@ -68,7 +66,7 @@ class Test_route53_public_hosted_zones_cloudwatch_logging_enabled:
 
             assert len(result) == 1
             assert result[0].resource_id == hosted_zone_id
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
@@ -85,7 +83,7 @@ class Test_route53_public_hosted_zones_cloudwatch_logging_enabled:
                 arn=f"arn:aws:route53:::{hosted_zone_id}",
                 id=hosted_zone_id,
                 private_zone=False,
-                region=AWS_REGION,
+                region=AWS_REGION_US_EAST_1,
             )
         }
 
@@ -106,7 +104,7 @@ class Test_route53_public_hosted_zones_cloudwatch_logging_enabled:
 
             assert len(result) == 1
             assert result[0].resource_id == hosted_zone_id
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
@@ -123,7 +121,7 @@ class Test_route53_public_hosted_zones_cloudwatch_logging_enabled:
                 arn=f"arn:aws:route53:::{hosted_zone_id}",
                 id=hosted_zone_id,
                 private_zone=True,
-                region=AWS_REGION,
+                region=AWS_REGION_US_EAST_1,
             )
         }
 

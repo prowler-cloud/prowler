@@ -1,0 +1,35 @@
+{
+  "Provider": "aws",
+  "CheckID": "eks_cluster_network_policy_enabled",
+  "CheckTitle": "Ensure Network Policy is Enabled and Set as Appropriate",
+  "CheckType": [
+    "Security",
+    "Configuration"
+  ],
+  "ServiceName": "eks",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "Severity": "high",
+  "ResourceType": "AwsEksCluster",
+  "Description": "Ensure that Network Policy is enabled and set as appropriate in Amazon EKS clusters. Network Policy provides pod-level firewalling to restrict traffic between sources, enhancing network security within the cluster.",
+  "Risk": "Without proper Network Policy settings, pods within the cluster may be vulnerable to unauthorized access and communication.",
+  "RelatedUrl": "https://docs.aws.amazon.com/eks/latest/userguide/eks-networking-add-ons.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/EKS/security-groups.html",
+      "Terraform": "https://docs.bridgecrew.io/docs/bc_aws_kubernetes_1#terraform"
+    },
+    "Recommendation": {
+      "Text": "Enable and configure Network Policy to enhance network security within the EKS cluster.",
+      "Url": "https://docs.aws.amazon.com/eks/latest/userguide/eks-networking-add-ons.html"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Enabling Network Policy may cause a rolling update of all cluster nodes and consumes additional resources."
+}

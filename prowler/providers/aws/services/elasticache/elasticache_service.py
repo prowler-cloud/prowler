@@ -1,5 +1,6 @@
 from typing import Optional
 
+from botocore.exceptions import ClientError
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
@@ -73,7 +74,15 @@ class ElastiCache(AWSService):
                     cluster.tags = regional_client.list_tags_for_resource(
                         ResourceName=cluster.arn
                     )["TagList"]
-
+                except ClientError as error:
+                    if error.response["Error"]["Code"] == "CacheClusterNotFound":
+                        logger.warning(
+                            f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
+                    else:
+                        logger.error(
+                            f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
                 except Exception as error:
                     logger.error(
                         f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

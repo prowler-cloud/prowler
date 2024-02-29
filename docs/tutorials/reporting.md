@@ -19,11 +19,12 @@ prowler <provider> -M csv json json-asff html -F <custom_report_name>
 ```console
 prowler <provider> -M csv json json-asff html -o <custom_report_directory>
 ```
-> Both flags can be used simultaneously to provide a custom directory and filename.
-```console
-prowler <provider> -M csv json json-asff html \
-        -F <custom_report_name> -o <custom_report_directory>
-```
+???+ note
+    Both flags can be used simultaneously to provide a custom directory and filename.
+    ```console
+    prowler <provider> -M csv json json-asff html \
+            -F <custom_report_name> -o <custom_report_directory>
+    ```
 ## Output timestamp format
 By default, the timestamp format of the output files is ISO 8601. This can be changed with the flag `--unix-timestamp` generating the timestamp fields in pure unix timestamp format.
 
@@ -41,50 +42,74 @@ Hereunder is the structure for each of the supported report formats by Prowler:
 
 ### HTML
 ![HTML Output](../img/output-html.png)
+
 ### CSV
 
-The following are the columns present in the CSV format:
+CSV format has a set of common columns for all the providers, and then provider specific columns.
+The common columns are the following:
 
 - ASSESSMENT_START_TIME
 - FINDING_UNIQUE_ID
 - PROVIDER
+- CHECK_ID
+- CHECK_TITLE
+- CHECK_TYPE
+- STATUS
+- STATUS_EXTENDED
+- SERVICE_NAME
+- SUBSERVICE_NAME
+- SEVERITY
+- RESOURCE_TYPE
+- RESOURCE_DETAILS
+- RESOURCE_TAGS
+- DESCRIPTION
+- RISK
+- RELATED_URL
+- REMEDIATION_RECOMMENDATION_TEXT
+- REMEDIATION_RECOMMENDATION_URL
+- REMEDIATION_RECOMMENDATION_CODE_NATIVEIAC
+- REMEDIATION_RECOMMENDATION_CODE_TERRAFORM
+- REMEDIATION_RECOMMENDATION_CODE_CLI
+- REMEDIATION_RECOMMENDATION_CODE_OTHER
+- COMPLIANCE
+- CATEGORIES
+- DEPENDS_ON
+- RELATED_TO
+- NOTES
+
+And then by the provider specific columns:
+
+#### AWS
+
 - PROFILE
 - ACCOUNT_ID
--  ACCOUNT_NAME
--  ACCOUNT_EMAIL
--  ACCOUNT_ARN
--  ACCOUNT_ORG
--  ACCOUNT_TAGS
--  REGION
--  CHECK_ID
--  CHECK_TITLE
--  CHECK_TYPE
--  STATUS
--  STATUS_EXTENDED
--  SERVICE_NAME
--  SUBSERVICE_NAME
--  SEVERITY
--  RESOURCE_ID
--  RESOURCE_ARN
--  RESOURCE_TYPE
--  RESOURCE_DETAILS
--  RESOURCE_TAGS
--  DESCRIPTION
--  COMPLIANCE
--  RISK
--  RELATED_URL
--  REMEDIATION_RECOMMENDATION_TEXT
--  REMEDIATION_RECOMMENDATION_URL
--  REMEDIATION_RECOMMENDATION_CODE_NATIVEIAC
--  REMEDIATION_RECOMMENDATION_CODE_TERRAFORM
--  REMEDIATION_RECOMMENDATION_CODE_CLI
--  REMEDIATION_RECOMMENDATION_CODE_OTHER
--  CATEGORIES
--  DEPENDS_ON
--  RELATED_TO
--  NOTES
+- ACCOUNT_NAME
+- ACCOUNT_EMAIL
+- ACCOUNT_ARN
+- ACCOUNT_ORG
+- ACCOUNT_TAGS
+- REGION
+- RESOURCE_ID
+- RESOURCE_ARN
 
-> Since Prowler v3 the CSV column delimiter is the semicolon (`;`)
+#### AZURE
+
+- TENANT_DOMAIN
+- SUBSCRIPTION
+- RESOURCE_ID
+- RESOURCE_NAME
+
+#### GCP
+
+- PROJECT_ID
+- LOCATION
+- RESOURCE_ID
+- RESOURCE_NAME
+
+
+???+ note
+    Since Prowler v3 the CSV column delimiter is the semicolon (`;`)
+
 ### JSON
 
 The following code is an example output of the JSON format:
@@ -181,7 +206,8 @@ The following code is an example output of the JSON format:
 }]
 ```
 
-> NOTE: Each finding is a `json` object within a list. This has changed in v3 since in v2 the format used was [ndjson](http://ndjson.org/).
+???+ note
+    Each finding is a `json` object within a list. This has changed in v3 since in v2 the format used was [ndjson](http://ndjson.org/).
 
 
 ### JSON-OCSF
@@ -442,7 +468,9 @@ Based on [Open Cybersecurity Schema Framework Security Finding v1.0.0-rc.3](http
 }]
 ```
 
-> NOTE: Each finding is a `json` object.
+???+ note
+    Each finding is a `json` object.
+
 ### JSON-ASFF
 
 The following code is an example output of the [JSON-ASFF](https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-findings-format-syntax.html) format:
@@ -575,4 +603,5 @@ The following code is an example output of the [JSON-ASFF](https://docs.aws.amaz
 }]
 ```
 
-> NOTE: Each finding is a `json` object within a list.
+???+ note
+    Each finding is a `json` object within a list.

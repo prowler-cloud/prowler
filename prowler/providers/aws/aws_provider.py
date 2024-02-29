@@ -10,7 +10,10 @@ from prowler.config.config import aws_services_json_file
 from prowler.lib.check.check import list_modules, recover_checks_from_service
 from prowler.lib.logger import logger
 from prowler.lib.utils.utils import open_file, parse_json_file
-from prowler.providers.aws.config import AWS_STS_GLOBAL_ENDPOINT_REGION
+from prowler.providers.aws.config import (
+    AWS_STS_GLOBAL_ENDPOINT_REGION,
+    ROLE_SESSION_NAME,
+)
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info, AWSAssumeRole
 from prowler.providers.aws.lib.credentials.credentials import create_sts_session
 
@@ -113,9 +116,15 @@ def assume_role(
     sts_endpoint_region: str = None,
 ) -> dict:
     try:
+        role_session_name = (
+            assumed_role_info.role_session_name
+            if assumed_role_info.role_session_name
+            else ROLE_SESSION_NAME
+        )
+
         assume_role_arguments = {
             "RoleArn": assumed_role_info.role_arn,
-            "RoleSessionName": "ProwlerAsessmentSession",
+            "RoleSessionName": role_session_name,
             "DurationSeconds": assumed_role_info.session_duration,
         }
 
@@ -152,28 +161,56 @@ def input_role_mfa_token_and_code() -> tuple[str]:
 
 
 def generate_regional_clients(
-    service: str, audit_info: AWS_Audit_Info, global_service: bool = False
+    service: str,
+    audit_info: AWS_Audit_Info,
 ) -> dict:
+    """generate_regional_clients returns a dict with the following format for the given service:
+
+    Example:
+        {"eu-west-1": boto3_service_client}
+    """
     try:
         regional_clients = {}
         service_regions = get_available_aws_service_regions(service, audit_info)
-        # Check if it is global service to gather only one region
-        if global_service:
-            if service_regions:
-                if audit_info.profile_region in service_regions:
-                    service_regions = [audit_info.profile_region]
-                service_regions = service_regions[:1]
-        for region in service_regions:
+
+        # Get the regions enabled for the account and get the intersection with the service available regions
+        if audit_info.enabled_regions:
+            enabled_regions = service_regions.intersection(audit_info.enabled_regions)
+        else:
+            enabled_regions = service_regions
+
+        for region in enabled_regions:
             regional_client = audit_info.audit_session.client(
                 service, region_name=region, config=audit_info.session_config
             )
             regional_client.region = region
             regional_clients[region] = regional_client
+
         return regional_clients
     except Exception as error:
         logger.error(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
         )
+
+
+def get_aws_enabled_regions(audit_info: AWS_Audit_Info) -> set:
+    """get_aws_enabled_regions returns a set of enabled AWS regions"""
+
+    # EC2 Client to check enabled regions
+    service = "ec2"
+    default_region = get_default_region(service, audit_info)
+    ec2_client = audit_info.audit_session.client(service, region_name=default_region)
+
+    enabled_regions = set()
+    try:
+        # With AllRegions=False we only get the enabled regions for the account
+        for region in ec2_client.describe_regions(AllRegions=False).get("Regions", []):
+            enabled_regions.add(region.get("RegionName"))
+    except Exception as error:
+        logger.warning(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+        )
+    return enabled_regions
 
 
 def get_aws_available_regions():
@@ -216,6 +253,8 @@ def get_checks_from_input_arn(audit_resources: list, provider: str) -> set:
                     service = "efs"
                 elif service == "logs":
                     service = "cloudwatch"
+                elif service == "cognito":
+                    service = "cognito-idp"
                 # Check if Prowler has checks in service
                 try:
                     list_modules(provider, service)
@@ -267,17 +306,18 @@ def get_regions_from_audit_resources(audit_resources: list) -> set:
     return audited_regions
 
 
-def get_available_aws_service_regions(service: str, audit_info: AWS_Audit_Info) -> list:
+def get_available_aws_service_regions(service: str, audit_info: AWS_Audit_Info) -> set:
     # Get json locally
     actual_directory = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))
     with open_file(f"{actual_directory}/{aws_services_json_file}") as f:
         data = parse_json_file(f)
-    # Check if it is a subservice
-    json_regions = data["services"][service]["regions"][audit_info.audited_partition]
-    if audit_info.audited_regions:  # Check for input aws audit_info.audited_regions
-        regions = list(
-            set(json_regions).intersection(audit_info.audited_regions)
-        )  # Get common regions between input and json
+    json_regions = set(
+        data["services"][service]["regions"][audit_info.audited_partition]
+    )
+    # Check for input aws audit_info.audited_regions
+    if audit_info.audited_regions:
+        # Get common regions between input and json
+        regions = json_regions.intersection(audit_info.audited_regions)
     else:  # Get all regions from json of the service and partition
         regions = json_regions
     return regions

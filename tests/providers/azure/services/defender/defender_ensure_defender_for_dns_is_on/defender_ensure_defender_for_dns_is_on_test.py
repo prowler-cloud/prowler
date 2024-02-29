@@ -1,9 +1,8 @@
 from unittest import mock
 from uuid import uuid4
 
-from prowler.providers.azure.services.defender.defender_service import Defender_Pricing
-
-AZURE_SUSCRIPTION = str(uuid4())
+from prowler.providers.azure.services.defender.defender_service import Pricing
+from tests.providers.azure.azure_fixtures import AZURE_SUBSCRIPTION
 
 
 class Test_defender_ensure_defender_for_dns_is_on:
@@ -27,8 +26,8 @@ class Test_defender_ensure_defender_for_dns_is_on:
         resource_id = str(uuid4())
         defender_client = mock.MagicMock
         defender_client.pricings = {
-            AZURE_SUSCRIPTION: {
-                "Dns": Defender_Pricing(
+            AZURE_SUBSCRIPTION: {
+                "Dns": Pricing(
                     resource_id=resource_id,
                     pricing_tier="Not Standard",
                     free_trial_remaining_time=0,
@@ -50,9 +49,9 @@ class Test_defender_ensure_defender_for_dns_is_on:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Defender plan Defender for DNS from subscription {AZURE_SUSCRIPTION} is set to OFF (pricing tier not standard)."
+                == f"Defender plan Defender for DNS from subscription {AZURE_SUBSCRIPTION} is set to OFF (pricing tier not standard)."
             )
-            assert result[0].subscription == AZURE_SUSCRIPTION
+            assert result[0].subscription == AZURE_SUBSCRIPTION
             assert result[0].resource_name == "Defender plan DNS"
             assert result[0].resource_id == resource_id
 
@@ -60,8 +59,8 @@ class Test_defender_ensure_defender_for_dns_is_on:
         resource_id = str(uuid4())
         defender_client = mock.MagicMock
         defender_client.pricings = {
-            AZURE_SUSCRIPTION: {
-                "Dns": Defender_Pricing(
+            AZURE_SUBSCRIPTION: {
+                "Dns": Pricing(
                     resource_id=resource_id,
                     pricing_tier="Standard",
                     free_trial_remaining_time=0,
@@ -83,8 +82,8 @@ class Test_defender_ensure_defender_for_dns_is_on:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Defender plan Defender for DNS from subscription {AZURE_SUSCRIPTION} is set to ON (pricing tier standard)."
+                == f"Defender plan Defender for DNS from subscription {AZURE_SUBSCRIPTION} is set to ON (pricing tier standard)."
             )
-            assert result[0].subscription == AZURE_SUSCRIPTION
+            assert result[0].subscription == AZURE_SUBSCRIPTION
             assert result[0].resource_name == "Defender plan DNS"
             assert result[0].resource_id == resource_id

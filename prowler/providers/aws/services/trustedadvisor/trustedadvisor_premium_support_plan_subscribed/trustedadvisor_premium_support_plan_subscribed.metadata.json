@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:aws:iam::AWS_ACCOUNT_NUMBER:root",
   "Severity": "low",
-  "ResourceType": "",
+  "ResourceType": "Other",
   "Description": "Check if a Premium support plan is subscribed.",
   "Risk": "Ensure that the appropriate support level is enabled for the necessary AWS accounts. For example, if an AWS account is being used to host production systems and environments, it is highly recommended that the minimum AWS Support Plan should be Business.",
   "RelatedUrl": "https://aws.amazon.com/premiumsupport/plans/",

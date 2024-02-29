@@ -5,9 +5,10 @@ from prowler.providers.aws.services.opensearch.opensearch_service import (
     OpenSearchDomain,
     PublishingLoggingOption,
 )
-
-AWS_REGION = "eu-west-1"
-AWS_ACCOUNT_NUMBER = "123456789012"
+from tests.providers.aws.audit_info_utils import (
+    AWS_ACCOUNT_NUMBER,
+    AWS_REGION_EU_WEST_1,
+)
 
 domain_name = "test-domain"
 domain_arn = f"arn:aws:es:us-west-2:{AWS_ACCOUNT_NUMBER}:domain/{domain_name}"
@@ -33,7 +34,9 @@ class Test_opensearch_service_domains_audit_logging_enabled:
         opensearch_client = mock.MagicMock
         opensearch_client.opensearch_domains = []
         opensearch_client.opensearch_domains.append(
-            OpenSearchDomain(name=domain_name, region=AWS_REGION, arn=domain_arn)
+            OpenSearchDomain(
+                name=domain_name, region=AWS_REGION_EU_WEST_1, arn=domain_arn
+            )
         )
         opensearch_client.opensearch_domains[0].logging = []
 
@@ -57,7 +60,9 @@ class Test_opensearch_service_domains_audit_logging_enabled:
         opensearch_client = mock.MagicMock
         opensearch_client.opensearch_domains = []
         opensearch_client.opensearch_domains.append(
-            OpenSearchDomain(name=domain_name, region=AWS_REGION, arn=domain_arn)
+            OpenSearchDomain(
+                name=domain_name, region=AWS_REGION_EU_WEST_1, arn=domain_arn
+            )
         )
         opensearch_client.opensearch_domains[0].logging = []
         opensearch_client.opensearch_domains[0].logging.append(

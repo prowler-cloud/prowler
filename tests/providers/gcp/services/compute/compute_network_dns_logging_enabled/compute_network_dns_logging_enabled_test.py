@@ -2,8 +2,7 @@ from re import search
 from unittest import mock
 
 from prowler.providers.gcp.services.dns.dns_service import Policy
-
-GCP_PROJECT_ID = "123456789012"
+from tests.providers.gcp.lib.audit_info_utils import GCP_PROJECT_ID
 
 
 class Test_compute_network_dns_logging_enabled:

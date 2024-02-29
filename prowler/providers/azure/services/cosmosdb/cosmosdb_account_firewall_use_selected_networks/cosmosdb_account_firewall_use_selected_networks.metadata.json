@@ -1,0 +1,30 @@
+{
+  "Provider": "azure",
+  "CheckID": "cosmosdb_account_firewall_use_selected_networks",
+  "CheckTitle": "Ensure That 'Firewalls & Networks' Is Limited to Use Selected Networks Instead of All Networks",
+  "CheckType": [],
+  "ServiceName": "cosmosdb",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "CosmosDB",
+  "Description": "Limiting your Cosmos DB to only communicate on whitelisted networks lowers its attack footprint.",
+  "Risk": "Selecting certain networks for your Cosmos DB to communicate restricts the number of networks including the internet that can interact with what is stored within the database.",
+  "RelatedUrl": "https://docs.microsoft.com/en-us/azure/cosmos-db/how-to-configure-private-endpoints",
+  "Remediation": {
+    "Code": {
+      "CLI": "az cosmosdb database list / az cosmosdb show <database id> **isVirtualNetworkFilterEnabled should be set to true**",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "1. Open the portal menu. 2. Select the Azure Cosmos DB blade. 3. Select a Cosmos DB account to audit. 4. Select Networking. 5. Under Public network access, select Selected networks. 6. Under Virtual networks, select + Add existing virtual network or + Add a new virtual network. 7. For existing networks, select subscription, virtual network, subnet and click Add. For new networks, provide a name, update the default values if required, and click Create. 8. Click Save.",
+      "Url": "https://learn.microsoft.com/en-us/azure/storage/common/storage-network-security?tabs=azure-portal"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Failure to whitelist the correct networks will result in a connection loss."
+}

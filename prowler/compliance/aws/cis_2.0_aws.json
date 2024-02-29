@@ -468,27 +468,6 @@
     },
     {
       "Id": "2.1.1",
-      "Description": "Ensure all S3 buckets employ encryption-at-rest",
-      "Checks": [
-        "s3_bucket_default_encryption"
-      ],
-      "Attributes": [
-        {
-          "Section": "2.1. Simple Storage Service (S3)",
-          "Profile": "Level 2",
-          "AssessmentStatus": "Automated",
-          "Description": "Amazon S3 provides a variety of no, or low, cost encryption options to protect data at rest.",
-          "RationaleStatement": "Encrypting data at rest reduces the likelihood that it is unintentionally exposed and can nullify the impact of disclosure if the encryption remains unbroken.",
-          "ImpactStatement": "Amazon S3 buckets with default bucket encryption using SSE-KMS cannot be used as destination buckets for Amazon S3 server access logging. Only SSE-S3 default encryption is supported for server access log destination buckets.",
-          "RemediationProcedure": "**From Console:**  1. Login to AWS Management Console and open the Amazon S3 console using https://console.aws.amazon.com/s3/  2. Select a Bucket. 3. Click on 'Properties'. 4. Click edit on `Default Encryption`. 5. Select either `AES-256`, `AWS-KMS`, `SSE-KMS` or `SSE-S3`. 6. Click `Save` 7. Repeat for all the buckets in your AWS account lacking encryption.  **From Command Line:**  Run either  ``` aws s3api put-bucket-encryption --bucket <bucket name> --server-side-encryption-configuration '{\"Rules\": [{\"ApplyServerSideEncryptionByDefault\": {\"SSEAlgorithm\": \"AES256\"}}]}' ```  or  ``` aws s3api put-bucket-encryption --bucket <bucket name> --server-side-encryption-configuration '{\"Rules\": [{\"ApplyServerSideEncryptionByDefault\": {\"SSEAlgorithm\": \"aws:kms\",\"KMSMasterKeyID\": \"aws/s3\"}}]}' ```  **Note:** the KMSMasterKeyID can be set to the master key of your choosing; aws/s3 is an AWS preconfigured default.",
-          "AuditProcedure": "**From Console:**  1. Login to AWS Management Console and open the Amazon S3 console using https://console.aws.amazon.com/s3/  2. Select a Bucket. 3. Click on 'Properties'. 4. Verify that `Default Encryption` is enabled, and displays either `AES-256`, `AWS-KMS`, `SSE-KMS` or `SSE-S3`. 5. Repeat for all the buckets in your AWS account.  **From Command Line:**  1. Run command to list buckets ``` aws s3 ls ``` 2. For each bucket, run  ``` aws s3api get-bucket-encryption --bucket <bucket name> ``` 3. Verify that either  ``` \"SSEAlgorithm\": \"AES256\" ```  or  ``` \"SSEAlgorithm\": \"aws:kms\"```  is displayed.",
-          "AdditionalInformation": "S3 bucket encryption only applies to objects as they are placed in the bucket. Enabling S3 bucket encryption does **not** encrypt objects previously stored within the bucket.",
-          "References": "https://docs.aws.amazon.com/AmazonS3/latest/user-guide/default-bucket-encryption.html:https://docs.aws.amazon.com/AmazonS3/latest/dev/bucket-encryption.html#bucket-encryption-related-resources"
-        }
-      ]
-    },
-    {
-      "Id": "2.1.2",
       "Description": "Ensure S3 Bucket Policy is set to deny HTTP requests",
       "Checks": [
         "s3_bucket_secure_transport_policy"
@@ -509,7 +488,7 @@
       ]
     },
     {
-      "Id": "2.1.3",
+      "Id": "2.1.2",
       "Description": "Ensure MFA Delete is enabled on S3 buckets",
       "Checks": [
         "s3_bucket_no_mfa_delete"
@@ -530,7 +509,7 @@
       ]
     },
     {
-      "Id": "2.1.4",
+      "Id": "2.1.3",
       "Description": "Ensure all data in Amazon S3 has been discovered, classified and secured when required.",
       "Checks": [
         "macie_is_enabled"
@@ -551,7 +530,7 @@
       ]
     },
     {
-      "Id": "2.1.5",
+      "Id": "2.1.4",
       "Description": "Ensure that S3 Buckets are configured with 'Block public access (bucket settings)'",
       "Checks": [
         "s3_bucket_level_public_access_block",

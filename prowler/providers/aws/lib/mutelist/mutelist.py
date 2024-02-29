@@ -118,7 +118,7 @@ def parse_mutelist_file(audit_info, mutelist_file):
 def mutelist_findings(
     mutelist: dict,
     audited_account: str,
-    check_findings: [Any],
+    check_findings: list[Any],
 ):
     # Check if finding is muted
     for finding in check_findings:
@@ -143,28 +143,23 @@ def is_muted(
     finding_tags,
 ):
     try:
-        muted_checks = {}
         # By default is not muted
         is_finding_muted = False
-        # First set account key from mutelist dict
-        if audited_account in mutelist["Accounts"]:
-            muted_checks = mutelist["Accounts"][audited_account]["Checks"]
-        # If there is a *, it affects to all accounts
-        # This cannot be elif since in the case of * and single accounts we
-        # want to merge muted checks from * to the other accounts check list
-        if "*" in mutelist["Accounts"]:
-            checks_multi_account = mutelist["Accounts"]["*"]["Checks"]
-            muted_checks.update(checks_multi_account)
-        # Test if it is muted
-        if is_muted_in_check(
-            muted_checks,
-            audited_account,
-            check,
-            finding_region,
-            finding_resource,
-            finding_tags,
-        ):
-            is_finding_muted = True
+
+        # We always check all the accounts present in the mutelist
+        # if one mutes the finding we set the finding as muted
+        for account in mutelist["Accounts"]:
+            if account == audited_account or account == "*":
+                if is_muted_in_check(
+                    mutelist["Accounts"][account]["Checks"],
+                    audited_account,
+                    check,
+                    finding_region,
+                    finding_resource,
+                    finding_tags,
+                ):
+                    is_finding_muted = True
+                    break
 
         return is_finding_muted
     except Exception as error:
@@ -204,7 +199,10 @@ def is_muted_in_check(
 
             muted_regions = muted_check_info.get("Regions")
             muted_resources = muted_check_info.get("Resources")
-            muted_tags = muted_check_info.get("Tags")
+            muted_tags = muted_check_info.get("Tags", "*")
+            # We need to set the allowlisted_tags if None, "" or [], so the falsy helps
+            if not muted_tags:
+                muted_tags = "*"
             # If there is a *, it affects to all checks
             if (
                 "*" == muted_check
@@ -221,13 +219,15 @@ def is_muted_in_check(
                 # For a finding to be muted requires the following set to True:
                 # - muted_in_check -> True
                 # - muted_in_region -> True
-                # - muted_in_tags -> True or muted_in_resource -> True
+                # - muted_in_tags -> True
+                # - muted_in_resource -> True
                 # - excepted -> False
 
                 if (
                     muted_in_check
                     and muted_in_region
-                    and (muted_in_tags or muted_in_resource)
+                    and muted_in_tags
+                    and muted_in_resource
                 ):
                     is_check_muted = True
 
@@ -305,10 +305,17 @@ def is_excepted(
             is_tag_excepted = __is_item_matched__(excepted_tags, finding_tags)
 
             if (
-                is_account_excepted
-                and is_region_excepted
-                and is_resource_excepted
-                and is_tag_excepted
+                not is_account_excepted
+                and not is_region_excepted
+                and not is_resource_excepted
+                and not is_tag_excepted
+            ):
+                excepted = False
+            elif (
+                (is_account_excepted or not excepted_accounts)
+                and (is_region_excepted or not excepted_regions)
+                and (is_resource_excepted or not excepted_resources)
+                and (is_tag_excepted or not excepted_tags)
             ):
                 excepted = True
         return excepted

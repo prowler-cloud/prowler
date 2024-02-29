@@ -1,15 +1,15 @@
 from unittest.mock import patch
 
 import botocore
-from boto3 import client, session
-from moto import mock_rds
+from boto3 import client
+from moto import mock_aws
 
-from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.aws.services.rds.rds_service import RDS
-from prowler.providers.common.models import Audit_Metadata
-
-AWS_ACCOUNT_NUMBER = "123456789012"
-AWS_REGION = "us-east-1"
+from tests.providers.aws.audit_info_utils import (
+    AWS_ACCOUNT_NUMBER,
+    AWS_REGION_US_EAST_1,
+    set_mocked_aws_audit_info,
+)
 
 make_api_call = botocore.client.BaseClient._make_api_call
 
@@ -31,74 +31,44 @@ def mock_make_api_call(self, operation_name, kwarg):
 
 @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
 class Test_RDS_Service:
-    # Mocked Audit Info
-    def set_mocked_audit_info(self):
-        audit_info = AWS_Audit_Info(
-            session_config=None,
-            original_session=None,
-            audit_session=session.Session(
-                profile_name=None,
-                botocore_session=None,
-            ),
-            audited_account=AWS_ACCOUNT_NUMBER,
-            audited_account_arn=f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root",
-            audited_user_id=None,
-            audited_partition="aws",
-            audited_identity_arn=None,
-            profile=None,
-            profile_region=None,
-            credentials=None,
-            assumed_role_info=None,
-            audited_regions=[AWS_REGION],
-            organizations_metadata=None,
-            audit_resources=None,
-            mfa_enabled=False,
-            audit_metadata=Audit_Metadata(
-                services_scanned=0,
-                expected_checks=[],
-                completed_checks=0,
-                audit_progress=0,
-            ),
-        )
-        return audit_info
 
     # Test Dynamo Service
-    @mock_rds
+    @mock_aws
     def test_service(self):
         # Dynamo client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
         rds = RDS(audit_info)
         assert rds.service == "rds"
 
     # Test Dynamo Client
-    @mock_rds
+    @mock_aws
     def test_client(self):
         # Dynamo client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
         rds = RDS(audit_info)
         for regional_client in rds.regional_clients.values():
             assert regional_client.__class__.__name__ == "RDS"
 
     # Test Dynamo Session
-    @mock_rds
+    @mock_aws
     def test__get_session__(self):
         # Dynamo client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
         rds = RDS(audit_info)
         assert rds.session.__class__.__name__ == "Session"
 
     # Test Dynamo Session
-    @mock_rds
+    @mock_aws
     def test_audited_account(self):
         # Dynamo client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
         rds = RDS(audit_info)
         assert rds.audited_account == AWS_ACCOUNT_NUMBER
 
     # Test RDS Describe DB Instances
-    @mock_rds
+    @mock_aws
     def test__describe_db_instances__(self):
-        conn = client("rds", region_name=AWS_REGION)
+        conn = client("rds", region_name=AWS_REGION_US_EAST_1)
         conn.create_db_parameter_group(
             DBParameterGroupName="test",
             DBParameterGroupFamily="default.postgres9.3",
@@ -123,11 +93,11 @@ class Test_RDS_Service:
             ],
         )
         # RDS client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
         rds = RDS(audit_info)
         assert len(rds.db_instances) == 1
         assert rds.db_instances[0].id == "db-master-1"
-        assert rds.db_instances[0].region == AWS_REGION
+        assert rds.db_instances[0].region == AWS_REGION_US_EAST_1
         assert (
             rds.db_instances[0].endpoint["Address"]
             == "db-master-1.aaaaaaaaaa.us-east-1.rds.amazonaws.com"
@@ -145,9 +115,9 @@ class Test_RDS_Service:
         ]
         assert "test" in rds.db_instances[0].parameter_groups
 
-    @mock_rds
+    @mock_aws
     def test__describe_db_parameters__(self):
-        conn = client("rds", region_name=AWS_REGION)
+        conn = client("rds", region_name=AWS_REGION_US_EAST_1)
         conn.create_db_parameter_group(
             DBParameterGroupName="test",
             DBParameterGroupFamily="default.postgres9.3",
@@ -173,19 +143,19 @@ class Test_RDS_Service:
             ],
         )
         # RDS client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
         rds = RDS(audit_info)
         assert len(rds.db_instances) == 1
         assert rds.db_instances[0].id == "db-master-1"
-        assert rds.db_instances[0].region == AWS_REGION
+        assert rds.db_instances[0].region == AWS_REGION_US_EAST_1
         for parameter in rds.db_instances[0].parameters:
             if parameter["ParameterName"] == "rds.force_ssl":
                 assert parameter["ParameterValue"] == "1"
 
     # Test RDS Describe DB Snapshots
-    @mock_rds
+    @mock_aws
     def test__describe_db_snapshots__(self):
-        conn = client("rds", region_name=AWS_REGION)
+        conn = client("rds", region_name=AWS_REGION_US_EAST_1)
         conn.create_db_instance(
             DBInstanceIdentifier="db-primary-1",
             AllocatedStorage=10,
@@ -198,18 +168,18 @@ class Test_RDS_Service:
             DBInstanceIdentifier="db-primary-1", DBSnapshotIdentifier="snapshot-1"
         )
         # RDS client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
         rds = RDS(audit_info)
         assert len(rds.db_snapshots) == 1
         assert rds.db_snapshots[0].id == "snapshot-1"
         assert rds.db_snapshots[0].instance_id == "db-primary-1"
-        assert rds.db_snapshots[0].region == AWS_REGION
+        assert rds.db_snapshots[0].region == AWS_REGION_US_EAST_1
         assert not rds.db_snapshots[0].public
 
     # Test RDS Describe DB Clusters
-    @mock_rds
+    @mock_aws
     def test__describe_db_clusters__(self):
-        conn = client("rds", region_name=AWS_REGION)
+        conn = client("rds", region_name=AWS_REGION_US_EAST_1)
         cluster_id = "db-master-1"
         conn.create_db_parameter_group(
             DBParameterGroupName="test",
@@ -221,7 +191,7 @@ class Test_RDS_Service:
             AllocatedStorage=10,
             Engine="postgres",
             DatabaseName="staging-postgres",
-            StorageEncrypted=False,
+            StorageEncrypted=True,
             DeletionProtection=True,
             PubliclyAccessible=False,
             AutoMinorVersionUpgrade=False,
@@ -235,24 +205,22 @@ class Test_RDS_Service:
             ],
         )
         # RDS client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
         rds = RDS(audit_info)
 
-        db_cluster_arn = (
-            f"arn:aws:rds:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:cluster:{cluster_id}"
-        )
+        db_cluster_arn = f"arn:aws:rds:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:cluster:{cluster_id}"
 
         assert len(rds.db_clusters) == 1
         assert rds.db_clusters[db_cluster_arn].id == "db-master-1"
         assert rds.db_clusters[db_cluster_arn].engine == "postgres"
-        assert rds.db_clusters[db_cluster_arn].region == AWS_REGION
+        assert rds.db_clusters[db_cluster_arn].region == AWS_REGION_US_EAST_1
         assert (
-            f"{AWS_REGION}.rds.amazonaws.com"
+            f"{AWS_REGION_US_EAST_1}.rds.amazonaws.com"
             in rds.db_clusters[db_cluster_arn].endpoint
         )
         assert rds.db_clusters[db_cluster_arn].status == "available"
         assert not rds.db_clusters[db_cluster_arn].public
-        assert not rds.db_clusters[db_cluster_arn].encrypted
+        assert rds.db_clusters[db_cluster_arn].encrypted
         assert rds.db_clusters[db_cluster_arn].backup_retention_period == 1
         assert rds.db_clusters[db_cluster_arn].cloudwatch_logs == ["audit", "error"]
         assert rds.db_clusters[db_cluster_arn].deletion_protection
@@ -264,9 +232,9 @@ class Test_RDS_Service:
         assert rds.db_clusters[db_cluster_arn].parameter_group == "test"
 
     # Test RDS Describe DB Cluster Snapshots
-    @mock_rds
+    @mock_aws
     def test__describe_db_cluster_snapshots__(self):
-        conn = client("rds", region_name=AWS_REGION)
+        conn = client("rds", region_name=AWS_REGION_US_EAST_1)
         conn.create_db_cluster(
             DBClusterIdentifier="db-primary-1",
             AllocatedStorage=10,
@@ -280,20 +248,25 @@ class Test_RDS_Service:
             DBClusterIdentifier="db-primary-1", DBClusterSnapshotIdentifier="snapshot-1"
         )
         # RDS client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
         rds = RDS(audit_info)
         assert len(rds.db_cluster_snapshots) == 1
         assert rds.db_cluster_snapshots[0].id == "snapshot-1"
         assert rds.db_cluster_snapshots[0].cluster_id == "db-primary-1"
-        assert rds.db_cluster_snapshots[0].region == AWS_REGION
+        assert rds.db_cluster_snapshots[0].region == AWS_REGION_US_EAST_1
         assert not rds.db_cluster_snapshots[0].public
 
     # Test RDS describe db engine versions
-    @mock_rds
+    @mock_aws
     def test__describe_db_engine_versions__(self):
         # RDS client for this test class
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
         rds = RDS(audit_info)
-        assert "mysql" in rds.db_engines[AWS_REGION]
-        assert rds.db_engines[AWS_REGION]["mysql"].engine_versions == ["8.0.32"]
-        assert rds.db_engines[AWS_REGION]["mysql"].engine_description == "description"
+        assert "mysql" in rds.db_engines[AWS_REGION_US_EAST_1]
+        assert rds.db_engines[AWS_REGION_US_EAST_1]["mysql"].engine_versions == [
+            "8.0.32"
+        ]
+        assert (
+            rds.db_engines[AWS_REGION_US_EAST_1]["mysql"].engine_description
+            == "description"
+        )
