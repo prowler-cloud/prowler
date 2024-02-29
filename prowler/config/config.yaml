@@ -1,11 +1,10 @@
 # AWS Configuration
 aws:
-
   # AWS Global Configuration
-  # aws.mute_non_default_regions --> Set to True to mute failed findings in non-default regions for GuardDuty, SecurityHub, DRS and Config
-  mute_non_default_regions: False
-  # If you want to mute failed findings only in specific regions, create a file with the following syntax and run it with `prowler aws -w mutelist.yaml`:
-  # Mute List:
+  # aws.allowlist_non_default_regions --> Set to True to allowlist failed findings in non-default regions for AccessAnalyzer, GuardDuty, SecurityHub, DRS and Config
+  allowlist_non_default_regions: False
+  # If you want to allowlist/mute failed findings only in specific regions, create a file with the following syntax and run it with `prowler aws -w allowlist.yaml`:
+  # Allowlist:
   #  Accounts:
   #   "*":
   #     Checks:
@@ -69,8 +68,8 @@ aws:
   # AWS Organizations
   # organizations_scp_check_deny_regions
   # organizations_enabled_regions: [
-  #   'eu-central-1',
-  #   'eu-west-1',
+  #   "eu-central-1",
+  #   "eu-west-1",
   #   "us-east-1"
   # ]
   organizations_enabled_regions: []
@@ -89,13 +88,23 @@ aws:
 
 # Azure Configuration
 azure:
+  # Azure Network Configuration
+  # azure.network_public_ip_shodan
+  shodan_api_key: null
+
+  # Azure App Service
+  # azure.app_ensure_php_version_is_latest
+  php_latest_version: "8.2"
+  # azure.app_ensure_python_version_is_latest
+  python_latest_version: "3.12"
+  # azure.app_ensure_java_version_is_latest
+  java_latest_version: "17"
 
 # GCP Configuration
 gcp:
 
 # Kubernetes Configuration
 kubernetes:
-
   # Kubernetes API Server
   # apiserver_audit_log_maxbackup_set
   audit_log_maxbackup: 10

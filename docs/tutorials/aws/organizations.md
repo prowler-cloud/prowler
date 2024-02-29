@@ -1,21 +1,28 @@
 # AWS Organizations
+
 ## Get AWS Account details from your AWS Organization
 
-Prowler allows you to get additional information of the scanned account in CSV and JSON outputs. When scanning a single account you get the Account ID as part of the output.
+Prowler allows you to get additional information of the scanned account from AWS Organizations.
 
-If you have AWS Organizations Prowler can get your account details like Account Name, Email, ARN, Organization ID and Tags and you will have them next to every finding in the CSV and JSON outputs.
+If you have AWS Organizations enabled, Prowler can get your account details like account name, email, ARN, organization id and tags and you will have them next to every finding's output.
 
-In order to do that you can use the option `-O`/`--organizations-role <organizations_role_arn>`. See the following sample command:
+In order to do that you can use the argument `-O`/`--organizations-role <organizations_role_arn>`. If this argument is not present Prowler will try to fetch that information automatically if the AWS account is a delegated administrator for the AWS Organization.
+
+???+ note
+    Refer [here](https://docs.aws.amazon.com/organizations/latest/userguide/orgs_delegate_policies.html) for more information about AWS Organizations delegated administrator.
+
+See the following sample command:
 
 ```shell
 prowler aws \
   -O arn:aws:iam::<management_organizations_account_id>:role/<role_name>
 ```
-> Make sure the role in your AWS Organizations management account has the permissions `organizations:ListAccounts*` and `organizations:ListTagsForResource`.
+???+ note
+    Make sure the role in your AWS Organizations management account has the permissions `organizations:DescribeAccount` and `organizations:ListTagsForResource`.
 
-In that command Prowler will scan the account and getting the account details from the AWS Organizations management account assuming a role and creating two reports with those details in JSON and CSV.
+Prowler will scan the AWS account and get the account details from AWS Organizations.
 
-In the JSON output below (redacted) you can see tags coded in base64 to prevent breaking CSV or JSON due to its format:
+In the JSON output below you can see tags coded in base64 to prevent breaking CSV or JSON due to its format:
 
 ```json
   "Account Email": "my-prod-account@domain.com",
@@ -25,13 +32,15 @@ In the JSON output below (redacted) you can see tags coded in base64 to prevent 
   "Account tags": "\"eyJUYWdzIjpasf0=\""
 ```
 
-The additional fields in CSV header output are as follow:
+The additional fields in CSV header output are as follows:
 
-```csv
-ACCOUNT_DETAILS_EMAIL,ACCOUNT_DETAILS_NAME,ACCOUNT_DETAILS_ARN,ACCOUNT_DETAILS_ORG,ACCOUNT_DETAILS_TAGS
-```
+- ACCOUNT_DETAILS_EMAIL
+- ACCOUNT_DETAILS_NAME
+- ACCOUNT_DETAILS_ARN
+- ACCOUNT_DETAILS_ORG
+- ACCOUNT_DETAILS_TAGS
 
-## Extra: run Prowler across all accounts in AWS Organizations by assuming roles
+## Extra: Run Prowler across all accounts in AWS Organizations by assuming roles
 
 If you want to run Prowler across all accounts of AWS Organizations you can do this:
 
@@ -55,4 +64,6 @@ If you want to run Prowler across all accounts of AWS Organizations you can do t
     done
     ```
 
-> Using the same for loop it can be scanned a list of accounts with a variable like `ACCOUNTS_LIST='11111111111 2222222222 333333333'`
+???+ note
+    Using the same for loop it can be scanned a list of accounts with a variable like:
+    </br>`ACCOUNTS_LIST='11111111111 2222222222 333333333'`

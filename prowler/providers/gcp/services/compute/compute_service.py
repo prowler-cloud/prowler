@@ -114,11 +114,13 @@ class Compute(GCPService):
                                 disks_encryption=[
                                     (
                                         disk["deviceName"],
-                                        True
-                                        if disk.get("diskEncryptionKey", {}).get(
-                                            "sha256"
-                                        )
-                                        else False,
+                                        (
+                                            True
+                                            if disk.get("diskEncryptionKey", {}).get(
+                                                "sha256"
+                                            )
+                                            else False
+                                        ),
                                     )
                                     for disk in instance["disks"]
                                 ],
@@ -144,9 +146,9 @@ class Compute(GCPService):
                         subnet_mode = (
                             "legacy"
                             if "autoCreateSubnetworks" not in network
-                            else "auto"
-                            if network["autoCreateSubnetworks"]
-                            else "custom"
+                            else (
+                                "auto" if network["autoCreateSubnetworks"] else "custom"
+                            )
                         )
                         self.networks.append(
                             Network(

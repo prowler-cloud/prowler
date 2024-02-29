@@ -1,6 +1,6 @@
 # Developer Guide
 
-You can extend Prowler in many different ways, in most cases you will want to create your own checks and compliance security frameworks, here is where you can learn about how to get started with it. We also include how to create custom outputs, integrations and more.
+You can extend Prowler Open Source in many different ways, in most cases you will want to create your own checks and compliance security frameworks, here is where you can learn about how to get started with it. We also include how to create custom outputs, integrations and more.
 
 ## Get the code and install all dependencies
 
@@ -16,7 +16,7 @@ pip install poetry
 ```
 Then install all dependencies including the ones for developers:
 ```
-poetry install
+poetry install --with dev
 poetry shell
 ```
 
@@ -31,7 +31,9 @@ You should get an output like the following:
 pre-commit installed at .git/hooks/pre-commit
 ```
 
-Before we merge any of your pull requests we pass checks to the code, we use the following tools and automation to make sure the code is secure and dependencies up-to-dated (these should have been already installed if you ran `pipenv install -d`):
+Before we merge any of your pull requests we pass checks to the code, we use the following tools and automation to make sure the code is secure and dependencies up-to-dated:
+???+ note
+    These should have been already installed if you ran `poetry install --with dev`
 
 - [`bandit`](https://pypi.org/project/bandit/) for code security review.
 - [`safety`](https://pypi.org/project/safety/) and [`dependabot`](https://github.com/features/security) for dependencies.

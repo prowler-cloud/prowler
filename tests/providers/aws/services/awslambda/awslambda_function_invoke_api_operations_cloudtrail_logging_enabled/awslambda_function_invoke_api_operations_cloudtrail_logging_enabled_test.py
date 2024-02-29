@@ -2,18 +2,18 @@ from unittest import mock
 
 from boto3 import client
 from mock import patch
-from moto import mock_cloudtrail, mock_s3
-from moto.core import DEFAULT_ACCOUNT_ID
+from moto import mock_aws
 
 from prowler.providers.aws.services.awslambda.awslambda_service import Function
 from tests.providers.aws.audit_info_utils import (
+    AWS_ACCOUNT_NUMBER,
     AWS_REGION_US_EAST_1,
     set_mocked_aws_audit_info,
 )
 
 
 # Mock generate_regional_clients()
-def mock_generate_regional_clients(service, audit_info, _):
+def mock_generate_regional_clients(service, audit_info):
     regional_client = audit_info.audit_session.client(
         service, region_name=AWS_REGION_US_EAST_1
     )
@@ -27,7 +27,7 @@ def mock_generate_regional_clients(service, audit_info, _):
     new=mock_generate_regional_clients,
 )
 class Test_awslambda_function_invoke_api_operations_cloudtrail_logging_enabled:
-    @mock_cloudtrail
+    @mock_aws
     def test_no_functions(self):
         lambda_client = mock.MagicMock
         lambda_client.functions = {}
@@ -58,14 +58,13 @@ class Test_awslambda_function_invoke_api_operations_cloudtrail_logging_enabled:
 
             assert len(result) == 0
 
-    @mock_cloudtrail
-    @mock_s3
+    @mock_aws
     def test_lambda_not_recorded_by_cloudtrail(self):
         # Lambda Client
         lambda_client = mock.MagicMock
         function_name = "test-lambda"
         function_runtime = "python3.9"
-        function_arn = f"arn:aws:lambda:{AWS_REGION_US_EAST_1}:{DEFAULT_ACCOUNT_ID}:function/{function_name}"
+        function_arn = f"arn:aws:lambda:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:function/{function_name}"
         lambda_client.functions = {
             function_name: Function(
                 name=function_name,
@@ -121,14 +120,13 @@ class Test_awslambda_function_invoke_api_operations_cloudtrail_logging_enabled:
             )
             assert result[0].resource_tags == []
 
-    @mock_cloudtrail
-    @mock_s3
+    @mock_aws
     def test_lambda_recorded_by_cloudtrail_classic_event_selector(self):
         # Lambda Client
         lambda_client = mock.MagicMock
         function_name = "test-lambda"
         function_runtime = "python3.9"
-        function_arn = f"arn:aws:lambda:{AWS_REGION_US_EAST_1}:{DEFAULT_ACCOUNT_ID}:function/{function_name}"
+        function_arn = f"arn:aws:lambda:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:function/{function_name}"
         lambda_client.functions = {
             function_name: Function(
                 name=function_name,
@@ -196,14 +194,13 @@ class Test_awslambda_function_invoke_api_operations_cloudtrail_logging_enabled:
             )
             assert result[0].resource_tags == []
 
-    @mock_cloudtrail
-    @mock_s3
+    @mock_aws
     def test_lambda_recorded_by_cloudtrail_advanced_event_selector(self):
         # Lambda Client
         lambda_client = mock.MagicMock
         function_name = "test-lambda"
         function_runtime = "python3.9"
-        function_arn = f"arn:aws:lambda:{AWS_REGION_US_EAST_1}:{DEFAULT_ACCOUNT_ID}:function/{function_name}"
+        function_arn = f"arn:aws:lambda:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:function/{function_name}"
         lambda_client.functions = {
             function_name: Function(
                 name=function_name,
@@ -274,8 +271,7 @@ class Test_awslambda_function_invoke_api_operations_cloudtrail_logging_enabled:
             )
             assert result[0].resource_tags == []
 
-    @mock_cloudtrail
-    @mock_s3
+    @mock_aws
     def test_all_lambdas_recorded_by_cloudtrail(self):
         # Lambda Client
         lambda_client = mock.MagicMock

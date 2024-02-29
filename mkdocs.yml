@@ -1,15 +1,15 @@
 # Project information
-site_name: Prowler Documentation
-site_url: https://docs.prowler.pro/
+site_name: Prowler Open Source Documentation
+site_url: https://docs.prowler.com/
 site_description: >-
-  Prowler Documentation Site
+  Prowler Open Source Documentation
 
 # Theme Configuration
 theme:
   language: en
-  logo: img/prowler-logo.png
+  logo: img/prowler-logo-white.png
   name: material
-  favicon: img/prowler-icon.svg
+  favicon: favicon.ico
   features:
     - navigation.tabs
     - navigation.tabs.sticky
@@ -18,6 +18,11 @@ theme:
   palette:
     primary: black
     accent: green
+
+plugins:
+  - search
+  - git-revision-date-localized:
+      enable_creation_date: true
 
 edit_uri: "https://github.com/prowler-cloud/prowler/tree/master/docs"
 # Prowler OSS Repository
@@ -41,6 +46,7 @@ nav:
       - Custom Metadata: tutorials/custom-checks-metadata.md
       - Ignore Unused Services: tutorials/ignore-unused-services.md
       - Pentesting: tutorials/pentesting.md
+      - Parallel Execution: tutorials/parallel-execution.md
       - Developer Guide: developer-guide/introduction.md
       - AWS:
           - Authentication: tutorials/aws/authentication.md
@@ -73,11 +79,13 @@ nav:
       - Testing:
           - Unit Tests: developer-guide/unit-testing.md
           - Integration Tests: developer-guide/integration-testing.md
+      - Debugging: developer-guide/debugging.md
   - Security: security.md
   - Contact Us: contact.md
   - Troubleshooting: troubleshooting.md
   - About: about.md
-  - ProwlerPro: https://prowler.pro
+  - Prowler SaaS: https://prowler.com
+
 # Customization
 extra:
   consent:
@@ -101,11 +109,15 @@ extra:
       link: https://twitter.com/prowlercloud
 
 # Copyright
-copyright: Copyright &copy; 2022 Toni de la Fuente, Maintained by the Prowler Team at Verica, Inc.</a>
+copyright: >
+  Copyright &copy; <script>document.write(new Date().getFullYear())</script> Toni de la Fuente, Maintained by the Prowler Team at ProwlerPro, Inc.</a>
+  </br><a href="#__consent">Change cookie settings</a>
 
 markdown_extensions:
   - abbr
   - admonition
+  - pymdownx.details
+  - pymdownx.superfences
   - attr_list
   - def_list
   - footnotes
@@ -119,8 +131,8 @@ markdown_extensions:
   - pymdownx.caret
   - pymdownx.details
   - pymdownx.emoji:
-      emoji_generator: !!python/name:materialx.emoji.to_svg
-      emoji_index: !!python/name:materialx.emoji.twemoji
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
   - pymdownx.highlight:
       anchor_linenums: true
   - pymdownx.inlinehilite

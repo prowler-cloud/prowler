@@ -1,0 +1,33 @@
+{
+  "Provider": "gcp",
+  "CheckID": "artifacts_container_analysis_enabled",
+  "CheckTitle": "Ensure Image Vulnerability Analysis using AR Container Analysis or a third-party provider",
+  "CheckType": [
+    "Security",
+    "Configuration"
+  ],
+  "ServiceName": "Artifact Registry",
+  "SubServiceName": "Container Analysis",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Service",
+  "Description": "Scan images stored in Google Container Registry (GCR) for vulnerabilities using AR Container Analysis or a third-party provider. This helps identify and mitigate security risks associated with known vulnerabilities in container images.",
+  "Risk": "Without image vulnerability scanning, container images stored in Artifact Registry may contain known vulnerabilities, increasing the risk of exploitation by malicious actors.",
+  "RelatedUrl": "https://cloud.google.com/artifact-analysis/docs",
+  "Remediation": {
+    "Code": {
+      "CLI": "gcloud services enable containeranalysis.googleapis.com",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable vulnerability scanning for images stored in Artifact Registry using AR Container Analysis or a third-party provider.",
+      "Url": "https://cloud.google.com/artifact-analysis/docs/container-scanning-overview"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "By default, AR Container Analysis is disabled."
+}

@@ -6,17 +6,21 @@ from re import search
 from unittest.mock import patch
 
 import mock
-from boto3 import client, resource, session
-from moto import mock_iam, mock_lambda, mock_s3
-from moto.core import DEFAULT_ACCOUNT_ID
+from boto3 import client, resource
+from moto import mock_aws
 
-from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.aws.services.awslambda.awslambda_service import AuthType, Lambda
-from prowler.providers.common.models import Audit_Metadata
+from tests.providers.aws.audit_info_utils import (
+    AWS_ACCOUNT_NUMBER,
+    AWS_REGION_EU_WEST_1,
+    AWS_REGION_US_EAST_1,
+    set_mocked_aws_audit_info,
+)
 
-# Mock Test Region
-AWS_REGION = "eu-west-1"
-AWS_REGION_NORTH_VIRGINIA = "us-east-1"
+LAMBDA_FUNCTION_CODE = """def lambda_handler(event, context):
+print("custom log event")
+return event
+            """
 
 
 def create_zip_file(code: str = "") -> io.BytesIO:
@@ -25,11 +29,7 @@ def create_zip_file(code: str = "") -> io.BytesIO:
     if not code:
         zip_file.writestr(
             "lambda_function.py",
-            """
-            def lambda_handler(event, context):
-                print("custom log event")
-                return event
-            """,
+            LAMBDA_FUNCTION_CODE,
         )
     else:
         zip_file.writestr("lambda_function.py", code)
@@ -47,18 +47,18 @@ def mock_request_get(_):
 
 
 # Mock generate_regional_clients()
-def mock_generate_regional_clients(service, audit_info, _):
+def mock_generate_regional_clients(service, audit_info):
     regional_client_eu_west_1 = audit_info.audit_session.client(
-        service, region_name=AWS_REGION
+        service, region_name=AWS_REGION_EU_WEST_1
     )
     regional_client_us_east_1 = audit_info.audit_session.client(
-        service, region_name=AWS_REGION_NORTH_VIRGINIA
+        service, region_name=AWS_REGION_US_EAST_1
     )
-    regional_client_eu_west_1.region = AWS_REGION
-    regional_client_us_east_1.region = AWS_REGION_NORTH_VIRGINIA
+    regional_client_eu_west_1.region = AWS_REGION_EU_WEST_1
+    regional_client_us_east_1.region = AWS_REGION_US_EAST_1
     return {
-        AWS_REGION: regional_client_eu_west_1,
-        AWS_REGION_NORTH_VIRGINIA: regional_client_us_east_1,
+        AWS_REGION_EU_WEST_1: regional_client_eu_west_1,
+        AWS_REGION_US_EAST_1: regional_client_us_east_1,
     }
 
 
@@ -67,73 +67,44 @@ def mock_generate_regional_clients(service, audit_info, _):
     new=mock_generate_regional_clients,
 )
 class Test_Lambda_Service:
-    def set_mocked_audit_info(self):
-        audit_info = AWS_Audit_Info(
-            session_config=None,
-            original_session=None,
-            audit_session=session.Session(
-                profile_name=None,
-                botocore_session=None,
-            ),
-            audited_account=DEFAULT_ACCOUNT_ID,
-            audited_account_arn=f"arn:aws:iam::{DEFAULT_ACCOUNT_ID}:root",
-            audited_user_id=None,
-            audited_partition="aws",
-            audited_identity_arn=None,
-            profile=None,
-            profile_region=None,
-            credentials=None,
-            assumed_role_info=None,
-            audited_regions=None,
-            organizations_metadata=None,
-            audit_resources=None,
-            mfa_enabled=False,
-            audit_metadata=Audit_Metadata(
-                services_scanned=0,
-                expected_checks=["awslambda_function_no_secrets_in_code"],
-                completed_checks=0,
-                audit_progress=0,
-            ),
-        )
-        return audit_info
-
     # Test Lambda Client
     def test__get_client__(self):
-        awslambda = Lambda(self.set_mocked_audit_info())
-        assert awslambda.regional_clients[AWS_REGION].__class__.__name__ == "Lambda"
+        awslambda = Lambda(set_mocked_aws_audit_info([AWS_REGION_US_EAST_1]))
+        assert (
+            awslambda.regional_clients[AWS_REGION_EU_WEST_1].__class__.__name__
+            == "Lambda"
+        )
 
     # Test Lambda Session
     def test__get_session__(self):
-        awslambda = Lambda(self.set_mocked_audit_info())
+        awslambda = Lambda(set_mocked_aws_audit_info([AWS_REGION_US_EAST_1]))
         assert awslambda.session.__class__.__name__ == "Session"
 
     # Test Lambda Service
     def test__get_service__(self):
-        awslambda = Lambda(self.set_mocked_audit_info())
+        awslambda = Lambda(set_mocked_aws_audit_info([AWS_REGION_US_EAST_1]))
         assert awslambda.service == "lambda"
 
-    @mock_lambda
-    @mock_iam
-    @mock_s3
+    @mock_aws
     def test__list_functions__(self):
         # Create IAM Lambda Role
-        iam_client = client("iam", region_name=AWS_REGION)
+        iam_client = client("iam", region_name=AWS_REGION_EU_WEST_1)
         iam_role = iam_client.create_role(
             RoleName="test-lambda-role",
             AssumeRolePolicyDocument="test-policy",
             Path="/",
         )["Role"]["Arn"]
         # Create S3 Bucket
-        s3_client = resource("s3", region_name=AWS_REGION)
+        s3_client = resource("s3", region_name=AWS_REGION_EU_WEST_1)
         s3_client.create_bucket(
             Bucket="test-bucket",
-            CreateBucketConfiguration={"LocationConstraint": AWS_REGION},
+            CreateBucketConfiguration={"LocationConstraint": AWS_REGION_EU_WEST_1},
         )
         # Create Test Lambda 1
-        lambda_client = client("lambda", region_name=AWS_REGION)
-        lambda_name = "test-lambda"
+        lambda_client = client("lambda", region_name=AWS_REGION_EU_WEST_1)
+        lambda_name_1 = "test-lambda-1"
         resp = lambda_client.create_function(
-            FunctionName=lambda_name,
+            FunctionName=lambda_name_1,
             Runtime="python3.7",
             Role=iam_role,
             Handler="lambda_function.lambda_handler",
@@ -160,20 +131,20 @@ class Test_Lambda_Service:
                     "Action": "lambda:GetFunction",
                     "Principal": "*",
                     "Effect": "Allow",
-                    "Resource": f"arn:aws:lambda:{AWS_REGION}:{DEFAULT_ACCOUNT_ID}:function:{lambda_name}",
+                    "Resource": f"arn:aws:lambda:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:function:{lambda_name_1}",
                     "Sid": "test",
                 }
             ],
         }
         _ = lambda_client.add_permission(
-            FunctionName=lambda_name,
+            FunctionName=lambda_name_1,
             StatementId="test",
             Action="lambda:GetFunction",
             Principal="*",
         )
         # Create Function URL Config
         _ = lambda_client.create_function_url_config(
-            FunctionName=lambda_name,
+            FunctionName=lambda_name_1,
             AuthType=AuthType.AWS_IAM.value,
             Cors={
                 "AllowCredentials": True,
@@ -194,10 +165,10 @@ class Test_Lambda_Service:
         )
 
         # Create Test Lambda 2 (with the same attributes but different region)
-        lambda_client_2 = client("lambda", region_name=AWS_REGION_NORTH_VIRGINIA)
-        lambda_name = "test-lambda"
+        lambda_client_2 = client("lambda", region_name=AWS_REGION_US_EAST_1)
+        lambda_name_2 = "test-lambda-2"
         resp_2 = lambda_client_2.create_function(
-            FunctionName=lambda_name,
+            FunctionName=lambda_name_2,
             Runtime="python3.7",
             Role=iam_role,
             Handler="lambda_function.lambda_handler",
@@ -220,24 +191,20 @@ class Test_Lambda_Service:
             "prowler.providers.aws.services.awslambda.awslambda_service.requests.get",
             new=mock_request_get,
         ):
-            awslambda = Lambda(self.set_mocked_audit_info())
+            awslambda = Lambda(
+                set_mocked_aws_audit_info(audited_regions=[AWS_REGION_US_EAST_1])
+            )
             assert awslambda.functions
             assert len(awslambda.functions) == 2
             # Lambda 1
-            assert awslambda.functions[lambda_arn_1].name == lambda_name
+            assert awslambda.functions[lambda_arn_1].name == lambda_name_1
             assert awslambda.functions[lambda_arn_1].arn == lambda_arn_1
             assert awslambda.functions[lambda_arn_1].runtime == "python3.7"
             assert awslambda.functions[lambda_arn_1].environment == {
                 "db-password": "test-password"
             }
-            assert awslambda.functions[lambda_arn_1].region == AWS_REGION
+            assert awslambda.functions[lambda_arn_1].region == AWS_REGION_EU_WEST_1
             assert awslambda.functions[lambda_arn_1].policy == lambda_policy
-
-            assert awslambda.functions[lambda_arn_1].code
-            assert search(
-                f"s3://awslambda-{AWS_REGION}-tasks.s3-{AWS_REGION}.amazonaws.com",
-                awslambda.functions[lambda_arn_1].code.location,
-            )
 
             assert awslambda.functions[lambda_arn_1].url_config
             assert (
@@ -256,31 +223,14 @@ class Test_Lambda_Service:
 
             assert awslambda.functions[lambda_arn_1].tags == [{"test": "test"}]
 
-            # Pending ZipFile tests
-            with tempfile.TemporaryDirectory() as tmp_dir_name:
-                awslambda.functions[lambda_arn_1].code.code_zip.extractall(tmp_dir_name)
-                files_in_zip = next(os.walk(tmp_dir_name))[2]
-                assert len(files_in_zip) == 1
-                assert files_in_zip[0] == "lambda_function.py"
-                with open(f"{tmp_dir_name}/{files_in_zip[0]}", "r") as lambda_code_file:
-                    _ = lambda_code_file
-                    # assert (
-                    #     lambda_code_file.read()
-                    #     == """
-                    # def lambda_handler(event, context):
-                    # print("custom log event")
-                    # return event
-                    # """
-                    # )
-
             # Lambda 2
-            assert awslambda.functions[lambda_arn_2].name == lambda_name
+            assert awslambda.functions[lambda_arn_2].name == lambda_name_2
             assert awslambda.functions[lambda_arn_2].arn == lambda_arn_2
             assert awslambda.functions[lambda_arn_2].runtime == "python3.7"
             assert awslambda.functions[lambda_arn_2].environment == {
                 "db-password": "test-password"
             }
-            assert awslambda.functions[lambda_arn_2].region == AWS_REGION_NORTH_VIRGINIA
+            assert awslambda.functions[lambda_arn_2].region == AWS_REGION_US_EAST_1
             # Emtpy policy
             assert awslambda.functions[lambda_arn_2].policy == {
                 "Id": "default",
@@ -288,8 +238,20 @@ class Test_Lambda_Service:
                 "Version": "2012-10-17",
             }
 
-            assert awslambda.functions[lambda_arn_2].code
-            assert search(
-                f"s3://awslambda-{AWS_REGION_NORTH_VIRGINIA}-tasks.s3-{AWS_REGION_NORTH_VIRGINIA}.amazonaws.com",
-                awslambda.functions[lambda_arn_2].code.location,
-            )
+            # Lambda Code
+            with tempfile.TemporaryDirectory() as tmp_dir_name:
+                for function, function_code in awslambda.__get_function_code__():
+                    if function.arn == lambda_arn_1 or function.arn == lambda_arn_2:
+                        assert search(
+                            f"s3://awslambda-{function.region}-tasks.s3-{function.region}.amazonaws.com",
+                            function_code.location,
+                        )
+                        assert function_code
+                        function_code.code_zip.extractall(tmp_dir_name)
+                        files_in_zip = next(os.walk(tmp_dir_name))[2]
+                        assert len(files_in_zip) == 1
+                        assert files_in_zip[0] == "lambda_function.py"
+                        with open(
+                            f"{tmp_dir_name}/{files_in_zip[0]}", "r"
+                        ) as lambda_code_file:
+                            assert lambda_code_file.read() == LAMBDA_FUNCTION_CODE

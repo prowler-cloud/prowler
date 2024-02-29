@@ -1,0 +1,30 @@
+{
+  "Provider": "azure",
+  "CheckID": "iam_custom_role_has_permissions_to_administer_resource_locks",
+  "CheckTitle": "Ensure an IAM custom role has permissions to administer resource locks",
+  "CheckType": [],
+  "ServiceName": "iam",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "AzureRole",
+  "Description": "Ensure a Custom Role is Assigned Permissions for Administering Resource Locks",
+  "Risk": "In Azure, resource locks are a way to prevent accidental deletion or modification of critical resources. These locks can be set at the resource group level or the individual resource level. Resource locks administration is a critical task that should be preformed from a custom role with the appropriate permissions. This ensures that only authorized users can administer resource locks.",
+  "RelatedUrl": "https://learn.microsoft.com/en-us/azure/azure-resource-manager/management/lock-resources?tabs=json",
+  "Remediation": {
+    "Code": {
+      "CLI": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/AccessControl/resource-lock-custom-role.html",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Resouce locks are needed to prevent accidental deletion or modification of critical Azure resources. The administration of resource locks should be performed from a custom role with the appropriate permissions.",
+      "Url": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/AccessControl/resource-lock-custom-role.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

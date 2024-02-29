@@ -1,6 +1,7 @@
 import os
 import sys
 
+from colorama import Fore, Style
 from google import auth
 from googleapiclient import discovery
 
@@ -17,9 +18,6 @@ class GCP_Provider:
         self.credentials, self.default_project_id = self.__set_credentials__(
             credentials_file
         )
-        if not self.default_project_id:
-            logger.critical("No Project ID associated to Google Credentials.")
-            sys.exit(1)
 
         self.project_ids = []
         accessible_projects = self.get_project_ids()
@@ -88,5 +86,8 @@ class GCP_Provider:
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            print(
+                f"\n{Fore.YELLOW}Cloud Resource Manager API {Style.RESET_ALL}has not been used before or it is disabled.\nEnable it by visiting https://console.developers.google.com/apis/api/cloudresourcemanager.googleapis.com/ then retry."
             )
             return []

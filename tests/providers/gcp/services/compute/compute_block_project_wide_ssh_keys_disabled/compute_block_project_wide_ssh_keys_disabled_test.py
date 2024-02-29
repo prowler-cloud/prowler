@@ -1,7 +1,7 @@
 from re import search
 from unittest import mock
 
-GCP_PROJECT_ID = "123456789012"
+from tests.providers.gcp.lib.audit_info_utils import GCP_PROJECT_ID
 
 
 class Test_compute_instance_block_project_wide_ssh_keys_disabled:

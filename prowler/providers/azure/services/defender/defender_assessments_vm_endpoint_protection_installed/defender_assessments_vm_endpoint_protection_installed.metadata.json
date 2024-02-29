@@ -1,0 +1,30 @@
+{
+  "Provider": "azure",
+  "CheckID": "defender_assessments_vm_endpoint_protection_installed",
+  "CheckTitle": "Ensure that Endpoint Protection for all Virtual Machines is installed",
+  "CheckType": [],
+  "ServiceName": "defender",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Microsoft.Security/assessments",
+  "Description": "Install endpoint protection for all virtual machines.",
+  "Risk": "Installing endpoint protection systems (like anti-malware for Azure) provides for real-time protection capability that helps identify and remove viruses, spyware, and other malicious software. These also offer configurable alerts when known-malicious or unwanted software attempts to install itself or run on Azure systems.",
+  "RelatedUrl": "https://learn.microsoft.com/en-us/azure/security/fundamentals/antimalware",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/VirtualMachines/install-endpoint-protection.html#",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Follow Microsoft Azure documentation to install endpoint protection from the security center. Alternatively, you can employ your own endpoint protection tool for your OS.",
+      "Url": ""
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Endpoint protection will incur an additional cost to you."
+}

@@ -1,0 +1,24 @@
+name: Pull Request Documentation Link
+
+on:
+  pull_request:
+    branches:
+      - 'master'
+      - 'prowler-4.0-dev'
+    paths:
+      - 'docs/**'
+
+env:
+  PR_NUMBER: ${{ github.event.pull_request.number }}
+
+jobs:
+  documentation-link:
+    name: Documentation Link
+    runs-on: ubuntu-latest
+    steps:
+      - name: Leave PR comment with the SaaS Documentation URI
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          issue-number: ${{ env.PR_NUMBER }}
+          body: |
+            You can check the documentation for this PR here -> [SaaS Documentation](https://prowler-prowler-docs--${{ env.PR_NUMBER }}.com.readthedocs.build/projects/prowler-open-source/en/${{ env.PR_NUMBER }}/)

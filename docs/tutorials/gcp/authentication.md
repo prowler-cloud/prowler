@@ -13,7 +13,8 @@ Otherwise, you can generate and download Service Account keys in JSON format (re
 prowler gcp --credentials-file path
 ```
 
-> `prowler` will scan the GCP project associated with the credentials.
+???+ note
+    `prowler` will scan the GCP project associated with the credentials.
 
 
 Prowler will follow the same credentials search as [Google authentication libraries](https://cloud.google.com/docs/authentication/application-default-credentials#search_order):

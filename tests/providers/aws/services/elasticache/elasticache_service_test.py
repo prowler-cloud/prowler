@@ -1,29 +1,24 @@
 import botocore
-from boto3 import session
 from mock import patch
 
-from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.aws.services.elasticache.elasticache_service import (
     Cluster,
     ElastiCache,
 )
-from prowler.providers.common.models import Audit_Metadata
-
-AWS_ACCOUNT_NUMBER = "123456789012"
-AWS_ACCOUNT_ARN = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
-
-AWS_REGION = "us-east-1"
-AWS_REGION_AZ1 = "us-east-1a"
-AWS_REGION_AZ2 = "us-east-b"
+from tests.providers.aws.audit_info_utils import (
+    AWS_ACCOUNT_NUMBER,
+    AWS_REGION_US_EAST_1,
+    AWS_REGION_US_EAST_1_AZA,
+    AWS_REGION_US_EAST_1_AZB,
+    set_mocked_aws_audit_info,
+)
 
 SUBNET_GROUP_NAME = "default"
 SUBNET_1 = "subnet-1"
 SUBNET_2 = "subnet-2"
 
 ELASTICACHE_CLUSTER_NAME = "test-cluster"
-ELASTICACHE_CLUSTER_ARN = (
-    f"arn:aws:elasticache:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:{ELASTICACHE_CLUSTER_NAME}"
-)
+ELASTICACHE_CLUSTER_ARN = f"arn:aws:elasticache:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:{ELASTICACHE_CLUSTER_NAME}"
 ELASTICACHE_ENGINE = "redis"
 
 ELASTICACHE_CLUSTER_TAGS = [
@@ -63,16 +58,20 @@ def mock_make_api_call(self, operation_name, kwargs):
                     "Subnets": [
                         {
                             "SubnetIdentifier": "subnet-1",
-                            "SubnetAvailabilityZone": {"Name": AWS_REGION_AZ1},
+                            "SubnetAvailabilityZone": {
+                                "Name": AWS_REGION_US_EAST_1_AZA
+                            },
                             "SubnetStatus": "Active",
                         },
                         {
                             "SubnetIdentifier": "subnet-2",
-                            "SubnetAvailabilityZone": {"Name": AWS_REGION_AZ2},
+                            "SubnetAvailabilityZone": {
+                                "Name": AWS_REGION_US_EAST_1_AZB
+                            },
                             "SubnetStatus": "Active",
                         },
                     ],
-                    "DBSubnetGroupArn": f"arn:aws:rds:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:subgrp:{SUBNET_GROUP_NAME}",
+                    "DBSubnetGroupArn": f"arn:aws:rds:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:subgrp:{SUBNET_GROUP_NAME}",
                 }
             ]
         }
@@ -82,10 +81,12 @@ def mock_make_api_call(self, operation_name, kwargs):
     return make_api_call(self, operation_name, kwargs)
 
 
-def mock_generate_regional_clients(service, audit_info, _):
-    regional_client = audit_info.audit_session.client(service, region_name=AWS_REGION)
-    regional_client.region = AWS_REGION
-    return {AWS_REGION: regional_client}
+def mock_generate_regional_clients(service, audit_info):
+    regional_client = audit_info.audit_session.client(
+        service, region_name=AWS_REGION_US_EAST_1
+    )
+    regional_client.region = AWS_REGION_US_EAST_1
+    return {AWS_REGION_US_EAST_1: regional_client}
 
 
 @patch(
@@ -95,64 +96,33 @@ def mock_generate_regional_clients(service, audit_info, _):
 # Patch every AWS call using Boto3
 @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
 class Test_ElastiCache_Service:
-    # Mocked Audit Info
-    def set_mocked_audit_info(self):
-        audit_info = AWS_Audit_Info(
-            session_config=None,
-            original_session=None,
-            audit_session=session.Session(
-                profile_name=None,
-                botocore_session=None,
-            ),
-            audited_account=AWS_ACCOUNT_NUMBER,
-            audited_account_arn=AWS_ACCOUNT_ARN,
-            audited_user_id=None,
-            audited_partition="aws",
-            audited_identity_arn=None,
-            profile=None,
-            profile_region=None,
-            credentials=None,
-            assumed_role_info=None,
-            audited_regions=None,
-            organizations_metadata=None,
-            audit_resources=None,
-            mfa_enabled=False,
-            audit_metadata=Audit_Metadata(
-                services_scanned=0,
-                expected_checks=[],
-                completed_checks=0,
-                audit_progress=0,
-            ),
-        )
-        return audit_info
-
     # Test ElastiCache Service
     def test_service(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info()
         elasticache = ElastiCache(audit_info)
         assert elasticache.service == "elasticache"
 
     # Test ElastiCache Client]
     def test_client(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info()
         elasticache = ElastiCache(audit_info)
         assert elasticache.client.__class__.__name__ == "ElastiCache"
 
     # Test ElastiCache Session
     def test__get_session__(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info()
         elasticache = ElastiCache(audit_info)
         assert elasticache.session.__class__.__name__ == "Session"
 
     # Test ElastiCache Session
     def test_audited_account(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info()
         elasticache = ElastiCache(audit_info)
         assert elasticache.audited_account == AWS_ACCOUNT_NUMBER
 
     # Test ElastiCache Clusters
     def test_describe_cache_clusters(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info()
         elasticache = ElastiCache(audit_info)
 
         assert len(elasticache.clusters) == 1
@@ -161,7 +131,7 @@ class Test_ElastiCache_Service:
             arn=ELASTICACHE_CLUSTER_ARN,
             name=ELASTICACHE_CLUSTER_NAME,
             id=ELASTICACHE_CLUSTER_NAME,
-            region=AWS_REGION,
+            region=AWS_REGION_US_EAST_1,
             cache_subnet_group_id=SUBNET_GROUP_NAME,
             subnets=[SUBNET_1, SUBNET_2],
             tags=ELASTICACHE_CLUSTER_TAGS,

@@ -2,8 +2,7 @@ from unittest import mock
 
 from prowler.providers.aws.services.route53.route53_service import HostedZone
 from prowler.providers.aws.services.shield.shield_service import Protection
-
-AWS_REGION = "eu-west-1"
+from tests.providers.aws.audit_info_utils import AWS_REGION_EU_WEST_1
 
 
 class Test_shield_advanced_protection_in_route53_hosted_zones:
@@ -47,14 +46,14 @@ class Test_shield_advanced_protection_in_route53_hosted_zones:
                 name=hosted_zone_name,
                 hosted_zone_name=hosted_zone_name,
                 private_zone=False,
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
             )
         }
 
         # Shield Client
         shield_client = mock.MagicMock
         shield_client.enabled = True
-        shield_client.region = AWS_REGION
+        shield_client.region = AWS_REGION_EU_WEST_1
         protection_id = "test-protection"
         shield_client.protections = {
             protection_id: Protection(
@@ -62,7 +61,7 @@ class Test_shield_advanced_protection_in_route53_hosted_zones:
                 name="",
                 resource_arn=hosted_zone_arn,
                 protection_arn="",
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
             )
         }
 
@@ -85,7 +84,7 @@ class Test_shield_advanced_protection_in_route53_hosted_zones:
             result = check.execute()
 
             assert len(result) == 1
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1
             assert result[0].resource_id == hosted_zone_id
             assert result[0].resource_arn == hosted_zone_arn
             assert result[0].status == "PASS"
@@ -108,14 +107,14 @@ class Test_shield_advanced_protection_in_route53_hosted_zones:
                 name=hosted_zone_name,
                 hosted_zone_name=hosted_zone_name,
                 private_zone=False,
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
             )
         }
 
         # Shield Client
         shield_client = mock.MagicMock
         shield_client.enabled = True
-        shield_client.region = AWS_REGION
+        shield_client.region = AWS_REGION_EU_WEST_1
         shield_client.protections = {}
 
         with mock.patch(
@@ -137,7 +136,7 @@ class Test_shield_advanced_protection_in_route53_hosted_zones:
             result = check.execute()
 
             assert len(result) == 1
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1
             assert result[0].resource_id == hosted_zone_id
             assert result[0].resource_arn == hosted_zone_arn
             assert result[0].status == "FAIL"
@@ -160,14 +159,14 @@ class Test_shield_advanced_protection_in_route53_hosted_zones:
                 name=hosted_zone_name,
                 hosted_zone_name=hosted_zone_name,
                 private_zone=False,
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
             )
         }
 
         # Shield Client
         shield_client = mock.MagicMock
         shield_client.enabled = False
-        shield_client.region = AWS_REGION
+        shield_client.region = AWS_REGION_EU_WEST_1
         shield_client.protections = {}
 
         with mock.patch(

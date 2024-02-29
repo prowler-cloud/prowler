@@ -1,8 +1,11 @@
-def is_account_only_allowed_in_condition(
-    condition_statement: dict, source_account: str
+def is_condition_block_restrictive(
+    condition_statement: dict, source_account: str, is_cross_account_allowed=False
 ):
     """
-    is_account_only_allowed_in_condition parses the IAM Condition policy block and returns True if the source_account passed as argument is within, False if not.
+    is_condition_block_restrictive parses the IAM Condition policy block and, by default, returns True if the source_account passed as argument is within, False if not.
+
+    If argument is_cross_account_allowed is True it tests if the Condition block includes any of the operators allowlisted returning True if does, False if not.
+
 
     @param condition_statement: dict with an IAM Condition block, e.g.:
         {
@@ -54,13 +57,19 @@ def is_account_only_allowed_in_condition(
                         condition_statement[condition_operator][value],
                         list,
                     ):
-                        # if there is an arn/account without the source account -> we do not consider it safe
-                        # here by default we assume is true and look for false entries
                         is_condition_key_restrictive = True
-                        for item in condition_statement[condition_operator][value]:
-                            if source_account not in item:
-                                is_condition_key_restrictive = False
-                                break
+                        # if cross account is not allowed check for each condition block looking for accounts
+                        # different than default
+                        if not is_cross_account_allowed:
+                            # if there is an arn/account without the source account -> we do not consider it safe
+                            # here by default we assume is true and look for false entries
+                            for item in condition_statement[condition_operator][value]:
+                                if source_account not in item:
+                                    is_condition_key_restrictive = False
+                                    break
+
+                        if is_condition_key_restrictive:
+                            is_condition_valid = True
 
                         if is_condition_key_restrictive:
                             is_condition_valid = True
@@ -70,10 +79,13 @@ def is_account_only_allowed_in_condition(
                         condition_statement[condition_operator][value],
                         str,
                     ):
-                        if (
-                            source_account
-                            in condition_statement[condition_operator][value]
-                        ):
+                        if is_cross_account_allowed:
                             is_condition_valid = True
+                        else:
+                            if (
+                                source_account
+                                in condition_statement[condition_operator][value]
+                            ):
+                                is_condition_valid = True
 
     return is_condition_valid

@@ -360,7 +360,7 @@ This report is being generated using credentials below:
 
 AWS-CLI Profile: {Fore.YELLOW}[{profile}]{Style.RESET_ALL} AWS Filter Region: {Fore.YELLOW}[{regions}]{Style.RESET_ALL}
 AWS Account: {Fore.YELLOW}[{self.identity.account}]{Style.RESET_ALL} UserId: {Fore.YELLOW}[{self.identity.user_id}]{Style.RESET_ALL}
-Caller Identity ARN: {Fore.YELLOW}[{ self.identity.identity_arn}]{Style.RESET_ALL}
+Caller Identity ARN: {Fore.YELLOW}[{self.identity.identity_arn}]{Style.RESET_ALL}
 """
         # If -A is set, print Assumed Role ARN
         if self.assumed_role.assumed_role_info.role_arn is not None:
@@ -596,9 +596,9 @@ Caller Identity ARN: {Fore.YELLOW}[{ self.identity.identity_arn}]{Style.RESET_AL
 
             # Set the info to assume the role from the partition, account and role name
             if self.assumed_role.assumed_role_info.external_id:
-                assume_role_arguments[
-                    "ExternalId"
-                ] = self.assumed_role.assumed_role_info.external_id
+                assume_role_arguments["ExternalId"] = (
+                    self.assumed_role.assumed_role_info.external_id
+                )
 
             if self.assumed_role.assumed_role_info.mfa_enabled:
                 mfa_ARN, mfa_TOTP = self.__input_role_mfa_token_and_code__()

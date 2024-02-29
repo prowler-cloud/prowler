@@ -2,50 +2,17 @@ from json import dumps
 from re import search
 from unittest import mock
 
-from boto3 import client, session
-from moto import mock_iam
+from boto3 import client
+from moto import mock_aws
 
-from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
-from prowler.providers.common.models import Audit_Metadata
-
-AWS_ACCOUNT_NUMBER = "123456789012"
-AWS_REGION = "us-east-1"
+from tests.providers.aws.audit_info_utils import (
+    AWS_REGION_US_EAST_1,
+    set_mocked_aws_audit_info,
+)
 
 
 class Test_iam_no_custom_policy_permissive_role_assumption:
-    # Mocked Audit Info
-    def set_mocked_audit_info(self):
-        audit_info = AWS_Audit_Info(
-            session_config=None,
-            original_session=None,
-            audit_session=session.Session(
-                profile_name=None,
-                botocore_session=None,
-                region_name=AWS_REGION,
-            ),
-            audited_account=AWS_ACCOUNT_NUMBER,
-            audited_account_arn=f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root",
-            audited_user_id=None,
-            audited_partition="aws",
-            audited_identity_arn=None,
-            profile=None,
-            profile_region=AWS_REGION,
-            credentials=None,
-            assumed_role_info=None,
-            audited_regions=None,
-            organizations_metadata=None,
-            audit_resources=None,
-            mfa_enabled=False,
-            audit_metadata=Audit_Metadata(
-                services_scanned=0,
-                expected_checks=[],
-                completed_checks=0,
-                audit_progress=0,
-            ),
-        )
-        return audit_info
-
-    @mock_iam
+    @mock_aws
     def test_policy_allows_permissive_role_assumption_wildcard(self):
         iam_client = client("iam")
         policy_name = "policy1"
@@ -61,7 +28,7 @@ class Test_iam_no_custom_policy_permissive_role_assumption:
 
         from prowler.providers.aws.services.iam.iam_service import IAM
 
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -85,7 +52,7 @@ class Test_iam_no_custom_policy_permissive_role_assumption:
                 assert result[0].resource_arn == arn
                 assert result[0].resource_id == policy_name
 
-    @mock_iam
+    @mock_aws
     def test_policy_allows_permissive_role_assumption_no_wilcard(self):
         iam_client = client("iam")
         policy_name = "policy1"
@@ -101,7 +68,7 @@ class Test_iam_no_custom_policy_permissive_role_assumption:
 
         from prowler.providers.aws.services.iam.iam_service import IAM
 
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -125,7 +92,7 @@ class Test_iam_no_custom_policy_permissive_role_assumption:
                 assert result[0].resource_arn == arn
                 assert result[0].resource_id == policy_name
 
-    @mock_iam
+    @mock_aws
     def test_policy_assume_role_not_allow_permissive_role_assumption(self):
         iam_client = client("iam")
         policy_name = "policy1"
@@ -145,7 +112,7 @@ class Test_iam_no_custom_policy_permissive_role_assumption:
 
         from prowler.providers.aws.services.iam.iam_service import IAM
 
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -169,7 +136,7 @@ class Test_iam_no_custom_policy_permissive_role_assumption:
                 assert result[0].resource_arn == arn
                 assert result[0].resource_id == policy_name
 
-    @mock_iam
+    @mock_aws
     def test_policy_not_allow_permissive_role_assumption(self):
         iam_client = client("iam")
         policy_name = "policy1"
@@ -185,7 +152,7 @@ class Test_iam_no_custom_policy_permissive_role_assumption:
 
         from prowler.providers.aws.services.iam.iam_service import IAM
 
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -209,7 +176,7 @@ class Test_iam_no_custom_policy_permissive_role_assumption:
                 assert result[0].resource_arn == arn
                 assert result[0].resource_id == policy_name
 
-    @mock_iam
+    @mock_aws
     def test_policy_permissive_and_not_permissive(self):
         iam_client = client("iam")
         policy_name_non_permissive = "policy1"
@@ -237,7 +204,7 @@ class Test_iam_no_custom_policy_permissive_role_assumption:
 
         from prowler.providers.aws.services.iam.iam_service import IAM
 
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",

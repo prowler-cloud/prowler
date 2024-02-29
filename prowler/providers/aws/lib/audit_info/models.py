@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Optional
 
@@ -20,6 +20,7 @@ class AWSAssumeRole:
     session_duration: int
     external_id: str
     mfa_enabled: bool
+    role_session_name: str
 
 
 @dataclass
@@ -53,3 +54,4 @@ class AWS_Audit_Info:
     audit_metadata: Optional[Any]
     audit_config: Optional[dict] = None
     ignore_unused_services: bool = False
+    enabled_regions: set = field(default_factory=set)

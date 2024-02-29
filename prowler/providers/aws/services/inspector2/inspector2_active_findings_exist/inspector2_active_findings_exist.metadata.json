@@ -1,0 +1,33 @@
+{
+  "Provider": "aws",
+  "CheckID": "inspector2_active_findings_exist",
+  "CheckTitle": "Check if Inspector2 findings exist",
+  "CheckAliases": [
+    "inspector2_findings_exist"
+  ],
+  "CheckType": [],
+  "ServiceName": "inspector2",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:inspector2:region:account-id/detector-id",
+  "Severity": "medium",
+  "ResourceType": "Other",
+  "Description": "Check if Inspector2 findings exist",
+  "Risk": "Without using AWS Inspector, you may not be aware of all the security vulnerabilities in your AWS resources, which could lead to unauthorized access, data breaches, or other security incidents.",
+  "RelatedUrl": "https://docs.aws.amazon.com/inspector/latest/user/findings-understanding.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Inspector/amazon-inspector-findings.html",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Review the active findings from Inspector2",
+      "Url": "https://docs.aws.amazon.com/inspector/latest/user/what-is-inspector.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

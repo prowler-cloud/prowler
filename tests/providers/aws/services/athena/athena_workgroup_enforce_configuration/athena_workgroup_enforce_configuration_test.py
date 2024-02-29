@@ -1,56 +1,25 @@
 from unittest import mock
 
-from boto3 import session
 from mock import patch
-from moto import mock_athena
+from moto import mock_aws
 
-from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
-from prowler.providers.common.models import Audit_Metadata
+from tests.providers.aws.audit_info_utils import (
+    AWS_ACCOUNT_NUMBER,
+    AWS_REGION_EU_WEST_1,
+    set_mocked_aws_audit_info,
+)
 from tests.providers.aws.services.athena.athena_service_test import mock_make_api_call
 
-AWS_REGION = "eu-west-1"
-AWS_ACCOUNT_NUMBER = "123456789012"
 ATHENA_PRIMARY_WORKGROUP = "primary"
-ATHENA_PRIMARY_WORKGROUP_ARN = f"arn:aws:athena:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:workgroup/{ATHENA_PRIMARY_WORKGROUP}"
+ATHENA_PRIMARY_WORKGROUP_ARN = f"arn:aws:athena:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:workgroup/{ATHENA_PRIMARY_WORKGROUP}"
 
 
 class Test_athena_workgroup_enforce_configuration:
-    def set_mocked_audit_info(self):
-        audit_info = AWS_Audit_Info(
-            session_config=None,
-            original_session=None,
-            audit_session=session.Session(
-                profile_name=None,
-                botocore_session=None,
-            ),
-            audited_account=AWS_ACCOUNT_NUMBER,
-            audited_account_arn=f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root",
-            audited_user_id=None,
-            audited_partition="aws",
-            audited_identity_arn=None,
-            profile=None,
-            profile_region=None,
-            credentials=None,
-            assumed_role_info=None,
-            audited_regions=[AWS_REGION],
-            organizations_metadata=None,
-            audit_resources=None,
-            mfa_enabled=False,
-            audit_metadata=Audit_Metadata(
-                services_scanned=0,
-                expected_checks=[],
-                completed_checks=0,
-                audit_progress=0,
-            ),
-        )
-
-        return audit_info
-
-    @mock_athena
+    @mock_aws
     def test_primary_workgroup_configuration_not_enforced(self):
         from prowler.providers.aws.services.athena.athena_service import Athena
 
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -74,14 +43,14 @@ class Test_athena_workgroup_enforce_configuration:
             )
             assert result[0].resource_id == ATHENA_PRIMARY_WORKGROUP
             assert result[0].resource_arn == ATHENA_PRIMARY_WORKGROUP_ARN
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1
             assert result[0].resource_tags == []
 
-    @mock_athena
+    @mock_aws
     def test_primary_workgroup_configuration_not_enforced_ignoring(self):
         from prowler.providers.aws.services.athena.athena_service import Athena
 
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         current_audit_info.ignore_unused_services = True
 
         with mock.patch(
@@ -100,13 +69,13 @@ class Test_athena_workgroup_enforce_configuration:
 
             assert len(result) == 0
 
-    @mock_athena
+    @mock_aws
     # We mock the get_work_group to return a workgroup not enforcing configuration
     @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
     def test_primary_workgroup_configuration_enforced(self):
         from prowler.providers.aws.services.athena.athena_service import Athena
 
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
@@ -130,5 +99,5 @@ class Test_athena_workgroup_enforce_configuration:
             )
             assert result[0].resource_id == ATHENA_PRIMARY_WORKGROUP
             assert result[0].resource_arn == ATHENA_PRIMARY_WORKGROUP_ARN
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1
             assert result[0].resource_tags == []

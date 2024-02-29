@@ -5,8 +5,6 @@ from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
-# from prowler.providers.aws.aws_provider import generate_regional_clients
-
 
 ################## FMS
 class FMS(AWSService):
@@ -68,14 +66,19 @@ class FMS(AWSService):
                 for page in list_compliance_status_paginator.paginate(
                     PolicyId=fms_policy.id
                 ):
-                    for fms_compliance_status in page["PolicyComplianceStatusList"]:
+                    for fms_compliance_status in page.get(
+                        "PolicyComplianceStatusList", []
+                    ):
+                        compliance_status = ""
+                        if fms_compliance_status.get("EvaluationResults"):
+                            compliance_status = fms_compliance_status.get(
+                                "EvaluationResults"
+                            )[0].get("ComplianceStatus", "")
                         fms_policy.compliance_status.append(
                             PolicyAccountComplianceStatus(
                                 account_id=fms_compliance_status.get("MemberAccount"),
                                 policy_id=fms_compliance_status.get("PolicyId"),
-                                status=fms_compliance_status.get("EvaluationResults")[
-                                    0
-                                ].get("ComplianceStatus"),
+                                status=compliance_status,
                             )
                         )
 

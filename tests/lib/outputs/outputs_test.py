@@ -455,9 +455,9 @@ class Test_Outputs:
         expected.GeneratorId = "prowler-" + finding.check_metadata.CheckID
         expected.AwsAccountId = AWS_ACCOUNT_ID
         expected.Types = finding.check_metadata.CheckType
-        expected.FirstObservedAt = (
-            expected.UpdatedAt
-        ) = expected.CreatedAt = timestamp_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
+        expected.FirstObservedAt = expected.UpdatedAt = expected.CreatedAt = (
+            timestamp_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
+        )
         expected.Severity = Severity(Label=finding.check_metadata.Severity.upper())
         expected.Title = finding.check_metadata.CheckTitle
         expected.Description = finding.status_extended
@@ -536,9 +536,9 @@ class Test_Outputs:
         expected.GeneratorId = "prowler-" + finding.check_metadata.CheckID
         expected.AwsAccountId = AWS_ACCOUNT_ID
         expected.Types = finding.check_metadata.CheckType
-        expected.FirstObservedAt = (
-            expected.UpdatedAt
-        ) = expected.CreatedAt = timestamp_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
+        expected.FirstObservedAt = expected.UpdatedAt = expected.CreatedAt = (
+            timestamp_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
+        )
         expected.Severity = Severity(Label=finding.check_metadata.Severity.upper())
         expected.Title = finding.check_metadata.CheckTitle
         expected.Description = finding.status_extended
@@ -563,12 +563,12 @@ class Test_Outputs:
             # "Code": finding.check_metadata.Remediation.Code,
         }
 
-        expected.Remediation[
-            "Recommendation"
-        ].Text = finding.check_metadata.Remediation.Recommendation.Text
-        expected.Remediation[
-            "Recommendation"
-        ].Url = "https://docs.aws.amazon.com/securityhub/latest/userguide/what-is-securityhub.html"
+        expected.Remediation["Recommendation"].Text = (
+            finding.check_metadata.Remediation.Recommendation.Text
+        )
+        expected.Remediation["Recommendation"].Url = (
+            "https://docs.aws.amazon.com/securityhub/latest/userguide/what-is-securityhub.html"
+        )
 
         input = Check_Output_JSON_ASFF()
         output_options = mock.MagicMock()
@@ -627,9 +627,9 @@ class Test_Outputs:
         expected.GeneratorId = "prowler-" + finding.check_metadata.CheckID
         expected.AwsAccountId = AWS_ACCOUNT_ID
         expected.Types = finding.check_metadata.CheckType
-        expected.FirstObservedAt = (
-            expected.UpdatedAt
-        ) = expected.CreatedAt = timestamp_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
+        expected.FirstObservedAt = expected.UpdatedAt = expected.CreatedAt = (
+            timestamp_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
+        )
         expected.Severity = Severity(Label=finding.check_metadata.Severity.upper())
         expected.Title = finding.check_metadata.CheckTitle
         expected.Description = finding.status_extended[:1000] + "..."
@@ -654,12 +654,12 @@ class Test_Outputs:
             # "Code": finding.check_metadata.Remediation.Code,
         }
 
-        expected.Remediation[
-            "Recommendation"
-        ].Text = finding.check_metadata.Remediation.Recommendation.Text
-        expected.Remediation[
-            "Recommendation"
-        ].Url = "https://docs.aws.amazon.com/securityhub/latest/userguide/what-is-securityhub.html"
+        expected.Remediation["Recommendation"].Text = (
+            finding.check_metadata.Remediation.Recommendation.Text
+        )
+        expected.Remediation["Recommendation"].Url = (
+            "https://docs.aws.amazon.com/securityhub/latest/userguide/what-is-securityhub.html"
+        )
 
         input = Check_Output_JSON_ASFF()
         output_options = mock.MagicMock()
@@ -866,9 +866,9 @@ class Test_Outputs:
             expected.GeneratorId = "prowler-" + finding.check_metadata.CheckID
             expected.AwsAccountId = AWS_ACCOUNT_ID
             expected.Types = finding.check_metadata.CheckType
-            expected.FirstObservedAt = (
-                expected.UpdatedAt
-            ) = expected.CreatedAt = timestamp_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
+            expected.FirstObservedAt = expected.UpdatedAt = expected.CreatedAt = (
+                timestamp_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
+            )
             expected.Severity = Severity(Label=finding.check_metadata.Severity.upper())
             expected.Title = finding.check_metadata.CheckTitle
             expected.Description = finding.status_extended
@@ -935,12 +935,12 @@ class Test_Outputs:
                 # "Code": finding.check_metadata.Remediation.Code,
             }
 
-            expected.Remediation[
-                "Recommendation"
-            ].Text = finding.check_metadata.Remediation.Recommendation.Text
-            expected.Remediation[
-                "Recommendation"
-            ].Url = "https://docs.aws.amazon.com/securityhub/latest/userguide/what-is-securityhub.html"
+            expected.Remediation["Recommendation"].Text = (
+                finding.check_metadata.Remediation.Recommendation.Text
+            )
+            expected.Remediation["Recommendation"].Url = (
+                "https://docs.aws.amazon.com/securityhub/latest/userguide/what-is-securityhub.html"
+            )
 
             input = Check_Output_JSON_ASFF()
             output_options = mock.MagicMock()
@@ -1332,12 +1332,12 @@ class Test_Outputs:
 
         output_options = mock.MagicMock()
         output_options.bulk_checks_metadata = {}
-        output_options.bulk_checks_metadata[
-            "iam_user_accesskey_unused"
-        ] = mock.MagicMock()
-        output_options.bulk_checks_metadata[
-            "iam_user_accesskey_unused"
-        ].Compliance = bulk_check_metadata
+        output_options.bulk_checks_metadata["iam_user_accesskey_unused"] = (
+            mock.MagicMock()
+        )
+        output_options.bulk_checks_metadata["iam_user_accesskey_unused"].Compliance = (
+            bulk_check_metadata
+        )
 
         assert get_check_compliance(finding, "aws", output_options) == {
             "CIS-1.4": ["2.1.3"],

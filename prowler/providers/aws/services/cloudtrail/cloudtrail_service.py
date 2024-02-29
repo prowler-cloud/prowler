@@ -140,7 +140,16 @@ class Cloudtrail(AWSService):
                                 error.response["Error"]["Code"]
                                 == "InsightNotEnabledException"
                             ):
-                                continue
+                                logger.warning(
+                                    f"{client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                                )
+                            elif (
+                                error.response["Error"]["Code"]
+                                == "UnsupportedOperationException"
+                            ):
+                                logger.warning(
+                                    f"{client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                                )
                             else:
                                 logger.error(
                                     f"{client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

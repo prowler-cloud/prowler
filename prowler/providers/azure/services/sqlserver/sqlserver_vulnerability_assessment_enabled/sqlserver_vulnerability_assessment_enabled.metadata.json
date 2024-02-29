@@ -1,0 +1,30 @@
+{
+  "Provider": "azure",
+  "CheckID": "sqlserver_vulnerability_assessment_enabled",
+  "CheckTitle": "Ensure that Vulnerability Assessment (VA) is enabled on a SQL server by setting a Storage Account",
+  "CheckType": [],
+  "ServiceName": "sqlserver",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "SQLServer",
+  "Description": "Enable Vulnerability Assessment (VA) service scans for critical SQL servers and corresponding SQL databases.",
+  "Risk": "The Vulnerability Assessment service scans databases for known security vulnerabilities and highlights deviations from best practices, such as misconfigurations, excessive permissions, and unprotected sensitive data. Results of the scan include actionable steps to resolve each issue and provide customized remediation scripts where applicable. Additionally, an assessment report can be customized by setting an acceptable baseline for permission configurations, feature configurations, and database settings.",
+  "RelatedUrl": "https://docs.microsoft.com/en-us/azure/sql-database/sql-vulnerability-assessment",
+  "Remediation": {
+    "Code": {
+      "CLI": "Update-AzSqlServerVulnerabilityAssessmentSetting -ResourceGroupName resource_group_name -ServerName Server_Name -StorageAccountName Storage_Name_from_same_subscription_and_same_Location -ScanResultsContainerName vulnerability-assessment -RecurringScansInterval Weekly -EmailSubscriptionAdmins $true -NotificationEmail @('mail1@mail.com' , 'mail2@mail.com')",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/Sql/vulnerability-assessment-sql-servers.html#",
+      "Terraform": "https://docs.bridgecrew.io/docs/ensure-that-vulnerability-assessment-va-is-enabled-on-a-sql-server-by-setting-a-storage-account"
+    },
+    "Recommendation": {
+      "Text": "1. Go to SQL servers 2. Select a server instance 3. Click on Security Center 4. Select Configure next to Enabled at subscription-level 5. In Section Vulnerability Assessment Settings, Click Select Storage account 6. Choose Storage Account (Existing or Create New). Click Ok 7. Click Save",
+      "Url": "https://learn.microsoft.com/en-us/azure/defender-for-cloud/sql-azure-vulnerability-assessment-enable"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Enabling the Microsoft Defender for SQL features will incur additional costs for each SQL server."
+}

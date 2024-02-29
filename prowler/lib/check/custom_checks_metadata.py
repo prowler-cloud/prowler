@@ -3,9 +3,9 @@ import sys
 import yaml
 from jsonschema import validate
 
+from prowler.config.config import valid_severities
 from prowler.lib.logger import logger
 
-valid_severities = ["critical", "high", "medium", "low", "informational"]
 custom_checks_metadata_schema = {
     "type": "object",
     "properties": {

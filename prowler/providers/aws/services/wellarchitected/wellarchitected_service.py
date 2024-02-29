@@ -1,5 +1,6 @@
 from typing import Optional
 
+from botocore.client import ClientError
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
@@ -49,6 +50,15 @@ class WellArchitected(AWSService):
                     WorkloadArn=workload.arn
                 )["Tags"]
                 workload.tags = [response]
+        except ClientError as error:
+            if error.response["Error"]["Code"] == "BadRequestException":
+                logger.warning(
+                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+            else:
+                logger.error(
+                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

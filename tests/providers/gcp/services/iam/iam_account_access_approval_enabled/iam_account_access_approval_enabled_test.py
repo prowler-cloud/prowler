@@ -2,8 +2,7 @@ from re import search
 from unittest import mock
 
 from prowler.providers.gcp.services.iam.iam_service import Setting
-
-GCP_PROJECT_ID = "123456789012"
+from tests.providers.gcp.lib.audit_info_utils import GCP_PROJECT_ID
 
 
 class Test_iam_account_access_approval_enabled:

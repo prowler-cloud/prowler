@@ -39,24 +39,29 @@ class Core(KubernetesService):
                         if pod.spec.ephemeral_containers
                         else []
                     )
-    
-                    for container in containers + init_containers + ephemeral_containers:
+                    for container in (
+                        containers + init_containers + ephemeral_containers
+                    ):
                         pod_containers[container.name] = Container(
                             name=container.name,
                             image=container.image,
                             command=container.command if container.command else None,
-                            ports=[
-                                {"containerPort": port.container_port}
-                                for port in container.ports
-                            ]
-                            if container.ports
-                            else None,
-                            env=[
-                                {"name": env.name, "value": env.value}
-                                for env in container.env
-                            ]
-                            if container.env
-                            else None,
+                            ports=(
+                                [
+                                    {"containerPort": port.container_port}
+                                    for port in container.ports
+                                ]
+                                if container.ports
+                                else None
+                            ),
+                            env=(
+                                [
+                                    {"name": env.name, "value": env.value}
+                                    for env in container.env
+                                ]
+                                if container.env
+                                else None
+                            ),
                             security_context=container.security_context,
                         )
                     self.pods[pod.metadata.uid] = Pod(
@@ -105,15 +110,19 @@ class Core(KubernetesService):
                 node_model = Node(
                     name=node.metadata.name,
                     uid=node.metadata.uid,
-                    namespace=node.metadata.namespace
-                    if node.metadata.namespace
-                    else "cluster-wide",
+                    namespace=(
+                        node.metadata.namespace
+                        if node.metadata.namespace
+                        else "cluster-wide"
+                    ),
                     labels=node.metadata.labels,
                     annotations=node.metadata.annotations,
                     unschedulable=node.spec.unschedulable,
-                    node_info=node.status.node_info.to_dict()
-                    if node.status.node_info
-                    else None,
+                    node_info=(
+                        node.status.node_info.to_dict()
+                        if node.status.node_info
+                        else None
+                    ),
                 )
                 self.nodes[node.metadata.uid] = node_model
         except Exception as error:

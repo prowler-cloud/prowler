@@ -3,14 +3,13 @@ from unittest import mock
 from uuid import uuid4
 
 from prowler.providers.aws.services.guardduty.guardduty_service import Detector
-
-AWS_REGION = "eu-west-1"
-AWS_ACCOUNT_NUMBER = "123456789012"
+from tests.providers.aws.audit_info_utils import (
+    AWS_ACCOUNT_NUMBER,
+    AWS_REGION_EU_WEST_1,
+)
 
 DETECTOR_ID = str(uuid4())
-DETECTOR_ARN = (
-    f"arn:aws:guardduty:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:detector/{DETECTOR_ID}"
-)
+DETECTOR_ARN = f"arn:aws:guardduty:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:detector/{DETECTOR_ID}"
 
 
 class Test_guardduty_no_high_severity_findings:
@@ -36,7 +35,7 @@ class Test_guardduty_no_high_severity_findings:
             Detector(
                 id=DETECTOR_ID,
                 arn=DETECTOR_ARN,
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
             )
         )
         with mock.patch(
@@ -56,7 +55,7 @@ class Test_guardduty_no_high_severity_findings:
             )
             assert result[0].resource_id == DETECTOR_ID
             assert result[0].resource_arn == DETECTOR_ARN
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1
 
     def test_not_enabled_account_detector(self):
         guardduty_client = mock.MagicMock
@@ -65,7 +64,7 @@ class Test_guardduty_no_high_severity_findings:
             Detector(
                 id=AWS_ACCOUNT_NUMBER,
                 arn=DETECTOR_ARN,
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
                 enabled_in_account=False,
             )
         )
@@ -87,7 +86,7 @@ class Test_guardduty_no_high_severity_findings:
         guardduty_client.detectors.append(
             Detector(
                 id=DETECTOR_ID,
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
                 arn=DETECTOR_ARN,
                 status=False,
                 findings=[str(uuid4())],
@@ -108,4 +107,4 @@ class Test_guardduty_no_high_severity_findings:
             assert search("has 1 high severity findings", result[0].status_extended)
             assert result[0].resource_id == DETECTOR_ID
             assert result[0].resource_arn == DETECTOR_ARN
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_EU_WEST_1

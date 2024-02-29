@@ -1,16 +1,15 @@
 import json
 
-from boto3 import client, session
-from moto import mock_organizations
-from moto.core import DEFAULT_ACCOUNT_ID
+from boto3 import client
+from moto import mock_aws
 
-from prowler.providers.aws.lib.audit_info.audit_info import AWS_Audit_Info
 from prowler.providers.aws.services.organizations.organizations_service import (
     Organizations,
 )
-from prowler.providers.common.models import Audit_Metadata
-
-AWS_REGION = "eu-west-1"
+from tests.providers.aws.audit_info_utils import (
+    AWS_REGION_EU_WEST_1,
+    set_mocked_aws_audit_info,
+)
 
 
 def scp_restrict_regions_with_deny():
@@ -18,51 +17,19 @@ def scp_restrict_regions_with_deny():
 
 
 class Test_Organizations_Service:
-    # Mocked Audit Info
-    def set_mocked_audit_info(self):
-        audit_info = AWS_Audit_Info(
-            session_config=None,
-            original_session=None,
-            audit_session=session.Session(
-                profile_name=None,
-                botocore_session=None,
-                region_name=AWS_REGION,
-            ),
-            audited_account=DEFAULT_ACCOUNT_ID,
-            audited_account_arn=f"arn:aws:iam::{DEFAULT_ACCOUNT_ID}:root",
-            audited_user_id=None,
-            audited_partition="aws",
-            audited_identity_arn=None,
-            profile=None,
-            profile_region=AWS_REGION,
-            credentials=None,
-            assumed_role_info=None,
-            audited_regions=None,
-            organizations_metadata=None,
-            audit_resources=None,
-            mfa_enabled=False,
-            audit_metadata=Audit_Metadata(
-                services_scanned=0,
-                expected_checks=[],
-                completed_checks=0,
-                audit_progress=0,
-            ),
-        )
-        return audit_info
-
-    @mock_organizations
+    @mock_aws
     def test_service(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         organizations = Organizations(audit_info)
         assert organizations.service == "organizations"
 
-    @mock_organizations
+    @mock_aws
     def test__describe_organization__(self):
         # Create Organization
-        conn = client("organizations", region_name=AWS_REGION)
+        conn = client("organizations", region_name=AWS_REGION_EU_WEST_1)
         response = conn.create_organization()
         # Mock
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         organizations = Organizations(audit_info)
         # Tests
         assert len(organizations.organizations) == 1
@@ -75,10 +42,10 @@ class Test_Organizations_Service:
         assert organizations.organizations[0].status == "ACTIVE"
         assert organizations.organizations[0].delegated_administrators == []
 
-    @mock_organizations
+    @mock_aws
     def test__list_policies__(self):
         # Create Policy
-        conn = client("organizations", region_name=AWS_REGION)
+        conn = client("organizations", region_name=AWS_REGION_EU_WEST_1)
         conn.create_organization()
         response = conn.create_policy(
             Content=scp_restrict_regions_with_deny(),
@@ -87,7 +54,7 @@ class Test_Organizations_Service:
             Type="SERVICE_CONTROL_POLICY",
         )
         # Mock
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         organizations = Organizations(audit_info)
         # Tests
         for policy in organizations.policies:

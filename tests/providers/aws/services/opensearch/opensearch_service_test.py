@@ -2,16 +2,15 @@ from json import dumps
 from unittest.mock import patch
 
 import botocore
-from boto3 import session
 
-from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.aws.services.opensearch.opensearch_service import (
     OpenSearchService,
 )
-from prowler.providers.common.models import Audit_Metadata
-
-AWS_ACCOUNT_NUMBER = "123456789012"
-AWS_REGION = "eu-west-1"
+from tests.providers.aws.audit_info_utils import (
+    AWS_ACCOUNT_NUMBER,
+    AWS_REGION_EU_WEST_1,
+    set_mocked_aws_audit_info,
+)
 
 test_domain_name = "test"
 domain_arn = f"arn:aws:es:us-west-2:{AWS_ACCOUNT_NUMBER}:domain/{test_domain_name}"
@@ -92,10 +91,12 @@ def mock_make_api_call(self, operation_name, kwarg):
     return make_api_call(self, operation_name, kwarg)
 
 
-def mock_generate_regional_clients(service, audit_info, _):
-    regional_client = audit_info.audit_session.client(service, region_name=AWS_REGION)
-    regional_client.region = AWS_REGION
-    return {AWS_REGION: regional_client}
+def mock_generate_regional_clients(service, audit_info):
+    regional_client = audit_info.audit_session.client(
+        service, region_name=AWS_REGION_EU_WEST_1
+    )
+    regional_client.region = AWS_REGION_EU_WEST_1
+    return {AWS_REGION_EU_WEST_1: regional_client}
 
 
 @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
@@ -104,71 +105,40 @@ def mock_generate_regional_clients(service, audit_info, _):
     new=mock_generate_regional_clients,
 )
 class Test_OpenSearchService_Service:
-    # Mocked Audit Info
-    def set_mocked_audit_info(self):
-        audit_info = AWS_Audit_Info(
-            session_config=None,
-            original_session=None,
-            audit_session=session.Session(
-                profile_name=None,
-                botocore_session=None,
-            ),
-            audited_account=AWS_ACCOUNT_NUMBER,
-            audited_account_arn=f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root",
-            audited_user_id=None,
-            audited_partition="aws",
-            audited_identity_arn=None,
-            profile=None,
-            profile_region=None,
-            credentials=None,
-            assumed_role_info=None,
-            audited_regions=None,
-            organizations_metadata=None,
-            audit_resources=None,
-            mfa_enabled=False,
-            audit_metadata=Audit_Metadata(
-                services_scanned=0,
-                expected_checks=[],
-                completed_checks=0,
-                audit_progress=0,
-            ),
-        )
-        return audit_info
-
     # Test OpenSearchService Service
     def test_service(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([])
         opensearch = OpenSearchService(audit_info)
         assert opensearch.service == "opensearch"
 
     # Test OpenSearchService_ client
     def test_client(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([])
         opensearch = OpenSearchService(audit_info)
         for reg_client in opensearch.regional_clients.values():
             assert reg_client.__class__.__name__ == "OpenSearchService"
 
     # Test OpenSearchService session
     def test__get_session__(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([])
         opensearch = OpenSearchService(audit_info)
         assert opensearch.session.__class__.__name__ == "Session"
 
     # Test OpenSearchService list domains names
     def test__list_domain_names__(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([])
         opensearch = OpenSearchService(audit_info)
         assert len(opensearch.opensearch_domains) == 1
         assert opensearch.opensearch_domains[0].name == test_domain_name
-        assert opensearch.opensearch_domains[0].region == AWS_REGION
+        assert opensearch.opensearch_domains[0].region == AWS_REGION_EU_WEST_1
 
     # Test OpenSearchService describ domain config
     def test__describe_domain_config__(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([])
         opensearch = OpenSearchService(audit_info)
         assert len(opensearch.opensearch_domains) == 1
         assert opensearch.opensearch_domains[0].name == test_domain_name
-        assert opensearch.opensearch_domains[0].region == AWS_REGION
+        assert opensearch.opensearch_domains[0].region == AWS_REGION_EU_WEST_1
         assert opensearch.opensearch_domains[0].access_policy
         assert opensearch.opensearch_domains[0].logging[0].name == "SEARCH_SLOW_LOGS"
         assert opensearch.opensearch_domains[0].logging[0].enabled
@@ -179,11 +149,11 @@ class Test_OpenSearchService_Service:
 
     # Test OpenSearchService describ domain
     def test__describe_domain__(self):
-        audit_info = self.set_mocked_audit_info()
+        audit_info = set_mocked_aws_audit_info([])
         opensearch = OpenSearchService(audit_info)
         assert len(opensearch.opensearch_domains) == 1
         assert opensearch.opensearch_domains[0].name == test_domain_name
-        assert opensearch.opensearch_domains[0].region == AWS_REGION
+        assert opensearch.opensearch_domains[0].region == AWS_REGION_EU_WEST_1
         assert opensearch.opensearch_domains[0].arn == domain_arn
         assert opensearch.opensearch_domains[0].access_policy
         assert (

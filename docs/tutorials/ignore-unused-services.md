@@ -1,6 +1,7 @@
 # Ignore Unused Services
 
-> Currently only available on the AWS provider.
+???+ note
+    Currently only available on the AWS provider.
 
 Prowler allows you to ignore unused services findings, so you can reduce the number of findings in Prowler's reports.
 
@@ -47,7 +48,7 @@ It is a best practice to encrypt both metadata and connection passwords in AWS G
 #### Inspector
 Amazon Inspector is a vulnerability discovery service that automates continuous scanning for security vulnerabilities within your Amazon EC2, Amazon ECR, and AWS Lambda environments. Prowler recommends to enable it and resolve all the Inspector's findings. Ignoring the unused services, Prowler will only notify you if there are any Lambda functions, EC2 instances or ECR repositories in the region where Amazon inspector should be enabled.
 
-  - `inspector2_findings_exist`
+  - `inspector2_is_enabled`
 
 #### Macie
 Amazon Macie is a security service that uses machine learning to automatically discover, classify and protect sensitive data in S3 buckets. Prowler will only create a finding when Macie is not enabled if there are S3 buckets in your account.

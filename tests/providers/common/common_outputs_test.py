@@ -38,6 +38,7 @@ class Test_Common_Output_Options:
             audit_resources=None,
             audit_config=None,
             azure_region_config=AzureRegionConfig(),
+            locations=None,
         )
         return audit_info
 
@@ -112,6 +113,7 @@ class Test_Common_Output_Options:
         arguments.shodan = "test-api-key"
         arguments.only_logs = False
         arguments.unix_timestamp = False
+        arguments.send_sh_only_fails = True
 
         audit_info = self.set_mocked_aws_audit_info()
         mutelist_file = ""
@@ -121,6 +123,7 @@ class Test_Common_Output_Options:
         )
         assert isinstance(output_options, Aws_Output_Options)
         assert output_options.security_hub_enabled
+        assert output_options.send_sh_only_fails
         assert output_options.is_quiet
         assert output_options.output_modes == ["html", "csv", "json", "json-asff"]
         assert output_options.output_directory == arguments.output_directory
@@ -207,6 +210,7 @@ class Test_Common_Output_Options:
         arguments.shodan = "test-api-key"
         arguments.only_logs = False
         arguments.unix_timestamp = False
+        arguments.send_sh_only_fails = True
 
         # Mock AWS Audit Info
         audit_info = self.set_mocked_aws_audit_info()
@@ -218,6 +222,7 @@ class Test_Common_Output_Options:
         )
         assert isinstance(output_options, Aws_Output_Options)
         assert output_options.security_hub_enabled
+        assert output_options.send_sh_only_fails
         assert output_options.is_quiet
         assert output_options.output_modes == ["html", "csv", "json", "json-asff"]
         assert output_options.output_directory == arguments.output_directory
@@ -243,6 +248,7 @@ class Test_Common_Output_Options:
         arguments.verbose = True
         arguments.only_logs = False
         arguments.unix_timestamp = False
+        arguments.shodan = "test-api-key"
 
         # Mock Azure Audit Info
         audit_info = self.set_mocked_azure_audit_info()
@@ -283,6 +289,7 @@ class Test_Common_Output_Options:
         arguments.verbose = True
         arguments.only_logs = False
         arguments.unix_timestamp = False
+        arguments.shodan = "test-api-key"
 
         # Mock Azure Audit Info
         audit_info = self.set_mocked_azure_audit_info()
@@ -324,7 +331,7 @@ class Test_Common_Output_Options:
         }
         printed_subscriptions = []
         for key, value in audit_info.identity.subscriptions.items():
-            intermediate = key + " : " + value
+            intermediate = f"{key} : {value}"
             printed_subscriptions.append(intermediate)
         assert (
             get_assessment_summary(audit_info)

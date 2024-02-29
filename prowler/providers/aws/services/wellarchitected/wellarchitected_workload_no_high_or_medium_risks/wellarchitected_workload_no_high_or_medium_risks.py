@@ -17,7 +17,7 @@ class wellarchitected_workload_no_high_or_medium_risks(Check):
             report.status_extended = f"Well Architected workload {workload.name} does not contain high or medium risks."
             if "HIGH" in workload.risks or "MEDIUM" in workload.risks:
                 report.status = "FAIL"
-                report.status_extended = f"Well Architected workload {workload.name} contains {workload.risks.get('HIGH',0)} high and {workload.risks.get('MEDIUM',0)} medium risks."
+                report.status_extended = f"Well Architected workload {workload.name} contains {workload.risks.get('HIGH' , 0)} high and {workload.risks.get('MEDIUM' , 0)} medium risks."
 
             findings.append(report)
         return findings

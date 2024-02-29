@@ -78,6 +78,7 @@ class Test_Slack_Integration:
             audit_metadata=None,
             audit_config=None,
             AzureRegionConfig=AzureRegionConfig(),
+            locations=None,
         )
         assert create_message_identity("aws", aws_audit_info) == (
             f"AWS Account *{aws_audit_info.audited_account}*",
@@ -119,14 +120,14 @@ class Test_Slack_Integration:
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": f"\n:white_check_mark: *{stats['total_pass']} Passed findings* ({round(stats['total_pass']/stats['findings_count']*100,2)}%)\n",
+                    "text": f"\n:white_check_mark: *{stats['total_pass']} Passed findings* ({round(stats['total_pass'] / stats['findings_count'] * 100 , 2)}%)\n",
                 },
             },
             {
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": f"\n:x: *{stats['total_fail']} Failed findings* ({round(stats['total_fail']/stats['findings_count']*100,2)}%)\n ",
+                    "text": f"\n:x: *{stats['total_fail']} Failed findings* ({round(stats['total_fail'] / stats['findings_count'] * 100 , 2)}%)\n ",
                 },
             },
             {
@@ -199,14 +200,14 @@ class Test_Slack_Integration:
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": f"\n:white_check_mark: *{stats['total_pass']} Passed findings* ({round(stats['total_pass']/stats['findings_count']*100,2)}%)\n",
+                    "text": f"\n:white_check_mark: *{stats['total_pass']} Passed findings* ({round(stats['total_pass'] / stats['findings_count'] * 100 , 2)}%)\n",
                 },
             },
             {
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": f"\n:x: *{stats['total_fail']} Failed findings* ({round(stats['total_fail']/stats['findings_count']*100,2)}%)\n ",
+                    "text": f"\n:x: *{stats['total_fail']} Failed findings* ({round(stats['total_fail'] / stats['findings_count'] * 100 , 2)}%)\n ",
                 },
             },
             {
@@ -279,14 +280,14 @@ class Test_Slack_Integration:
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": f"\n:white_check_mark: *{stats['total_pass']} Passed findings* ({round(stats['total_pass']/stats['findings_count']*100,2)}%)\n",
+                    "text": f"\n:white_check_mark: *{stats['total_pass']} Passed findings* ({round(stats['total_pass'] / stats['findings_count'] * 100 , 2)}%)\n",
                 },
             },
             {
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": f"\n:x: *{stats['total_fail']} Failed findings* ({round(stats['total_fail']/stats['findings_count']*100,2)}%)\n ",
+                    "text": f"\n:x: *{stats['total_fail']} Failed findings* ({round(stats['total_fail'] / stats['findings_count'] * 100 , 2)}%)\n ",
                 },
             },
             {

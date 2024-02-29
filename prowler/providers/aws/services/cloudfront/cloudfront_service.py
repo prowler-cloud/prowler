@@ -53,12 +53,12 @@ class CloudFront(AWSService):
                 distributions[distribution_id].logging_enabled = distribution_config[
                     "DistributionConfig"
                 ]["Logging"]["Enabled"]
-                distributions[
-                    distribution_id
-                ].geo_restriction_type = GeoRestrictionType(
-                    distribution_config["DistributionConfig"]["Restrictions"][
-                        "GeoRestriction"
-                    ]["RestrictionType"]
+                distributions[distribution_id].geo_restriction_type = (
+                    GeoRestrictionType(
+                        distribution_config["DistributionConfig"]["Restrictions"][
+                            "GeoRestriction"
+                        ]["RestrictionType"]
+                    )
                 )
                 distributions[distribution_id].web_acl_id = distribution_config[
                     "DistributionConfig"
@@ -78,9 +78,9 @@ class CloudFront(AWSService):
                         "DefaultCacheBehavior"
                     ].get("FieldLevelEncryptionId"),
                 )
-                distributions[
-                    distribution_id
-                ].default_cache_config = default_cache_config
+                distributions[distribution_id].default_cache_config = (
+                    default_cache_config
+                )
 
         except Exception as error:
             logger.error(

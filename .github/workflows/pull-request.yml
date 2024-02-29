@@ -14,13 +14,13 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.9", "3.10", "3.11"]
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Test if changes are in not ignored paths
         id: are-non-ignored-files-changed
-        uses: tj-actions/changed-files@v39
+        uses: tj-actions/changed-files@v42
         with:
           files: ./**
           files_ignore: |
@@ -28,6 +28,7 @@ jobs:
             README.md
             docs/**
             permissions/**
+            mkdocs.yml
       - name: Install poetry
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
         run: |
@@ -35,7 +36,7 @@ jobs:
           pipx install poetry
       - name: Set up Python ${{ matrix.python-version }}
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
           cache: "poetry"
@@ -87,6 +88,6 @@ jobs:
           poetry run pytest -n auto --cov=./prowler --cov-report=xml tests
       - name: Upload coverage reports to Codecov
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}

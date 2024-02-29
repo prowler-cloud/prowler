@@ -3,12 +3,11 @@ from uuid import uuid4
 
 from azure.mgmt.sql.models import ServerExternalAdministrator
 
-from prowler.providers.azure.services.sqlserver.sqlserver_service import SQL_Server
+from prowler.providers.azure.services.sqlserver.sqlserver_service import Server
+from tests.providers.azure.azure_fixtures import AZURE_SUBSCRIPTION
 
-AZURE_SUSCRIPTION = str(uuid4())
 
-
-class Test_defender_ensure_defender_for_storage_is_on:
+class Test_sqlserver_azuread_administrator_enabled:
     def test_no_sql_servers(self):
         sqlserver_client = mock.MagicMock
         sqlserver_client.sql_servers = {}
@@ -30,8 +29,8 @@ class Test_defender_ensure_defender_for_storage_is_on:
         sql_server_name = "SQL Server Name"
         sql_server_id = str(uuid4())
         sqlserver_client.sql_servers = {
-            AZURE_SUSCRIPTION: [
-                SQL_Server(
+            AZURE_SUBSCRIPTION: [
+                Server(
                     id=sql_server_id,
                     name=sql_server_name,
                     public_network_access="",
@@ -57,9 +56,9 @@ class Test_defender_ensure_defender_for_storage_is_on:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"SQL Server {sql_server_name} from subscription {AZURE_SUSCRIPTION} does not have an Active Directory administrator."
+                == f"SQL Server {sql_server_name} from subscription {AZURE_SUBSCRIPTION} does not have an Active Directory administrator."
             )
-            assert result[0].subscription == AZURE_SUSCRIPTION
+            assert result[0].subscription == AZURE_SUBSCRIPTION
             assert result[0].resource_name == sql_server_name
             assert result[0].resource_id == sql_server_id
 
@@ -68,8 +67,8 @@ class Test_defender_ensure_defender_for_storage_is_on:
         sql_server_name = "SQL Server Name"
         sql_server_id = str(uuid4())
         sqlserver_client.sql_servers = {
-            AZURE_SUSCRIPTION: [
-                SQL_Server(
+            AZURE_SUBSCRIPTION: [
+                Server(
                     id=sql_server_id,
                     name=sql_server_name,
                     public_network_access="",
@@ -97,9 +96,9 @@ class Test_defender_ensure_defender_for_storage_is_on:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"SQL Server {sql_server_name} from subscription {AZURE_SUSCRIPTION} does not have an Active Directory administrator."
+                == f"SQL Server {sql_server_name} from subscription {AZURE_SUBSCRIPTION} does not have an Active Directory administrator."
             )
-            assert result[0].subscription == AZURE_SUSCRIPTION
+            assert result[0].subscription == AZURE_SUBSCRIPTION
             assert result[0].resource_name == sql_server_name
             assert result[0].resource_id == sql_server_id
 
@@ -108,8 +107,8 @@ class Test_defender_ensure_defender_for_storage_is_on:
         sql_server_name = "SQL Server Name"
         sql_server_id = str(uuid4())
         sqlserver_client.sql_servers = {
-            AZURE_SUSCRIPTION: [
-                SQL_Server(
+            AZURE_SUBSCRIPTION: [
+                Server(
                     id=sql_server_id,
                     name=sql_server_name,
                     public_network_access="",
@@ -137,8 +136,8 @@ class Test_defender_ensure_defender_for_storage_is_on:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"SQL Server {sql_server_name} from subscription {AZURE_SUSCRIPTION} has an Active Directory administrator."
+                == f"SQL Server {sql_server_name} from subscription {AZURE_SUBSCRIPTION} has an Active Directory administrator."
             )
-            assert result[0].subscription == AZURE_SUSCRIPTION
+            assert result[0].subscription == AZURE_SUBSCRIPTION
             assert result[0].resource_name == sql_server_name
             assert result[0].resource_id == sql_server_id

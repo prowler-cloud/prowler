@@ -1,6 +1,6 @@
 from unittest import mock
 
-GCP_PROJECT_ID = "123456789012"
+from tests.providers.gcp.lib.audit_info_utils import GCP_PROJECT_ID
 
 
 class Test_bigquery_dataset_public_access:

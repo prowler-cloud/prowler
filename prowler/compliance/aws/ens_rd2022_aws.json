@@ -212,6 +212,31 @@
       ]
     },
     {
+      "Id": "op.acc.4.aws.iam.8",
+      "Description": "Proceso de gestión de derechos de acceso",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.acc.4",
+          "Marco": "operacional",
+          "Categoria": "control de acceso",
+          "DescripcionControl": "Se restringirá todo acceso a las acciones especificadas para el usuario root de una cuenta.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad"
+          ],
+          "ModoEjecucion": "automático"
+        }
+      ],
+      "Checks": [
+        "organizations_account_part_of_organizations",
+        "organizations_scp_check_deny_regions"
+      ]
+    },
+    {
       "Id": "op.acc.4.aws.iam.9",
       "Description": "Proceso de gestión de derechos de acceso",
       "Attributes": [
@@ -789,7 +814,8 @@
         }
       ],
       "Checks": [
-        "inspector2_findings_exist"
+        "inspector2_is_enabled",
+        "inspector2_active_findings_exist"
       ]
     },
     {
@@ -1122,6 +1148,30 @@
       ]
     },
     {
+      "Id": "op.exp.8.r1.aws.ct.3",
+      "Description": "Revisión de los registros",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.8.r1",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "Registrar los eventos de lectura y escritura de datos.",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "trazabilidad"
+          ],
+          "ModoEjecucion": "automático"
+        }
+      ],
+      "Checks": [
+        "cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled",
+        "cloudtrail_s3_dataevents_write_enabled",
+        "cloudtrail_s3_dataevents_read_enabled",
+        "cloudtrail_insights_exist"
+      ]
+    },
+    {
       "Id": "op.exp.8.r1.aws.ct.4",
       "Description": "Revisión de los registros",
       "Attributes": [
@@ -1231,6 +1281,33 @@
         "iam_no_custom_policy_permissive_role_assumption",
         "iam_policy_attached_only_to_group_or_roles",
         "iam_role_cross_service_confused_deputy_prevention"
+      ]
+    },
+    {
+      "Id": "op.exp.8.r4.aws.ct.1",
+      "Description": "Control de acceso",
+      "Attributes": [
+        {
+          "IdGrupoControl": "op.exp.8.r4",
+          "Marco": "operacional",
+          "Categoria": "explotación",
+          "DescripcionControl": "Asignar correctamente las políticas AWS IAM para el acceso y borrado de los registros y sus copias de seguridad haciendo uso del principio de mínimo privilegio.",
+          "Nivel": "alto",
+          "Tipo": "refuerzo",
+          "Dimensiones": [
+            "trazabilidad"
+          ],
+          "ModoEjecucion": "automático"
+        }
+      ],
+      "Checks": [
+        "iam_policy_allows_privilege_escalation",
+        "iam_customer_attached_policy_no_administrative_privileges",
+        "iam_customer_unattached_policy_no_administrative_privilege",
+        "iam_no_custom_policy_permissive_role_assumption",
+        "iam_policy_attached_only_to_group_or_roles",
+        "iam_role_cross_service_confused_deputy_prevention",
+        "iam_policy_no_full_access_to_cloudtrail"
       ]
     },
     {
@@ -1859,7 +1936,8 @@
         }
       ],
       "Checks": [
-        "inspector2_findings_exist"
+        "inspector2_is_enabled",
+        "inspector2_active_findings_exist"
       ]
     },
     {
@@ -1934,7 +2012,8 @@
         }
       ],
       "Checks": [
-        "inspector2_findings_exist"
+        "inspector2_is_enabled",
+        "inspector2_active_findings_exist"
       ]
     },
     {
@@ -2110,7 +2189,7 @@
         }
       ],
       "Checks": [
-        "networkfirewall_in_all_vpc"
+        "fms_policy_compliant"
       ]
     },
     {
@@ -2252,6 +2331,31 @@
       ]
     },
     {
+      "Id": "mp.com.4.aws.ws.1",
+      "Description": "Separación de flujos de información en la red",
+      "Attributes": [
+        {
+          "IdGrupoControl": "mp.com.4",
+          "Marco": "medidas de protección",
+          "Categoria": "segregación de redes",
+          "DescripcionControl": "Se deberán abrir solo los puertos necesarios para el uso del servicio AWS WorkSpaces.",
+          "Nivel": "alto",
+          "Tipo": "requisito",
+          "Dimensiones": [
+            "confidencialidad",
+            "integridad",
+            "trazabilidad",
+            "autenticidad",
+            "disponibilidad"
+          ],
+          "ModoEjecucion": "automático"
+        }
+      ],
+      "Checks": [
+        "workspaces_vpc_2private_1public_subnets_nat"
+      ]
+    },
+    {
       "Id": "mp.com.4.aws.vpc.1",
       "Description": "Separación de flujos de información en la red",
       "Attributes": [
@@ -2323,7 +2427,8 @@
         }
       ],
       "Checks": [
-        "vpc_subnet_separate_private_public"
+        "vpc_subnet_separate_private_public",
+        "vpc_different_regions"
       ]
     },
     {
@@ -2370,7 +2475,8 @@
         }
       ],
       "Checks": [
-        "vpc_subnet_different_az"
+        "vpc_subnet_different_az",
+        "vpc_different_regions"
       ]
     },
     {

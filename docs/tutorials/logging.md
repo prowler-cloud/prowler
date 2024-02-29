@@ -18,7 +18,8 @@ You can establish the log level of Prowler with `--log-level` option:
 prowler <provider> --log-level {DEBUG,INFO,WARNING,ERROR,CRITICAL}
 ```
 
-> By default, Prowler will run with the `CRITICAL` log level, since critical errors will abort the execution.
+???+ note
+    By default, Prowler will run with the `CRITICAL` log level, since critical errors will abort the execution.
 
 ## Export Logs to File
 
@@ -45,4 +46,5 @@ An example of a log file will be the following:
         "message": "eu-west-2 -- ClientError[124]: An error occurred (UnauthorizedOperation) when calling the DescribeNetworkAcls operation: You are not authorized to perform this operation."
     }
 
-> NOTE: Each finding is represented as a `json` object.
+???+ note
+    Each finding is represented as a `json` object.

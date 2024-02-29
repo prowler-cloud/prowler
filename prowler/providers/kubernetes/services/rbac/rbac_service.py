@@ -25,17 +25,19 @@ class Rbac(KubernetesService):
                 # For each binding, create a ClusterRoleBinding object and append it to the list
                 formatted_binding = {
                     "metadata": binding.metadata,
-                    "subjects": []
-                    if not binding.subjects
-                    else [
-                        {
-                            "kind": subject.kind,
-                            "name": subject.name,
-                            "namespace": getattr(subject, "namespace", ""),
-                            "metadata": getattr(subject, "metadata", None),
-                        }
-                        for subject in binding.subjects
-                    ],
+                    "subjects": (
+                        []
+                        if not binding.subjects
+                        else [
+                            {
+                                "kind": subject.kind,
+                                "name": subject.name,
+                                "namespace": getattr(subject, "namespace", ""),
+                                "metadata": getattr(subject, "metadata", None),
+                            }
+                            for subject in binding.subjects
+                        ]
+                    ),
                     "roleRef": {
                         "kind": binding.role_ref.kind,
                         "name": binding.role_ref.name,

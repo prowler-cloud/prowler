@@ -2,12 +2,13 @@ from re import search
 from unittest import mock
 
 from prowler.providers.aws.services.sagemaker.sagemaker_service import TrainingJob
-
-AWS_REGION = "eu-west-1"
-AWS_ACCOUNT_NUMBER = "123456789012"
+from tests.providers.aws.audit_info_utils import (
+    AWS_ACCOUNT_NUMBER,
+    AWS_REGION_EU_WEST_1,
+)
 
 test_training_job = "test-training-job"
-training_job_arn = f"arn:aws:sagemaker:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:training-job/{test_training_job}"
+training_job_arn = f"arn:aws:sagemaker:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:training-job/{test_training_job}"
 
 
 class Test_sagemaker_training_jobs_intercontainer_encryption_enabled:
@@ -33,7 +34,7 @@ class Test_sagemaker_training_jobs_intercontainer_encryption_enabled:
             TrainingJob(
                 name=test_training_job,
                 arn=training_job_arn,
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
                 container_traffic_encryption=True,
             )
         )
@@ -62,7 +63,7 @@ class Test_sagemaker_training_jobs_intercontainer_encryption_enabled:
             TrainingJob(
                 name=test_training_job,
                 arn=training_job_arn,
-                region=AWS_REGION,
+                region=AWS_REGION_EU_WEST_1,
             )
         )
         with mock.patch(

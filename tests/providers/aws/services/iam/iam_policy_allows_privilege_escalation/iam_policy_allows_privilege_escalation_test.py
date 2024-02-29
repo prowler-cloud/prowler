@@ -2,14 +2,14 @@ from json import dumps
 from re import search
 from unittest import mock
 
-from boto3 import client, session
-from moto import mock_iam
+from boto3 import client
+from moto import mock_aws
 
-from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
-from prowler.providers.common.models import Audit_Metadata
-
-AWS_REGION = "us-east-1"
-AWS_ACCOUNT_NUMBER = "123456789012"
+from tests.providers.aws.audit_info_utils import (
+    AWS_ACCOUNT_NUMBER,
+    AWS_REGION_US_EAST_1,
+    set_mocked_aws_audit_info,
+)
 
 # Keep this up-to-date with the check's actions that allows for privilege escalation
 privilege_escalation_policies_combination = {
@@ -84,40 +84,16 @@ privilege_escalation_policies_combination = {
 
 
 class Test_iam_policy_allows_privilege_escalation:
-    def set_mocked_audit_info(self):
-        audit_info = AWS_Audit_Info(
-            session_config=None,
-            original_session=None,
-            audit_session=session.Session(
-                profile_name=None,
-                botocore_session=None,
-            ),
-            audited_account=AWS_ACCOUNT_NUMBER,
-            audited_account_arn=f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root",
-            audited_user_id=None,
-            audited_partition="aws",
-            audited_identity_arn=None,
-            profile=None,
-            profile_region=None,
-            credentials=None,
-            assumed_role_info=None,
-            audited_regions=["us-east-1", "eu-west-1"],
-            organizations_metadata=None,
-            audit_resources=None,
-            mfa_enabled=False,
-            audit_metadata=Audit_Metadata(
-                services_scanned=0,
-                expected_checks=[],
-                completed_checks=0,
-                audit_progress=0,
-            ),
-        )
+    from tests.providers.aws.audit_info_utils import (
+        AWS_ACCOUNT_ARN,
+        AWS_ACCOUNT_NUMBER,
+        AWS_REGION_US_EAST_1,
+        set_mocked_aws_audit_info,
+    )
 
-        return audit_info
-
-    # @mock_iam
+    # @mock_aws
     # def test_iam_policy_allows_privilege_escalation_sts(self):
-    #     iam_client = client("iam", region_name=AWS_REGION)
+    #     iam_client = client("iam", region_name=AWS_REGION_US_EAST_1)
     #     policy_name = "policy1"
     #     policy_document = {
     #         "Version": "2012-10-17",
@@ -128,10 +104,8 @@ class Test_iam_policy_allows_privilege_escalation:
     #     policy_arn = iam_client.create_policy(
     #         PolicyName=policy_name, PolicyDocument=dumps(policy_document)
     #     )["Policy"]["Arn"]
-
-    #     current_audit_info = self.set_mocked_audit_info()
+    #     set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
     #     from prowler.providers.aws.services.iam.iam_service import IAM
-
     #     with mock.patch(
     #         "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
     #         new=current_audit_info,
@@ -143,7 +117,6 @@ class Test_iam_policy_allows_privilege_escalation:
     #         from prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation import (
     #             iam_policy_allows_privilege_escalation,
     #         )
-
     #         check = iam_policy_allows_privilege_escalation()
     #         result = check.execute()
     #         assert len(result) == 1
@@ -155,9 +128,9 @@ class Test_iam_policy_allows_privilege_escalation:
     #         assert result[0].resource_id == policy_name
     #         assert result[0].resource_arn == policy_arn
 
-    @mock_iam
+    @mock_aws
     def test_iam_policy_not_allows_privilege_escalation(self):
-        iam_client = client("iam", region_name=AWS_REGION)
+        iam_client = client("iam", region_name=AWS_REGION_US_EAST_1)
         policy_name = "policy1"
         policy_document = {
             "Version": "2012-10-17",
@@ -171,7 +144,7 @@ class Test_iam_policy_allows_privilege_escalation:
             PolicyName=policy_name, PolicyDocument=dumps(policy_document)
         )["Policy"]["Arn"]
 
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
         from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
@@ -196,12 +169,12 @@ class Test_iam_policy_allows_privilege_escalation:
             )
             assert result[0].resource_id == policy_name
             assert result[0].resource_arn == policy_arn
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_tags == []
 
-    @mock_iam
+    @mock_aws
     def test_iam_policy_not_allows_privilege_escalation_glue_GetDevEndpoints(self):
-        iam_client = client("iam", region_name=AWS_REGION)
+        iam_client = client("iam", region_name=AWS_REGION_US_EAST_1)
         policy_name = "policy1"
         policy_document = {
             "Version": "2012-10-17",
@@ -219,7 +192,7 @@ class Test_iam_policy_allows_privilege_escalation:
             PolicyName=policy_name, PolicyDocument=dumps(policy_document)
         )["Policy"]["Arn"]
 
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
         from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
@@ -244,12 +217,12 @@ class Test_iam_policy_allows_privilege_escalation:
             )
             assert result[0].resource_id == policy_name
             assert result[0].resource_arn == policy_arn
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_tags == []
 
-    @mock_iam
+    @mock_aws
     def test_iam_policy_not_allows_privilege_escalation_dynamodb_PutItem(self):
-        iam_client = client("iam", region_name=AWS_REGION)
+        iam_client = client("iam", region_name=AWS_REGION_US_EAST_1)
         policy_name = "policy1"
         policy_document = {
             "Version": "2012-10-17",
@@ -278,7 +251,7 @@ class Test_iam_policy_allows_privilege_escalation:
             PolicyName=policy_name, PolicyDocument=dumps(policy_document)
         )["Policy"]["Arn"]
 
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
         from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
@@ -303,14 +276,14 @@ class Test_iam_policy_allows_privilege_escalation:
             )
             assert result[0].resource_id == policy_name
             assert result[0].resource_arn == policy_arn
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_tags == []
 
-    @mock_iam
+    @mock_aws
     def test_iam_policy_allows_privilege_escalation_iam_all_and_ec2_RunInstances(
         self,
     ):
-        iam_client = client("iam", region_name=AWS_REGION)
+        iam_client = client("iam", region_name=AWS_REGION_US_EAST_1)
         policy_name = "policy1"
         policy_document = {
             "Version": "2012-10-17",
@@ -333,7 +306,7 @@ class Test_iam_policy_allows_privilege_escalation:
             PolicyName=policy_name, PolicyDocument=dumps(policy_document)
         )["Policy"]["Arn"]
 
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
         from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
@@ -354,7 +327,7 @@ class Test_iam_policy_allows_privilege_escalation:
             assert result[0].status == "FAIL"
             assert result[0].resource_id == policy_name
             assert result[0].resource_arn == policy_arn
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_tags == []
 
             assert search(
@@ -364,11 +337,11 @@ class Test_iam_policy_allows_privilege_escalation:
             assert search("iam:PassRole", result[0].status_extended)
             assert search("ec2:RunInstances", result[0].status_extended)
 
-    @mock_iam
+    @mock_aws
     def test_iam_policy_allows_privilege_escalation_iam_PassRole(
         self,
     ):
-        iam_client = client("iam", region_name=AWS_REGION)
+        iam_client = client("iam", region_name=AWS_REGION_US_EAST_1)
         policy_name = "policy1"
         policy_document = {
             "Version": "2012-10-17",
@@ -384,7 +357,7 @@ class Test_iam_policy_allows_privilege_escalation:
             PolicyName=policy_name, PolicyDocument=dumps(policy_document)
         )["Policy"]["Arn"]
 
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
         from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
@@ -405,7 +378,7 @@ class Test_iam_policy_allows_privilege_escalation:
             assert result[0].status == "FAIL"
             assert result[0].resource_id == policy_name
             assert result[0].resource_arn == policy_arn
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_tags == []
 
             assert search(
@@ -414,11 +387,11 @@ class Test_iam_policy_allows_privilege_escalation:
             )
             assert search("iam:PassRole", result[0].status_extended)
 
-    @mock_iam
+    @mock_aws
     def test_iam_policy_allows_privilege_escalation_two_combinations(
         self,
     ):
-        iam_client = client("iam", region_name=AWS_REGION)
+        iam_client = client("iam", region_name=AWS_REGION_US_EAST_1)
         policy_name = "policy1"
         policy_document = {
             "Version": "2012-10-17",
@@ -453,7 +426,7 @@ class Test_iam_policy_allows_privilege_escalation:
             PolicyName=policy_name, PolicyDocument=dumps(policy_document)
         )["Policy"]["Arn"]
 
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
         from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
@@ -474,7 +447,7 @@ class Test_iam_policy_allows_privilege_escalation:
             assert result[0].status == "FAIL"
             assert result[0].resource_id == policy_name
             assert result[0].resource_arn == policy_arn
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_tags == []
 
             assert search(
@@ -486,11 +459,11 @@ class Test_iam_policy_allows_privilege_escalation:
             assert search("lambda:CreateFunction", result[0].status_extended)
             assert search("ec2:RunInstances", result[0].status_extended)
 
-    @mock_iam
+    @mock_aws
     def test_iam_policy_allows_privilege_escalation_iam_PassRole_and_other_actions(
         self,
     ):
-        iam_client = client("iam", region_name=AWS_REGION)
+        iam_client = client("iam", region_name=AWS_REGION_US_EAST_1)
         policy_name = "policy1"
         policy_document = {
             "Version": "2012-10-17",
@@ -511,7 +484,7 @@ class Test_iam_policy_allows_privilege_escalation:
             PolicyName=policy_name, PolicyDocument=dumps(policy_document)
         )["Policy"]["Arn"]
 
-        current_audit_info = self.set_mocked_audit_info()
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
         from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
@@ -532,7 +505,7 @@ class Test_iam_policy_allows_privilege_escalation:
             assert result[0].status == "FAIL"
             assert result[0].resource_id == policy_name
             assert result[0].resource_arn == policy_arn
-            assert result[0].region == AWS_REGION
+            assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_tags == []
 
             assert search(
@@ -541,12 +514,12 @@ class Test_iam_policy_allows_privilege_escalation:
             )
             assert search("iam:PassRole", result[0].status_extended)
 
-    @mock_iam
+    @mock_aws
     def test_iam_policy_allows_privilege_escalation_policies_combination(
         self,
     ):
-        current_audit_info = self.set_mocked_audit_info()
-        iam_client = client("iam", region_name=AWS_REGION)
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        iam_client = client("iam", region_name=AWS_REGION_US_EAST_1)
         policy_name = "privileged_policy"
         for values in privilege_escalation_policies_combination.values():
             print(list(values))
@@ -585,7 +558,7 @@ class Test_iam_policy_allows_privilege_escalation:
                 assert result[0].status == "FAIL"
                 assert result[0].resource_id == policy_name
                 assert result[0].resource_arn == policy_arn
-                assert result[0].region == AWS_REGION
+                assert result[0].region == AWS_REGION_US_EAST_1
                 assert result[0].resource_tags == []
 
                 assert search(
@@ -600,12 +573,12 @@ class Test_iam_policy_allows_privilege_escalation:
                 # Delete each IAM policy after the test
                 iam_client.delete_policy(PolicyArn=policy_arn)
 
-    @mock_iam
+    @mock_aws
     def test_iam_policy_allows_privilege_escalation_two_policies_one_good_one_bad(
         self,
     ):
-        current_audit_info = self.set_mocked_audit_info()
-        iam_client = client("iam", region_name=AWS_REGION)
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        iam_client = client("iam", region_name=AWS_REGION_US_EAST_1)
         policy_name_1 = "privileged_policy_1"
         policy_document_1 = {
             "Version": "2012-10-17",
@@ -672,7 +645,7 @@ class Test_iam_policy_allows_privilege_escalation:
                     assert finding.status == "PASS"
                     assert finding.resource_id == policy_name_1
                     assert finding.resource_arn == policy_arn_1
-                    assert finding.region == AWS_REGION
+                    assert finding.region == AWS_REGION_US_EAST_1
                     assert finding.resource_tags == []
                     assert (
                         finding.status_extended
@@ -683,7 +656,7 @@ class Test_iam_policy_allows_privilege_escalation:
                     assert finding.status == "FAIL"
                     assert finding.resource_id == policy_name_2
                     assert finding.resource_arn == policy_arn_2
-                    assert finding.region == AWS_REGION
+                    assert finding.region == AWS_REGION_US_EAST_1
                     assert finding.resource_tags == []
                     assert search(
                         f"Custom Policy {policy_arn_2} allows privilege escalation using the following actions: ",
@@ -693,12 +666,12 @@ class Test_iam_policy_allows_privilege_escalation:
                     assert search("lambda:InvokeFunction", finding.status_extended)
                     assert search("lambda:CreateFunction", finding.status_extended)
 
-    @mock_iam
+    @mock_aws
     def test_iam_policy_allows_privilege_escalation_two_bad_policies(
         self,
     ):
-        current_audit_info = self.set_mocked_audit_info()
-        iam_client = client("iam", region_name=AWS_REGION)
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        iam_client = client("iam", region_name=AWS_REGION_US_EAST_1)
         policy_name_1 = "privileged_policy_1"
         policy_document_1 = {
             "Version": "2012-10-17",
@@ -772,7 +745,7 @@ class Test_iam_policy_allows_privilege_escalation:
                     assert finding.status == "FAIL"
                     assert finding.resource_id == policy_name_1
                     assert finding.resource_arn == policy_arn_1
-                    assert finding.region == AWS_REGION
+                    assert finding.region == AWS_REGION_US_EAST_1
                     assert finding.resource_tags == []
 
                     assert search(
@@ -787,7 +760,7 @@ class Test_iam_policy_allows_privilege_escalation:
                     assert finding.status == "FAIL"
                     assert finding.resource_id == policy_name_2
                     assert finding.resource_arn == policy_arn_2
-                    assert finding.region == AWS_REGION
+                    assert finding.region == AWS_REGION_US_EAST_1
                     assert finding.resource_tags == []
 
                     assert search(
@@ -798,12 +771,12 @@ class Test_iam_policy_allows_privilege_escalation:
                     assert search("lambda:InvokeFunction", finding.status_extended)
                     assert search("lambda:CreateFunction", finding.status_extended)
 
-    @mock_iam
+    @mock_aws
     def test_iam_policy_allows_privilege_escalation_over_permissive_policy(
         self,
     ):
-        current_audit_info = self.set_mocked_audit_info()
-        iam_client = client("iam", region_name=AWS_REGION)
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        iam_client = client("iam", region_name=AWS_REGION_US_EAST_1)
         policy_name_1 = "privileged_policy_1"
         policy_document_1 = {
             "Version": "2012-10-17",
@@ -853,7 +826,7 @@ class Test_iam_policy_allows_privilege_escalation:
                     assert finding.status == "FAIL"
                     assert finding.resource_id == policy_name_1
                     assert finding.resource_arn == policy_arn_1
-                    assert finding.region == AWS_REGION
+                    assert finding.region == AWS_REGION_US_EAST_1
                     assert finding.resource_tags == []
 
                     assert search(
@@ -864,12 +837,12 @@ class Test_iam_policy_allows_privilege_escalation:
                     assert search("iam:PassRole", finding.status_extended)
                     assert search("ec2:RunInstances", finding.status_extended)
 
-    @mock_iam
+    @mock_aws
     def test_iam_policy_allows_privilege_escalation_administrator_policy(
         self,
     ):
-        current_audit_info = self.set_mocked_audit_info()
-        iam_client = client("iam", region_name=AWS_REGION)
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        iam_client = client("iam", region_name=AWS_REGION_US_EAST_1)
         policy_name_1 = "privileged_policy_1"
         policy_document_1 = {
             "Version": "2012-10-17",
@@ -909,7 +882,7 @@ class Test_iam_policy_allows_privilege_escalation:
                     assert finding.status == "FAIL"
                     assert finding.resource_id == policy_name_1
                     assert finding.resource_arn == policy_arn_1
-                    assert finding.region == AWS_REGION
+                    assert finding.region == AWS_REGION_US_EAST_1
                     assert finding.resource_tags == []
                     assert search(
                         f"Custom Policy {policy_arn_1} allows privilege escalation using the following actions:",
@@ -922,12 +895,12 @@ class Test_iam_policy_allows_privilege_escalation:
                         ]:
                             assert search(permission, finding.status_extended)
 
-    @mock_iam
+    @mock_aws
     def test_iam_policy_allows_privilege_escalation_iam_put(
         self,
     ):
-        current_audit_info = self.set_mocked_audit_info()
-        iam_client = client("iam", region_name=AWS_REGION)
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        iam_client = client("iam", region_name=AWS_REGION_US_EAST_1)
         policy_name_1 = "privileged_policy_1"
         policy_document_1 = {
             "Version": "2012-10-17",
@@ -967,7 +940,7 @@ class Test_iam_policy_allows_privilege_escalation:
                     assert finding.status == "FAIL"
                     assert finding.resource_id == policy_name_1
                     assert finding.resource_arn == policy_arn_1
-                    assert finding.region == AWS_REGION
+                    assert finding.region == AWS_REGION_US_EAST_1
                     assert finding.resource_tags == []
                     assert search(
                         f"Custom Policy {policy_arn_1} allows privilege escalation using the following actions:",
@@ -975,12 +948,12 @@ class Test_iam_policy_allows_privilege_escalation:
                     )
                     assert search("iam:Put*", finding.status_extended)
 
-    @mock_iam
+    @mock_aws
     def test_iam_policy_allows_privilege_escalation_iam_wildcard(
         self,
     ):
-        current_audit_info = self.set_mocked_audit_info()
-        iam_client = client("iam", region_name=AWS_REGION)
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        iam_client = client("iam", region_name=AWS_REGION_US_EAST_1)
         policy_name_1 = "privileged_policy_1"
         policy_document_1 = {
             "Version": "2012-10-17",
@@ -1020,7 +993,7 @@ class Test_iam_policy_allows_privilege_escalation:
                     assert finding.status == "FAIL"
                     assert finding.resource_id == policy_name_1
                     assert finding.resource_arn == policy_arn_1
-                    assert finding.region == AWS_REGION
+                    assert finding.region == AWS_REGION_US_EAST_1
                     assert finding.resource_tags == []
                     assert search(
                         f"Custom Policy {policy_arn_1} allows privilege escalation using the following actions:",
@@ -1028,12 +1001,12 @@ class Test_iam_policy_allows_privilege_escalation:
                     )
                     assert search("iam:*", finding.status_extended)
 
-    @mock_iam
+    @mock_aws
     def test_iam_policy_not_allows_privilege_escalation_custom_policy(
         self,
     ):
-        current_audit_info = self.set_mocked_audit_info()
-        iam_client = client("iam", region_name=AWS_REGION)
+        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        iam_client = client("iam", region_name=AWS_REGION_US_EAST_1)
         policy_name_1 = "privileged_policy_1"
         policy_document_1 = {
             "Version": "2012-10-17",
@@ -1048,7 +1021,7 @@ class Test_iam_policy_allows_privilege_escalation:
                     "Sid": "",
                     "Effect": "Allow",
                     "Action": "es:*",
-                    "Resource": f"arn:aws:es:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:domain/test/*",
+                    "Resource": f"arn:aws:es:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:domain/test/*",
                 },
             ],
         }
@@ -1079,7 +1052,7 @@ class Test_iam_policy_allows_privilege_escalation:
                     assert finding.status == "PASS"
                     assert finding.resource_id == policy_name_1
                     assert finding.resource_arn == policy_arn_1
-                    assert finding.region == AWS_REGION
+                    assert finding.region == AWS_REGION_US_EAST_1
                     assert finding.resource_tags == []
                     assert (
                         finding.status_extended
