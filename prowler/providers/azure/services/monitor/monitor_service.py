@@ -29,6 +29,7 @@ class Monitor(AzureService):
                             id=setting.id,
                             logs=setting.logs,
                             storage_account_id=setting.storage_account_id,
+                            type=setting.type,
                         )
                     )
 
@@ -44,3 +45,4 @@ class DiagnosticSetting:
     id: str
     storage_account_id: str
     logs: LogSettings
+    type: str

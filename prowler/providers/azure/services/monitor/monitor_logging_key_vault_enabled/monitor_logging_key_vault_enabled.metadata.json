@@ -1,0 +1,30 @@
+{
+  "Provider": "azure",
+  "CheckID": "monitor_logging_key_vault_enabled",
+  "CheckTitle": "Ensure that logging for Azure Key Vault is 'Enabled'",
+  "CheckType": [],
+  "ServiceName": "monitor",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Monitor",
+  "Description": "Enable AuditEvent logging for key vault instances to ensure interactions with key vaults are logged and available.",
+  "Risk": "Monitoring how and when key vaults are accessed, and by whom, enables an audit trail of interactions with confidential information, keys, and certificates managed by Azure Keyvault. Enabling logging for Key Vault saves information in an Azure storage account which the user provides. This creates a new container named insights-logs-auditevent automatically for the specified storage account. This same storage account can be used for collecting logs for multiple key vaults.",
+  "RelatedUrl": "https://docs.microsoft.com/en-us/azure/key-vault/key-vault-logging",
+  "Remediation": {
+    "Code": {
+      "CLI": "az monitor diagnostic-settings create --name <diagnostic settings name> --resource <key vault resource ID> --logs'[{category:AuditEvents,enabled:true,retention-policy:{enabled:true,days:180}}]' --metrics'[{category:AllMetrics,enabled:true,retention-policy:{enabled:true,days:180}}]' <[--event-hub <event hub ID> --event-hub-rule <event hub auth rule ID> | --storage-account <storage account ID> |--workspace <log analytics workspace ID> | --marketplace-partner-id <full resource ID of third-party solution>]>",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/KeyVault/enable-audit-event-logging-for-azure-key-vaults.html",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "1. Go to Key vaults 2. For each Key vault 3. Go to Diagnostic settings 4. Click on Edit Settings 5. Ensure that Archive to a storage account is Enabled 6. Ensure that AuditEvent is checked, and the retention days is set to 180 days or as appropriate",
+      "Url": "https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-data-protection#dp-8-ensure-security-of-key-and-certificate-repository"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "By default, Diagnostic AuditEvent logging is not enabled for Key Vault instances."
+}
