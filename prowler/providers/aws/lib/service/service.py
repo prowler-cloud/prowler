@@ -1,7 +1,7 @@
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from prowler.lib.logger import logger
-from prowler.providers.aws.aws_provider_new import AwsProvider
+from prowler.providers.aws.aws_provider import AwsProvider
 
 # TODO: review the following code
 # from prowler.providers.aws.aws_provider import (
