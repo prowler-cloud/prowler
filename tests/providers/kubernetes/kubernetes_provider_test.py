@@ -15,10 +15,6 @@ class TestKubernetesProvider:
     def test_setup_session(
         self,
         mock_list_kube_config_contexts,
-        mock_load_incluster_config,
-        mock_load_kube_config,
-        mock_api_client,
-        mock_rbac_api,
     ):
         # Mocking the return value of list_kube_config_contexts
         mock_list_kube_config_contexts.return_value = (
@@ -52,8 +48,6 @@ class TestKubernetesProvider:
     @patch("kubernetes.config.load_kube_config")
     def test_get_context_user_roles(
         self,
-        mock_load_kube_config,
-        mock_load_incluster_config,
         mock_list_kube_config_contexts,
         mock_rbac_api,
     ):
@@ -97,12 +91,7 @@ class TestKubernetesProvider:
     @patch("sys.stdout", new_callable=MagicMock)
     def test_print_credentials(
         self,
-        mock_stdout,
         mock_list_kube_config_contexts,
-        mock_load_incluster_config,
-        mock_load_kube_config,
-        mock_api_client,
-        mock_rbac_api,
     ):
         mock_list_kube_config_contexts.return_value = (
             [
@@ -143,8 +132,6 @@ class TestKubernetesProvider:
     @patch("kubernetes.config.load_kube_config")
     def test_search_and_save_roles(
         self,
-        mock_load_kube_config,
-        mock_load_incluster_config,
         mock_list_kube_config_contexts,
         mock_rbac_api,
     ):
