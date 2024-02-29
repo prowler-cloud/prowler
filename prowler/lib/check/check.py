@@ -208,8 +208,6 @@ def list_categories(bulk_checks_metadata: dict) -> set():
     for check in bulk_checks_metadata.values():
         for cat in check.Categories:
             if cat:
-                if cat in "Pod Security":
-                    print(check)
                 available_categories.add(cat)
     return available_categories
 
