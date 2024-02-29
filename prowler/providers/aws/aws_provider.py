@@ -241,13 +241,3 @@ def get_checks_from_input_arn(audit_resources: list, provider: str) -> set:
 
     # Return final checks list
     return sorted(checks_from_arn)
-
-
-def get_regions_from_audit_resources(audit_resources: list) -> set:
-    """get_regions_from_audit_resources gets the regions from the audit resources arns"""
-    audited_regions = set()
-    for resource in audit_resources:
-        region = resource.split(":")[3]
-        if region:
-            audited_regions.add(region)
-    return audited_regions
