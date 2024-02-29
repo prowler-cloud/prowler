@@ -596,9 +596,9 @@ Caller Identity ARN: {Fore.YELLOW}[{ self.identity.identity_arn}]{Style.RESET_AL
 
             # Set the info to assume the role from the partition, account and role name
             if self.assumed_role.assumed_role_info.external_id:
-                assume_role_arguments[
-                    "ExternalId"
-                ] = self.assumed_role.assumed_role_info.external_id
+                assume_role_arguments["ExternalId"] = (
+                    self.assumed_role.assumed_role_info.external_id
+                )
 
             if self.assumed_role.assumed_role_info.mfa_enabled:
                 mfa_ARN, mfa_TOTP = self.__input_role_mfa_token_and_code__()
