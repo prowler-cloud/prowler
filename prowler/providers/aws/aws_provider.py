@@ -2,8 +2,6 @@ import os
 import pathlib
 import sys
 from argparse import Namespace
-from dataclasses import dataclass
-from datetime import datetime
 from typing import Any, Optional
 
 from boto3 import client, session
@@ -28,57 +26,15 @@ from prowler.providers.aws.lib.credentials.credentials import (
 from prowler.providers.aws.lib.organizations.organizations import (
     get_organizations_metadata,
 )
+from prowler.providers.aws.models import (
+    AWSAssumeRole,
+    AWSAssumeRoleConfiguration,
+    AWSCredentials,
+    AWSIdentityInfo,
+    AWSOrganizationsInfo,
+    AWSSession,
+)
 from prowler.providers.common.provider import Provider
-
-
-@dataclass
-class AWSOrganizationsInfo:
-    account_details_email: str
-    account_details_name: str
-    account_details_arn: str
-    account_details_org: str
-    account_details_tags: str
-
-
-@dataclass
-class AWSCredentials:
-    aws_access_key_id: str
-    aws_session_token: str
-    aws_secret_access_key: str
-    expiration: datetime
-
-
-@dataclass
-class AWSAssumeRole:
-    role_arn: str
-    session_duration: int
-    external_id: str
-    mfa_enabled: bool
-
-
-@dataclass
-class AWSAssumeRoleConfiguration:
-    assumed_role_info: AWSAssumeRole
-    assumed_role_credentials: AWSCredentials
-
-
-@dataclass
-class AWSIdentityInfo:
-    account: str
-    account_arn: str
-    user_id: str
-    partition: str
-    identity_arn: str
-    profile: str
-    profile_region: str
-    audited_regions: list
-
-
-@dataclass
-class AWSSession:
-    session: session.Session
-    session_config: Config
-    original_session: None
 
 
 class AwsProvider(Provider):
