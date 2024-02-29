@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import os
 import sys
 
 from colorama import Fore, Style
@@ -37,7 +36,6 @@ from prowler.lib.outputs.compliance.compliance import display_compliance_table
 from prowler.lib.outputs.html import add_html_footer, fill_html_overview_statistics
 from prowler.lib.outputs.json import close_json
 from prowler.lib.outputs.outputs import extract_findings_statistics
-from prowler.lib.outputs.slack import send_slack_message
 from prowler.lib.outputs.summary_table import display_summary_table
 from prowler.providers.aws.lib.s3.s3 import send_to_s3_bucket
 from prowler.providers.aws.lib.security_hub.security_hub import (
@@ -46,18 +44,17 @@ from prowler.providers.aws.lib.security_hub.security_hub import (
     resolve_security_hub_previous_findings,
     verify_security_hub_integration_enabled_per_region,
 )
-from prowler.providers.common.audit_info import (
-    set_provider_audit_info,
-    set_provider_execution_parameters,
-)
+
+# from prowler.providers.common.audit_info import (
+#     set_provider_audit_info,
+#     set_provider_execution_parameters,
+# )
 from prowler.providers.common.clean import clean_provider_local_output_directories
 from prowler.providers.common.common import (
     get_global_provider,
     set_global_provider_object,
 )
-from prowler.providers.common.mutelist import set_provider_mutelist
 from prowler.providers.common.outputs import set_provider_output_options
-from prowler.providers.common.quick_inventory import run_provider_quick_inventory
 
 
 def prowler():
@@ -154,13 +151,17 @@ def prowler():
         print_checks(provider, sorted(checks_to_execute), bulk_checks_metadata)
         sys.exit()
 
-    # Set the audit info based on the selected provider
-    audit_info = set_provider_audit_info(provider, args.__dict__)
+        # Set the audit info based on the selected provider
+        # TODO: remove the following line with the audit_info
+        # audit_info = set_provider_audit_info(provider, args.__dict__)
+
     set_global_provider_object(args)
+    # TODO: rename global_provider to provider
+    global_provider = get_global_provider()
 
     # Import custom checks from folder
     if checks_folder:
-        parse_checks_from_folder(audit_info, checks_folder, provider)
+        parse_checks_from_folder(global_provider, checks_folder)
 
     # Exclude checks if -e/--excluded-checks
     if excluded_checks:
@@ -174,33 +175,37 @@ def prowler():
 
     # Once the audit_info is set and we have the eventual checks based on the resource identifier,
     # it is time to check what Prowler's checks are going to be executed
-    if audit_info.audit_resources:
-        checks_from_resources = set_provider_execution_parameters(provider, audit_info)
+    # TODO: the following if is done within the function
+    # if global_provider.audit_resources:
+    checks_from_resources = global_provider.get_checks_to_execute_by_audit_resources()
+    if checks_from_resources:
         checks_to_execute = checks_to_execute.intersection(checks_from_resources)
 
     # Sort final check list
     checks_to_execute = sorted(checks_to_execute)
 
     # Parse Mute List
-    mutelist_file = set_provider_mutelist(provider, audit_info, args)
+    if hasattr(args, "mutelist_file"):
+        mutelist_file = global_provider.get_mutelist(args.mutelist_file)
 
     # Set output options based on the selected provider
     audit_output_options = set_provider_output_options(
-        provider, args, audit_info, mutelist_file, bulk_checks_metadata
+        provider, args, global_provider.identity, mutelist_file, bulk_checks_metadata
     )
 
+    # TODO: adapt the quick inventory for the new AWS provider
     # Run the quick inventory for the provider if available
-    if hasattr(args, "quick_inventory") and args.quick_inventory:
-        run_provider_quick_inventory(provider, audit_info, args)
-        sys.exit()
+    # if hasattr(args, "quick_inventory") and args.quick_inventory:
+    #     run_provider_quick_inventory(provider, global_provider.identity, args)
+    #     sys.exit()
 
     # Execute checks
     findings = []
+
     if len(checks_to_execute):
         findings = execute_checks(
             checks_to_execute,
-            provider,
-            audit_info,
+            global_provider,
             audit_output_options,
             custom_checks_metadata,
         )
@@ -212,20 +217,21 @@ def prowler():
     # Extract findings stats
     stats = extract_findings_statistics(findings)
 
-    if args.slack:
-        if "SLACK_API_TOKEN" in os.environ and "SLACK_CHANNEL_ID" in os.environ:
-            _ = send_slack_message(
-                os.environ["SLACK_API_TOKEN"],
-                os.environ["SLACK_CHANNEL_ID"],
-                stats,
-                provider,
-                audit_info,
-            )
-        else:
-            logger.critical(
-                "Slack integration needs SLACK_API_TOKEN and SLACK_CHANNEL_ID environment variables (see more in https://docs.prowler.cloud/en/latest/tutorials/integrations/#slack)."
-            )
-            sys.exit(1)
+    # TODO: adapt the slack integration for the new AWS provider
+    # if args.slack:
+    #     if "SLACK_API_TOKEN" in os.environ and "SLACK_CHANNEL_ID" in os.environ:
+    #         _ = send_slack_message(
+    #             os.environ["SLACK_API_TOKEN"],
+    #             os.environ["SLACK_CHANNEL_ID"],
+    #             stats,
+    #             provider,
+    #             audit_info,
+    #         )
+    #     else:
+    #         logger.critical(
+    #             "Slack integration needs SLACK_API_TOKEN and SLACK_CHANNEL_ID environment variables (see more in https://docs.prowler.cloud/en/latest/tutorials/integrations/#slack)."
+    #         )
+    #         sys.exit(1)
 
     if args.output_modes:
         for mode in args.output_modes:
@@ -265,7 +271,6 @@ def prowler():
             f"{Style.BRIGHT}\nSending findings to AWS Security Hub, please wait...{Style.RESET_ALL}"
         )
         # Verify where AWS Security Hub is enabled
-        global_provider = get_global_provider()
         aws_security_enabled_regions = []
         security_hub_regions = (
             global_provider.get_available_aws_service_regions("securityhub")

@@ -66,8 +66,8 @@ aws:
     ]
 
   # AWS Organizations
-  # organizations_scp_check_deny_regions
-  # organizations_enabled_regions: [
+  # aws.organizations_scp_check_deny_regions
+  # aws.organizations_enabled_regions: [
   #   "eu-central-1",
   #   "eu-west-1",
   #   "us-east-1"
@@ -76,14 +76,14 @@ aws:
   organizations_trusted_delegated_administrators: []
 
   # AWS ECR
-  # ecr_repositories_scan_vulnerabilities_in_latest_image
+  # aws.ecr_repositories_scan_vulnerabilities_in_latest_image
   # CRITICAL
   # HIGH
   # MEDIUM
   ecr_repository_vulnerability_minimum_severity: "MEDIUM"
 
   # AWS Trusted Advisor
-  # trustedadvisor_premium_support_plan_subscribed
+  # aws.trustedadvisor_premium_support_plan_subscribed
   verify_premium_support_plans: True
 
 # Azure Configuration
@@ -106,9 +106,27 @@ gcp:
 # Kubernetes Configuration
 kubernetes:
   # Kubernetes API Server
-  # apiserver_audit_log_maxbackup_set
+  # kubernetes.apiserver_audit_log_maxbackup_set
   audit_log_maxbackup: 10
-  # apiserver_audit_log_maxsize_set
+  # kubernetes.apiserver_audit_log_maxsize_set
   audit_log_maxsize: 100
-  # apiserver_audit_log_maxage_set
+  # kubernetes.apiserver_audit_log_maxage_set
   audit_log_maxage: 30
+  # kubernetes.apiserver_strong_ciphers_only
+  apiserver_strong_ciphers: [
+      "TLS_AES_128_GCM_SHA256",
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256",
+  ]
+  # Kubelet
+  # kubernetes.kubelet_strong_ciphers_only
+  kubelet_strong_ciphers: [
+      "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
+      "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+      "TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305",
+      "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
+      "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305",
+      "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384",
+      "TLS_RSA_WITH_AES_256_GCM_SHA384",
+      "TLS_RSA_WITH_AES_128_GCM_SHA256",
+  ]

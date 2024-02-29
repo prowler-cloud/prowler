@@ -125,16 +125,16 @@ def parse_checks_from_file(input_file: str, provider: str) -> set:
 
 
 # Load checks from custom folder
-def parse_checks_from_folder(audit_info, input_folder: str, provider: str) -> int:
+def parse_checks_from_folder(provider, input_folder: str) -> int:
     try:
         imported_checks = 0
         # Check if input folder is a S3 URI
-        if provider == "aws" and re.search(
+        if provider.provider == "aws" and re.search(
             "^s3://([^/]+)/(.*?([^/]+))/$", input_folder
         ):
             bucket = input_folder.split("/")[2]
             key = ("/").join(input_folder.split("/")[3:])
-            s3_resource = audit_info.audit_session.resource("s3")
+            s3_resource = provider.session.session.resource("s3")
             bucket = s3_resource.Bucket(bucket)
             for obj in bucket.objects.filter(Prefix=key):
                 if not os.path.exists(os.path.dirname(obj.key)):
@@ -151,7 +151,7 @@ def parse_checks_from_folder(audit_info, input_folder: str, provider: str) -> in
                     # Copy checks to specific provider/service folder
                     check_service = check.name.split("_")[0]
                     prowler_dir = prowler.__path__
-                    prowler_module = f"{prowler_dir[0]}/providers/{provider}/services/{check_service}/{check.name}"
+                    prowler_module = f"{prowler_dir[0]}/providers/{provider.provider}/services/{check_service}/{check.name}"
                     if os.path.exists(prowler_module):
                         shutil.rmtree(prowler_module)
                     shutil.copytree(check_module, prowler_module)
@@ -421,8 +421,7 @@ def run_check(check: Check, output_options: Provider_Output_Options) -> list:
 
 def execute_checks(
     checks_to_execute: list,
-    provider: str,
-    audit_info: Any,
+    global_provider: Any,
     audit_output_options: Provider_Output_Options,
     custom_checks_metadata: Any,
 ) -> list:
@@ -467,9 +466,9 @@ def execute_checks(
                 check_findings = execute(
                     service,
                     check_name,
-                    provider,
+                    global_provider.provider,
                     audit_output_options,
-                    audit_info,
+                    global_provider.identity,
                     services_executed,
                     checks_executed,
                     custom_checks_metadata,
@@ -479,7 +478,7 @@ def execute_checks(
             # If check does not exists in the provider or is from another provider
             except ModuleNotFoundError:
                 logger.error(
-                    f"Check '{check_name}' was not found for the {provider.upper()} provider"
+                    f"Check '{check_name}' was not found for the {global_provider.provider.upper()} provider"
                 )
             except Exception as error:
                 logger.error(
@@ -513,9 +512,8 @@ def execute_checks(
                     check_findings = execute(
                         service,
                         check_name,
-                        provider,
                         audit_output_options,
-                        audit_info,
+                        global_provider,
                         services_executed,
                         checks_executed,
                         custom_checks_metadata,
@@ -525,7 +523,7 @@ def execute_checks(
                 # If check does not exists in the provider or is from another provider
                 except ModuleNotFoundError:
                     logger.error(
-                        f"Check '{check_name}' was not found for the {provider.upper()} provider"
+                        f"Check '{check_name}' was not found for the {global_provider.provider.upper()} provider"
                     )
                 except Exception as error:
                     logger.error(
@@ -539,18 +537,14 @@ def execute_checks(
 def execute(
     service: str,
     check_name: str,
-    provider: str,
     audit_output_options: Provider_Output_Options,
-    audit_info: Any,
+    global_provider: Any,
     services_executed: set,
     checks_executed: set,
     custom_checks_metadata: Any,
 ):
-    global_provider = get_global_provider()
     # Import check module
-    check_module_path = (
-        f"prowler.providers.{provider}.services.{service}.{check_name}.{check_name}"
-    )
+    check_module_path = f"prowler.providers.{global_provider.provider}.services.{service}.{check_name}.{check_name}"
     lib = import_check(check_module_path)
     # Recover functions from check
     check_to_execute = getattr(lib, check_name)
@@ -579,7 +573,7 @@ def execute(
         )
 
     # Report the check's findings
-    report(check_findings, audit_output_options, audit_info)
+    report(check_findings, audit_output_options, global_provider.identity)
 
     if os.environ.get("PROWLER_REPORT_LIB_PATH"):
         try:
@@ -588,7 +582,9 @@ def execute(
             outputs_module = importlib.import_module(lib)
             custom_report_interface = getattr(outputs_module, "report")
 
-            custom_report_interface(check_findings, audit_output_options, audit_info)
+            custom_report_interface(
+                check_findings, audit_output_options, global_provider.identity
+            )
         except Exception:
             sys.exit(1)
 
