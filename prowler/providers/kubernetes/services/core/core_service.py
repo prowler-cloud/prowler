@@ -39,7 +39,6 @@ class Core(KubernetesService):
                         if pod.spec.ephemeral_containers
                         else []
                     )
-    
                     for container in containers + init_containers + ephemeral_containers:
                         pod_containers[container.name] = Container(
                             name=container.name,
