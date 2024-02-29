@@ -1,14 +1,10 @@
-import os
-import pathlib
 import sys
 
 from boto3 import client, session
 from botocore.credentials import RefreshableCredentials
 from botocore.session import get_session
 
-from prowler.config.config import aws_services_json_file
 from prowler.lib.logger import logger
-from prowler.lib.utils.utils import open_file, parse_json_file
 from prowler.providers.aws.config import (
     AWS_STS_GLOBAL_ENDPOINT_REGION,
     ROLE_SESSION_NAME,
@@ -157,20 +153,3 @@ def input_role_mfa_token_and_code() -> tuple[str]:
     mfa_ARN = input("Enter ARN of MFA: ")
     mfa_TOTP = input("Enter MFA code: ")
     return (mfa_ARN.strip(), mfa_TOTP.strip())
-
-
-def get_aws_available_regions():
-    try:
-        actual_directory = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))
-        with open_file(f"{actual_directory}/{aws_services_json_file}") as f:
-            data = parse_json_file(f)
-
-        regions = set()
-        for service in data["services"].values():
-            for partition in service["regions"]:
-                for item in service["regions"][partition]:
-                    regions.add(item)
-        return list(regions)
-    except Exception as error:
-        logger.error(f"{error.__class__.__name__}: {error}")
-        return []
