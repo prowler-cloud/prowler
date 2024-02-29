@@ -372,6 +372,7 @@ Caller Identity ARN: {Fore.YELLOW}[{self.identity.identity_arn}]{Style.RESET_ALL
         return regions
 
     # TODO: why do we need the provider as an argument if this is only for AWS?
+    # This should be moved to the checks folder, maybe????
     # Remove if not needed
     def get_checks_from_input_arn(self) -> set:
         """get_checks_from_input_arn gets the list of checks from the input arns"""
