@@ -2,12 +2,9 @@
   "Provider": "kubernetes",
   "CheckID": "apiserver_disable_profiling",
   "CheckTitle": "Ensure that the --profiling argument is set to false",
-  "CheckType": [
-    "Security",
-    "Configuration"
-  ],
+  "CheckType": [],
   "ServiceName": "apiserver",
-  "SubServiceName": "Performance",
+  "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "KubernetesAPIServer",
@@ -16,8 +13,8 @@
   "RelatedUrl": "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/",
   "Remediation": {
     "Code": {
-      "CLI": "Edit the kube-apiserver configuration to set the --profiling argument to false. Example: --profiling=false",
-      "NativeIaC": "",
+      "CLI": "--profiling=false",
+      "NativeIaC": "https://docs.bridgecrew.io/docs/ensure-that-the-profiling-argument-is-set-to-false-2",
       "Other": "",
       "Terraform": ""
     },
@@ -27,8 +24,7 @@
     }
   },
   "Categories": [
-    "Security Best Practices",
-    "Configuration Management"
+    "trustboundaries"
   ],
   "DependsOn": [],
   "RelatedTo": [],

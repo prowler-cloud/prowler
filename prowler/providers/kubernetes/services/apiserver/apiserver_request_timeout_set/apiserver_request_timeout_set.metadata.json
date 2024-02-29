@@ -2,12 +2,9 @@
   "Provider": "kubernetes",
   "CheckID": "apiserver_request_timeout_set",
   "CheckTitle": "Ensure that the --request-timeout argument is set as appropriate",
-  "CheckType": [
-    "Performance",
-    "Configuration"
-  ],
+  "CheckType": [],
   "ServiceName": "apiserver",
-  "SubServiceName": "Request Handling",
+  "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "KubernetesAPIServer",
@@ -16,8 +13,8 @@
   "RelatedUrl": "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/",
   "Remediation": {
     "Code": {
-      "CLI": "Edit the kube-apiserver configuration to set the --request-timeout argument to an appropriate value based on your environment. Example: --request-timeout=300s",
-      "NativeIaC": "",
+      "CLI": "--request-timeout=300s",
+      "NativeIaC": "https://docs.bridgecrew.io/docs/ensure-that-the-request-timeout-argument-is-set-as-appropriate",
       "Other": "",
       "Terraform": ""
     },
@@ -27,8 +24,7 @@
     }
   },
   "Categories": [
-    "Resource Management",
-    "Configuration Optimization"
+    "cluster-security"
   ],
   "DependsOn": [],
   "RelatedTo": [],

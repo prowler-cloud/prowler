@@ -2,12 +2,9 @@
   "Provider": "kubernetes",
   "CheckID": "apiserver_security_context_deny_plugin",
   "CheckTitle": "Ensure that the admission control plugin SecurityContextDeny is set if PodSecurityPolicy is not used",
-  "CheckType": [
-    "Security",
-    "Configuration"
-  ],
+  "CheckType": [],
   "ServiceName": "apiserver",
-  "SubServiceName": "Admission Control",
+  "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "KubernetesAPIServer",
@@ -16,8 +13,8 @@
   "RelatedUrl": "https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/",
   "Remediation": {
     "Code": {
-      "CLI": "Edit the kube-apiserver configuration to include SecurityContextDeny in the --enable-admission-plugins argument, unless PodSecurityPolicy is already in use. Example: --enable-admission-plugins=...,SecurityContextDeny,...",
-      "NativeIaC": "",
+      "CLI": "--enable-admission-plugins=...,SecurityContextDeny,...",
+      "NativeIaC": "https://docs.bridgecrew.io/docs/ensure-that-the-admission-control-plugin-securitycontextdeny-is-set-if-podsecuritypolicy-is-not-used",
       "Other": "",
       "Terraform": ""
     },
@@ -27,8 +24,7 @@
     }
   },
   "Categories": [
-    "Pod Security",
-    "Security Best Practices"
+    "trustboundaries"
   ],
   "DependsOn": [],
   "RelatedTo": [],

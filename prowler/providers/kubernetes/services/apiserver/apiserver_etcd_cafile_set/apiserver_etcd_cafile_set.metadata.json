@@ -2,12 +2,9 @@
   "Provider": "kubernetes",
   "CheckID": "apiserver_etcd_cafile_set",
   "CheckTitle": "Ensure that the --etcd-cafile argument is set as appropriate",
-  "CheckType": [
-    "Security",
-    "Configuration"
-  ],
+  "CheckType": [],
   "ServiceName": "apiserver",
-  "SubServiceName": "etcd Connection",
+  "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "KubernetesAPIServer",
@@ -16,8 +13,8 @@
   "RelatedUrl": "https://kubernetes.io/docs/tasks/administer-cluster/configure-upgrade-etcd/",
   "Remediation": {
     "Code": {
-      "CLI": "Edit the kube-apiserver configuration to include the --etcd-cafile parameter with the appropriate CA file. Example: --etcd-cafile=<path/to/ca-file>",
-      "NativeIaC": "",
+      "CLI": "--etcd-cafile=<path/to/ca-file>",
+      "NativeIaC": "https://docs.bridgecrew.io/docs/ensure-that-the-etcd-cafile-argument-is-set-as-appropriate-1",
       "Other": "",
       "Terraform": ""
     },
@@ -27,8 +24,8 @@
     }
   },
   "Categories": [
-    "Data Security",
-    "TLS Configuration"
+    "encryption",
+    "encryption"
   ],
   "DependsOn": [],
   "RelatedTo": [],

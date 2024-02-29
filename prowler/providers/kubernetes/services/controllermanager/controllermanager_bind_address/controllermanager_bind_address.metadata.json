@@ -2,12 +2,9 @@
   "Provider": "kubernetes",
   "CheckID": "controllermanager_bind_address",
   "CheckTitle": "Ensure that the --bind-address argument is set to 127.0.0.1",
-  "CheckType": [
-    "Security",
-    "Configuration"
-  ],
+  "CheckType": [],
   "ServiceName": "controller-manager",
-  "SubServiceName": "Bind Address Configuration",
+  "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "KubernetesControllerManager",
@@ -16,8 +13,8 @@
   "RelatedUrl": "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-controller-manager/",
   "Remediation": {
     "Code": {
-      "CLI": "Edit the controller-manager manifest to set --bind-address to 127.0.0.1.",
-      "NativeIaC": "",
+      "CLI": "--bind-address=127.0.0.1",
+      "NativeIaC": "https://docs.bridgecrew.io/docs/ensure-that-the-bind-address-argument-is-set-to-127001",
       "Other": "",
       "Terraform": ""
     },
@@ -27,8 +24,7 @@
     }
   },
   "Categories": [
-    "Network Security",
-    "Configuration Management"
+    "internet-exposed"
   ],
   "DependsOn": [],
   "RelatedTo": [],

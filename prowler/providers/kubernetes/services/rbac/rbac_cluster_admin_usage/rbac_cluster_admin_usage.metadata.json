@@ -2,12 +2,9 @@
   "Provider": "kubernetes",
   "CheckID": "rbac_cluster_admin_usage",
   "CheckTitle": "Ensure that the cluster-admin role is only used where required",
-  "CheckType": [
-    "Security",
-    "Compliance"
-  ],
+  "CheckType": [],
   "ServiceName": "RBAC",
-  "SubServiceName": "Authorization",
+  "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "ClusterRoleBinding",
@@ -16,7 +13,7 @@
   "RelatedUrl": "https://kubernetes.io/docs/reference/access-authn-authz/rbac/#user-facing-roles",
   "Remediation": {
     "Code": {
-      "CLI": "Review and, if necessary, modify the ClusterRoleBindings to limit the use of 'cluster-admin'. Use 'kubectl delete clusterrolebinding [name]' to remove unnecessary bindings.",
+      "CLI": "",
       "NativeIaC": "",
       "Other": "",
       "Terraform": ""
@@ -27,8 +24,7 @@
     }
   },
   "Categories": [
-    "Access Control",
-    "Least Privilege Principle"
+    "trustboundaries"
   ],
   "DependsOn": [],
   "RelatedTo": [],

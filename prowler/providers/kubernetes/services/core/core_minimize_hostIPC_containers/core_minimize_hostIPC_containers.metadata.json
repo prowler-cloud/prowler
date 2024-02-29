@@ -2,12 +2,9 @@
   "Provider": "kubernetes",
   "CheckID": "core_minimize_hostIPC_containers",
   "CheckTitle": "Minimize the admission of containers wishing to share the host IPC namespace",
-  "CheckType": [
-    "Security",
-    "Configuration"
-  ],
+  "CheckType": [],
   "ServiceName": "core",
-  "SubServiceName": "Host IPC Namespace",
+  "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "KubernetesPod",
@@ -27,8 +24,7 @@
     }
   },
   "Categories": [
-    "Container Security",
-    "Best Practices"
+    "container-security"
   ],
   "DependsOn": [],
   "RelatedTo": [],

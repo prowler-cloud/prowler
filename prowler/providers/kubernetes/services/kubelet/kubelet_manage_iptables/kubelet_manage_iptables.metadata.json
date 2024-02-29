@@ -2,12 +2,9 @@
   "Provider": "kubernetes",
   "CheckID": "kubelet_manage_iptables",
   "CheckTitle": "Ensure that the kubelet --make-iptables-util-chains argument is set to true",
-  "CheckType": [
-    "Security",
-    "Configuration"
-  ],
+  "CheckType": [],
   "ServiceName": "kubelet",
-  "SubServiceName": "Iptables Management",
+  "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "KubernetesKubelet",
@@ -16,8 +13,8 @@
   "RelatedUrl": "https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/",
   "Remediation": {
     "Code": {
-      "CLI": "Set the --make-iptables-util-chains argument in the kubelet service file on each worker node to true.",
-      "NativeIaC": "",
+      "CLI": "--make-iptables-util-chains=true",
+      "NativeIaC": "https://docs.bridgecrew.io/docs/ensure-that-the-make-iptables-util-chains-argument-is-set-to-true",
       "Other": "",
       "Terraform": ""
     },
@@ -27,8 +24,7 @@
     }
   },
   "Categories": [
-    "Network Security",
-    "Node Management"
+    "internet-exposed"
   ],
   "DependsOn": [],
   "RelatedTo": [],

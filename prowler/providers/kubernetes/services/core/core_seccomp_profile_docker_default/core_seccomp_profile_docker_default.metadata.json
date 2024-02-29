@@ -2,12 +2,9 @@
   "Provider": "kubernetes",
   "CheckID": "core_seccomp_profile_docker_default",
   "CheckTitle": "Ensure that the seccomp profile is set to docker/default in your pod definitions",
-  "CheckType": [
-    "Security",
-    "Configuration"
-  ],
+  "CheckType": [],
   "ServiceName": "core",
-  "SubServiceName": "Seccomp Profile",
+  "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "KubernetesPod",
@@ -27,8 +24,7 @@
     }
   },
   "Categories": [
-    "Container Security",
-    "Best Practices"
+    "container-security"
   ],
   "DependsOn": [],
   "RelatedTo": [],

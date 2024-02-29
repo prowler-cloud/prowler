@@ -2,12 +2,9 @@
   "Provider": "kubernetes",
   "CheckID": "kubelet_disable_read_only_port",
   "CheckTitle": "Verify that the kubelet --read-only-port argument is set to 0",
-  "CheckType": [
-    "Security",
-    "Configuration"
-  ],
+  "CheckType": [],
   "ServiceName": "kubelet",
-  "SubServiceName": "Read-Only Port Configuration",
+  "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "KubernetesKubelet",
@@ -16,8 +13,8 @@
   "RelatedUrl": "https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/",
   "Remediation": {
     "Code": {
-      "CLI": "Set the --read-only-port argument in the kubelet service file on each worker node to 0.",
-      "NativeIaC": "",
+      "CLI": "--read-only-port=0",
+      "NativeIaC": "https://docs.bridgecrew.io/docs/ensure-that-the-read-only-port-argument-is-set-to-0",
       "Other": "",
       "Terraform": ""
     },
@@ -27,8 +24,7 @@
     }
   },
   "Categories": [
-    "Security",
-    "Node Management"
+    "trustboundaries"
   ],
   "DependsOn": [],
   "RelatedTo": [],

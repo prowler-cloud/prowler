@@ -2,12 +2,9 @@
   "Provider": "kubernetes",
   "CheckID": "apiserver_node_restriction_plugin",
   "CheckTitle": "Ensure that the admission control plugin NodeRestriction is set",
-  "CheckType": [
-    "Security",
-    "Configuration"
-  ],
+  "CheckType": [],
   "ServiceName": "apiserver",
-  "SubServiceName": "Admission Control",
+  "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "KubernetesAPIServer",
@@ -16,8 +13,8 @@
   "RelatedUrl": "https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers",
   "Remediation": {
     "Code": {
-      "CLI": "Edit the kube-apiserver configuration to include NodeRestriction in the --enable-admission-plugins argument. Example: --enable-admission-plugins=...,NodeRestriction,...",
-      "NativeIaC": "",
+      "CLI": "--enable-admission-plugins=...,NodeRestriction,...",
+      "NativeIaC": "https://docs.bridgecrew.io/docs/ensure-that-the-admission-control-plugin-noderestriction-is-set",
       "Other": "",
       "Terraform": ""
     },
@@ -27,8 +24,7 @@
     }
   },
   "Categories": [
-    "Node Security",
-    "Admission Control"
+    "trustboundaries"
   ],
   "DependsOn": [],
   "RelatedTo": [],
