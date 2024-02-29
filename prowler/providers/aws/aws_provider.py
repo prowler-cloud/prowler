@@ -193,26 +193,6 @@ def generate_regional_clients(
         )
 
 
-def get_aws_enabled_regions(audit_info: AWS_Audit_Info) -> set:
-    """get_aws_enabled_regions returns a set of enabled AWS regions"""
-
-    # EC2 Client to check enabled regions
-    service = "ec2"
-    default_region = get_default_region(service, audit_info)
-    ec2_client = audit_info.audit_session.client(service, region_name=default_region)
-
-    enabled_regions = set()
-    try:
-        # With AllRegions=False we only get the enabled regions for the account
-        for region in ec2_client.describe_regions(AllRegions=False).get("Regions", []):
-            enabled_regions.add(region.get("RegionName"))
-    except Exception as error:
-        logger.warning(
-            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-        )
-    return enabled_regions
-
-
 def get_aws_available_regions():
     try:
         actual_directory = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))
@@ -321,30 +301,3 @@ def get_available_aws_service_regions(service: str, audit_info: AWS_Audit_Info) 
     else:  # Get all regions from json of the service and partition
         regions = json_regions
     return regions
-
-
-def get_default_region(service: str, audit_info: AWS_Audit_Info) -> str:
-    """get_default_region gets the default region based on the profile and audited service regions"""
-    service_regions = get_available_aws_service_regions(service, audit_info)
-    default_region = get_global_region(
-        audit_info
-    )  # global region of the partition when all regions are audited and there is no profile region
-    if audit_info.profile_region in service_regions:
-        # return profile region only if it is audited
-        default_region = audit_info.profile_region
-    # return first audited region if specific regions are audited
-    elif audit_info.audited_regions:
-        default_region = audit_info.audited_regions[0]
-    return default_region
-
-
-def get_global_region(audit_info: AWS_Audit_Info) -> str:
-    """get_global_region gets the global region based on the audited partition"""
-    global_region = "us-east-1"
-    if audit_info.audited_partition == "aws-cn":
-        global_region = "cn-north-1"
-    elif audit_info.audited_partition == "aws-us-gov":
-        global_region = "us-gov-east-1"
-    elif "aws-iso" in audit_info.audited_partition:
-        global_region = "aws-iso-global"
-    return global_region

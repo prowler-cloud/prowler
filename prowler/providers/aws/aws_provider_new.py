@@ -121,6 +121,7 @@ class AwsProvider(Provider):
     audit_config: dict = {}
     mfa_enabled: bool = False
     ignore_unused_services: bool = False
+    enabled_regions: set = set()
 
     def __init__(self, arguments: Namespace):
         logger.info("Setting AWS provider ...")
@@ -227,6 +228,9 @@ class AwsProvider(Provider):
 
         # Parse Input Resource ARNs
         self.audit_resources = getattr(arguments, "resource_arn", None)
+
+        # Get Enabled Regions
+        self.enabled_regions = self.get_aws_enabled_regions()
 
     def setup_session(self, input_mfa: bool):
         logger.info("Creating regular session ...")
@@ -619,3 +623,24 @@ Caller Identity ARN: {Fore.YELLOW}[{self.identity.identity_arn}]{Style.RESET_ALL
 
         else:
             return assumed_credentials
+
+    def get_aws_enabled_regions(self) -> set:
+        """get_aws_enabled_regions returns a set of enabled AWS regions"""
+
+        # EC2 Client to check enabled regions
+        service = "ec2"
+        default_region = self.get_default_region(service)
+        ec2_client = self.session.session.client(service, region_name=default_region)
+
+        enabled_regions = set()
+        try:
+            # With AllRegions=False we only get the enabled regions for the account
+            for region in ec2_client.describe_regions(AllRegions=False).get(
+                "Regions", []
+            ):
+                enabled_regions.add(region.get("RegionName"))
+        except Exception as error:
+            logger.warning(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return enabled_regions
