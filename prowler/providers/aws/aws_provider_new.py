@@ -429,6 +429,8 @@ Caller Identity ARN: {Fore.YELLOW}[{self.identity.identity_arn}]{Style.RESET_ALL
             logger.error(f"{error.__class__.__name__}: {error}")
             return []
 
+    # TODO: why do we need the provider as an argument if this is only for AWS?
+    # Remove if not needed
     def get_checks_from_input_arn(audit_resources: list, provider: str) -> set:
         """get_checks_from_input_arn gets the list of checks from the input arns"""
         checks_from_arn = set()
