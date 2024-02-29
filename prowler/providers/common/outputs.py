@@ -9,7 +9,7 @@ from prowler.lib.logger import logger
 
 
 def set_provider_output_options(
-    provider: str, arguments, audit_info, mutelist_file, bulk_checks_metadata
+    provider: str, arguments, identity, mutelist_file, bulk_checks_metadata
 ):
     """
     set_provider_output_options configures automatically the outputs based on the selected provider and returns the Provider_Output_Options object.
@@ -19,7 +19,7 @@ def set_provider_output_options(
         provider_output_class = f"{provider.capitalize()}_Output_Options"
         provider_output_options = getattr(
             importlib.import_module(__name__), provider_output_class
-        )(arguments, audit_info, mutelist_file, bulk_checks_metadata)
+        )(arguments, identity, mutelist_file, bulk_checks_metadata)
     except Exception as error:
         logger.critical(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -135,15 +135,16 @@ class Kubernetes_Output_Options(Provider_Output_Options):
 class Aws_Output_Options(Provider_Output_Options):
     security_hub_enabled: bool
 
-    def __init__(self, arguments, audit_info, mutelist_file, bulk_checks_metadata):
+    def __init__(self, arguments, identity, mutelist_file, bulk_checks_metadata):
         # First call Provider_Output_Options init
         super().__init__(arguments, mutelist_file, bulk_checks_metadata)
 
         # Confire Shodan API
-        if arguments.shodan:
-            audit_info = change_config_var(
-                "shodan_api_key", arguments.shodan, audit_info
-            )
+        # TODO: review shodan for the new AWS provider
+        # if arguments.shodan:
+        #     audit_info = change_config_var(
+        #         "shodan_api_key", arguments.shodan, audit_info
+        #     )
 
         # Check if custom output filename was input, if not, set the default
         if (
@@ -151,7 +152,7 @@ class Aws_Output_Options(Provider_Output_Options):
             or arguments.output_filename is None
         ):
             self.output_filename = (
-                f"prowler-output-{audit_info.audited_account}-{output_file_timestamp}"
+                f"prowler-output-{identity.account}-{output_file_timestamp}"
             )
         else:
             self.output_filename = arguments.output_filename
