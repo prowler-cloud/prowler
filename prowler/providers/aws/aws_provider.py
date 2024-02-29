@@ -14,7 +14,7 @@ from prowler.providers.aws.config import (
     AWS_STS_GLOBAL_ENDPOINT_REGION,
     ROLE_SESSION_NAME,
 )
-from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info, AWSAssumeRole
+from prowler.providers.aws.lib.audit_info.models import AWSAssumeRole
 from prowler.providers.aws.lib.credentials.credentials import create_sts_session
 
 
@@ -160,39 +160,6 @@ def input_role_mfa_token_and_code() -> tuple[str]:
     return (mfa_ARN.strip(), mfa_TOTP.strip())
 
 
-def generate_regional_clients(
-    service: str,
-    audit_info: AWS_Audit_Info,
-) -> dict:
-    """generate_regional_clients returns a dict with the following format for the given service:
-
-    Example:
-        {"eu-west-1": boto3_service_client}
-    """
-    try:
-        regional_clients = {}
-        service_regions = get_available_aws_service_regions(service, audit_info)
-
-        # Get the regions enabled for the account and get the intersection with the service available regions
-        if audit_info.enabled_regions:
-            enabled_regions = service_regions.intersection(audit_info.enabled_regions)
-        else:
-            enabled_regions = service_regions
-
-        for region in enabled_regions:
-            regional_client = audit_info.audit_session.client(
-                service, region_name=region, config=audit_info.session_config
-            )
-            regional_client.region = region
-            regional_clients[region] = regional_client
-
-        return regional_clients
-    except Exception as error:
-        logger.error(
-            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-        )
-
-
 def get_aws_available_regions():
     try:
         actual_directory = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))
@@ -284,20 +251,3 @@ def get_regions_from_audit_resources(audit_resources: list) -> set:
         if region:
             audited_regions.add(region)
     return audited_regions
-
-
-def get_available_aws_service_regions(service: str, audit_info: AWS_Audit_Info) -> set:
-    # Get json locally
-    actual_directory = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))
-    with open_file(f"{actual_directory}/{aws_services_json_file}") as f:
-        data = parse_json_file(f)
-    json_regions = set(
-        data["services"][service]["regions"][audit_info.audited_partition]
-    )
-    # Check for input aws audit_info.audited_regions
-    if audit_info.audited_regions:
-        # Get common regions between input and json
-        regions = json_regions.intersection(audit_info.audited_regions)
-    else:  # Get all regions from json of the service and partition
-        regions = json_regions
-    return regions
