@@ -1,53 +1,83 @@
 import os
 import sys
+from argparse import Namespace
+from dataclasses import dataclass
+from typing import Any, Optional
 
+from colorama import Fore, Style
 from kubernetes import client, config
 
 from prowler.lib.logger import logger
+from prowler.providers.common.provider import Provider
 
 
-class Kubernetes_Provider:
-    def __init__(self, kubeconfig_file: str, context: str, namespaces: str):
+@dataclass
+class KubernetesIdentityInfo:
+    active_context: str
+
+
+class KubernetesProvider(Provider):
+    provider = "kubernetes"
+    api_client: Any
+    context: dict
+    namespaces: list
+    audit_resources: Optional[Any]
+    audit_metadata: Optional[Any]
+    audit_config: Optional[dict]
+    identity: KubernetesIdentityInfo
+
+    def __init__(self, arguments: Namespace):
+        """
+        Initializes the KubernetesProvider instance.
+        Args:
+            arguments (dict): A dictionary containing configuration arguments.
+        """
         logger.info("Instantiating Kubernetes Provider ...")
-        self.api_client, self.context = self.__set_credentials__(
-            kubeconfig_file, context
+        self.api_client, self.context = self.setup_session(
+            arguments.kubeconfig_file, arguments.context
         )
-        if not self.api_client:
-            logger.critical("Failed to set up a Kubernetes session.")
-            sys.exit(1)
-        if not namespaces:
+        if not arguments.namespaces:
             logger.info("Retrieving all namespaces ...")
             self.namespaces = self.get_all_namespaces()
         else:
-            self.namespaces = namespaces
+            self.namespaces = arguments.namespaces
 
-    def __set_credentials__(self, kubeconfig_file, input_context):
+        if not self.api_client:
+            logger.critical("Failed to set up a Kubernetes session.")
+            sys.exit(1)
+
+        self.identity = KubernetesIdentityInfo(
+            active_context=self.context["name"].replace(":", "_").replace("/", "_")
+        )
+        if not arguments.only_logs:
+            self.print_credentials()
+
+    def setup_session(self, kubeconfig_file, input_context):
         """
-        Set up credentials for Kubernetes provider.
+        Sets up the Kubernetes session.
 
-        :param kubeconfig_file: Path to kubeconfig file.
-        :param input_context: Context to be used for Kubernetes session.
-        :return: Tuple containing ApiClient and context information.
+        Args:
+            kubeconfig_file (str): Path to the kubeconfig file.
+            input_context (str): Context name.
+
+        Returns:
+            Tuple: A tuple containing the API client and the context.
         """
         try:
             if kubeconfig_file:
-                # Use kubeconfig file if provided
-                logger.info(f"Loading kubeconfig from file: {kubeconfig_file} ...")
+                logger.info(f"Using kubeconfig file: {kubeconfig_file}")
                 config.load_kube_config(
                     config_file=os.path.abspath(kubeconfig_file), context=input_context
                 )
-                # Set context if input in argument
                 if input_context:
                     contexts = config.list_kube_config_contexts()[0]
                     for context_item in contexts:
                         if context_item["name"] == input_context:
                             context = context_item
                 else:
-                    # Get active context
                     context = config.list_kube_config_contexts()[1]
             else:
-                # Otherwise try to load in-cluster config
-                logger.info("Loading in-cluster config ...")
+                logger.info("Using in-cluster config")
                 config.load_incluster_config()
                 context = {
                     "name": "In-Cluster",
@@ -63,43 +93,20 @@ class Kubernetes_Provider:
             )
             sys.exit(1)
 
-    def get_credentials(self):
-        """
-        Get Kubernetes API client and context.
-
-        :return: Tuple containing ApiClient and context information.
-        """
-        return self.api_client, self.context
-
-    def get_all_namespaces(self):
-        """
-        Retrieve a list of all namespaces from a Kubernetes cluster.
-
-        :return: List of namespaces.
-        """
-        try:
-            v1 = client.CoreV1Api()
-            namespace_list = v1.list_namespace(timeout_seconds=2, _request_timeout=2)
-            namespaces = [item.metadata.name for item in namespace_list.items]
-            logger.info("All namespaces retrieved successfully.")
-            return namespaces
-        except Exception as error:
-            logger.critical(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
-            sys.exit()
-
     def search_and_save_roles(
         self, roles: list, role_bindings, context_user: str, role_binding_type: str
     ):
         """
-        Search and save roles based on role bindings and context user.
+        Searches for and saves roles.
 
-        :param roles: List of roles to save.
-        :param role_bindings: List of role bindings to search.
-        :param context_user: Context user to match.
-        :param role_binding_type: Type of role binding.
-        :return: Updated list of roles.
+        Args:
+            roles (list): A list to save the roles.
+            role_bindings: Role bindings.
+            context_user (str): Context user.
+            role_binding_type (str): Role binding type.
+
+        Returns:
+            list: A list containing the roles.
         """
         try:
             for rb in role_bindings:
@@ -121,9 +128,10 @@ class Kubernetes_Provider:
 
     def get_context_user_roles(self):
         """
-        Get roles assigned to the context user.
+        Retrieves the context user roles.
 
-        :return: List of roles assigned to the context user.
+        Returns:
+            list: A list containing the context user roles.
         """
         try:
             rbac_api = client.RbacAuthorizationV1Api()
@@ -151,3 +159,62 @@ class Kubernetes_Provider:
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
             sys.exit(1)
+
+    def get_all_namespaces(self):
+        """
+        Retrieves all namespaces.
+        Returns:
+            list: A list containing all namespace names.
+        """
+        try:
+            v1 = client.CoreV1Api()
+            namespace_list = v1.list_namespace(timeout_seconds=2, _request_timeout=2)
+            namespaces = [item.metadata.name for item in namespace_list.items]
+            logger.info("All namespaces retrieved successfully.")
+            return namespaces
+        except Exception as error:
+            logger.critical(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            sys.exit()
+
+    def get_pod_current_namespace(self):
+        """
+        Retrieves the current namespace from the pod's mounted service account info.
+        Returns:
+            str: The current namespace.
+        """
+        try:
+            with open(
+                "/var/run/secrets/kubernetes.io/serviceaccount/namespace", "r"
+            ) as f:
+                return f.read().strip()
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            return "default"
+
+    def print_credentials(self):
+        """
+        Prints the Kubernetes credentials.
+        """
+        if self.context.get("name") == "In-Cluster":
+            report = f"""
+This report is being generated using the Kubernetes configuration below:
+
+Kubernetes Pod: {Fore.YELLOW}[prowler]{Style.RESET_ALL}  Namespace: {Fore.YELLOW}[{self.get_pod_current_namespace()}]{Style.RESET_ALL}
+"""
+            print(report)
+        else:
+            cluster_name = self.context.get("context").get("cluster")
+            user_name = self.context.get("context").get("user")
+            roles = self.get_context_user_roles()
+            roles_str = ", ".join(roles) if roles else "No associated Roles"
+
+            report = f"""
+This report is being generated using the Kubernetes configuration below:
+
+Kubernetes Cluster: {Fore.YELLOW}[{cluster_name}]{Style.RESET_ALL} User: {Fore.YELLOW}[{user_name}]{Style.RESET_ALL} Namespaces: {Fore.YELLOW}[{', '.join(self.namespaces)}]{Style.RESET_ALL} Roles: {Fore.YELLOW}[{roles_str}]{Style.RESET_ALL}
+"""
+            print(report)

@@ -1,12 +1,13 @@
 from prowler.lib.logger import logger
+from prowler.providers.kubernetes.kubernetes_provider import KubernetesProvider
 from prowler.providers.kubernetes.lib.service.service import KubernetesService
 from prowler.providers.kubernetes.services.core.core_client import core_client
 
 
 ################## ControllerManager ##################
 class ControllerManager(KubernetesService):
-    def __init__(self, audit_info):
-        super().__init__(audit_info)
+    def __init__(self, provider: KubernetesProvider):
+        super().__init__(provider)
         self.client = core_client
 
         self.controllermanager_pods = self.__get_controllermanager_pods__()

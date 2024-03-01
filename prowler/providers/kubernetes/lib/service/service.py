@@ -1,7 +1,7 @@
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from prowler.lib.logger import logger
-from prowler.providers.kubernetes.kubernetes_provider_new import KubernetesProvider
+from prowler.providers.kubernetes.kubernetes_provider import KubernetesProvider
 
 MAX_WORKERS = 10
 
