@@ -527,7 +527,6 @@ def execute_checks(
                         f"Check '{check_name}' was not found for the {global_provider.provider.upper()} provider"
                     )
                 except Exception as error:
-                    traceback.print_last()
                     # TODO: add more loggin here, we need the original exception -- traceback.print_last()
                     logger.error(
                         f"{check_name} - {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
