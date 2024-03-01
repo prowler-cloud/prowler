@@ -7098,7 +7098,10 @@
           "us-west-1",
           "us-west-2"
         ],
-        "aws-cn": [],
+        "aws-cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
         "aws-us-gov": [
           "us-gov-east-1",
           "us-gov-west-1"
@@ -8412,6 +8415,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
