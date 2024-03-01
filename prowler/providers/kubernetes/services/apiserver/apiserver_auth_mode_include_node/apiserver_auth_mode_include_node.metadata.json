@@ -2,12 +2,9 @@
   "Provider": "kubernetes",
   "CheckID": "apiserver_auth_mode_include_node",
   "CheckTitle": "Ensure that the --authorization-mode argument includes Node",
-  "CheckType": [
-    "Security",
-    "Configuration"
-  ],
+  "CheckType": [],
   "ServiceName": "apiserver",
-  "SubServiceName": "Authorization",
+  "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "KubernetesAPIServer",
@@ -16,8 +13,8 @@
   "RelatedUrl": "https://kubernetes.io/docs/reference/access-authn-authz/node/",
   "Remediation": {
     "Code": {
-      "CLI": "Edit the kube-apiserver configuration to include Node in the --authorization-mode argument. Example: --authorization-mode=Node,RBAC",
-      "NativeIaC": "",
+      "CLI": "--authorization-mode=Node,RBAC",
+      "NativeIaC": "https://docs.bridgecrew.io/docs/ensure-that-the-authorization-mode-argument-includes-node",
       "Other": "",
       "Terraform": ""
     },
@@ -27,8 +24,7 @@
     }
   },
   "Categories": [
-    "Access Control",
-    "Security Best Practices"
+    "trustboundaries"
   ],
   "DependsOn": [],
   "RelatedTo": [],

@@ -2,10 +2,7 @@
   "Provider": "kubernetes",
   "CheckID": "etcd_tls_encryption",
   "CheckTitle": "Ensure that the --cert-file and --key-file arguments are set as appropriate for etcd",
-  "CheckType": [
-    "Security",
-    "Configuration"
-  ],
+  "CheckType": [],
   "ServiceName": "etcd",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
@@ -16,8 +13,8 @@
   "RelatedUrl": "https://etcd.io/docs/latest/op-guide/security/",
   "Remediation": {
     "Code": {
-      "CLI": "Edit the etcd pod specification file /etc/kubernetes/manifests/etcd.yaml on the master node and set the --cert-file and --key-file arguments appropriately.",
-      "NativeIaC": "",
+      "CLI": "--cert-file=/path/to/cert-file --key-file=/path/to/key-file",
+      "NativeIaC": "https://docs.bridgecrew.io/docs/ensure-that-the-cert-file-and-key-file-arguments-are-set-as-appropriate",
       "Other": "",
       "Terraform": ""
     },
@@ -27,8 +24,7 @@
     }
   },
   "Categories": [
-    "Cluster Security",
-    "Data Protection"
+    "encryption"
   ],
   "DependsOn": [],
   "RelatedTo": [],

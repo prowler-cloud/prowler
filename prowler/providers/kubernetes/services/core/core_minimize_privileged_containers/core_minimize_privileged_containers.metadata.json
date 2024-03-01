@@ -2,12 +2,9 @@
   "Provider": "kubernetes",
   "CheckID": "core_minimize_privileged_containers",
   "CheckTitle": "Minimize the admission of privileged containers",
-  "CheckType": [
-    "Security",
-    "Configuration"
-  ],
+  "CheckType": [],
   "ServiceName": "core",
-  "SubServiceName": "Privileged Containers",
+  "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "KubernetesPod",
@@ -27,8 +24,7 @@
     }
   },
   "Categories": [
-    "Container Security",
-    "Best Practices"
+    "container-security"
   ],
   "DependsOn": [],
   "RelatedTo": [],

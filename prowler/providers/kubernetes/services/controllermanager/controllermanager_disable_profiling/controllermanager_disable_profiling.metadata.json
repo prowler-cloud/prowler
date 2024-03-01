@@ -2,12 +2,9 @@
   "Provider": "kubernetes",
   "CheckID": "controller_manager_disable_profiling",
   "CheckTitle": "Ensure that the --profiling argument is set to false",
-  "CheckType": [
-    "Security",
-    "Configuration"
-  ],
+  "CheckType": [],
   "ServiceName": "controller-manager",
-  "SubServiceName": "Profiling Configuration",
+  "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "KubernetesControllerManager",
@@ -16,8 +13,8 @@
   "RelatedUrl": "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-controller-manager/",
   "Remediation": {
     "Code": {
-      "CLI": "Edit the controller-manager manifest to set the --profiling argument to false.",
-      "NativeIaC": "",
+      "CLI": "--profiling=false",
+      "NativeIaC": "https://docs.bridgecrew.io/docs/ensure-that-the-profiling-argument-is-set-to-false",
       "Other": "",
       "Terraform": ""
     },
@@ -27,7 +24,7 @@
     }
   },
   "Categories": [
-    "Security Best Practices"
+    "trustboundaries"
   ],
   "DependsOn": [],
   "RelatedTo": [],

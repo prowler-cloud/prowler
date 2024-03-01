@@ -2,12 +2,9 @@
   "Provider": "kubernetes",
   "CheckID": "etcd_client_cert_auth",
   "CheckTitle": "Ensure that the --client-cert-auth argument is set to true for etcd",
-  "CheckType": [
-    "Security",
-    "Configuration"
-  ],
+  "CheckType": [],
   "ServiceName": "etcd",
-  "SubServiceName": "Client Certificate Authentication",
+  "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "EtcdService",
@@ -16,8 +13,8 @@
   "RelatedUrl": "https://etcd.io/docs/latest/op-guide/security/",
   "Remediation": {
     "Code": {
-      "CLI": "Edit the etcd pod specification file to set --client-cert-auth to true. Example: --client-cert-auth=\"true\".",
-      "NativeIaC": "",
+      "CLI": "--client-cert-auth=true",
+      "NativeIaC": "https://docs.bridgecrew.io/docs/ensure-that-the-client-cert-auth-argument-is-set-to-true",
       "Other": "",
       "Terraform": ""
     },
@@ -27,8 +24,8 @@
     }
   },
   "Categories": [
-    "Data Security",
-    "Access Control"
+    "encryption",
+    "trustboundaries"
   ],
   "DependsOn": [],
   "RelatedTo": [],

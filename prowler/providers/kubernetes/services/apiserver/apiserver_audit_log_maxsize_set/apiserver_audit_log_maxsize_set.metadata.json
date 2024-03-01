@@ -2,12 +2,9 @@
   "Provider": "kubernetes",
   "CheckID": "apiserver_audit_log_maxsize_set",
   "CheckTitle": "Ensure that the --audit-log-maxsize argument is set to 100 or as appropriate",
-  "CheckType": [
-    "Security",
-    "Configuration"
-  ],
+  "CheckType": [],
   "ServiceName": "apiserver",
-  "SubServiceName": "Auditing",
+  "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "KubernetesAPIServer",
@@ -16,8 +13,8 @@
   "RelatedUrl": "https://kubernetes.io/docs/concepts/cluster-administration/audit/",
   "Remediation": {
     "Code": {
-      "CLI": "Edit the kube-apiserver configuration to set the --audit-log-maxsize argument to 100 MB or an appropriate size. Example: --audit-log-maxsize=100",
-      "NativeIaC": "",
+      "CLI": "--audit-log-maxsize=100",
+      "NativeIaC": "https://docs.bridgecrew.io/docs/ensure-that-the-audit-log-maxsize-argument-is-set-to-100-or-as-appropriate#kubernetes",
       "Other": "",
       "Terraform": ""
     },
@@ -27,8 +24,7 @@
     }
   },
   "Categories": [
-    "Logging",
-    "Compliance"
+    "logging"
   ],
   "DependsOn": [],
   "RelatedTo": [],

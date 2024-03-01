@@ -2,12 +2,9 @@
   "Provider": "kubernetes",
   "CheckID": "core_minimize_admission_hostport_containers",
   "CheckTitle": "Minimize the admission of containers which use HostPorts",
-  "CheckType": [
-    "Security",
-    "Configuration"
-  ],
+  "CheckType": [],
   "ServiceName": "core",
-  "SubServiceName": "HostPorts",
+  "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "KubernetesPod",
@@ -27,8 +24,7 @@
     }
   },
   "Categories": [
-    "Network Security",
-    "Best Practices"
+    "internet-exposed"
   ],
   "DependsOn": [],
   "RelatedTo": [],

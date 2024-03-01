@@ -2,12 +2,9 @@
   "Provider": "kubernetes",
   "CheckID": "rbac_minimize_csr_approval_access",
   "CheckTitle": "Minimize access to the approval sub-resource of certificatesigningrequests objects",
-  "CheckType": [
-    "Security",
-    "Configuration"
-  ],
+  "CheckType": [],
   "ServiceName": "RBAC",
-  "SubServiceName": "CSR Management",
+  "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "CertificateSigningRequestApproval",
@@ -16,8 +13,8 @@
   "RelatedUrl": "https://kubernetes.io/docs/concepts/security/rbac-good-practices/#csrs-and-certificate-issuing",
   "Remediation": {
     "Code": {
-      "CLI": "Review and update RBAC configurations to restrict access to the approval sub-resource of CSR objects. Ensure that only trusted users or service accounts have the required permissions.",
-      "NativeIaC": "",
+      "CLI": "",
+      "NativeIaC": "https://docs.bridgecrew.io/docs/ensure-clusterroles-that-grant-permissions-to-approve-certificatesigningrequests-are-minimized",
       "Other": "",
       "Terraform": ""
     },
@@ -27,8 +24,7 @@
     }
   },
   "Categories": [
-    "Access Control",
-    "Privilege Management"
+    "trustboundaries"
   ],
   "DependsOn": [],
   "RelatedTo": [],

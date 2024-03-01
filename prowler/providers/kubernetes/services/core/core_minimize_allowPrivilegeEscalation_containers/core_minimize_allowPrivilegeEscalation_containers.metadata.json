@@ -2,12 +2,9 @@
   "Provider": "kubernetes",
   "CheckID": "core_minimize_allowPrivilegeEscalation_containers",
   "CheckTitle": "Minimize the admission of containers with allowPrivilegeEscalation",
-  "CheckType": [
-    "Security",
-    "Configuration"
-  ],
+  "CheckType": [],
   "ServiceName": "core",
-  "SubServiceName": "Privilege Escalation Control",
+  "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "KubernetesPod",
@@ -27,8 +24,7 @@
     }
   },
   "Categories": [
-    "Container Security",
-    "Best Practices"
+    "container-security"
   ],
   "DependsOn": [],
   "RelatedTo": [],

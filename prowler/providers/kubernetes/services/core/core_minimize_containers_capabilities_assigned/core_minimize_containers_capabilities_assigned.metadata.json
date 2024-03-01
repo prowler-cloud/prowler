@@ -2,12 +2,9 @@
   "Provider": "kubernetes",
   "CheckID": "core_minimize_containers_capabilities_assigned",
   "CheckTitle": "Minimize the admission of containers with capabilities assigned",
-  "CheckType": [
-    "Security",
-    "Configuration"
-  ],
+  "CheckType": [],
   "ServiceName": "core",
-  "SubServiceName": "Capability Assignment",
+  "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "KubernetesPod",
@@ -27,8 +24,7 @@
     }
   },
   "Categories": [
-    "Container Security",
-    "Best Practices"
+    "container-security"
   ],
   "DependsOn": [],
   "RelatedTo": [],

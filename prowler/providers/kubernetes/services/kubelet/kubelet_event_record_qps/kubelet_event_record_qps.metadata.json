@@ -2,12 +2,9 @@
   "Provider": "kubernetes",
   "CheckID": "kubelet_event_record_qps",
   "CheckTitle": "Ensure that the kubelet eventRecordQPS argument is set to an appropriate level",
-  "CheckType": [
-    "Security",
-    "Configuration"
-  ],
+  "CheckType": [],
   "ServiceName": "kubelet",
-  "SubServiceName": "Event Recording",
+  "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "KubernetesKubelet",
@@ -16,8 +13,8 @@
   "RelatedUrl": "https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/",
   "Remediation": {
     "Code": {
-      "CLI": "Set the eventRecordQPS argument in the kubelet configuration file to an appropriate level that balances event capture with system performance.",
-      "NativeIaC": "",
+      "CLI": "--event-qps=<appropriate_level>",
+      "NativeIaC": "https://docs.bridgecrew.io/docs/ensure-that-the-event-qps-argument-is-set-to-0-or-a-level-which-ensures-appropriate-event-capture",
       "Other": "",
       "Terraform": ""
     },
@@ -27,8 +24,7 @@
     }
   },
   "Categories": [
-    "Event Logging",
-    "System Performance"
+    "logging"
   ],
   "DependsOn": [],
   "RelatedTo": [],
