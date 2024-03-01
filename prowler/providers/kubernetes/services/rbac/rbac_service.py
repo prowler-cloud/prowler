@@ -4,13 +4,14 @@ from kubernetes import client
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
+from prowler.providers.kubernetes.kubernetes_provider import KubernetesProvider
 from prowler.providers.kubernetes.lib.service.service import KubernetesService
 
 
 ################## Rbac ##################
 class Rbac(KubernetesService):
-    def __init__(self, audit_info):
-        super().__init__(audit_info)
+    def __init__(self, provider: KubernetesProvider):
+        super().__init__(provider)
         self.client = client.RbacAuthorizationV1Api()
 
         self.cluster_role_bindings = self.__list_cluster_role_bindings__()

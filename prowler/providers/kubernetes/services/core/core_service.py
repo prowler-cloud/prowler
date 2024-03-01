@@ -7,15 +7,16 @@ from kubernetes.client.models import V1PodSecurityContext, V1SecurityContext
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
+from prowler.providers.kubernetes.kubernetes_provider import KubernetesProvider
 from prowler.providers.kubernetes.lib.service.service import KubernetesService
 
 
 ################## Core ##################
 class Core(KubernetesService):
-    def __init__(self, audit_info):
-        super().__init__(audit_info)
+    def __init__(self, provider: KubernetesProvider):
+        super().__init__(provider)
         self.client = client.CoreV1Api(self.api_client)
-        self.namespaces = audit_info.namespaces
+        self.namespaces = provider.namespaces
         self.pods = {}
         self.__get_pods__()
         self.config_maps = {}
