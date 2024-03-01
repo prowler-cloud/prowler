@@ -2,10 +2,7 @@
   "Provider": "kubernetes",
   "CheckID": "scheduler_profiling",
   "CheckTitle": "Ensure that the --profiling argument is set to false",
-  "CheckType": [
-    "Cluster Performance",
-    "Cluster Security"
-  ],
+  "CheckType": [],
   "ServiceName": "scheduler",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
@@ -16,8 +13,8 @@
   "RelatedUrl": "https://github.com/kubernetes/community/blob/master/contributors/devel/profiling.md",
   "Remediation": {
     "Code": {
-      "CLI": "Edit the Scheduler pod specification file /etc/kubernetes/manifests/kube-scheduler.yaml and set --profiling=false",
-      "NativeIaC": "",
+      "CLI": "--profiling=false",
+      "NativeIaC": "https://docs.bridgecrew.io/docs/ensure-that-the-profiling-argument-is-set-to-false-2",
       "Other": "",
       "Terraform": ""
     },
@@ -27,8 +24,7 @@
     }
   },
   "Categories": [
-    "Performance Optimization",
-    "Security Best Practices"
+    "trustboundaries"
   ],
   "DependsOn": [],
   "RelatedTo": [],

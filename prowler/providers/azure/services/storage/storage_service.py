@@ -8,12 +8,13 @@ from azure.mgmt.storage.v2022_09_01.models import (
 )
 
 from prowler.lib.logger import logger
+from prowler.providers.azure.azure_provider import AzureProvider
 from prowler.providers.azure.lib.service.service import AzureService
 
 
 ########################## Storage
 class Storage(AzureService):
-    def __init__(self, provider):
+    def __init__(self, provider: AzureProvider):
         super().__init__(StorageManagementClient, provider)
         self.storage_accounts = self.__get_storage_accounts__()
         self.__get_blob_properties__()

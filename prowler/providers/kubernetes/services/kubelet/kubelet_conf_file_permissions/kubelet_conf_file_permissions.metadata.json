@@ -2,12 +2,9 @@
   "Provider": "kubernetes",
   "CheckID": "kubelet_conf_file_permissions",
   "CheckTitle": "Ensure kubelet.conf file permissions are set to 600 or more restrictive",
-  "CheckType": [
-    "Security",
-    "Configuration"
-  ],
+  "CheckType": [],
   "ServiceName": "kubelet",
-  "SubServiceName": "Config File Permissions",
+  "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "KubernetesWorkerNode",
@@ -27,8 +24,7 @@
     }
   },
   "Categories": [
-    "Node Security",
-    "Compliance"
+    "node-security"
   ],
   "DependsOn": [],
   "RelatedTo": [],

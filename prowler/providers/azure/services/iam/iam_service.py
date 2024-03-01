@@ -4,12 +4,13 @@ from azure.mgmt.authorization import AuthorizationManagementClient
 from azure.mgmt.authorization.v2022_04_01.models import Permission
 
 from prowler.lib.logger import logger
+from prowler.providers.azure.azure_provider import AzureProvider
 from prowler.providers.azure.lib.service.service import AzureService
 
 
 ########################## IAM
 class IAM(AzureService):
-    def __init__(self, provider):
+    def __init__(self, provider: AzureProvider):
         super().__init__(AuthorizationManagementClient, provider)
         self.roles, self.custom_roles = self.__get_roles__()
 

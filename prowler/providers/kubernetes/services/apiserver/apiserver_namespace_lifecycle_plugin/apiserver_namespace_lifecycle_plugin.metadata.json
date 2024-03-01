@@ -2,12 +2,9 @@
   "Provider": "kubernetes",
   "CheckID": "apiserver_namespace_lifecycle_plugin",
   "CheckTitle": "Ensure that the admission control plugin NamespaceLifecycle is set",
-  "CheckType": [
-    "Security",
-    "Configuration"
-  ],
+  "CheckType": [],
   "ServiceName": "apiserver",
-  "SubServiceName": "Admission Control",
+  "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "KubernetesAPIServer",
@@ -16,8 +13,8 @@
   "RelatedUrl": "https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/",
   "Remediation": {
     "Code": {
-      "CLI": "Edit the kube-apiserver configuration to ensure that NamespaceLifecycle is included in the --enable-admission-plugins argument. Remove the plugin from --disable-admission-plugins if present.",
-      "NativeIaC": "",
+      "CLI": "--enable-admission-plugins=...,NamespaceLifecycle,...",
+      "NativeIaC": "https://docs.bridgecrew.io/docs/ensure-that-the-admission-control-plugin-namespacelifecycle-is-set",
       "Other": "",
       "Terraform": ""
     },
@@ -27,8 +24,7 @@
     }
   },
   "Categories": [
-    "Namespace Management",
-    "Cluster Security"
+    "cluster-security"
   ],
   "DependsOn": [],
   "RelatedTo": [],

@@ -2,10 +2,7 @@
   "Provider": "kubernetes",
   "CheckID": "apiserver_anonymous_requests",
   "CheckTitle": "Ensure that the --anonymous-auth argument is set to false",
-  "CheckType": [
-    "Cluster Security",
-    "Authentication and Authorization"
-  ],
+  "CheckType": [],
   "ServiceName": "apiserver",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
@@ -16,8 +13,8 @@
   "RelatedUrl": "https://kubernetes.io/docs/admin/authentication/#anonymous-requests",
   "Remediation": {
     "Code": {
-      "CLI": "Edit the API server pod specification file /etc/kubernetes/manifests/kube-apiserver.yaml and set --anonymous-auth=false",
-      "NativeIaC": "",
+      "CLI": "--anonymous-auth=false",
+      "NativeIaC": "https://docs.bridgecrew.io/docs/ensure-that-the-anonymous-auth-argument-is-set-to-false-1#kubernetes",
       "Other": "",
       "Terraform": ""
     },
@@ -27,8 +24,7 @@
     }
   },
   "Categories": [
-    "Security Best Practices",
-    "Compliance"
+    "trustboundaries"
   ],
   "DependsOn": [],
   "RelatedTo": [],

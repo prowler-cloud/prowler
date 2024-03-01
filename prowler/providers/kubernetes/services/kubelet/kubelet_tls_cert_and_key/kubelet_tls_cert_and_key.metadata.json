@@ -2,12 +2,9 @@
   "Provider": "kubernetes",
   "CheckID": "kubelet_tls_cert_and_key",
   "CheckTitle": "Ensure that the kubelet TLS certificate and private key are set appropriately",
-  "CheckType": [
-    "Security",
-    "Configuration"
-  ],
+  "CheckType": [],
   "ServiceName": "kubelet",
-  "SubServiceName": "TLS Configuration",
+  "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "KubernetesKubelet",
@@ -16,8 +13,8 @@
   "RelatedUrl": "https://kubernetes.io/docs/reference/access-authn-authz/kubelet-tls-bootstrapping/",
   "Remediation": {
     "Code": {
-      "CLI": "Set the --tls-cert-file and --tls-private-key-file arguments in the kubelet configuration. Example: --tls-cert-file=<path/to/tls-certificate-file> --tls-private-key-file=<path/to/tls-key-file>.",
-      "NativeIaC": "",
+      "CLI": "--tls-cert-file=<path/to/tls-certificate-file> --tls-private-key-file=<path/to/tls-key-file>",
+      "NativeIaC": "https://docs.bridgecrew.io/docs/ensure-that-the-tls-cert-file-and-tls-private-key-file-arguments-are-set-as-appropriate-for-kubelet",
       "Other": "",
       "Terraform": ""
     },
@@ -27,8 +24,8 @@
     }
   },
   "Categories": [
-    "Data Security",
-    "Network Security"
+    "encryption",
+    "internet-exposed"
   ],
   "DependsOn": [],
   "RelatedTo": [],

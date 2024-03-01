@@ -2,12 +2,9 @@
   "Provider": "kubernetes",
   "CheckID": "apiserver_audit_log_path_set",
   "CheckTitle": "Ensure that the --audit-log-path argument is set",
-  "CheckType": [
-    "Security",
-    "Configuration"
-  ],
+  "CheckType": [],
   "ServiceName": "apiserver",
-  "SubServiceName": "Auditing",
+  "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "KubernetesAPIServer",
@@ -16,8 +13,8 @@
   "RelatedUrl": "https://kubernetes.io/docs/concepts/cluster-administration/audit/",
   "Remediation": {
     "Code": {
-      "CLI": "Edit the kube-apiserver configuration to set the --audit-log-path argument to a valid log path. Example: --audit-log-path=/var/log/apiserver/audit.log",
-      "NativeIaC": "",
+      "CLI": "--audit-log-path=/var/log/apiserver/audit.log",
+      "NativeIaC": "https://docs.bridgecrew.io/docs/ensure-that-the-audit-log-path-argument-is-set#kubernetes",
       "Other": "",
       "Terraform": ""
     },
@@ -27,8 +24,7 @@
     }
   },
   "Categories": [
-    "Logging",
-    "Compliance"
+    "logging"
   ],
   "DependsOn": [],
   "RelatedTo": [],

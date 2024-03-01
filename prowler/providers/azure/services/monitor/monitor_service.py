@@ -4,13 +4,14 @@ from azure.mgmt.monitor import MonitorManagementClient
 from azure.mgmt.monitor.models import LogSettings
 
 from prowler.lib.logger import logger
+from prowler.providers.azure.azure_provider import AzureProvider
 from prowler.providers.azure.lib.service.service import AzureService
 
 
 ########################## Monitor
 class Monitor(AzureService):
-    def __init__(self, audit_info):
-        super().__init__(MonitorManagementClient, audit_info)
+    def __init__(self, provider: AzureProvider):
+        super().__init__(MonitorManagementClient, provider)
 
         self.diagnostics_settings = self.__get_diagnostics_settings__()
 

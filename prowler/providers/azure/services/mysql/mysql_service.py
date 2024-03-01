@@ -3,13 +3,14 @@ from dataclasses import dataclass
 from azure.mgmt.rdbms.mysql_flexibleservers import MySQLManagementClient
 
 from prowler.lib.logger import logger
+from prowler.providers.azure.azure_provider import AzureProvider
 from prowler.providers.azure.lib.service.service import AzureService
 
 
 ########################## MySQL
 class MySQL(AzureService):
-    def __init__(self, audit_info):
-        super().__init__(MySQLManagementClient, audit_info)
+    def __init__(self, provider: AzureProvider):
+        super().__init__(MySQLManagementClient, provider)
 
         self.flexible_servers = self.__get_flexible_servers__()
 

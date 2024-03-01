@@ -2,12 +2,9 @@
   "Provider": "kubernetes",
   "CheckID": "kubelet_client_ca_file_set",
   "CheckTitle": "Ensure that the kubelet --client-ca-file argument is set as appropriate",
-  "CheckType": [
-    "Security",
-    "Configuration"
-  ],
+  "CheckType": [],
   "ServiceName": "kubelet",
-  "SubServiceName": "Client CA File",
+  "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "KubernetesKubelet",
@@ -16,7 +13,7 @@
   "RelatedUrl": "https://kubernetes.io/docs/reference/access-authn-authz/kubelet-authn-authz/",
   "Remediation": {
     "Code": {
-      "CLI": "Set the --client-ca-file argument in the kubelet service file on each worker node to the path of the client CA file.",
+      "CLI": "--client-ca-file=/path/to/ca-file",
       "NativeIaC": "",
       "Other": "",
       "Terraform": ""
@@ -27,8 +24,7 @@
     }
   },
   "Categories": [
-    "Security",
-    "Node Management"
+    "trustboundaries"
   ],
   "DependsOn": [],
   "RelatedTo": [],

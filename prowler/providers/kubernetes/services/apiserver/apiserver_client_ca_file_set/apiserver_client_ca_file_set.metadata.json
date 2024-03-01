@@ -2,12 +2,9 @@
   "Provider": "kubernetes",
   "CheckID": "apiserver_client_ca_file_set",
   "CheckTitle": "Ensure that the --client-ca-file argument is set as appropriate",
-  "CheckType": [
-    "Security",
-    "Configuration"
-  ],
+  "CheckType": [],
   "ServiceName": "apiserver",
-  "SubServiceName": "TLS Authentication",
+  "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "KubernetesAPIServer",
@@ -16,8 +13,8 @@
   "RelatedUrl": "https://kubernetes.io/docs/setup/best-practices/certificates/",
   "Remediation": {
     "Code": {
-      "CLI": "Edit the kube-apiserver configuration to include the --client-ca-file parameter with the appropriate CA file. Example: --client-ca-file=<path/to/client-ca-file>",
-      "NativeIaC": "",
+      "CLI": "--client-ca-file=<path/to/client-ca-file>",
+      "NativeIaC": "https://docs.bridgecrew.io/docs/ensure-that-the-client-ca-file-argument-is-set-as-appropriate-scored",
       "Other": "",
       "Terraform": ""
     },
@@ -27,8 +24,7 @@
     }
   },
   "Categories": [
-    "Access Control",
-    "TLS Configuration"
+    "encryption"
   ],
   "DependsOn": [],
   "RelatedTo": [],
