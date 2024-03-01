@@ -103,7 +103,7 @@ class Azure_Output_Options(Provider_Output_Options):
 
 
 class Gcp_Output_Options(Provider_Output_Options):
-    def __init__(self, arguments, audit_info, mutelist_file, bulk_checks_metadata):
+    def __init__(self, arguments, identity, mutelist_file, bulk_checks_metadata):
         # First call Provider_Output_Options init
         super().__init__(arguments, mutelist_file, bulk_checks_metadata)
 
@@ -112,7 +112,9 @@ class Gcp_Output_Options(Provider_Output_Options):
             not hasattr(arguments, "output_filename")
             or arguments.output_filename is None
         ):
-            self.output_filename = f"prowler-output-{getattr(audit_info.credentials, '_service_account_email', 'default')}-{output_file_timestamp}"
+            self.output_filename = (
+                f"prowler-output-{identity.profile}-{output_file_timestamp}"
+            )
         else:
             self.output_filename = arguments.output_filename
 

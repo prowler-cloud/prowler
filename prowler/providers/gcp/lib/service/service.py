@@ -8,7 +8,7 @@ from googleapiclient import discovery
 from googleapiclient.discovery import Resource
 
 from prowler.lib.logger import logger
-from prowler.providers.gcp.gcp_provider_new import GcpProvider
+from prowler.providers.gcp.gcp_provider import GcpProvider
 
 
 class GCPService:

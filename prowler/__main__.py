@@ -190,7 +190,6 @@ def prowler():
         mutelist_file = global_provider.get_mutelist(args.mutelist_file)
 
     # Set output options based on the selected provider
-
     # TODO: this is going to be removed an include in the Provider as a new common object
     audit_output_options = set_provider_output_options(
         provider, args, global_provider.identity, mutelist_file, bulk_checks_metadata
