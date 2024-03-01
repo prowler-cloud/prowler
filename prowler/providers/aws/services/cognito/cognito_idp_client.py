@@ -1,4 +1,4 @@
-from prowler.providers.aws.lib.audit_info.audit_info import current_audit_info
 from prowler.providers.aws.services.cognito.cognito_service import CognitoIDP
+from prowler.providers.common.common import get_global_provider
 
-cognito_idp_client = CognitoIDP(current_audit_info)
+cognito_idp_client = CognitoIDP(get_global_provider())

@@ -12,12 +12,13 @@ from azure.mgmt.sql.models import (
 )
 
 from prowler.lib.logger import logger
+from prowler.providers.azure.azure_provider import AzureProvider
 from prowler.providers.azure.lib.service.service import AzureService
 
 
 ########################## SQLServer
 class SQLServer(AzureService):
-    def __init__(self, provider):
+    def __init__(self, provider: AzureProvider):
         super().__init__(SqlManagementClient, provider)
         self.sql_servers = self.__get_sql_servers__()
 

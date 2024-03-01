@@ -10,8 +10,8 @@ from prowler.providers.aws.lib.service.service import AWSService
 
 ################## CognitoIDP
 class CognitoIDP(AWSService):
-    def __init__(self, audit_info):
-        super().__init__("cognito-idp", audit_info)
+    def __init__(self, provider):
+        super().__init__("cognito-idp", provider)
         self.user_pools = {}
         self.__threading_call__(self.__list_user_pools__)
         self.__describe_user_pools__()

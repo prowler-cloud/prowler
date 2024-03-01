@@ -1,4 +1,4 @@
-from prowler.providers.azure.lib.audit_info.audit_info import azure_audit_info
 from prowler.providers.azure.services.postgresql.postgresql_service import PostgreSQL
+from prowler.providers.common.common import get_global_provider
 
-postgresql_client = PostgreSQL(azure_audit_info)
+postgresql_client = PostgreSQL(get_global_provider())

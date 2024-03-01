@@ -4,14 +4,14 @@ from azure.mgmt.web import WebSiteManagementClient
 from azure.mgmt.web.models import ManagedServiceIdentity, SiteConfigResource
 
 from prowler.lib.logger import logger
-from prowler.providers.azure.lib.audit_info.models import Azure_Audit_Info
+from prowler.providers.azure.azure_provider import AzureProvider
 from prowler.providers.azure.lib.service.service import AzureService
 
 
 ########################## App
 class App(AzureService):
-    def __init__(self, audit_info: Azure_Audit_Info):
-        super().__init__(WebSiteManagementClient, audit_info)
+    def __init__(self, provider: AzureProvider):
+        super().__init__(WebSiteManagementClient, provider)
         self.apps = self.__get_apps__()
 
     def __get_apps__(self):

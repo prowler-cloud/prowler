@@ -41,7 +41,6 @@ from prowler.providers.common.provider import Provider
 
 
 class AwsProvider(Provider):
-    provider: str = "aws"
     session: AWSSession = AWSSession(
         session=None, session_config=None, original_session=None
     )
@@ -85,6 +84,7 @@ class AwsProvider(Provider):
 
     def __init__(self, arguments: Namespace):
         logger.info("Setting AWS provider ...")
+        self.provider = "aws"
         # Parse input arguments
         # Assume Role Options
         input_role = getattr(arguments, "role", None)

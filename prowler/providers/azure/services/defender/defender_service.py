@@ -5,12 +5,13 @@ from azure.mgmt.security import SecurityCenter
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
+from prowler.providers.azure.azure_provider import AzureProvider
 from prowler.providers.azure.lib.service.service import AzureService
 
 
 ########################## Defender
 class Defender(AzureService):
-    def __init__(self, provider):
+    def __init__(self, provider: AzureProvider):
         super().__init__(SecurityCenter, provider)
 
         self.pricings = self.__get_pricings__()

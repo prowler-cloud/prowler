@@ -1,4 +1,4 @@
-from prowler.providers.azure.lib.audit_info.audit_info import azure_audit_info
 from prowler.providers.azure.services.cosmosdb.cosmosdb_service import CosmosDB
+from prowler.providers.common.common import get_global_provider
 
-cosmosdb_client = CosmosDB(azure_audit_info)
+cosmosdb_client = CosmosDB(get_global_provider())

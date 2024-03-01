@@ -3,14 +3,14 @@ from dataclasses import dataclass
 from azure.mgmt.resource.policy import PolicyClient
 
 from prowler.lib.logger import logger
-from prowler.providers.azure.lib.audit_info.models import Azure_Audit_Info
+from prowler.providers.azure.azure_provider import AzureProvider
 from prowler.providers.azure.lib.service.service import AzureService
 
 
 ########################## Policy
 class Policy(AzureService):
-    def __init__(self, audit_info: Azure_Audit_Info):
-        super().__init__(PolicyClient, audit_info)
+    def __init__(self, provider: AzureProvider):
+        super().__init__(PolicyClient, provider)
         self.policy_assigments = self.__get_policy_assigments__()
 
     def __get_policy_assigments__(self):

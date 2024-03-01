@@ -1,4 +1,4 @@
-from prowler.providers.azure.lib.audit_info.audit_info import azure_audit_info
 from prowler.providers.azure.services.keyvault.keyvault_service import KeyVault
+from prowler.providers.common.common import get_global_provider
 
-keyvault_client = KeyVault(azure_audit_info)
+keyvault_client = KeyVault(get_global_provider())

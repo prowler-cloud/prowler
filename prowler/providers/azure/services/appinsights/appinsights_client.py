@@ -1,4 +1,4 @@
-from prowler.providers.azure.lib.audit_info.audit_info import azure_audit_info
 from prowler.providers.azure.services.appinsights.appinsights_service import AppInsights
+from prowler.providers.common.common import get_global_provider
 
-appinsights_client = AppInsights(azure_audit_info)
+appinsights_client = AppInsights(get_global_provider())

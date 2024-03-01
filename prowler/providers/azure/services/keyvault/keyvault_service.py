@@ -10,16 +10,18 @@ from azure.mgmt.keyvault.v2023_07_01.models import (
 )
 
 from prowler.lib.logger import logger
+from prowler.providers.azure.azure_provider import AzureProvider
 from prowler.providers.azure.lib.service.service import AzureService
 
 
 ########################## Storage
 class KeyVault(AzureService):
-    def __init__(self, audit_info):
-        super().__init__(KeyVaultManagementClient, audit_info)
-        self.key_vaults = self.__get_key_vaults__(audit_info)
+    def __init__(self, provider: AzureProvider):
+        super().__init__(KeyVaultManagementClient, provider)
+        # TODO: review this credentials assignment
+        self.key_vaults = self.__get_key_vaults__(provider)
 
-    def __get_key_vaults__(self, audit_info):
+    def __get_key_vaults__(self, provider):
         logger.info("KeyVault - Getting key_vaults...")
         key_vaults = {}
         for subscription, client in self.clients.items():
@@ -33,7 +35,7 @@ class KeyVault(AzureService):
                         resource_group, keyvault_name
                     ).properties
                     keys = self.__get_keys__(
-                        subscription, resource_group, keyvault_name, audit_info
+                        subscription, resource_group, keyvault_name, provider
                     )
                     secrets = self.__get_secrets__(
                         subscription, resource_group, keyvault_name
@@ -55,7 +57,7 @@ class KeyVault(AzureService):
                 )
         return key_vaults
 
-    def __get_keys__(self, subscription, resource_group, keyvault_name, audit_info):
+    def __get_keys__(self, subscription, resource_group, keyvault_name, provider):
         logger.info(f"KeyVault - Getting keys for {keyvault_name}...")
         keys = []
         try:
@@ -79,7 +81,8 @@ class KeyVault(AzureService):
         try:
             key_client = KeyClient(
                 vault_url=f"https://{keyvault_name}.vault.azure.net/",
-                credential=audit_info.credentials,
+                # TODO: review the following line
+                credential=provider.session,
             )
             properties = key_client.list_properties_of_keys()
             for prop in properties:
@@ -88,6 +91,7 @@ class KeyVault(AzureService):
                     if key.name == prop.name:
                         key.rotation_policy = policy
 
+        # TODO: handle different errors here since we are catching all HTTP Errors here
         except HttpResponseError:
             logger.error(
                 f"Subscription name: {subscription} -- has no access policy configured for keyvault {keyvault_name}"

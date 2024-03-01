@@ -4,14 +4,14 @@ from azure.mgmt.compute import ComputeManagementClient
 from azure.mgmt.compute.models import StorageProfile
 
 from prowler.lib.logger import logger
-from prowler.providers.azure.lib.audit_info.models import Azure_Audit_Info
+from prowler.providers.azure.azure_provider import AzureProvider
 from prowler.providers.azure.lib.service.service import AzureService
 
 
 ########################## VirtualMachines
 class VirtualMachines(AzureService):
-    def __init__(self, audit_info: Azure_Audit_Info):
-        super().__init__(ComputeManagementClient, audit_info)
+    def __init__(self, provider: AzureProvider):
+        super().__init__(ComputeManagementClient, provider)
         self.virtual_machines = self.__get_virtual_machines__()
         self.disks = self.__get_disks__()
 
