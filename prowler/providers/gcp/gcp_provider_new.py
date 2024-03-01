@@ -25,9 +25,6 @@ class GcpProvider(Provider):
         credentials_file = arguments.credentials_file
 
         self.session, self.default_project_id = self.setup_session(credentials_file)
-        if not self.default_project_id:
-            logger.critical("No Project ID associated to Google Credentials.")
-            sys.exit(1)
 
         self.project_ids = []
         accessible_projects = self.get_project_ids()
@@ -74,15 +71,7 @@ class GcpProvider(Provider):
 
     def print_credentials(self):
         # Beautify audited profile, set "default" if there is no profile set
-        try:
-            getattr(self.session, "_service_account_email")
-            profile = (
-                self.session._service_account_email
-                if self.session._service_account_email is not None
-                else "default"
-            )
-        except AttributeError:
-            profile = "default"
+        profile = getattr(self.session.credentials, "_service_account_email", "default")
 
         report = f"""
 This report is being generated using credentials below:
@@ -115,5 +104,8 @@ GCP Account: {Fore.YELLOW}[{profile}]{Style.RESET_ALL}  GCP Project IDs: {Fore.Y
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            print(
+                f"\n{Fore.YELLOW}Cloud Resource Manager API {Style.RESET_ALL}has not been used before or it is disabled.\nEnable it by visiting https://console.developers.google.com/apis/api/cloudresourcemanager.googleapis.com/ then retry."
             )
             return []
