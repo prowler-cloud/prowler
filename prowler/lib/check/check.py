@@ -522,10 +522,12 @@ def execute_checks(
 
                 # If check does not exists in the provider or is from another provider
                 except ModuleNotFoundError:
+                    # TODO: add more loggin here, we need the original exception -- traceback.print_last()
                     logger.error(
                         f"Check '{check_name}' was not found for the {global_provider.provider.upper()} provider"
                     )
                 except Exception as error:
+                    # TODO: add more loggin here, we need the original exception -- traceback.print_last()
                     logger.error(
                         f"{check_name} - {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )

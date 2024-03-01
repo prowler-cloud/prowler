@@ -1,5 +1,6 @@
 import os
 import sys
+from dataclasses import dataclass
 from typing import Any, Optional
 
 from colorama import Fore, Style
@@ -11,10 +12,20 @@ from prowler.lib.logger import logger
 from prowler.providers.common.provider import Provider
 
 
+@dataclass
+class GCPIdentityInfo:
+    profile: str
+
+
+# TODO: why do we have variables defined in the class not passed to the __init__???
 class GcpProvider(Provider):
+    # TODO: should we move session and identity to the Provider parent class?
+    provider = "gcp"
     session: Credentials
     default_project_id: str
     project_ids: list
+    # TODO: review this since we have to create an identity object
+    identity: GCPIdentityInfo
     audit_resources: Optional[Any]
     audit_metadata: Optional[Any]
     audit_config: Optional[dict]
@@ -45,6 +56,11 @@ class GcpProvider(Provider):
             # If not projects were input, all accessible projects are scanned by default
             self.project_ids = accessible_projects
 
+        self.identity = GCPIdentityInfo(
+            profile=getattr(self.session, "_service_account_email", "default")
+        )
+
+        # TODO: move this to the parent class or the main
         if not arguments.only_logs:
             self.print_credentials()
 
@@ -71,12 +87,11 @@ class GcpProvider(Provider):
 
     def print_credentials(self):
         # Beautify audited profile, set "default" if there is no profile set
-        profile = getattr(self.session.credentials, "_service_account_email", "default")
 
         report = f"""
 This report is being generated using credentials below:
 
-GCP Account: {Fore.YELLOW}[{profile}]{Style.RESET_ALL}  GCP Project IDs: {Fore.YELLOW}[{", ".join(self.project_ids)}]{Style.RESET_ALL}
+GCP Account: {Fore.YELLOW}[{self.identity.profile}]{Style.RESET_ALL}  GCP Project IDs: {Fore.YELLOW}[{", ".join(self.project_ids)}]{Style.RESET_ALL}
 """
         print(report)
 

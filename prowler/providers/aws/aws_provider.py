@@ -40,6 +40,7 @@ from prowler.providers.aws.models import (
 from prowler.providers.common.provider import Provider
 
 
+# TODO: why do we have variables defined in the class not passed to the __init__???
 class AwsProvider(Provider):
     session: AWSSession = AWSSession(
         session=None, session_config=None, original_session=None

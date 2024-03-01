@@ -15,6 +15,7 @@ from prowler.providers.azure.models import AzureIdentityInfo, AzureRegionConfig
 from prowler.providers.common.provider import Provider
 
 
+# TODO: why do we have variables defined in the class not passed to the __init__???
 class AzureProvider(Provider):
     session: DefaultAzureCredential
     identity: AzureIdentityInfo
