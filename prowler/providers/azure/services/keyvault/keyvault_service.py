@@ -91,6 +91,7 @@ class KeyVault(AzureService):
                     if key.name == prop.name:
                         key.rotation_policy = policy
 
+        # TODO: handle different errors here since we are catching all HTTP Errors here
         except HttpResponseError:
             logger.error(
                 f"Subscription name: {subscription} -- has no access policy configured for keyvault {keyvault_name}"
