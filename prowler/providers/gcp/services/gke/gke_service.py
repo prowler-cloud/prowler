@@ -6,7 +6,7 @@ from prowler.providers.gcp.lib.service.service import GCPService
 
 ################## GKE
 class GKE(GCPService):
-    def __init__(self, audit_info):
+    def __init__(self, provider):
         super().__init__("container", audit_info, api_version="v1beta1")
         self.locations = []
         self.__get_locations__()

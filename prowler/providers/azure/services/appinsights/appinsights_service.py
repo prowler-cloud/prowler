@@ -3,14 +3,14 @@ from dataclasses import dataclass
 from azure.mgmt.applicationinsights import ApplicationInsightsManagementClient
 
 from prowler.lib.logger import logger
-from prowler.providers.azure.lib.audit_info.models import Azure_Audit_Info
+from prowler.providers.azure.azure_provider import AzureProvider
 from prowler.providers.azure.lib.service.service import AzureService
 
 
 ########################## AppInsights
 class AppInsights(AzureService):
-    def __init__(self, audit_info: Azure_Audit_Info):
-        super().__init__(ApplicationInsightsManagementClient, audit_info)
+    def __init__(self, provider: AzureProvider):
+        super().__init__(ApplicationInsightsManagementClient, provider)
         self.components = self.__get_components__()
 
     def __get_components__(self):

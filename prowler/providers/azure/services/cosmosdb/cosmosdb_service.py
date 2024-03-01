@@ -4,12 +4,13 @@ from azure.mgmt.cosmosdb import CosmosDBManagementClient
 from azure.mgmt.cosmosdb.models import PrivateEndpointConnection
 
 from prowler.lib.logger import logger
+from prowler.providers.azure.azure_provider import AzureProvider
 from prowler.providers.azure.lib.service.service import AzureService
 
 
 class CosmosDB(AzureService):
-    def __init__(self, audit_info):
-        super().__init__(CosmosDBManagementClient, audit_info)
+    def __init__(self, provider: AzureProvider):
+        super().__init__(CosmosDBManagementClient, provider)
         self.accounts = self.__get_accounts__()
 
     def __get_accounts__(self):
