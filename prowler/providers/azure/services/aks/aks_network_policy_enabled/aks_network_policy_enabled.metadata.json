@@ -1,0 +1,30 @@
+{
+  "Provider": "azure",
+  "CheckID": "aks_network_policy_enabled",
+  "CheckTitle": "<CheckTitle>",
+  "CheckType": [],
+  "ServiceName": "aks",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "<ResourceType>",
+  "Description": "<CIS description>",
+  "Risk": "<CIS Rationale>",
+  "RelatedUrl": "<Microsoft URL>",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "<Suele ser Trend Micro>",
+      "Terraform": "<BridgeCrew>"
+    },
+    "Recommendation": {
+      "Text": "<CIS Remediation>",
+      "Url": ""
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "CIS Impact (a veces no esta)"
+}
