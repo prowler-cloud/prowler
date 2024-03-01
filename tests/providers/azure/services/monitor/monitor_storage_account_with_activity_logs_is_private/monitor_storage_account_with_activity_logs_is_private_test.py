@@ -134,16 +134,22 @@ class Test_monitor_storage_account_with_activity_logs_is_private:
                 assert len(result) == 2
                 assert result[0].subscription == AZURE_SUBSCRIPTION
                 assert result[0].status == "FAIL"
-                assert result[0].resource_id == "Monitor"
-                assert result[0].resource_name == "Monitor"
+                assert (
+                    result[0].resource_id
+                    == "/subscriptions/1234a5-123a-123a-123a-1234567890ab/resourceGroups/rg/providers/Microsoft.Storage/storageAccounts/storageaccountname1"
+                )
+                assert result[0].resource_name == "storageaccountname1"
                 assert (
                     result[0].status_extended
                     == f"Blob public access enabled in storage account {storage_client.storage_accounts[AZURE_SUBSCRIPTION][0].name} storing activity logs in subscription {AZURE_SUBSCRIPTION}."
                 )
                 assert result[1].subscription == AZURE_SUBSCRIPTION
                 assert result[1].status == "PASS"
-                assert result[1].resource_id == "Monitor"
-                assert result[1].resource_name == "Monitor"
+                assert (
+                    result[1].resource_id
+                    == "/subscriptions/1224a5-123a-123a-123a-1234567890ab/resourceGroups/rg/providers/Microsoft.Storage/storageAccounts/storageaccountname2"
+                )
+                assert result[1].resource_name == "storageaccountname2"
                 assert (
                     result[1].status_extended
                     == f"Blob public access disabled in storage account {storage_client.storage_accounts[AZURE_SUBSCRIPTION][1].name} storing activity logs in subscription {AZURE_SUBSCRIPTION}."
