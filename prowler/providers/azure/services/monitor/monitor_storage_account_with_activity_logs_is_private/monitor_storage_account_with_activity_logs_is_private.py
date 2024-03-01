@@ -33,12 +33,10 @@ class monitor_storage_account_with_activity_logs_is_private(Check):
                         report.resource_name = "Monitor"
                         report.resource_id = "Monitor"
                         if storage_account.allow_blob_public_access:
-                            print("Entra")
                             report.status = "FAIL"
                             report.status_extended = f"Blob public access enabled in storage account {storage_account.name} storing activity logs in subscription {subscription_name}."
                             findings.append(report)
                         else:
-                            print("Entra else")
                             report.status = "PASS"
                             report.status_extended = f"Blob public access disabled in storage account {storage_account.name} storing activity logs in subscription {subscription_name}."
                             findings.append(report)
