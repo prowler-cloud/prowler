@@ -37,15 +37,7 @@ class Test_monitor_storage_account_with_activity_logs_cmk_encrypted:
 
             check = monitor_storage_account_with_activity_logs_cmk_encrypted()
             result = check.execute()
-            assert len(result) == 1
-            assert result[0].subscription == AZURE_SUBSCRIPTION
-            assert result[0].status == "PASS"
-            assert result[0].resource_id == "Monitor"
-            assert result[0].resource_name == "Monitor"
-            assert (
-                result[0].status_extended
-                == f"Encryption with CMK in subscription {AZURE_SUBSCRIPTION} is not necessary."
-            )
+            assert len(result) == 0
 
     def test_diagnostic_settings_configured(self):
         monitor_client = mock.MagicMock
@@ -142,15 +134,21 @@ class Test_monitor_storage_account_with_activity_logs_cmk_encrypted:
                 assert len(result) == 2
                 assert result[0].subscription == AZURE_SUBSCRIPTION
                 assert result[0].status == "PASS"
-                assert result[0].resource_id == "Monitor"
-                assert result[0].resource_name == "Monitor"
+                assert result[0].resource_name == "storageaccountname1"
+                assert (
+                    result[0].resource_id
+                    == "/subscriptions/1234a5-123a-123a-123a-1234567890ab/resourceGroups/rg/providers/Microsoft.Storage/storageAccounts/storageaccountname1"
+                )
                 assert (
                     result[0].status_extended
                     == f"Storage account {storage_client.storage_accounts[AZURE_SUBSCRIPTION][0].name} storing activity log in subscription {AZURE_SUBSCRIPTION} is encrypted with Customer Managed Key or not necessary."
                 )
                 assert result[1].status == "FAIL"
-                assert result[1].resource_id == "Monitor"
-                assert result[1].resource_name == "Monitor"
+                assert result[1].resource_name == "storageaccountname2"
+                assert (
+                    result[1].resource_id
+                    == "/subscriptions/1224a5-123a-123a-123a-1234567890ab/resourceGroups/rg/providers/Microsoft.Storage/storageAccounts/storageaccountname2"
+                )
                 assert (
                     result[1].status_extended
                     == f"Storage account {storage_client.storage_accounts[AZURE_SUBSCRIPTION][1].name} storing activity log in subscription {AZURE_SUBSCRIPTION} is not encrypted with Customer Managed Key."
