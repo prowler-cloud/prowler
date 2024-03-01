@@ -32,6 +32,7 @@ class KubernetesProvider(Provider):
             arguments (dict): A dictionary containing configuration arguments.
         """
         logger.info("Instantiating Kubernetes Provider ...")
+        self.provider = "kubernetes"
         self.api_client, self.context = self.setup_session(
             arguments.kubeconfig_file, arguments.context
         )
