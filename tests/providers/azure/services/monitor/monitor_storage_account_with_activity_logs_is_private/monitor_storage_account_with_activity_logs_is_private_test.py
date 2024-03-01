@@ -37,15 +37,7 @@ class Test_monitor_storage_account_with_activity_logs_is_private:
 
             check = monitor_storage_account_with_activity_logs_is_private()
             result = check.execute()
-            assert len(result) == 1
-            assert result[0].subscription == AZURE_SUBSCRIPTION
-            assert result[0].status == "PASS"
-            assert result[0].resource_id == "Monitor"
-            assert result[0].resource_name == "Monitor"
-            assert (
-                result[0].status_extended
-                == f"Blob public access disabled in storage account storing activity log in subscription {AZURE_SUBSCRIPTION} or not necessary."
-            )
+            assert len(result) == 0
 
     def test_diagnostic_settings_configured(self):
         monitor_client = mock.MagicMock

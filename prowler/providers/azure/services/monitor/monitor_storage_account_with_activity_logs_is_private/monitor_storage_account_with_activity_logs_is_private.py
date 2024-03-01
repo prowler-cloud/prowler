@@ -11,15 +11,6 @@ class monitor_storage_account_with_activity_logs_is_private(Check):
             subscription_name,
             diagnostic_settings,
         ) in monitor_client.diagnostics_settings.items():
-            if not diagnostic_settings:
-                report = Check_Report_Azure(self.metadata())
-                report.subscription = subscription_name
-                report.resource_name = "Monitor"
-                report.resource_id = "Monitor"
-                report.status = "PASS"
-                report.status_extended = f"Blob public access disabled in storage account storing activity log in subscription {subscription_name} or not necessary."
-                findings.append(report)
-                continue
             for diagnostic_setting in diagnostic_settings:
                 sa_id = diagnostic_setting.storage_account_id  # sa = storage account
                 elements = sa_id.split("/")
@@ -35,10 +26,10 @@ class monitor_storage_account_with_activity_logs_is_private(Check):
                         if storage_account.allow_blob_public_access:
                             report.status = "FAIL"
                             report.status_extended = f"Blob public access enabled in storage account {storage_account.name} storing activity logs in subscription {subscription_name}."
-                            findings.append(report)
                         else:
                             report.status = "PASS"
                             report.status_extended = f"Blob public access disabled in storage account {storage_account.name} storing activity logs in subscription {subscription_name}."
-                            findings.append(report)
+
+                        findings.append(report)
 
         return findings
