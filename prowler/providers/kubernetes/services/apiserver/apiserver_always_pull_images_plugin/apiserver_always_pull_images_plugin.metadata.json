@@ -2,12 +2,9 @@
   "Provider": "kubernetes",
   "CheckID": "apiserver_always_pull_images_plugin",
   "CheckTitle": "Ensure that the admission control plugin AlwaysPullImages is set",
-  "CheckType": [
-    "Security",
-    "Configuration"
-  ],
+  "CheckType": [],
   "ServiceName": "apiserver",
-  "SubServiceName": "Admission Control",
+  "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "KubernetesAPIServer",
@@ -16,8 +13,8 @@
   "RelatedUrl": "https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#alwayspullimages",
   "Remediation": {
     "Code": {
-      "CLI": "Edit the kube-apiserver configuration to include AlwaysPullImages in the --enable-admission-plugins argument. Example: --enable-admission-plugins=...,AlwaysPullImages,...",
-      "NativeIaC": "",
+      "CLI": "--enable-admission-plugins=...,AlwaysPullImages,...",
+      "NativeIaC": "https://docs.bridgecrew.io/docs/ensure-that-the-admission-control-plugin-alwayspullimages-is-set#kubernetes",
       "Other": "",
       "Terraform": ""
     },
@@ -27,8 +24,7 @@
     }
   },
   "Categories": [
-    "Image Security",
-    "Cluster Security"
+    "cluster-security"
   ],
   "DependsOn": [],
   "RelatedTo": [],

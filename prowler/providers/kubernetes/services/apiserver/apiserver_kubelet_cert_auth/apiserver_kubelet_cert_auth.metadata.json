@@ -2,12 +2,9 @@
   "Provider": "kubernetes",
   "CheckID": "apiserver_kubelet_cert_auth",
   "CheckTitle": "Ensure that the --kubelet-certificate-authority argument is set as appropriate",
-  "CheckType": [
-    "Security",
-    "Configuration"
-  ],
+  "CheckType": [],
   "ServiceName": "apiserver",
-  "SubServiceName": "TLS Verification",
+  "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "KubernetesAPIServer",
@@ -16,8 +13,8 @@
   "RelatedUrl": "https://kubernetes.io/docs/setup/best-practices/certificates/",
   "Remediation": {
     "Code": {
-      "CLI": "Set the --kubelet-certificate-authority argument in the kube-apiserver configuration to the path of the CA certificate file. Example: --kubelet-certificate-authority=/path/to/ca-file",
-      "NativeIaC": "",
+      "CLI": "--kubelet-certificate-authority=/path/to/ca-file",
+      "NativeIaC": "https://docs.bridgecrew.io/docs/ensure-that-the-kubelet-certificate-authority-argument-is-set-as-appropriate",
       "Other": "",
       "Terraform": ""
     },
@@ -27,8 +24,8 @@
     }
   },
   "Categories": [
-    "Cluster Security",
-    "Communication Security"
+    "cluster-security",
+    "internet-exposed"
   ],
   "DependsOn": [],
   "RelatedTo": [],

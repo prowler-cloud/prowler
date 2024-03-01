@@ -2,12 +2,9 @@
   "Provider": "kubernetes",
   "CheckID": "controllermanager_root_ca_file_set",
   "CheckTitle": "Ensure that the --root-ca-file argument is set as appropriate",
-  "CheckType": [
-    "Security",
-    "Configuration"
-  ],
+  "CheckType": [],
   "ServiceName": "controller-manager",
-  "SubServiceName": "Root CA File Configuration",
+  "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "KubernetesControllerManager",
@@ -16,8 +13,8 @@
   "RelatedUrl": "https://kubernetes.io/docs/setup/best-practices/certificates/",
   "Remediation": {
     "Code": {
-      "CLI": "Edit the controller-manager manifest to set the --root-ca-file argument to the appropriate certificate bundle file.",
-      "NativeIaC": "",
+      "CLI": "--root-ca-file=/path/to/ca-file",
+      "NativeIaC": "https://docs.bridgecrew.io/docs/ensure-that-the-root-ca-file-argument-is-set-as-appropriate",
       "Other": "",
       "Terraform": ""
     },
@@ -27,8 +24,8 @@
     }
   },
   "Categories": [
-    "Data Security",
-    "Network Security"
+    "encryption",
+    "internet-exposed"
   ],
   "DependsOn": [],
   "RelatedTo": [],

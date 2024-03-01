@@ -2,10 +2,7 @@
   "Provider": "kubernetes",
   "CheckID": "controllermanager_garbage_collection",
   "CheckTitle": "Ensure that the --terminated-pod-gc-threshold argument is set as appropriate",
-  "CheckType": [
-    "Resource Management",
-    "Performance Optimization"
-  ],
+  "CheckType": [],
   "ServiceName": "controller-manager",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
@@ -16,8 +13,8 @@
   "RelatedUrl": "https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#pod-garbage-collection",
   "Remediation": {
     "Code": {
-      "CLI": "Edit the Controller Manager pod specification file /etc/kubernetes/manifests/kube-controller-manager.yaml and set --terminated-pod-gc-threshold to an appropriate value, e.g., --terminated-pod-gc-threshold=10",
-      "NativeIaC": "",
+      "CLI": "--terminated-pod-gc-threshold=10",
+      "NativeIaC": "https://docs.bridgecrew.io/docs/ensure-that-the-terminated-pod-gc-threshold-argument-is-set-as-appropriate",
       "Other": "",
       "Terraform": ""
     },
@@ -27,8 +24,7 @@
     }
   },
   "Categories": [
-    "Cluster Stability",
-    "Operational Best Practices"
+    "cluster-security"
   ],
   "DependsOn": [],
   "RelatedTo": [],

@@ -2,12 +2,9 @@
   "Provider": "kubernetes",
   "CheckID": "apiserver_etcd_tls_config",
   "CheckTitle": "Ensure that the --etcd-certfile and --etcd-keyfile arguments are set as appropriate",
-  "CheckType": [
-    "Security",
-    "Configuration"
-  ],
+  "CheckType": [],
   "ServiceName": "apiserver",
-  "SubServiceName": "etcd Connection",
+  "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "KubernetesAPIServer",
@@ -16,8 +13,8 @@
   "RelatedUrl": "https://kubernetes.io/docs/tasks/administer-cluster/configure-upgrade-etcd/",
   "Remediation": {
     "Code": {
-      "CLI": "Edit the kube-apiserver configuration to include TLS parameters for etcd connection. Example: --etcd-certfile=<path/to/client-certificate-file> --etcd-keyfile=<path/to/client-key-file>",
-      "NativeIaC": "",
+      "CLI": "--etcd-certfile=<path/to/client-certificate-file> --etcd-keyfile=<path/to/client-key-file>",
+      "NativeIaC": "https://docs.bridgecrew.io/docs/ensure-that-the-etcd-certfile-and-etcd-keyfile-arguments-are-set-as-appropriate",
       "Other": "",
       "Terraform": ""
     },
@@ -27,8 +24,7 @@
     }
   },
   "Categories": [
-    "Data Security",
-    "Configuration Optimization"
+    "encryption"
   ],
   "DependsOn": [],
   "RelatedTo": [],

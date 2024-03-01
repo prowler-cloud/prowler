@@ -2,12 +2,9 @@
   "Provider": "kubernetes",
   "CheckID": "etcd_peer_tls_config",
   "CheckTitle": "Ensure that the --peer-cert-file and --peer-key-file arguments are set as appropriate for etcd",
-  "CheckType": [
-    "Security",
-    "Configuration"
-  ],
+  "CheckType": [],
   "ServiceName": "etcd",
-  "SubServiceName": "Peer TLS Configuration",
+  "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "EtcdService",
@@ -16,8 +13,8 @@
   "RelatedUrl": "https://etcd.io/docs/latest/op-guide/security/",
   "Remediation": {
     "Code": {
-      "CLI": "Configure peer TLS encryption by editing the etcd pod specification file with appropriate certificate and key files. Example: --peer-client-file=</path/to/peer-cert-file> --peer-key-file=</path/to/peer-key-file>.",
-      "NativeIaC": "",
+      "CLI": "--peer-client-file=</path/to/peer-cert-file> --peer-key-file=</path/to/peer-key-file>",
+      "NativeIaC": "https://docs.bridgecrew.io/docs/ensure-that-the-peer-cert-file-and-peer-key-file-arguments-are-set-as-appropriate",
       "Other": "",
       "Terraform": ""
     },
@@ -27,8 +24,8 @@
     }
   },
   "Categories": [
-    "Data Security",
-    "Network Security"
+    "encryption",
+    "internet-exposed"
   ],
   "DependsOn": [],
   "RelatedTo": [],

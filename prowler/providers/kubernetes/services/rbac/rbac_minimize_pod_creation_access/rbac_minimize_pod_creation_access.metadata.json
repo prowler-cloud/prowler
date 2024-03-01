@@ -2,12 +2,9 @@
   "Provider": "kubernetes",
   "CheckID": "rbac_minimize_pod_creation_access",
   "CheckTitle": "Minimize access to create pods",
-  "CheckType": [
-    "Security",
-    "Configuration"
-  ],
+  "CheckType": [],
   "ServiceName": "RBAC",
-  "SubServiceName": "Pod Creation Access Management",
+  "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Pod",
@@ -16,7 +13,7 @@
   "RelatedUrl": "https://kubernetes.io/docs/reference/access-authn-authz/rbac/",
   "Remediation": {
     "Code": {
-      "CLI": "Review and update RBAC settings to restrict pod creation access to necessary users only. Use `kubectl get clusterrolebindings -o yaml` and `kubectl get rolebindings --all-namespaces -o yaml` to identify users with pod creation privileges.",
+      "CLI": "",
       "NativeIaC": "",
       "Other": "",
       "Terraform": ""
@@ -27,8 +24,7 @@
     }
   },
   "Categories": [
-    "Access Control",
-    "Policy Management"
+    "trustboundaries"
   ],
   "DependsOn": [],
   "RelatedTo": [],

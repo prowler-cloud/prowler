@@ -2,12 +2,9 @@
   "Provider": "kubernetes",
   "CheckID": "apiserver_kubelet_tls_auth",
   "CheckTitle": "Ensure that the --kubelet-client-certificate and --kubelet-client-key arguments are set as appropriate",
-  "CheckType": [
-    "Security",
-    "Configuration"
-  ],
+  "CheckType": [],
   "ServiceName": "apiserver",
-  "SubServiceName": "TLS Authentication",
+  "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "KubernetesAPIServer",
@@ -16,8 +13,8 @@
   "RelatedUrl": "https://kubernetes.io/docs/setup/best-practices/certificates/",
   "Remediation": {
     "Code": {
-      "CLI": "Set the --kubelet-client-certificate and --kubelet-client-key arguments in the kube-apiserver configuration. Example: --kubelet-client-certificate=/path/to/client-certificate-file --kubelet-client-key=/path/to/client-key-file",
-      "NativeIaC": "",
+      "CLI": "--kubelet-client-certificate=/path/to/client-certificate-file --kubelet-client-key=/path/to/client-key-file",
+      "NativeIaC": "https://docs.bridgecrew.io/docs/ensure-that-the-kubelet-client-certificate-and-kubelet-client-key-arguments-are-set-as-appropriate",
       "Other": "",
       "Terraform": ""
     },
@@ -27,8 +24,8 @@
     }
   },
   "Categories": [
-    "Cluster Security",
-    "Communication Security"
+    "cluster-security",
+    "internet-exposed"
   ],
   "DependsOn": [],
   "RelatedTo": [],

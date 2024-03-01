@@ -2,12 +2,9 @@
   "Provider": "kubernetes",
   "CheckID": "apiserver_event_rate_limit",
   "CheckTitle": "Ensure that the admission control plugin EventRateLimit is set",
-  "CheckType": [
-    "Security",
-    "Configuration"
-  ],
+  "CheckType": [],
   "ServiceName": "apiserver",
-  "SubServiceName": "Admission Control",
+  "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "KubernetesAPIServer",
@@ -16,8 +13,8 @@
   "RelatedUrl": "https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/",
   "Remediation": {
     "Code": {
-      "CLI": "Edit the kube-apiserver configuration to include EventRateLimit in the --enable-admission-plugins argument and specify a configuration file. Example: --enable-admission-plugins=...,EventRateLimit,... --admission-control-config-file=/path/to/configuration/file",
-      "NativeIaC": "",
+      "CLI": "--enable-admission-plugins=...,EventRateLimit,... --admission-control-config-file=/path/to/configuration/file",
+      "NativeIaC": "https://docs.bridgecrew.io/docs/ensure-that-the-admission-control-plugin-eventratelimit-is-set",
       "Other": "",
       "Terraform": ""
     },
@@ -27,8 +24,7 @@
     }
   },
   "Categories": [
-    "Resource Management",
-    "Security Best Practices"
+    "trustboundaries"
   ],
   "DependsOn": [],
   "RelatedTo": [],
