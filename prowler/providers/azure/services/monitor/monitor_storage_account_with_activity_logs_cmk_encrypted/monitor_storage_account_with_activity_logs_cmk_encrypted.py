@@ -12,13 +12,10 @@ class monitor_storage_account_with_activity_logs_cmk_encrypted(Check):
             diagnostic_settings,
         ) in monitor_client.diagnostics_settings.items():
             for diagnostic_setting in diagnostic_settings:
-                sa_id = diagnostic_setting.storage_account_id  # sa = storage account
-                elements = sa_id.split("/")
-                sa_name = elements[8]
                 for storage_account in storage_client.storage_accounts[
                     subscription_name
                 ]:
-                    if storage_account.name == sa_name:
+                    if storage_account.name == diagnostic_setting.storage_account_name:
                         report = Check_Report_Azure(self.metadata())
                         report.subscription = subscription_name
                         report.resource_name = storage_account.name
