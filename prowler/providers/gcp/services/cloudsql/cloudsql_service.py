@@ -1,12 +1,13 @@
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
+from prowler.providers.gcp.gcp_provider import GcpProvider
 from prowler.providers.gcp.lib.service.service import GCPService
 
 
 ################## CloudSQL
 class CloudSQL(GCPService):
-    def __init__(self, provider):
+    def __init__(self, provider: GcpProvider):
         super().__init__("sqladmin", provider)
         self.instances = []
         self.__get_instances__()

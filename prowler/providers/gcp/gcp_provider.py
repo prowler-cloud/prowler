@@ -1,23 +1,30 @@
 import os
 import sys
+from typing import Any, Optional
 
 from colorama import Fore, Style
 from google import auth
+from google.oauth2.credentials import Credentials
 from googleapiclient import discovery
 
 from prowler.lib.logger import logger
+from prowler.providers.common.provider import Provider
 
 
-class GCP_Provider:
-    def __init__(
-        self,
-        credentials_file: str,
-        input_project_ids: list,
-    ):
+class GcpProvider(Provider):
+    session: Credentials
+    default_project_id: str
+    project_ids: list
+    audit_resources: Optional[Any]
+    audit_metadata: Optional[Any]
+    audit_config: Optional[dict]
+
+    def __init__(self, arguments):
         logger.info("Instantiating GCP Provider ...")
-        self.credentials, self.default_project_id = self.__set_credentials__(
-            credentials_file
-        )
+        input_project_ids = arguments.project_ids
+        credentials_file = arguments.credentials_file
+
+        self.session, self.default_project_id = self.setup_session(credentials_file)
 
         self.project_ids = []
         accessible_projects = self.get_project_ids()
@@ -38,7 +45,10 @@ class GCP_Provider:
             # If not projects were input, all accessible projects are scanned by default
             self.project_ids = accessible_projects
 
-    def __set_credentials__(self, credentials_file):
+        if not arguments.only_logs:
+            self.print_credentials()
+
+    def setup_session(self, credentials_file):
         try:
             if credentials_file:
                 self.__set_gcp_creds_env_var__(credentials_file)
@@ -59,15 +69,23 @@ class GCP_Provider:
         client_secrets_path = os.path.abspath(credentials_file)
         os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = client_secrets_path
 
-    def get_credentials(self):
-        return self.credentials, self.default_project_id, self.project_ids
+    def print_credentials(self):
+        # Beautify audited profile, set "default" if there is no profile set
+        profile = getattr(self.session.credentials, "_service_account_email", "default")
+
+        report = f"""
+This report is being generated using credentials below:
+
+GCP Account: {Fore.YELLOW}[{profile}]{Style.RESET_ALL}  GCP Project IDs: {Fore.YELLOW}[{", ".join(self.project_ids)}]{Style.RESET_ALL}
+"""
+        print(report)
 
     def get_project_ids(self):
         try:
             project_ids = []
 
             service = discovery.build(
-                "cloudresourcemanager", "v1", credentials=self.credentials
+                "cloudresourcemanager", "v1", credentials=self.session
             )
 
             request = service.projects().list()

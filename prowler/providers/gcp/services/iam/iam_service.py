@@ -3,6 +3,7 @@ from datetime import datetime
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
+from prowler.providers.gcp.gcp_provider import GcpProvider
 from prowler.providers.gcp.lib.service.service import GCPService
 from prowler.providers.gcp.services.cloudresourcemanager.cloudresourcemanager_client import (
     cloudresourcemanager_client,
@@ -11,7 +12,7 @@ from prowler.providers.gcp.services.cloudresourcemanager.cloudresourcemanager_cl
 
 ################## IAM
 class IAM(GCPService):
-    def __init__(self, provider):
+    def __init__(self, provider: GcpProvider):
         super().__init__(__class__.__name__, provider)
         self.service_accounts = []
         self.__get_service_accounts__()
@@ -103,7 +104,7 @@ class ServiceAccount(BaseModel):
 
 ################## AccessApproval
 class AccessApproval(GCPService):
-    def __init__(self, provider):
+    def __init__(self, provider: GcpProvider):
         super().__init__(__class__.__name__, provider)
         self.settings = {}
         self.__get_settings__()
@@ -135,7 +136,7 @@ class Setting(BaseModel):
 
 ################## EssentialContacts
 class EssentialContacts(GCPService):
-    def __init__(self, provider):
+    def __init__(self, provider: GcpProvider):
         super().__init__(__class__.__name__, provider)
         self.organizations = []
         self.__get_contacts__()

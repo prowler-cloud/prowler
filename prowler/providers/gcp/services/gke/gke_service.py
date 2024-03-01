@@ -1,13 +1,14 @@
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
+from prowler.providers.gcp.gcp_provider import GcpProvider
 from prowler.providers.gcp.lib.service.service import GCPService
 
 
 ################## GKE
 class GKE(GCPService):
-    def __init__(self, audit_info):
-        super().__init__("container", audit_info, api_version="v1beta1")
+    def __init__(self, provider: GcpProvider):
+        super().__init__("container", provider, api_version="v1beta1")
         self.locations = []
         self.__get_locations__()
         self.clusters = {}
