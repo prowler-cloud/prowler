@@ -1,5 +1,6 @@
 import sys
 from importlib import import_module
+from pkgutil import iter_modules
 
 from prowler.lib.logger import logger
 
@@ -10,12 +11,10 @@ global_provider = None
 
 def get_available_providers() -> list[str]:
     """get_available_providers returns a list of the available providers"""
-    providers_list = import_module(f"{providers_path}")
-    providers = [
-        provider
-        for provider in providers_list.__dict__
-        if not (provider.startswith("__") or provider.startswith("common"))
-    ]
+    providers = []
+    for _, provider, _ in iter_modules([providers_path.replace(".", "/")]):
+        if provider != "common":
+            providers.append(provider)
     return providers
 
 
