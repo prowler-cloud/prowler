@@ -15,7 +15,7 @@ class defender_container_images_vulnerabilities_scaned(Check):
             report.resource_id = "Microsoft.Security/assessments"
             report.resource_name = "Microsoft.Security/assessments"
             report.subscription = subscription_name
-            report.status_extended = f"Azure running container images should have vulnerabilities resolved (powered by Microsoft Defender Vulnerability Management) is not enabled in subscription {subscription_name}."
+            report.status_extended = f"Azure running container images should have vulnerabilities resolved (powered by Microsoft Defender Vulnerability Management) is not enabled in subscription '{subscription_name}'."
             if (
                 "Azure running container images should have vulnerabilities resolved (powered by Microsoft Defender Vulnerability Management)"
                 in assessments
@@ -26,7 +26,6 @@ class defender_container_images_vulnerabilities_scaned(Check):
                 report.resource_id = assessments[
                     "Azure running container images should have vulnerabilities resolved (powered by Microsoft Defender Vulnerability Management)"
                 ].resource_id
-                report.status_extended = f"Endpoint protection is set up in all VMs in subscription {subscription_name}."
 
                 if (
                     assessments[
@@ -35,8 +34,8 @@ class defender_container_images_vulnerabilities_scaned(Check):
                     != "Unhealthy"
                 ):
                     report.status = "PASS"
-                    report.status_extended = f"Azure running container images should have vulnerabilities resolved (powered by Microsoft Defender Vulnerability Management) is enabled in subscription {subscription_name}."
+                    report.status_extended = f"Azure running container images should have vulnerabilities resolved (powered by Microsoft Defender Vulnerability Management) is enabled in subscription '{subscription_name}'."
 
-                findings.append(report)
+            findings.append(report)
 
         return findings
