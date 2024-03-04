@@ -1,7 +1,7 @@
 import os
 import sys
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Optional
 
 from colorama import Fore, Style
 from google import auth
@@ -9,35 +9,33 @@ from google.oauth2.credentials import Credentials
 from googleapiclient import discovery
 
 from prowler.lib.logger import logger
+from prowler.providers.common.models import Audit_Metadata
 from prowler.providers.common.provider import Provider
 
 
 @dataclass
 class GCPIdentityInfo:
     profile: str
-
-
-# TODO: why do we have variables defined in the class not passed to the __init__???
-class GcpProvider(Provider):
-    # TODO: should we move session and identity to the Provider parent class?
-    provider = "gcp"
-    session: Credentials
     default_project_id: str
-    project_ids: list
-    # TODO: review this since we have to create an identity object
-    identity: GCPIdentityInfo
-    audit_resources: Optional[Any]
-    audit_metadata: Optional[Any]
-    audit_config: Optional[dict]
+
+
+class GcpProvider(Provider):
+    _type: str = "gcp"
+    _session: Credentials
+    _project_ids: list
+    _identity: GCPIdentityInfo
+    _audit_config: Optional[dict]
+    # TODO: this is not optional, enforce for all providers
+    audit_metadata: Audit_Metadata
 
     def __init__(self, arguments):
         logger.info("Instantiating GCP Provider ...")
         input_project_ids = arguments.project_ids
         credentials_file = arguments.credentials_file
 
-        self.session, self.default_project_id = self.setup_session(credentials_file)
+        self._session, default_project_id = self.setup_session(credentials_file)
 
-        self.project_ids = []
+        self._project_ids = []
         accessible_projects = self.get_project_ids()
         if not accessible_projects:
             logger.critical("No Project IDs can be accessed via Google Credentials.")
@@ -46,7 +44,7 @@ class GcpProvider(Provider):
         if input_project_ids:
             for input_project in input_project_ids:
                 if input_project in accessible_projects:
-                    self.project_ids.append(input_project)
+                    self._project_ids.append(input_project)
                 else:
                     logger.critical(
                         f"Project {input_project} cannot be accessed via Google Credentials."
@@ -54,11 +52,32 @@ class GcpProvider(Provider):
                     sys.exit(1)
         else:
             # If not projects were input, all accessible projects are scanned by default
-            self.project_ids = accessible_projects
+            self._project_ids = accessible_projects
 
-        self.identity = GCPIdentityInfo(
-            profile=getattr(self.session, "_service_account_email", "default")
+        self._identity = GCPIdentityInfo(
+            profile=getattr(self.session, "_service_account_email", "default"),
+            default_project_id=default_project_id,
         )
+
+    @property
+    def identity(self):
+        return self._identity
+
+    @property
+    def type(self):
+        return self._type
+
+    @property
+    def session(self):
+        return self._session
+
+    @property
+    def project_ids(self):
+        return self._project_ids
+
+    @property
+    def audit_config(self):
+        return self._audit_config
 
     def setup_session(self, credentials_file):
         try:

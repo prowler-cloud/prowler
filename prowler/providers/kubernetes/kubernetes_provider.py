@@ -2,12 +2,13 @@ import os
 import sys
 from argparse import Namespace
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Optional
 
 from colorama import Fore, Style
 from kubernetes import client, config
 
 from prowler.lib.logger import logger
+from prowler.providers.common.models import Audit_Metadata
 from prowler.providers.common.provider import Provider
 
 
@@ -33,10 +34,10 @@ class KubernetesProvider(Provider):
     _type: str = "kubernetes"
     _session: KubernetesSession
     _namespaces: list
-    audit_resources: Optional[Any]
-    audit_metadata: Optional[Any]
     _audit_config: Optional[dict]
     _identity: KubernetesIdentityInfo
+    # TODO: this is not optional, enforce for all providers
+    audit_metadata: Audit_Metadata
 
     def __init__(self, arguments: Namespace):
         """
