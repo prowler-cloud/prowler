@@ -535,7 +535,7 @@ def get_kubernetes_html_assessment_summary(provider):
                     <ul class="list-group list-group-flush">
                         <li class="list-group-item">
                             <b>Kubernetes Context:</b> """
-                + provider.context["name"]
+                + provider.identity.context
                 + """
                         </li>
                     </ul>
@@ -549,12 +549,12 @@ def get_kubernetes_html_assessment_summary(provider):
                     <ul class="list-group list-group-flush">
                         <li class="list-group-item">
                             <b>Kubernetes Cluster:</b> """
-                + provider.context["context"]["cluster"]
+                + provider.identity.cluster
                 + """
                         </li>
                         <li class="list-group-item">
                             <b>Kubernetes User:</b> """
-                + provider.context["context"]["user"]
+                + provider.identity.user
                 + """
                         </li>
                     </ul>

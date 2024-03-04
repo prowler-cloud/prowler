@@ -13,19 +13,30 @@ from prowler.providers.common.provider import Provider
 
 @dataclass
 class KubernetesIdentityInfo:
-    active_context: str
+    context: str
+    cluster: str
+    user: str
+
+
+@dataclass
+class KubernetesSession:
+    """
+    KubernetesSession stores the Kubernetes session's configuration.
+
+    """
+
+    api_client: client.ApiClient
+    context: dict
 
 
 class KubernetesProvider(Provider):
-    provider = "kubernetes"
-    # TODO: api_client is the session
-    api_client: Any
-    context: dict
-    namespaces: list
+    _type: str = "kubernetes"
+    _session: KubernetesSession
+    _namespaces: list
     audit_resources: Optional[Any]
     audit_metadata: Optional[Any]
-    audit_config: Optional[dict]
-    identity: KubernetesIdentityInfo
+    _audit_config: Optional[dict]
+    _identity: KubernetesIdentityInfo
 
     def __init__(self, arguments: Namespace):
         """
@@ -34,24 +45,44 @@ class KubernetesProvider(Provider):
             arguments (dict): A dictionary containing configuration arguments.
         """
         logger.info("Instantiating Kubernetes Provider ...")
-        self.api_client, self.context = self.setup_session(
-            arguments.kubeconfig_file, arguments.context
-        )
+        self._session = self.setup_session(arguments.kubeconfig_file, arguments.context)
         if not arguments.namespaces:
             logger.info("Retrieving all namespaces ...")
-            self.namespaces = self.get_all_namespaces()
+            self._namespaces = self.get_all_namespaces()
         else:
-            self.namespaces = arguments.namespaces
+            self._namespaces = arguments.namespaces
 
-        if not self.api_client:
+        if not self._session.api_client:
             logger.critical("Failed to set up a Kubernetes session.")
             sys.exit(1)
 
-        self.identity = KubernetesIdentityInfo(
-            active_context=self.context["name"].replace(":", "_").replace("/", "_")
+        self._identity = KubernetesIdentityInfo(
+            context=self._session.context["name"].replace(":", "_").replace("/", "_"),
+            user=self._session.context["context"]["user"],
+            cluster=self._session.context["context"]["user"],
         )
 
-    def setup_session(self, kubeconfig_file, input_context):
+    @property
+    def type(self):
+        return self._type
+
+    @property
+    def session(self):
+        return self._session
+
+    @property
+    def identity(self):
+        return self._identity
+
+    @property
+    def namespaces(self):
+        return self._namespaces
+
+    @property
+    def audit_config(self):
+        return self._audit_config
+
+    def setup_session(self, kubeconfig_file, input_context) -> KubernetesSession:
         """
         Sets up the Kubernetes session.
 
@@ -85,7 +116,7 @@ class KubernetesProvider(Provider):
                         "user": "service-account-name",  # Also a placeholder
                     },
                 }
-            return client.ApiClient(), context
+            return KubernetesSession(api_client=client.ApiClient(), context=context)
         except Exception as error:
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -134,7 +165,7 @@ class KubernetesProvider(Provider):
         """
         try:
             rbac_api = client.RbacAuthorizationV1Api()
-            context_user = self.context.get("context", {}).get("user", "")
+            context_user = self._session.context.get("context", {}).get("user", "")
             roles = []
             # Search in ClusterRoleBindings
             roles = self.search_and_save_roles(
@@ -198,7 +229,7 @@ class KubernetesProvider(Provider):
         """
         Prints the Kubernetes credentials.
         """
-        if self.context.get("name") == "In-Cluster":
+        if self._session.context.get("name") == "In-Cluster":
             report = f"""
 This report is being generated using the Kubernetes configuration below:
 
@@ -206,8 +237,8 @@ Kubernetes Pod: {Fore.YELLOW}[prowler]{Style.RESET_ALL}  Namespace: {Fore.YELLOW
 """
             print(report)
         else:
-            cluster_name = self.context.get("context").get("cluster")
-            user_name = self.context.get("context").get("user")
+            cluster_name = self._session.context.get("context").get("cluster")
+            user_name = self._session.context.get("context").get("user")
             roles = self.get_context_user_roles()
             roles_str = ", ".join(roles) if roles else "No associated Roles"
 

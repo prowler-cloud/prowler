@@ -129,7 +129,7 @@ class Kubernetes_Output_Options(Provider_Output_Options):
             or arguments.output_filename is None
         ):
             self.output_filename = (
-                f"prowler-output-{identity.active_context}-{output_file_timestamp}"
+                f"prowler-output-{identity.context}-{output_file_timestamp}"
             )
         else:
             self.output_filename = arguments.output_filename

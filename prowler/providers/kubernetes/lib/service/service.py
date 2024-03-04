@@ -8,8 +8,8 @@ MAX_WORKERS = 10
 
 class KubernetesService:
     def __init__(self, provider: KubernetesProvider):
-        self.context = provider.context
-        self.api_client = provider.api_client
+        self.context = provider.identity.context
+        self.api_client = provider.session.api_client
 
         # Thread pool for __threading_call__
         self.thread_pool = ThreadPoolExecutor(max_workers=MAX_WORKERS)
