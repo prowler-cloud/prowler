@@ -136,6 +136,8 @@ class AwsProvider(Provider):
             assumed_role_configuration = AWSAssumeRoleConfiguration(
                 info=assumed_role_information, credentials=assumed_role_credentials
             )
+            # Store the assumed role configuration since it'll be needed to refresh the credentials
+            self._assumed_role_configuration = assumed_role_configuration
 
             # Store a new current session using the assumed IAM Role
             self._session.current_session = self.setup_assumed_session(
@@ -382,6 +384,8 @@ class AwsProvider(Provider):
         self,
         assumed_role_credentials: AWSCredentials,
     ) -> Session:
+        # FIXME: Boto3 returns the timestamp in UTC and the local TZ could be different so the expiration time could not work as expected
+        # PRWLR-3305
         try:
             # From botocore we can use RefreshableCredentials class, which has an attribute (refresh_using)
             # that needs to be a method without arguments that retrieves a new set of fresh credentials
@@ -410,11 +414,13 @@ class AwsProvider(Provider):
     # Refresh credentials method using assume role
     # This method is called "adding ()" to the name, so it cannot accept arguments
     # https://github.com/boto/botocore/blob/098cc255f81a25b852e1ecdeb7adebd94c7b1b73/botocore/credentials.py#L570
-    def refresh_credentials(self):
+    # TODO: maybe this can be improved with botocore.credentials.DeferredRefreshableCredentials https://stackoverflow.com/a/75576540
+    def refresh_credentials(self) -> dict:
         logger.info("Refreshing assumed credentials...")
-        # TODO: review this since it could not work
-        response = self.assume_role(self.aws_session, self.role_info)
-        # TODO: probably the following dict could be AWSCredentials
+        # Since this method does not accept arguments, we need to get the original_session and the assumed role credentials
+        response = self.assume_role(
+            self._session.original_session, self._assumed_role_configuration.info
+        )
         refreshed_credentials = dict(
             # Keys of the dict has to be the same as those that are being searched in the parent class
             # https://github.com/boto/botocore/blob/098cc255f81a25b852e1ecdeb7adebd94c7b1b73/botocore/credentials.py#L609
@@ -717,7 +723,6 @@ Caller Identity ARN: {Fore.YELLOW}[{self._identity.identity_arn}]{Style.RESET_AL
 
             sts_client = create_sts_session(session, AWS_STS_GLOBAL_ENDPOINT_REGION)
             assumed_credentials = sts_client.assume_role(**assume_role_arguments)
-
             return AWSCredentials(
                 aws_access_key_id=assumed_credentials["Credentials"]["AccessKeyId"],
                 aws_session_token=assumed_credentials["Credentials"]["SessionToken"],
