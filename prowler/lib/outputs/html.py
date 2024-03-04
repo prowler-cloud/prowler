@@ -550,6 +550,7 @@ def get_kubernetes_html_assessment_summary(provider):
                         <li class="list-group-item">
                             <b>Kubernetes Cluster:</b> """
                 + provider.identity.cluster
+
                 + """
                         </li>
                         <li class="list-group-item">
