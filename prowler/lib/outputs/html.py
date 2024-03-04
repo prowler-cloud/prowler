@@ -498,7 +498,7 @@ def get_gcp_html_assessment_summary(provider):
                     <ul class="list-group list-group-flush">
                         <li class="list-group-item">
                             <b>GCP Account:</b> """
-                + getattr(provider.session, "_service_account_email", "default")
+                + provider.identity.profile
                 + """
                         </li>
                     </ul>
