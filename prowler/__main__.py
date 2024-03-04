@@ -44,11 +44,7 @@ from prowler.providers.aws.lib.security_hub.security_hub import (
     resolve_security_hub_previous_findings,
     verify_security_hub_integration_enabled_per_region,
 )
-from prowler.providers.common.clean import clean_provider_local_output_directories
-from prowler.providers.common.common import (
-    get_global_provider,
-    set_global_provider_object,
-)
+from prowler.providers.common.common import set_global_provider_object
 from prowler.providers.common.outputs import set_provider_output_options
 
 
@@ -147,8 +143,7 @@ def prowler():
         sys.exit()
 
     # Provider to scan
-    set_global_provider_object(args)
-    global_provider = get_global_provider()
+    global_provider = set_global_provider_object(args)
 
     # Print Provider Credentials
     if not args.only_logs:
@@ -343,9 +338,6 @@ def prowler():
     # If custom checks were passed, remove the modules
     if checks_folder:
         remove_custom_checks_module(checks_folder, provider)
-
-    # clean local directories
-    clean_provider_local_output_directories(args)
 
     # If there are failed findings exit code 3, except if -z is input
     if not args.ignore_exit_code_3 and stats["total_fail"] > 0:

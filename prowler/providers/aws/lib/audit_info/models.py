@@ -33,6 +33,7 @@ class AWSOrganizationsInfo:
 
 
 @dataclass
+# TODO: remove this class once is not used
 class AWS_Audit_Info:
     original_session: session.Session
     audit_session: session.Session

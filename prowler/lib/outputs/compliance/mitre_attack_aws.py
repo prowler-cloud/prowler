@@ -10,7 +10,7 @@ from prowler.lib.utils.utils import outputs_unix_timestamp
 
 
 def write_compliance_row_mitre_attack_aws(
-    file_descriptors, finding, compliance, output_options, audit_info
+    file_descriptors, finding, compliance, output_options, provider
 ):
     compliance_output = compliance.Framework
     if compliance.Version != "":
@@ -41,7 +41,7 @@ def write_compliance_row_mitre_attack_aws(
         compliance_row = Check_Output_MITRE_ATTACK(
             Provider=finding.check_metadata.Provider,
             Description=compliance.Description,
-            AccountId=audit_info.audited_account,
+            AccountId=provider.identity.account,
             Region=finding.region,
             AssessmentDate=outputs_unix_timestamp(
                 output_options.unix_timestamp, timestamp

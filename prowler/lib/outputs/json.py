@@ -31,7 +31,6 @@ from prowler.lib.outputs.models import (
     unroll_dict_to_list,
 )
 from prowler.lib.utils.utils import hash_sha512, open_file, outputs_unix_timestamp
-from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 
 
 def fill_json_asff(finding_output, audit_info, finding, output_options):
@@ -144,7 +143,7 @@ def generate_json_asff_resource_tags(tags):
         )
 
 
-def fill_json_ocsf(audit_info, finding, output_options) -> Check_Output_JSON_OCSF:
+def fill_json_ocsf(provider, finding, output_options) -> Check_Output_JSON_OCSF:
     try:
         resource_region = ""
         resource_name = ""
@@ -157,20 +156,22 @@ def fill_json_ocsf(audit_info, finding, output_options) -> Check_Output_JSON_OCS
         account = None
         org = None
         profile = ""
-        if isinstance(audit_info, AWS_Audit_Info):
+        if provider.type == "aws":
             profile = (
-                audit_info.profile if audit_info.profile is not None else "default"
+                provider.identity.profile
+                if provider.identity.profile is not None
+                else "default"
             )
         if (
-            hasattr(audit_info, "organizations_metadata")
-            and audit_info.organizations_metadata
+            hasattr(provider, "organizations_metadata")
+            and provider.organizations_metadata
         ):
-            aws_account_name = audit_info.organizations_metadata.account_details_name
-            aws_org_uid = audit_info.organizations_metadata.account_details_org
+            aws_account_name = provider.organizations_metadata.account_details_name
+            aws_org_uid = provider.organizations_metadata.account_details_org
         if finding.check_metadata.Provider == "aws":
             account = Account(
                 name=aws_account_name,
-                uid=audit_info.audited_account,
+                uid=provider.identity.account,
             )
             org = Organization(
                 name=aws_org_uid,
@@ -179,15 +180,15 @@ def fill_json_ocsf(audit_info, finding, output_options) -> Check_Output_JSON_OCS
             resource_region = finding.region
             resource_name = finding.resource_id
             resource_uid = finding.resource_arn
-            finding_uid = f"prowler-{finding.check_metadata.Provider}-{finding.check_metadata.CheckID}-{audit_info.audited_account}-{finding.region}-{finding.resource_id}"
+            finding_uid = f"prowler-{finding.check_metadata.Provider}-{finding.check_metadata.CheckID}-{provider.identity.account}-{finding.region}-{finding.resource_id}"
         elif finding.check_metadata.Provider == "azure":
             account = Account(
                 name=finding.subscription,
                 uid=finding.subscription,
             )
             org = Organization(
-                name=audit_info.identity.domain,
-                uid=audit_info.identity.domain,
+                name=provider.identity.domain,
+                uid=provider.identity.domain,
             )
             resource_name = finding.resource_name
             resource_uid = finding.resource_id

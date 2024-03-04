@@ -9,7 +9,7 @@ from prowler.lib.utils.utils import outputs_unix_timestamp
 
 
 def write_compliance_row_generic(
-    file_descriptors, finding, compliance, output_options, audit_info
+    file_descriptors, finding, compliance, output_options, provider
 ):
     compliance_output = compliance.Framework
     if compliance.Version != "":
@@ -31,7 +31,7 @@ def write_compliance_row_generic(
             compliance_row = Check_Output_CSV_Generic_Compliance(
                 Provider=finding.check_metadata.Provider,
                 Description=compliance.Description,
-                AccountId=audit_info.audited_account,
+                AccountId=provider.identity.account,
                 Region=finding.region,
                 AssessmentDate=outputs_unix_timestamp(
                     output_options.unix_timestamp, timestamp

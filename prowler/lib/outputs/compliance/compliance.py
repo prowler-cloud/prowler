@@ -79,7 +79,7 @@ def get_check_compliance_frameworks_in_input(
 
 
 def fill_compliance(
-    output_options, finding, audit_info, file_descriptors, input_compliance_frameworks
+    output_options, finding, provider, file_descriptors, input_compliance_frameworks
 ):
     try:
         # We have to retrieve all the check's compliance requirements and get the ones matching with the input ones
@@ -92,7 +92,7 @@ def fill_compliance(
         for compliance in check_compliances:
             if compliance.Framework == "ENS" and compliance.Version == "RD2022":
                 write_compliance_row_ens_rd2022_aws(
-                    file_descriptors, finding, compliance, output_options, audit_info
+                    file_descriptors, finding, compliance, output_options, provider
                 )
 
             elif compliance.Framework == "CIS":
@@ -101,7 +101,7 @@ def fill_compliance(
                     finding,
                     compliance,
                     output_options,
-                    audit_info,
+                    provider,
                     input_compliance_frameworks,
                 )
 
@@ -110,7 +110,7 @@ def fill_compliance(
                 and compliance.Provider == "AWS"
             ):
                 write_compliance_row_aws_well_architected_framework(
-                    file_descriptors, finding, compliance, output_options, audit_info
+                    file_descriptors, finding, compliance, output_options, provider
                 )
 
             elif (
@@ -119,7 +119,7 @@ def fill_compliance(
                 and compliance.Provider == "AWS"
             ):
                 write_compliance_row_iso27001_2013_aws(
-                    file_descriptors, finding, compliance, output_options, audit_info
+                    file_descriptors, finding, compliance, output_options, provider
                 )
 
             elif (
@@ -128,12 +128,12 @@ def fill_compliance(
                 and compliance.Provider == "AWS"
             ):
                 write_compliance_row_mitre_attack_aws(
-                    file_descriptors, finding, compliance, output_options, audit_info
+                    file_descriptors, finding, compliance, output_options, provider
                 )
 
             else:
                 write_compliance_row_generic(
-                    file_descriptors, finding, compliance, output_options, audit_info
+                    file_descriptors, finding, compliance, output_options, provider
                 )
 
     except Exception as error:
