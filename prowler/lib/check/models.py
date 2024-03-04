@@ -3,8 +3,9 @@ import sys
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel, ValidationError, validator
 
+from prowler.config.config import valid_severities
 from prowler.lib.logger import logger
 
 
@@ -55,6 +56,18 @@ class Check_Metadata_Model(BaseModel):
     # We set the compliance to None to
     # store the compliance later if supplied
     Compliance: list = None
+
+    @validator("Severity", pre=True, always=True)
+    def severity_to_lower(severity):
+        return severity.lower()
+
+    @validator("Severity")
+    def valid_severity(severity):
+        if severity not in valid_severities:
+            raise ValueError(
+                f"Invalid severity: {severity}. Severity must be one of {', '.join(valid_severities)}"
+            )
+        return severity
 
 
 class Check(ABC, Check_Metadata_Model):

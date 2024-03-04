@@ -6,7 +6,7 @@
   "ServiceName": "monitor",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "Medium",
+  "Severity": "medium",
   "ResourceType": "Monitor",
   "Description": "Storage accounts with the activity log exports can be configured to use CustomerManaged Keys (CMK).",
   "Risk": "Configuring the storage account with the activity log export container to use CMKs provides additional confidentiality controls on log data, as a given user must have read permission on the corresponding storage account and must be granted decrypt permission by the CMK.",
