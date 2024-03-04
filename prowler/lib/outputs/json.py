@@ -33,7 +33,7 @@ from prowler.lib.outputs.models import (
 from prowler.lib.utils.utils import hash_sha512, open_file, outputs_unix_timestamp
 
 
-def fill_json_asff(finding_output, audit_info, finding, output_options):
+def fill_json_asff(finding_output, provider, finding, output_options):
     try:
         # Check if there are no resources in the finding
         if finding.resource_arn == "":
@@ -42,13 +42,13 @@ def fill_json_asff(finding_output, audit_info, finding, output_options):
             finding.resource_arn = finding.resource_id
         # The following line cannot be changed because it is the format we use to generate unique findings for AWS Security Hub
         # If changed some findings could be lost because the unique identifier will be different
-        finding_output.Id = f"prowler-{finding.check_metadata.CheckID}-{audit_info.audited_account}-{finding.region}-{hash_sha512(finding.resource_id)}"
-        finding_output.ProductArn = f"arn:{audit_info.audited_partition}:securityhub:{finding.region}::product/prowler/prowler"
+        finding_output.Id = f"prowler-{finding.check_metadata.CheckID}-{provider.identity.account}-{finding.region}-{hash_sha512(finding.resource_id)}"
+        finding_output.ProductArn = f"arn:{provider.identity.partition}:securityhub:{finding.region}::product/prowler/prowler"
         finding_output.ProductFields = ProductFields(
             ProviderVersion=prowler_version, ProwlerResourceName=finding.resource_arn
         )
         finding_output.GeneratorId = "prowler-" + finding.check_metadata.CheckID
-        finding_output.AwsAccountId = audit_info.audited_account
+        finding_output.AwsAccountId = provider.identity.account
         finding_output.Types = finding.check_metadata.CheckType
         finding_output.FirstObservedAt = finding_output.UpdatedAt = (
             finding_output.CreatedAt
@@ -68,7 +68,7 @@ def fill_json_asff(finding_output, audit_info, finding, output_options):
             Resource(
                 Id=finding.resource_arn,
                 Type=finding.check_metadata.ResourceType,
-                Partition=audit_info.audited_partition,
+                Partition=provider.identity.partition,
                 Region=finding.region,
                 Tags=resource_tags,
             )
