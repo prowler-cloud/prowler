@@ -2,7 +2,7 @@ from prowler.lib.check.models import Check, Check_Report_Azure
 from prowler.providers.azure.services.aks.aks_client import aks_client
 
 
-class aks_rbac_enabled(Check):
+class aks_cluster_rbac_enabled(Check):
     def execute(self) -> Check_Report_Azure:
         findings = []
 

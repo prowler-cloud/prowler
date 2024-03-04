@@ -1,6 +1,6 @@
 {
   "Provider": "azure",
-  "CheckID": "aks_rbac_enabled",
+  "CheckID": "aks_cluster_rbac_enabled",
   "CheckTitle": "Ensure AKS RBAC is enabled",
   "CheckType": [],
   "ServiceName": "aks",
