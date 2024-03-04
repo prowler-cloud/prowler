@@ -24,7 +24,7 @@ class AKS(AzureService):
                 clusters.update({subscription_name: {}})
 
                 for cluster in clusters_list:
-                    if getattr(cluster, "kubernetes_version", ""):
+                    if getattr(cluster, "kubernetes_version", None):
                         clusters[subscription_name].update(
                             {
                                 cluster.id: Cluster(
