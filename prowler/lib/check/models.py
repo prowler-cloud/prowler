@@ -58,7 +58,6 @@ class Check_Metadata_Model(BaseModel):
     # store the compliance later if supplied
     Compliance: list = None
 
-
     @validator("Categories", each_item=True, pre=True, always=True)
     def valid_category(value):
         if not isinstance(value, str):
@@ -81,7 +80,6 @@ class Check_Metadata_Model(BaseModel):
                 f"Invalid severity: {severity}. Severity must be one of {', '.join(valid_severities)}"
             )
         return severity
-
 
 
 class Check(ABC, Check_Metadata_Model):
