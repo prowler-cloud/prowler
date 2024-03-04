@@ -62,4 +62,4 @@ class Cluster:
     private_fqdn: str
     network_policy: str
     agent_pool_profiles: list[ManagedClusterAgentPoolProfile]
-    rbac_enabled: bool = False
+    rbac_enabled: bool
