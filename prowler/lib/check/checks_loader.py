@@ -41,7 +41,7 @@ def load_checks_to_execute(
 
                 # Severities
                 if metadata.Severity:
-                    check_severities[metadata.Severity.lower()].append(check)
+                    check_severities[metadata.Severity].append(check)
 
                 # Categories
                 for category in metadata.Categories:

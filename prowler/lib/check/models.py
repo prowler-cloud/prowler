@@ -3,7 +3,7 @@ import sys
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel, ValidationError, validator
 
 from prowler.lib.logger import logger
 
@@ -55,6 +55,10 @@ class Check_Metadata_Model(BaseModel):
     # We set the compliance to None to
     # store the compliance later if supplied
     Compliance: list = None
+
+    @validator("Severity", pre=True, always=True)
+    def severity_to_lower(cls, severity):
+        return severity.lower()
 
 
 class Check(ABC, Check_Metadata_Model):
