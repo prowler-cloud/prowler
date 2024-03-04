@@ -16,7 +16,7 @@
       "CLI": "",
       "NativeIaC": "",
       "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/AKS/enable-role-based-access-control-for-kubernetes-service.html#",
-      "Terraform": ""
+      "Terraform": "https://docs.bridgecrew.io/docs/bc_azr_kubernetes_2#terraform"
     },
     "Recommendation": {
       "Text": "",
