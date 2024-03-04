@@ -190,7 +190,7 @@ def remove_custom_checks_module(input_folder: str, provider: str):
                     shutil.rmtree(input_folder)
 
 
-def list_services(provider: str) -> set():
+def list_services(provider: str) -> set:
     available_services = set()
     checks_tuple = recover_checks_from_provider(provider)
     for _, check_path in checks_tuple:
@@ -203,7 +203,7 @@ def list_services(provider: str) -> set():
     return sorted(available_services)
 
 
-def list_categories(bulk_checks_metadata: dict) -> set():
+def list_categories(bulk_checks_metadata: dict) -> set:
     available_categories = set()
     for check in bulk_checks_metadata.values():
         for cat in check.Categories:
@@ -431,9 +431,11 @@ def execute_checks(
     services_executed = set()
     checks_executed = set()
 
+    # TODO: why is this here?
     global_provider = get_global_provider()
 
     # Initialize the Audit Metadata
+    # TODO: this should be done in the provider class
     global_provider.audit_metadata = Audit_Metadata(
         services_scanned=0,
         expected_checks=checks_to_execute,
@@ -466,7 +468,7 @@ def execute_checks(
                 check_findings = execute(
                     service,
                     check_name,
-                    global_provider.provider,
+                    global_provider.type,
                     audit_output_options,
                     global_provider.identity,
                     services_executed,
@@ -478,7 +480,7 @@ def execute_checks(
             # If check does not exists in the provider or is from another provider
             except ModuleNotFoundError:
                 logger.error(
-                    f"Check '{check_name}' was not found for the {global_provider.provider.upper()} provider"
+                    f"Check '{check_name}' was not found for the {global_provider.type.upper()} provider"
                 )
             except Exception as error:
                 logger.error(
@@ -522,10 +524,12 @@ def execute_checks(
 
                 # If check does not exists in the provider or is from another provider
                 except ModuleNotFoundError:
+                    # TODO: add more loggin here, we need the original exception -- traceback.print_last()
                     logger.error(
-                        f"Check '{check_name}' was not found for the {global_provider.provider.upper()} provider"
+                        f"Check '{check_name}' was not found for the {global_provider.type.upper()} provider"
                     )
                 except Exception as error:
+                    # TODO: add more loggin here, we need the original exception -- traceback.print_last()
                     logger.error(
                         f"{check_name} - {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
@@ -544,7 +548,7 @@ def execute(
     custom_checks_metadata: Any,
 ):
     # Import check module
-    check_module_path = f"prowler.providers.{global_provider.provider}.services.{service}.{check_name}.{check_name}"
+    check_module_path = f"prowler.providers.{global_provider.type}.services.{service}.{check_name}.{check_name}"
     lib = import_check(check_module_path)
     # Recover functions from check
     check_to_execute = getattr(lib, check_name)

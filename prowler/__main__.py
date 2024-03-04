@@ -44,11 +44,6 @@ from prowler.providers.aws.lib.security_hub.security_hub import (
     resolve_security_hub_previous_findings,
     verify_security_hub_integration_enabled_per_region,
 )
-
-# from prowler.providers.common.audit_info import (
-#     set_provider_audit_info,
-#     set_provider_execution_parameters,
-# )
 from prowler.providers.common.clean import clean_provider_local_output_directories
 from prowler.providers.common.common import (
     get_global_provider,
@@ -151,13 +146,13 @@ def prowler():
         print_checks(provider, sorted(checks_to_execute), bulk_checks_metadata)
         sys.exit()
 
-        # Set the audit info based on the selected provider
-        # TODO: remove the following line with the audit_info
-        # audit_info = set_provider_audit_info(provider, args.__dict__)
-
+    # Provider to scan
     set_global_provider_object(args)
-    # TODO: rename global_provider to provider
     global_provider = get_global_provider()
+
+    # Print Provider Credentials
+    if not args.only_logs:
+        global_provider.print_credentials()
 
     # Import custom checks from folder
     if checks_folder:
@@ -190,7 +185,6 @@ def prowler():
         mutelist_file = global_provider.get_mutelist(args.mutelist_file)
 
     # Set output options based on the selected provider
-
     # TODO: this is going to be removed an include in the Provider as a new common object
     audit_output_options = set_provider_output_options(
         provider, args, global_provider.identity, mutelist_file, bulk_checks_metadata

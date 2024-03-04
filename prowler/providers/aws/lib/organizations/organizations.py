@@ -1,28 +1,16 @@
-from boto3 import client, session
+from boto3 import session
 
+# from boto3 import client
 from prowler.lib.logger import logger
 from prowler.providers.aws.lib.audit_info.models import AWSOrganizationsInfo
 
 
 def get_organizations_metadata(
     aws_account_id: str,
-    assumed_credentials: dict = None,
-    session: session = None,
+    session: session.Session,
 ) -> tuple[dict, dict]:
     try:
-        if assumed_credentials:
-            organizations_client = client(
-                "organizations",
-                aws_access_key_id=assumed_credentials["Credentials"]["AccessKeyId"],
-                aws_secret_access_key=assumed_credentials["Credentials"][
-                    "SecretAccessKey"
-                ],
-                aws_session_token=assumed_credentials["Credentials"]["SessionToken"],
-            )
-        if session:
-            organizations_client = session.client("organizations")
-        else:
-            organizations_client = client("organizations")
+        organizations_client = session.client("organizations")
 
         organizations_metadata = organizations_client.describe_account(
             AccountId=aws_account_id

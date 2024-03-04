@@ -6,6 +6,7 @@ from prowler.providers.aws.lib.arn.error import RoleArnParsingFailedMissingField
 
 
 class ARN(BaseModel):
+    arn: str
     partition: str
     service: str
     region: Optional[str]  # In IAM ARN's do not have region
@@ -21,6 +22,7 @@ class ARN(BaseModel):
         ## Retrieve fields
         arn_elements = arn.split(":", 5)
         data = {
+            "arn": arn,
             "partition": arn_elements[1],
             "service": arn_elements[2],
             "region": arn_elements[3] if arn_elements[3] != "" else None,
