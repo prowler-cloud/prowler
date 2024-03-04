@@ -68,7 +68,7 @@ class Test_aks_network_policy_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Network policy enabled for cluster 'cluster_name' in subscription '{AZURE_SUBSCRIPTION}'."
+                == f"Network policy is enabled for cluster 'cluster_name' in subscription '{AZURE_SUBSCRIPTION}'."
             )
             assert result[0].resource_name == "cluster_name"
             assert result[0].resource_id == cluster_id
@@ -104,7 +104,7 @@ class Test_aks_network_policy_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Network policy not enabled for cluster 'cluster_name' in subscription '{AZURE_SUBSCRIPTION}'."
+                == f"Network policy is not enabled for cluster 'cluster_name' in subscription '{AZURE_SUBSCRIPTION}'."
             )
             assert result[0].resource_name == "cluster_name"
             assert result[0].resource_id == cluster_id

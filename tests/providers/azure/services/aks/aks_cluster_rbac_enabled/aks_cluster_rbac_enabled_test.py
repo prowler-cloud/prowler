@@ -68,7 +68,7 @@ class Test_aks_cluster_rbac_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"RBAC enabled for cluster 'cluster_name' in subscription '{AZURE_SUBSCRIPTION}'."
+                == f"RBAC is enabled for cluster 'cluster_name' in subscription '{AZURE_SUBSCRIPTION}'."
             )
             assert result[0].resource_name == "cluster_name"
             assert result[0].resource_id == cluster_id
@@ -104,7 +104,7 @@ class Test_aks_cluster_rbac_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"RBAC not enabled for cluster 'cluster_name' in subscription '{AZURE_SUBSCRIPTION}'."
+                == f"RBAC is not enabled for cluster 'cluster_name' in subscription '{AZURE_SUBSCRIPTION}'."
             )
             assert result[0].resource_name == "cluster_name"
             assert result[0].resource_id == cluster_id
