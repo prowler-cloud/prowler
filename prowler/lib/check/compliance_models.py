@@ -151,9 +151,9 @@ class Compliance_Requirement(BaseModel):
         Union[
             CIS_Requirement_Attribute,
             ENS_Requirement_Attribute,
-            Generic_Compliance_Requirement_Attribute,
             ISO27001_2013_Requirement_Attribute,
             AWS_Well_Architected_Requirement_Attribute,
+            Generic_Compliance_Requirement_Attribute,
         ]
     ]
     Checks: list[str]
