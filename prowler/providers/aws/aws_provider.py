@@ -327,30 +327,36 @@ class AwsProvider(Provider):
     def setup_session(
         self, input_mfa: bool, input_profile: str, input_role: str = None
     ) -> Session:
-        logger.info("Creating original session ...")
-        if input_mfa and not input_role:
-            mfa_info = self.__input_role_mfa_token_and_code__()
-            # TODO: validate MFA ARN here
-            get_session_token_arguments = {
-                "SerialNumber": mfa_info.arn,
-                "TokenCode": mfa_info.totp,
-            }
-            sts_client = client("sts")
-            session_credentials = sts_client.get_session_token(
-                **get_session_token_arguments
-            )
-            return Session(
-                aws_access_key_id=session_credentials["Credentials"]["AccessKeyId"],
-                aws_secret_access_key=session_credentials["Credentials"][
-                    "SecretAccessKey"
-                ],
-                aws_session_token=session_credentials["Credentials"]["SessionToken"],
-                profile_name=self._identity.profile,
-            )
-        else:
-            return Session(
-                profile_name=input_profile,
-            )
+        try:
+            logger.info("Creating original session ...")
+            if input_mfa and not input_role:
+                mfa_info = self.__input_role_mfa_token_and_code__()
+                # TODO: validate MFA ARN here
+                get_session_token_arguments = {
+                    "SerialNumber": mfa_info.arn,
+                    "TokenCode": mfa_info.totp,
+                }
+                sts_client = client("sts")
+                session_credentials = sts_client.get_session_token(
+                    **get_session_token_arguments
+                )
+                return Session(
+                    aws_access_key_id=session_credentials["Credentials"]["AccessKeyId"],
+                    aws_secret_access_key=session_credentials["Credentials"][
+                        "SecretAccessKey"
+                    ],
+                    aws_session_token=session_credentials["Credentials"][
+                        "SessionToken"
+                    ],
+                    profile_name=self._identity.profile,
+                )
+            else:
+                return Session(
+                    profile_name=input_profile,
+                )
+        except Exception as error:
+            logger.critical(f"{error.__class__.__name__} -- {error}")
+            sys.exit(1)
 
     def set_assumed_role_info(
         self,
