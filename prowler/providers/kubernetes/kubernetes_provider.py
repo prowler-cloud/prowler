@@ -165,7 +165,7 @@ class KubernetesProvider(Provider):
         """
         try:
             rbac_api = client.RbacAuthorizationV1Api()
-            context_user = self._session.context.get("context", {}).get("user", "")
+            context_user = self._identity.user
             roles = []
             # Search in ClusterRoleBindings
             roles = self.search_and_save_roles(
@@ -229,7 +229,7 @@ class KubernetesProvider(Provider):
         """
         Prints the Kubernetes credentials.
         """
-        if self._session.context.get("name") == "In-Cluster":
+        if self._identity.context == "In-Cluster":
             report = f"""
 This report is being generated using the Kubernetes configuration below:
 
@@ -237,14 +237,12 @@ Kubernetes Pod: {Fore.YELLOW}[prowler]{Style.RESET_ALL}  Namespace: {Fore.YELLOW
 """
             print(report)
         else:
-            cluster_name = self._session.context.get("context").get("cluster")
-            user_name = self._session.context.get("context").get("user")
             roles = self.get_context_user_roles()
             roles_str = ", ".join(roles) if roles else "No associated Roles"
 
             report = f"""
 This report is being generated using the Kubernetes configuration below:
 
-Kubernetes Cluster: {Fore.YELLOW}[{cluster_name}]{Style.RESET_ALL} User: {Fore.YELLOW}[{user_name}]{Style.RESET_ALL} Namespaces: {Fore.YELLOW}[{', '.join(self.namespaces)}]{Style.RESET_ALL} Roles: {Fore.YELLOW}[{roles_str}]{Style.RESET_ALL}
+Kubernetes Cluster: {Fore.YELLOW}[{self._identity.cluster}]{Style.RESET_ALL} User: {Fore.YELLOW}[{self._identity.user}]{Style.RESET_ALL} Namespaces: {Fore.YELLOW}[{', '.join(self.namespaces)}]{Style.RESET_ALL} Roles: {Fore.YELLOW}[{roles_str}]{Style.RESET_ALL}
 """
             print(report)
