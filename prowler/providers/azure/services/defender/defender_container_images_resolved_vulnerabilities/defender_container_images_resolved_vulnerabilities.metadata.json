@@ -1,0 +1,30 @@
+{
+  "Provider": "azure",
+  "CheckID": "defender_container_images_resolved_vulnerabilities",
+  "CheckTitle": "Container images should be scanned for vulnerabilities",
+  "CheckType": [],
+  "ServiceName": "defender",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Microsoft.Security/assessments",
+  "Description": "Azure Defender for Container Registries provides vulnerability scanning for container images stored in Azure Container Registry. It helps you to identify and remediate vulnerabilities in your container images. Azure Defender for Container Registries integrates with Azure Security Center and Azure Monitor to provide a comprehensive security solution for your container images.",
+  "Risk": "If you don't scan your container images for vulnerabilities, you might deploy images that contain known vulnerabilities. This can lead to security breaches and data loss.",
+  "RelatedUrl": "https://learn.microsoft.com/en-us/azure/container-registry/container-registry-check-health",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "",
+      "Url": "https://learn.microsoft.com/en-us/azure/container-registry/scan-images-defender"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
