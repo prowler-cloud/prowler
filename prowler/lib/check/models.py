@@ -65,7 +65,7 @@ class Check_Metadata_Model(BaseModel):
     def valid_severity(severity):
         if severity not in valid_severities:
             raise ValueError(
-                f"{severity} is not a valid severity, it must be one of {', '.join(valid_severities)}"
+                f"Invalid severity: {severity}. Severity must be one of {', '.join(valid_severities)}"
             )
         return severity
 
