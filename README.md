@@ -99,7 +99,7 @@ python prowler.py -v
 
 You can run Prowler from your workstation, an EC2 instance, Fargate or any other container, Codebuild, CloudShell and Cloud9.
 
-![Architecture](https://github.com/prowler-cloud/prowler/assets/38561120/bc89f7a6-c511-4337-830a-4ace8db9b911)
+![Architecture](https://github.com/prowler-cloud/prowler/assets/38561120/710f0def-6e3e-4b3e-b8fa-4b3e7db1ed9f)
 
 # 📝 Requirements
 
