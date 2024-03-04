@@ -58,11 +58,11 @@ class Check_Metadata_Model(BaseModel):
     Compliance: list = None
 
     @validator("Severity", pre=True, always=True)
-    def severity_to_lower(cls, severity):
+    def severity_to_lower(severity):
         return severity.lower()
 
     @validator("Severity")
-    def valid_severity(cls, severity):
+    def valid_severity(severity):
         if severity not in valid_severities:
             raise ValueError(
                 f"{severity} is not a valid severity, it must be one of {', '.join(valid_severities)}"
