@@ -350,14 +350,16 @@ class AwsProvider(Provider):
                     aws_session_token=session_credentials["Credentials"][
                         "SessionToken"
                     ],
-                    profile_name=self._identity.profile,
+                    profile_name=input_profile,
                 )
             else:
                 return Session(
                     profile_name=input_profile,
                 )
         except Exception as error:
-            logger.critical(f"{error.__class__.__name__} -- {error}")
+            logger.critical(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
             sys.exit(1)
 
     def set_assumed_role_info(
@@ -408,7 +410,9 @@ class AwsProvider(Provider):
                 botocore_session=assumed_session,
             )
         except Exception as error:
-            logger.critical(f"{error.__class__.__name__} -- {error}")
+            logger.critical(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
             sys.exit(1)
 
     # Refresh credentials method using assume role
