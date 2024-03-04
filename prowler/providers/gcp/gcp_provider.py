@@ -60,10 +60,6 @@ class GcpProvider(Provider):
             profile=getattr(self.session, "_service_account_email", "default")
         )
 
-        # TODO: move this to the parent class or the main
-        if not arguments.only_logs:
-            self.print_credentials()
-
     def setup_session(self, credentials_file):
         try:
             if credentials_file:

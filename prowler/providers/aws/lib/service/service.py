@@ -23,6 +23,7 @@ class AWSService:
 
     def __init__(self, service: str, provider: AwsProvider, global_service=False):
         # Audit Information
+        # Do we need to store the whole provider?
         self.provider = provider
         self.audited_account = provider.identity.account
         self.audited_account_arn = provider.identity.account_arn
@@ -32,7 +33,7 @@ class AWSService:
         self.audit_config = provider.audit_config
 
         # AWS Session
-        self.session = provider.session.session
+        self.session = provider.session.current_session
 
         # We receive the service using __class__.__name__ or the service name in lowercase
         # e.g.: AccessAnalyzer --> we need a lowercase string, so service.lower()
@@ -40,9 +41,7 @@ class AWSService:
 
         # Generate Regional Clients
         if not global_service:
-            self.regional_clients = provider.generate_regional_clients(
-                self.service, global_service
-            )
+            self.regional_clients = provider.generate_regional_clients(self.service)
             # TODO: review the following code
             # self.regional_clients = generate_regional_clients(self.service, audit_info)
 

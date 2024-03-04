@@ -1,5 +1,8 @@
+import sys
 from importlib import import_module
 from typing import Any
+
+from prowler.lib.logger import logger
 
 providers_prowler_lib_path = "prowler.providers"
 
@@ -31,12 +34,18 @@ def get_available_providers() -> list[str]:
 
 
 def set_global_provider_object(arguments):
-    global global_provider
-    # make here dynamic import
-    common_import_path = (
-        f"prowler.providers.{arguments.provider}.{arguments.provider}_provider"
-    )
-    provider_class = f"{arguments.provider.capitalize()}Provider"
-    global_provider = getattr(import_module(common_import_path), provider_class)(
-        arguments
-    )
+    try:
+        global global_provider
+        # make here dynamic import
+        common_import_path = (
+            f"prowler.providers.{arguments.provider}.{arguments.provider}_provider"
+        )
+        provider_class = f"{arguments.provider.capitalize()}Provider"
+        global_provider = getattr(import_module(common_import_path), provider_class)(
+            arguments
+        )
+    except TypeError as error:
+        logger.critical(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+        )
+        sys.exit(1)
