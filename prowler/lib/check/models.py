@@ -6,6 +6,7 @@ from dataclasses import dataclass
 
 from pydantic import BaseModel, ValidationError, validator
 
+from prowler.config.config import valid_severities
 from prowler.lib.logger import logger
 
 
@@ -57,6 +58,7 @@ class Check_Metadata_Model(BaseModel):
     # store the compliance later if supplied
     Compliance: list = None
 
+
     @validator("Categories", each_item=True, pre=True, always=True)
     def valid_category(value):
         if not isinstance(value, str):
@@ -67,6 +69,19 @@ class Check_Metadata_Model(BaseModel):
                 f"Invalid category: {value}. Categories can only contain lowercase letters and hyphen '-'"
             )
         return value_lower
+
+    @validator("Severity", pre=True, always=True)
+    def severity_to_lower(severity):
+        return severity.lower()
+
+    @validator("Severity")
+    def valid_severity(severity):
+        if severity not in valid_severities:
+            raise ValueError(
+                f"Invalid severity: {severity}. Severity must be one of {', '.join(valid_severities)}"
+            )
+        return severity
+
 
 
 class Check(ABC, Check_Metadata_Model):
