@@ -8,7 +8,7 @@
 <p align="center">
 <b>Learn more at <a href="https://prowler.com">prowler.com</i></b>
 </p>
-  
+
 <p align="center">
 <a href="https://join.slack.com/t/prowler-workspace/shared_invite/zt-1hix76xsl-2uq222JIXrC7Q8It~9ZNog"><img width="30" height="30" alt="Prowler community on Slack" src="https://github.com/prowler-cloud/prowler/assets/3985464/3617e470-670c-47c9-9794-ce895ebdb627"></a>
   <br>
@@ -50,7 +50,7 @@ It contains hundreds of controls covering CIS, NIST 800, NIST CSF, CISA, RBI, Fe
 | AWS | 302 | 61 -> `prowler aws --list-services` | 27 -> `prowler aws --list-compliance` | 6 -> `prowler aws --list-categories` |
 | GCP | 73 | 11 -> `prowler gcp --list-services` | 1 -> `prowler gcp --list-compliance` | 2 -> `prowler gcp --list-categories`|
 | Azure | 37 | 4 -> `prowler azure --list-services` | CIS soon | 1 -> `prowler azure --list-categories` |
-| Kubernetes | Work In Progress | - | CIS soon | - |
+| Kubernetes | 83 | 7 -> `prowler kubernetes --list-services` | CIS soon | 7 -> `prowler kubernetes --list-categories` |
 
 # 📖 Documentation
 
@@ -99,7 +99,7 @@ python prowler.py -v
 
 You can run Prowler from your workstation, an EC2 instance, Fargate or any other container, Codebuild, CloudShell and Cloud9.
 
-![Architecture](https://github.com/prowler-cloud/prowler/assets/38561120/080261d9-773d-4af1-af79-217a273e3176)
+![Architecture](https://github.com/prowler-cloud/prowler/assets/38561120/bc89f7a6-c511-4337-830a-4ace8db9b911)
 
 # 📝 Requirements
 
@@ -272,6 +272,25 @@ Optionally, you can provide the location of an application credential JSON file 
 prowler gcp --credentials-file path
 ```
 > By default, `prowler` will scan all accessible GCP Projects, use flag `--project-ids` to specify the projects to be scanned.
+
+## Kubernetes
+
+For non in-cluster execution, you can provide the location of the KubeConfig file with the following argument:
+
+```console
+prowler kubernetes --kubeconfig-file path
+```
+
+For in-cluster execution, you can use the supplied yaml to run Prowler as a job:
+```console
+kubectl apply -f job.yaml
+kubectl apply -f prowler-role.yaml
+kubectl apply -f prowler-rolebinding.yaml
+kubectl get pods --> prowler-XXXXX
+kubectl logs prowler-XXXXX
+```
+
+> By default, `prowler` will scan all namespaces in your active Kubernetes context, use flag `--context` to specify the context to be scanned and `--namespaces` to specify the namespaces to be scanned.
 
 # 📃 License
 
