@@ -9,7 +9,7 @@ from prowler.providers.azure.lib.service.service import AzureService
 
 
 ########################## AKS (Azure Kubernetes Service)
-class Aks(AzureService):
+class AKS(AzureService):
     def __init__(self, audit_info: Azure_Audit_Info):
         super().__init__(ContainerServiceClient, audit_info)
         self.clusters = self.__get_clusters__()
