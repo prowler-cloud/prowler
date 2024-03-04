@@ -61,3 +61,17 @@ class AWSSession:
     current_session: Session
     original_session: Session
     session_config: Config
+
+
+@dataclass
+class AWSCallerIdentity:
+    user_id: str
+    account: str
+    arn: str
+    region: str
+
+
+@dataclass
+class AWSMFAInfo:
+    arn: str
+    totp: str

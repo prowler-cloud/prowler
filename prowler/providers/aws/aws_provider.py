@@ -28,8 +28,10 @@ from prowler.providers.aws.lib.organizations.organizations import (
 from prowler.providers.aws.models import (
     AWSAssumeRoleConfiguration,
     AWSAssumeRoleInfo,
+    AWSCallerIdentity,
     AWSCredentials,
     AWSIdentityInfo,
+    AWSMFAInfo,
     AWSOrganizationsInfo,
     AWSSession,
 )
@@ -301,23 +303,22 @@ class AwsProvider(Provider):
 
     def set_identity(
         self,
-        caller_identity: dict,
+        caller_identity: AWSCallerIdentity,
         input_profile: str,
         input_regions: set,
         profile_region: str,
     ) -> AWSIdentityInfo:
-        logger.info(f"Original AWS Caller Identity UserId: {caller_identity['UserId']}")
-        logger.info(f"Original AWS Caller Identity ARN: {caller_identity['Arn']}")
+        logger.info(f"Original AWS Caller Identity UserId: {caller_identity.user_id}")
+        logger.info(f"Original AWS Caller Identity ARN: {caller_identity.arn}")
 
-        account = caller_identity["Account"]
-        partition = parse_iam_credentials_arn(caller_identity["Arn"]).partition
+        partition = parse_iam_credentials_arn(caller_identity.arn).partition
 
         return AWSIdentityInfo(
-            account=account,
-            account_arn=f"arn:{partition}:iam::{account}:root",
-            user_id=caller_identity["UserId"],
+            account=caller_identity.account,
+            account_arn=f"arn:{partition}:iam::{caller_identity.account}:root",
+            user_id=caller_identity.user_id,
             partition=partition,
-            identity_arn=caller_identity["Arn"],
+            identity_arn=caller_identity.arn,
             profile=input_profile,
             profile_region=profile_region,
             audited_regions=input_regions,
@@ -326,19 +327,13 @@ class AwsProvider(Provider):
     def setup_session(
         self, input_mfa: bool, input_profile: str, input_role: str = None
     ) -> Session:
-        logger.info("Creating regular session ...")
-        # Input MFA only if a role is not going to be assumed
-        # TODO: AttributeError: 'AwsProvider' object has no attribute '_assumed_role'. Did you mean: 'assume_role'?
-        # TODO: check with ./prowler.py aws --role arn:aws:iam::580944000508:role/ProwlerProSaaSScanRole --external-id ba3a1514-f473-4121-a770-14b8d286d8e0 --profile dev --log-level INFO --mfa
-        # Test with Role with MFA and User with MFA
-        # if input_mfa and not self._assumed_role.info.role_arn:
-        # We need to verify that input_mfa is True and we don't want to assume a role, if we want to assume a role we will ask the ARN while assuming the role
+        logger.info("Creating original session ...")
         if input_mfa and not input_role:
-            mfa_ARN, mfa_TOTP = self.__input_role_mfa_token_and_code__()
+            mfa_info = self.__input_role_mfa_token_and_code__()
             # TODO: validate MFA ARN here
             get_session_token_arguments = {
-                "SerialNumber": mfa_ARN,
-                "TokenCode": mfa_TOTP,
+                "SerialNumber": mfa_info.arn,
+                "TokenCode": mfa_info.totp,
             }
             sts_client = client("sts")
             session_credentials = sts_client.get_session_token(
@@ -645,11 +640,11 @@ Caller Identity ARN: {Fore.YELLOW}[{self._identity.identity_arn}]{Style.RESET_AL
             global_region = "aws-iso-global"
         return global_region
 
-    def __input_role_mfa_token_and_code__(self) -> tuple[str]:
+    def __input_role_mfa_token_and_code__(self) -> AWSMFAInfo:
         """input_role_mfa_token_and_code ask for the AWS MFA ARN and TOTP and returns it."""
         mfa_ARN = input("Enter ARN of MFA: ")
         mfa_TOTP = input("Enter MFA code: ")
-        return (mfa_ARN.strip(), mfa_TOTP.strip())
+        return AWSMFAInfo(arn=mfa_ARN, totp=mfa_TOTP)
 
     # TODO: rename function
     def _set_session_config(self, aws_retries_max_attempts: int) -> Config:
@@ -704,9 +699,9 @@ Caller Identity ARN: {Fore.YELLOW}[{self._identity.identity_arn}]{Style.RESET_AL
                 assume_role_arguments["ExternalId"] = assumed_role_info.external_id
 
             if assumed_role_info.mfa_enabled:
-                mfa_ARN, mfa_TOTP = self.__input_role_mfa_token_and_code__()
-                assume_role_arguments["SerialNumber"] = mfa_ARN
-                assume_role_arguments["TokenCode"] = mfa_TOTP
+                mfa_info = self.__input_role_mfa_token_and_code__()
+                assume_role_arguments["SerialNumber"] = mfa_info.arn
+                assume_role_arguments["TokenCode"] = mfa_info.totp
 
             # Set the STS Endpoint Region
             # TODO: review the STS endpoint region removal
@@ -806,8 +801,7 @@ def get_aws_available_regions():
 def validate_aws_credentials(
     session: Session,
     aws_region: str,
-) -> dict:
-    # TODO: create a type for the AWSCallerIdentity response
+) -> AWSCallerIdentity:
     """
     validate_aws_credentials returns the get_caller_identity() answer, exits if something exception is raised.
     """
@@ -815,8 +809,12 @@ def validate_aws_credentials(
         validate_credentials_client = create_sts_session(session, aws_region)
         caller_identity = validate_credentials_client.get_caller_identity()
         # Include the region where the caller_identity has validated the credentials
-        caller_identity["region"] = aws_region
-        return caller_identity
+        return AWSCallerIdentity(
+            user_id=caller_identity.get("UserId"),
+            account=caller_identity.get("Account"),
+            arn=caller_identity.get("Arn"),
+            region=aws_region,
+        )
     except Exception as error:
         logger.critical(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
