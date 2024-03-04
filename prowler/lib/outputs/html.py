@@ -474,15 +474,6 @@ def get_azure_html_assessment_summary(provider):
 def get_gcp_html_assessment_summary(provider):
     try:
         if provider.type == "gcp":
-            try:
-                getattr(provider.credentials, "_service_account_email")
-                profile = (
-                    provider.credentials._service_account_email
-                    if provider.credentials._service_account_email is not None
-                    else "default"
-                )
-            except AttributeError:
-                profile = "default"
             return (
                 """
             <div class="col-md-2">
@@ -507,7 +498,7 @@ def get_gcp_html_assessment_summary(provider):
                     <ul class="list-group list-group-flush">
                         <li class="list-group-item">
                             <b>GCP Account:</b> """
-                + profile
+                + provider.identity.profile
                 + """
                         </li>
                     </ul>
@@ -550,7 +541,6 @@ def get_kubernetes_html_assessment_summary(provider):
                         <li class="list-group-item">
                             <b>Kubernetes Cluster:</b> """
                 + provider.identity.cluster
-
                 + """
                         </li>
                         <li class="list-group-item">

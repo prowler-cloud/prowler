@@ -24,7 +24,7 @@ class GCPService:
         self.service = service.lower() if not service.islower() else service
         self.credentials = provider.session
         self.api_version = api_version
-        self.default_project_id = provider.default_project_id
+        self.default_project_id = provider.identity.default_project_id
         self.region = region
         self.client = self.__generate_client__(
             self.service, api_version, self.credentials
