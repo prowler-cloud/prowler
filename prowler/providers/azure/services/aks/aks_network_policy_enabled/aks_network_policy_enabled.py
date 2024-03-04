@@ -17,7 +17,7 @@ class aks_network_policy_enabled(Check):
 
                 if not getattr(cluster, "network_policy", False):
                     report.status = "FAIL"
-                    report.status_extended = f"Network policy not enabled for cluster '{cluster.name}' in subscription '{subscription_name}'."
+                    report.status_extended = f"Network policy is not enabled for cluster '{cluster.name}' in subscription '{subscription_name}'."
 
                 findings.append(report)
 
