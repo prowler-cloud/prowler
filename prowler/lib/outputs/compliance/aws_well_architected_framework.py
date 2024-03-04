@@ -13,9 +13,6 @@ def write_compliance_row_aws_well_architected_framework(
     file_descriptors, finding, compliance, output_options, provider
 ):
     try:
-        # print(compliance)
-        # print(provider)
-        # exit()
         compliance_output = compliance.Framework
         if compliance.Version != "":
             compliance_output += "_" + compliance.Version
