@@ -13,7 +13,7 @@ from prowler.lib.utils.utils import outputs_unix_timestamp
 from prowler.providers.aws.lib.audit_info.models import AWSOrganizationsInfo
 
 
-def get_check_compliance(finding, provider, output_options) -> dict:
+def get_check_compliance(finding, provider_type, output_options) -> dict:
     """get_check_compliance returns a map with the compliance framework as key and the requirements where the finding's check is present.
 
         Example:
@@ -33,7 +33,7 @@ def get_check_compliance(finding, provider, output_options) -> dict:
                 compliance_fw = compliance.Framework
                 if compliance.Version:
                     compliance_fw = f"{compliance_fw}-{compliance.Version}"
-                if compliance.Provider == provider.upper():
+                if compliance.Provider == provider_type.upper():
                     if compliance_fw not in check_compliance:
                         check_compliance[compliance_fw] = []
                     for requirement in compliance.Requirements:
@@ -46,86 +46,86 @@ def get_check_compliance(finding, provider, output_options) -> dict:
         sys.exit(1)
 
 
-def generate_provider_output_csv(
-    provider: str, finding, audit_info, mode: str, fd, output_options
-):
+def generate_provider_output_csv(provider, finding, mode: str, fd, output_options):
     """
     set_provider_output_options configures automatically the outputs based on the selected provider and returns the Provider_Output_Options object.
     """
     try:
         # Dynamically load the Provider_Output_Options class
-        finding_output_model = f"{provider.capitalize()}_Check_Output_{mode.upper()}"
+        finding_output_model = (
+            f"{provider.type.capitalize()}_Check_Output_{mode.upper()}"
+        )
         output_model = getattr(importlib.import_module(__name__), finding_output_model)
         # Fill common data among providers
         data = fill_common_data_csv(finding, output_options.unix_timestamp)
 
-        if provider == "azure":
+        if provider.type == "azure":
             data["resource_id"] = finding.resource_id
             data["resource_name"] = finding.resource_name
             data["subscription"] = finding.subscription
-            data["tenant_domain"] = audit_info.identity.domain
+            data["tenant_domain"] = provider.identity.domain
             data["finding_unique_id"] = (
-                f"prowler-{provider}-{finding.check_metadata.CheckID}-{finding.subscription}-{finding.resource_id}"
+                f"prowler-{provider.type}-{finding.check_metadata.CheckID}-{finding.subscription}-{finding.resource_id}"
             )
             data["compliance"] = unroll_dict(
-                get_check_compliance(finding, provider, output_options)
+                get_check_compliance(finding, provider.type, output_options)
             )
             finding_output = output_model(**data)
 
-        if provider == "gcp":
+        if provider.type == "gcp":
             data["resource_id"] = finding.resource_id
             data["resource_name"] = finding.resource_name
             data["project_id"] = finding.project_id
             data["location"] = finding.location.lower()
             data["finding_unique_id"] = (
-                f"prowler-{provider}-{finding.check_metadata.CheckID}-{finding.project_id}-{finding.resource_id}"
+                f"prowler-{provider.type}-{finding.check_metadata.CheckID}-{finding.project_id}-{finding.resource_id}"
             )
             data["compliance"] = unroll_dict(
-                get_check_compliance(finding, provider, output_options)
+                get_check_compliance(finding, provider.type, output_options)
             )
             finding_output = output_model(**data)
 
-        if provider == "kubernetes":
+        if provider.type == "kubernetes":
             data["resource_id"] = finding.resource_id
             data["resource_name"] = finding.resource_name
             data["namespace"] = finding.namespace
             data["finding_unique_id"] = (
-                f"prowler-{provider}-{finding.check_metadata.CheckID}-{finding.namespace}-{finding.resource_id}"
+                f"prowler-{provider.type}-{finding.check_metadata.CheckID}-{finding.namespace}-{finding.resource_id}"
             )
             data["compliance"] = unroll_dict(
-                get_check_compliance(finding, provider, output_options)
+                get_check_compliance(finding, provider.type, output_options)
             )
             finding_output = output_model(**data)
 
-        if provider == "aws":
-            data["profile"] = audit_info.profile
-            data["account_id"] = audit_info.audited_account
+        if provider.type == "aws":
+            data["profile"] = provider.identity.profile
+            data["account_id"] = provider.identity.account
             data["region"] = finding.region
             data["resource_id"] = finding.resource_id
             data["resource_arn"] = finding.resource_arn
             data["finding_unique_id"] = (
-                f"prowler-{provider}-{finding.check_metadata.CheckID}-{audit_info.audited_account}-{finding.region}-{finding.resource_id}"
+                f"prowler-{provider.type}-{finding.check_metadata.CheckID}-{provider.identity.account}-{finding.region}-{finding.resource_id}"
             )
             data["compliance"] = unroll_dict(
-                get_check_compliance(finding, provider, output_options)
+                get_check_compliance(finding, provider.type, output_options)
             )
             finding_output = output_model(**data)
 
-            if audit_info.organizations_metadata:
+            if provider.organizations_metadata:
                 finding_output.account_name = (
-                    audit_info.organizations_metadata.account_details_name
+                    provider.organizations_metadata.account_details_name
                 )
                 finding_output.account_email = (
-                    audit_info.organizations_metadata.account_details_email
+                    provider.organizations_metadata.account_details_email
                 )
                 finding_output.account_arn = (
-                    audit_info.organizations_metadata.account_details_arn
+                    provider.organizations_metadata.account_details_arn
                 )
                 finding_output.account_org = (
-                    audit_info.organizations_metadata.account_details_org
+                    provider.organizations_metadata.account_details_org
                 )
                 finding_output.account_tags = (
-                    audit_info.organizations_metadata.account_details_tags
+                    provider.organizations_metadata.account_details_tags
                 )
 
         csv_writer = DictWriter(
@@ -379,15 +379,15 @@ class Kubernetes_Check_Output_CSV(Check_Output_CSV):
     resource_name: str = ""
 
 
-def generate_provider_output_json(
-    provider: str, finding, audit_info, mode: str, output_options
-):
+def generate_provider_output_json(provider, finding, mode: str, output_options):
     """
     generate_provider_output_json configures automatically the outputs based on the selected provider and returns the Check_Output_JSON object.
     """
     try:
         # Dynamically load the Provider_Output_Options class for the JSON format
-        finding_output_model = f"{provider.capitalize()}_Check_Output_{mode.upper()}"
+        finding_output_model = (
+            f"{provider.type.capitalize()}_Check_Output_{mode.upper()}"
+        )
         output_model = getattr(importlib.import_module(__name__), finding_output_model)
         # Instantiate the class for the cloud provider
         finding_output = output_model(**finding.check_metadata.dict())
@@ -400,13 +400,13 @@ def generate_provider_output_json(
         finding_output.ResourceDetails = finding.resource_details
 
         if provider == "azure":
-            finding_output.Tenant_Domain = audit_info.identity.domain
+            finding_output.Tenant_Domain = provider.identity.domain
             finding_output.Subscription = finding.subscription
             finding_output.ResourceId = finding.resource_id
             finding_output.ResourceName = finding.resource_name
-            finding_output.FindingUniqueId = f"prowler-{provider}-{finding.check_metadata.CheckID}-{finding.subscription}-{finding.resource_id}"
+            finding_output.FindingUniqueId = f"prowler-{provider.type}-{finding.check_metadata.CheckID}-{finding.subscription}-{finding.resource_id}"
             finding_output.Compliance = get_check_compliance(
-                finding, provider, output_options
+                finding, provider.type, output_options
             )
 
         if provider == "gcp":
@@ -414,26 +414,26 @@ def generate_provider_output_json(
             finding_output.Location = finding.location.lower()
             finding_output.ResourceId = finding.resource_id
             finding_output.ResourceName = finding.resource_name
-            finding_output.FindingUniqueId = f"prowler-{provider}-{finding.check_metadata.CheckID}-{finding.project_id}-{finding.resource_id}"
+            finding_output.FindingUniqueId = f"prowler-{provider.type}-{finding.check_metadata.CheckID}-{finding.project_id}-{finding.resource_id}"
             finding_output.Compliance = get_check_compliance(
-                finding, provider, output_options
+                finding, provider.type, output_options
             )
 
         if provider == "aws":
-            finding_output.Profile = audit_info.profile
-            finding_output.AccountId = audit_info.audited_account
+            finding_output.Profile = provider.identity.profile
+            finding_output.AccountId = provider.identity.account
             finding_output.Region = finding.region
             finding_output.ResourceId = finding.resource_id
             finding_output.ResourceArn = finding.resource_arn
             finding_output.ResourceTags = parse_json_tags(finding.resource_tags)
-            finding_output.FindingUniqueId = f"prowler-{provider}-{finding.check_metadata.CheckID}-{audit_info.audited_account}-{finding.region}-{finding.resource_id}"
+            finding_output.FindingUniqueId = f"prowler-{provider.type}-{finding.check_metadata.CheckID}-{provider.identity.account}-{finding.region}-{finding.resource_id}"
             finding_output.Compliance = get_check_compliance(
-                finding, provider, output_options
+                finding, provider.type, output_options
             )
 
-            if audit_info.organizations_metadata:
+            if provider.organizations_metadata:
                 finding_output.OrganizationsInfo = (
-                    audit_info.organizations_metadata.__dict__
+                    provider.organizations_metadata.__dict__
                 )
 
     except Exception as error:

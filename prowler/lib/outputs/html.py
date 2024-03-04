@@ -18,13 +18,9 @@ from prowler.lib.outputs.models import (
     unroll_tags,
 )
 from prowler.lib.utils.utils import open_file
-from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
-from prowler.providers.azure.lib.audit_info.models import Azure_Audit_Info
-from prowler.providers.gcp.lib.audit_info.models import GCP_Audit_Info
-from prowler.providers.kubernetes.lib.audit_info.models import Kubernetes_Audit_Info
 
 
-def add_html_header(file_descriptor, audit_info):
+def add_html_header(file_descriptor, provider):
     try:
         file_descriptor.write(
             """
@@ -113,7 +109,7 @@ def add_html_header(file_descriptor, audit_info):
             </ul>
             </div>
         </div> """
-            + get_assessment_summary(audit_info)
+            + get_assessment_summary(provider)
             + """
             <div class="col-md-2">
             <div class="card">
@@ -336,18 +332,21 @@ def add_html_footer(output_filename, output_directory):
         sys.exit(1)
 
 
-def get_aws_html_assessment_summary(audit_info):
+def get_aws_html_assessment_summary(provider):
     try:
-        if isinstance(audit_info, AWS_Audit_Info):
+        if provider.type == "aws":
             profile = (
-                audit_info.profile if audit_info.profile is not None else "default"
+                provider.identity.profile
+                if provider.identity.profile is not None
+                else "default"
             )
-            if isinstance(audit_info.audited_regions, list):
-                audited_regions = " ".join(audit_info.audited_regions)
-            elif not audit_info.audited_regions:
+            if isinstance(provider.identity.audited_regions, list):
+                audited_regions = " ".join(provider.identity.audited_regions)
+            elif not provider.identity.audited_regions:
                 audited_regions = "All Regions"
+            # TODO: why this fallback?
             else:
-                audited_regions = ", ".join(audit_info.audited_regions)
+                audited_regions = ", ".join(provider.identity.audited_regions)
             return (
                 """
             <div class="col-md-2">
@@ -358,7 +357,7 @@ def get_aws_html_assessment_summary(audit_info):
                     <ul class="list-group list-group-flush">
                         <li class="list-group-item">
                             <b>AWS Account:</b> """
-                + audit_info.audited_account
+                + provider.identity.account
                 + """
                         </li>
                         <li class="list-group-item">
@@ -382,12 +381,12 @@ def get_aws_html_assessment_summary(audit_info):
                 <ul class="list-group list-group-flush">
                     <li class="list-group-item">
                         <b>User Id:</b> """
-                + audit_info.audited_user_id
+                + provider.identity.user_id
                 + """
                         </li>
                         <li class="list-group-item">
                             <b>Caller Identity ARN:</b> """
-                + audit_info.audited_identity_arn
+                + provider.identity.identity_arn
                 + """
                         </li>
                     </ul>
@@ -403,21 +402,21 @@ def get_aws_html_assessment_summary(audit_info):
         sys.exit(1)
 
 
-def get_azure_html_assessment_summary(audit_info):
+def get_azure_html_assessment_summary(provider):
     try:
-        if isinstance(audit_info, Azure_Audit_Info):
+        if provider.type == "azure":
             printed_subscriptions = []
-            for key, value in audit_info.identity.subscriptions.items():
+            for key, value in provider.identity.subscriptions.items():
                 intermediate = f"{key} : {value}"
                 printed_subscriptions.append(intermediate)
 
             # check if identity is str(coming from SP) or dict(coming from browser or)
-            if isinstance(audit_info.identity.identity_id, dict):
-                html_identity = audit_info.identity.identity_id.get(
+            if isinstance(provider.identity.identity_id, dict):
+                html_identity = provider.identity.identity_id.get(
                     "userPrincipalName", "Identity not found"
                 )
             else:
-                html_identity = audit_info.identity.identity_id
+                html_identity = provider.identity.identity_id
             return (
                 """
             <div class="col-md-2">
@@ -428,12 +427,12 @@ def get_azure_html_assessment_summary(audit_info):
                     <ul class="list-group list-group-flush">
                         <li class="list-group-item">
                             <b>Azure Tenant IDs:</b> """
-                + " ".join(audit_info.identity.tenant_ids)
+                + " ".join(provider.identity.tenant_ids)
                 + """
                         </li>
                         <li class="list-group-item">
                             <b>Azure Tenant Domain:</b> """
-                + audit_info.identity.domain
+                + provider.identity.domain
                 + """
                         </li>
                         <li class="list-group-item">
@@ -452,7 +451,7 @@ def get_azure_html_assessment_summary(audit_info):
                 <ul class="list-group list-group-flush">
                     <li class="list-group-item">
                         <b>Azure Identity Type:</b> """
-                + audit_info.identity.identity_type
+                + provider.identity.identity_type
                 + """
                         </li>
                         <li class="list-group-item">
@@ -472,14 +471,14 @@ def get_azure_html_assessment_summary(audit_info):
         sys.exit(1)
 
 
-def get_gcp_html_assessment_summary(audit_info):
+def get_gcp_html_assessment_summary(provider):
     try:
-        if isinstance(audit_info, GCP_Audit_Info):
+        if provider.type == "gcp":
             try:
-                getattr(audit_info.credentials, "_service_account_email")
+                getattr(provider.credentials, "_service_account_email")
                 profile = (
-                    audit_info.credentials._service_account_email
-                    if audit_info.credentials._service_account_email is not None
+                    provider.credentials._service_account_email
+                    if provider.credentials._service_account_email is not None
                     else "default"
                 )
             except AttributeError:
@@ -494,7 +493,7 @@ def get_gcp_html_assessment_summary(audit_info):
                     <ul class="list-group list-group-flush">
                         <li class="list-group-item">
                             <b>GCP Project IDs:</b> """
-                + ", ".join(audit_info.project_ids)
+                + ", ".join(provider.project_ids)
                 + """
                         </li>
                     </ul>
@@ -523,9 +522,9 @@ def get_gcp_html_assessment_summary(audit_info):
         sys.exit(1)
 
 
-def get_kubernetes_html_assessment_summary(audit_info):
+def get_kubernetes_html_assessment_summary(provider):
     try:
-        if isinstance(audit_info, Kubernetes_Audit_Info):
+        if provider.type == "kubernetes":
             return (
                 """
             <div class="col-md-2">
@@ -536,7 +535,7 @@ def get_kubernetes_html_assessment_summary(audit_info):
                     <ul class="list-group list-group-flush">
                         <li class="list-group-item">
                             <b>Kubernetes Context:</b> """
-                + audit_info.context["name"]
+                + provider.context["name"]
                 + """
                         </li>
                     </ul>
@@ -550,12 +549,12 @@ def get_kubernetes_html_assessment_summary(audit_info):
                     <ul class="list-group list-group-flush">
                         <li class="list-group-item">
                             <b>Kubernetes Cluster:</b> """
-                + audit_info.context["context"]["cluster"]
+                + provider.context["context"]["cluster"]
                 + """
                         </li>
                         <li class="list-group-item">
                             <b>Kubernetes User:</b> """
-                + audit_info.context["context"]["user"]
+                + provider.context["context"]["user"]
                 + """
                         </li>
                     </ul>
@@ -570,26 +569,18 @@ def get_kubernetes_html_assessment_summary(audit_info):
         sys.exit(1)
 
 
-def get_assessment_summary(audit_info):
+def get_assessment_summary(provider):
     """
     get_assessment_summary gets the HTML assessment summary for the provider
     """
     try:
-        # This is based in the Provider_Audit_Info class
-        # It is not pretty but useful
-        # AWS_Audit_Info --> aws
-        # GCP_Audit_Info --> gcp
-        # Azure_Audit_Info --> azure
-        # Kubernetes_Audit_Info --> kubernetes
-        provider = audit_info.__class__.__name__.split("_")[0].lower()
-
         # Dynamically get the Provider quick inventory handler
         provider_html_assessment_summary_function = (
-            f"get_{provider}_html_assessment_summary"
+            f"get_{provider.type}_html_assessment_summary"
         )
         return getattr(
             importlib.import_module(__name__), provider_html_assessment_summary_function
-        )(audit_info)
+        )(provider)
     except Exception as error:
         logger.critical(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

@@ -517,7 +517,6 @@ Caller Identity ARN: {Fore.YELLOW}[{self._identity.identity_arn}]{Style.RESET_AL
             regions = json_regions
         return regions
 
-    # Remove if not needed
     def get_checks_from_input_arn(self) -> set:
         """
         get_checks_from_input_arn gets the list of checks from the input arns

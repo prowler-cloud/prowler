@@ -29,13 +29,12 @@ def set_provider_output_options(
         return provider_output_options
 
 
-def get_provider_output_model(audit_info_class_name):
+def get_provider_output_model(provider_type):
     """
-    get_provider_output_model returns the model _Check_Output_CSV for each provider
+    get_provider_output_model returns the model <provider>_Check_Output_CSV for each provider
     """
-    # from AWS_Audit_Info -> AWS -> aws -> Aws
-    output_provider = audit_info_class_name.split("_", 1)[0].lower().capitalize()
-    output_provider_model_name = f"{output_provider}_Check_Output_CSV"
+    # TODO: classes should be AwsCheckOutputCSV
+    output_provider_model_name = f"{provider_type.capitalize()}_Check_Output_CSV"
     output_provider_models_path = "prowler.lib.outputs.models"
     output_provider_model = getattr(
         importlib.import_module(output_provider_models_path), output_provider_model_name

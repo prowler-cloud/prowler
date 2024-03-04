@@ -141,6 +141,7 @@ class Mitre_Requirement(BaseModel):
 
 
 # Base Compliance Model
+# TODO: move this to compliance folder
 class Compliance_Requirement(BaseModel):
     """Compliance_Requirement holds the base model for every requirement within a compliance framework"""
 
@@ -151,9 +152,10 @@ class Compliance_Requirement(BaseModel):
         Union[
             CIS_Requirement_Attribute,
             ENS_Requirement_Attribute,
-            Generic_Compliance_Requirement_Attribute,
             ISO27001_2013_Requirement_Attribute,
             AWS_Well_Architected_Requirement_Attribute,
+            # Generic_Compliance_Requirement_Attribute must be the last one since it is the fallback for generic compliance framework
+            Generic_Compliance_Requirement_Attribute,
         ]
     ]
     Checks: list[str]

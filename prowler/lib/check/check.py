@@ -577,7 +577,7 @@ def execute(
         )
 
     # Report the check's findings
-    report(check_findings, audit_output_options, global_provider.identity)
+    report(check_findings, audit_output_options, global_provider)
 
     if os.environ.get("PROWLER_REPORT_LIB_PATH"):
         try:
@@ -587,7 +587,7 @@ def execute(
             custom_report_interface = getattr(outputs_module, "report")
 
             custom_report_interface(
-                check_findings, audit_output_options, global_provider.identity
+                check_findings, audit_output_options, global_provider
             )
         except Exception:
             sys.exit(1)
