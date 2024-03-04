@@ -43,6 +43,7 @@ class Aks(AzureService):
                                     agent_pool_profiles=getattr(
                                         cluster, "agent_pool_profiles", []
                                     ),
+                                    rbac_enabled=getattr(cluster, "enable_rbac", False),
                                 )
                             }
                         )
@@ -61,3 +62,4 @@ class Cluster:
     private_fqdn: str
     network_policy: str
     agent_pool_profiles: list[ManagedClusterAgentPoolProfile]
+    rbac_enabled: bool = False
