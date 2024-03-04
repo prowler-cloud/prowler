@@ -20,3 +20,13 @@ def init_parser(self):
         default=[],
         help="GCP Project IDs to be scanned by Prowler",
     )
+
+    # 3rd Party Integrations
+    gcp_3rd_party_subparser = gcp_parser.add_argument_group("3rd Party Integrations")
+    gcp_3rd_party_subparser.add_argument(
+        "-N",
+        "--shodan",
+        nargs="?",
+        default=None,
+        help="Shodan API key used by check compute_public_address_shodan.",
+    )

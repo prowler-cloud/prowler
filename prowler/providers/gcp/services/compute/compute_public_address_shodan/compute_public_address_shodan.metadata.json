@@ -1,0 +1,34 @@
+{
+  "Provider": "compute",
+  "CheckID": "compute_public_address_shodan",
+  "CheckTitle": "Check if any of the Public Addresses are in Shodan (requires Shodan API KEY).",
+  "CheckType": [
+    "Infrastructure Security"
+  ],
+  "ServiceName": "compute",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "AwsEc2Eip",
+  "Description": "Check if any of the Public Addresses are in Shodan (requires Shodan API KEY).",
+  "Risk": "Sites like Shodan index exposed systems and further expose them to wider audiences as a quick way to find exploitable systems.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Check Identified IPs; consider changing them to private ones and delete them from Shodan.",
+      "Url": "https://www.shodan.io/"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
