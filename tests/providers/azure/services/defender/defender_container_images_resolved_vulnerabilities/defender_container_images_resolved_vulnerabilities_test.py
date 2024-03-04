@@ -145,3 +145,27 @@ class Test_defender_container_images_resolved_vulnerabilities:
                 result[0].status_extended
                 == f"Azure running container images do not have unresolved vulnerabilities in subscription '{AZURE_SUBSCRIPTION}'."
             )
+
+    def test_defender_subscription_assesment_not_applicable(self):
+        defender_client = mock.MagicMock
+        defender_client.assessments = {
+            AZURE_SUBSCRIPTION: {
+                "Azure running container images should have vulnerabilities resolved (powered by Microsoft Defender Vulnerability Management)": Assesment(
+                    resource_id=str(uuid4()),
+                    resource_name=str(uuid4()),
+                    status="NotApplicable",
+                )
+            }
+        }
+
+        with mock.patch(
+            "prowler.providers.azure.services.defender.defender_container_images_resolved_vulnerabilities.defender_container_images_resolved_vulnerabilities.defender_client",
+            new=defender_client,
+        ):
+            from prowler.providers.azure.services.defender.defender_container_images_resolved_vulnerabilities.defender_container_images_resolved_vulnerabilities import (
+                defender_container_images_resolved_vulnerabilities,
+            )
+
+            check = defender_container_images_resolved_vulnerabilities()
+            result = check.execute()
+            assert len(result) == 0
