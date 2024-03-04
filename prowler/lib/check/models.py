@@ -5,6 +5,7 @@ from dataclasses import dataclass
 
 from pydantic import BaseModel, ValidationError, validator
 
+from prowler.config.config import valid_severities
 from prowler.lib.logger import logger
 
 
@@ -59,6 +60,14 @@ class Check_Metadata_Model(BaseModel):
     @validator("Severity", pre=True, always=True)
     def severity_to_lower(cls, severity):
         return severity.lower()
+
+    @validator("Severity")
+    def valid_severity(cls, severity):
+        if severity not in valid_severities:
+            raise ValueError(
+                f"{severity} is not a valid severity, it must be one of {', '.join(valid_severities)}"
+            )
+        return severity
 
 
 class Check(ABC, Check_Metadata_Model):
