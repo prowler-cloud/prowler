@@ -52,14 +52,13 @@ class AzureProvider(Provider):
             managed_entity_auth,
             subscription_ids,
         )
-        if not arguments.only_logs:
-            self.print_credentials()
 
         # TODO: should we keep this here or within the identity?
         self.locations = self.get_locations(self.session, self.region_config)
         # TODO: move this to the providers, pending for AWS, GCP, AZURE and K8s
         self.audit_config = {}
 
+    # TODO: this should be moved to the argparse, if not we need to enforce it from the Provider
     def validate_arguments(
         self, az_cli_auth, sp_env_auth, browser_auth, managed_entity_auth, tenant_id
     ):

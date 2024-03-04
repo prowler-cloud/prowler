@@ -18,6 +18,7 @@ class KubernetesIdentityInfo:
 
 class KubernetesProvider(Provider):
     provider = "kubernetes"
+    # TODO: api_client is the session
     api_client: Any
     context: dict
     namespaces: list
@@ -49,8 +50,6 @@ class KubernetesProvider(Provider):
         self.identity = KubernetesIdentityInfo(
             active_context=self.context["name"].replace(":", "_").replace("/", "_")
         )
-        if not arguments.only_logs:
-            self.print_credentials()
 
     def setup_session(self, kubeconfig_file, input_context):
         """
