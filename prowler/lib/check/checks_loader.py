@@ -32,21 +32,26 @@ def load_checks_to_execute(
 
         # First, loop over the bulk_checks_metadata to extract the needed subsets
         for check, metadata in bulk_checks_metadata.items():
-            # Aliases
-            for alias in metadata.CheckAliases:
-                if alias not in check_aliases:
-                    check_aliases[alias] = []
-                check_aliases[alias].append(check)
+            try:
+                # Aliases
+                for alias in metadata.CheckAliases:
+                    if alias not in check_aliases:
+                        check_aliases[alias] = []
+                    check_aliases[alias].append(check)
 
-            # Severities
-            if metadata.Severity:
-                check_severities[metadata.Severity].append(check)
+                # Severities
+                if metadata.Severity:
+                    check_severities[metadata.Severity.lower()].append(check)
 
-            # Categories
-            for category in metadata.Categories:
-                if category not in check_categories:
-                    check_categories[category] = []
-                check_categories[category].append(check)
+                # Categories
+                for category in metadata.Categories:
+                    if category not in check_categories:
+                        check_categories[category] = []
+                    check_categories[category].append(check)
+            except Exception as error:
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+                )
 
         # Handle if there are checks passed using -c/--checks
         if check_list:
@@ -105,6 +110,7 @@ def load_checks_to_execute(
         logger.error(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
         )
+        return checks_to_execute
 
 
 def update_checks_to_execute_with_aliases(
