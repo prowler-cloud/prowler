@@ -1,4 +1,5 @@
 import os
+import re
 import sys
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
@@ -56,6 +57,17 @@ class Check_Metadata_Model(BaseModel):
     # We set the compliance to None to
     # store the compliance later if supplied
     Compliance: list = None
+
+    @validator("Categories", each_item=True, pre=True, always=True)
+    def valid_category(value):
+        if not isinstance(value, str):
+            raise ValueError("Categories must be a list of strings")
+        value_lower = value.lower()
+        if not re.match("^[a-z-]+$", value_lower):
+            raise ValueError(
+                f"Invalid category: {value}. Categories can only contain lowercase letters and hyphen '-'"
+            )
+        return value_lower
 
     @validator("Severity", pre=True, always=True)
     def severity_to_lower(severity):
