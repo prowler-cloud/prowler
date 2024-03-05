@@ -4,13 +4,11 @@ from typing import Any
 
 from prowler.config.config import (
     csv_file_suffix,
-    html_file_suffix,
     json_asff_file_suffix,
     json_file_suffix,
     json_ocsf_file_suffix,
 )
 from prowler.lib.logger import logger
-from prowler.lib.outputs.html import add_html_header
 from prowler.lib.outputs.models import (
     Check_Output_CSV_AWS_CIS,
     Check_Output_CSV_AWS_ISO27001_2013,
@@ -46,8 +44,6 @@ def initialize_file_descriptor(
 
             if output_mode in ("json", "json-asff", "json-ocsf"):
                 file_descriptor.write("[")
-            elif "html" in output_mode:
-                add_html_header(file_descriptor, audit_info)
             else:
                 # Format is the class model of the CSV format to print the headers
                 csv_header = [x.upper() for x in generate_csv_fields(format)]
@@ -90,13 +86,6 @@ def fill_file_descriptors(output_modes, output_directory, output_filename, provi
                     filename = (
                         f"{output_directory}/{output_filename}{json_ocsf_file_suffix}"
                     )
-                    file_descriptor = initialize_file_descriptor(
-                        filename, output_mode, provider
-                    )
-                    file_descriptors.update({output_mode: file_descriptor})
-
-                elif output_mode == "html":
-                    filename = f"{output_directory}/{output_filename}{html_file_suffix}"
                     file_descriptor = initialize_file_descriptor(
                         filename, output_mode, provider
                     )

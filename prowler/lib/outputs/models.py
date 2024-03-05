@@ -264,15 +264,6 @@ def unroll_dict_to_list(dict: dict):
     return dict_list
 
 
-def parse_html_string(str: str):
-    string = ""
-    for elem in str.split(" | "):
-        if elem:
-            string += f"\n&#x2022;{elem}\n"
-
-    return string
-
-
 def parse_json_tags(tags: list):
     dict_tags = {}
     if tags and tags != [{}] and tags != [None]:
