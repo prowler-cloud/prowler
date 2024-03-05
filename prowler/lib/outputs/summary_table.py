@@ -11,13 +11,12 @@ from prowler.config.config import (
     json_ocsf_file_suffix,
 )
 from prowler.lib.logger import logger
-from prowler.providers.common.outputs import Provider_Output_Options
 
 
 def display_summary_table(
     findings: list,
     provider,
-    output_options: Provider_Output_Options,
+    output_options,
 ):
     output_directory = output_options.output_directory
     output_filename = output_options.output_filename

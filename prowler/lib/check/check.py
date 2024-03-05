@@ -24,7 +24,6 @@ from prowler.lib.utils.utils import open_file, parse_json_file
 from prowler.providers.aws.lib.mutelist.mutelist import mutelist_findings
 from prowler.providers.common.common import get_global_provider
 from prowler.providers.common.models import Audit_Metadata
-from prowler.providers.common.outputs import Provider_Output_Options
 
 
 # Load all checks metadata
@@ -398,8 +397,7 @@ def import_check(check_path: str) -> ModuleType:
     return lib
 
 
-# TODO: change ref to Provider_Output_Options
-def run_check(check: Check, output_options: Provider_Output_Options) -> list:
+def run_check(check: Check, output_options) -> list:
     findings = []
     if output_options.verbose:
         print(
