@@ -1,7 +1,6 @@
 import asyncio
 import sys
 from os import getenv
-from typing import Optional
 
 import requests
 from azure.identity import DefaultAzureCredential, InteractiveBrowserCredential
@@ -9,6 +8,7 @@ from azure.mgmt.subscription import SubscriptionClient
 from colorama import Fore, Style
 from msgraph import GraphServiceClient
 
+from prowler.config.config import load_and_validate_config_file
 from prowler.lib.logger import logger
 from prowler.providers.azure.lib.regions.regions import get_regions_config
 from prowler.providers.azure.models import (
@@ -24,7 +24,7 @@ class AzureProvider(Provider):
     _type: str = "azure"
     _session: DefaultAzureCredential
     _identity: AzureIdentityInfo
-    _audit_config: Optional[dict]
+    _audit_config: dict
     _region_config: AzureRegionConfig
     _locations: dict
     _output_options: AzureOutputOptions
@@ -63,8 +63,12 @@ class AzureProvider(Provider):
 
         # TODO: should we keep this here or within the identity?
         self._locations = self.get_locations(self.session, self.region_config)
+
         # TODO: move this to the providers, pending for AWS, GCP, AZURE and K8s
-        self._audit_config = {}
+        # Audit Config
+        self._audit_config = load_and_validate_config_file(
+            self._type, arguments.config_file
+        )
 
     @property
     def identity(self):

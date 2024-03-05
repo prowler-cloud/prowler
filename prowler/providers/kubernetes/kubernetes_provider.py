@@ -1,11 +1,11 @@
 import os
 import sys
 from argparse import Namespace
-from typing import Optional
 
 from colorama import Fore, Style
 from kubernetes import client, config
 
+from prowler.config.config import load_and_validate_config_file
 from prowler.lib.logger import logger
 from prowler.providers.common.models import Audit_Metadata
 from prowler.providers.common.provider import Provider
@@ -20,7 +20,7 @@ class KubernetesProvider(Provider):
     _type: str = "kubernetes"
     _session: KubernetesSession
     _namespaces: list
-    _audit_config: Optional[dict]
+    _audit_config: dict
     _identity: KubernetesIdentityInfo
     _output_options: KubernetesOutputOptions
     # TODO: enforce the mutelist for the Provider class
@@ -50,6 +50,12 @@ class KubernetesProvider(Provider):
             context=self._session.context["name"].replace(":", "_").replace("/", "_"),
             user=self._session.context["context"]["user"],
             cluster=self._session.context["context"]["user"],
+        )
+
+        # TODO: move this to the providers, pending for AWS, GCP, AZURE and K8s
+        # Audit Config
+        self._audit_config = load_and_validate_config_file(
+            self._type, arguments.config_file
         )
 
     @property
