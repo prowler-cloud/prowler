@@ -5,7 +5,6 @@ from tabulate import tabulate
 
 from prowler.config.config import (
     csv_file_suffix,
-    html_file_suffix,
     json_asff_file_suffix,
     json_file_suffix,
     json_ocsf_file_suffix,
@@ -115,10 +114,6 @@ def display_summary_table(
                 f"{Style.BRIGHT}* You only see here those services that contains resources.{Style.RESET_ALL}"
             )
             print("\nDetailed results are in:")
-            if "html" in output_options.output_modes:
-                print(
-                    f" - HTML: {output_directory}/{output_filename}{html_file_suffix}"
-                )
             if "json-asff" in output_options.output_modes:
                 print(
                     f" - JSON-ASFF: {output_directory}/{output_filename}{json_asff_file_suffix}"

@@ -126,9 +126,9 @@ Detailed documentation at https://docs.prowler.cloud
             "-M",
             "--output-modes",
             nargs="+",
-            help="Output modes, by default csv, html and json",
-            default=["csv", "json", "html", "json-ocsf"],
-            choices=["csv", "json", "json-asff", "html", "json-ocsf"],
+            help="Output modes, by default csv and json",
+            default=["csv", "json", "json-ocsf"],
+            choices=["csv", "json", "json-asff", "json-ocsf"],
         )
         common_outputs_parser.add_argument(
             "-F",

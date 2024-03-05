@@ -33,7 +33,6 @@ from prowler.lib.check.custom_checks_metadata import (
 from prowler.lib.cli.parser import ProwlerArgumentParser
 from prowler.lib.logger import logger, set_logging_config
 from prowler.lib.outputs.compliance.compliance import display_compliance_table
-from prowler.lib.outputs.html import add_html_footer, fill_html_overview_statistics
 from prowler.lib.outputs.json import close_json
 from prowler.lib.outputs.outputs import extract_findings_statistics
 from prowler.lib.outputs.summary_table import display_summary_table
@@ -229,16 +228,6 @@ def prowler():
                     global_provider.output_options.output_filename,
                     args.output_directory,
                     mode,
-                )
-            if mode == "html":
-                add_html_footer(
-                    global_provider.output_options.output_filename,
-                    args.output_directory,
-                )
-                fill_html_overview_statistics(
-                    stats,
-                    global_provider.output_options.output_filename,
-                    args.output_directory,
                 )
             # Send output to S3 if needed (-B / -D)
             if provider == "aws" and (

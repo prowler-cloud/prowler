@@ -9,7 +9,6 @@ from prowler.lib.outputs.compliance.compliance import (
     fill_compliance,
 )
 from prowler.lib.outputs.file_descriptors import fill_file_descriptors
-from prowler.lib.outputs.html import fill_html
 from prowler.lib.outputs.json import fill_json_asff, fill_json_ocsf
 from prowler.lib.outputs.models import (
     Check_Output_JSON_ASFF,
@@ -106,10 +105,6 @@ def report(check_findings, provider):
                                 file_descriptors["json-asff"].write(",")
 
                         # Common outputs
-                        if "html" in file_descriptors:
-                            fill_html(file_descriptors["html"], finding, output_options)
-                            file_descriptors["html"].write("")
-
                         if "csv" in file_descriptors:
                             csv_writer, finding_output = generate_provider_output_csv(
                                 provider,

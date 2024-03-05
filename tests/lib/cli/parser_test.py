@@ -44,7 +44,7 @@ class Test_Parser:
         assert not parsed.quiet
         assert len(parsed.output_modes) == 4
         assert "csv" in parsed.output_modes
-        assert "html" in parsed.output_modes
+
         assert "json" in parsed.output_modes
         assert not parsed.output_filename
         assert "output" in parsed.output_directory
@@ -92,7 +92,7 @@ class Test_Parser:
         assert not parsed.quiet
         assert len(parsed.output_modes) == 4
         assert "csv" in parsed.output_modes
-        assert "html" in parsed.output_modes
+
         assert "json" in parsed.output_modes
         assert not parsed.output_filename
         assert "output" in parsed.output_directory
@@ -132,7 +132,7 @@ class Test_Parser:
         assert not parsed.quiet
         assert len(parsed.output_modes) == 4
         assert "csv" in parsed.output_modes
-        assert "html" in parsed.output_modes
+
         assert "json" in parsed.output_modes
         assert not parsed.output_filename
         assert "output" in parsed.output_directory
@@ -167,7 +167,7 @@ class Test_Parser:
         assert not parsed.quiet
         assert len(parsed.output_modes) == 4
         assert "csv" in parsed.output_modes
-        assert "html" in parsed.output_modes
+
         assert "json" in parsed.output_modes
         assert not parsed.output_filename
         assert "output" in parsed.output_directory
@@ -268,7 +268,6 @@ class Test_Parser:
         assert len(parsed.output_modes) == 4
         assert "csv" in parsed.output_modes
         assert "json" in parsed.output_modes
-        assert "html" in parsed.output_modes
 
     def test_root_parser_output_modes_short(self):
         command = [prowler_command, "-M", "csv"]
