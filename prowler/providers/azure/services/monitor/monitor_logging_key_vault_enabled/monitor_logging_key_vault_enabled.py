@@ -9,23 +9,38 @@ class monitor_logging_key_vault_enabled(Check):
         for (
             subscription_name,
             diagnostic_settings,
-        ) in monitor_client.diagnostics_settings.items():
+        ) in monitor_client.diagnostics_settings_for_key_vault.items():
+            report = Check_Report_Azure(self.metadata())
             if not diagnostic_settings:
-                report = Check_Report_Azure(self.metadata())
-                report.status = "PASS"
+                report.status = "FAIL"
                 report.subscription = subscription_name
                 report.resource_name = "Monitor"
-                report.resource_id = "Monitor"
-                report.status_extended = f"Logging for Azure Key Vault is enabled in subscription {subscription_name} or not necessary."
+                report.resource_id = ""
+                report.status_extended = f"There are no diagnostic settings capturing appropiate categories in subscription {subscription_name}."
                 findings.append(report)
-            for diagnostic_setting in diagnostic_settings:
-                print(diagnostic_setting.type)
-                for log in diagnostic_setting.logs:
-                    print(log.category)
-                if diagnostic_setting.type == "Microsoft.KeyVault/vaults":
-                    # Comprobacion de que archive to a storage account esté enabled
-                    pass
 
-        findings.append(report)
+            for diagnostics_setting in diagnostic_settings:
+                diagnostic_setting_name = diagnostics_setting.id.split("/")[-1]
+                for log in diagnostics_setting.logs:
+                    if log.category == "AuditEvent":
+                        report = Check_Report_Azure(self.metadata())
+                        if log.enabled:
+                            report.status = "PASS"
+                            report.status_extended = f"Diagnostic setting {diagnostic_setting_name} for Key Vault in subscription {subscription_name} is capturing AuditEvent category."
+                            report.subscription = subscription_name
+                            report.resource_name = (
+                                diagnostics_setting.storage_account_name
+                            )
+                            report.diagnostic_setting_name = diagnostic_setting_name
+                        else:
+                            report.status = "FAIL"
+                            report.status_extended = f"Diagnostic setting {diagnostic_setting_name} for Key Vault in subscription {subscription_name} is not capturing AuditEvent category."
+                            report.subscription = subscription_name
+                            report.resource_name = (
+                                diagnostics_setting.storage_account_name
+                            )
+                            report.diagnostic_setting_name = diagnostic_setting_name
+
+                        findings.append(report)
 
         return findings
