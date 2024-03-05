@@ -53,7 +53,7 @@ def update_checks_metadata_with_compliance(
                     check_compliance.append(compliance)
             # Create metadata for Manual Control
             manual_check_metadata = {
-                "Provider": "aws",
+                "Provider": framework.Provider,
                 "CheckID": "manual_check",
                 "CheckTitle": "Manual Check",
                 "CheckType": [],
