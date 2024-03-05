@@ -86,7 +86,19 @@ class Test_defender_container_images_scan_enabled:
 
             check = defender_container_images_scan_enabled()
             result = check.execute()
-            assert len(result) == 0
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert result[0].status_extended == (
+                f"Container image scan is disabled in subscription {AZURE_SUBSCRIPTION}."
+            )
+            assert (
+                result[0].resource_id
+                == defender_client.pricings[AZURE_SUBSCRIPTION][
+                    "Containers"
+                ].resource_id
+            )
+            assert result[0].resource_name == "Dender plan for Containers"
+            assert result[0].subscription == AZURE_SUBSCRIPTION
 
     def test_defender_subscription_containers_container_images_scan_off(self):
         defender_client = mock.MagicMock
