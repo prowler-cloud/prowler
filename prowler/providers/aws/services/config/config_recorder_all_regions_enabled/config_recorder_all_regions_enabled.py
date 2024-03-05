@@ -8,7 +8,9 @@ class config_recorder_all_regions_enabled(Check):
         for recorder in config_client.recorders:
             report = Check_Report_AWS(self.metadata())
             report.region = recorder.region
-            report.resource_arn = config_client.recoder_arn_template
+            report.resource_arn = config_client.__get_recorder_arn_template__(
+                recorder.region
+            )
             report.resource_id = (
                 config_client.audited_account if not recorder.name else recorder.name
             )

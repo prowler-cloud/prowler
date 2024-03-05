@@ -41,6 +41,11 @@ class EC2(AWSService):
         self.elastic_ips = []
         self.__threading_call__(self.__describe_ec2_addresses__)
 
+    def __get_volume_arn_template__(self, region):
+        return (
+            f"arn:{self.audited_partition}:ec2:{region}:{self.audited_account}:volume"
+        )
+
     def __describe_instances__(self, regional_client):
         try:
             describe_instances_paginator = regional_client.get_paginator(

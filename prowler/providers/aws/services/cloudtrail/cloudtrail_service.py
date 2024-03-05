@@ -22,6 +22,13 @@ class Cloudtrail(AWSService):
         self.__get_event_selectors__()
         self.__list_tags_for_resource__()
 
+    def __get_trail_arn_template__(self, region):
+        return (
+            f"arn:{self.audited_partition}:cloudtrail:{region}:{self.audited_account}:trail"
+            if region
+            else f"arn:{self.audited_partition}:cloudtrail:{self.region}:{self.audited_account}:trail"
+        )
+
     def __get_trails__(self, regional_client):
         logger.info("Cloudtrail - Getting trails...")
         try:

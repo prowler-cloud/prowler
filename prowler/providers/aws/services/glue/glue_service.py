@@ -12,7 +12,6 @@ class Glue(AWSService):
     def __init__(self, audit_info):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, audit_info)
-        self.data_catalog_arn_template = f"arn:{self.audited_partition}:glue:{self.region}:{self.audited_account}:data-catalog"
         self.connections = []
         self.__threading_call__(self.__get_connections__)
         self.tables = []
@@ -25,6 +24,9 @@ class Glue(AWSService):
         self.__threading_call__(self.__get_security_configurations__)
         self.jobs = []
         self.__threading_call__(self.__get_jobs__)
+
+    def __get_data_catalog_arn_template__(self, region):
+        return f"arn:{self.audited_partition}:glue:{region}:{self.audited_account}:data-catalog"
 
     def __get_connections__(self, regional_client):
         logger.info("Glue - Getting connections...")
