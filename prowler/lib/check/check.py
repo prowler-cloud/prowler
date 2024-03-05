@@ -566,7 +566,7 @@ def execute(
     )
 
     # Mute List findings
-    if global_provider.mutelist:
+    if hasattr(global_provider, "mutelist"):
         check_findings = mutelist_findings(
             global_provider.mutelist,
             global_provider.identity.account,
