@@ -1,0 +1,30 @@
+{
+  "Provider": "azure",
+  "CheckID": "defender_container_images_vulnerabilities_scaned",
+  "CheckTitle": "Ensure Image Vulnerability Scanning using Azure Defender image scanning or a third party provider",
+  "CheckType": [],
+  "ServiceName": "defender",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Microsoft.Security",
+  "Description": "Scan images being deployed to Azure (AKS) for vulnerabilities. Vulnerability scanning for images stored in Azure Container Registry is generally available in Azure Security Center. This capability is powered by Qualys, a leading provider of information security. When you push an image to Container Registry, Security Center automatically scans it, then checks for known vulnerabilities in packages or dependencies defined in the file. When the scan completes (after about 10 minutes), Security Center provides details and a security classification for each vulnerability detected, along with guidance on how to remediate issues and protect vulnerable attack surfaces.",
+  "Risk": "Vulnerabilities in software packages can be exploited by hackers or malicious users to obtain unauthorized access to local cloud resources. Azure Defender and other third party products allow images to be scanned for known vulnerabilities.",
+  "RelatedUrl": "https://learn.microsoft.com/en-us/azure/container-registry/container-registry-check-health",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "",
+      "Url": "https://learn.microsoft.com/en-us/azure/container-registry/scan-images-defender"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "When using an Azure container registry, you might occasionally encounter problems. For example, you might not be able to pull a container image because of an issue with Docker in your local environment. Or, a network issue might prevent you from connecting to the registry."
+}
