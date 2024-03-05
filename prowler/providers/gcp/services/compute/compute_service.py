@@ -89,7 +89,7 @@ class Compute(GCPService):
 
                     for instance in response.get("items", []):
                         public_ip = False
-                        for interface in instance["networkInterfaces"]:
+                        for interface in instance.get("networkInterfaces", []):
                             for config in interface.get("accessConfigs", []):
                                 if "natIP" in config:
                                     public_ip = True
@@ -99,13 +99,13 @@ class Compute(GCPService):
                                 id=instance["id"],
                                 zone=zone,
                                 public_ip=public_ip,
-                                metadata=instance["metadata"],
-                                shielded_enabled_vtpm=instance[
-                                    "shieldedInstanceConfig"
-                                ]["enableVtpm"],
-                                shielded_enabled_integrity_monitoring=instance[
-                                    "shieldedInstanceConfig"
-                                ]["enableIntegrityMonitoring"],
+                                metadata=instance.get("metadata", {}),
+                                shielded_enabled_vtpm=instance.get(
+                                    "shieldedInstanceConfig", {}
+                                ).get("enableVtpm", False),
+                                shielded_enabled_integrity_monitoring=instance.get(
+                                    "shieldedInstanceConfig", {}
+                                ).get("enableIntegrityMonitoring", False),
                                 confidential_computing=instance.get(
                                     "confidentialInstanceConfig", {}
                                 ).get("enableConfidentialCompute", False),
@@ -122,7 +122,7 @@ class Compute(GCPService):
                                             else False
                                         ),
                                     )
-                                    for disk in instance["disks"]
+                                    for disk in instance.get("disks", [])
                                 ],
                                 project_id=project_id,
                             )

@@ -33,6 +33,9 @@ class AWS_Provider:
             # If we receive a credentials object filled is coming form an assumed role, so renewal is needed
             if audit_info.credentials:
                 logger.info("Creating session for assumed role ...")
+                # FIXME: Boto3 returns the timestamp in UTC and the local TZ could be different so the expiration time could not work as expected
+                # PRWLR-3305
+
                 # From botocore we can use RefreshableCredentials class, which has an attribute (refresh_using)
                 # that needs to be a method without arguments that retrieves a new set of fresh credentials
                 # asuming the role again. -> https://github.com/boto/botocore/blob/098cc255f81a25b852e1ecdeb7adebd94c7b1b73/botocore/credentials.py#L395

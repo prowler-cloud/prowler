@@ -27,6 +27,9 @@ class Monitor(AzureService):
                     diagnostics_settings[subscription].append(
                         DiagnosticSetting(
                             id=setting.id,
+                            storage_account_name=setting.storage_account_id.split("/")[
+                                -1
+                            ],
                             logs=setting.logs,
                             storage_account_id=setting.storage_account_id,
                         )
@@ -43,4 +46,5 @@ class Monitor(AzureService):
 class DiagnosticSetting:
     id: str
     storage_account_id: str
+    storage_account_name: str
     logs: LogSettings

@@ -64,6 +64,7 @@ class Test_monitor_diagnostic_setting_with_appropriate_categories:
                         mock.MagicMock(category="ResourceHealth", enabled=False),
                     ],
                     storage_account_id="/subscriptions/1234a5-123a-123a-123a-1234567890ab/resourceGroups/rg/providers/Microsoft.Storage/storageAccounts/storageaccountname",
+                    storage_account_name="storageaccountname",
                 ),
                 DiagnosticSetting(
                     id="id2",
@@ -77,7 +78,8 @@ class Test_monitor_diagnostic_setting_with_appropriate_categories:
                         mock.MagicMock(category="Autoscale", enabled=False),
                         mock.MagicMock(category="ResourceHealth", enabled=False),
                     ],
-                    storage_account_id="/subscriptions/1224a5-123a-123a-123a-1234567890ab/resourceGroups/rg/providers/Microsoft.Storage/storageAccounts/storageaccountname",
+                    storage_account_id="/subscriptions/1224a5-123a-123a-123a-1234567890ab/resourceGroups/rg/providers/Microsoft.Storage/storageAccounts/storageaccountname2",
+                    storage_account_name="storageaccountname2",
                 ),
             ]
         }
