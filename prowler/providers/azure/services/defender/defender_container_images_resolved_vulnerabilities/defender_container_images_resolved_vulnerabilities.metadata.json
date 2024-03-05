@@ -1,15 +1,15 @@
 {
   "Provider": "azure",
   "CheckID": "defender_container_images_resolved_vulnerabilities",
-  "CheckTitle": "Container images should be scanned for vulnerabilities",
+  "CheckTitle": "Container images used by containers should have vulnerabilities resolved",
   "CheckType": [],
   "ServiceName": "defender",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Microsoft.Security/assessments",
-  "Description": "Azure Defender for Container Registries provides vulnerability scanning for container images stored in Azure Container Registry. It helps you to identify and remediate vulnerabilities in your container images. Azure Defender for Container Registries integrates with Azure Security Center and Azure Monitor to provide a comprehensive security solution for your container images.",
-  "Risk": "If you don't scan your container images for vulnerabilities, you might deploy images that contain known vulnerabilities. This can lead to security breaches and data loss.",
+  "Description": "Container images used by containers should have vulnerabilities resolved. Azure Defender for Container Registries can help you identify and resolve vulnerabilities in your container images. It provides vulnerability scanning and prioritized security recommendations for your container images. You can use Azure Defender for Container Registries to scan your container images for vulnerabilities and get prioritized security recommendations to resolve them. You can also use Azure Defender for Container Registries to monitor your container registries for security threats and get prioritized security recommendations to resolve them. Azure Defender for Container Registries integrates with Azure Security Center to provide a unified view of security across your container registries and other Azure resources. Azure Defender for Container Registries is part of Azure Defender, which provides advanced threat protection for your hybrid workloads. Azure Defender uses advanced analytics and global threat intelligence to detect attacks that might otherwise go unnoticed.",
+  "Risk": "If vulnerabilities are not resolved, attackers can exploit them to gain unauthorized access to your containerized applications and data.",
   "RelatedUrl": "https://learn.microsoft.com/en-us/azure/container-registry/container-registry-check-health",
   "Remediation": {
     "Code": {
