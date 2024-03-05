@@ -1,6 +1,6 @@
 {
   "Provider": "azure",
-  "CheckID": "defender_container_images_vulnerabilities_scaned",
+  "CheckID": "defender_container_images_scan_enabled",
   "CheckTitle": "Ensure Image Vulnerability Scanning using Azure Defender image scanning or a third party provider",
   "CheckType": [],
   "ServiceName": "defender",
