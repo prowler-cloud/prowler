@@ -3916,13 +3916,13 @@ files = [
 
 [[package]]
 name = "slack-sdk"
-version = "3.27.0"
+version = "3.27.1"
 description = "The Slack API Platform SDK for Python"
 optional = false
 python-versions = ">=3.6"
 files = [
-    {file = "slack_sdk-3.27.0-py2.py3-none-any.whl", hash = "sha256:a901c68cb5547d5459cdefd81343d116db56d65f6b33f4081ddf1cdd243bf07e"},
-    {file = "slack_sdk-3.27.0.tar.gz", hash = "sha256:811472ce598db855ab3c02f098fa430323ccb253cfe17ba20c7b05ab206d984d"},
+    {file = "slack_sdk-3.27.1-py2.py3-none-any.whl", hash = "sha256:c108e509160cf1324c5c8b1f47ca52fb5e287021b8caf9f4ec78ad737ab7b1d9"},
+    {file = "slack_sdk-3.27.1.tar.gz", hash = "sha256:85d86b34d807c26c8bb33c1569ec0985876f06ae4a2692afba765b7a5490d28c"},
 ]
 
 [package.extras]
@@ -4409,4 +4409,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.13"
-content-hash = "10eac78003f07a640c15ace83f1b9e2254eae2dcbf8a161b9346a4b7fe580f96"
+content-hash = "2321e887337f7d192280547782a7486b3bcc915f13f43bf6784f52aa8457aff8"
