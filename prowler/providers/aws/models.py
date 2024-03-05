@@ -86,13 +86,6 @@ class AWSOutputOptions(ProviderOutputOptions):
         # First call Provider_Output_Options init
         super().__init__(arguments, bulk_checks_metadata)
 
-        # Confire Shodan API
-        # TODO: review shodan for the new AWS provider
-        # if arguments.shodan:
-        #     audit_info = change_config_var(
-        #         "shodan_api_key", arguments.shodan, audit_info
-        #     )
-
         # Check if custom output filename was input, if not, set the default
         if (
             not hasattr(arguments, "output_filename")
