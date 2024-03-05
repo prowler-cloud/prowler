@@ -22,6 +22,7 @@ class Test_ssmincidents_enabled_with_plans:
             f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
         )
         ssmincidents_client.region = AWS_REGION_US_EAST_1
+        ssmincidents_client.replication_set_arn_template = f"arn:{ssmincidents_client.audited_partition}:ssm-incidents:{ssmincidents_client.region}:{ssmincidents_client.audited_account}:replication-set"
         ssmincidents_client.replication_set = []
         with mock.patch(
             "prowler.providers.aws.services.ssmincidents.ssmincidents_service.SSMIncidents",
@@ -57,6 +58,8 @@ class Test_ssmincidents_enabled_with_plans:
         ssmincidents_client.replication_set = [
             ReplicationSet(arn=REPLICATION_SET_ARN, status="CREATING")
         ]
+        ssmincidents_client.audited_partition = "aws"
+        ssmincidents_client.replication_set_arn_template = f"arn:{ssmincidents_client.audited_partition}:ssm-incidents:{ssmincidents_client.region}:{ssmincidents_client.audited_account}:replication-set"
         with mock.patch(
             "prowler.providers.aws.services.ssmincidents.ssmincidents_service.SSMIncidents",
             new=ssmincidents_client,
@@ -89,6 +92,8 @@ class Test_ssmincidents_enabled_with_plans:
         ssmincidents_client.replication_set = [
             ReplicationSet(arn=REPLICATION_SET_ARN, status="ACTIVE")
         ]
+        ssmincidents_client.audited_partition = "aws"
+        ssmincidents_client.replication_set_arn_template = f"arn:{ssmincidents_client.audited_partition}:ssm-incidents:{ssmincidents_client.region}:{ssmincidents_client.audited_account}:replication-set"
         ssmincidents_client.response_plans = []
         with mock.patch(
             "prowler.providers.aws.services.ssmincidents.ssmincidents_service.SSMIncidents",
@@ -127,6 +132,8 @@ class Test_ssmincidents_enabled_with_plans:
                 arn=RESPONSE_PLAN_ARN, name="test", region=AWS_REGION_US_EAST_1
             )
         ]
+        ssmincidents_client.audited_partition = "aws"
+        ssmincidents_client.replication_set_arn_template = f"arn:{ssmincidents_client.audited_partition}:ssm-incidents:{ssmincidents_client.region}:{ssmincidents_client.audited_account}:replication-set"
         with mock.patch(
             "prowler.providers.aws.services.ssmincidents.ssmincidents_service.SSMIncidents",
             new=ssmincidents_client,

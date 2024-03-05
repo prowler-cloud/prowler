@@ -120,6 +120,7 @@ class TrustedAdvisor(AWSService):
 class Check(BaseModel):
     id: str
     name: str
+    arn: str
     status: Optional[str]
     region: str
 

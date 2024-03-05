@@ -11,6 +11,7 @@ from tests.providers.aws.audit_info_utils import (
 )
 
 CHECK_NAME = "test-check"
+CHECK_ARN = "arn:aws:trusted-advisor:::check/test-check"
 
 
 class Test_trustedadvisor_errors_and_warnings:
@@ -22,6 +23,7 @@ class Test_trustedadvisor_errors_and_warnings:
         trustedadvisor_client.audited_account_arn = AWS_ACCOUNT_ARN
         trustedadvisor_client.audited_partition = "aws"
         trustedadvisor_client.region = AWS_REGION_US_EAST_1
+        trustedadvisor_client.account_arn_template = f"arn:{trustedadvisor_client.audited_partition}:trusted-advisor:{trustedadvisor_client.region}:{trustedadvisor_client.audited_account}:account"
         with mock.patch(
             "prowler.providers.aws.services.trustedadvisor.trustedadvisor_service.TrustedAdvisor",
             trustedadvisor_client,
@@ -55,6 +57,7 @@ class Test_trustedadvisor_errors_and_warnings:
             Check(
                 id=CHECK_NAME,
                 name=CHECK_NAME,
+                arn=CHECK_ARN,
                 region=AWS_REGION_US_EAST_1,
                 status="ok",
             )
@@ -88,6 +91,7 @@ class Test_trustedadvisor_errors_and_warnings:
             Check(
                 id=CHECK_NAME,
                 name=CHECK_NAME,
+                arn=CHECK_ARN,
                 region=AWS_REGION_US_EAST_1,
                 status="error",
             )
@@ -121,6 +125,7 @@ class Test_trustedadvisor_errors_and_warnings:
             Check(
                 id=CHECK_NAME,
                 name=CHECK_NAME,
+                arn=CHECK_ARN,
                 region=AWS_REGION_US_EAST_1,
                 status="not_available",
             )
