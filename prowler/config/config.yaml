@@ -23,7 +23,8 @@ aws:
 
   # AWS EC2 Configuration
   # aws.ec2_elastic_ip_shodan
-  shodan_api_key: null
+  # TODO: create common config
+  shodan_api_key: "patata"
   # aws.ec2_securitygroup_with_many_ingress_egress_rules --> by default is 50 rules
   max_security_group_rules: 50
   # aws.ec2_instance_older_than_specific_days --> by default is 6 months (180 days)
@@ -90,7 +91,8 @@ aws:
 azure:
   # Azure Network Configuration
   # azure.network_public_ip_shodan
-  shodan_api_key: null
+  # TODO: create common config
+  shodan_api_key: "patata"
 
   # Azure App Service
   # azure.app_ensure_php_version_is_latest
@@ -113,14 +115,16 @@ kubernetes:
   # kubernetes.apiserver_audit_log_maxage_set
   audit_log_maxage: 30
   # kubernetes.apiserver_strong_ciphers_only
-  apiserver_strong_ciphers: [
+  apiserver_strong_ciphers:
+    [
       "TLS_AES_128_GCM_SHA256",
       "TLS_AES_256_GCM_SHA384",
       "TLS_CHACHA20_POLY1305_SHA256",
-  ]
+    ]
   # Kubelet
   # kubernetes.kubelet_strong_ciphers_only
-  kubelet_strong_ciphers: [
+  kubelet_strong_ciphers:
+    [
       "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
       "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
       "TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305",
@@ -129,4 +133,4 @@ kubernetes:
       "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384",
       "TLS_RSA_WITH_AES_256_GCM_SHA384",
       "TLS_RSA_WITH_AES_128_GCM_SHA256",
-  ]
+    ]

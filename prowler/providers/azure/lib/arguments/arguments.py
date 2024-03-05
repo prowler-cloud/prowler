@@ -52,17 +52,6 @@ def init_parser(self):
         type=validate_azure_region,
         help="Azure region from `az cloud list --output table`, by default AzureCloud",
     )
-    # 3rd Party Integrations
-    azure_3rd_party_subparser = azure_parser.add_argument_group(
-        "3rd Party Integrations"
-    )
-    azure_3rd_party_subparser.add_argument(
-        "-N",
-        "--shodan",
-        nargs="?",
-        default=None,
-        help="Shodan API key used by check network_public_ip_shodan.",
-    )
 
 
 def validate_azure_region(region):
