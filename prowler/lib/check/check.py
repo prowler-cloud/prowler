@@ -24,7 +24,6 @@ from prowler.lib.utils.utils import open_file, parse_json_file
 from prowler.providers.aws.lib.mutelist.mutelist import mutelist_findings
 from prowler.providers.common.common import get_global_provider
 from prowler.providers.common.models import Audit_Metadata
-from prowler.providers.common.outputs import Provider_Output_Options
 
 
 # Load all checks metadata
@@ -398,7 +397,7 @@ def import_check(check_path: str) -> ModuleType:
     return lib
 
 
-def run_check(check: Check, output_options: Provider_Output_Options) -> list:
+def run_check(check: Check, output_options) -> list:
     findings = []
     if output_options.verbose:
         print(
@@ -422,7 +421,6 @@ def run_check(check: Check, output_options: Provider_Output_Options) -> list:
 def execute_checks(
     checks_to_execute: list,
     global_provider: Any,
-    audit_output_options: Provider_Output_Options,
     custom_checks_metadata: Any,
 ) -> list:
     # List to store all the check's findings
@@ -460,7 +458,7 @@ def execute_checks(
             )
 
     # Execution with the --only-logs flag
-    if audit_output_options.only_logs:
+    if global_provider.output_options.only_logs:
         for check_name in checks_to_execute:
             # Recover service from check name
             service = check_name.split("_")[0]
@@ -469,7 +467,6 @@ def execute_checks(
                     service,
                     check_name,
                     global_provider.type,
-                    audit_output_options,
                     global_provider.identity,
                     services_executed,
                     checks_executed,
@@ -514,7 +511,6 @@ def execute_checks(
                     check_findings = execute(
                         service,
                         check_name,
-                        audit_output_options,
                         global_provider,
                         services_executed,
                         checks_executed,
@@ -541,7 +537,6 @@ def execute_checks(
 def execute(
     service: str,
     check_name: str,
-    audit_output_options: Provider_Output_Options,
     global_provider: Any,
     services_executed: set,
     checks_executed: set,
@@ -559,7 +554,7 @@ def execute(
         c = update_check_metadata(c, custom_checks_metadata["Checks"][c.CheckID])
 
     # Run check
-    check_findings = run_check(c, audit_output_options)
+    check_findings = run_check(c, global_provider.output_options)
 
     # Update Audit Status
     services_executed.add(service)
@@ -569,15 +564,15 @@ def execute(
     )
 
     # Mute List findings
-    if audit_output_options.mutelist_file:
+    if hasattr(global_provider, "mutelist") and global_provider.mutelist:
         check_findings = mutelist_findings(
-            audit_output_options.mutelist_file,
-            global_provider.audited_account,
+            global_provider.mutelist,
+            global_provider.identity.account,
             check_findings,
         )
 
     # Report the check's findings
-    report(check_findings, audit_output_options, global_provider.identity)
+    report(check_findings, global_provider)
 
     if os.environ.get("PROWLER_REPORT_LIB_PATH"):
         try:
@@ -586,8 +581,9 @@ def execute(
             outputs_module = importlib.import_module(lib)
             custom_report_interface = getattr(outputs_module, "report")
 
+            # TODO: review this call and see if we can remove the global_provider.output_options since it is contained in the global_provider
             custom_report_interface(
-                check_findings, audit_output_options, global_provider.identity
+                check_findings, global_provider.output_options, global_provider
             )
         except Exception:
             sys.exit(1)

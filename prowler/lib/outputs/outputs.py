@@ -9,15 +9,12 @@ from prowler.lib.outputs.compliance.compliance import (
     fill_compliance,
 )
 from prowler.lib.outputs.file_descriptors import fill_file_descriptors
-from prowler.lib.outputs.html import fill_html
 from prowler.lib.outputs.json import fill_json_asff, fill_json_ocsf
 from prowler.lib.outputs.models import (
     Check_Output_JSON_ASFF,
     generate_provider_output_csv,
     generate_provider_output_json,
 )
-from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
-from prowler.providers.azure.lib.audit_info.models import Azure_Audit_Info
 
 
 def stdout_report(finding, color, verbose, status):
@@ -36,26 +33,26 @@ def stdout_report(finding, color, verbose, status):
         )
 
 
-def report(check_findings, output_options, audit_info):
+def report(check_findings, provider):
     try:
+        output_options = provider.output_options
         file_descriptors = {}
         if check_findings:
             # TO-DO Generic Function
-            if isinstance(audit_info, AWS_Audit_Info):
+            if provider.type == "aws":
                 check_findings.sort(key=lambda x: x.region)
 
-            if isinstance(audit_info, Azure_Audit_Info):
+            if provider.type == "azure":
                 check_findings.sort(key=lambda x: x.subscription)
 
             # Generate the required output files
             if output_options.output_modes:
-                # if isinstance(audit_info, AWS_Audit_Info):
                 # We have to create the required output files
                 file_descriptors = fill_file_descriptors(
                     output_options.output_modes,
                     output_options.output_directory,
                     output_options.output_filename,
-                    audit_info,
+                    provider,
                 )
 
             for finding in check_findings:
@@ -80,14 +77,14 @@ def report(check_findings, output_options, audit_info):
                         fill_compliance(
                             output_options,
                             finding,
-                            audit_info,
+                            provider,
                             file_descriptors,
                             input_compliance_frameworks,
                         )
 
                         add_manual_controls(
                             output_options,
-                            audit_info,
+                            provider,
                             file_descriptors,
                             input_compliance_frameworks,
                         )
@@ -97,7 +94,7 @@ def report(check_findings, output_options, audit_info):
                             if "json-asff" in file_descriptors:
                                 finding_output = Check_Output_JSON_ASFF()
                                 fill_json_asff(
-                                    finding_output, audit_info, finding, output_options
+                                    finding_output, provider, finding, output_options
                                 )
 
                                 json.dump(
@@ -108,15 +105,10 @@ def report(check_findings, output_options, audit_info):
                                 file_descriptors["json-asff"].write(",")
 
                         # Common outputs
-                        if "html" in file_descriptors:
-                            fill_html(file_descriptors["html"], finding, output_options)
-                            file_descriptors["html"].write("")
-
                         if "csv" in file_descriptors:
                             csv_writer, finding_output = generate_provider_output_csv(
-                                finding.check_metadata.Provider,
+                                provider,
                                 finding,
-                                audit_info,
                                 "csv",
                                 file_descriptors["csv"],
                                 output_options,
@@ -125,9 +117,8 @@ def report(check_findings, output_options, audit_info):
 
                         if "json" in file_descriptors:
                             finding_output = generate_provider_output_json(
-                                finding.check_metadata.Provider,
+                                provider,
                                 finding,
-                                audit_info,
                                 "json",
                                 output_options,
                             )
@@ -140,7 +131,7 @@ def report(check_findings, output_options, audit_info):
 
                         if "json-ocsf" in file_descriptors:
                             finding_output = fill_json_ocsf(
-                                audit_info, finding, output_options
+                                provider, finding, output_options
                             )
 
                             json.dump(

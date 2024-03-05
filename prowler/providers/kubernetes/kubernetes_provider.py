@@ -1,31 +1,32 @@
 import os
 import sys
 from argparse import Namespace
-from dataclasses import dataclass
-from typing import Any, Optional
 
 from colorama import Fore, Style
 from kubernetes import client, config
 
+from prowler.config.config import load_and_validate_config_file
 from prowler.lib.logger import logger
+from prowler.providers.common.models import Audit_Metadata
 from prowler.providers.common.provider import Provider
-
-
-@dataclass
-class KubernetesIdentityInfo:
-    active_context: str
+from prowler.providers.kubernetes.models import (
+    KubernetesIdentityInfo,
+    KubernetesOutputOptions,
+    KubernetesSession,
+)
 
 
 class KubernetesProvider(Provider):
-    provider = "kubernetes"
-    # TODO: api_client is the session
-    api_client: Any
-    context: dict
-    namespaces: list
-    audit_resources: Optional[Any]
-    audit_metadata: Optional[Any]
-    audit_config: Optional[dict]
-    identity: KubernetesIdentityInfo
+    _type: str = "kubernetes"
+    _session: KubernetesSession
+    _namespaces: list
+    _audit_config: dict
+    _identity: KubernetesIdentityInfo
+    _output_options: KubernetesOutputOptions
+    # TODO: enforce the mutelist for the Provider class
+    # _mutelist: dict = {}
+    # TODO: this is not optional, enforce for all providers
+    audit_metadata: Audit_Metadata
 
     def __init__(self, arguments: Namespace):
         """
@@ -34,24 +35,76 @@ class KubernetesProvider(Provider):
             arguments (dict): A dictionary containing configuration arguments.
         """
         logger.info("Instantiating Kubernetes Provider ...")
-        self.api_client, self.context = self.setup_session(
-            arguments.kubeconfig_file, arguments.context
-        )
+        self._session = self.setup_session(arguments.kubeconfig_file, arguments.context)
         if not arguments.namespaces:
             logger.info("Retrieving all namespaces ...")
-            self.namespaces = self.get_all_namespaces()
+            self._namespaces = self.get_all_namespaces()
         else:
-            self.namespaces = arguments.namespaces
+            self._namespaces = arguments.namespaces
 
-        if not self.api_client:
+        if not self._session.api_client:
             logger.critical("Failed to set up a Kubernetes session.")
             sys.exit(1)
 
-        self.identity = KubernetesIdentityInfo(
-            active_context=self.context["name"].replace(":", "_").replace("/", "_")
+        self._identity = KubernetesIdentityInfo(
+            context=self._session.context["name"].replace(":", "_").replace("/", "_"),
+            user=self._session.context["context"]["user"],
+            cluster=self._session.context["context"]["user"],
         )
 
-    def setup_session(self, kubeconfig_file, input_context):
+        # TODO: move this to the providers, pending for AWS, GCP, AZURE and K8s
+        # Audit Config
+        self._audit_config = load_and_validate_config_file(
+            self._type, arguments.config_file
+        )
+
+    @property
+    def type(self):
+        return self._type
+
+    @property
+    def session(self):
+        return self._session
+
+    @property
+    def identity(self):
+        return self._identity
+
+    @property
+    def namespaces(self):
+        return self._namespaces
+
+    @property
+    def audit_config(self):
+        return self._audit_config
+
+    @property
+    def output_options(self):
+        return self._output_options
+
+    @output_options.setter
+    def output_options(self, options: tuple):
+        arguments, bulk_checks_metadata = options
+        self._output_options = KubernetesOutputOptions(
+            arguments, bulk_checks_metadata, self._identity
+        )
+
+    # TODO: pending to implement
+    # @property
+    # def mutelist(self):
+    #     return self._mutelist
+
+    # @mutelist.setter
+    # def mutelist(self, mutelist_path):
+    #     if mutelist_path:
+    #         mutelist = parse_mutelist_file(
+    #             self._session.current_session, self._identity.account, mutelist_path
+    #         )
+    #     else:
+    #         mutelist = {}
+    #     self._mutelist = mutelist
+
+    def setup_session(self, kubeconfig_file, input_context) -> KubernetesSession:
         """
         Sets up the Kubernetes session.
 
@@ -85,7 +138,7 @@ class KubernetesProvider(Provider):
                         "user": "service-account-name",  # Also a placeholder
                     },
                 }
-            return client.ApiClient(), context
+            return KubernetesSession(api_client=client.ApiClient(), context=context)
         except Exception as error:
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -134,7 +187,7 @@ class KubernetesProvider(Provider):
         """
         try:
             rbac_api = client.RbacAuthorizationV1Api()
-            context_user = self.context.get("context", {}).get("user", "")
+            context_user = self._identity.user
             roles = []
             # Search in ClusterRoleBindings
             roles = self.search_and_save_roles(
@@ -198,7 +251,7 @@ class KubernetesProvider(Provider):
         """
         Prints the Kubernetes credentials.
         """
-        if self.context.get("name") == "In-Cluster":
+        if self._identity.context == "In-Cluster":
             report = f"""
 This report is being generated using the Kubernetes configuration below:
 
@@ -206,14 +259,12 @@ Kubernetes Pod: {Fore.YELLOW}[prowler]{Style.RESET_ALL}  Namespace: {Fore.YELLOW
 """
             print(report)
         else:
-            cluster_name = self.context.get("context").get("cluster")
-            user_name = self.context.get("context").get("user")
             roles = self.get_context_user_roles()
             roles_str = ", ".join(roles) if roles else "No associated Roles"
 
             report = f"""
 This report is being generated using the Kubernetes configuration below:
 
-Kubernetes Cluster: {Fore.YELLOW}[{cluster_name}]{Style.RESET_ALL} User: {Fore.YELLOW}[{user_name}]{Style.RESET_ALL} Namespaces: {Fore.YELLOW}[{', '.join(self.namespaces)}]{Style.RESET_ALL} Roles: {Fore.YELLOW}[{roles_str}]{Style.RESET_ALL}
+Kubernetes Cluster: {Fore.YELLOW}[{self._identity.cluster}]{Style.RESET_ALL} User: {Fore.YELLOW}[{self._identity.user}]{Style.RESET_ALL} Namespaces: {Fore.YELLOW}[{', '.join(self.namespaces)}]{Style.RESET_ALL} Roles: {Fore.YELLOW}[{roles_str}]{Style.RESET_ALL}
 """
             print(report)

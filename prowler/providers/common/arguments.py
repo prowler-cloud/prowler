@@ -3,10 +3,7 @@ from argparse import Namespace
 from importlib import import_module
 
 from prowler.lib.logger import logger
-from prowler.providers.common.common import (
-    get_available_providers,
-    providers_prowler_lib_path,
-)
+from prowler.providers.common.common import get_available_providers, providers_path
 
 provider_arguments_lib_path = "lib.arguments.arguments"
 validate_provider_arguments_function = "validate_arguments"
@@ -21,7 +18,7 @@ def init_providers_parser(self):
         try:
             getattr(
                 import_module(
-                    f"{providers_prowler_lib_path}.{provider}.{provider_arguments_lib_path}"
+                    f"{providers_path}.{provider}.{provider_arguments_lib_path}"
                 ),
                 init_provider_arguments_function,
             )(self)
@@ -38,7 +35,7 @@ def validate_provider_arguments(arguments: Namespace) -> tuple[bool, str]:
         # Provider function must be located at prowler.providers.<provider>.lib.arguments.arguments.validate_arguments
         return getattr(
             import_module(
-                f"{providers_prowler_lib_path}.{arguments.provider}.{provider_arguments_lib_path}"
+                f"{providers_path}.{arguments.provider}.{provider_arguments_lib_path}"
             ),
             validate_provider_arguments_function,
         )(arguments)

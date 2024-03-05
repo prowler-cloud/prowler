@@ -5,14 +5,13 @@ from prowler.config.config import timestamp_utc
 from prowler.lib.logger import logger
 from prowler.lib.outputs.json import fill_json_asff
 from prowler.lib.outputs.models import Check_Output_JSON_ASFF
-from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 
 SECURITY_HUB_INTEGRATION_NAME = "prowler/prowler"
 SECURITY_HUB_MAX_BATCH = 100
 
 
 def prepare_security_hub_findings(
-    findings: list, audit_info: AWS_Audit_Info, output_options, enabled_regions: list
+    findings: list, provider, output_options, enabled_regions: list
 ) -> dict:
     security_hub_findings_per_region = {}
 
@@ -42,7 +41,7 @@ def prepare_security_hub_findings(
 
         # Format the finding in the JSON ASFF format
         finding_json_asff = fill_json_asff(
-            Check_Output_JSON_ASFF(), audit_info, finding, output_options
+            Check_Output_JSON_ASFF(), provider, finding, output_options
         )
 
         # Include that finding within their region in the JSON format
@@ -137,7 +136,7 @@ def batch_send_to_security_hub(
 
 # Move previous Security Hub check findings to ARCHIVED (as prowler didn't re-detect them)
 def resolve_security_hub_previous_findings(
-    security_hub_findings_per_region: dict, audit_info: AWS_Audit_Info
+    security_hub_findings_per_region: dict, provider
 ) -> list:
     """
     resolve_security_hub_previous_findings archives all the findings that does not appear in the current execution
@@ -152,14 +151,14 @@ def resolve_security_hub_previous_findings(
             for finding in current_findings:
                 current_findings_ids.append(finding["Id"])
             # Get findings of that region
-            security_hub_client = audit_info.audit_session.client(
+            security_hub_client = provider.session.current_session.client(
                 "securityhub", region_name=region
             )
             findings_filter = {
                 "ProductName": [{"Value": "Prowler", "Comparison": "EQUALS"}],
                 "RecordState": [{"Value": "ACTIVE", "Comparison": "EQUALS"}],
                 "AwsAccountId": [
-                    {"Value": audit_info.audited_account, "Comparison": "EQUALS"}
+                    {"Value": provider.identity.account, "Comparison": "EQUALS"}
                 ],
                 "Region": [{"Value": region, "Comparison": "EQUALS"}],
             }

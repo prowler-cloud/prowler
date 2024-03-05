@@ -33,6 +33,7 @@ from prowler.providers.aws.models import (
     AWSIdentityInfo,
     AWSMFAInfo,
     AWSOrganizationsInfo,
+    AWSOutputOptions,
     AWSSession,
 )
 from prowler.providers.common.models import Audit_Metadata
@@ -45,9 +46,12 @@ class AwsProvider(Provider):
     _session: AWSSession
     _organizations_metadata: AWSOrganizationsInfo
     _audit_resources: list = []
-    _audit_config: dict = {}
+    _audit_config: dict
     _ignore_unused_services: bool = False
     _enabled_regions: set = set()
+    # TODO: enforce the mutelist for the Provider class
+    _mutelist: dict = {}
+    _output_options: AWSOutputOptions
     # TODO: this is not optional, enforce for all providers
     audit_metadata: Audit_Metadata
 
@@ -221,10 +225,9 @@ class AwsProvider(Provider):
         self._ignore_unused_services = ignore_unused_services
 
         # Audit Config
-        if getattr(arguments, "config_file", None):
-            self._audit_config = load_and_validate_config_file(
-                self._type, arguments.config_file
-            )
+        self._audit_config = load_and_validate_config_file(
+            self._type, arguments.config_file
+        )
 
     @property
     def identity(self):
@@ -253,6 +256,31 @@ class AwsProvider(Provider):
     @property
     def audit_config(self):
         return self._audit_config
+
+    @property
+    def output_options(self):
+        return self._output_options
+
+    @output_options.setter
+    def output_options(self, options: tuple):
+        arguments, bulk_checks_metadata = options
+        self._output_options = AWSOutputOptions(
+            arguments, bulk_checks_metadata, self._identity
+        )
+
+    @property
+    def mutelist(self):
+        return self._mutelist
+
+    @mutelist.setter
+    def mutelist(self, mutelist_path):
+        if mutelist_path:
+            mutelist = parse_mutelist_file(
+                self._session.current_session, self._identity.account, mutelist_path
+            )
+        else:
+            mutelist = {}
+        self._mutelist = mutelist
 
     # TODO: This can be moved to another class since it doesn't need self
     def get_organizations_info(
@@ -517,7 +545,6 @@ Caller Identity ARN: {Fore.YELLOW}[{self._identity.identity_arn}]{Style.RESET_AL
             regions = json_regions
         return regions
 
-    # Remove if not needed
     def get_checks_from_input_arn(self) -> set:
         """
         get_checks_from_input_arn gets the list of checks from the input arns
@@ -774,17 +801,6 @@ Caller Identity ARN: {Fore.YELLOW}[{self._identity.identity_arn}]{Style.RESET_AL
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
             sys.exit(1)
-
-    # TODO: maybe create a function in the provider with a default empty string
-    def get_mutelist(self, mutelist_file):
-        # Parse content from Mute List file and get it, if necessary, from S3
-        if mutelist_file:
-            mutelist_file = parse_mutelist_file(
-                self.session.session, self._identity.account, mutelist_file
-            )
-        else:
-            mutelist_file = None
-        return mutelist_file
 
 
 def read_aws_regions_file() -> dict:

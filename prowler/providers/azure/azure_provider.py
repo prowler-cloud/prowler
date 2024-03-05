@@ -1,7 +1,6 @@
 import asyncio
 import sys
 from os import getenv
-from typing import Any, Optional
 
 import requests
 from azure.identity import DefaultAzureCredential, InteractiveBrowserCredential
@@ -9,24 +8,33 @@ from azure.mgmt.subscription import SubscriptionClient
 from colorama import Fore, Style
 from msgraph import GraphServiceClient
 
+from prowler.config.config import load_and_validate_config_file
 from prowler.lib.logger import logger
 from prowler.providers.azure.lib.regions.regions import get_regions_config
-from prowler.providers.azure.models import AzureIdentityInfo, AzureRegionConfig
+from prowler.providers.azure.models import (
+    AzureIdentityInfo,
+    AzureOutputOptions,
+    AzureRegionConfig,
+)
+from prowler.providers.common.models import Audit_Metadata
 from prowler.providers.common.provider import Provider
 
 
-# TODO: why do we have variables defined in the class not passed to the __init__???
 class AzureProvider(Provider):
-    session: DefaultAzureCredential
-    identity: AzureIdentityInfo
-    audit_resources: Optional[Any]
-    audit_metadata: Optional[Any]
-    audit_config: dict
-    region_config: AzureRegionConfig
+    _type: str = "azure"
+    _session: DefaultAzureCredential
+    _identity: AzureIdentityInfo
+    _audit_config: dict
+    _region_config: AzureRegionConfig
+    _locations: dict
+    _output_options: AzureOutputOptions
+    # TODO: enforce the mutelist for the Provider class
+    # _mutelist: dict = {}
+    # TODO: this is not optional, enforce for all providers
+    audit_metadata: Audit_Metadata
 
     def __init__(self, arguments):
         logger.info("Setting Azure provider ...")
-        self.provider = "azure"
         subscription_ids = arguments.subscription_ids
 
         logger.info("Checking if any credentials mode is set ...")
@@ -41,11 +49,11 @@ class AzureProvider(Provider):
         self.validate_arguments(
             az_cli_auth, sp_env_auth, browser_auth, managed_entity_auth, tenant_id
         )
-        self.region_config = self.setup_region_config(region)
-        self.session = self.setup_session(
+        self._region_config = self.setup_region_config(region)
+        self._session = self.setup_session(
             az_cli_auth, sp_env_auth, browser_auth, managed_entity_auth, tenant_id
         )
-        self.identity = self.setup_identity(
+        self._identity = self.setup_identity(
             az_cli_auth,
             sp_env_auth,
             browser_auth,
@@ -54,9 +62,63 @@ class AzureProvider(Provider):
         )
 
         # TODO: should we keep this here or within the identity?
-        self.locations = self.get_locations(self.session, self.region_config)
+        self._locations = self.get_locations(self.session, self.region_config)
+
         # TODO: move this to the providers, pending for AWS, GCP, AZURE and K8s
-        self.audit_config = {}
+        # Audit Config
+        self._audit_config = load_and_validate_config_file(
+            self._type, arguments.config_file
+        )
+
+    @property
+    def identity(self):
+        return self._identity
+
+    @property
+    def type(self):
+        return self._type
+
+    @property
+    def session(self):
+        return self._session
+
+    @property
+    def region_config(self):
+        return self._region_config
+
+    @property
+    def locations(self):
+        return self._locations
+
+    @property
+    def audit_config(self):
+        return self._audit_config
+
+    @property
+    def output_options(self):
+        return self._output_options
+
+    @output_options.setter
+    def output_options(self, options: tuple):
+        arguments, bulk_checks_metadata = options
+        self._output_options = AzureOutputOptions(
+            arguments, bulk_checks_metadata, self._identity
+        )
+
+    # TODO: pending to implement
+    # @property
+    # def mutelist(self):
+    #     return self._mutelist
+
+    # @mutelist.setter
+    # def mutelist(self, mutelist_path):
+    #     if mutelist_path:
+    #         mutelist = parse_mutelist_file(
+    #             self._session.current_session, self._identity.account, mutelist_path
+    #         )
+    #     else:
+    #         mutelist = {}
+    #     self._mutelist = mutelist
 
     # TODO: this should be moved to the argparse, if not we need to enforce it from the Provider
     def validate_arguments(
@@ -92,15 +154,15 @@ class AzureProvider(Provider):
 
     def print_credentials(self):
         printed_subscriptions = []
-        for key, value in self.identity.subscriptions.items():
+        for key, value in self._identity.subscriptions.items():
             intermediate = key + ": " + value
             printed_subscriptions.append(intermediate)
         report = f"""
 This report is being generated using the identity below:
 
-Azure Tenant IDs: {Fore.YELLOW}[{" ".join(self.identity.tenant_ids)}]{Style.RESET_ALL} Azure Tenant Domain: {Fore.YELLOW}[{self.identity.domain}]{Style.RESET_ALL} Azure Region: {Fore.YELLOW}[{self.region_config.name}]{Style.RESET_ALL}
+Azure Tenant IDs: {Fore.YELLOW}[{" ".join(self._identity.tenant_ids)}]{Style.RESET_ALL} Azure Tenant Domain: {Fore.YELLOW}[{self._identity.domain}]{Style.RESET_ALL} Azure Region: {Fore.YELLOW}[{self.region_config.name}]{Style.RESET_ALL}
 Azure Subscriptions: {Fore.YELLOW}{printed_subscriptions}{Style.RESET_ALL}
-Azure Identity Type: {Fore.YELLOW}[{self.identity.identity_type}]{Style.RESET_ALL} Azure Identity ID: {Fore.YELLOW}[{self.identity.identity_id}]{Style.RESET_ALL}
+Azure Identity Type: {Fore.YELLOW}[{self._identity.identity_type}]{Style.RESET_ALL} Azure Identity ID: {Fore.YELLOW}[{self._identity.identity_id}]{Style.RESET_ALL}
 """
         print(report)
 

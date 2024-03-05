@@ -44,7 +44,7 @@ class Test_Parser:
         assert not parsed.quiet
         assert len(parsed.output_modes) == 4
         assert "csv" in parsed.output_modes
-        assert "html" in parsed.output_modes
+
         assert "json" in parsed.output_modes
         assert not parsed.output_filename
         assert "output" in parsed.output_directory
@@ -92,7 +92,7 @@ class Test_Parser:
         assert not parsed.quiet
         assert len(parsed.output_modes) == 4
         assert "csv" in parsed.output_modes
-        assert "html" in parsed.output_modes
+
         assert "json" in parsed.output_modes
         assert not parsed.output_filename
         assert "output" in parsed.output_directory
@@ -132,7 +132,7 @@ class Test_Parser:
         assert not parsed.quiet
         assert len(parsed.output_modes) == 4
         assert "csv" in parsed.output_modes
-        assert "html" in parsed.output_modes
+
         assert "json" in parsed.output_modes
         assert not parsed.output_filename
         assert "output" in parsed.output_directory
@@ -167,7 +167,7 @@ class Test_Parser:
         assert not parsed.quiet
         assert len(parsed.output_modes) == 4
         assert "csv" in parsed.output_modes
-        assert "html" in parsed.output_modes
+
         assert "json" in parsed.output_modes
         assert not parsed.output_filename
         assert "output" in parsed.output_directory
@@ -268,7 +268,6 @@ class Test_Parser:
         assert len(parsed.output_modes) == 4
         assert "csv" in parsed.output_modes
         assert "json" in parsed.output_modes
-        assert "html" in parsed.output_modes
 
     def test_root_parser_output_modes_short(self):
         command = [prowler_command, "-M", "csv"]
@@ -967,6 +966,7 @@ class Test_Parser:
         parsed = self.parser.parse(command)
         assert parsed.output_bucket_no_assume == bucket
 
+    # TODO: change for the global parser
     def test_aws_parser_shodan_short(self):
         argument = "-N"
         shodan_api_key = str(uuid.uuid4())
@@ -974,6 +974,7 @@ class Test_Parser:
         parsed = self.parser.parse(command)
         assert parsed.shodan == shodan_api_key
 
+    # TODO: change for the global parser
     def test_aws_parser_shodan_long(self):
         argument = "--shodan"
         shodan_api_key = str(uuid.uuid4())
@@ -1079,6 +1080,7 @@ class Test_Parser:
         assert parsed.provider == "azure"
         assert parsed.az_cli_auth
 
+    # TODO: change for the global parser
     def test_azure_parser_shodan_short(self):
         argument = "-N"
         shodan_api_key = str(uuid.uuid4())
@@ -1086,6 +1088,7 @@ class Test_Parser:
         parsed = self.parser.parse(command)
         assert parsed.shodan == shodan_api_key
 
+    # TODO: change for the global parser
     def test_azure_parser_shodan_long(self):
         argument = "--shodan"
         shodan_api_key = str(uuid.uuid4())

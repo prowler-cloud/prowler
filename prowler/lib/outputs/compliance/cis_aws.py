@@ -4,12 +4,12 @@ from prowler.lib.utils.utils import outputs_unix_timestamp
 
 
 def generate_compliance_row_cis_aws(
-    finding, compliance, requirement, attribute, output_options, audit_info
+    finding, compliance, requirement, attribute, output_options, provider
 ):
     compliance_row = Check_Output_CSV_AWS_CIS(
         Provider=finding.check_metadata.Provider,
         Description=compliance.Description,
-        AccountId=audit_info.audited_account,
+        AccountId=provider.identity.account,
         Region=finding.region,
         AssessmentDate=outputs_unix_timestamp(output_options.unix_timestamp, timestamp),
         Requirements_Id=requirement.Id,

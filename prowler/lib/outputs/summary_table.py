@@ -5,43 +5,40 @@ from tabulate import tabulate
 
 from prowler.config.config import (
     csv_file_suffix,
-    html_file_suffix,
     json_asff_file_suffix,
     json_file_suffix,
     json_ocsf_file_suffix,
 )
 from prowler.lib.logger import logger
-from prowler.providers.common.outputs import Provider_Output_Options
 
 
 def display_summary_table(
     findings: list,
-    audit_info,
-    output_options: Provider_Output_Options,
-    provider: str,
+    provider,
+    output_options,
 ):
     output_directory = output_options.output_directory
     output_filename = output_options.output_filename
     try:
-        if provider == "aws":
+        if provider.type == "aws":
             entity_type = "Account"
-            audited_entities = audit_info.audited_account
-        elif provider == "azure":
+            audited_entities = provider.identity.account
+        elif provider.type == "azure":
             if (
-                audit_info.identity.domain
+                provider.identity.domain
                 != "Unknown tenant domain (missing AAD permissions)"
             ):
                 entity_type = "Tenant Domain"
-                audited_entities = audit_info.identity.domain
+                audited_entities = provider.identity.domain
             else:
                 entity_type = "Tenant ID/s"
-                audited_entities = " ".join(audit_info.identity.tenant_ids)
-        elif provider == "gcp":
+                audited_entities = " ".join(provider.identity.tenant_ids)
+        elif provider.type == "gcp":
             entity_type = "Project ID/s"
-            audited_entities = ", ".join(audit_info.project_ids)
-        elif provider == "kubernetes":
+            audited_entities = ", ".join(provider.project_ids)
+        elif provider.type == "kubernetes":
             entity_type = "Context"
-            audited_entities = audit_info.context["name"]
+            audited_entities = provider.identity.context
 
         if findings:
             current = {
@@ -110,17 +107,13 @@ def display_summary_table(
             )
             if provider == "azure":
                 print(
-                    f"\nSubscriptions scanned: {Fore.YELLOW}{' '.join(audit_info.identity.subscriptions.keys())}{Style.RESET_ALL}"
+                    f"\nSubscriptions scanned: {Fore.YELLOW}{' '.join(provider.identity.subscriptions.keys())}{Style.RESET_ALL}"
                 )
             print(tabulate(findings_table, headers="keys", tablefmt="rounded_grid"))
             print(
                 f"{Style.BRIGHT}* You only see here those services that contains resources.{Style.RESET_ALL}"
             )
             print("\nDetailed results are in:")
-            if "html" in output_options.output_modes:
-                print(
-                    f" - HTML: {output_directory}/{output_filename}{html_file_suffix}"
-                )
             if "json-asff" in output_options.output_modes:
                 print(
                     f" - JSON-ASFF: {output_directory}/{output_filename}{json_asff_file_suffix}"

@@ -27,7 +27,7 @@ lint: ## Lint Code
 	@echo "Running black... "
 	black --check .
 	@echo "Running pylint..."
-	pylint --disable=W,C,R,E -j 0 providers lib util config
+	pylint --disable=W,C,R,E -j 0 prowler util
 
 ##@ PyPI
 pypi-clean: ## Delete the distribution files

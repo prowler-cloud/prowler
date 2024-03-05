@@ -12,6 +12,7 @@ from abc import ABC, abstractmethod
 # class Provider(metaclass=ProviderMeta):
 
 
+# TODO: enforce audit_metadata for all the providers
 class Provider(ABC):
 
     @property
@@ -61,6 +62,24 @@ class Provider(ABC):
     @abstractmethod
     def setup_session(self):
         pass
+
+    @property
+    @abstractmethod
+    def output_options(self):
+        """
+        output_options method returns the provider's audit output configuration.
+
+        This method needs to be created in each provider.
+        """
+
+    @output_options.setter
+    @abstractmethod
+    def output_options(self):
+        """
+        output_options.setter sets the provider's audit output configuration.
+
+        This method needs to be created in each provider.
+        """
 
     # TODO: probably this won't be here since we want to do the arguments validation during the parse()
     def validate_arguments(self):

@@ -8,12 +8,11 @@ import requests
 import yaml
 
 from prowler.lib.logger import logger
+from prowler.providers.common.common import get_global_provider
 
 timestamp = datetime.today()
 timestamp_utc = datetime.now(timezone.utc).replace(tzinfo=timezone.utc)
 prowler_version = "3.14.0"
-html_logo_url = "https://github.com/prowler-cloud/prowler/"
-html_logo_img = "https://user-images.githubusercontent.com/3985464/113734260-7ba06900-96fb-11eb-82bc-d4f68a1e2710.png"
 square_logo_img = "https://user-images.githubusercontent.com/38561120/235905862-9ece5bd7-9aa3-4e48-807a-3a9035eb8bfb.png"
 aws_logo = "https://user-images.githubusercontent.com/38561120/235953920-3e3fba08-0795-41dc-b480-9bea57db9f2e.png"
 azure_logo = "https://user-images.githubusercontent.com/38561120/235927375-b23e2e0f-8932-49ec-b59c-d89f61c8041d.png"
@@ -84,15 +83,29 @@ def check_current_version():
         return f"{prowler_version_string}"
 
 
-def change_config_var(variable: str, value: str, audit_info):
+# TODO: remove after changing tests for this function
+# def change_config_var(variable: str, value: str, audit_info):
+#     try:
+#         if (
+#             hasattr(audit_info, "audit_config")
+#             and audit_info.audit_config is not None
+#             and variable in audit_info.audit_config
+#         ):
+#             audit_info.audit_config[variable] = value
+#         return audit_info
+#     except Exception as error:
+#         logger.error(
+#             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+#         )
+
+
+# TODO: revisit this function
+def update_provider_config(variable: str, value: str):
     try:
-        if (
-            hasattr(audit_info, "audit_config")
-            and audit_info.audit_config is not None
-            and variable in audit_info.audit_config
-        ):
-            audit_info.audit_config[variable] = value
-        return audit_info
+        global_provider = get_global_provider()
+        if global_provider.audit_config and variable in global_provider.audit_config:
+            global_provider.audit_config[variable] = value
+
     except Exception as error:
         logger.error(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"

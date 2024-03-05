@@ -33,7 +33,6 @@ from prowler.lib.check.custom_checks_metadata import (
 from prowler.lib.cli.parser import ProwlerArgumentParser
 from prowler.lib.logger import logger, set_logging_config
 from prowler.lib.outputs.compliance.compliance import display_compliance_table
-from prowler.lib.outputs.html import add_html_footer, fill_html_overview_statistics
 from prowler.lib.outputs.json import close_json
 from prowler.lib.outputs.outputs import extract_findings_statistics
 from prowler.lib.outputs.summary_table import display_summary_table
@@ -44,12 +43,7 @@ from prowler.providers.aws.lib.security_hub.security_hub import (
     resolve_security_hub_previous_findings,
     verify_security_hub_integration_enabled_per_region,
 )
-from prowler.providers.common.clean import clean_provider_local_output_directories
-from prowler.providers.common.common import (
-    get_global_provider,
-    set_global_provider_object,
-)
-from prowler.providers.common.outputs import set_provider_output_options
+from prowler.providers.common.common import set_global_provider_object
 
 
 def prowler():
@@ -147,8 +141,7 @@ def prowler():
         sys.exit()
 
     # Provider to scan
-    set_global_provider_object(args)
-    global_provider = get_global_provider()
+    global_provider = set_global_provider_object(args)
 
     # Print Provider Credentials
     if not args.only_logs:
@@ -179,16 +172,14 @@ def prowler():
     # Sort final check list
     checks_to_execute = sorted(checks_to_execute)
 
-    # Parse Mute List
-    mutelist_file = ""
+    # Setup Mute List
+    # TODO: this should be available for all the providers
+    # Move the argument to the Prowler level to be available for all
     if hasattr(args, "mutelist_file"):
-        mutelist_file = global_provider.get_mutelist(args.mutelist_file)
+        global_provider.mutelist = args.mutelist_file
 
-    # Set output options based on the selected provider
-    # TODO: this is going to be removed an include in the Provider as a new common object
-    audit_output_options = set_provider_output_options(
-        provider, args, global_provider.identity, mutelist_file, bulk_checks_metadata
-    )
+    # Setup Output Options
+    global_provider.output_options = (args, bulk_checks_metadata)
 
     # TODO: adapt the quick inventory for the new AWS provider
     # Run the quick inventory for the provider if available
@@ -203,7 +194,6 @@ def prowler():
         findings = execute_checks(
             checks_to_execute,
             global_provider,
-            audit_output_options,
             custom_checks_metadata,
         )
     else:
@@ -235,27 +225,22 @@ def prowler():
             # Close json file if exists
             if "json" in mode:
                 close_json(
-                    audit_output_options.output_filename, args.output_directory, mode
-                )
-            if mode == "html":
-                add_html_footer(
-                    audit_output_options.output_filename, args.output_directory
-                )
-                fill_html_overview_statistics(
-                    stats, audit_output_options.output_filename, args.output_directory
+                    global_provider.output_options.output_filename,
+                    args.output_directory,
+                    mode,
                 )
             # Send output to S3 if needed (-B / -D)
             if provider == "aws" and (
                 args.output_bucket or args.output_bucket_no_assume
             ):
                 output_bucket = args.output_bucket
-                bucket_session = audit_info.audit_session
+                bucket_session = global_provider.session.current_session
                 # Check if -D was input
                 if args.output_bucket_no_assume:
                     output_bucket = args.output_bucket_no_assume
-                    bucket_session = audit_info.original_session
+                    bucket_session = global_provider.session.original_session
                 send_to_s3_bucket(
-                    audit_output_options.output_filename,
+                    global_provider.output_options.output_filename,
                     args.output_directory,
                     mode,
                     output_bucket,
@@ -271,27 +256,30 @@ def prowler():
         aws_security_enabled_regions = []
         security_hub_regions = (
             global_provider.get_available_aws_service_regions("securityhub")
-            if not audit_info.audited_regions
-            else audit_info.audited_regions
+            if not global_provider.identity.audited_regions
+            else global_provider.identity.audited_regions
         )
         for region in security_hub_regions:
             # Save the regions where AWS Security Hub is enabled
             if verify_security_hub_integration_enabled_per_region(
-                audit_info.audited_partition,
+                global_provider.identity.partition,
                 region,
-                audit_info.audit_session,
-                audit_info.audited_account,
+                global_provider.session.current_session,
+                global_provider.identity.account,
             ):
                 aws_security_enabled_regions.append(region)
 
         # Prepare the findings to be sent to Security Hub
         security_hub_findings_per_region = prepare_security_hub_findings(
-            findings, audit_info, audit_output_options, aws_security_enabled_regions
+            findings,
+            provider,
+            global_provider.output_options,
+            aws_security_enabled_regions,
         )
 
         # Send the findings to Security Hub
         findings_sent_to_security_hub = batch_send_to_security_hub(
-            security_hub_findings_per_region, audit_info.audit_session
+            security_hub_findings_per_region, provider.session.current_session
         )
 
         print(
@@ -305,7 +293,7 @@ def prowler():
             )
             findings_archived_in_security_hub = resolve_security_hub_previous_findings(
                 security_hub_findings_per_region,
-                audit_info,
+                provider,
             )
             print(
                 f"{Style.BRIGHT}{Fore.GREEN}\n{findings_archived_in_security_hub} findings archived in AWS Security Hub!{Style.RESET_ALL}"
@@ -315,9 +303,8 @@ def prowler():
     if not args.only_logs:
         display_summary_table(
             findings,
-            audit_info,
-            audit_output_options,
-            provider,
+            global_provider,
+            global_provider.output_options,
         )
 
         if findings:
@@ -331,21 +318,18 @@ def prowler():
                     findings,
                     bulk_checks_metadata,
                     compliance,
-                    audit_output_options.output_filename,
-                    audit_output_options.output_directory,
+                    global_provider.output_options.output_filename,
+                    global_provider.output_options.output_directory,
                     compliance_overview,
                 )
             if compliance_overview:
                 print(
-                    f"\nDetailed compliance results are in {Fore.YELLOW}{audit_output_options.output_directory}/compliance/{Style.RESET_ALL}\n"
+                    f"\nDetailed compliance results are in {Fore.YELLOW}{global_provider.output_options.output_directory}/compliance/{Style.RESET_ALL}\n"
                 )
 
     # If custom checks were passed, remove the modules
     if checks_folder:
         remove_custom_checks_module(checks_folder, provider)
-
-    # clean local directories
-    clean_provider_local_output_directories(args)
 
     # If there are failed findings exit code 3, except if -z is input
     if not args.ignore_exit_code_3 and stats["total_fail"] > 0:
