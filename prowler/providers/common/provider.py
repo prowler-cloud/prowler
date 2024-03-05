@@ -12,6 +12,7 @@ from abc import ABC, abstractmethod
 # class Provider(metaclass=ProviderMeta):
 
 
+# TODO: enforce audit_metadata for all the providers
 class Provider(ABC):
 
     @property

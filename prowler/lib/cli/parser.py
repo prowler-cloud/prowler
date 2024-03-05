@@ -52,6 +52,7 @@ Detailed documentation at https://docs.prowler.cloud
         self.__init_list_checks_parser__()
         self.__init_config_parser__()
         self.__init_custom_checks_metadata_parser__()
+        self.__init_third_party_integrations_parser__()
 
         # Init Providers Arguments
         init_providers_parser(self)
@@ -300,4 +301,17 @@ Detailed documentation at https://docs.prowler.cloud
             nargs="?",
             default=None,
             help="Path for the custom checks metadata YAML file. See example prowler/config/custom_checks_metadata_example.yaml for reference and format. See more in https://docs.prowler.cloud/en/latest/tutorials/custom-checks-metadata/",
+        )
+
+    def __init_third_party_integrations_parser__(self):
+        third_party_subparser = self.common_providers_parser.add_argument_group(
+            "3rd Party Integrations"
+        )
+        third_party_subparser.add_argument(
+            "-N",
+            "--shodan",
+            nargs="?",
+            default=None,
+            metavar="SHODAN_API_KEY",
+            help="Shodan API key.",
         )

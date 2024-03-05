@@ -8,6 +8,7 @@ import requests
 import yaml
 
 from prowler.lib.logger import logger
+from prowler.providers.common.common import get_global_provider
 
 timestamp = datetime.today()
 timestamp_utc = datetime.now(timezone.utc).replace(tzinfo=timezone.utc)
@@ -82,15 +83,29 @@ def check_current_version():
         return f"{prowler_version_string}"
 
 
-def change_config_var(variable: str, value: str, audit_info):
+# TODO: remove after changing tests for this function
+# def change_config_var(variable: str, value: str, audit_info):
+#     try:
+#         if (
+#             hasattr(audit_info, "audit_config")
+#             and audit_info.audit_config is not None
+#             and variable in audit_info.audit_config
+#         ):
+#             audit_info.audit_config[variable] = value
+#         return audit_info
+#     except Exception as error:
+#         logger.error(
+#             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+#         )
+
+
+# TODO: revisit this function
+def update_provider_config(variable: str, value: str):
     try:
-        if (
-            hasattr(audit_info, "audit_config")
-            and audit_info.audit_config is not None
-            and variable in audit_info.audit_config
-        ):
-            audit_info.audit_config[variable] = value
-        return audit_info
+        global_provider = get_global_provider()
+        if global_provider.audit_config and variable in global_provider.audit_config:
+            global_provider.audit_config[variable] = value
+
     except Exception as error:
         logger.error(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"

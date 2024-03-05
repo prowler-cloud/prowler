@@ -119,14 +119,7 @@ def init_parser(self):
         default=None,
         help="Same as -B but do not use the assumed role credentials to put objects to the bucket, instead uses the initial credentials.",
     )
-    aws_3rd_party_subparser = aws_parser.add_argument_group("3rd Party Integrations")
-    aws_3rd_party_subparser.add_argument(
-        "-N",
-        "--shodan",
-        nargs="?",
-        default=None,
-        help="Shodan API key used by check ec2_elastic_ip_shodan.",
-    )
+
     # Mute List
     mutelist_subparser = aws_parser.add_argument_group("Mute List")
     mutelist_subparser.add_argument(

@@ -966,6 +966,7 @@ class Test_Parser:
         parsed = self.parser.parse(command)
         assert parsed.output_bucket_no_assume == bucket
 
+    # TODO: change for the global parser
     def test_aws_parser_shodan_short(self):
         argument = "-N"
         shodan_api_key = str(uuid.uuid4())
@@ -973,6 +974,7 @@ class Test_Parser:
         parsed = self.parser.parse(command)
         assert parsed.shodan == shodan_api_key
 
+    # TODO: change for the global parser
     def test_aws_parser_shodan_long(self):
         argument = "--shodan"
         shodan_api_key = str(uuid.uuid4())
@@ -1078,6 +1080,7 @@ class Test_Parser:
         assert parsed.provider == "azure"
         assert parsed.az_cli_auth
 
+    # TODO: change for the global parser
     def test_azure_parser_shodan_short(self):
         argument = "-N"
         shodan_api_key = str(uuid.uuid4())
@@ -1085,6 +1088,7 @@ class Test_Parser:
         parsed = self.parser.parse(command)
         assert parsed.shodan == shodan_api_key
 
+    # TODO: change for the global parser
     def test_azure_parser_shodan_long(self):
         argument = "--shodan"
         shodan_api_key = str(uuid.uuid4())
