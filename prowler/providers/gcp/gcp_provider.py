@@ -19,6 +19,7 @@ class GcpProvider(Provider):
     _project_ids: list
     _identity: GCPIdentityInfo
     _audit_config: dict
+
     _output_options: GCPOutputOptions
     # TODO: enforce the mutelist for the Provider class
     # _mutelist: dict = {}
