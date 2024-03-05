@@ -7,7 +7,7 @@ class fms_policy_compliant(Check):
         findings = []
         if fms_client.fms_admin_account:
             report = Check_Report_AWS(self.metadata())
-            report.resource_arn = fms_client.audited_account_arn
+            report.resource_arn = fms_client.policy_arn_template
             report.resource_id = fms_client.audited_account
             report.region = fms_client.region
             report.status = "PASS"

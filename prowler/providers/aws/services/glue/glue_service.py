@@ -25,6 +25,9 @@ class Glue(AWSService):
         self.jobs = []
         self.__threading_call__(self.__get_jobs__)
 
+    def __get_data_catalog_arn_template__(self, region):
+        return f"arn:{self.audited_partition}:glue:{region}:{self.audited_account}:data-catalog"
+
     def __get_connections__(self, regional_client):
         logger.info("Glue - Getting connections...")
         try:

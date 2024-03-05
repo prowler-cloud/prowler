@@ -67,6 +67,7 @@ class Logs(AWSService):
     def __init__(self, audit_info):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, audit_info)
+        self.log_group_arn_template = f"arn:{self.audited_partition}:logs:{self.region}:{self.audited_account}:log-group"
         self.metric_filters = []
         self.log_groups = []
         self.__threading_call__(self.__describe_metric_filters__)

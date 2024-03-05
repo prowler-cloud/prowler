@@ -4,7 +4,6 @@ from boto3 import client
 from moto import mock_aws
 
 from tests.providers.aws.audit_info_utils import (
-    AWS_ACCOUNT_ARN,
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_WEST_1,
     AWS_REGION_US_EAST_1,
@@ -67,7 +66,10 @@ class Test_cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_c
                 == "No CloudWatch log groups found with metric filters or alarms associated."
             )
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
-            assert result[0].resource_arn == AWS_ACCOUNT_ARN
+            assert (
+                result[0].resource_arn
+                == f"arn:aws:logs:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:log-group"
+            )
             assert result[0].region == AWS_REGION_EU_WEST_1
 
     @mock_aws
@@ -129,7 +131,10 @@ class Test_cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_c
                 == "No CloudWatch log groups found with metric filters or alarms associated."
             )
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
-            assert result[0].resource_arn == AWS_ACCOUNT_ARN
+            assert (
+                result[0].resource_arn
+                == f"arn:aws:logs:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:log-group"
+            )
             assert result[0].region == AWS_REGION_EU_WEST_1
 
     @mock_aws
@@ -197,7 +202,10 @@ class Test_cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_c
                 == "No CloudWatch log groups found with metric filters or alarms associated."
             )
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
-            assert result[0].resource_arn == AWS_ACCOUNT_ARN
+            assert (
+                result[0].resource_arn
+                == f"arn:aws:logs:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:log-group"
+            )
             assert result[0].region == AWS_REGION_EU_WEST_1
 
     @mock_aws
