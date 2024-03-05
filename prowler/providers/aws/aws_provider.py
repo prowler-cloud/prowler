@@ -46,7 +46,7 @@ class AwsProvider(Provider):
     _session: AWSSession
     _organizations_metadata: AWSOrganizationsInfo
     _audit_resources: list = []
-    _audit_config: dict = {}
+    _audit_config: dict
     _ignore_unused_services: bool = False
     _enabled_regions: set = set()
     # TODO: enforce the mutelist for the Provider class
@@ -225,10 +225,9 @@ class AwsProvider(Provider):
         self._ignore_unused_services = ignore_unused_services
 
         # Audit Config
-        if getattr(arguments, "config_file", None):
-            self._audit_config = load_and_validate_config_file(
-                self._type, arguments.config_file
-            )
+        self._audit_config = load_and_validate_config_file(
+            self._type, arguments.config_file
+        )
 
     @property
     def identity(self):

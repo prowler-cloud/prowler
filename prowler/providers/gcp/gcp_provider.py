@@ -1,12 +1,12 @@
 import os
 import sys
-from typing import Optional
 
 from colorama import Fore, Style
 from google import auth
 from google.oauth2.credentials import Credentials
 from googleapiclient import discovery
 
+from prowler.config.config import load_and_validate_config_file
 from prowler.lib.logger import logger
 from prowler.providers.common.models import Audit_Metadata
 from prowler.providers.common.provider import Provider
@@ -18,7 +18,8 @@ class GcpProvider(Provider):
     _session: Credentials
     _project_ids: list
     _identity: GCPIdentityInfo
-    _audit_config: Optional[dict]
+    _audit_config: dict
+
     _output_options: GCPOutputOptions
     # TODO: enforce the mutelist for the Provider class
     # _mutelist: dict = {}
@@ -54,6 +55,12 @@ class GcpProvider(Provider):
         self._identity = GCPIdentityInfo(
             profile=getattr(self.session, "_service_account_email", "default"),
             default_project_id=default_project_id,
+        )
+
+        # TODO: move this to the providers, pending for AWS, GCP, AZURE and K8s
+        # Audit Config
+        self._audit_config = load_and_validate_config_file(
+            self._type, arguments.config_file
         )
 
     @property
