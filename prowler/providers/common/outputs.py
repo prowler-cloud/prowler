@@ -4,7 +4,6 @@ from dataclasses import dataclass
 from os import makedirs
 from os.path import isdir
 
-from prowler.config.config import output_file_timestamp
 from prowler.lib.logger import logger
 
 
@@ -72,20 +71,3 @@ class Provider_Output_Options:
             if not isdir(arguments.output_directory + "/compliance"):
                 if arguments.output_modes:
                     makedirs(arguments.output_directory + "/compliance", exist_ok=True)
-
-
-class Kubernetes_Output_Options(Provider_Output_Options):
-    def __init__(self, arguments, identity, mutelist_file, bulk_checks_metadata):
-        # First call Provider_Output_Options init
-        super().__init__(arguments, mutelist_file, bulk_checks_metadata)
-        # TODO move the below if to Provider_Output_Options
-        # Check if custom output filename was input, if not, set the default
-        if (
-            not hasattr(arguments, "output_filename")
-            or arguments.output_filename is None
-        ):
-            self.output_filename = (
-                f"prowler-output-{identity.context}-{output_file_timestamp}"
-            )
-        else:
-            self.output_filename = arguments.output_filename
