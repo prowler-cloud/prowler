@@ -52,6 +52,17 @@ class Test_ec2_ebs_default_encryption:
                     assert result.resource_id == AWS_ACCOUNT_NUMBER
                     assert (
                         result.resource_arn
+                        == f"arn:aws:ec2:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:volume"
+                    )
+                if result.region == AWS_REGION_EU_WEST_1:
+                    assert result.status == "FAIL"
+                    assert (
+                        result.status_extended
+                        == "EBS Default Encryption is not activated."
+                    )
+                    assert result.resource_id == AWS_ACCOUNT_NUMBER
+                    assert (
+                        result.resource_arn
                         == f"arn:aws:ec2:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:volume"
                     )
 
@@ -76,28 +87,33 @@ class Test_ec2_ebs_default_encryption:
             )
 
             check = ec2_ebs_default_encryption()
-            result = check.execute()
+            results = check.execute()
 
             # One result per region
-            assert len(result) == 2
-            assert result[0].status == "FAIL"
-            assert (
-                result[0].status_extended == "EBS Default Encryption is not activated."
-            )
-            assert result[0].resource_id == AWS_ACCOUNT_NUMBER
-            assert (
-                result[0].resource_arn
-                == f"arn:aws:ec2:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:volume"
-            )
-            assert result[1].status == "FAIL"
-            assert (
-                result[1].status_extended == "EBS Default Encryption is not activated."
-            )
-            assert result[1].resource_id == AWS_ACCOUNT_NUMBER
-            assert (
-                result[1].resource_arn
-                == f"arn:aws:ec2:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:volume"
-            )
+            assert len(results) == 2
+            for result in results:
+                if result.region == AWS_REGION_US_EAST_1:
+                    assert result.status == "FAIL"
+                    assert (
+                        result.status_extended
+                        == "EBS Default Encryption is not activated."
+                    )
+                    assert result.resource_id == AWS_ACCOUNT_NUMBER
+                    assert (
+                        result.resource_arn
+                        == f"arn:aws:ec2:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:volume"
+                    )
+                if result.region == AWS_REGION_EU_WEST_1:
+                    assert result.status == "FAIL"
+                    assert (
+                        result.status_extended
+                        == "EBS Default Encryption is not activated."
+                    )
+                    assert result.resource_id == AWS_ACCOUNT_NUMBER
+                    assert (
+                        result.resource_arn
+                        == f"arn:aws:ec2:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:volume"
+                    )
 
     @mock_aws
     def test_ec2_ebs_encryption_disabled_ignored(self):
