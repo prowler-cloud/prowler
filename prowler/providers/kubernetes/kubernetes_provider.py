@@ -1,7 +1,6 @@
 import os
 import sys
 from argparse import Namespace
-from dataclasses import dataclass
 from typing import Optional
 
 from colorama import Fore, Style
@@ -10,24 +9,11 @@ from kubernetes import client, config
 from prowler.lib.logger import logger
 from prowler.providers.common.models import Audit_Metadata
 from prowler.providers.common.provider import Provider
-
-
-@dataclass
-class KubernetesIdentityInfo:
-    context: str
-    cluster: str
-    user: str
-
-
-@dataclass
-class KubernetesSession:
-    """
-    KubernetesSession stores the Kubernetes session's configuration.
-
-    """
-
-    api_client: client.ApiClient
-    context: dict
+from prowler.providers.kubernetes.models import (
+    KubernetesIdentityInfo,
+    KubernetesOutputOptions,
+    KubernetesSession,
+)
 
 
 class KubernetesProvider(Provider):
@@ -36,6 +22,9 @@ class KubernetesProvider(Provider):
     _namespaces: list
     _audit_config: Optional[dict]
     _identity: KubernetesIdentityInfo
+    _output_options: KubernetesOutputOptions
+    # TODO: enforce the mutelist for the Provider class
+    # _mutelist: dict = {}
     # TODO: this is not optional, enforce for all providers
     audit_metadata: Audit_Metadata
 
@@ -82,6 +71,32 @@ class KubernetesProvider(Provider):
     @property
     def audit_config(self):
         return self._audit_config
+
+    @property
+    def output_options(self):
+        return self._output_options
+
+    @output_options.setter
+    def output_options(self, options: tuple):
+        arguments, bulk_checks_metadata = options
+        self._output_options = KubernetesOutputOptions(
+            arguments, bulk_checks_metadata, self._identity
+        )
+
+    # TODO: pending to implement
+    # @property
+    # def mutelist(self):
+    #     return self._mutelist
+
+    # @mutelist.setter
+    # def mutelist(self, mutelist_path):
+    #     if mutelist_path:
+    #         mutelist = parse_mutelist_file(
+    #             self._session.current_session, self._identity.account, mutelist_path
+    #         )
+    #     else:
+    #         mutelist = {}
+    #     self._mutelist = mutelist
 
     def setup_session(self, kubeconfig_file, input_context) -> KubernetesSession:
         """

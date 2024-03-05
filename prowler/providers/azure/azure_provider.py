@@ -11,7 +11,11 @@ from msgraph import GraphServiceClient
 
 from prowler.lib.logger import logger
 from prowler.providers.azure.lib.regions.regions import get_regions_config
-from prowler.providers.azure.models import AzureIdentityInfo, AzureRegionConfig
+from prowler.providers.azure.models import (
+    AzureIdentityInfo,
+    AzureOutputOptions,
+    AzureRegionConfig,
+)
 from prowler.providers.common.models import Audit_Metadata
 from prowler.providers.common.provider import Provider
 
@@ -23,6 +27,9 @@ class AzureProvider(Provider):
     _audit_config: Optional[dict]
     _region_config: AzureRegionConfig
     _locations: dict
+    _output_options: AzureOutputOptions
+    # TODO: enforce the mutelist for the Provider class
+    # _mutelist: dict = {}
     # TODO: this is not optional, enforce for all providers
     audit_metadata: Audit_Metadata
 
@@ -82,6 +89,32 @@ class AzureProvider(Provider):
     @property
     def audit_config(self):
         return self._audit_config
+
+    @property
+    def output_options(self):
+        return self._output_options
+
+    @output_options.setter
+    def output_options(self, options: tuple):
+        arguments, bulk_checks_metadata = options
+        self._output_options = AzureOutputOptions(
+            arguments, bulk_checks_metadata, self._identity
+        )
+
+    # TODO: pending to implement
+    # @property
+    # def mutelist(self):
+    #     return self._mutelist
+
+    # @mutelist.setter
+    # def mutelist(self, mutelist_path):
+    #     if mutelist_path:
+    #         mutelist = parse_mutelist_file(
+    #             self._session.current_session, self._identity.account, mutelist_path
+    #         )
+    #     else:
+    #         mutelist = {}
+    #     self._mutelist = mutelist
 
     # TODO: this should be moved to the argparse, if not we need to enforce it from the Provider
     def validate_arguments(

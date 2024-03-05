@@ -1,6 +1,5 @@
 import os
 import sys
-from dataclasses import dataclass
 from typing import Optional
 
 from colorama import Fore, Style
@@ -11,12 +10,7 @@ from googleapiclient import discovery
 from prowler.lib.logger import logger
 from prowler.providers.common.models import Audit_Metadata
 from prowler.providers.common.provider import Provider
-
-
-@dataclass
-class GCPIdentityInfo:
-    profile: str
-    default_project_id: str
+from prowler.providers.gcp.models import GCPIdentityInfo, GCPOutputOptions
 
 
 class GcpProvider(Provider):
@@ -25,6 +19,9 @@ class GcpProvider(Provider):
     _project_ids: list
     _identity: GCPIdentityInfo
     _audit_config: Optional[dict]
+    _output_options: GCPOutputOptions
+    # TODO: enforce the mutelist for the Provider class
+    # _mutelist: dict = {}
     # TODO: this is not optional, enforce for all providers
     audit_metadata: Audit_Metadata
 
@@ -78,6 +75,32 @@ class GcpProvider(Provider):
     @property
     def audit_config(self):
         return self._audit_config
+
+    @property
+    def output_options(self):
+        return self._output_options
+
+    @output_options.setter
+    def output_options(self, options: tuple):
+        arguments, bulk_checks_metadata = options
+        self._output_options = GCPOutputOptions(
+            arguments, bulk_checks_metadata, self._identity
+        )
+
+    # TODO: pending to implement
+    # @property
+    # def mutelist(self):
+    #     return self._mutelist
+
+    # @mutelist.setter
+    # def mutelist(self, mutelist_path):
+    #     if mutelist_path:
+    #         mutelist = parse_mutelist_file(
+    #             self._session.current_session, self._identity.account, mutelist_path
+    #         )
+    #     else:
+    #         mutelist = {}
+    #     self._mutelist = mutelist
 
     def setup_session(self, credentials_file):
         try:
