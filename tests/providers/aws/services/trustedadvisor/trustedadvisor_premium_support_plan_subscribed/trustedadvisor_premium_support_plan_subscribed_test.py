@@ -22,7 +22,7 @@ class Test_trustedadvisor_premium_support_plan_subscribed:
 
         # Set verify_premium_support_plans config
         trustedadvisor_client.audit_config = {"verify_premium_support_plans": True}
-
+        trustedadvisor_client.account_arn_template = f"arn:{trustedadvisor_client.audited_partition}:trusted-advisor:{trustedadvisor_client.region}:{trustedadvisor_client.audited_account}:account"
         with mock.patch(
             "prowler.providers.aws.services.trustedadvisor.trustedadvisor_service.TrustedAdvisor",
             trustedadvisor_client,
@@ -57,7 +57,7 @@ class Test_trustedadvisor_premium_support_plan_subscribed:
 
         # Set verify_premium_support_plans config
         trustedadvisor_client.audit_config = {"verify_premium_support_plans": True}
-
+        trustedadvisor_client.account_arn_template = f"arn:{trustedadvisor_client.audited_partition}:trusted-advisor:{trustedadvisor_client.region}:{trustedadvisor_client.audited_account}:account"
         with mock.patch(
             "prowler.providers.aws.services.trustedadvisor.trustedadvisor_service.TrustedAdvisor",
             trustedadvisor_client,

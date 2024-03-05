@@ -42,7 +42,9 @@ class Test_glue_data_catalogs_metadata_encryption_enabled:
             )
         ]
         glue_client.audited_account = "12345678912"
-
+        glue_client.audited_partition = "aws"
+        glue_client.region = AWS_REGION_US_EAST_1
+        glue_client.data_catalog_arn_template = f"arn:{glue_client.audited_partition}:glue:{glue_client.region}:{glue_client.audited_account}:data-catalog"
         with mock.patch(
             "prowler.providers.aws.services.glue.glue_service.Glue",
             glue_client,
@@ -79,7 +81,9 @@ class Test_glue_data_catalogs_metadata_encryption_enabled:
         ]
         glue_client.audited_account = "12345678912"
         glue_client.audit_info.ignore_unused_services = True
-
+        glue_client.audited_partition = "aws"
+        glue_client.region = AWS_REGION_US_EAST_1
+        glue_client.data_catalog_arn_template = f"arn:{glue_client.audited_partition}:glue:{glue_client.region}:{glue_client.audited_account}:data-catalog"
         with mock.patch(
             "prowler.providers.aws.services.glue.glue_service.Glue",
             glue_client,
@@ -109,7 +113,9 @@ class Test_glue_data_catalogs_metadata_encryption_enabled:
         ]
         glue_client.audited_account = "12345678912"
         glue_client.audit_info.ignore_unused_services = True
-
+        glue_client.audited_partition = "aws"
+        glue_client.region = AWS_REGION_US_EAST_1
+        glue_client.data_catalog_arn_template = f"arn:{glue_client.audited_partition}:glue:{glue_client.region}:{glue_client.audited_account}:data-catalog"
         with mock.patch(
             "prowler.providers.aws.services.glue.glue_service.Glue",
             glue_client,
@@ -145,7 +151,9 @@ class Test_glue_data_catalogs_metadata_encryption_enabled:
             )
         ]
         glue_client.audited_account = "12345678912"
-
+        glue_client.audited_partition = "aws"
+        glue_client.region = AWS_REGION_US_EAST_1
+        glue_client.data_catalog_arn_template = f"arn:{glue_client.audited_partition}:glue:{glue_client.region}:{glue_client.audited_account}:data-catalog"
         with mock.patch(
             "prowler.providers.aws.services.glue.glue_service.Glue",
             glue_client,

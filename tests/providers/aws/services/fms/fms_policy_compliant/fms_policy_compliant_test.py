@@ -54,6 +54,7 @@ class Test_fms_policy_compliant:
                 ],
             )
         ]
+        fms_client.policy_arn_template = f"arn:{fms_client.audited_partition}:fms:{fms_client.region}:{fms_client.audited_account}:policy"
         with mock.patch(
             "prowler.providers.aws.services.fms.fms_service.FMS",
             new=fms_client,
@@ -104,6 +105,7 @@ class Test_fms_policy_compliant:
                 ],
             )
         ]
+        fms_client.policy_arn_template = f"arn:{fms_client.audited_partition}:fms:{fms_client.region}:{fms_client.audited_account}:policy"
         with mock.patch(
             "prowler.providers.aws.services.fms.fms_service.FMS",
             new=fms_client,
@@ -132,6 +134,7 @@ class Test_fms_policy_compliant:
         fms_client = mock.MagicMock
         fms_client.audited_account = AWS_ACCOUNT_NUMBER
         fms_client.audited_account_arn = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
+        fms_client.audited_partition = "aws"
         fms_client.region = AWS_REGION_US_EAST_1
         fms_client.fms_admin_account = True
         fms_client.fms_policies = [
@@ -157,6 +160,7 @@ class Test_fms_policy_compliant:
                 ],
             )
         ]
+        fms_client.policy_arn_template = f"arn:{fms_client.audited_partition}:fms:{fms_client.region}:{fms_client.audited_account}:policy"
         with mock.patch(
             "prowler.providers.aws.services.fms.fms_service.FMS",
             new=fms_client,
@@ -190,6 +194,7 @@ class Test_fms_policy_compliant:
         fms_client.audited_partition = "aws"
         fms_client.fms_admin_account = True
         fms_client.fms_policies = []
+        fms_client.policy_arn_template = f"arn:{fms_client.audited_partition}:fms:{fms_client.region}:{fms_client.audited_account}:policy"
         with mock.patch(
             "prowler.providers.aws.services.fms.fms_service.FMS",
             new=fms_client,
@@ -219,6 +224,7 @@ class Test_fms_policy_compliant:
         fms_client = mock.MagicMock
         fms_client.audited_account = AWS_ACCOUNT_NUMBER
         fms_client.audited_account_arn = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
+        fms_client.audited_partition = "aws"
         fms_client.region = AWS_REGION_US_EAST_1
         fms_client.fms_admin_account = True
         fms_client.fms_policies = [
@@ -239,6 +245,7 @@ class Test_fms_policy_compliant:
                 ],
             )
         ]
+        fms_client.policy_arn_template = f"arn:{fms_client.audited_partition}:fms:{fms_client.region}:{fms_client.audited_account}:policy"
         with mock.patch(
             "prowler.providers.aws.services.fms.fms_service.FMS",
             new=fms_client,

@@ -15,6 +15,7 @@ class Test_backup_plans_exist:
         backup_client.audited_account_arn = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
         backup_client.audited_partition = "aws"
         backup_client.region = AWS_REGION
+        backup_client.backup_plan_arn_template = f"arn:{backup_client.audited_partition}:backup:{backup_client.region}:{backup_client.audited_account}:backup-plan"
         backup_client.backup_plans = []
         backup_client.backup_vaults = ["vault"]
         with mock.patch(

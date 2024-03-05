@@ -13,6 +13,7 @@ class Test_backup_vaults_exist:
         backup_client.audited_account_arn = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
         backup_client.region = AWS_REGION
         backup_client.audited_partition = "aws"
+        backup_client.backup_vault_arn_template = f"arn:{backup_client.audited_partition}:backup:{backup_client.region}:{backup_client.audited_account}:backup-vault"
         backup_client.backup_vaults = []
         with mock.patch(
             "prowler.providers.aws.services.backup.backup_service.Backup",
@@ -41,6 +42,8 @@ class Test_backup_vaults_exist:
         backup_client.audited_account = AWS_ACCOUNT_NUMBER
         backup_client.audited_account_arn = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
         backup_client.region = AWS_REGION
+        backup_client.audited_partition = "aws"
+        backup_client.backup_vault_arn_template = f"arn:{backup_client.audited_partition}:backup:{backup_client.region}:{backup_client.audited_account}:backup-vault"
         backup_vault_arn = f"arn:aws:backup:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:backup-vault:MyBackupVault"
         backup_client.backup_vaults = [
             BackupVault(

@@ -30,6 +30,7 @@ class Test_drs_job_exist:
                 ],
             )
         ]
+        drs_client.recovery_job_arn_template = f"arn:{drs_client.audited_partition}:drs:{drs_client.region}:{drs_client.audited_account}:recovery-job"
         with mock.patch(
             "prowler.providers.aws.services.drs.drs_service.DRS",
             new=drs_client,
@@ -69,6 +70,7 @@ class Test_drs_job_exist:
                 jobs=[],
             )
         ]
+        drs_client.recovery_job_arn_template = f"arn:{drs_client.audited_partition}:drs:{drs_client.region}:{drs_client.audited_account}:recovery-job"
         with mock.patch(
             "prowler.providers.aws.services.drs.drs_service.DRS",
             new=drs_client,
@@ -109,6 +111,7 @@ class Test_drs_job_exist:
                 jobs=[],
             )
         ]
+        drs_client.recovery_job_arn_template = f"arn:{drs_client.audited_partition}:drs:{drs_client.region}:{drs_client.audited_account}:recovery-job"
         with mock.patch(
             "prowler.providers.aws.services.drs.drs_service.DRS",
             new=drs_client,
@@ -147,6 +150,7 @@ class Test_drs_job_exist:
                 jobs=[],
             )
         ]
+        drs_client.recovery_job_arn_template = f"arn:{drs_client.audited_partition}:drs:{drs_client.region}:{drs_client.audited_account}:recovery-job"
         with mock.patch(
             "prowler.providers.aws.services.drs.drs_service.DRS",
             new=drs_client,

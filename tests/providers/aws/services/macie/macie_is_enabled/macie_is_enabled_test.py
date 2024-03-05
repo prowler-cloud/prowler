@@ -31,6 +31,7 @@ class Test_macie_is_enabled:
                 region="eu-west-1",
             )
         ]
+        macie_client.session_arn_template = f"arn:{macie_client.audited_partition}:macie:{macie_client.region}:{macie_client.audited_account}:session"
         current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         with mock.patch(
@@ -79,6 +80,7 @@ class Test_macie_is_enabled:
                 region="eu-west-1",
             )
         ]
+        macie_client.session_arn_template = f"arn:{macie_client.audited_partition}:macie:{macie_client.region}:{macie_client.audited_account}:session"
         current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         with mock.patch(
@@ -121,6 +123,7 @@ class Test_macie_is_enabled:
         macie_client.audited_account_arn = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
         macie_client.audited_partition = "aws"
         macie_client.region = AWS_REGION_EU_WEST_1
+        macie_client.session_arn_template = f"arn:{macie_client.audited_partition}:macie:{macie_client.region}:{macie_client.audited_account}:session"
         macie_client.sessions = [
             Session(
                 status="PAUSED",
@@ -176,7 +179,7 @@ class Test_macie_is_enabled:
                 region=AWS_REGION_EU_WEST_1,
             )
         ]
-
+        macie_client.session_arn_template = f"arn:{macie_client.audited_partition}:macie:{macie_client.region}:{macie_client.audited_account}:session"
         macie_client.audit_info.ignore_unused_services = True
         current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
@@ -227,7 +230,7 @@ class Test_macie_is_enabled:
             )
         ]
         current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
-
+        macie_client.session_arn_template = f"arn:{macie_client.audited_partition}:macie:{macie_client.region}:{macie_client.audited_account}:session"
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             new=current_audit_info,

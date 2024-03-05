@@ -86,7 +86,7 @@ class Test_s3_bucket_public_access:
                     assert result[0].resource_id == AWS_ACCOUNT_NUMBER
                     assert (
                         result[0].resource_arn
-                        == f"arn:aws:s3:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:bucket"
+                        == f"arn:aws:s3:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:account"
                     )
                     assert result[0].region == AWS_REGION_US_EAST_1
 
@@ -139,7 +139,7 @@ class Test_s3_bucket_public_access:
                     assert result[0].resource_id == AWS_ACCOUNT_NUMBER
                     assert (
                         result[0].resource_arn
-                        == f"arn:aws:s3:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:bucket"
+                        == f"arn:aws:s3:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:account"
                     )
                     assert result[0].region == AWS_REGION_US_EAST_1
 
