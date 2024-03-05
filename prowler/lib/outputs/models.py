@@ -89,6 +89,7 @@ def generate_provider_output_csv(provider, finding, mode: str, fd, output_option
             data["resource_id"] = finding.resource_id
             data["resource_name"] = finding.resource_name
             data["namespace"] = finding.namespace
+            data["context"] = provider.identity.context
             data["finding_unique_id"] = (
                 f"prowler-{provider.type}-{finding.check_metadata.CheckID}-{finding.namespace}-{finding.resource_id}"
             )
@@ -374,6 +375,7 @@ class Kubernetes_Check_Output_CSV(Check_Output_CSV):
     Kubernetes_Check_Output_CSV generates a finding's output in CSV format for the Kubernetes provider.
     """
 
+    context: str = ""
     namespace: str = ""
     resource_id: str = ""
     resource_name: str = ""
@@ -399,7 +401,7 @@ def generate_provider_output_json(provider, finding, mode: str, output_options):
         finding_output.StatusExtended = finding.status_extended
         finding_output.ResourceDetails = finding.resource_details
 
-        if provider == "azure":
+        if provider.type == "azure":
             finding_output.Tenant_Domain = provider.identity.domain
             finding_output.Subscription = finding.subscription
             finding_output.ResourceId = finding.resource_id
@@ -409,7 +411,7 @@ def generate_provider_output_json(provider, finding, mode: str, output_options):
                 finding, provider.type, output_options
             )
 
-        if provider == "gcp":
+        if provider.type == "gcp":
             finding_output.ProjectId = finding.project_id
             finding_output.Location = finding.location.lower()
             finding_output.ResourceId = finding.resource_id
@@ -419,7 +421,17 @@ def generate_provider_output_json(provider, finding, mode: str, output_options):
                 finding, provider.type, output_options
             )
 
-        if provider == "aws":
+        if provider.type == "kubernetes":
+            finding_output.Context = provider.identity.context
+            finding_output.Namespace = finding.namespace
+            finding_output.ResourceId = finding.resource_id
+            finding_output.ResourceName = finding.resource_name
+            finding_output.FindingUniqueId = f"prowler-{provider.type}-{finding.check_metadata.CheckID}-{finding.namespace}-{finding.resource_id}"
+            finding_output.Compliance = get_check_compliance(
+                finding, provider.type, output_options
+            )
+
+        if provider.type == "aws":
             finding_output.Profile = provider.identity.profile
             finding_output.AccountId = provider.identity.account
             finding_output.Region = finding.region
@@ -528,6 +540,7 @@ class Kubernetes_Check_Output_JSON(Check_Output_JSON):
 
     ResourceId: str = ""
     ResourceName: str = ""
+    Context: str = ""
     Namespace: str = ""
 
     def __init__(self, **metadata):
