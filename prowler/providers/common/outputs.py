@@ -74,23 +74,6 @@ class Provider_Output_Options:
                     makedirs(arguments.output_directory + "/compliance", exist_ok=True)
 
 
-class Gcp_Output_Options(Provider_Output_Options):
-    def __init__(self, arguments, identity, mutelist_file, bulk_checks_metadata):
-        # First call Provider_Output_Options init
-        super().__init__(arguments, mutelist_file, bulk_checks_metadata)
-
-        # Check if custom output filename was input, if not, set the default
-        if (
-            not hasattr(arguments, "output_filename")
-            or arguments.output_filename is None
-        ):
-            self.output_filename = (
-                f"prowler-output-{identity.profile}-{output_file_timestamp}"
-            )
-        else:
-            self.output_filename = arguments.output_filename
-
-
 class Kubernetes_Output_Options(Provider_Output_Options):
     def __init__(self, arguments, identity, mutelist_file, bulk_checks_metadata):
         # First call Provider_Output_Options init
