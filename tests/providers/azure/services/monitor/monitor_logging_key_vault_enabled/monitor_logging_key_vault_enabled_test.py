@@ -90,6 +90,7 @@ class Test_monitor_logging_key_vault_enabled:
             assert result[0].subscription == AZURE_SUBSCRIPTION
             assert result[0].resource_name == "storage_account_name"
             assert result[0].diagnostic_setting_name == "id1"
+            assert result[0].resource_id == "id/id1"
             assert (
                 result[0].status_extended
                 == f"Diagnostic setting id1 for Key Vault in subscription {AZURE_SUBSCRIPTION} is capturing AuditEvent category."
@@ -98,6 +99,7 @@ class Test_monitor_logging_key_vault_enabled:
             assert result[1].subscription == AZURE_SUBSCRIPTION
             assert result[1].resource_name == "storage_account_name2"
             assert result[1].diagnostic_setting_name == "id2"
+            assert result[1].resource_id == "id2/id2"
             assert (
                 result[1].status_extended
                 == f"Diagnostic setting id2 for Key Vault in subscription {AZURE_SUBSCRIPTION} is not capturing AuditEvent category."

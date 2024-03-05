@@ -32,6 +32,7 @@ class monitor_logging_key_vault_enabled(Check):
                                 diagnostics_setting.storage_account_name
                             )
                             report.diagnostic_setting_name = diagnostic_setting_name
+                            report.resource_id = diagnostics_setting.id
                         else:
                             report.status = "FAIL"
                             report.status_extended = f"Diagnostic setting {diagnostic_setting_name} for Key Vault in subscription {subscription_name} is not capturing AuditEvent category."
@@ -40,6 +41,7 @@ class monitor_logging_key_vault_enabled(Check):
                                 diagnostics_setting.storage_account_name
                             )
                             report.diagnostic_setting_name = diagnostic_setting_name
+                            report.resource_id = diagnostics_setting.id
 
                         findings.append(report)
 
