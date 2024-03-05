@@ -199,6 +199,10 @@ def fill_json_ocsf(provider, finding, output_options) -> Check_Output_JSON_OCSF:
             resource_name = finding.resource_name
             resource_uid = finding.resource_id
             finding_uid = f"prowler-{finding.check_metadata.Provider}-{finding.check_metadata.CheckID}-{finding.project_id}-{finding.resource_id}"
+        elif finding.check_metadata.Provider == "kubernetes":
+            resource_name = finding.resource_name
+            resource_uid = finding.resource_id
+            finding_uid = f"prowler-{finding.check_metadata.Provider}-{finding.check_metadata.CheckID}-{finding.namespace}-{finding.resource_id}"
         cloud = Cloud(
             provider=finding.check_metadata.Provider,
             org=org,
