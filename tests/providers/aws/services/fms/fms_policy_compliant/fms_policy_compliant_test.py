@@ -55,6 +55,9 @@ class Test_fms_policy_compliant:
             )
         ]
         fms_client.policy_arn_template = f"arn:{fms_client.audited_partition}:fms:{fms_client.region}:{fms_client.audited_account}:policy"
+        fms_client.__get_policy_arn_template__ = mock.MagicMock(
+            return_value=fms_client.policy_arn_template
+        )
         with mock.patch(
             "prowler.providers.aws.services.fms.fms_service.FMS",
             new=fms_client,
@@ -106,6 +109,9 @@ class Test_fms_policy_compliant:
             )
         ]
         fms_client.policy_arn_template = f"arn:{fms_client.audited_partition}:fms:{fms_client.region}:{fms_client.audited_account}:policy"
+        fms_client.__get_policy_arn_template__ = mock.MagicMock(
+            return_value=fms_client.policy_arn_template
+        )
         with mock.patch(
             "prowler.providers.aws.services.fms.fms_service.FMS",
             new=fms_client,
@@ -161,6 +167,9 @@ class Test_fms_policy_compliant:
             )
         ]
         fms_client.policy_arn_template = f"arn:{fms_client.audited_partition}:fms:{fms_client.region}:{fms_client.audited_account}:policy"
+        fms_client.__get_policy_arn_template__ = mock.MagicMock(
+            return_value=fms_client.policy_arn_template
+        )
         with mock.patch(
             "prowler.providers.aws.services.fms.fms_service.FMS",
             new=fms_client,
@@ -195,6 +204,9 @@ class Test_fms_policy_compliant:
         fms_client.fms_admin_account = True
         fms_client.fms_policies = []
         fms_client.policy_arn_template = f"arn:{fms_client.audited_partition}:fms:{fms_client.region}:{fms_client.audited_account}:policy"
+        fms_client.__get_policy_arn_template__ = mock.MagicMock(
+            return_value=fms_client.policy_arn_template
+        )
         with mock.patch(
             "prowler.providers.aws.services.fms.fms_service.FMS",
             new=fms_client,
@@ -246,6 +258,9 @@ class Test_fms_policy_compliant:
             )
         ]
         fms_client.policy_arn_template = f"arn:{fms_client.audited_partition}:fms:{fms_client.region}:{fms_client.audited_account}:policy"
+        fms_client.__get_policy_arn_template__ = mock.MagicMock(
+            return_value=fms_client.policy_arn_template
+        )
         with mock.patch(
             "prowler.providers.aws.services.fms.fms_service.FMS",
             new=fms_client,

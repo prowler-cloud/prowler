@@ -23,6 +23,9 @@ class Test_resourceexplorer2_indexes_found:
         resourceexplorer2_client.audited_partition = "aws"
         resourceexplorer2_client.region = AWS_REGION_US_EAST_1
         resourceexplorer2_client.index_arn_template = f"arn:{resourceexplorer2_client.audited_partition}:resource-explorer:{resourceexplorer2_client.region}:{resourceexplorer2_client.audited_account}:index"
+        resourceexplorer2_client.__get_index_arn_template__ = mock.MagicMock(
+            return_value=resourceexplorer2_client.index_arn_template
+        )
         with mock.patch(
             "prowler.providers.aws.services.resourceexplorer2.resourceexplorer2_service.ResourceExplorer2",
             new=resourceexplorer2_client,
@@ -58,6 +61,9 @@ class Test_resourceexplorer2_indexes_found:
         resourceexplorer2_client.region = AWS_REGION_US_EAST_1
         resourceexplorer2_client.audited_partition = "aws"
         resourceexplorer2_client.index_arn_template = f"arn:{resourceexplorer2_client.audited_partition}:resource-explorer:{resourceexplorer2_client.region}:{resourceexplorer2_client.audited_account}:index"
+        resourceexplorer2_client.__get_index_arn_template__ = mock.MagicMock(
+            return_value=resourceexplorer2_client.index_arn_template
+        )
         with mock.patch(
             "prowler.providers.aws.services.resourceexplorer2.resourceexplorer2_service.ResourceExplorer2",
             new=resourceexplorer2_client,

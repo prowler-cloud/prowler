@@ -61,7 +61,7 @@ class Test_cloudtrail_multi_region_enabled:
                         assert report.resource_id == AWS_ACCOUNT_NUMBER
                         assert (
                             report.resource_arn
-                            == f"arn:aws:cloudtrail:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:trail"
+                            == f"arn:aws:cloudtrail:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:trail"
                         )
                         assert report.resource_tags == []
 
@@ -137,7 +137,7 @@ class Test_cloudtrail_multi_region_enabled:
                         assert report.resource_id == AWS_ACCOUNT_NUMBER
                         assert (
                             report.resource_arn
-                            == f"arn:aws:cloudtrail:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:trail"
+                            == f"arn:aws:cloudtrail:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:trail"
                         )
                         assert report.resource_tags == []
 
@@ -213,7 +213,7 @@ class Test_cloudtrail_multi_region_enabled:
                         assert report.resource_id == AWS_ACCOUNT_NUMBER
                         assert (
                             report.resource_arn
-                            == f"arn:aws:cloudtrail:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:trail"
+                            == f"arn:aws:cloudtrail:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:trail"
                         )
                         assert report.resource_tags == []
                         assert report.region == AWS_REGION_EU_WEST_1

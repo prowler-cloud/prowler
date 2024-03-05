@@ -21,6 +21,9 @@ class Test_emr_cluster_account_public_block_enabled:
         emr_client.region = AWS_REGION_EU_WEST_1
         emr_client.audited_partition = "aws"
         emr_client.cluster_arn_template = f"arn:{emr_client.audited_partition}:elasticmapreduce:{emr_client.region}:{emr_client.audited_account}:cluster"
+        emr_client.__get_cluster_arn_template__ = mock.MagicMock(
+            return_value=emr_client.cluster_arn_template
+        )
         with mock.patch(
             "prowler.providers.aws.services.emr.emr_service.EMR",
             new=emr_client,
@@ -53,6 +56,9 @@ class Test_emr_cluster_account_public_block_enabled:
         emr_client.region = AWS_REGION_EU_WEST_1
         emr_client.audited_partition = "aws"
         emr_client.cluster_arn_template = f"arn:{emr_client.audited_partition}:elasticmapreduce:{emr_client.region}:{emr_client.audited_account}:cluster"
+        emr_client.__get_cluster_arn_template__ = mock.MagicMock(
+            return_value=emr_client.cluster_arn_template
+        )
         with mock.patch(
             "prowler.providers.aws.services.emr.emr_service.EMR",
             new=emr_client,

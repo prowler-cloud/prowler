@@ -89,6 +89,15 @@ class Test_ec2_ebs_default_encryption:
                 result[0].resource_arn
                 == f"arn:aws:ec2:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:volume"
             )
+            assert result[1].status == "FAIL"
+            assert (
+                result[1].status_extended == "EBS Default Encryption is not activated."
+            )
+            assert result[1].resource_id == AWS_ACCOUNT_NUMBER
+            assert (
+                result[1].resource_arn
+                == f"arn:aws:ec2:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:volume"
+            )
 
     @mock_aws
     def test_ec2_ebs_encryption_disabled_ignored(self):
@@ -154,5 +163,5 @@ class Test_ec2_ebs_default_encryption:
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
             assert (
                 result[0].resource_arn
-                == f"arn:aws:ec2:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:volume"
+                == f"arn:aws:ec2:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:volume"
             )

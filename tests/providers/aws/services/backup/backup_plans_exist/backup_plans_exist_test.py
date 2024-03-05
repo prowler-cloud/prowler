@@ -16,6 +16,9 @@ class Test_backup_plans_exist:
         backup_client.audited_partition = "aws"
         backup_client.region = AWS_REGION
         backup_client.backup_plan_arn_template = f"arn:{backup_client.audited_partition}:backup:{backup_client.region}:{backup_client.audited_account}:backup-plan"
+        backup_client.__get_backup_plan_arn_template__ = mock.MagicMock(
+            return_value=backup_client.backup_plan_arn_template
+        )
         backup_client.backup_plans = []
         backup_client.backup_vaults = ["vault"]
         with mock.patch(

@@ -24,6 +24,9 @@ class Test_trustedadvisor_errors_and_warnings:
         trustedadvisor_client.audited_partition = "aws"
         trustedadvisor_client.region = AWS_REGION_US_EAST_1
         trustedadvisor_client.account_arn_template = f"arn:{trustedadvisor_client.audited_partition}:trusted-advisor:{trustedadvisor_client.region}:{trustedadvisor_client.audited_account}:account"
+        trustedadvisor_client.__get_account_arn_template__ = mock.MagicMock(
+            return_value=trustedadvisor_client.account_arn_template
+        )
         with mock.patch(
             "prowler.providers.aws.services.trustedadvisor.trustedadvisor_service.TrustedAdvisor",
             trustedadvisor_client,

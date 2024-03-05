@@ -32,6 +32,9 @@ class Test_macie_is_enabled:
             )
         ]
         macie_client.session_arn_template = f"arn:{macie_client.audited_partition}:macie:{macie_client.region}:{macie_client.audited_account}:session"
+        macie_client.__get_session_arn_template__ = mock.MagicMock(
+            return_value=macie_client.session_arn_template
+        )
         current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         with mock.patch(
@@ -81,6 +84,9 @@ class Test_macie_is_enabled:
             )
         ]
         macie_client.session_arn_template = f"arn:{macie_client.audited_partition}:macie:{macie_client.region}:{macie_client.audited_account}:session"
+        macie_client.__get_session_arn_template__ = mock.MagicMock(
+            return_value=macie_client.session_arn_template
+        )
         current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         with mock.patch(
@@ -124,6 +130,9 @@ class Test_macie_is_enabled:
         macie_client.audited_partition = "aws"
         macie_client.region = AWS_REGION_EU_WEST_1
         macie_client.session_arn_template = f"arn:{macie_client.audited_partition}:macie:{macie_client.region}:{macie_client.audited_account}:session"
+        macie_client.__get_session_arn_template__ = mock.MagicMock(
+            return_value=macie_client.session_arn_template
+        )
         macie_client.sessions = [
             Session(
                 status="PAUSED",
@@ -180,6 +189,9 @@ class Test_macie_is_enabled:
             )
         ]
         macie_client.session_arn_template = f"arn:{macie_client.audited_partition}:macie:{macie_client.region}:{macie_client.audited_account}:session"
+        macie_client.__get_session_arn_template__ = mock.MagicMock(
+            return_value=macie_client.session_arn_template
+        )
         macie_client.audit_info.ignore_unused_services = True
         current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
@@ -231,6 +243,9 @@ class Test_macie_is_enabled:
         ]
         current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         macie_client.session_arn_template = f"arn:{macie_client.audited_partition}:macie:{macie_client.region}:{macie_client.audited_account}:session"
+        macie_client.__get_session_arn_template__ = mock.MagicMock(
+            return_value=macie_client.session_arn_template
+        )
         with mock.patch(
             "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             new=current_audit_info,
