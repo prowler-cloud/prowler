@@ -12,7 +12,7 @@ class GCPIdentityInfo:
 
 class GCPOutputOptions(ProviderOutputOptions):
     def __init__(self, arguments, bulk_checks_metadata, identity):
-        # First call Provider_Output_Options init
+        # First call ProviderOutputOptions init
         super().__init__(arguments, bulk_checks_metadata)
 
         # Check if custom output filename was input, if not, set the default

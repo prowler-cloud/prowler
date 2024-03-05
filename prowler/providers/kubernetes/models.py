@@ -26,9 +26,9 @@ class KubernetesSession:
 
 class KubernetesOutputOptions(ProviderOutputOptions):
     def __init__(self, arguments, bulk_checks_metadata, identity):
-        # First call Provider_Output_Options init
+        # First call ProviderOutputOptions init
         super().__init__(arguments, bulk_checks_metadata)
-        # TODO move the below if to Provider_Output_Options
+        # TODO move the below if to ProviderOutputOptions
         # Check if custom output filename was input, if not, set the default
         if (
             not hasattr(arguments, "output_filename")

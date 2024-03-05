@@ -48,7 +48,7 @@ def get_check_compliance(finding, provider_type, output_options) -> dict:
 
 def generate_provider_output_csv(provider, finding, mode: str, fd, output_options):
     """
-    set_provider_output_options configures automatically the outputs based on the selected provider and returns the Provider_Output_Options object.
+    generate_provider_output_csv creates the provider's CSV output
     """
     try:
         # Dynamically load the Provider_Output_Options class
