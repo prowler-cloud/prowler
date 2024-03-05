@@ -24,7 +24,7 @@ aws:
   # AWS EC2 Configuration
   # aws.ec2_elastic_ip_shodan
   # TODO: create common config
-  shodan_api_key: "patata"
+  shodan_api_key: null
   # aws.ec2_securitygroup_with_many_ingress_egress_rules --> by default is 50 rules
   max_security_group_rules: 50
   # aws.ec2_instance_older_than_specific_days --> by default is 6 months (180 days)
@@ -92,7 +92,7 @@ azure:
   # Azure Network Configuration
   # azure.network_public_ip_shodan
   # TODO: create common config
-  shodan_api_key: "patata"
+  shodan_api_key: null
 
   # Azure App Service
   # azure.app_ensure_php_version_is_latest
