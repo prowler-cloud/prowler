@@ -3,6 +3,7 @@ import sys
 from typing import Any
 
 import yaml
+from boto3 import Session
 from boto3.dynamodb.conditions import Attr
 from schema import Optional, Schema
 
@@ -32,34 +33,34 @@ mutelist_schema = Schema(
 )
 
 
-def parse_mutelist_file(session, aws_account, mutelist_file):
+def parse_mutelist_file(session: Session, aws_account: str, mutelist_path: str):
     try:
         # Check if file is a S3 URI
-        if re.search("^s3://([^/]+)/(.*?([^/]+))$", mutelist_file):
-            bucket = mutelist_file.split("/")[2]
-            key = ("/").join(mutelist_file.split("/")[3:])
+        if re.search("^s3://([^/]+)/(.*?([^/]+))$", mutelist_path):
+            bucket = mutelist_path.split("/")[2]
+            key = ("/").join(mutelist_path.split("/")[3:])
             s3_client = session.client("s3")
             mutelist = yaml.safe_load(
                 s3_client.get_object(Bucket=bucket, Key=key)["Body"]
             )["Mute List"]
         # Check if file is a Lambda Function ARN
-        elif re.search(r"^arn:(\w+):lambda:", mutelist_file):
-            lambda_region = mutelist_file.split(":")[3]
+        elif re.search(r"^arn:(\w+):lambda:", mutelist_path):
+            lambda_region = mutelist_path.split(":")[3]
             lambda_client = session.client("lambda", region_name=lambda_region)
             lambda_response = lambda_client.invoke(
-                FunctionName=mutelist_file, InvocationType="RequestResponse"
+                FunctionName=mutelist_path, InvocationType="RequestResponse"
             )
             lambda_payload = lambda_response["Payload"].read()
             mutelist = yaml.safe_load(lambda_payload)["Mute List"]
         # Check if file is a DynamoDB ARN
         elif re.search(
             r"^arn:aws(-cn|-us-gov)?:dynamodb:[a-z]{2}-[a-z-]+-[1-9]{1}:[0-9]{12}:table\/[a-zA-Z0-9._-]+$",
-            mutelist_file,
+            mutelist_path,
         ):
             mutelist = {"Accounts": {}}
-            table_region = mutelist_file.split(":")[3]
+            table_region = mutelist_path.split(":")[3]
             dynamodb_resource = session.resource("dynamodb", region_name=table_region)
-            dynamo_table = dynamodb_resource.Table(mutelist_file.split("/")[1])
+            dynamo_table = dynamodb_resource.Table(mutelist_path.split("/")[1])
             response = dynamo_table.scan(
                 FilterExpression=Attr("Accounts").is_in([aws_account, "*"])
             )
@@ -90,7 +91,7 @@ def parse_mutelist_file(session, aws_account, mutelist_file):
                         "Exceptions"
                     ] = item["Exceptions"]
         else:
-            with open(mutelist_file) as f:
+            with open(mutelist_path) as f:
                 mutelist = yaml.safe_load(f)["Mute List"]
         try:
             mutelist_schema.validate(mutelist)

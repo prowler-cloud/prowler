@@ -34,8 +34,9 @@ def stdout_report(finding, color, verbose, status):
         )
 
 
-def report(check_findings, output_options, provider):
+def report(check_findings, provider):
     try:
+        output_options = provider.output_options
         file_descriptors = {}
         if check_findings:
             # TO-DO Generic Function

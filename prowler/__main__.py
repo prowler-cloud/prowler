@@ -45,7 +45,6 @@ from prowler.providers.aws.lib.security_hub.security_hub import (
     verify_security_hub_integration_enabled_per_region,
 )
 from prowler.providers.common.common import set_global_provider_object
-from prowler.providers.common.outputs import set_provider_output_options
 
 
 def prowler():
@@ -174,16 +173,11 @@ def prowler():
     # Sort final check list
     checks_to_execute = sorted(checks_to_execute)
 
-    # Parse Mute List
-    mutelist_file = ""
-    if hasattr(args, "mutelist_file"):
-        mutelist_file = global_provider.get_mutelist(args.mutelist_file)
+    # Setup Mute List
+    global_provider.mutelist = args.mutelist_file
 
-    # Set output options based on the selected provider
-    # TODO: this is going to be removed an include in the Provider as a new common object
-    audit_output_options = set_provider_output_options(
-        provider, args, global_provider.identity, mutelist_file, bulk_checks_metadata
-    )
+    # Setup Output Options
+    global_provider.output_options = (args, bulk_checks_metadata)
 
     # TODO: adapt the quick inventory for the new AWS provider
     # Run the quick inventory for the provider if available
@@ -198,7 +192,6 @@ def prowler():
         findings = execute_checks(
             checks_to_execute,
             global_provider,
-            audit_output_options,
             custom_checks_metadata,
         )
     else:
@@ -230,14 +223,19 @@ def prowler():
             # Close json file if exists
             if "json" in mode:
                 close_json(
-                    audit_output_options.output_filename, args.output_directory, mode
+                    global_provider.output_options.output_filename,
+                    args.output_directory,
+                    mode,
                 )
             if mode == "html":
                 add_html_footer(
-                    audit_output_options.output_filename, args.output_directory
+                    global_provider.output_options.output_filename,
+                    args.output_directory,
                 )
                 fill_html_overview_statistics(
-                    stats, audit_output_options.output_filename, args.output_directory
+                    stats,
+                    global_provider.output_options.output_filename,
+                    args.output_directory,
                 )
             # Send output to S3 if needed (-B / -D)
             if provider == "aws" and (
@@ -250,7 +248,7 @@ def prowler():
                     output_bucket = args.output_bucket_no_assume
                     bucket_session = global_provider.session.original_session
                 send_to_s3_bucket(
-                    audit_output_options.output_filename,
+                    global_provider.output_options.output_filename,
                     args.output_directory,
                     mode,
                     output_bucket,
@@ -281,7 +279,10 @@ def prowler():
 
         # Prepare the findings to be sent to Security Hub
         security_hub_findings_per_region = prepare_security_hub_findings(
-            findings, provider, audit_output_options, aws_security_enabled_regions
+            findings,
+            provider,
+            global_provider.output_options,
+            aws_security_enabled_regions,
         )
 
         # Send the findings to Security Hub
@@ -311,7 +312,7 @@ def prowler():
         display_summary_table(
             findings,
             global_provider,
-            audit_output_options,
+            global_provider.output_options,
         )
 
         if findings:
@@ -325,13 +326,13 @@ def prowler():
                     findings,
                     bulk_checks_metadata,
                     compliance,
-                    audit_output_options.output_filename,
-                    audit_output_options.output_directory,
+                    global_provider.output_options.output_filename,
+                    global_provider.output_options.output_directory,
                     compliance_overview,
                 )
             if compliance_overview:
                 print(
-                    f"\nDetailed compliance results are in {Fore.YELLOW}{audit_output_options.output_directory}/compliance/{Style.RESET_ALL}\n"
+                    f"\nDetailed compliance results are in {Fore.YELLOW}{global_provider.output_options.output_directory}/compliance/{Style.RESET_ALL}\n"
                 )
 
     # If custom checks were passed, remove the modules

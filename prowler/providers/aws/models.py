@@ -4,7 +4,9 @@ from datetime import datetime
 from boto3.session import Session
 from botocore.config import Config
 
+from prowler.config.config import output_file_timestamp
 from prowler.providers.aws.lib.arn.models import ARN
+from prowler.providers.common.models import ProviderOutputOptions
 
 
 @dataclass
@@ -75,3 +77,38 @@ class AWSCallerIdentity:
 class AWSMFAInfo:
     arn: str
     totp: str
+
+
+class AWSOutputOptions(ProviderOutputOptions):
+    security_hub_enabled: bool
+
+    def __init__(self, arguments, bulk_checks_metadata, identity):
+        # First call Provider_Output_Options init
+        super().__init__(arguments, bulk_checks_metadata)
+
+        # Confire Shodan API
+        # TODO: review shodan for the new AWS provider
+        # if arguments.shodan:
+        #     audit_info = change_config_var(
+        #         "shodan_api_key", arguments.shodan, audit_info
+        #     )
+
+        # Check if custom output filename was input, if not, set the default
+        if (
+            not hasattr(arguments, "output_filename")
+            or arguments.output_filename is None
+        ):
+            self.output_filename = (
+                f"prowler-output-{identity.account}-{output_file_timestamp}"
+            )
+        else:
+            self.output_filename = arguments.output_filename
+
+        # Security Hub Outputs
+        self.security_hub_enabled = arguments.security_hub
+        self.send_sh_only_fails = arguments.send_sh_only_fails
+        if arguments.security_hub:
+            if not self.output_modes:
+                self.output_modes = ["json-asff"]
+            else:
+                self.output_modes.append("json-asff")
