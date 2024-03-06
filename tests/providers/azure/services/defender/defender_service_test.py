@@ -23,6 +23,7 @@ def mock_defender_get_pricings(_):
                 resource_id="resource_id",
                 pricing_tier="pricing_tier",
                 free_trial_remaining_time=timedelta(days=1),
+                extensions={},
             )
         }
     }
@@ -143,6 +144,7 @@ class Test_Defender_Service:
         assert defender.pricings[AZURE_SUBSCRIPTION][
             "Standard"
         ].free_trial_remaining_time == timedelta(days=1)
+        assert defender.pricings[AZURE_SUBSCRIPTION]["Standard"].extensions == {}
 
     def test__get_auto_provisioning_settings__(self):
         defender = Defender(set_mocked_azure_audit_info())

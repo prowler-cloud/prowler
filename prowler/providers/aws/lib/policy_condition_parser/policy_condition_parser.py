@@ -71,9 +71,6 @@ def is_condition_block_restrictive(
                         if is_condition_key_restrictive:
                             is_condition_valid = True
 
-                        if is_condition_key_restrictive:
-                            is_condition_valid = True
-
                     # value is a string
                     elif isinstance(
                         condition_statement[condition_operator][value],

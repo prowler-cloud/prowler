@@ -292,13 +292,13 @@ files = [
 
 [[package]]
 name = "azure-core"
-version = "1.30.0"
+version = "1.30.1"
 description = "Microsoft Azure Core Library for Python"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "azure-core-1.30.0.tar.gz", hash = "sha256:6f3a7883ef184722f6bd997262eddaf80cfe7e5b3e0caaaf8db1695695893d35"},
-    {file = "azure_core-1.30.0-py3-none-any.whl", hash = "sha256:3dae7962aad109610e68c9a7abb31d79720e1d982ddf61363038d175a5025e89"},
+    {file = "azure-core-1.30.1.tar.gz", hash = "sha256:26273a254131f84269e8ea4464f3560c731f29c0c1f69ac99010845f239c1a8f"},
+    {file = "azure_core-1.30.1-py3-none-any.whl", hash = "sha256:7c5ee397e48f281ec4dd773d67a0a47a0962ed6fa833036057f9ea067f688e74"},
 ]
 
 [package.dependencies]
@@ -384,6 +384,22 @@ python-versions = ">=3.7"
 files = [
     {file = "azure-mgmt-compute-30.5.0.tar.gz", hash = "sha256:ed3ea34b799db0d52ee55e2f1ab4b0f09fa4a08f35e061ecb9aad9fb5a218844"},
     {file = "azure_mgmt_compute-30.5.0-py3-none-any.whl", hash = "sha256:b65a6c1e22be7334604257d8d9f96a9c6dc4c6d4869f95d0d551c7c8170a2e71"},
+]
+
+[package.dependencies]
+azure-common = ">=1.1,<2.0"
+azure-mgmt-core = ">=1.3.2,<2.0.0"
+isodate = ">=0.6.1,<1.0.0"
+
+[[package]]
+name = "azure-mgmt-containerservice"
+version = "29.1.0"
+description = "Microsoft Azure Container Service Management Client Library for Python"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "azure-mgmt-containerservice-29.1.0.tar.gz", hash = "sha256:46887178bb1035933f06fa63121c1ac9d4c5871f202ae2b86bc4af6e1e3b354f"},
+    {file = "azure_mgmt_containerservice-29.1.0-py3-none-any.whl", hash = "sha256:0941a26a9c61930e004001e7340812dadb8a726e2ccc5b4d30ce4e6403fe1f43"},
 ]
 
 [package.dependencies]
@@ -810,13 +826,13 @@ pycparser = "*"
 
 [[package]]
 name = "cfn-lint"
-version = "0.85.3"
+version = "0.86.0"
 description = "Checks CloudFormation templates for practices and behaviour that could potentially be improved"
 optional = false
 python-versions = ">=3.8, <=4.0, !=4.0"
 files = [
-    {file = "cfn-lint-0.85.3.tar.gz", hash = "sha256:efed015205051664285f0aedac106209c80f8b251b231fce93d0911db0e07cec"},
-    {file = "cfn_lint-0.85.3-py3-none-any.whl", hash = "sha256:53121526fe50c04a3551379fd835417d7c05959280df8869e12070946af977a3"},
+    {file = "cfn-lint-0.86.0.tar.gz", hash = "sha256:7216e9c10dd27af73821d0ae79b17406cd89f5dfbc25feb5d2ba756eb6e9a651"},
+    {file = "cfn_lint-0.86.0-py3-none-any.whl", hash = "sha256:70cefa0ab91e35698cd8c03a2f99a367d71d848da5a62123192552937652d542"},
 ]
 
 [package.dependencies]
@@ -1429,13 +1445,13 @@ grpcio-gcp = ["grpcio-gcp (>=0.2.2,<1.0.dev0)"]
 
 [[package]]
 name = "google-api-python-client"
-version = "2.118.0"
+version = "2.120.0"
 description = "Google API Client Library for Python"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "google-api-python-client-2.118.0.tar.gz", hash = "sha256:ebf4927a3f5184096647be8f705d090e7f06d48ad82b0fa431a2fe80c2cbe182"},
-    {file = "google_api_python_client-2.118.0-py2.py3-none-any.whl", hash = "sha256:9d83b178496b180e058fd206ebfb70ea1afab49f235dd326f557513f56f496d5"},
+    {file = "google-api-python-client-2.120.0.tar.gz", hash = "sha256:a0c8769cad9576768bcb3191cb1f550f6ab3290cba042badb0fb17bba03f70cc"},
+    {file = "google_api_python_client-2.120.0-py2.py3-none-any.whl", hash = "sha256:e2cdf4497bfc758fb44a4b487920cc1ca0571c2428187697a8e43e3b9feba1c9"},
 ]
 
 [package.dependencies]
@@ -2064,13 +2080,13 @@ files = [
 
 [[package]]
 name = "marshmallow"
-version = "3.21.0"
+version = "3.21.1"
 description = "A lightweight library for converting complex datatypes to and from native Python datatypes."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "marshmallow-3.21.0-py3-none-any.whl", hash = "sha256:e7997f83571c7fd476042c2c188e4ee8a78900ca5e74bd9c8097afa56624e9bd"},
-    {file = "marshmallow-3.21.0.tar.gz", hash = "sha256:20f53be28c6e374a711a16165fb22a8dc6003e3f7cda1285e3ca777b9193885b"},
+    {file = "marshmallow-3.21.1-py3-none-any.whl", hash = "sha256:f085493f79efb0644f270a9bf2892843142d80d7174bbbd2f3713f2a589dc633"},
+    {file = "marshmallow-3.21.1.tar.gz", hash = "sha256:4e65e9e0d80fc9e609574b9983cf32579f305c718afb30d7233ab818571768c3"},
 ]
 
 [package.dependencies]
@@ -2116,13 +2132,13 @@ files = [
 
 [[package]]
 name = "microsoft-kiota-abstractions"
-version = "1.2.0"
+version = "1.3.1"
 description = "Core abstractions for kiota generated libraries in Python"
 optional = false
 python-versions = "*"
 files = [
-    {file = "microsoft_kiota_abstractions-1.2.0-py2.py3-none-any.whl", hash = "sha256:09061cec7e9c9da8bc3eced4488118c8b4a7ebd26aa8de2b46c43f07fee5610a"},
-    {file = "microsoft_kiota_abstractions-1.2.0.tar.gz", hash = "sha256:2b38241402995952c5598923391dcbb84bd97e48c0d76f93e2817c69ba19e3f6"},
+    {file = "microsoft_kiota_abstractions-1.3.1-py2.py3-none-any.whl", hash = "sha256:76930f9fe44e90afb849ecfae8a08acb2effe61a2975441022e0f5229383d73c"},
+    {file = "microsoft_kiota_abstractions-1.3.1.tar.gz", hash = "sha256:9e082212edf9e5a533eff4139cf1f7a3afc4a74938b95fa486c10ee9f7654d58"},
 ]
 
 [package.dependencies]
@@ -2150,13 +2166,13 @@ opentelemetry-sdk = ">=1.20.0"
 
 [[package]]
 name = "microsoft-kiota-http"
-version = "1.3.0"
+version = "1.3.1"
 description = "Kiota http request adapter implementation for httpx library"
 optional = false
 python-versions = "*"
 files = [
-    {file = "microsoft_kiota_http-1.3.0-py2.py3-none-any.whl", hash = "sha256:4be1fd892dcef31ecd8d616969e970437a0b6b98c3223980d6c4aa55582729aa"},
-    {file = "microsoft_kiota_http-1.3.0.tar.gz", hash = "sha256:ae97bbfe4544c94e43591b44c8a60791689f31f7d16a9154df7738e829a28481"},
+    {file = "microsoft_kiota_http-1.3.1-py2.py3-none-any.whl", hash = "sha256:d62972c6ed4c785f9808a15479a7421abb38a9519b39e6933e5d05555b9fb427"},
+    {file = "microsoft_kiota_http-1.3.1.tar.gz", hash = "sha256:09d85310379f88af0a0967925d1fcbe82f2520a9fe6fa1fd50e79af813bc451d"},
 ]
 
 [package.dependencies]
@@ -2167,13 +2183,13 @@ opentelemetry-sdk = ">=1.20.0"
 
 [[package]]
 name = "microsoft-kiota-serialization-json"
-version = "1.0.1"
+version = "1.1.0"
 description = "Implementation of Kiota Serialization interfaces for JSON"
 optional = false
 python-versions = "*"
 files = [
-    {file = "microsoft_kiota_serialization_json-1.0.1-py2.py3-none-any.whl", hash = "sha256:1b54602c6ec8185499213f6da24dcc90add2ffa5e328a61bdb50ddf8e1ba483b"},
-    {file = "microsoft_kiota_serialization_json-1.0.1.tar.gz", hash = "sha256:1d93ecee5d31941e3bdfa3c0b319cfe629d4f59a95fb0fbe0b054f7dbdc0ff60"},
+    {file = "microsoft_kiota_serialization_json-1.1.0-py2.py3-none-any.whl", hash = "sha256:a32c73dd92ef2677dbf1deca2fb44b5111c0ef572b15c47205bff521800cd750"},
+    {file = "microsoft_kiota_serialization_json-1.1.0.tar.gz", hash = "sha256:72bf65d81c0356ad87c229694733f4eb558628a13c5ee8dd274980c4b2d9b64b"},
 ]
 
 [package.dependencies]
@@ -2245,13 +2261,13 @@ pytz = "*"
 
 [[package]]
 name = "mkdocs-material"
-version = "9.5.11"
+version = "9.5.12"
 description = "Documentation that simply works"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "mkdocs_material-9.5.11-py3-none-any.whl", hash = "sha256:788ee0f3e036dca2dc20298d65e480297d348a44c9d7b2ee05c5262983e66072"},
-    {file = "mkdocs_material-9.5.11.tar.gz", hash = "sha256:7af7f8af0dea16175558f3fb9245d26c83a17199baa5f157755e63d7437bf971"},
+    {file = "mkdocs_material-9.5.12-py3-none-any.whl", hash = "sha256:d6f0c269f015e48c76291cdc79efb70f7b33bbbf42d649cfe475522ebee61b1f"},
+    {file = "mkdocs_material-9.5.12.tar.gz", hash = "sha256:5f69cef6a8aaa4050b812f72b1094fda3d079b9a51cf27a247244c03ec455e97"},
 ]
 
 [package.dependencies]
@@ -3132,13 +3148,13 @@ testutils = ["gitpython (>3)"]
 
 [[package]]
 name = "pymdown-extensions"
-version = "10.7"
+version = "10.7.1"
 description = "Extension pack for Python Markdown."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "pymdown_extensions-10.7-py3-none-any.whl", hash = "sha256:6ca215bc57bc12bf32b414887a68b810637d039124ed9b2e5bd3325cbb2c050c"},
-    {file = "pymdown_extensions-10.7.tar.gz", hash = "sha256:c0d64d5cf62566f59e6b2b690a4095c931107c250a8c8e1351c1de5f6b036deb"},
+    {file = "pymdown_extensions-10.7.1-py3-none-any.whl", hash = "sha256:f5cc7000d7ff0d1ce9395d216017fa4df3dde800afb1fb72d1c7d3fd35e710f4"},
+    {file = "pymdown_extensions-10.7.1.tar.gz", hash = "sha256:c70e146bdd83c744ffc766b4671999796aba18842b268510a329f7f64700d584"},
 ]
 
 [package.dependencies]
@@ -3150,13 +3166,13 @@ extra = ["pygments (>=2.12)"]
 
 [[package]]
 name = "pyparsing"
-version = "3.1.1"
+version = "3.1.2"
 description = "pyparsing module - Classes and methods to define and execute parsing grammars"
 optional = false
 python-versions = ">=3.6.8"
 files = [
-    {file = "pyparsing-3.1.1-py3-none-any.whl", hash = "sha256:32c7c0b711493c72ff18a981d24f28aaf9c1fb7ed5e9667c9e84e3db623bdbfb"},
-    {file = "pyparsing-3.1.1.tar.gz", hash = "sha256:ede28a1a32462f5a9705e07aea48001a08f7cf81a021585011deba701581a0db"},
+    {file = "pyparsing-3.1.2-py3-none-any.whl", hash = "sha256:f9db75911801ed778fe61bb643079ff86601aca99fcae6345aa67292038fb742"},
+    {file = "pyparsing-3.1.2.tar.gz", hash = "sha256:a1bac0ce561155ecc3ed78ca94d3c9378656ad4c94c1270de543f621420f94ad"},
 ]
 
 [package.extras]
@@ -3257,13 +3273,13 @@ testing = ["filelock"]
 
 [[package]]
 name = "python-dateutil"
-version = "2.8.2"
+version = "2.9.0.post0"
 description = "Extensions to the standard Python datetime module"
 optional = false
 python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,>=2.7"
 files = [
-    {file = "python-dateutil-2.8.2.tar.gz", hash = "sha256:0123cacc1627ae19ddf3c27a5de5bd67ee4586fbdd6440d9748f8abb483d3e86"},
-    {file = "python_dateutil-2.8.2-py2.py3-none-any.whl", hash = "sha256:961d03dc3453ebbc59dbdea9e4e11c5651520a876d0f4db161e8674aae935da9"},
+    {file = "python-dateutil-2.9.0.post0.tar.gz", hash = "sha256:37dd54208da7e1cd875388217d5e00ebd4179249f90fb72437e91a35459a0ad3"},
+    {file = "python_dateutil-2.9.0.post0-py2.py3-none-any.whl", hash = "sha256:a8b2bc7bffae282281c8140a97d3aa9c14da0b136dfe83f850eea9a5f7470427"},
 ]
 
 [package.dependencies]
@@ -3930,13 +3946,13 @@ files = [
 
 [[package]]
 name = "slack-sdk"
-version = "3.27.0"
+version = "3.27.1"
 description = "The Slack API Platform SDK for Python"
 optional = false
 python-versions = ">=3.6"
 files = [
-    {file = "slack_sdk-3.27.0-py2.py3-none-any.whl", hash = "sha256:a901c68cb5547d5459cdefd81343d116db56d65f6b33f4081ddf1cdd243bf07e"},
-    {file = "slack_sdk-3.27.0.tar.gz", hash = "sha256:811472ce598db855ab3c02f098fa430323ccb253cfe17ba20c7b05ab206d984d"},
+    {file = "slack_sdk-3.27.1-py2.py3-none-any.whl", hash = "sha256:c108e509160cf1324c5c8b1f47ca52fb5e287021b8caf9f4ec78ad737ab7b1d9"},
+    {file = "slack_sdk-3.27.1.tar.gz", hash = "sha256:85d86b34d807c26c8bb33c1569ec0985876f06ae4a2692afba765b7a5490d28c"},
 ]
 
 [package.extras]
@@ -4439,4 +4455,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.13"
-content-hash = "dc655cec9f8bc9b586a4af5cdadc1fa8babc95467a0cd2a25482c0a0b0fd1171"
+content-hash = "bf0fbc4e6ba2ecc7f163a3a5048b60cce386dfbf603de925e405326413b7a268"

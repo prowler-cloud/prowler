@@ -10,6 +10,7 @@ class ResourceExplorer2(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
         super().__init__("resource-explorer-2", provider)
+        self.index_arn_template = f"arn:{self.audited_partition}:resource-explorer:{self.region}:{self.audited_account}:index"
         self.indexes = []
         self.__threading_call__(self.__list_indexes__)
 

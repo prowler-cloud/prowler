@@ -5,6 +5,7 @@ from boto3 import client
 from moto import mock_aws
 
 from tests.providers.aws.audit_info_utils import (
+    AWS_ACCOUNT_NUMBER,
     AWS_REGION_US_EAST_1,
     set_mocked_aws_audit_info,
 )
@@ -85,5 +86,5 @@ class Test_iam_root_hardware_mfa_enabled_test:
             assert result[0].resource_id == "<root_account>"
             assert (
                 result[0].resource_arn
-                == f"arn:aws:iam::{service_client.audited_account}:root"
+                == f"arn:aws:iam:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:mfa"
             )

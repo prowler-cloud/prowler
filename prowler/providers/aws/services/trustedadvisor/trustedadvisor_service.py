@@ -12,6 +12,7 @@ class TrustedAdvisor(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
         super().__init__("support", provider)
+        self.account_arn_template = f"arn:{self.audited_partition}:trusted-advisor:{self.region}:{self.audited_account}:account"
         self.checks = []
         self.premium_support = PremiumSupport(enabled=False)
         # Support API is not available in China Partition
@@ -37,10 +38,12 @@ class TrustedAdvisor(AWSService):
             for check in self.client.describe_trusted_advisor_checks(language="en").get(
                 "checks", []
             ):
+                check_arn = f"arn:{self.audited_partition}:trusted-advisor:{self.client.region}:{self.audited_account}:check/{check['id']}"
                 self.checks.append(
                     Check(
                         id=check["id"],
                         name=check["name"],
+                        arn=check_arn,
                         region=self.client.region,
                     )
                 )
@@ -117,6 +120,7 @@ class TrustedAdvisor(AWSService):
 class Check(BaseModel):
     id: str
     name: str
+    arn: str
     status: Optional[str]
     region: str
 

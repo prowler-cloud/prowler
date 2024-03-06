@@ -26,7 +26,8 @@ from prowler.providers.common.outputs import get_provider_output_model
 def initialize_file_descriptor(
     filename: str,
     output_mode: str,
-    audit_info: Any,
+    # TODO: review this provider, maybe it's not needed
+    provider: Any,
     format: Any = None,
 ) -> TextIOWrapper:
     """Open/Create the output file. If needed include headers or the required format"""
@@ -92,8 +93,8 @@ def fill_file_descriptors(output_modes, output_directory, output_filename, provi
                     file_descriptors.update({output_mode: file_descriptor})
 
                 elif provider.type == "gcp":
-                    if output_mode == "cis_2.0_gcp":
-                        filename = f"{output_directory}/compliance/{output_filename}_cis_2.0_gcp{csv_file_suffix}"
+                    filename = f"{output_directory}/compliance/{output_filename}_{output_mode}{csv_file_suffix}"
+                    if "cis_" in output_mode:
                         file_descriptor = initialize_file_descriptor(
                             filename, output_mode, provider, Check_Output_CSV_GCP_CIS
                         )
@@ -106,93 +107,68 @@ def fill_file_descriptors(output_modes, output_directory, output_filename, provi
                             filename, output_mode, provider
                         )
                         file_descriptors.update({output_mode: file_descriptor})
-
-                    elif output_mode == "ens_rd2022_aws":
-                        filename = f"{output_directory}/compliance/{output_filename}_ens_rd2022_aws{csv_file_suffix}"
-                        file_descriptor = initialize_file_descriptor(
-                            filename,
-                            output_mode,
-                            provider,
-                            Check_Output_CSV_ENS_RD2022,
-                        )
-                        file_descriptors.update({output_mode: file_descriptor})
-
-                    elif output_mode == "cis_1.5_aws":
-                        filename = f"{output_directory}/compliance/{output_filename}_cis_1.5_aws{csv_file_suffix}"
-                        file_descriptor = initialize_file_descriptor(
-                            filename, output_mode, provider, Check_Output_CSV_AWS_CIS
-                        )
-                        file_descriptors.update({output_mode: file_descriptor})
-
-                    elif output_mode == "cis_1.4_aws":
-                        filename = f"{output_directory}/compliance/{output_filename}_cis_1.4_aws{csv_file_suffix}"
-                        file_descriptor = initialize_file_descriptor(
-                            filename, output_mode, provider, Check_Output_CSV_AWS_CIS
-                        )
-                        file_descriptors.update({output_mode: file_descriptor})
-
-                    elif (
-                        output_mode
-                        == "aws_well_architected_framework_security_pillar_aws"
-                    ):
-                        filename = f"{output_directory}/compliance/{output_filename}_aws_well_architected_framework_security_pillar_aws{csv_file_suffix}"
-                        file_descriptor = initialize_file_descriptor(
-                            filename,
-                            output_mode,
-                            provider,
-                            Check_Output_CSV_AWS_Well_Architected,
-                        )
-                        file_descriptors.update({output_mode: file_descriptor})
-
-                    elif (
-                        output_mode
-                        == "aws_well_architected_framework_reliability_pillar_aws"
-                    ):
-                        filename = f"{output_directory}/compliance/{output_filename}_aws_well_architected_framework_reliability_pillar_aws{csv_file_suffix}"
-                        file_descriptor = initialize_file_descriptor(
-                            filename,
-                            output_mode,
-                            provider,
-                            Check_Output_CSV_AWS_Well_Architected,
-                        )
-                        file_descriptors.update({output_mode: file_descriptor})
-
-                    elif output_mode == "iso27001_2013_aws":
-                        filename = f"{output_directory}/compliance/{output_filename}_iso27001_2013_aws{csv_file_suffix}"
-                        file_descriptor = initialize_file_descriptor(
-                            filename,
-                            output_mode,
-                            provider,
-                            Check_Output_CSV_AWS_ISO27001_2013,
-                        )
-                        file_descriptors.update({output_mode: file_descriptor})
-
-                    elif output_mode == "mitre_attack_aws":
-                        filename = f"{output_directory}/compliance/{output_filename}_mitre_attack_aws{csv_file_suffix}"
-                        file_descriptor = initialize_file_descriptor(
-                            filename,
-                            output_mode,
-                            provider,
-                            Check_Output_MITRE_ATTACK,
-                        )
-                        file_descriptors.update({output_mode: file_descriptor})
-
-                    else:
-                        # Generic Compliance framework
-                        if (
-                            provider.type == "aws"
-                            and "aws" in output_mode
-                            or (provider.type == "azure" and "azure" in output_mode)
-                            or (provider.type == "gcp" and "gcp" in output_mode)
-                        ):
-                            filename = f"{output_directory}/compliance/{output_filename}_{output_mode}{csv_file_suffix}"
+                    else:  # Compliance frameworks
+                        filename = f"{output_directory}/{output_filename}_{output_mode}{csv_file_suffix}"
+                        if output_mode == "ens_rd2022_aws":
                             file_descriptor = initialize_file_descriptor(
                                 filename,
                                 output_mode,
                                 provider,
-                                Check_Output_CSV_Generic_Compliance,
+                                Check_Output_CSV_ENS_RD2022,
                             )
                             file_descriptors.update({output_mode: file_descriptor})
+
+                        elif "cis_" in output_mode:
+                            file_descriptor = initialize_file_descriptor(
+                                filename,
+                                output_mode,
+                                provider,
+                                Check_Output_CSV_AWS_CIS,
+                            )
+                            file_descriptors.update({output_mode: file_descriptor})
+
+                        elif "aws_well_architected_framework" in output_mode:
+                            file_descriptor = initialize_file_descriptor(
+                                filename,
+                                output_mode,
+                                provider,
+                                Check_Output_CSV_AWS_Well_Architected,
+                            )
+                            file_descriptors.update({output_mode: file_descriptor})
+
+                        elif output_mode == "iso27001_2013_aws":
+                            file_descriptor = initialize_file_descriptor(
+                                filename,
+                                output_mode,
+                                provider,
+                                Check_Output_CSV_AWS_ISO27001_2013,
+                            )
+                            file_descriptors.update({output_mode: file_descriptor})
+
+                        elif output_mode == "mitre_attack_aws":
+                            file_descriptor = initialize_file_descriptor(
+                                filename,
+                                output_mode,
+                                provider,
+                                Check_Output_MITRE_ATTACK,
+                            )
+                            file_descriptors.update({output_mode: file_descriptor})
+
+                        else:
+                            # Generic Compliance framework
+                            if (
+                                provider.type == "aws"
+                                and "aws" in output_mode
+                                or (provider.type == "azure" and "azure" in output_mode)
+                                or (provider.type == "gcp" and "gcp" in output_mode)
+                            ):
+                                file_descriptor = initialize_file_descriptor(
+                                    filename,
+                                    output_mode,
+                                    provider,
+                                    Check_Output_CSV_Generic_Compliance,
+                                )
+                                file_descriptors.update({output_mode: file_descriptor})
 
     except Exception as error:
         logger.error(

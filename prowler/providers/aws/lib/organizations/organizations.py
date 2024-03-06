@@ -1,6 +1,5 @@
 from boto3 import session
 
-# from boto3 import client
 from prowler.lib.logger import logger
 from prowler.providers.aws.lib.audit_info.models import AWSOrganizationsInfo
 
