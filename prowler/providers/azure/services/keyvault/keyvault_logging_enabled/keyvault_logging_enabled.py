@@ -20,30 +20,25 @@ class keyvault_logging_enabled(Check):
                     findings.append(report)
                 else:
                     for diagnostic_setting in keyvault.monitor_diagnostic_settings:
+                        report = Check_Report_Azure(self.metadata())
                         for log in diagnostic_setting.logs:
-                            report = Check_Report_Azure(self.metadata())
                             if log.category == "AuditEvent" and log.enabled:
                                 report.status = "PASS"
                                 report.status_extended = f"Diagnostic setting {diagnostic_setting.name} for Key Vault {keyvault_name} in subscription {subscription_name} is capturing AuditEvent category."
                                 report.subscription = subscription_name
-                                report.resource_name = (
-                                    diagnostic_setting.storage_account_name
-                                )
+                                report.resource_name = diagnostic_setting.name
                                 report.diagnostic_setting_name = diagnostic_setting.name
                                 report.resource_id = diagnostic_setting.id
-                                findings.append(report)
+                                break
 
                             else:
                                 report.status = "FAIL"
                                 report.status_extended = f"Diagnostic setting {diagnostic_setting.name} for Key Vault {keyvault_name} in subscription {subscription_name} is not capturing AuditEvent category."
                                 report.subscription = subscription_name
-                                report.resource_name = (
-                                    diagnostic_setting.storage_account_name
-                                )
+                                report.resource_name = diagnostic_setting.name
                                 report.diagnostic_setting_name = diagnostic_setting.name
                                 report.resource_id = diagnostic_setting.id
-                                findings.append(report)
 
-                            break
+                    findings.append(report)
 
         return findings

@@ -103,7 +103,7 @@ class Test_keyvault_logging_enabled:
             assert len(result) == 2
             assert result[0].status == "PASS"
             assert result[0].subscription == AZURE_SUBSCRIPTION
-            assert result[0].resource_name == "storage_account_name"
+            assert result[0].resource_name == "name_diagnostic_setting"
             assert result[0].diagnostic_setting_name == "name_diagnostic_setting"
             assert result[0].resource_id == "id/id"
             assert (
@@ -112,7 +112,7 @@ class Test_keyvault_logging_enabled:
             )
             assert result[1].status == "FAIL"
             assert result[1].subscription == AZURE_SUBSCRIPTION
-            assert result[1].resource_name == "storage_account_name2"
+            assert result[1].resource_name == "name_diagnostic_setting2"
             assert result[1].diagnostic_setting_name == "name_diagnostic_setting2"
             assert result[1].resource_id == "id2/id2"
             assert (
