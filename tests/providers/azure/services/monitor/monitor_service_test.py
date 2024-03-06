@@ -28,6 +28,7 @@ def mock_monitor_get_diagnostics_settings(_):
                 ],
                 storage_account_id="/subscriptions/1234a5-123a-123a-123a-1234567890ab/resourceGroups/rg/providers/Microsoft.Storage/storageAccounts/storageaccountname",
                 storage_account_name="storageaccountname",
+                name="name",
             )
         ]
     }

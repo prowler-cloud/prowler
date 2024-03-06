@@ -8,9 +8,11 @@ from azure.mgmt.keyvault.v2023_07_01.models import (
     SecretAttributes,
     VaultProperties,
 )
+from azure.mgmt.monitor import MonitorManagementClient
 
 from prowler.lib.logger import logger
 from prowler.providers.azure.lib.service.service import AzureService
+from prowler.providers.azure.services.monitor.monitor_service import DiagnosticSetting
 
 
 ########################## Storage
@@ -47,6 +49,9 @@ class KeyVault(AzureService):
                             properties=keyvault_properties,
                             keys=keys,
                             secrets=secrets,
+                            monitor_diagnostic_settings=self.__get_vault_monitor_settings__(
+                                audit_info, keyvault_name, resource_group
+                            ),
                         )
                     )
             except Exception as error:
@@ -116,6 +121,39 @@ class KeyVault(AzureService):
             )
         return secrets
 
+    def __get_vault_monitor_settings__(self, audit_info, keyvault_name, resource_group):
+        logger.info(
+            f"KeyVault - Getting monitor diagnostics settings for {keyvault_name}..."
+        )
+        monitor_diagnostics_settings = []
+        for subscription in self.clients:
+            monitor_client = MonitorManagementClient(
+                credential=audit_info.credentials,
+                subscription_id=self.subscriptions[subscription],
+            )
+            try:
+                settings = monitor_client.diagnostic_settings.list(
+                    resource_uri=f"subscriptions/{self.subscriptions[subscription]}/resourceGroups/{resource_group}/providers/Microsoft.KeyVault/vaults/{keyvault_name}"
+                )
+                for setting in settings:
+                    monitor_diagnostics_settings.append(
+                        DiagnosticSetting(
+                            id=setting.id,
+                            name=setting.id.split("/")[-1],
+                            storage_account_name=setting.storage_account_id.split("/")[
+                                -1
+                            ],
+                            logs=setting.logs,
+                            storage_account_id=setting.storage_account_id,
+                        )
+                    )
+
+            except Exception as error:
+                logger.error(
+                    f"Subscription name: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+        return monitor_diagnostics_settings
+
 
 @dataclass
 class Key:
@@ -145,3 +183,4 @@ class KeyVaultInfo:
     properties: VaultProperties
     keys: list[Key] = None
     secrets: list[Secret] = None
+    monitor_diagnostic_settings: list[DiagnosticSetting] = None
