@@ -58,7 +58,6 @@ csv_file_suffix = ".csv"
 json_file_suffix = ".json"
 json_asff_file_suffix = ".asff.json"
 json_ocsf_file_suffix = ".ocsf.json"
-html_file_suffix = ".html"
 default_config_file_path = (
     f"{pathlib.Path(os.path.dirname(os.path.realpath(__file__)))}/config.yaml"
 )

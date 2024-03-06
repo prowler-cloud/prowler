@@ -14,6 +14,9 @@ class DRS(AWSService):
         self.drs_services = []
         self.__threading_call__(self.__describe_jobs__)
 
+    def __get_recovery_job_arn_template__(self, region):
+        return f"arn:{self.audited_partition}:drs:{region}:{self.audited_account}:recovery-job"
+
     def __describe_jobs__(self, regional_client):
         logger.info("DRS - Describe Jobs...")
         try:

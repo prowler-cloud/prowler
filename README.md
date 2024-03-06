@@ -8,7 +8,7 @@
 <p align="center">
 <b>Learn more at <a href="https://prowler.com">prowler.com</i></b>
 </p>
-  
+
 <p align="center">
 <a href="https://join.slack.com/t/prowler-workspace/shared_invite/zt-1hix76xsl-2uq222JIXrC7Q8It~9ZNog"><img width="30" height="30" alt="Prowler community on Slack" src="https://github.com/prowler-cloud/prowler/assets/3985464/3617e470-670c-47c9-9794-ce895ebdb627"></a>
   <br>
@@ -49,7 +49,7 @@ It contains hundreds of controls covering CIS, NIST 800, NIST CSF, CISA, RBI, Fe
 |---|---|---|---|---|
 | AWS | 302 | 61 -> `prowler aws --list-services` | 27 -> `prowler aws --list-compliance` | 6 -> `prowler aws --list-categories` |
 | GCP | 73 | 11 -> `prowler gcp --list-services` | 1 -> `prowler gcp --list-compliance` | 2 -> `prowler gcp --list-categories`|
-| Azure | 37 | 4 -> `prowler azure --list-services` | CIS soon | 1 -> `prowler azure --list-categories` |
+| Azure | 91 | 14 -> `prowler azure --list-services` | CIS soon | 2 -> `prowler azure --list-categories` |
 | Kubernetes | Work In Progress | - | CIS soon | - |
 
 # 📖 Documentation
