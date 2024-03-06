@@ -4,14 +4,14 @@ from azure.mgmt.containerservice import ContainerServiceClient
 from azure.mgmt.containerservice.models import ManagedClusterAgentPoolProfile
 
 from prowler.lib.logger import logger
-from prowler.providers.azure.lib.audit_info.models import Azure_Audit_Info
+from prowler.providers.azure.azure_provider import AzureProvider
 from prowler.providers.azure.lib.service.service import AzureService
 
 
 ########################## AKS (Azure Kubernetes Service)
 class AKS(AzureService):
-    def __init__(self, audit_info: Azure_Audit_Info):
-        super().__init__(ContainerServiceClient, audit_info)
+    def __init__(self, provider: AzureProvider):
+        super().__init__(ContainerServiceClient, provider)
         self.clusters = self.__get_clusters__()
 
     def __get_clusters__(self):
