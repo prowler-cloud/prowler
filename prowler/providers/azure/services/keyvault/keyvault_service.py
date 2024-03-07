@@ -8,10 +8,10 @@ from azure.mgmt.keyvault.v2023_07_01.models import (
     SecretAttributes,
     VaultProperties,
 )
-from azure.mgmt.monitor import MonitorManagementClient
 
 from prowler.lib.logger import logger
 from prowler.providers.azure.lib.service.service import AzureService
+from prowler.providers.azure.services.monitor.monitor_client import monitor_client
 from prowler.providers.azure.services.monitor.monitor_service import DiagnosticSetting
 
 
@@ -127,27 +127,13 @@ class KeyVault(AzureService):
         )
         monitor_diagnostics_settings = []
         for subscription in self.clients:
-            monitor_client = MonitorManagementClient(
-                credential=audit_info.credentials,
-                subscription_id=self.subscriptions[subscription],
-            )
             try:
-                settings = monitor_client.diagnostic_settings.list(
-                    resource_uri=f"subscriptions/{self.subscriptions[subscription]}/resourceGroups/{resource_group}/providers/Microsoft.KeyVault/vaults/{keyvault_name}"
-                )
-                for setting in settings:
-                    monitor_diagnostics_settings.append(
-                        DiagnosticSetting(
-                            id=setting.id,
-                            name=setting.id.split("/")[-1],
-                            storage_account_name=setting.storage_account_id.split("/")[
-                                -1
-                            ],
-                            logs=setting.logs,
-                            storage_account_id=setting.storage_account_id,
-                        )
+                for client in monitor_client.clients.values():
+                    monitor_diagnostics_settings = monitor_client.diagnostic_settings_with_uri(
+                        subscription,
+                        f"subscriptions/{self.subscriptions[subscription]}/resourceGroups/{resource_group}/providers/Microsoft.KeyVault/vaults/{keyvault_name}",
+                        client,
                     )
-
             except Exception as error:
                 logger.error(
                     f"Subscription name: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

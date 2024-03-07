@@ -20,24 +20,20 @@ class keyvault_logging_enabled(Check):
                     findings.append(report)
                 else:
                     for diagnostic_setting in keyvault.monitor_diagnostic_settings:
+                        print(diagnostic_setting)
                         report = Check_Report_Azure(self.metadata())
+                        report.subscription = subscription_name
+                        report.resource_name = diagnostic_setting.name
+                        report.resource_id = diagnostic_setting.id
                         for log in diagnostic_setting.logs:
                             if log.category == "AuditEvent" and log.enabled:
                                 report.status = "PASS"
                                 report.status_extended = f"Diagnostic setting {diagnostic_setting.name} for Key Vault {keyvault_name} in subscription {subscription_name} is capturing AuditEvent category."
-                                report.subscription = subscription_name
-                                report.resource_name = diagnostic_setting.name
-                                report.diagnostic_setting_name = diagnostic_setting.name
-                                report.resource_id = diagnostic_setting.id
                                 break
 
                             else:
                                 report.status = "FAIL"
                                 report.status_extended = f"Diagnostic setting {diagnostic_setting.name} for Key Vault {keyvault_name} in subscription {subscription_name} is not capturing AuditEvent category."
-                                report.subscription = subscription_name
-                                report.resource_name = diagnostic_setting.name
-                                report.diagnostic_setting_name = diagnostic_setting.name
-                                report.resource_id = diagnostic_setting.id
 
                     findings.append(report)
 

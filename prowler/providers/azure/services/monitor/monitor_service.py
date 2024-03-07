@@ -16,30 +16,40 @@ class Monitor(AzureService):
 
     def __get_diagnostics_settings__(self):
         logger.info("Monitor - Getting diagnostics settings...")
+        diagnostics_settings_list = []
         diagnostics_settings = {}
         for subscription, client in self.clients.items():
             try:
-                diagnostics_settings.update({subscription: []})
-                settings = client.diagnostic_settings.list(
-                    resource_uri=f"subscriptions/{self.subscriptions[subscription]}/"
+                diagnostics_settings_list = self.diagnostic_settings_with_uri(
+                    subscription,
+                    f"subscriptions/{self.subscriptions[subscription]}/",
+                    client,
                 )
-                for setting in settings:
-                    diagnostics_settings[subscription].append(
-                        DiagnosticSetting(
-                            id=setting.id,
-                            name=setting.id.split("/")[-1],
-                            storage_account_name=setting.storage_account_id.split("/")[
-                                -1
-                            ],
-                            logs=setting.logs,
-                            storage_account_id=setting.storage_account_id,
-                        )
-                    )
-
+                diagnostics_settings.update({subscription: diagnostics_settings_list})
             except Exception as error:
                 logger.error(
                     f"Subscription name: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
+        return diagnostics_settings
+
+    def diagnostic_settings_with_uri(self, subscription, uri, client):
+        diagnostics_settings = []
+        try:
+            settings = client.diagnostic_settings.list(resource_uri=uri)
+            for setting in settings:
+                diagnostics_settings.append(
+                    DiagnosticSetting(
+                        id=setting.id,
+                        name=setting.id.split("/")[-1],
+                        storage_account_name=setting.storage_account_id.split("/")[-1],
+                        logs=setting.logs,
+                        storage_account_id=setting.storage_account_id,
+                    )
+                )
+        except Exception as error:
+            logger.error(
+                f"Subscription name: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
         return diagnostics_settings
 
 
