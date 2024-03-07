@@ -1,5 +1,5 @@
 {
-  "Framework": "Partner-Hosted-Foundational-Technical-Review",
+  "Framework": "Foundational-Technical-Review",
   "Version": "",
   "Provider": "AWS",
   "Description": "The Foundational Technical Review (FTR) assesses an AWS Partner's solution against a specific set of Amazon Web Services (AWS) best practices around security, performance, and operational processes that are most critical for customer success. Passing the FTR is required to qualify AWS Software Partners for AWS Partner Network (APN) programs such as AWS Competency and AWS Service Ready but any AWS Partner who offers a technology solution may request a FTR review through AWS Partner Central.",

@@ -23,6 +23,7 @@ Currently, the available frameworks are:
 - `fedramp_low_revision_4_aws`
 - `fedramp_moderate_revision_4_aws`
 - `ffiec_aws`
+- `foundational_technical_review_aws`
 - `gdpr_aws`
 - `gxp_21_cfr_part_11_aws`
 - `gxp_eu_annex_11_aws`
@@ -33,7 +34,6 @@ Currently, the available frameworks are:
 - `nist_800_53_revision_4_aws`
 - `nist_800_53_revision_5_aws`
 - `nist_csf_1.1_aws`
-- `partner_hosted_foundational_technical_review_aws`
 - `pci_3.2.1_aws`
 - `rbi_cyber_security_framework_aws`
 - `soc2_aws`
