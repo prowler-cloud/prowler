@@ -5,12 +5,18 @@ from colorama import Fore, Style
 from google import auth
 from google.oauth2.credentials import Credentials
 from googleapiclient import discovery
+from googleapiclient.errors import HttpError
 
 from prowler.config.config import load_and_validate_config_file
 from prowler.lib.logger import logger
 from prowler.providers.common.models import Audit_Metadata
 from prowler.providers.common.provider import Provider
-from prowler.providers.gcp.models import GCPIdentityInfo, GCPOutputOptions
+from prowler.providers.gcp.models import (
+    GCPIdentityInfo,
+    GCPOrganization,
+    GCPOutputOptions,
+    GCPProject,
+)
 
 
 class GcpProvider(Provider):
@@ -34,15 +40,17 @@ class GcpProvider(Provider):
         self._session, default_project_id = self.setup_session(credentials_file)
 
         self._project_ids = []
-        accessible_projects = self.get_project_ids()
+        self._projects = {}
+        accessible_projects = self.get_projects()
         if not accessible_projects:
             logger.critical("No Project IDs can be accessed via Google Credentials.")
             sys.exit(1)
 
         if input_project_ids:
             for input_project in input_project_ids:
-                if input_project in accessible_projects:
-                    self._project_ids.append(input_project)
+                if input_project in accessible_projects.keys():
+                    self._projects[input_project] = accessible_projects[input_project]
+                    self._project_ids.append(accessible_projects[input_project].id)
                 else:
                     logger.critical(
                         f"Project {input_project} cannot be accessed via Google Credentials."
@@ -50,7 +58,12 @@ class GcpProvider(Provider):
                     sys.exit(1)
         else:
             # If not projects were input, all accessible projects are scanned by default
-            self._project_ids = accessible_projects
+            for project_id, project in accessible_projects.items():
+                self._projects[project_id] = project
+                self._project_ids.append(project_id)
+
+        # Update organizations info
+        self.update_projects_with_organizations()
 
         self._identity = GCPIdentityInfo(
             profile=getattr(self.session, "_service_account_email", "default"),
@@ -76,6 +89,10 @@ class GcpProvider(Provider):
         return self._session
 
     @property
+    def projects(self):
+        return self._projects
+
+    @property
     def project_ids(self):
         return self._project_ids
 
@@ -93,6 +110,27 @@ class GcpProvider(Provider):
         self._output_options = GCPOutputOptions(
             arguments, bulk_checks_metadata, self._identity
         )
+
+    @property
+    def get_output_mapping(self):
+        return {
+            # Account: identity.profile
+            "auth_method": "identity.profile",
+            "provider": "type",
+            # TODO: comes from finding, finding.project_id
+            # "account_uid": "",
+            # TODO: get project name from GCP
+            # "account_name": "organizations_metadata.account_details_name",
+            # There is no concept as project email in GCP
+            # "account_email": "organizations_metadata.account_details_email",
+            # TODO: get project organization ID from GCP
+            # "account_organization_uid": "organizations_metadata.account_details_arn",
+            # TODO: get project organization from GCP
+            # "account_organization": "",
+            # TODO: get project tags organization from GCP
+            # "account_tags": "organizations_metadata.account_details_tags",
+            # "partition": "identity.partition",
+        }
 
     # TODO: pending to implement
     # @property
@@ -131,8 +169,8 @@ class GcpProvider(Provider):
         os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = client_secrets_path
 
     def print_credentials(self):
-        # Beautify audited profile, set "default" if there is no profile set
-
+        # TODO: Beautify audited profile, set "default" if there is no profile set
+        # TODO: improve print_credentials with more data like name, number, organization
         report = f"""
 This report is being generated using credentials below:
 
@@ -140,9 +178,9 @@ GCP Account: {Fore.YELLOW}[{self.identity.profile}]{Style.RESET_ALL}  GCP Projec
 """
         print(report)
 
-    def get_project_ids(self):
+    def get_projects(self) -> dict[str, GCPProject]:
         try:
-            project_ids = []
+            projects = {}
 
             service = discovery.build(
                 "cloudresourcemanager", "v1", credentials=self.session
@@ -154,18 +192,78 @@ GCP Account: {Fore.YELLOW}[{self.identity.profile}]{Style.RESET_ALL}  GCP Projec
                 response = request.execute()
 
                 for project in response.get("projects", []):
-                    project_ids.append(project["projectId"])
+                    labels = ""
+                    for key, value in project.get("labels", {}).items():
+                        labels += f"{key}:{value},"
 
+                    project_id = project["projectId"]
+                    gcp_project = GCPProject(
+                        number=project["projectNumber"],
+                        id=project_id,
+                        name=project["name"],
+                        lifecycle_state=project["lifecycleState"],
+                        labels=labels.rstrip(","),
+                    )
+
+                    if (
+                        "parent" in project
+                        and "type" in project["parent"]
+                        and project["parent"]["type"] == "organization"
+                    ):
+                        organization_id = project["parent"]["id"]
+                        gcp_project.organization = GCPOrganization(
+                            id=organization_id, name=f"organizations/{organization_id}"
+                        )
+
+                    projects[project_id] = gcp_project
                 request = service.projects().list_next(
                     previous_request=request, previous_response=response
                 )
 
-            return project_ids
+        except HttpError as http_error:
+
+            if http_error.status_code == 403 and "organizations" in http_error.uri:
+                logger.error(
+                    f"{http_error.__class__.__name__}[{http_error.__traceback__.tb_lineno}]: {http_error.error_details} to get Organizations data."
+                )
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+            # TODO: we cannot print this for whatever exception
             print(
                 f"\n{Fore.YELLOW}Cloud Resource Manager API {Style.RESET_ALL}has not been used before or it is disabled.\nEnable it by visiting https://console.developers.google.com/apis/api/cloudresourcemanager.googleapis.com/ then retry."
             )
-            return []
+        finally:
+            return projects
+
+    def update_projects_with_organizations(self):
+        try:
+            service = discovery.build(
+                "cloudresourcemanager", "v1", credentials=self._session
+            )
+            # TODO: this call requires more permissions to get that data
+            # resourcemanager.organizations.get --> add to the docs
+            for id, project in self._projects.items():
+                if project.organization:
+                    request = service.organizations().get(
+                        name=f"organizations/{project.organization.id}"
+                    )
+
+                    while request is not None:
+                        response = request.execute()
+                        print(response)
+
+        except HttpError as http_error:
+            if http_error.status_code == 403 and "organizations" in http_error.uri:
+                logger.error(
+                    f"{http_error.__class__.__name__}[{http_error.__traceback__.tb_lineno}]: {http_error.error_details} to get Organizations data."
+                )
+            else:
+                logger.error(
+                    f"{http_error.__class__.__name__}[{http_error.__traceback__.tb_lineno}]: {http_error}"
+                )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )

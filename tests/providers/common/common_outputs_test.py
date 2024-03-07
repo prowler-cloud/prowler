@@ -16,7 +16,6 @@ from prowler.providers.common.outputs import (
     Azure_Output_Options,
     Gcp_Output_Options,
     Kubernetes_Output_Options,
-    get_provider_output_model,
     set_provider_output_options,
 )
 from prowler.providers.gcp.lib.audit_info.models import GCP_Audit_Info
@@ -251,7 +250,7 @@ class Test_Common_Output_Options:
 
         # Mock Azure Audit Info
         audit_info = self.set_mocked_azure_audit_info()
-        audit_info.identity.domain = "test-domain"
+        audit_info.identity.tenant_domain = "test-domain"
 
         mutelist_file = ""
         bulk_checks_metadata = {}
@@ -270,7 +269,7 @@ class Test_Common_Output_Options:
         assert output_options.verbose
         assert (
             output_options.output_filename
-            == f"prowler-output-{audit_info.identity.domain}-{DATETIME}"
+            == f"prowler-output-{audit_info.identity.tenant_domain}-{DATETIME}"
         )
 
         # Delete testing directory
@@ -316,17 +315,3 @@ class Test_Common_Output_Options:
 
         # Delete testing directory
         rmdir(arguments.output_directory)
-
-    def test_get_provider_output_model(self):
-        audit_info_class_names = [
-            "AWS_Audit_Info",
-            "GCP_Audit_Info",
-            "Azure_Audit_Info",
-            "Kubernetes_Audit_Info",
-        ]
-        for class_name in audit_info_class_names:
-            provider_prefix = class_name.split("_", 1)[0].lower().capitalize()
-            assert (
-                get_provider_output_model(class_name).__name__
-                == f"{provider_prefix}_Check_Output_CSV"
-            )

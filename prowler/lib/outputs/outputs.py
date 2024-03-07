@@ -1,4 +1,5 @@
 import json
+from csv import DictWriter
 
 from colorama import Fore, Style
 
@@ -8,12 +9,20 @@ from prowler.lib.outputs.compliance.compliance import (
     add_manual_controls,
     fill_compliance,
 )
+from prowler.lib.outputs.csv.csv import (
+    fill_common_data_csv,
+    generate_csv_fields,
+    generate_provider_output_csv,
+    get_provider_data_mapping,
+)
+from prowler.lib.outputs.csv.models import CSVRow
 from prowler.lib.outputs.file_descriptors import fill_file_descriptors
 from prowler.lib.outputs.json import fill_json_asff, fill_json_ocsf
 from prowler.lib.outputs.models import (
     Check_Output_JSON_ASFF,
-    generate_provider_output_csv,
     generate_provider_output_json,
+    get_check_compliance,
+    unroll_dict,
 )
 
 
@@ -104,16 +113,33 @@ def report(check_findings, provider):
                                 )
                                 file_descriptors["json-asff"].write(",")
 
-                        # Common outputs
+                        # CSV
                         if "csv" in file_descriptors:
-                            csv_writer, finding_output = generate_provider_output_csv(
-                                provider,
-                                finding,
-                                "csv",
-                                file_descriptors["csv"],
-                                output_options,
+                            provider_data = get_provider_data_mapping(provider)
+                            common_data = fill_common_data_csv(
+                                finding, output_options.unix_timestamp
                             )
-                            csv_writer.writerow(finding_output.__dict__)
+                            compliance_data = unroll_dict(
+                                get_check_compliance(
+                                    finding, provider.type, output_options
+                                )
+                            )
+                            csv_data = {}
+                            csv_data.update(provider_data)
+                            csv_data.update(common_data)
+                            csv_data["compliance"] = compliance_data
+
+                            csv_writer = DictWriter(
+                                file_descriptors["csv"],
+                                fieldnames=generate_csv_fields(CSVRow),
+                                delimiter=";",
+                            )
+
+                            finding_output = generate_provider_output_csv(
+                                provider, finding, csv_data
+                            )
+
+                            csv_writer.writerow(finding_output.dict())
 
                         if "json" in file_descriptors:
                             finding_output = generate_provider_output_json(
