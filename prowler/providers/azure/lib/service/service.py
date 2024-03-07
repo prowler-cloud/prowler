@@ -24,16 +24,25 @@ class AzureService:
         clients = {}
         try:
             for display_name, id in subscriptions.items():
-                clients.update(
-                    {
-                        display_name: service(
-                            credential=credentials,
-                            subscription_id=id,
-                            base_url=region_config.base_url,
-                            credential_scopes=region_config.credential_scopes,
-                        )
-                    }
-                )
+                if "GraphServiceClient" in str(service):
+                    clients.update(
+                        {
+                            display_name: service(
+                                credentials=credentials,
+                            )
+                        }
+                    )
+                else:
+                    clients.update(
+                        {
+                            display_name: service(
+                                credential=credentials,
+                                subscription_id=id,
+                                base_url=region_config.base_url,
+                                credential_scopes=region_config.credential_scopes,
+                            )
+                        }
+                    )
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
