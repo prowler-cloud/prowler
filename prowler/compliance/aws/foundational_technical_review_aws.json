@@ -5,19 +5,6 @@
   "Description": "The Foundational Technical Review (FTR) assesses an AWS Partner's solution against a specific set of Amazon Web Services (AWS) best practices around security, performance, and operational processes that are most critical for customer success. Passing the FTR is required to qualify AWS Software Partners for AWS Partner Network (APN) programs such as AWS Competency and AWS Service Ready but any AWS Partner who offers a technology solution may request a FTR review through AWS Partner Central.",
   "Requirements": [
     {
-      "Id": "1.1",
-      "Name": "Software Path Membership",
-      "Description": "AWS Partners must be enrolled in Software Path. AWS Systems Integrator (SI) Partners should talk to their PDR/PDM on how to join the Software Path",
-      "Attributes": [
-        {
-          "Section": "AWS Foundational Technical Review prerequisites",
-          "Subsection": "1.0 Foundational Technical Review Requirements",
-          "Type": "Manual"
-        }
-      ],
-      "Checks": []
-    },
-    {
       "Id": "HOST-001",
       "Name": "Confirm your hosting model",
       "Description": "To use this FTR checklist you must host all critical application components on AWS. You may use external providers for edge services such as content delivery networks (CDNs) or domain name system (DNS), or corporate identity providers. If you are using any edge services outside AWS, please specify them in the self-assessment.",
