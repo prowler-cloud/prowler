@@ -11,6 +11,8 @@ from azure.mgmt.keyvault.v2023_07_01.models import (
 
 from prowler.lib.logger import logger
 from prowler.providers.azure.lib.service.service import AzureService
+from prowler.providers.azure.services.monitor.monitor_client import monitor_client
+from prowler.providers.azure.services.monitor.monitor_service import DiagnosticSetting
 
 
 ########################## Storage
@@ -47,6 +49,9 @@ class KeyVault(AzureService):
                             properties=keyvault_properties,
                             keys=keys,
                             secrets=secrets,
+                            monitor_diagnostic_settings=self.__get_vault_monitor_settings__(
+                                audit_info, keyvault_name, resource_group
+                            ),
                         )
                     )
             except Exception as error:
@@ -116,6 +121,25 @@ class KeyVault(AzureService):
             )
         return secrets
 
+    def __get_vault_monitor_settings__(self, audit_info, keyvault_name, resource_group):
+        logger.info(
+            f"KeyVault - Getting monitor diagnostics settings for {keyvault_name}..."
+        )
+        monitor_diagnostics_settings = []
+        for subscription in self.clients:
+            try:
+                for client in monitor_client.clients.values():
+                    monitor_diagnostics_settings = monitor_client.diagnostic_settings_with_uri(
+                        subscription,
+                        f"subscriptions/{self.subscriptions[subscription]}/resourceGroups/{resource_group}/providers/Microsoft.KeyVault/vaults/{keyvault_name}",
+                        client,
+                    )
+            except Exception as error:
+                logger.error(
+                    f"Subscription name: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+        return monitor_diagnostics_settings
+
 
 @dataclass
 class Key:
@@ -145,3 +169,4 @@ class KeyVaultInfo:
     properties: VaultProperties
     keys: list[Key] = None
     secrets: list[Secret] = None
+    monitor_diagnostic_settings: list[DiagnosticSetting] = None
