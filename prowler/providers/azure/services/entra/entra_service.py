@@ -24,10 +24,11 @@ class Entra(AzureService):
     async def __get_users__(self):
         try:
             users = {}
-            for client in self.clients.values():
+            for tenant, client in self.clients.items():
                 users_list = await client.users.get()
+                users.update({tenant: {}})
                 for user in users_list.value:
-                    users.update(
+                    users[tenant].update(
                         {
                             user.user_principal_name: User(
                                 id=user.id, name=user.display_name
@@ -43,16 +44,20 @@ class Entra(AzureService):
 
     async def __get_authorization_policy__(self):
         try:
-            authorization_policy = None
-            for client in self.clients.values():
+            authorization_policy = {}
+            for tenant, client in self.clients.items():
                 auth_policy = await client.policies.authorization_policy.get()
-                authorization_policy = AuthorizationPolicy(
-                    id=auth_policy.id,
-                    name=auth_policy.display_name,
-                    description=auth_policy.description,
-                    default_user_role_permissions=getattr(
-                        auth_policy, "default_user_role_permissions", None
-                    ),
+                authorization_policy.update(
+                    {
+                        tenant: AuthorizationPolicy(
+                            id=auth_policy.id,
+                            name=auth_policy.display_name,
+                            description=auth_policy.description,
+                            default_user_role_permissions=getattr(
+                                auth_policy, "default_user_role_permissions", None
+                            ),
+                        )
+                    }
                 )
         except Exception as error:
             logger.error(
