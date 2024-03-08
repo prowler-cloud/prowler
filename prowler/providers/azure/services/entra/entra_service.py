@@ -24,13 +24,16 @@ class Entra(AzureService):
     async def __get_users__(self):
         try:
             users = {}
-            # TODO: Implement a better way to get only one client
-            client = self.clients[list(self.subscriptions.keys())[0]]
-            users_list = await client.users.get()
-            for user in users_list.value:
-                users.update(
-                    {user.user_principal_name: User(id=user.id, name=user.display_name)}
-                )
+            for client in self.clients.values():
+                users_list = await client.users.get()
+                for user in users_list.value:
+                    users.update(
+                        {
+                            user.user_principal_name: User(
+                                id=user.id, name=user.display_name
+                            )
+                        }
+                    )
         except Exception as error:
             logger.error(
                 f"ERROR: {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -41,8 +44,6 @@ class Entra(AzureService):
     async def __get_authorization_policy__(self):
         try:
             authorization_policy = None
-            # TODO: Implement a better way to get only one client
-            client = self.clients[list(self.subscriptions.keys())[0]]
             for client in self.clients.values():
                 auth_policy = await client.policies.authorization_policy.get()
                 authorization_policy = AuthorizationPolicy(

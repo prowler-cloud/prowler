@@ -9,7 +9,7 @@ class AzureService:
         audit_info: Azure_Audit_Info,
     ):
         self.clients = self.__set_clients__(
-            audit_info.identity.subscriptions,
+            audit_info.identity,
             audit_info.credentials,
             service,
             audit_info.azure_region_config,
@@ -20,19 +20,13 @@ class AzureService:
 
         self.audit_config = audit_info.audit_config
 
-    def __set_clients__(self, subscriptions, credentials, service, region_config):
+    def __set_clients__(self, identity, credentials, service, region_config):
         clients = {}
         try:
-            for display_name, id in subscriptions.items():
-                if "GraphServiceClient" in str(service):
-                    clients.update(
-                        {
-                            display_name: service(
-                                credentials=credentials,
-                            )
-                        }
-                    )
-                else:
+            if "GraphServiceClient" in str(service):
+                clients.update({identity.domain: service(credentials=credentials)})
+            else:
+                for display_name, id in identity.subscriptions.items():
                     clients.update(
                         {
                             display_name: service(
