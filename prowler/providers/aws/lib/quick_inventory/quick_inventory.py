@@ -283,7 +283,7 @@ def create_output(resources: list, audit_info: AWS_Audit_Info, args):
     print(f" - JSON: {args.output_directory}/{output_file + json_file_suffix}")
 
     # Send output to S3 if needed (-B / -D)
-    for mode in ["json", "csv"]:
+    for mode in ["csv"]:
         if args.output_bucket or args.output_bucket_no_assume:
             # Check if -B was input
             if args.output_bucket:

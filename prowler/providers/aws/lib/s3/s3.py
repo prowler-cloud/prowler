@@ -1,7 +1,6 @@
 from prowler.config.config import (
     csv_file_suffix,
     json_asff_file_suffix,
-    json_file_suffix,
     json_ocsf_file_suffix,
 )
 from prowler.lib.logger import logger
@@ -15,8 +14,6 @@ def send_to_s3_bucket(
         # Get only last part of the path
         if output_mode == "csv":
             filename = f"{output_filename}{csv_file_suffix}"
-        elif output_mode == "json":
-            filename = f"{output_filename}{json_file_suffix}"
         elif output_mode == "json-asff":
             filename = f"{output_filename}{json_asff_file_suffix}"
         elif output_mode == "json-ocsf":
