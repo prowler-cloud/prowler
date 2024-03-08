@@ -2,11 +2,8 @@ from csv import DictWriter
 from operator import attrgetter
 from typing import Any
 
-from prowler.config.config import timestamp
 from prowler.lib.logger import logger
 from prowler.lib.outputs.csv.models import CSVRow
-from prowler.lib.outputs.models import unroll_list, unroll_tags
-from prowler.lib.utils.utils import outputs_unix_timestamp
 
 
 def get_provider_data_mapping(provider) -> dict:
@@ -24,52 +21,14 @@ def get_provider_data_mapping(provider) -> dict:
     return data
 
 
-def fill_common_data_csv(finding: dict, unix_timestamp: bool) -> dict:
-    data = {
-        "timestamp": outputs_unix_timestamp(unix_timestamp, timestamp),
-        "check_id": finding.check_metadata.CheckID,
-        "check_title": finding.check_metadata.CheckTitle,
-        "check_type": ",".join(finding.check_metadata.CheckType),
-        "status": finding.status,
-        "status_extended": finding.status_extended,
-        "service_name": finding.check_metadata.ServiceName,
-        "subservice_name": finding.check_metadata.SubServiceName,
-        "severity": finding.check_metadata.Severity,
-        "resource_type": finding.check_metadata.ResourceType,
-        "resource_details": finding.resource_details,
-        "resource_tags": unroll_tags(finding.resource_tags),
-        "description": finding.check_metadata.Description,
-        "risk": finding.check_metadata.Risk,
-        "related_url": finding.check_metadata.RelatedUrl,
-        "remediation_recommendation_text": (
-            finding.check_metadata.Remediation.Recommendation.Text
-        ),
-        "remediation_recommendation_url": (
-            finding.check_metadata.Remediation.Recommendation.Url
-        ),
-        "remediation_code_nativeiac": (
-            finding.check_metadata.Remediation.Code.NativeIaC
-        ),
-        "remediation_code_terraform": (
-            finding.check_metadata.Remediation.Code.Terraform
-        ),
-        "remediation_code_cli": (finding.check_metadata.Remediation.Code.CLI),
-        "remediation_code_other": (finding.check_metadata.Remediation.Code.Other),
-        "categories": unroll_list(finding.check_metadata.Categories),
-        "depends_on": unroll_list(finding.check_metadata.DependsOn),
-        "related_to": unroll_list(finding.check_metadata.RelatedTo),
-        "notes": finding.check_metadata.Notes,
-    }
-    return data
-
-
-def generate_provider_output_csv(provider, finding, csv_data):
+def generate_provider_output_csv(provider, finding, csv_data) -> CSVRow:
     """
     generate_provider_output_csv creates the provider's CSV output
     """
     # TODO: we have to standardize this between the above mapping and the provider.get_output_mapping()
     try:
         if provider.type == "aws":
+            # TODO: probably Organization UID is without the account id
             csv_data["auth_method"] = f"profile: {csv_data['auth_method']}"
             csv_data["resource_name"] = finding.resource_id
             csv_data["resource_uid"] = finding.resource_arn

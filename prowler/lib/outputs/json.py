@@ -6,31 +6,51 @@ from prowler.config.config import (
     json_file_suffix,
     json_ocsf_file_suffix,
     prowler_version,
-    timestamp,
     timestamp_utc,
 )
 from prowler.lib.logger import logger
 from prowler.lib.outputs.models import (
-    Account,
-    Check_Output_JSON_OCSF,
-    Cloud,
     Compliance,
-    Compliance_OCSF,
-    Feature,
-    Finding,
-    Group,
-    Metadata,
-    Organization,
-    Product,
     ProductFields,
-    Remediation_OCSF,
     Resource,
-    Resources,
     Severity,
     get_check_compliance,
-    unroll_dict_to_list,
 )
-from prowler.lib.utils.utils import hash_sha512, open_file, outputs_unix_timestamp
+from prowler.lib.utils.utils import hash_sha512, open_file
+
+
+def generate_json_asff_status(status: str) -> str:
+    json_asff_status = ""
+    if status == "PASS":
+        json_asff_status = "PASSED"
+    elif status == "FAIL":
+        json_asff_status = "FAILED"
+    elif status == "MUTED":
+        json_asff_status = "MUTED"
+    else:
+        json_asff_status = "NOT_AVAILABLE"
+
+    return json_asff_status
+
+
+def generate_json_asff_resource_tags(tags):
+    try:
+        resource_tags = {}
+        if tags and tags != [None]:
+            for tag in tags:
+                if "Key" in tag and "Value" in tag:
+                    resource_tags[tag["Key"]] = tag["Value"]
+                else:
+                    resource_tags.update(tag)
+            if len(resource_tags) == 0:
+                return None
+        else:
+            return None
+        return resource_tags
+    except Exception as error:
+        logger.error(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+        )
 
 
 def fill_json_asff(finding_output, provider, finding, output_options):
@@ -107,231 +127,6 @@ def fill_json_asff(finding_output, provider, finding, output_options):
         logger.error(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
         )
-
-
-def generate_json_asff_status(status: str) -> str:
-    json_asff_status = ""
-    if status == "PASS":
-        json_asff_status = "PASSED"
-    elif status == "FAIL":
-        json_asff_status = "FAILED"
-    elif status == "MUTED":
-        json_asff_status = "MUTED"
-    else:
-        json_asff_status = "NOT_AVAILABLE"
-
-    return json_asff_status
-
-
-def generate_json_asff_resource_tags(tags):
-    try:
-        resource_tags = {}
-        if tags and tags != [None]:
-            for tag in tags:
-                if "Key" in tag and "Value" in tag:
-                    resource_tags[tag["Key"]] = tag["Value"]
-                else:
-                    resource_tags.update(tag)
-            if len(resource_tags) == 0:
-                return None
-        else:
-            return None
-        return resource_tags
-    except Exception as error:
-        logger.error(
-            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-        )
-
-
-def fill_json_ocsf(provider, finding, output_options) -> Check_Output_JSON_OCSF:
-    try:
-        resource_region = ""
-        resource_name = ""
-        resource_uid = ""
-        finding_uid = ""
-        project_uid = ""
-        resource_labels = finding.resource_tags if finding.resource_tags else []
-        aws_account_name = ""
-        aws_org_uid = ""
-        account = None
-        org = None
-        profile = ""
-        if provider.type == "aws":
-            profile = (
-                provider.identity.profile
-                if provider.identity.profile is not None
-                else "default"
-            )
-        if (
-            hasattr(provider, "organizations_metadata")
-            and provider.organizations_metadata
-        ):
-            aws_account_name = provider.organizations_metadata.account_details_name
-            aws_org_uid = provider.organizations_metadata.account_details_org
-        if finding.check_metadata.Provider == "aws":
-            account = Account(
-                name=aws_account_name,
-                uid=provider.identity.account,
-            )
-            org = Organization(
-                name=aws_org_uid,
-                uid=aws_org_uid,
-            )
-            resource_region = finding.region
-            resource_name = finding.resource_id
-            resource_uid = finding.resource_arn
-            finding_uid = f"prowler-{finding.check_metadata.Provider}-{finding.check_metadata.CheckID}-{provider.identity.account}-{finding.region}-{finding.resource_id}"
-        elif finding.check_metadata.Provider == "azure":
-            account = Account(
-                name=finding.subscription,
-                uid=finding.subscription,
-            )
-            org = Organization(
-                name=provider.identity.tenant_domain,
-                uid=provider.identity.tenant_domain,
-            )
-            resource_name = finding.resource_name
-            resource_uid = finding.resource_id
-            finding_uid = f"prowler-{finding.check_metadata.Provider}-{finding.check_metadata.CheckID}-{finding.subscription}-{finding.resource_id}"
-        elif finding.check_metadata.Provider == "gcp":
-            project_uid = finding.project_id
-            resource_region = finding.location.lower()
-            resource_name = finding.resource_name
-            resource_uid = finding.resource_id
-            finding_uid = f"prowler-{finding.check_metadata.Provider}-{finding.check_metadata.CheckID}-{finding.project_id}-{finding.resource_id}"
-        elif finding.check_metadata.Provider == "kubernetes":
-            resource_name = finding.resource_name
-            resource_uid = finding.resource_id
-            finding_uid = f"prowler-{finding.check_metadata.Provider}-{finding.check_metadata.CheckID}-{finding.namespace}-{finding.resource_id}"
-        cloud = Cloud(
-            provider=finding.check_metadata.Provider,
-            org=org,
-            account=account,
-            region=resource_region,
-            project_uid=project_uid,
-        )
-        finding_ocsf = Finding(
-            title=finding.check_metadata.CheckTitle,
-            uid=finding_uid,
-            desc=finding.check_metadata.Description,
-            supporting_data={
-                "Risk": finding.check_metadata.Risk,
-                "Notes": finding.check_metadata.Notes,
-            },
-            related_events=finding.check_metadata.DependsOn
-            + finding.check_metadata.RelatedTo,
-            remediation=Remediation_OCSF(
-                kb_articles=list(
-                    filter(
-                        None,
-                        [
-                            finding.check_metadata.Remediation.Code.NativeIaC,
-                            finding.check_metadata.Remediation.Code.Terraform,
-                            finding.check_metadata.Remediation.Code.CLI,
-                            finding.check_metadata.Remediation.Code.Other,
-                            finding.check_metadata.Remediation.Recommendation.Url,
-                        ],
-                    )
-                ),
-                desc=finding.check_metadata.Remediation.Recommendation.Text,
-            ),
-            types=finding.check_metadata.CheckType,
-            src_url=finding.check_metadata.RelatedUrl,
-        )
-        resources = []
-        resources.append(
-            Resources(
-                group=Group(name=finding.check_metadata.ServiceName),
-                region=resource_region,
-                name=resource_name,
-                labels=resource_labels,
-                uid=resource_uid,
-                type=finding.check_metadata.ResourceType,
-                details=finding.resource_details,
-            )
-        )
-        metadata = Metadata(
-            product=Product(
-                feature=Feature(
-                    uid=finding.check_metadata.CheckID,
-                    name=finding.check_metadata.CheckID,
-                )
-            ),
-            original_time=outputs_unix_timestamp(
-                output_options.unix_timestamp, timestamp
-            ),
-            profiles=[profile],
-        )
-        compliance = Compliance_OCSF(
-            status=generate_json_ocsf_status(finding.status),
-            status_detail=finding.status_extended,
-            requirements=unroll_dict_to_list(
-                get_check_compliance(
-                    finding, finding.check_metadata.Provider, output_options
-                )
-            ),
-        )
-        finding_output = Check_Output_JSON_OCSF(
-            finding=finding_ocsf,
-            resources=resources,
-            status_detail=finding.status_extended,
-            message=finding.status_extended,
-            severity=finding.check_metadata.Severity.capitalize(),
-            severity_id=generate_json_ocsf_severity_id(finding.check_metadata.Severity),
-            status=generate_json_ocsf_status(finding.status),
-            status_id=generate_json_ocsf_status_id(finding.status),
-            compliance=compliance,
-            cloud=cloud,
-            time=outputs_unix_timestamp(output_options.unix_timestamp, timestamp),
-            metadata=metadata,
-        )
-        return finding_output
-    except Exception as error:
-        logger.error(
-            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-        )
-
-
-def generate_json_ocsf_status(status: str):
-    json_ocsf_status = ""
-    if status == "PASS":
-        json_ocsf_status = "Success"
-    elif status == "FAIL":
-        json_ocsf_status = "Failure"
-    elif status == "MUTED":
-        json_ocsf_status = "Other"
-    else:
-        json_ocsf_status = "Unknown"
-
-    return json_ocsf_status
-
-
-def generate_json_ocsf_status_id(status: str):
-    json_ocsf_status_id = 0
-    if status == "PASS":
-        json_ocsf_status_id = 1
-    elif status == "FAIL":
-        json_ocsf_status_id = 2
-    elif status == "MUTED":
-        json_ocsf_status_id = 99
-    else:
-        json_ocsf_status_id = 0
-
-    return json_ocsf_status_id
-
-
-def generate_json_ocsf_severity_id(severity: str):
-    json_ocsf_severity_id = 0
-    if severity == "low":
-        json_ocsf_severity_id = 2
-    elif severity == "medium":
-        json_ocsf_severity_id = 3
-    elif severity == "high":
-        json_ocsf_severity_id = 4
-    elif severity == "critical":
-        json_ocsf_severity_id = 5
-
-    return json_ocsf_severity_id
 
 
 def close_json(output_filename, output_directory, mode):

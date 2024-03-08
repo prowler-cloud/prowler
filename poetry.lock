@@ -1172,6 +1172,26 @@ graph = ["objgraph (>=1.7.2)"]
 profile = ["gprof2dot (>=2022.7.29)"]
 
 [[package]]
+name = "dnspython"
+version = "2.6.1"
+description = "DNS toolkit"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "dnspython-2.6.1-py3-none-any.whl", hash = "sha256:5ef3b9680161f6fa89daf8ad451b5f1a33b18ae8a1c6778cdf4b43f08c0a6e50"},
+    {file = "dnspython-2.6.1.tar.gz", hash = "sha256:e8f0f9c23a7b7cb99ded64e6c3a6f3e701d78f50c55e002b839dea7225cff7cc"},
+]
+
+[package.extras]
+dev = ["black (>=23.1.0)", "coverage (>=7.0)", "flake8 (>=7)", "mypy (>=1.8)", "pylint (>=3)", "pytest (>=7.4)", "pytest-cov (>=4.1.0)", "sphinx (>=7.2.0)", "twine (>=4.0.0)", "wheel (>=0.42.0)"]
+dnssec = ["cryptography (>=41)"]
+doh = ["h2 (>=4.1.0)", "httpcore (>=1.0.0)", "httpx (>=0.26.0)"]
+doq = ["aioquic (>=0.9.25)"]
+idna = ["idna (>=3.6)"]
+trio = ["trio (>=0.23)"]
+wmi = ["wmi (>=1.5.1)"]
+
+[[package]]
 name = "docker"
 version = "7.0.0"
 description = "A Python library for the Docker Engine API."
@@ -1212,6 +1232,21 @@ all = ["dparse[conda]", "dparse[pipenv]", "dparse[poetry]"]
 conda = ["pyyaml"]
 pipenv = ["pipenv"]
 poetry = ["poetry"]
+
+[[package]]
+name = "email-validator"
+version = "2.1.0.post1"
+description = "A robust email address syntax and deliverability validation library."
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "email_validator-2.1.0.post1-py3-none-any.whl", hash = "sha256:c973053efbeddfef924dc0bd93f6e77a1ea7ee0fce935aea7103c7a3d6d2d637"},
+    {file = "email_validator-2.1.0.post1.tar.gz", hash = "sha256:a4b0bd1cf55f073b924258d19321b1f3aa74b4b5a71a42c305575dba920e1a44"},
+]
+
+[package.dependencies]
+dnspython = ">=2.0.0"
+idna = ">=2.0.0"
 
 [[package]]
 name = "exceptiongroup"
@@ -2958,6 +2993,21 @@ files = [
 ]
 
 [[package]]
+name = "py-ocsf-models"
+version = "0.0.1"
+description = "This is a Python implementation of the OCSF models. The models are used to represent the data of the OCSF Schema defined in https://schema.ocsf.io/."
+optional = false
+python-versions = ">=3.9,<3.13"
+files = [
+    {file = "py_ocsf_models-0.0.1-py3-none-any.whl", hash = "sha256:d12fed232489da2ebb4ac78cd0ac0f2e20cd15bc536682f3346acf36edda651e"},
+    {file = "py_ocsf_models-0.0.1.tar.gz", hash = "sha256:dbd0af56887b6c143a5f2b2d0beceb835f7f857fbb35bc1fed3ee59a3d46c361"},
+]
+
+[package.dependencies]
+email-validator = "2.1.0.post1"
+pydantic = "1.10.14"
+
+[[package]]
 name = "py-partiql-parser"
 version = "0.5.1"
 description = "Pure Python PartiQL Parser"
@@ -4455,4 +4505,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.13"
-content-hash = "bf0fbc4e6ba2ecc7f163a3a5048b60cce386dfbf603de925e405326413b7a268"
+content-hash = "8ec74bf55bb6678652c7f2413910cd46d67308e40367309d744e7c4fd425169c"
