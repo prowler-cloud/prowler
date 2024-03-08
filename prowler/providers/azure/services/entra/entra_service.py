@@ -36,7 +36,7 @@ class Entra(AzureService):
                     )
         except Exception as error:
             logger.error(
-                f"ERROR: {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
         return users
@@ -56,7 +56,7 @@ class Entra(AzureService):
                 )
         except Exception as error:
             logger.error(
-                f"ERROR: {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
         return authorization_policy
