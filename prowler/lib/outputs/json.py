@@ -187,8 +187,8 @@ def fill_json_ocsf(provider, finding, output_options) -> Check_Output_JSON_OCSF:
                 uid=finding.subscription,
             )
             org = Organization(
-                name=provider.identity.domain,
-                uid=provider.identity.domain,
+                name=provider.identity.tenant_domain,
+                uid=provider.identity.tenant_domain,
             )
             resource_name = finding.resource_name
             resource_uid = finding.resource_id

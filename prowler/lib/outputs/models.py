@@ -1,8 +1,7 @@
 import importlib
 import sys
-from csv import DictWriter
 from datetime import datetime
-from typing import Any, List, Literal, Optional
+from typing import List, Literal, Optional
 
 from pydantic import BaseModel
 
@@ -44,148 +43,6 @@ def get_check_compliance(finding, provider_type, output_options) -> dict:
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
         )
         sys.exit(1)
-
-
-def generate_provider_output_csv(provider, finding, mode: str, fd, output_options):
-    """
-    generate_provider_output_csv creates the provider's CSV output
-    """
-    try:
-        # Dynamically load the Provider_Output_Options class
-        finding_output_model = (
-            f"{provider.type.capitalize()}_Check_Output_{mode.upper()}"
-        )
-        output_model = getattr(importlib.import_module(__name__), finding_output_model)
-        # Fill common data among providers
-        data = fill_common_data_csv(finding, output_options.unix_timestamp)
-
-        if provider.type == "azure":
-            data["resource_id"] = finding.resource_id
-            data["resource_name"] = finding.resource_name
-            data["subscription"] = finding.subscription
-            data["tenant_domain"] = provider.identity.domain
-            data["finding_unique_id"] = (
-                f"prowler-{provider.type}-{finding.check_metadata.CheckID}-{finding.subscription}-{finding.resource_id}"
-            )
-            data["compliance"] = unroll_dict(
-                get_check_compliance(finding, provider.type, output_options)
-            )
-            finding_output = output_model(**data)
-
-        if provider.type == "gcp":
-            data["resource_id"] = finding.resource_id
-            data["resource_name"] = finding.resource_name
-            data["project_id"] = finding.project_id
-            data["location"] = finding.location.lower()
-            data["finding_unique_id"] = (
-                f"prowler-{provider.type}-{finding.check_metadata.CheckID}-{finding.project_id}-{finding.resource_id}"
-            )
-            data["compliance"] = unroll_dict(
-                get_check_compliance(finding, provider.type, output_options)
-            )
-            finding_output = output_model(**data)
-
-        if provider.type == "kubernetes":
-            data["resource_id"] = finding.resource_id
-            data["resource_name"] = finding.resource_name
-            data["namespace"] = finding.namespace
-            data["context"] = provider.identity.context
-            data["finding_unique_id"] = (
-                f"prowler-{provider.type}-{finding.check_metadata.CheckID}-{finding.namespace}-{finding.resource_id}"
-            )
-            data["compliance"] = unroll_dict(
-                get_check_compliance(finding, provider.type, output_options)
-            )
-            finding_output = output_model(**data)
-
-        if provider.type == "aws":
-            data["profile"] = provider.identity.profile
-            data["account_id"] = provider.identity.account
-            data["region"] = finding.region
-            data["resource_id"] = finding.resource_id
-            data["resource_arn"] = finding.resource_arn
-            data["finding_unique_id"] = (
-                f"prowler-{provider.type}-{finding.check_metadata.CheckID}-{provider.identity.account}-{finding.region}-{finding.resource_id}"
-            )
-            data["compliance"] = unroll_dict(
-                get_check_compliance(finding, provider.type, output_options)
-            )
-            finding_output = output_model(**data)
-
-            if provider.organizations_metadata:
-                finding_output.account_name = (
-                    provider.organizations_metadata.account_details_name
-                )
-                finding_output.account_email = (
-                    provider.organizations_metadata.account_details_email
-                )
-                finding_output.account_arn = (
-                    provider.organizations_metadata.account_details_arn
-                )
-                finding_output.account_org = (
-                    provider.organizations_metadata.account_details_org
-                )
-                finding_output.account_tags = (
-                    provider.organizations_metadata.account_details_tags
-                )
-
-        csv_writer = DictWriter(
-            fd,
-            fieldnames=generate_csv_fields(output_model),
-            delimiter=";",
-        )
-
-    except Exception as error:
-        logger.error(
-            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-        )
-    else:
-        return csv_writer, finding_output
-
-
-def fill_common_data_csv(finding: dict, unix_timestamp: bool) -> dict:
-    data = {
-        "assessment_start_time": outputs_unix_timestamp(unix_timestamp, timestamp),
-        "finding_unique_id": "",
-        "provider": finding.check_metadata.Provider,
-        "check_id": finding.check_metadata.CheckID,
-        "check_title": finding.check_metadata.CheckTitle,
-        "check_type": ",".join(finding.check_metadata.CheckType),
-        "status": finding.status,
-        "status_extended": finding.status_extended,
-        "service_name": finding.check_metadata.ServiceName,
-        "subservice_name": finding.check_metadata.SubServiceName,
-        "severity": finding.check_metadata.Severity,
-        "resource_type": finding.check_metadata.ResourceType,
-        "resource_details": finding.resource_details,
-        "resource_tags": unroll_tags(finding.resource_tags),
-        "description": finding.check_metadata.Description,
-        "risk": finding.check_metadata.Risk,
-        "related_url": finding.check_metadata.RelatedUrl,
-        "remediation_recommendation_text": (
-            finding.check_metadata.Remediation.Recommendation.Text
-        ),
-        "remediation_recommendation_url": (
-            finding.check_metadata.Remediation.Recommendation.Url
-        ),
-        "remediation_recommendation_code_nativeiac": (
-            finding.check_metadata.Remediation.Code.NativeIaC
-        ),
-        "remediation_recommendation_code_terraform": (
-            finding.check_metadata.Remediation.Code.Terraform
-        ),
-        "remediation_recommendation_code_cli": (
-            finding.check_metadata.Remediation.Code.CLI
-        ),
-        "remediation_recommendation_code_other": (
-            finding.check_metadata.Remediation.Code.Other
-        ),
-        "categories": unroll_list(finding.check_metadata.Categories),
-        "depends_on": unroll_list(finding.check_metadata.DependsOn),
-        "related_to": unroll_list(finding.check_metadata.RelatedTo),
-        "notes": finding.check_metadata.Notes,
-    }
-    return data
 
 
 def unroll_list(listed_items: list):
@@ -276,102 +133,6 @@ def parse_json_tags(tags: list):
     return dict_tags
 
 
-def generate_csv_fields(format: Any) -> list[str]:
-    """Generates the CSV headers for the given class"""
-    csv_fields = []
-    # __fields__ is always available in the Pydantic's BaseModel class
-    for field in format.__dict__.get("__fields__").keys():
-        csv_fields.append(field)
-    return csv_fields
-
-
-class Check_Output_CSV(BaseModel):
-    """
-    Check_Output_CSV generates a finding's output in CSV format.
-
-    This is the base CSV output model for every provider.
-    """
-
-    assessment_start_time: str
-    finding_unique_id: str
-    provider: str
-    check_id: str
-    check_title: str
-    check_type: str
-    status: str
-    status_extended: str
-    service_name: str
-    subservice_name: str
-    severity: str
-    resource_type: str
-    resource_details: str
-    resource_tags: str
-    description: str
-    risk: str
-    related_url: str
-    remediation_recommendation_text: str
-    remediation_recommendation_url: str
-    remediation_recommendation_code_nativeiac: str
-    remediation_recommendation_code_terraform: str
-    remediation_recommendation_code_cli: str
-    remediation_recommendation_code_other: str
-    compliance: str
-    categories: str
-    depends_on: str
-    related_to: str
-    notes: str
-
-
-class Aws_Check_Output_CSV(Check_Output_CSV):
-    """
-    Aws_Check_Output_CSV generates a finding's output in CSV format for the AWS provider.
-    """
-
-    profile: Optional[str]
-    account_id: int
-    account_name: Optional[str]
-    account_email: Optional[str]
-    account_arn: Optional[str]
-    account_org: Optional[str]
-    account_tags: Optional[str]
-    region: str
-    resource_id: str
-    resource_arn: str
-
-
-class Azure_Check_Output_CSV(Check_Output_CSV):
-    """
-    Azure_Check_Output_CSV generates a finding's output in CSV format for the Azure provider.
-    """
-
-    tenant_domain: str = ""
-    subscription: str = ""
-    resource_id: str = ""
-    resource_name: str = ""
-
-
-class Gcp_Check_Output_CSV(Check_Output_CSV):
-    """
-    Gcp_Check_Output_CSV generates a finding's output in CSV format for the GCP provider.
-    """
-
-    project_id: str = ""
-    location: str = ""
-    resource_id: str = ""
-    resource_name: str = ""
-
-
-class Kubernetes_Check_Output_CSV(Check_Output_CSV):
-    """
-    Kubernetes_Check_Output_CSV generates a finding's output in CSV format for the Kubernetes provider.
-    """
-
-    context: str = ""
-    namespace: str = ""
-    resource_id: str = ""
-    resource_name: str = ""
-
-
 def generate_provider_output_json(provider, finding, mode: str, output_options):
     """
     generate_provider_output_json configures automatically the outputs based on the selected provider and returns the Check_Output_JSON object.
@@ -393,7 +154,7 @@ def generate_provider_output_json(provider, finding, mode: str, output_options):
         finding_output.ResourceDetails = finding.resource_details
 
         if provider.type == "azure":
-            finding_output.Tenant_Domain = provider.identity.domain
+            finding_output.Tenant_Domain = provider.identity.tenant_domain
             finding_output.Subscription = finding.subscription
             finding_output.ResourceId = finding.resource_id
             finding_output.ResourceName = finding.resource_name

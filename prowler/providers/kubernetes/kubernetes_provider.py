@@ -49,7 +49,7 @@ class KubernetesProvider(Provider):
         self._identity = KubernetesIdentityInfo(
             context=self._session.context["name"].replace(":", "_").replace("/", "_"),
             user=self._session.context["context"]["user"],
-            cluster=self._session.context["context"]["user"],
+            cluster=self._session.context["context"]["cluster"],
         )
 
         # TODO: move this to the providers, pending for AWS, GCP, AZURE and K8s
@@ -88,6 +88,22 @@ class KubernetesProvider(Provider):
         self._output_options = KubernetesOutputOptions(
             arguments, bulk_checks_metadata, self._identity
         )
+
+    @property
+    def get_output_mapping(self):
+        return {
+            # "in-cluster/kubeconfig"
+            "auth_method": "identity.profile",
+            "provider": "type",
+            # cluster: <context>
+            "account_uid": "identity.account",
+            # "account_name": "organizations_metadata.account_details_name",
+            # "account_email": "organizations_metadata.account_details_email",
+            # "account_organization_uid": "organizations_metadata.account_details_arn",
+            # "account_organization": "organizations_metadata.account_details_org",
+            # "account_tags": "organizations_metadata.account_details_tags",
+            # "partition": "identity.partition",
+        }
 
     # TODO: pending to implement
     # @property

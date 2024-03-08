@@ -8,7 +8,7 @@ class AzureIdentityInfo(BaseModel):
     identity_id: str = ""
     identity_type: str = ""
     tenant_ids: list[str] = []
-    domain: str = "Unknown tenant domain (missing AAD permissions)"
+    tenant_domain: str = "Unknown tenant domain (missing AAD permissions)"
     subscriptions: dict = {}
     locations: dict = {}
 
@@ -18,6 +18,13 @@ class AzureRegionConfig(BaseModel):
     authority: str = None
     base_url: str = ""
     credential_scopes: list = []
+
+
+class AzureSubscription(BaseModel):
+    id: str
+    subscription_id: str
+    display_name: str
+    state: str
 
 
 class AzureOutputOptions(ProviderOutputOptions):
@@ -37,9 +44,12 @@ class AzureOutputOptions(ProviderOutputOptions):
             not hasattr(arguments, "output_filename")
             or arguments.output_filename is None
         ):
-            if identity.domain != "Unknown tenant domain (missing AAD permissions)":
+            if (
+                identity.tenant_domain
+                != "Unknown tenant domain (missing AAD permissions)"
+            ):
                 self.output_filename = (
-                    f"prowler-output-{identity.domain}-{output_file_timestamp}"
+                    f"prowler-output-{identity.tenant_domain}-{output_file_timestamp}"
                 )
             else:
                 self.output_filename = f"prowler-output-{'-'.join(identity.tenant_ids)}-{output_file_timestamp}"

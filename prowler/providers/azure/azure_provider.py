@@ -105,6 +105,25 @@ class AzureProvider(Provider):
             arguments, bulk_checks_metadata, self._identity
         )
 
+    @property
+    def get_output_mapping(self):
+        return {
+            # identity_type: identity_id
+            # "auth_method": "identity.profile",
+            "provider": "type",
+            # "account_uid": "identity.account",
+            # TODO: store subscription_name + id pairs
+            # "account_name": "organizations_metadata.account_details_name",
+            # "account_email": "organizations_metadata.account_details_email",
+            # TODO: check the tenant_ids
+            # TODO: we have to get the account organization, the tenant is not that
+            "account_organization_uid": "identity.tenant_ids",
+            "account_organization": "identity.tenant_domain",
+            # TODO: pending to get the subscription tags
+            # "account_tags": "organizations_metadata.account_details_tags",
+            "partition": "region_config.name",
+        }
+
     # TODO: pending to implement
     # @property
     # def mutelist(self):
@@ -160,7 +179,7 @@ class AzureProvider(Provider):
         report = f"""
 This report is being generated using the identity below:
 
-Azure Tenant IDs: {Fore.YELLOW}[{" ".join(self._identity.tenant_ids)}]{Style.RESET_ALL} Azure Tenant Domain: {Fore.YELLOW}[{self._identity.domain}]{Style.RESET_ALL} Azure Region: {Fore.YELLOW}[{self.region_config.name}]{Style.RESET_ALL}
+Azure Tenant ID: {Fore.YELLOW}[{self._identity.tenant_ids[0]}]{Style.RESET_ALL} Azure Tenant Domain: {Fore.YELLOW}[{self._identity.tenant_domain}]{Style.RESET_ALL} Azure Region: {Fore.YELLOW}[{self.region_config.name}]{Style.RESET_ALL}
 Azure Subscriptions: {Fore.YELLOW}{printed_subscriptions}{Style.RESET_ALL}
 Azure Identity Type: {Fore.YELLOW}[{self._identity.identity_type}]{Style.RESET_ALL} Azure Identity ID: {Fore.YELLOW}[{self._identity.identity_id}]{Style.RESET_ALL}
 """
@@ -248,7 +267,7 @@ Azure Identity Type: {Fore.YELLOW}[{self._identity.identity_type}]{Style.RESET_A
                     domain_result = await client.domains.get()
                     if getattr(domain_result, "value"):
                         if getattr(domain_result.value[0], "id"):
-                            identity.domain = domain_result.value[0].id
+                            identity.tenant_domain = domain_result.value[0].id
 
                 except Exception as error:
                     logger.error(
@@ -300,6 +319,8 @@ Azure Identity Type: {Fore.YELLOW}[{self._identity.identity_type}]{Style.RESET_A
             if not subscription_ids:
                 logger.info("Scanning all the Azure subscriptions...")
                 for subscription in subscriptions_client.subscriptions.list():
+                    # TODO: get tags or labels
+                    # TODO: fill with AzureSubscription
                     identity.subscriptions.update(
                         {subscription.display_name: subscription.subscription_id}
                     )
@@ -333,7 +354,7 @@ Azure Identity Type: {Fore.YELLOW}[{self._identity.identity_type}]{Style.RESET_A
 
         return identity
 
-    def get_locations(self, credentials, region_config):
+    def get_locations(self, credentials, region_config) -> dict[str, list[str]]:
         locations = None
         if credentials and region_config:
             subscriptions_client = SubscriptionClient(

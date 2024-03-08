@@ -1,6 +1,6 @@
 from prowler.lib.outputs.compliance.cis_aws import generate_compliance_row_cis_aws
 from prowler.lib.outputs.compliance.cis_gcp import generate_compliance_row_cis_gcp
-from prowler.lib.outputs.csv import write_csv
+from prowler.lib.outputs.csv.csv import write_csv
 
 
 def write_compliance_row_cis(
