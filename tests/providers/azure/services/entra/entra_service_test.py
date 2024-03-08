@@ -5,10 +5,7 @@ from prowler.providers.azure.services.entra.entra_service import (
     Entra,
     User,
 )
-from tests.providers.azure.azure_fixtures import (
-    AZURE_SUBSCRIPTION,
-    set_mocked_azure_audit_info,
-)
+from tests.providers.azure.azure_fixtures import DOMAIN, set_mocked_azure_audit_info
 
 
 async def mock_entra_get_users(_):
@@ -37,10 +34,7 @@ async def mock_entra_get_authorization_policy(_):
 class Test_Entra_Service:
     def test__get_client__(self):
         entra_client = Entra(set_mocked_azure_audit_info())
-        assert (
-            entra_client.clients[AZURE_SUBSCRIPTION].__class__.__name__
-            == "GraphServiceClient"
-        )
+        assert entra_client.clients[DOMAIN].__class__.__name__ == "GraphServiceClient"
 
     def test__get_subscriptions__(self):
         entra_client = Entra(set_mocked_azure_audit_info())
