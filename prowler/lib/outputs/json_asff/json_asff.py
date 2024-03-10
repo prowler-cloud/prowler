@@ -1,7 +1,12 @@
 from prowler.config.config import prowler_version, timestamp_utc
 from prowler.lib.logger import logger
 from prowler.lib.outputs.compliance.compliance import get_check_compliance
-from prowler.lib.outputs.models import Compliance, ProductFields, Resource, Severity
+from prowler.lib.outputs.json_asff.models import (
+    Compliance,
+    ProductFields,
+    Resource,
+    Severity,
+)
 from prowler.lib.utils.utils import hash_sha512
 
 

@@ -19,8 +19,8 @@ from prowler.lib.outputs.compliance.compliance import (
 from prowler.lib.outputs.csv.csv import generate_csv_fields
 from prowler.lib.outputs.file_descriptors import fill_file_descriptors
 from prowler.lib.outputs.json_asff.json_asff import fill_json_asff
+from prowler.lib.outputs.json_asff.models import Check_Output_JSON_ASFF
 from prowler.lib.outputs.json_ocsf.json_ocsf import fill_json_ocsf
-from prowler.lib.outputs.models import Check_Output_JSON_ASFF
 from prowler.lib.outputs.utils import unroll_dict
 
 

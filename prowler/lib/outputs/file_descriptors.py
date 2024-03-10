@@ -9,8 +9,7 @@ from prowler.config.config import (
 )
 from prowler.lib.logger import logger
 from prowler.lib.outputs.common_models import FindingOutput
-from prowler.lib.outputs.csv.csv import generate_csv_fields
-from prowler.lib.outputs.models import (
+from prowler.lib.outputs.compliance.models import (
     Check_Output_CSV_AWS_CIS,
     Check_Output_CSV_AWS_ISO27001_2013,
     Check_Output_CSV_AWS_Well_Architected,
@@ -19,6 +18,7 @@ from prowler.lib.outputs.models import (
     Check_Output_CSV_Generic_Compliance,
     Check_Output_MITRE_ATTACK,
 )
+from prowler.lib.outputs.csv.csv import generate_csv_fields
 from prowler.lib.utils.utils import file_exists, open_file
 
 

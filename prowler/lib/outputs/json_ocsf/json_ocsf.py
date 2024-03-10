@@ -16,9 +16,6 @@ from prowler.lib.logger import logger
 from prowler.lib.outputs.common_models import FindingOutput
 
 
-# TODO: output_options lives within the provider
-# provider_data should be a type
-# Merge this two objects
 def fill_json_ocsf(finding_output: FindingOutput) -> DetectionFinding:
     try:
         # TODO:
