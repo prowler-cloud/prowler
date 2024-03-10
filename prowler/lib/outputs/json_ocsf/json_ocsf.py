@@ -45,7 +45,7 @@ def fill_json_ocsf(finding_output: FindingOutput) -> DetectionFinding:
                     # TODO: function to get this by provider
                     org=Organization(
                         uid=finding_output.account_organization_uid,
-                        name=finding_output.account_organization,
+                        name=finding_output.account_organization_name,
                         # TODO: remove this once the fixes are released in the models lib
                         ou_name="",
                     ),

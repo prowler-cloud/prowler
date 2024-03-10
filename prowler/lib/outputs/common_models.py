@@ -38,7 +38,7 @@ class FindingOutput(BaseModel):
     # Optional since depends on permissions
     account_organization_uid: Optional[str]
     # Optional since depends on permissions
-    account_organization: Optional[str]
+    account_organization_name: Optional[str]
     # Optional since depends on permissions
     account_tags: Optional[str]
     finding_uid: str

@@ -11,11 +11,12 @@ from prowler.providers.common.models import ProviderOutputOptions
 
 @dataclass
 class AWSOrganizationsInfo:
-    account_details_email: str
-    account_details_name: str
-    account_details_arn: str
-    account_details_org: str
-    account_details_tags: str
+    account_email: str
+    account_name: str
+    organization_account_arn: str
+    organization_arn: str
+    organization_id: str
+    account_tags: str
 
 
 @dataclass

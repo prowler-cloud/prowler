@@ -288,11 +288,11 @@ class AwsProvider(Provider):
             "auth_method": "identity.profile",
             "provider": "type",
             "account_uid": "identity.account",
-            "account_name": "organizations_metadata.account_details_name",
-            "account_email": "organizations_metadata.account_details_email",
-            "account_organization_uid": "organizations_metadata.account_details_arn",
-            "account_organization": "organizations_metadata.account_details_org",
-            "account_tags": "organizations_metadata.account_details_tags",
+            "account_name": "organizations_metadata.account_name",
+            "account_email": "organizations_metadata.account_email",
+            "account_organization_uid": "organizations_metadata.organization_arn",
+            "account_organization_name": "organizations_metadata.organization_id",
+            "account_tags": "organizations_metadata.account_tags",
             "partition": "identity.partition",
         }
 
