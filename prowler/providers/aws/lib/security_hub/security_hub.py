@@ -3,7 +3,7 @@ from botocore.client import ClientError
 
 from prowler.config.config import timestamp_utc
 from prowler.lib.logger import logger
-from prowler.lib.outputs.json import fill_json_asff
+from prowler.lib.outputs.json_asff.json_asff import fill_json_asff
 from prowler.lib.outputs.models import Check_Output_JSON_ASFF
 
 SECURITY_HUB_INTEGRATION_NAME = "prowler/prowler"

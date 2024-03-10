@@ -8,7 +8,7 @@ from boto3.dynamodb.conditions import Attr
 from schema import Optional, Schema
 
 from prowler.lib.logger import logger
-from prowler.lib.outputs.models import unroll_tags
+from prowler.lib.outputs.utils import unroll_tags
 
 mutelist_schema = Schema(
     {

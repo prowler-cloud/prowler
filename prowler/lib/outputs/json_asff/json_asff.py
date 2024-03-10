@@ -1,22 +1,8 @@
-import os
-import sys
-
-from prowler.config.config import (
-    json_asff_file_suffix,
-    json_file_suffix,
-    json_ocsf_file_suffix,
-    prowler_version,
-    timestamp_utc,
-)
+from prowler.config.config import prowler_version, timestamp_utc
 from prowler.lib.logger import logger
-from prowler.lib.outputs.models import (
-    Compliance,
-    ProductFields,
-    Resource,
-    Severity,
-    get_check_compliance,
-)
-from prowler.lib.utils.utils import hash_sha512, open_file
+from prowler.lib.outputs.compliance.compliance import get_check_compliance
+from prowler.lib.outputs.models import Compliance, ProductFields, Resource, Severity
+from prowler.lib.utils.utils import hash_sha512
 
 
 def generate_json_asff_status(status: str) -> str:
@@ -62,6 +48,7 @@ def fill_json_asff(finding_output, provider, finding, output_options):
             finding.resource_arn = finding.resource_id
         # The following line cannot be changed because it is the format we use to generate unique findings for AWS Security Hub
         # If changed some findings could be lost because the unique identifier will be different
+        # TODO: get this from the provider output
         finding_output.Id = f"prowler-{finding.check_metadata.CheckID}-{provider.identity.account}-{finding.region}-{hash_sha512(finding.resource_id)}"
         finding_output.ProductArn = f"arn:{provider.identity.partition}:securityhub:{finding.region}::product/prowler/prowler"
         finding_output.ProductFields = ProductFields(
@@ -127,32 +114,3 @@ def fill_json_asff(finding_output, provider, finding, output_options):
         logger.error(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
         )
-
-
-def close_json(output_filename, output_directory, mode):
-    """close_json closes the output JSON file replacing the last comma with ]"""
-    try:
-        suffix = json_file_suffix
-        if mode == "json-asff":
-            suffix = json_asff_file_suffix
-        elif mode == "json-ocsf":
-            suffix = json_ocsf_file_suffix
-        filename = f"{output_directory}/{output_filename}{suffix}"
-        # Close JSON file if exists
-        if os.path.isfile(filename):
-            file_descriptor = open_file(
-                filename,
-                "a",
-            )
-            # Replace last comma for square bracket if not empty
-            if file_descriptor.tell() > 0:
-                if file_descriptor.tell() != 1:
-                    file_descriptor.seek(file_descriptor.tell() - 1, os.SEEK_SET)
-                file_descriptor.truncate()
-                file_descriptor.write("]")
-            file_descriptor.close()
-    except Exception as error:
-        logger.critical(
-            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
-        )
-        sys.exit(1)

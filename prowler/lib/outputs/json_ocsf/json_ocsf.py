@@ -13,13 +13,13 @@ from py_ocsf_models.profiles.cloud import Cloud, CloudProfile
 from prowler.lib.logger import logger
 
 # from py_ocsf_models.objects.related_event import RelatedEvent
-from prowler.lib.outputs.csv.models import CSVRow
+from prowler.lib.outputs.common_models import FindingOutput
 
 
 # TODO: output_options lives within the provider
 # provider_data should be a type
 # Merge this two objects
-def fill_json_ocsf(finding_output: CSVRow) -> DetectionFinding:
+def fill_json_ocsf(finding_output: FindingOutput) -> DetectionFinding:
     try:
         # TODO:
         # FindingInformation.created_time

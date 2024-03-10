@@ -3,7 +3,7 @@ from operator import attrgetter
 from prowler.config.config import timestamp
 from prowler.lib.logger import logger
 from prowler.lib.outputs.common_models import FindingOutput
-from prowler.lib.outputs.models import unroll_list, unroll_tags
+from prowler.lib.outputs.utils import unroll_list, unroll_tags
 from prowler.lib.utils.utils import outputs_unix_timestamp
 
 

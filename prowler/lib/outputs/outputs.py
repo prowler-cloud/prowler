@@ -14,16 +14,14 @@ from prowler.lib.outputs.common_models import FindingOutput
 from prowler.lib.outputs.compliance.compliance import (
     add_manual_controls,
     fill_compliance,
+    get_check_compliance,
 )
 from prowler.lib.outputs.csv.csv import generate_csv_fields
 from prowler.lib.outputs.file_descriptors import fill_file_descriptors
-from prowler.lib.outputs.json import fill_json_asff
+from prowler.lib.outputs.json_asff.json_asff import fill_json_asff
 from prowler.lib.outputs.json_ocsf.json_ocsf import fill_json_ocsf
-from prowler.lib.outputs.models import (
-    Check_Output_JSON_ASFF,
-    get_check_compliance,
-    unroll_dict,
-)
+from prowler.lib.outputs.models import Check_Output_JSON_ASFF
+from prowler.lib.outputs.utils import unroll_dict
 
 
 def stdout_report(finding, color, verbose, status):
@@ -101,6 +99,7 @@ def report(check_findings, provider):
                         # AWS specific outputs
                         if finding.check_metadata.Provider == "aws":
                             if "json-asff" in file_descriptors:
+                                # Initialize this field using the class within fill_json_asff not here
                                 finding_output = Check_Output_JSON_ASFF()
                                 fill_json_asff(
                                     finding_output, provider, finding, output_options
