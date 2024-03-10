@@ -3,22 +3,19 @@ from csv import DictWriter
 
 from colorama import Fore, Style
 
-from prowler.config.config import (
-    available_compliance_frameworks,
-    orange_color,
-    timestamp,
-)
+from prowler.config.config import available_compliance_frameworks, orange_color
 from prowler.lib.logger import logger
+from prowler.lib.outputs.common import (
+    fill_common_finding_data,
+    generate_provider_output,
+    get_provider_data_mapping,
+)
+from prowler.lib.outputs.common_models import FindingOutput
 from prowler.lib.outputs.compliance.compliance import (
     add_manual_controls,
     fill_compliance,
 )
-from prowler.lib.outputs.csv.csv import (
-    generate_csv_fields,
-    generate_provider_output_csv,
-    get_provider_data_mapping,
-)
-from prowler.lib.outputs.csv.models import CSVRow
+from prowler.lib.outputs.csv.csv import generate_csv_fields
 from prowler.lib.outputs.file_descriptors import fill_file_descriptors
 from prowler.lib.outputs.json import fill_json_asff
 from prowler.lib.outputs.json_ocsf.json_ocsf import fill_json_ocsf
@@ -26,10 +23,7 @@ from prowler.lib.outputs.models import (
     Check_Output_JSON_ASFF,
     get_check_compliance,
     unroll_dict,
-    unroll_list,
-    unroll_tags,
 )
-from prowler.lib.utils.utils import outputs_unix_timestamp
 
 
 def stdout_report(finding, color, verbose, status):
@@ -130,16 +124,15 @@ def report(check_findings, provider):
                         csv_data["compliance"] = unroll_dict(
                             get_check_compliance(finding, provider.type, output_options)
                         )
-                        finding_output = generate_provider_output_csv(
+                        finding_output = generate_provider_output(
                             provider, finding, csv_data
                         )
 
                         # CSV
                         if "csv" in file_descriptors:
-
                             csv_writer = DictWriter(
                                 file_descriptors["csv"],
-                                fieldnames=generate_csv_fields(CSVRow),
+                                fieldnames=generate_csv_fields(FindingOutput),
                                 delimiter=";",
                             )
 
@@ -147,12 +140,10 @@ def report(check_findings, provider):
 
                         # JSON
                         if "json-ocsf" in file_descriptors:
-                            finding_output = fill_json_ocsf(finding_output)
-                            json.dump(
-                                finding_output.dict(exclude_none=True),
-                                file_descriptors["json-ocsf"],
-                                indent=4,
-                                default=str,
+                            detection_finding = fill_json_ocsf(finding_output)
+                            # print(file)
+                            file_descriptors["json-ocsf"].write(
+                                detection_finding.json(exclude_none=True, indent=4)
                             )
                             file_descriptors["json-ocsf"].write(",")
 
@@ -171,46 +162,6 @@ def report(check_findings, provider):
         logger.error(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
         )
-
-
-# TODO: this function needs to return a Class with the attributes mapped
-def fill_common_finding_data(finding: dict, unix_timestamp: bool) -> dict:
-    finding_data = {
-        "timestamp": outputs_unix_timestamp(unix_timestamp, timestamp),
-        "check_id": finding.check_metadata.CheckID,
-        "check_title": finding.check_metadata.CheckTitle,
-        "check_type": ",".join(finding.check_metadata.CheckType),
-        "status": finding.status,
-        "status_extended": finding.status_extended,
-        "service_name": finding.check_metadata.ServiceName,
-        "subservice_name": finding.check_metadata.SubServiceName,
-        "severity": finding.check_metadata.Severity,
-        "resource_type": finding.check_metadata.ResourceType,
-        "resource_details": finding.resource_details,
-        "resource_tags": unroll_tags(finding.resource_tags),
-        "description": finding.check_metadata.Description,
-        "risk": finding.check_metadata.Risk,
-        "related_url": finding.check_metadata.RelatedUrl,
-        "remediation_recommendation_text": (
-            finding.check_metadata.Remediation.Recommendation.Text
-        ),
-        "remediation_recommendation_url": (
-            finding.check_metadata.Remediation.Recommendation.Url
-        ),
-        "remediation_code_nativeiac": (
-            finding.check_metadata.Remediation.Code.NativeIaC
-        ),
-        "remediation_code_terraform": (
-            finding.check_metadata.Remediation.Code.Terraform
-        ),
-        "remediation_code_cli": (finding.check_metadata.Remediation.Code.CLI),
-        "remediation_code_other": (finding.check_metadata.Remediation.Code.Other),
-        "categories": unroll_list(finding.check_metadata.Categories),
-        "depends_on": unroll_list(finding.check_metadata.DependsOn),
-        "related_to": unroll_list(finding.check_metadata.RelatedTo),
-        "notes": finding.check_metadata.Notes,
-    }
-    return finding_data
 
 
 def set_report_color(status: str) -> str:

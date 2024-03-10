@@ -4,6 +4,8 @@ from typing import Optional
 
 from pydantic import BaseModel
 
+from prowler.config.config import prowler_version
+
 
 class Status(str, Enum):
     PASS = "PASS"
@@ -19,7 +21,7 @@ class Severity(str, Enum):
     informational = "informational"
 
 
-class CSVRow(BaseModel):
+class FindingOutput(BaseModel):
     """
     CSVRow generates a finding's output in CSV format.
 
@@ -72,3 +74,4 @@ class CSVRow(BaseModel):
     depends_on: str
     related_to: str
     notes: str
+    prowler_version: str = prowler_version

@@ -10,7 +10,6 @@ from py_ocsf_models.objects.remediation import Remediation
 from py_ocsf_models.objects.resource_details import ResourceDetails
 from py_ocsf_models.profiles.cloud import Cloud, CloudProfile
 
-from prowler.config.config import prowler_version
 from prowler.lib.logger import logger
 
 # from py_ocsf_models.objects.related_event import RelatedEvent
@@ -105,11 +104,12 @@ def fill_json_ocsf(finding_output: CSVRow) -> DetectionFinding:
                     name="Prowler",
                     vendor_name="Prowler",
                     uid="",
-                    version=prowler_version,
+                    version=finding_output.prowler_version,
                 ),
                 version="1.1.0",
             ),
             # TODO: add values from DetectionFinding TypeID once the fixes are released in the models lib
+            # TODO: add compliance object, check if there is another compliance finding
             type_id=200401,
         )
     except Exception as error:
