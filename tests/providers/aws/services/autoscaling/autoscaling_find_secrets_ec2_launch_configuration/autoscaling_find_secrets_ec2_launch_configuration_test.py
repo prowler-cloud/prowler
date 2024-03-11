@@ -27,8 +27,8 @@ class Test_autoscaling_find_secrets_ec2_launch_configuration:
         current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=current_audit_info,
         ), mock.patch(
             "prowler.providers.aws.services.autoscaling.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_client",
             new=AutoScaling(current_audit_info),
@@ -67,8 +67,8 @@ class Test_autoscaling_find_secrets_ec2_launch_configuration:
         current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=current_audit_info,
         ), mock.patch(
             "prowler.providers.aws.services.autoscaling.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_client",
             new=AutoScaling(current_audit_info),
@@ -114,8 +114,8 @@ class Test_autoscaling_find_secrets_ec2_launch_configuration:
         current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=current_audit_info,
         ), mock.patch(
             "prowler.providers.aws.services.autoscaling.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_client",
             new=AutoScaling(current_audit_info),
@@ -166,8 +166,8 @@ class Test_autoscaling_find_secrets_ec2_launch_configuration:
         current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=current_audit_info,
         ), mock.patch(
             "prowler.providers.aws.services.autoscaling.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_client",
             new=AutoScaling(current_audit_info),
@@ -212,8 +212,8 @@ class Test_autoscaling_find_secrets_ec2_launch_configuration:
         current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=current_audit_info,
         ), mock.patch(
             "prowler.providers.aws.services.autoscaling.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_client",
             new=AutoScaling(current_audit_info),
@@ -265,8 +265,8 @@ class Test_autoscaling_find_secrets_ec2_launch_configuration:
         current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=current_audit_info,
         ), mock.patch(
             "prowler.providers.aws.services.autoscaling.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_find_secrets_ec2_launch_configuration.autoscaling_client",
             new=AutoScaling(current_audit_info),

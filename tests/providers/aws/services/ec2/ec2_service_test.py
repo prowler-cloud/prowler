@@ -87,7 +87,7 @@ class Test_EC2_Service:
         assert re.match(r"i-[0-9a-z]{17}", ec2.instances[0].id)
         assert (
             ec2.instances[0].arn
-            == f"arn:{audit_info.audited_partition}:ec2:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:instance/{ec2.instances[0].id}"
+            == f"arn:{audit_info.identity.partition}:ec2:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:instance/{ec2.instances[0].id}"
         )
         assert ec2.instances[0].type == "m1.small"
         assert ec2.instances[0].state == "running"
@@ -150,7 +150,7 @@ class Test_EC2_Service:
                 assert security_group.name == "test-security-group"
                 assert (
                     security_group.arn
-                    == f"arn:{audit_info.audited_partition}:ec2:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:security-group/{security_group.id}"
+                    == f"arn:{audit_info.identity.partition}:ec2:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:security-group/{security_group.id}"
                 )
                 assert re.match(r"sg-[0-9a-z]{17}", security_group.id)
                 assert security_group.region == AWS_REGION_US_EAST_1
@@ -209,7 +209,7 @@ class Test_EC2_Service:
                 assert re.match(r"acl-[0-9a-z]{8}", acl.id)
                 assert (
                     acl.arn
-                    == f"arn:{audit_info.audited_partition}:ec2:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:network-acl/{acl.id}"
+                    == f"arn:{audit_info.identity.partition}:ec2:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:network-acl/{acl.id}"
                 )
                 assert acl.entries == []
                 assert acl.tags == [
@@ -295,7 +295,7 @@ class Test_EC2_Service:
                 assert re.match(r"snap-[0-9a-z]{8}", snapshot.id)
                 assert (
                     snapshot.arn
-                    == f"arn:{audit_info.audited_partition}:ec2:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:snapshot/{snapshot.id}"
+                    == f"arn:{audit_info.identity.partition}:ec2:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:snapshot/{snapshot.id}"
                 )
                 assert snapshot.region == AWS_REGION_US_EAST_1
                 assert not snapshot.encrypted
@@ -396,7 +396,7 @@ class Test_EC2_Service:
                 assert security_group.name == "test-securitygroup"
                 assert (
                     security_group.arn
-                    == f"arn:{audit_info.audited_partition}:ec2:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:security-group/{security_group.id}"
+                    == f"arn:{audit_info.identity.partition}:ec2:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:security-group/{security_group.id}"
                 )
                 assert re.match(r"sg-[0-9a-z]{17}", security_group.id)
                 assert security_group.region == AWS_REGION_US_EAST_1
@@ -494,7 +494,7 @@ class Test_EC2_Service:
         assert re.match(r"ami-[0-9a-z]{8}", ec2.images[0].id)
         assert (
             ec2.images[0].arn
-            == f"arn:{audit_info.audited_partition}:ec2:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:image/{ec2.images[0].id}"
+            == f"arn:{audit_info.identity.partition}:ec2:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:image/{ec2.images[0].id}"
         )
         assert not ec2.images[0].public
         assert ec2.images[0].region == AWS_REGION_US_EAST_1
@@ -537,7 +537,7 @@ class Test_EC2_Service:
         assert re.match(r"vol-[0-9a-z]{8}", ec2.volumes[0].id)
         assert (
             ec2.volumes[0].arn
-            == f"arn:{audit_info.audited_partition}:ec2:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:volume/{ec2.volumes[0].id}"
+            == f"arn:{audit_info.identity.partition}:ec2:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:volume/{ec2.volumes[0].id}"
         )
         assert ec2.volumes[0].region == AWS_REGION_US_EAST_1
         assert not ec2.volumes[0].encrypted

@@ -20,8 +20,10 @@ class Test_cloudtrail_logs_s3_bucket_access_logging_enabled:
         from prowler.providers.aws.services.s3.s3_service import S3
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=set_mocked_aws_audit_info([AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]),
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_aws_audit_info(
+                [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
+            ),
         ), mock.patch(
             "prowler.providers.aws.services.cloudtrail.cloudtrail_logs_s3_bucket_access_logging_enabled.cloudtrail_logs_s3_bucket_access_logging_enabled.cloudtrail_client",
             new=Cloudtrail(
@@ -62,8 +64,10 @@ class Test_cloudtrail_logs_s3_bucket_access_logging_enabled:
         from prowler.providers.aws.services.s3.s3_service import S3
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=set_mocked_aws_audit_info([AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]),
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_aws_audit_info(
+                [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
+            ),
         ), mock.patch(
             "prowler.providers.aws.services.cloudtrail.cloudtrail_logs_s3_bucket_access_logging_enabled.cloudtrail_logs_s3_bucket_access_logging_enabled.cloudtrail_client",
             new=Cloudtrail(
@@ -133,8 +137,10 @@ class Test_cloudtrail_logs_s3_bucket_access_logging_enabled:
         from prowler.providers.aws.services.s3.s3_service import S3
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=set_mocked_aws_audit_info([AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]),
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_aws_audit_info(
+                [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
+            ),
         ), mock.patch(
             "prowler.providers.aws.services.cloudtrail.cloudtrail_logs_s3_bucket_access_logging_enabled.cloudtrail_logs_s3_bucket_access_logging_enabled.cloudtrail_client",
             new=Cloudtrail(
@@ -184,8 +190,10 @@ class Test_cloudtrail_logs_s3_bucket_access_logging_enabled:
         from prowler.providers.aws.services.s3.s3_service import S3
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=set_mocked_aws_audit_info([AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]),
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_aws_audit_info(
+                [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
+            ),
         ), mock.patch(
             "prowler.providers.aws.services.cloudtrail.cloudtrail_logs_s3_bucket_access_logging_enabled.cloudtrail_logs_s3_bucket_access_logging_enabled.cloudtrail_client",
             new=Cloudtrail(

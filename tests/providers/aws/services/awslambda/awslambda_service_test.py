@@ -47,11 +47,11 @@ def mock_request_get(_):
 
 
 # Mock generate_regional_clients()
-def mock_generate_regional_clients(service, audit_info):
-    regional_client_eu_west_1 = audit_info.audit_session.client(
+def mock_generate_regional_clients(provider, service):
+    regional_client_eu_west_1 = provider.session.current_session.client(
         service, region_name=AWS_REGION_EU_WEST_1
     )
-    regional_client_us_east_1 = audit_info.audit_session.client(
+    regional_client_us_east_1 = provider.session.current_session.client(
         service, region_name=AWS_REGION_US_EAST_1
     )
     regional_client_eu_west_1.region = AWS_REGION_EU_WEST_1
@@ -63,7 +63,7 @@ def mock_generate_regional_clients(service, audit_info):
 
 
 @patch(
-    "prowler.providers.aws.lib.service.service.generate_regional_clients",
+    "prowler.providers.aws.aws_provider.AwsProvider.generate_regional_clients",
     new=mock_generate_regional_clients,
 )
 class Test_Lambda_Service:

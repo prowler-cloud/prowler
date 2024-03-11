@@ -10,7 +10,7 @@ from tests.providers.aws.audit_info_utils import (
 class Test_glue_data_catalogs_connection_passwords_encryption_enabled:
     def test_glue_no_settings(self):
         glue_client = mock.MagicMock
-        glue_client.audit_info = set_mocked_aws_audit_info()
+        glue_client.provider = set_mocked_aws_audit_info()
         glue_client.catalog_encryption_settings = []
 
         with mock.patch(
@@ -29,7 +29,7 @@ class Test_glue_data_catalogs_connection_passwords_encryption_enabled:
 
     def test_glue_catalog_password_unencrypted(self):
         glue_client = mock.MagicMock
-        glue_client.audit_info = set_mocked_aws_audit_info()
+        glue_client.provider = set_mocked_aws_audit_info()
         glue_client.catalog_encryption_settings = [
             CatalogEncryptionSetting(
                 mode="DISABLED",
@@ -70,7 +70,7 @@ class Test_glue_data_catalogs_connection_passwords_encryption_enabled:
 
     def test_glue_catalog_password_unencrypted_ignoring(self):
         glue_client = mock.MagicMock
-        glue_client.audit_info = set_mocked_aws_audit_info()
+        glue_client.provider = set_mocked_aws_audit_info()
         glue_client.catalog_encryption_settings = [
             CatalogEncryptionSetting(
                 mode="DISABLED",
@@ -88,7 +88,7 @@ class Test_glue_data_catalogs_connection_passwords_encryption_enabled:
         glue_client.__get_data_catalog_arn_template__ = mock.MagicMock(
             return_value=glue_client.data_catalog_arn_template
         )
-        glue_client.audit_info.ignore_unused_services = True
+        glue_client.provider._ignore_unused_services = True
         with mock.patch(
             "prowler.providers.aws.services.glue.glue_service.Glue",
             glue_client,
@@ -105,7 +105,7 @@ class Test_glue_data_catalogs_connection_passwords_encryption_enabled:
 
     def test_glue_catalog_password_unencrypted_ignoring_with_tables(self):
         glue_client = mock.MagicMock
-        glue_client.audit_info = set_mocked_aws_audit_info()
+        glue_client.provider = set_mocked_aws_audit_info()
         glue_client.catalog_encryption_settings = [
             CatalogEncryptionSetting(
                 mode="DISABLED",
@@ -123,7 +123,7 @@ class Test_glue_data_catalogs_connection_passwords_encryption_enabled:
         glue_client.__get_data_catalog_arn_template__ = mock.MagicMock(
             return_value=glue_client.data_catalog_arn_template
         )
-        glue_client.audit_info.ignore_unused_services = True
+        glue_client.provider._ignore_unused_services = True
         with mock.patch(
             "prowler.providers.aws.services.glue.glue_service.Glue",
             glue_client,
@@ -147,7 +147,7 @@ class Test_glue_data_catalogs_connection_passwords_encryption_enabled:
 
     def test_glue_catalog_encrypted(self):
         glue_client = mock.MagicMock
-        glue_client.audit_info = set_mocked_aws_audit_info()
+        glue_client.provider = set_mocked_aws_audit_info()
         glue_client.catalog_encryption_settings = [
             CatalogEncryptionSetting(
                 mode="DISABLED",

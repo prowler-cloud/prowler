@@ -17,10 +17,12 @@ class Test_organizations_delegated_administrators:
     @mock_aws
     def test_no_organization(self):
         audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
-        audit_info.audit_config = {"organizations_trusted_delegated_administrators": []}
+        audit_info._audit_config = {
+            "organizations_trusted_delegated_administrators": []
+        }
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=audit_info,
         ):
             with mock.patch(
                 "prowler.providers.aws.services.organizations.organizations_delegated_administrators.organizations_delegated_administrators.organizations_client",
@@ -39,15 +41,17 @@ class Test_organizations_delegated_administrators:
     @mock_aws
     def test_organization_no_delegations(self):
         audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
-        audit_info.audit_config = {"organizations_trusted_delegated_administrators": []}
+        audit_info._audit_config = {
+            "organizations_trusted_delegated_administrators": []
+        }
 
         # Create Organization
         conn = client("organizations", region_name=AWS_REGION_EU_WEST_1)
         response = conn.create_organization()
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=audit_info,
         ):
             with mock.patch(
                 "prowler.providers.aws.services.organizations.organizations_delegated_administrators.organizations_delegated_administrators.organizations_client",
@@ -90,15 +94,15 @@ class Test_organizations_delegated_administrators:
         )
 
         # Set config variable
-        audit_info.audit_config = {
+        audit_info._audit_config = {
             "organizations_trusted_delegated_administrators": [
                 account["CreateAccountStatus"]["AccountId"]
             ]
         }
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=audit_info,
         ):
             with mock.patch(
                 "prowler.providers.aws.services.organizations.organizations_delegated_administrators.organizations_delegated_administrators.organizations_client",
@@ -141,11 +145,13 @@ class Test_organizations_delegated_administrators:
         )
 
         # Set config variable
-        audit_info.audit_config = {"organizations_trusted_delegated_administrators": []}
+        audit_info._audit_config = {
+            "organizations_trusted_delegated_administrators": []
+        }
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=audit_info,
         ):
             with mock.patch(
                 "prowler.providers.aws.services.organizations.organizations_delegated_administrators.organizations_delegated_administrators.organizations_client",

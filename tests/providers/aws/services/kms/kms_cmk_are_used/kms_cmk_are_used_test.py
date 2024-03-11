@@ -17,8 +17,8 @@ class Test_kms_cmk_are_used:
         current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=current_audit_info,
         ), mock.patch(
             "prowler.providers.aws.services.kms.kms_cmk_are_used.kms_cmk_are_used.kms_client",
             new=KMS(current_audit_info),
@@ -45,8 +45,8 @@ class Test_kms_cmk_are_used:
         current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=current_audit_info,
         ), mock.patch(
             "prowler.providers.aws.services.kms.kms_cmk_are_used.kms_cmk_are_used.kms_client",
             new=KMS(current_audit_info),
@@ -78,8 +78,8 @@ class Test_kms_cmk_are_used:
         current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=current_audit_info,
         ), mock.patch(
             "prowler.providers.aws.services.kms.kms_cmk_are_used.kms_cmk_are_used.kms_client",
             new=KMS(current_audit_info),
@@ -114,8 +114,8 @@ class Test_kms_cmk_are_used:
         current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=current_audit_info,
         ), mock.patch(
             "prowler.providers.aws.services.kms.kms_cmk_are_used.kms_cmk_are_used.kms_client",
             new=KMS(current_audit_info),

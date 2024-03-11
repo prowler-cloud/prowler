@@ -24,8 +24,8 @@ class Test_cloudtrail_multi_region_enabled:
         )
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=current_audit_info,
         ):
             with mock.patch(
                 "prowler.providers.aws.services.cloudtrail.cloudtrail_multi_region_enabled.cloudtrail_multi_region_enabled.cloudtrail_client",
@@ -38,7 +38,7 @@ class Test_cloudtrail_multi_region_enabled:
 
                 check = cloudtrail_multi_region_enabled()
                 result = check.execute()
-                assert len(result) == len(current_audit_info.audited_regions)
+                assert len(result) == len(current_audit_info.identity.audited_regions)
                 for report in result:
                     if report.region == AWS_REGION_US_EAST_1:
                         assert report.status == "FAIL"
@@ -100,8 +100,8 @@ class Test_cloudtrail_multi_region_enabled:
         )
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=current_audit_info,
         ):
             with mock.patch(
                 "prowler.providers.aws.services.cloudtrail.cloudtrail_multi_region_enabled.cloudtrail_multi_region_enabled.cloudtrail_client",
@@ -114,7 +114,7 @@ class Test_cloudtrail_multi_region_enabled:
 
                 check = cloudtrail_multi_region_enabled()
                 result = check.execute()
-                assert len(result) == len(current_audit_info.audited_regions)
+                assert len(result) == len(current_audit_info.identity.audited_regions)
                 for report in result:
                     if report.region == AWS_REGION_US_EAST_1:
                         assert report.status == "FAIL"
@@ -178,8 +178,8 @@ class Test_cloudtrail_multi_region_enabled:
         )
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=current_audit_info,
         ):
             with mock.patch(
                 "prowler.providers.aws.services.cloudtrail.cloudtrail_multi_region_enabled.cloudtrail_multi_region_enabled.cloudtrail_client",
@@ -192,7 +192,7 @@ class Test_cloudtrail_multi_region_enabled:
 
                 check = cloudtrail_multi_region_enabled()
                 result = check.execute()
-                assert len(result) == len(current_audit_info.audited_regions)
+                assert len(result) == len(current_audit_info.identity.audited_regions)
                 for report in result:
                     if report.resource_id == trail_name_us:
                         assert report.status == "PASS"
@@ -255,8 +255,8 @@ class Test_cloudtrail_multi_region_enabled:
         )
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=current_audit_info,
         ):
             with mock.patch(
                 "prowler.providers.aws.services.cloudtrail.cloudtrail_multi_region_enabled.cloudtrail_multi_region_enabled.cloudtrail_client",
@@ -269,7 +269,7 @@ class Test_cloudtrail_multi_region_enabled:
 
                 check = cloudtrail_multi_region_enabled()
                 result = check.execute()
-                assert len(result) == len(current_audit_info.audited_regions)
+                assert len(result) == len(current_audit_info.identity.audited_regions)
                 for report in result:
                     if report.region == AWS_REGION_US_EAST_1:
                         assert report.status == "PASS"

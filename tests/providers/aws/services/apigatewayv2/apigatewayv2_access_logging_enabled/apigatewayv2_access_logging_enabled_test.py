@@ -50,8 +50,8 @@ class Test_apigatewayv2_api_access_logging_enabled:
         )
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=current_audit_info,
         ), mock.patch(
             "prowler.providers.aws.services.apigatewayv2.apigatewayv2_api_access_logging_enabled.apigatewayv2_api_access_logging_enabled.apigatewayv2_client",
             new=ApiGatewayV2(current_audit_info),
@@ -83,8 +83,8 @@ class Test_apigatewayv2_api_access_logging_enabled:
         )
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=current_audit_info,
         ), mock.patch(
             "prowler.providers.aws.services.apigatewayv2.apigatewayv2_api_access_logging_enabled.apigatewayv2_api_access_logging_enabled.apigatewayv2_client",
             new=ApiGatewayV2(current_audit_info),

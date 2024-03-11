@@ -23,8 +23,8 @@ class Test_ec2_elastic_ip_unassigned:
         )
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=current_audit_info,
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_elastic_ip_unassigned.ec2_elastic_ip_unassigned.ec2_client",
             new=EC2(current_audit_info),
@@ -54,8 +54,8 @@ class Test_ec2_elastic_ip_unassigned:
         )
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=current_audit_info,
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_elastic_ip_unassigned.ec2_elastic_ip_unassigned.ec2_client",
             new=EC2(current_audit_info),
@@ -78,7 +78,7 @@ class Test_ec2_elastic_ip_unassigned:
             )
             assert (
                 results[0].resource_arn
-                == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION_US_EAST_1}:{current_audit_info.audited_account}:eip-allocation/{allocation_id}"
+                == f"arn:{current_audit_info.identity.partition}:ec2:{AWS_REGION_US_EAST_1}:{current_audit_info.identity.account}:eip-allocation/{allocation_id}"
             )
 
     @mock_aws
@@ -107,8 +107,8 @@ class Test_ec2_elastic_ip_unassigned:
         )
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=current_audit_info,
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_elastic_ip_unassigned.ec2_elastic_ip_unassigned.ec2_client",
             new=EC2(current_audit_info),
@@ -131,5 +131,5 @@ class Test_ec2_elastic_ip_unassigned:
             )
             assert (
                 results[0].resource_arn
-                == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION_US_EAST_1}:{current_audit_info.audited_account}:eip-allocation/{eip.allocation_id}"
+                == f"arn:{current_audit_info.identity.partition}:ec2:{AWS_REGION_US_EAST_1}:{current_audit_info.identity.account}:eip-allocation/{eip.allocation_id}"
             )

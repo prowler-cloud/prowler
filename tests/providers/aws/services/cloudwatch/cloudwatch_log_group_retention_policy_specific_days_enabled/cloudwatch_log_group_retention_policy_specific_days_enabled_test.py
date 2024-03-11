@@ -18,7 +18,7 @@ class Test_cloudwatch_log_group_retention_policy_specific_days_enabled:
         current_audit_info = set_mocked_aws_audit_info(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
-        current_audit_info.audit_config = {"log_group_retention_days": 365}
+        current_audit_info._audit_config = {"log_group_retention_days": 365}
 
         from prowler.providers.common.models import Audit_Metadata
 
@@ -31,8 +31,8 @@ class Test_cloudwatch_log_group_retention_policy_specific_days_enabled:
         )
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=current_audit_info,
         ), mock.patch(
             "prowler.providers.aws.services.cloudwatch.cloudwatch_log_group_retention_policy_specific_days_enabled.cloudwatch_log_group_retention_policy_specific_days_enabled.logs_client",
             new=Logs(current_audit_info),
@@ -60,7 +60,7 @@ class Test_cloudwatch_log_group_retention_policy_specific_days_enabled:
         current_audit_info = set_mocked_aws_audit_info(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
-        current_audit_info.audit_config = {"log_group_retention_days": 365}
+        current_audit_info._audit_config = {"log_group_retention_days": 365}
 
         from prowler.providers.common.models import Audit_Metadata
 
@@ -73,8 +73,8 @@ class Test_cloudwatch_log_group_retention_policy_specific_days_enabled:
         )
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=current_audit_info,
         ), mock.patch(
             "prowler.providers.aws.services.cloudwatch.cloudwatch_log_group_retention_policy_specific_days_enabled.cloudwatch_log_group_retention_policy_specific_days_enabled.logs_client",
             new=Logs(current_audit_info),
@@ -114,7 +114,7 @@ class Test_cloudwatch_log_group_retention_policy_specific_days_enabled:
         current_audit_info = set_mocked_aws_audit_info(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
-        current_audit_info.audit_config = {"log_group_retention_days": 365}
+        current_audit_info._audit_config = {"log_group_retention_days": 365}
 
         from prowler.providers.common.models import Audit_Metadata
 
@@ -127,8 +127,8 @@ class Test_cloudwatch_log_group_retention_policy_specific_days_enabled:
         )
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=current_audit_info,
         ), mock.patch(
             "prowler.providers.aws.services.cloudwatch.cloudwatch_log_group_retention_policy_specific_days_enabled.cloudwatch_log_group_retention_policy_specific_days_enabled.logs_client",
             new=Logs(current_audit_info),
@@ -168,7 +168,7 @@ class Test_cloudwatch_log_group_retention_policy_specific_days_enabled:
         current_audit_info = set_mocked_aws_audit_info(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
-        current_audit_info.audit_config = {"log_group_retention_days": 365}
+        current_audit_info._audit_config = {"log_group_retention_days": 365}
 
         from prowler.providers.common.models import Audit_Metadata
 
@@ -181,8 +181,8 @@ class Test_cloudwatch_log_group_retention_policy_specific_days_enabled:
         )
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=current_audit_info,
         ), mock.patch(
             "prowler.providers.aws.services.cloudwatch.cloudwatch_log_group_retention_policy_specific_days_enabled.cloudwatch_log_group_retention_policy_specific_days_enabled.logs_client",
             new=Logs(current_audit_info),

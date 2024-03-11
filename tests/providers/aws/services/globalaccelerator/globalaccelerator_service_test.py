@@ -1,5 +1,6 @@
 import botocore
 from mock import patch
+from moto import mock_aws
 
 from prowler.providers.aws.services.globalaccelerator.globalaccelerator_service import (
     GlobalAccelerator,
@@ -45,6 +46,7 @@ def mock_make_api_call(self, operation_name, kwarg):
     return make_api_call(self, operation_name, kwarg)
 
 
+@mock_aws
 # Patch every AWS call using Boto3 and generate_regional_clients to have 1 client
 @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
 class Test_GlobalAccelerator_Service:

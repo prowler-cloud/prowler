@@ -35,8 +35,8 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_redis_6379:
         )
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=current_audit_info,
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_redis_6379.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_redis_6379.ec2_client",
             new=EC2(current_audit_info),
@@ -70,7 +70,7 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_redis_6379:
                         )
                         assert (
                             res.resource_arn
-                            == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION_US_EAST_1}:{current_audit_info.audited_account}:security-group/{sg['GroupId']}"
+                            == f"arn:{current_audit_info.identity.partition}:ec2:{AWS_REGION_US_EAST_1}:{current_audit_info.identity.account}:security-group/{sg['GroupId']}"
                         )
                         assert res.resource_details == sg["GroupName"]
                         assert res.resource_tags == []
@@ -87,7 +87,7 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_redis_6379:
                         )
                         assert (
                             res.resource_arn
-                            == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION_EU_WEST_1}:{current_audit_info.audited_account}:security-group/{sg['GroupId']}"
+                            == f"arn:{current_audit_info.identity.partition}:ec2:{AWS_REGION_EU_WEST_1}:{current_audit_info.identity.account}:security-group/{sg['GroupId']}"
                         )
                         assert res.resource_details == sg["GroupName"]
                         assert res.resource_tags == []
@@ -124,8 +124,8 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_redis_6379:
         )
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=current_audit_info,
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_redis_6379.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_redis_6379.ec2_client",
             new=EC2(current_audit_info),
@@ -156,7 +156,7 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_redis_6379:
                     )
                     assert (
                         sg.resource_arn
-                        == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION_US_EAST_1}:{current_audit_info.audited_account}:security-group/{default_sg_id}"
+                        == f"arn:{current_audit_info.identity.partition}:ec2:{AWS_REGION_US_EAST_1}:{current_audit_info.identity.account}:security-group/{default_sg_id}"
                     )
                     assert sg.resource_details == default_sg_name
                     assert sg.resource_tags == []
@@ -192,8 +192,8 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_redis_6379:
             ]
         )
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=current_audit_info,
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_redis_6379.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_redis_6379.ec2_client",
             new=EC2(current_audit_info),
@@ -224,7 +224,7 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_redis_6379:
                     )
                     assert (
                         sg.resource_arn
-                        == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION_US_EAST_1}:{current_audit_info.audited_account}:security-group/{default_sg_id}"
+                        == f"arn:{current_audit_info.identity.partition}:ec2:{AWS_REGION_US_EAST_1}:{current_audit_info.identity.account}:security-group/{default_sg_id}"
                     )
                     assert sg.resource_details == default_sg_name
                     assert sg.resource_tags == []
@@ -243,11 +243,11 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_redis_6379:
                 AWS_REGION_EU_WEST_1,
             ]
         )
-        current_audit_info.ignore_unused_services = True
+        current_audit_info._ignore_unused_services = True
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=current_audit_info,
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_redis_6379.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_redis_6379.ec2_client",
             new=EC2(current_audit_info),
@@ -281,11 +281,11 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_redis_6379:
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
         current_audit_info = set_mocked_aws_audit_info()
-        current_audit_info.ignore_unused_services = True
+        current_audit_info._ignore_unused_services = True
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=current_audit_info,
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_redis_6379.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_redis_6379.ec2_client",
             new=EC2(current_audit_info),
@@ -315,7 +315,7 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_redis_6379:
                     )
                     assert (
                         result[0].resource_arn
-                        == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION_US_EAST_1}:{current_audit_info.audited_account}:security-group/{sg['GroupId']}"
+                        == f"arn:{current_audit_info.identity.partition}:ec2:{AWS_REGION_US_EAST_1}:{current_audit_info.identity.account}:security-group/{sg['GroupId']}"
                     )
                     assert result[0].resource_details == sg["GroupName"]
                     assert result[0].resource_tags == []

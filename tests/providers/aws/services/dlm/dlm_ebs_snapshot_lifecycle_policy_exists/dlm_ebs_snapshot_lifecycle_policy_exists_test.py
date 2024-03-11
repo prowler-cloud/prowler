@@ -31,8 +31,8 @@ class Test_dlm_ebs_snapshot_lifecycle_policy_exists:
             "prowler.providers.aws.services.dlm.dlm_service.DLM",
             new=dlm_client,
         ), mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=audit_info,
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_service.EC2",
             return_value=EC2(audit_info),
@@ -96,8 +96,8 @@ class Test_dlm_ebs_snapshot_lifecycle_policy_exists:
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=audit_info,
         ), mock.patch(
             "prowler.providers.aws.services.dlm.dlm_ebs_snapshot_lifecycle_policy_exists.dlm_ebs_snapshot_lifecycle_policy_exists.ec2_client",
             new=EC2(audit_info),
@@ -157,8 +157,8 @@ class Test_dlm_ebs_snapshot_lifecycle_policy_exists:
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=audit_info,
         ), mock.patch(
             "prowler.providers.aws.services.dlm.dlm_ebs_snapshot_lifecycle_policy_exists.dlm_ebs_snapshot_lifecycle_policy_exists.ec2_client",
             new=EC2(audit_info),
@@ -198,8 +198,8 @@ class Test_dlm_ebs_snapshot_lifecycle_policy_exists:
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=audit_info,
         ), mock.patch(
             "prowler.providers.aws.services.dlm.dlm_ebs_snapshot_lifecycle_policy_exists.dlm_ebs_snapshot_lifecycle_policy_exists.ec2_client",
             new=EC2(audit_info),

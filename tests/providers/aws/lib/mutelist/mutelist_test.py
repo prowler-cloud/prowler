@@ -40,7 +40,9 @@ class Test_Allowlist:
 
         with open("tests/providers/aws/lib/mutelist/fixtures/mutelist.yaml") as f:
             assert yaml.safe_load(f)["Mute List"] == parse_mutelist_file(
-                audit_info, "s3://test-mutelist/mutelist.yaml"
+                audit_info.session.current_session,
+                audit_info.identity.account,
+                "s3://test-mutelist/mutelist.yaml",
             )
 
     # Test DynamoDB mutelist
@@ -78,7 +80,8 @@ class Test_Allowlist:
         assert (
             "keyword"
             in parse_mutelist_file(
-                audit_info,
+                audit_info.session.current_session,
+                audit_info.identity.account,
                 "arn:aws:dynamodb:"
                 + AWS_REGION_US_EAST_1
                 + ":"
@@ -123,7 +126,8 @@ class Test_Allowlist:
         assert (
             "environment=dev"
             in parse_mutelist_file(
-                audit_info,
+                audit_info.session.current_session,
+                audit_info.identity.account,
                 "arn:aws:dynamodb:"
                 + AWS_REGION_US_EAST_1
                 + ":"
@@ -201,7 +205,7 @@ class Test_Allowlist:
 
         muted_findings = mutelist_findings(mutelist, AWS_ACCOUNT_NUMBER, check_findings)
         assert len(muted_findings) == 1
-        assert muted_findings[0].status == "WARNING"
+        assert muted_findings[0].status == "MUTED"
 
     def test_is_muted_with_everything_excepted(self):
         mutelist = {

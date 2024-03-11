@@ -1,6 +1,8 @@
 from argparse import Namespace
 
 from boto3 import session
+from botocore.config import Config
+from moto import mock_aws
 
 from prowler.providers.aws.aws_provider import AwsProvider
 from prowler.providers.common.models import Audit_Metadata
@@ -76,6 +78,8 @@ AWS_ISO_PARTITION = "aws-iso"
 
 
 # Mocked AWS Provider
+# This here causes to call this function mocking the AWS calls
+@mock_aws
 def set_mocked_aws_audit_info(
     # def set_mocked_aws_provider(
     audited_regions: list[str] = [],
@@ -93,14 +97,14 @@ def set_mocked_aws_audit_info(
     ),
     original_session: session.Session = None,
     enabled_regions: set = None,
-):
+) -> AwsProvider:
     # Create default AWS Provider
     provider = AwsProvider(Namespace())
     # Mock Session
     provider._session.session_config = None
     provider._session.original_session = original_session
     provider._session.current_session = audit_session
-    provider._session.session_config = audit_config
+    provider._session.session_config = Config()
     # Mock Identity
     provider._identity.account = audited_account
     provider._identity.account_arn = audited_account_arn
@@ -115,8 +119,10 @@ def set_mocked_aws_audit_info(
     provider._enabled_regions = (
         enabled_regions if enabled_regions else set(audited_regions)
     )
+    # TODO: we can create the organizations metadata here with moto
     provider._organizations_metadata = None
     provider._audit_resources = []
+    provider._audit_config = audit_config
     provider.audit_metadata = Audit_Metadata(
         services_scanned=0,
         expected_checks=expected_checks,

@@ -62,7 +62,7 @@ class Test_S3_Service:
         assert s3.buckets[0].name == bucket_name
         assert (
             s3.buckets[0].arn
-            == f"arn:{audit_info.audited_partition}:s3:::{bucket_name}"
+            == f"arn:{audit_info.identity.partition}:s3:::{bucket_name}"
         )
         assert not s3.buckets[0].object_lock
 
@@ -86,7 +86,7 @@ class Test_S3_Service:
         assert s3.buckets[0].name == bucket_name
         assert (
             s3.buckets[0].arn
-            == f"arn:{audit_info.audited_partition}:s3:::{bucket_name}"
+            == f"arn:{audit_info.identity.partition}:s3:::{bucket_name}"
         )
         assert s3.buckets[0].versioning is True
 
@@ -119,7 +119,7 @@ class Test_S3_Service:
         assert s3.buckets[0].name == bucket_name
         assert (
             s3.buckets[0].arn
-            == f"arn:{audit_info.audited_partition}:s3:::{bucket_name}"
+            == f"arn:{audit_info.identity.partition}:s3:::{bucket_name}"
         )
         assert s3.buckets[0].acl_grantees[0].display_name == "test"
         assert s3.buckets[0].acl_grantees[0].ID == "test_ID"
@@ -199,7 +199,7 @@ class Test_S3_Service:
         assert s3.buckets[0].name == bucket_name
         assert (
             s3.buckets[0].arn
-            == f"arn:{audit_info.audited_partition}:s3:::{bucket_name}"
+            == f"arn:{audit_info.identity.partition}:s3:::{bucket_name}"
         )
         assert s3.buckets[0].logging is True
 
@@ -220,7 +220,7 @@ class Test_S3_Service:
         assert s3.buckets[0].name == bucket_name
         assert (
             s3.buckets[0].arn
-            == f"arn:{audit_info.audited_partition}:s3:::{bucket_name}"
+            == f"arn:{audit_info.identity.partition}:s3:::{bucket_name}"
         )
         assert s3.buckets[0].policy == json.loads(ssl_policy)
 
@@ -253,7 +253,7 @@ class Test_S3_Service:
         assert s3.buckets[0].name == bucket_name
         assert (
             s3.buckets[0].arn
-            == f"arn:{audit_info.audited_partition}:s3:::{bucket_name}"
+            == f"arn:{audit_info.identity.partition}:s3:::{bucket_name}"
         )
         assert s3.buckets[0].encryption == "aws:kms"
 
@@ -275,7 +275,7 @@ class Test_S3_Service:
         assert s3.buckets[0].name == bucket_name
         assert (
             s3.buckets[0].arn
-            == f"arn:{audit_info.audited_partition}:s3:::{bucket_name}"
+            == f"arn:{audit_info.identity.partition}:s3:::{bucket_name}"
         )
         assert s3.buckets[0].ownership == "BucketOwnerEnforced"
 
@@ -305,7 +305,7 @@ class Test_S3_Service:
         assert s3.buckets[0].name == bucket_name
         assert (
             s3.buckets[0].arn
-            == f"arn:{audit_info.audited_partition}:s3:::{bucket_name}"
+            == f"arn:{audit_info.identity.partition}:s3:::{bucket_name}"
         )
         assert s3.buckets[0].public_access_block.block_public_acls
         assert s3.buckets[0].public_access_block.ignore_public_acls
@@ -379,6 +379,6 @@ class Test_S3_Service:
         assert s3.buckets[0].name == bucket_name
         assert (
             s3.buckets[0].arn
-            == f"arn:{audit_info.audited_partition}:s3:::{bucket_name}"
+            == f"arn:{audit_info.identity.partition}:s3:::{bucket_name}"
         )
         assert s3.buckets[0].object_lock

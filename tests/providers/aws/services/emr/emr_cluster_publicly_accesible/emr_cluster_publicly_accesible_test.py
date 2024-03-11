@@ -81,8 +81,8 @@ class Test_emr_cluster_publicly_accesible:
             "prowler.providers.aws.services.emr.emr_service.EMR",
             new=emr_client,
         ), mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            set_mocked_aws_audit_info(),
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_aws_audit_info(),
         ), mock.patch(
             "prowler.providers.aws.services.emr.emr_cluster_publicly_accesible.emr_cluster_publicly_accesible.ec2_client",
             new=EC2(set_mocked_aws_audit_info()),
@@ -147,8 +147,8 @@ class Test_emr_cluster_publicly_accesible:
             "prowler.providers.aws.services.emr.emr_service.EMR",
             new=emr_client,
         ), mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            set_mocked_aws_audit_info(),
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_aws_audit_info(),
         ), mock.patch(
             "prowler.providers.aws.services.emr.emr_cluster_publicly_accesible.emr_cluster_publicly_accesible.ec2_client",
             new=EC2(set_mocked_aws_audit_info()),
@@ -230,8 +230,8 @@ class Test_emr_cluster_publicly_accesible:
             "prowler.providers.aws.services.emr.emr_service.EMR",
             new=emr_client,
         ), mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            set_mocked_aws_audit_info(),
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_aws_audit_info(),
         ), mock.patch(
             "prowler.providers.aws.services.emr.emr_cluster_publicly_accesible.emr_cluster_publicly_accesible.ec2_client",
             new=EC2(set_mocked_aws_audit_info()),
@@ -316,8 +316,8 @@ class Test_emr_cluster_publicly_accesible:
             "prowler.providers.aws.services.emr.emr_service.EMR",
             new=emr_client,
         ), mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            set_mocked_aws_audit_info(),
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_aws_audit_info(),
         ), mock.patch(
             "prowler.providers.aws.services.emr.emr_cluster_publicly_accesible.emr_cluster_publicly_accesible.ec2_client",
             new=EC2(set_mocked_aws_audit_info()),
@@ -399,8 +399,8 @@ class Test_emr_cluster_publicly_accesible:
             "prowler.providers.aws.services.emr.emr_service.EMR",
             new=emr_client,
         ), mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            set_mocked_aws_audit_info(),
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_aws_audit_info(),
         ), mock.patch(
             "prowler.providers.aws.services.emr.emr_cluster_publicly_accesible.emr_cluster_publicly_accesible.ec2_client",
             new=EC2(set_mocked_aws_audit_info()),

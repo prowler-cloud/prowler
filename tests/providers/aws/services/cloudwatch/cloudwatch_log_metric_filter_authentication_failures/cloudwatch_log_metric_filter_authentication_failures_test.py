@@ -37,8 +37,8 @@ class Test_cloudwatch_log_metric_filter_authentication_failures:
         )
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=current_audit_info,
         ), mock.patch(
             "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_authentication_failures.cloudwatch_log_metric_filter_authentication_failures.logs_client",
             new=Logs(current_audit_info),
@@ -100,8 +100,8 @@ class Test_cloudwatch_log_metric_filter_authentication_failures:
         )
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=current_audit_info,
         ), mock.patch(
             "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_authentication_failures.cloudwatch_log_metric_filter_authentication_failures.logs_client",
             new=Logs(current_audit_info),
@@ -169,8 +169,8 @@ class Test_cloudwatch_log_metric_filter_authentication_failures:
         )
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=current_audit_info,
         ), mock.patch(
             "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_authentication_failures.cloudwatch_log_metric_filter_authentication_failures.logs_client",
             new=Logs(current_audit_info),
@@ -250,8 +250,8 @@ class Test_cloudwatch_log_metric_filter_authentication_failures:
         )
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=current_audit_info,
         ), mock.patch(
             "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_authentication_failures.cloudwatch_log_metric_filter_authentication_failures.logs_client",
             new=Logs(current_audit_info),
@@ -343,8 +343,8 @@ class Test_cloudwatch_log_metric_filter_authentication_failures:
         )
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=current_audit_info,
         ), mock.patch(
             "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_authentication_failures.cloudwatch_log_metric_filter_authentication_failures.logs_client",
             new=Logs(current_audit_info),
@@ -436,8 +436,8 @@ class Test_cloudwatch_log_metric_filter_authentication_failures:
         )
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=current_audit_info,
         ), mock.patch(
             "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_authentication_failures.cloudwatch_log_metric_filter_authentication_failures.logs_client",
             new=Logs(current_audit_info),
@@ -529,8 +529,8 @@ class Test_cloudwatch_log_metric_filter_authentication_failures:
         )
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=current_audit_info,
         ), mock.patch(
             "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_authentication_failures.cloudwatch_log_metric_filter_authentication_failures.logs_client",
             new=Logs(current_audit_info),

@@ -11,7 +11,7 @@ from tests.providers.aws.audit_info_utils import (
 class Test_glue_data_catalogs_metadata_encryption_enabled:
     def test_glue_no_settings(self):
         glue_client = mock.MagicMock
-        glue_client.audit_info = set_mocked_aws_audit_info
+        glue_client.provider = set_mocked_aws_audit_info
         glue_client.catalog_encryption_settings = []
 
         with mock.patch(
@@ -30,7 +30,7 @@ class Test_glue_data_catalogs_metadata_encryption_enabled:
 
     def test_glue_catalog_unencrypted(self):
         glue_client = mock.MagicMock
-        glue_client.audit_info = set_mocked_aws_audit_info()
+        glue_client.provider = set_mocked_aws_audit_info()
         glue_client.catalog_encryption_settings = [
             CatalogEncryptionSetting(
                 mode="disabled.",
@@ -71,7 +71,7 @@ class Test_glue_data_catalogs_metadata_encryption_enabled:
 
     def test_glue_catalog_unencrypted_ignoring(self):
         glue_client = mock.MagicMock
-        glue_client.audit_info = set_mocked_aws_audit_info()
+        glue_client.provider = set_mocked_aws_audit_info()
         glue_client.catalog_encryption_settings = [
             CatalogEncryptionSetting(
                 mode="disabled.",
@@ -83,7 +83,7 @@ class Test_glue_data_catalogs_metadata_encryption_enabled:
             )
         ]
         glue_client.audited_account = "12345678912"
-        glue_client.audit_info.ignore_unused_services = True
+        glue_client.provider._ignore_unused_services = True
         glue_client.audited_partition = "aws"
         glue_client.region = AWS_REGION_US_EAST_1
         glue_client.data_catalog_arn_template = f"arn:{glue_client.audited_partition}:glue:{glue_client.region}:{glue_client.audited_account}:data-catalog"
@@ -106,7 +106,7 @@ class Test_glue_data_catalogs_metadata_encryption_enabled:
 
     def test_glue_catalog_unencrypted_ignoring_with_tables(self):
         glue_client = mock.MagicMock
-        glue_client.audit_info = set_mocked_aws_audit_info()
+        glue_client.provider = set_mocked_aws_audit_info()
         glue_client.catalog_encryption_settings = [
             CatalogEncryptionSetting(
                 mode="disabled.",
@@ -118,7 +118,7 @@ class Test_glue_data_catalogs_metadata_encryption_enabled:
             )
         ]
         glue_client.audited_account = "12345678912"
-        glue_client.audit_info.ignore_unused_services = True
+        glue_client.provider._ignore_unused_services = True
         glue_client.audited_partition = "aws"
         glue_client.region = AWS_REGION_US_EAST_1
         glue_client.data_catalog_arn_template = f"arn:{glue_client.audited_partition}:glue:{glue_client.region}:{glue_client.audited_account}:data-catalog"
@@ -148,7 +148,7 @@ class Test_glue_data_catalogs_metadata_encryption_enabled:
 
     def test_glue_catalog_encrypted(self):
         glue_client = mock.MagicMock
-        glue_client.audit_info = set_mocked_aws_audit_info()
+        glue_client.provider = set_mocked_aws_audit_info()
         glue_client.catalog_encryption_settings = [
             CatalogEncryptionSetting(
                 mode="SSE-KMS",

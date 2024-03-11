@@ -32,8 +32,8 @@ class Test_ecr_repositories_lifecycle_policy_enabled:
         ecr_client.registries = {}
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            set_mocked_aws_audit_info(),
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_aws_audit_info(),
         ), mock.patch(
             "prowler.providers.aws.services.ecr.ecr_repositories_lifecycle_policy_enabled.ecr_repositories_lifecycle_policy_enabled.ecr_client",
             ecr_client,
@@ -58,8 +58,8 @@ class Test_ecr_repositories_lifecycle_policy_enabled:
         )
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            set_mocked_aws_audit_info(),
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_aws_audit_info(),
         ), mock.patch(
             "prowler.providers.aws.services.ecr.ecr_repositories_lifecycle_policy_enabled.ecr_repositories_lifecycle_policy_enabled.ecr_client",
             ecr_client,
@@ -94,8 +94,8 @@ class Test_ecr_repositories_lifecycle_policy_enabled:
         )
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            set_mocked_aws_audit_info(),
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_aws_audit_info(),
         ), mock.patch(
             "prowler.providers.aws.services.ecr.ecr_repositories_lifecycle_policy_enabled.ecr_repositories_lifecycle_policy_enabled.ecr_client",
             ecr_client,
@@ -138,8 +138,8 @@ class Test_ecr_repositories_lifecycle_policy_enabled:
         )
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            set_mocked_aws_audit_info(),
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_aws_audit_info(),
         ), mock.patch(
             "prowler.providers.aws.services.ecr.ecr_repositories_lifecycle_policy_enabled.ecr_repositories_lifecycle_policy_enabled.ecr_client",
             ecr_client,

@@ -173,6 +173,7 @@ class Test_securityhub_enabled:
             check = securityhub_enabled()
             result = check.execute()
 
+            # TODO: review MUTED
             assert result[0].status == "MUTED"
             assert (
                 result[0].status_extended

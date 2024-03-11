@@ -37,8 +37,8 @@ class Test_cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_c
         )
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=current_audit_info,
         ), mock.patch(
             "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled.cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled.logs_client",
             new=Logs(current_audit_info),
@@ -102,8 +102,8 @@ class Test_cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_c
         )
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=current_audit_info,
         ), mock.patch(
             "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled.cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled.logs_client",
             new=Logs(current_audit_info),
@@ -173,8 +173,8 @@ class Test_cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_c
         )
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=current_audit_info,
         ), mock.patch(
             "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled.cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled.logs_client",
             new=Logs(current_audit_info),
@@ -256,8 +256,8 @@ class Test_cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_c
         )
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=current_audit_info,
         ), mock.patch(
             "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled.cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled.logs_client",
             new=Logs(current_audit_info),
@@ -351,8 +351,8 @@ class Test_cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_c
         )
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=current_audit_info,
         ), mock.patch(
             "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled.cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled.logs_client",
             new=Logs(current_audit_info),
@@ -446,8 +446,8 @@ class Test_cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_c
         )
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=current_audit_info,
         ), mock.patch(
             "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled.cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled.logs_client",
             new=Logs(current_audit_info),
@@ -541,8 +541,8 @@ class Test_cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_c
         )
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=current_audit_info,
         ), mock.patch(
             "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled.cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled.logs_client",
             new=Logs(current_audit_info),

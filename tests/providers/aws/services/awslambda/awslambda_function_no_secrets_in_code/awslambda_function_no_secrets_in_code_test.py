@@ -65,8 +65,8 @@ class Test_awslambda_function_no_secrets_in_code:
         lambda_client.functions = {}
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            set_mocked_aws_audit_info(),
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_aws_audit_info(),
         ), mock.patch(
             "prowler.providers.aws.services.awslambda.awslambda_function_no_secrets_in_code.awslambda_function_no_secrets_in_code.awslambda_client",
             new=lambda_client,
@@ -86,8 +86,8 @@ class Test_awslambda_function_no_secrets_in_code:
         lambda_client.functions = {LAMBDA_FUNCTION_ARN: create_lambda_function()}
         lambda_client.__get_function_code__ = mock__get_function_code__with_secrets
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            set_mocked_aws_audit_info(),
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_aws_audit_info(),
         ), mock.patch(
             "prowler.providers.aws.services.awslambda.awslambda_function_no_secrets_in_code.awslambda_function_no_secrets_in_code.awslambda_client",
             new=lambda_client,
@@ -118,8 +118,8 @@ class Test_awslambda_function_no_secrets_in_code:
         lambda_client.__get_function_code__ = mock__get_function_code__without_secrets
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            set_mocked_aws_audit_info(),
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_aws_audit_info(),
         ), mock.patch(
             "prowler.providers.aws.services.awslambda.awslambda_function_no_secrets_in_code.awslambda_function_no_secrets_in_code.awslambda_client",
             new=lambda_client,

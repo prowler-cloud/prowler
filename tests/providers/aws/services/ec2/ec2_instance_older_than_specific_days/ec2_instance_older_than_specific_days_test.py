@@ -23,11 +23,11 @@ class Test_ec2_instance_older_than_specific_days:
         current_audit_info = set_mocked_aws_audit_info(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
-        current_audit_info.audit_config = {"max_ec2_instance_age_in_days": 180}
+        current_audit_info._audit_config = {"max_ec2_instance_age_in_days": 180}
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=current_audit_info,
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_instance_older_than_specific_days.ec2_instance_older_than_specific_days.ec2_client",
             new=EC2(current_audit_info),
@@ -57,11 +57,11 @@ class Test_ec2_instance_older_than_specific_days:
         current_audit_info = set_mocked_aws_audit_info(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
-        current_audit_info.audit_config = {"max_ec2_instance_age_in_days": 180}
+        current_audit_info._audit_config = {"max_ec2_instance_age_in_days": 180}
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=current_audit_info,
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_instance_older_than_specific_days.ec2_instance_older_than_specific_days.ec2_client",
             new=EC2(current_audit_info),
@@ -83,7 +83,7 @@ class Test_ec2_instance_older_than_specific_days:
             assert result[0].resource_id == instance.id
             assert (
                 result[0].resource_arn
-                == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION_US_EAST_1}:{current_audit_info.audited_account}:instance/{instance.id}"
+                == f"arn:{current_audit_info.identity.partition}:ec2:{AWS_REGION_US_EAST_1}:{current_audit_info.identity.account}:instance/{instance.id}"
             )
 
     @mock_aws
@@ -101,11 +101,11 @@ class Test_ec2_instance_older_than_specific_days:
         current_audit_info = set_mocked_aws_audit_info(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
-        current_audit_info.audit_config = {"max_ec2_instance_age_in_days": 180}
+        current_audit_info._audit_config = {"max_ec2_instance_age_in_days": 180}
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=current_audit_info,
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_instance_older_than_specific_days.ec2_instance_older_than_specific_days.ec2_client",
             new=EC2(current_audit_info),
@@ -131,5 +131,5 @@ class Test_ec2_instance_older_than_specific_days:
             assert result[0].resource_id == instance.id
             assert (
                 result[0].resource_arn
-                == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION_US_EAST_1}:{current_audit_info.audited_account}:instance/{instance.id}"
+                == f"arn:{current_audit_info.identity.partition}:ec2:{AWS_REGION_US_EAST_1}:{current_audit_info.identity.account}:instance/{instance.id}"
             )

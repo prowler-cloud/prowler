@@ -15,12 +15,12 @@ class Test_macie_is_enabled:
     @mock_aws
     def test_macie_disabled(self):
         s3_client = mock.MagicMock
-        s3_client.audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
+        s3_client.provider = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         s3_client.buckets = []
         s3_client.regions_with_buckets = []
 
         macie_client = mock.MagicMock
-        macie_client.audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
+        macie_client.provider = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         macie_client.audited_account = AWS_ACCOUNT_NUMBER
         macie_client.audited_account_arn = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
         macie_client.audited_partition = "aws"
@@ -38,8 +38,8 @@ class Test_macie_is_enabled:
         current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=current_audit_info,
         ), mock.patch(
             "prowler.providers.aws.services.macie.macie_is_enabled.macie_is_enabled.macie_client",
             new=macie_client,
@@ -67,12 +67,12 @@ class Test_macie_is_enabled:
     @mock_aws
     def test_macie_enabled(self):
         s3_client = mock.MagicMock
-        s3_client.audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
+        s3_client.provider = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         s3_client.buckets = []
         s3_client.regions_with_buckets = []
 
         macie_client = mock.MagicMock
-        macie_client.audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
+        macie_client.provider = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         macie_client.audited_account = AWS_ACCOUNT_NUMBER
         macie_client.audited_account_arn = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
         macie_client.audited_partition = "aws"
@@ -90,8 +90,8 @@ class Test_macie_is_enabled:
         current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=current_audit_info,
         ), mock.patch(
             "prowler.providers.aws.services.macie.macie_is_enabled.macie_is_enabled.macie_client",
             new=macie_client,
@@ -119,12 +119,12 @@ class Test_macie_is_enabled:
     @mock_aws
     def test_macie_suspended_ignored(self):
         s3_client = mock.MagicMock
-        s3_client.audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
+        s3_client.provider = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         s3_client.buckets = []
         s3_client.regions_with_buckets = []
 
         macie_client = mock.MagicMock
-        macie_client.audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
+        macie_client.provider = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         macie_client.audited_account = AWS_ACCOUNT_NUMBER
         macie_client.audited_account_arn = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
         macie_client.audited_partition = "aws"
@@ -141,11 +141,11 @@ class Test_macie_is_enabled:
         ]
 
         current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
-        macie_client.audit_info.ignore_unused_services = True
+        macie_client.provider._ignore_unused_services = True
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=current_audit_info,
         ), mock.patch(
             "prowler.providers.aws.services.macie.macie_is_enabled.macie_is_enabled.macie_client",
             new=macie_client,
@@ -167,7 +167,7 @@ class Test_macie_is_enabled:
     def test_macie_suspended_ignored_with_buckets(self):
         s3_client = mock.MagicMock
         s3_client.regions_with_buckets = [AWS_REGION_EU_WEST_1]
-        s3_client.audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
+        s3_client.provider = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         s3_client.buckets = [
             Bucket(
                 name="test",
@@ -177,7 +177,7 @@ class Test_macie_is_enabled:
         ]
 
         macie_client = mock.MagicMock
-        macie_client.audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
+        macie_client.provider = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         macie_client.audited_account = AWS_ACCOUNT_NUMBER
         macie_client.audited_account_arn = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
         macie_client.audited_partition = "aws"
@@ -192,12 +192,12 @@ class Test_macie_is_enabled:
         macie_client.__get_session_arn_template__ = mock.MagicMock(
             return_value=macie_client.session_arn_template
         )
-        macie_client.audit_info.ignore_unused_services = True
+        macie_client.provider._ignore_unused_services = True
         current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=current_audit_info,
         ), mock.patch(
             "prowler.providers.aws.services.macie.macie_is_enabled.macie_is_enabled.macie_client",
             new=macie_client,
@@ -227,10 +227,10 @@ class Test_macie_is_enabled:
     @mock_aws
     def test_macie_suspended(self):
         s3_client = mock.MagicMock
-        s3_client.audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
+        s3_client.provider = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
 
         macie_client = mock.MagicMock
-        macie_client.audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
+        macie_client.provider = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
         macie_client.audited_account = AWS_ACCOUNT_NUMBER
         macie_client.audited_account_arn = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
         macie_client.audited_partition = "aws"
@@ -247,8 +247,8 @@ class Test_macie_is_enabled:
             return_value=macie_client.session_arn_template
         )
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=current_audit_info,
         ), mock.patch(
             "prowler.providers.aws.services.macie.macie_is_enabled.macie_is_enabled.macie_client",
             new=macie_client,

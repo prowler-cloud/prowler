@@ -21,11 +21,11 @@ class Test_vpc_endpoint_connections_trust_boundaries:
 
         current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
         # Set config variable
-        current_audit_info.audit_config = {"trusted_account_ids": []}
+        current_audit_info._audit_config = {"trusted_account_ids": []}
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=current_audit_info,
         ):
             with mock.patch(
                 "prowler.providers.aws.services.vpc.vpc_endpoint_connections_trust_boundaries.vpc_endpoint_connections_trust_boundaries.vpc_client",
@@ -60,11 +60,11 @@ class Test_vpc_endpoint_connections_trust_boundaries:
 
         current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
         # Set config variable
-        current_audit_info.audit_config = {"trusted_account_ids": []}
+        current_audit_info._audit_config = {"trusted_account_ids": []}
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=current_audit_info,
         ):
             with mock.patch(
                 "prowler.providers.aws.services.vpc.vpc_endpoint_connections_trust_boundaries.vpc_endpoint_connections_trust_boundaries.vpc_client",
@@ -111,11 +111,11 @@ class Test_vpc_endpoint_connections_trust_boundaries:
 
         current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
         # Set config variable
-        current_audit_info.audit_config = {"trusted_account_ids": []}
+        current_audit_info._audit_config = {"trusted_account_ids": []}
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=current_audit_info,
         ):
             with mock.patch(
                 "prowler.providers.aws.services.vpc.vpc_endpoint_connections_trust_boundaries.vpc_endpoint_connections_trust_boundaries.vpc_client",
@@ -173,11 +173,11 @@ class Test_vpc_endpoint_connections_trust_boundaries:
 
         current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
         # Set config variable
-        current_audit_info.audit_config = {"trusted_account_ids": []}
+        current_audit_info._audit_config = {"trusted_account_ids": []}
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=current_audit_info,
         ):
             with mock.patch(
                 "prowler.providers.aws.services.vpc.vpc_endpoint_connections_trust_boundaries.vpc_endpoint_connections_trust_boundaries.vpc_client",
@@ -233,11 +233,11 @@ class Test_vpc_endpoint_connections_trust_boundaries:
 
         current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
         # Set config variable
-        current_audit_info.audit_config = {"trusted_account_ids": []}
+        current_audit_info._audit_config = {"trusted_account_ids": []}
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=current_audit_info,
         ):
             with mock.patch(
                 "prowler.providers.aws.services.vpc.vpc_endpoint_connections_trust_boundaries.vpc_endpoint_connections_trust_boundaries.vpc_client",
@@ -296,11 +296,11 @@ class Test_vpc_endpoint_connections_trust_boundaries:
 
         current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
         # Set config variable
-        current_audit_info.audit_config = {"trusted_account_ids": []}
+        current_audit_info._audit_config = {"trusted_account_ids": []}
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=current_audit_info,
         ):
             with mock.patch(
                 "prowler.providers.aws.services.vpc.vpc_endpoint_connections_trust_boundaries.vpc_endpoint_connections_trust_boundaries.vpc_client",
@@ -358,13 +358,13 @@ class Test_vpc_endpoint_connections_trust_boundaries:
         current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
 
         # Set config variable
-        current_audit_info.audit_config = {
+        current_audit_info._audit_config = {
             "trusted_account_ids": [TRUSTED_AWS_ACCOUNT_NUMBER]
         }
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=current_audit_info,
         ):
             with mock.patch(
                 "prowler.providers.aws.services.vpc.vpc_endpoint_connections_trust_boundaries.vpc_endpoint_connections_trust_boundaries.vpc_client",
@@ -421,13 +421,13 @@ class Test_vpc_endpoint_connections_trust_boundaries:
         current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
 
         # Set config variable
-        current_audit_info.audit_config = {
+        current_audit_info._audit_config = {
             "trusted_account_ids": [TRUSTED_AWS_ACCOUNT_NUMBER]
         }
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=current_audit_info,
         ):
             with mock.patch(
                 "prowler.providers.aws.services.vpc.vpc_endpoint_connections_trust_boundaries.vpc_endpoint_connections_trust_boundaries.vpc_client",
@@ -488,11 +488,11 @@ class Test_vpc_endpoint_connections_trust_boundaries:
 
         current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
         # Set config variable
-        current_audit_info.audit_config = {"trusted_account_ids": []}
+        current_audit_info._audit_config = {"trusted_account_ids": []}
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=current_audit_info,
         ):
             with mock.patch(
                 "prowler.providers.aws.services.vpc.vpc_endpoint_connections_trust_boundaries.vpc_endpoint_connections_trust_boundaries.vpc_client",
@@ -548,11 +548,11 @@ class Test_vpc_endpoint_connections_trust_boundaries:
 
         current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
         # Set config variable
-        current_audit_info.audit_config = {"trusted_account_ids": []}
+        current_audit_info._audit_config = {"trusted_account_ids": []}
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=current_audit_info,
         ):
             with mock.patch(
                 "prowler.providers.aws.services.vpc.vpc_endpoint_connections_trust_boundaries.vpc_endpoint_connections_trust_boundaries.vpc_client",
@@ -615,11 +615,11 @@ class Test_vpc_endpoint_connections_trust_boundaries:
 
         current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
         # Set config variable
-        current_audit_info.audit_config = {"trusted_account_ids": []}
+        current_audit_info._audit_config = {"trusted_account_ids": []}
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=current_audit_info,
         ):
             with mock.patch(
                 "prowler.providers.aws.services.vpc.vpc_endpoint_connections_trust_boundaries.vpc_endpoint_connections_trust_boundaries.vpc_client",
@@ -682,11 +682,11 @@ class Test_vpc_endpoint_connections_trust_boundaries:
 
         current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
         # Set config variable
-        current_audit_info.audit_config = {"trusted_account_ids": []}
+        current_audit_info._audit_config = {"trusted_account_ids": []}
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=current_audit_info,
         ):
             with mock.patch(
                 "prowler.providers.aws.services.vpc.vpc_endpoint_connections_trust_boundaries.vpc_endpoint_connections_trust_boundaries.vpc_client",

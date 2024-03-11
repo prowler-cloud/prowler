@@ -27,8 +27,8 @@ class Test_ec2_instance_managed_by_ssm_test:
         ssm_client.managed_instances = {}
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=current_audit_info,
         ), mock.patch(
             "prowler.providers.aws.services.ssm.ssm_service.SSM",
             new=ssm_client,
@@ -72,8 +72,8 @@ class Test_ec2_instance_managed_by_ssm_test:
         )
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=current_audit_info,
         ), mock.patch(
             "prowler.providers.aws.services.ssm.ssm_service.SSM",
             new=ssm_client,
@@ -128,8 +128,8 @@ class Test_ec2_instance_managed_by_ssm_test:
         )
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=current_audit_info,
         ), mock.patch(
             "prowler.providers.aws.services.ssm.ssm_service.SSM",
             new=ssm_client,

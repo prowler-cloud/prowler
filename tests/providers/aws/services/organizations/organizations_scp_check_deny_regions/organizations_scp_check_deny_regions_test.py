@@ -23,12 +23,12 @@ class Test_organizations_scp_check_deny_regions:
     @mock_aws
     def test_no_organization(self):
         audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
-        audit_info.audit_config = {
+        audit_info._audit_config = {
             "organizations_enabled_regions": [AWS_REGION_EU_WEST_1]
         }
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=audit_info,
         ):
             with mock.patch(
                 "prowler.providers.aws.services.organizations.organizations_scp_check_deny_regions.organizations_scp_check_deny_regions.organizations_client",
@@ -55,7 +55,7 @@ class Test_organizations_scp_check_deny_regions:
     @mock_aws
     def test_organization_without_scp_deny_regions(self):
         audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
-        audit_info.audit_config = {
+        audit_info._audit_config = {
             "organizations_enabled_regions": [AWS_REGION_EU_WEST_1]
         }
 
@@ -64,8 +64,8 @@ class Test_organizations_scp_check_deny_regions:
         response = conn.create_organization()
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=audit_info,
         ):
             with mock.patch(
                 "prowler.providers.aws.services.organizations.organizations_scp_check_deny_regions.organizations_scp_check_deny_regions.organizations_client",
@@ -105,11 +105,11 @@ class Test_organizations_scp_check_deny_regions:
         )
 
         # Set config variable
-        audit_info.audit_config = {"organizations_enabled_regions": ["eu-central-1"]}
+        audit_info._audit_config = {"organizations_enabled_regions": ["eu-central-1"]}
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=audit_info,
         ):
             with mock.patch(
                 "prowler.providers.aws.services.organizations.organizations_scp_check_deny_regions.organizations_scp_check_deny_regions.organizations_client",
@@ -149,11 +149,11 @@ class Test_organizations_scp_check_deny_regions:
         )
 
         # Set config variable
-        audit_info.audit_config = {"organizations_enabled_regions": ["us-east-1"]}
+        audit_info._audit_config = {"organizations_enabled_regions": ["us-east-1"]}
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=audit_info,
         ):
             with mock.patch(
                 "prowler.providers.aws.services.organizations.organizations_scp_check_deny_regions.organizations_scp_check_deny_regions.organizations_client",
@@ -180,7 +180,7 @@ class Test_organizations_scp_check_deny_regions:
     @mock_aws
     def test_organization_with_scp_deny_all_regions_valid(self):
         audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
-        audit_info.audit_config = {
+        audit_info._audit_config = {
             "organizations_enabled_regions": [
                 AWS_REGION_EU_WEST_1,
                 AWS_REGION_EU_CENTRAL_1,
@@ -198,11 +198,11 @@ class Test_organizations_scp_check_deny_regions:
         )
 
         # Set config variable
-        audit_info.audit_config = {"organizations_enabled_regions": ["eu-central-1"]}
+        audit_info._audit_config = {"organizations_enabled_regions": ["eu-central-1"]}
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=audit_info,
         ):
             with mock.patch(
                 "prowler.providers.aws.services.organizations.organizations_scp_check_deny_regions.organizations_scp_check_deny_regions.organizations_client",

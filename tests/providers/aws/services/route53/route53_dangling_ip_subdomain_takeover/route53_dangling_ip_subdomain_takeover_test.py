@@ -19,8 +19,8 @@ class Test_route53_dangling_ip_subdomain_takeover:
         audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=audit_info,
         ):
             with mock.patch(
                 "prowler.providers.aws.services.route53.route53_dangling_ip_subdomain_takeover.route53_dangling_ip_subdomain_takeover.route53_client",
@@ -54,8 +54,8 @@ class Test_route53_dangling_ip_subdomain_takeover:
         audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=audit_info,
         ):
             with mock.patch(
                 "prowler.providers.aws.services.route53.route53_dangling_ip_subdomain_takeover.route53_dangling_ip_subdomain_takeover.route53_client",
@@ -104,8 +104,8 @@ class Test_route53_dangling_ip_subdomain_takeover:
         audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=audit_info,
         ):
             with mock.patch(
                 "prowler.providers.aws.services.route53.route53_dangling_ip_subdomain_takeover.route53_dangling_ip_subdomain_takeover.route53_client",
@@ -135,7 +135,7 @@ class Test_route53_dangling_ip_subdomain_takeover:
                     )
                     assert (
                         result[0].resource_arn
-                        == f"arn:{audit_info.audited_partition}:route53:::hostedzone/{zone_id.replace('/hostedzone/', '')}"
+                        == f"arn:{audit_info.identity.partition}:route53:::hostedzone/{zone_id.replace('/hostedzone/', '')}"
                     )
 
     @mock_aws
@@ -167,8 +167,8 @@ class Test_route53_dangling_ip_subdomain_takeover:
         audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=audit_info,
         ):
             with mock.patch(
                 "prowler.providers.aws.services.route53.route53_dangling_ip_subdomain_takeover.route53_dangling_ip_subdomain_takeover.route53_client",
@@ -198,7 +198,7 @@ class Test_route53_dangling_ip_subdomain_takeover:
                     )
                     assert (
                         result[0].resource_arn
-                        == f"arn:{audit_info.audited_partition}:route53:::hostedzone/{zone_id.replace('/hostedzone/', '')}"
+                        == f"arn:{audit_info.identity.partition}:route53:::hostedzone/{zone_id.replace('/hostedzone/', '')}"
                     )
 
     @mock_aws
@@ -230,8 +230,8 @@ class Test_route53_dangling_ip_subdomain_takeover:
         audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=audit_info,
         ):
             with mock.patch(
                 "prowler.providers.aws.services.route53.route53_dangling_ip_subdomain_takeover.route53_dangling_ip_subdomain_takeover.route53_client",
@@ -261,7 +261,7 @@ class Test_route53_dangling_ip_subdomain_takeover:
                     )
                     assert (
                         result[0].resource_arn
-                        == f"arn:{audit_info.audited_partition}:route53:::hostedzone/{zone_id.replace('/hostedzone/', '')}"
+                        == f"arn:{audit_info.identity.partition}:route53:::hostedzone/{zone_id.replace('/hostedzone/', '')}"
                     )
 
     @mock_aws
@@ -296,8 +296,8 @@ class Test_route53_dangling_ip_subdomain_takeover:
         audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=audit_info,
         ):
             with mock.patch(
                 "prowler.providers.aws.services.route53.route53_dangling_ip_subdomain_takeover.route53_dangling_ip_subdomain_takeover.route53_client",
@@ -327,7 +327,7 @@ class Test_route53_dangling_ip_subdomain_takeover:
                     )
                     assert (
                         result[0].resource_arn
-                        == f"arn:{audit_info.audited_partition}:route53:::hostedzone/{zone_id.replace('/hostedzone/', '')}"
+                        == f"arn:{audit_info.identity.partition}:route53:::hostedzone/{zone_id.replace('/hostedzone/', '')}"
                     )
 
     @mock_aws
@@ -368,8 +368,8 @@ class Test_route53_dangling_ip_subdomain_takeover:
         audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=audit_info,
         ):
             with mock.patch(
                 "prowler.providers.aws.services.route53.route53_dangling_ip_subdomain_takeover.route53_dangling_ip_subdomain_takeover.route53_client",
@@ -399,5 +399,5 @@ class Test_route53_dangling_ip_subdomain_takeover:
                     )
                     assert (
                         result[0].resource_arn
-                        == f"arn:{audit_info.audited_partition}:route53:::hostedzone/{zone_id.replace('/hostedzone/', '')}"
+                        == f"arn:{audit_info.identity.partition}:route53:::hostedzone/{zone_id.replace('/hostedzone/', '')}"
                     )

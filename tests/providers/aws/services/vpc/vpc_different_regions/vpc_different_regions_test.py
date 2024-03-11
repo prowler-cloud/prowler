@@ -22,8 +22,8 @@ class Test_vpc_different_regions:
         )
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=current_audit_info,
         ):
             with mock.patch(
                 "prowler.providers.aws.services.vpc.vpc_different_regions.vpc_different_regions.vpc_client",
@@ -58,8 +58,8 @@ class Test_vpc_different_regions:
         )
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=current_audit_info,
         ):
             with mock.patch(
                 "prowler.providers.aws.services.vpc.vpc_different_regions.vpc_different_regions.vpc_client",
@@ -96,8 +96,8 @@ class Test_vpc_different_regions:
         )
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=current_audit_info,
         ):
             with mock.patch(
                 "prowler.providers.aws.services.vpc.vpc_different_regions.vpc_different_regions.vpc_client",

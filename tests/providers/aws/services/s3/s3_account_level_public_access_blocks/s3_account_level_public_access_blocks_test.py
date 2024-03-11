@@ -31,7 +31,7 @@ class Test_s3_account_level_public_access_blocks:
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
             # from prowler.providers.common.common import get_global_provider
-            # "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            # "prowler.providers.common.common.get_global_provider",
             return_value=audit_info,
         ), mock.patch(
             "prowler.providers.aws.services.s3.s3_account_level_public_access_blocks.s3_account_level_public_access_blocks.s3_client",
@@ -81,7 +81,7 @@ class Test_s3_account_level_public_access_blocks:
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
             # from prowler.providers.common.common import get_global_provider
-            # "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
+            # "prowler.providers.common.common.get_global_provider",
             return_value=audit_info,
         ), mock.patch(
             "prowler.providers.aws.services.s3.s3_account_level_public_access_blocks.s3_account_level_public_access_blocks.s3_client",
@@ -131,8 +131,6 @@ class Test_s3_account_level_public_access_blocks:
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            # from prowler.providers.common.common import get_global_provider
-            # "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             return_value=audit_info,
         ), mock.patch(
             "prowler.providers.aws.services.s3.s3_account_level_public_access_blocks.s3_account_level_public_access_blocks.s3_client",

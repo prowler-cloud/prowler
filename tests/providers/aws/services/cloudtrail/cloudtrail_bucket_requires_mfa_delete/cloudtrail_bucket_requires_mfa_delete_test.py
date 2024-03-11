@@ -25,8 +25,8 @@ class Test_cloudtrail_bucket_requires_mfa_delete:
         )
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=current_audit_info,
         ), mock.patch(
             "prowler.providers.aws.services.cloudtrail.cloudtrail_bucket_requires_mfa_delete.cloudtrail_bucket_requires_mfa_delete.cloudtrail_client",
             new=Cloudtrail(current_audit_info),
@@ -60,8 +60,8 @@ class Test_cloudtrail_bucket_requires_mfa_delete:
         cloudtrail_client_us_east_1.get_trail_status(Name=trail_name_us)
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=current_audit_info,
         ), mock.patch(
             "prowler.providers.aws.services.cloudtrail.cloudtrail_bucket_requires_mfa_delete.cloudtrail_bucket_requires_mfa_delete.cloudtrail_client",
             new=Cloudtrail(current_audit_info),
@@ -123,8 +123,8 @@ class Test_cloudtrail_bucket_requires_mfa_delete:
         cloudtrail_client_us_east_1.get_trail_status(Name=trail_name_us)
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=current_audit_info,
         ), mock.patch(
             "prowler.providers.aws.services.cloudtrail.cloudtrail_bucket_requires_mfa_delete.cloudtrail_bucket_requires_mfa_delete.cloudtrail_client",
             new=Cloudtrail(current_audit_info),
@@ -170,8 +170,8 @@ class Test_cloudtrail_bucket_requires_mfa_delete:
         cloudtrail_client_us_east_1.get_trail_status(Name=trail_name_us)
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=current_audit_info,
         ), mock.patch(
             "prowler.providers.aws.services.cloudtrail.cloudtrail_bucket_requires_mfa_delete.cloudtrail_bucket_requires_mfa_delete.cloudtrail_client",
             new=Cloudtrail(current_audit_info),
@@ -225,8 +225,8 @@ class Test_cloudtrail_bucket_requires_mfa_delete:
         cloudtrail_client_us_east_1.get_trail_status(Name=trail_name_us)
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=current_audit_info,
         ), mock.patch(
             "prowler.providers.aws.services.cloudtrail.cloudtrail_bucket_requires_mfa_delete.cloudtrail_bucket_requires_mfa_delete.cloudtrail_client",
             new=Cloudtrail(current_audit_info),

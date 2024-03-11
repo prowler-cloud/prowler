@@ -144,7 +144,7 @@ class Test_Cloudtrail_Service:
             [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
         )
         cloudtrail = Cloudtrail(audit_info)
-        assert len(cloudtrail.trails) == len(audit_info.audited_regions)
+        assert len(cloudtrail.trails) == len(audit_info.identity.audited_regions)
         for trail in cloudtrail.trails:
             if trail.name:
                 if trail.name == trail_name_us:
@@ -188,7 +188,7 @@ class Test_Cloudtrail_Service:
             [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
         )
         cloudtrail = Cloudtrail(audit_info)
-        assert len(cloudtrail.trails) == len(audit_info.audited_regions)
+        assert len(cloudtrail.trails) == len(audit_info.identity.audited_regions)
         for trail in cloudtrail.trails:
             if trail.name:
                 if trail.name == trail_name_us:
@@ -236,7 +236,7 @@ class Test_Cloudtrail_Service:
             [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
         )
         cloudtrail = Cloudtrail(audit_info)
-        assert len(cloudtrail.trails) == len(audit_info.audited_regions)
+        assert len(cloudtrail.trails) == len(audit_info.identity.audited_regions)
         for trail in cloudtrail.trails:
             if trail.name:
                 if trail.name == trail_name_us:
