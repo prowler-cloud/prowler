@@ -45,7 +45,7 @@ class Test_monitor_alert_create_update_sqlserver_fr:
             assert result[0].resource_id == "Monitor"
             assert (
                 result[0].status_extended
-                == f"There is not an alert for Create/Update SQL Server Firewall Rule in subscription {AZURE_SUBSCRIPTION}."
+                == f"There is not an alert for create firewallRules in subscription {AZURE_SUBSCRIPTION}."
             )
 
     def test_alert_rules_configured(self):
@@ -99,5 +99,5 @@ class Test_monitor_alert_create_update_sqlserver_fr:
             assert result[0].resource_id == "id2"
             assert (
                 result[0].status_extended
-                == f"Alert name2 is configured to trigger when a fireall rule for SQL Server is created or updated in subscription {AZURE_SUBSCRIPTION}."
+                == f"There is an alert configured for create firewallRules in subscription {AZURE_SUBSCRIPTION}."
             )

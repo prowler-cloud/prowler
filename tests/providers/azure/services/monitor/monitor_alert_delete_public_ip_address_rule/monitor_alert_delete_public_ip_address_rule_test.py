@@ -45,7 +45,7 @@ class Test_monitor_alert_create_update_security_solution:
             assert result[0].resource_id == "Monitor"
             assert (
                 result[0].status_extended
-                == f"There is not an alert for Delete Public IP Address Rule in subscription {AZURE_SUBSCRIPTION}."
+                == f"There is not an alert for delete publicIPAddresses in subscription {AZURE_SUBSCRIPTION}."
             )
 
     def test_alert_rules_configured(self):
@@ -99,5 +99,5 @@ class Test_monitor_alert_create_update_security_solution:
             assert result[0].resource_id == "id2"
             assert (
                 result[0].status_extended
-                == f"Alert name2 is configured to trigger when a public IP address rule is deleted in subscription {AZURE_SUBSCRIPTION}."
+                == f"There is an alert configured for delete publicIPAddresses in subscription {AZURE_SUBSCRIPTION}."
             )
