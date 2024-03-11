@@ -225,9 +225,11 @@ class AwsProvider(Provider):
         self._ignore_unused_services = ignore_unused_services
 
         # Audit Config
-        self._audit_config = load_and_validate_config_file(
-            self._type, arguments.config_file
-        )
+        self._audit_config = {}
+        if hasattr(arguments, "config_file"):
+            self._audit_config = load_and_validate_config_file(
+                self._type, arguments.config_file
+            )
 
     @property
     def identity(self):

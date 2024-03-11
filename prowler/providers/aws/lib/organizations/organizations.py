@@ -1,7 +1,7 @@
 from boto3 import session
 
 from prowler.lib.logger import logger
-from prowler.providers.aws.lib.audit_info.models import AWSOrganizationsInfo
+from prowler.providers.aws.models import AWSOrganizationsInfo
 
 
 def get_organizations_metadata(

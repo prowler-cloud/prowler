@@ -10,7 +10,7 @@ from prowler.config.config import prowler_version, timestamp
 from prowler.lib.check.models import Remediation
 from prowler.lib.logger import logger
 from prowler.lib.utils.utils import outputs_unix_timestamp
-from prowler.providers.aws.lib.audit_info.models import AWSOrganizationsInfo
+from prowler.providers.aws.models import AWSOrganizationsInfo
 
 
 def get_check_compliance(finding, provider_type, output_options) -> dict:
