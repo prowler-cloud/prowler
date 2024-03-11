@@ -13,7 +13,7 @@ from prowler.providers.aws.lib.mutelist.mutelist import (
     mutelist_findings,
     parse_mutelist_file,
 )
-from tests.providers.aws.audit_info_utils import (
+from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_CENTRAL_1,
     AWS_REGION_EU_SOUTH_3,

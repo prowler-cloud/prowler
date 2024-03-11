@@ -2,10 +2,7 @@ import botocore
 from mock import patch
 
 from prowler.providers.aws.services.account.account_service import Account, Contact
-from tests.providers.aws.audit_info_utils import (
-    AWS_ACCOUNT_NUMBER,
-    set_mocked_aws_provider,
-)
+from tests.providers.aws.utils import AWS_ACCOUNT_NUMBER, set_mocked_aws_provider
 
 # Mocking Access Analyzer Calls
 make_api_call = botocore.client.BaseClient._make_api_call

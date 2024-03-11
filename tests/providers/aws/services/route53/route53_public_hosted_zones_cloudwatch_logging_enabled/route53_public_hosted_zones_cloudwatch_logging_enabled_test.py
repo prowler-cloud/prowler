@@ -4,10 +4,7 @@ from prowler.providers.aws.services.route53.route53_service import (
     HostedZone,
     LoggingConfig,
 )
-from tests.providers.aws.audit_info_utils import (
-    AWS_ACCOUNT_NUMBER,
-    AWS_REGION_US_EAST_1,
-)
+from tests.providers.aws.utils import AWS_ACCOUNT_NUMBER, AWS_REGION_US_EAST_1
 
 
 class Test_route53_public_hosted_zones_cloudwatch_logging_enabled:

@@ -4,10 +4,7 @@ from boto3 import client
 from moto import mock_aws
 
 from prowler.providers.aws.services.ecs.ecs_service import ECS
-from tests.providers.aws.audit_info_utils import (
-    AWS_REGION_EU_WEST_1,
-    set_mocked_aws_provider,
-)
+from tests.providers.aws.utils import AWS_REGION_EU_WEST_1, set_mocked_aws_provider
 
 
 def mock_generate_regional_clients(provider, service):

@@ -6,12 +6,6 @@ from moto import mock_aws
 
 from prowler.providers.aws.services.neptune.neptune_service import Neptune
 from prowler.providers.aws.services.vpc.vpc_service import VpcSubnet
-from tests.providers.aws.audit_info_utils import (
-    AWS_REGION_US_EAST_1,
-    AWS_REGION_US_EAST_1_AZA,
-    AWS_REGION_US_EAST_1_AZB,
-    set_mocked_aws_provider,
-)
 from tests.providers.aws.services.neptune.neptune_service_test import (
     NEPTUNE_CLUSTER_NAME,
     NEPTUNE_CLUSTER_TAGS,
@@ -19,6 +13,12 @@ from tests.providers.aws.services.neptune.neptune_service_test import (
     SUBNET_1,
     SUBNET_2,
     mock_make_api_call,
+)
+from tests.providers.aws.utils import (
+    AWS_REGION_US_EAST_1,
+    AWS_REGION_US_EAST_1_AZA,
+    AWS_REGION_US_EAST_1_AZB,
+    set_mocked_aws_provider,
 )
 
 VPC_ID = "vpc-12345678901234567"

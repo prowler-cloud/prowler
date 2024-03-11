@@ -5,10 +5,7 @@ import botocore
 from prowler.providers.aws.services.networkfirewall.networkfirewall_service import (
     NetworkFirewall,
 )
-from tests.providers.aws.audit_info_utils import (
-    AWS_REGION_US_EAST_1,
-    set_mocked_aws_provider,
-)
+from tests.providers.aws.utils import AWS_REGION_US_EAST_1, set_mocked_aws_provider
 
 FIREWALL_ARN = "arn:aws:network-firewall:us-east-1:123456789012:firewall/my-firewall"
 FIREWALL_NAME = "my-firewall"

@@ -1,7 +1,7 @@
 from unittest import mock
 
 from prowler.providers.aws.services.cloudfront.cloudfront_service import Distribution
-from tests.providers.aws.audit_info_utils import AWS_ACCOUNT_NUMBER
+from tests.providers.aws.utils import AWS_ACCOUNT_NUMBER
 
 DISTRIBUTION_ID = "E27LVI50CSW06W"
 DISTRIBUTION_ARN = (

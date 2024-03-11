@@ -4,10 +4,7 @@ from unittest.mock import patch
 import botocore
 
 from prowler.providers.aws.services.route53.route53_service import Route53Domains
-from tests.providers.aws.audit_info_utils import (
-    AWS_REGION_US_EAST_1,
-    set_mocked_aws_provider,
-)
+from tests.providers.aws.utils import AWS_REGION_US_EAST_1, set_mocked_aws_provider
 
 # Mocking Access Analyzer Calls
 make_api_call = botocore.client.BaseClient._make_api_call

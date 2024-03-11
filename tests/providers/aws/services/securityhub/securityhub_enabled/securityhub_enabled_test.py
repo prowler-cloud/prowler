@@ -3,7 +3,7 @@ from unittest import mock
 from prowler.providers.aws.services.securityhub.securityhub_service import (
     SecurityHubHub,
 )
-from tests.providers.aws.audit_info_utils import AWS_ACCOUNT_ARN, AWS_REGION_EU_WEST_1
+from tests.providers.aws.utils import AWS_ACCOUNT_ARN, AWS_REGION_EU_WEST_1
 
 
 class Test_securityhub_enabled:

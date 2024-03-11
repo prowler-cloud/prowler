@@ -27,7 +27,7 @@ from prowler.providers.aws.aws_provider import (
     get_checks_from_input_arn,
     get_regions_from_audit_resources,
 )
-from tests.providers.aws.audit_info_utils import set_mocked_aws_audit_info
+from tests.providers.aws.utils import set_mocked_aws_audit_info
 
 AWS_ACCOUNT_NUMBER = "123456789012"
 AWS_REGION = "us-east-1"

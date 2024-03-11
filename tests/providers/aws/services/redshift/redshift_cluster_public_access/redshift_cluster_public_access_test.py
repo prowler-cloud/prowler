@@ -3,10 +3,7 @@ from unittest import mock
 from uuid import uuid4
 
 from prowler.providers.aws.services.redshift.redshift_service import Cluster
-from tests.providers.aws.audit_info_utils import (
-    AWS_ACCOUNT_NUMBER,
-    AWS_REGION_EU_WEST_1,
-)
+from tests.providers.aws.utils import AWS_ACCOUNT_NUMBER, AWS_REGION_EU_WEST_1
 
 CLUSTER_ID = str(uuid4())
 CLUSTER_ARN = (

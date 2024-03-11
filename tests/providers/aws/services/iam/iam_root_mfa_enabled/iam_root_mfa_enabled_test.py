@@ -4,16 +4,13 @@ from unittest import mock
 from boto3 import client
 from moto import mock_aws
 
-from tests.providers.aws.audit_info_utils import (
-    AWS_REGION_US_EAST_1,
-    set_mocked_aws_provider,
-)
+from tests.providers.aws.utils import AWS_REGION_US_EAST_1, set_mocked_aws_provider
 
 AWS_ACCOUNT_NUMBER = "123456789012"
 
 
 class Test_iam_root_mfa_enabled_test:
-    from tests.providers.aws.audit_info_utils import (
+    from tests.providers.aws.utils import (
         AWS_ACCOUNT_ARN,
         AWS_ACCOUNT_NUMBER,
         AWS_REGION_US_EAST_1,

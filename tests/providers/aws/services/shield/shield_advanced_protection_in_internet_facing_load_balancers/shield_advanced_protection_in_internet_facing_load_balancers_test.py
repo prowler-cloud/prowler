@@ -5,10 +5,7 @@ from mock import patch
 from moto import mock_aws
 
 from prowler.providers.aws.services.shield.shield_service import Protection
-from tests.providers.aws.audit_info_utils import (
-    AWS_REGION_EU_WEST_1,
-    set_mocked_aws_provider,
-)
+from tests.providers.aws.utils import AWS_REGION_EU_WEST_1, set_mocked_aws_provider
 
 
 # Mock generate_regional_clients()

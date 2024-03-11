@@ -4,10 +4,7 @@ from unittest.mock import patch
 import botocore
 
 from prowler.providers.aws.services.codebuild.codebuild_service import Codebuild
-from tests.providers.aws.audit_info_utils import (
-    AWS_REGION_EU_WEST_1,
-    set_mocked_aws_provider,
-)
+from tests.providers.aws.utils import AWS_REGION_EU_WEST_1, set_mocked_aws_provider
 
 # last time invoked time
 last_invoked_time = datetime.now() - timedelta(days=2)

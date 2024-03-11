@@ -5,10 +5,7 @@ from unittest import mock
 from boto3 import client
 from moto import mock_aws
 
-from tests.providers.aws.audit_info_utils import (
-    AWS_REGION_US_EAST_1,
-    set_mocked_aws_provider,
-)
+from tests.providers.aws.utils import AWS_REGION_US_EAST_1, set_mocked_aws_provider
 
 ACTUAL_DIRECTORY = Path(path.dirname(path.realpath(__file__)))
 FIXTURES_DIR_NAME = "fixtures"

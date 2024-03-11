@@ -4,7 +4,7 @@ from unittest.mock import patch
 import botocore
 
 from prowler.providers.aws.services.fms.fms_service import FMS
-from tests.providers.aws.audit_info_utils import set_mocked_aws_provider
+from tests.providers.aws.utils import set_mocked_aws_provider
 
 POLICY_ARN = "arn:aws:fms:us-east-1:123456789012:policy/MyFMSManagedPolicy"
 POLICY_ID = "12345678-1234-1234-1234-123456789012"

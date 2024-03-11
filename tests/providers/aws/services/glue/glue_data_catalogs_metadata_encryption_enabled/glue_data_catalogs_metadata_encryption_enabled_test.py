@@ -2,10 +2,7 @@ from re import search
 from unittest import mock
 
 from prowler.providers.aws.services.glue.glue_service import CatalogEncryptionSetting
-from tests.providers.aws.audit_info_utils import (
-    AWS_REGION_US_EAST_1,
-    set_mocked_aws_provider,
-)
+from tests.providers.aws.utils import AWS_REGION_US_EAST_1, set_mocked_aws_provider
 
 
 class Test_glue_data_catalogs_metadata_encryption_enabled:

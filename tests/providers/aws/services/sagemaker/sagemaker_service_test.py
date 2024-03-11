@@ -4,7 +4,7 @@ from uuid import uuid4
 import botocore
 
 from prowler.providers.aws.services.sagemaker.sagemaker_service import SageMaker
-from tests.providers.aws.audit_info_utils import (
+from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_WEST_1,
     set_mocked_aws_provider,

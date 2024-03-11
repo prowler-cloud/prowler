@@ -4,10 +4,7 @@ from unittest.mock import patch
 import botocore
 
 from prowler.providers.aws.services.macie.macie_service import Macie, Session
-from tests.providers.aws.audit_info_utils import (
-    AWS_REGION_EU_WEST_1,
-    set_mocked_aws_provider,
-)
+from tests.providers.aws.utils import AWS_REGION_EU_WEST_1, set_mocked_aws_provider
 
 # Mocking Macie2 Calls
 make_api_call = botocore.client.BaseClient._make_api_call

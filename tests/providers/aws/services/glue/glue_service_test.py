@@ -4,7 +4,7 @@ import botocore
 from moto import mock_aws
 
 from prowler.providers.aws.services.glue.glue_service import Glue
-from tests.providers.aws.audit_info_utils import (
+from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_US_EAST_1,
     set_mocked_aws_provider,

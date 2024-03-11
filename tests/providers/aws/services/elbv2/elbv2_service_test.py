@@ -2,7 +2,7 @@ from boto3 import client, resource
 from moto import mock_aws
 
 from prowler.providers.aws.services.elbv2.elbv2_service import ELBv2
-from tests.providers.aws.audit_info_utils import (
+from tests.providers.aws.utils import (
     AWS_REGION_EU_WEST_1,
     AWS_REGION_EU_WEST_1_AZA,
     AWS_REGION_EU_WEST_1_AZB,

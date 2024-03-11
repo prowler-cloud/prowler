@@ -9,7 +9,7 @@ from freezegun import freeze_time
 from moto import mock_aws
 
 from prowler.providers.aws.services.ec2.ec2_service import EC2
-from tests.providers.aws.audit_info_utils import (
+from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_WEST_1,
     AWS_REGION_US_EAST_1,

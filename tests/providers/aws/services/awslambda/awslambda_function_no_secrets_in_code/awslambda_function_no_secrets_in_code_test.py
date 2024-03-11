@@ -5,13 +5,13 @@ from prowler.providers.aws.services.awslambda.awslambda_service import (
     Function,
     LambdaCode,
 )
-from tests.providers.aws.audit_info_utils import (
+from tests.providers.aws.services.awslambda.awslambda_service_test import (
+    create_zip_file,
+)
+from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_US_EAST_1,
     set_mocked_aws_provider,
-)
-from tests.providers.aws.services.awslambda.awslambda_service_test import (
-    create_zip_file,
 )
 
 LAMBDA_FUNCTION_NAME = "test-lambda"

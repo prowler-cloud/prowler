@@ -1,7 +1,7 @@
 from mock import patch
 
 from prowler.providers.aws.lib.service.service import AWSService
-from tests.providers.aws.audit_info_utils import (
+from tests.providers.aws.utils import (
     AWS_ACCOUNT_ARN,
     AWS_ACCOUNT_NUMBER,
     AWS_COMMERCIAL_PARTITION,

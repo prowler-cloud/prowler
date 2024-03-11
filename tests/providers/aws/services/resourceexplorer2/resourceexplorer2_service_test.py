@@ -5,10 +5,7 @@ import botocore
 from prowler.providers.aws.services.resourceexplorer2.resourceexplorer2_service import (
     ResourceExplorer2,
 )
-from tests.providers.aws.audit_info_utils import (
-    AWS_REGION_EU_WEST_1,
-    set_mocked_aws_provider,
-)
+from tests.providers.aws.utils import AWS_REGION_EU_WEST_1, set_mocked_aws_provider
 
 INDEX_ARN = "arn:aws:resource-explorer-2:ap-south-1:123456789012:index/123456-2896-4fe8-93d2-15ec137e5c47"
 INDEX_REGION = "us-east-1"

@@ -5,10 +5,7 @@ from boto3 import client
 from moto import mock_aws
 
 from prowler.providers.aws.services.iam.iam_service import Role
-from tests.providers.aws.audit_info_utils import (
-    AWS_REGION_US_EAST_1,
-    set_mocked_aws_provider,
-)
+from tests.providers.aws.utils import AWS_REGION_US_EAST_1, set_mocked_aws_provider
 
 AWS_REGION = "us-east-1"
 AWS_ACCOUNT_ID = "123456789012"

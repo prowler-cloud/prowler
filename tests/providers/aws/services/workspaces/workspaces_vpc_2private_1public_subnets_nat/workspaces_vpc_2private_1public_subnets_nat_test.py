@@ -6,7 +6,7 @@ from moto import mock_aws
 
 from prowler.providers.aws.services.vpc.vpc_service import VPC
 from prowler.providers.aws.services.workspaces.workspaces_service import WorkSpace
-from tests.providers.aws.audit_info_utils import (
+from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_WEST_1,
     set_mocked_aws_provider,

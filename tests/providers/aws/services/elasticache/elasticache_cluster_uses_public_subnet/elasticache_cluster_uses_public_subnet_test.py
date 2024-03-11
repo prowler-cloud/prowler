@@ -5,12 +5,6 @@ from moto import mock_aws
 
 from prowler.providers.aws.services.elasticache.elasticache_service import Cluster
 from prowler.providers.aws.services.vpc.vpc_service import VpcSubnet
-from tests.providers.aws.audit_info_utils import (
-    AWS_REGION_US_EAST_1,
-    AWS_REGION_US_EAST_1_AZA,
-    AWS_REGION_US_EAST_1_AZB,
-    set_mocked_aws_provider,
-)
 from tests.providers.aws.services.elasticache.elasticache_service_test import (
     ELASTICACHE_CLUSTER_ARN,
     ELASTICACHE_CLUSTER_NAME,
@@ -19,6 +13,12 @@ from tests.providers.aws.services.elasticache.elasticache_service_test import (
     SUBNET_2,
     SUBNET_GROUP_NAME,
     mock_make_api_call,
+)
+from tests.providers.aws.utils import (
+    AWS_REGION_US_EAST_1,
+    AWS_REGION_US_EAST_1_AZA,
+    AWS_REGION_US_EAST_1_AZB,
+    set_mocked_aws_provider,
 )
 
 VPC_ID = "vpc-12345678901234567"

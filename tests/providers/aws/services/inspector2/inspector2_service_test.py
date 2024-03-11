@@ -4,7 +4,7 @@ from unittest.mock import patch
 import botocore
 
 from prowler.providers.aws.services.inspector2.inspector2_service import Inspector2
-from tests.providers.aws.audit_info_utils import (
+from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_WEST_1,
     set_mocked_aws_provider,

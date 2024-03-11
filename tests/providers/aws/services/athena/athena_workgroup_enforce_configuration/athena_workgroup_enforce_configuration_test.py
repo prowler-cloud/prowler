@@ -3,12 +3,12 @@ from unittest import mock
 from mock import patch
 from moto import mock_aws
 
-from tests.providers.aws.audit_info_utils import (
+from tests.providers.aws.services.athena.athena_service_test import mock_make_api_call
+from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_WEST_1,
     set_mocked_aws_provider,
 )
-from tests.providers.aws.services.athena.athena_service_test import mock_make_api_call
 
 ATHENA_PRIMARY_WORKGROUP = "primary"
 ATHENA_PRIMARY_WORKGROUP_ARN = f"arn:aws:athena:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:workgroup/{ATHENA_PRIMARY_WORKGROUP}"

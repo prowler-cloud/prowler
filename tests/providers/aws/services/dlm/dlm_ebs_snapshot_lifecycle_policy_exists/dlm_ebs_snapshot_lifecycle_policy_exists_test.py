@@ -4,7 +4,7 @@ from boto3 import client, resource
 from moto import mock_aws
 
 from prowler.providers.aws.services.dlm.dlm_service import LifecyclePolicy
-from tests.providers.aws.audit_info_utils import (
+from tests.providers.aws.utils import (
     AWS_ACCOUNT_ARN,
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_US_EAST_1,

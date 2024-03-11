@@ -5,10 +5,7 @@ from uuid import uuid4
 from prowler.providers.aws.services.wellarchitected.wellarchitected_service import (
     Workload,
 )
-from tests.providers.aws.audit_info_utils import (
-    AWS_ACCOUNT_NUMBER,
-    AWS_REGION_EU_WEST_1,
-)
+from tests.providers.aws.utils import AWS_ACCOUNT_NUMBER, AWS_REGION_EU_WEST_1
 
 workload_id = str(uuid4())
 

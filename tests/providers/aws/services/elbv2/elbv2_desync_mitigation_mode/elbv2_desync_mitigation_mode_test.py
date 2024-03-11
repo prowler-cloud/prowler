@@ -4,7 +4,7 @@ from unittest import mock
 from boto3 import client, resource
 from moto import mock_aws
 
-from tests.providers.aws.audit_info_utils import (
+from tests.providers.aws.utils import (
     AWS_REGION_EU_WEST_1,
     AWS_REGION_EU_WEST_1_AZA,
     AWS_REGION_EU_WEST_1_AZB,

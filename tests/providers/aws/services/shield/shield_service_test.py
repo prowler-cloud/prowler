@@ -2,7 +2,7 @@ import botocore
 from mock import patch
 
 from prowler.providers.aws.services.shield.shield_service import Shield
-from tests.providers.aws.audit_info_utils import (
+from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_WEST_1,
     set_mocked_aws_provider,

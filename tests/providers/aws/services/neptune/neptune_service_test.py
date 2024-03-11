@@ -4,7 +4,7 @@ from mock import patch
 from moto import mock_aws
 
 from prowler.providers.aws.services.neptune.neptune_service import Cluster, Neptune
-from tests.providers.aws.audit_info_utils import (
+from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_US_EAST_1,
     AWS_REGION_US_EAST_1_AZA,

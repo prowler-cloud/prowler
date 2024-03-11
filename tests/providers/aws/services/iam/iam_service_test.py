@@ -8,7 +8,7 @@ from mock import patch
 from moto import mock_aws
 
 from prowler.providers.aws.services.iam.iam_service import IAM, Policy, is_service_role
-from tests.providers.aws.audit_info_utils import (
+from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_US_EAST_1,
     set_mocked_aws_provider,

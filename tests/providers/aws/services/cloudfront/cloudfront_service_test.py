@@ -9,10 +9,7 @@ from prowler.providers.aws.services.cloudfront.cloudfront_service import (
     GeoRestrictionType,
     ViewerProtocolPolicy,
 )
-from tests.providers.aws.audit_info_utils import (
-    AWS_REGION_US_EAST_1,
-    set_mocked_aws_provider,
-)
+from tests.providers.aws.utils import AWS_REGION_US_EAST_1, set_mocked_aws_provider
 
 
 def example_distribution_config(ref):

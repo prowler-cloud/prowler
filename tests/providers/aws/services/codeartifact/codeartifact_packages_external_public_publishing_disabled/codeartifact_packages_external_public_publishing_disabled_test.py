@@ -11,7 +11,7 @@ from prowler.providers.aws.services.codeartifact.codeartifact_service import (
     Restrictions,
     RestrictionValues,
 )
-from tests.providers.aws.audit_info_utils import AWS_ACCOUNT_NUMBER
+from tests.providers.aws.utils import AWS_ACCOUNT_NUMBER
 
 AWS_REGION = "eu-west-1"
 

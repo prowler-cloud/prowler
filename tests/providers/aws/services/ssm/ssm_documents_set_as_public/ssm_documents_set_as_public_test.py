@@ -1,10 +1,7 @@
 from unittest import mock
 
 from prowler.providers.aws.services.ssm.ssm_service import Document
-from tests.providers.aws.audit_info_utils import (
-    AWS_ACCOUNT_NUMBER,
-    AWS_REGION_US_EAST_1,
-)
+from tests.providers.aws.utils import AWS_ACCOUNT_NUMBER, AWS_REGION_US_EAST_1
 
 
 class Test_ssm_documents_set_as_public:

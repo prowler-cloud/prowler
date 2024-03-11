@@ -5,10 +5,7 @@ from boto3 import client
 from mock import patch
 from moto import mock_aws
 
-from tests.providers.aws.audit_info_utils import (
-    AWS_REGION_US_EAST_1,
-    set_mocked_aws_provider,
-)
+from tests.providers.aws.utils import AWS_REGION_US_EAST_1, set_mocked_aws_provider
 
 # Mocking ApiGatewayV2 Calls
 make_api_call = botocore.client.BaseClient._make_api_call

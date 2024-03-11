@@ -5,7 +5,7 @@ from unittest import mock
 from boto3 import client
 from moto import mock_aws
 
-from tests.providers.aws.audit_info_utils import (
+from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_US_EAST_1,
     set_mocked_aws_provider,
@@ -84,7 +84,7 @@ privilege_escalation_policies_combination = {
 
 
 class Test_iam_policy_allows_privilege_escalation:
-    from tests.providers.aws.audit_info_utils import (
+    from tests.providers.aws.utils import (
         AWS_ACCOUNT_ARN,
         AWS_ACCOUNT_NUMBER,
         AWS_REGION_US_EAST_1,

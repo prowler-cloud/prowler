@@ -1,7 +1,7 @@
 from unittest import mock
 
 from prowler.providers.aws.services.awslambda.awslambda_service import Function
-from tests.providers.aws.audit_info_utils import (
+from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_US_EAST_1,
     set_mocked_aws_provider,

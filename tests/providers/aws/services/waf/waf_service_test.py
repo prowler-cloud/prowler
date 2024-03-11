@@ -3,10 +3,7 @@ from unittest.mock import patch
 import botocore
 
 from prowler.providers.aws.services.waf.waf_service import WAF
-from tests.providers.aws.audit_info_utils import (
-    AWS_REGION_EU_WEST_1,
-    set_mocked_aws_provider,
-)
+from tests.providers.aws.utils import AWS_REGION_EU_WEST_1, set_mocked_aws_provider
 
 # Mocking WAF-Regional Calls
 make_api_call = botocore.client.BaseClient._make_api_call

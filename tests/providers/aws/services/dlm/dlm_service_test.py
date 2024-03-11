@@ -2,7 +2,7 @@ import botocore
 from mock import patch
 
 from prowler.providers.aws.services.dlm.dlm_service import DLM, LifecyclePolicy
-from tests.providers.aws.audit_info_utils import (
+from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_US_EAST_1,
     set_mocked_aws_provider,

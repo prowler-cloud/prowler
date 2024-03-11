@@ -4,7 +4,7 @@ from boto3 import client, resource
 from moto import mock_aws
 
 from prowler.providers.aws.services.vpc.vpc_service import VPC, Route
-from tests.providers.aws.audit_info_utils import (
+from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_WEST_1,
     AWS_REGION_US_EAST_1,
