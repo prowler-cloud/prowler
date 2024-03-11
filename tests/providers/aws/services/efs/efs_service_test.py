@@ -9,7 +9,7 @@ from prowler.providers.aws.services.efs.efs_service import EFS
 from tests.providers.aws.audit_info_utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_WEST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 # Mocking Access Analyzer Calls
@@ -58,12 +58,12 @@ def mock_generate_regional_clients(provider, service):
 class Test_EFS:
     # Test EFS Session
     def test__get_session__(self):
-        access_analyzer = EFS(set_mocked_aws_audit_info())
+        access_analyzer = EFS(set_mocked_aws_provider())
         assert access_analyzer.session.__class__.__name__ == "Session"
 
     # Test EFS Service
     def test__get_service__(self):
-        access_analyzer = EFS(set_mocked_aws_audit_info())
+        access_analyzer = EFS(set_mocked_aws_provider())
         assert access_analyzer.service == "efs"
 
     @mock_aws
@@ -77,7 +77,7 @@ class Test_EFS:
                 {"Key": "test", "Value": "test"},
             ],
         )
-        filesystem = EFS(set_mocked_aws_audit_info())
+        filesystem = EFS(set_mocked_aws_provider())
         assert len(filesystem.filesystems) == 1
         assert filesystem.filesystems[0].id == efs["FileSystemId"]
         assert filesystem.filesystems[0].encrypted == efs["Encrypted"]
@@ -92,7 +92,7 @@ class Test_EFS:
         efs = efs_client.create_file_system(
             CreationToken=creation_token, Encrypted=True
         )
-        filesystem = EFS(set_mocked_aws_audit_info())
+        filesystem = EFS(set_mocked_aws_provider())
         assert len(filesystem.filesystems) == 1
         assert filesystem.filesystems[0].id == efs["FileSystemId"]
         assert filesystem.filesystems[0].encrypted == efs["Encrypted"]

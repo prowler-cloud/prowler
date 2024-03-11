@@ -6,7 +6,7 @@ from prowler.providers.aws.services.appstream.appstream_service import AppStream
 from tests.providers.aws.audit_info_utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_US_EAST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 # Mock Test Region
@@ -68,22 +68,22 @@ def mock_generate_regional_clients(provider, service):
 class Test_AppStream_Service:
     # Test AppStream Client
     def test__get_client__(self):
-        appstream = AppStream(set_mocked_aws_audit_info([AWS_REGION_US_EAST_1]))
+        appstream = AppStream(set_mocked_aws_provider([AWS_REGION_US_EAST_1]))
         assert appstream.regional_clients[AWS_REGION].__class__.__name__ == "AppStream"
 
     # Test AppStream Session
     def test__get_session__(self):
-        appstream = AppStream(set_mocked_aws_audit_info([AWS_REGION_US_EAST_1]))
+        appstream = AppStream(set_mocked_aws_provider([AWS_REGION_US_EAST_1]))
         assert appstream.session.__class__.__name__ == "Session"
 
     # Test AppStream Session
     def test__get_service__(self):
-        appstream = AppStream(set_mocked_aws_audit_info([AWS_REGION_US_EAST_1]))
+        appstream = AppStream(set_mocked_aws_provider([AWS_REGION_US_EAST_1]))
         assert appstream.service == "appstream"
 
     def test__describe_fleets__(self):
         # Set partition for the service
-        appstream = AppStream(set_mocked_aws_audit_info([AWS_REGION_US_EAST_1]))
+        appstream = AppStream(set_mocked_aws_provider([AWS_REGION_US_EAST_1]))
         assert len(appstream.fleets) == 2
 
         assert (
@@ -110,7 +110,7 @@ class Test_AppStream_Service:
 
     def test__list_tags_for_resource__(self):
         # Set partition for the service
-        appstream = AppStream(set_mocked_aws_audit_info([AWS_REGION_US_EAST_1]))
+        appstream = AppStream(set_mocked_aws_provider([AWS_REGION_US_EAST_1]))
         assert len(appstream.fleets) == 2
 
         assert appstream.fleets[0].tags == [{"test": "test"}]

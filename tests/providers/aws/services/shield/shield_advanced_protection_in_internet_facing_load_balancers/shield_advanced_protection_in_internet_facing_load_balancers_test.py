@@ -7,7 +7,7 @@ from moto import mock_aws
 from prowler.providers.aws.services.shield.shield_service import Protection
 from tests.providers.aws.audit_info_utils import (
     AWS_REGION_EU_WEST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 
@@ -39,10 +39,10 @@ class Test_shield_advanced_protection_in_internet_facing_load_balancers:
             new=shield_client,
         ), mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1]),
+            return_value=set_mocked_aws_provider([AWS_REGION_EU_WEST_1]),
         ), mock.patch(
             "prowler.providers.aws.services.shield.shield_advanced_protection_in_internet_facing_load_balancers.shield_advanced_protection_in_internet_facing_load_balancers.elbv2_client",
-            new=ELBv2(set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])),
+            new=ELBv2(set_mocked_aws_provider([AWS_REGION_EU_WEST_1])),
         ):
             # Test Check
             from prowler.providers.aws.services.shield.shield_advanced_protection_in_internet_facing_load_balancers.shield_advanced_protection_in_internet_facing_load_balancers import (
@@ -106,10 +106,10 @@ class Test_shield_advanced_protection_in_internet_facing_load_balancers:
             new=shield_client,
         ), mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1]),
+            return_value=set_mocked_aws_provider([AWS_REGION_EU_WEST_1]),
         ), mock.patch(
             "prowler.providers.aws.services.shield.shield_advanced_protection_in_internet_facing_load_balancers.shield_advanced_protection_in_internet_facing_load_balancers.elbv2_client",
-            new=ELBv2(set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])),
+            new=ELBv2(set_mocked_aws_provider([AWS_REGION_EU_WEST_1])),
         ):
             # Test Check
             from prowler.providers.aws.services.shield.shield_advanced_protection_in_internet_facing_load_balancers.shield_advanced_protection_in_internet_facing_load_balancers import (
@@ -181,10 +181,10 @@ class Test_shield_advanced_protection_in_internet_facing_load_balancers:
             new=shield_client,
         ), mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1]),
+            return_value=set_mocked_aws_provider([AWS_REGION_EU_WEST_1]),
         ), mock.patch(
             "prowler.providers.aws.services.shield.shield_advanced_protection_in_internet_facing_load_balancers.shield_advanced_protection_in_internet_facing_load_balancers.elbv2_client",
-            new=ELBv2(set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])),
+            new=ELBv2(set_mocked_aws_provider([AWS_REGION_EU_WEST_1])),
         ):
             # Test Check
             from prowler.providers.aws.services.shield.shield_advanced_protection_in_internet_facing_load_balancers.shield_advanced_protection_in_internet_facing_load_balancers import (
@@ -239,10 +239,10 @@ class Test_shield_advanced_protection_in_internet_facing_load_balancers:
             new=shield_client,
         ), mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1]),
+            return_value=set_mocked_aws_provider([AWS_REGION_EU_WEST_1]),
         ), mock.patch(
             "prowler.providers.aws.services.shield.shield_advanced_protection_in_internet_facing_load_balancers.shield_advanced_protection_in_internet_facing_load_balancers.elbv2_client",
-            new=ELBv2(set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])),
+            new=ELBv2(set_mocked_aws_provider([AWS_REGION_EU_WEST_1])),
         ):
             # Test Check
             from prowler.providers.aws.services.shield.shield_advanced_protection_in_internet_facing_load_balancers.shield_advanced_protection_in_internet_facing_load_balancers import (
@@ -305,10 +305,10 @@ class Test_shield_advanced_protection_in_internet_facing_load_balancers:
             new=shield_client,
         ), mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1]),
+            return_value=set_mocked_aws_provider([AWS_REGION_EU_WEST_1]),
         ), mock.patch(
             "prowler.providers.aws.services.shield.shield_advanced_protection_in_internet_facing_load_balancers.shield_advanced_protection_in_internet_facing_load_balancers.elbv2_client",
-            new=ELBv2(set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])),
+            new=ELBv2(set_mocked_aws_provider([AWS_REGION_EU_WEST_1])),
         ):
             # Test Check
             from prowler.providers.aws.services.shield.shield_advanced_protection_in_internet_facing_load_balancers.shield_advanced_protection_in_internet_facing_load_balancers import (

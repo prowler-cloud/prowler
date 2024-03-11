@@ -7,7 +7,7 @@ from prowler.providers.aws.services.eks.eks_service import EKS
 from tests.providers.aws.audit_info_utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_WEST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 cluster_name = "test"
@@ -31,21 +31,21 @@ def mock_generate_regional_clients(provider, service):
 class Test_EKS_Service:
     # Test EKS Service
     def test_service(self):
-        audit_info = set_mocked_aws_audit_info()
-        eks = EKS(audit_info)
+        aws_provider = set_mocked_aws_provider()
+        eks = EKS(aws_provider)
         assert eks.service == "eks"
 
     # Test EKS client
     def test_client(self):
-        audit_info = set_mocked_aws_audit_info()
-        eks = EKS(audit_info)
+        aws_provider = set_mocked_aws_provider()
+        eks = EKS(aws_provider)
         for reg_client in eks.regional_clients.values():
             assert reg_client.__class__.__name__ == "EKS"
 
     # Test EKS session
     def test__get_session__(self):
-        audit_info = set_mocked_aws_audit_info()
-        eks = EKS(audit_info)
+        aws_provider = set_mocked_aws_provider()
+        eks = EKS(aws_provider)
         assert eks.session.__class__.__name__ == "Session"
 
     # Test EKS list clusters
@@ -73,8 +73,8 @@ class Test_EKS_Service:
             roleArn=f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:role/eks-service-role-AWSServiceRoleForAmazonEKS-J7ONKE3BQ4PI",
             tags={"test": "test"},
         )
-        audit_info = set_mocked_aws_audit_info()
-        eks = EKS(audit_info)
+        aws_provider = set_mocked_aws_provider()
+        eks = EKS(aws_provider)
         assert len(eks.clusters) == 1
         assert eks.clusters[0].name == cluster_name
         assert eks.clusters[0].region == AWS_REGION_EU_WEST_1
@@ -126,8 +126,8 @@ class Test_EKS_Service:
                 },
             ],
         )
-        audit_info = set_mocked_aws_audit_info()
-        eks = EKS(audit_info)
+        aws_provider = set_mocked_aws_provider()
+        eks = EKS(aws_provider)
         assert len(eks.clusters) == 1
         assert eks.clusters[0].name == cluster_name
         assert eks.clusters[0].region == AWS_REGION_EU_WEST_1

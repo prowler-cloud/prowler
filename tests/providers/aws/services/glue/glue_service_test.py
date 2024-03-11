@@ -7,7 +7,7 @@ from prowler.providers.aws.services.glue.glue_service import Glue
 from tests.providers.aws.audit_info_utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_US_EAST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 # Mocking Access Analyzer Calls
@@ -123,16 +123,16 @@ class Test_Glue_Service:
     @mock_aws
     def test_service(self):
         # Glue client for this test class
-        audit_info = set_mocked_aws_audit_info()
-        glue = Glue(audit_info)
+        aws_provider = set_mocked_aws_provider()
+        glue = Glue(aws_provider)
         assert glue.service == "glue"
 
     # Test Glue Client
     @mock_aws
     def test_client(self):
         # Glue client for this test class
-        audit_info = set_mocked_aws_audit_info()
-        glue = Glue(audit_info)
+        aws_provider = set_mocked_aws_provider()
+        glue = Glue(aws_provider)
         for regional_client in glue.regional_clients.values():
             assert regional_client.__class__.__name__ == "Glue"
 
@@ -140,23 +140,23 @@ class Test_Glue_Service:
     @mock_aws
     def test__get_session__(self):
         # Glue client for this test class
-        audit_info = set_mocked_aws_audit_info()
-        glue = Glue(audit_info)
+        aws_provider = set_mocked_aws_provider()
+        glue = Glue(aws_provider)
         assert glue.session.__class__.__name__ == "Session"
 
     # Test Glue Session
     @mock_aws
     def test_audited_account(self):
         # Glue client for this test class
-        audit_info = set_mocked_aws_audit_info()
-        glue = Glue(audit_info)
+        aws_provider = set_mocked_aws_provider()
+        glue = Glue(aws_provider)
         assert glue.audited_account == AWS_ACCOUNT_NUMBER
 
     # Test Glue Search Tables
     @mock_aws
     def test__search_tables__(self):
-        audit_info = set_mocked_aws_audit_info()
-        glue = Glue(audit_info)
+        aws_provider = set_mocked_aws_provider()
+        glue = Glue(aws_provider)
         assert len(glue.tables) == 1
         assert glue.tables[0].name == "table"
         assert glue.tables[0].database == "database"
@@ -166,8 +166,8 @@ class Test_Glue_Service:
     # Test Glue Get Connections
     @mock_aws
     def test__get_connections__(self):
-        audit_info = set_mocked_aws_audit_info()
-        glue = Glue(audit_info)
+        aws_provider = set_mocked_aws_provider()
+        glue = Glue(aws_provider)
         assert len(glue.connections) == 1
         assert glue.connections[0].name == "connection"
         assert glue.connections[0].type == "JDBC"
@@ -183,8 +183,8 @@ class Test_Glue_Service:
     # Test Glue Get Catalog Encryption
     @mock_aws
     def test__get_data_catalog_encryption_settings__(self):
-        audit_info = set_mocked_aws_audit_info()
-        glue = Glue(audit_info)
+        aws_provider = set_mocked_aws_provider()
+        glue = Glue(aws_provider)
         assert len(glue.catalog_encryption_settings) == 1
         assert glue.catalog_encryption_settings[0].mode == "SSE-KMS"
         assert glue.catalog_encryption_settings[0].kms_id == "kms_key"
@@ -195,8 +195,8 @@ class Test_Glue_Service:
     # Test Glue Get Dev Endpoints
     @mock_aws
     def test__get_dev_endpoints__(self):
-        audit_info = set_mocked_aws_audit_info()
-        glue = Glue(audit_info)
+        aws_provider = set_mocked_aws_provider()
+        glue = Glue(aws_provider)
         assert len(glue.dev_endpoints) == 1
         assert glue.dev_endpoints[0].name == "endpoint"
         assert glue.dev_endpoints[0].security == "security_config"
@@ -205,8 +205,8 @@ class Test_Glue_Service:
     # Test Glue Get Security Configs
     @mock_aws
     def test__get_security_configurations__(self):
-        audit_info = set_mocked_aws_audit_info()
-        glue = Glue(audit_info)
+        aws_provider = set_mocked_aws_provider()
+        glue = Glue(aws_provider)
         assert len(glue.security_configs) == 1
         assert glue.security_configs[0].name == "test"
         assert glue.security_configs[0].s3_encryption == "DISABLED"
@@ -217,8 +217,8 @@ class Test_Glue_Service:
     # Test Glue Get Security Configs
     @mock_aws
     def test__get_jobs__(self):
-        audit_info = set_mocked_aws_audit_info()
-        glue = Glue(audit_info)
+        aws_provider = set_mocked_aws_provider()
+        glue = Glue(aws_provider)
         assert len(glue.jobs) == 1
         assert glue.jobs[0].name == "job"
         assert glue.jobs[0].security == "security_config"

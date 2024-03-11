@@ -7,7 +7,7 @@ from moto import mock_aws
 from tests.providers.aws.audit_info_utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_US_EAST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 INLINE_POLICY_ADMIN = {
@@ -43,16 +43,16 @@ class Test_iam_inline_policy_no_administrative_privileges:
         _ = iam_client.create_group(GroupName=group_name)
 
         # Audit Info
-        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
         from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.iam.iam_inline_policy_no_administrative_privileges.iam_inline_policy_no_administrative_privileges.iam_client",
-            new=IAM(current_audit_info),
+            new=IAM(aws_provider),
         ):
             from prowler.providers.aws.services.iam.iam_inline_policy_no_administrative_privileges.iam_inline_policy_no_administrative_privileges import (
                 iam_inline_policy_no_administrative_privileges,
@@ -78,16 +78,16 @@ class Test_iam_inline_policy_no_administrative_privileges:
             PolicyDocument=dumps(INLINE_POLICY_ADMIN),
         )
         # Audit Info
-        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
         from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.iam.iam_inline_policy_no_administrative_privileges.iam_inline_policy_no_administrative_privileges.iam_client",
-            new=IAM(current_audit_info),
+            new=IAM(aws_provider),
         ):
             from prowler.providers.aws.services.iam.iam_inline_policy_no_administrative_privileges.iam_inline_policy_no_administrative_privileges import (
                 iam_inline_policy_no_administrative_privileges,
@@ -122,16 +122,16 @@ class Test_iam_inline_policy_no_administrative_privileges:
             PolicyDocument=dumps(INLINE_POLICY_NOT_ADMIN),
         )
         # Audit Info
-        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
         from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.iam.iam_inline_policy_no_administrative_privileges.iam_inline_policy_no_administrative_privileges.iam_client",
-            new=IAM(current_audit_info),
+            new=IAM(aws_provider),
         ):
             from prowler.providers.aws.services.iam.iam_inline_policy_no_administrative_privileges.iam_inline_policy_no_administrative_privileges import (
                 iam_inline_policy_no_administrative_privileges,
@@ -174,16 +174,16 @@ class Test_iam_inline_policy_no_administrative_privileges:
             PolicyDocument=dumps(INLINE_POLICY_ADMIN),
         )
         # Audit Info
-        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
         from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.iam.iam_inline_policy_no_administrative_privileges.iam_inline_policy_no_administrative_privileges.iam_client",
-            new=IAM(current_audit_info),
+            new=IAM(aws_provider),
         ):
             from prowler.providers.aws.services.iam.iam_inline_policy_no_administrative_privileges.iam_inline_policy_no_administrative_privileges import (
                 iam_inline_policy_no_administrative_privileges,
@@ -228,16 +228,16 @@ class Test_iam_inline_policy_no_administrative_privileges:
         )
 
         # Audit Info
-        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
         from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.iam.iam_inline_policy_no_administrative_privileges.iam_inline_policy_no_administrative_privileges.iam_client",
-            new=IAM(current_audit_info),
+            new=IAM(aws_provider),
         ):
             from prowler.providers.aws.services.iam.iam_inline_policy_no_administrative_privileges.iam_inline_policy_no_administrative_privileges import (
                 iam_inline_policy_no_administrative_privileges,
@@ -266,16 +266,16 @@ class Test_iam_inline_policy_no_administrative_privileges:
             PolicyDocument=dumps(INLINE_POLICY_ADMIN),
         )
         # Audit Info
-        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
         from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.iam.iam_inline_policy_no_administrative_privileges.iam_inline_policy_no_administrative_privileges.iam_client",
-            new=IAM(current_audit_info),
+            new=IAM(aws_provider),
         ):
             from prowler.providers.aws.services.iam.iam_inline_policy_no_administrative_privileges.iam_inline_policy_no_administrative_privileges import (
                 iam_inline_policy_no_administrative_privileges,
@@ -313,16 +313,16 @@ class Test_iam_inline_policy_no_administrative_privileges:
             PolicyDocument=dumps(INLINE_POLICY_NOT_ADMIN),
         )
         # Audit Info
-        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
         from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.iam.iam_inline_policy_no_administrative_privileges.iam_inline_policy_no_administrative_privileges.iam_client",
-            new=IAM(current_audit_info),
+            new=IAM(aws_provider),
         ):
             from prowler.providers.aws.services.iam.iam_inline_policy_no_administrative_privileges.iam_inline_policy_no_administrative_privileges import (
                 iam_inline_policy_no_administrative_privileges,
@@ -367,16 +367,16 @@ class Test_iam_inline_policy_no_administrative_privileges:
             PolicyDocument=dumps(INLINE_POLICY_ADMIN),
         )
         # Audit Info
-        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
         from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.iam.iam_inline_policy_no_administrative_privileges.iam_inline_policy_no_administrative_privileges.iam_client",
-            new=IAM(current_audit_info),
+            new=IAM(aws_provider),
         ):
             from prowler.providers.aws.services.iam.iam_inline_policy_no_administrative_privileges.iam_inline_policy_no_administrative_privileges import (
                 iam_inline_policy_no_administrative_privileges,
@@ -420,16 +420,16 @@ class Test_iam_inline_policy_no_administrative_privileges:
         )
 
         # Audit Info
-        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
         from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.iam.iam_inline_policy_no_administrative_privileges.iam_inline_policy_no_administrative_privileges.iam_client",
-            new=IAM(current_audit_info),
+            new=IAM(aws_provider),
         ):
             from prowler.providers.aws.services.iam.iam_inline_policy_no_administrative_privileges.iam_inline_policy_no_administrative_privileges import (
                 iam_inline_policy_no_administrative_privileges,
@@ -459,16 +459,16 @@ class Test_iam_inline_policy_no_administrative_privileges:
             PolicyDocument=dumps(INLINE_POLICY_ADMIN),
         )
         # Audit Info
-        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
         from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.iam.iam_inline_policy_no_administrative_privileges.iam_inline_policy_no_administrative_privileges.iam_client",
-            new=IAM(current_audit_info),
+            new=IAM(aws_provider),
         ):
             from prowler.providers.aws.services.iam.iam_inline_policy_no_administrative_privileges.iam_inline_policy_no_administrative_privileges import (
                 iam_inline_policy_no_administrative_privileges,
@@ -507,16 +507,16 @@ class Test_iam_inline_policy_no_administrative_privileges:
             PolicyDocument=dumps(INLINE_POLICY_NOT_ADMIN),
         )
         # Audit Info
-        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
         from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.iam.iam_inline_policy_no_administrative_privileges.iam_inline_policy_no_administrative_privileges.iam_client",
-            new=IAM(current_audit_info),
+            new=IAM(aws_provider),
         ):
             from prowler.providers.aws.services.iam.iam_inline_policy_no_administrative_privileges.iam_inline_policy_no_administrative_privileges import (
                 iam_inline_policy_no_administrative_privileges,
@@ -562,16 +562,16 @@ class Test_iam_inline_policy_no_administrative_privileges:
             PolicyDocument=dumps(INLINE_POLICY_ADMIN),
         )
         # Audit Info
-        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
         from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.iam.iam_inline_policy_no_administrative_privileges.iam_inline_policy_no_administrative_privileges.iam_client",
-            new=IAM(current_audit_info),
+            new=IAM(aws_provider),
         ):
             from prowler.providers.aws.services.iam.iam_inline_policy_no_administrative_privileges.iam_inline_policy_no_administrative_privileges import (
                 iam_inline_policy_no_administrative_privileges,

@@ -7,7 +7,7 @@ from prowler.providers.aws.services.apigateway.apigateway_service import Stage
 from tests.providers.aws.audit_info_utils import (
     AWS_REGION_EU_WEST_1,
     AWS_REGION_US_EAST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 
@@ -24,16 +24,16 @@ class Test_apigateway_restapi_client_certificate_enabled:
             APIGateway,
         )
 
-        current_audit_info = current_audit_info = set_mocked_aws_audit_info(
+        aws_provider = set_mocked_aws_provider(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.apigateway.apigateway_restapi_client_certificate_enabled.apigateway_restapi_client_certificate_enabled.apigateway_client",
-            new=APIGateway(current_audit_info),
+            new=APIGateway(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.apigateway.apigateway_restapi_client_certificate_enabled.apigateway_restapi_client_certificate_enabled import (
@@ -84,16 +84,16 @@ class Test_apigateway_restapi_client_certificate_enabled:
             APIGateway,
         )
 
-        current_audit_info = current_audit_info = set_mocked_aws_audit_info(
+        aws_provider = set_mocked_aws_provider(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.apigateway.apigateway_restapi_client_certificate_enabled.apigateway_restapi_client_certificate_enabled.apigateway_client",
-            new=APIGateway(current_audit_info),
+            new=APIGateway(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.apigateway.apigateway_restapi_client_certificate_enabled.apigateway_restapi_client_certificate_enabled import (
@@ -112,7 +112,7 @@ class Test_apigateway_restapi_client_certificate_enabled:
             assert result[0].resource_id == "test-rest-api"
             assert (
                 result[0].resource_arn
-                == f"arn:{current_audit_info.identity.partition}:apigateway:{AWS_REGION_US_EAST_1}::/restapis/{rest_api['id']}/stages/test"
+                == f"arn:{aws_provider.identity.partition}:apigateway:{AWS_REGION_US_EAST_1}::/restapis/{rest_api['id']}/stages/test"
             )
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_tags == [None]
@@ -129,16 +129,16 @@ class Test_apigateway_restapi_client_certificate_enabled:
             APIGateway,
         )
 
-        current_audit_info = current_audit_info = set_mocked_aws_audit_info(
+        aws_provider = set_mocked_aws_provider(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.apigateway.apigateway_restapi_client_certificate_enabled.apigateway_restapi_client_certificate_enabled.apigateway_client",
-            new=APIGateway(current_audit_info),
+            new=APIGateway(aws_provider),
         ) as service_client:
             # Test Check
             from prowler.providers.aws.services.apigateway.apigateway_restapi_client_certificate_enabled.apigateway_restapi_client_certificate_enabled import (
@@ -148,7 +148,7 @@ class Test_apigateway_restapi_client_certificate_enabled:
             service_client.rest_apis[0].stages.append(
                 Stage(
                     name="test",
-                    arn=f"arn:{current_audit_info.identity.partition}:apigateway:{AWS_REGION_US_EAST_1}::/restapis/test-rest-api/stages/test",
+                    arn=f"arn:{aws_provider.identity.partition}:apigateway:{AWS_REGION_US_EAST_1}::/restapis/test-rest-api/stages/test",
                     logging=True,
                     client_certificate=True,
                     waf=True,
@@ -167,7 +167,7 @@ class Test_apigateway_restapi_client_certificate_enabled:
             assert result[0].resource_id == "test-rest-api"
             assert (
                 result[0].resource_arn
-                == f"arn:{current_audit_info.identity.partition}:apigateway:{AWS_REGION_US_EAST_1}::/restapis/test-rest-api/stages/test"
+                == f"arn:{aws_provider.identity.partition}:apigateway:{AWS_REGION_US_EAST_1}::/restapis/test-rest-api/stages/test"
             )
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_tags == []

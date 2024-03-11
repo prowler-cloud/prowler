@@ -9,7 +9,7 @@ from prowler.providers.aws.services.apigatewayv2.apigatewayv2_service import (
 from tests.providers.aws.audit_info_utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_US_EAST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 # Mocking ApiGatewayV2 Calls
@@ -45,16 +45,16 @@ class Test_ApiGatewayV2_Service:
     @mock_aws
     def test_service(self):
         # ApiGatewayV2 client for this test class
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        apigatewayv2 = ApiGatewayV2(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        apigatewayv2 = ApiGatewayV2(aws_provider)
         assert apigatewayv2.service == "apigatewayv2"
 
     # Test ApiGatewayV2 Client
     @mock_aws
     def test_client(self):
         # ApiGatewayV2 client for this test class
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        apigatewayv2 = ApiGatewayV2(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        apigatewayv2 = ApiGatewayV2(aws_provider)
         for regional_client in apigatewayv2.regional_clients.values():
             assert regional_client.__class__.__name__ == "ApiGatewayV2"
 
@@ -62,16 +62,16 @@ class Test_ApiGatewayV2_Service:
     @mock_aws
     def test__get_session__(self):
         # ApiGatewayV2 client for this test class
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        apigatewayv2 = ApiGatewayV2(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        apigatewayv2 = ApiGatewayV2(aws_provider)
         assert apigatewayv2.session.__class__.__name__ == "Session"
 
     # Test ApiGatewayV2 Session
     @mock_aws
     def test_audited_account(self):
         # ApiGatewayV2 client for this test class
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        apigatewayv2 = ApiGatewayV2(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        apigatewayv2 = ApiGatewayV2(aws_provider)
         assert apigatewayv2.audited_account == AWS_ACCOUNT_NUMBER
 
     # Test ApiGatewayV2 Get APIs
@@ -84,8 +84,8 @@ class Test_ApiGatewayV2_Service:
             Name="test-api", ProtocolType="HTTP", Tags={"test": "test"}
         )
         # ApiGatewayV2 client for this test class
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        apigatewayv2 = ApiGatewayV2(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        apigatewayv2 = ApiGatewayV2(aws_provider)
         assert len(apigatewayv2.apis) == len(apigatewayv2_client.get_apis()["Items"])
         assert apigatewayv2.apis[0].tags == [{"test": "test"}]
 
@@ -105,8 +105,8 @@ class Test_ApiGatewayV2_Service:
             AuthorizerPayloadFormatVersion="2.0",
         )
         # ApiGatewayV2 client for this test class
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        apigatewayv2 = ApiGatewayV2(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        apigatewayv2 = ApiGatewayV2(aws_provider)
         assert apigatewayv2.apis[0].authorizer is True
 
     # Test ApiGatewayV2 Get Stages
@@ -117,6 +117,6 @@ class Test_ApiGatewayV2_Service:
         # Create ApiGatewayV2 Rest API and a deployment stage
         apigatewayv2_client.create_api(Name="test-api", ProtocolType="HTTP")
 
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        apigatewayv2 = ApiGatewayV2(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        apigatewayv2 = ApiGatewayV2(aws_provider)
         assert apigatewayv2.apis[0].stages[0].logging is True

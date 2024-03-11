@@ -13,7 +13,7 @@ from prowler.providers.aws.services.cloudformation.cloudformation_service import
 from tests.providers.aws.audit_info_utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_WEST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 # Dummy CloudFormation Template
@@ -137,9 +137,7 @@ class Test_CloudFormation_Service:
     # Test CloudFormation Client
     @mock_aws
     def test__get_client__(self):
-        cloudformation = CloudFormation(
-            set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
-        )
+        cloudformation = CloudFormation(set_mocked_aws_provider([AWS_REGION_EU_WEST_1]))
         assert (
             cloudformation.regional_clients[AWS_REGION_EU_WEST_1].__class__.__name__
             == "CloudFormation"
@@ -148,9 +146,7 @@ class Test_CloudFormation_Service:
     # Test CloudFormation Service
     @mock_aws
     def test__get_service__(self):
-        cloudformation = CloudFormation(
-            set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
-        )
+        cloudformation = CloudFormation(set_mocked_aws_provider([AWS_REGION_EU_WEST_1]))
         assert (
             cloudformation.regional_clients[AWS_REGION_EU_WEST_1].__class__.__name__
             == "CloudFormation"
@@ -159,9 +155,7 @@ class Test_CloudFormation_Service:
     # Test CloudFormation Session
     @mock_aws
     def test__get_session__(self):
-        cloudformation = CloudFormation(
-            set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
-        )
+        cloudformation = CloudFormation(set_mocked_aws_provider([AWS_REGION_EU_WEST_1]))
         assert cloudformation.session.__class__.__name__ == "Session"
 
     @mock_aws
@@ -187,9 +181,7 @@ class Test_CloudFormation_Service:
             ],
         )
 
-        cloudformation = CloudFormation(
-            set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
-        )
+        cloudformation = CloudFormation(set_mocked_aws_provider([AWS_REGION_EU_WEST_1]))
         assert len(cloudformation.stacks) == 1
         assert cloudformation.stacks[0].arn == stack_arn["StackId"]
         assert cloudformation.stacks[0].name == "Test-Stack"

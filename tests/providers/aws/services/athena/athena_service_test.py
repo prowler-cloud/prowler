@@ -5,7 +5,7 @@ from moto import mock_aws
 from prowler.providers.aws.services.athena.athena_service import Athena
 from tests.providers.aws.audit_info_utils import (
     AWS_REGION_EU_WEST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 # Mocking Access Analyzer Calls
@@ -57,9 +57,9 @@ class Test_Athena_Service:
     @mock_aws
     def test__get_workgroups__not_encrypted(self):
         default_workgroup_name = "primary"
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
-        workgroup_arn = f"arn:{audit_info.identity.partition}:athena:{AWS_REGION_EU_WEST_1}:{audit_info.identity.account}:workgroup/{default_workgroup_name}"
-        athena = Athena(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        workgroup_arn = f"arn:{aws_provider.identity.partition}:athena:{AWS_REGION_EU_WEST_1}:{aws_provider.identity.account}:workgroup/{default_workgroup_name}"
+        athena = Athena(aws_provider)
         assert len(athena.workgroups) == 1
         assert athena.workgroups[workgroup_arn]
         assert athena.workgroups[workgroup_arn].arn == workgroup_arn
@@ -81,11 +81,11 @@ class Test_Athena_Service:
     @mock_aws
     def test__get_workgroups__encrypted(self):
         default_workgroup_name = "primary"
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
         # Athena client
         # This API call is not implemented by Moto
-        # athena_client = audit_info.audit_session.client(
+        # athena_client = aws_provider.audit_session.client(
         #     "athena", region_name=AWS_REGION
         # )
         # athena_client.update_work_group(
@@ -97,8 +97,8 @@ class Test_Athena_Service:
         #     },
         # )
 
-        workgroup_arn = f"arn:{audit_info.identity.partition}:athena:{AWS_REGION_EU_WEST_1}:{audit_info.identity.account}:workgroup/{default_workgroup_name}"
-        athena = Athena(audit_info)
+        workgroup_arn = f"arn:{aws_provider.identity.partition}:athena:{AWS_REGION_EU_WEST_1}:{aws_provider.identity.account}:workgroup/{default_workgroup_name}"
+        athena = Athena(aws_provider)
         assert len(athena.workgroups) == 1
         assert athena.workgroups[workgroup_arn]
         assert athena.workgroups[workgroup_arn].arn == workgroup_arn

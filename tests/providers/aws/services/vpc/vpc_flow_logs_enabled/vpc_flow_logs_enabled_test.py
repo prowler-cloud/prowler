@@ -7,7 +7,7 @@ from tests.providers.aws.audit_info_utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_WEST_1,
     AWS_REGION_US_EAST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 
@@ -16,16 +16,16 @@ class Test_vpc_flow_logs_enabled:
     def test_vpc_only_default_vpcs(self):
         from prowler.providers.aws.services.vpc.vpc_service import VPC
 
-        current_audit_info = set_mocked_aws_audit_info(
+        aws_provider = set_mocked_aws_provider(
             [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
         )
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.vpc.vpc_flow_logs_enabled.vpc_flow_logs_enabled.vpc_client",
-            new=VPC(current_audit_info),
+            new=VPC(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.vpc.vpc_flow_logs_enabled.vpc_flow_logs_enabled import (
@@ -67,16 +67,16 @@ class Test_vpc_flow_logs_enabled:
             + ":role/test-role",
         )
 
-        current_audit_info = set_mocked_aws_audit_info(
+        aws_provider = set_mocked_aws_provider(
             [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
         )
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.vpc.vpc_flow_logs_enabled.vpc_flow_logs_enabled.vpc_client",
-            new=VPC(current_audit_info),
+            new=VPC(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.vpc.vpc_flow_logs_enabled.vpc_flow_logs_enabled import (
@@ -104,16 +104,16 @@ class Test_vpc_flow_logs_enabled:
 
         vpc = ec2_client.create_vpc(CidrBlock="10.0.0.0/16")["Vpc"]
 
-        current_audit_info = set_mocked_aws_audit_info(
+        aws_provider = set_mocked_aws_provider(
             [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
         )
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.vpc.vpc_flow_logs_enabled.vpc_flow_logs_enabled.vpc_client",
-            new=VPC(current_audit_info),
+            new=VPC(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.vpc.vpc_flow_logs_enabled.vpc_flow_logs_enabled import (
@@ -142,17 +142,17 @@ class Test_vpc_flow_logs_enabled:
 
         ec2_client.create_vpc(CidrBlock="10.0.0.0/16")["Vpc"]
 
-        current_audit_info = set_mocked_aws_audit_info(
+        aws_provider = set_mocked_aws_provider(
             [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
         )
-        current_audit_info._ignore_unused_services = True
+        aws_provider._ignore_unused_services = True
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.vpc.vpc_flow_logs_enabled.vpc_flow_logs_enabled.vpc_client",
-            new=VPC(current_audit_info),
+            new=VPC(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.vpc.vpc_flow_logs_enabled.vpc_flow_logs_enabled import (
@@ -174,17 +174,17 @@ class Test_vpc_flow_logs_enabled:
         vpc = ec2.create_vpc(CidrBlock="10.0.0.0/16")
         subnet = ec2.create_subnet(VpcId=vpc.id, CidrBlock="10.0.0.0/18")
         ec2.create_network_interface(SubnetId=subnet.id)
-        current_audit_info = set_mocked_aws_audit_info(
+        aws_provider = set_mocked_aws_provider(
             [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
         )
-        current_audit_info._ignore_unused_services = True
+        aws_provider._ignore_unused_services = True
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.vpc.vpc_flow_logs_enabled.vpc_flow_logs_enabled.vpc_client",
-            new=VPC(current_audit_info),
+            new=VPC(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.vpc.vpc_flow_logs_enabled.vpc_flow_logs_enabled import (

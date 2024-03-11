@@ -9,7 +9,7 @@ from prowler.providers.aws.services.rds.rds_service import DBCluster, DBInstance
 from tests.providers.aws.audit_info_utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_US_EAST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 make_api_call = botocore.client.BaseClient._make_api_call
@@ -36,15 +36,15 @@ class Test_rds_instance_multi_az:
     def test_rds_no_instances(self):
         from prowler.providers.aws.services.rds.rds_service import RDS
 
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=audit_info,
+            return_value=aws_provider,
         ):
             with mock.patch(
                 "prowler.providers.aws.services.rds.rds_instance_multi_az.rds_instance_multi_az.rds_client",
-                new=RDS(audit_info),
+                new=RDS(aws_provider),
             ):
                 # Test Check
                 from prowler.providers.aws.services.rds.rds_instance_multi_az.rds_instance_multi_az import (
@@ -68,15 +68,15 @@ class Test_rds_instance_multi_az:
         )
         from prowler.providers.aws.services.rds.rds_service import RDS
 
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=audit_info,
+            return_value=aws_provider,
         ):
             with mock.patch(
                 "prowler.providers.aws.services.rds.rds_instance_multi_az.rds_instance_multi_az.rds_client",
-                new=RDS(audit_info),
+                new=RDS(aws_provider),
             ):
                 # Test Check
                 from prowler.providers.aws.services.rds.rds_instance_multi_az.rds_instance_multi_az import (
@@ -114,15 +114,15 @@ class Test_rds_instance_multi_az:
 
         from prowler.providers.aws.services.rds.rds_service import RDS
 
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=audit_info,
+            return_value=aws_provider,
         ):
             with mock.patch(
                 "prowler.providers.aws.services.rds.rds_instance_multi_az.rds_instance_multi_az.rds_client",
-                new=RDS(audit_info),
+                new=RDS(aws_provider),
             ):
                 # Test Check
                 from prowler.providers.aws.services.rds.rds_instance_multi_az.rds_instance_multi_az import (
@@ -191,11 +191,11 @@ class Test_rds_instance_multi_az:
             )
         ]
 
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=audit_info,
+            return_value=aws_provider,
         ):
             with mock.patch(
                 "prowler.providers.aws.services.rds.rds_instance_multi_az.rds_instance_multi_az.rds_client",
@@ -268,11 +268,11 @@ class Test_rds_instance_multi_az:
             )
         ]
 
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=audit_info,
+            return_value=aws_provider,
         ):
             with mock.patch(
                 "prowler.providers.aws.services.rds.rds_instance_multi_az.rds_instance_multi_az.rds_client",

@@ -6,7 +6,7 @@ from moto import mock_aws
 from tests.providers.aws.audit_info_utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_US_EAST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 AWS_ACCOUNT_ARN = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
@@ -19,19 +19,17 @@ class Test_vpc_endpoint_services_allowed_principals_trust_boundaries:
     def test_no_vpc_endpoint_services(self):
         from prowler.providers.aws.services.vpc.vpc_service import VPC
 
-        current_audit_info = set_mocked_aws_audit_info(
-            audited_regions=[AWS_REGION_US_EAST_1]
-        )
+        aws_provider = set_mocked_aws_provider(audited_regions=[AWS_REGION_US_EAST_1])
         # Set config variable
-        current_audit_info._audit_config = {"trusted_account_ids": []}
+        aws_provider._audit_config = {"trusted_account_ids": []}
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ):
             with mock.patch(
                 "prowler.providers.aws.services.vpc.vpc_endpoint_services_allowed_principals_trust_boundaries.vpc_endpoint_services_allowed_principals_trust_boundaries.vpc_client",
-                new=VPC(current_audit_info),
+                new=VPC(aws_provider),
             ):
                 # Test Check
                 from prowler.providers.aws.services.vpc.vpc_endpoint_services_allowed_principals_trust_boundaries.vpc_endpoint_services_allowed_principals_trust_boundaries import (
@@ -73,19 +71,17 @@ class Test_vpc_endpoint_services_allowed_principals_trust_boundaries:
 
         from prowler.providers.aws.services.vpc.vpc_service import VPC
 
-        current_audit_info = set_mocked_aws_audit_info(
-            audited_regions=[AWS_REGION_US_EAST_1]
-        )
+        aws_provider = set_mocked_aws_provider(audited_regions=[AWS_REGION_US_EAST_1])
         # Set config variable
-        current_audit_info._audit_config = {"trusted_account_ids": []}
+        aws_provider._audit_config = {"trusted_account_ids": []}
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ):
             with mock.patch(
                 "prowler.providers.aws.services.vpc.vpc_endpoint_services_allowed_principals_trust_boundaries.vpc_endpoint_services_allowed_principals_trust_boundaries.vpc_client",
-                new=VPC(current_audit_info),
+                new=VPC(aws_provider),
             ):
                 # Test Check
                 from prowler.providers.aws.services.vpc.vpc_endpoint_services_allowed_principals_trust_boundaries.vpc_endpoint_services_allowed_principals_trust_boundaries import (
@@ -141,19 +137,17 @@ class Test_vpc_endpoint_services_allowed_principals_trust_boundaries:
 
         from prowler.providers.aws.services.vpc.vpc_service import VPC
 
-        current_audit_info = set_mocked_aws_audit_info(
-            audited_regions=[AWS_REGION_US_EAST_1]
-        )
+        aws_provider = set_mocked_aws_provider(audited_regions=[AWS_REGION_US_EAST_1])
         # Set config variable
-        current_audit_info._audit_config = {"trusted_account_ids": []}
+        aws_provider._audit_config = {"trusted_account_ids": []}
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ):
             with mock.patch(
                 "prowler.providers.aws.services.vpc.vpc_endpoint_services_allowed_principals_trust_boundaries.vpc_endpoint_services_allowed_principals_trust_boundaries.vpc_client",
-                new=VPC(current_audit_info),
+                new=VPC(aws_provider),
             ):
                 # Test Check
                 from prowler.providers.aws.services.vpc.vpc_endpoint_services_allowed_principals_trust_boundaries.vpc_endpoint_services_allowed_principals_trust_boundaries import (
@@ -209,19 +203,17 @@ class Test_vpc_endpoint_services_allowed_principals_trust_boundaries:
 
         from prowler.providers.aws.services.vpc.vpc_service import VPC
 
-        current_audit_info = set_mocked_aws_audit_info(
-            audited_regions=[AWS_REGION_US_EAST_1]
-        )
+        aws_provider = set_mocked_aws_provider(audited_regions=[AWS_REGION_US_EAST_1])
         # Set config variable
-        current_audit_info._audit_config = {"trusted_account_ids": []}
+        aws_provider._audit_config = {"trusted_account_ids": []}
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ):
             with mock.patch(
                 "prowler.providers.aws.services.vpc.vpc_endpoint_services_allowed_principals_trust_boundaries.vpc_endpoint_services_allowed_principals_trust_boundaries.vpc_client",
-                new=VPC(current_audit_info),
+                new=VPC(aws_provider),
             ):
                 # Test Check
                 from prowler.providers.aws.services.vpc.vpc_endpoint_services_allowed_principals_trust_boundaries.vpc_endpoint_services_allowed_principals_trust_boundaries import (
@@ -277,19 +269,17 @@ class Test_vpc_endpoint_services_allowed_principals_trust_boundaries:
 
         from prowler.providers.aws.services.vpc.vpc_service import VPC
 
-        current_audit_info = set_mocked_aws_audit_info(
-            audited_regions=[AWS_REGION_US_EAST_1]
-        )
+        aws_provider = set_mocked_aws_provider(audited_regions=[AWS_REGION_US_EAST_1])
         # Set config variable
-        current_audit_info._audit_config = {"trusted_account_ids": []}
+        aws_provider._audit_config = {"trusted_account_ids": []}
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ):
             with mock.patch(
                 "prowler.providers.aws.services.vpc.vpc_endpoint_services_allowed_principals_trust_boundaries.vpc_endpoint_services_allowed_principals_trust_boundaries.vpc_client",
-                new=VPC(current_audit_info),
+                new=VPC(aws_provider),
             ):
                 # Test Check
                 from prowler.providers.aws.services.vpc.vpc_endpoint_services_allowed_principals_trust_boundaries.vpc_endpoint_services_allowed_principals_trust_boundaries import (
@@ -347,21 +337,17 @@ class Test_vpc_endpoint_services_allowed_principals_trust_boundaries:
 
         from prowler.providers.aws.services.vpc.vpc_service import VPC
 
-        current_audit_info = set_mocked_aws_audit_info(
-            audited_regions=[AWS_REGION_US_EAST_1]
-        )
+        aws_provider = set_mocked_aws_provider(audited_regions=[AWS_REGION_US_EAST_1])
         # Set config variable
-        current_audit_info._audit_config = {
-            "trusted_account_ids": [AWS_ACCOUNT_NUMBER_2]
-        }
+        aws_provider._audit_config = {"trusted_account_ids": [AWS_ACCOUNT_NUMBER_2]}
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ):
             with mock.patch(
                 "prowler.providers.aws.services.vpc.vpc_endpoint_services_allowed_principals_trust_boundaries.vpc_endpoint_services_allowed_principals_trust_boundaries.vpc_client",
-                new=VPC(current_audit_info),
+                new=VPC(aws_provider),
             ):
                 # Test Check
                 from prowler.providers.aws.services.vpc.vpc_endpoint_services_allowed_principals_trust_boundaries.vpc_endpoint_services_allowed_principals_trust_boundaries import (

@@ -7,14 +7,14 @@ from moto import mock_aws
 from prowler.providers.aws.services.iam.iam_service import IAM
 from tests.providers.aws.audit_info_utils import (
     AWS_REGION_US_EAST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 
 class Test_iam_policy_no_full_access_to_kms:
     @mock_aws
     def test_policy_full_access_to_kms(self):
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         iam_client = client("iam")
         policy_name = "policy_kms_full"
         policy_document_full_access = {
@@ -29,11 +29,11 @@ class Test_iam_policy_no_full_access_to_kms:
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=audit_info,
+            return_value=aws_provider,
         ):
             with mock.patch(
                 "prowler.providers.aws.services.iam.iam_policy_no_full_access_to_kms.iam_policy_no_full_access_to_kms.iam_client",
-                new=IAM(audit_info),
+                new=IAM(aws_provider),
             ):
                 # Test Check
                 from prowler.providers.aws.services.iam.iam_policy_no_full_access_to_kms.iam_policy_no_full_access_to_kms import (
@@ -53,7 +53,7 @@ class Test_iam_policy_no_full_access_to_kms:
 
     @mock_aws
     def test_policy_no_full_access_to_kms(self):
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         iam_client = client("iam")
         policy_name = "policy_no_kms_full"
         policy_document_full_access = {
@@ -68,11 +68,11 @@ class Test_iam_policy_no_full_access_to_kms:
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=audit_info,
+            return_value=aws_provider,
         ):
             with mock.patch(
                 "prowler.providers.aws.services.iam.iam_policy_no_full_access_to_kms.iam_policy_no_full_access_to_kms.iam_client",
-                new=IAM(audit_info),
+                new=IAM(aws_provider),
             ):
                 # Test Check
                 from prowler.providers.aws.services.iam.iam_policy_no_full_access_to_kms.iam_policy_no_full_access_to_kms import (
@@ -92,7 +92,7 @@ class Test_iam_policy_no_full_access_to_kms:
 
     @mock_aws
     def test_policy_mixed(self):
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         iam_client = client("iam")
         policy_name = "policy_mixed"
         policy_document_full_access = {
@@ -107,11 +107,11 @@ class Test_iam_policy_no_full_access_to_kms:
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=audit_info,
+            return_value=aws_provider,
         ):
             with mock.patch(
                 "prowler.providers.aws.services.iam.iam_policy_no_full_access_to_kms.iam_policy_no_full_access_to_kms.iam_client",
-                new=IAM(audit_info),
+                new=IAM(aws_provider),
             ):
                 # Test Check
                 from prowler.providers.aws.services.iam.iam_policy_no_full_access_to_kms.iam_policy_no_full_access_to_kms import (

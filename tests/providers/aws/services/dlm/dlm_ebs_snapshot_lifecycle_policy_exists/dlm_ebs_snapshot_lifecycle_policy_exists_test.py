@@ -8,7 +8,7 @@ from tests.providers.aws.audit_info_utils import (
     AWS_ACCOUNT_ARN,
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_US_EAST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 LIFECYCLE_POLICY_ID = "policy-XXXXXXXXXXXX"
@@ -23,7 +23,7 @@ class Test_dlm_ebs_snapshot_lifecycle_policy_exists:
         dlm_client.audited_account_arn = AWS_ACCOUNT_ARN
         dlm_client.lifecycle_policies = {}
 
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
@@ -32,10 +32,10 @@ class Test_dlm_ebs_snapshot_lifecycle_policy_exists:
             new=dlm_client,
         ), mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=audit_info,
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_service.EC2",
-            return_value=EC2(audit_info),
+            return_value=EC2(aws_provider),
         ) as ec2_client, mock.patch(
             "prowler.providers.aws.services.ec2.ec2_client.ec2_client",
             new=ec2_client,
@@ -91,16 +91,16 @@ class Test_dlm_ebs_snapshot_lifecycle_policy_exists:
         dlm_client.__get_lifecycle_policy_arn_template__ = mock.MagicMock(
             return_value=dlm_client.lifecycle_policy_arn_template
         )
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=audit_info,
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.dlm.dlm_ebs_snapshot_lifecycle_policy_exists.dlm_ebs_snapshot_lifecycle_policy_exists.ec2_client",
-            new=EC2(audit_info),
+            new=EC2(aws_provider),
         ), mock.patch(
             "prowler.providers.aws.services.dlm.dlm_ebs_snapshot_lifecycle_policy_exists.dlm_ebs_snapshot_lifecycle_policy_exists.dlm_client",
             new=dlm_client,
@@ -152,16 +152,16 @@ class Test_dlm_ebs_snapshot_lifecycle_policy_exists:
 
         # from prowler.providers.aws.services.ec2.ec2_service import EC2
 
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=audit_info,
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.dlm.dlm_ebs_snapshot_lifecycle_policy_exists.dlm_ebs_snapshot_lifecycle_policy_exists.ec2_client",
-            new=EC2(audit_info),
+            new=EC2(aws_provider),
         ), mock.patch(
             "prowler.providers.aws.services.dlm.dlm_ebs_snapshot_lifecycle_policy_exists.dlm_ebs_snapshot_lifecycle_policy_exists.dlm_client",
             new=dlm_client,
@@ -193,16 +193,16 @@ class Test_dlm_ebs_snapshot_lifecycle_policy_exists:
 
         # from prowler.providers.aws.services.ec2.ec2_service import EC2
 
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=audit_info,
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.dlm.dlm_ebs_snapshot_lifecycle_policy_exists.dlm_ebs_snapshot_lifecycle_policy_exists.ec2_client",
-            new=EC2(audit_info),
+            new=EC2(aws_provider),
         ) as ec2_client, mock.patch(
             "prowler.providers.aws.services.dlm.dlm_ebs_snapshot_lifecycle_policy_exists.dlm_ebs_snapshot_lifecycle_policy_exists.dlm_client",
             new=dlm_client,

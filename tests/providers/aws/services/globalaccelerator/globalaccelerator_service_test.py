@@ -8,7 +8,7 @@ from prowler.providers.aws.services.globalaccelerator.globalaccelerator_service 
 from tests.providers.aws.audit_info_utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_US_WEST_2,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 # Mocking Access Analyzer Calls
@@ -53,28 +53,28 @@ class Test_GlobalAccelerator_Service:
     # Test GlobalAccelerator Service
     def test_service(self):
         # GlobalAccelerator client for this test class
-        audit_info = set_mocked_aws_audit_info()
-        globalaccelerator = GlobalAccelerator(audit_info)
+        aws_provider = set_mocked_aws_provider()
+        globalaccelerator = GlobalAccelerator(aws_provider)
         assert globalaccelerator.service == "globalaccelerator"
 
     # Test GlobalAccelerator Client
     def test_client(self):
         # GlobalAccelerator client for this test class
-        audit_info = set_mocked_aws_audit_info()
-        globalaccelerator = GlobalAccelerator(audit_info)
+        aws_provider = set_mocked_aws_provider()
+        globalaccelerator = GlobalAccelerator(aws_provider)
         assert globalaccelerator.client.__class__.__name__ == "GlobalAccelerator"
 
     # Test GlobalAccelerator Session
     def test__get_session__(self):
         # GlobalAccelerator client for this test class
-        audit_info = set_mocked_aws_audit_info()
-        globalaccelerator = GlobalAccelerator(audit_info)
+        aws_provider = set_mocked_aws_provider()
+        globalaccelerator = GlobalAccelerator(aws_provider)
         assert globalaccelerator.session.__class__.__name__ == "Session"
 
     def test__list_accelerators__(self):
         # GlobalAccelerator client for this test class
-        audit_info = set_mocked_aws_audit_info()
-        globalaccelerator = GlobalAccelerator(audit_info)
+        aws_provider = set_mocked_aws_provider()
+        globalaccelerator = GlobalAccelerator(aws_provider)
 
         accelerator_name = "TestAccelerator"
 

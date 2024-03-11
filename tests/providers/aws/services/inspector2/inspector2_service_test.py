@@ -7,7 +7,7 @@ from prowler.providers.aws.services.inspector2.inspector2_service import Inspect
 from tests.providers.aws.audit_info_utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_WEST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 FINDING_ARN = (
@@ -85,29 +85,29 @@ def mock_generate_regional_clients(provider, service):
 )
 class Test_Inspector2_Service:
     def test__get_client__(self):
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
-        inspector2 = Inspector2(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        inspector2 = Inspector2(aws_provider)
         assert (
             inspector2.regional_clients[AWS_REGION_EU_WEST_1].__class__.__name__
             == "Inspector2"
         )
 
     def test__get_service__(self):
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
-        inspector2 = Inspector2(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        inspector2 = Inspector2(aws_provider)
         assert inspector2.service == "inspector2"
 
     def test__batch_get_account_status__(self):
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
-        inspector2 = Inspector2(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        inspector2 = Inspector2(aws_provider)
         assert len(inspector2.inspectors) == 1
         assert inspector2.inspectors[0].id == "Inspector2"
         assert inspector2.inspectors[0].region == AWS_REGION_EU_WEST_1
         assert inspector2.inspectors[0].status == "ENABLED"
 
     def test__list_findings__(self):
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
-        inspector2 = Inspector2(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        inspector2 = Inspector2(aws_provider)
         assert len(inspector2.inspectors[0].findings) == 1
         assert inspector2.inspectors[0].findings[0].arn == FINDING_ARN
         assert inspector2.inspectors[0].findings[0].region == AWS_REGION_EU_WEST_1

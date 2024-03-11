@@ -7,7 +7,7 @@ from moto import mock_aws
 from tests.providers.aws.audit_info_utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_US_EAST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 
@@ -30,15 +30,15 @@ class Test_iam_policy_attached_only_to_group_or_roles:
         )["Policy"]["Arn"]
         iam_client.attach_user_policy(UserName=user, PolicyArn=policyArn)
 
-        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.iam.iam_policy_attached_only_to_group_or_roles.iam_policy_attached_only_to_group_or_roles.iam_client",
-            new=IAM(current_audit_info),
+            new=IAM(aws_provider),
         ):
             from prowler.providers.aws.services.iam.iam_policy_attached_only_to_group_or_roles.iam_policy_attached_only_to_group_or_roles import (
                 iam_policy_attached_only_to_group_or_roles,
@@ -79,15 +79,15 @@ class Test_iam_policy_attached_only_to_group_or_roles:
         )["Policy"]["Arn"]
         iam_client.attach_user_policy(UserName=user, PolicyArn=policyArn)
 
-        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.iam.iam_policy_attached_only_to_group_or_roles.iam_policy_attached_only_to_group_or_roles.iam_client",
-            new=IAM(current_audit_info),
+            new=IAM(aws_provider),
         ):
             from prowler.providers.aws.services.iam.iam_policy_attached_only_to_group_or_roles.iam_policy_attached_only_to_group_or_roles import (
                 iam_policy_attached_only_to_group_or_roles,
@@ -133,15 +133,15 @@ class Test_iam_policy_attached_only_to_group_or_roles:
             UserName=user, PolicyName=policyName, PolicyDocument=dumps(policyDocument)
         )
 
-        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.iam.iam_policy_attached_only_to_group_or_roles.iam_policy_attached_only_to_group_or_roles.iam_client",
-            new=IAM(current_audit_info),
+            new=IAM(aws_provider),
         ):
             from prowler.providers.aws.services.iam.iam_policy_attached_only_to_group_or_roles.iam_policy_attached_only_to_group_or_roles import (
                 iam_policy_attached_only_to_group_or_roles,
@@ -168,15 +168,15 @@ class Test_iam_policy_attached_only_to_group_or_roles:
         user = "test_no_policies"
         iam_client.create_user(UserName=user)
 
-        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.iam.iam_policy_attached_only_to_group_or_roles.iam_policy_attached_only_to_group_or_roles.iam_client",
-            new=IAM(current_audit_info),
+            new=IAM(aws_provider),
         ):
             from prowler.providers.aws.services.iam.iam_policy_attached_only_to_group_or_roles.iam_policy_attached_only_to_group_or_roles import (
                 iam_policy_attached_only_to_group_or_roles,

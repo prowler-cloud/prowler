@@ -6,7 +6,7 @@ from moto import mock_aws
 from tests.providers.aws.audit_info_utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_US_EAST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 
@@ -29,17 +29,17 @@ class Test_cloudtrail_s3_dataevents_read_enabled:
         )
         from prowler.providers.aws.services.s3.s3_service import S3
 
-        current_audit_info = set_mocked_aws_audit_info()
+        aws_provider = set_mocked_aws_provider()
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.cloudtrail.cloudtrail_s3_dataevents_read_enabled.cloudtrail_s3_dataevents_read_enabled.cloudtrail_client",
-            new=Cloudtrail(current_audit_info),
+            new=Cloudtrail(aws_provider),
         ), mock.patch(
             "prowler.providers.aws.services.cloudtrail.cloudtrail_s3_dataevents_read_enabled.cloudtrail_s3_dataevents_read_enabled.s3_client",
-            new=S3(current_audit_info),
+            new=S3(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.cloudtrail.cloudtrail_s3_dataevents_read_enabled.cloudtrail_s3_dataevents_read_enabled import (
@@ -70,18 +70,18 @@ class Test_cloudtrail_s3_dataevents_read_enabled:
         )
         from prowler.providers.aws.services.s3.s3_service import S3
 
-        current_audit_info = set_mocked_aws_audit_info()
-        current_audit_info._ignore_unused_services = True
+        aws_provider = set_mocked_aws_provider()
+        aws_provider._ignore_unused_services = True
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.cloudtrail.cloudtrail_s3_dataevents_read_enabled.cloudtrail_s3_dataevents_read_enabled.cloudtrail_client",
-            new=Cloudtrail(current_audit_info),
+            new=Cloudtrail(aws_provider),
         ), mock.patch(
             "prowler.providers.aws.services.cloudtrail.cloudtrail_s3_dataevents_read_enabled.cloudtrail_s3_dataevents_read_enabled.s3_client",
-            new=S3(current_audit_info),
+            new=S3(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.cloudtrail.cloudtrail_s3_dataevents_read_enabled.cloudtrail_s3_dataevents_read_enabled import (
@@ -104,18 +104,18 @@ class Test_cloudtrail_s3_dataevents_read_enabled:
         )
         from prowler.providers.aws.services.s3.s3_service import S3
 
-        current_audit_info = set_mocked_aws_audit_info()
-        current_audit_info._ignore_unused_services = True
+        aws_provider = set_mocked_aws_provider()
+        aws_provider._ignore_unused_services = True
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.cloudtrail.cloudtrail_s3_dataevents_read_enabled.cloudtrail_s3_dataevents_read_enabled.cloudtrail_client",
-            new=Cloudtrail(current_audit_info),
+            new=Cloudtrail(aws_provider),
         ), mock.patch(
             "prowler.providers.aws.services.cloudtrail.cloudtrail_s3_dataevents_read_enabled.cloudtrail_s3_dataevents_read_enabled.s3_client",
-            new=S3(current_audit_info),
+            new=S3(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.cloudtrail.cloudtrail_s3_dataevents_read_enabled.cloudtrail_s3_dataevents_read_enabled import (
@@ -169,17 +169,17 @@ class Test_cloudtrail_s3_dataevents_read_enabled:
         )
         from prowler.providers.aws.services.s3.s3_service import S3
 
-        current_audit_info = set_mocked_aws_audit_info()
+        aws_provider = set_mocked_aws_provider()
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.cloudtrail.cloudtrail_s3_dataevents_read_enabled.cloudtrail_s3_dataevents_read_enabled.cloudtrail_client",
-            new=Cloudtrail(current_audit_info),
+            new=Cloudtrail(aws_provider),
         ), mock.patch(
             "prowler.providers.aws.services.cloudtrail.cloudtrail_s3_dataevents_read_enabled.cloudtrail_s3_dataevents_read_enabled.s3_client",
-            new=S3(current_audit_info),
+            new=S3(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.cloudtrail.cloudtrail_s3_dataevents_read_enabled.cloudtrail_s3_dataevents_read_enabled import (
@@ -233,17 +233,17 @@ class Test_cloudtrail_s3_dataevents_read_enabled:
         )
         from prowler.providers.aws.services.s3.s3_service import S3
 
-        current_audit_info = set_mocked_aws_audit_info()
+        aws_provider = set_mocked_aws_provider()
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.cloudtrail.cloudtrail_s3_dataevents_read_enabled.cloudtrail_s3_dataevents_read_enabled.cloudtrail_client",
-            new=Cloudtrail(current_audit_info),
+            new=Cloudtrail(aws_provider),
         ), mock.patch(
             "prowler.providers.aws.services.cloudtrail.cloudtrail_s3_dataevents_read_enabled.cloudtrail_s3_dataevents_read_enabled.s3_client",
-            new=S3(current_audit_info),
+            new=S3(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.cloudtrail.cloudtrail_s3_dataevents_read_enabled.cloudtrail_s3_dataevents_read_enabled import (
@@ -294,17 +294,17 @@ class Test_cloudtrail_s3_dataevents_read_enabled:
         )
         from prowler.providers.aws.services.s3.s3_service import S3
 
-        current_audit_info = set_mocked_aws_audit_info()
+        aws_provider = set_mocked_aws_provider()
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.cloudtrail.cloudtrail_s3_dataevents_read_enabled.cloudtrail_s3_dataevents_read_enabled.cloudtrail_client",
-            new=Cloudtrail(current_audit_info),
+            new=Cloudtrail(aws_provider),
         ), mock.patch(
             "prowler.providers.aws.services.cloudtrail.cloudtrail_s3_dataevents_read_enabled.cloudtrail_s3_dataevents_read_enabled.s3_client",
-            new=S3(current_audit_info),
+            new=S3(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.cloudtrail.cloudtrail_s3_dataevents_read_enabled.cloudtrail_s3_dataevents_read_enabled import (
@@ -361,17 +361,17 @@ class Test_cloudtrail_s3_dataevents_read_enabled:
         )
         from prowler.providers.aws.services.s3.s3_service import S3
 
-        current_audit_info = set_mocked_aws_audit_info()
+        aws_provider = set_mocked_aws_provider()
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.cloudtrail.cloudtrail_s3_dataevents_read_enabled.cloudtrail_s3_dataevents_read_enabled.cloudtrail_client",
-            new=Cloudtrail(current_audit_info),
+            new=Cloudtrail(aws_provider),
         ), mock.patch(
             "prowler.providers.aws.services.cloudtrail.cloudtrail_s3_dataevents_read_enabled.cloudtrail_s3_dataevents_read_enabled.s3_client",
-            new=S3(current_audit_info),
+            new=S3(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.cloudtrail.cloudtrail_s3_dataevents_read_enabled.cloudtrail_s3_dataevents_read_enabled import (

@@ -6,7 +6,7 @@ from moto import mock_aws
 
 from tests.providers.aws.audit_info_utils import (
     AWS_REGION_US_EAST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 
@@ -15,15 +15,15 @@ class Test_iam_no_expired_server_certificates_stored_test:
     def test_no_certificates(self):
         from prowler.providers.aws.services.iam.iam_service import IAM
 
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=audit_info,
+            return_value=aws_provider,
         ):
             with mock.patch(
                 "prowler.providers.aws.services.iam.iam_no_expired_server_certificates_stored.iam_no_expired_server_certificates_stored.iam_client",
-                new=IAM(audit_info),
+                new=IAM(aws_provider),
             ):
                 from prowler.providers.aws.services.iam.iam_no_expired_server_certificates_stored.iam_no_expired_server_certificates_stored import (
                     iam_no_expired_server_certificates_stored,
@@ -46,15 +46,15 @@ class Test_iam_no_expired_server_certificates_stored_test:
 
         from prowler.providers.aws.services.iam.iam_service import IAM
 
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=audit_info,
+            return_value=aws_provider,
         ):
             with mock.patch(
                 "prowler.providers.aws.services.iam.iam_no_expired_server_certificates_stored.iam_no_expired_server_certificates_stored.iam_client",
-                new=IAM(audit_info),
+                new=IAM(aws_provider),
             ):
                 from prowler.providers.aws.services.iam.iam_no_expired_server_certificates_stored.iam_no_expired_server_certificates_stored import (
                     iam_no_expired_server_certificates_stored,

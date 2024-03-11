@@ -8,7 +8,7 @@ from prowler.providers.aws.services.trustedadvisor.trustedadvisor_service import
 )
 from tests.providers.aws.audit_info_utils import (
     AWS_REGION_US_EAST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 make_api_call = botocore.client.BaseClient._make_api_call
@@ -40,27 +40,27 @@ class Test_TrustedAdvisor_Service:
 
     # Test TrustedAdvisor Service
     def test_service(self):
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        trustedadvisor = TrustedAdvisor(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        trustedadvisor = TrustedAdvisor(aws_provider)
         assert trustedadvisor.service == "support"
 
     # Test TrustedAdvisor client
     def test_client(self):
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        trustedadvisor = TrustedAdvisor(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        trustedadvisor = TrustedAdvisor(aws_provider)
         assert trustedadvisor.client.__class__.__name__ == "Support"
 
     # Test TrustedAdvisor session
     def test__get_session__(self):
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        trustedadvisor = TrustedAdvisor(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        trustedadvisor = TrustedAdvisor(aws_provider)
         assert trustedadvisor.session.__class__.__name__ == "Session"
 
     @mock_aws
     # Test TrustedAdvisor session
     def test__describe_trusted_advisor_checks__(self):
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        trustedadvisor = TrustedAdvisor(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        trustedadvisor = TrustedAdvisor(aws_provider)
         assert trustedadvisor.premium_support.enabled
         assert len(trustedadvisor.checks) == 104  # Default checks
         assert trustedadvisor.checks[0].region == AWS_REGION_US_EAST_1

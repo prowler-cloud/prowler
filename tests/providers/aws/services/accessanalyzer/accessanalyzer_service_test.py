@@ -8,7 +8,7 @@ from prowler.providers.aws.services.accessanalyzer.accessanalyzer_service import
 from tests.providers.aws.audit_info_utils import (
     AWS_REGION_EU_WEST_1,
     AWS_REGION_US_EAST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 # Mocking Access Analyzer Calls
@@ -72,7 +72,7 @@ class Test_AccessAnalyzer_Service:
     # Test AccessAnalyzer Client
     def test__get_client__(self):
         access_analyzer = AccessAnalyzer(
-            set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
+            set_mocked_aws_provider([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
         )
         assert (
             access_analyzer.regional_clients[AWS_REGION_EU_WEST_1].__class__.__name__
@@ -82,20 +82,20 @@ class Test_AccessAnalyzer_Service:
     # Test AccessAnalyzer Session
     def test__get_session__(self):
         access_analyzer = AccessAnalyzer(
-            set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
+            set_mocked_aws_provider([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
         )
         assert access_analyzer.session.__class__.__name__ == "Session"
 
     # Test AccessAnalyzer Service
     def test__get_service__(self):
         access_analyzer = AccessAnalyzer(
-            set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
+            set_mocked_aws_provider([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
         )
         assert access_analyzer.service == "accessanalyzer"
 
     def test__list_analyzers__(self):
         access_analyzer = AccessAnalyzer(
-            set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
+            set_mocked_aws_provider([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
         )
         assert len(access_analyzer.analyzers) == 1
         assert access_analyzer.analyzers[0].arn == "ARN"
@@ -107,7 +107,7 @@ class Test_AccessAnalyzer_Service:
 
     def test__list_findings__(self):
         access_analyzer = AccessAnalyzer(
-            set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
+            set_mocked_aws_provider([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
         )
         assert len(access_analyzer.analyzers) == 1
         assert len(access_analyzer.analyzers[0].findings) == 1

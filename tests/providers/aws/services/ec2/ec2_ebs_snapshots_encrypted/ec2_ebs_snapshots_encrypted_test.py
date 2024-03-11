@@ -7,7 +7,7 @@ from moto import mock_aws
 from tests.providers.aws.audit_info_utils import (
     AWS_REGION_EU_WEST_1,
     AWS_REGION_US_EAST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 
@@ -28,16 +28,16 @@ class Test_ec2_ebs_snapshots_encrypted:
     def test_ec2_default_snapshots(self):
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
-        current_audit_info = set_mocked_aws_audit_info(
+        aws_provider = set_mocked_aws_provider(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_ebs_snapshots_encrypted.ec2_ebs_snapshots_encrypted.ec2_client",
-            new=EC2(current_audit_info),
+            new=EC2(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.ec2.ec2_ebs_snapshots_encrypted.ec2_ebs_snapshots_encrypted import (
@@ -59,16 +59,16 @@ class Test_ec2_ebs_snapshots_encrypted:
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
-        current_audit_info = set_mocked_aws_audit_info(
+        aws_provider = set_mocked_aws_provider(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_ebs_snapshots_encrypted.ec2_ebs_snapshots_encrypted.ec2_client",
-            new=EC2(current_audit_info),
+            new=EC2(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.ec2.ec2_ebs_snapshots_encrypted.ec2_ebs_snapshots_encrypted import (
@@ -92,7 +92,7 @@ class Test_ec2_ebs_snapshots_encrypted:
                     )
                     assert (
                         snap.resource_arn
-                        == f"arn:{current_audit_info.identity.partition}:ec2:{AWS_REGION_US_EAST_1}:{current_audit_info.identity.account}:snapshot/{snapshot.id}"
+                        == f"arn:{aws_provider.identity.partition}:ec2:{AWS_REGION_US_EAST_1}:{aws_provider.identity.account}:snapshot/{snapshot.id}"
                     )
 
     @mock_aws
@@ -106,16 +106,16 @@ class Test_ec2_ebs_snapshots_encrypted:
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
-        current_audit_info = set_mocked_aws_audit_info(
+        aws_provider = set_mocked_aws_provider(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_ebs_snapshots_encrypted.ec2_ebs_snapshots_encrypted.ec2_client",
-            new=EC2(current_audit_info),
+            new=EC2(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.ec2.ec2_ebs_snapshots_encrypted.ec2_ebs_snapshots_encrypted import (
@@ -139,5 +139,5 @@ class Test_ec2_ebs_snapshots_encrypted:
                     )
                     assert (
                         snap.resource_arn
-                        == f"arn:{current_audit_info.identity.partition}:ec2:{AWS_REGION_US_EAST_1}:{current_audit_info.identity.account}:snapshot/{snapshot.id}"
+                        == f"arn:{aws_provider.identity.partition}:ec2:{AWS_REGION_US_EAST_1}:{aws_provider.identity.account}:snapshot/{snapshot.id}"
                     )

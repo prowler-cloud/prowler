@@ -80,8 +80,7 @@ AWS_ISO_PARTITION = "aws-iso"
 # Mocked AWS Provider
 # This here causes to call this function mocking the AWS calls
 @mock_aws
-def set_mocked_aws_audit_info(
-    # def set_mocked_aws_provider(
+def set_mocked_aws_provider(
     audited_regions: list[str] = [],
     audited_account: str = AWS_ACCOUNT_NUMBER,
     audited_account_arn: str = AWS_ACCOUNT_ARN,

@@ -9,7 +9,7 @@ from moto import mock_aws
 from tests.providers.aws.audit_info_utils import (
     AWS_REGION_EU_WEST_1,
     AWS_REGION_US_EAST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 EXAMPLE_AMI_ID = "ami-12c6146b"
@@ -20,17 +20,17 @@ class Test_ec2_instance_older_than_specific_days:
     def test_ec2_no_instances(self):
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
-        current_audit_info = set_mocked_aws_audit_info(
+        aws_provider = set_mocked_aws_provider(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
-        current_audit_info._audit_config = {"max_ec2_instance_age_in_days": 180}
+        aws_provider._audit_config = {"max_ec2_instance_age_in_days": 180}
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_instance_older_than_specific_days.ec2_instance_older_than_specific_days.ec2_client",
-            new=EC2(current_audit_info),
+            new=EC2(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.ec2.ec2_instance_older_than_specific_days.ec2_instance_older_than_specific_days import (
@@ -54,17 +54,17 @@ class Test_ec2_instance_older_than_specific_days:
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
-        current_audit_info = set_mocked_aws_audit_info(
+        aws_provider = set_mocked_aws_provider(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
-        current_audit_info._audit_config = {"max_ec2_instance_age_in_days": 180}
+        aws_provider._audit_config = {"max_ec2_instance_age_in_days": 180}
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_instance_older_than_specific_days.ec2_instance_older_than_specific_days.ec2_client",
-            new=EC2(current_audit_info),
+            new=EC2(aws_provider),
         ):
             from prowler.providers.aws.services.ec2.ec2_instance_older_than_specific_days.ec2_instance_older_than_specific_days import (
                 ec2_instance_older_than_specific_days,
@@ -83,7 +83,7 @@ class Test_ec2_instance_older_than_specific_days:
             assert result[0].resource_id == instance.id
             assert (
                 result[0].resource_arn
-                == f"arn:{current_audit_info.identity.partition}:ec2:{AWS_REGION_US_EAST_1}:{current_audit_info.identity.account}:instance/{instance.id}"
+                == f"arn:{aws_provider.identity.partition}:ec2:{AWS_REGION_US_EAST_1}:{aws_provider.identity.account}:instance/{instance.id}"
             )
 
     @mock_aws
@@ -98,17 +98,17 @@ class Test_ec2_instance_older_than_specific_days:
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
-        current_audit_info = set_mocked_aws_audit_info(
+        aws_provider = set_mocked_aws_provider(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
-        current_audit_info._audit_config = {"max_ec2_instance_age_in_days": 180}
+        aws_provider._audit_config = {"max_ec2_instance_age_in_days": 180}
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_instance_older_than_specific_days.ec2_instance_older_than_specific_days.ec2_client",
-            new=EC2(current_audit_info),
+            new=EC2(aws_provider),
         ) as service_client:
             from prowler.providers.aws.services.ec2.ec2_instance_older_than_specific_days.ec2_instance_older_than_specific_days import (
                 ec2_instance_older_than_specific_days,
@@ -131,5 +131,5 @@ class Test_ec2_instance_older_than_specific_days:
             assert result[0].resource_id == instance.id
             assert (
                 result[0].resource_arn
-                == f"arn:{current_audit_info.identity.partition}:ec2:{AWS_REGION_US_EAST_1}:{current_audit_info.identity.account}:instance/{instance.id}"
+                == f"arn:{aws_provider.identity.partition}:ec2:{AWS_REGION_US_EAST_1}:{aws_provider.identity.account}:instance/{instance.id}"
             )

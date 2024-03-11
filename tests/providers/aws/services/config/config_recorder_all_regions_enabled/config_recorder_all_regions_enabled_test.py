@@ -8,7 +8,7 @@ from tests.providers.aws.audit_info_utils import (
     AWS_REGION_EU_SOUTH_2,
     AWS_REGION_EU_WEST_1,
     AWS_REGION_US_EAST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 
@@ -17,16 +17,16 @@ class Test_config_recorder_all_regions_enabled:
     def test_config_no_recorders(self):
         from prowler.providers.aws.services.config.config_service import Config
 
-        current_audit_info = set_mocked_aws_audit_info(
+        aws_provider = set_mocked_aws_provider(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.config.config_recorder_all_regions_enabled.config_recorder_all_regions_enabled.config_client",
-            new=Config(current_audit_info),
+            new=Config(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.config.config_recorder_all_regions_enabled.config_recorder_all_regions_enabled import (
@@ -72,14 +72,14 @@ class Test_config_recorder_all_regions_enabled:
         )
         from prowler.providers.aws.services.config.config_service import Config
 
-        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.config.config_recorder_all_regions_enabled.config_recorder_all_regions_enabled.config_client",
-            new=Config(current_audit_info),
+            new=Config(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.config.config_recorder_all_regions_enabled.config_recorder_all_regions_enabled import (
@@ -119,14 +119,14 @@ class Test_config_recorder_all_regions_enabled:
         config_client.start_configuration_recorder(ConfigurationRecorderName="default")
         from prowler.providers.aws.services.config.config_service import Config
 
-        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.config.config_recorder_all_regions_enabled.config_recorder_all_regions_enabled.config_client",
-            new=Config(current_audit_info),
+            new=Config(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.config.config_recorder_all_regions_enabled.config_recorder_all_regions_enabled import (
@@ -161,7 +161,7 @@ class Test_config_recorder_all_regions_enabled:
         )
         from prowler.providers.aws.services.config.config_service import Config
 
-        current_audit_info = set_mocked_aws_audit_info(
+        aws_provider = set_mocked_aws_provider(
             audited_regions=[AWS_REGION_EU_SOUTH_2, AWS_REGION_US_EAST_1],
             profile_region=AWS_REGION_EU_SOUTH_2,
             audit_config={"allowlist_non_default_regions": True},
@@ -169,10 +169,10 @@ class Test_config_recorder_all_regions_enabled:
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.config.config_recorder_all_regions_enabled.config_recorder_all_regions_enabled.config_client",
-            new=Config(current_audit_info),
+            new=Config(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.config.config_recorder_all_regions_enabled.config_recorder_all_regions_enabled import (

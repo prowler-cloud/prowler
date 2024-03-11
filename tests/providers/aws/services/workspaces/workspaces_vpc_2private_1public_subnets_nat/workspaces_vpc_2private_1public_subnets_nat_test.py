@@ -9,7 +9,7 @@ from prowler.providers.aws.services.workspaces.workspaces_service import WorkSpa
 from tests.providers.aws.audit_info_utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_WEST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 WORKSPACE_ID = str(uuid4())
@@ -52,15 +52,15 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
             )
         )
 
-        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ):
             with mock.patch(
                 "prowler.providers.aws.services.workspaces.workspaces_vpc_2private_1public_subnets_nat.workspaces_vpc_2private_1public_subnets_nat.vpc_client",
-                new=VPC(current_audit_info),
+                new=VPC(aws_provider),
             ):
                 with mock.patch(
                     "prowler.providers.aws.services.workspaces.workspaces_vpc_2private_1public_subnets_nat.workspaces_vpc_2private_1public_subnets_nat.workspaces_client",
@@ -120,15 +120,15 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
             )
         )
 
-        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ):
             with mock.patch(
                 "prowler.providers.aws.services.workspaces.workspaces_vpc_2private_1public_subnets_nat.workspaces_vpc_2private_1public_subnets_nat.vpc_client",
-                new=VPC(current_audit_info),
+                new=VPC(aws_provider),
             ):
                 with mock.patch(
                     "prowler.providers.aws.services.workspaces.workspaces_vpc_2private_1public_subnets_nat.workspaces_vpc_2private_1public_subnets_nat.workspaces_client",
@@ -205,15 +205,15 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
             )
         )
 
-        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ):
             with mock.patch(
                 "prowler.providers.aws.services.workspaces.workspaces_vpc_2private_1public_subnets_nat.workspaces_vpc_2private_1public_subnets_nat.vpc_client",
-                new=VPC(current_audit_info),
+                new=VPC(aws_provider),
             ):
                 with mock.patch(
                     "prowler.providers.aws.services.workspaces.workspaces_vpc_2private_1public_subnets_nat.workspaces_vpc_2private_1public_subnets_nat.workspaces_client",
@@ -309,15 +309,15 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
             )
         )
 
-        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ):
             with mock.patch(
                 "prowler.providers.aws.services.workspaces.workspaces_vpc_2private_1public_subnets_nat.workspaces_vpc_2private_1public_subnets_nat.vpc_client",
-                new=VPC(current_audit_info),
+                new=VPC(aws_provider),
             ):
                 with mock.patch(
                     "prowler.providers.aws.services.workspaces.workspaces_vpc_2private_1public_subnets_nat.workspaces_vpc_2private_1public_subnets_nat.workspaces_client",
@@ -421,15 +421,15 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
             )
         )
 
-        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ):
             with mock.patch(
                 "prowler.providers.aws.services.workspaces.workspaces_vpc_2private_1public_subnets_nat.workspaces_vpc_2private_1public_subnets_nat.vpc_client",
-                new=VPC(current_audit_info),
+                new=VPC(aws_provider),
             ):
                 with mock.patch(
                     "prowler.providers.aws.services.workspaces.workspaces_vpc_2private_1public_subnets_nat.workspaces_vpc_2private_1public_subnets_nat.workspaces_client",

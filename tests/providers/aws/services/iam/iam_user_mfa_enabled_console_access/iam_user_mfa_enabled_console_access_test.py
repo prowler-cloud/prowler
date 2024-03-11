@@ -5,7 +5,7 @@ from moto import mock_aws
 
 from tests.providers.aws.audit_info_utils import (
     AWS_REGION_US_EAST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 AWS_ACCOUNT_NUMBER = "123456789012"
@@ -16,7 +16,7 @@ class Test_iam_user_mfa_enabled_console_access_test:
         AWS_ACCOUNT_ARN,
         AWS_ACCOUNT_NUMBER,
         AWS_REGION_US_EAST_1,
-        set_mocked_aws_audit_info,
+        set_mocked_aws_provider,
     )
 
     @mock_aws
@@ -27,13 +27,13 @@ class Test_iam_user_mfa_enabled_console_access_test:
 
         from prowler.providers.aws.services.iam.iam_service import IAM
 
-        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.iam.iam_user_mfa_enabled_console_access.iam_user_mfa_enabled_console_access.iam_client",
-            new=IAM(current_audit_info),
+            new=IAM(aws_provider),
         ) as service_client:
             from prowler.providers.aws.services.iam.iam_user_mfa_enabled_console_access.iam_user_mfa_enabled_console_access import (
                 iam_user_mfa_enabled_console_access,
@@ -60,13 +60,13 @@ class Test_iam_user_mfa_enabled_console_access_test:
 
         from prowler.providers.aws.services.iam.iam_service import IAM
 
-        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.iam.iam_user_mfa_enabled_console_access.iam_user_mfa_enabled_console_access.iam_client",
-            new=IAM(current_audit_info),
+            new=IAM(aws_provider),
         ) as service_client:
             from prowler.providers.aws.services.iam.iam_user_mfa_enabled_console_access.iam_user_mfa_enabled_console_access import (
                 iam_user_mfa_enabled_console_access,
@@ -93,13 +93,13 @@ class Test_iam_user_mfa_enabled_console_access_test:
 
         from prowler.providers.aws.services.iam.iam_service import IAM
 
-        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.iam.iam_user_mfa_enabled_console_access.iam_user_mfa_enabled_console_access.iam_client",
-            new=IAM(current_audit_info),
+            new=IAM(aws_provider),
         ) as service_client:
             from prowler.providers.aws.services.iam.iam_user_mfa_enabled_console_access.iam_user_mfa_enabled_console_access import (
                 iam_user_mfa_enabled_console_access,
@@ -127,13 +127,13 @@ class Test_iam_user_mfa_enabled_console_access_test:
 
         from prowler.providers.aws.services.iam.iam_service import IAM
 
-        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.iam.iam_user_mfa_enabled_console_access.iam_user_mfa_enabled_console_access.iam_client",
-            new=IAM(current_audit_info),
+            new=IAM(aws_provider),
         ) as service_client:
             from prowler.providers.aws.services.iam.iam_user_mfa_enabled_console_access.iam_user_mfa_enabled_console_access import (
                 iam_user_mfa_enabled_console_access,

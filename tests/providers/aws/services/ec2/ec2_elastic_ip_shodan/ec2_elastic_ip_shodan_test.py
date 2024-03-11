@@ -7,7 +7,7 @@ from tests.providers.aws.audit_info_utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_WEST_1,
     AWS_REGION_US_EAST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 EXAMPLE_AMI_ID = "ami-12c6146b"
@@ -23,17 +23,17 @@ class Test_ec2_elastic_ip_shodan:
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
-        current_audit_info = set_mocked_aws_audit_info(
+        aws_provider = set_mocked_aws_provider(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1],
             audit_config={"shodan_api_key": ""},
         )
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_elastic_ip_shodan.ec2_elastic_ip_shodan.ec2_client",
-            new=EC2(current_audit_info),
+            new=EC2(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.ec2.ec2_elastic_ip_shodan.ec2_elastic_ip_shodan import (
@@ -54,17 +54,17 @@ class Test_ec2_elastic_ip_shodan:
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
-        current_audit_info = set_mocked_aws_audit_info(
+        aws_provider = set_mocked_aws_provider(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1],
             audit_config={"shodan_api_key": ""},
         )
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_elastic_ip_shodan.ec2_elastic_ip_shodan.ec2_client",
-            new=EC2(current_audit_info),
+            new=EC2(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.ec2.ec2_elastic_ip_shodan.ec2_elastic_ip_shodan import (
@@ -92,17 +92,17 @@ class Test_ec2_elastic_ip_shodan:
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
-        current_audit_info = set_mocked_aws_audit_info(
+        aws_provider = set_mocked_aws_provider(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1],
             audit_config={"shodan_api_key": ""},
         )
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_elastic_ip_shodan.ec2_elastic_ip_shodan.ec2_client",
-            new=EC2(current_audit_info),
+            new=EC2(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.ec2.ec2_elastic_ip_shodan.ec2_elastic_ip_shodan import (
@@ -133,7 +133,7 @@ class Test_ec2_elastic_ip_shodan:
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
-        current_audit_info = set_mocked_aws_audit_info(
+        aws_provider = set_mocked_aws_provider(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1],
             audit_config={"shodan_api_key": "XXXXXXX"},
         )
@@ -144,10 +144,10 @@ class Test_ec2_elastic_ip_shodan:
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_elastic_ip_shodan.ec2_elastic_ip_shodan.ec2_client",
-            new=EC2(current_audit_info),
+            new=EC2(aws_provider),
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_elastic_ip_shodan.ec2_elastic_ip_shodan.shodan.Shodan.host",
             return_value={"ports": ports, "isp": isp, "country_name": country},

@@ -10,7 +10,7 @@ from prowler.providers.aws.services.secretsmanager.secretsmanager_service import
 )
 from tests.providers.aws.audit_info_utils import (
     AWS_REGION_EU_WEST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 
@@ -32,8 +32,8 @@ class Test_SecretsManager_Service:
     # Test SecretsManager Client
     @mock_aws
     def test__get_client__(self):
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
-        secretsmanager = SecretsManager(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        secretsmanager = SecretsManager(aws_provider)
         assert (
             secretsmanager.regional_clients[AWS_REGION_EU_WEST_1].__class__.__name__
             == "SecretsManager"
@@ -42,15 +42,15 @@ class Test_SecretsManager_Service:
     # Test SecretsManager Session
     @mock_aws
     def test__get_session__(self):
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
-        secretsmanager = SecretsManager(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        secretsmanager = SecretsManager(aws_provider)
         assert secretsmanager.session.__class__.__name__ == "Session"
 
     # Test SecretsManager Service
     @mock_aws
     def test__get_service__(self):
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
-        secretsmanager = SecretsManager(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        secretsmanager = SecretsManager(aws_provider)
         assert secretsmanager.service == "secretsmanager"
 
     @mock_aws
@@ -126,8 +126,8 @@ class Test_SecretsManager_Service:
         )
 
         # Set partition for the service
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
-        secretsmanager = SecretsManager(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        secretsmanager = SecretsManager(aws_provider)
 
         assert len(secretsmanager.secrets) == 1
         assert secretsmanager.secrets

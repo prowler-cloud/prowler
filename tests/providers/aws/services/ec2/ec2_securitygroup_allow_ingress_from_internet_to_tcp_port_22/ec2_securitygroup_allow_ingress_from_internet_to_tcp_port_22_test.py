@@ -8,7 +8,7 @@ from prowler.providers.aws.services.vpc.vpc_service import VPC
 from tests.providers.aws.audit_info_utils import (
     AWS_REGION_EU_WEST_1,
     AWS_REGION_US_EAST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 
@@ -21,19 +21,19 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22:
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
-        current_audit_info = set_mocked_aws_audit_info(
+        aws_provider = set_mocked_aws_provider(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22.ec2_client",
-            new=EC2(current_audit_info),
+            new=EC2(aws_provider),
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22.vpc_client",
-            new=VPC(current_audit_info),
+            new=VPC(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22 import (
@@ -74,19 +74,19 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22:
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
-        current_audit_info = set_mocked_aws_audit_info(
+        aws_provider = set_mocked_aws_provider(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22.ec2_client",
-            new=EC2(current_audit_info),
+            new=EC2(aws_provider),
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22.vpc_client",
-            new=VPC(current_audit_info),
+            new=VPC(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22 import (
@@ -113,7 +113,7 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22:
                     )
                     assert (
                         sg.resource_arn
-                        == f"arn:{current_audit_info.identity.partition}:ec2:{AWS_REGION_US_EAST_1}:{current_audit_info.identity.account}:security-group/{default_sg_id}"
+                        == f"arn:{aws_provider.identity.partition}:ec2:{AWS_REGION_US_EAST_1}:{aws_provider.identity.account}:security-group/{default_sg_id}"
                     )
                     assert sg.resource_details == default_sg_name
                     assert sg.resource_tags == []
@@ -142,19 +142,19 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22:
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
-        current_audit_info = set_mocked_aws_audit_info(
+        aws_provider = set_mocked_aws_provider(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22.ec2_client",
-            new=EC2(current_audit_info),
+            new=EC2(aws_provider),
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22.vpc_client",
-            new=VPC(current_audit_info),
+            new=VPC(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22 import (
@@ -177,7 +177,7 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22:
                     )
                     assert (
                         sg.resource_arn
-                        == f"arn:{current_audit_info.identity.partition}:ec2:{AWS_REGION_US_EAST_1}:{current_audit_info.identity.account}:security-group/{default_sg_id}"
+                        == f"arn:{aws_provider.identity.partition}:ec2:{AWS_REGION_US_EAST_1}:{aws_provider.identity.account}:security-group/{default_sg_id}"
                     )
                     assert sg.resource_details == default_sg_name
                     assert sg.resource_tags == []
@@ -190,20 +190,20 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22:
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
-        current_audit_info = set_mocked_aws_audit_info(
+        aws_provider = set_mocked_aws_provider(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1],
             ignore_unused_services=True,
         )
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22.ec2_client",
-            new=EC2(current_audit_info),
+            new=EC2(aws_provider),
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22.vpc_client",
-            new=VPC(current_audit_info),
+            new=VPC(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22 import (
@@ -230,20 +230,20 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22:
         default_sg["GroupName"]
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
-        current_audit_info = set_mocked_aws_audit_info(
+        aws_provider = set_mocked_aws_provider(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1],
             ignore_unused_services=True,
         )
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22.ec2_client",
-            new=EC2(current_audit_info),
+            new=EC2(aws_provider),
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22.vpc_client",
-            new=VPC(current_audit_info),
+            new=VPC(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22 import (

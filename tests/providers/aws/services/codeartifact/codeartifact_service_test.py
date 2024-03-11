@@ -12,7 +12,7 @@ from tests.providers.aws.audit_info_utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_WEST_1,
     AWS_REGION_US_EAST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 # Mocking Access Analyzer Calls
@@ -104,7 +104,7 @@ class Test_CodeArtifact_Service:
     # Test CodeArtifact Client
     def test__get_client__(self):
         codeartifact = CodeArtifact(
-            set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
+            set_mocked_aws_provider([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
         )
         assert (
             codeartifact.regional_clients[AWS_REGION_EU_WEST_1].__class__.__name__
@@ -114,21 +114,21 @@ class Test_CodeArtifact_Service:
     # Test CodeArtifact Session
     def test__get_session__(self):
         codeartifact = CodeArtifact(
-            set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
+            set_mocked_aws_provider([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
         )
         assert codeartifact.session.__class__.__name__ == "Session"
 
     # Test CodeArtifact Service
     def test__get_service__(self):
         codeartifact = CodeArtifact(
-            set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
+            set_mocked_aws_provider([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
         )
         assert codeartifact.service == "codeartifact"
 
     def test__list_repositories__(self):
         # Set partition for the service
         codeartifact = CodeArtifact(
-            set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
+            set_mocked_aws_provider([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
         )
 
         assert len(codeartifact.repositories) == 1

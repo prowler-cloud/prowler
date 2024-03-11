@@ -9,7 +9,7 @@ from tests.providers.aws.audit_info_utils import (
     AWS_REGION_EU_WEST_1_AZA,
     AWS_REGION_EU_WEST_1_AZB,
     AWS_REGION_US_EAST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 
@@ -20,13 +20,13 @@ class Test_elbv2_insecure_ssl_ciphers:
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=set_mocked_aws_audit_info(
+            return_value=set_mocked_aws_provider(
                 [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
             ),
         ), mock.patch(
             "prowler.providers.aws.services.elbv2.elbv2_insecure_ssl_ciphers.elbv2_insecure_ssl_ciphers.elbv2_client",
             new=ELBv2(
-                set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
+                set_mocked_aws_provider([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
             ),
         ):
             # Test Check
@@ -95,13 +95,13 @@ class Test_elbv2_insecure_ssl_ciphers:
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=set_mocked_aws_audit_info(
+            return_value=set_mocked_aws_provider(
                 [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
             ),
         ), mock.patch(
             "prowler.providers.aws.services.elbv2.elbv2_insecure_ssl_ciphers.elbv2_insecure_ssl_ciphers.elbv2_client",
             new=ELBv2(
-                set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
+                set_mocked_aws_provider([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
             ),
         ):
             from prowler.providers.aws.services.elbv2.elbv2_insecure_ssl_ciphers.elbv2_insecure_ssl_ciphers import (
@@ -174,13 +174,13 @@ class Test_elbv2_insecure_ssl_ciphers:
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=set_mocked_aws_audit_info(
+            return_value=set_mocked_aws_provider(
                 [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
             ),
         ), mock.patch(
             "prowler.providers.aws.services.elbv2.elbv2_insecure_ssl_ciphers.elbv2_insecure_ssl_ciphers.elbv2_client",
             new=ELBv2(
-                set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
+                set_mocked_aws_provider([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
             ),
         ):
             from prowler.providers.aws.services.elbv2.elbv2_insecure_ssl_ciphers.elbv2_insecure_ssl_ciphers import (

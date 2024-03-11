@@ -8,7 +8,7 @@ from prowler.providers.aws.services.emr.emr_service import Cluster, ClusterStatu
 from tests.providers.aws.audit_info_utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_WEST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 
@@ -82,10 +82,10 @@ class Test_emr_cluster_publicly_accesible:
             new=emr_client,
         ), mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=set_mocked_aws_audit_info(),
+            return_value=set_mocked_aws_provider(),
         ), mock.patch(
             "prowler.providers.aws.services.emr.emr_cluster_publicly_accesible.emr_cluster_publicly_accesible.ec2_client",
-            new=EC2(set_mocked_aws_audit_info()),
+            new=EC2(set_mocked_aws_provider()),
         ):
             # Test Check
             from prowler.providers.aws.services.emr.emr_cluster_publicly_accesible.emr_cluster_publicly_accesible import (
@@ -148,10 +148,10 @@ class Test_emr_cluster_publicly_accesible:
             new=emr_client,
         ), mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=set_mocked_aws_audit_info(),
+            return_value=set_mocked_aws_provider(),
         ), mock.patch(
             "prowler.providers.aws.services.emr.emr_cluster_publicly_accesible.emr_cluster_publicly_accesible.ec2_client",
-            new=EC2(set_mocked_aws_audit_info()),
+            new=EC2(set_mocked_aws_provider()),
         ):
             # Test Check
             from prowler.providers.aws.services.emr.emr_cluster_publicly_accesible.emr_cluster_publicly_accesible import (
@@ -231,10 +231,10 @@ class Test_emr_cluster_publicly_accesible:
             new=emr_client,
         ), mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=set_mocked_aws_audit_info(),
+            return_value=set_mocked_aws_provider(),
         ), mock.patch(
             "prowler.providers.aws.services.emr.emr_cluster_publicly_accesible.emr_cluster_publicly_accesible.ec2_client",
-            new=EC2(set_mocked_aws_audit_info()),
+            new=EC2(set_mocked_aws_provider()),
         ):
             # Test Check
             from prowler.providers.aws.services.emr.emr_cluster_publicly_accesible.emr_cluster_publicly_accesible import (
@@ -317,10 +317,10 @@ class Test_emr_cluster_publicly_accesible:
             new=emr_client,
         ), mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=set_mocked_aws_audit_info(),
+            return_value=set_mocked_aws_provider(),
         ), mock.patch(
             "prowler.providers.aws.services.emr.emr_cluster_publicly_accesible.emr_cluster_publicly_accesible.ec2_client",
-            new=EC2(set_mocked_aws_audit_info()),
+            new=EC2(set_mocked_aws_provider()),
         ):
             # Test Check
             from prowler.providers.aws.services.emr.emr_cluster_publicly_accesible.emr_cluster_publicly_accesible import (
@@ -400,10 +400,10 @@ class Test_emr_cluster_publicly_accesible:
             new=emr_client,
         ), mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=set_mocked_aws_audit_info(),
+            return_value=set_mocked_aws_provider(),
         ), mock.patch(
             "prowler.providers.aws.services.emr.emr_cluster_publicly_accesible.emr_cluster_publicly_accesible.ec2_client",
-            new=EC2(set_mocked_aws_audit_info()),
+            new=EC2(set_mocked_aws_provider()),
         ):
             # Test Check
             from prowler.providers.aws.services.emr.emr_cluster_publicly_accesible.emr_cluster_publicly_accesible import (

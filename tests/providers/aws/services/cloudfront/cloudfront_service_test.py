@@ -11,7 +11,7 @@ from prowler.providers.aws.services.cloudfront.cloudfront_service import (
 )
 from tests.providers.aws.audit_info_utils import (
     AWS_REGION_US_EAST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 
@@ -153,24 +153,24 @@ class Test_CloudFront_Service:
     # Test CloudFront Client
     @mock_aws
     def test__get_client__(self):
-        cloudfront = CloudFront(set_mocked_aws_audit_info())
+        cloudfront = CloudFront(set_mocked_aws_provider())
         assert cloudfront.client.__class__.__name__ == "CloudFront"
 
     # Test CloudFront Session
     @mock_aws
     def test__get_session__(self):
-        cloudfront = CloudFront(set_mocked_aws_audit_info())
+        cloudfront = CloudFront(set_mocked_aws_provider())
         assert cloudfront.session.__class__.__name__ == "Session"
 
     # Test CloudFront Service
     @mock_aws
     def test__get_service__(self):
-        cloudfront = CloudFront(set_mocked_aws_audit_info())
+        cloudfront = CloudFront(set_mocked_aws_provider())
         assert cloudfront.service == "cloudfront"
 
     @mock_aws
     def test__list_distributions__zero(self):
-        cloudfront = CloudFront(set_mocked_aws_audit_info())
+        cloudfront = CloudFront(set_mocked_aws_provider())
 
         assert len(cloudfront.distributions) == 0
 
@@ -181,7 +181,7 @@ class Test_CloudFront_Service:
         response = cloudfront_client.create_distribution(DistributionConfig=config)
         cloudfront_distribution_id = response["Distribution"]["Id"]
         cloudfront_distribution_arn = response["Distribution"]["ARN"]
-        cloudfront = CloudFront(set_mocked_aws_audit_info())
+        cloudfront = CloudFront(set_mocked_aws_provider())
 
         assert len(cloudfront.distributions) == 1
         assert (

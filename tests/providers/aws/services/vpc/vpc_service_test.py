@@ -8,7 +8,7 @@ from tests.providers.aws.audit_info_utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_WEST_1,
     AWS_REGION_US_EAST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 
@@ -18,20 +18,20 @@ class Test_VPC_Service:
     @mock_aws
     def test_service(self):
         # VPC client for this test class
-        audit_info = set_mocked_aws_audit_info(
+        aws_provider = set_mocked_aws_provider(
             [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
         )
-        vpc = VPC(audit_info)
+        vpc = VPC(aws_provider)
         assert vpc.service == "ec2"
 
     # Test VPC Client
     @mock_aws
     def test_client(self):
         # VPC client for this test class
-        audit_info = set_mocked_aws_audit_info(
+        aws_provider = set_mocked_aws_provider(
             [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
         )
-        vpc = VPC(audit_info)
+        vpc = VPC(aws_provider)
         for regional_client in vpc.regional_clients.values():
             assert regional_client.__class__.__name__ == "EC2"
 
@@ -39,20 +39,20 @@ class Test_VPC_Service:
     @mock_aws
     def test__get_session__(self):
         # VPC client for this test class
-        audit_info = set_mocked_aws_audit_info(
+        aws_provider = set_mocked_aws_provider(
             [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
         )
-        vpc = VPC(audit_info)
+        vpc = VPC(aws_provider)
         assert vpc.session.__class__.__name__ == "Session"
 
     # Test VPC Session
     @mock_aws
     def test_audited_account(self):
         # VPC client for this test class
-        audit_info = set_mocked_aws_audit_info(
+        aws_provider = set_mocked_aws_provider(
             [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
         )
-        vpc = VPC(audit_info)
+        vpc = VPC(aws_provider)
         assert vpc.audited_account == AWS_ACCOUNT_NUMBER
 
     # Test VPC Describe VPCs
@@ -73,10 +73,10 @@ class Test_VPC_Service:
             ],
         )["Vpc"]
         # VPC client for this test class
-        audit_info = set_mocked_aws_audit_info(
+        aws_provider = set_mocked_aws_provider(
             [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
         )
-        vpc = VPC(audit_info)
+        vpc = VPC(aws_provider)
         assert (
             len(vpc.vpcs) == 3
         )  # Number of AWS regions + created VPC, one default VPC per region
@@ -104,10 +104,10 @@ class Test_VPC_Service:
             + ":role/test-role",
         )
         # VPC client for this test class
-        audit_info = set_mocked_aws_audit_info(
+        aws_provider = set_mocked_aws_provider(
             [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
         )
-        vpc = VPC(audit_info)
+        vpc = VPC(aws_provider)
         # Search created VPC among default ones
         for vpc_iter in vpc.vpcs.values():
             if vpc_iter.id == new_vpc["VpcId"]:
@@ -139,10 +139,10 @@ class Test_VPC_Service:
             VpcPeeringConnectionId=vpc_pcx_id
         )
         # VPC client for this test class
-        audit_info = set_mocked_aws_audit_info(
+        aws_provider = set_mocked_aws_provider(
             [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
         )
-        vpc = VPC(audit_info)
+        vpc = VPC(aws_provider)
         assert len(vpc.vpc_peering_connections) == 1
         assert vpc.vpc_peering_connections[0].id == vpc_pcx_id
         assert vpc.vpc_peering_connections[0].tags == [
@@ -180,10 +180,10 @@ class Test_VPC_Service:
         # )
 
         # VPC client for this test class
-        audit_info = set_mocked_aws_audit_info(
+        aws_provider = set_mocked_aws_provider(
             [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
         )
-        vpc = VPC(audit_info)
+        vpc = VPC(aws_provider)
         vpc.vpc_peering_connections[0].route_tables = [
             Route(
                 id=main_route_table_id,
@@ -229,10 +229,10 @@ class Test_VPC_Service:
             ],
         )["VpcEndpoint"]["VpcEndpointId"]
         # VPC client for this test class
-        audit_info = set_mocked_aws_audit_info(
+        aws_provider = set_mocked_aws_provider(
             [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
         )
-        vpc = VPC(audit_info)
+        vpc = VPC(aws_provider)
         assert len(vpc.vpc_endpoints) == 1
         assert vpc.vpc_endpoints[0].id == endpoint
         assert vpc.vpc_endpoints[0].tags == [
@@ -278,10 +278,10 @@ class Test_VPC_Service:
         endpoint_service = endpoint["ServiceConfiguration"]["ServiceName"]
 
         # VPC client for this test class
-        audit_info = set_mocked_aws_audit_info(
+        aws_provider = set_mocked_aws_provider(
             [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
         )
-        vpc = VPC(audit_info)
+        vpc = VPC(aws_provider)
 
         for vpce in vpc.vpc_endpoint_services:
             assert vpce.arn == endpoint_arn
@@ -307,10 +307,10 @@ class Test_VPC_Service:
             AvailabilityZone=f"{AWS_REGION_US_EAST_1}a",
         )
         # VPC client for this test class
-        audit_info = set_mocked_aws_audit_info(
+        aws_provider = set_mocked_aws_provider(
             [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
         )
-        vpc = VPC(audit_info)
+        vpc = VPC(aws_provider)
         assert (
             len(vpc.vpcs) == 3
         )  # Number of AWS regions + created VPC, one default VPC per region

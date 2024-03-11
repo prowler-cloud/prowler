@@ -9,7 +9,7 @@ from prowler.providers.aws.services.ecr.ecr_service import ECR, ScanningRule
 from tests.providers.aws.audit_info_utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_WEST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 repo_arn = f"arn:aws:ecr:eu-west-1:{AWS_ACCOUNT_NUMBER}:repository/test-repo"
@@ -99,21 +99,21 @@ def mock_generate_regional_clients(provider, service):
 class Test_ECR_Service:
     # Test ECR Service
     def test_service(self):
-        audit_info = set_mocked_aws_audit_info()
-        ecr = ECR(audit_info)
+        aws_provider = set_mocked_aws_provider()
+        ecr = ECR(aws_provider)
         assert ecr.service == "ecr"
 
     # Test ECR client
     def test_client(self):
-        audit_info = set_mocked_aws_audit_info()
-        ecr = ECR(audit_info)
+        aws_provider = set_mocked_aws_provider()
+        ecr = ECR(aws_provider)
         for regional_client in ecr.regional_clients.values():
             assert regional_client.__class__.__name__ == "ECR"
 
     # Test ECR session
     def test__get_session__(self):
-        audit_info = set_mocked_aws_audit_info()
-        ecr = ECR(audit_info)
+        aws_provider = set_mocked_aws_provider()
+        ecr = ECR(aws_provider)
         assert ecr.session.__class__.__name__ == "Session"
 
     # Test describe ECR repositories
@@ -127,8 +127,8 @@ class Test_ECR_Service:
                 {"Key": "test", "Value": "test"},
             ],
         )
-        audit_info = set_mocked_aws_audit_info()
-        ecr = ECR(audit_info)
+        aws_provider = set_mocked_aws_provider()
+        ecr = ECR(aws_provider)
 
         assert len(ecr.registries) == 1
         assert ecr.registries[AWS_REGION_EU_WEST_1].id == AWS_ACCOUNT_NUMBER
@@ -150,8 +150,8 @@ class Test_ECR_Service:
             repositoryName=repo_name,
             imageScanningConfiguration={"scanOnPush": True},
         )
-        audit_info = set_mocked_aws_audit_info()
-        ecr = ECR(audit_info)
+        aws_provider = set_mocked_aws_provider()
+        ecr = ECR(aws_provider)
         assert len(ecr.registries) == 1
         assert len(ecr.registries[AWS_REGION_EU_WEST_1].repositories) == 1
         assert ecr.registries[AWS_REGION_EU_WEST_1].repositories[0].name == repo_name
@@ -196,8 +196,8 @@ class Test_ECR_Service:
             repositoryName=repo_name,
             imageScanningConfiguration={"scanOnPush": True},
         )
-        audit_info = set_mocked_aws_audit_info()
-        ecr = ECR(audit_info)
+        aws_provider = set_mocked_aws_provider()
+        ecr = ECR(aws_provider)
         assert len(ecr.registries) == 1
         assert len(ecr.registries[AWS_REGION_EU_WEST_1].repositories) == 1
         assert ecr.registries[AWS_REGION_EU_WEST_1].repositories[0].name == repo_name
@@ -213,8 +213,8 @@ class Test_ECR_Service:
             repositoryName=repo_name,
             imageScanningConfiguration={"scanOnPush": True},
         )
-        audit_info = set_mocked_aws_audit_info()
-        ecr = ECR(audit_info)
+        aws_provider = set_mocked_aws_provider()
+        ecr = ECR(aws_provider)
         assert len(ecr.registries) == 1
         assert len(ecr.registries[AWS_REGION_EU_WEST_1].repositories) == 1
         assert ecr.registries[AWS_REGION_EU_WEST_1].repositories[0].name == repo_name
@@ -321,8 +321,8 @@ class Test_ECR_Service:
     # Test get ECR Registries Scanning Configuration
     @mock_aws
     def test__get_registry_scanning_configuration__(self):
-        audit_info = set_mocked_aws_audit_info()
-        ecr = ECR(audit_info)
+        aws_provider = set_mocked_aws_provider()
+        ecr = ECR(aws_provider)
         assert len(ecr.registries) == 1
         assert ecr.registries[AWS_REGION_EU_WEST_1].id == AWS_ACCOUNT_NUMBER
         assert ecr.registries[AWS_REGION_EU_WEST_1].scan_type == "BASIC"

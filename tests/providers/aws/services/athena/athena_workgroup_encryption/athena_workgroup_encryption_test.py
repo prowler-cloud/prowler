@@ -6,7 +6,7 @@ from moto import mock_aws
 from tests.providers.aws.audit_info_utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_WEST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 from tests.providers.aws.services.athena.athena_service_test import mock_make_api_call
 
@@ -19,14 +19,14 @@ class Test_athena_workgroup_encryption:
     def test_primary_workgroup_not_encrypted(self):
         from prowler.providers.aws.services.athena.athena_service import Athena
 
-        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.athena.athena_workgroup_encryption.athena_workgroup_encryption.athena_client",
-            new=Athena(current_audit_info),
+            new=Athena(aws_provider),
         ):
             from prowler.providers.aws.services.athena.athena_workgroup_encryption.athena_workgroup_encryption import (
                 athena_workgroup_encryption,
@@ -50,15 +50,15 @@ class Test_athena_workgroup_encryption:
     def test_primary_workgroup_not_encrypted_ignoring(self):
         from prowler.providers.aws.services.athena.athena_service import Athena
 
-        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
-        current_audit_info._ignore_unused_services = True
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        aws_provider._ignore_unused_services = True
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.athena.athena_workgroup_encryption.athena_workgroup_encryption.athena_client",
-            new=Athena(current_audit_info),
+            new=Athena(aws_provider),
         ):
             from prowler.providers.aws.services.athena.athena_workgroup_encryption.athena_workgroup_encryption import (
                 athena_workgroup_encryption,
@@ -75,14 +75,14 @@ class Test_athena_workgroup_encryption:
     def test_primary_workgroup_encrypted(self):
         from prowler.providers.aws.services.athena.athena_service import Athena
 
-        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.athena.athena_workgroup_encryption.athena_workgroup_encryption.athena_client",
-            new=Athena(current_audit_info),
+            new=Athena(aws_provider),
         ):
             from prowler.providers.aws.services.athena.athena_workgroup_encryption.athena_workgroup_encryption import (
                 athena_workgroup_encryption,

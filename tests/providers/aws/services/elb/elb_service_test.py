@@ -5,7 +5,7 @@ from prowler.providers.aws.services.elb.elb_service import ELB
 from tests.providers.aws.audit_info_utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_US_EAST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 
@@ -14,16 +14,16 @@ class Test_ELB_Service:
     @mock_aws
     def test_service(self):
         # ELB client for this test class
-        audit_info = set_mocked_aws_audit_info()
-        elb = ELB(audit_info)
+        aws_provider = set_mocked_aws_provider()
+        elb = ELB(aws_provider)
         assert elb.service == "elb"
 
     # Test ELB Client
     @mock_aws
     def test_client(self):
         # ELB client for this test class
-        audit_info = set_mocked_aws_audit_info()
-        elb = ELB(audit_info)
+        aws_provider = set_mocked_aws_provider()
+        elb = ELB(aws_provider)
         for regional_client in elb.regional_clients.values():
             assert regional_client.__class__.__name__ == "ElasticLoadBalancing"
 
@@ -31,8 +31,8 @@ class Test_ELB_Service:
     @mock_aws
     def test__get_session__(self):
         # ELB client for this test class
-        audit_info = set_mocked_aws_audit_info()
-        elb = ELB(audit_info)
+        aws_provider = set_mocked_aws_provider()
+        elb = ELB(aws_provider)
         assert elb.session.__class__.__name__ == "Session"
 
     # Test ELB Describe Load Balancers
@@ -56,8 +56,8 @@ class Test_ELB_Service:
             SecurityGroups=[security_group.id],
         )
         # ELB client for this test class
-        audit_info = set_mocked_aws_audit_info()
-        elb = ELB(audit_info)
+        aws_provider = set_mocked_aws_provider()
+        elb = ELB(aws_provider)
         assert len(elb.loadbalancers) == 1
         assert elb.loadbalancers[0].name == "my-lb"
         assert elb.loadbalancers[0].region == AWS_REGION_US_EAST_1
@@ -100,8 +100,8 @@ class Test_ELB_Service:
             },
         )
         # ELB client for this test class
-        audit_info = set_mocked_aws_audit_info()
-        elb = ELB(audit_info)
+        aws_provider = set_mocked_aws_provider()
+        elb = ELB(aws_provider)
         assert elb.loadbalancers[0].name == "my-lb"
         assert elb.loadbalancers[0].region == AWS_REGION_US_EAST_1
         assert elb.loadbalancers[0].scheme == "internal"

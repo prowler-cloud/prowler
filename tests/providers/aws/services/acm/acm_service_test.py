@@ -9,7 +9,7 @@ from prowler.providers.aws.services.acm.acm_service import ACM
 from tests.providers.aws.audit_info_utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_US_EAST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 # Mocking Access Analyzer Calls
@@ -96,16 +96,16 @@ class Test_ACM_Service:
     # @mock_acm
     def test_service(self):
         # ACM client for this test class
-        audit_info = set_mocked_aws_audit_info()
-        acm = ACM(audit_info)
+        aws_provider = set_mocked_aws_provider()
+        acm = ACM(aws_provider)
         assert acm.service == "acm"
 
     # Test ACM Client
     # @mock_acm
     def test_client(self):
         # ACM client for this test class
-        audit_info = set_mocked_aws_audit_info()
-        acm = ACM(audit_info)
+        aws_provider = set_mocked_aws_provider()
+        acm = ACM(aws_provider)
         for regional_client in acm.regional_clients.values():
             assert regional_client.__class__.__name__ == "ACM"
 
@@ -113,16 +113,16 @@ class Test_ACM_Service:
     # @mock_acm
     def test__get_session__(self):
         # ACM client for this test class
-        audit_info = set_mocked_aws_audit_info()
-        acm = ACM(audit_info)
+        aws_provider = set_mocked_aws_provider()
+        acm = ACM(aws_provider)
         assert acm.session.__class__.__name__ == "Session"
 
     # Test ACM Session
     # @mock_acm
     def test_audited_account(self):
         # ACM client for this test class
-        audit_info = set_mocked_aws_audit_info()
-        acm = ACM(audit_info)
+        aws_provider = set_mocked_aws_provider()
+        acm = ACM(aws_provider)
         assert acm.audited_account == AWS_ACCOUNT_NUMBER
 
     # Test ACM List Certificates
@@ -136,8 +136,8 @@ class Test_ACM_Service:
         # )
 
         # ACM client for this test class
-        audit_info = set_mocked_aws_audit_info()
-        acm = ACM(audit_info)
+        aws_provider = set_mocked_aws_provider()
+        acm = ACM(aws_provider)
         assert len(acm.certificates) == 1
         assert acm.certificates[0].arn == certificate_arn
         assert acm.certificates[0].name == certificate_name
@@ -157,8 +157,8 @@ class Test_ACM_Service:
         # )
 
         # ACM client for this test class
-        audit_info = set_mocked_aws_audit_info()
-        acm = ACM(audit_info)
+        aws_provider = set_mocked_aws_provider()
+        acm = ACM(aws_provider)
         assert len(acm.certificates) == 1
         assert acm.certificates[0].tags == [
             {"Key": "test", "Value": "test"},

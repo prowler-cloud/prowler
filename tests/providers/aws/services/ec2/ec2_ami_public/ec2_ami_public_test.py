@@ -6,7 +6,7 @@ from moto import mock_aws
 from tests.providers.aws.audit_info_utils import (
     AWS_REGION_EU_WEST_1,
     AWS_REGION_US_EAST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 EXAMPLE_AMI_ID = "ami-12c6146b"
@@ -17,16 +17,16 @@ class Test_ec2_ami_public:
     def test_no_amis(self):
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
-        current_audit_info = set_mocked_aws_audit_info(
+        aws_provider = set_mocked_aws_provider(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_ami_public.ec2_ami_public.ec2_client",
-            new=EC2(current_audit_info),
+            new=EC2(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.ec2.ec2_ami_public.ec2_ami_public import (
@@ -52,16 +52,16 @@ class Test_ec2_ami_public:
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
-        current_audit_info = set_mocked_aws_audit_info(
+        aws_provider = set_mocked_aws_provider(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_ami_public.ec2_ami_public.ec2_client",
-            new=EC2(current_audit_info),
+            new=EC2(aws_provider),
         ):
             from prowler.providers.aws.services.ec2.ec2_ami_public.ec2_ami_public import (
                 ec2_ami_public,
@@ -76,7 +76,7 @@ class Test_ec2_ami_public:
             assert result[0].resource_id == image_id
             assert (
                 result[0].resource_arn
-                == f"arn:{current_audit_info.identity.partition}:ec2:{AWS_REGION_US_EAST_1}:{current_audit_info.identity.account}:image/{image_id}"
+                == f"arn:{aws_provider.identity.partition}:ec2:{AWS_REGION_US_EAST_1}:{aws_provider.identity.account}:image/{image_id}"
             )
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_tags == []
@@ -104,16 +104,16 @@ class Test_ec2_ami_public:
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
-        current_audit_info = set_mocked_aws_audit_info(
+        aws_provider = set_mocked_aws_provider(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_ami_public.ec2_ami_public.ec2_client",
-            new=EC2(current_audit_info),
+            new=EC2(aws_provider),
         ):
             from prowler.providers.aws.services.ec2.ec2_ami_public.ec2_ami_public import (
                 ec2_ami_public,
@@ -130,7 +130,7 @@ class Test_ec2_ami_public:
             assert result[0].resource_id == image_id
             assert (
                 result[0].resource_arn
-                == f"arn:{current_audit_info.identity.partition}:ec2:{AWS_REGION_US_EAST_1}:{current_audit_info.identity.account}:image/{image_id}"
+                == f"arn:{aws_provider.identity.partition}:ec2:{AWS_REGION_US_EAST_1}:{aws_provider.identity.account}:image/{image_id}"
             )
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_tags == []

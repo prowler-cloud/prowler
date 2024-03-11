@@ -8,7 +8,7 @@ from tests.providers.aws.audit_info_utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_WEST_1,
     AWS_REGION_US_EAST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 
@@ -17,17 +17,17 @@ class Test_vpc_different_regions:
     def test_no_vpcs(self):
         from prowler.providers.aws.services.vpc.vpc_service import VPC
 
-        current_audit_info = set_mocked_aws_audit_info(
+        aws_provider = set_mocked_aws_provider(
             [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
         )
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ):
             with mock.patch(
                 "prowler.providers.aws.services.vpc.vpc_different_regions.vpc_different_regions.vpc_client",
-                new=VPC(current_audit_info),
+                new=VPC(aws_provider),
             ) as vpc_client:
                 # Remove all VPCs
                 vpc_client.vpcs.clear()
@@ -53,17 +53,17 @@ class Test_vpc_different_regions:
 
         from prowler.providers.aws.services.vpc.vpc_service import VPC
 
-        current_audit_info = set_mocked_aws_audit_info(
+        aws_provider = set_mocked_aws_provider(
             [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
         )
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ):
             with mock.patch(
                 "prowler.providers.aws.services.vpc.vpc_different_regions.vpc_different_regions.vpc_client",
-                new=VPC(current_audit_info),
+                new=VPC(aws_provider),
             ):
                 # Test Check
                 from prowler.providers.aws.services.vpc.vpc_different_regions.vpc_different_regions import (
@@ -91,17 +91,17 @@ class Test_vpc_different_regions:
 
         from prowler.providers.aws.services.vpc.vpc_service import VPC
 
-        current_audit_info = set_mocked_aws_audit_info(
+        aws_provider = set_mocked_aws_provider(
             [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
         )
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ):
             with mock.patch(
                 "prowler.providers.aws.services.vpc.vpc_different_regions.vpc_different_regions.vpc_client",
-                new=VPC(current_audit_info),
+                new=VPC(aws_provider),
             ):
                 # Test Check
                 from prowler.providers.aws.services.vpc.vpc_different_regions.vpc_different_regions import (

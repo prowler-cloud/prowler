@@ -6,7 +6,7 @@ import botocore
 from prowler.providers.aws.services.route53.route53_service import Route53Domains
 from tests.providers.aws.audit_info_utils import (
     AWS_REGION_US_EAST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 # Mocking Access Analyzer Calls
@@ -72,29 +72,21 @@ class Test_Route53_Service:
 
     # Test Route53Domains Client
     def test__get_client__(self):
-        route53domains = Route53Domains(
-            set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        )
+        route53domains = Route53Domains(set_mocked_aws_provider([AWS_REGION_US_EAST_1]))
         assert route53domains.client.__class__.__name__ == "Route53Domains"
 
     # Test Route53Domains Session
     def test__get_session__(self):
-        route53domains = Route53Domains(
-            set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        )
+        route53domains = Route53Domains(set_mocked_aws_provider([AWS_REGION_US_EAST_1]))
         assert route53domains.session.__class__.__name__ == "Session"
 
     # Test Route53Domains Service
     def test__get_service__(self):
-        route53domains = Route53Domains(
-            set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        )
+        route53domains = Route53Domains(set_mocked_aws_provider([AWS_REGION_US_EAST_1]))
         assert route53domains.service == "route53domains"
 
     def test__list_domains__(self):
-        route53domains = Route53Domains(
-            set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        )
+        route53domains = Route53Domains(set_mocked_aws_provider([AWS_REGION_US_EAST_1]))
         domain_name = "test.domain.com"
         assert len(route53domains.domains)
         assert route53domains.domains

@@ -8,7 +8,7 @@ from prowler.providers.aws.services.awslambda.awslambda_service import (
 from tests.providers.aws.audit_info_utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_US_EAST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 from tests.providers.aws.services.awslambda.awslambda_service_test import (
     create_zip_file,
@@ -66,7 +66,7 @@ class Test_awslambda_function_no_secrets_in_code:
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=set_mocked_aws_audit_info(),
+            return_value=set_mocked_aws_provider(),
         ), mock.patch(
             "prowler.providers.aws.services.awslambda.awslambda_function_no_secrets_in_code.awslambda_function_no_secrets_in_code.awslambda_client",
             new=lambda_client,
@@ -87,7 +87,7 @@ class Test_awslambda_function_no_secrets_in_code:
         lambda_client.__get_function_code__ = mock__get_function_code__with_secrets
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=set_mocked_aws_audit_info(),
+            return_value=set_mocked_aws_provider(),
         ), mock.patch(
             "prowler.providers.aws.services.awslambda.awslambda_function_no_secrets_in_code.awslambda_function_no_secrets_in_code.awslambda_client",
             new=lambda_client,
@@ -119,7 +119,7 @@ class Test_awslambda_function_no_secrets_in_code:
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=set_mocked_aws_audit_info(),
+            return_value=set_mocked_aws_provider(),
         ), mock.patch(
             "prowler.providers.aws.services.awslambda.awslambda_function_no_secrets_in_code.awslambda_function_no_secrets_in_code.awslambda_client",
             new=lambda_client,

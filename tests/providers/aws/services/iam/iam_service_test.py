@@ -11,7 +11,7 @@ from prowler.providers.aws.services.iam.iam_service import IAM, Policy, is_servi
 from tests.providers.aws.audit_info_utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_US_EAST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 TEST_DATETIME = "2023-01-01T12:01:01+00:00"
@@ -84,16 +84,16 @@ class Test_IAM_Service:
     @mock_aws
     def test__get_client__(self):
         # IAM client for this test class
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        iam = IAM(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        iam = IAM(aws_provider)
         assert iam.client.__class__.__name__ == "IAM"
 
     # Test IAM Session
     @mock_aws
     def test__get_session__(self):
         # IAM client for this test class
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        iam = IAM(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        iam = IAM(aws_provider)
         assert iam.session.__class__.__name__ == "Session"
 
     # Test IAM Get Credential Report
@@ -134,8 +134,8 @@ class Test_IAM_Service:
         }
 
         # IAM client for this test class
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        iam = IAM(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        iam = IAM(aws_provider)
         assert len(iam.credential_report) == 1
         assert iam.credential_report[0].get("user")
         assert iam.credential_report[0]["user"] == expected_credential_report["user"]
@@ -305,8 +305,8 @@ class Test_IAM_Service:
         )["Role"]
 
         # IAM client for this test class
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        iam = IAM(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        iam = IAM(aws_provider)
 
         assert len(iam.roles) == len(iam_client.list_roles()["Roles"])
         assert iam.roles[0].tags == [
@@ -332,8 +332,8 @@ class Test_IAM_Service:
         )
 
         # IAM client for this test class
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        iam = IAM(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        iam = IAM(aws_provider)
         assert len(iam.groups) == len(iam_client.list_groups()["Groups"])
 
     # Test IAM Get Users
@@ -356,8 +356,8 @@ class Test_IAM_Service:
         )
 
         # IAM client for this test class
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        iam = IAM(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        iam = IAM(aws_provider)
         assert len(iam.users) == len(iam_client.list_users()["Users"])
         assert iam.users[0].tags == [
             {"Key": "test", "Value": "test"},
@@ -374,8 +374,8 @@ class Test_IAM_Service:
         account_summary = iam_client.get_account_summary()["SummaryMap"]
 
         # IAM client for this test class
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        iam = IAM(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        iam = IAM(aws_provider)
 
         assert iam.account_summary["SummaryMap"] == account_summary
 
@@ -408,8 +408,8 @@ class Test_IAM_Service:
         )
 
         # IAM client for this test class
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        iam = IAM(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        iam = IAM(aws_provider)
 
         assert iam.password_policy.length == min_password_length
         assert iam.password_policy.symbols == require_symbols
@@ -444,8 +444,8 @@ class Test_IAM_Service:
         )
 
         # IAM client for this test class
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        iam = IAM(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        iam = IAM(aws_provider)
 
         assert len(iam.users) == 1
         assert len(iam.users[0].mfa_devices) == 1
@@ -478,8 +478,8 @@ class Test_IAM_Service:
         )
 
         # IAM client for this test class
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        iam = IAM(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        iam = IAM(aws_provider)
 
         assert len(iam.virtual_mfa_devices) == 1
         assert (
@@ -505,8 +505,8 @@ class Test_IAM_Service:
         iam_client.add_user_to_group(GroupName=group, UserName=username)
 
         # IAM client for this test class
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        iam = IAM(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        iam = IAM(aws_provider)
 
         assert len(iam.groups) == 1
         assert iam.groups[0].name == group
@@ -552,8 +552,8 @@ class Test_IAM_Service:
         )
 
         # IAM client for this test class
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        iam = IAM(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        iam = IAM(aws_provider)
 
         assert len(iam.groups) == 1
         assert iam.groups[0].name == group
@@ -587,8 +587,8 @@ class Test_IAM_Service:
         )
 
         # IAM client for this test class
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        iam = IAM(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        iam = IAM(aws_provider)
 
         assert len(iam.roles) == 1
         assert iam.roles[0].name == role_name
@@ -608,8 +608,8 @@ class Test_IAM_Service:
             EntityFilter="Role",
         )["PolicyRoles"]
 
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        iam = IAM(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        iam = IAM(aws_provider)
         assert len(iam.entities_role_attached_to_support_policy) == 0
 
     @mock_aws(config={"iam": {"load_aws_managed_policies": True}})
@@ -639,8 +639,8 @@ class Test_IAM_Service:
             EntityFilter="Role",
         )["PolicyRoles"]
 
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        iam = IAM(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        iam = IAM(aws_provider)
         assert len(iam.entities_role_attached_to_support_policy) == 1
         assert iam.entities_role_attached_to_support_policy[0]["RoleName"] == role_name
 
@@ -652,8 +652,8 @@ class Test_IAM_Service:
             EntityFilter="Role",
         )["PolicyRoles"]
 
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        iam = IAM(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        iam = IAM(aws_provider)
         assert len(iam.entities_role_attached_to_securityaudit_policy) == 0
 
     @mock_aws(config={"iam": {"load_aws_managed_policies": True}})
@@ -683,8 +683,8 @@ class Test_IAM_Service:
             EntityFilter="Role",
         )["PolicyRoles"]
 
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        iam = IAM(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        iam = IAM(aws_provider)
         assert len(iam.entities_role_attached_to_securityaudit_policy) == 1
         assert (
             iam.entities_role_attached_to_securityaudit_policy[0]["RoleName"]
@@ -708,8 +708,8 @@ class Test_IAM_Service:
                 {"Key": "string", "Value": "string"},
             ],
         )
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        iam = IAM(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        iam = IAM(aws_provider)
         custom_policies = 0
         for policy in iam.policies:
             if policy.type == "Custom":
@@ -733,8 +733,8 @@ class Test_IAM_Service:
         iam_client.create_policy(
             PolicyName=policy_name, PolicyDocument=dumps(policy_document)
         )
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        iam = IAM(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        iam = IAM(aws_provider)
 
         custom_policies = 0
         for policy in iam.policies:
@@ -784,8 +784,8 @@ nTTxU4a7x1naFxzYXK1iQ1vMARKMjDb19QEJIEJKZlDK4uS7yMlf1nFS
         )
 
         # IAM client for this test class
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        iam = IAM(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        iam = IAM(aws_provider)
 
         assert len(iam.saml_providers) == 1
         assert iam.saml_providers[0]["Arn"].split("/")[1] == saml_provider_name
@@ -808,8 +808,8 @@ nTTxU4a7x1naFxzYXK1iQ1vMARKMjDb19QEJIEJKZlDK4uS7yMlf1nFS
         )
 
         # IAM client for this test class
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        iam = IAM(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        iam = IAM(aws_provider)
 
         assert len(iam.users) == 1
         assert iam.users[0].name == user_name
@@ -852,8 +852,8 @@ nTTxU4a7x1naFxzYXK1iQ1vMARKMjDb19QEJIEJKZlDK4uS7yMlf1nFS
 
         iam_client.delete_policy
         # IAM client for this test class
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        iam = IAM(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        iam = IAM(aws_provider)
 
         assert len(iam.groups) == 1
         assert iam.groups[0].name == group_name
@@ -896,8 +896,8 @@ nTTxU4a7x1naFxzYXK1iQ1vMARKMjDb19QEJIEJKZlDK4uS7yMlf1nFS
         )
 
         # IAM client for this test class
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        iam = IAM(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        iam = IAM(aws_provider)
 
         assert len(iam.roles) == 1
         assert iam.roles[0].name == role_name
@@ -936,8 +936,8 @@ nTTxU4a7x1naFxzYXK1iQ1vMARKMjDb19QEJIEJKZlDK4uS7yMlf1nFS
         access_key = iam_client.create_access_key(UserName="test-user")
         access_key_id = access_key["AccessKey"]["AccessKeyId"]
         # IAM client for this test class
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        iam = IAM(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        iam = IAM(aws_provider)
 
         assert len(iam.users) == 1
 

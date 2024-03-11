@@ -10,7 +10,7 @@ from prowler.providers.aws.services.s3.s3_service import S3
 from tests.providers.aws.audit_info_utils import (
     AWS_REGION_EU_WEST_1,
     AWS_REGION_US_EAST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 # Mocking Backup Calls
@@ -20,16 +20,16 @@ make_api_call = botocore.client.BaseClient._make_api_call
 class Test_cloudtrail_bucket_requires_mfa_delete:
     @mock_aws
     def test_no_trails(self):
-        current_audit_info = set_mocked_aws_audit_info(
+        aws_provider = set_mocked_aws_provider(
             [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
         )
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.cloudtrail.cloudtrail_bucket_requires_mfa_delete.cloudtrail_bucket_requires_mfa_delete.cloudtrail_client",
-            new=Cloudtrail(current_audit_info),
+            new=Cloudtrail(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.cloudtrail.cloudtrail_bucket_requires_mfa_delete.cloudtrail_bucket_requires_mfa_delete import (
@@ -42,7 +42,7 @@ class Test_cloudtrail_bucket_requires_mfa_delete:
 
     @mock_aws
     def test_trails_with_no_mfa_bucket(self):
-        current_audit_info = set_mocked_aws_audit_info(
+        aws_provider = set_mocked_aws_provider(
             [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
         )
 
@@ -61,13 +61,13 @@ class Test_cloudtrail_bucket_requires_mfa_delete:
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.cloudtrail.cloudtrail_bucket_requires_mfa_delete.cloudtrail_bucket_requires_mfa_delete.cloudtrail_client",
-            new=Cloudtrail(current_audit_info),
+            new=Cloudtrail(aws_provider),
         ), mock.patch(
             "prowler.providers.aws.services.cloudtrail.cloudtrail_bucket_requires_mfa_delete.cloudtrail_bucket_requires_mfa_delete.s3_client",
-            new=S3(current_audit_info),
+            new=S3(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.cloudtrail.cloudtrail_bucket_requires_mfa_delete.cloudtrail_bucket_requires_mfa_delete import (
@@ -105,7 +105,7 @@ class Test_cloudtrail_bucket_requires_mfa_delete:
         new=mock_make_api_call_getbucketversioning_mfadelete_enabled,
     )
     def test_trails_with_mfa_bucket(self):
-        current_audit_info = set_mocked_aws_audit_info(
+        aws_provider = set_mocked_aws_provider(
             [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
         )
 
@@ -124,13 +124,13 @@ class Test_cloudtrail_bucket_requires_mfa_delete:
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.cloudtrail.cloudtrail_bucket_requires_mfa_delete.cloudtrail_bucket_requires_mfa_delete.cloudtrail_client",
-            new=Cloudtrail(current_audit_info),
+            new=Cloudtrail(aws_provider),
         ), mock.patch(
             "prowler.providers.aws.services.cloudtrail.cloudtrail_bucket_requires_mfa_delete.cloudtrail_bucket_requires_mfa_delete.s3_client",
-            new=S3(current_audit_info),
+            new=S3(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.cloudtrail.cloudtrail_bucket_requires_mfa_delete.cloudtrail_bucket_requires_mfa_delete import (
@@ -152,7 +152,7 @@ class Test_cloudtrail_bucket_requires_mfa_delete:
 
     @mock_aws
     def test_trails_with_no_mfa_bucket_cross(self):
-        current_audit_info = set_mocked_aws_audit_info(
+        aws_provider = set_mocked_aws_provider(
             [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
         )
 
@@ -171,13 +171,13 @@ class Test_cloudtrail_bucket_requires_mfa_delete:
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.cloudtrail.cloudtrail_bucket_requires_mfa_delete.cloudtrail_bucket_requires_mfa_delete.cloudtrail_client",
-            new=Cloudtrail(current_audit_info),
+            new=Cloudtrail(aws_provider),
         ), mock.patch(
             "prowler.providers.aws.services.cloudtrail.cloudtrail_bucket_requires_mfa_delete.cloudtrail_bucket_requires_mfa_delete.s3_client",
-            new=S3(current_audit_info),
+            new=S3(aws_provider),
         ) as s3_client:
             # Test Check
             from prowler.providers.aws.services.cloudtrail.cloudtrail_bucket_requires_mfa_delete.cloudtrail_bucket_requires_mfa_delete import (
@@ -207,7 +207,7 @@ class Test_cloudtrail_bucket_requires_mfa_delete:
         new=mock_make_api_call_getbucketversioning_mfadelete_enabled,
     )
     def test_trails_with_mfa_bucket_cross(self):
-        current_audit_info = set_mocked_aws_audit_info(
+        aws_provider = set_mocked_aws_provider(
             [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
         )
 
@@ -226,13 +226,13 @@ class Test_cloudtrail_bucket_requires_mfa_delete:
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.cloudtrail.cloudtrail_bucket_requires_mfa_delete.cloudtrail_bucket_requires_mfa_delete.cloudtrail_client",
-            new=Cloudtrail(current_audit_info),
+            new=Cloudtrail(aws_provider),
         ), mock.patch(
             "prowler.providers.aws.services.cloudtrail.cloudtrail_bucket_requires_mfa_delete.cloudtrail_bucket_requires_mfa_delete.s3_client",
-            new=S3(current_audit_info),
+            new=S3(aws_provider),
         ) as s3_client:
             # Test Check
             from prowler.providers.aws.services.cloudtrail.cloudtrail_bucket_requires_mfa_delete.cloudtrail_bucket_requires_mfa_delete import (

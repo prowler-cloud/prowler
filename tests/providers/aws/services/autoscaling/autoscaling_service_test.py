@@ -7,7 +7,7 @@ from prowler.providers.aws.services.autoscaling.autoscaling_service import AutoS
 from tests.providers.aws.audit_info_utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_US_EAST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 
@@ -16,16 +16,16 @@ class Test_AutoScaling_Service:
     @mock_aws
     def test_service(self):
         # AutoScaling client for this test class
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        autoscaling = AutoScaling(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        autoscaling = AutoScaling(aws_provider)
         assert autoscaling.service == "autoscaling"
 
     # Test AutoScaling Client
     @mock_aws
     def test_client(self):
         # AutoScaling client for this test class
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        autoscaling = AutoScaling(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        autoscaling = AutoScaling(aws_provider)
         for regional_client in autoscaling.regional_clients.values():
             assert regional_client.__class__.__name__ == "AutoScaling"
 
@@ -33,16 +33,16 @@ class Test_AutoScaling_Service:
     @mock_aws
     def test__get_session__(self):
         # AutoScaling client for this test class
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        autoscaling = AutoScaling(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        autoscaling = AutoScaling(aws_provider)
         assert autoscaling.session.__class__.__name__ == "Session"
 
     # Test AutoScaling Session
     @mock_aws
     def test_audited_account(self):
         # AutoScaling client for this test class
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        autoscaling = AutoScaling(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        autoscaling = AutoScaling(aws_provider)
         assert autoscaling.audited_account == AWS_ACCOUNT_NUMBER
 
     # Test AutoScaling Get APIs
@@ -67,8 +67,8 @@ class Test_AutoScaling_Service:
             SecurityGroups=["default", "default2"],
         )
         # AutoScaling client for this test class
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        autoscaling = AutoScaling(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        autoscaling = AutoScaling(aws_provider)
         assert len(autoscaling.launch_configurations) == 2
         assert autoscaling.launch_configurations[0].name == "tester1"
         assert (
@@ -107,8 +107,8 @@ class Test_AutoScaling_Service:
         )
 
         # AutoScaling client for this test class
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        autoscaling = AutoScaling(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        autoscaling = AutoScaling(aws_provider)
         print("asg", asg)
         assert len(autoscaling.groups) == 1
         # create_auto_scaling_group doesn't return the ARN, can't check it

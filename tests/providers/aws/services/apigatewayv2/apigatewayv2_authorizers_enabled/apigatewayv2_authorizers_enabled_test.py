@@ -7,7 +7,7 @@ from moto import mock_aws
 
 from tests.providers.aws.audit_info_utils import (
     AWS_REGION_US_EAST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 # Mocking ApiGatewayV2 Calls
@@ -45,16 +45,14 @@ class Test_apigatewayv2_api_authorizers_enabled:
             ApiGatewayV2,
         )
 
-        current_audit_info = current_audit_info = set_mocked_aws_audit_info(
-            [AWS_REGION_US_EAST_1]
-        )
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.apigatewayv2.apigatewayv2_api_authorizers_enabled.apigatewayv2_api_authorizers_enabled.apigatewayv2_client",
-            new=ApiGatewayV2(current_audit_info),
+            new=ApiGatewayV2(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.apigatewayv2.apigatewayv2_api_authorizers_enabled.apigatewayv2_api_authorizers_enabled import (
@@ -83,16 +81,14 @@ class Test_apigatewayv2_api_authorizers_enabled:
             ApiGatewayV2,
         )
 
-        current_audit_info = current_audit_info = set_mocked_aws_audit_info(
-            [AWS_REGION_US_EAST_1]
-        )
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.apigatewayv2.apigatewayv2_api_authorizers_enabled.apigatewayv2_api_authorizers_enabled.apigatewayv2_client",
-            new=ApiGatewayV2(current_audit_info),
+            new=ApiGatewayV2(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.apigatewayv2.apigatewayv2_api_authorizers_enabled.apigatewayv2_api_authorizers_enabled import (

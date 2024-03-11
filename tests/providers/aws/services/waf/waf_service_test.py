@@ -5,7 +5,7 @@ import botocore
 from prowler.providers.aws.services.waf.waf_service import WAF
 from tests.providers.aws.audit_info_utils import (
     AWS_REGION_EU_WEST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 # Mocking WAF-Regional Calls
@@ -49,30 +49,30 @@ class Test_WAF_Service:
     # Test WAF Service
     def test_service(self):
         # WAF client for this test class
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
-        waf = WAF(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        waf = WAF(aws_provider)
         assert waf.service == "waf-regional"
 
     # Test WAF Client
     def test_client(self):
         # WAF client for this test class
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
-        waf = WAF(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        waf = WAF(aws_provider)
         for regional_client in waf.regional_clients.values():
             assert regional_client.__class__.__name__ == "WAFRegional"
 
     # Test WAF Session
     def test__get_session__(self):
         # WAF client for this test class
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
-        waf = WAF(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        waf = WAF(aws_provider)
         assert waf.session.__class__.__name__ == "Session"
 
     # Test WAF Describe Web ACLs
     def test__list_web_acls__(self):
         # WAF client for this test class
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
-        waf = WAF(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        waf = WAF(aws_provider)
         assert len(waf.web_acls) == 1
         assert waf.web_acls[0].name == "my-web-acl"
         assert waf.web_acls[0].region == AWS_REGION_EU_WEST_1
@@ -81,8 +81,8 @@ class Test_WAF_Service:
     # Test WAF Describe Web ACLs Resources
     def test__list_resources_for_web_acl__(self):
         # WAF client for this test class
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
-        waf = WAF(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        waf = WAF(aws_provider)
         assert len(waf.web_acls) == 1
         assert len(waf.web_acls[0].albs) == 1
         assert "alb-arn" in waf.web_acls[0].albs

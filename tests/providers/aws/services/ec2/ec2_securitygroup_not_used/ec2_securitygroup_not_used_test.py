@@ -7,7 +7,7 @@ from moto import mock_aws
 from tests.providers.aws.audit_info_utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_US_EAST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 EXAMPLE_AMI_ID = "ami-12c6146b"
@@ -23,19 +23,19 @@ class Test_ec2_securitygroup_not_used:
         from prowler.providers.aws.services.awslambda.awslambda_service import Lambda
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
-        current_audit_info = set_mocked_aws_audit_info(
+        aws_provider = set_mocked_aws_provider(
             audited_regions=["us-east-1", "eu-west-1"]
         )
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_securitygroup_not_used.ec2_securitygroup_not_used.ec2_client",
-            new=EC2(current_audit_info),
+            new=EC2(aws_provider),
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_securitygroup_not_used.ec2_securitygroup_not_used.awslambda_client",
-            new=Lambda(current_audit_info),
+            new=Lambda(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.ec2.ec2_securitygroup_not_used.ec2_securitygroup_not_used import (
@@ -62,19 +62,19 @@ class Test_ec2_securitygroup_not_used:
         from prowler.providers.aws.services.awslambda.awslambda_service import Lambda
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
-        current_audit_info = set_mocked_aws_audit_info(
+        aws_provider = set_mocked_aws_provider(
             audited_regions=["us-east-1", "eu-west-1"]
         )
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_securitygroup_not_used.ec2_securitygroup_not_used.ec2_client",
-            new=EC2(current_audit_info),
+            new=EC2(aws_provider),
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_securitygroup_not_used.ec2_securitygroup_not_used.awslambda_client",
-            new=Lambda(current_audit_info),
+            new=Lambda(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.ec2.ec2_securitygroup_not_used.ec2_securitygroup_not_used import (
@@ -94,7 +94,7 @@ class Test_ec2_securitygroup_not_used:
             )
             assert (
                 result[0].resource_arn
-                == f"arn:{current_audit_info.identity.partition}:ec2:{AWS_REGION_US_EAST_1}:{current_audit_info.identity.account}:security-group/{sg.id}"
+                == f"arn:{aws_provider.identity.partition}:ec2:{AWS_REGION_US_EAST_1}:{aws_provider.identity.account}:security-group/{sg.id}"
             )
             assert result[0].resource_id == sg.id
             assert result[0].resource_details == sg_name
@@ -116,19 +116,19 @@ class Test_ec2_securitygroup_not_used:
         from prowler.providers.aws.services.awslambda.awslambda_service import Lambda
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
-        current_audit_info = set_mocked_aws_audit_info(
+        aws_provider = set_mocked_aws_provider(
             audited_regions=["us-east-1", "eu-west-1"]
         )
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_securitygroup_not_used.ec2_securitygroup_not_used.ec2_client",
-            new=EC2(current_audit_info),
+            new=EC2(aws_provider),
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_securitygroup_not_used.ec2_securitygroup_not_used.awslambda_client",
-            new=Lambda(current_audit_info),
+            new=Lambda(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.ec2.ec2_securitygroup_not_used.ec2_securitygroup_not_used import (
@@ -152,7 +152,7 @@ class Test_ec2_securitygroup_not_used:
             )
             assert (
                 result[0].resource_arn
-                == f"arn:{current_audit_info.identity.partition}:ec2:{AWS_REGION_US_EAST_1}:{current_audit_info.identity.account}:security-group/{sg.id}"
+                == f"arn:{aws_provider.identity.partition}:ec2:{AWS_REGION_US_EAST_1}:{aws_provider.identity.account}:security-group/{sg.id}"
             )
             assert result[0].resource_id == sg.id
             assert result[0].resource_details == sg_name
@@ -198,19 +198,19 @@ class Test_ec2_securitygroup_not_used:
         from prowler.providers.aws.services.awslambda.awslambda_service import Lambda
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
-        current_audit_info = set_mocked_aws_audit_info(
+        aws_provider = set_mocked_aws_provider(
             audited_regions=["us-east-1", "eu-west-1"]
         )
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_securitygroup_not_used.ec2_securitygroup_not_used.ec2_client",
-            new=EC2(current_audit_info),
+            new=EC2(aws_provider),
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_securitygroup_not_used.ec2_securitygroup_not_used.awslambda_client",
-            new=Lambda(current_audit_info),
+            new=Lambda(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.ec2.ec2_securitygroup_not_used.ec2_securitygroup_not_used import (
@@ -234,7 +234,7 @@ class Test_ec2_securitygroup_not_used:
             )
             assert (
                 result[0].resource_arn
-                == f"arn:{current_audit_info.identity.partition}:ec2:{AWS_REGION_US_EAST_1}:{current_audit_info.identity.account}:security-group/{sg.id}"
+                == f"arn:{aws_provider.identity.partition}:ec2:{AWS_REGION_US_EAST_1}:{aws_provider.identity.account}:security-group/{sg.id}"
             )
             assert result[0].resource_id == sg.id
             assert result[0].resource_details == sg_name
@@ -273,19 +273,19 @@ class Test_ec2_securitygroup_not_used:
         from prowler.providers.aws.services.awslambda.awslambda_service import Lambda
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
-        current_audit_info = set_mocked_aws_audit_info(
+        aws_provider = set_mocked_aws_provider(
             audited_regions=["us-east-1", "eu-west-1"]
         )
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_securitygroup_not_used.ec2_securitygroup_not_used.ec2_client",
-            new=EC2(current_audit_info),
+            new=EC2(aws_provider),
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_securitygroup_not_used.ec2_securitygroup_not_used.awslambda_client",
-            new=Lambda(current_audit_info),
+            new=Lambda(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.ec2.ec2_securitygroup_not_used.ec2_securitygroup_not_used import (
@@ -305,7 +305,7 @@ class Test_ec2_securitygroup_not_used:
             )
             assert (
                 result[0].resource_arn
-                == f"arn:{current_audit_info.identity.partition}:ec2:{AWS_REGION_US_EAST_1}:{current_audit_info.identity.account}:security-group/{sg.id}"
+                == f"arn:{aws_provider.identity.partition}:ec2:{AWS_REGION_US_EAST_1}:{aws_provider.identity.account}:security-group/{sg.id}"
             )
             assert result[0].resource_id == sg.id
             assert result[0].resource_details == sg_name
@@ -318,7 +318,7 @@ class Test_ec2_securitygroup_not_used:
             )
             assert (
                 result[1].resource_arn
-                == f"arn:{current_audit_info.identity.partition}:ec2:{AWS_REGION_US_EAST_1}:{current_audit_info.identity.account}:security-group/{sg1.id}"
+                == f"arn:{aws_provider.identity.partition}:ec2:{AWS_REGION_US_EAST_1}:{aws_provider.identity.account}:security-group/{sg1.id}"
             )
             assert result[1].resource_id == sg1.id
             assert result[1].resource_details == sg_name1

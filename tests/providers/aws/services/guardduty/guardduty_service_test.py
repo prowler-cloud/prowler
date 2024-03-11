@@ -9,7 +9,7 @@ from prowler.providers.aws.services.guardduty.guardduty_service import GuardDuty
 from tests.providers.aws.audit_info_utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_WEST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 AWS_ACCOUNT_NUMBER_ADMIN = "123456789013"
@@ -66,21 +66,21 @@ def mock_generate_regional_clients(provider, service):
 class Test_GuardDuty_Service:
     # Test GuardDuty Service
     def test_service(self):
-        audit_info = set_mocked_aws_audit_info()
-        guardduty = GuardDuty(audit_info)
+        aws_provider = set_mocked_aws_provider()
+        guardduty = GuardDuty(aws_provider)
         assert guardduty.service == "guardduty"
 
     # Test GuardDuty client
     def test_client(self):
-        audit_info = set_mocked_aws_audit_info()
-        guardduty = GuardDuty(audit_info)
+        aws_provider = set_mocked_aws_provider()
+        guardduty = GuardDuty(aws_provider)
         for reg_client in guardduty.regional_clients.values():
             assert reg_client.__class__.__name__ == "GuardDuty"
 
     # Test GuardDuty session
     def test__get_session__(self):
-        audit_info = set_mocked_aws_audit_info()
-        guardduty = GuardDuty(audit_info)
+        aws_provider = set_mocked_aws_provider()
+        guardduty = GuardDuty(aws_provider)
         assert guardduty.session.__class__.__name__ == "Session"
 
     @mock_aws
@@ -89,8 +89,8 @@ class Test_GuardDuty_Service:
         guardduty_client = client("guardduty", region_name=AWS_REGION_EU_WEST_1)
         response = guardduty_client.create_detector(Enable=True, Tags={"test": "test"})
 
-        audit_info = set_mocked_aws_audit_info()
-        guardduty = GuardDuty(audit_info)
+        aws_provider = set_mocked_aws_provider()
+        guardduty = GuardDuty(aws_provider)
 
         assert len(guardduty.detectors) == 1
         assert guardduty.detectors[0].id == response["DetectorId"]
@@ -111,8 +111,8 @@ class Test_GuardDuty_Service:
         guardduty_client = client("guardduty", region_name=AWS_REGION_EU_WEST_1)
         response = guardduty_client.create_detector(Enable=True)
 
-        audit_info = set_mocked_aws_audit_info()
-        guardduty = GuardDuty(audit_info)
+        aws_provider = set_mocked_aws_provider()
+        guardduty = GuardDuty(aws_provider)
 
         assert len(guardduty.detectors) == 1
         assert guardduty.detectors[0].id == response["DetectorId"]
@@ -133,8 +133,8 @@ class Test_GuardDuty_Service:
         guardduty_client = client("guardduty", region_name=AWS_REGION_EU_WEST_1)
         response = guardduty_client.create_detector(Enable=True)
 
-        audit_info = set_mocked_aws_audit_info()
-        guardduty = GuardDuty(audit_info)
+        aws_provider = set_mocked_aws_provider()
+        guardduty = GuardDuty(aws_provider)
 
         assert len(guardduty.detectors) == 1
         assert guardduty.detectors[0].id == response["DetectorId"]
@@ -154,8 +154,8 @@ class Test_GuardDuty_Service:
         guardduty_client = client("guardduty", region_name=AWS_REGION_EU_WEST_1)
         response = guardduty_client.create_detector(Enable=True)
 
-        audit_info = set_mocked_aws_audit_info()
-        guardduty = GuardDuty(audit_info)
+        aws_provider = set_mocked_aws_provider()
+        guardduty = GuardDuty(aws_provider)
 
         assert len(guardduty.detectors) == 1
         assert guardduty.detectors[0].id == response["DetectorId"]
@@ -176,8 +176,8 @@ class Test_GuardDuty_Service:
         guardduty_client = client("guardduty", region_name=AWS_REGION_EU_WEST_1)
         response = guardduty_client.create_detector(Enable=True)
 
-        audit_info = set_mocked_aws_audit_info()
-        guardduty = GuardDuty(audit_info)
+        aws_provider = set_mocked_aws_provider()
+        guardduty = GuardDuty(aws_provider)
 
         assert len(guardduty.detectors) == 1
         assert guardduty.detectors[0].id == response["DetectorId"]

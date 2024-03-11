@@ -9,7 +9,7 @@ from tests.providers.aws.audit_info_utils import (
     AWS_REGION_US_EAST_1,
     AWS_REGION_US_EAST_1_AZA,
     AWS_REGION_US_EAST_1_AZB,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 SUBNET_GROUP_NAME = "default"
@@ -87,29 +87,29 @@ class Test_Neptune_Service:
     # Test Neptune Service
     @mock_aws
     def test_service(self):
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        neptune = Neptune(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        neptune = Neptune(aws_provider)
         assert neptune.service == "neptune"
 
     # Test Neptune Client]
     @mock_aws
     def test_client(self):
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        neptune = Neptune(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        neptune = Neptune(aws_provider)
         assert neptune.client.__class__.__name__ == "Neptune"
 
     # Test Neptune Session
     @mock_aws
     def test__get_session__(self):
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        neptune = Neptune(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        neptune = Neptune(aws_provider)
         assert neptune.session.__class__.__name__ == "Session"
 
     # Test Neptune Session
     @mock_aws
     def test_audited_account(self):
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        neptune = Neptune(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        neptune = Neptune(aws_provider)
         assert neptune.audited_account == AWS_ACCOUNT_NUMBER
 
     # Test Neptune Get Neptune Contacts
@@ -134,8 +134,8 @@ class Test_Neptune_Service:
         cluster_arn = cluster["DBClusterArn"]
         cluster_id = cluster["DbClusterResourceId"]
 
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        neptune = Neptune(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        neptune = Neptune(aws_provider)
 
         assert len(neptune.clusters) == 1
         assert neptune.clusters[cluster_arn]

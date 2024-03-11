@@ -17,7 +17,7 @@ from tests.providers.aws.audit_info_utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_WEST_1,
     AWS_REGION_US_EAST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 # Mocking Access Analyzer Calls
@@ -122,7 +122,7 @@ class Test_DirectoryService_Service:
     @mock_aws
     def test__get_client__(self):
         directoryservice = DirectoryService(
-            set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
+            set_mocked_aws_provider([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
         )
         assert (
             directoryservice.regional_clients[AWS_REGION_EU_WEST_1].__class__.__name__
@@ -133,7 +133,7 @@ class Test_DirectoryService_Service:
     @mock_aws
     def test__get_session__(self):
         directoryservice = DirectoryService(
-            set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
+            set_mocked_aws_provider([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
         )
         assert directoryservice.session.__class__.__name__ == "Session"
 
@@ -141,7 +141,7 @@ class Test_DirectoryService_Service:
     @mock_aws
     def test__get_service__(self):
         directoryservice = DirectoryService(
-            set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
+            set_mocked_aws_provider([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
         )
         assert directoryservice.service == "ds"
 
@@ -149,7 +149,7 @@ class Test_DirectoryService_Service:
     def test__describe_directories__(self):
         # Set partition for the service
         directoryservice = DirectoryService(
-            set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
+            set_mocked_aws_provider([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
         )
 
         # __describe_directories__

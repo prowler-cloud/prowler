@@ -4,7 +4,7 @@ from prowler.providers.aws.services.ecr.ecr_service import Registry, Repository
 from tests.providers.aws.audit_info_utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_WEST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 repository_name = "test_repo"
@@ -33,7 +33,7 @@ class Test_ecr_repositories_lifecycle_policy_enabled:
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=set_mocked_aws_audit_info(),
+            return_value=set_mocked_aws_provider(),
         ), mock.patch(
             "prowler.providers.aws.services.ecr.ecr_repositories_lifecycle_policy_enabled.ecr_repositories_lifecycle_policy_enabled.ecr_client",
             ecr_client,
@@ -59,7 +59,7 @@ class Test_ecr_repositories_lifecycle_policy_enabled:
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=set_mocked_aws_audit_info(),
+            return_value=set_mocked_aws_provider(),
         ), mock.patch(
             "prowler.providers.aws.services.ecr.ecr_repositories_lifecycle_policy_enabled.ecr_repositories_lifecycle_policy_enabled.ecr_client",
             ecr_client,
@@ -95,7 +95,7 @@ class Test_ecr_repositories_lifecycle_policy_enabled:
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=set_mocked_aws_audit_info(),
+            return_value=set_mocked_aws_provider(),
         ), mock.patch(
             "prowler.providers.aws.services.ecr.ecr_repositories_lifecycle_policy_enabled.ecr_repositories_lifecycle_policy_enabled.ecr_client",
             ecr_client,
@@ -139,7 +139,7 @@ class Test_ecr_repositories_lifecycle_policy_enabled:
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=set_mocked_aws_audit_info(),
+            return_value=set_mocked_aws_provider(),
         ), mock.patch(
             "prowler.providers.aws.services.ecr.ecr_repositories_lifecycle_policy_enabled.ecr_repositories_lifecycle_policy_enabled.ecr_client",
             ecr_client,

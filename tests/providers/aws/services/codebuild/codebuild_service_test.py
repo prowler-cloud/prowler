@@ -6,7 +6,7 @@ import botocore
 from prowler.providers.aws.services.codebuild.codebuild_service import Codebuild
 from tests.providers.aws.audit_info_utils import (
     AWS_REGION_EU_WEST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 # last time invoked time
@@ -54,22 +54,22 @@ def mock_generate_regional_clients(provider, service):
 class Test_Codebuild_Service:
     # Test Codebuild Session
     def test__get_session__(self):
-        codebuild = Codebuild(set_mocked_aws_audit_info())
+        codebuild = Codebuild(set_mocked_aws_provider())
         assert codebuild.session.__class__.__name__ == "Session"
 
     # Test Codebuild Service
     def test__get_service__(self):
-        codebuild = Codebuild(set_mocked_aws_audit_info())
+        codebuild = Codebuild(set_mocked_aws_provider())
         assert codebuild.service == "codebuild"
 
     def test__list_projects__(self):
-        codebuild = Codebuild(set_mocked_aws_audit_info())
+        codebuild = Codebuild(set_mocked_aws_provider())
         assert len(codebuild.projects) == 1
         assert codebuild.projects[0].name == "test"
         assert codebuild.projects[0].region == AWS_REGION_EU_WEST_1
 
     def test__list_builds_for_project__(self):
-        codebuild = Codebuild(set_mocked_aws_audit_info())
+        codebuild = Codebuild(set_mocked_aws_provider())
         assert len(codebuild.projects) == 1
         assert codebuild.projects[0].name == "test"
         assert codebuild.projects[0].region == AWS_REGION_EU_WEST_1

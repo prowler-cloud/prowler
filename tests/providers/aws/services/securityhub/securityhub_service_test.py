@@ -5,7 +5,7 @@ import botocore
 from prowler.providers.aws.services.securityhub.securityhub_service import SecurityHub
 from tests.providers.aws.audit_info_utils import (
     AWS_REGION_EU_WEST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 # Mocking Access Analyzer Calls
@@ -61,7 +61,7 @@ def mock_generate_regional_clients(provider, service):
 class Test_SecurityHub_Service:
     # Test SecurityHub Client
     def test__get_client__(self):
-        security_hub = SecurityHub(set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1]))
+        security_hub = SecurityHub(set_mocked_aws_provider([AWS_REGION_EU_WEST_1]))
         assert (
             security_hub.regional_clients[AWS_REGION_EU_WEST_1].__class__.__name__
             == "SecurityHub"
@@ -69,12 +69,12 @@ class Test_SecurityHub_Service:
 
     # Test SecurityHub Session
     def test__get_session__(self):
-        security_hub = SecurityHub(set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1]))
+        security_hub = SecurityHub(set_mocked_aws_provider([AWS_REGION_EU_WEST_1]))
         assert security_hub.session.__class__.__name__ == "Session"
 
     def test__describe_hub__(self):
         # Set partition for the service
-        securityhub = SecurityHub(set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1]))
+        securityhub = SecurityHub(set_mocked_aws_provider([AWS_REGION_EU_WEST_1]))
         assert len(securityhub.securityhubs) == 1
         assert (
             securityhub.securityhubs[0].arn

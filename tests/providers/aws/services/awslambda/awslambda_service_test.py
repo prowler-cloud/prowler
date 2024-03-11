@@ -14,7 +14,7 @@ from tests.providers.aws.audit_info_utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_WEST_1,
     AWS_REGION_US_EAST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 LAMBDA_FUNCTION_CODE = """def lambda_handler(event, context):
@@ -69,7 +69,7 @@ def mock_generate_regional_clients(provider, service):
 class Test_Lambda_Service:
     # Test Lambda Client
     def test__get_client__(self):
-        awslambda = Lambda(set_mocked_aws_audit_info([AWS_REGION_US_EAST_1]))
+        awslambda = Lambda(set_mocked_aws_provider([AWS_REGION_US_EAST_1]))
         assert (
             awslambda.regional_clients[AWS_REGION_EU_WEST_1].__class__.__name__
             == "Lambda"
@@ -77,12 +77,12 @@ class Test_Lambda_Service:
 
     # Test Lambda Session
     def test__get_session__(self):
-        awslambda = Lambda(set_mocked_aws_audit_info([AWS_REGION_US_EAST_1]))
+        awslambda = Lambda(set_mocked_aws_provider([AWS_REGION_US_EAST_1]))
         assert awslambda.session.__class__.__name__ == "Session"
 
     # Test Lambda Service
     def test__get_service__(self):
-        awslambda = Lambda(set_mocked_aws_audit_info([AWS_REGION_US_EAST_1]))
+        awslambda = Lambda(set_mocked_aws_provider([AWS_REGION_US_EAST_1]))
         assert awslambda.service == "lambda"
 
     @mock_aws
@@ -192,7 +192,7 @@ class Test_Lambda_Service:
             new=mock_request_get,
         ):
             awslambda = Lambda(
-                set_mocked_aws_audit_info(audited_regions=[AWS_REGION_US_EAST_1])
+                set_mocked_aws_provider(audited_regions=[AWS_REGION_US_EAST_1])
             )
             assert awslambda.functions
             assert len(awslambda.functions) == 2

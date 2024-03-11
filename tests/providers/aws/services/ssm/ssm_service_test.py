@@ -9,7 +9,7 @@ from prowler.providers.aws.services.ssm.ssm_service import SSM, ResourceStatus
 from tests.providers.aws.audit_info_utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_US_EAST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 # Mocking Access Analyzer Calls
@@ -136,19 +136,19 @@ class Test_SSM_Service:
     # Test SSM Client
     @mock_aws
     def test__get_client__(self):
-        ssm = SSM(set_mocked_aws_audit_info([AWS_REGION_US_EAST_1]))
+        ssm = SSM(set_mocked_aws_provider([AWS_REGION_US_EAST_1]))
         assert ssm.regional_clients[AWS_REGION_US_EAST_1].__class__.__name__ == "SSM"
 
     # Test SSM Session
     @mock_aws
     def test__get_session__(self):
-        ssm = SSM(set_mocked_aws_audit_info([AWS_REGION_US_EAST_1]))
+        ssm = SSM(set_mocked_aws_provider([AWS_REGION_US_EAST_1]))
         assert ssm.session.__class__.__name__ == "Session"
 
     # Test SSM Service
     @mock_aws
     def test__get_service__(self):
-        ssm = SSM(set_mocked_aws_audit_info([AWS_REGION_US_EAST_1]))
+        ssm = SSM(set_mocked_aws_provider([AWS_REGION_US_EAST_1]))
         assert ssm.service == "ssm"
 
     @mock_aws
@@ -172,7 +172,7 @@ class Test_SSM_Service:
             AccountIdsToAdd=[AWS_ACCOUNT_NUMBER],
         )
 
-        ssm = SSM(set_mocked_aws_audit_info([AWS_REGION_US_EAST_1]))
+        ssm = SSM(set_mocked_aws_provider([AWS_REGION_US_EAST_1]))
 
         document_arn = f"arn:aws:ssm:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:document/{ssm_document_name}"
 
@@ -190,7 +190,7 @@ class Test_SSM_Service:
 
     @mock_aws
     def test__list_resource_compliance_summaries__(self):
-        ssm = SSM(set_mocked_aws_audit_info([AWS_REGION_US_EAST_1]))
+        ssm = SSM(set_mocked_aws_provider([AWS_REGION_US_EAST_1]))
         instance_id = "i-1234567890abcdef0"
         assert len(ssm.compliance_resources) == 1
         assert ssm.compliance_resources

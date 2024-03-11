@@ -5,7 +5,7 @@ from moto import mock_aws
 
 from tests.providers.aws.audit_info_utils import (
     AWS_REGION_US_EAST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 
@@ -14,15 +14,15 @@ class Test_vpc_peering_routing_tables_with_least_privilege:
     def test_vpc_no_peering_connections(self):
         from prowler.providers.aws.services.vpc.vpc_service import VPC
 
-        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ):
             with mock.patch(
                 "prowler.providers.aws.services.vpc.vpc_peering_routing_tables_with_least_privilege.vpc_peering_routing_tables_with_least_privilege.vpc_client",
-                new=VPC(current_audit_info),
+                new=VPC(aws_provider),
             ):
                 # Test Check
                 from prowler.providers.aws.services.vpc.vpc_peering_routing_tables_with_least_privilege.vpc_peering_routing_tables_with_least_privilege import (
@@ -64,15 +64,15 @@ class Test_vpc_peering_routing_tables_with_least_privilege:
 
         from prowler.providers.aws.services.vpc.vpc_service import VPC, Route
 
-        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ):
             with mock.patch(
                 "prowler.providers.aws.services.vpc.vpc_peering_routing_tables_with_least_privilege.vpc_peering_routing_tables_with_least_privilege.vpc_client",
-                new=VPC(current_audit_info),
+                new=VPC(aws_provider),
             ) as service_client:
                 # Test Check
                 from prowler.providers.aws.services.vpc.vpc_peering_routing_tables_with_least_privilege.vpc_peering_routing_tables_with_least_privilege import (
@@ -129,15 +129,15 @@ class Test_vpc_peering_routing_tables_with_least_privilege:
 
         from prowler.providers.aws.services.vpc.vpc_service import VPC, Route
 
-        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ):
             with mock.patch(
                 "prowler.providers.aws.services.vpc.vpc_peering_routing_tables_with_least_privilege.vpc_peering_routing_tables_with_least_privilege.vpc_client",
-                new=VPC(current_audit_info),
+                new=VPC(aws_provider),
             ) as service_client:
                 # Test Check
                 from prowler.providers.aws.services.vpc.vpc_peering_routing_tables_with_least_privilege.vpc_peering_routing_tables_with_least_privilege import (
@@ -196,15 +196,15 @@ class Test_vpc_peering_routing_tables_with_least_privilege:
 
         from prowler.providers.aws.services.vpc.vpc_service import VPC, Route
 
-        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=current_audit_info,
+            return_value=aws_provider,
         ):
             with mock.patch(
                 "prowler.providers.aws.services.vpc.vpc_peering_routing_tables_with_least_privilege.vpc_peering_routing_tables_with_least_privilege.vpc_client",
-                new=VPC(current_audit_info),
+                new=VPC(aws_provider),
             ) as service_client:
                 # Test Check
                 from prowler.providers.aws.services.vpc.vpc_peering_routing_tables_with_least_privilege.vpc_peering_routing_tables_with_least_privilege import (

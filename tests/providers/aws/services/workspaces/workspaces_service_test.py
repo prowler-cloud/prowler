@@ -6,7 +6,7 @@ import botocore
 from prowler.providers.aws.services.workspaces.workspaces_service import WorkSpaces
 from tests.providers.aws.audit_info_utils import (
     AWS_REGION_EU_WEST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 workspace_id = str(uuid4())
@@ -51,27 +51,27 @@ def mock_generate_regional_clients(provider, service):
 class Test_WorkSpaces_Service:
     # Test WorkSpaces Service
     def test_service(self):
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
-        workspaces = WorkSpaces(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        workspaces = WorkSpaces(aws_provider)
         assert workspaces.service == "workspaces"
 
     # Test WorkSpaces client
     def test_client(self):
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
-        workspaces = WorkSpaces(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        workspaces = WorkSpaces(aws_provider)
         for reg_client in workspaces.regional_clients.values():
             assert reg_client.__class__.__name__ == "WorkSpaces"
 
     # Test WorkSpaces session
     def test__get_session__(self):
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
-        workspaces = WorkSpaces(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        workspaces = WorkSpaces(aws_provider)
         assert workspaces.session.__class__.__name__ == "Session"
 
     # Test WorkSpaces describe workspaces
     def test__describe_workspaces__(self):
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
-        workspaces = WorkSpaces(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        workspaces = WorkSpaces(aws_provider)
         assert len(workspaces.workspaces) == 1
         assert workspaces.workspaces[0].id == workspace_id
         assert workspaces.workspaces[0].region == AWS_REGION_EU_WEST_1

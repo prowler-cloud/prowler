@@ -7,7 +7,7 @@ from moto import mock_aws
 from tests.providers.aws.audit_info_utils import (
     AWS_REGION_EU_WEST_1,
     AWS_REGION_US_EAST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 
@@ -20,13 +20,13 @@ class Test_cloudtrail_log_file_validation_enabled:
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=set_mocked_aws_audit_info(
+            return_value=set_mocked_aws_provider(
                 [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
             ),
         ), mock.patch(
             "prowler.providers.aws.services.cloudtrail.cloudtrail_log_file_validation_enabled.cloudtrail_log_file_validation_enabled.cloudtrail_client",
             new=Cloudtrail(
-                set_mocked_aws_audit_info([AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1])
+                set_mocked_aws_provider([AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1])
             ),
         ):
             # Test Check
@@ -57,13 +57,13 @@ class Test_cloudtrail_log_file_validation_enabled:
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=set_mocked_aws_audit_info(
+            return_value=set_mocked_aws_provider(
                 [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
             ),
         ), mock.patch(
             "prowler.providers.aws.services.cloudtrail.cloudtrail_log_file_validation_enabled.cloudtrail_log_file_validation_enabled.cloudtrail_client",
             new=Cloudtrail(
-                set_mocked_aws_audit_info([AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1])
+                set_mocked_aws_provider([AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1])
             ),
         ):
             # Test Check
@@ -117,13 +117,13 @@ class Test_cloudtrail_log_file_validation_enabled:
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=set_mocked_aws_audit_info(
+            return_value=set_mocked_aws_provider(
                 [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
             ),
         ), mock.patch(
             "prowler.providers.aws.services.cloudtrail.cloudtrail_log_file_validation_enabled.cloudtrail_log_file_validation_enabled.cloudtrail_client",
             new=Cloudtrail(
-                set_mocked_aws_audit_info([AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1])
+                set_mocked_aws_provider([AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1])
             ),
         ) as service_client:
             # Test Check
