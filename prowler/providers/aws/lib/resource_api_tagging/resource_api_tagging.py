@@ -1,11 +1,10 @@
 import sys
 
 from prowler.lib.logger import logger
-from prowler.providers.aws.aws_provider import generate_regional_clients
-from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 
 
-def get_tagged_resources(input_resource_tags: list, current_audit_info: AWS_Audit_Info):
+# TODO(aws): Remove from the provider or from here
+def get_tagged_resources(input_resource_tags: list, provider):
     """
     get_tagged_resources returns a list of the resources that are going to be scanned based on the given input tags
     """
@@ -17,8 +16,8 @@ def get_tagged_resources(input_resource_tags: list, current_audit_info: AWS_Audi
             value = tag.split("=")[1]
             resource_tags.append({"Key": key, "Values": [value]})
         # Get Resources with resource_tags for all regions
-        for regional_client in generate_regional_clients(
-            "resourcegroupstaggingapi", current_audit_info
+        for regional_client in provider.generate_regional_clients(
+            "resourcegroupstaggingapi"
         ).values():
             try:
                 get_resources_paginator = regional_client.get_paginator("get_resources")

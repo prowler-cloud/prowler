@@ -1,16 +1,13 @@
 from argparse import Namespace
 from os import rmdir
 
-from boto3 import session
 from mock import patch
 
-from prowler.providers.aws.lib.audit_info.audit_info import AWS_Audit_Info
 from prowler.providers.azure.lib.audit_info.audit_info import (
     Azure_Audit_Info,
     AzureIdentityInfo,
     AzureRegionConfig,
 )
-from prowler.providers.common.models import Audit_Metadata
 from prowler.providers.common.outputs import (
     Aws_Output_Options,
     Azure_Output_Options,
@@ -64,37 +61,6 @@ class Test_Common_Output_Options:
             audit_resources=None,
             audit_metadata=None,
             audit_config=None,
-        )
-        return audit_info
-
-    # Mocked AWS Audit Info
-    def set_mocked_aws_audit_info(self):
-        audit_info = AWS_Audit_Info(
-            session_config=None,
-            original_session=None,
-            audit_session=session.Session(
-                profile_name=None,
-                botocore_session=None,
-            ),
-            audited_account=AWS_ACCOUNT_NUMBER,
-            audited_account_arn=f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root",
-            audited_user_id="test-user",
-            audited_partition="aws",
-            audited_identity_arn="test-user-arn",
-            profile=None,
-            profile_region=None,
-            credentials=None,
-            assumed_role_info=None,
-            audited_regions=None,
-            organizations_metadata=None,
-            audit_resources=None,
-            mfa_enabled=False,
-            audit_metadata=Audit_Metadata(
-                services_scanned=0,
-                expected_checks=[],
-                completed_checks=0,
-                audit_progress=0,
-            ),
         )
         return audit_info
 
@@ -319,7 +285,6 @@ class Test_Common_Output_Options:
 
     def test_get_provider_output_model(self):
         audit_info_class_names = [
-            "AWS_Audit_Info",
             "GCP_Audit_Info",
             "Azure_Audit_Info",
             "Kubernetes_Audit_Info",

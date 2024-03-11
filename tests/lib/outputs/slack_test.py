@@ -7,7 +7,6 @@ from prowler.lib.outputs.slack import (
     create_message_identity,
     send_slack_message,
 )
-from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.azure.lib.audit_info.models import (
     Azure_Audit_Info,
     AzureIdentityInfo,
@@ -29,6 +28,7 @@ def mock_create_message_identity(*_):
 
 class Test_Slack_Integration:
     def test_create_message_identity(self):
+        # TODO(Audit_Info): use provider here
         aws_audit_info = AWS_Audit_Info(
             session_config=None,
             original_session=None,
