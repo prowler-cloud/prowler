@@ -29,9 +29,6 @@ from prowler.lib.outputs.json import (
     fill_json_ocsf,
     generate_json_asff_resource_tags,
     generate_json_asff_status,
-    generate_json_ocsf_severity_id,
-    generate_json_ocsf_status,
-    generate_json_ocsf_status_id,
 )
 from prowler.lib.outputs.models import (
     Account,
@@ -1305,22 +1302,3 @@ class Test_Outputs:
         assert generate_json_asff_resource_tags(
             [{"Key": "key1", "Value": "value1"}]
         ) == {"key1": "value1"}
-
-    def test_generate_json_ocsf_status(self):
-        assert generate_json_ocsf_status("PASS") == "Success"
-        assert generate_json_ocsf_status("FAIL") == "Failure"
-        assert generate_json_ocsf_status("MUTED") == "Other"
-        assert generate_json_ocsf_status("SOMETHING ELSE") == "Unknown"
-
-    def test_generate_json_ocsf_status_id(self):
-        assert generate_json_ocsf_status_id("PASS") == 1
-        assert generate_json_ocsf_status_id("FAIL") == 2
-        assert generate_json_ocsf_status_id("MUTED") == 99
-        assert generate_json_ocsf_status_id("SOMETHING ELSE") == 0
-
-    def test_generate_json_ocsf_severity_id(self):
-        assert generate_json_ocsf_severity_id("low") == 2
-        assert generate_json_ocsf_severity_id("medium") == 3
-        assert generate_json_ocsf_severity_id("high") == 4
-        assert generate_json_ocsf_severity_id("critical") == 5
-        assert generate_json_ocsf_severity_id("something else") == 0

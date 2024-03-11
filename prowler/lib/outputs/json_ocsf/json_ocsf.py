@@ -1,19 +1,33 @@
 from py_ocsf_models.events.base_event import SeverityID, StatusID
 from py_ocsf_models.events.findings.detection_finding import DetectionFinding
+from py_ocsf_models.events.findings.detection_finding import (
+    TypeID as DetectionFindingTypeID,
+)
 from py_ocsf_models.events.findings.finding import ActivityID, FindingInformation
 from py_ocsf_models.objects.account import Account, TypeID
+from py_ocsf_models.objects.cloud import Cloud
 from py_ocsf_models.objects.group import Group
 from py_ocsf_models.objects.metadata import Metadata
 from py_ocsf_models.objects.organization import Organization
 from py_ocsf_models.objects.product import Product
 from py_ocsf_models.objects.remediation import Remediation
 from py_ocsf_models.objects.resource_details import ResourceDetails
-from py_ocsf_models.profiles.cloud import Cloud, CloudProfile
 
 from prowler.lib.logger import logger
 
 # from py_ocsf_models.objects.related_event import RelatedEvent
 from prowler.lib.outputs.common_models import FindingOutput
+
+
+def get_account_type_id_by_provider(provider: str) -> TypeID:
+    type_id = TypeID.Other
+    if provider == "aws":
+        type_id = TypeID.AWS_Account
+    elif provider == "azure":
+        type_id = TypeID.Azure_AD_Account
+    elif provider == "gcp":
+        type_id = TypeID.GCP_Account
+    return type_id
 
 
 def fill_json_ocsf(finding_output: FindingOutput) -> DetectionFinding:
@@ -31,27 +45,23 @@ def fill_json_ocsf(finding_output: FindingOutput) -> DetectionFinding:
                 # TODO: RelatedEvent and depends_on + related_to
                 # related_events=[RelatedEvent()],
             ),
-            # TODO: cloud can't be a CloudProfile with a Cloud object within, needs to be one level above
-            cloud=CloudProfile(
-                cloud=Cloud(
-                    # TODO: function to get this by provider
-                    account=Account(
-                        name=finding_output.account_name,
-                        # TODO: function to get this type based on the provider
-                        type_id=TypeID.AWS_Account.value,
-                        type=TypeID.AWS_Account.name,
-                        uid=finding_output.account_uid,
-                    ),
-                    # TODO: function to get this by provider
-                    org=Organization(
-                        uid=finding_output.account_organization_uid,
-                        name=finding_output.account_organization_name,
-                        # TODO: remove this once the fixes are released in the models lib
-                        ou_name="",
-                    ),
-                    provider=finding_output.provider,
-                    region=finding_output.region,
-                )
+            cloud=Cloud(
+                # TODO: function to get this by provider
+                account=Account(
+                    name=finding_output.account_name,
+                    type_id=get_account_type_id_by_provider(
+                        finding_output.provider
+                    ).value,
+                    type=get_account_type_id_by_provider(finding_output.provider).name,
+                    uid=finding_output.account_uid,
+                ),
+                # TODO: function to get this by provider
+                org=Organization(
+                    uid=finding_output.account_organization_uid,
+                    name=finding_output.account_organization_name,
+                ),
+                provider=finding_output.provider,
+                region=finding_output.region,
             ),
             event_time=finding_output.timestamp,
             remediation=Remediation(
@@ -78,8 +88,7 @@ def fill_json_ocsf(finding_output: FindingOutput) -> DetectionFinding:
             status_id=StatusID.Other.value,
             status=finding_output.status,
             status_detail=finding_output.status_extended,
-            # TODO: pending to add cloud_partition and region
-            # Check labels for other providers
+            # TODO: Check labels for other providers
             resources=[
                 ResourceDetails(
                     labels=(
@@ -89,69 +98,22 @@ def fill_json_ocsf(finding_output: FindingOutput) -> DetectionFinding:
                     ),
                     name=finding_output.resource_name,
                     uid=finding_output.resource_uid,
-                    # TODO: remove uid once the fixes are released in the models lib
-                    group=Group(name=finding_output.service_name, uid=""),
+                    group=Group(name=finding_output.service_name),
                     type=finding_output.resource_type,
+                    cloud_partition=finding_output.partition,
+                    region=finding_output.region,
                 )
             ],
-            # TODO: remove version once the fixes are released in the models lib
-            # Also Product name and uid, only vendor name needed
             metadata=Metadata(
                 product=Product(
                     name="Prowler",
                     vendor_name="Prowler",
-                    uid="",
                     version=finding_output.prowler_version,
                 ),
-                version="1.1.0",
             ),
-            # TODO: add values from DetectionFinding TypeID once the fixes are released in the models lib
-            # TODO: add compliance object, check if there is another compliance finding
-            type_id=200401,
+            type_id=DetectionFindingTypeID.Create,
         )
     except Exception as error:
         logger.error(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
         )
-
-
-def generate_json_ocsf_status(status: str):
-    json_ocsf_status = ""
-    if status == "PASS":
-        json_ocsf_status = "Success"
-    elif status == "FAIL":
-        json_ocsf_status = "Failure"
-    elif status == "MUTED":
-        json_ocsf_status = "Other"
-    else:
-        json_ocsf_status = "Unknown"
-
-    return json_ocsf_status
-
-
-def generate_json_ocsf_status_id(status: str):
-    json_ocsf_status_id = 0
-    if status == "PASS":
-        json_ocsf_status_id = 1
-    elif status == "FAIL":
-        json_ocsf_status_id = 2
-    elif status == "MUTED":
-        json_ocsf_status_id = 99
-    else:
-        json_ocsf_status_id = 0
-
-    return json_ocsf_status_id
-
-
-def generate_json_ocsf_severity_id(severity: str):
-    json_ocsf_severity_id = 0
-    if severity == "low":
-        json_ocsf_severity_id = 2
-    elif severity == "medium":
-        json_ocsf_severity_id = 3
-    elif severity == "high":
-        json_ocsf_severity_id = 4
-    elif severity == "critical":
-        json_ocsf_severity_id = 5
-
-    return json_ocsf_severity_id
