@@ -32,6 +32,7 @@ class Test_entra_policy_ensure_default_user_cannot_create_apps:
                 default_user_role_permissions=mock.MagicMock(
                     allowed_to_create_apps=False
                 ),
+                guest_invite_settings="everyone",
             )
         }
 
@@ -66,6 +67,7 @@ class Test_entra_policy_ensure_default_user_cannot_create_apps:
                 default_user_role_permissions=mock.MagicMock(
                     allowed_to_create_apps=True
                 ),
+                guest_invite_settings="everyone",
             )
         }
 

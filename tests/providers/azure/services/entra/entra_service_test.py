@@ -20,6 +20,7 @@ async def mock_entra_get_authorization_policy(_):
         name="Name 1",
         description="Description 1",
         default_user_role_permissions=None,
+        guest_invite_settings="everyone",
     )
 
 
@@ -34,7 +35,14 @@ async def mock_entra_get_authorization_policy(_):
 class Test_Entra_Service:
     def test__get_client__(self):
         entra_client = Entra(set_mocked_azure_audit_info())
-        assert entra_client.clients[DOMAIN].__class__.__name__ == "GraphServiceClient"
+        assert (
+            entra_client.clients[DOMAIN]["v1"].__class__.__name__
+            == "GraphServiceClient"
+        )
+        assert (
+            entra_client.clients[DOMAIN]["beta"].__class__.__name__
+            == "GraphServiceClient"
+        )
 
     def test__get_subscriptions__(self):
         entra_client = Entra(set_mocked_azure_audit_info())
@@ -52,3 +60,4 @@ class Test_Entra_Service:
         assert entra_client.authorization_policy.name == "Name 1"
         assert entra_client.authorization_policy.description == "Description 1"
         assert not entra_client.authorization_policy.default_user_role_permissions
+        assert entra_client.authorization_policy.guest_invite_settings == "everyone"
