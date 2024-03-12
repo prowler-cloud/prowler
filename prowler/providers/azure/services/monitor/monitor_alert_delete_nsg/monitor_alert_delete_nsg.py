@@ -13,54 +13,26 @@ class monitor_alert_delete_nsg(Check):
             subscription_name,
             activity_log_alerts,
         ) in monitor_client.alert_rules.items():
-            # report = check_alerts_review(activity_log_alerts,"Microsoft.Network/networkSecurityGroups/delete", self.metadata, subscription_name)
-            # report_classic = check_alerts_review(activity_log_alerts,"Microsoft.ClassicNetwork/networkSecurityGroups/delete", self.metadata, subscription_name)
-            # if report.status == "PASS":
-            #    findings.append(report)
-            # elif report_classic.status == "PASS":
-            #    findings.append(report_classic)
-            # else:
-            #    findings.append(report)
-            if (
-                check_alerts_review(
-                    activity_log_alerts,
-                    "Microsoft.Network/networkSecurityGroups/delete",
-                    self.metadata(),
-                    subscription_name,
+            report = Check_Report_Azure(self.metadata())
+            report.status = "FAIL"
+            report.subscription = subscription_name
+            report.resource_name = "Monitor"
+            report.resource_id = "Monitor"
+            report.status_extended = f"There is not an alert for delete Network Securiy Groups in subscription {subscription_name}."
+            for alert_rule in activity_log_alerts:
+                check = check_alerts_review(
+                    alert_rule, "Microsoft.Network/networkSecurityGroups/delete"
+                ) or check_alerts_review(
+                    alert_rule, "Microsoft.ClassicNetwork/networkSecurityGroups/delete"
                 )
-            ).status == "PASS":
-                findings.append(
-                    check_alerts_review(
-                        activity_log_alerts,
-                        "Microsoft.Network/networkSecurityGroups/delete",
-                        self.metadata(),
-                        subscription_name,
-                    )
-                )
-            elif (
-                check_alerts_review(
-                    activity_log_alerts,
-                    "Microsoft.ClassicNetwork/networkSecurityGroups/delete",
-                    self.metadata(),
-                    subscription_name,
-                )
-            ).status == "PASS":
-                findings.append(
-                    check_alerts_review(
-                        activity_log_alerts,
-                        "Microsoft.ClassicNetwork/networkSecurityGroups/delete",
-                        self.metadata(),
-                        subscription_name,
-                    )
-                )
-            else:
-                findings.append(
-                    check_alerts_review(
-                        activity_log_alerts,
-                        "Microsoft.Network/networkSecurityGroups/delete",
-                        self.metadata(),
-                        subscription_name,
-                    )
-                )
+                if check:
+                    report.status = "PASS"
+                    report.resource_name = alert_rule.name
+                    report.resource_id = alert_rule.id
+                    report.subscription = subscription_name
+                    report.status_extended = f"There is an alert configured for delete Network Securiy Groups in subscription {subscription_name}."
+                    break
+
+            findings.append(report)
 
         return findings
