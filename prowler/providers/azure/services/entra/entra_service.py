@@ -6,6 +6,7 @@ from msgraph import GraphServiceClient
 from msgraph.generated.models.default_user_role_permissions import (
     DefaultUserRolePermissions,
 )
+from msgraph_beta import GraphServiceClient as GraphServiceClientBeta
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
@@ -15,7 +16,7 @@ from prowler.providers.azure.lib.service.service import AzureService
 ########################## Entra
 class Entra(AzureService):
     def __init__(self, azure_audit_info):
-        super().__init__(GraphServiceClient, azure_audit_info)
+        super().__init__([GraphServiceClient, GraphServiceClientBeta], azure_audit_info)
         self.users = asyncio.get_event_loop().run_until_complete(self.__get_users__())
         self.authorization_policy = asyncio.get_event_loop().run_until_complete(
             self.__get_authorization_policy__()
@@ -25,7 +26,7 @@ class Entra(AzureService):
         try:
             users = {}
             for tenant, client in self.clients.items():
-                users_list = await client.users.get()
+                users_list = await client["v1"].users.get()
                 users.update({tenant: {}})
                 for user in users_list.value:
                     users[tenant].update(
@@ -46,7 +47,7 @@ class Entra(AzureService):
         try:
             authorization_policy = {}
             for tenant, client in self.clients.items():
-                auth_policy = await client.policies.authorization_policy.get()
+                auth_policy = await client["v1"].policies.authorization_policy.get()
                 authorization_policy.update(
                     {
                         tenant: AuthorizationPolicy(
@@ -55,6 +56,11 @@ class Entra(AzureService):
                             description=auth_policy.description,
                             default_user_role_permissions=getattr(
                                 auth_policy, "default_user_role_permissions", None
+                            ),
+                            guest_invite_settings=(
+                                auth_policy.allow_invites_from.value
+                                if getattr(auth_policy, "allow_invites_from", None)
+                                else "everyone"
                             ),
                         )
                     }
@@ -78,3 +84,4 @@ class AuthorizationPolicy:
     name: str
     description: str
     default_user_role_permissions: Optional[DefaultUserRolePermissions]
+    guest_invite_settings: str
