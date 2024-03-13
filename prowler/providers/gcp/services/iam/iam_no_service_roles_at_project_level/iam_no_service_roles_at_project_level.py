@@ -28,7 +28,7 @@ class iam_no_service_roles_at_project_level(Check):
                 report = Check_Report_GCP(self.metadata())
                 report.project_id = project
                 report.resource_id = project
-                report.resource_name = ""
+                report.resource_name = project
                 report.status = "PASS"
                 report.location = cloudresourcemanager_client.region
                 report.status_extended = f"No IAM Users assigned to service roles at project level {project}."

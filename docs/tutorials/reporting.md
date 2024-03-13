@@ -106,6 +106,11 @@ And then by the provider specific columns:
 - RESOURCE_ID
 - RESOURCE_NAME
 
+#### KUBERNETES
+
+- NAMESPACE
+- RESOURCE_ID
+- RESOURCE_NAME
 
 ???+ note
     Since Prowler v3 the CSV column delimiter is the semicolon (`;`)
