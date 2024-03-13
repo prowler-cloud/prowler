@@ -93,10 +93,10 @@ class KubernetesProvider(Provider):
     def get_output_mapping(self):
         return {
             # "in-cluster/kubeconfig"
-            "auth_method": "identity.profile",
+            # "auth_method": "identity.profile",
             "provider": "type",
             # cluster: <context>
-            "account_uid": "identity.account",
+            "account_uid": "identity.cluster",
             # "account_name": "organizations_metadata.account_details_name",
             # "account_email": "organizations_metadata.account_details_email",
             # "account_organization_uid": "organizations_metadata.account_details_arn",
