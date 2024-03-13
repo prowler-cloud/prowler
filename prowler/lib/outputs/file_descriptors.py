@@ -9,6 +9,8 @@ from prowler.config.config import (
     json_ocsf_file_suffix,
 )
 from prowler.lib.logger import logger
+from prowler.lib.outputs.csv.csv import generate_csv_fields
+from prowler.lib.outputs.csv.models import CSVRow
 from prowler.lib.outputs.models import (
     Check_Output_CSV_AWS_CIS,
     Check_Output_CSV_AWS_ISO27001_2013,
@@ -17,20 +19,14 @@ from prowler.lib.outputs.models import (
     Check_Output_CSV_GCP_CIS,
     Check_Output_CSV_Generic_Compliance,
     Check_Output_MITRE_ATTACK,
-    generate_csv_fields,
 )
 from prowler.lib.utils.utils import file_exists, open_file
-from prowler.providers.common.outputs import get_provider_output_model
 
 
 def initialize_file_descriptor(
-    filename: str,
-    output_mode: str,
-    # TODO: review this provider, maybe it's not needed
-    provider: Any,
-    format: Any = None,
+    filename: str, output_mode: str, format: Any = CSVRow
 ) -> TextIOWrapper:
-    """Open/Create the output file. If needed include headers or the required format"""
+    """Open/Create the output file. If needed include headers or the required format, by default will use the CSVRow"""
     try:
         if file_exists(filename):
             file_descriptor = open_file(
@@ -52,12 +48,11 @@ def initialize_file_descriptor(
                     file_descriptor, fieldnames=csv_header, delimiter=";"
                 )
                 csv_writer.writeheader()
+        return file_descriptor
     except Exception as error:
         logger.error(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
         )
-
-    return file_descriptor
 
 
 def fill_file_descriptors(output_modes, output_directory, output_filename, provider):
@@ -67,36 +62,31 @@ def fill_file_descriptors(output_modes, output_directory, output_filename, provi
             for output_mode in output_modes:
                 if output_mode == "csv":
                     filename = f"{output_directory}/{output_filename}{csv_file_suffix}"
-                    output_model = get_provider_output_model(provider.type)
+                    output_model = CSVRow
                     file_descriptor = initialize_file_descriptor(
                         filename,
                         output_mode,
-                        provider,
                         output_model,
                     )
                     file_descriptors.update({output_mode: file_descriptor})
 
                 elif output_mode == "json":
                     filename = f"{output_directory}/{output_filename}{json_file_suffix}"
-                    file_descriptor = initialize_file_descriptor(
-                        filename, output_mode, provider
-                    )
+                    file_descriptor = initialize_file_descriptor(filename, output_mode)
                     file_descriptors.update({output_mode: file_descriptor})
 
                 elif output_mode == "json-ocsf":
                     filename = (
                         f"{output_directory}/{output_filename}{json_ocsf_file_suffix}"
                     )
-                    file_descriptor = initialize_file_descriptor(
-                        filename, output_mode, provider
-                    )
+                    file_descriptor = initialize_file_descriptor(filename, output_mode)
                     file_descriptors.update({output_mode: file_descriptor})
 
                 elif provider.type == "gcp":
                     filename = f"{output_directory}/compliance/{output_filename}_{output_mode}{csv_file_suffix}"
                     if "cis_" in output_mode:
                         file_descriptor = initialize_file_descriptor(
-                            filename, output_mode, provider, Check_Output_CSV_GCP_CIS
+                            filename, output_mode, Check_Output_CSV_GCP_CIS
                         )
                         file_descriptors.update({output_mode: file_descriptor})
                     else:
@@ -112,7 +102,7 @@ def fill_file_descriptors(output_modes, output_directory, output_filename, provi
                     if output_mode == "json-asff":
                         filename = f"{output_directory}/{output_filename}{json_asff_file_suffix}"
                         file_descriptor = initialize_file_descriptor(
-                            filename, output_mode, provider
+                            filename, output_mode
                         )
                         file_descriptors.update({output_mode: file_descriptor})
                     else:  # Compliance frameworks
@@ -121,7 +111,6 @@ def fill_file_descriptors(output_modes, output_directory, output_filename, provi
                             file_descriptor = initialize_file_descriptor(
                                 filename,
                                 output_mode,
-                                provider,
                                 Check_Output_CSV_ENS_RD2022,
                             )
                             file_descriptors.update({output_mode: file_descriptor})
@@ -130,7 +119,6 @@ def fill_file_descriptors(output_modes, output_directory, output_filename, provi
                             file_descriptor = initialize_file_descriptor(
                                 filename,
                                 output_mode,
-                                provider,
                                 Check_Output_CSV_AWS_CIS,
                             )
                             file_descriptors.update({output_mode: file_descriptor})
@@ -139,7 +127,6 @@ def fill_file_descriptors(output_modes, output_directory, output_filename, provi
                             file_descriptor = initialize_file_descriptor(
                                 filename,
                                 output_mode,
-                                provider,
                                 Check_Output_CSV_AWS_Well_Architected,
                             )
                             file_descriptors.update({output_mode: file_descriptor})
@@ -148,7 +135,6 @@ def fill_file_descriptors(output_modes, output_directory, output_filename, provi
                             file_descriptor = initialize_file_descriptor(
                                 filename,
                                 output_mode,
-                                provider,
                                 Check_Output_CSV_AWS_ISO27001_2013,
                             )
                             file_descriptors.update({output_mode: file_descriptor})
@@ -157,16 +143,15 @@ def fill_file_descriptors(output_modes, output_directory, output_filename, provi
                             file_descriptor = initialize_file_descriptor(
                                 filename,
                                 output_mode,
-                                provider,
                                 Check_Output_MITRE_ATTACK,
                             )
                             file_descriptors.update({output_mode: file_descriptor})
 
                         else:
+                            # Generic Compliance framework
                             file_descriptor = initialize_file_descriptor(
                                 filename,
                                 output_mode,
-                                provider,
                                 Check_Output_CSV_Generic_Compliance,
                             )
                             file_descriptors.update({output_mode: file_descriptor})

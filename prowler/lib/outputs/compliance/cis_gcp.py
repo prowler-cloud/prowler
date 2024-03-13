@@ -1,5 +1,6 @@
 from prowler.config.config import timestamp
-from prowler.lib.outputs.models import Check_Output_CSV_GCP_CIS, generate_csv_fields
+from prowler.lib.outputs.csv.csv import generate_csv_fields
+from prowler.lib.outputs.models import Check_Output_CSV_GCP_CIS
 from prowler.lib.utils.utils import outputs_unix_timestamp
 
 

@@ -284,6 +284,20 @@ class AwsProvider(Provider):
             mutelist = {}
         self._mutelist = mutelist
 
+    @property
+    def get_output_mapping(self):
+        return {
+            "auth_method": "identity.profile",
+            "provider": "type",
+            "account_uid": "identity.account",
+            "account_name": "organizations_metadata.account_details_name",
+            "account_email": "organizations_metadata.account_details_email",
+            "account_organization_uid": "organizations_metadata.account_details_arn",
+            "account_organization": "organizations_metadata.account_details_org",
+            "account_tags": "organizations_metadata.account_details_tags",
+            "partition": "identity.partition",
+        }
+
     # TODO: This can be moved to another class since it doesn't need self
     def get_organizations_info(
         self, organizations_session: Session, aws_account_id: str

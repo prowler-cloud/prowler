@@ -1,10 +1,8 @@
 from csv import DictWriter
 
 from prowler.config.config import timestamp
-from prowler.lib.outputs.models import (
-    Check_Output_CSV_Generic_Compliance,
-    generate_csv_fields,
-)
+from prowler.lib.outputs.csv.csv import generate_csv_fields
+from prowler.lib.outputs.models import Check_Output_CSV_Generic_Compliance
 from prowler.lib.utils.utils import outputs_unix_timestamp
 
 
