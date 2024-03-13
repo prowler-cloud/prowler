@@ -32,7 +32,7 @@ def get_account_type_id_by_provider(provider: str) -> TypeID:
 
 def fill_json_ocsf(finding_output: FindingOutput) -> DetectionFinding:
     try:
-        # TODO:
+        # TODO: add or delete?
         # FindingInformation.created_time
         return DetectionFinding(
             activity_id=ActivityID.Create.value,
@@ -46,7 +46,6 @@ def fill_json_ocsf(finding_output: FindingOutput) -> DetectionFinding:
                 # related_events=[RelatedEvent()],
             ),
             cloud=Cloud(
-                # TODO: function to get this by provider
                 account=Account(
                     name=finding_output.account_name,
                     type_id=get_account_type_id_by_provider(
@@ -55,7 +54,6 @@ def fill_json_ocsf(finding_output: FindingOutput) -> DetectionFinding:
                     type=get_account_type_id_by_provider(finding_output.provider).name,
                     uid=finding_output.account_uid,
                 ),
-                # TODO: function to get this by provider
                 org=Organization(
                     uid=finding_output.account_organization_uid,
                     name=finding_output.account_organization_name,
@@ -88,9 +86,9 @@ def fill_json_ocsf(finding_output: FindingOutput) -> DetectionFinding:
             status_id=StatusID.Other.value,
             status=finding_output.status,
             status_detail=finding_output.status_extended,
-            # TODO: Check labels for other providers
             resources=[
                 ResourceDetails(
+                    # TODO: Check labels for other providers
                     labels=(
                         finding_output.resource_tags.split(",")
                         if finding_output.resource_tags
