@@ -2,10 +2,10 @@ from boto3 import client
 from moto import mock_aws
 
 from prowler.providers.aws.services.apigateway.apigateway_service import APIGateway
-from tests.providers.aws.audit_info_utils import (
+from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_US_EAST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 
@@ -14,16 +14,16 @@ class Test_APIGateway_Service:
     @mock_aws
     def test_service(self):
         # APIGateway client for this test class
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        apigateway = APIGateway(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        apigateway = APIGateway(aws_provider)
         assert apigateway.service == "apigateway"
 
     # Test APIGateway Client
     @mock_aws
     def test_client(self):
         # APIGateway client for this test class
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        apigateway = APIGateway(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        apigateway = APIGateway(aws_provider)
         for regional_client in apigateway.regional_clients.values():
             assert regional_client.__class__.__name__ == "APIGateway"
 
@@ -31,16 +31,16 @@ class Test_APIGateway_Service:
     @mock_aws
     def test__get_session__(self):
         # APIGateway client for this test class
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        apigateway = APIGateway(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        apigateway = APIGateway(aws_provider)
         assert apigateway.session.__class__.__name__ == "Session"
 
     # Test APIGateway Session
     @mock_aws
     def test_audited_account(self):
         # APIGateway client for this test class
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        apigateway = APIGateway(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        apigateway = APIGateway(aws_provider)
         assert apigateway.audited_account == AWS_ACCOUNT_NUMBER
 
     # Test APIGateway Get Rest APIs
@@ -53,8 +53,8 @@ class Test_APIGateway_Service:
             name="test-rest-api",
         )
         # APIGateway client for this test class
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        apigateway = APIGateway(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        apigateway = APIGateway(aws_provider)
         assert len(apigateway.rest_apis) == len(
             apigateway_client.get_rest_apis()["items"]
         )
@@ -75,8 +75,8 @@ class Test_APIGateway_Service:
             type="TOKEN",
         )
         # APIGateway client for this test class
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        apigateway = APIGateway(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        apigateway = APIGateway(aws_provider)
         assert apigateway.rest_apis[0].authorizer is True
 
     # Test APIGateway Get Rest API
@@ -91,8 +91,8 @@ class Test_APIGateway_Service:
             tags={"test": "test"},
         )
         # APIGateway client for this test class
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        apigateway = APIGateway(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        apigateway = APIGateway(aws_provider)
         assert apigateway.rest_apis[0].public_endpoint is False
         assert apigateway.rest_apis[0].tags == [{"test": "test"}]
 
@@ -143,8 +143,8 @@ class Test_APIGateway_Service:
                 },
             ],
         )
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        apigateway = APIGateway(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        apigateway = APIGateway(aws_provider)
         assert apigateway.rest_apis[0].stages[0].logging is True
 
     # Test APIGateway __get_resources__
@@ -178,8 +178,8 @@ class Test_APIGateway_Service:
             authorizationType="AWS_IAM",
         )
 
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        apigateway = APIGateway(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        apigateway = APIGateway(aws_provider)
 
         # we skip OPTIONS methods
         assert list(apigateway.rest_apis[0].resources[1].resource_methods.keys()) == [

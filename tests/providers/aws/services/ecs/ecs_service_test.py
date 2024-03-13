@@ -4,14 +4,11 @@ from boto3 import client
 from moto import mock_aws
 
 from prowler.providers.aws.services.ecs.ecs_service import ECS
-from tests.providers.aws.audit_info_utils import (
-    AWS_REGION_EU_WEST_1,
-    set_mocked_aws_audit_info,
-)
+from tests.providers.aws.utils import AWS_REGION_EU_WEST_1, set_mocked_aws_provider
 
 
-def mock_generate_regional_clients(service, audit_info):
-    regional_client = audit_info.audit_session.client(
+def mock_generate_regional_clients(provider, service):
+    regional_client = provider._session.current_session.client(
         service, region_name=AWS_REGION_EU_WEST_1
     )
     regional_client.region = AWS_REGION_EU_WEST_1
@@ -19,27 +16,27 @@ def mock_generate_regional_clients(service, audit_info):
 
 
 @patch(
-    "prowler.providers.aws.lib.service.service.generate_regional_clients",
+    "prowler.providers.aws.aws_provider.AwsProvider.generate_regional_clients",
     new=mock_generate_regional_clients,
 )
 class Test_ECS_Service:
     # Test ECS Service
     def test_service(self):
-        audit_info = set_mocked_aws_audit_info()
-        ecs = ECS(audit_info)
+        aws_provider = set_mocked_aws_provider()
+        ecs = ECS(aws_provider)
         assert ecs.service == "ecs"
 
     # Test ECS client
     def test_client(self):
-        audit_info = set_mocked_aws_audit_info()
-        ecs = ECS(audit_info)
+        aws_provider = set_mocked_aws_provider()
+        ecs = ECS(aws_provider)
         for reg_client in ecs.regional_clients.values():
             assert reg_client.__class__.__name__ == "ECS"
 
     # Test ECS session
     def test__get_session__(self):
-        audit_info = set_mocked_aws_audit_info()
-        ecs = ECS(audit_info)
+        aws_provider = set_mocked_aws_provider()
+        ecs = ECS(aws_provider)
         assert ecs.session.__class__.__name__ == "Session"
 
     # Test list ECS task definitions
@@ -59,8 +56,8 @@ class Test_ECS_Service:
         )
 
         task_definition = ecs_client.register_task_definition(**definition)
-        audit_info = set_mocked_aws_audit_info()
-        ecs = ECS(audit_info)
+        aws_provider = set_mocked_aws_provider()
+        ecs = ECS(aws_provider)
 
         assert len(ecs.task_definitions) == 1
         assert (
@@ -96,8 +93,8 @@ class Test_ECS_Service:
         )
 
         task_definition = ecs_client.register_task_definition(**definition)
-        audit_info = set_mocked_aws_audit_info()
-        ecs = ECS(audit_info)
+        aws_provider = set_mocked_aws_provider()
+        ecs = ECS(aws_provider)
 
         assert len(ecs.task_definitions) == 1
         assert (

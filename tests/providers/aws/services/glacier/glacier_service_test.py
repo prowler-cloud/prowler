@@ -4,11 +4,11 @@ from unittest.mock import patch
 import botocore
 
 from prowler.providers.aws.services.glacier.glacier_service import Glacier
-from tests.providers.aws.audit_info_utils import (
+from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_WEST_1,
     AWS_REGION_US_EAST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 # Mocking Access Analyzer Calls
@@ -62,8 +62,8 @@ def mock_make_api_call(self, operation_name, kwarg):
 
 
 # Mock generate_regional_clients()
-def mock_generate_regional_clients(service, audit_info):
-    regional_client = audit_info.audit_session.client(
+def mock_generate_regional_clients(provider, service):
+    regional_client = provider._session.current_session.client(
         service, region_name=AWS_REGION_EU_WEST_1
     )
     regional_client.region = AWS_REGION_EU_WEST_1
@@ -73,14 +73,14 @@ def mock_generate_regional_clients(service, audit_info):
 # Patch every AWS call using Boto3 and generate_regional_clients to have 1 client
 @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
 @patch(
-    "prowler.providers.aws.lib.service.service.generate_regional_clients",
+    "prowler.providers.aws.aws_provider.AwsProvider.generate_regional_clients",
     new=mock_generate_regional_clients,
 )
 class Test_Glacier_Service:
     # Test Glacier Client
     def test__get_client__(self):
         glacier = Glacier(
-            set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
+            set_mocked_aws_provider([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
         )
         assert (
             glacier.regional_clients[AWS_REGION_EU_WEST_1].__class__.__name__
@@ -90,21 +90,21 @@ class Test_Glacier_Service:
     # Test Glacier Session
     def test__get_session__(self):
         glacier = Glacier(
-            set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
+            set_mocked_aws_provider([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
         )
         assert glacier.session.__class__.__name__ == "Session"
 
     # Test Glacier Service
     def test__get_service__(self):
         glacier = Glacier(
-            set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
+            set_mocked_aws_provider([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
         )
         assert glacier.service == "glacier"
 
     def test__list_vaults__(self):
         # Set partition for the service
         glacier = Glacier(
-            set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
+            set_mocked_aws_provider([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
         )
         vault_name = "examplevault"
         assert len(glacier.vaults) == 1
@@ -120,7 +120,7 @@ class Test_Glacier_Service:
     def test__get_vault_access_policy__(self):
         # Set partition for the service
         glacier = Glacier(
-            set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
+            set_mocked_aws_provider([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
         )
         vault_name = "examplevault"
         assert len(glacier.vaults) == 1

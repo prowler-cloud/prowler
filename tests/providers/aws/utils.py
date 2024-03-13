@@ -1,6 +1,10 @@
-from boto3 import session
+from argparse import Namespace
 
-from prowler.providers.aws.lib.audit_info.models import AWS_Assume_Role, AWS_Audit_Info
+from boto3 import session
+from botocore.config import Config
+from moto import mock_aws
+
+from prowler.providers.aws.aws_provider import AwsProvider
 from prowler.providers.common.models import Audit_Metadata
 
 # Root AWS Account
@@ -73,49 +77,56 @@ AWS_CHINA_PARTITION = "aws-cn"
 AWS_ISO_PARTITION = "aws-iso"
 
 
-# Mocked AWS Audit Info
-def set_mocked_aws_audit_info(
-    audited_regions: [str] = [],
+# Mocked AWS Provider
+# This here causes to call this function mocking the AWS calls
+@mock_aws
+def set_mocked_aws_provider(
+    audited_regions: list[str] = [],
     audited_account: str = AWS_ACCOUNT_NUMBER,
     audited_account_arn: str = AWS_ACCOUNT_ARN,
     audited_partition: str = AWS_COMMERCIAL_PARTITION,
-    expected_checks: [str] = [],
+    expected_checks: list[str] = [],
     profile_region: str = None,
     audit_config: dict = {},
     ignore_unused_services: bool = False,
-    assumed_role_info: AWS_Assume_Role = None,
+    # assumed_role_info: AWSAssumeRole = None,
     audit_session: session.Session = session.Session(
         profile_name=None,
         botocore_session=None,
     ),
     original_session: session.Session = None,
     enabled_regions: set = None,
-):
-    audit_info = AWS_Audit_Info(
-        session_config=None,
-        original_session=original_session,
-        audit_session=audit_session,
-        audited_account=audited_account,
-        audited_account_arn=audited_account_arn,
-        audited_user_id=None,
-        audited_partition=audited_partition,
-        audited_identity_arn=None,
-        profile=None,
-        profile_region=profile_region,
-        credentials=None,
-        assumed_role_info=assumed_role_info,
-        audited_regions=audited_regions,
-        organizations_metadata=None,
-        audit_resources=[],
-        mfa_enabled=False,
-        audit_metadata=Audit_Metadata(
-            services_scanned=0,
-            expected_checks=expected_checks,
-            completed_checks=0,
-            audit_progress=0,
-        ),
-        audit_config=audit_config,
-        ignore_unused_services=ignore_unused_services,
-        enabled_regions=enabled_regions if enabled_regions else set(audited_regions),
+) -> AwsProvider:
+    # Create default AWS Provider
+    provider = AwsProvider(Namespace())
+    # Mock Session
+    provider._session.session_config = None
+    provider._session.original_session = original_session
+    provider._session.current_session = audit_session
+    provider._session.session_config = Config()
+    # Mock Identity
+    provider._identity.account = audited_account
+    provider._identity.account_arn = audited_account_arn
+    provider._identity.user_id = None
+    provider._identity.partition = audited_partition
+    provider._identity.identity_arn = None
+    provider._identity.profile = None
+    provider._identity.profile_region = profile_region
+    provider._identity.audited_regions = audited_regions
+    # Mock Configiration
+    provider._ignore_unused_services = ignore_unused_services
+    provider._enabled_regions = (
+        enabled_regions if enabled_regions else set(audited_regions)
     )
-    return audit_info
+    # TODO: we can create the organizations metadata here with moto
+    provider._organizations_metadata = None
+    provider._audit_resources = []
+    provider._audit_config = audit_config
+    provider.audit_metadata = Audit_Metadata(
+        services_scanned=0,
+        expected_checks=expected_checks,
+        completed_checks=0,
+        audit_progress=0,
+    )
+
+    return provider

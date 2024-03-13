@@ -6,6 +6,8 @@ from pydantic import BaseModel
 
 from prowler.config.config import prowler_version
 from prowler.lib.logger import logger
+from prowler.lib.utils.utils import outputs_unix_timestamp
+from prowler.providers.aws.models import AWSOrganizationsInfo
 
 
 def get_check_compliance(finding, provider_type, output_options) -> dict:

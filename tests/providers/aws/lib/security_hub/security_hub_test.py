@@ -8,14 +8,12 @@ from mock import MagicMock, patch
 
 from prowler.config.config import prowler_version, timestamp_utc
 from prowler.lib.check.models import Check_Report, load_check_metadata
-
-# from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.aws.lib.security_hub.security_hub import (
     batch_send_to_security_hub,
     prepare_security_hub_findings,
     verify_security_hub_integration_enabled_per_region,
 )
-from tests.providers.aws.audit_info_utils import (
+from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_COMMERCIAL_PARTITION,
     AWS_REGION_EU_WEST_1,

@@ -28,7 +28,7 @@ class TestS3:
 
         # Create mock session
         audit_info.audit_session = boto3.session.Session(region_name=AWS_REGION)
-        audit_info.audited_account = AWS_ACCOUNT_ID
+        audit_info.identity.account = AWS_ACCOUNT_ID
 
         # Create mock bucket
         client = audit_info.audit_session.client("s3")
@@ -36,7 +36,7 @@ class TestS3:
 
         # Mocked CSV output file
         output_directory = f"{ACTUAL_DIRECTORY}/{FIXTURES_DIR_NAME}"
-        filename = f"prowler-output-{audit_info.audited_account}"
+        filename = f"prowler-output-{audit_info.identity.account}"
 
         # Send mock CSV file to mock S3 Bucket
         send_to_s3_bucket(
@@ -67,7 +67,7 @@ class TestS3:
 
         # Create mock session
         audit_info.audit_session = boto3.session.Session(region_name=AWS_REGION)
-        audit_info.audited_account = AWS_ACCOUNT_ID
+        audit_info.identity.account = AWS_ACCOUNT_ID
 
         # Create mock bucket
         client = audit_info.audit_session.client("s3")
@@ -75,7 +75,7 @@ class TestS3:
 
         # Mocked CSV output file
         output_directory = f"{ACTUAL_DIRECTORY}/{FIXTURES_DIR_NAME}"
-        filename = f"prowler-output-{audit_info.audited_account}"
+        filename = f"prowler-output-{audit_info.identity.account}"
 
         # Send mock CSV file to mock S3 Bucket
         send_to_s3_bucket(

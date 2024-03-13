@@ -2,10 +2,7 @@ import botocore
 from mock import patch
 
 from prowler.providers.aws.services.account.account_service import Account, Contact
-from tests.providers.aws.audit_info_utils import (
-    AWS_ACCOUNT_NUMBER,
-    set_mocked_aws_audit_info,
-)
+from tests.providers.aws.utils import AWS_ACCOUNT_NUMBER, set_mocked_aws_provider
 
 # Mocking Access Analyzer Calls
 make_api_call = botocore.client.BaseClient._make_api_call
@@ -55,33 +52,33 @@ def mock_make_api_call(self, operation_name, kwargs):
 class Test_Account_Service:
     # Test Account Service
     def test_service(self):
-        audit_info = set_mocked_aws_audit_info()
-        account = Account(audit_info)
+        aws_provider = set_mocked_aws_provider()
+        account = Account(aws_provider)
         assert account.service == "account"
 
     # Test Account Client
     def test_client(self):
-        audit_info = set_mocked_aws_audit_info()
-        account = Account(audit_info)
+        aws_provider = set_mocked_aws_provider()
+        account = Account(aws_provider)
         assert account.client.__class__.__name__ == "Account"
 
     # Test Account Session
     def test__get_session__(self):
-        audit_info = set_mocked_aws_audit_info()
-        account = Account(audit_info)
+        aws_provider = set_mocked_aws_provider()
+        account = Account(aws_provider)
         assert account.session.__class__.__name__ == "Session"
 
     # Test Account Session
     def test_audited_account(self):
-        audit_info = set_mocked_aws_audit_info()
-        account = Account(audit_info)
+        aws_provider = set_mocked_aws_provider()
+        account = Account(aws_provider)
         assert account.audited_account == AWS_ACCOUNT_NUMBER
 
     # Test Account Get Account Contacts
     def test_get_account_contacts(self):
         # Account client for this test class
-        audit_info = set_mocked_aws_audit_info()
-        account = Account(audit_info)
+        aws_provider = set_mocked_aws_provider()
+        account = Account(aws_provider)
         assert account.number_of_contacts == 4
         assert account.contact_base == Contact(
             type="PRIMARY",

@@ -5,10 +5,7 @@ from boto3 import client
 from moto import mock_aws
 
 from prowler.providers.aws.services.route53.route53_service import Route53
-from tests.providers.aws.audit_info_utils import (
-    AWS_REGION_US_EAST_1,
-    set_mocked_aws_audit_info,
-)
+from tests.providers.aws.utils import AWS_REGION_US_EAST_1, set_mocked_aws_provider
 
 # Mocking Access Analyzer Calls
 make_api_call = botocore.client.BaseClient._make_api_call
@@ -38,19 +35,19 @@ class Test_Route53_Service:
     # Test Route53 Client
     @mock_aws
     def test__get_client__(self):
-        route53 = Route53(set_mocked_aws_audit_info([AWS_REGION_US_EAST_1]))
+        route53 = Route53(set_mocked_aws_provider([AWS_REGION_US_EAST_1]))
         assert route53.client.__class__.__name__ == "Route53"
 
     # Test Route53 Session
     @mock_aws
     def test__get_session__(self):
-        route53 = Route53(set_mocked_aws_audit_info([AWS_REGION_US_EAST_1]))
+        route53 = Route53(set_mocked_aws_provider([AWS_REGION_US_EAST_1]))
         assert route53.session.__class__.__name__ == "Session"
 
     # Test Route53 Service
     @mock_aws
     def test__get_service__(self):
-        route53 = Route53(set_mocked_aws_audit_info([AWS_REGION_US_EAST_1]))
+        route53 = Route53(set_mocked_aws_provider([AWS_REGION_US_EAST_1]))
         assert route53.service == "route53"
 
     @mock_aws
@@ -77,7 +74,7 @@ class Test_Route53_Service:
         )
 
         # Set partition for the service
-        route53 = Route53(set_mocked_aws_audit_info([AWS_REGION_US_EAST_1]))
+        route53 = Route53(set_mocked_aws_provider([AWS_REGION_US_EAST_1]))
         assert len(route53.hosted_zones) == 1
         assert route53.hosted_zones[hosted_zone_id]
         assert route53.hosted_zones[hosted_zone_id].id == hosted_zone_id
@@ -121,7 +118,7 @@ class Test_Route53_Service:
         )
 
         # Set partition for the service
-        route53 = Route53(set_mocked_aws_audit_info([AWS_REGION_US_EAST_1]))
+        route53 = Route53(set_mocked_aws_provider([AWS_REGION_US_EAST_1]))
         assert len(route53.hosted_zones) == 1
         assert route53.hosted_zones[hosted_zone_id]
         assert route53.hosted_zones[hosted_zone_id].id == hosted_zone_id
@@ -152,7 +149,7 @@ class Test_Route53_Service:
         hosted_zone_name = response["HostedZone"]["Name"]
 
         # Set partition for the service
-        route53 = Route53(set_mocked_aws_audit_info([AWS_REGION_US_EAST_1]))
+        route53 = Route53(set_mocked_aws_provider([AWS_REGION_US_EAST_1]))
         assert len(route53.hosted_zones) == 1
         assert route53.hosted_zones[hosted_zone_id]
         assert route53.hosted_zones[hosted_zone_id].id == hosted_zone_id
@@ -179,7 +176,7 @@ class Test_Route53_Service:
         hosted_zone_name = response["HostedZone"]["Name"]
 
         # Set partition for the service
-        route53 = Route53(set_mocked_aws_audit_info([AWS_REGION_US_EAST_1]))
+        route53 = Route53(set_mocked_aws_provider([AWS_REGION_US_EAST_1]))
         assert len(route53.hosted_zones) == 1
         assert route53.hosted_zones[hosted_zone_id]
         assert route53.hosted_zones[hosted_zone_id].id == hosted_zone_id
@@ -219,7 +216,7 @@ class Test_Route53_Service:
         )
 
         # Set partition for the service
-        route53 = Route53(set_mocked_aws_audit_info([AWS_REGION_US_EAST_1]))
+        route53 = Route53(set_mocked_aws_provider([AWS_REGION_US_EAST_1]))
         assert (
             len(route53.record_sets) == 3
         )  # Default NS and SOA records plus the A record just created

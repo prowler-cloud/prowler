@@ -3,10 +3,7 @@ from unittest import mock
 from prowler.providers.aws.services.resourceexplorer2.resourceexplorer2_service import (
     Indexes,
 )
-from tests.providers.aws.audit_info_utils import (
-    AWS_ACCOUNT_NUMBER,
-    AWS_REGION_US_EAST_1,
-)
+from tests.providers.aws.utils import AWS_ACCOUNT_NUMBER, AWS_REGION_US_EAST_1
 
 INDEX_ARN = "arn:aws:resource-explorer-2:ap-south-1:123456789012:index/123456-2896-4fe8-93d2-15ec137e5c47"
 INDEX_REGION = "us-east-1"

@@ -2,10 +2,10 @@ import botocore
 from mock import patch
 
 from prowler.providers.aws.services.dlm.dlm_service import DLM, LifecyclePolicy
-from tests.providers.aws.audit_info_utils import (
+from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_US_EAST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 LIFECYCLE_POLICY_ID = "policy-XXXXXXXXXXXX"
@@ -38,8 +38,8 @@ def mock_make_api_call(self, operation_name, kwargs):
     return make_api_call(self, operation_name, kwargs)
 
 
-def mock_generate_regional_clients(service, audit_info):
-    regional_client = audit_info.audit_session.client(
+def mock_generate_regional_clients(provider, service):
+    regional_client = provider._session.current_session.client(
         service, region_name=AWS_REGION_US_EAST_1
     )
     regional_client.region = AWS_REGION_US_EAST_1
@@ -47,7 +47,7 @@ def mock_generate_regional_clients(service, audit_info):
 
 
 @patch(
-    "prowler.providers.aws.lib.service.service.generate_regional_clients",
+    "prowler.providers.aws.aws_provider.AwsProvider.generate_regional_clients",
     new=mock_generate_regional_clients,
 )
 # Patch every AWS call using Boto3
@@ -55,33 +55,33 @@ def mock_generate_regional_clients(service, audit_info):
 class Test_DLM_Service:
     # Test DLM Service
     def test_service(self):
-        audit_info = set_mocked_aws_audit_info()
-        dlm = DLM(audit_info)
+        aws_provider = set_mocked_aws_provider()
+        dlm = DLM(aws_provider)
         assert dlm.service == "dlm"
 
     # Test DLM Client
     def test_client(self):
-        audit_info = set_mocked_aws_audit_info()
-        dlm = DLM(audit_info)
+        aws_provider = set_mocked_aws_provider()
+        dlm = DLM(aws_provider)
         assert dlm.client.__class__.__name__ == "DLM"
 
     # Test DLM Session
     def test__get_session__(self):
-        audit_info = set_mocked_aws_audit_info()
-        dlm = DLM(audit_info)
+        aws_provider = set_mocked_aws_provider()
+        dlm = DLM(aws_provider)
         assert dlm.session.__class__.__name__ == "Session"
 
     # Test DLM Session
     def test_audited_account(self):
-        audit_info = set_mocked_aws_audit_info()
-        dlm = DLM(audit_info)
+        aws_provider = set_mocked_aws_provider()
+        dlm = DLM(aws_provider)
         assert dlm.audited_account == AWS_ACCOUNT_NUMBER
 
     # Test DLM Get DLM Contacts
     def test_get_lifecycle_policies(self):
         # DLM client for this test class
-        audit_info = set_mocked_aws_audit_info()
-        dlm = DLM(audit_info)
+        aws_provider = set_mocked_aws_provider()
+        dlm = DLM(aws_provider)
         assert dlm.lifecycle_policies == {
             AWS_REGION_US_EAST_1: {
                 LIFECYCLE_POLICY_ID: LifecyclePolicy(

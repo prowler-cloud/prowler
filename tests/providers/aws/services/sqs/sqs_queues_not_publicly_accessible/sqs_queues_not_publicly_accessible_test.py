@@ -3,10 +3,7 @@ from unittest import mock
 from uuid import uuid4
 
 from prowler.providers.aws.services.sqs.sqs_service import Queue
-from tests.providers.aws.audit_info_utils import (
-    AWS_ACCOUNT_NUMBER,
-    AWS_REGION_EU_WEST_1,
-)
+from tests.providers.aws.utils import AWS_ACCOUNT_NUMBER, AWS_REGION_EU_WEST_1
 
 test_queue_name = str(uuid4())
 test_queue_url = f"https://sqs.{AWS_REGION_EU_WEST_1}.amazonaws.com/{AWS_ACCOUNT_NUMBER}/{test_queue_name}"

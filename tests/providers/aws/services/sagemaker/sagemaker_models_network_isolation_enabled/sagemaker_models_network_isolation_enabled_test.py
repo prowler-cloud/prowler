@@ -3,10 +3,7 @@ from unittest import mock
 from uuid import uuid4
 
 from prowler.providers.aws.services.sagemaker.sagemaker_service import Model
-from tests.providers.aws.audit_info_utils import (
-    AWS_ACCOUNT_NUMBER,
-    AWS_REGION_EU_WEST_1,
-)
+from tests.providers.aws.utils import AWS_ACCOUNT_NUMBER, AWS_REGION_EU_WEST_1
 
 test_notebook_instance = "test-notebook-instance"
 notebook_instance_arn = f"arn:aws:sagemaker:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:notebook-instance/{test_notebook_instance}"

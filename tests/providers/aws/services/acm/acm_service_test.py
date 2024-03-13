@@ -6,10 +6,10 @@ from freezegun import freeze_time
 from mock import patch
 
 from prowler.providers.aws.services.acm.acm_service import ACM
-from tests.providers.aws.audit_info_utils import (
+from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_US_EAST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 # Mocking Access Analyzer Calls
@@ -74,8 +74,8 @@ def mock_make_api_call(self, operation_name, kwargs):
 
 
 # Mock generate_regional_clients()
-def mock_generate_regional_clients(service, audit_info):
-    regional_client = audit_info.audit_session.client(
+def mock_generate_regional_clients(provider, service):
+    regional_client = provider._session.current_session.client(
         service, region_name=AWS_REGION_US_EAST_1
     )
     regional_client.region = AWS_REGION_US_EAST_1
@@ -84,7 +84,7 @@ def mock_generate_regional_clients(service, audit_info):
 
 # Patch every AWS call using Boto3 and generate_regional_clients to have 1 client
 @patch(
-    "prowler.providers.aws.lib.service.service.generate_regional_clients",
+    "prowler.providers.aws.aws_provider.AwsProvider.generate_regional_clients",
     new=mock_generate_regional_clients,
 )
 @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
@@ -96,16 +96,16 @@ class Test_ACM_Service:
     # @mock_acm
     def test_service(self):
         # ACM client for this test class
-        audit_info = set_mocked_aws_audit_info()
-        acm = ACM(audit_info)
+        aws_provider = set_mocked_aws_provider()
+        acm = ACM(aws_provider)
         assert acm.service == "acm"
 
     # Test ACM Client
     # @mock_acm
     def test_client(self):
         # ACM client for this test class
-        audit_info = set_mocked_aws_audit_info()
-        acm = ACM(audit_info)
+        aws_provider = set_mocked_aws_provider()
+        acm = ACM(aws_provider)
         for regional_client in acm.regional_clients.values():
             assert regional_client.__class__.__name__ == "ACM"
 
@@ -113,16 +113,16 @@ class Test_ACM_Service:
     # @mock_acm
     def test__get_session__(self):
         # ACM client for this test class
-        audit_info = set_mocked_aws_audit_info()
-        acm = ACM(audit_info)
+        aws_provider = set_mocked_aws_provider()
+        acm = ACM(aws_provider)
         assert acm.session.__class__.__name__ == "Session"
 
     # Test ACM Session
     # @mock_acm
     def test_audited_account(self):
         # ACM client for this test class
-        audit_info = set_mocked_aws_audit_info()
-        acm = ACM(audit_info)
+        aws_provider = set_mocked_aws_provider()
+        acm = ACM(aws_provider)
         assert acm.audited_account == AWS_ACCOUNT_NUMBER
 
     # Test ACM List Certificates
@@ -136,8 +136,8 @@ class Test_ACM_Service:
         # )
 
         # ACM client for this test class
-        audit_info = set_mocked_aws_audit_info()
-        acm = ACM(audit_info)
+        aws_provider = set_mocked_aws_provider()
+        acm = ACM(aws_provider)
         assert len(acm.certificates) == 1
         assert acm.certificates[0].arn == certificate_arn
         assert acm.certificates[0].name == certificate_name
@@ -157,8 +157,8 @@ class Test_ACM_Service:
         # )
 
         # ACM client for this test class
-        audit_info = set_mocked_aws_audit_info()
-        acm = ACM(audit_info)
+        aws_provider = set_mocked_aws_provider()
+        acm = ACM(aws_provider)
         assert len(acm.certificates) == 1
         assert acm.certificates[0].tags == [
             {"Key": "test", "Value": "test"},

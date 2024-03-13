@@ -2,10 +2,7 @@ from re import search
 from unittest import mock
 
 from prowler.providers.aws.services.sagemaker.sagemaker_service import TrainingJob
-from tests.providers.aws.audit_info_utils import (
-    AWS_ACCOUNT_NUMBER,
-    AWS_REGION_EU_WEST_1,
-)
+from tests.providers.aws.utils import AWS_ACCOUNT_NUMBER, AWS_REGION_EU_WEST_1
 
 test_training_job = "test-training-job"
 training_job_arn = f"arn:aws:sagemaker:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:training-job/{test_training_job}"

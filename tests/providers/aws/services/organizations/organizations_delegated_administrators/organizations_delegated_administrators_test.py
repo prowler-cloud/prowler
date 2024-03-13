@@ -7,24 +7,23 @@ from moto import mock_aws
 from prowler.providers.aws.services.organizations.organizations_service import (
     Organizations,
 )
-from tests.providers.aws.audit_info_utils import (
-    AWS_REGION_EU_WEST_1,
-    set_mocked_aws_audit_info,
-)
+from tests.providers.aws.utils import AWS_REGION_EU_WEST_1, set_mocked_aws_provider
 
 
 class Test_organizations_delegated_administrators:
     @mock_aws
     def test_no_organization(self):
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
-        audit_info.audit_config = {"organizations_trusted_delegated_administrators": []}
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        aws_provider._audit_config = {
+            "organizations_trusted_delegated_administrators": []
+        }
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=aws_provider,
         ):
             with mock.patch(
                 "prowler.providers.aws.services.organizations.organizations_delegated_administrators.organizations_delegated_administrators.organizations_client",
-                new=Organizations(audit_info),
+                new=Organizations(aws_provider),
             ):
                 # Test Check
                 from prowler.providers.aws.services.organizations.organizations_delegated_administrators.organizations_delegated_administrators import (
@@ -38,20 +37,22 @@ class Test_organizations_delegated_administrators:
 
     @mock_aws
     def test_organization_no_delegations(self):
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
-        audit_info.audit_config = {"organizations_trusted_delegated_administrators": []}
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        aws_provider._audit_config = {
+            "organizations_trusted_delegated_administrators": []
+        }
 
         # Create Organization
         conn = client("organizations", region_name=AWS_REGION_EU_WEST_1)
         response = conn.create_organization()
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=aws_provider,
         ):
             with mock.patch(
                 "prowler.providers.aws.services.organizations.organizations_delegated_administrators.organizations_delegated_administrators.organizations_client",
-                new=Organizations(audit_info),
+                new=Organizations(aws_provider),
             ):
                 # Test Check
                 from prowler.providers.aws.services.organizations.organizations_delegated_administrators.organizations_delegated_administrators import (
@@ -73,7 +74,7 @@ class Test_organizations_delegated_administrators:
 
     @mock_aws
     def test_organization_trusted_delegated(self):
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
         # Create Organization
         conn = client("organizations", region_name=AWS_REGION_EU_WEST_1)
@@ -90,19 +91,19 @@ class Test_organizations_delegated_administrators:
         )
 
         # Set config variable
-        audit_info.audit_config = {
+        aws_provider._audit_config = {
             "organizations_trusted_delegated_administrators": [
                 account["CreateAccountStatus"]["AccountId"]
             ]
         }
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=aws_provider,
         ):
             with mock.patch(
                 "prowler.providers.aws.services.organizations.organizations_delegated_administrators.organizations_delegated_administrators.organizations_client",
-                new=Organizations(audit_info),
+                new=Organizations(aws_provider),
             ):
                 # Test Check
                 from prowler.providers.aws.services.organizations.organizations_delegated_administrators.organizations_delegated_administrators import (
@@ -124,7 +125,7 @@ class Test_organizations_delegated_administrators:
 
     @mock_aws
     def test_organization_untrusted_delegated(self):
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
         # Create Organization
         conn = client("organizations", region_name=AWS_REGION_EU_WEST_1)
@@ -141,15 +142,17 @@ class Test_organizations_delegated_administrators:
         )
 
         # Set config variable
-        audit_info.audit_config = {"organizations_trusted_delegated_administrators": []}
+        aws_provider._audit_config = {
+            "organizations_trusted_delegated_administrators": []
+        }
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=aws_provider,
         ):
             with mock.patch(
                 "prowler.providers.aws.services.organizations.organizations_delegated_administrators.organizations_delegated_administrators.organizations_client",
-                new=Organizations(audit_info),
+                new=Organizations(aws_provider),
             ):
                 # Test Check
                 from prowler.providers.aws.services.organizations.organizations_delegated_administrators.organizations_delegated_administrators import (

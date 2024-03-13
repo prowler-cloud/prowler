@@ -11,7 +11,7 @@ class GlobalAccelerator(AWSService):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
         self.accelerators = {}
-        if provider.audited_partition == "aws":
+        if self.audited_partition == "aws":
             # Global Accelerator is a global service that supports endpoints in multiple AWS Regions
             # but you must specify the US West (Oregon) Region to create, update, or otherwise work with accelerators.
             # That is, for example, specify --region us-west-2 on AWS CLI commands.

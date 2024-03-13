@@ -5,10 +5,7 @@ from prowler.providers.aws.services.opensearch.opensearch_service import (
     OpenSearchDomain,
     PublishingLoggingOption,
 )
-from tests.providers.aws.audit_info_utils import (
-    AWS_ACCOUNT_NUMBER,
-    AWS_REGION_EU_WEST_1,
-)
+from tests.providers.aws.utils import AWS_ACCOUNT_NUMBER, AWS_REGION_EU_WEST_1
 
 domain_name = "test-domain"
 domain_arn = f"arn:aws:es:us-west-2:{AWS_ACCOUNT_NUMBER}:domain/{domain_name}"

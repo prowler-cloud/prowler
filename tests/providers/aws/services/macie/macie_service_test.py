@@ -4,10 +4,7 @@ from unittest.mock import patch
 import botocore
 
 from prowler.providers.aws.services.macie.macie_service import Macie, Session
-from tests.providers.aws.audit_info_utils import (
-    AWS_REGION_EU_WEST_1,
-    set_mocked_aws_audit_info,
-)
+from tests.providers.aws.utils import AWS_REGION_EU_WEST_1, set_mocked_aws_provider
 
 # Mocking Macie2 Calls
 make_api_call = botocore.client.BaseClient._make_api_call
@@ -32,8 +29,8 @@ def mock_make_api_call(self, operation_name, kwarg):
 
 
 # Mock generate_regional_clients()
-def mock_generate_regional_clients(service, audit_info):
-    regional_client = audit_info.audit_session.client(
+def mock_generate_regional_clients(provider, service):
+    regional_client = provider._session.current_session.client(
         service, region_name=AWS_REGION_EU_WEST_1
     )
     regional_client.region = AWS_REGION_EU_WEST_1
@@ -43,30 +40,30 @@ def mock_generate_regional_clients(service, audit_info):
 # Patch every AWS call using Boto3 and generate_regional_clients to have 1 client
 @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
 @patch(
-    "prowler.providers.aws.lib.service.service.generate_regional_clients",
+    "prowler.providers.aws.aws_provider.AwsProvider.generate_regional_clients",
     new=mock_generate_regional_clients,
 )
 class Test_Macie_Service:
     # Test Macie Client
     def test__get_client__(self):
-        macie = Macie(set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1]))
+        macie = Macie(set_mocked_aws_provider([AWS_REGION_EU_WEST_1]))
         assert (
             macie.regional_clients[AWS_REGION_EU_WEST_1].__class__.__name__ == "Macie2"
         )
 
     # Test Macie Session
     def test__get_session__(self):
-        macie = Macie(set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1]))
+        macie = Macie(set_mocked_aws_provider([AWS_REGION_EU_WEST_1]))
         assert macie.session.__class__.__name__ == "Session"
 
     # Test Macie Service
     def test__get_service__(self):
-        macie = Macie(set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1]))
+        macie = Macie(set_mocked_aws_provider([AWS_REGION_EU_WEST_1]))
         assert macie.service == "macie2"
 
     def test__get_macie_session__(self):
         # Set partition for the service
-        macie = Macie(set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1]))
+        macie = Macie(set_mocked_aws_provider([AWS_REGION_EU_WEST_1]))
         macie.sessions = [
             Session(
                 status="ENABLED",

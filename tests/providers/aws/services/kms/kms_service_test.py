@@ -4,10 +4,10 @@ from boto3 import client
 from moto import mock_aws
 
 from prowler.providers.aws.services.kms.kms_service import KMS
-from tests.providers.aws.audit_info_utils import (
+from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_US_EAST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 
@@ -17,16 +17,16 @@ class Test_ACM_Service:
     @mock_aws
     def test_service(self):
         # KMS client for this test class
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        kms = KMS(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        kms = KMS(aws_provider)
         assert kms.service == "kms"
 
     # Test KMS Client
     @mock_aws
     def test_client(self):
         # KMS client for this test class
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        kms = KMS(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        kms = KMS(aws_provider)
         for regional_client in kms.regional_clients.values():
             assert regional_client.__class__.__name__ == "KMS"
 
@@ -34,16 +34,16 @@ class Test_ACM_Service:
     @mock_aws
     def test__get_session__(self):
         # KMS client for this test class
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        kms = KMS(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        kms = KMS(aws_provider)
         assert kms.session.__class__.__name__ == "Session"
 
     # Test KMS Session
     @mock_aws
     def test_audited_account(self):
         # KMS client for this test class
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        kms = KMS(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        kms = KMS(aws_provider)
         assert kms.audited_account == AWS_ACCOUNT_NUMBER
 
     # Test KMS List Keys
@@ -55,8 +55,8 @@ class Test_ACM_Service:
         key1 = kms_client.create_key()["KeyMetadata"]
         key2 = kms_client.create_key()["KeyMetadata"]
         # KMS client for this test class
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        kms = KMS(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        kms = KMS(aws_provider)
         assert len(kms.keys) == 2
         assert kms.keys[0].arn == key1["Arn"]
         assert kms.keys[1].arn == key2["Arn"]
@@ -73,8 +73,8 @@ class Test_ACM_Service:
             ],
         )["KeyMetadata"]
         # KMS client for this test class
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        kms = KMS(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        kms = KMS(aws_provider)
         assert len(kms.keys) == 1
         assert kms.keys[0].arn == key1["Arn"]
         assert kms.keys[0].state == key1["KeyState"]
@@ -94,8 +94,8 @@ class Test_ACM_Service:
         key2 = kms_client.create_key()["KeyMetadata"]
         kms_client.enable_key_rotation(KeyId=key2["KeyId"])
         # KMS client for this test class
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        kms = KMS(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        kms = KMS(aws_provider)
         assert len(kms.keys) == 2
         assert kms.keys[0].arn == key1["Arn"]
         assert kms.keys[0].rotation_enabled is False
@@ -141,8 +141,8 @@ class Test_ACM_Service:
         key1 = kms_client.create_key(Policy=default_policy)["KeyMetadata"]
         key2 = kms_client.create_key(Policy=public_policy)["KeyMetadata"]
         # KMS client for this test class
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        kms = KMS(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        kms = KMS(aws_provider)
         assert len(kms.keys) == 2
         assert kms.keys[0].arn == key1["Arn"]
         assert kms.keys[0].policy == json.loads(default_policy)

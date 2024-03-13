@@ -3,10 +3,10 @@ from unittest import mock
 from boto3 import client
 from moto import mock_aws
 
-from tests.providers.aws.audit_info_utils import (
+from tests.providers.aws.utils import (
     AWS_REGION_EU_WEST_1,
     AWS_REGION_US_EAST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 API_GW_NAME = "test-rest-api"
@@ -19,16 +19,16 @@ class Test_apigateway_restapi_public_with_authorizer:
             APIGateway,
         )
 
-        current_audit_info = current_audit_info = set_mocked_aws_audit_info(
+        aws_provider = set_mocked_aws_provider(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.apigateway.apigateway_restapi_public_with_authorizer.apigateway_restapi_public_with_authorizer.apigateway_client",
-            new=APIGateway(current_audit_info),
+            new=APIGateway(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.apigateway.apigateway_restapi_public_with_authorizer.apigateway_restapi_public_with_authorizer import (
@@ -57,16 +57,16 @@ class Test_apigateway_restapi_public_with_authorizer:
             APIGateway,
         )
 
-        current_audit_info = current_audit_info = set_mocked_aws_audit_info(
+        aws_provider = set_mocked_aws_provider(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.apigateway.apigateway_restapi_public_with_authorizer.apigateway_restapi_public_with_authorizer.apigateway_client",
-            new=APIGateway(current_audit_info),
+            new=APIGateway(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.apigateway.apigateway_restapi_public_with_authorizer.apigateway_restapi_public_with_authorizer import (
@@ -85,7 +85,7 @@ class Test_apigateway_restapi_public_with_authorizer:
             assert result[0].resource_id == API_GW_NAME
             assert (
                 result[0].resource_arn
-                == f"arn:{current_audit_info.audited_partition}:apigateway:{AWS_REGION_US_EAST_1}::/restapis/{rest_api['id']}"
+                == f"arn:{aws_provider.identity.partition}:apigateway:{AWS_REGION_US_EAST_1}::/restapis/{rest_api['id']}"
             )
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_tags == [{}]
@@ -110,16 +110,16 @@ class Test_apigateway_restapi_public_with_authorizer:
             APIGateway,
         )
 
-        current_audit_info = current_audit_info = set_mocked_aws_audit_info(
+        aws_provider = set_mocked_aws_provider(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.apigateway.apigateway_restapi_public_with_authorizer.apigateway_restapi_public_with_authorizer.apigateway_client",
-            new=APIGateway(current_audit_info),
+            new=APIGateway(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.apigateway.apigateway_restapi_public_with_authorizer.apigateway_restapi_public_with_authorizer import (
@@ -138,7 +138,7 @@ class Test_apigateway_restapi_public_with_authorizer:
             assert result[0].resource_id == API_GW_NAME
             assert (
                 result[0].resource_arn
-                == f"arn:{current_audit_info.audited_partition}:apigateway:{AWS_REGION_US_EAST_1}::/restapis/{rest_api['id']}"
+                == f"arn:{aws_provider.identity.partition}:apigateway:{AWS_REGION_US_EAST_1}::/restapis/{rest_api['id']}"
             )
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_tags == [{}]

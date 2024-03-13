@@ -2,10 +2,7 @@ from unittest import mock
 from uuid import uuid4
 
 from prowler.providers.aws.services.wafv2.wafv2_service import WebAclv2
-from tests.providers.aws.audit_info_utils import (
-    AWS_ACCOUNT_NUMBER,
-    AWS_REGION_EU_WEST_1,
-)
+from tests.providers.aws.utils import AWS_ACCOUNT_NUMBER, AWS_REGION_EU_WEST_1
 
 waf_id = str(uuid4())
 waf_name = "waf-example"

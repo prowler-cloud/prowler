@@ -3,19 +3,19 @@ from unittest import mock
 from boto3 import client
 from moto import mock_aws
 
-from tests.providers.aws.audit_info_utils import (
+from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_US_EAST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 
 class Test_iam_password_policy_reuse_24:
-    from tests.providers.aws.audit_info_utils import (
+    from tests.providers.aws.utils import (
         AWS_ACCOUNT_ARN,
         AWS_ACCOUNT_NUMBER,
         AWS_REGION_US_EAST_1,
-        set_mocked_aws_audit_info,
+        set_mocked_aws_provider,
     )
 
     @mock_aws
@@ -24,15 +24,15 @@ class Test_iam_password_policy_reuse_24:
         # update password policy
         iam_client.update_account_password_policy(PasswordReusePrevention=24)
 
-        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.iam.iam_password_policy_reuse_24.iam_password_policy_reuse_24.iam_client",
-            new=IAM(current_audit_info),
+            new=IAM(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.iam.iam_password_policy_reuse_24.iam_password_policy_reuse_24 import (
@@ -60,15 +60,15 @@ class Test_iam_password_policy_reuse_24:
         # update password policy
         iam_client.update_account_password_policy(PasswordReusePrevention=20)
 
-        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.iam.iam_password_policy_reuse_24.iam_password_policy_reuse_24.iam_client",
-            new=IAM(current_audit_info),
+            new=IAM(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.iam.iam_password_policy_reuse_24.iam_password_policy_reuse_24 import (

@@ -3,10 +3,7 @@ from unittest import mock
 from boto3 import client
 from moto import mock_aws
 
-from tests.providers.aws.audit_info_utils import (
-    AWS_REGION_US_EAST_1,
-    set_mocked_aws_audit_info,
-)
+from tests.providers.aws.utils import AWS_REGION_US_EAST_1, set_mocked_aws_provider
 
 
 class Test_autoscaling_group_multiple_az:
@@ -19,14 +16,14 @@ class Test_autoscaling_group_multiple_az:
             AutoScaling,
         )
 
-        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.autoscaling.autoscaling_group_multiple_az.autoscaling_group_multiple_az.autoscaling_client",
-            new=AutoScaling(current_audit_info),
+            new=AutoScaling(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.autoscaling.autoscaling_group_multiple_az.autoscaling_group_multiple_az import (
@@ -66,14 +63,14 @@ class Test_autoscaling_group_multiple_az:
             AutoScaling,
         )
 
-        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.autoscaling.autoscaling_group_multiple_az.autoscaling_group_multiple_az.autoscaling_client",
-            new=AutoScaling(current_audit_info),
+            new=AutoScaling(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.autoscaling.autoscaling_group_multiple_az.autoscaling_group_multiple_az import (
@@ -122,14 +119,14 @@ class Test_autoscaling_group_multiple_az:
             AutoScaling,
         )
 
-        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.autoscaling.autoscaling_group_multiple_az.autoscaling_group_multiple_az.autoscaling_client",
-            new=AutoScaling(current_audit_info),
+            new=AutoScaling(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.autoscaling.autoscaling_group_multiple_az.autoscaling_group_multiple_az import (
@@ -189,14 +186,14 @@ class Test_autoscaling_group_multiple_az:
             AutoScaling,
         )
 
-        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.autoscaling.autoscaling_group_multiple_az.autoscaling_group_multiple_az.autoscaling_client",
-            new=AutoScaling(current_audit_info),
+            new=AutoScaling(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.autoscaling.autoscaling_group_multiple_az.autoscaling_group_multiple_az import (

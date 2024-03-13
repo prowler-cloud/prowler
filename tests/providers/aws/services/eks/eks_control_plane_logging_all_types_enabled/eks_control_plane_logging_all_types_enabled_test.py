@@ -5,10 +5,7 @@ from prowler.providers.aws.services.eks.eks_service import (
     EKSCluster,
     EKSClusterLoggingEntity,
 )
-from tests.providers.aws.audit_info_utils import (
-    AWS_ACCOUNT_NUMBER,
-    AWS_REGION_EU_WEST_1,
-)
+from tests.providers.aws.utils import AWS_ACCOUNT_NUMBER, AWS_REGION_EU_WEST_1
 
 cluster_name = "cluster_test"
 cluster_arn = (

@@ -5,12 +5,12 @@ import botocore
 from boto3 import client, resource
 from moto import mock_aws
 
-from tests.providers.aws.audit_info_utils import (
+from tests.providers.aws.utils import (
     AWS_REGION_EU_WEST_1,
     AWS_REGION_EU_WEST_1_AZA,
     AWS_REGION_EU_WEST_1_AZB,
     AWS_REGION_US_EAST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 # Mocking WAF-Regional Calls
@@ -43,22 +43,24 @@ class Test_elbv2_waf_acl_attached:
         from prowler.providers.aws.services.wafv2.wafv2_service import WAFv2
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]),
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_aws_provider(
+                [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
+            ),
         ), mock.patch(
             "prowler.providers.aws.services.elbv2.elbv2_waf_acl_attached.elbv2_waf_acl_attached.elbv2_client",
             new=ELBv2(
-                set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
+                set_mocked_aws_provider([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
             ),
         ), mock.patch(
             "prowler.providers.aws.services.elbv2.elbv2_waf_acl_attached.elbv2_waf_acl_attached.wafv2_client",
             new=WAFv2(
-                set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
+                set_mocked_aws_provider([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
             ),
         ), mock.patch(
             "prowler.providers.aws.services.elbv2.elbv2_waf_acl_attached.elbv2_waf_acl_attached.waf_client",
             new=WAF(
-                set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
+                set_mocked_aws_provider([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
             ),
         ):
             # Test Check
@@ -114,22 +116,24 @@ class Test_elbv2_waf_acl_attached:
         from prowler.providers.aws.services.wafv2.wafv2_service import WAFv2
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]),
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_aws_provider(
+                [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
+            ),
         ), mock.patch(
             "prowler.providers.aws.services.elbv2.elbv2_waf_acl_attached.elbv2_waf_acl_attached.elbv2_client",
             new=ELBv2(
-                set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
+                set_mocked_aws_provider([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
             ),
         ), mock.patch(
             "prowler.providers.aws.services.elbv2.elbv2_waf_acl_attached.elbv2_waf_acl_attached.wafv2_client",
             new=WAFv2(
-                set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
+                set_mocked_aws_provider([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
             ),
         ), mock.patch(
             "prowler.providers.aws.services.elbv2.elbv2_waf_acl_attached.elbv2_waf_acl_attached.waf_client",
             new=WAF(
-                set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
+                set_mocked_aws_provider([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
             ),
         ):
             # Test Check
@@ -194,23 +198,25 @@ class Test_elbv2_waf_acl_attached:
         from prowler.providers.aws.services.wafv2.wafv2_service import WAFv2
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]),
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_aws_provider(
+                [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
+            ),
         ), mock.patch(
             "prowler.providers.aws.services.elbv2.elbv2_waf_acl_attached.elbv2_waf_acl_attached.elbv2_client",
             new=ELBv2(
-                set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
+                set_mocked_aws_provider([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
             ),
         ), mock.patch(
             "prowler.providers.aws.services.elbv2.elbv2_waf_acl_attached.elbv2_waf_acl_attached.wafv2_client",
             new=WAFv2(
-                set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
+                set_mocked_aws_provider([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
             ),
         ) as service_client:
             with mock.patch(
                 "prowler.providers.aws.services.elbv2.elbv2_waf_acl_attached.elbv2_waf_acl_attached.waf_client",
                 new=WAF(
-                    set_mocked_aws_audit_info(
+                    set_mocked_aws_provider(
                         [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
                     )
                 ),

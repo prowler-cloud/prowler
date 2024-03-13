@@ -4,27 +4,27 @@ from boto3 import client
 from moto import mock_aws
 
 from prowler.providers.aws.services.cloudtrail.cloudtrail_service import Cloudtrail
-from tests.providers.aws.audit_info_utils import (
+from tests.providers.aws.utils import (
     AWS_REGION_EU_WEST_1,
     AWS_REGION_US_EAST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 
 class Test_cloudtrail_insights_exist:
     @mock_aws
     def test_no_trails(self):
-        current_audit_info = set_mocked_aws_audit_info(
+        aws_provider = set_mocked_aws_provider(
             [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
         )
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=aws_provider,
         ):
             with mock.patch(
                 "prowler.providers.aws.services.cloudtrail.cloudtrail_insights_exist.cloudtrail_insights_exist.cloudtrail_client",
-                new=Cloudtrail(current_audit_info),
+                new=Cloudtrail(aws_provider),
             ):
                 # Test Check
                 from prowler.providers.aws.services.cloudtrail.cloudtrail_insights_exist.cloudtrail_insights_exist import (
@@ -37,7 +37,7 @@ class Test_cloudtrail_insights_exist:
 
     @mock_aws
     def test_trails_with_no_insight_selector(self):
-        current_audit_info = set_mocked_aws_audit_info(
+        aws_provider = set_mocked_aws_provider(
             [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
         )
 
@@ -55,12 +55,12 @@ class Test_cloudtrail_insights_exist:
         cloudtrail_client_us_east_1.get_trail_status(Name=trail_name_us)
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=aws_provider,
         ):
             with mock.patch(
                 "prowler.providers.aws.services.cloudtrail.cloudtrail_insights_exist.cloudtrail_insights_exist.cloudtrail_client",
-                new=Cloudtrail(current_audit_info),
+                new=Cloudtrail(aws_provider),
             ):
                 # Test Check
                 from prowler.providers.aws.services.cloudtrail.cloudtrail_insights_exist.cloudtrail_insights_exist import (
@@ -82,7 +82,7 @@ class Test_cloudtrail_insights_exist:
 
     @mock_aws
     def test_trails_with_insight_selector(self):
-        current_audit_info = set_mocked_aws_audit_info(
+        aws_provider = set_mocked_aws_provider(
             [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
         )
 
@@ -104,12 +104,12 @@ class Test_cloudtrail_insights_exist:
         )
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=aws_provider,
         ):
             with mock.patch(
                 "prowler.providers.aws.services.cloudtrail.cloudtrail_insights_exist.cloudtrail_insights_exist.cloudtrail_client",
-                new=Cloudtrail(current_audit_info),
+                new=Cloudtrail(aws_provider),
             ):
                 # Test Check
                 from prowler.providers.aws.services.cloudtrail.cloudtrail_insights_exist.cloudtrail_insights_exist import (

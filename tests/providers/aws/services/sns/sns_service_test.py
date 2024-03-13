@@ -7,10 +7,10 @@ from boto3 import client
 from moto import mock_aws
 
 from prowler.providers.aws.services.sns.sns_service import SNS
-from tests.providers.aws.audit_info_utils import (
+from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_WEST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 topic_name = "test-topic"
@@ -37,8 +37,8 @@ def mock_make_api_call(self, operation_name, kwarg):
     return make_api_call(self, operation_name, kwarg)
 
 
-def mock_generate_regional_clients(service, audit_info):
-    regional_client = audit_info.audit_session.client(
+def mock_generate_regional_clients(provider, service):
+    regional_client = provider._session.current_session.client(
         service, region_name=AWS_REGION_EU_WEST_1
     )
     regional_client.region = AWS_REGION_EU_WEST_1
@@ -47,27 +47,27 @@ def mock_generate_regional_clients(service, audit_info):
 
 @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
 @patch(
-    "prowler.providers.aws.lib.service.service.generate_regional_clients",
+    "prowler.providers.aws.aws_provider.AwsProvider.generate_regional_clients",
     new=mock_generate_regional_clients,
 )
 class Test_SNS_Service:
     # Test SNS Service
     def test_service(self):
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
-        sns = SNS(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        sns = SNS(aws_provider)
         assert sns.service == "sns"
 
     # Test SNS client
     def test_client(self):
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
-        sns = SNS(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        sns = SNS(aws_provider)
         for reg_client in sns.regional_clients.values():
             assert reg_client.__class__.__name__ == "SNS"
 
     # Test SNS session
     def test__get_session__(self):
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
-        sns = SNS(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        sns = SNS(aws_provider)
         assert sns.session.__class__.__name__ == "Session"
 
     @mock_aws
@@ -81,8 +81,8 @@ class Test_SNS_Service:
             ],
         )
 
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
-        sns = SNS(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        sns = SNS(aws_provider)
 
         assert len(sns.topics) == 1
         assert sns.topics[0].name == topic_name
@@ -101,8 +101,8 @@ class Test_SNS_Service:
         sns_client = client("sns", region_name=AWS_REGION_EU_WEST_1)
         sns_client.create_topic(Name=topic_name)
 
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
-        sns = SNS(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        sns = SNS(aws_provider)
 
         assert len(sns.topics) == 1
         assert (

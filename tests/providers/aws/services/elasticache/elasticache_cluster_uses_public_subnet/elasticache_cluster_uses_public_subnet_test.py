@@ -5,12 +5,6 @@ from moto import mock_aws
 
 from prowler.providers.aws.services.elasticache.elasticache_service import Cluster
 from prowler.providers.aws.services.vpc.vpc_service import VpcSubnet
-from tests.providers.aws.audit_info_utils import (
-    AWS_REGION_US_EAST_1,
-    AWS_REGION_US_EAST_1_AZA,
-    AWS_REGION_US_EAST_1_AZB,
-    set_mocked_aws_audit_info,
-)
 from tests.providers.aws.services.elasticache.elasticache_service_test import (
     ELASTICACHE_CLUSTER_ARN,
     ELASTICACHE_CLUSTER_NAME,
@@ -19,6 +13,12 @@ from tests.providers.aws.services.elasticache.elasticache_service_test import (
     SUBNET_2,
     SUBNET_GROUP_NAME,
     mock_make_api_call,
+)
+from tests.providers.aws.utils import (
+    AWS_REGION_US_EAST_1,
+    AWS_REGION_US_EAST_1_AZA,
+    AWS_REGION_US_EAST_1_AZB,
+    set_mocked_aws_provider,
 )
 
 VPC_ID = "vpc-12345678901234567"
@@ -38,8 +38,8 @@ class Test_elasticache_cluster_uses_public_subnet:
         elasticache_service.clusters = {}
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=set_mocked_aws_audit_info([AWS_REGION_US_EAST_1]),
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
         ), mock.patch(
             "prowler.providers.aws.services.elasticache.elasticache_service.ElastiCache",
             new=elasticache_service,
@@ -106,8 +106,8 @@ class Test_elasticache_cluster_uses_public_subnet:
         )
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=set_mocked_aws_audit_info([AWS_REGION_US_EAST_1]),
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
         ), mock.patch(
             "prowler.providers.aws.services.elasticache.elasticache_service.ElastiCache",
             new=elasticache_service,
@@ -183,8 +183,8 @@ class Test_elasticache_cluster_uses_public_subnet:
         )
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=set_mocked_aws_audit_info([AWS_REGION_US_EAST_1]),
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
         ), mock.patch(
             "prowler.providers.aws.services.elasticache.elasticache_service.ElastiCache",
             new=elasticache_service,

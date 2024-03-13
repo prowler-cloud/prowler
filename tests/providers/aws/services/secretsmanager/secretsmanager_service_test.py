@@ -8,15 +8,12 @@ from moto import mock_aws
 from prowler.providers.aws.services.secretsmanager.secretsmanager_service import (
     SecretsManager,
 )
-from tests.providers.aws.audit_info_utils import (
-    AWS_REGION_EU_WEST_1,
-    set_mocked_aws_audit_info,
-)
+from tests.providers.aws.utils import AWS_REGION_EU_WEST_1, set_mocked_aws_provider
 
 
 # Mock generate_regional_clients()
-def mock_generate_regional_clients(service, audit_info):
-    regional_client = audit_info.audit_session.client(
+def mock_generate_regional_clients(provider, service):
+    regional_client = provider._session.current_session.client(
         service, region_name=AWS_REGION_EU_WEST_1
     )
     regional_client.region = AWS_REGION_EU_WEST_1
@@ -25,15 +22,15 @@ def mock_generate_regional_clients(service, audit_info):
 
 # Patch every AWS call using Boto3 and generate_regional_clients to have 1 client
 @patch(
-    "prowler.providers.aws.lib.service.service.generate_regional_clients",
+    "prowler.providers.aws.aws_provider.AwsProvider.generate_regional_clients",
     new=mock_generate_regional_clients,
 )
 class Test_SecretsManager_Service:
     # Test SecretsManager Client
     @mock_aws
     def test__get_client__(self):
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
-        secretsmanager = SecretsManager(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        secretsmanager = SecretsManager(aws_provider)
         assert (
             secretsmanager.regional_clients[AWS_REGION_EU_WEST_1].__class__.__name__
             == "SecretsManager"
@@ -42,15 +39,15 @@ class Test_SecretsManager_Service:
     # Test SecretsManager Session
     @mock_aws
     def test__get_session__(self):
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
-        secretsmanager = SecretsManager(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        secretsmanager = SecretsManager(aws_provider)
         assert secretsmanager.session.__class__.__name__ == "Session"
 
     # Test SecretsManager Service
     @mock_aws
     def test__get_service__(self):
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
-        secretsmanager = SecretsManager(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        secretsmanager = SecretsManager(aws_provider)
         assert secretsmanager.service == "secretsmanager"
 
     @mock_aws
@@ -126,8 +123,8 @@ class Test_SecretsManager_Service:
         )
 
         # Set partition for the service
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
-        secretsmanager = SecretsManager(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        secretsmanager = SecretsManager(aws_provider)
 
         assert len(secretsmanager.secrets) == 1
         assert secretsmanager.secrets

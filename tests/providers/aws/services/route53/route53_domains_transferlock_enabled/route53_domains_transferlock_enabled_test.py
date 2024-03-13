@@ -1,7 +1,7 @@
 from unittest import mock
 
 from prowler.providers.aws.services.route53.route53_service import Domain
-from tests.providers.aws.audit_info_utils import AWS_REGION_US_EAST_1
+from tests.providers.aws.utils import AWS_REGION_US_EAST_1
 
 
 class Test_route53_domains_transferlock_enabled:

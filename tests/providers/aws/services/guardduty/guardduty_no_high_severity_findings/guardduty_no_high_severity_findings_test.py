@@ -3,10 +3,7 @@ from unittest import mock
 from uuid import uuid4
 
 from prowler.providers.aws.services.guardduty.guardduty_service import Detector
-from tests.providers.aws.audit_info_utils import (
-    AWS_ACCOUNT_NUMBER,
-    AWS_REGION_EU_WEST_1,
-)
+from tests.providers.aws.utils import AWS_ACCOUNT_NUMBER, AWS_REGION_EU_WEST_1
 
 DETECTOR_ID = str(uuid4())
 DETECTOR_ARN = f"arn:aws:guardduty:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:detector/{DETECTOR_ID}"

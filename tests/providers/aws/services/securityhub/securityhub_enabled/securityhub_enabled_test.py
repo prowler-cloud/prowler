@@ -3,7 +3,7 @@ from unittest import mock
 from prowler.providers.aws.services.securityhub.securityhub_service import (
     SecurityHubHub,
 )
-from tests.providers.aws.audit_info_utils import AWS_ACCOUNT_ARN, AWS_REGION_EU_WEST_1
+from tests.providers.aws.utils import AWS_ACCOUNT_ARN, AWS_REGION_EU_WEST_1
 
 
 class Test_securityhub_enabled:
@@ -149,7 +149,7 @@ class Test_securityhub_enabled:
 
     def test_securityhub_hub_active_without_integrations_or_standards_muted(self):
         securityhub_client = mock.MagicMock
-        securityhub_client.audit_config = {"allowlist_non_default_regions": True}
+        securityhub_client.audit_config = {"mute_non_default_regions": True}
         securityhub_client.region = AWS_REGION_EU_WEST_1
         securityhub_client.securityhubs = [
             SecurityHubHub(
