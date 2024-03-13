@@ -41,7 +41,7 @@ The following list includes all the Azure checks with configurable variables tha
 
 | Check Name                                                    | Value                                            | Type            |
 |---------------------------------------------------------------|--------------------------------------------------|-----------------|
-| `network_public_ip_shodan`                                   | `shodan_api_key`                    | String         |
+| `network_public_ip_shodan`                                    | `shodan_api_key`                                 | String          |
 | `app_ensure_php_version_is_latest`                            | `php_latest_version`                             | String          |
 | `app_ensure_python_version_is_latest`                         | `python_latest_version`                          | String          |
 | `app_ensure_java_version_is_latest`                           | `java_latest_version`                            | String          |
@@ -50,6 +50,19 @@ The following list includes all the Azure checks with configurable variables tha
 ## GCP
 
 ### Configurable Checks
+
+## Kubernetes
+
+### Configurable Checks
+The following list includes all the Azure checks with configurable variables that can be changed in the configuration yaml file:
+
+| Check Name                                                    | Value                                            | Type            |
+|---------------------------------------------------------------|--------------------------------------------------|-----------------|
+| `audit_log_maxbackup`                                         | `audit_log_maxbackup`                            | String          |
+| `audit_log_maxsize`                                           | `audit_log_maxsize`                              | String          |
+| `audit_log_maxage`                                            | `audit_log_maxage`                               | String          |
+| `apiserver_strong_ciphers`                                    | `apiserver_strong_ciphers`                       | String          |
+| `kubelet_strong_ciphers_only`                                 | `kubelet_strong_ciphers`                         | String          |
 
 ## Config YAML File Structure
 

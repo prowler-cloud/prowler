@@ -15,7 +15,7 @@ Prowler is available as a project in [PyPI](https://pypi.org/project/prowler/), 
 
     * `Python >= 3.9`
     * `Python pip >= 3.9`
-    * AWS, GCP and/or Azure credentials
+    * AWS, GCP, Azure and/or Kubernetes credentials
 
     _Commands_:
 
@@ -29,7 +29,7 @@ Prowler is available as a project in [PyPI](https://pypi.org/project/prowler/), 
     _Requirements_:
 
     * Have `docker` installed: https://docs.docker.com/get-docker/.
-    * AWS, GCP and/or Azure credentials
+    * AWS, GCP, Azure and/or Kubernetes credentials
     * In the command below, change `-v` to your local directory path in order to access the reports.
 
     _Commands_:
@@ -46,7 +46,7 @@ Prowler is available as a project in [PyPI](https://pypi.org/project/prowler/), 
 
     _Requirements for Ubuntu 20.04.3 LTS_:
 
-    * AWS, GCP and/or Azure credentials
+    * AWS, GCP, Azure and/or Kubernetes credentials
     * Install python 3.9 with: `sudo apt-get install python3.9`
     * Remove python 3.8 to avoid conflicts if you can: `sudo apt-get remove python3.8`
     * Make sure you have the python3 distutils package installed: `sudo apt-get install python3-distutils`
@@ -66,7 +66,7 @@ Prowler is available as a project in [PyPI](https://pypi.org/project/prowler/), 
 
     _Requirements for Developers_:
 
-    * AWS, GCP and/or Azure credentials
+    * AWS, GCP, Azure and/or Kubernetes credentials
     * `git`, `Python >= 3.9`, `pip` and `poetry` installed (`pip install poetry`)
 
     _Commands_:
@@ -83,7 +83,7 @@ Prowler is available as a project in [PyPI](https://pypi.org/project/prowler/), 
 
     _Requirements_:
 
-    * AWS, GCP and/or Azure credentials
+    * AWS, GCP, Azure and/or Kubernetes credentials
     * Latest Amazon Linux 2 should come with Python 3.9 already installed however it may need pip. Install Python pip 3.9 with: `sudo yum install -y python3-pip`.
     * Make sure setuptools for python is already installed with: `pip3 install setuptools`
 
@@ -100,7 +100,7 @@ Prowler is available as a project in [PyPI](https://pypi.org/project/prowler/), 
     _Requirements_:
 
     * `Brew` installed in your Mac or Linux
-    * AWS, GCP and/or Azure credentials
+    * AWS, GCP, Azure and/or Kubernetes credentials
 
     _Commands_:
 
@@ -160,7 +160,7 @@ You can run Prowler from your workstation, an EC2 instance, Fargate or any other
 ![Architecture](img/architecture.png)
 ## Basic Usage
 
-To run Prowler, you will need to specify the provider (e.g `aws`, `gcp` or `azure`):
+To run Prowler, you will need to specify the provider (e.g `aws`, `gcp`, `azure` or `kubernetes`):
 
 ???+ note
     If no provider specified, AWS will be used for backward compatibility with most of v2 options.
@@ -197,6 +197,7 @@ For executing specific checks or services you can use options `-c`/`checks` or `
 prowler azure --checks storage_blob_public_access_level_is_disabled
 prowler aws --services s3 ec2
 prowler gcp --services iam compute
+prowler kubernetes --services etcd apiserver
 ```
 
 Also, checks and services can be excluded with options `-e`/`--excluded-checks` or `--excluded-services`:
@@ -205,6 +206,7 @@ Also, checks and services can be excluded with options `-e`/`--excluded-checks` 
 prowler aws --excluded-checks s3_bucket_public_access
 prowler azure --excluded-services defender iam
 prowler gcp --excluded-services kms
+prowler kubernetes --excluded-services controllermanager
 ```
 
 More options and executions methods that will save your time in [Miscellaneous](tutorials/misc.md).
@@ -274,6 +276,27 @@ prowler gcp --project-ids <Project ID 1> <Project ID 2> ... <Project ID N>
 ```
 
 See more details about GCP Authentication in [Requirements](getting-started/requirements.md)
+
+## Kubernetes
+
+Prowler allows you to scan your Kubernetes Cluster either from within the cluster or from outside the cluster.
+
+For non in-cluster execution, you can provide the location of the KubeConfig file with the following argument:
+
+```console
+prowler kubernetes --kubeconfig-file path
+```
+
+For in-cluster execution, you can use the supplied yaml to run Prowler as a job:
+```console
+kubectl apply -f job.yaml
+kubectl apply -f prowler-role.yaml
+kubectl apply -f prowler-rolebinding.yaml
+kubectl get pods --> prowler-XXXXX
+kubectl logs prowler-XXXXX
+```
+
+> By default, `prowler` will scan all namespaces in your active Kubernetes context, use flag `--context` to specify the context to be scanned and `--namespaces` to specify the namespaces to be scanned.
 
 ## Prowler v2 Documentation
 For **Prowler v2 Documentation**, please check it out [here](https://github.com/prowler-cloud/prowler/blob/8818f47333a0c1c1a457453c87af0ea5b89a385f/README.md).
