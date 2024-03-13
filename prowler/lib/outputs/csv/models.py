@@ -4,8 +4,6 @@ from typing import Optional
 
 from pydantic import BaseModel
 
-from prowler.config.config import prowler_version
-
 
 class Status(str, Enum):
     PASS = "PASS"
@@ -21,11 +19,11 @@ class Severity(str, Enum):
     informational = "informational"
 
 
-class FindingOutput(BaseModel):
+class CSVRow(BaseModel):
     """
-    FindingOutput generates a finding's output. It can be written to CSV or another format doing the mapping.
+    CSVRow generates a finding's output in CSV format.
 
-    This is the base finding output model for every provider.
+    This is the base CSV output model for every provider.
     """
 
     auth_method: str
@@ -38,7 +36,7 @@ class FindingOutput(BaseModel):
     # Optional since depends on permissions
     account_organization_uid: Optional[str]
     # Optional since depends on permissions
-    account_organization_name: Optional[str]
+    account_organization: Optional[str]
     # Optional since depends on permissions
     account_tags: Optional[str]
     finding_uid: str
@@ -74,4 +72,3 @@ class FindingOutput(BaseModel):
     depends_on: str
     related_to: str
     notes: str
-    prowler_version: str = prowler_version

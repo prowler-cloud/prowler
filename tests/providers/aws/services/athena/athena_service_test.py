@@ -3,10 +3,7 @@ from mock import patch
 from moto import mock_aws
 
 from prowler.providers.aws.services.athena.athena_service import Athena
-from tests.providers.aws.audit_info_utils import (
-    AWS_REGION_EU_WEST_1,
-    set_mocked_aws_audit_info,
-)
+from tests.providers.aws.utils import AWS_REGION_EU_WEST_1, set_mocked_aws_provider
 
 # Mocking Access Analyzer Calls
 make_api_call = BaseClient._make_api_call
@@ -39,8 +36,8 @@ def mock_make_api_call(self, operation_name, kwarg):
 
 
 # Mock generate_regional_clients()
-def mock_generate_regional_clients(service, audit_info):
-    regional_client = audit_info.audit_session.client(
+def mock_generate_regional_clients(provider, service):
+    regional_client = provider._session.current_session.client(
         service, region_name=AWS_REGION_EU_WEST_1
     )
     regional_client.region = AWS_REGION_EU_WEST_1
@@ -49,7 +46,7 @@ def mock_generate_regional_clients(service, audit_info):
 
 # Patch every AWS call using Boto3 and generate_regional_clients to have 1 client
 @patch(
-    "prowler.providers.aws.lib.service.service.generate_regional_clients",
+    "prowler.providers.aws.aws_provider.AwsProvider.generate_regional_clients",
     new=mock_generate_regional_clients,
 )
 class Test_Athena_Service:
@@ -57,9 +54,9 @@ class Test_Athena_Service:
     @mock_aws
     def test__get_workgroups__not_encrypted(self):
         default_workgroup_name = "primary"
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
-        workgroup_arn = f"arn:{audit_info.audited_partition}:athena:{AWS_REGION_EU_WEST_1}:{audit_info.audited_account}:workgroup/{default_workgroup_name}"
-        athena = Athena(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        workgroup_arn = f"arn:{aws_provider.identity.partition}:athena:{AWS_REGION_EU_WEST_1}:{aws_provider.identity.account}:workgroup/{default_workgroup_name}"
+        athena = Athena(aws_provider)
         assert len(athena.workgroups) == 1
         assert athena.workgroups[workgroup_arn]
         assert athena.workgroups[workgroup_arn].arn == workgroup_arn
@@ -81,11 +78,11 @@ class Test_Athena_Service:
     @mock_aws
     def test__get_workgroups__encrypted(self):
         default_workgroup_name = "primary"
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
         # Athena client
         # This API call is not implemented by Moto
-        # athena_client = audit_info.audit_session.client(
+        # athena_client = aws_provider.audit_session.client(
         #     "athena", region_name=AWS_REGION
         # )
         # athena_client.update_work_group(
@@ -97,8 +94,8 @@ class Test_Athena_Service:
         #     },
         # )
 
-        workgroup_arn = f"arn:{audit_info.audited_partition}:athena:{AWS_REGION_EU_WEST_1}:{audit_info.audited_account}:workgroup/{default_workgroup_name}"
-        athena = Athena(audit_info)
+        workgroup_arn = f"arn:{aws_provider.identity.partition}:athena:{AWS_REGION_EU_WEST_1}:{aws_provider.identity.account}:workgroup/{default_workgroup_name}"
+        athena = Athena(aws_provider)
         assert len(athena.workgroups) == 1
         assert athena.workgroups[workgroup_arn]
         assert athena.workgroups[workgroup_arn].arn == workgroup_arn

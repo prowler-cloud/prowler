@@ -5,10 +5,10 @@ from unittest import mock
 from boto3 import client
 from moto import mock_aws
 
-from tests.providers.aws.audit_info_utils import (
+from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_US_EAST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 # Keep this up-to-date with the check's actions that allows for privilege escalation
@@ -84,11 +84,11 @@ privilege_escalation_policies_combination = {
 
 
 class Test_iam_policy_allows_privilege_escalation:
-    from tests.providers.aws.audit_info_utils import (
+    from tests.providers.aws.utils import (
         AWS_ACCOUNT_ARN,
         AWS_ACCOUNT_NUMBER,
         AWS_REGION_US_EAST_1,
-        set_mocked_aws_audit_info,
+        set_mocked_aws_provider,
     )
 
     # @mock_aws
@@ -104,14 +104,14 @@ class Test_iam_policy_allows_privilege_escalation:
     #     policy_arn = iam_client.create_policy(
     #         PolicyName=policy_name, PolicyDocument=dumps(policy_document)
     #     )["Policy"]["Arn"]
-    #     set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+    #     set_mocked_aws_provider([AWS_REGION_US_EAST_1])
     #     from prowler.providers.aws.services.iam.iam_service import IAM
     #     with mock.patch(
-    #         "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-    #         new=current_audit_info,
+    #         "prowler.providers.common.common.get_global_provider",
+    #         return_value=aws_provider,
     #     ), mock.patch(
     #         "prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation.iam_client",
-    #         new=IAM(current_audit_info),
+    #         new=IAM(aws_provider),
     #     ):
     #         # Test Check
     #         from prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation import (
@@ -144,15 +144,15 @@ class Test_iam_policy_allows_privilege_escalation:
             PolicyName=policy_name, PolicyDocument=dumps(policy_document)
         )["Policy"]["Arn"]
 
-        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation.iam_client",
-            new=IAM(current_audit_info),
+            new=IAM(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation import (
@@ -192,15 +192,15 @@ class Test_iam_policy_allows_privilege_escalation:
             PolicyName=policy_name, PolicyDocument=dumps(policy_document)
         )["Policy"]["Arn"]
 
-        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation.iam_client",
-            new=IAM(current_audit_info),
+            new=IAM(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation import (
@@ -251,15 +251,15 @@ class Test_iam_policy_allows_privilege_escalation:
             PolicyName=policy_name, PolicyDocument=dumps(policy_document)
         )["Policy"]["Arn"]
 
-        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation.iam_client",
-            new=IAM(current_audit_info),
+            new=IAM(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation import (
@@ -306,15 +306,15 @@ class Test_iam_policy_allows_privilege_escalation:
             PolicyName=policy_name, PolicyDocument=dumps(policy_document)
         )["Policy"]["Arn"]
 
-        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation.iam_client",
-            new=IAM(current_audit_info),
+            new=IAM(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation import (
@@ -357,15 +357,15 @@ class Test_iam_policy_allows_privilege_escalation:
             PolicyName=policy_name, PolicyDocument=dumps(policy_document)
         )["Policy"]["Arn"]
 
-        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation.iam_client",
-            new=IAM(current_audit_info),
+            new=IAM(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation import (
@@ -426,15 +426,15 @@ class Test_iam_policy_allows_privilege_escalation:
             PolicyName=policy_name, PolicyDocument=dumps(policy_document)
         )["Policy"]["Arn"]
 
-        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation.iam_client",
-            new=IAM(current_audit_info),
+            new=IAM(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation import (
@@ -484,15 +484,15 @@ class Test_iam_policy_allows_privilege_escalation:
             PolicyName=policy_name, PolicyDocument=dumps(policy_document)
         )["Policy"]["Arn"]
 
-        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation.iam_client",
-            new=IAM(current_audit_info),
+            new=IAM(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation import (
@@ -518,7 +518,7 @@ class Test_iam_policy_allows_privilege_escalation:
     def test_iam_policy_allows_privilege_escalation_policies_combination(
         self,
     ):
-        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         iam_client = client("iam", region_name=AWS_REGION_US_EAST_1)
         policy_name = "privileged_policy"
         for values in privilege_escalation_policies_combination.values():
@@ -541,11 +541,11 @@ class Test_iam_policy_allows_privilege_escalation:
             from prowler.providers.aws.services.iam.iam_service import IAM
 
             with mock.patch(
-                "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-                new=current_audit_info,
+                "prowler.providers.common.common.get_global_provider",
+                return_value=aws_provider,
             ), mock.patch(
                 "prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation.iam_client",
-                new=IAM(current_audit_info),
+                new=IAM(aws_provider),
             ):
                 # Test Check
                 from prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation import (
@@ -577,7 +577,7 @@ class Test_iam_policy_allows_privilege_escalation:
     def test_iam_policy_allows_privilege_escalation_two_policies_one_good_one_bad(
         self,
     ):
-        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         iam_client = client("iam", region_name=AWS_REGION_US_EAST_1)
         policy_name_1 = "privileged_policy_1"
         policy_document_1 = {
@@ -626,11 +626,11 @@ class Test_iam_policy_allows_privilege_escalation:
         from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation.iam_client",
-            new=IAM(current_audit_info),
+            new=IAM(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation import (
@@ -670,7 +670,7 @@ class Test_iam_policy_allows_privilege_escalation:
     def test_iam_policy_allows_privilege_escalation_two_bad_policies(
         self,
     ):
-        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         iam_client = client("iam", region_name=AWS_REGION_US_EAST_1)
         policy_name_1 = "privileged_policy_1"
         policy_document_1 = {
@@ -726,11 +726,11 @@ class Test_iam_policy_allows_privilege_escalation:
         from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation.iam_client",
-            new=IAM(current_audit_info),
+            new=IAM(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation import (
@@ -775,7 +775,7 @@ class Test_iam_policy_allows_privilege_escalation:
     def test_iam_policy_allows_privilege_escalation_over_permissive_policy(
         self,
     ):
-        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         iam_client = client("iam", region_name=AWS_REGION_US_EAST_1)
         policy_name_1 = "privileged_policy_1"
         policy_document_1 = {
@@ -807,11 +807,11 @@ class Test_iam_policy_allows_privilege_escalation:
         from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation.iam_client",
-            new=IAM(current_audit_info),
+            new=IAM(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation import (
@@ -841,7 +841,7 @@ class Test_iam_policy_allows_privilege_escalation:
     def test_iam_policy_allows_privilege_escalation_administrator_policy(
         self,
     ):
-        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         iam_client = client("iam", region_name=AWS_REGION_US_EAST_1)
         policy_name_1 = "privileged_policy_1"
         policy_document_1 = {
@@ -863,11 +863,11 @@ class Test_iam_policy_allows_privilege_escalation:
         from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation.iam_client",
-            new=IAM(current_audit_info),
+            new=IAM(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation import (
@@ -899,7 +899,7 @@ class Test_iam_policy_allows_privilege_escalation:
     def test_iam_policy_allows_privilege_escalation_iam_put(
         self,
     ):
-        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         iam_client = client("iam", region_name=AWS_REGION_US_EAST_1)
         policy_name_1 = "privileged_policy_1"
         policy_document_1 = {
@@ -921,11 +921,11 @@ class Test_iam_policy_allows_privilege_escalation:
         from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation.iam_client",
-            new=IAM(current_audit_info),
+            new=IAM(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation import (
@@ -952,7 +952,7 @@ class Test_iam_policy_allows_privilege_escalation:
     def test_iam_policy_allows_privilege_escalation_iam_wildcard(
         self,
     ):
-        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         iam_client = client("iam", region_name=AWS_REGION_US_EAST_1)
         policy_name_1 = "privileged_policy_1"
         policy_document_1 = {
@@ -974,11 +974,11 @@ class Test_iam_policy_allows_privilege_escalation:
         from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation.iam_client",
-            new=IAM(current_audit_info),
+            new=IAM(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation import (
@@ -1005,7 +1005,7 @@ class Test_iam_policy_allows_privilege_escalation:
     def test_iam_policy_not_allows_privilege_escalation_custom_policy(
         self,
     ):
-        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         iam_client = client("iam", region_name=AWS_REGION_US_EAST_1)
         policy_name_1 = "privileged_policy_1"
         policy_document_1 = {
@@ -1033,11 +1033,11 @@ class Test_iam_policy_allows_privilege_escalation:
         from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation.iam_client",
-            new=IAM(current_audit_info),
+            new=IAM(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation import (

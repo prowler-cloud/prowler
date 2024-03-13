@@ -4,11 +4,11 @@ from unittest import mock
 from boto3 import client
 from moto import mock_aws
 
-from tests.providers.aws.audit_info_utils import (
+from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_WEST_1,
     AWS_REGION_US_EAST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 
@@ -17,16 +17,16 @@ class Test_dynamodb_accelerator_cluster_encryption_enabled:
     def test_dax_no_clusters(self):
         from prowler.providers.aws.services.dynamodb.dynamodb_service import DAX
 
-        current_audit_info = set_mocked_aws_audit_info(
+        aws_provider = set_mocked_aws_provider(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.dynamodb.dynamodb_accelerator_cluster_encryption_enabled.dynamodb_accelerator_cluster_encryption_enabled.dax_client",
-            new=DAX(current_audit_info),
+            new=DAX(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.dynamodb.dynamodb_accelerator_cluster_encryption_enabled.dynamodb_accelerator_cluster_encryption_enabled import (
@@ -50,16 +50,16 @@ class Test_dynamodb_accelerator_cluster_encryption_enabled:
         )["Cluster"]
         from prowler.providers.aws.services.dynamodb.dynamodb_service import DAX
 
-        current_audit_info = set_mocked_aws_audit_info(
+        aws_provider = set_mocked_aws_provider(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.dynamodb.dynamodb_accelerator_cluster_encryption_enabled.dynamodb_accelerator_cluster_encryption_enabled.dax_client",
-            new=DAX(current_audit_info),
+            new=DAX(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.dynamodb.dynamodb_accelerator_cluster_encryption_enabled.dynamodb_accelerator_cluster_encryption_enabled import (
@@ -93,16 +93,16 @@ class Test_dynamodb_accelerator_cluster_encryption_enabled:
         )["Cluster"]
         from prowler.providers.aws.services.dynamodb.dynamodb_service import DAX
 
-        current_audit_info = set_mocked_aws_audit_info(
+        aws_provider = set_mocked_aws_provider(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.dynamodb.dynamodb_accelerator_cluster_encryption_enabled.dynamodb_accelerator_cluster_encryption_enabled.dax_client",
-            new=DAX(current_audit_info),
+            new=DAX(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.dynamodb.dynamodb_accelerator_cluster_encryption_enabled.dynamodb_accelerator_cluster_encryption_enabled import (

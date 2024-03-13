@@ -4,10 +4,10 @@ from unittest import mock
 from boto3 import client
 from moto import mock_aws
 
-from tests.providers.aws.audit_info_utils import (
+from tests.providers.aws.utils import (
     AWS_REGION_EU_WEST_1,
     AWS_REGION_US_EAST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 
@@ -20,17 +20,19 @@ class Test_cloudtrail_logs_s3_bucket_is_not_publicly_accessible:
         from prowler.providers.aws.services.s3.s3_service import S3
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=set_mocked_aws_audit_info([AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]),
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_aws_provider(
+                [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
+            ),
         ), mock.patch(
             "prowler.providers.aws.services.cloudtrail.cloudtrail_logs_s3_bucket_is_not_publicly_accessible.cloudtrail_logs_s3_bucket_is_not_publicly_accessible.cloudtrail_client",
             new=Cloudtrail(
-                set_mocked_aws_audit_info([AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1])
+                set_mocked_aws_provider([AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1])
             ),
         ), mock.patch(
             "prowler.providers.aws.services.cloudtrail.cloudtrail_logs_s3_bucket_is_not_publicly_accessible.cloudtrail_logs_s3_bucket_is_not_publicly_accessible.s3_client",
             new=S3(
-                set_mocked_aws_audit_info([AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1])
+                set_mocked_aws_provider([AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1])
             ),
         ):
             # Test Check
@@ -60,17 +62,19 @@ class Test_cloudtrail_logs_s3_bucket_is_not_publicly_accessible:
         from prowler.providers.aws.services.s3.s3_service import S3
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=set_mocked_aws_audit_info([AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]),
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_aws_provider(
+                [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
+            ),
         ), mock.patch(
             "prowler.providers.aws.services.cloudtrail.cloudtrail_logs_s3_bucket_is_not_publicly_accessible.cloudtrail_logs_s3_bucket_is_not_publicly_accessible.cloudtrail_client",
             new=Cloudtrail(
-                set_mocked_aws_audit_info([AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1])
+                set_mocked_aws_provider([AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1])
             ),
         ), mock.patch(
             "prowler.providers.aws.services.cloudtrail.cloudtrail_logs_s3_bucket_is_not_publicly_accessible.cloudtrail_logs_s3_bucket_is_not_publicly_accessible.s3_client",
             new=S3(
-                set_mocked_aws_audit_info([AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1])
+                set_mocked_aws_provider([AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1])
             ),
         ):
             # Test Check
@@ -129,17 +133,19 @@ class Test_cloudtrail_logs_s3_bucket_is_not_publicly_accessible:
         from prowler.providers.aws.services.s3.s3_service import S3
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=set_mocked_aws_audit_info([AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]),
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_aws_provider(
+                [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
+            ),
         ), mock.patch(
             "prowler.providers.aws.services.cloudtrail.cloudtrail_logs_s3_bucket_is_not_publicly_accessible.cloudtrail_logs_s3_bucket_is_not_publicly_accessible.cloudtrail_client",
             new=Cloudtrail(
-                set_mocked_aws_audit_info([AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1])
+                set_mocked_aws_provider([AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1])
             ),
         ), mock.patch(
             "prowler.providers.aws.services.cloudtrail.cloudtrail_logs_s3_bucket_is_not_publicly_accessible.cloudtrail_logs_s3_bucket_is_not_publicly_accessible.s3_client",
             new=S3(
-                set_mocked_aws_audit_info([AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1])
+                set_mocked_aws_provider([AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1])
             ),
         ):
             # Test Check
@@ -196,17 +202,19 @@ class Test_cloudtrail_logs_s3_bucket_is_not_publicly_accessible:
         from prowler.providers.aws.services.s3.s3_service import S3
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=set_mocked_aws_audit_info([AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]),
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_aws_provider(
+                [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
+            ),
         ), mock.patch(
             "prowler.providers.aws.services.cloudtrail.cloudtrail_logs_s3_bucket_is_not_publicly_accessible.cloudtrail_logs_s3_bucket_is_not_publicly_accessible.cloudtrail_client",
             new=Cloudtrail(
-                set_mocked_aws_audit_info([AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1])
+                set_mocked_aws_provider([AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1])
             ),
         ), mock.patch(
             "prowler.providers.aws.services.cloudtrail.cloudtrail_logs_s3_bucket_is_not_publicly_accessible.cloudtrail_logs_s3_bucket_is_not_publicly_accessible.s3_client",
             new=S3(
-                set_mocked_aws_audit_info([AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1])
+                set_mocked_aws_provider([AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1])
             ),
         ):
             # Test Check
@@ -245,17 +253,19 @@ class Test_cloudtrail_logs_s3_bucket_is_not_publicly_accessible:
         from prowler.providers.aws.services.s3.s3_service import S3
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=set_mocked_aws_audit_info([AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]),
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_aws_provider(
+                [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
+            ),
         ), mock.patch(
             "prowler.providers.aws.services.cloudtrail.cloudtrail_logs_s3_bucket_is_not_publicly_accessible.cloudtrail_logs_s3_bucket_is_not_publicly_accessible.cloudtrail_client",
             new=Cloudtrail(
-                set_mocked_aws_audit_info([AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1])
+                set_mocked_aws_provider([AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1])
             ),
         ), mock.patch(
             "prowler.providers.aws.services.cloudtrail.cloudtrail_logs_s3_bucket_is_not_publicly_accessible.cloudtrail_logs_s3_bucket_is_not_publicly_accessible.s3_client",
             new=S3(
-                set_mocked_aws_audit_info([AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1])
+                set_mocked_aws_provider([AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1])
             ),
         ) as s3_client:
             # Test Check

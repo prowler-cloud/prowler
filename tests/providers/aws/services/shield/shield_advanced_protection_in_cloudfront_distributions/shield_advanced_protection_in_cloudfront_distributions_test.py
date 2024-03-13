@@ -2,10 +2,7 @@ from unittest import mock
 
 from prowler.providers.aws.services.cloudfront.cloudfront_service import Distribution
 from prowler.providers.aws.services.shield.shield_service import Protection
-from tests.providers.aws.audit_info_utils import (
-    AWS_ACCOUNT_NUMBER,
-    AWS_REGION_EU_WEST_1,
-)
+from tests.providers.aws.utils import AWS_ACCOUNT_NUMBER, AWS_REGION_EU_WEST_1
 
 
 class Test_shield_advanced_protection_in_cloudfront_distributions:

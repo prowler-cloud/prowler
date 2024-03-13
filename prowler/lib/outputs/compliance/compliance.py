@@ -220,11 +220,9 @@ def display_compliance_table(
                 ens_compliance_table["Bajo"].append(
                     f"{Fore.YELLOW}{marcos[marco]['Bajo']}{Style.RESET_ALL}"
                 )
-            if fail_count + pass_count < 1:
-                print(
-                    f"\nThere are no resources for {Fore.YELLOW}{compliance_framework.upper()}{Style.RESET_ALL}.\n"
-                )
-            else:
+            if (
+                fail_count + pass_count > 1
+            ):  # If there are no resources, don't print the compliance table
                 print(
                     f"\nEstado de Cumplimiento de {Fore.YELLOW}{compliance_framework.upper()}{Style.RESET_ALL}:"
                 )
@@ -318,11 +316,9 @@ def display_compliance_table(
                     cis_compliance_table["Level 2"].append(
                         f"{Fore.GREEN}PASS({sections[section]['Level 2']['PASS']}){Style.RESET_ALL}"
                     )
-            if fail_count + pass_count < 1:
-                print(
-                    f"\nThere are no resources for {Fore.YELLOW}{compliance_framework.upper()}{Style.RESET_ALL}.\n"
-                )
-            else:
+            if (
+                fail_count + pass_count > 1
+            ):  # If there are no resources, don't print the compliance table
                 print(
                     f"\nCompliance Status of {Fore.YELLOW}{compliance_framework.upper()}{Style.RESET_ALL} Framework:"
                 )
@@ -393,11 +389,9 @@ def display_compliance_table(
                     mitre_compliance_table["Status"].append(
                         f"{Fore.GREEN}PASS({tactics[tactic]['PASS']}){Style.RESET_ALL}"
                     )
-            if fail_count + pass_count < 1:
-                print(
-                    f"\nThere are no resources for {Fore.YELLOW}{compliance_framework.upper()}{Style.RESET_ALL}.\n"
-                )
-            else:
+            if (
+                fail_count + pass_count > 1
+            ):  # If there are no resources, don't print the compliance table
                 print(
                     f"\nCompliance Status of {Fore.YELLOW}{compliance_framework.upper()}{Style.RESET_ALL} Framework:"
                 )
@@ -446,11 +440,9 @@ def display_compliance_table(
                                     fail_count += 1
                                 elif finding.status == "PASS":
                                     pass_count += 1
-            if fail_count + pass_count < 1:
-                print(
-                    f"\nThere are no resources for {Fore.YELLOW}{compliance_framework.upper()}{Style.RESET_ALL}.\n"
-                )
-            else:
+            if (
+                fail_count + pass_count > 1
+            ):  # If there are no resources, don't print the compliance table
                 print(
                     f"\nCompliance Status of {Fore.YELLOW}{compliance_framework.upper()}{Style.RESET_ALL} Framework:"
                 )

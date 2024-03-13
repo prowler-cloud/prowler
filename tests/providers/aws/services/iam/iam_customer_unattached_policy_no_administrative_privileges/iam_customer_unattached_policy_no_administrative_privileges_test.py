@@ -5,10 +5,7 @@ from unittest import mock
 from boto3 import client
 from moto import mock_aws
 
-from tests.providers.aws.audit_info_utils import (
-    AWS_REGION_US_EAST_1,
-    set_mocked_aws_audit_info,
-)
+from tests.providers.aws.utils import AWS_REGION_US_EAST_1, set_mocked_aws_provider
 
 
 class Test_iam_customer_unattached_policy_no_administrative_privileges_test:
@@ -26,15 +23,15 @@ class Test_iam_customer_unattached_policy_no_administrative_privileges_test:
             PolicyName=policy_name, PolicyDocument=dumps(policy_document)
         )["Policy"]["Arn"]
 
-        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.iam.iam_customer_unattached_policy_no_administrative_privileges.iam_customer_unattached_policy_no_administrative_privileges.iam_client",
-            new=IAM(current_audit_info),
+            new=IAM(aws_provider),
         ):
             from prowler.providers.aws.services.iam.iam_customer_unattached_policy_no_administrative_privileges.iam_customer_unattached_policy_no_administrative_privileges import (
                 iam_customer_unattached_policy_no_administrative_privileges,
@@ -65,15 +62,15 @@ class Test_iam_customer_unattached_policy_no_administrative_privileges_test:
             PolicyName=policy_name, PolicyDocument=dumps(policy_document)
         )["Policy"]["Arn"]
 
-        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.iam.iam_customer_unattached_policy_no_administrative_privileges.iam_customer_unattached_policy_no_administrative_privileges.iam_client",
-            new=IAM(current_audit_info),
+            new=IAM(aws_provider),
         ):
             from prowler.providers.aws.services.iam.iam_customer_unattached_policy_no_administrative_privileges.iam_customer_unattached_policy_no_administrative_privileges import (
                 iam_customer_unattached_policy_no_administrative_privileges,
@@ -116,15 +113,15 @@ class Test_iam_customer_unattached_policy_no_administrative_privileges_test:
             PolicyDocument=dumps(policy_document_administrative),
         )["Policy"]["Arn"]
 
-        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.iam.iam_customer_unattached_policy_no_administrative_privileges.iam_customer_unattached_policy_no_administrative_privileges.iam_client",
-            new=IAM(current_audit_info),
+            new=IAM(aws_provider),
         ):
             from prowler.providers.aws.services.iam.iam_customer_unattached_policy_no_administrative_privileges.iam_customer_unattached_policy_no_administrative_privileges import (
                 iam_customer_unattached_policy_no_administrative_privileges,

@@ -114,7 +114,7 @@ You will need to pass the S3 URI where your Mute List YAML file was uploaded to 
 prowler aws -w s3://<bucket>/<prefix>/mutelist.yaml
 ```
 ???+ note
-    Make sure that the used AWS credentials have s3:GetObject permissions in the S3 path where the allowlist file is located.
+    Make sure that the used AWS credentials have `s3:GetObject` permissions in the S3 path where the mutelist file is located.
 
 ### AWS DynamoDB Table ARN
 

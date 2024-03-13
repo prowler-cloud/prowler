@@ -1,13 +1,14 @@
 import botocore
 from mock import patch
+from moto import mock_aws
 
 from prowler.providers.aws.services.globalaccelerator.globalaccelerator_service import (
     GlobalAccelerator,
 )
-from tests.providers.aws.audit_info_utils import (
+from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_US_WEST_2,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 # Mocking Access Analyzer Calls
@@ -45,34 +46,35 @@ def mock_make_api_call(self, operation_name, kwarg):
     return make_api_call(self, operation_name, kwarg)
 
 
+@mock_aws
 # Patch every AWS call using Boto3 and generate_regional_clients to have 1 client
 @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
 class Test_GlobalAccelerator_Service:
     # Test GlobalAccelerator Service
     def test_service(self):
         # GlobalAccelerator client for this test class
-        audit_info = set_mocked_aws_audit_info()
-        globalaccelerator = GlobalAccelerator(audit_info)
+        aws_provider = set_mocked_aws_provider()
+        globalaccelerator = GlobalAccelerator(aws_provider)
         assert globalaccelerator.service == "globalaccelerator"
 
     # Test GlobalAccelerator Client
     def test_client(self):
         # GlobalAccelerator client for this test class
-        audit_info = set_mocked_aws_audit_info()
-        globalaccelerator = GlobalAccelerator(audit_info)
+        aws_provider = set_mocked_aws_provider()
+        globalaccelerator = GlobalAccelerator(aws_provider)
         assert globalaccelerator.client.__class__.__name__ == "GlobalAccelerator"
 
     # Test GlobalAccelerator Session
     def test__get_session__(self):
         # GlobalAccelerator client for this test class
-        audit_info = set_mocked_aws_audit_info()
-        globalaccelerator = GlobalAccelerator(audit_info)
+        aws_provider = set_mocked_aws_provider()
+        globalaccelerator = GlobalAccelerator(aws_provider)
         assert globalaccelerator.session.__class__.__name__ == "Session"
 
     def test__list_accelerators__(self):
         # GlobalAccelerator client for this test class
-        audit_info = set_mocked_aws_audit_info()
-        globalaccelerator = GlobalAccelerator(audit_info)
+        aws_provider = set_mocked_aws_provider()
+        globalaccelerator = GlobalAccelerator(aws_provider)
 
         accelerator_name = "TestAccelerator"
 

@@ -2,11 +2,11 @@ from boto3 import client
 from moto import mock_aws
 
 from prowler.providers.aws.services.cognito.cognito_service import CognitoIDP
-from tests.providers.aws.audit_info_utils import (
+from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_WEST_1,
     AWS_REGION_US_EAST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 
@@ -14,52 +14,52 @@ class Test_Cognito_Service:
     # Test Cognito Service
     @mock_aws
     def test_service(self):
-        audit_info = set_mocked_aws_audit_info(
+        aws_provider = set_mocked_aws_provider(
             audited_regions=[AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
-        cognito = CognitoIDP(audit_info)
+        cognito = CognitoIDP(aws_provider)
         assert cognito.service == "cognito-idp"
 
     # Test Cognito client
     @mock_aws
     def test_client(self):
-        audit_info = set_mocked_aws_audit_info(
+        aws_provider = set_mocked_aws_provider(
             audited_regions=[AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
-        cognito = CognitoIDP(audit_info)
+        cognito = CognitoIDP(aws_provider)
         for regional_client in cognito.regional_clients.values():
             assert regional_client.__class__.__name__ == "CognitoIdentityProvider"
 
     # Test Cognito session
     @mock_aws
     def test__get_session__(self):
-        audit_info = set_mocked_aws_audit_info(
+        aws_provider = set_mocked_aws_provider(
             audited_regions=[AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
-        cognito = CognitoIDP(audit_info)
+        cognito = CognitoIDP(aws_provider)
         assert cognito.session.__class__.__name__ == "Session"
 
     # Test Cognito Session
     @mock_aws
     def test_audited_account(self):
-        audit_info = set_mocked_aws_audit_info(
+        aws_provider = set_mocked_aws_provider(
             audited_regions=[AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
-        cognito = CognitoIDP(audit_info)
+        cognito = CognitoIDP(aws_provider)
         assert cognito.audited_account == AWS_ACCOUNT_NUMBER
 
     @mock_aws
     def test_list_user_pools(self):
         user_pool_name_1 = "user_pool_test_1"
         user_pool_name_2 = "user_pool_test_2"
-        audit_info = set_mocked_aws_audit_info(
+        aws_provider = set_mocked_aws_provider(
             audited_regions=[AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
         cognito_client_eu_west_1 = client("cognito-idp", region_name="eu-west-1")
         cognito_client_us_east_1 = client("cognito-idp", region_name="us-east-1")
         cognito_client_eu_west_1.create_user_pool(PoolName=user_pool_name_1)
         cognito_client_us_east_1.create_user_pool(PoolName=user_pool_name_2)
-        cognito = CognitoIDP(audit_info)
+        cognito = CognitoIDP(aws_provider)
         assert len(cognito.user_pools) == 2
         for user_pool in cognito.user_pools.values():
             assert (
@@ -70,14 +70,14 @@ class Test_Cognito_Service:
     @mock_aws
     def test_describe_user_pools(self):
         user_pool_name_1 = "user_pool_test_1"
-        audit_info = set_mocked_aws_audit_info(
+        aws_provider = set_mocked_aws_provider(
             audited_regions=[AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
         cognito_client_eu_west_1 = client("cognito-idp", region_name="eu-west-1")
         user_pool_id = cognito_client_eu_west_1.create_user_pool(
             PoolName=user_pool_name_1
         )["UserPool"]["Id"]
-        cognito = CognitoIDP(audit_info)
+        cognito = CognitoIDP(aws_provider)
         assert len(cognito.user_pools) == 1
         for user_pool in cognito.user_pools.values():
             assert user_pool.name == user_pool_name_1
@@ -91,7 +91,7 @@ class Test_Cognito_Service:
     @mock_aws
     def test_get_user_pool_mfa_config(self):
         user_pool_name_1 = "user_pool_test_1"
-        audit_info = set_mocked_aws_audit_info(
+        aws_provider = set_mocked_aws_provider(
             audited_regions=[AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
         cognito_client_eu_west_1 = client("cognito-idp", region_name="eu-west-1")
@@ -103,7 +103,7 @@ class Test_Cognito_Service:
             SoftwareTokenMfaConfiguration={"Enabled": True},
             MfaConfiguration="ON",
         )
-        cognito = CognitoIDP(audit_info)
+        cognito = CognitoIDP(aws_provider)
         assert len(cognito.user_pools) == 1
         for user_pool in cognito.user_pools.values():
             assert user_pool.name == user_pool_name_1

@@ -6,12 +6,6 @@ from moto import mock_aws
 
 from prowler.providers.aws.services.neptune.neptune_service import Neptune
 from prowler.providers.aws.services.vpc.vpc_service import VpcSubnet
-from tests.providers.aws.audit_info_utils import (
-    AWS_REGION_US_EAST_1,
-    AWS_REGION_US_EAST_1_AZA,
-    AWS_REGION_US_EAST_1_AZB,
-    set_mocked_aws_audit_info,
-)
 from tests.providers.aws.services.neptune.neptune_service_test import (
     NEPTUNE_CLUSTER_NAME,
     NEPTUNE_CLUSTER_TAGS,
@@ -19,6 +13,12 @@ from tests.providers.aws.services.neptune.neptune_service_test import (
     SUBNET_1,
     SUBNET_2,
     mock_make_api_call,
+)
+from tests.providers.aws.utils import (
+    AWS_REGION_US_EAST_1,
+    AWS_REGION_US_EAST_1_AZA,
+    AWS_REGION_US_EAST_1_AZB,
+    set_mocked_aws_provider,
 )
 
 VPC_ID = "vpc-12345678901234567"
@@ -33,14 +33,14 @@ class Test_neptune_cluster_uses_public_subnet:
         vpc_client = MagicMock
         vpc_client.vpc_subnets = {}
 
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.neptune.neptune_cluster_uses_public_subnet.neptune_cluster_uses_public_subnet.neptune_client",
-            new=Neptune(audit_info),
+            new=Neptune(aws_provider),
         ), mock.patch(
             "prowler.providers.aws.services.neptune.neptune_cluster_uses_public_subnet.neptune_cluster_uses_public_subnet.vpc_client",
             new=vpc_client,
@@ -106,13 +106,13 @@ class Test_neptune_cluster_uses_public_subnet:
         cluster_arn = cluster["DBClusterArn"]
         cluster_id = cluster["DbClusterResourceId"]
 
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.neptune.neptune_cluster_uses_public_subnet.neptune_cluster_uses_public_subnet.neptune_client",
-            new=Neptune(audit_info),
+            new=Neptune(aws_provider),
         ), mock.patch(
             "prowler.providers.aws.services.neptune.neptune_cluster_uses_public_subnet.neptune_cluster_uses_public_subnet.vpc_client",
             new=vpc_client,
@@ -187,13 +187,13 @@ class Test_neptune_cluster_uses_public_subnet:
         cluster_arn = cluster["DBClusterArn"]
         cluster_id = cluster["DbClusterResourceId"]
 
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.neptune.neptune_cluster_uses_public_subnet.neptune_cluster_uses_public_subnet.neptune_client",
-            new=Neptune(audit_info),
+            new=Neptune(aws_provider),
         ), mock.patch(
             "prowler.providers.aws.services.neptune.neptune_cluster_uses_public_subnet.neptune_cluster_uses_public_subnet.vpc_client",
             new=vpc_client,

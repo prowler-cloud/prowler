@@ -5,10 +5,7 @@ import botocore
 from prowler.providers.aws.services.networkfirewall.networkfirewall_service import (
     NetworkFirewall,
 )
-from tests.providers.aws.audit_info_utils import (
-    AWS_REGION_US_EAST_1,
-    set_mocked_aws_audit_info,
-)
+from tests.providers.aws.utils import AWS_REGION_US_EAST_1, set_mocked_aws_provider
 
 FIREWALL_ARN = "arn:aws:network-firewall:us-east-1:123456789012:firewall/my-firewall"
 FIREWALL_NAME = "my-firewall"
@@ -51,8 +48,8 @@ def mock_make_api_call(self, operation_name, kwargs):
     return make_api_call(self, operation_name, kwargs)
 
 
-def mock_generate_regional_clients(service, audit_info):
-    regional_client = audit_info.audit_session.client(
+def mock_generate_regional_clients(provider, service):
+    regional_client = provider._session.current_session.client(
         service, region_name=AWS_REGION_US_EAST_1
     )
     regional_client.region = AWS_REGION_US_EAST_1
@@ -62,34 +59,34 @@ def mock_generate_regional_clients(service, audit_info):
 # Patch every AWS call using Boto3 and generate_regional_clients to have 1 client
 @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
 @patch(
-    "prowler.providers.aws.lib.service.service.generate_regional_clients",
+    "prowler.providers.aws.aws_provider.AwsProvider.generate_regional_clients",
     new=mock_generate_regional_clients,
 )
 class Test_NetworkFirewall_Service:
     def test__get_client__(self):
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        networkfirewall = NetworkFirewall(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        networkfirewall = NetworkFirewall(aws_provider)
         assert (
             networkfirewall.regional_clients[AWS_REGION_US_EAST_1].__class__.__name__
             == "NetworkFirewall"
         )
 
     def test__get_service__(self):
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        networkfirewall = NetworkFirewall(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        networkfirewall = NetworkFirewall(aws_provider)
         assert networkfirewall.service == "network-firewall"
 
     def test__list_firewalls__(self):
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        networkfirewall = NetworkFirewall(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        networkfirewall = NetworkFirewall(aws_provider)
         assert len(networkfirewall.network_firewalls) == 1
         assert networkfirewall.network_firewalls[0].arn == FIREWALL_ARN
         assert networkfirewall.network_firewalls[0].region == AWS_REGION_US_EAST_1
         assert networkfirewall.network_firewalls[0].name == FIREWALL_NAME
 
     def test__describe_firewall__(self):
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        networkfirewall = NetworkFirewall(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        networkfirewall = NetworkFirewall(aws_provider)
         assert len(networkfirewall.network_firewalls) == 1
         assert networkfirewall.network_firewalls[0].arn == FIREWALL_ARN
         assert networkfirewall.network_firewalls[0].region == AWS_REGION_US_EAST_1

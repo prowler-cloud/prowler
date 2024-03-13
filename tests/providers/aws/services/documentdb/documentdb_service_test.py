@@ -5,10 +5,10 @@ from prowler.providers.aws.services.documentdb.documentdb_service import (
     DocumentDB,
     Instance,
 )
-from tests.providers.aws.audit_info_utils import (
+from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_US_EAST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 DOC_DB_CLUSTER_ID = "test-cluster"
@@ -58,8 +58,8 @@ def mock_make_api_call(self, operation_name, kwargs):
     return make_api_call(self, operation_name, kwargs)
 
 
-def mock_generate_regional_clients(service, audit_info):
-    regional_client = audit_info.audit_session.client(
+def mock_generate_regional_clients(provider, service):
+    regional_client = provider._session.current_session.client(
         service, region_name=AWS_REGION_US_EAST_1
     )
     regional_client.region = AWS_REGION_US_EAST_1
@@ -67,7 +67,7 @@ def mock_generate_regional_clients(service, audit_info):
 
 
 @patch(
-    "prowler.providers.aws.lib.service.service.generate_regional_clients",
+    "prowler.providers.aws.aws_provider.AwsProvider.generate_regional_clients",
     new=mock_generate_regional_clients,
 )
 # Patch every AWS call using Boto3
@@ -75,32 +75,32 @@ def mock_generate_regional_clients(service, audit_info):
 class Test_DocumentDB_Service:
     # Test DocumentDB Service
     def test_service(self):
-        audit_info = set_mocked_aws_audit_info()
-        docdb = DocumentDB(audit_info)
+        aws_provider = set_mocked_aws_provider()
+        docdb = DocumentDB(aws_provider)
         assert docdb.service == "docdb"
 
     # Test DocumentDB Client
     def test_client(self):
-        audit_info = set_mocked_aws_audit_info()
-        docdb = DocumentDB(audit_info)
+        aws_provider = set_mocked_aws_provider()
+        docdb = DocumentDB(aws_provider)
         assert docdb.client.__class__.__name__ == "DocDB"
 
     # Test DocumentDB Session
     def test__get_session__(self):
-        audit_info = set_mocked_aws_audit_info()
-        docdb = DocumentDB(audit_info)
+        aws_provider = set_mocked_aws_provider()
+        docdb = DocumentDB(aws_provider)
         assert docdb.session.__class__.__name__ == "Session"
 
     # Test DocumentDB Session
     def test_audited_account(self):
-        audit_info = set_mocked_aws_audit_info()
-        docdb = DocumentDB(audit_info)
+        aws_provider = set_mocked_aws_provider()
+        docdb = DocumentDB(aws_provider)
         assert docdb.audited_account == AWS_ACCOUNT_NUMBER
 
     # Test DocumentDB Get DocumentDB Contacts
     def test_describe_db_instances(self):
-        audit_info = set_mocked_aws_audit_info()
-        docdb = DocumentDB(audit_info)
+        aws_provider = set_mocked_aws_provider()
+        docdb = DocumentDB(aws_provider)
         assert docdb.db_instances == {
             DOC_DB_INSTANCE_ARN: Instance(
                 id=DOC_DB_INSTANCE_NAME,

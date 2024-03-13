@@ -4,10 +4,10 @@ from boto3 import client
 from moto import mock_aws
 
 from prowler.providers.aws.services.s3.s3_service import S3, S3Control
-from tests.providers.aws.audit_info_utils import (
+from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_US_EAST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 
@@ -17,32 +17,32 @@ class Test_S3_Service:
     @mock_aws
     def test_service(self):
         # S3 client for this test class
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        s3 = S3(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        s3 = S3(aws_provider)
         assert s3.service == "s3"
 
     # Test S3 Client
     @mock_aws
     def test_client(self):
         # S3 client for this test class
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        s3 = S3(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        s3 = S3(aws_provider)
         assert s3.client.__class__.__name__ == "S3"
 
     # Test S3 Session
     @mock_aws
     def test__get_session__(self):
         # S3 client for this test class
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        s3 = S3(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        s3 = S3(aws_provider)
         assert s3.session.__class__.__name__ == "Session"
 
     # Test S3 Session
     @mock_aws
     def test_audited_account(self):
         # S3 client for this test class
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        s3 = S3(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        s3 = S3(aws_provider)
         assert s3.audited_account == AWS_ACCOUNT_NUMBER
 
     # Test S3 List Buckets
@@ -55,14 +55,14 @@ class Test_S3_Service:
         s3_client.create_bucket(Bucket=bucket_name)
 
         # S3 client for this test class
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        s3 = S3(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        s3 = S3(aws_provider)
 
         assert len(s3.buckets) == 1
         assert s3.buckets[0].name == bucket_name
         assert (
             s3.buckets[0].arn
-            == f"arn:{audit_info.audited_partition}:s3:::{bucket_name}"
+            == f"arn:{aws_provider.identity.partition}:s3:::{bucket_name}"
         )
         assert not s3.buckets[0].object_lock
 
@@ -80,13 +80,13 @@ class Test_S3_Service:
             VersioningConfiguration={"MFADelete": "Disabled", "Status": "Enabled"},
         )
         # S3 client for this test class
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        s3 = S3(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        s3 = S3(aws_provider)
         assert len(s3.buckets) == 1
         assert s3.buckets[0].name == bucket_name
         assert (
             s3.buckets[0].arn
-            == f"arn:{audit_info.audited_partition}:s3:::{bucket_name}"
+            == f"arn:{aws_provider.identity.partition}:s3:::{bucket_name}"
         )
         assert s3.buckets[0].versioning is True
 
@@ -113,13 +113,13 @@ class Test_S3_Service:
             },
             Bucket=bucket_name,
         )
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        s3 = S3(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        s3 = S3(aws_provider)
         assert len(s3.buckets) == 1
         assert s3.buckets[0].name == bucket_name
         assert (
             s3.buckets[0].arn
-            == f"arn:{audit_info.audited_partition}:s3:::{bucket_name}"
+            == f"arn:{aws_provider.identity.partition}:s3:::{bucket_name}"
         )
         assert s3.buckets[0].acl_grantees[0].display_name == "test"
         assert s3.buckets[0].acl_grantees[0].ID == "test_ID"
@@ -193,13 +193,13 @@ class Test_S3_Service:
             },
         )
         # S3 client for this test class
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        s3 = S3(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        s3 = S3(aws_provider)
         assert len(s3.buckets) == 1
         assert s3.buckets[0].name == bucket_name
         assert (
             s3.buckets[0].arn
-            == f"arn:{audit_info.audited_partition}:s3:::{bucket_name}"
+            == f"arn:{aws_provider.identity.partition}:s3:::{bucket_name}"
         )
         assert s3.buckets[0].logging is True
 
@@ -214,13 +214,13 @@ class Test_S3_Service:
             Bucket=bucket_name,
             Policy=ssl_policy,
         )
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        s3 = S3(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        s3 = S3(aws_provider)
         assert len(s3.buckets) == 1
         assert s3.buckets[0].name == bucket_name
         assert (
             s3.buckets[0].arn
-            == f"arn:{audit_info.audited_partition}:s3:::{bucket_name}"
+            == f"arn:{aws_provider.identity.partition}:s3:::{bucket_name}"
         )
         assert s3.buckets[0].policy == json.loads(ssl_policy)
 
@@ -247,13 +247,13 @@ class Test_S3_Service:
             Bucket=bucket_name, ServerSideEncryptionConfiguration=sse_config
         )
         # S3 client for this test class
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        s3 = S3(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        s3 = S3(aws_provider)
         assert len(s3.buckets) == 1
         assert s3.buckets[0].name == bucket_name
         assert (
             s3.buckets[0].arn
-            == f"arn:{audit_info.audited_partition}:s3:::{bucket_name}"
+            == f"arn:{aws_provider.identity.partition}:s3:::{bucket_name}"
         )
         assert s3.buckets[0].encryption == "aws:kms"
 
@@ -269,13 +269,13 @@ class Test_S3_Service:
         )
 
         # S3 client for this test class
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        s3 = S3(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        s3 = S3(aws_provider)
         assert len(s3.buckets) == 1
         assert s3.buckets[0].name == bucket_name
         assert (
             s3.buckets[0].arn
-            == f"arn:{audit_info.audited_partition}:s3:::{bucket_name}"
+            == f"arn:{aws_provider.identity.partition}:s3:::{bucket_name}"
         )
         assert s3.buckets[0].ownership == "BucketOwnerEnforced"
 
@@ -299,13 +299,13 @@ class Test_S3_Service:
             },
         )
         # S3 client for this test class
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        s3 = S3(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        s3 = S3(aws_provider)
         assert len(s3.buckets) == 1
         assert s3.buckets[0].name == bucket_name
         assert (
             s3.buckets[0].arn
-            == f"arn:{audit_info.audited_partition}:s3:::{bucket_name}"
+            == f"arn:{aws_provider.identity.partition}:s3:::{bucket_name}"
         )
         assert s3.buckets[0].public_access_block.block_public_acls
         assert s3.buckets[0].public_access_block.ignore_public_acls
@@ -329,8 +329,8 @@ class Test_S3_Service:
             },
         )
         # S3 client for this test class
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        s3 = S3(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        s3 = S3(aws_provider)
 
         assert len(s3.buckets) == 1
         assert s3.buckets[0].tags == [
@@ -352,8 +352,8 @@ class Test_S3_Service:
             },
         )
         # S3 client for this test class
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        s3control = S3Control(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        s3control = S3Control(aws_provider)
         assert s3control.account_public_access_block.block_public_acls
         assert s3control.account_public_access_block.ignore_public_acls
         assert s3control.account_public_access_block.block_public_policy
@@ -373,12 +373,12 @@ class Test_S3_Service:
         )
 
         # S3 client for this test class
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        s3 = S3(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        s3 = S3(aws_provider)
         assert len(s3.buckets) == 1
         assert s3.buckets[0].name == bucket_name
         assert (
             s3.buckets[0].arn
-            == f"arn:{audit_info.audited_partition}:s3:::{bucket_name}"
+            == f"arn:{aws_provider.identity.partition}:s3:::{bucket_name}"
         )
         assert s3.buckets[0].object_lock

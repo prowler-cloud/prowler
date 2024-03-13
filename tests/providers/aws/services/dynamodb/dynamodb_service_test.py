@@ -2,10 +2,10 @@ from boto3 import client
 from moto import mock_aws
 
 from prowler.providers.aws.services.dynamodb.dynamodb_service import DAX, DynamoDB
-from tests.providers.aws.audit_info_utils import (
+from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_US_EAST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 
@@ -14,16 +14,16 @@ class Test_DynamoDB_Service:
     @mock_aws
     def test_service(self):
         # Dynamo client for this test class
-        audit_info = set_mocked_aws_audit_info()
-        dynamodb = DynamoDB(audit_info)
+        aws_provider = set_mocked_aws_provider()
+        dynamodb = DynamoDB(aws_provider)
         assert dynamodb.service == "dynamodb"
 
     # Test Dynamo Client
     @mock_aws
     def test_client(self):
         # Dynamo client for this test class
-        audit_info = set_mocked_aws_audit_info()
-        dynamodb = DynamoDB(audit_info)
+        aws_provider = set_mocked_aws_provider()
+        dynamodb = DynamoDB(aws_provider)
         for regional_client in dynamodb.regional_clients.values():
             assert regional_client.__class__.__name__ == "DynamoDB"
 
@@ -31,16 +31,16 @@ class Test_DynamoDB_Service:
     @mock_aws
     def test__get_session__(self):
         # Dynamo client for this test class
-        audit_info = set_mocked_aws_audit_info()
-        dynamodb = DynamoDB(audit_info)
+        aws_provider = set_mocked_aws_provider()
+        dynamodb = DynamoDB(aws_provider)
         assert dynamodb.session.__class__.__name__ == "Session"
 
     # Test Dynamo Session
     @mock_aws
     def test_audited_account(self):
         # Dynamo client for this test class
-        audit_info = set_mocked_aws_audit_info()
-        dynamodb = DynamoDB(audit_info)
+        aws_provider = set_mocked_aws_provider()
+        dynamodb = DynamoDB(aws_provider)
         assert dynamodb.audited_account == AWS_ACCOUNT_NUMBER
 
     # Test DynamoDB List Tables
@@ -74,8 +74,8 @@ class Test_DynamoDB_Service:
             BillingMode="PAY_PER_REQUEST",
         )
         # DynamoDB client for this test class
-        audit_info = set_mocked_aws_audit_info()
-        dynamo = DynamoDB(audit_info)
+        aws_provider = set_mocked_aws_provider()
+        dynamo = DynamoDB(aws_provider)
         assert len(dynamo.tables) == 2
         assert dynamo.tables[0].name == "test1"
         assert dynamo.tables[1].name == "test2"
@@ -104,8 +104,8 @@ class Test_DynamoDB_Service:
             ],
         )["TableDescription"]
         # DynamoDB client for this test class
-        audit_info = set_mocked_aws_audit_info()
-        dynamo = DynamoDB(audit_info)
+        aws_provider = set_mocked_aws_provider()
+        dynamo = DynamoDB(aws_provider)
         assert len(dynamo.tables) == 1
         assert dynamo.tables[0].arn == table["TableArn"]
         assert dynamo.tables[0].name == "test1"
@@ -137,8 +137,8 @@ class Test_DynamoDB_Service:
             PointInTimeRecoverySpecification={"PointInTimeRecoveryEnabled": True},
         )
         # DynamoDB client for this test class
-        audit_info = set_mocked_aws_audit_info()
-        dynamo = DynamoDB(audit_info)
+        aws_provider = set_mocked_aws_provider()
+        dynamo = DynamoDB(aws_provider)
         assert len(dynamo.tables) == 1
         assert dynamo.tables[0].arn == table["TableArn"]
         assert dynamo.tables[0].name == "test1"
@@ -173,8 +173,8 @@ class Test_DynamoDB_Service:
             ],
         )
         # DAX client for this test class
-        audit_info = set_mocked_aws_audit_info()
-        dax = DAX(audit_info)
+        aws_provider = set_mocked_aws_provider()
+        dax = DAX(aws_provider)
         assert len(dax.clusters) == 2
 
         assert dax.clusters[0].name == "daxcluster1"

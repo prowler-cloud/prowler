@@ -4,20 +4,17 @@ from unittest import mock
 
 from moto import mock_aws
 
-from tests.providers.aws.audit_info_utils import (
-    AWS_REGION_US_EAST_1,
-    set_mocked_aws_audit_info,
-)
+from tests.providers.aws.utils import AWS_REGION_US_EAST_1, set_mocked_aws_provider
 
 AWS_ACCOUNT_NUMBER = "123456789012"
 
 
 class Test_iam_user_no_setup_initial_access_key_test:
-    from tests.providers.aws.audit_info_utils import (
+    from tests.providers.aws.utils import (
         AWS_ACCOUNT_ARN,
         AWS_ACCOUNT_NUMBER,
         AWS_REGION_US_EAST_1,
-        set_mocked_aws_audit_info,
+        set_mocked_aws_provider,
     )
 
     @mock_aws
@@ -28,15 +25,15 @@ test_false_access_key_1,arn:aws:iam::123456789012:test_false_access_key_1,2022-0
         csv_reader = DictReader(credential_lines, delimiter=",")
         credential_list = list(csv_reader)
 
-        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.iam.iam_user_no_setup_initial_access_key.iam_user_no_setup_initial_access_key.iam_client",
-            new=IAM(current_audit_info),
+            new=IAM(aws_provider),
         ) as service_client:
             from prowler.providers.aws.services.iam.iam_user_no_setup_initial_access_key.iam_user_no_setup_initial_access_key import (
                 iam_user_no_setup_initial_access_key,
@@ -57,15 +54,15 @@ test_false_access_key_2,arn:aws:iam::123456789012:test_false_access_key_2,2022-0
         csv_reader = DictReader(credential_lines, delimiter=",")
         credential_list = list(csv_reader)
 
-        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.iam.iam_user_no_setup_initial_access_key.iam_user_no_setup_initial_access_key.iam_client",
-            new=IAM(current_audit_info),
+            new=IAM(aws_provider),
         ) as service_client:
             from prowler.providers.aws.services.iam.iam_user_no_setup_initial_access_key.iam_user_no_setup_initial_access_key import (
                 iam_user_no_setup_initial_access_key,
@@ -86,15 +83,15 @@ test_false_both_access_keys,arn:aws:iam::123456789012:test_false_both_access_key
         csv_reader = DictReader(credential_lines, delimiter=",")
         credential_list = list(csv_reader)
 
-        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.iam.iam_user_no_setup_initial_access_key.iam_user_no_setup_initial_access_key.iam_client",
-            new=IAM(current_audit_info),
+            new=IAM(aws_provider),
         ) as service_client:
             from prowler.providers.aws.services.iam.iam_user_no_setup_initial_access_key.iam_user_no_setup_initial_access_key import (
                 iam_user_no_setup_initial_access_key,
@@ -117,15 +114,15 @@ test_pass,arn:aws:iam::123456789012:test_pass,2022-02-17T14:59:38+00:00,not_supp
         csv_reader = DictReader(credential_lines, delimiter=",")
         credential_list = list(csv_reader)
 
-        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         from prowler.providers.aws.services.iam.iam_service import IAM
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.iam.iam_user_no_setup_initial_access_key.iam_user_no_setup_initial_access_key.iam_client",
-            new=IAM(current_audit_info),
+            new=IAM(aws_provider),
         ) as service_client:
             from prowler.providers.aws.services.iam.iam_user_no_setup_initial_access_key.iam_user_no_setup_initial_access_key import (
                 iam_user_no_setup_initial_access_key,

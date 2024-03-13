@@ -193,7 +193,7 @@ def is_muted_in_check(
             muted_regions = muted_check_info.get("Regions")
             muted_resources = muted_check_info.get("Resources")
             muted_tags = muted_check_info.get("Tags", "*")
-            # We need to set the allowlisted_tags if None, "" or [], so the falsy helps
+            # We need to set the muted_tags if None, "" or [], so the falsy helps
             if not muted_tags:
                 muted_tags = "*"
             # If there is a *, it affects to all checks

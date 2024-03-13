@@ -1,10 +1,10 @@
 from unittest import mock
 
 from prowler.providers.aws.services.inspector2.inspector2_service import Inspector
-from tests.providers.aws.audit_info_utils import (
+from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_WEST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 FINDING_ARN = (
@@ -19,10 +19,10 @@ class Test_inspector2_is_enabled:
         awslambda_client = mock.MagicMock
         ecr_client = mock.MagicMock
         ec2_client = mock.MagicMock
-        ec2_client.audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
-        ecr_client.audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
-        awslambda_client.audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
-        inspector2_client.audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
+        ec2_client.provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        ecr_client.provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        awslambda_client.provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        inspector2_client.provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         inspector2_client.audited_account = AWS_ACCOUNT_NUMBER
         inspector2_client.audited_account_arn = (
             f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
@@ -37,11 +37,11 @@ class Test_inspector2_is_enabled:
                 findings=[],
             )
         ]
-        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=aws_provider,
         ):
             with mock.patch(
                 "prowler.providers.aws.services.inspector2.inspector2_is_enabled.inspector2_is_enabled.inspector2_client",
@@ -68,7 +68,7 @@ class Test_inspector2_is_enabled:
     def test_enabled_no_finding(self):
         # Mock the inspector2 client
         inspector2_client = mock.MagicMock
-        inspector2_client.audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
+        inspector2_client.provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         inspector2_client.audited_account = AWS_ACCOUNT_NUMBER
         inspector2_client.audited_account_arn = (
             f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
@@ -83,11 +83,11 @@ class Test_inspector2_is_enabled:
                 findings=[],
             )
         ]
-        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=aws_provider,
         ):
             with mock.patch(
                 "prowler.providers.aws.services.inspector2.inspector2_is_enabled.inspector2_is_enabled.inspector2_client",

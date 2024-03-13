@@ -6,16 +6,13 @@ from boto3 import client
 from moto import mock_aws
 
 from prowler.providers.aws.services.iam.iam_service import IAM
-from tests.providers.aws.audit_info_utils import (
-    AWS_REGION_US_EAST_1,
-    set_mocked_aws_audit_info,
-)
+from tests.providers.aws.utils import AWS_REGION_US_EAST_1, set_mocked_aws_provider
 
 
 class Test_iam_securityaudit_role_created:
     @mock_aws(config={"iam": {"load_aws_managed_policies": True}})
     def test_securityaudit_role_created(self):
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         iam = client("iam")
         role_name = "test_securityaudit_role_created"
         assume_role_policy_document = {
@@ -37,12 +34,12 @@ class Test_iam_securityaudit_role_created:
         )
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=aws_provider,
         ):
             with mock.patch(
                 "prowler.providers.aws.services.iam.iam_securityaudit_role_created.iam_securityaudit_role_created.iam_client",
-                new=IAM(audit_info),
+                new=IAM(aws_provider),
             ):
                 # Test Check
                 from prowler.providers.aws.services.iam.iam_securityaudit_role_created.iam_securityaudit_role_created import (
@@ -62,15 +59,15 @@ class Test_iam_securityaudit_role_created:
 
     @mock_aws(config={"iam": {"load_aws_managed_policies": True}})
     def test_no_securityaudit_role_created(self):
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=aws_provider,
         ):
             with mock.patch(
                 "prowler.providers.aws.services.iam.iam_securityaudit_role_created.iam_securityaudit_role_created.iam_client",
-                new=IAM(audit_info),
+                new=IAM(aws_provider),
             ):
                 # Test Check
                 from prowler.providers.aws.services.iam.iam_securityaudit_role_created.iam_securityaudit_role_created import (

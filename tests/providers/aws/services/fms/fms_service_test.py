@@ -4,7 +4,7 @@ from unittest.mock import patch
 import botocore
 
 from prowler.providers.aws.services.fms.fms_service import FMS
-from tests.providers.aws.audit_info_utils import set_mocked_aws_audit_info
+from tests.providers.aws.utils import set_mocked_aws_provider
 
 POLICY_ARN = "arn:aws:fms:us-east-1:123456789012:policy/MyFMSManagedPolicy"
 POLICY_ID = "12345678-1234-1234-1234-123456789012"
@@ -62,18 +62,18 @@ def mock_make_api_call(self, operation_name, kwargs):
 @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
 class Test_FMS_Service:
     def test__get_client__(self):
-        audit_info = set_mocked_aws_audit_info()
-        fms = FMS(audit_info)
+        aws_provider = set_mocked_aws_provider()
+        fms = FMS(aws_provider)
         assert fms.client.__class__.__name__ == "FMS"
 
     def test__get_service__(self):
-        audit_info = set_mocked_aws_audit_info()
-        fms = FMS(audit_info)
+        aws_provider = set_mocked_aws_provider()
+        fms = FMS(aws_provider)
         assert fms.service == "fms"
 
     def test__list_policies__(self):
-        audit_info = set_mocked_aws_audit_info()
-        fms = FMS(audit_info)
+        aws_provider = set_mocked_aws_provider()
+        fms = FMS(aws_provider)
         assert len(fms.fms_policies) == 1
         assert fms.fms_admin_account is True
         assert fms.fms_policies[0].arn == POLICY_ARN
@@ -88,8 +88,8 @@ class Test_FMS_Service:
         )
 
     def test__list_compliance_status__(self):
-        audit_info = set_mocked_aws_audit_info()
-        fms = FMS(audit_info)
+        aws_provider = set_mocked_aws_provider()
+        fms = FMS(aws_provider)
         assert len(fms.fms_policies) == 1
         assert fms.fms_policies[0].compliance_status[0].status == "COMPLIANT"
         assert fms.fms_policies[0].compliance_status[0].account_id == "123456789012"

@@ -8,10 +8,7 @@ from prowler.providers.aws.lib.organizations.organizations import (
     get_organizations_metadata,
     parse_organizations_metadata,
 )
-from tests.providers.aws.audit_info_utils import (
-    AWS_ACCOUNT_NUMBER,
-    AWS_REGION_US_EAST_1,
-)
+from tests.providers.aws.utils import AWS_ACCOUNT_NUMBER, AWS_REGION_US_EAST_1
 
 
 class Test_AWS_Organizations:

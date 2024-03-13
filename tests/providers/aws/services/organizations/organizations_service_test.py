@@ -6,10 +6,7 @@ from moto import mock_aws
 from prowler.providers.aws.services.organizations.organizations_service import (
     Organizations,
 )
-from tests.providers.aws.audit_info_utils import (
-    AWS_REGION_EU_WEST_1,
-    set_mocked_aws_audit_info,
-)
+from tests.providers.aws.utils import AWS_REGION_EU_WEST_1, set_mocked_aws_provider
 
 
 def scp_restrict_regions_with_deny():
@@ -19,8 +16,8 @@ def scp_restrict_regions_with_deny():
 class Test_Organizations_Service:
     @mock_aws
     def test_service(self):
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
-        organizations = Organizations(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        organizations = Organizations(aws_provider)
         assert organizations.service == "organizations"
 
     @mock_aws
@@ -29,8 +26,8 @@ class Test_Organizations_Service:
         conn = client("organizations", region_name=AWS_REGION_EU_WEST_1)
         response = conn.create_organization()
         # Mock
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
-        organizations = Organizations(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        organizations = Organizations(aws_provider)
         # Tests
         assert len(organizations.organizations) == 1
         assert organizations.organizations[0].arn == response["Organization"]["Arn"]
@@ -54,8 +51,8 @@ class Test_Organizations_Service:
             Type="SERVICE_CONTROL_POLICY",
         )
         # Mock
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
-        organizations = Organizations(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        organizations = Organizations(aws_provider)
         # Tests
         for policy in organizations.policies:
             if policy.arn == response["Policy"]["PolicySummary"]["Arn"]:

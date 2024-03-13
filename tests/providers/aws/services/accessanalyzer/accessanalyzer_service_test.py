@@ -5,10 +5,10 @@ import botocore
 from prowler.providers.aws.services.accessanalyzer.accessanalyzer_service import (
     AccessAnalyzer,
 )
-from tests.providers.aws.audit_info_utils import (
+from tests.providers.aws.utils import (
     AWS_REGION_EU_WEST_1,
     AWS_REGION_US_EAST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 # Mocking Access Analyzer Calls
@@ -54,8 +54,8 @@ def mock_make_api_call(self, operation_name, kwarg):
     return make_api_call(self, operation_name, kwarg)
 
 
-def mock_generate_regional_clients(service, audit_info):
-    regional_client = audit_info.audit_session.client(
+def mock_generate_regional_clients(provider, service):
+    regional_client = provider._session.current_session.client(
         service, region_name=AWS_REGION_EU_WEST_1
     )
     regional_client.region = AWS_REGION_EU_WEST_1
@@ -65,14 +65,14 @@ def mock_generate_regional_clients(service, audit_info):
 # Patch every AWS call using Boto3 and generate_regional_clients to have 1 client
 @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
 @patch(
-    "prowler.providers.aws.lib.service.service.generate_regional_clients",
+    "prowler.providers.aws.aws_provider.AwsProvider.generate_regional_clients",
     new=mock_generate_regional_clients,
 )
 class Test_AccessAnalyzer_Service:
     # Test AccessAnalyzer Client
     def test__get_client__(self):
         access_analyzer = AccessAnalyzer(
-            set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
+            set_mocked_aws_provider([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
         )
         assert (
             access_analyzer.regional_clients[AWS_REGION_EU_WEST_1].__class__.__name__
@@ -82,20 +82,20 @@ class Test_AccessAnalyzer_Service:
     # Test AccessAnalyzer Session
     def test__get_session__(self):
         access_analyzer = AccessAnalyzer(
-            set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
+            set_mocked_aws_provider([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
         )
         assert access_analyzer.session.__class__.__name__ == "Session"
 
     # Test AccessAnalyzer Service
     def test__get_service__(self):
         access_analyzer = AccessAnalyzer(
-            set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
+            set_mocked_aws_provider([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
         )
         assert access_analyzer.service == "accessanalyzer"
 
     def test__list_analyzers__(self):
         access_analyzer = AccessAnalyzer(
-            set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
+            set_mocked_aws_provider([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
         )
         assert len(access_analyzer.analyzers) == 1
         assert access_analyzer.analyzers[0].arn == "ARN"
@@ -107,7 +107,7 @@ class Test_AccessAnalyzer_Service:
 
     def test__list_findings__(self):
         access_analyzer = AccessAnalyzer(
-            set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
+            set_mocked_aws_provider([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
         )
         assert len(access_analyzer.analyzers) == 1
         assert len(access_analyzer.analyzers[0].findings) == 1

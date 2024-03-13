@@ -13,7 +13,7 @@ from prowler.providers.aws.aws_provider import (
     get_global_region,
 )
 from prowler.providers.aws.lib.audit_info.models import AWS_Assume_Role
-from tests.providers.aws.audit_info_utils import (
+from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_CHINA_PARTITION,
     AWS_GOV_CLOUD_PARTITION,

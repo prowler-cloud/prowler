@@ -10,10 +10,10 @@ from moto import mock_aws
 from prowler.providers.aws.services.cloudformation.cloudformation_service import (
     CloudFormation,
 )
-from tests.providers.aws.audit_info_utils import (
+from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_WEST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 # Dummy CloudFormation Template
@@ -119,8 +119,8 @@ def mock_make_api_call(self, operation_name, kwarg):
 
 
 # Mock generate_regional_clients()
-def mock_generate_regional_clients(service, audit_info):
-    regional_client = audit_info.audit_session.client(
+def mock_generate_regional_clients(provider, service):
+    regional_client = provider._session.current_session.client(
         service, region_name=AWS_REGION_EU_WEST_1
     )
     regional_client.region = AWS_REGION_EU_WEST_1
@@ -130,16 +130,14 @@ def mock_generate_regional_clients(service, audit_info):
 # Patch every AWS call using Boto3 and generate_regional_clients to have 1 client
 @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
 @patch(
-    "prowler.providers.aws.lib.service.service.generate_regional_clients",
+    "prowler.providers.aws.aws_provider.AwsProvider.generate_regional_clients",
     new=mock_generate_regional_clients,
 )
 class Test_CloudFormation_Service:
     # Test CloudFormation Client
     @mock_aws
     def test__get_client__(self):
-        cloudformation = CloudFormation(
-            set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
-        )
+        cloudformation = CloudFormation(set_mocked_aws_provider([AWS_REGION_EU_WEST_1]))
         assert (
             cloudformation.regional_clients[AWS_REGION_EU_WEST_1].__class__.__name__
             == "CloudFormation"
@@ -148,9 +146,7 @@ class Test_CloudFormation_Service:
     # Test CloudFormation Service
     @mock_aws
     def test__get_service__(self):
-        cloudformation = CloudFormation(
-            set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
-        )
+        cloudformation = CloudFormation(set_mocked_aws_provider([AWS_REGION_EU_WEST_1]))
         assert (
             cloudformation.regional_clients[AWS_REGION_EU_WEST_1].__class__.__name__
             == "CloudFormation"
@@ -159,9 +155,7 @@ class Test_CloudFormation_Service:
     # Test CloudFormation Session
     @mock_aws
     def test__get_session__(self):
-        cloudformation = CloudFormation(
-            set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
-        )
+        cloudformation = CloudFormation(set_mocked_aws_provider([AWS_REGION_EU_WEST_1]))
         assert cloudformation.session.__class__.__name__ == "Session"
 
     @mock_aws
@@ -187,9 +181,7 @@ class Test_CloudFormation_Service:
             ],
         )
 
-        cloudformation = CloudFormation(
-            set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
-        )
+        cloudformation = CloudFormation(set_mocked_aws_provider([AWS_REGION_EU_WEST_1]))
         assert len(cloudformation.stacks) == 1
         assert cloudformation.stacks[0].arn == stack_arn["StackId"]
         assert cloudformation.stacks[0].name == "Test-Stack"

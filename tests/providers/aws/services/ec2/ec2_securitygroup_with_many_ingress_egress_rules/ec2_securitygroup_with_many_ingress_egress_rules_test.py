@@ -3,10 +3,10 @@ from unittest import mock
 from boto3 import client
 from moto import mock_aws
 
-from tests.providers.aws.audit_info_utils import (
+from tests.providers.aws.utils import (
     AWS_REGION_EU_WEST_1,
     AWS_REGION_US_EAST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 
@@ -19,17 +19,17 @@ class Test_ec2_securitygroup_with_many_ingress_egress_rules:
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
-        current_audit_info = set_mocked_aws_audit_info(
+        aws_provider = set_mocked_aws_provider(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
-        current_audit_info.audit_config = {"max_security_group_rules": 50}
+        aws_provider._audit_config = {"max_security_group_rules": 50}
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_securitygroup_with_many_ingress_egress_rules.ec2_securitygroup_with_many_ingress_egress_rules.ec2_client",
-            new=EC2(current_audit_info),
+            new=EC2(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.ec2.ec2_securitygroup_with_many_ingress_egress_rules.ec2_securitygroup_with_many_ingress_egress_rules import (
@@ -71,17 +71,17 @@ class Test_ec2_securitygroup_with_many_ingress_egress_rules:
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
-        current_audit_info = set_mocked_aws_audit_info(
+        aws_provider = set_mocked_aws_provider(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
-        current_audit_info.audit_config = {"max_security_group_rules": 50}
+        aws_provider._audit_config = {"max_security_group_rules": 50}
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_securitygroup_with_many_ingress_egress_rules.ec2_securitygroup_with_many_ingress_egress_rules.ec2_client",
-            new=EC2(current_audit_info),
+            new=EC2(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.ec2.ec2_securitygroup_with_many_ingress_egress_rules.ec2_securitygroup_with_many_ingress_egress_rules import (
@@ -104,7 +104,7 @@ class Test_ec2_securitygroup_with_many_ingress_egress_rules:
                     )
                     assert (
                         sg.resource_arn
-                        == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION_US_EAST_1}:{current_audit_info.audited_account}:security-group/{default_sg_id}"
+                        == f"arn:{aws_provider.identity.partition}:ec2:{AWS_REGION_US_EAST_1}:{aws_provider.identity.account}:security-group/{default_sg_id}"
                     )
                     assert sg.resource_details == default_sg_name
                     assert sg.resource_tags == []
@@ -133,17 +133,17 @@ class Test_ec2_securitygroup_with_many_ingress_egress_rules:
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
-        current_audit_info = set_mocked_aws_audit_info(
+        aws_provider = set_mocked_aws_provider(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
-        current_audit_info.audit_config = {"max_security_group_rules": 50}
+        aws_provider._audit_config = {"max_security_group_rules": 50}
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_securitygroup_with_many_ingress_egress_rules.ec2_securitygroup_with_many_ingress_egress_rules.ec2_client",
-            new=EC2(current_audit_info),
+            new=EC2(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.ec2.ec2_securitygroup_with_many_ingress_egress_rules.ec2_securitygroup_with_many_ingress_egress_rules import (
@@ -166,7 +166,7 @@ class Test_ec2_securitygroup_with_many_ingress_egress_rules:
                     )
                     assert (
                         sg.resource_arn
-                        == f"arn:{current_audit_info.audited_partition}:ec2:{AWS_REGION_US_EAST_1}:{current_audit_info.audited_account}:security-group/{default_sg_id}"
+                        == f"arn:{aws_provider.identity.partition}:ec2:{AWS_REGION_US_EAST_1}:{aws_provider.identity.account}:security-group/{default_sg_id}"
                     )
                     assert sg.resource_details == default_sg_name
                     assert sg.resource_tags == []

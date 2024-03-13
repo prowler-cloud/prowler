@@ -4,10 +4,7 @@ from prowler.providers.aws.services.fms.fms_service import (
     Policy,
     PolicyAccountComplianceStatus,
 )
-from tests.providers.aws.audit_info_utils import (
-    AWS_ACCOUNT_NUMBER,
-    AWS_REGION_US_EAST_1,
-)
+from tests.providers.aws.utils import AWS_ACCOUNT_NUMBER, AWS_REGION_US_EAST_1
 
 
 class Test_fms_policy_compliant:

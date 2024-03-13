@@ -15,10 +15,10 @@ from prowler.config.config import (
 )
 from prowler.lib.logger import logger
 from prowler.providers.aws.lib.arn.models import get_arn_resource_type
-from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.aws.lib.s3.s3 import send_to_s3_bucket
 
 
+# TODO(Audit_Info): use provider here
 def quick_inventory(audit_info: AWS_Audit_Info, args):
     resources = []
     global_resources = []
@@ -209,6 +209,7 @@ def create_inventory_table(resources: list, resources_in_region: dict) -> dict:
     return inventory_table
 
 
+# TODO(Audit_Info): use provider here
 def create_output(resources: list, audit_info: AWS_Audit_Info, args):
     json_output = []
     # Check if custom output filename was input, if not, set the default
@@ -302,6 +303,7 @@ def create_output(resources: list, audit_info: AWS_Audit_Info, args):
             )
 
 
+# TODO(Audit_Info): use provider here
 def get_regional_buckets(audit_info: AWS_Audit_Info, region: str) -> list:
     regional_buckets = []
     s3_client = audit_info.audit_session.client("s3", region_name=region)

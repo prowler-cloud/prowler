@@ -4,12 +4,12 @@ from mock import patch
 from moto import mock_aws
 
 from prowler.providers.aws.services.neptune.neptune_service import Cluster, Neptune
-from tests.providers.aws.audit_info_utils import (
+from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_US_EAST_1,
     AWS_REGION_US_EAST_1_AZA,
     AWS_REGION_US_EAST_1_AZB,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 SUBNET_GROUP_NAME = "default"
@@ -69,8 +69,8 @@ def mock_make_api_call(self, operation_name, kwargs):
     return make_api_call(self, operation_name, kwargs)
 
 
-def mock_generate_regional_clients(service, audit_info):
-    regional_client = audit_info.audit_session.client(
+def mock_generate_regional_clients(provider, service):
+    regional_client = provider._session.current_session.client(
         service, region_name=AWS_REGION_US_EAST_1
     )
     regional_client.region = AWS_REGION_US_EAST_1
@@ -78,7 +78,7 @@ def mock_generate_regional_clients(service, audit_info):
 
 
 @patch(
-    "prowler.providers.aws.lib.service.service.generate_regional_clients",
+    "prowler.providers.aws.aws_provider.AwsProvider.generate_regional_clients",
     new=mock_generate_regional_clients,
 )
 # Patch every AWS call using Boto3
@@ -87,29 +87,29 @@ class Test_Neptune_Service:
     # Test Neptune Service
     @mock_aws
     def test_service(self):
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        neptune = Neptune(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        neptune = Neptune(aws_provider)
         assert neptune.service == "neptune"
 
     # Test Neptune Client]
     @mock_aws
     def test_client(self):
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        neptune = Neptune(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        neptune = Neptune(aws_provider)
         assert neptune.client.__class__.__name__ == "Neptune"
 
     # Test Neptune Session
     @mock_aws
     def test__get_session__(self):
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        neptune = Neptune(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        neptune = Neptune(aws_provider)
         assert neptune.session.__class__.__name__ == "Session"
 
     # Test Neptune Session
     @mock_aws
     def test_audited_account(self):
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        neptune = Neptune(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        neptune = Neptune(aws_provider)
         assert neptune.audited_account == AWS_ACCOUNT_NUMBER
 
     # Test Neptune Get Neptune Contacts
@@ -134,8 +134,8 @@ class Test_Neptune_Service:
         cluster_arn = cluster["DBClusterArn"]
         cluster_id = cluster["DbClusterResourceId"]
 
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        neptune = Neptune(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        neptune = Neptune(aws_provider)
 
         assert len(neptune.clusters) == 1
         assert neptune.clusters[cluster_arn]

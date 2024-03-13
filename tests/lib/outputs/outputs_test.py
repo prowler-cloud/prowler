@@ -59,7 +59,6 @@ from prowler.lib.outputs.models import (
 )
 from prowler.lib.outputs.outputs import extract_findings_statistics, set_report_color
 from prowler.lib.utils.utils import hash_sha512, open_file
-from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
 from prowler.providers.common.models import Audit_Metadata
 
 AWS_ACCOUNT_ID = "123456789012"
@@ -69,6 +68,7 @@ class Test_Outputs:
     def test_fill_file_descriptors(self):
         audited_account = AWS_ACCOUNT_ID
         output_directory = f"{os.path.dirname(os.path.realpath(__file__))}"
+        # TODO(Audit_Info): use provider here
         audit_info = AWS_Audit_Info(
             session_config=None,
             original_session=None,

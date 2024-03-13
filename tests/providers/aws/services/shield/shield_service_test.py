@@ -2,10 +2,10 @@ import botocore
 from mock import patch
 
 from prowler.providers.aws.services.shield.shield_service import Shield
-from tests.providers.aws.audit_info_utils import (
+from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_WEST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 # Mocking Access Analyzer Calls
@@ -36,34 +36,34 @@ class Test_Shield_Service:
     # Test Shield Service
     def test_service(self):
         # Shield client for this test class
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
-        shield = Shield(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        shield = Shield(aws_provider)
         assert shield.service == "shield"
 
     # Test Shield Client
     def test_client(self):
         # Shield client for this test class
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
-        shield = Shield(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        shield = Shield(aws_provider)
         assert shield.client.__class__.__name__ == "Shield"
 
     # Test Shield Session
     def test__get_session__(self):
         # Shield client for this test class
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
-        shield = Shield(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        shield = Shield(aws_provider)
         assert shield.session.__class__.__name__ == "Session"
 
     def test__get_subscription_state__(self):
         # Shield client for this test class
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
-        shield = Shield(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        shield = Shield(aws_provider)
         assert shield.enabled
 
     def test__list_protections__(self):
         # Shield client for this test class
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
-        shield = Shield(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        shield = Shield(aws_provider)
         protection_id = "a1b2c3d4-5678-90ab-cdef-EXAMPLE11111"
         protection_name = "Protection for CloudFront distribution"
         cloudfront_distribution_id = "E198WC25FXOWY8"

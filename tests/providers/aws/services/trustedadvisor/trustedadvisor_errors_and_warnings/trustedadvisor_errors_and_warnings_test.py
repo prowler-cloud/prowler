@@ -4,7 +4,7 @@ from prowler.providers.aws.services.trustedadvisor.trustedadvisor_service import
     Check,
     PremiumSupport,
 )
-from tests.providers.aws.audit_info_utils import (
+from tests.providers.aws.utils import (
     AWS_ACCOUNT_ARN,
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_US_EAST_1,

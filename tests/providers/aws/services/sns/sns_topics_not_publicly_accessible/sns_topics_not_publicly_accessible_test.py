@@ -2,10 +2,7 @@ from unittest import mock
 from uuid import uuid4
 
 from prowler.providers.aws.services.sns.sns_service import Topic
-from tests.providers.aws.audit_info_utils import (
-    AWS_ACCOUNT_NUMBER,
-    AWS_REGION_EU_WEST_1,
-)
+from tests.providers.aws.utils import AWS_ACCOUNT_NUMBER, AWS_REGION_EU_WEST_1
 
 kms_key_id = str(uuid4())
 topic_name = "test-topic"

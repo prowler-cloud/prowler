@@ -3,11 +3,11 @@ from unittest import mock
 from boto3 import client
 from moto import mock_aws
 
-from tests.providers.aws.audit_info_utils import (
+from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_WEST_1,
     AWS_REGION_US_EAST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 
@@ -22,13 +22,13 @@ class Test_cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk
             Logs,
         )
 
-        current_audit_info = set_mocked_aws_audit_info(
+        aws_provider = set_mocked_aws_provider(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
 
         from prowler.providers.common.models import Audit_Metadata
 
-        current_audit_info.audit_metadata = Audit_Metadata(
+        aws_provider.audit_metadata = Audit_Metadata(
             services_scanned=0,
             # We need to set this check to call __describe_log_groups__
             expected_checks=["cloudwatch_log_group_no_secrets_in_logs"],
@@ -37,17 +37,17 @@ class Test_cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk
         )
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk.cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk.logs_client",
-            new=Logs(current_audit_info),
+            new=Logs(aws_provider),
         ), mock.patch(
             "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk.cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk.cloudwatch_client",
-            new=CloudWatch(current_audit_info),
+            new=CloudWatch(aws_provider),
         ), mock.patch(
             "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk.cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk.cloudtrail_client",
-            new=Cloudtrail(current_audit_info),
+            new=Cloudtrail(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk.cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk import (
@@ -87,13 +87,13 @@ class Test_cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk
             Logs,
         )
 
-        current_audit_info = set_mocked_aws_audit_info(
+        aws_provider = set_mocked_aws_provider(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
 
         from prowler.providers.common.models import Audit_Metadata
 
-        current_audit_info.audit_metadata = Audit_Metadata(
+        aws_provider.audit_metadata = Audit_Metadata(
             services_scanned=0,
             # We need to set this check to call __describe_log_groups__
             expected_checks=["cloudwatch_log_group_no_secrets_in_logs"],
@@ -102,17 +102,17 @@ class Test_cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk
         )
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk.cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk.logs_client",
-            new=Logs(current_audit_info),
+            new=Logs(aws_provider),
         ), mock.patch(
             "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk.cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk.cloudwatch_client",
-            new=CloudWatch(current_audit_info),
+            new=CloudWatch(aws_provider),
         ), mock.patch(
             "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk.cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk.cloudtrail_client",
-            new=Cloudtrail(current_audit_info),
+            new=Cloudtrail(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk.cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk import (
@@ -158,13 +158,13 @@ class Test_cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk
             Logs,
         )
 
-        current_audit_info = set_mocked_aws_audit_info(
+        aws_provider = set_mocked_aws_provider(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
 
         from prowler.providers.common.models import Audit_Metadata
 
-        current_audit_info.audit_metadata = Audit_Metadata(
+        aws_provider.audit_metadata = Audit_Metadata(
             services_scanned=0,
             # We need to set this check to call __describe_log_groups__
             expected_checks=["cloudwatch_log_group_no_secrets_in_logs"],
@@ -173,17 +173,17 @@ class Test_cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk
         )
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk.cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk.logs_client",
-            new=Logs(current_audit_info),
+            new=Logs(aws_provider),
         ), mock.patch(
             "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk.cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk.cloudwatch_client",
-            new=CloudWatch(current_audit_info),
+            new=CloudWatch(aws_provider),
         ), mock.patch(
             "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk.cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk.cloudtrail_client",
-            new=Cloudtrail(current_audit_info),
+            new=Cloudtrail(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk.cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk import (
@@ -241,13 +241,13 @@ class Test_cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk
             Logs,
         )
 
-        current_audit_info = set_mocked_aws_audit_info(
+        aws_provider = set_mocked_aws_provider(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
 
         from prowler.providers.common.models import Audit_Metadata
 
-        current_audit_info.audit_metadata = Audit_Metadata(
+        aws_provider.audit_metadata = Audit_Metadata(
             services_scanned=0,
             # We need to set this check to call __describe_log_groups__
             expected_checks=["cloudwatch_log_group_no_secrets_in_logs"],
@@ -256,17 +256,17 @@ class Test_cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk
         )
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk.cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk.logs_client",
-            new=Logs(current_audit_info),
+            new=Logs(aws_provider),
         ), mock.patch(
             "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk.cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk.cloudwatch_client",
-            new=CloudWatch(current_audit_info),
+            new=CloudWatch(aws_provider),
         ), mock.patch(
             "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk.cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk.cloudtrail_client",
-            new=Cloudtrail(current_audit_info),
+            new=Cloudtrail(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk.cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk import (
@@ -336,13 +336,13 @@ class Test_cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk
             Logs,
         )
 
-        current_audit_info = set_mocked_aws_audit_info(
+        aws_provider = set_mocked_aws_provider(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
 
         from prowler.providers.common.models import Audit_Metadata
 
-        current_audit_info.audit_metadata = Audit_Metadata(
+        aws_provider.audit_metadata = Audit_Metadata(
             services_scanned=0,
             # We need to set this check to call __describe_log_groups__
             expected_checks=["cloudwatch_log_group_no_secrets_in_logs"],
@@ -351,17 +351,17 @@ class Test_cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk
         )
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk.cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk.logs_client",
-            new=Logs(current_audit_info),
+            new=Logs(aws_provider),
         ), mock.patch(
             "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk.cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk.cloudwatch_client",
-            new=CloudWatch(current_audit_info),
+            new=CloudWatch(aws_provider),
         ), mock.patch(
             "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk.cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk.cloudtrail_client",
-            new=Cloudtrail(current_audit_info),
+            new=Cloudtrail(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk.cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk import (
@@ -431,13 +431,13 @@ class Test_cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk
             Logs,
         )
 
-        current_audit_info = set_mocked_aws_audit_info(
+        aws_provider = set_mocked_aws_provider(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
 
         from prowler.providers.common.models import Audit_Metadata
 
-        current_audit_info.audit_metadata = Audit_Metadata(
+        aws_provider.audit_metadata = Audit_Metadata(
             services_scanned=0,
             # We need to set this check to call __describe_log_groups__
             expected_checks=["cloudwatch_log_group_no_secrets_in_logs"],
@@ -446,17 +446,17 @@ class Test_cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk
         )
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk.cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk.logs_client",
-            new=Logs(current_audit_info),
+            new=Logs(aws_provider),
         ), mock.patch(
             "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk.cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk.cloudwatch_client",
-            new=CloudWatch(current_audit_info),
+            new=CloudWatch(aws_provider),
         ), mock.patch(
             "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk.cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk.cloudtrail_client",
-            new=Cloudtrail(current_audit_info),
+            new=Cloudtrail(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk.cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk import (
@@ -526,13 +526,13 @@ class Test_cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk
             Logs,
         )
 
-        current_audit_info = set_mocked_aws_audit_info(
+        aws_provider = set_mocked_aws_provider(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
 
         from prowler.providers.common.models import Audit_Metadata
 
-        current_audit_info.audit_metadata = Audit_Metadata(
+        aws_provider.audit_metadata = Audit_Metadata(
             services_scanned=0,
             # We need to set this check to call __describe_log_groups__
             expected_checks=["cloudwatch_log_group_no_secrets_in_logs"],
@@ -541,17 +541,17 @@ class Test_cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk
         )
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk.cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk.logs_client",
-            new=Logs(current_audit_info),
+            new=Logs(aws_provider),
         ), mock.patch(
             "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk.cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk.cloudwatch_client",
-            new=CloudWatch(current_audit_info),
+            new=CloudWatch(aws_provider),
         ), mock.patch(
             "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk.cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk.cloudtrail_client",
-            new=Cloudtrail(current_audit_info),
+            new=Cloudtrail(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk.cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk import (

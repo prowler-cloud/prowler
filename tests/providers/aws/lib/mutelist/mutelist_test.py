@@ -13,7 +13,7 @@ from prowler.providers.aws.lib.mutelist.mutelist import (
     mutelist_findings,
     parse_mutelist_file,
 )
-from tests.providers.aws.audit_info_utils import (
+from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_CENTRAL_1,
     AWS_REGION_EU_SOUTH_3,
@@ -23,7 +23,7 @@ from tests.providers.aws.audit_info_utils import (
 )
 
 
-class Test_Allowlist:
+class TestMutelist:
     # Test S3 mutelist
     @mock_aws
     def test_s3_mutelist(self):
@@ -40,7 +40,9 @@ class Test_Allowlist:
 
         with open("tests/providers/aws/lib/mutelist/fixtures/mutelist.yaml") as f:
             assert yaml.safe_load(f)["Mute List"] == parse_mutelist_file(
-                audit_info, "s3://test-mutelist/mutelist.yaml"
+                audit_info.session.current_session,
+                audit_info.identity.account,
+                "s3://test-mutelist/mutelist.yaml",
             )
 
     # Test DynamoDB mutelist
@@ -78,7 +80,8 @@ class Test_Allowlist:
         assert (
             "keyword"
             in parse_mutelist_file(
-                audit_info,
+                audit_info.session.current_session,
+                audit_info.identity.account,
                 "arn:aws:dynamodb:"
                 + AWS_REGION_US_EAST_1
                 + ":"
@@ -123,7 +126,8 @@ class Test_Allowlist:
         assert (
             "environment=dev"
             in parse_mutelist_file(
-                audit_info,
+                audit_info.session.current_session,
+                audit_info.identity.account,
                 "arn:aws:dynamodb:"
                 + AWS_REGION_US_EAST_1
                 + ":"
@@ -133,9 +137,8 @@ class Test_Allowlist:
             )["Accounts"]["*"]["Checks"]["*"]["Tags"]
         )
 
-    # Allowlist tests
     def test_mutelist_findings_only_wildcard(self):
-        # Allowlist example
+
         mutelist = {
             "Accounts": {
                 "*": {
@@ -166,7 +169,7 @@ class Test_Allowlist:
         assert muted_findings[0].status == "MUTED"
 
     def test_mutelist_all_exceptions_empty(self):
-        # Allowlist example
+
         mutelist = {
             "Accounts": {
                 "*": {
@@ -201,7 +204,7 @@ class Test_Allowlist:
 
         muted_findings = mutelist_findings(mutelist, AWS_ACCOUNT_NUMBER, check_findings)
         assert len(muted_findings) == 1
-        assert muted_findings[0].status == "WARNING"
+        assert muted_findings[0].status == "MUTED"
 
     def test_is_muted_with_everything_excepted(self):
         mutelist = {
@@ -291,7 +294,7 @@ class Test_Allowlist:
         )
 
     def test_is_muted(self):
-        # Allowlist example
+
         mutelist = {
             "Accounts": {
                 "*": {
@@ -509,7 +512,7 @@ class Test_Allowlist:
         )
 
     def test_is_muted_all_and_single_account_with_different_resources(self):
-        # Allowlist example
+
         mutelist = {
             "Accounts": {
                 "*": {
@@ -579,7 +582,7 @@ class Test_Allowlist:
     def test_is_muted_all_and_single_account_with_different_resources_and_exceptions(
         self,
     ):
-        # Allowlist example
+
         mutelist = {
             "Accounts": {
                 "*": {
@@ -931,7 +934,7 @@ class Test_Allowlist:
         )
 
     def test_is_muted_specific_account_with_other_account_excepted(self):
-        # Allowlist example
+
         mutelist = {
             "Accounts": {
                 AWS_ACCOUNT_NUMBER: {
@@ -966,7 +969,7 @@ class Test_Allowlist:
         )
 
     def test_is_muted_complex_mutelist(self):
-        # Allowlist example
+
         mutelist = {
             "Accounts": {
                 "*": {
@@ -1110,7 +1113,7 @@ class Test_Allowlist:
         )
 
     def test_is_excepted_only_in_account(self):
-        # Allowlist example
+
         exceptions = {
             "Accounts": [AWS_ACCOUNT_NUMBER],
             "Regions": [],
@@ -1127,7 +1130,7 @@ class Test_Allowlist:
         )
 
     def test_is_excepted_only_in_region(self):
-        # Allowlist example
+
         exceptions = {
             "Accounts": [],
             "Regions": [AWS_REGION_EU_CENTRAL_1, AWS_REGION_EU_SOUTH_3],
@@ -1144,7 +1147,7 @@ class Test_Allowlist:
         )
 
     def test_is_excepted_only_in_resources(self):
-        # Allowlist example
+
         exceptions = {
             "Accounts": [],
             "Regions": [],
@@ -1161,7 +1164,7 @@ class Test_Allowlist:
         )
 
     def test_is_excepted_only_in_tags(self):
-        # Allowlist example
+
         exceptions = {
             "Accounts": [],
             "Regions": [],
@@ -1178,7 +1181,7 @@ class Test_Allowlist:
         )
 
     def test_is_excepted_in_account_and_tags(self):
-        # Allowlist example
+
         exceptions = {
             "Accounts": [AWS_ACCOUNT_NUMBER],
             "Regions": [],

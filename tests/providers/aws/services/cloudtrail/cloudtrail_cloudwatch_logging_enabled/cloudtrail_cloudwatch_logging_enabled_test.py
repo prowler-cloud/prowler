@@ -5,17 +5,17 @@ from unittest import mock
 from boto3 import client
 from moto import mock_aws
 
-from tests.providers.aws.audit_info_utils import (
+from tests.providers.aws.utils import (
     AWS_REGION_EU_WEST_1,
     AWS_REGION_US_EAST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 
 class Test_cloudtrail_cloudwatch_logging_enabled:
     @mock_aws
     def test_no_trails(self):
-        current_audit_info = set_mocked_aws_audit_info(
+        aws_provider = set_mocked_aws_provider(
             [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
         )
 
@@ -24,12 +24,12 @@ class Test_cloudtrail_cloudwatch_logging_enabled:
         )
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=aws_provider,
         ):
             with mock.patch(
                 "prowler.providers.aws.services.cloudtrail.cloudtrail_cloudwatch_logging_enabled.cloudtrail_cloudwatch_logging_enabled.cloudtrail_client",
-                new=Cloudtrail(current_audit_info),
+                new=Cloudtrail(aws_provider),
             ):
                 # Test Check
                 from prowler.providers.aws.services.cloudtrail.cloudtrail_cloudwatch_logging_enabled.cloudtrail_cloudwatch_logging_enabled import (
@@ -71,13 +71,15 @@ class Test_cloudtrail_cloudwatch_logging_enabled:
         )
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=set_mocked_aws_audit_info([AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]),
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_aws_provider(
+                [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
+            ),
         ):
             with mock.patch(
                 "prowler.providers.aws.services.cloudtrail.cloudtrail_cloudwatch_logging_enabled.cloudtrail_cloudwatch_logging_enabled.cloudtrail_client",
                 new=Cloudtrail(
-                    set_mocked_aws_audit_info(
+                    set_mocked_aws_provider(
                         [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
                     )
                 ),
@@ -158,13 +160,15 @@ class Test_cloudtrail_cloudwatch_logging_enabled:
         )
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=set_mocked_aws_audit_info([AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]),
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_aws_provider(
+                [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
+            ),
         ):
             with mock.patch(
                 "prowler.providers.aws.services.cloudtrail.cloudtrail_cloudwatch_logging_enabled.cloudtrail_cloudwatch_logging_enabled.cloudtrail_client",
                 new=Cloudtrail(
-                    set_mocked_aws_audit_info(
+                    set_mocked_aws_provider(
                         [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
                     )
                 ),
@@ -246,13 +250,15 @@ class Test_cloudtrail_cloudwatch_logging_enabled:
         )
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=set_mocked_aws_audit_info([AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]),
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_aws_provider(
+                [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
+            ),
         ):
             with mock.patch(
                 "prowler.providers.aws.services.cloudtrail.cloudtrail_cloudwatch_logging_enabled.cloudtrail_cloudwatch_logging_enabled.cloudtrail_client",
                 new=Cloudtrail(
-                    set_mocked_aws_audit_info(
+                    set_mocked_aws_provider(
                         [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
                     )
                 ),

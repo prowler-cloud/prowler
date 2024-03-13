@@ -6,7 +6,6 @@ from mock import patch
 from moto import mock_aws
 
 from prowler.config.config import default_config_file_path
-from prowler.providers.aws.lib.audit_info.models import AWS_Assume_Role, AWS_Audit_Info
 from prowler.providers.azure.azure_provider import Azure_Provider
 from prowler.providers.azure.lib.audit_info.models import (
     Azure_Audit_Info,
@@ -107,6 +106,7 @@ def mock_get_context_user_roles(*_):
 class Test_Set_Audit_Info:
     # Mocked Audit Info
     def set_mocked_audit_info(self):
+        # TODO(Audit_Info): use provider here, and common helper from utils
         audit_info = AWS_Audit_Info(
             session_config=None,
             original_session=None,
@@ -388,6 +388,7 @@ class Test_Set_Audit_Info:
             }
 
             audit_info = set_provider_audit_info(provider, arguments)
+            # TODO(Audit_Info): use provider here
             assert isinstance(audit_info, AWS_Audit_Info)
 
     def test_set_audit_info_aws_bad_session_duration(self):

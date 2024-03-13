@@ -4,10 +4,7 @@ from unittest.mock import patch
 import botocore
 
 from prowler.providers.aws.services.codebuild.codebuild_service import Codebuild
-from tests.providers.aws.audit_info_utils import (
-    AWS_REGION_EU_WEST_1,
-    set_mocked_aws_audit_info,
-)
+from tests.providers.aws.utils import AWS_REGION_EU_WEST_1, set_mocked_aws_provider
 
 # last time invoked time
 last_invoked_time = datetime.now() - timedelta(days=2)
@@ -38,8 +35,8 @@ def mock_make_api_call(self, operation_name, kwarg):
 
 
 # Mock generate_regional_clients()
-def mock_generate_regional_clients(service, audit_info):
-    regional_client = audit_info.audit_session.client(
+def mock_generate_regional_clients(provider, service):
+    regional_client = provider._session.current_session.client(
         service, region_name=AWS_REGION_EU_WEST_1
     )
     regional_client.region = AWS_REGION_EU_WEST_1
@@ -48,28 +45,28 @@ def mock_generate_regional_clients(service, audit_info):
 
 @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
 @patch(
-    "prowler.providers.aws.lib.service.service.generate_regional_clients",
+    "prowler.providers.aws.aws_provider.AwsProvider.generate_regional_clients",
     new=mock_generate_regional_clients,
 )
 class Test_Codebuild_Service:
     # Test Codebuild Session
     def test__get_session__(self):
-        codebuild = Codebuild(set_mocked_aws_audit_info())
+        codebuild = Codebuild(set_mocked_aws_provider())
         assert codebuild.session.__class__.__name__ == "Session"
 
     # Test Codebuild Service
     def test__get_service__(self):
-        codebuild = Codebuild(set_mocked_aws_audit_info())
+        codebuild = Codebuild(set_mocked_aws_provider())
         assert codebuild.service == "codebuild"
 
     def test__list_projects__(self):
-        codebuild = Codebuild(set_mocked_aws_audit_info())
+        codebuild = Codebuild(set_mocked_aws_provider())
         assert len(codebuild.projects) == 1
         assert codebuild.projects[0].name == "test"
         assert codebuild.projects[0].region == AWS_REGION_EU_WEST_1
 
     def test__list_builds_for_project__(self):
-        codebuild = Codebuild(set_mocked_aws_audit_info())
+        codebuild = Codebuild(set_mocked_aws_provider())
         assert len(codebuild.projects) == 1
         assert codebuild.projects[0].name == "test"
         assert codebuild.projects[0].region == AWS_REGION_EU_WEST_1

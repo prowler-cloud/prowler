@@ -3,10 +3,7 @@ from unittest import mock
 from boto3 import client
 from moto import mock_aws
 
-from tests.providers.aws.audit_info_utils import (
-    AWS_REGION_US_EAST_1,
-    set_mocked_aws_audit_info,
-)
+from tests.providers.aws.utils import AWS_REGION_US_EAST_1, set_mocked_aws_provider
 
 
 class Test_kms_cmk_are_used:
@@ -14,14 +11,14 @@ class Test_kms_cmk_are_used:
     def test_kms_no_keys(self):
         from prowler.providers.aws.services.kms.kms_service import KMS
 
-        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.kms.kms_cmk_are_used.kms_cmk_are_used.kms_client",
-            new=KMS(current_audit_info),
+            new=KMS(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.kms.kms_cmk_are_used.kms_cmk_are_used import (
@@ -42,14 +39,14 @@ class Test_kms_cmk_are_used:
 
         from prowler.providers.aws.services.kms.kms_service import KMS
 
-        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.kms.kms_cmk_are_used.kms_cmk_are_used.kms_client",
-            new=KMS(current_audit_info),
+            new=KMS(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.kms.kms_cmk_are_used.kms_cmk_are_used import (
@@ -75,14 +72,14 @@ class Test_kms_cmk_are_used:
 
         from prowler.providers.aws.services.kms.kms_service import KMS
 
-        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.kms.kms_cmk_are_used.kms_cmk_are_used.kms_client",
-            new=KMS(current_audit_info),
+            new=KMS(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.kms.kms_cmk_are_used.kms_cmk_are_used import (
@@ -111,14 +108,14 @@ class Test_kms_cmk_are_used:
 
         from prowler.providers.aws.services.kms.kms_service import KMS
 
-        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.kms.kms_cmk_are_used.kms_cmk_are_used.kms_client",
-            new=KMS(current_audit_info),
+            new=KMS(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.kms.kms_cmk_are_used.kms_cmk_are_used import (

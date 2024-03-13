@@ -2,12 +2,10 @@ from datetime import datetime
 from unittest.mock import patch
 
 import botocore
+from moto import mock_aws
 
 from prowler.providers.aws.services.backup.backup_service import Backup
-from tests.providers.aws.audit_info_utils import (
-    AWS_REGION_EU_WEST_1,
-    set_mocked_aws_audit_info,
-)
+from tests.providers.aws.utils import AWS_REGION_EU_WEST_1, set_mocked_aws_provider
 
 # Mocking Backup Calls
 make_api_call = botocore.client.BaseClient._make_api_call
@@ -58,45 +56,46 @@ def mock_make_api_call(self, operation_name, kwarg):
     return make_api_call(self, operation_name, kwarg)
 
 
-def mock_generate_regional_clients(service, audit_info):
-    regional_client = audit_info.audit_session.client(
+def mock_generate_regional_clients(provider, service):
+    regional_client = provider._session.current_session.client(
         service, region_name=AWS_REGION_EU_WEST_1
     )
     regional_client.region = AWS_REGION_EU_WEST_1
     return {AWS_REGION_EU_WEST_1: regional_client}
 
 
+@mock_aws
 # Patch every AWS call using Boto3 and generate_regional_clients to have 1 client
 @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
 @patch(
-    "prowler.providers.aws.lib.service.service.generate_regional_clients",
+    "prowler.providers.aws.aws_provider.AwsProvider.generate_regional_clients",
     new=mock_generate_regional_clients,
 )
 class Test_Backup_Service:
     # Test Backup Client
     def test__get_client__(self):
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
-        backup = Backup(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        backup = Backup(aws_provider)
         assert (
             backup.regional_clients[AWS_REGION_EU_WEST_1].__class__.__name__ == "Backup"
         )
 
     # Test Backup Session
     def test__get_session__(self):
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
-        access_analyzer = Backup(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        access_analyzer = Backup(aws_provider)
         assert access_analyzer.session.__class__.__name__ == "Session"
 
     # Test Backup Service
     def test__get_service__(self):
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
-        access_analyzer = Backup(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        access_analyzer = Backup(aws_provider)
         assert access_analyzer.service == "backup"
 
     # Test Backup List Backup Vaults
     def test__list_backup_vaults__(self):
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
-        backup = Backup(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        backup = Backup(aws_provider)
         assert len(backup.backup_vaults) == 1
         assert backup.backup_vaults[0].arn == "ARN"
         assert backup.backup_vaults[0].name == "Test Vault"
@@ -109,8 +108,8 @@ class Test_Backup_Service:
 
     # Test Backup List Backup Plans
     def test__list_backup_plans__(self):
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
-        backup = Backup(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        backup = Backup(aws_provider)
         assert len(backup.backup_plans) == 1
         assert backup.backup_plans[0].arn == "ARN"
         assert backup.backup_plans[0].id == "ID"
@@ -122,8 +121,8 @@ class Test_Backup_Service:
 
     # Test Backup List Report Plans
     def test__list_backup_report_plans__(self):
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
-        backup = Backup(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        backup = Backup(aws_provider)
         assert len(backup.backup_report_plans) == 1
         assert backup.backup_report_plans[0].arn == "ARN"
         assert backup.backup_report_plans[0].region == AWS_REGION_EU_WEST_1

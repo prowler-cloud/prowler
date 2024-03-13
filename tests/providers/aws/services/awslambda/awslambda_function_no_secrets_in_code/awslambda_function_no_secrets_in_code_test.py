@@ -5,13 +5,13 @@ from prowler.providers.aws.services.awslambda.awslambda_service import (
     Function,
     LambdaCode,
 )
-from tests.providers.aws.audit_info_utils import (
-    AWS_ACCOUNT_NUMBER,
-    AWS_REGION_US_EAST_1,
-    set_mocked_aws_audit_info,
-)
 from tests.providers.aws.services.awslambda.awslambda_service_test import (
     create_zip_file,
+)
+from tests.providers.aws.utils import (
+    AWS_ACCOUNT_NUMBER,
+    AWS_REGION_US_EAST_1,
+    set_mocked_aws_provider,
 )
 
 LAMBDA_FUNCTION_NAME = "test-lambda"
@@ -65,8 +65,8 @@ class Test_awslambda_function_no_secrets_in_code:
         lambda_client.functions = {}
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            set_mocked_aws_audit_info(),
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_aws_provider(),
         ), mock.patch(
             "prowler.providers.aws.services.awslambda.awslambda_function_no_secrets_in_code.awslambda_function_no_secrets_in_code.awslambda_client",
             new=lambda_client,
@@ -86,8 +86,8 @@ class Test_awslambda_function_no_secrets_in_code:
         lambda_client.functions = {LAMBDA_FUNCTION_ARN: create_lambda_function()}
         lambda_client.__get_function_code__ = mock__get_function_code__with_secrets
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            set_mocked_aws_audit_info(),
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_aws_provider(),
         ), mock.patch(
             "prowler.providers.aws.services.awslambda.awslambda_function_no_secrets_in_code.awslambda_function_no_secrets_in_code.awslambda_client",
             new=lambda_client,
@@ -118,8 +118,8 @@ class Test_awslambda_function_no_secrets_in_code:
         lambda_client.__get_function_code__ = mock__get_function_code__without_secrets
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            set_mocked_aws_audit_info(),
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_aws_provider(),
         ), mock.patch(
             "prowler.providers.aws.services.awslambda.awslambda_function_no_secrets_in_code.awslambda_function_no_secrets_in_code.awslambda_client",
             new=lambda_client,

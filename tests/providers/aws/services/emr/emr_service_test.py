@@ -6,10 +6,10 @@ from boto3 import client
 from moto import mock_aws
 
 from prowler.providers.aws.services.emr.emr_service import EMR, ClusterStatus
-from tests.providers.aws.audit_info_utils import (
+from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_WEST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 # Mocking Access Analyzer Calls
@@ -36,8 +36,8 @@ def mock_make_api_call(self, operation_name, kwarg):
 
 
 # Mock generate_regional_clients()
-def mock_generate_regional_clients(service, audit_info):
-    regional_client = audit_info.audit_session.client(
+def mock_generate_regional_clients(provider, service):
+    regional_client = provider._session.current_session.client(
         service, region_name=AWS_REGION_EU_WEST_1
     )
     regional_client.region = AWS_REGION_EU_WEST_1
@@ -45,7 +45,7 @@ def mock_generate_regional_clients(service, audit_info):
 
 
 @patch(
-    "prowler.providers.aws.lib.service.service.generate_regional_clients",
+    "prowler.providers.aws.aws_provider.AwsProvider.generate_regional_clients",
     new=mock_generate_regional_clients,
 )
 @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
@@ -53,19 +53,19 @@ class Test_EMR_Service:
     # Test EMR Client
     @mock_aws
     def test__get_client__(self):
-        emr = EMR(set_mocked_aws_audit_info())
+        emr = EMR(set_mocked_aws_provider())
         assert emr.regional_clients[AWS_REGION_EU_WEST_1].__class__.__name__ == "EMR"
 
     # Test EMR Session
     @mock_aws
     def test__get_session__(self):
-        emr = EMR(set_mocked_aws_audit_info())
+        emr = EMR(set_mocked_aws_provider())
         assert emr.session.__class__.__name__ == "Session"
 
     # Test EMR Service
     @mock_aws
     def test__get_service__(self):
-        emr = EMR(set_mocked_aws_audit_info())
+        emr = EMR(set_mocked_aws_provider())
         assert emr.service == "emr"
 
     # Test __list_clusters__ and __describe_cluster__
@@ -93,7 +93,7 @@ class Test_EMR_Service:
         )
         cluster_id = emr_client.run_job_flow(**run_job_flow_args)["JobFlowId"]
         # EMR Class
-        emr = EMR(set_mocked_aws_audit_info())
+        emr = EMR(set_mocked_aws_provider())
 
         assert len(emr.clusters) == 1
         assert emr.clusters[cluster_id].id == cluster_id
@@ -115,7 +115,7 @@ class Test_EMR_Service:
 
     @mock_aws
     def test__get_block_public_access_configuration__(self):
-        emr = EMR(set_mocked_aws_audit_info())
+        emr = EMR(set_mocked_aws_provider())
 
         assert len(emr.block_public_access_configuration) == 1
         assert emr.block_public_access_configuration[

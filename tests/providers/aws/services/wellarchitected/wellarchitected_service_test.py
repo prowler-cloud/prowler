@@ -6,10 +6,10 @@ import botocore
 from prowler.providers.aws.services.wellarchitected.wellarchitected_service import (
     WellArchitected,
 )
-from tests.providers.aws.audit_info_utils import (
+from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_WEST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 workload_id = str(uuid4())
@@ -40,8 +40,8 @@ def mock_make_api_call(self, operation_name, kwarg):
     return make_api_call(self, operation_name, kwarg)
 
 
-def mock_generate_regional_clients(service, audit_info):
-    regional_client = audit_info.audit_session.client(
+def mock_generate_regional_clients(provider, service):
+    regional_client = provider._session.current_session.client(
         service, region_name=AWS_REGION_EU_WEST_1
     )
     regional_client.region = AWS_REGION_EU_WEST_1
@@ -50,33 +50,33 @@ def mock_generate_regional_clients(service, audit_info):
 
 @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
 @patch(
-    "prowler.providers.aws.lib.service.service.generate_regional_clients",
+    "prowler.providers.aws.aws_provider.AwsProvider.generate_regional_clients",
     new=mock_generate_regional_clients,
 )
 class Test_WellArchitected_Service:
     # Test WellArchitected Service
     def test_service(self):
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
-        wellarchitected = WellArchitected(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        wellarchitected = WellArchitected(aws_provider)
         assert wellarchitected.service == "wellarchitected"
 
     # Test WellArchitected client
     def test_client(self):
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
-        wellarchitected = WellArchitected(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        wellarchitected = WellArchitected(aws_provider)
         for reg_client in wellarchitected.regional_clients.values():
             assert reg_client.__class__.__name__ == "WellArchitected"
 
     # Test WellArchitected session
     def test__get_session__(self):
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
-        wellarchitected = WellArchitected(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        wellarchitected = WellArchitected(aws_provider)
         assert wellarchitected.session.__class__.__name__ == "Session"
 
     # Test WellArchitected list workloads
     def test__list_workloads__(self):
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
-        wellarchitected = WellArchitected(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        wellarchitected = WellArchitected(aws_provider)
         assert len(wellarchitected.workloads) == 1
         assert wellarchitected.workloads[0].id == workload_id
         assert (

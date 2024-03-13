@@ -2,7 +2,7 @@ from re import search
 from unittest import mock
 
 from prowler.providers.aws.services.glue.glue_service import DevEndpoint, SecurityConfig
-from tests.providers.aws.audit_info_utils import AWS_REGION_US_EAST_1
+from tests.providers.aws.utils import AWS_REGION_US_EAST_1
 
 
 class Test_glue_development_endpoints_s3_encryption_enabled:

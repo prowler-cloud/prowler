@@ -3,10 +3,7 @@ from unittest import mock
 from boto3 import client
 from moto import mock_aws
 
-from tests.providers.aws.audit_info_utils import (
-    AWS_REGION_US_EAST_1,
-    set_mocked_aws_audit_info,
-)
+from tests.providers.aws.utils import AWS_REGION_US_EAST_1, set_mocked_aws_provider
 
 
 class Test_vpc_subnet_no_public_ip_by_default:
@@ -37,15 +34,15 @@ class Test_vpc_subnet_no_public_ip_by_default:
 
         from prowler.providers.aws.services.vpc.vpc_service import VPC
 
-        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=aws_provider,
         ):
             with mock.patch(
                 "prowler.providers.aws.services.vpc.vpc_subnet_no_public_ip_by_default.vpc_subnet_no_public_ip_by_default.vpc_client",
-                new=VPC(current_audit_info),
+                new=VPC(aws_provider),
             ):
                 from prowler.providers.aws.services.vpc.vpc_subnet_no_public_ip_by_default.vpc_subnet_no_public_ip_by_default import (
                     vpc_subnet_no_public_ip_by_default,
@@ -81,15 +78,15 @@ class Test_vpc_subnet_no_public_ip_by_default:
 
         from prowler.providers.aws.services.vpc.vpc_service import VPC
 
-        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=aws_provider,
         ):
             with mock.patch(
                 "prowler.providers.aws.services.vpc.vpc_subnet_no_public_ip_by_default.vpc_subnet_no_public_ip_by_default.vpc_client",
-                new=VPC(current_audit_info),
+                new=VPC(aws_provider),
             ):
                 from prowler.providers.aws.services.vpc.vpc_subnet_no_public_ip_by_default.vpc_subnet_no_public_ip_by_default import (
                     vpc_subnet_no_public_ip_by_default,

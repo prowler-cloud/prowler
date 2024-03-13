@@ -5,10 +5,7 @@ from boto3 import client
 from moto import mock_aws
 
 from prowler.providers.aws.services.iam.iam_service import Role
-from tests.providers.aws.audit_info_utils import (
-    AWS_REGION_US_EAST_1,
-    set_mocked_aws_audit_info,
-)
+from tests.providers.aws.utils import AWS_REGION_US_EAST_1, set_mocked_aws_provider
 
 AWS_REGION = "us-east-1"
 AWS_ACCOUNT_ID = "123456789012"
@@ -19,14 +16,14 @@ class Test_iam_role_cross_service_confused_deputy_prevention:
     def test_no_roles(self):
         from prowler.providers.aws.services.iam.iam_service import IAM
 
-        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        current_audit_info.audited_account = AWS_ACCOUNT_ID
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        aws_provider.identity.account = AWS_ACCOUNT_ID
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.iam.iam_role_cross_service_confused_deputy_prevention.iam_role_cross_service_confused_deputy_prevention.iam_client",
-            new=IAM(current_audit_info),
+            new=IAM(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.iam.iam_role_cross_service_confused_deputy_prevention.iam_role_cross_service_confused_deputy_prevention import (
@@ -59,12 +56,12 @@ class Test_iam_role_cross_service_confused_deputy_prevention:
             )
         )
 
-        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        current_audit_info.audited_account = AWS_ACCOUNT_ID
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        aws_provider.identity.account = AWS_ACCOUNT_ID
 
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.iam.iam_role_cross_service_confused_deputy_prevention.iam_role_cross_service_confused_deputy_prevention.iam_client",
             new=iam_client,
@@ -98,14 +95,14 @@ class Test_iam_role_cross_service_confused_deputy_prevention:
 
         from prowler.providers.aws.services.iam.iam_service import IAM
 
-        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        current_audit_info.audited_account = AWS_ACCOUNT_ID
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        aws_provider.identity.account = AWS_ACCOUNT_ID
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.iam.iam_role_cross_service_confused_deputy_prevention.iam_role_cross_service_confused_deputy_prevention.iam_client",
-            new=IAM(current_audit_info),
+            new=IAM(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.iam.iam_role_cross_service_confused_deputy_prevention.iam_role_cross_service_confused_deputy_prevention import (
@@ -146,14 +143,14 @@ class Test_iam_role_cross_service_confused_deputy_prevention:
 
         from prowler.providers.aws.services.iam.iam_service import IAM
 
-        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        current_audit_info.audited_account = AWS_ACCOUNT_ID
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        aws_provider.identity.account = AWS_ACCOUNT_ID
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.iam.iam_role_cross_service_confused_deputy_prevention.iam_role_cross_service_confused_deputy_prevention.iam_client",
-            new=IAM(current_audit_info),
+            new=IAM(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.iam.iam_role_cross_service_confused_deputy_prevention.iam_role_cross_service_confused_deputy_prevention import (
@@ -196,14 +193,14 @@ class Test_iam_role_cross_service_confused_deputy_prevention:
 
         from prowler.providers.aws.services.iam.iam_service import IAM
 
-        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        current_audit_info.audited_account = AWS_ACCOUNT_ID
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        aws_provider.identity.account = AWS_ACCOUNT_ID
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.iam.iam_role_cross_service_confused_deputy_prevention.iam_role_cross_service_confused_deputy_prevention.iam_client",
-            new=IAM(current_audit_info),
+            new=IAM(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.iam.iam_role_cross_service_confused_deputy_prevention.iam_role_cross_service_confused_deputy_prevention import (
@@ -246,14 +243,14 @@ class Test_iam_role_cross_service_confused_deputy_prevention:
 
         from prowler.providers.aws.services.iam.iam_service import IAM
 
-        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        current_audit_info.audited_account = AWS_ACCOUNT_ID
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        aws_provider.identity.account = AWS_ACCOUNT_ID
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.iam.iam_role_cross_service_confused_deputy_prevention.iam_role_cross_service_confused_deputy_prevention.iam_client",
-            new=IAM(current_audit_info),
+            new=IAM(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.iam.iam_role_cross_service_confused_deputy_prevention.iam_role_cross_service_confused_deputy_prevention import (
@@ -296,14 +293,14 @@ class Test_iam_role_cross_service_confused_deputy_prevention:
 
         from prowler.providers.aws.services.iam.iam_service import IAM
 
-        current_audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
-        current_audit_info.audited_account = AWS_ACCOUNT_ID
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        aws_provider.identity.account = AWS_ACCOUNT_ID
         with mock.patch(
-            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-            new=current_audit_info,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.iam.iam_role_cross_service_confused_deputy_prevention.iam_role_cross_service_confused_deputy_prevention.iam_client",
-            new=IAM(current_audit_info),
+            new=IAM(aws_provider),
         ):
             # Test Check
             from prowler.providers.aws.services.iam.iam_role_cross_service_confused_deputy_prevention.iam_role_cross_service_confused_deputy_prevention import (

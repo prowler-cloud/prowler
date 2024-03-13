@@ -2,12 +2,12 @@ from boto3 import client, resource
 from moto import mock_aws
 
 from prowler.providers.aws.services.elbv2.elbv2_service import ELBv2
-from tests.providers.aws.audit_info_utils import (
+from tests.providers.aws.utils import (
     AWS_REGION_EU_WEST_1,
     AWS_REGION_EU_WEST_1_AZA,
     AWS_REGION_EU_WEST_1_AZB,
     AWS_REGION_US_EAST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 
@@ -16,20 +16,20 @@ class Test_ELBv2_Service:
     @mock_aws
     def test_service(self):
         # ELBv2 client for this test class
-        audit_info = set_mocked_aws_audit_info(
+        aws_provider = set_mocked_aws_provider(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
-        elbv2 = ELBv2(audit_info)
+        elbv2 = ELBv2(aws_provider)
         assert elbv2.service == "elbv2"
 
     # Test ELBv2 Client
     @mock_aws
     def test_client(self):
         # ELBv2 client for this test class
-        audit_info = set_mocked_aws_audit_info(
+        aws_provider = set_mocked_aws_provider(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
-        elbv2 = ELBv2(audit_info)
+        elbv2 = ELBv2(aws_provider)
         for regional_client in elbv2.regional_clients.values():
             assert regional_client.__class__.__name__ == "ElasticLoadBalancingv2"
 
@@ -37,10 +37,10 @@ class Test_ELBv2_Service:
     @mock_aws
     def test__get_session__(self):
         # ELBv2 client for this test class
-        audit_info = set_mocked_aws_audit_info(
+        aws_provider = set_mocked_aws_provider(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
-        elbv2 = ELBv2(audit_info)
+        elbv2 = ELBv2(aws_provider)
         assert elbv2.session.__class__.__name__ == "Session"
 
     # Test ELBv2 Describe Load Balancers
@@ -71,10 +71,10 @@ class Test_ELBv2_Service:
             Scheme="internal",
         )["LoadBalancers"][0]
         # ELBv2 client for this test class
-        audit_info = set_mocked_aws_audit_info(
+        aws_provider = set_mocked_aws_provider(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
-        elbv2 = ELBv2(audit_info)
+        elbv2 = ELBv2(aws_provider)
         assert len(elbv2.loadbalancersv2) == 1
         assert elbv2.loadbalancersv2[0].name == "my-lb"
         assert elbv2.loadbalancersv2[0].region == AWS_REGION_EU_WEST_1
@@ -125,10 +125,10 @@ class Test_ELBv2_Service:
             ],
         )
         # ELBv2 client for this test class
-        audit_info = set_mocked_aws_audit_info(
+        aws_provider = set_mocked_aws_provider(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
-        elbv2 = ELBv2(audit_info)
+        elbv2 = ELBv2(aws_provider)
         assert len(elbv2.loadbalancersv2[0].listeners) == 1
         assert elbv2.loadbalancersv2[0].listeners[0].protocol == "HTTP"
         assert elbv2.loadbalancersv2[0].listeners[0].port == 443
@@ -174,10 +174,10 @@ class Test_ELBv2_Service:
             ],
         )
         # ELBv2 client for this test class
-        audit_info = set_mocked_aws_audit_info(
+        aws_provider = set_mocked_aws_provider(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
-        elbv2 = ELBv2(audit_info)
+        elbv2 = ELBv2(aws_provider)
         assert len(elbv2.loadbalancersv2) == 1
         assert elbv2.loadbalancersv2[0].desync_mitigation_mode == "defensive"
         assert elbv2.loadbalancersv2[0].access_logs == "true"
@@ -228,9 +228,9 @@ class Test_ELBv2_Service:
             DefaultActions=actions,
         )
         # ELBv2 client for this test class
-        audit_info = set_mocked_aws_audit_info(
+        aws_provider = set_mocked_aws_provider(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
-        elbv2 = ELBv2(audit_info)
+        elbv2 = ELBv2(aws_provider)
         assert len(elbv2.loadbalancersv2) == 1
         assert elbv2.loadbalancersv2[0].listeners[0].rules[0].actions == actions

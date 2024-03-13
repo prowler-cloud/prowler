@@ -7,10 +7,10 @@ from boto3 import client
 from moto import mock_aws
 
 from prowler.providers.aws.services.sqs.sqs_service import SQS
-from tests.providers.aws.audit_info_utils import (
+from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_WEST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 test_queue = "test-queue"
@@ -39,8 +39,8 @@ def mock_make_api_call(self, operation_name, kwarg):
     return make_api_call(self, operation_name, kwarg)
 
 
-def mock_generate_regional_clients(service, audit_info):
-    regional_client = audit_info.audit_session.client(
+def mock_generate_regional_clients(provider, service):
+    regional_client = provider._session.current_session.client(
         service, region_name=AWS_REGION_EU_WEST_1
     )
     regional_client.region = AWS_REGION_EU_WEST_1
@@ -49,27 +49,27 @@ def mock_generate_regional_clients(service, audit_info):
 
 @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
 @patch(
-    "prowler.providers.aws.lib.service.service.generate_regional_clients",
+    "prowler.providers.aws.aws_provider.AwsProvider.generate_regional_clients",
     new=mock_generate_regional_clients,
 )
 class Test_SQS_Service:
     # Test SQS Service
     def test_service(self):
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
-        sqs = SQS(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        sqs = SQS(aws_provider)
         assert sqs.service == "sqs"
 
     # Test SQS client
     def test_client(self):
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
-        sqs = SQS(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        sqs = SQS(aws_provider)
         for reg_client in sqs.regional_clients.values():
             assert reg_client.__class__.__name__ == "SQS"
 
     # Test SQS session
     def test__get_session__(self):
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
-        sqs = SQS(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        sqs = SQS(aws_provider)
         assert sqs.session.__class__.__name__ == "Session"
 
     @mock_aws
@@ -77,8 +77,8 @@ class Test_SQS_Service:
     def test__list_queues__(self):
         sqs_client = client("sqs", region_name=AWS_REGION_EU_WEST_1)
         queue = sqs_client.create_queue(QueueName=test_queue, tags={"test": "test"})
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
-        sqs = SQS(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        sqs = SQS(aws_provider)
         assert len(sqs.queues) == 1
         assert sqs.queues[0].id == queue["QueueUrl"]
         assert sqs.queues[0].name == test_queue
@@ -96,8 +96,8 @@ class Test_SQS_Service:
     #     sqs_client = client("sqs", region_name=AWS_REGION_EU_WEST_1)
     #     for i in range(0,1050):
     #         sqs_client.create_queue(QueueName=f"{test_queue}-{i}", tags={"test": "test"})
-    #     audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
-    #     sqs = SQS(audit_info)
+    #     aws_provider =set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+    #     sqs = SQS(aws_provider)
     #     assert len(sqs.queues) > 1000
 
     @mock_aws
@@ -107,8 +107,8 @@ class Test_SQS_Service:
         queue = sqs_client.create_queue(
             QueueName=test_queue,
         )
-        audit_info = set_mocked_aws_audit_info([AWS_REGION_EU_WEST_1])
-        sqs = SQS(audit_info)
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        sqs = SQS(aws_provider)
         assert len(sqs.queues) == 1
         assert sqs.queues[0].id == queue["QueueUrl"]
         assert sqs.queues[0].region == AWS_REGION_EU_WEST_1
