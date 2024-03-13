@@ -69,7 +69,7 @@ class Test_Common_Output_Options:
         # Set the arguments passed
         arguments = Namespace()
         arguments.quiet = True
-        arguments.output_modes = ["csv", "json"]
+        arguments.output_modes = ["csv"]
         arguments.output_directory = "output_test_directory"
         arguments.verbose = True
         arguments.output_filename = "output_test_filename"
@@ -89,7 +89,7 @@ class Test_Common_Output_Options:
         assert output_options.security_hub_enabled
         assert output_options.send_sh_only_fails
         assert output_options.is_quiet
-        assert output_options.output_modes == ["csv", "json", "json-asff"]
+        assert output_options.output_modes == ["csv", "json-asff"]
         assert output_options.output_directory == arguments.output_directory
         assert output_options.mutelist_file == ""
         assert output_options.bulk_checks_metadata == {}
@@ -105,7 +105,7 @@ class Test_Common_Output_Options:
         # Set the arguments passed
         arguments = Namespace()
         arguments.quiet = True
-        arguments.output_modes = ["csv", "json"]
+        arguments.output_modes = ["csv"]
         arguments.output_directory = "output_test_directory"
         arguments.verbose = True
         arguments.output_filename = "output_test_filename"
@@ -120,7 +120,7 @@ class Test_Common_Output_Options:
         )
         assert isinstance(output_options, Gcp_Output_Options)
         assert output_options.is_quiet
-        assert output_options.output_modes == ["csv", "json"]
+        assert output_options.output_modes == ["csv"]
         assert output_options.output_directory == arguments.output_directory
         assert output_options.mutelist_file == ""
         assert output_options.bulk_checks_metadata == {}
@@ -136,7 +136,7 @@ class Test_Common_Output_Options:
         # Set the arguments passed
         arguments = Namespace()
         arguments.quiet = True
-        arguments.output_modes = ["csv", "json"]
+        arguments.output_modes = ["csv"]
         arguments.output_directory = "output_test_directory"
         arguments.verbose = True
         arguments.output_filename = "output_test_filename"
@@ -151,7 +151,7 @@ class Test_Common_Output_Options:
         )
         assert isinstance(output_options, Kubernetes_Output_Options)
         assert output_options.is_quiet
-        assert output_options.output_modes == ["csv", "json"]
+        assert output_options.output_modes == ["csv"]
         assert output_options.output_directory == arguments.output_directory
         assert output_options.mutelist_file == ""
         assert output_options.bulk_checks_metadata == {}
@@ -167,7 +167,7 @@ class Test_Common_Output_Options:
         # Set the arguments passed
         arguments = Namespace()
         arguments.quiet = True
-        arguments.output_modes = ["csv", "json"]
+        arguments.output_modes = ["csv"]
         arguments.output_directory = "output_test_directory"
         arguments.verbose = True
         arguments.security_hub = True
@@ -188,7 +188,7 @@ class Test_Common_Output_Options:
         assert output_options.security_hub_enabled
         assert output_options.send_sh_only_fails
         assert output_options.is_quiet
-        assert output_options.output_modes == ["csv", "json", "json-asff"]
+        assert output_options.output_modes == ["csv", "json-asff"]
         assert output_options.output_directory == arguments.output_directory
         assert output_options.mutelist_file == ""
         assert output_options.bulk_checks_metadata == {}
@@ -207,7 +207,7 @@ class Test_Common_Output_Options:
         # Set the arguments passed
         arguments = Namespace()
         arguments.quiet = True
-        arguments.output_modes = ["csv", "json"]
+        arguments.output_modes = ["csv"]
         arguments.output_directory = "output_test_directory"
         arguments.verbose = True
         arguments.only_logs = False
@@ -227,7 +227,6 @@ class Test_Common_Output_Options:
         assert output_options.is_quiet
         assert output_options.output_modes == [
             "csv",
-            "json",
         ]
         assert output_options.output_directory == arguments.output_directory
         assert output_options.mutelist_file == ""
@@ -247,7 +246,7 @@ class Test_Common_Output_Options:
         # Set the arguments passed
         arguments = Namespace()
         arguments.quiet = True
-        arguments.output_modes = ["csv", "json"]
+        arguments.output_modes = ["csv"]
         arguments.output_directory = "output_test_directory"
         arguments.verbose = True
         arguments.only_logs = False
@@ -268,7 +267,6 @@ class Test_Common_Output_Options:
         assert output_options.is_quiet
         assert output_options.output_modes == [
             "csv",
-            "json",
         ]
         assert output_options.output_directory == arguments.output_directory
         assert output_options.mutelist_file == ""

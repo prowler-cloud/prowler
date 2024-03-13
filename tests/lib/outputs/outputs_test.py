@@ -98,10 +98,9 @@ class Test_Outputs:
         )
         test_output_modes = [
             ["csv"],
-            ["json"],
             ["json-asff"],
-            ["csv", "json"],
-            ["csv", "json", "json-asff"],
+            ["json-ocsf"],
+            ["csv", "json-asff", "json-ocsf"],
         ]
         output_filename = f"prowler-output-{audited_account}-{output_file_timestamp}"
         expected = [
@@ -112,13 +111,13 @@ class Test_Outputs:
                 )
             },
             {
-                "json": open_file(
-                    f"{output_directory}/{output_filename}{json_file_suffix}",
+                "json-asff": open_file(
+                    f"{output_directory}/{output_filename}{json_asff_file_suffix}",
                     "a",
                 )
             },
             {
-                "json-asff": open_file(
+                "json-ocsf": open_file(
                     f"{output_directory}/{output_filename}{json_asff_file_suffix}",
                     "a",
                 )
@@ -128,17 +127,7 @@ class Test_Outputs:
                     f"{output_directory}/{output_filename}{csv_file_suffix}",
                     "a",
                 ),
-                "json": open_file(
-                    f"{output_directory}/{output_filename}{json_file_suffix}",
-                    "a",
-                ),
-            },
-            {
-                "csv": open_file(
-                    f"{output_directory}/{output_filename}{csv_file_suffix}",
-                    "a",
-                ),
-                "json": open_file(
+                "json-ocsf": open_file(
                     f"{output_directory}/{output_filename}{json_file_suffix}",
                     "a",
                 ),

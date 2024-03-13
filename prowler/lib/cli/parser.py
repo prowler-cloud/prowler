@@ -128,8 +128,8 @@ Detailed documentation at https://docs.prowler.cloud
             "--output-modes",
             nargs="+",
             help="Output modes, by default csv and json",
-            default=["csv", "json", "json-ocsf"],
-            choices=["csv", "json", "json-asff", "json-ocsf"],
+            default=["csv", "json-ocsf"],
+            choices=["csv", "json-asff", "json-ocsf"],
         )
         common_outputs_parser.add_argument(
             "-F",
