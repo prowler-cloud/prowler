@@ -1,7 +1,11 @@
 from datetime import timedelta
 from typing import Dict
 
-from azure.core.exceptions import HttpResponseError
+from azure.core.exceptions import (
+    ClientAuthenticationError,
+    HttpResponseError,
+    ResourceNotFoundError,
+)
 from azure.mgmt.security import SecurityCenter
 from pydantic import BaseModel
 
@@ -48,6 +52,11 @@ class Defender(AzureService):
                             )
                         }
                     )
+            except ResourceNotFoundError as error:
+                if "Subscription Not Registered" in error.message:
+                    logger.error(
+                        f"Subscription name: {subscription_name} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: Subscription Not Registered - Please register to Microsoft.Security in order to view your security status"
+                    )
             except Exception as error:
                 logger.error(
                     f"Subscription name: {subscription_name} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -72,10 +81,14 @@ class Defender(AzureService):
                             )
                         }
                     )
+            except ClientAuthenticationError as error:
+                if "Subscription Not Registered" in error.message:
+                    logger.error(
+                        f"Subscription name: {subscription_name} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: Subscription Not Registered - Please register to Microsoft.Security in order to view your security status"
+                    )
             except Exception as error:
-                logger.error(f"Subscription name: {subscription_name}")
                 logger.error(
-                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    f"Subscription name: {subscription_name} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         return auto_provisioning
 
@@ -121,6 +134,11 @@ class Defender(AzureService):
                                 enabled=setting.enabled,
                             )
                         }
+                    )
+            except ClientAuthenticationError as error:
+                if "Subscription Not Registered" in error.message:
+                    logger.error(
+                        f"Subscription name: {subscription_name} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: Subscription Not Registered - Please register to Microsoft.Security in order to view your security status"
                     )
             except Exception as error:
                 logger.error(
