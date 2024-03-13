@@ -244,7 +244,7 @@ GCP Account: {Fore.YELLOW}[{self.identity.profile}]{Style.RESET_ALL}  GCP Projec
             )
             # TODO: this call requires more permissions to get that data
             # resourcemanager.organizations.get --> add to the docs
-            for id, project in self._projects.items():
+            for project in self._projects.values():
                 if project.organization:
                     request = service.organizations().get(
                         name=f"organizations/{project.organization.id}"
@@ -252,6 +252,10 @@ GCP Account: {Fore.YELLOW}[{self.identity.profile}]{Style.RESET_ALL}  GCP Projec
 
                     while request is not None:
                         response = request.execute()
+                        project.organization.display_name = response.get("displayName")
+                        request = service.projects().list_next(
+                            previous_request=request, previous_response=response
+                        )
 
         except HttpError as http_error:
             if http_error.status_code == 403 and "organizations" in http_error.uri:

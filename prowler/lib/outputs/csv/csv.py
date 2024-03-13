@@ -95,7 +95,7 @@ def generate_provider_output_csv(provider, finding, csv_data):
             csv_data["region"] = ""
 
         elif provider.type == "gcp":
-            csv_data["auth_method"] = f"Principal: {csv_data['auth_method']}"
+            csv_data["auth_method"] = f"Account: {csv_data['auth_method']}"
             csv_data["account_uid"] = provider.projects[finding.project_id].number
             csv_data["account_name"] = provider.projects[finding.project_id].name
             csv_data["account_tags"] = provider.projects[finding.project_id].labels
