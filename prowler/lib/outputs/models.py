@@ -1,15 +1,11 @@
-import importlib
 import sys
 from datetime import datetime
 from typing import List, Literal, Optional
 
 from pydantic import BaseModel
 
-from prowler.config.config import prowler_version, timestamp
-from prowler.lib.check.models import Remediation
+from prowler.config.config import prowler_version
 from prowler.lib.logger import logger
-from prowler.lib.utils.utils import outputs_unix_timestamp
-from prowler.providers.aws.lib.audit_info.models import AWSOrganizationsInfo
 
 
 def get_check_compliance(finding, provider_type, output_options) -> dict:
@@ -131,172 +127,6 @@ def parse_json_tags(tags: list):
                 dict_tags.update(tag)
 
     return dict_tags
-
-
-def generate_provider_output_json(provider, finding, mode: str, output_options):
-    """
-    generate_provider_output_json configures automatically the outputs based on the selected provider and returns the Check_Output_JSON object.
-    """
-    try:
-        # Dynamically load the Provider_Output_Options class for the JSON format
-        finding_output_model = (
-            f"{provider.type.capitalize()}_Check_Output_{mode.upper()}"
-        )
-        output_model = getattr(importlib.import_module(__name__), finding_output_model)
-        # Instantiate the class for the cloud provider
-        finding_output = output_model(**finding.check_metadata.dict())
-        # Fill common fields
-        finding_output.AssessmentStartTime = outputs_unix_timestamp(
-            output_options.unix_timestamp, timestamp
-        )
-        finding_output.Status = finding.status
-        finding_output.StatusExtended = finding.status_extended
-        finding_output.ResourceDetails = finding.resource_details
-
-        if provider.type == "azure":
-            finding_output.Tenant_Domain = provider.identity.tenant_domain
-            finding_output.Subscription = finding.subscription
-            finding_output.ResourceId = finding.resource_id
-            finding_output.ResourceName = finding.resource_name
-            finding_output.FindingUniqueId = f"prowler-{provider.type}-{finding.check_metadata.CheckID}-{finding.subscription}-{finding.resource_id}"
-            finding_output.Compliance = get_check_compliance(
-                finding, provider.type, output_options
-            )
-
-        if provider.type == "gcp":
-            finding_output.ProjectId = finding.project_id
-            finding_output.Location = finding.location.lower()
-            finding_output.ResourceId = finding.resource_id
-            finding_output.ResourceName = finding.resource_name
-            finding_output.FindingUniqueId = f"prowler-{provider.type}-{finding.check_metadata.CheckID}-{finding.project_id}-{finding.resource_id}"
-            finding_output.Compliance = get_check_compliance(
-                finding, provider.type, output_options
-            )
-
-        if provider.type == "kubernetes":
-            finding_output.Context = provider.identity.context
-            finding_output.Namespace = finding.namespace
-            finding_output.ResourceId = finding.resource_id
-            finding_output.ResourceName = finding.resource_name
-            finding_output.FindingUniqueId = f"prowler-{provider.type}-{finding.check_metadata.CheckID}-{finding.namespace}-{finding.resource_id}"
-            finding_output.Compliance = get_check_compliance(
-                finding, provider.type, output_options
-            )
-
-        if provider.type == "aws":
-            finding_output.Profile = provider.identity.profile
-            finding_output.AccountId = provider.identity.account
-            finding_output.Region = finding.region
-            finding_output.ResourceId = finding.resource_id
-            finding_output.ResourceArn = finding.resource_arn
-            finding_output.ResourceTags = parse_json_tags(finding.resource_tags)
-            finding_output.FindingUniqueId = f"prowler-{provider.type}-{finding.check_metadata.CheckID}-{provider.identity.account}-{finding.region}-{finding.resource_id}"
-            finding_output.Compliance = get_check_compliance(
-                finding, provider.type, output_options
-            )
-
-            if provider.organizations_metadata:
-                finding_output.OrganizationsInfo = (
-                    provider.organizations_metadata.__dict__
-                )
-
-    except Exception as error:
-        logger.critical(
-            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-        )
-        sys.exit(1)
-    else:
-        return finding_output
-
-
-class Check_Output_JSON(BaseModel):
-    """
-    Check_Output_JSON generates a finding's output in JSON format.
-
-    This is the base JSON output model for every provider.
-    """
-
-    AssessmentStartTime: str = ""
-    FindingUniqueId: str = ""
-    Provider: str
-    CheckID: str
-    CheckTitle: str
-    CheckType: List[str]
-    ServiceName: str
-    SubServiceName: str
-    Status: str = ""
-    StatusExtended: str = ""
-    Severity: str
-    ResourceType: str
-    ResourceDetails: str = ""
-    Description: str
-    Risk: str
-    RelatedUrl: str
-    Remediation: Remediation
-    Compliance: Optional[dict]
-    Categories: List[str]
-    DependsOn: List[str]
-    RelatedTo: List[str]
-    Notes: str
-
-
-class Aws_Check_Output_JSON(Check_Output_JSON):
-    """
-    Aws_Check_Output_JSON generates a finding's output in JSON format for the AWS provider.
-    """
-
-    Profile: str = ""
-    AccountId: str = ""
-    OrganizationsInfo: Optional[AWSOrganizationsInfo]
-    Region: str = ""
-    ResourceId: str = ""
-    ResourceArn: str = ""
-    ResourceTags: list = []
-
-    def __init__(self, **metadata):
-        super().__init__(**metadata)
-
-
-class Azure_Check_Output_JSON(Check_Output_JSON):
-    """
-    Azure_Check_Output_JSON generates a finding's output in JSON format for the AWS provider.
-    """
-
-    Tenant_Domain: str = ""
-    Subscription: str = ""
-    ResourceId: str = ""
-    ResourceName: str = ""
-
-    def __init__(self, **metadata):
-        super().__init__(**metadata)
-
-
-class Gcp_Check_Output_JSON(Check_Output_JSON):
-    """
-    Gcp_Check_Output_JSON generates a finding's output in JSON format for the GCP provider.
-    """
-
-    ProjectId: str = ""
-    ResourceId: str = ""
-    ResourceName: str = ""
-    Location: str = ""
-
-    def __init__(self, **metadata):
-        super().__init__(**metadata)
-
-
-class Kubernetes_Check_Output_JSON(Check_Output_JSON):
-    """
-    Kubernetes_Check_Output_JSON generates a finding's output in JSON format for the Kubernetes provider.
-    """
-
-    ResourceId: str = ""
-    ResourceName: str = ""
-    Context: str = ""
-    Namespace: str = ""
-
-    def __init__(self, **metadata):
-        super().__init__(**metadata)
 
 
 class Check_Output_MITRE_ATTACK(BaseModel):

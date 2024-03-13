@@ -20,7 +20,6 @@ from prowler.lib.outputs.file_descriptors import fill_file_descriptors
 from prowler.lib.outputs.json import fill_json_asff, fill_json_ocsf
 from prowler.lib.outputs.models import (
     Check_Output_JSON_ASFF,
-    generate_provider_output_json,
     get_check_compliance,
     unroll_dict,
 )
@@ -140,20 +139,6 @@ def report(check_findings, provider):
                             )
 
                             csv_writer.writerow(finding_output.dict())
-
-                        if "json" in file_descriptors:
-                            finding_output = generate_provider_output_json(
-                                provider,
-                                finding,
-                                "json",
-                                output_options,
-                            )
-                            json.dump(
-                                finding_output.dict(),
-                                file_descriptors["json"],
-                                indent=4,
-                            )
-                            file_descriptors["json"].write(",")
 
                         if "json-ocsf" in file_descriptors:
                             finding_output = fill_json_ocsf(

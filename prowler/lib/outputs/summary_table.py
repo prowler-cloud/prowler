@@ -6,7 +6,6 @@ from tabulate import tabulate
 from prowler.config.config import (
     csv_file_suffix,
     json_asff_file_suffix,
-    json_file_suffix,
     json_ocsf_file_suffix,
 )
 from prowler.lib.logger import logger
@@ -124,10 +123,6 @@ def display_summary_table(
                 )
             if "csv" in output_options.output_modes:
                 print(f" - CSV: {output_directory}/{output_filename}{csv_file_suffix}")
-            if "json" in output_options.output_modes:
-                print(
-                    f" - JSON: {output_directory}/{output_filename}{json_file_suffix}"
-                )
 
         else:
             print(

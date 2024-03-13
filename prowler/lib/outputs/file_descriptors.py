@@ -5,7 +5,6 @@ from typing import Any
 from prowler.config.config import (
     csv_file_suffix,
     json_asff_file_suffix,
-    json_file_suffix,
     json_ocsf_file_suffix,
 )
 from prowler.lib.logger import logger
@@ -39,7 +38,7 @@ def initialize_file_descriptor(
                 "a",
             )
 
-            if output_mode in ("json", "json-asff", "json-ocsf"):
+            if output_mode in ("json-asff", "json-ocsf"):
                 file_descriptor.write("[")
             else:
                 # Format is the class model of the CSV format to print the headers
@@ -68,11 +67,6 @@ def fill_file_descriptors(output_modes, output_directory, output_filename, provi
                         output_mode,
                         output_model,
                     )
-                    file_descriptors.update({output_mode: file_descriptor})
-
-                elif output_mode == "json":
-                    filename = f"{output_directory}/{output_filename}{json_file_suffix}"
-                    file_descriptor = initialize_file_descriptor(filename, output_mode)
                     file_descriptors.update({output_mode: file_descriptor})
 
                 elif output_mode == "json-ocsf":

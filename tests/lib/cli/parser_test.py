@@ -45,7 +45,6 @@ class Test_Parser:
         assert len(parsed.output_modes) == 4
         assert "csv" in parsed.output_modes
 
-        assert "json" in parsed.output_modes
         assert not parsed.output_filename
         assert "output" in parsed.output_directory
         assert not parsed.verbose
@@ -93,7 +92,6 @@ class Test_Parser:
         assert len(parsed.output_modes) == 4
         assert "csv" in parsed.output_modes
 
-        assert "json" in parsed.output_modes
         assert not parsed.output_filename
         assert "output" in parsed.output_directory
         assert not parsed.verbose
@@ -133,7 +131,6 @@ class Test_Parser:
         assert len(parsed.output_modes) == 4
         assert "csv" in parsed.output_modes
 
-        assert "json" in parsed.output_modes
         assert not parsed.output_filename
         assert "output" in parsed.output_directory
         assert not parsed.verbose
@@ -168,7 +165,6 @@ class Test_Parser:
         assert len(parsed.output_modes) == 4
         assert "csv" in parsed.output_modes
 
-        assert "json" in parsed.output_modes
         assert not parsed.output_filename
         assert "output" in parsed.output_directory
         assert not parsed.verbose
@@ -267,7 +263,6 @@ class Test_Parser:
         parsed = self.parser.parse(command)
         assert len(parsed.output_modes) == 4
         assert "csv" in parsed.output_modes
-        assert "json" in parsed.output_modes
 
     def test_root_parser_output_modes_short(self):
         command = [prowler_command, "-M", "csv"]
