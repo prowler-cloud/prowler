@@ -364,8 +364,6 @@ Azure Identity Type: {Fore.YELLOW}[{self._identity.identity_type}]{Style.RESET_A
             )
             list_subscriptions = subscriptions_client.subscriptions.list()
             # TODO: use the identity subscritions
-            for subscription in list_subscriptions:
-                print(subscription)
             list_subscriptions_ids = [
                 subscription.subscription_id for subscription in list_subscriptions
             ]
