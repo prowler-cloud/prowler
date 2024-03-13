@@ -599,13 +599,13 @@ isodate = ">=0.6.1,<1.0.0"
 
 [[package]]
 name = "azure-storage-blob"
-version = "12.19.0"
+version = "12.19.1"
 description = "Microsoft Azure Blob Storage Client Library for Python"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "azure-storage-blob-12.19.0.tar.gz", hash = "sha256:26c0a4320a34a3c2a1b74528ba6812ebcb632a04cd67b1c7377232c4b01a5897"},
-    {file = "azure_storage_blob-12.19.0-py3-none-any.whl", hash = "sha256:7bbc2c9c16678f7a420367fef6b172ba8730a7e66df7f4d7a55d5b3c8216615b"},
+    {file = "azure-storage-blob-12.19.1.tar.gz", hash = "sha256:13e16ba42fc54ac2c7e8f976062173a5c82b9ec0594728e134aac372965a11b0"},
+    {file = "azure_storage_blob-12.19.1-py3-none-any.whl", hash = "sha256:c5530dc51c21c9564e4eb706cd499befca8819b10dd89716d3fc90d747556243"},
 ]
 
 [package.dependencies]
@@ -4426,4 +4426,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.13"
-content-hash = "230c8299d0cf0b4c4ae5ab4a61cca28f4a71f0a34a4697ea9a404161faae35a0"
+content-hash = "7546aaec7fce2369c65022bbeb34166238925194ff41851b5efa151a6b70ae6d"
