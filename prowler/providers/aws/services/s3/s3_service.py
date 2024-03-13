@@ -15,6 +15,7 @@ class S3(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
+        self.account_arn_template = f"arn:{self.audited_partition}:s3:{self.region}:{self.audited_account}:account"
         self.regions_with_buckets = []
         self.buckets = self.__list_buckets__(provider)
         self.__threading_call__(self.__get_bucket_versioning__)

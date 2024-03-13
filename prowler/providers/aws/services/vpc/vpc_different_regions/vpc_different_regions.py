@@ -14,7 +14,7 @@ class vpc_different_regions(Check):
             report = Check_Report_AWS(self.metadata())
             report.region = vpc_client.region
             report.resource_id = vpc_client.audited_account
-            report.resource_arn = vpc_client.audited_account_arn
+            report.resource_arn = vpc_client.vpc_arn_template
 
             report.status = "FAIL"
             report.status_extended = "VPCs found only in one region."

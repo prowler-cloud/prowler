@@ -17,6 +17,7 @@ class SSMIncidents(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
         super().__init__("ssm-incidents", provider)
+        self.replication_set_arn_template = f"arn:{self.audited_partition}:ssm-incidents:{self.region}:{self.audited_account}:replication-set"
         self.replication_set = []
         self.__list_replication_sets__()
         self.__get_replication_set__()

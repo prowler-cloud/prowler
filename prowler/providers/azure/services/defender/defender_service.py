@@ -1,4 +1,5 @@
 from datetime import timedelta
+from typing import Dict
 
 from azure.core.exceptions import HttpResponseError
 from azure.mgmt.security import SecurityCenter
@@ -33,8 +34,18 @@ class Defender(AzureService):
                         {
                             pricing.name: Pricing(
                                 resource_id=pricing.id,
-                                pricing_tier=pricing.pricing_tier,
+                                pricing_tier=getattr(pricing, "pricing_tier", None),
                                 free_trial_remaining_time=pricing.free_trial_remaining_time,
+                                extensions=dict(
+                                    [
+                                        (extension.name, extension.is_enabled)
+                                        for extension in (
+                                            pricing.extensions
+                                            if getattr(pricing, "extensions", None)
+                                            else []
+                                        )
+                                    ]
+                                ),
                             )
                         }
                     )
@@ -193,6 +204,7 @@ class Pricing(BaseModel):
     resource_id: str
     pricing_tier: str
     free_trial_remaining_time: timedelta
+    extensions: Dict[str, bool] = {}
 
 
 class AutoProvisioningSetting(BaseModel):

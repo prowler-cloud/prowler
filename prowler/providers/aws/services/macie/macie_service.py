@@ -12,6 +12,9 @@ class Macie(AWSService):
         self.sessions = []
         self.__threading_call__(self.__get_macie_session__)
 
+    def __get_session_arn_template__(self, region):
+        return f"arn:{self.audited_partition}:macie:{region}:{self.audited_account}:session"
+
     def __get_macie_session__(self, regional_client):
         logger.info("Macie - Get Macie Session...")
         try:
