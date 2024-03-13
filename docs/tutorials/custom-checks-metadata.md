@@ -31,6 +31,10 @@ CustomChecksMetadata:
     Checks:
       compute_instance_public_ip:
         Severity: critical
+  kubernetes:
+    Checks:
+      apiserver_anonymous_requests:
+        Severity: low
 ```
 
 ## Usage

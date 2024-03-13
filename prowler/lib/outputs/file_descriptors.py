@@ -99,6 +99,14 @@ def fill_file_descriptors(output_modes, output_directory, output_filename, provi
                             filename, output_mode, provider, Check_Output_CSV_GCP_CIS
                         )
                         file_descriptors.update({output_mode: file_descriptor})
+                    else:
+                        file_descriptor = initialize_file_descriptor(
+                            filename,
+                            output_mode,
+                            provider,
+                            Check_Output_CSV_Generic_Compliance,
+                        )
+                        file_descriptors.update({output_mode: file_descriptor})
 
                 elif provider.type == "aws":
                     if output_mode == "json-asff":
@@ -108,7 +116,7 @@ def fill_file_descriptors(output_modes, output_directory, output_filename, provi
                         )
                         file_descriptors.update({output_mode: file_descriptor})
                     else:  # Compliance frameworks
-                        filename = f"{output_directory}/{output_filename}_{output_mode}{csv_file_suffix}"
+                        filename = f"{output_directory}/compliance/{output_filename}_{output_mode}{csv_file_suffix}"
                         if output_mode == "ens_rd2022_aws":
                             file_descriptor = initialize_file_descriptor(
                                 filename,
@@ -155,20 +163,22 @@ def fill_file_descriptors(output_modes, output_directory, output_filename, provi
                             file_descriptors.update({output_mode: file_descriptor})
 
                         else:
-                            # Generic Compliance framework
-                            if (
-                                provider.type == "aws"
-                                and "aws" in output_mode
-                                or (provider.type == "azure" and "azure" in output_mode)
-                                or (provider.type == "gcp" and "gcp" in output_mode)
-                            ):
-                                file_descriptor = initialize_file_descriptor(
-                                    filename,
-                                    output_mode,
-                                    provider,
-                                    Check_Output_CSV_Generic_Compliance,
-                                )
-                                file_descriptors.update({output_mode: file_descriptor})
+                            file_descriptor = initialize_file_descriptor(
+                                filename,
+                                output_mode,
+                                provider,
+                                Check_Output_CSV_Generic_Compliance,
+                            )
+                            file_descriptors.update({output_mode: file_descriptor})
+                elif provider.type == "azure":
+                    filename = f"{output_directory}/compliance/{output_filename}_{output_mode}{csv_file_suffix}"
+                    file_descriptor = initialize_file_descriptor(
+                        filename,
+                        output_mode,
+                        provider,
+                        Check_Output_CSV_Generic_Compliance,
+                    )
+                    file_descriptors.update({output_mode: file_descriptor})
 
     except Exception as error:
         logger.error(
