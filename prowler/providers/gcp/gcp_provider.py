@@ -252,7 +252,6 @@ GCP Account: {Fore.YELLOW}[{self.identity.profile}]{Style.RESET_ALL}  GCP Projec
 
                     while request is not None:
                         response = request.execute()
-                        print(response)
 
         except HttpError as http_error:
             if http_error.status_code == 403 and "organizations" in http_error.uri:
