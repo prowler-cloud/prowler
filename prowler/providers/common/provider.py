@@ -81,6 +81,14 @@ class Provider(ABC):
         This method needs to be created in each provider.
         """
 
+    @abstractmethod
+    def get_output_mapping(self):
+        """
+        get_output_mapping return the CSV output mapping between the provider and the generic model.
+
+        This method needs to be created in each provider.
+        """
+
     # TODO: probably this won't be here since we want to do the arguments validation during the parse()
     def validate_arguments(self):
         pass

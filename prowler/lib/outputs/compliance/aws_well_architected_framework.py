@@ -2,10 +2,8 @@ from csv import DictWriter
 
 from prowler.config.config import timestamp
 from prowler.lib.logger import logger
-from prowler.lib.outputs.models import (
-    Check_Output_CSV_AWS_Well_Architected,
-    generate_csv_fields,
-)
+from prowler.lib.outputs.csv.csv import generate_csv_fields
+from prowler.lib.outputs.models import Check_Output_CSV_AWS_Well_Architected
 from prowler.lib.utils.utils import outputs_unix_timestamp
 
 
