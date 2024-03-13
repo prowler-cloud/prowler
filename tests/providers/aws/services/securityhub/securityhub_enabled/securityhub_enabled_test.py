@@ -149,7 +149,7 @@ class Test_securityhub_enabled:
 
     def test_securityhub_hub_active_without_integrations_or_standards_muted(self):
         securityhub_client = mock.MagicMock
-        securityhub_client.audit_config = {"allowlist_non_default_regions": True}
+        securityhub_client.audit_config = {"mute_non_default_regions": True}
         securityhub_client.region = AWS_REGION_EU_WEST_1
         securityhub_client.securityhubs = [
             SecurityHubHub(
@@ -173,7 +173,6 @@ class Test_securityhub_enabled:
             check = securityhub_enabled()
             result = check.execute()
 
-            # TODO: review MUTED
             assert result[0].status == "MUTED"
             assert (
                 result[0].status_extended

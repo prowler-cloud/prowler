@@ -4,7 +4,6 @@ from boto3 import client
 from moto import mock_aws
 
 from tests.providers.aws.utils import (
-    AWS_ACCOUNT_ARN,
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_WEST_1,
     AWS_REGION_US_EAST_1,
@@ -80,7 +79,10 @@ class Test_vpc_different_regions:
                     result[0].status_extended == "VPCs found in more than one region."
                 )
                 assert result[0].resource_id == AWS_ACCOUNT_NUMBER
-                assert result[0].resource_arn == AWS_ACCOUNT_ARN
+                assert (
+                    result[0].resource_arn
+                    == f"arn:aws:ec2:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:vpc"
+                )
                 assert result[0].resource_tags == []
 
     @mock_aws
@@ -116,5 +118,8 @@ class Test_vpc_different_regions:
                 assert result[0].region == AWS_REGION_US_EAST_1
                 assert result[0].status_extended == "VPCs found only in one region."
                 assert result[0].resource_id == AWS_ACCOUNT_NUMBER
-                assert result[0].resource_arn == AWS_ACCOUNT_ARN
+                assert (
+                    result[0].resource_arn
+                    == f"arn:aws:ec2:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:vpc"
+                )
                 assert result[0].resource_tags == []
