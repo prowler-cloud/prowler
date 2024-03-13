@@ -6,6 +6,7 @@ from py_ocsf_models.events.findings.detection_finding import (
 from py_ocsf_models.events.findings.finding import ActivityID, FindingInformation
 from py_ocsf_models.objects.account import Account, TypeID
 from py_ocsf_models.objects.cloud import Cloud
+from py_ocsf_models.objects.container import Container
 from py_ocsf_models.objects.group import Group
 from py_ocsf_models.objects.metadata import Metadata
 from py_ocsf_models.objects.organization import Organization
@@ -61,6 +62,13 @@ def fill_json_ocsf(finding_output: FindingOutput) -> DetectionFinding:
                 provider=finding_output.provider,
                 region=finding_output.region,
             ),
+            # TODO: Only fill the container object if it is Kubernetes
+            container=Container(
+                name=finding_output.resource_name,
+                uid=finding_output.resource_uid,
+            ),
+            # TODO: Get the PID of the namespace (we only have the name of the namespace)
+            # namespace_pid=finding_output.region,
             event_time=finding_output.timestamp,
             remediation=Remediation(
                 desc=finding_output.remediation_recommendation_text,
@@ -110,6 +118,7 @@ def fill_json_ocsf(finding_output: FindingOutput) -> DetectionFinding:
                 ),
             ),
             type_id=DetectionFindingTypeID.Create,
+            type_name=DetectionFindingTypeID.Create.name,
         )
     except Exception as error:
         logger.error(

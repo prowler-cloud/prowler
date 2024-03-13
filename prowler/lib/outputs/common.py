@@ -76,7 +76,7 @@ def generate_provider_output(provider, finding, csv_data) -> FindingOutput:
                     finding.project_id
                 ].organization.display_name
 
-        elif provider.type == "k8s":
+        elif provider.type == "kubernetes":
             if provider.identity.context == "In-Cluster":
                 csv_data["auth_method"] = "in-cluster"
             else:
