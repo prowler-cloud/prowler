@@ -2262,6 +2262,7 @@
           "ap-southeast-3",
           "ca-central-1",
           "eu-central-1",
+          "eu-central-2",
           "eu-north-1",
           "eu-south-1",
           "eu-west-1",
@@ -2295,6 +2296,7 @@
           "ap-southeast-3",
           "ca-central-1",
           "eu-central-1",
+          "eu-central-2",
           "eu-north-1",
           "eu-south-1",
           "eu-west-1",
@@ -2330,6 +2332,7 @@
           "ap-southeast-3",
           "ca-central-1",
           "eu-central-1",
+          "eu-central-2",
           "eu-north-1",
           "eu-south-1",
           "eu-west-1",
@@ -3806,6 +3809,7 @@
           "eu-central-1",
           "eu-north-1",
           "eu-south-1",
+          "eu-south-2",
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
@@ -4457,8 +4461,10 @@
           "ap-southeast-3",
           "ca-central-1",
           "eu-central-1",
+          "eu-central-2",
           "eu-north-1",
           "eu-south-1",
+          "eu-south-2",
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
@@ -4471,8 +4477,14 @@
           "us-west-1",
           "us-west-2"
         ],
-        "aws-cn": [],
-        "aws-us-gov": []
+        "aws-cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
+        "aws-us-gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
       }
     },
     "fsx-windows": {
@@ -4895,6 +4907,7 @@
           "eu-central-2",
           "eu-north-1",
           "eu-south-1",
+          "eu-south-2",
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
@@ -5677,6 +5690,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ca-central-1",
+          "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
@@ -9789,6 +9803,7 @@
           "ap-southeast-1",
           "ap-southeast-2",
           "ap-southeast-3",
+          "ap-southeast-4",
           "ca-central-1",
           "eu-central-1",
           "eu-central-2",
