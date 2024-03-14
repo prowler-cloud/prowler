@@ -2994,13 +2994,13 @@ files = [
 
 [[package]]
 name = "py-ocsf-models"
-version = "0.0.2"
+version = "0.0.3"
 description = "This is a Python implementation of the OCSF models. The models are used to represent the data of the OCSF Schema defined in https://schema.ocsf.io/."
 optional = false
 python-versions = ">=3.9,<3.13"
 files = [
-    {file = "py_ocsf_models-0.0.2-py3-none-any.whl", hash = "sha256:eff9cb44c11bb4de46e39d748a475911552492e8e20f42938345702d80356661"},
-    {file = "py_ocsf_models-0.0.2.tar.gz", hash = "sha256:ad169f3a8fe126292ac7e482d5b900b6f8d2e4ac695d79f9ef2cf3be2167a8e7"},
+    {file = "py_ocsf_models-0.0.3-py3-none-any.whl", hash = "sha256:f4a47a1dbd502098a6016903cae328c29a52b2348a6d43e699889df98333f8ba"},
+    {file = "py_ocsf_models-0.0.3.tar.gz", hash = "sha256:46de6cd03e2b743984c8e394544b7184f172fab7aea62f5133e13acf28a2036e"},
 ]
 
 [package.dependencies]
@@ -4505,4 +4505,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.13"
-content-hash = "b2e92393839a3c9c96a291fcfcb929510fbc18cabbabd63a0ae15f491dd8e2d1"
+content-hash = "2bbb6bfb3c931d8d98d4cb5c1d5642073de26932c0bc73a188fe77c922707d0e"

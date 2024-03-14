@@ -15,8 +15,6 @@ from py_ocsf_models.objects.remediation import Remediation
 from py_ocsf_models.objects.resource_details import ResourceDetails
 
 from prowler.lib.logger import logger
-
-# from py_ocsf_models.objects.related_event import RelatedEvent
 from prowler.lib.outputs.common_models import FindingOutput
 
 
@@ -31,11 +29,11 @@ def get_account_type_id_by_provider(provider: str) -> TypeID:
     return type_id
 
 
-def get_finding_status_id(status: str) -> StatusID:
+def get_finding_status_id(status: str, muted: bool) -> StatusID:
     status_id = StatusID.Other
     if status == "FAIL":
         status_id = StatusID.New
-    elif status == "MUTED":
+    if muted:
         status_id = StatusID.Suppressed
     return status_id
 
@@ -47,7 +45,9 @@ def fill_json_ocsf(finding_output: FindingOutput) -> DetectionFinding:
         finding_severity = getattr(
             SeverityID, finding_output.severity.capitalize(), SeverityID.Unknown
         )
-        finding_status = get_finding_status_id(finding_output.status)
+        finding_status = get_finding_status_id(
+            finding_output.status, finding_output.muted
+        )
 
         detection_finding = DetectionFinding(
             activity_id=finding_activity.value,
@@ -58,8 +58,6 @@ def fill_json_ocsf(finding_output: FindingOutput) -> DetectionFinding:
                 title=finding_output.check_title,
                 uid=finding_output.finding_uid,
                 product_uid="prowler",
-                # TODO: RelatedEvent and depends_on + related_to
-                # related_events=[RelatedEvent()],
             ),
             event_time=finding_output.timestamp,
             remediation=Remediation(
@@ -106,7 +104,7 @@ def fill_json_ocsf(finding_output: FindingOutput) -> DetectionFinding:
                     version=finding_output.prowler_version,
                 ),
             ),
-            type_id=DetectionFindingTypeID.Create,
+            type_uid=DetectionFindingTypeID.Create,
             type_name=DetectionFindingTypeID.Create.name,
         )
 
