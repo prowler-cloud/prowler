@@ -51,7 +51,7 @@ class Monitor(AzureService):
                 rules = client.activity_log_alerts.list_by_subscription_id()
                 for rule in rules:
                     alert_rules[subscription].append(
-                        AlertRules(
+                        AlertRule(
                             id=rule.id,
                             name=rule.name,
                             condition=rule.condition,
@@ -75,7 +75,7 @@ class DiagnosticSetting:
 
 
 @dataclass
-class AlertRules:
+class AlertRule:
     id: str
     name: str
     condition: AlertRuleAllOfCondition

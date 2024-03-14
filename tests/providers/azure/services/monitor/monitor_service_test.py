@@ -1,7 +1,12 @@
 from unittest import mock
 from unittest.mock import patch
 
+from azure.mgmt.monitor.models import AlertRuleAnyOfOrLeafCondition
+
+from prowler.providers.azure.services.monitor.lib.monitor_alerts import check_alert_rule
 from prowler.providers.azure.services.monitor.monitor_service import (
+    AlertRule,
+    AlertRuleAllOfCondition,
     DiagnosticSetting,
     Monitor,
 )
@@ -100,4 +105,67 @@ class Test_Monitor_Service:
         assert (
             monitor.diagnostics_settings[AZURE_SUBSCRIPTION][0].storage_account_id
             == "/subscriptions/1234a5-123a-123a-123a-1234567890ab/resourceGroups/rg/providers/Microsoft.Storage/storageAccounts/storageaccountname"
+        )
+
+    def test__monitor_alerts_false__(self):
+        alert_rule = AlertRule(
+            id="id",
+            name="name",
+            condition=AlertRuleAllOfCondition(
+                all_of=[
+                    AlertRuleAnyOfOrLeafCondition(),
+                    AlertRuleAnyOfOrLeafCondition(
+                        equals="Microsoft.Authorization/policyAssignments/write",
+                        field="operationName",
+                    ),
+                ]
+            ),
+            enabled=False,
+            description="description",
+        )
+
+        assert not check_alert_rule(
+            alert_rule, "Microsoft.Authorization/policyAssignments/write"
+        )
+
+    def test__monitor_alerts_true__(self):
+        alert_rule = AlertRule(
+            id="id",
+            name="name",
+            condition=AlertRuleAllOfCondition(
+                all_of=[
+                    AlertRuleAnyOfOrLeafCondition(),
+                    AlertRuleAnyOfOrLeafCondition(
+                        equals="Microsoft.Authorization/policyAssignments/write",
+                        field="operationName",
+                    ),
+                ]
+            ),
+            enabled=True,
+            description="description",
+        )
+
+        assert check_alert_rule(
+            alert_rule, "Microsoft.Authorization/policyAssignments/write"
+        )
+
+    def test__monitor_alerts_false_equal__(self):
+        alert_rule = AlertRule(
+            id="id",
+            name="name",
+            condition=AlertRuleAllOfCondition(
+                all_of=[
+                    AlertRuleAnyOfOrLeafCondition(),
+                    AlertRuleAnyOfOrLeafCondition(
+                        equals="Microsoft.Authorization/policyAssingments/write",
+                        field="operationName",
+                    ),
+                ]
+            ),
+            enabled=True,
+            description="description",
+        )
+
+        assert not check_alert_rule(
+            alert_rule, "Microsoft.Authorization/policyAssignments/write"
         )

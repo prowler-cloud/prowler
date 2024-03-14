@@ -3,8 +3,8 @@ from unittest import mock
 from azure.mgmt.monitor.models import AlertRuleAnyOfOrLeafCondition
 
 from prowler.providers.azure.services.monitor.monitor_service import (
+    AlertRule,
     AlertRuleAllOfCondition,
-    AlertRules,
 )
 from tests.providers.azure.azure_fixtures import AZURE_SUBSCRIPTION
 
@@ -53,7 +53,7 @@ class Test_monitor_alert_delete_policy_assignment:
         monitor_client = mock.MagicMock
         monitor_client.alert_rules = {
             AZURE_SUBSCRIPTION: [
-                AlertRules(
+                AlertRule(
                     id="id",
                     name="name",
                     condition=AlertRuleAllOfCondition(
@@ -68,7 +68,7 @@ class Test_monitor_alert_delete_policy_assignment:
                     enabled=False,
                     description="description",
                 ),
-                AlertRules(
+                AlertRule(
                     id="id2",
                     name="name2",
                     condition=AlertRuleAllOfCondition(

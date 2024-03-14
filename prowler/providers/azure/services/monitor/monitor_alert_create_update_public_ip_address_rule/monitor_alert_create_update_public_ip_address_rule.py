@@ -1,7 +1,5 @@
 from prowler.lib.check.models import Check, Check_Report_Azure
-from prowler.providers.azure.services.monitor.lib.monitoring_alerts_review.monitoring_alerts_review import (
-    check_alerts_review,
-)
+from prowler.providers.azure.services.monitor.lib.monitor_alerts import check_alert_rule
 from prowler.providers.azure.services.monitor.monitor_client import monitor_client
 
 
@@ -20,10 +18,9 @@ class monitor_alert_create_update_public_ip_address_rule(Check):
             report.resource_id = "Monitor"
             report.status_extended = f"There is not an alert for creating/updating Public IP address rule in subscription {subscription_name}."
             for alert_rule in activity_log_alerts:
-                check = check_alerts_review(
+                if check_alert_rule(
                     alert_rule, "Microsoft.Network/publicIPAddresses/write"
-                )
-                if check:
+                ):
                     report.status = "PASS"
                     report.resource_name = alert_rule.name
                     report.resource_id = alert_rule.id
