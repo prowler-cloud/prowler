@@ -9,7 +9,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "AwsEc2Eip",
+  "ResourceType": "GCPComputeAddress",
   "Description": "Check if any of the Public Addresses are in Shodan (requires Shodan API KEY).",
   "Risk": "Sites like Shodan index exposed systems and further expose them to wider audiences as a quick way to find exploitable systems.",
   "RelatedUrl": "",
