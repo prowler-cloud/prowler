@@ -2,6 +2,7 @@ from unittest import mock
 from uuid import uuid4
 
 from prowler.providers.azure.services.entra.entra_service import AuthorizationPolicy
+from tests.providers.azure.azure_fixtures import DOMAIN
 
 
 class Test_entra_policy_ensure_default_user_cannot_create_tenants:
@@ -25,7 +26,7 @@ class Test_entra_policy_ensure_default_user_cannot_create_tenants:
         id = str(uuid4())
         entra_client = mock.MagicMock
         entra_client.authorization_policy = {
-            "test.omnimicrosoft.com": AuthorizationPolicy(
+            DOMAIN: AuthorizationPolicy(
                 id=id,
                 name="Test",
                 description="Test",
@@ -54,13 +55,13 @@ class Test_entra_policy_ensure_default_user_cannot_create_tenants:
             )
             assert result[0].resource_name == "Test"
             assert result[0].resource_id == id
-            assert result[0].subscription == "All from tenant 'test.omnimicrosoft.com'"
+            assert result[0].subscription == f"All from tenant '{DOMAIN}'"
 
     def test_entra_default_user_role_permissions_allowed_to_create_tenants(self):
         id = str(uuid4())
         entra_client = mock.MagicMock
         entra_client.authorization_policy = {
-            "test.omnimicrosoft.com": AuthorizationPolicy(
+            DOMAIN: AuthorizationPolicy(
                 id=id,
                 name="Test",
                 description="Test",
@@ -89,4 +90,4 @@ class Test_entra_policy_ensure_default_user_cannot_create_tenants:
             )
             assert result[0].resource_name == "Test"
             assert result[0].resource_id == id
-            assert result[0].subscription == "All from tenant 'test.omnimicrosoft.com'"
+            assert result[0].subscription == f"All from tenant '{DOMAIN}'"
