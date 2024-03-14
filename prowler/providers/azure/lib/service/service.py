@@ -1,3 +1,5 @@
+from typing import Union
+
 from prowler.lib.logger import logger
 from prowler.providers.azure.lib.audit_info.models import Azure_Audit_Info
 
@@ -5,13 +7,13 @@ from prowler.providers.azure.lib.audit_info.models import Azure_Audit_Info
 class AzureService:
     def __init__(
         self,
-        services: list,
+        services: Union[list[object], object],
         audit_info: Azure_Audit_Info,
     ):
         """
-        services must be a list of Azure clients to use in service (for now only GraphServiceClient support multiple client for use "v1" and "beta" versions)
-        If the service is not in a list, it will be converted to a list of one element
-        If a list is passed, and it not contains GraphServiceClient, it will be used only the last client of the list for all subscriptions
+        services argument must be a list of Azure client's class to be set for the current service (for now only GraphServiceClient supports multiple clients to use "v1" and "beta" versions)
+        If the service not a list, thus a class object, it will be converted to a list of one element with that class object
+        If a list is passed, and it not contains GraphServiceClient, it will be used only the first client of the list for all subscriptions
         """
         if not isinstance(services, list):
             services = [services]
@@ -31,28 +33,25 @@ class AzureService:
     def __set_clients__(self, identity, credentials, services, region_config):
         clients = {}
         try:
-            clients.update({identity.domain: {}})
-            for client_service in services:
-                if "msgraph_beta." in str(client_service):
-                    clients[identity.domain].update(
-                        {"beta": client_service(credentials=credentials)}
-                    )
-                elif "msgraph." in str(client_service):
-                    clients[identity.domain].update(
-                        {"v1": client_service(credentials=credentials)}
-                    )
-                else:
-                    for display_name, id in identity.subscriptions.items():
-                        clients.update(
-                            {
-                                display_name: client_service(
-                                    credential=credentials,
-                                    subscription_id=id,
-                                    base_url=region_config.base_url,
-                                    credential_scopes=region_config.credential_scopes,
-                                )
-                            }
+            if "GraphServiceClient" in str(services):
+                clients.update({identity.domain: {}})
+                for client_service in services:
+                    if "msgraph_beta." in str(client_service):
+                        clients[identity.domain]["beta"] = client_service(
+                            credentials=credentials
                         )
+                    elif "msgraph." in str(client_service):
+                        clients[identity.domain]["v1"] = client_service(
+                            credentials=credentials
+                        )
+            else:
+                for display_name, id in identity.subscriptions.items():
+                    clients[display_name] = services[0](
+                        credential=credentials,
+                        subscription_id=id,
+                        base_url=region_config.base_url,
+                        credential_scopes=region_config.credential_scopes,
+                    )
 
         except Exception as error:
             logger.error(
