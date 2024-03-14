@@ -138,6 +138,15 @@ def mutelist_findings(
                 finding.resource_name,
                 unroll_tags(finding.resource_tags),
             )
+        elif global_provider.type == "gcp":
+            finding.muted = is_muted(
+                global_provider.mutelist,
+                finding.project_id,
+                finding.check_metadata.CheckID,
+                finding.location,
+                finding.resource_name,
+                unroll_tags(finding.resource_tags),
+            )
     return check_findings
 
 
