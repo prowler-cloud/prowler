@@ -147,6 +147,15 @@ def mutelist_findings(
                 finding.resource_name,
                 unroll_tags(finding.resource_tags),
             )
+        elif global_provider.type == "kubernetes":
+            finding.muted = is_muted(
+                global_provider.mutelist,
+                global_provider.identity.cluster,
+                finding.check_metadata.CheckID,
+                finding.namespace,
+                finding.resource_name,
+                unroll_tags(finding.resource_tags),
+            )
     return check_findings
 
 
