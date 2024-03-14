@@ -62,7 +62,7 @@ class AzureProvider(Provider):
         )
 
         # TODO: should we keep this here or within the identity?
-        self._locations = self.get_locations(self.session, self.region_config)
+        self._locations = self.get_locations(self.session)
 
         # TODO: move this to the providers, pending for AWS, GCP, AZURE and K8s
         # Audit Config
@@ -354,9 +354,9 @@ Azure Identity Type: {Fore.YELLOW}[{self._identity.identity_type}]{Style.RESET_A
 
         return identity
 
-    def get_locations(self, credentials, region_config) -> dict[str, list[str]]:
+    def get_locations(self, credentials) -> dict[str, list[str]]:
         locations = None
-        if credentials and region_config:
+        if credentials:
             locations = {}
             token = credentials.get_token("https://management.azure.com/.default").token
             for display_name, subscription_id in self._identity.subscriptions.items():
