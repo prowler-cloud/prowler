@@ -1,0 +1,44 @@
+### Account, Check and/or Region can be * to apply for all the cases.
+### Account == Azure Subscription and Region == Azure Location
+### Resources and tags are lists that can have either Regex or Keywords.
+### Tags is an optional list that matches on tuples of 'key=value' and are "ANDed" together.
+### Use an alternation Regex to match one of multiple tags with "ORed" logic.
+### For each check you can except Accounts, Regions, Resources and/or Tags.
+###########################  MUTE LIST EXAMPLE  ###########################
+Mute List:
+  Accounts:
+    "Azure subscription 1":
+      Checks:
+        "sqlserver_tde_encryption_enabled":
+          Regions:
+            - "westeurope"
+          Resources:
+            - "sqlserver1"           # Will ignore sqlserver1 in check sqlserver_tde_encryption_enabled located in westeurope
+            - "sqlserver2"           # Will ignore sqlserver2 in check sqlserver_tde_encryption_enabled located in westeurope
+        "defender_*":
+          Regions:
+            - "*"
+          Resources:
+            - "*"                 # Will ignore every Defender check in every location
+        "*":
+          Regions:
+            - "*"
+          Resources:
+            - "test"
+          Tags:
+            - "test=test"         # Will ignore every resource containing the string "test" and the tags 'test=test' and
+            - "project=test|project=stage" # either of ('project=test' OR project=stage) in Azure subscription 1 and every location
+
+    "*":
+      Checks:
+        "vm_*":
+          Regions:
+            - "*"
+          Resources:
+            - "*"
+          Exceptions:
+            Accounts:
+              - "Subscription2"
+            Regions:
+              - "eastus"
+              - "eastus2"        # Will ignore every resource in VM checks except the ones in Azure Subscription2 located in eastus or eastus2

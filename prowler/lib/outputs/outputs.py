@@ -36,9 +36,14 @@ def stdout_report(finding, color, verbose, status):
         details = finding.namespace.lower()
 
     if verbose and (not status or finding.status in status):
-        print(
-            f"\t{color}{finding.status}{Style.RESET_ALL} {details}: {finding.status_extended}"
-        )
+        if finding.muted:
+            print(
+                f"\t{color}MUTED ({finding.status}){Style.RESET_ALL} {details}: {finding.status_extended}"
+            )
+        else:
+            print(
+                f"\t{color}{finding.status}{Style.RESET_ALL} {details}: {finding.status_extended}"
+            )
 
 
 def report(check_findings, provider):
@@ -65,7 +70,7 @@ def report(check_findings, provider):
 
             for finding in check_findings:
                 # Print findings by stdout
-                color = set_report_color(finding.status)
+                color = set_report_color(finding.status, finding.muted)
                 stdout_report(
                     finding, color, output_options.verbose, output_options.status
                 )
@@ -170,17 +175,17 @@ def report(check_findings, provider):
         )
 
 
-def set_report_color(status: str) -> str:
+def set_report_color(status: str, muted: bool = False) -> str:
     """Return the color for a give result status"""
     color = ""
-    if status == "PASS":
+    if muted:
+        color = orange_color
+    elif status == "PASS":
         color = Fore.GREEN
     elif status == "FAIL":
         color = Fore.RED
     elif status == "ERROR":
         color = Fore.BLACK
-    elif status == "MUTED":
-        color = orange_color
     elif status == "MANUAL":
         color = Fore.YELLOW
     else:

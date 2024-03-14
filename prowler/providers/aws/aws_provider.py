@@ -278,7 +278,7 @@ class AwsProvider(Provider):
     def mutelist(self, mutelist_path):
         if mutelist_path:
             mutelist = parse_mutelist_file(
-                self._session.current_session, self._identity.account, mutelist_path
+                mutelist_path, self._session.current_session, self._identity.account
             )
         else:
             mutelist = {}
