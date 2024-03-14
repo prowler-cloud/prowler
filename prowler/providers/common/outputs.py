@@ -78,7 +78,7 @@ class Azure_Output_Options(Provider_Output_Options):
         # First call Provider_Output_Options init
         super().__init__(arguments, allowlist_file, bulk_checks_metadata)
 
-        # Confire Shodan API
+        # Configure Shodan API
         if arguments.shodan:
             audit_info = change_config_var(
                 "shodan_api_key", arguments.shodan, audit_info
@@ -105,7 +105,7 @@ class Gcp_Output_Options(Provider_Output_Options):
         # First call Provider_Output_Options init
         super().__init__(arguments, allowlist_file, bulk_checks_metadata)
 
-        # Confire Shodan API
+        # Configure Shodan API
         if arguments.shodan:
             audit_info = change_config_var(
                 "shodan_api_key", arguments.shodan, audit_info
@@ -128,7 +128,7 @@ class Aws_Output_Options(Provider_Output_Options):
         # First call Provider_Output_Options init
         super().__init__(arguments, allowlist_file, bulk_checks_metadata)
 
-        # Confire Shodan API
+        # Configure Shodan API
         if arguments.shodan:
             audit_info = change_config_var(
                 "shodan_api_key", arguments.shodan, audit_info
