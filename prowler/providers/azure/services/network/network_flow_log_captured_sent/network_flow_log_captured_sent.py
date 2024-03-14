@@ -11,6 +11,8 @@ class network_flow_log_captured_sent(Check):
                 report.subscription = subscription
                 report.resource_name = network_watcher.name
                 report.resource_id = network_watcher.id
+                report.status = "FAIL"
+                report.status_extended = f"Network Watcher {network_watcher.name} from subscription {subscription} has no flow logs"
                 if network_watcher.flow_logs:
                     report.status = "FAIL"
                     report.status_extended = f"Network Watcher {network_watcher.name} from subscription {subscription} has flow logs disabled"
@@ -19,9 +21,7 @@ class network_flow_log_captured_sent(Check):
                             report.status = "PASS"
                             report.status_extended = f"Network Watcher {network_watcher.name} from subscription {subscription} has flow logs that are captured and sent to Log Analytics workspace"
                             break
-                else:
-                    report.status = "FAIL"
-                    report.status_extended = f"Network Watcher {network_watcher.name} from subscription {subscription} has no flow logs"
+
                 findings.append(report)
 
         return findings
