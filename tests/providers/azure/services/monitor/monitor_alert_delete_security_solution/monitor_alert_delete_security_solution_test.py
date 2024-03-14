@@ -45,7 +45,7 @@ class Test_monitor_alert_create_update_security_solution:
             assert result[0].resource_id == "Monitor"
             assert (
                 result[0].status_extended
-                == f"There is not an alert for delete Security Solution in subscription {AZURE_SUBSCRIPTION}."
+                == f"There is not an alert for deleting Security Solution in subscription {AZURE_SUBSCRIPTION}."
             )
 
     def test_alert_rules_configured(self):
@@ -59,7 +59,8 @@ class Test_monitor_alert_create_update_security_solution:
                         all_of=[
                             AlertRuleAnyOfOrLeafCondition(),
                             AlertRuleAnyOfOrLeafCondition(
-                                equals="Microsoft.Security/securitySolutions/delete"
+                                equals="Microsoft.Security/securitySolutions/delete",
+                                field="operationName",
                             ),
                         ]
                     ),
@@ -73,7 +74,8 @@ class Test_monitor_alert_create_update_security_solution:
                         all_of=[
                             AlertRuleAnyOfOrLeafCondition(),
                             AlertRuleAnyOfOrLeafCondition(
-                                equals="Microsoft.Security/securitySolutions/delete"
+                                equals="Microsoft.Security/securitySolutions/delete",
+                                field="operationName",
                             ),
                         ]
                     ),
@@ -99,5 +101,5 @@ class Test_monitor_alert_create_update_security_solution:
             assert result[0].resource_id == "id2"
             assert (
                 result[0].status_extended
-                == f"There is an alert configured for delete Security Solution in subscription {AZURE_SUBSCRIPTION}."
+                == f"There is an alert configured for deleting Security Solution in subscription {AZURE_SUBSCRIPTION}."
             )

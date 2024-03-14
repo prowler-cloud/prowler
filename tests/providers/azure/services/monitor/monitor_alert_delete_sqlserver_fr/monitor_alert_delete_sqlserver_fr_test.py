@@ -45,7 +45,7 @@ class Test_monitor_alert_delete_sqlserver_fr:
             assert result[0].resource_id == "Monitor"
             assert (
                 result[0].status_extended
-                == f"There is not an alert for delete SQL Server firewall rule in subscription {AZURE_SUBSCRIPTION}."
+                == f"There is not an alert for deleting SQL Server firewall rule in subscription {AZURE_SUBSCRIPTION}."
             )
 
     def test_alert_rules_configured(self):
@@ -59,7 +59,8 @@ class Test_monitor_alert_delete_sqlserver_fr:
                         all_of=[
                             AlertRuleAnyOfOrLeafCondition(),
                             AlertRuleAnyOfOrLeafCondition(
-                                equals="Microsoft.Sql/servers/firewallRules/delete"
+                                equals="Microsoft.Sql/servers/firewallRules/delete",
+                                field="operationName",
                             ),
                         ]
                     ),
@@ -73,7 +74,8 @@ class Test_monitor_alert_delete_sqlserver_fr:
                         all_of=[
                             AlertRuleAnyOfOrLeafCondition(),
                             AlertRuleAnyOfOrLeafCondition(
-                                equals="Microsoft.Sql/servers/firewallRules/delete"
+                                equals="Microsoft.Sql/servers/firewallRules/delete",
+                                field="operationName",
                             ),
                         ]
                     ),
@@ -99,5 +101,5 @@ class Test_monitor_alert_delete_sqlserver_fr:
             assert result[0].resource_id == "id2"
             assert (
                 result[0].status_extended
-                == f"There is an alert configured for delete SQL Server firewall rule in subscription {AZURE_SUBSCRIPTION}."
+                == f"There is an alert configured for deleting SQL Server firewall rule in subscription {AZURE_SUBSCRIPTION}."
             )

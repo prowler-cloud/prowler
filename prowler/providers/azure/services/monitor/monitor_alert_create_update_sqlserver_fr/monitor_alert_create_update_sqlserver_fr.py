@@ -18,7 +18,7 @@ class monitor_alert_create_update_sqlserver_fr(Check):
             report.subscription = subscription_name
             report.resource_name = "Monitor"
             report.resource_id = "Monitor"
-            report.status_extended = f"There is not an alert for create SQL Server firewall rule in subscription {subscription_name}."
+            report.status_extended = f"There is not an alert for creating/updating SQL Server firewall rule in subscription {subscription_name}."
             for alert_rule in activity_log_alerts:
                 check = check_alerts_review(
                     alert_rule, "Microsoft.Sql/servers/firewallRules/write"
@@ -28,7 +28,7 @@ class monitor_alert_create_update_sqlserver_fr(Check):
                     report.resource_name = alert_rule.name
                     report.resource_id = alert_rule.id
                     report.subscription = subscription_name
-                    report.status_extended = f"There is an alert configured for create SQL Server firewall rule in subscription {subscription_name}."
+                    report.status_extended = f"There is an alert configured for creating/updating SQL Server firewall rule in subscription {subscription_name}."
                     break
 
             findings.append(report)

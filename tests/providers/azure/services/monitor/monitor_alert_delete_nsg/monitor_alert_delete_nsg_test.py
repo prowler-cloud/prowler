@@ -45,7 +45,7 @@ class Test_monitor_alert_delete_nsg:
             assert result[0].resource_id == "Monitor"
             assert (
                 result[0].status_extended
-                == f"There is not an alert for delete Network Securiy Groups in subscription {AZURE_SUBSCRIPTION}."
+                == f"There is not an alert for deleting Network Security Groups in subscription {AZURE_SUBSCRIPTION}."
             )
 
     def test_alert_rules_configured(self):
@@ -59,7 +59,8 @@ class Test_monitor_alert_delete_nsg:
                         all_of=[
                             AlertRuleAnyOfOrLeafCondition(),
                             AlertRuleAnyOfOrLeafCondition(
-                                equals="Microsoft.Network/networkSecurityGroups/delete"
+                                equals="Microsoft.Network/networkSecurityGroups/delete",
+                                field="operationName",
                             ),
                         ]
                     ),
@@ -73,7 +74,8 @@ class Test_monitor_alert_delete_nsg:
                         all_of=[
                             AlertRuleAnyOfOrLeafCondition(),
                             AlertRuleAnyOfOrLeafCondition(
-                                equals="Microsoft.Network/networkSecurityGroups/delete"
+                                equals="Microsoft.Network/networkSecurityGroups/delete",
+                                field="operationName",
                             ),
                         ]
                     ),
@@ -99,5 +101,5 @@ class Test_monitor_alert_delete_nsg:
             assert result[0].resource_id == "id2"
             assert (
                 result[0].status_extended
-                == f"There is an alert configured for delete Network Securiy Groups in subscription {AZURE_SUBSCRIPTION}."
+                == f"There is an alert configured for deleting Network Security Groups in subscription {AZURE_SUBSCRIPTION}."
             )

@@ -46,7 +46,7 @@ class Test_monitor_alert_create_policy_assignment:
             assert result[0].resource_id == "Monitor"
             assert (
                 result[0].status_extended
-                == f"There is not an alert for create Policy Assignments in subscription {AZURE_SUBSCRIPTION}."
+                == f"There is not an alert for creating Policy Assignments in subscription {AZURE_SUBSCRIPTION}."
             )
 
     def test_alert_rules_configured(self):
@@ -60,7 +60,8 @@ class Test_monitor_alert_create_policy_assignment:
                         all_of=[
                             AlertRuleAnyOfOrLeafCondition(),
                             AlertRuleAnyOfOrLeafCondition(
-                                equals="Microsoft.Authorization/policyAssignments/write"
+                                equals="Microsoft.Authorization/policyAssignments/write",
+                                field="operationName",
                             ),
                         ]
                     ),
@@ -74,7 +75,8 @@ class Test_monitor_alert_create_policy_assignment:
                         all_of=[
                             AlertRuleAnyOfOrLeafCondition(),
                             AlertRuleAnyOfOrLeafCondition(
-                                equals="Microsoft.Authorization/policyAssignments/write"
+                                equals="Microsoft.Authorization/policyAssignments/write",
+                                field="operationName",
                             ),
                         ]
                     ),
@@ -100,5 +102,5 @@ class Test_monitor_alert_create_policy_assignment:
             assert result[0].resource_id == "id2"
             assert (
                 result[0].status_extended
-                == f"There is an alert configured for create Policy Assignments in subscription {AZURE_SUBSCRIPTION}."
+                == f"There is an alert configured for creating Policy Assignments in subscription {AZURE_SUBSCRIPTION}."
             )
