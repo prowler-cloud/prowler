@@ -19,7 +19,7 @@ from tests.providers.aws.utils import (
     AWS_REGION_EU_SOUTH_3,
     AWS_REGION_EU_WEST_1,
     AWS_REGION_US_EAST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 
@@ -27,7 +27,7 @@ class TestMutelist:
     # Test S3 mutelist
     @mock_aws
     def test_s3_mutelist(self):
-        audit_info = set_mocked_aws_audit_info()
+        aws_provider = set_mocked_aws_provider()
         # Create bucket and upload mutelist yaml
         s3_resource = resource("s3", region_name=AWS_REGION_US_EAST_1)
         s3_resource.create_bucket(Bucket="test-mutelist")
@@ -40,15 +40,15 @@ class TestMutelist:
 
         with open("tests/providers/aws/lib/mutelist/fixtures/mutelist.yaml") as f:
             assert yaml.safe_load(f)["Mute List"] == parse_mutelist_file(
-                audit_info.session.current_session,
-                audit_info.identity.account,
+                aws_provider.session.current_session,
+                aws_provider.identity.account,
                 "s3://test-mutelist/mutelist.yaml",
             )
 
     # Test DynamoDB mutelist
     @mock_aws
     def test_dynamo_mutelist(self):
-        audit_info = set_mocked_aws_audit_info()
+        aws_provider = set_mocked_aws_provider()
         # Create table and put item
         dynamodb_resource = resource("dynamodb", region_name=AWS_REGION_US_EAST_1)
         table_name = "test-mutelist"
@@ -80,8 +80,8 @@ class TestMutelist:
         assert (
             "keyword"
             in parse_mutelist_file(
-                audit_info.session.current_session,
-                audit_info.identity.account,
+                aws_provider.session.current_session,
+                aws_provider.identity.account,
                 "arn:aws:dynamodb:"
                 + AWS_REGION_US_EAST_1
                 + ":"
@@ -93,7 +93,7 @@ class TestMutelist:
 
     @mock_aws
     def test_dynamo_mutelist_with_tags(self):
-        audit_info = set_mocked_aws_audit_info()
+        aws_provider = set_mocked_aws_provider()
         # Create table and put item
         dynamodb_resource = resource("dynamodb", region_name=AWS_REGION_US_EAST_1)
         table_name = "test-mutelist"
@@ -126,8 +126,8 @@ class TestMutelist:
         assert (
             "environment=dev"
             in parse_mutelist_file(
-                audit_info.session.current_session,
-                audit_info.identity.account,
+                aws_provider.session.current_session,
+                aws_provider.identity.account,
                 "arn:aws:dynamodb:"
                 + AWS_REGION_US_EAST_1
                 + ":"
