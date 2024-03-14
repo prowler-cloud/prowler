@@ -164,5 +164,8 @@ azure:
 
 # GCP Configuration
 gcp:
+  # GCP Compute Configuration
+  # gcp.compute_public_address_shodan
+  shodan_api_key: null
 
 ```

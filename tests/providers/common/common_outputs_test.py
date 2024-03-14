@@ -110,6 +110,7 @@ class Test_Common_Output_Options:
         arguments.verbose = True
         arguments.output_filename = "output_test_filename"
         arguments.only_logs = False
+        arguments.shodan = "test-api-key"
         arguments.unix_timestamp = False
 
         audit_info = self.set_mocked_gcp_audit_info()
