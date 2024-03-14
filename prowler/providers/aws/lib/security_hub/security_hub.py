@@ -29,10 +29,8 @@ def prepare_security_hub_findings(
             continue
 
         # Handle status filters, if any
-        if (
-            not output_options.status
-            or finding.status in output_options.status
-            or output_options.send_sh_only_fails
+        if (finding.status != "FAIL" and output_options.send_sh_only_fails) or (
+            output_options.status and finding.status not in output_options.status
         ):
             continue
 
