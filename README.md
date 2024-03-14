@@ -47,9 +47,9 @@ It contains hundreds of controls covering CIS, NIST 800, NIST CSF, CISA, RBI, Fe
 
 | Provider | Checks | Services | [Compliance Frameworks](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/compliance/) | [Categories](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/misc/#categories) |
 |---|---|---|---|---|
-| AWS | 302 | 61 -> `prowler aws --list-services` | 27 -> `prowler aws --list-compliance` | 6 -> `prowler aws --list-categories` |
-| GCP | 73 | 11 -> `prowler gcp --list-services` | 1 -> `prowler gcp --list-compliance` | 2 -> `prowler gcp --list-categories`|
-| Azure | 91 | 14 -> `prowler azure --list-services` | CIS soon | 2 -> `prowler azure --list-categories` |
+| AWS | 304 | 61 -> `prowler aws --list-services` | 28 -> `prowler aws --list-compliance` | 6 -> `prowler aws --list-categories` |
+| GCP | 75 | 11 -> `prowler gcp --list-services` | 1 -> `prowler gcp --list-compliance` | 2 -> `prowler gcp --list-categories`|
+| Azure | 109 | 16 -> `prowler azure --list-services` | CIS soon | 2 -> `prowler azure --list-categories` |
 | Kubernetes | Work In Progress | - | CIS soon | - |
 
 # 📖 Documentation
