@@ -344,7 +344,7 @@
       ],
       "Checks": [
         "inspector2_is_enabled",
-        "inspector2_findings_exist",
+        "inspector2_active_findings_exist",
         "accessanalyzer_enabled_without_findings",
         "guardduty_no_high_severity_findings"
       ]
