@@ -13,6 +13,7 @@ from colorama import Fore, Style
 from prowler.config.config import aws_services_json_file, load_and_validate_config_file
 from prowler.lib.check.check import list_modules, recover_checks_from_service
 from prowler.lib.logger import logger
+from prowler.lib.mutelist.mutelist import parse_mutelist_file
 from prowler.lib.utils.utils import open_file, parse_json_file
 from prowler.providers.aws.config import (
     AWS_STS_GLOBAL_ENDPOINT_REGION,
@@ -20,7 +21,6 @@ from prowler.providers.aws.config import (
     ROLE_SESSION_NAME,
 )
 from prowler.providers.aws.lib.arn.arn import parse_iam_credentials_arn
-from prowler.providers.aws.lib.mutelist.mutelist import parse_mutelist_file
 from prowler.providers.aws.lib.organizations.organizations import (
     get_organizations_metadata,
     parse_organizations_metadata,

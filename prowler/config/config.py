@@ -63,6 +63,16 @@ default_config_file_path = (
 )
 
 
+def get_default_mute_file_path(provider: str):
+    """
+    get_default_mute_file_path returns the default mute file path for the provider
+    """
+    # TODO: crate default mutelist file for kubernetes, azure and gcp
+    if provider == "aws":
+        return f"{pathlib.Path(os.path.dirname(os.path.realpath(__file__)))}/{provider}_mutelist.yaml"
+    return None
+
+
 def check_current_version():
     try:
         prowler_version_string = f"Prowler {prowler_version}"

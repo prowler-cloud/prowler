@@ -32,6 +32,7 @@ def fill_common_data_csv(finding: dict, unix_timestamp: bool) -> dict:
         "check_type": ",".join(finding.check_metadata.CheckType),
         "status": finding.status,
         "status_extended": finding.status_extended,
+        "muted": finding.muted,
         "service_name": finding.check_metadata.ServiceName,
         "subservice_name": finding.check_metadata.SubServiceName,
         "severity": finding.check_metadata.Severity,

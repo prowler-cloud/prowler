@@ -115,15 +115,14 @@ def mutelist_findings(
 ):
     # Check if finding is muted
     for finding in check_findings:
-        if is_muted(
+        finding.muted = is_muted(
             mutelist,
             audited_account,
             finding.check_metadata.CheckID,
             finding.region,
             finding.resource_id,
             unroll_tags(finding.resource_tags),
-        ):
-            finding.status = "MUTED"
+        )
     return check_findings
 
 

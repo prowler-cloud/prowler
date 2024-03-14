@@ -8,6 +8,7 @@ from prowler.config.config import (
     default_config_file_path,
     default_output_directory,
     finding_statuses,
+    get_default_mute_file_path,
     valid_severities,
 )
 from prowler.providers.common.arguments import (
@@ -50,6 +51,7 @@ Detailed documentation at https://docs.prowler.cloud
         self.__init_checks_parser__()
         self.__init_exclude_checks_parser__()
         self.__init_list_checks_parser__()
+        self.__init_mutelist_parser__()
         self.__init_config_parser__()
         self.__init_custom_checks_metadata_parser__()
         self.__init_third_party_integrations_parser__()
@@ -280,6 +282,20 @@ Detailed documentation at https://docs.prowler.cloud
             "--list-categories",
             action="store_true",
             help="List the available check's categories",
+        )
+
+    def __init_mutelist_parser__(self):
+        mutelist_subparser = self.common_providers_parser.add_argument_group(
+            "Mute List"
+        )
+        provider = sys.argv[1] if len(sys.argv) > 1 else "aws"
+        mutelist_subparser.add_argument(
+            "-w",
+            "--mutelist-file",
+            nargs="?",
+            # TODO: Add default mutelist file depending on the provider
+            default=get_default_mute_file_path(provider),
+            help="Path for mutelist yaml file. See example prowler/config/aws_mutelist.yaml for reference and format. It also accepts AWS DynamoDB Table or Lambda ARNs or S3 URIs, see more in https://docs.prowler.cloud/en/latest/tutorials/mutelist/",
         )
 
     def __init_config_parser__(self):
