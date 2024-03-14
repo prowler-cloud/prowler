@@ -8,9 +8,8 @@ from prowler.config.config import (
     json_ocsf_file_suffix,
 )
 from prowler.lib.logger import logger
-from prowler.lib.outputs.csv.csv import generate_csv_fields
-from prowler.lib.outputs.csv.models import CSVRow
-from prowler.lib.outputs.models import (
+from prowler.lib.outputs.common_models import FindingOutput
+from prowler.lib.outputs.compliance.models import (
     Check_Output_CSV_AWS_CIS,
     Check_Output_CSV_AWS_ISO27001_2013,
     Check_Output_CSV_AWS_Well_Architected,
@@ -19,13 +18,14 @@ from prowler.lib.outputs.models import (
     Check_Output_CSV_Generic_Compliance,
     Check_Output_MITRE_ATTACK,
 )
+from prowler.lib.outputs.csv.csv import generate_csv_fields
 from prowler.lib.utils.utils import file_exists, open_file
 
 
 def initialize_file_descriptor(
-    filename: str, output_mode: str, format: Any = CSVRow
+    filename: str, output_mode: str, format: Any = FindingOutput
 ) -> TextIOWrapper:
-    """Open/Create the output file. If needed include headers or the required format, by default will use the CSVRow"""
+    """Open/Create the output file. If needed include headers or the required format, by default will use the FindingOutput"""
     try:
         if file_exists(filename):
             file_descriptor = open_file(
@@ -61,7 +61,7 @@ def fill_file_descriptors(output_modes, output_directory, output_filename, provi
             for output_mode in output_modes:
                 if output_mode == "csv":
                     filename = f"{output_directory}/{output_filename}{csv_file_suffix}"
-                    output_model = CSVRow
+                    output_model = FindingOutput
                     file_descriptor = initialize_file_descriptor(
                         filename,
                         output_mode,
@@ -87,7 +87,6 @@ def fill_file_descriptors(output_modes, output_directory, output_filename, provi
                         file_descriptor = initialize_file_descriptor(
                             filename,
                             output_mode,
-                            provider,
                             Check_Output_CSV_Generic_Compliance,
                         )
                         file_descriptors.update({output_mode: file_descriptor})
@@ -154,7 +153,6 @@ def fill_file_descriptors(output_modes, output_directory, output_filename, provi
                     file_descriptor = initialize_file_descriptor(
                         filename,
                         output_mode,
-                        provider,
                         Check_Output_CSV_Generic_Compliance,
                     )
                     file_descriptors.update({output_mode: file_descriptor})

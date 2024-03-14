@@ -463,3 +463,36 @@ def display_compliance_table(
             f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
         )
         sys.exit(1)
+
+
+def get_check_compliance(finding, provider_type, output_options) -> dict:
+    """get_check_compliance returns a map with the compliance framework as key and the requirements where the finding's check is present.
+
+        Example:
+
+    {
+        "CIS-1.4": ["2.1.3"],
+        "CIS-1.5": ["2.1.3"],
+    }
+    """
+    try:
+        check_compliance = {}
+        # We have to retrieve all the check's compliance requirements
+        if finding.check_metadata.CheckID in output_options.bulk_checks_metadata:
+            for compliance in output_options.bulk_checks_metadata[
+                finding.check_metadata.CheckID
+            ].Compliance:
+                compliance_fw = compliance.Framework
+                if compliance.Version:
+                    compliance_fw = f"{compliance_fw}-{compliance.Version}"
+                if compliance.Provider == provider_type.upper():
+                    if compliance_fw not in check_compliance:
+                        check_compliance[compliance_fw] = []
+                    for requirement in compliance.Requirements:
+                        check_compliance[compliance_fw].append(requirement.Id)
+        return check_compliance
+    except Exception as error:
+        logger.critical(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+        )
+        sys.exit(1)

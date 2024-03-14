@@ -118,7 +118,7 @@ class AzureProvider(Provider):
             # TODO: check the tenant_ids
             # TODO: we have to get the account organization, the tenant is not that
             "account_organization_uid": "identity.tenant_ids",
-            "account_organization": "identity.tenant_domain",
+            "account_organization_name": "identity.tenant_domain",
             # TODO: pending to get the subscription tags
             # "account_tags": "organizations_metadata.account_details_tags",
             "partition": "region_config.name",

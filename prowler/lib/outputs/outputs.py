@@ -5,24 +5,23 @@ from colorama import Fore, Style
 
 from prowler.config.config import available_compliance_frameworks, orange_color
 from prowler.lib.logger import logger
+from prowler.lib.outputs.common import (
+    fill_common_finding_data,
+    generate_provider_output,
+    get_provider_data_mapping,
+)
+from prowler.lib.outputs.common_models import FindingOutput
 from prowler.lib.outputs.compliance.compliance import (
     add_manual_controls,
     fill_compliance,
-)
-from prowler.lib.outputs.csv.csv import (
-    fill_common_data_csv,
-    generate_csv_fields,
-    generate_provider_output_csv,
-    get_provider_data_mapping,
-)
-from prowler.lib.outputs.csv.models import CSVRow
-from prowler.lib.outputs.file_descriptors import fill_file_descriptors
-from prowler.lib.outputs.json import fill_json_asff, fill_json_ocsf
-from prowler.lib.outputs.models import (
-    Check_Output_JSON_ASFF,
     get_check_compliance,
-    unroll_dict,
 )
+from prowler.lib.outputs.csv.csv import generate_csv_fields
+from prowler.lib.outputs.file_descriptors import fill_file_descriptors
+from prowler.lib.outputs.json_asff.json_asff import fill_json_asff
+from prowler.lib.outputs.json_asff.models import Check_Output_JSON_ASFF
+from prowler.lib.outputs.json_ocsf.json_ocsf import fill_json_ocsf
+from prowler.lib.outputs.utils import unroll_dict
 
 
 def stdout_report(finding, color, verbose, status):
@@ -100,6 +99,7 @@ def report(check_findings, provider):
                         # AWS specific outputs
                         if finding.check_metadata.Provider == "aws":
                             if "json-asff" in file_descriptors:
+                                # Initialize this field using the class within fill_json_asff not here
                                 finding_output = Check_Output_JSON_ASFF()
                                 fill_json_asff(
                                     finding_output, provider, finding, output_options
@@ -112,44 +112,37 @@ def report(check_findings, provider):
                                 )
                                 file_descriptors["json-asff"].write(",")
 
+                        # Common Output Data
+                        provider_data_mapping = get_provider_data_mapping(provider)
+                        common_finding_data = fill_common_finding_data(
+                            finding, output_options.unix_timestamp
+                        )
+                        csv_data = {}
+                        csv_data.update(provider_data_mapping)
+                        csv_data.update(common_finding_data)
+                        csv_data["compliance"] = unroll_dict(
+                            get_check_compliance(finding, provider.type, output_options)
+                        )
+                        finding_output = generate_provider_output(
+                            provider, finding, csv_data
+                        )
+
                         # CSV
                         if "csv" in file_descriptors:
-                            provider_data = get_provider_data_mapping(provider)
-                            common_data = fill_common_data_csv(
-                                finding, output_options.unix_timestamp
-                            )
-                            compliance_data = unroll_dict(
-                                get_check_compliance(
-                                    finding, provider.type, output_options
-                                )
-                            )
-                            csv_data = {}
-                            csv_data.update(provider_data)
-                            csv_data.update(common_data)
-                            csv_data["compliance"] = compliance_data
-
                             csv_writer = DictWriter(
                                 file_descriptors["csv"],
-                                fieldnames=generate_csv_fields(CSVRow),
+                                fieldnames=generate_csv_fields(FindingOutput),
                                 delimiter=";",
-                            )
-
-                            finding_output = generate_provider_output_csv(
-                                provider, finding, csv_data
                             )
 
                             csv_writer.writerow(finding_output.dict())
 
+                        # JSON
                         if "json-ocsf" in file_descriptors:
-                            finding_output = fill_json_ocsf(
-                                provider, finding, output_options
-                            )
-
-                            json.dump(
-                                finding_output.dict(),
-                                file_descriptors["json-ocsf"],
-                                indent=4,
-                                default=str,
+                            detection_finding = fill_json_ocsf(finding_output)
+                            # print(file)
+                            file_descriptors["json-ocsf"].write(
+                                detection_finding.json(exclude_none=True, indent=4)
                             )
                             file_descriptors["json-ocsf"].write(",")
 
