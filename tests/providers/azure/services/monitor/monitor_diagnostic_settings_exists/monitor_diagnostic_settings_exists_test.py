@@ -131,8 +131,8 @@ class Test_monitor_diagnostic_settings_exists:
             new=monitor_client,
         ):
             with mock.patch(
-                "prowler.providers.azure.services.monitor.monitor_diagnostic_settings_exists.monitor_diagnostic_settings_exists.storage_client",
-                new=storage_client,
+                "prowler.providers.azure.services.monitor.monitor_diagnostic_settings_exists.monitor_diagnostic_settings_exists.monitor_client",
+                new=monitor_client,
             ):
                 from prowler.providers.azure.services.monitor.monitor_diagnostic_settings_exists.monitor_diagnostic_settings_exists import (
                     monitor_diagnostic_settings_exists,
