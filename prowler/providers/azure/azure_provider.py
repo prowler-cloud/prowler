@@ -62,7 +62,7 @@ class AzureProvider(Provider):
         )
 
         # TODO: should we keep this here or within the identity?
-        self._locations = self.get_locations(self.session, self.region_config)
+        self._locations = self.get_locations(self.session)
 
         # TODO: move this to the providers, pending for AWS, GCP, AZURE and K8s
         # Audit Config
@@ -354,23 +354,13 @@ Azure Identity Type: {Fore.YELLOW}[{self._identity.identity_type}]{Style.RESET_A
 
         return identity
 
-    def get_locations(self, credentials, region_config) -> dict[str, list[str]]:
+    def get_locations(self, credentials) -> dict[str, list[str]]:
         locations = None
-        if credentials and region_config:
-            subscriptions_client = SubscriptionClient(
-                credential=credentials,
-                base_url=region_config.base_url,
-                credential_scopes=region_config.credential_scopes,
-            )
-            list_subscriptions = subscriptions_client.subscriptions.list()
-            # TODO: use the identity subscritions
-            list_subscriptions_ids = [
-                subscription.subscription_id for subscription in list_subscriptions
-            ]
+        if credentials:
             locations = {}
             token = credentials.get_token("https://management.azure.com/.default").token
-            for subscription_id in list_subscriptions_ids:
-                locations.update({subscription_id: []})
+            for display_name, subscription_id in self._identity.subscriptions.items():
+                locations.update({display_name: []})
                 url = f"https://management.azure.com/subscriptions/{subscription_id}/locations?api-version=2022-12-01"
                 headers = {
                     "Authorization": f"Bearer {token}",
@@ -380,5 +370,5 @@ Azure Identity Type: {Fore.YELLOW}[{self._identity.identity_type}]{Style.RESET_A
                 if response.status_code == 200:
                     data = response.json()
                     for location in data["value"]:
-                        locations[subscription_id].append(location["name"])
+                        locations[display_name].append(location["name"])
         return locations
