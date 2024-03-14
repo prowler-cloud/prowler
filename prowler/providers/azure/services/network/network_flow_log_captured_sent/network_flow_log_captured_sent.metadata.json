@@ -1,6 +1,6 @@
 {
   "Provider": "azure",
-  "CheckID": "network_flow_logs_captured_sent",
+  "CheckID": "network_flow_log_captured_sent",
   "CheckTitle": "Ensure that network flow logs are captured and fed into a central log analytics workspace.",
   "CheckType": [],
   "ServiceName": "network",

@@ -2,7 +2,7 @@ from prowler.lib.check.models import Check, Check_Report_Azure
 from prowler.providers.azure.services.network.network_client import network_client
 
 
-class network_flow_logs_captured_sent(Check):
+class network_flow_log_captured_sent(Check):
     def execute(self) -> Check_Report_Azure:
         findings = []
         for subscription, network_watchers in network_client.network_watchers.items():

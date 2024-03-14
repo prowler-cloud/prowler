@@ -7,7 +7,7 @@ from prowler.providers.azure.services.network.network_service import NetworkWatc
 from tests.providers.azure.azure_fixtures import AZURE_SUBSCRIPTION
 
 
-class Test_network_flow_logs_captured_sent:
+class Test_network_flow_log_captured_sent:
     def test_no_network_watchers(self):
         network_client = mock.MagicMock
         network_client.network_watchers = {}
@@ -19,11 +19,11 @@ class Test_network_flow_logs_captured_sent:
             "prowler.providers.azure.services.network.network_client.network_client",
             new=service_client,
         ):
-            from prowler.providers.azure.services.network.network_flow_logs_captured_sent.network_flow_logs_captured_sent import (
-                network_flow_logs_captured_sent,
+            from prowler.providers.azure.services.network.network_flow_log_captured_sent.network_flow_log_captured_sent import (
+                network_flow_log_captured_sent,
             )
 
-            check = network_flow_logs_captured_sent()
+            check = network_flow_log_captured_sent()
             result = check.execute()
             assert len(result) == 0
 
@@ -50,11 +50,11 @@ class Test_network_flow_logs_captured_sent:
             "prowler.providers.azure.services.network.network_client.network_client",
             new=service_client,
         ):
-            from prowler.providers.azure.services.network.network_flow_logs_captured_sent.network_flow_logs_captured_sent import (
-                network_flow_logs_captured_sent,
+            from prowler.providers.azure.services.network.network_flow_log_captured_sent.network_flow_log_captured_sent import (
+                network_flow_log_captured_sent,
             )
 
-            check = network_flow_logs_captured_sent()
+            check = network_flow_log_captured_sent()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
@@ -94,11 +94,11 @@ class Test_network_flow_logs_captured_sent:
             "prowler.providers.azure.services.network.network_client.network_client",
             new=service_client,
         ):
-            from prowler.providers.azure.services.network.network_flow_logs_captured_sent.network_flow_logs_captured_sent import (
-                network_flow_logs_captured_sent,
+            from prowler.providers.azure.services.network.network_flow_log_captured_sent.network_flow_log_captured_sent import (
+                network_flow_log_captured_sent,
             )
 
-            check = network_flow_logs_captured_sent()
+            check = network_flow_log_captured_sent()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
@@ -138,11 +138,11 @@ class Test_network_flow_logs_captured_sent:
             "prowler.providers.azure.services.network.network_client.network_client",
             new=service_client,
         ):
-            from prowler.providers.azure.services.network.network_flow_logs_captured_sent.network_flow_logs_captured_sent import (
-                network_flow_logs_captured_sent,
+            from prowler.providers.azure.services.network.network_flow_log_captured_sent.network_flow_log_captured_sent import (
+                network_flow_log_captured_sent,
             )
 
-            check = network_flow_logs_captured_sent()
+            check = network_flow_log_captured_sent()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
