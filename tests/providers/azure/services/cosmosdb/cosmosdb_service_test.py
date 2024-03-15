@@ -3,7 +3,7 @@ from unittest.mock import patch
 from prowler.providers.azure.services.cosmosdb.cosmosdb_service import Account, CosmosDB
 from tests.providers.azure.azure_fixtures import (
     AZURE_SUBSCRIPTION,
-    set_mocked_azure_audit_info,
+    set_mocked_azure_provider,
 )
 
 
@@ -30,14 +30,14 @@ def mock_cosmosdb_get_accounts(_):
 )
 class Test_CosmosDB_Service:
     def test__get_client__(self):
-        account = CosmosDB(set_mocked_azure_audit_info())
+        account = CosmosDB(set_mocked_azure_provider())
         assert (
             account.clients[AZURE_SUBSCRIPTION].__class__.__name__
             == "CosmosDBManagementClient"
         )
 
     def test__get_accounts__(self):
-        account = CosmosDB(set_mocked_azure_audit_info())
+        account = CosmosDB(set_mocked_azure_provider())
         assert account.accounts[AZURE_SUBSCRIPTION][0].__class__.__name__ == "Account"
         assert account.accounts[AZURE_SUBSCRIPTION][0].id == "account_id"
         assert account.accounts[AZURE_SUBSCRIPTION][0].name == "account_name"

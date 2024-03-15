@@ -2,7 +2,10 @@ from unittest import mock
 from uuid import uuid4
 
 from prowler.providers.azure.services.cosmosdb.cosmosdb_service import Account
-from tests.providers.azure.azure_fixtures import AZURE_SUBSCRIPTION
+from tests.providers.azure.azure_fixtures import (
+    AZURE_SUBSCRIPTION,
+    set_mocked_azure_provider,
+)
 
 
 class Test_cosmosdb_account_use_aad_and_rbac:
@@ -11,6 +14,9 @@ class Test_cosmosdb_account_use_aad_and_rbac:
         cosmosdb_client.accounts = {}
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.cosmosdb.cosmosdb_account_use_aad_and_rbac.cosmosdb_account_use_aad_and_rbac.cosmosdb_client",
             new=cosmosdb_client,
         ):
@@ -43,6 +49,9 @@ class Test_cosmosdb_account_use_aad_and_rbac:
         }
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.cosmosdb.cosmosdb_account_use_aad_and_rbac.cosmosdb_account_use_aad_and_rbac.cosmosdb_client",
             new=cosmosdb_client,
         ):
@@ -83,6 +92,9 @@ class Test_cosmosdb_account_use_aad_and_rbac:
         }
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.cosmosdb.cosmosdb_account_use_aad_and_rbac.cosmosdb_account_use_aad_and_rbac.cosmosdb_client",
             new=cosmosdb_client,
         ):

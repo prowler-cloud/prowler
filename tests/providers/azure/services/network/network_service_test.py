@@ -11,7 +11,7 @@ from prowler.providers.azure.services.network.network_service import (
 )
 from tests.providers.azure.azure_fixtures import (
     AZURE_SUBSCRIPTION,
-    set_mocked_azure_audit_info,
+    set_mocked_azure_provider,
 )
 
 
@@ -84,14 +84,14 @@ def mock_network_get_public_ip_addresses(_):
 )
 class Test_Network_Service:
     def test__get_client__(self):
-        network = Network(set_mocked_azure_audit_info())
+        network = Network(set_mocked_azure_provider())
         assert (
             network.clients[AZURE_SUBSCRIPTION].__class__.__name__
             == "NetworkManagementClient"
         )
 
     def test__get_security_groups__(self):
-        network = Network(set_mocked_azure_audit_info())
+        network = Network(set_mocked_azure_provider())
         assert (
             network.security_groups[AZURE_SUBSCRIPTION][0].__class__.__name__
             == "SecurityGroup"
@@ -102,7 +102,7 @@ class Test_Network_Service:
         assert network.security_groups[AZURE_SUBSCRIPTION][0].security_rules == []
 
     def test__get_network_watchers__(self):
-        network = Network(set_mocked_azure_audit_info())
+        network = Network(set_mocked_azure_provider())
         assert (
             network.network_watchers[AZURE_SUBSCRIPTION][0].__class__.__name__
             == "NetworkWatcher"
@@ -115,7 +115,7 @@ class Test_Network_Service:
         ]
 
     def __get_flow_logs__(self):
-        network = Network(set_mocked_azure_audit_info())
+        network = Network(set_mocked_azure_provider())
         nw_name = "name"
         assert (
             network.network_watchers[AZURE_SUBSCRIPTION][0]
@@ -137,7 +137,7 @@ class Test_Network_Service:
         )
 
     def __get_bastion_hosts__(self):
-        network = Network(set_mocked_azure_audit_info())
+        network = Network(set_mocked_azure_provider())
         assert (
             network.bastion_hosts[AZURE_SUBSCRIPTION][0].__class__.__name__
             == "BastionHost"
@@ -147,7 +147,7 @@ class Test_Network_Service:
         assert network.bastion_hosts[AZURE_SUBSCRIPTION][0].location == "location"
 
     def __get_public_ip_addresses__(self):
-        network = Network(set_mocked_azure_audit_info())
+        network = Network(set_mocked_azure_provider())
         assert (
             network.public_ip_addresses[AZURE_SUBSCRIPTION][0].__class__.__name__
             == "PublicIp"

@@ -2,7 +2,10 @@ from unittest import mock
 from uuid import uuid4
 
 from prowler.providers.azure.services.defender.defender_service import Pricing
-from tests.providers.azure.azure_fixtures import AZURE_SUBSCRIPTION
+from tests.providers.azure.azure_fixtures import (
+    AZURE_SUBSCRIPTION,
+    set_mocked_azure_provider,
+)
 
 
 class Test_defender_ensure_defender_for_databases_is_on:
@@ -11,6 +14,9 @@ class Test_defender_ensure_defender_for_databases_is_on:
         defender_client.pricings = {}
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.defender.defender_ensure_defender_for_databases_is_on.defender_ensure_defender_for_databases_is_on.defender_client",
             new=defender_client,
         ):
@@ -36,6 +42,9 @@ class Test_defender_ensure_defender_for_databases_is_on:
         }
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.defender.defender_ensure_defender_for_databases_is_on.defender_ensure_defender_for_databases_is_on.defender_client",
             new=defender_client,
         ):
@@ -61,6 +70,9 @@ class Test_defender_ensure_defender_for_databases_is_on:
         }
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.defender.defender_ensure_defender_for_databases_is_on.defender_ensure_defender_for_databases_is_on.defender_client",
             new=defender_client,
         ):
@@ -86,6 +98,9 @@ class Test_defender_ensure_defender_for_databases_is_on:
         }
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.defender.defender_ensure_defender_for_databases_is_on.defender_ensure_defender_for_databases_is_on.defender_client",
             new=defender_client,
         ):
@@ -111,6 +126,9 @@ class Test_defender_ensure_defender_for_databases_is_on:
         }
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.defender.defender_ensure_defender_for_databases_is_on.defender_ensure_defender_for_databases_is_on.defender_client",
             new=defender_client,
         ):
@@ -151,6 +169,9 @@ class Test_defender_ensure_defender_for_databases_is_on:
         }
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.defender.defender_ensure_defender_for_databases_is_on.defender_ensure_defender_for_databases_is_on.defender_client",
             new=defender_client,
         ):
@@ -199,6 +220,9 @@ class Test_defender_ensure_defender_for_databases_is_on:
         }
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.defender.defender_ensure_defender_for_databases_is_on.defender_ensure_defender_for_databases_is_on.defender_client",
             new=defender_client,
         ):

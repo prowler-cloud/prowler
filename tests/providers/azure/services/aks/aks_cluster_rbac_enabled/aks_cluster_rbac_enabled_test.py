@@ -2,7 +2,10 @@ from unittest import mock
 from uuid import uuid4
 
 from prowler.providers.azure.services.aks.aks_service import Cluster
-from tests.providers.azure.azure_fixtures import AZURE_SUBSCRIPTION
+from tests.providers.azure.azure_fixtures import (
+    AZURE_SUBSCRIPTION,
+    set_mocked_azure_provider,
+)
 
 
 class Test_aks_cluster_rbac_enabled:
@@ -11,6 +14,9 @@ class Test_aks_cluster_rbac_enabled:
         aks_client.clusters = {}
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.aks.aks_cluster_rbac_enabled.aks_cluster_rbac_enabled.aks_client",
             new=aks_client,
         ):
@@ -27,6 +33,9 @@ class Test_aks_cluster_rbac_enabled:
         aks_client.clusters = {AZURE_SUBSCRIPTION: {}}
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.aks.aks_cluster_rbac_enabled.aks_cluster_rbac_enabled.aks_client",
             new=aks_client,
         ):
@@ -55,6 +64,9 @@ class Test_aks_cluster_rbac_enabled:
         }
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.aks.aks_cluster_rbac_enabled.aks_cluster_rbac_enabled.aks_client",
             new=aks_client,
         ):
@@ -91,6 +103,9 @@ class Test_aks_cluster_rbac_enabled:
         }
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.aks.aks_cluster_rbac_enabled.aks_cluster_rbac_enabled.aks_client",
             new=aks_client,
         ):

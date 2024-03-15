@@ -4,7 +4,10 @@ from uuid import uuid4
 from azure.mgmt.sql.models import ServerBlobAuditingPolicy
 
 from prowler.providers.azure.services.sqlserver.sqlserver_service import Server
-from tests.providers.azure.azure_fixtures import AZURE_SUBSCRIPTION
+from tests.providers.azure.azure_fixtures import (
+    AZURE_SUBSCRIPTION,
+    set_mocked_azure_provider,
+)
 
 
 class Test_sqlserver_auditing_retention_90_days:
@@ -13,6 +16,9 @@ class Test_sqlserver_auditing_retention_90_days:
         sqlserver_client.sql_servers = {}
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.sqlserver.sqlserver_auditing_retention_90_days.sqlserver_auditing_retention_90_days.sqlserver_client",
             new=sqlserver_client,
         ):
@@ -45,6 +51,9 @@ class Test_sqlserver_auditing_retention_90_days:
         }
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.sqlserver.sqlserver_auditing_retention_90_days.sqlserver_auditing_retention_90_days.sqlserver_client",
             new=sqlserver_client,
         ):
@@ -87,6 +96,9 @@ class Test_sqlserver_auditing_retention_90_days:
         }
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.sqlserver.sqlserver_auditing_retention_90_days.sqlserver_auditing_retention_90_days.sqlserver_client",
             new=sqlserver_client,
         ):
@@ -129,6 +141,9 @@ class Test_sqlserver_auditing_retention_90_days:
         }
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.sqlserver.sqlserver_auditing_retention_90_days.sqlserver_auditing_retention_90_days.sqlserver_client",
             new=sqlserver_client,
         ):
@@ -174,6 +189,9 @@ class Test_sqlserver_auditing_retention_90_days:
         }
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.sqlserver.sqlserver_auditing_retention_90_days.sqlserver_auditing_retention_90_days.sqlserver_client",
             new=sqlserver_client,
         ):
@@ -219,6 +237,9 @@ class Test_sqlserver_auditing_retention_90_days:
         }
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.sqlserver.sqlserver_auditing_retention_90_days.sqlserver_auditing_retention_90_days.sqlserver_client",
             new=sqlserver_client,
         ):

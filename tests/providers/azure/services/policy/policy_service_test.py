@@ -6,7 +6,7 @@ from prowler.providers.azure.services.policy.policy_service import (
 )
 from tests.providers.azure.azure_fixtures import (
     AZURE_SUBSCRIPTION,
-    set_mocked_azure_audit_info,
+    set_mocked_azure_provider,
 )
 
 
@@ -24,15 +24,15 @@ def mock_policy_assigments(_):
 )
 class Test_AppInsights_Service:
     def test__get_client__(self):
-        policy = Policy(set_mocked_azure_audit_info())
+        policy = Policy(set_mocked_azure_provider())
         assert policy.clients[AZURE_SUBSCRIPTION].__class__.__name__ == "PolicyClient"
 
     def test__get_subscriptions__(self):
-        policy = Policy(set_mocked_azure_audit_info())
+        policy = Policy(set_mocked_azure_provider())
         assert policy.subscriptions.__class__.__name__ == "dict"
 
     def test__get_policy_assigments__(self):
-        policy = Policy(set_mocked_azure_audit_info())
+        policy = Policy(set_mocked_azure_provider())
         assert policy.policy_assigments.__class__.__name__ == "dict"
         assert policy.policy_assigments[AZURE_SUBSCRIPTION].__class__.__name__ == "dict"
         assert (

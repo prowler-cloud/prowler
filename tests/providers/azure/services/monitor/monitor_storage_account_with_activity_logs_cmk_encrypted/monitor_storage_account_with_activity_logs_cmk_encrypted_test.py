@@ -2,7 +2,10 @@ from unittest import mock
 
 from prowler.providers.azure.services.monitor.monitor_service import DiagnosticSetting
 from prowler.providers.azure.services.storage.storage_service import Account
-from tests.providers.azure.azure_fixtures import AZURE_SUBSCRIPTION
+from tests.providers.azure.azure_fixtures import (
+    AZURE_SUBSCRIPTION,
+    set_mocked_azure_provider,
+)
 
 
 class Test_monitor_storage_account_with_activity_logs_cmk_encrypted:
@@ -13,6 +16,9 @@ class Test_monitor_storage_account_with_activity_logs_cmk_encrypted:
         monitor_client.diagnostics_settings = {}
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.monitor.monitor_storage_account_with_activity_logs_cmk_encrypted.monitor_storage_account_with_activity_logs_cmk_encrypted.monitor_client",
             new=monitor_client,
         ):
@@ -28,6 +34,9 @@ class Test_monitor_storage_account_with_activity_logs_cmk_encrypted:
         monitor_client = mock.MagicMock
         monitor_client.diagnostics_settings = {AZURE_SUBSCRIPTION: []}
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.monitor.monitor_storage_account_with_activity_logs_cmk_encrypted.monitor_storage_account_with_activity_logs_cmk_encrypted.monitor_client",
             new=monitor_client,
         ):
@@ -120,6 +129,9 @@ class Test_monitor_storage_account_with_activity_logs_cmk_encrypted:
         }
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.monitor.monitor_storage_account_with_activity_logs_cmk_encrypted.monitor_storage_account_with_activity_logs_cmk_encrypted.monitor_client",
             new=monitor_client,
         ):

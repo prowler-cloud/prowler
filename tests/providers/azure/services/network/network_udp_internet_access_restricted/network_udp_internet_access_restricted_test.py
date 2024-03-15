@@ -4,7 +4,10 @@ from uuid import uuid4
 from azure.mgmt.network.models._models import SecurityRule
 
 from prowler.providers.azure.services.network.network_service import SecurityGroup
-from tests.providers.azure.azure_fixtures import AZURE_SUBSCRIPTION
+from tests.providers.azure.azure_fixtures import (
+    AZURE_SUBSCRIPTION,
+    set_mocked_azure_provider,
+)
 
 
 class Test_network_udp_internet_access_restricted:
@@ -13,6 +16,9 @@ class Test_network_udp_internet_access_restricted:
         network_client.security_groups = {}
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.network.network_service.Network",
             new=network_client,
         ) as service_client, mock.patch(
@@ -44,6 +50,9 @@ class Test_network_udp_internet_access_restricted:
         }
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.network.network_service.Network",
             new=network_client,
         ) as service_client, mock.patch(
@@ -90,6 +99,9 @@ class Test_network_udp_internet_access_restricted:
         }
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.network.network_service.Network",
             new=network_client,
         ) as service_client, mock.patch(
@@ -136,6 +148,9 @@ class Test_network_udp_internet_access_restricted:
         }
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.network.network_service.Network",
             new=network_client,
         ) as service_client, mock.patch(

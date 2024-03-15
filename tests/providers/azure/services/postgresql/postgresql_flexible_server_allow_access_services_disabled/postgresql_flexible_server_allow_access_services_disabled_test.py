@@ -5,7 +5,10 @@ from prowler.providers.azure.services.postgresql.postgresql_service import (
     Firewall,
     Server,
 )
-from tests.providers.azure.azure_fixtures import AZURE_SUBSCRIPTION
+from tests.providers.azure.azure_fixtures import (
+    AZURE_SUBSCRIPTION,
+    set_mocked_azure_provider,
+)
 
 
 class Test_postgresql_flexible_server_allow_access_services_disabled:
@@ -14,6 +17,9 @@ class Test_postgresql_flexible_server_allow_access_services_disabled:
         postgresql_client.flexible_servers = {}
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.postgresql.postgresql_flexible_server_allow_access_services_disabled.postgresql_flexible_server_allow_access_services_disabled.postgresql_client",
             new=postgresql_client,
         ):
@@ -53,6 +59,9 @@ class Test_postgresql_flexible_server_allow_access_services_disabled:
         }
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.postgresql.postgresql_flexible_server_allow_access_services_disabled.postgresql_flexible_server_allow_access_services_disabled.postgresql_client",
             new=postgresql_client,
         ):
@@ -100,6 +109,9 @@ class Test_postgresql_flexible_server_allow_access_services_disabled:
         }
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.postgresql.postgresql_flexible_server_allow_access_services_disabled.postgresql_flexible_server_allow_access_services_disabled.postgresql_client",
             new=postgresql_client,
         ):

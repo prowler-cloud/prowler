@@ -2,7 +2,10 @@ from unittest import mock
 from uuid import uuid4
 
 from prowler.providers.azure.services.postgresql.postgresql_service import Server
-from tests.providers.azure.azure_fixtures import AZURE_SUBSCRIPTION
+from tests.providers.azure.azure_fixtures import (
+    AZURE_SUBSCRIPTION,
+    set_mocked_azure_provider,
+)
 
 
 class Test_postgresql_flexible_server_log_disconnections_on:
@@ -11,6 +14,9 @@ class Test_postgresql_flexible_server_log_disconnections_on:
         postgresql_client.flexible_servers = {}
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.postgresql.postgresql_flexible_server_log_disconnections_on.postgresql_flexible_server_log_disconnections_on.postgresql_client",
             new=postgresql_client,
         ):
@@ -44,6 +50,9 @@ class Test_postgresql_flexible_server_log_disconnections_on:
         }
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.postgresql.postgresql_flexible_server_log_disconnections_on.postgresql_flexible_server_log_disconnections_on.postgresql_client",
             new=postgresql_client,
         ):
@@ -85,6 +94,9 @@ class Test_postgresql_flexible_server_log_disconnections_on:
         }
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.postgresql.postgresql_flexible_server_log_disconnections_on.postgresql_flexible_server_log_disconnections_on.postgresql_client",
             new=postgresql_client,
         ):

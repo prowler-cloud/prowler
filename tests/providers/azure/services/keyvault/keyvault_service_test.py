@@ -8,7 +8,7 @@ from prowler.providers.azure.services.keyvault.keyvault_service import (
 )
 from tests.providers.azure.azure_fixtures import (
     AZURE_SUBSCRIPTION,
-    set_mocked_azure_audit_info,
+    set_mocked_azure_provider,
 )
 
 
@@ -48,14 +48,14 @@ def mock_keyvault_get_key_vaults(_, __):
 )
 class Test_keyvault_service:
     def test__get_client__(self):
-        keyvault = KeyVault(set_mocked_azure_audit_info())
+        keyvault = KeyVault(set_mocked_azure_provider())
         assert (
             keyvault.clients[AZURE_SUBSCRIPTION].__class__.__name__
             == "KeyVaultManagementClient"
         )
 
     def test__get_key_vaults__(self):
-        keyvault = KeyVault(set_mocked_azure_audit_info())
+        keyvault = KeyVault(set_mocked_azure_provider())
         assert (
             keyvault.key_vaults[AZURE_SUBSCRIPTION][0].__class__.__name__
             == "KeyVaultInfo"
@@ -70,7 +70,7 @@ class Test_keyvault_service:
         assert keyvault.key_vaults[AZURE_SUBSCRIPTION][0].properties is None
 
     def test__get_keys__(self):
-        keyvault = KeyVault(set_mocked_azure_audit_info())
+        keyvault = KeyVault(set_mocked_azure_provider())
         assert (
             keyvault.key_vaults[AZURE_SUBSCRIPTION][0].keys[0].__class__.__name__
             == "Key"
@@ -85,7 +85,7 @@ class Test_keyvault_service:
         )
 
     def test__get_secrets__(self):
-        keyvault = KeyVault(set_mocked_azure_audit_info())
+        keyvault = KeyVault(set_mocked_azure_provider())
         assert (
             keyvault.key_vaults[AZURE_SUBSCRIPTION][0].secrets[0].__class__.__name__
             == "Secret"

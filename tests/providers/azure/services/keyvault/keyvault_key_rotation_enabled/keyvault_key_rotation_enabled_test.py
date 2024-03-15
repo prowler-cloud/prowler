@@ -1,12 +1,13 @@
 from unittest import mock
-from uuid import uuid4
 
 from azure.keyvault.keys import KeyRotationLifetimeAction, KeyRotationPolicy
 from azure.mgmt.keyvault.v2023_07_01.models import KeyAttributes, VaultProperties
 
 from prowler.providers.azure.services.keyvault.keyvault_service import Key, KeyVaultInfo
-
-AZURE_SUBSCRIPTION = str(uuid4())
+from tests.providers.azure.azure_fixtures import (
+    AZURE_SUBSCRIPTION,
+    set_mocked_azure_provider,
+)
 
 
 class Test_keyvault_key_rotation_enabled:
@@ -15,6 +16,9 @@ class Test_keyvault_key_rotation_enabled:
         keyvault_client.key_vaults = {}
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.keyvault.keyvault_key_rotation_enabled.keyvault_key_rotation_enabled.keyvault_client",
             new=keyvault_client,
         ):
@@ -45,6 +49,9 @@ class Test_keyvault_key_rotation_enabled:
         }
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.keyvault.keyvault_key_rotation_enabled.keyvault_key_rotation_enabled.keyvault_client",
             new=keyvault_client,
         ):
@@ -86,6 +93,9 @@ class Test_keyvault_key_rotation_enabled:
         }
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.keyvault.keyvault_key_rotation_enabled.keyvault_key_rotation_enabled.keyvault_client",
             new=keyvault_client,
         ):
@@ -143,6 +153,9 @@ class Test_keyvault_key_rotation_enabled:
         }
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.keyvault.keyvault_key_rotation_enabled.keyvault_key_rotation_enabled.keyvault_client",
             new=keyvault_client,
         ):

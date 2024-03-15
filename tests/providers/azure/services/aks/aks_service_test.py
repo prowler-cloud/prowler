@@ -3,7 +3,7 @@ from unittest.mock import patch
 from prowler.providers.azure.services.aks.aks_service import AKS, Cluster
 from tests.providers.azure.azure_fixtures import (
     AZURE_SUBSCRIPTION,
-    set_mocked_azure_audit_info,
+    set_mocked_azure_provider,
 )
 
 
@@ -28,18 +28,18 @@ def mock_aks_get_clusters(_):
 )
 class Test_AppInsights_Service:
     def test__get_client__(self):
-        aks = AKS(set_mocked_azure_audit_info())
+        aks = AKS(set_mocked_azure_provider())
         assert (
             aks.clients[AZURE_SUBSCRIPTION].__class__.__name__
             == "ContainerServiceClient"
         )
 
     def test__get_subscriptions__(self):
-        aks = AKS(set_mocked_azure_audit_info())
+        aks = AKS(set_mocked_azure_provider())
         assert aks.subscriptions.__class__.__name__ == "dict"
 
     def test__get_components__(self):
-        aks = AKS(set_mocked_azure_audit_info())
+        aks = AKS(set_mocked_azure_provider())
         assert len(aks.clusters) == 1
         assert aks.clusters[AZURE_SUBSCRIPTION]["cluster_id-1"].name == "cluster_name"
         assert (

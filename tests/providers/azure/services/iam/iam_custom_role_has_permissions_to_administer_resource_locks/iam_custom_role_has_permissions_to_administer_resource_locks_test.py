@@ -4,7 +4,10 @@ from uuid import uuid4
 from azure.mgmt.authorization.v2022_04_01.models import Permission
 
 from prowler.providers.azure.services.iam.iam_service import Role
-from tests.providers.azure.azure_fixtures import AZURE_SUBSCRIPTION
+from tests.providers.azure.azure_fixtures import (
+    AZURE_SUBSCRIPTION,
+    set_mocked_azure_provider,
+)
 
 
 class Test_iam_custom_role_has_permissions_to_administer_resource_locks:
@@ -13,6 +16,9 @@ class Test_iam_custom_role_has_permissions_to_administer_resource_locks:
         defender_client.custom_roles = {}
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.iam.iam_custom_role_has_permissions_to_administer_resource_locks.iam_custom_role_has_permissions_to_administer_resource_locks.iam_client",
             new=defender_client,
         ):
@@ -49,6 +55,9 @@ class Test_iam_custom_role_has_permissions_to_administer_resource_locks:
         }
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.iam.iam_custom_role_has_permissions_to_administer_resource_locks.iam_custom_role_has_permissions_to_administer_resource_locks.iam_client",
             new=defender_client,
         ):
@@ -89,6 +98,9 @@ class Test_iam_custom_role_has_permissions_to_administer_resource_locks:
         }
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.iam.iam_custom_role_has_permissions_to_administer_resource_locks.iam_custom_role_has_permissions_to_administer_resource_locks.iam_client",
             new=defender_client,
         ):

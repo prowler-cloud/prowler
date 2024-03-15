@@ -7,7 +7,7 @@ from prowler.providers.azure.services.mysql.mysql_service import (
 )
 from tests.providers.azure.azure_fixtures import (
     AZURE_SUBSCRIPTION,
-    set_mocked_azure_audit_info,
+    set_mocked_azure_provider,
 )
 
 
@@ -50,18 +50,18 @@ def mock_mysql_get_configurations(_):
 )
 class Test_MySQL_Service:
     def test__get_client__(self):
-        mysql = MySQL(set_mocked_azure_audit_info())
+        mysql = MySQL(set_mocked_azure_provider())
         assert (
             mysql.clients[AZURE_SUBSCRIPTION].__class__.__name__
             == "MySQLManagementClient"
         )
 
     def test__get_subscriptions__(self):
-        mysql = MySQL(set_mocked_azure_audit_info())
+        mysql = MySQL(set_mocked_azure_provider())
         assert mysql.subscriptions.__class__.__name__ == "dict"
 
     def test__get_flexible_servers__(self):
-        mysql = MySQL(set_mocked_azure_audit_info())
+        mysql = MySQL(set_mocked_azure_provider())
         assert len(mysql.flexible_servers) == 1
         assert (
             mysql.flexible_servers[AZURE_SUBSCRIPTION]["test"].resource_id
@@ -92,7 +92,7 @@ class Test_MySQL_Service:
         )
 
     def test__get_configurations__(self):
-        mysql = MySQL(set_mocked_azure_audit_info())
+        mysql = MySQL(set_mocked_azure_provider())
         configurations = mysql.__get_configurations__()
 
         assert len(configurations) == 1

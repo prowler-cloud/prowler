@@ -2,7 +2,10 @@ from unittest import mock
 from uuid import uuid4
 
 from prowler.providers.azure.services.policy.policy_service import PolicyAssigment
-from tests.providers.azure.azure_fixtures import AZURE_SUBSCRIPTION
+from tests.providers.azure.azure_fixtures import (
+    AZURE_SUBSCRIPTION,
+    set_mocked_azure_provider,
+)
 
 
 class Test_policy_ensure_asc_enforcement_enabled:
@@ -11,6 +14,9 @@ class Test_policy_ensure_asc_enforcement_enabled:
         policy_client.policy_assigments = {}
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.policy.policy_ensure_asc_enforcement_enabled.policy_ensure_asc_enforcement_enabled.policy_client",
             new=policy_client,
         ):
@@ -27,6 +33,9 @@ class Test_policy_ensure_asc_enforcement_enabled:
         policy_client.policy_assigments = {AZURE_SUBSCRIPTION: {}}
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.policy.policy_ensure_asc_enforcement_enabled.policy_ensure_asc_enforcement_enabled.policy_client",
             new=policy_client,
         ):
@@ -48,6 +57,9 @@ class Test_policy_ensure_asc_enforcement_enabled:
         }
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.policy.policy_ensure_asc_enforcement_enabled.policy_ensure_asc_enforcement_enabled.policy_client",
             new=policy_client,
         ):
@@ -71,6 +83,9 @@ class Test_policy_ensure_asc_enforcement_enabled:
         }
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.policy.policy_ensure_asc_enforcement_enabled.policy_ensure_asc_enforcement_enabled.policy_client",
             new=policy_client,
         ):
@@ -102,6 +117,9 @@ class Test_policy_ensure_asc_enforcement_enabled:
         }
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.policy.policy_ensure_asc_enforcement_enabled.policy_ensure_asc_enforcement_enabled.policy_client",
             new=policy_client,
         ):

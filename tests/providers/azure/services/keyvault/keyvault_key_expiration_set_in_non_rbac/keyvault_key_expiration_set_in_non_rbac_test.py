@@ -4,8 +4,10 @@ from uuid import uuid4
 from azure.mgmt.keyvault.v2023_07_01.models import KeyAttributes, VaultProperties
 
 from prowler.providers.azure.services.keyvault.keyvault_service import Key, KeyVaultInfo
-
-AZURE_SUBSCRIPTION = str(uuid4())
+from tests.providers.azure.azure_fixtures import (
+    AZURE_SUBSCRIPTION,
+    set_mocked_azure_provider,
+)
 
 
 class Test_keyvault_key_expiration_set_in_non_rbac:
@@ -14,6 +16,9 @@ class Test_keyvault_key_expiration_set_in_non_rbac:
         keyvault_client.key_vaults = {}
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.keyvault.keyvault_key_expiration_set_in_non_rbac.keyvault_key_expiration_set_in_non_rbac.keyvault_client",
             new=keyvault_client,
         ):
@@ -44,6 +49,9 @@ class Test_keyvault_key_expiration_set_in_non_rbac:
         }
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.keyvault.keyvault_key_expiration_set_in_non_rbac.keyvault_key_expiration_set_in_non_rbac.keyvault_client",
             new=keyvault_client,
         ):
@@ -84,6 +92,9 @@ class Test_keyvault_key_expiration_set_in_non_rbac:
         }
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.keyvault.keyvault_key_expiration_set_in_non_rbac.keyvault_key_expiration_set_in_non_rbac.keyvault_client",
             new=keyvault_client,
         ):
@@ -131,6 +142,9 @@ class Test_keyvault_key_expiration_set_in_non_rbac:
         }
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.keyvault.keyvault_key_expiration_set_in_non_rbac.keyvault_key_expiration_set_in_non_rbac.keyvault_client",
             new=keyvault_client,
         ):

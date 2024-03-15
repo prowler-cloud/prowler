@@ -2,7 +2,10 @@ from unittest import mock
 from uuid import uuid4
 
 from prowler.providers.azure.services.storage.storage_service import Account
-from tests.providers.azure.azure_fixtures import AZURE_SUBSCRIPTION
+from tests.providers.azure.azure_fixtures import (
+    AZURE_SUBSCRIPTION,
+    set_mocked_azure_provider,
+)
 
 
 class Test_storage_secure_transfer_required_is_enabled:
@@ -11,6 +14,9 @@ class Test_storage_secure_transfer_required_is_enabled:
         storage_client.storage_accounts = {}
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.storage.storage_secure_transfer_required_is_enabled.storage_secure_transfer_required_is_enabled.storage_client",
             new=storage_client,
         ):
@@ -45,6 +51,9 @@ class Test_storage_secure_transfer_required_is_enabled:
         }
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.storage.storage_secure_transfer_required_is_enabled.storage_secure_transfer_required_is_enabled.storage_client",
             new=storage_client,
         ):
@@ -87,6 +96,9 @@ class Test_storage_secure_transfer_required_is_enabled:
         }
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.storage.storage_secure_transfer_required_is_enabled.storage_secure_transfer_required_is_enabled.storage_client",
             new=storage_client,
         ):

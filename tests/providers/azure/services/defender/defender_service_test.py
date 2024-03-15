@@ -12,7 +12,7 @@ from prowler.providers.azure.services.defender.defender_service import (
 )
 from tests.providers.azure.azure_fixtures import (
     AZURE_SUBSCRIPTION,
-    set_mocked_azure_audit_info,
+    set_mocked_azure_provider,
 )
 
 
@@ -120,18 +120,18 @@ def mock_defender_get_iot_security_solutions(_):
 )
 class Test_Defender_Service:
     def test__get_client__(self):
-        defender = Defender(set_mocked_azure_audit_info())
+        defender = Defender(set_mocked_azure_provider())
         assert (
             defender.clients[AZURE_SUBSCRIPTION].__class__.__name__ == "SecurityCenter"
         )
 
     def test__get_subscriptions__(self):
-        defender = Defender(set_mocked_azure_audit_info())
-        defender = Defender(set_mocked_azure_audit_info())
+        defender = Defender(set_mocked_azure_provider())
+        defender = Defender(set_mocked_azure_provider())
         assert defender.subscriptions.__class__.__name__ == "dict"
 
     def test__get_pricings__(self):
-        defender = Defender(set_mocked_azure_audit_info())
+        defender = Defender(set_mocked_azure_provider())
         assert len(defender.pricings) == 1
         assert (
             defender.pricings[AZURE_SUBSCRIPTION]["Standard"].resource_id
@@ -147,7 +147,7 @@ class Test_Defender_Service:
         assert defender.pricings[AZURE_SUBSCRIPTION]["Standard"].extensions == {}
 
     def test__get_auto_provisioning_settings__(self):
-        defender = Defender(set_mocked_azure_audit_info())
+        defender = Defender(set_mocked_azure_provider())
         assert len(defender.auto_provisioning_settings) == 1
         assert (
             defender.auto_provisioning_settings[AZURE_SUBSCRIPTION][
@@ -175,7 +175,7 @@ class Test_Defender_Service:
         )
 
     def test__get_assessments__(self):
-        defender = Defender(set_mocked_azure_audit_info())
+        defender = Defender(set_mocked_azure_provider())
         assert len(defender.assessments) == 1
         assert (
             defender.assessments[AZURE_SUBSCRIPTION]["default"].resource_id
@@ -188,7 +188,7 @@ class Test_Defender_Service:
         assert defender.assessments[AZURE_SUBSCRIPTION]["default"].status == "Healthy"
 
     def test__get_settings__(self):
-        defender = Defender(set_mocked_azure_audit_info())
+        defender = Defender(set_mocked_azure_provider())
         assert len(defender.settings) == 1
         assert (
             defender.settings[AZURE_SUBSCRIPTION]["MCAS"].resource_id
@@ -204,7 +204,7 @@ class Test_Defender_Service:
         assert defender.settings[AZURE_SUBSCRIPTION]["MCAS"].enabled
 
     def test__get_security_contacts__(self):
-        defender = Defender(set_mocked_azure_audit_info())
+        defender = Defender(set_mocked_azure_provider())
         assert len(defender.security_contacts) == 1
         assert (
             defender.security_contacts[AZURE_SUBSCRIPTION]["default"].resource_id
@@ -241,7 +241,7 @@ class Test_Defender_Service:
         )
 
     def test__get_iot_security_solutions__(self):
-        defender = Defender(set_mocked_azure_audit_info())
+        defender = Defender(set_mocked_azure_provider())
         assert len(defender.iot_security_solutions) == 1
         assert (
             defender.iot_security_solutions[AZURE_SUBSCRIPTION][

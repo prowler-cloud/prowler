@@ -5,7 +5,7 @@ from azure.mgmt.web.models import ManagedServiceIdentity, SiteConfigResource
 from prowler.providers.azure.services.app.app_service import App, WebApp
 from tests.providers.azure.azure_fixtures import (
     AZURE_SUBSCRIPTION,
-    set_mocked_azure_audit_info,
+    set_mocked_azure_provider,
 )
 
 
@@ -30,18 +30,18 @@ def mock_app_get_apps(self):
 )
 class Test_App_Service:
     def test__get_client__(self):
-        app_service = App(set_mocked_azure_audit_info())
+        app_service = App(set_mocked_azure_provider())
         assert (
             app_service.clients[AZURE_SUBSCRIPTION].__class__.__name__
             == "WebSiteManagementClient"
         )
 
     def test__get_subscriptions__(self):
-        app_service = App(set_mocked_azure_audit_info())
+        app_service = App(set_mocked_azure_provider())
         assert app_service.subscriptions.__class__.__name__ == "dict"
 
     def test__get_apps__(self):
-        app_service = App(set_mocked_azure_audit_info())
+        app_service = App(set_mocked_azure_provider())
         assert len(app_service.apps) == 1
         assert (
             app_service.apps[AZURE_SUBSCRIPTION]["app_id-1"].resource_id
@@ -65,7 +65,7 @@ class Test_App_Service:
         )
 
     def test__get_client_cert_mode__(self):
-        app_service = App(set_mocked_azure_audit_info())
+        app_service = App(set_mocked_azure_provider())
         assert (
             app_service.__get_client_cert_mode__(False, "OptionalInteractiveUser")
             == "Ignore"

@@ -7,7 +7,7 @@ from prowler.providers.azure.services.storage.storage_service import (
 )
 from tests.providers.azure.azure_fixtures import (
     AZURE_SUBSCRIPTION,
-    set_mocked_azure_audit_info,
+    set_mocked_azure_provider,
 )
 
 
@@ -45,14 +45,14 @@ def mock_storage_get_storage_accounts(_):
 )
 class Test_Storage_Service:
     def test__get_client__(self):
-        storage = Storage(set_mocked_azure_audit_info())
+        storage = Storage(set_mocked_azure_provider())
         assert (
             storage.clients[AZURE_SUBSCRIPTION].__class__.__name__
             == "StorageManagementClient"
         )
 
     def test__get_storage_accounts__(self):
-        storage = Storage(set_mocked_azure_audit_info())
+        storage = Storage(set_mocked_azure_provider())
         assert (
             storage.storage_accounts[AZURE_SUBSCRIPTION][0].__class__.__name__
             == "Account"
@@ -100,7 +100,7 @@ class Test_Storage_Service:
         )
 
     def test__get_blob_properties__(self):
-        storage = Storage(set_mocked_azure_audit_info())
+        storage = Storage(set_mocked_azure_provider())
         assert (
             storage.storage_accounts[AZURE_SUBSCRIPTION][
                 0

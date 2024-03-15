@@ -7,7 +7,7 @@ from prowler.providers.azure.services.monitor.monitor_service import (
 )
 from tests.providers.azure.azure_fixtures import (
     AZURE_SUBSCRIPTION,
-    set_mocked_azure_audit_info,
+    set_mocked_azure_provider,
 )
 
 
@@ -39,18 +39,18 @@ def mock_monitor_get_diagnostics_settings(_):
 )
 class Test_Monitor_Service:
     def test__get_client__(self):
-        monitor = Monitor(set_mocked_azure_audit_info())
+        monitor = Monitor(set_mocked_azure_provider())
         assert (
             monitor.clients[AZURE_SUBSCRIPTION].__class__.__name__
             == "MonitorManagementClient"
         )
 
     def test__get_subscriptions__(self):
-        monitor = Monitor(set_mocked_azure_audit_info())
+        monitor = Monitor(set_mocked_azure_provider())
         assert monitor.subscriptions.__class__.__name__ == "dict"
 
     def test__get_diagnostics_settings(self):
-        monitor = Monitor(set_mocked_azure_audit_info())
+        monitor = Monitor(set_mocked_azure_provider())
         assert len(monitor.diagnostics_settings) == 1
         assert monitor.diagnostics_settings[AZURE_SUBSCRIPTION][0].id == "id"
         assert (

@@ -2,7 +2,10 @@ from unittest import mock
 from uuid import uuid4
 
 from prowler.providers.azure.services.app.app_service import WebApp
-from tests.providers.azure.azure_fixtures import AZURE_SUBSCRIPTION
+from tests.providers.azure.azure_fixtures import (
+    AZURE_SUBSCRIPTION,
+    set_mocked_azure_provider,
+)
 
 
 class Test_app_minimum_tls_version_12:
@@ -11,6 +14,9 @@ class Test_app_minimum_tls_version_12:
         app_client.apps = {}
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.app.app_minimum_tls_version_12.app_minimum_tls_version_12.app_client",
             new=app_client,
         ):
@@ -27,6 +33,9 @@ class Test_app_minimum_tls_version_12:
         app_client.apps = {AZURE_SUBSCRIPTION: {}}
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.app.app_minimum_tls_version_12.app_minimum_tls_version_12.app_client",
             new=app_client,
         ):
@@ -55,6 +64,9 @@ class Test_app_minimum_tls_version_12:
         }
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.app.app_minimum_tls_version_12.app_minimum_tls_version_12.app_client",
             new=app_client,
         ):
@@ -91,6 +103,9 @@ class Test_app_minimum_tls_version_12:
         }
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.app.app_minimum_tls_version_12.app_minimum_tls_version_12.app_client",
             new=app_client,
         ):
@@ -127,6 +142,9 @@ class Test_app_minimum_tls_version_12:
         }
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.app.app_minimum_tls_version_12.app_minimum_tls_version_12.app_client",
             new=app_client,
         ):

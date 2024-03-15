@@ -10,7 +10,6 @@ from prowler.providers.azure.azure_provider import Azure_Provider
 from prowler.providers.azure.lib.audit_info.models import (
     Azure_Audit_Info,
     AzureIdentityInfo,
-    AzureRegionConfig,
 )
 from prowler.providers.azure.lib.exception.exception import AzureException
 from prowler.providers.common.audit_info import (
@@ -28,15 +27,15 @@ EXAMPLE_AMI_ID = "ami-12c6146b"
 AWS_ACCOUNT_NUMBER = "123456789012"
 
 
-mock_azure_audit_info = Azure_Audit_Info(
-    credentials=None,
-    identity=AzureIdentityInfo(),
-    audit_metadata=None,
-    audit_resources=None,
-    audit_config=None,
-    azure_region_config=AzureRegionConfig(),
-    locations=None,
-)
+# mock_azure_audit_info = Azure_Audit_Info(
+#     credentials=None,
+#     identity=AzureIdentityInfo(),
+#     audit_metadata=None,
+#     audit_resources=None,
+#     audit_config=None,
+#     azure_region_config=AzureRegionConfig(),
+#     locations=None,
+# )
 
 mock_set_audit_info = Audit_Info()
 

@@ -1,7 +1,10 @@
 from unittest import mock
 
 from prowler.providers.azure.services.network.network_service import NetworkWatcher
-from tests.providers.azure.azure_fixtures import AZURE_SUBSCRIPTION
+from tests.providers.azure.azure_fixtures import (
+    AZURE_SUBSCRIPTION,
+    set_mocked_azure_provider,
+)
 
 
 class Test_network_watcher_enabled:
@@ -13,6 +16,9 @@ class Test_network_watcher_enabled:
         network_client.network_watchers = {}
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.network.network_service.Network",
             new=network_client,
         ) as service_client, mock.patch(
@@ -46,6 +52,9 @@ class Test_network_watcher_enabled:
         }
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.network.network_service.Network",
             new=network_client,
         ) as service_client, mock.patch(
@@ -87,6 +96,9 @@ class Test_network_watcher_enabled:
         }
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.network.network_service.Network",
             new=network_client,
         ) as service_client, mock.patch(

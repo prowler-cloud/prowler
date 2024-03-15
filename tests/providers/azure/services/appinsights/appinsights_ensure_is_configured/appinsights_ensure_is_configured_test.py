@@ -1,7 +1,10 @@
 from unittest import mock
 
 from prowler.providers.azure.services.appinsights.appinsights_service import Component
-from tests.providers.azure.azure_fixtures import AZURE_SUBSCRIPTION
+from tests.providers.azure.azure_fixtures import (
+    AZURE_SUBSCRIPTION,
+    set_mocked_azure_provider,
+)
 
 
 class Test_appinsights_ensure_is_configured:
@@ -10,6 +13,9 @@ class Test_appinsights_ensure_is_configured:
         appinsights_client.components = {}
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.appinsights.appinsights_ensure_is_configured.appinsights_ensure_is_configured.appinsights_client",
             new=appinsights_client,
         ):
@@ -26,6 +32,9 @@ class Test_appinsights_ensure_is_configured:
         appinsights_client.components = {AZURE_SUBSCRIPTION: {}}
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.appinsights.appinsights_ensure_is_configured.appinsights_ensure_is_configured.appinsights_client",
             new=appinsights_client,
         ):
@@ -57,6 +66,9 @@ class Test_appinsights_ensure_is_configured:
         }
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.appinsights.appinsights_ensure_is_configured.appinsights_ensure_is_configured.appinsights_client",
             new=appinsights_client,
         ):
