@@ -23,18 +23,29 @@ def send_slack_message(token, channel, stats, provider, audit_info):
         )
 
 
-def create_message_identity(provider, audit_info):
+# TODO: move this to each provider
+def create_message_identity(provider):
+    """
+    Create a Slack message identity based on the provider type.
+
+    Parameters:
+    - provider (Provider): The Provider (e.g. "AwsProvider", "GcpProvider", "AzureProvide").
+
+    Returns:
+    - identity (str): The message identity based on the provider type.
+    - logo (str): The logo URL associated with the provider type.
+    """
     try:
         identity = ""
         logo = aws_logo
-        if provider == "aws":
-            identity = f"AWS Account *{audit_info.audited_account}*"
-        elif provider == "gcp":
-            identity = f"GCP Projects *{', '.join(audit_info.project_ids)}*"
+        if provider.type == "aws":
+            identity = f"AWS Account *{provider.identity.account}*"
+        elif provider.type == "gcp":
+            identity = f"GCP Projects *{', '.join(provider.project_ids)}*"
             logo = gcp_logo
-        elif provider == "azure":
+        elif provider.type == "azure":
             printed_subscriptions = []
-            for key, value in audit_info.identity.subscriptions.items():
+            for key, value in provider.identity.subscriptions.items():
                 intermediate = f"- *{key}: {value}*\n"
                 printed_subscriptions.append(intermediate)
             identity = f"Azure Subscriptions:\n{''.join(printed_subscriptions)}"
