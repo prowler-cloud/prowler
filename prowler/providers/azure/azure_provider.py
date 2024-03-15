@@ -10,6 +10,7 @@ from msgraph import GraphServiceClient
 
 from prowler.config.config import load_and_validate_config_file
 from prowler.lib.logger import logger
+from prowler.lib.mutelist.mutelist import parse_mutelist_file
 from prowler.providers.azure.lib.regions.regions import get_regions_config
 from prowler.providers.azure.models import (
     AzureIdentityInfo,
@@ -124,20 +125,18 @@ class AzureProvider(Provider):
             "partition": "region_config.name",
         }
 
-    # TODO: pending to implement
-    # @property
-    # def mutelist(self):
-    #     return self._mutelist
+    @property
+    def mutelist(self):
+        return self._mutelist
 
-    # @mutelist.setter
-    # def mutelist(self, mutelist_path):
-    #     if mutelist_path:
-    #         mutelist = parse_mutelist_file(
-    #             self._session.current_session, self._identity.account, mutelist_path
-    #         )
-    #     else:
-    #         mutelist = {}
-    #     self._mutelist = mutelist
+    @mutelist.setter
+    def mutelist(self, mutelist_path):
+        if mutelist_path:
+            mutelist = parse_mutelist_file(mutelist_path)
+        else:
+            mutelist = {}
+
+        self._mutelist = mutelist
 
     # TODO: this should be moved to the argparse, if not we need to enforce it from the Provider
     def validate_arguments(

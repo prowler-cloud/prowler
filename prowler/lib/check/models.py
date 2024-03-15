@@ -115,6 +115,7 @@ class Check_Report:
     check_metadata: Check_Metadata_Model
     resource_details: str
     resource_tags: list
+    muted: bool
 
     def __init__(self, metadata):
         self.status = ""
@@ -122,6 +123,7 @@ class Check_Report:
         self.status_extended = ""
         self.resource_details = ""
         self.resource_tags = []
+        self.muted = False
 
 
 @dataclass

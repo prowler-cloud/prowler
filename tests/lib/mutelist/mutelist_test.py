@@ -3,7 +3,7 @@ from boto3 import resource
 from mock import MagicMock
 from moto import mock_aws
 
-from prowler.providers.aws.lib.mutelist.mutelist import (
+from prowler.lib.mutelist.mutelist import (
     is_excepted,
     is_muted,
     is_muted_in_check,
@@ -19,7 +19,7 @@ from tests.providers.aws.utils import (
     AWS_REGION_EU_SOUTH_3,
     AWS_REGION_EU_WEST_1,
     AWS_REGION_US_EAST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 
@@ -27,28 +27,28 @@ class TestMutelist:
     # Test S3 mutelist
     @mock_aws
     def test_s3_mutelist(self):
-        audit_info = set_mocked_aws_audit_info()
+        aws_provider = set_mocked_aws_provider()
         # Create bucket and upload mutelist yaml
         s3_resource = resource("s3", region_name=AWS_REGION_US_EAST_1)
         s3_resource.create_bucket(Bucket="test-mutelist")
         s3_resource.Object("test-mutelist", "mutelist.yaml").put(
             Body=open(
-                "tests/providers/aws/lib/mutelist/fixtures/mutelist.yaml",
+                "tests//lib/mutelist/fixtures/aws_mutelist.yaml",
                 "rb",
             )
         )
 
-        with open("tests/providers/aws/lib/mutelist/fixtures/mutelist.yaml") as f:
+        with open("tests//lib/mutelist/fixtures/aws_mutelist.yaml") as f:
             assert yaml.safe_load(f)["Mute List"] == parse_mutelist_file(
-                audit_info.session.current_session,
-                audit_info.identity.account,
                 "s3://test-mutelist/mutelist.yaml",
+                aws_provider.session.current_session,
+                aws_provider.identity.account,
             )
 
     # Test DynamoDB mutelist
     @mock_aws
     def test_dynamo_mutelist(self):
-        audit_info = set_mocked_aws_audit_info()
+        aws_provider = set_mocked_aws_provider()
         # Create table and put item
         dynamodb_resource = resource("dynamodb", region_name=AWS_REGION_US_EAST_1)
         table_name = "test-mutelist"
@@ -80,20 +80,20 @@ class TestMutelist:
         assert (
             "keyword"
             in parse_mutelist_file(
-                audit_info.session.current_session,
-                audit_info.identity.account,
                 "arn:aws:dynamodb:"
                 + AWS_REGION_US_EAST_1
                 + ":"
                 + str(AWS_ACCOUNT_NUMBER)
                 + ":table/"
                 + table_name,
+                aws_provider.session.current_session,
+                aws_provider.identity.account,
             )["Accounts"]["*"]["Checks"]["iam_user_hardware_mfa_enabled"]["Resources"]
         )
 
     @mock_aws
     def test_dynamo_mutelist_with_tags(self):
-        audit_info = set_mocked_aws_audit_info()
+        aws_provider = set_mocked_aws_provider()
         # Create table and put item
         dynamodb_resource = resource("dynamodb", region_name=AWS_REGION_US_EAST_1)
         table_name = "test-mutelist"
@@ -126,14 +126,14 @@ class TestMutelist:
         assert (
             "environment=dev"
             in parse_mutelist_file(
-                audit_info.session.current_session,
-                audit_info.identity.account,
                 "arn:aws:dynamodb:"
                 + AWS_REGION_US_EAST_1
                 + ":"
                 + str(AWS_ACCOUNT_NUMBER)
                 + ":table/"
                 + table_name,
+                aws_provider.session.current_session,
+                aws_provider.identity.account,
             )["Accounts"]["*"]["Checks"]["*"]["Tags"]
         )
 
@@ -161,12 +161,15 @@ class TestMutelist:
         finding_1.region = AWS_REGION_US_EAST_1
         finding_1.resource_id = "prowler"
         finding_1.resource_tags = []
+        aws_provider = set_mocked_aws_provider()
+        aws_provider._mutelist = mutelist
 
         check_findings.append(finding_1)
 
-        muted_findings = mutelist_findings(mutelist, AWS_ACCOUNT_NUMBER, check_findings)
+        muted_findings = mutelist_findings(aws_provider, check_findings)
         assert len(muted_findings) == 1
-        assert muted_findings[0].status == "MUTED"
+        assert muted_findings[0].status == "FAIL"
+        assert muted_findings[0].muted
 
     def test_mutelist_all_exceptions_empty(self):
 
@@ -199,12 +202,15 @@ class TestMutelist:
         finding_1.region = AWS_REGION_US_EAST_1
         finding_1.resource_id = "prowler"
         finding_1.resource_tags = []
+        aws_provider = set_mocked_aws_provider()
+        aws_provider._mutelist = mutelist
 
         check_findings.append(finding_1)
 
-        muted_findings = mutelist_findings(mutelist, AWS_ACCOUNT_NUMBER, check_findings)
+        muted_findings = mutelist_findings(aws_provider, check_findings)
         assert len(muted_findings) == 1
-        assert muted_findings[0].status == "MUTED"
+        assert muted_findings[0].status == "FAIL"
+        assert muted_findings[0].muted
 
     def test_is_muted_with_everything_excepted(self):
         mutelist = {
