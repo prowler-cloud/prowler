@@ -25,7 +25,7 @@ class AzureService:
             if "GraphServiceClient" in str(service):
                 clients.update({identity.tenant_domain: service(credentials=session)})
             else:
-                for display_name, id in self.subscriptions.items():
+                for display_name, id in identity.subscriptions.items():
                     clients.update(
                         {
                             display_name: service(

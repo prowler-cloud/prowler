@@ -9,13 +9,14 @@ from msgraph.generated.models.default_user_role_permissions import (
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
+from prowler.providers.azure.azure_provider import AzureProvider
 from prowler.providers.azure.lib.service.service import AzureService
 
 
 ########################## Entra
 class Entra(AzureService):
-    def __init__(self, azure_audit_info):
-        super().__init__(GraphServiceClient, azure_audit_info)
+    def __init__(self, provider: AzureProvider):
+        super().__init__(GraphServiceClient, provider)
         self.users = asyncio.get_event_loop().run_until_complete(self.__get_users__())
         self.authorization_policy = asyncio.get_event_loop().run_until_complete(
             self.__get_authorization_policy__()

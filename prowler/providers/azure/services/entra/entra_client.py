@@ -1,4 +1,4 @@
-from prowler.providers.azure.lib.audit_info.audit_info import azure_audit_info
 from prowler.providers.azure.services.entra.entra_service import Entra
+from prowler.providers.common.common import get_global_provider
 
-entra_client = Entra(azure_audit_info)
+entra_client = Entra(get_global_provider())
