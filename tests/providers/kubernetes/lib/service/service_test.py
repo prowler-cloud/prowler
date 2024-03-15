@@ -1,13 +1,15 @@
 from kubernetes import client
 
 from prowler.providers.kubernetes.lib.service.service import KubernetesService
-from tests.providers.kubernetes.audit_info_utils import set_mocked_audit_info
+from tests.providers.kubernetes.kubernetes_fixtures import (
+    set_mocked_kubernetes_provider,
+)
 
 
-class Test_KubernetesService:
+class TestKubernetesService:
     def test_KubernetesService_init(self):
-        audit_info = set_mocked_audit_info()
-        service = KubernetesService(audit_info)
+        kubernetes_provider = set_mocked_kubernetes_provider()
+        service = KubernetesService(kubernetes_provider)
 
         assert service.context is None
         assert service.api_client == client.ApiClient

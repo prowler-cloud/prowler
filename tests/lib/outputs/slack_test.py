@@ -7,11 +7,6 @@ from prowler.lib.outputs.slack import (
     create_message_identity,
     send_slack_message,
 )
-from prowler.providers.azure.lib.audit_info.models import (
-    Azure_Audit_Info,
-    AzureIdentityInfo,
-    AzureRegionConfig,
-)
 from prowler.providers.common.models import Audit_Metadata
 from prowler.providers.gcp.lib.audit_info.models import GCP_Audit_Info
 

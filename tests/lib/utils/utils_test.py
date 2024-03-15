@@ -156,8 +156,8 @@ class TestFilePermissions:
         temp_file.close()
         os.chmod(temp_file.name, 0o644)  # Set permissions to 644 (-rw-r--r--)
         # Check ownership for the temporary file
-        is_root = is_owned_by_root(temp_file.name)
-        assert not is_root
+        assert not is_owned_by_root(temp_file.name)
         os.unlink(temp_file.name)
+
         assert not is_owned_by_root("not_existing_file")
         assert is_owned_by_root("/etc/passwd")

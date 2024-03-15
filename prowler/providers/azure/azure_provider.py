@@ -140,6 +140,7 @@ class AzureProvider(Provider):
     #     self._mutelist = mutelist
 
     # TODO: this should be moved to the argparse, if not we need to enforce it from the Provider
+    # previously was using the AzureException
     def validate_arguments(
         self, az_cli_auth, sp_env_auth, browser_auth, managed_entity_auth, tenant_id
     ):

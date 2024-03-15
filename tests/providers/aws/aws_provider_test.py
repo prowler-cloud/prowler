@@ -28,6 +28,45 @@ from tests.providers.aws.utils import (
 )
 
 
+def mock_print_audit_credentials(*_):
+    pass
+
+
+# Mocking GetCallerIdentity for China and GovCloud
+make_api_call = botocore.client.BaseClient._make_api_call
+
+
+def mock_get_caller_identity_china(self, operation_name, kwarg):
+    if operation_name == "GetCallerIdentity":
+        return {
+            "UserId": "XXXXXXXXXXXXXXXXXXXXX",
+            "Account": AWS_ACCOUNT_NUMBER,
+            "Arn": f"arn:aws-cn:iam::{AWS_ACCOUNT_NUMBER}:user/test-user",
+        }
+
+    return make_api_call(self, operation_name, kwarg)
+
+
+def mock_get_caller_identity_gov_cloud(self, operation_name, kwarg):
+    if operation_name == "GetCallerIdentity":
+        return {
+            "UserId": "XXXXXXXXXXXXXXXXXXXXX",
+            "Account": AWS_ACCOUNT_NUMBER,
+            "Arn": f"arn:aws-us-gov:iam::{AWS_ACCOUNT_NUMBER}:user/test-user",
+        }
+
+    return make_api_call(self, operation_name, kwarg)
+
+
+def mock_validate_credentials(*_):
+    caller_identity = {
+        "Arn": "arn:aws:iam::123456789012:user/test",
+        "Account": "123456789012",
+        "UserId": "test",
+    }
+    return caller_identity
+
+
 class Test_AWS_Provider:
     @mock_aws
     def test_aws_provider_user_without_mfa(self):
@@ -488,3 +527,216 @@ class Test_AWS_Provider:
             },
         ):
             assert len(get_available_aws_service_regions("ec2", audit_info)) == 17
+
+    @mock_aws
+    def test_get_tagged_resources(self):
+        with patch(
+            "prowler.providers.common.audit_info.current_audit_info",
+            new=self.set_mocked_audit_info(),
+        ) as mock_audit_info:
+            client = boto3.client("ec2", region_name="eu-central-1")
+            instances = client.run_instances(
+                ImageId=EXAMPLE_AMI_ID,
+                MinCount=1,
+                MaxCount=1,
+                InstanceType="t2.micro",
+                TagSpecifications=[
+                    {
+                        "ResourceType": "instance",
+                        "Tags": [
+                            {"Key": "MY_TAG1", "Value": "MY_VALUE1"},
+                            {"Key": "MY_TAG2", "Value": "MY_VALUE2"},
+                        ],
+                    },
+                    {
+                        "ResourceType": "instance",
+                        "Tags": [{"Key": "ami", "Value": "test"}],
+                    },
+                ],
+            )
+            instance_id = instances["Instances"][0]["InstanceId"]
+            image_id = client.create_image(Name="testami", InstanceId=instance_id)[
+                "ImageId"
+            ]
+            client.create_tags(
+                Resources=[image_id], Tags=[{"Key": "ami", "Value": "test"}]
+            )
+
+            mock_audit_info.audited_regions = ["eu-central-1"]
+            mock_audit_info.audit_session = boto3.session.Session()
+            assert len(get_tagged_resources(["ami=test"], mock_audit_info)) == 2
+            assert image_id in str(get_tagged_resources(["ami=test"], mock_audit_info))
+            assert instance_id in str(
+                get_tagged_resources(["ami=test"], mock_audit_info)
+            )
+            assert (
+                len(get_tagged_resources(["MY_TAG1=MY_VALUE1"], mock_audit_info)) == 1
+            )
+            assert instance_id in str(
+                get_tagged_resources(["MY_TAG1=MY_VALUE1"], mock_audit_info)
+            )
+
+    @mock_aws
+    @patch(
+        "prowler.providers.common.audit_info.validate_aws_credentials",
+        new=mock_validate_credentials,
+    )
+    @patch(
+        "prowler.providers.common.audit_info.print_aws_credentials",
+        new=mock_print_audit_credentials,
+    )
+    def test_set_audit_info_aws(self):
+        with patch(
+            "prowler.providers.common.audit_info.current_audit_info",
+            new=self.set_mocked_audit_info(),
+        ):
+            provider = "aws"
+            arguments = {
+                "profile": None,
+                "role": None,
+                "session_duration": None,
+                "external_id": None,
+                "regions": None,
+                "organizations_role": None,
+                "config_file": default_config_file_path,
+            }
+
+            audit_info = set_provider_audit_info(provider, arguments)
+            # TODO(Audit_Info): use provider here
+            assert isinstance(audit_info, AWS_Audit_Info)
+
+    def test_set_audit_info_aws_bad_session_duration(self):
+        with patch(
+            "prowler.providers.common.audit_info.current_audit_info",
+            new=self.set_mocked_audit_info(),
+        ):
+            provider = "aws"
+            arguments = {
+                "profile": None,
+                "role": None,
+                "session_duration": 100,
+                "external_id": None,
+                "regions": None,
+                "organizations_role": None,
+            }
+
+            with pytest.raises(SystemExit) as exception:
+                _ = set_provider_audit_info(provider, arguments)
+            # assert exception == "Value for -T option must be between 900 and 43200"
+            assert isinstance(exception, pytest.ExceptionInfo)
+
+    def test_set_audit_info_aws_session_duration_without_role(self):
+        with patch(
+            "prowler.providers.common.audit_info.current_audit_info",
+            new=self.set_mocked_audit_info(),
+        ):
+            provider = "aws"
+            arguments = {
+                "profile": None,
+                "role": None,
+                "session_duration": 1000,
+                "external_id": None,
+                "regions": None,
+                "organizations_role": None,
+            }
+
+            with pytest.raises(SystemExit) as exception:
+                _ = set_provider_audit_info(provider, arguments)
+            # assert exception == "To use -I/--external-id, -T/--session-duration or --role-session-name options -R/--role option is needed"
+            assert isinstance(exception, pytest.ExceptionInfo)
+
+    def test_set_audit_info_external_id_without_role(self):
+        with patch(
+            "prowler.providers.common.audit_info.current_audit_info",
+            new=self.set_mocked_audit_info(),
+        ):
+            provider = "aws"
+            arguments = {
+                "profile": None,
+                "role": None,
+                "session_duration": 3600,
+                "external_id": "test-external-id",
+                "regions": None,
+                "organizations_role": None,
+            }
+
+            with pytest.raises(SystemExit) as exception:
+                _ = set_provider_audit_info(provider, arguments)
+            # assert exception == "To use -I/--external-id, -T/--session-duration or --role-session-name options -R/--role option is needed"
+            assert isinstance(exception, pytest.ExceptionInfo)
+
+    def test_set_provider_output_options_aws_no_output_filename(self):
+        #  Set the cloud provider
+        provider = "aws"
+        # Set the arguments passed
+        arguments = Namespace()
+        arguments.quiet = True
+        arguments.output_modes = ["csv"]
+        arguments.output_directory = "output_test_directory"
+        arguments.verbose = True
+        arguments.security_hub = True
+        arguments.shodan = "test-api-key"
+        arguments.only_logs = False
+        arguments.unix_timestamp = False
+        arguments.send_sh_only_fails = True
+
+        # Mock AWS Audit Info
+        audit_info = self.set_mocked_aws_audit_info()
+
+        mutelist_file = ""
+        bulk_checks_metadata = {}
+        output_options = set_provider_output_options(
+            provider, arguments, audit_info, mutelist_file, bulk_checks_metadata
+        )
+        assert isinstance(output_options, Aws_Output_Options)
+        assert output_options.security_hub_enabled
+        assert output_options.send_sh_only_fails
+        assert output_options.is_quiet
+        assert output_options.output_modes == ["csv", "json-asff"]
+        assert output_options.output_directory == arguments.output_directory
+        assert output_options.mutelist_file == ""
+        assert output_options.bulk_checks_metadata == {}
+        assert output_options.verbose
+        assert (
+            output_options.output_filename
+            == f"prowler-output-{AWS_ACCOUNT_NUMBER}-{DATETIME}"
+        )
+
+        # Delete testing directory
+        rmdir(arguments.output_directory)
+
+    def test_set_provider_output_options_aws(self):
+        #  Set the cloud provider
+        provider = "aws"
+        # Set the arguments passed
+        arguments = Namespace()
+        arguments.quiet = True
+        arguments.output_modes = ["csv"]
+        arguments.output_directory = "output_test_directory"
+        arguments.verbose = True
+        arguments.output_filename = "output_test_filename"
+        arguments.security_hub = True
+        arguments.shodan = "test-api-key"
+        arguments.only_logs = False
+        arguments.unix_timestamp = False
+        arguments.send_sh_only_fails = True
+
+        audit_info = self.set_mocked_aws_audit_info()
+        mutelist_file = ""
+        bulk_checks_metadata = {}
+        output_options = set_provider_output_options(
+            provider, arguments, audit_info, mutelist_file, bulk_checks_metadata
+        )
+        assert isinstance(output_options, Aws_Output_Options)
+        assert output_options.security_hub_enabled
+        assert output_options.send_sh_only_fails
+        assert output_options.is_quiet
+        assert output_options.output_modes == ["csv", "json-asff"]
+        assert output_options.output_directory == arguments.output_directory
+        assert output_options.mutelist_file == ""
+        assert output_options.bulk_checks_metadata == {}
+        assert output_options.verbose
+        assert output_options.output_filename == arguments.output_filename
+
+        # Delete testing directory
+        rmdir(arguments.output_directory)
