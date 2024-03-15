@@ -148,7 +148,6 @@ class TestAzureProvider:
                 == "Azure provider requires at least one authentication method set: [--az-cli-auth | --sp-env-auth | --browser-auth | --managed-identity-auth]"
             )
 
-    @patch("prowler.config.config.output_file_timestamp", new="20230101120000")
     @freeze_time(datetime.today())
     def test_azure_provider_output_options_with_domain(self):
         arguments = Namespace()
@@ -181,6 +180,9 @@ class TestAzureProvider:
         ), patch(
             "prowler.providers.azure.azure_provider.AzureProvider.get_locations",
             return_value={},
+        ), patch(
+            "prowler.providers.azure.azure_provider.AzureProvider.setup_session",
+            return_value=DefaultAzureCredential(),
         ):
             azure_provider = AzureProvider(arguments)
 
@@ -208,6 +210,7 @@ class TestAzureProvider:
             rmdir(f"{arguments.output_directory}/compliance")
             rmdir(arguments.output_directory)
 
+    @freeze_time(datetime.today())
     def test_azure_provider_output_options_tenant_ids(self):
         # Output Options
         arguments = Namespace()
