@@ -1,5 +1,5 @@
 class RoleArnParsingFailedMissingFields(Exception):
-    # The ARN contains a numberof fields different than six separated by :"
+    # The ARN contains a number of fields different than six separated by :"
     def __init__(self):
         self.message = "The assumed role ARN contains an invalid number of fields separated by : or it does not start by arn, please input a valid ARN"
         super().__init__(self.message)

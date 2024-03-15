@@ -1,8 +1,9 @@
 from csv import DictWriter
 
 from prowler.config.config import timestamp
+from prowler.lib.outputs.compliance.models import Check_Output_MITRE_ATTACK
 from prowler.lib.outputs.csv.csv import generate_csv_fields
-from prowler.lib.outputs.models import Check_Output_MITRE_ATTACK, unroll_list
+from prowler.lib.outputs.utils import unroll_list
 from prowler.lib.utils.utils import outputs_unix_timestamp
 
 
