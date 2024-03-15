@@ -293,9 +293,8 @@ Detailed documentation at https://docs.prowler.cloud
             "-w",
             "--mutelist-file",
             nargs="?",
-            # TODO: Add default mutelist file depending on the provider
             default=get_default_mute_file_path(provider),
-            help="Path for mutelist yaml file. See example prowler/config/aws_mutelist.yaml for reference and format. It also accepts AWS DynamoDB Table or Lambda ARNs or S3 URIs, see more in https://docs.prowler.cloud/en/latest/tutorials/mutelist/",
+            help="Path for mutelist yaml file. See example prowler/config/<provider>_mutelist.yaml for reference and format. For AWS provider, it also accepts AWS DynamoDB Table or Lambda ARNs or S3 URIs, see more in https://docs.prowler.cloud/en/latest/tutorials/mutelist/",
         )
 
     def __init_config_parser__(self):
