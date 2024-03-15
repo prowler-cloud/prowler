@@ -59,6 +59,7 @@ def display_summary_table(
                 "High": [],
                 "Medium": [],
                 "Low": [],
+                "Muted": [],
             }
             pass_count = fail_count = muted_count = 0
             for finding in findings:
@@ -155,10 +156,7 @@ def add_service_to_table(findings_table, current):
         current["Status"] = f"{Fore.RED}FAIL ({total_fails}){Style.RESET_ALL}"
     else:
         current["Status"] = f"{Fore.GREEN}PASS ({current['Total']}){Style.RESET_ALL}"
-    if current["Muted"] > 0:
-        current[
-            "Status"
-        ] += f" - {orange_color}MUTED ({current['Muted']}){Style.RESET_ALL}"
+
     findings_table["Provider"].append(current["Provider"])
     findings_table["Service"].append(current["Service"])
     findings_table["Status"].append(current["Status"])
@@ -170,3 +168,4 @@ def add_service_to_table(findings_table, current):
         f"{Fore.YELLOW}{current['Medium']}{Style.RESET_ALL}"
     )
     findings_table["Low"].append(f"{Fore.BLUE}{current['Low']}{Style.RESET_ALL}")
+    findings_table["Muted"].append(f"{orange_color}{current['Muted']}{Style.RESET_ALL}")
