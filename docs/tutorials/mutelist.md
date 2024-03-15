@@ -12,10 +12,15 @@ prowler <provider> -w mutelist.yaml
 
 ???+ note
     For Azure provider, the Account ID is the Subscription Name and the Region is the Location.
+    
+???+ note
     For GCP provider, the Account ID is the Project ID and the Region is the Zone.
+
+???+ note
     For Kubernetes provider, the Account ID is the Cluster Name and the Region is the Namespace.
 
 The Mute List file is a YAML file with the following syntax:
+
 ```yaml
     ### Account, Check and/or Region can be * to apply for all the cases.
     ### Resources and tags are lists that can have either Regex or Keywords.
