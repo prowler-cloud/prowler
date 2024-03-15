@@ -422,6 +422,7 @@ def execute_checks(
     checks_to_execute: list,
     global_provider: Any,
     custom_checks_metadata: Any,
+    mutelist_file: str,
 ) -> list:
     # List to store all the check's findings
     all_findings = []
@@ -484,6 +485,11 @@ def execute_checks(
                     f"{check_name} - {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
     else:
+        # Print the mutelist (if any) that is being used
+        if mutelist_file:
+            print(
+                f"{Style.BRIGHT}Using the following Mute List: {Style.RESET_ALL}{Fore.YELLOW}{mutelist_file}{Style.RESET_ALL}\n"
+            )
         # Default execution
         checks_num = len(checks_to_execute)
         plural_string = "checks"

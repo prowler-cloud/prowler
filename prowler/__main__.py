@@ -172,8 +172,6 @@ def prowler():
     checks_to_execute = sorted(checks_to_execute)
 
     # Setup Mute List
-    # TODO: this should be available for all the providers
-    # Move the argument to the Prowler level to be available for all
     if hasattr(args, "mutelist_file"):
         global_provider.mutelist = args.mutelist_file
 
@@ -194,6 +192,7 @@ def prowler():
             checks_to_execute,
             global_provider,
             custom_checks_metadata,
+            getattr(args, "mutelist_file", None),
         )
     else:
         logger.error(
