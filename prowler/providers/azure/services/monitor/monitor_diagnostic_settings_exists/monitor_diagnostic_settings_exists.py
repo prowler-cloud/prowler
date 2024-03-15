@@ -10,20 +10,18 @@ class monitor_diagnostic_settings_exists(Check):
             subscription_name,
             diagnostic_settings,
         ) in monitor_client.diagnostics_settings.items():
-            print(subscription_name)
             report = Check_Report_Azure(self.metadata())
             report.subscription = subscription_name
-            if not diagnostic_settings:
-                report.status = "FAIL"
-                report.status_extended = (
-                    f"No diagnostic settings found in subscription {subscription_name}."
-                )
-                findings.append(report)
-            else:
+            report.status = "FAIL"
+            report.status_extended = (
+                f"No diagnostic settings found in subscription {subscription_name}."
+            )
+            if diagnostic_settings:
                 report.status = "PASS"
                 report.status_extended = (
                     f"Diagnostic settings found in subscription {subscription_name}."
                 )
-                findings.append(report)
+
+            findings.append(report)
 
         return findings
