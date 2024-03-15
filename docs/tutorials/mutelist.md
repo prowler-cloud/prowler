@@ -15,6 +15,8 @@ prowler <provider> -w mutelist.yaml
     For GCP provider, the Account ID is the Project ID and the Region is the Zone.
     For Kubernetes provider, the Account ID is the Cluster Name and the Region is the Namespace.
 
+The Mute List file is a YAML file with the following syntax:
+```yaml
     ### Account, Check and/or Region can be * to apply for all the cases.
     ### Resources and tags are lists that can have either Regex or Keywords.
     ### Tags is an optional list that matches on tuples of 'key=value' and are "ANDed" together.
@@ -86,7 +88,7 @@ prowler <provider> -w mutelist.yaml
                   - "test"
                 Tags:
                   - "environment=prod"   # Will ignore every resource except in account 123456789012 except the ones containing the string "test" and tag environment=prod
-
+```
 ## Mute specific AWS regions
 If you want to mute failed findings only in specific regions, create a file with the following syntax and run it with `prowler aws -w mutelist.yaml`:
 
