@@ -58,7 +58,16 @@ class Test_keyvault_logging_enabled:
                         DiagnosticSetting(
                             id="id/id",
                             logs=[
-                                mock.MagicMock(category="AuditEvent", enabled=True),
+                                mock.MagicMock(
+                                    category_group="audit",
+                                    category="None",
+                                    enabled=True,
+                                ),
+                                mock.MagicMock(
+                                    category_group="allLogs",
+                                    category="None",
+                                    enabled=False,
+                                ),
                             ],
                             storage_account_name="storage_account_name",
                             storage_account_id="storage_account_id",
@@ -80,7 +89,16 @@ class Test_keyvault_logging_enabled:
                         DiagnosticSetting(
                             id="id2/id2",
                             logs=[
-                                mock.MagicMock(category="AuditEvent", enabled=False),
+                                mock.MagicMock(
+                                    category_group="audit",
+                                    category="None",
+                                    enabled=True,
+                                ),
+                                mock.MagicMock(
+                                    category_group="allLogs",
+                                    category="None",
+                                    enabled=True,
+                                ),
                             ],
                             storage_account_name="storage_account_name2",
                             storage_account_id="storage_account_id2",
@@ -101,19 +119,19 @@ class Test_keyvault_logging_enabled:
             check = keyvault_logging_enabled()
             result = check.execute()
             assert len(result) == 2
-            assert result[0].status == "PASS"
+            assert result[0].status == "FAIL"
             assert result[0].subscription == AZURE_SUBSCRIPTION
             assert result[0].resource_name == "name_diagnostic_setting"
             assert result[0].resource_id == "id/id"
             assert (
                 result[0].status_extended
-                == f"Diagnostic setting name_diagnostic_setting for Key Vault name_keyvault in subscription {AZURE_SUBSCRIPTION} is capturing AuditEvent category."
+                == f"Diagnostic setting name_diagnostic_setting for Key Vault name_keyvault in subscription {AZURE_SUBSCRIPTION} does not have audit logging."
             )
-            assert result[1].status == "FAIL"
+            assert result[1].status == "PASS"
             assert result[1].subscription == AZURE_SUBSCRIPTION
             assert result[1].resource_name == "name_diagnostic_setting2"
             assert result[1].resource_id == "id2/id2"
             assert (
                 result[1].status_extended
-                == f"Diagnostic setting name_diagnostic_setting2 for Key Vault name_keyvault2 in subscription {AZURE_SUBSCRIPTION} is not capturing AuditEvent category."
+                == f"Diagnostic setting name_diagnostic_setting2 for Key Vault name_keyvault2 in subscription {AZURE_SUBSCRIPTION} has audit logging."
             )

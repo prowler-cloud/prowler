@@ -14,26 +14,29 @@ class keyvault_logging_enabled(Check):
                     report = Check_Report_Azure(self.metadata())
                     report.status = "FAIL"
                     report.subscription = subscription_name
-                    report.resource_name = "KeyVault"
-                    report.resource_id = "KeyVault"
-                    report.status_extended = f"There are no diagnostic settings capturing appropiate categories in Key Vault {keyvault_name} in subscription {subscription_name}."
+                    report.resource_name = keyvault.name
+                    report.resource_id = keyvault.id
+                    report.status_extended = f"There are no diagnostic settings capturing audit logs for Key Vault {keyvault_name} in subscription {subscription_name}."
                     findings.append(report)
                 else:
                     for diagnostic_setting in keyvault.monitor_diagnostic_settings:
-                        print(diagnostic_setting)
                         report = Check_Report_Azure(self.metadata())
                         report.subscription = subscription_name
                         report.resource_name = diagnostic_setting.name
                         report.resource_id = diagnostic_setting.id
+                        report.status = "FAIL"
+                        report.status_extended = f"Diagnostic setting {diagnostic_setting.name} for Key Vault {keyvault_name} in subscription {subscription_name} does not have audit logging."
+                        audit = False
+                        allLogs = False
                         for log in diagnostic_setting.logs:
-                            if log.category == "AuditEvent" and log.enabled:
+                            if log.category_group == "audit" and log.enabled:
+                                audit = True
+                            if log.category_group == "allLogs" and log.enabled:
+                                allLogs = True
+                            if audit and allLogs:
                                 report.status = "PASS"
-                                report.status_extended = f"Diagnostic setting {diagnostic_setting.name} for Key Vault {keyvault_name} in subscription {subscription_name} is capturing AuditEvent category."
+                                report.status_extended = f"Diagnostic setting {diagnostic_setting.name} for Key Vault {keyvault_name} in subscription {subscription_name} has audit logging."
                                 break
-
-                            else:
-                                report.status = "FAIL"
-                                report.status_extended = f"Diagnostic setting {diagnostic_setting.name} for Key Vault {keyvault_name} in subscription {subscription_name} is not capturing AuditEvent category."
 
                     findings.append(report)
 

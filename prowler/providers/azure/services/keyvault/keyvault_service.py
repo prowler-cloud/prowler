@@ -15,7 +15,7 @@ from prowler.providers.azure.services.monitor.monitor_client import monitor_clie
 from prowler.providers.azure.services.monitor.monitor_service import DiagnosticSetting
 
 
-########################## Storage
+########################## KeyVault
 class KeyVault(AzureService):
     def __init__(self, audit_info):
         super().__init__(KeyVaultManagementClient, audit_info)
@@ -50,7 +50,7 @@ class KeyVault(AzureService):
                             keys=keys,
                             secrets=secrets,
                             monitor_diagnostic_settings=self.__get_vault_monitor_settings__(
-                                audit_info, keyvault_name, resource_group
+                                keyvault_name, resource_group, subscription
                             ),
                         )
                     )
@@ -121,23 +121,23 @@ class KeyVault(AzureService):
             )
         return secrets
 
-    def __get_vault_monitor_settings__(self, audit_info, keyvault_name, resource_group):
+    def __get_vault_monitor_settings__(
+        self, keyvault_name, resource_group, subscription
+    ):
         logger.info(
             f"KeyVault - Getting monitor diagnostics settings for {keyvault_name}..."
         )
         monitor_diagnostics_settings = []
-        for subscription in self.clients:
-            try:
-                for client in monitor_client.clients.values():
-                    monitor_diagnostics_settings = monitor_client.diagnostic_settings_with_uri(
-                        subscription,
-                        f"subscriptions/{self.subscriptions[subscription]}/resourceGroups/{resource_group}/providers/Microsoft.KeyVault/vaults/{keyvault_name}",
-                        client,
-                    )
-            except Exception as error:
-                logger.error(
-                    f"Subscription name: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                )
+        try:
+            monitor_diagnostics_settings = monitor_client.diagnostic_settings_with_uri(
+                self.subscriptions[subscription],
+                f"subscriptions/{self.subscriptions[subscription]}/resourceGroups/{resource_group}/providers/Microsoft.KeyVault/vaults/{keyvault_name}",
+                monitor_client.clients[subscription],
+            )
+        except Exception as error:
+            logger.error(
+                f"Subscription name: {self.subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
         return monitor_diagnostics_settings
 
 
