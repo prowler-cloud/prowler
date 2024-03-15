@@ -118,6 +118,7 @@ def mutelist_findings(
 ):
     # Check if finding is muted
     for finding in check_findings:
+        # TODO: Move this mapping to the execute_check function and pass that output to the mutelist and the report
         if global_provider.type == "aws":
             finding.muted = is_muted(
                 global_provider.mutelist,
