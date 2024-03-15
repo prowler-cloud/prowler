@@ -4,6 +4,7 @@ import sys
 from prowler.lib.logger import logger
 
 
+# TODO: delete
 def set_provider_mutelist(provider, audit_info, args):
     """
     set_provider_mutelist configures the mutelist based on the selected provider.

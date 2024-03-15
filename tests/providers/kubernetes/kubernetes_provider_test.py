@@ -1,9 +1,11 @@
 import io
 import sys
 from argparse import Namespace
+from os import rmdir
 from unittest.mock import MagicMock, patch
 
 from prowler.providers.kubernetes.kubernetes_provider import KubernetesProvider
+from prowler.providers.kubernetes.models import KubernetesOutputOptions
 
 
 def mock_set_kubernetes_credentials(*_):
@@ -166,36 +168,9 @@ class TestKubernetesProvider:
         roles = provider.search_and_save_roles([], [], "test-user", "ClusterRole")
         assert isinstance(roles, list)
 
-    @patch.object(
-        Kubernetes_Provider, "__set_credentials__", new=mock_set_kubernetes_credentials
-    )
-    @patch.object(
-        Kubernetes_Provider, "get_context_user_roles", new=mock_get_context_user_roles
-    )
-    def test_set_audit_info_kubernetes(self):
-        provider = "kubernetes"
-        arguments = {
-            "profile": None,
-            "role": None,
-            "session_duration": None,
-            "external_id": None,
-            "regions": None,
-            "organizations_role": None,
-            "subscriptions": None,
-            "context": "default",
-            "kubeconfig_file": "config",
-            "config_file": default_config_file_path,
-        }
-
-        audit_info = set_provider_audit_info(provider, arguments)
-        assert isinstance(audit_info, Kubernetes_Audit_Info)
-
     def test_set_provider_output_options_kubernetes(self):
-        #  Set the cloud provider
-        provider = "kubernetes"
-        # Set the arguments passed
         arguments = Namespace()
-        arguments.quiet = True
+        arguments.status = []
         arguments.output_modes = ["csv"]
         arguments.output_directory = "output_test_directory"
         arguments.verbose = True
@@ -203,14 +178,13 @@ class TestKubernetesProvider:
         arguments.only_logs = False
         arguments.unix_timestamp = False
 
-        audit_info = self.set_mocked_kubernetes_audit_info()
-        mutelist_file = ""
-        bulk_checks_metadata = {}
-        output_options = set_provider_output_options(
-            provider, arguments, audit_info, mutelist_file, bulk_checks_metadata
-        )
-        assert isinstance(output_options, Kubernetes_Output_Options)
-        assert output_options.is_quiet
+        arguments = Namespace(kubeconfig_file=None, context=None, only_logs=False)
+        kubernetes_provider = KubernetesProvider(arguments)
+
+        output_options = kubernetes_provider.output_options = arguments, {}
+
+        assert isinstance(kubernetes_provider.output_options, KubernetesOutputOptions)
+        assert output_options.status == []
         assert output_options.output_modes == ["csv"]
         assert output_options.output_directory == arguments.output_directory
         assert output_options.mutelist_file == ""
@@ -219,4 +193,5 @@ class TestKubernetesProvider:
         assert output_options.output_filename == arguments.output_filename
 
         # Delete testing directory
+        rmdir(f"{arguments.output_directory}/compliance")
         rmdir(arguments.output_directory)

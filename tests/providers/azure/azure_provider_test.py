@@ -61,7 +61,7 @@ class TestAzureProvider:
                 "java_latest_version": "17",
             }
 
-    def test_zure_provider_not_auth_methods(self):
+    def test_azure_provider_not_auth_methods(self):
         arguments = Namespace()
         arguments.subscription_ids = None
         arguments.tenant_id = None
@@ -171,7 +171,6 @@ class TestAzureProvider:
         arguments.only_logs = False
         arguments.unix_timestamp = False
         arguments.shodan = "test-api-key"
-        arguments.mutelist_file = ""
 
         tenant_domain = "test-domain"
         with patch(
@@ -197,7 +196,6 @@ class TestAzureProvider:
                 azure_provider.output_options.output_directory
                 == arguments.output_directory
             )
-            # assert azure_provider.output_options.mutelist_file == ""
             assert azure_provider.output_options.bulk_checks_metadata == {}
             assert azure_provider.output_options.verbose
             assert (
@@ -221,7 +219,6 @@ class TestAzureProvider:
         arguments.only_logs = False
         arguments.unix_timestamp = False
         arguments.shodan = "test-api-key"
-        arguments.mutelist_file = ""
 
         tenants = ["tenant-1", "tenant-2"]
 
@@ -235,7 +232,6 @@ class TestAzureProvider:
             "csv",
         ]
         assert azure_output_options.output_directory == arguments.output_directory
-        # assert azure_provider.output_options.mutelist_file == ""
         assert azure_output_options.bulk_checks_metadata == {}
         assert azure_output_options.verbose
         assert (

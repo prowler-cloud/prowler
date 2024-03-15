@@ -20,6 +20,7 @@ from prowler.providers.aws.config import (
     ROLE_SESSION_NAME,
 )
 from prowler.providers.aws.lib.arn.arn import parse_iam_credentials_arn
+from prowler.providers.aws.lib.arn.models import ARN
 from prowler.providers.aws.lib.mutelist.mutelist import parse_mutelist_file
 from prowler.providers.aws.lib.organizations.organizations import (
     get_organizations_metadata,
@@ -82,7 +83,7 @@ class AwsProvider(Provider):
 
         # Configure the initial AWS Session using the local credentials: profile or environment variables
         aws_session = self.setup_session(input_mfa, input_profile, input_role)
-        session_config = self._set_session_config(aws_retries_max_attempts)
+        session_config = self.set_session_config(aws_retries_max_attempts)
         # Current session and the original session points to the same session object until we get a new one, if needed
         self._session = AWSSession(
             current_session=aws_session,
@@ -357,14 +358,14 @@ class AwsProvider(Provider):
         logger.info(f"Original AWS Caller Identity UserId: {caller_identity.user_id}")
         logger.info(f"Original AWS Caller Identity ARN: {caller_identity.arn}")
 
-        partition = parse_iam_credentials_arn(caller_identity.arn).partition
+        partition = parse_iam_credentials_arn(caller_identity.arn.arn).partition
 
         return AWSIdentityInfo(
             account=caller_identity.account,
             account_arn=f"arn:{partition}:iam::{caller_identity.account}:root",
             user_id=caller_identity.user_id,
             partition=partition,
-            identity_arn=caller_identity.arn,
+            identity_arn=caller_identity.arn.arn,
             profile=input_profile,
             profile_region=profile_region,
             audited_regions=input_regions,
@@ -638,9 +639,24 @@ Caller Identity ARN: {Fore.YELLOW}[{self._identity.identity_arn}]{Style.RESET_AL
                 audited_regions.add(region)
         return audited_regions
 
-    def get_tagged_resources(self, input_resource_tags: list):
+    def get_tagged_resources(self, input_resource_tags: list[str]):
         """
-        get_tagged_resources returns a list of the resources that are going to be scanned based on the given input tags
+        Returns a list of the resources that are going to be scanned based on the given input tags.
+
+        Parameters:
+        - input_resource_tags: A list of strings representing the tags to filter the resources. Each string should be in the format "key=value".
+
+        Returns:
+        - A list of strings representing the ARNs (Amazon Resource Names) of the tagged resources.
+
+        Note:
+        - This method uses the AWS Resource Groups Tagging API to retrieve the tagged resources.
+        - The method generates regional clients for the Resource Groups Tagging API for each enabled region in the AWS provider.
+        - The method paginates through the results of the 'get_resources' operation to retrieve all the tagged resources.
+
+        Example usage:
+            input_resource_tags = ["Environment=Production", "Owner=John Doe"]
+            tagged_resources = get_tagged_resources(input_resource_tags)
         """
         try:
             resource_tags = []
@@ -677,9 +693,8 @@ Caller Identity ARN: {Fore.YELLOW}[{self._identity.identity_arn}]{Style.RESET_AL
     def get_default_region(self, service: str) -> str:
         """get_default_region returns the default region based on the profile and audited service regions"""
         service_regions = self.get_available_aws_service_regions(service)
-        default_region = (
-            self.get_global_region()
-        )  # global region of the partition when all regions are audited and there is no profile region
+        default_region = self.get_global_region()
+        # global region of the partition when all regions are audited and there is no profile region
         if self._identity.profile_region in service_regions:
             # return profile region only if it is audited
             default_region = self._identity.profile_region
@@ -705,10 +720,9 @@ Caller Identity ARN: {Fore.YELLOW}[{self._identity.identity_arn}]{Style.RESET_AL
         mfa_TOTP = input("Enter MFA code: ")
         return AWSMFAInfo(arn=mfa_ARN, totp=mfa_TOTP)
 
-    # TODO: rename function
-    def _set_session_config(self, aws_retries_max_attempts: int) -> Config:
+    def set_session_config(self, aws_retries_max_attempts: int) -> Config:
         """
-        _set_session_config returns a botocore Config object with the Prowler user agent and the default retrier configuration if nothing is passed as argument
+        set_session_config returns a botocore Config object with the Prowler user agent and the default retrier configuration if nothing is passed as argument
         """
         # Set the maximum retries for the standard retrier config
         default_session_config = Config(
@@ -724,9 +738,7 @@ Caller Identity ARN: {Fore.YELLOW}[{self._identity.identity_arn}]{Style.RESET_AL
                 },
             )
             # Merge the new configuration
-            default_session_config.merge(config)
-            # TODO: I don't understand the following line
-            # default_session_config = self.session.session_config.merge(config)
+            default_session_config = default_session_config.merge(config)
 
         return default_session_config
 
@@ -820,6 +832,12 @@ Caller Identity ARN: {Fore.YELLOW}[{self._identity.identity_arn}]{Style.RESET_AL
 
 
 def read_aws_regions_file() -> dict:
+    """
+    Reads the AWS services JSON file and returns the parsed data as a dictionary.
+
+    Returns:
+        dict: The parsed data from the AWS services JSON file.
+    """
     # Get JSON locally
     actual_directory = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))
     with open_file(f"{actual_directory}/{aws_services_json_file}") as f:
@@ -828,7 +846,13 @@ def read_aws_regions_file() -> dict:
     return data
 
 
-def get_aws_available_regions():
+def get_aws_available_regions() -> set:
+    """
+    Get the available AWS regions from the AWS services JSON file.
+
+    Returns:
+        set: A set of available AWS regions.
+    """
     try:
         data = read_aws_regions_file()
 
@@ -840,7 +864,7 @@ def get_aws_available_regions():
         return regions
     except Exception as error:
         logger.error(f"{error.__class__.__name__}: {error}")
-        return []
+        return set()
 
 
 # TODO: This can be moved to another class since it doesn't need self
@@ -859,7 +883,7 @@ def validate_aws_credentials(
         return AWSCallerIdentity(
             user_id=caller_identity.get("UserId"),
             account=caller_identity.get("Account"),
-            arn=caller_identity.get("Arn"),
+            arn=ARN(caller_identity.get("Arn")),
             region=aws_region,
         )
     except Exception as error:
@@ -891,6 +915,26 @@ def get_aws_region_for_sts(session_region: str, input_regions: set[str]) -> str:
 def create_sts_session(
     session: session.Session, aws_region: str
 ) -> session.Session.client:
-    return session.client(
-        "sts", aws_region, endpoint_url=f"https://sts.{aws_region}.amazonaws.com"
-    )
+    """
+    Create an STS session client.
+
+    Parameters:
+    - session (session.Session): The AWS session object.
+    - aws_region (str): The AWS region to use for the session.
+
+    Returns:
+    - session.Session.client: The STS session client.
+
+    Example:
+        session = boto3.session.Session()
+        sts_client = create_sts_session(session, 'us-west-2')
+    """
+    try:
+        return session.client(
+            "sts", aws_region, endpoint_url=f"https://sts.{aws_region}.amazonaws.com"
+        )
+    except Exception as error:
+        logger.critical(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+        )
+        sys.exit(1)

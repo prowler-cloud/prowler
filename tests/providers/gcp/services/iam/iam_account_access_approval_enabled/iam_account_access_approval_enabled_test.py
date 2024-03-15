@@ -35,12 +35,8 @@ class Test_iam_account_access_approval_enabled:
             assert result[0].location == "global"
 
     def test_iam_project_with_settings(self):
-        from prowler.providers.gcp.services.iam.iam_service import Setting
-
+        cloudresourcemanager_client = mock.MagicMock
         accessapproval_client = mock.MagicMock
-        accessapproval_client.settings = {
-            GCP_PROJECT_ID: Setting(name="test", project_id=GCP_PROJECT_ID)
-        }
         accessapproval_client.project_ids = [GCP_PROJECT_ID]
         accessapproval_client.region = "global"
 
@@ -50,7 +46,16 @@ class Test_iam_account_access_approval_enabled:
         ), mock.patch(
             "prowler.providers.gcp.services.iam.iam_account_access_approval_enabled.iam_account_access_approval_enabled.accessapproval_client",
             new=accessapproval_client,
+        ), mock.patch(
+            "prowler.providers.gcp.services.iam.iam_service.cloudresourcemanager_client",
+            new=cloudresourcemanager_client,
         ):
+            from prowler.providers.gcp.services.iam.iam_service import Setting
+
+            accessapproval_client.settings = {
+                GCP_PROJECT_ID: Setting(name="test", project_id=GCP_PROJECT_ID)
+            }
+
             from prowler.providers.gcp.services.iam.iam_account_access_approval_enabled.iam_account_access_approval_enabled import (
                 iam_account_access_approval_enabled,
             )
