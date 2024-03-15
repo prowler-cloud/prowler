@@ -1,6 +1,7 @@
 from boto3 import session
 
 from prowler.lib.logger import logger
+from prowler.providers.aws.lib.arn.models import ARN
 from prowler.providers.aws.models import AWSOrganizationsInfo
 
 
@@ -34,14 +35,19 @@ def parse_organizations_metadata(metadata: dict, tags: dict) -> AWSOrganizations
             account_details_tags += f"{tag['Key']}:{tag['Value']},"
 
         account_details = metadata.get("Account", {})
-        organizations_info = AWSOrganizationsInfo(
-            account_details_email=account_details.get("Email", ""),
-            account_details_name=account_details.get("Name", ""),
-            account_details_arn=account_details.get("Arn", ""),
-            account_details_org=account_details.get("Arn", "").split("/")[1],
-            account_details_tags=account_details_tags.rstrip(","),
+
+        aws_account_arn = ARN(account_details.get("Arn", ""))
+        aws_organization_id = aws_account_arn.resource.split("/")[0]
+        aws_organization_arn = f"arn:{aws_account_arn.partition}:organizations::{aws_account_arn.account_id}:organization/{aws_organization_id}"
+
+        return AWSOrganizationsInfo(
+            account_email=account_details.get("Email", ""),
+            account_name=account_details.get("Name", ""),
+            organization_account_arn=aws_account_arn.arn,
+            organization_arn=aws_organization_arn,
+            organization_id=aws_organization_id,
+            account_tags=account_details_tags.rstrip(","),
         )
-        return organizations_info
     except Exception as error:
         logger.warning(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
