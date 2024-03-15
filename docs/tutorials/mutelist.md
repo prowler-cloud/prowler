@@ -12,7 +12,7 @@ prowler <provider> -w mutelist.yaml
 
 ???+ note
     For Azure provider, the Account ID is the Subscription Name and the Region is the Location.
-    
+
 ???+ note
     For GCP provider, the Account ID is the Project ID and the Region is the Zone.
 
@@ -110,7 +110,7 @@ If you want to mute failed findings only in specific regions, create a file with
 
 ## Default AWS Mute List
 For the AWS Provider, Prowler is executed with a Default AWS Mute List with the AWS Resources that should be muted such as all resources created by AWS Control Tower when setting up a landing zone.
-You can see this Mute List file in `prowler/config/aws_mutelist.yaml`.
+You can see this Mute List file in [`prowler/config/aws_mutelist.yaml`](https://github.com/prowler-cloud/prowler/blob/master/prowler/config/aws_allowlist.yaml).
 
 ## Supported AWS Mute List Locations
 
