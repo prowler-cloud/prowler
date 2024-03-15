@@ -3,9 +3,17 @@ Sometimes you may find resources that are intentionally configured in a certain 
 
 Mute List option works along with other options and adds a `MUTED` instead of `MANUAL`, `PASS` or `FAIL` to any output format.
 
-You can use `-w`/`--mutelist-file` with the path of your mutelist yaml file, but first, let's review the syntax.
+You can use `-w`/`--mutelist-file` with the path of your mutelist yaml file:
+```
+prowler <provider> -w mutelist.yaml
+```
 
 ## Mute List Yaml File Syntax
+
+???+ note
+    For Azure provider, the Account ID is the Subscription Name and the Region is the Location.
+    For GCP provider, the Account ID is the Project ID and the Region is the Zone.
+    For Kubernetes provider, the Account ID is the Cluster Name and the Region is the Namespace.
 
     ### Account, Check and/or Region can be * to apply for all the cases.
     ### Resources and tags are lists that can have either Regex or Keywords.
@@ -79,7 +87,7 @@ You can use `-w`/`--mutelist-file` with the path of your mutelist yaml file, but
                 Tags:
                   - "environment=prod"   # Will ignore every resource except in account 123456789012 except the ones containing the string "test" and tag environment=prod
 
-## Mute specific regions
+## Mute specific AWS regions
 If you want to mute failed findings only in specific regions, create a file with the following syntax and run it with `prowler aws -w mutelist.yaml`:
 
     Mute List:
@@ -94,20 +102,13 @@ If you want to mute failed findings only in specific regions, create a file with
               - "*"
 
 ## Default AWS Mute List
-Prowler provides you a Default AWS Mute List with the AWS Resources that should be muted such as all resources created by AWS Control Tower when setting up a landing zone.
-You can execute Prowler with this mutelist using the following command:
-```sh
-prowler aws --mutelist prowler/config/aws_mutelist.yaml
-```
-## Supported Mute List Locations
+For the AWS Provider, Prowler is executed with a Default AWS Mute List with the AWS Resources that should be muted such as all resources created by AWS Control Tower when setting up a landing zone.
+You can see this Mute List file in `prowler/config/aws_mutelist.yaml`.
 
-The mutelisting flag supports the following locations:
+## Supported AWS Mute List Locations
 
-### Local file
-You will need to pass the local path where your Mute List YAML file is located:
-```
-prowler <provider> -w mutelist.yaml
-```
+The mutelisting flag supports the following AWS locations when using the AWS Provider:
+
 ### AWS S3 URI
 You will need to pass the S3 URI where your Mute List YAML file was uploaded to your bucket:
 ```
