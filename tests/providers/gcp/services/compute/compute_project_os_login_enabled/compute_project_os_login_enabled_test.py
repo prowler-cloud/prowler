@@ -1,7 +1,7 @@
 from re import search
 from unittest import mock
 
-from tests.providers.gcp.lib.audit_info_utils import GCP_PROJECT_ID
+from tests.providers.gcp.gcp_fixtures import GCP_PROJECT_ID, set_mocked_gcp_provider
 
 
 class Test_compute_project_os_login_enabled:
@@ -11,6 +11,9 @@ class Test_compute_project_os_login_enabled:
         compute_client.projects = []
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_gcp_provider(),
+        ), mock.patch(
             "prowler.providers.gcp.services.compute.compute_project_os_login_enabled.compute_project_os_login_enabled.compute_client",
             new=compute_client,
         ):
@@ -35,6 +38,9 @@ class Test_compute_project_os_login_enabled:
         compute_client.projects = [project]
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_gcp_provider(),
+        ), mock.patch(
             "prowler.providers.gcp.services.compute.compute_project_os_login_enabled.compute_project_os_login_enabled.compute_client",
             new=compute_client,
         ):
@@ -68,6 +74,9 @@ class Test_compute_project_os_login_enabled:
         compute_client.projects = [project]
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_gcp_provider(),
+        ), mock.patch(
             "prowler.providers.gcp.services.compute.compute_project_os_login_enabled.compute_project_os_login_enabled.compute_client",
             new=compute_client,
         ):

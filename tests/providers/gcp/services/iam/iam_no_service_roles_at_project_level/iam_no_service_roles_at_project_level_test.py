@@ -1,7 +1,7 @@
 from re import search
 from unittest import mock
 
-from tests.providers.gcp.lib.audit_info_utils import GCP_PROJECT_ID
+from tests.providers.gcp.gcp_fixtures import GCP_PROJECT_ID, set_mocked_gcp_provider
 
 
 class Test_iam_no_service_roles_at_project_level:
@@ -12,6 +12,9 @@ class Test_iam_no_service_roles_at_project_level:
         cloudresourcemanager_client.region = "global"
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_gcp_provider(),
+        ), mock.patch(
             "prowler.providers.gcp.services.cloudresourcemanager.cloudresourcemanager_service.CloudResourceManager",
             new=cloudresourcemanager_client,
         ), mock.patch(
@@ -59,6 +62,9 @@ class Test_iam_no_service_roles_at_project_level:
         cloudresourcemanager_client.region = "global"
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_gcp_provider(),
+        ), mock.patch(
             "prowler.providers.gcp.services.cloudresourcemanager.cloudresourcemanager_service.CloudResourceManager",
             new=cloudresourcemanager_client,
         ), mock.patch(
@@ -80,7 +86,7 @@ class Test_iam_no_service_roles_at_project_level:
                 result[0].status_extended,
             )
             assert result[0].resource_id == GCP_PROJECT_ID
-            assert result[0].resource_name == ""
+            assert result[0].resource_name == GCP_PROJECT_ID
             assert result[0].project_id == GCP_PROJECT_ID
             assert result[0].location == cloudresourcemanager_client.region
 
@@ -101,6 +107,9 @@ class Test_iam_no_service_roles_at_project_level:
         cloudresourcemanager_client.region = "global"
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_gcp_provider(),
+        ), mock.patch(
             "prowler.providers.gcp.services.cloudresourcemanager.cloudresourcemanager_service.CloudResourceManager",
             new=cloudresourcemanager_client,
         ), mock.patch(
@@ -142,6 +151,9 @@ class Test_iam_no_service_roles_at_project_level:
         cloudresourcemanager_client.region = "global"
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_gcp_provider(),
+        ), mock.patch(
             "prowler.providers.gcp.services.cloudresourcemanager.cloudresourcemanager_service.CloudResourceManager",
             new=cloudresourcemanager_client,
         ), mock.patch(

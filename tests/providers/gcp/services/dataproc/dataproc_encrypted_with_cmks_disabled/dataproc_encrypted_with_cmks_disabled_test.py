@@ -1,7 +1,7 @@
 from re import search
 from unittest import mock
 
-from tests.providers.gcp.lib.audit_info_utils import GCP_PROJECT_ID
+from tests.providers.gcp.gcp_fixtures import GCP_PROJECT_ID, set_mocked_gcp_provider
 
 
 class Test_dataproc_encrypted_with_cmks_disabled:
@@ -10,6 +10,9 @@ class Test_dataproc_encrypted_with_cmks_disabled:
         dataproc_client.clusters = []
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_gcp_provider(),
+        ), mock.patch(
             "prowler.providers.gcp.services.dataproc.dataproc_encrypted_with_cmks_disabled.dataproc_encrypted_with_cmks_disabled.dataproc_client",
             new=dataproc_client,
         ):
@@ -36,6 +39,9 @@ class Test_dataproc_encrypted_with_cmks_disabled:
         dataproc_client.clusters = [cluster]
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_gcp_provider(),
+        ), mock.patch(
             "prowler.providers.gcp.services.dataproc.dataproc_encrypted_with_cmks_disabled.dataproc_encrypted_with_cmks_disabled.dataproc_client",
             new=dataproc_client,
         ):
@@ -69,6 +75,9 @@ class Test_dataproc_encrypted_with_cmks_disabled:
         dataproc_client.clusters = [cluster]
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_gcp_provider(),
+        ), mock.patch(
             "prowler.providers.gcp.services.dataproc.dataproc_encrypted_with_cmks_disabled.dataproc_encrypted_with_cmks_disabled.dataproc_client",
             new=dataproc_client,
         ):
