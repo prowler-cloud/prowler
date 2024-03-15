@@ -17,10 +17,15 @@ class Test_ssmincidents_enabled_with_plans:
     def test_ssmincidents_no_replicationset(self):
         ssmincidents_client = mock.MagicMock
         ssmincidents_client.audited_account = AWS_ACCOUNT_NUMBER
+        ssmincidents_client.audited_partition = "aws"
         ssmincidents_client.audited_account_arn = (
             f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
         )
         ssmincidents_client.region = AWS_REGION_US_EAST_1
+        ssmincidents_client.replication_set_arn_template = f"arn:{ssmincidents_client.audited_partition}:ssm-incidents:{ssmincidents_client.region}:{ssmincidents_client.audited_account}:replication-set"
+        ssmincidents_client.__get_replication_set_arn_template__ = mock.MagicMock(
+            return_value=ssmincidents_client.replication_set_arn_template
+        )
         ssmincidents_client.replication_set = []
         with mock.patch(
             "prowler.providers.aws.services.ssmincidents.ssmincidents_service.SSMIncidents",
@@ -40,7 +45,10 @@ class Test_ssmincidents_enabled_with_plans:
                 result[0].status_extended == "No SSM Incidents replication set exists."
             )
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
-            assert result[0].resource_arn == f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
+            assert (
+                result[0].resource_arn
+                == f"arn:{ssmincidents_client.audited_partition}:ssm-incidents:{ssmincidents_client.region}:{ssmincidents_client.audited_account}:replication-set"
+            )
             assert result[0].region == AWS_REGION_US_EAST_1
 
     def test_ssmincidents_replicationset_not_active(self):
@@ -53,6 +61,11 @@ class Test_ssmincidents_enabled_with_plans:
         ssmincidents_client.replication_set = [
             ReplicationSet(arn=REPLICATION_SET_ARN, status="CREATING")
         ]
+        ssmincidents_client.audited_partition = "aws"
+        ssmincidents_client.replication_set_arn_template = f"arn:{ssmincidents_client.audited_partition}:ssm-incidents:{ssmincidents_client.region}:{ssmincidents_client.audited_account}:replication-set"
+        ssmincidents_client.__get_replication_set_arn_template__ = mock.MagicMock(
+            return_value=ssmincidents_client.replication_set_arn_template
+        )
         with mock.patch(
             "prowler.providers.aws.services.ssmincidents.ssmincidents_service.SSMIncidents",
             new=ssmincidents_client,
@@ -85,6 +98,11 @@ class Test_ssmincidents_enabled_with_plans:
         ssmincidents_client.replication_set = [
             ReplicationSet(arn=REPLICATION_SET_ARN, status="ACTIVE")
         ]
+        ssmincidents_client.audited_partition = "aws"
+        ssmincidents_client.replication_set_arn_template = f"arn:{ssmincidents_client.audited_partition}:ssm-incidents:{ssmincidents_client.region}:{ssmincidents_client.audited_account}:replication-set"
+        ssmincidents_client.__get_replication_set_arn_template__ = mock.MagicMock(
+            return_value=ssmincidents_client.replication_set_arn_template
+        )
         ssmincidents_client.response_plans = []
         with mock.patch(
             "prowler.providers.aws.services.ssmincidents.ssmincidents_service.SSMIncidents",
@@ -123,6 +141,11 @@ class Test_ssmincidents_enabled_with_plans:
                 arn=RESPONSE_PLAN_ARN, name="test", region=AWS_REGION_US_EAST_1
             )
         ]
+        ssmincidents_client.audited_partition = "aws"
+        ssmincidents_client.replication_set_arn_template = f"arn:{ssmincidents_client.audited_partition}:ssm-incidents:{ssmincidents_client.region}:{ssmincidents_client.audited_account}:replication-set"
+        ssmincidents_client.__get_replication_set_arn_template__ = mock.MagicMock(
+            return_value=ssmincidents_client.replication_set_arn_template
+        )
         with mock.patch(
             "prowler.providers.aws.services.ssmincidents.ssmincidents_service.SSMIncidents",
             new=ssmincidents_client,

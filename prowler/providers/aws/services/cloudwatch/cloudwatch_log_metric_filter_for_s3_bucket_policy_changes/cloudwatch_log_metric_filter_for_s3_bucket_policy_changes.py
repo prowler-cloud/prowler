@@ -20,9 +20,9 @@ class cloudwatch_log_metric_filter_for_s3_bucket_policy_changes(Check):
         report.status_extended = (
             "No CloudWatch log groups found with metric filters or alarms associated."
         )
-        report.region = cloudwatch_client.region
-        report.resource_id = cloudtrail_client.audited_account
-        report.resource_arn = cloudtrail_client.audited_account_arn
+        report.region = logs_client.region
+        report.resource_id = logs_client.audited_account
+        report.resource_arn = logs_client.log_group_arn_template
 
         report = check_cloudwatch_log_metric_filter(
             pattern,

@@ -54,7 +54,7 @@ class cloudtrail_s3_dataevents_write_enabled(Check):
         ):
             report = Check_Report_AWS(self.metadata())
             report.region = cloudtrail_client.region
-            report.resource_arn = cloudtrail_client.audited_account_arn
+            report.resource_arn = cloudtrail_client.trail_arn_template
             report.resource_id = cloudtrail_client.audited_account
             report.status = "FAIL"
             report.status_extended = "No CloudTrail trails have a data event to record all S3 object-level API operations."

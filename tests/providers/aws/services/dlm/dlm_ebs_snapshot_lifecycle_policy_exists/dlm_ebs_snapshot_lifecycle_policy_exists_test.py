@@ -75,6 +75,8 @@ class Test_dlm_ebs_snapshot_lifecycle_policy_exists:
         dlm_client = mock.MagicMock
         dlm_client.audited_account = AWS_ACCOUNT_NUMBER
         dlm_client.audited_account_arn = AWS_ACCOUNT_ARN
+        dlm_client.region = AWS_REGION_US_EAST_1
+        dlm_client.audited_partition = "aws"
         dlm_client.lifecycle_policies = {
             AWS_REGION_US_EAST_1: {
                 LIFECYCLE_POLICY_ID: LifecyclePolicy(
@@ -85,7 +87,10 @@ class Test_dlm_ebs_snapshot_lifecycle_policy_exists:
                 )
             }
         }
-
+        dlm_client.lifecycle_policy_arn_template = f"arn:{dlm_client.audited_partition}:dlm:{dlm_client.region}:{dlm_client.audited_account}:policy"
+        dlm_client.__get_lifecycle_policy_arn_template__ = mock.MagicMock(
+            return_value=dlm_client.lifecycle_policy_arn_template
+        )
         audit_info = set_mocked_aws_audit_info([AWS_REGION_US_EAST_1])
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
@@ -111,7 +116,10 @@ class Test_dlm_ebs_snapshot_lifecycle_policy_exists:
             assert result[0].status_extended == "EBS snapshot lifecycle policies found."
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
-            assert result[0].resource_arn == AWS_ACCOUNT_ARN
+            assert (
+                result[0].resource_arn
+                == f"arn:aws:dlm:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:policy"
+            )
 
     @mock_aws
     def test_one_ebs_snapshot_and_no_dlm_lifecycle_policy(self):

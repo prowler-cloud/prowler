@@ -4,7 +4,6 @@ from boto3 import client
 from moto import mock_aws
 
 from tests.providers.aws.audit_info_utils import (
-    AWS_ACCOUNT_ARN,
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_US_EAST_1,
     set_mocked_aws_audit_info,
@@ -37,7 +36,10 @@ class Test_cloudtrail_multi_region_enabled_logging_management_events:
                 result = check.execute()
                 assert len(result) == 1
                 assert result[0].resource_id == AWS_ACCOUNT_NUMBER
-                assert result[0].resource_arn == AWS_ACCOUNT_ARN
+                assert (
+                    result[0].resource_arn
+                    == f"arn:aws:cloudtrail:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:trail"
+                )
                 assert result[0].region == AWS_REGION_US_EAST_1
                 assert result[0].status == "FAIL"
                 assert (
@@ -149,7 +151,10 @@ class Test_cloudtrail_multi_region_enabled_logging_management_events:
                 check = cloudtrail_multi_region_enabled_logging_management_events()
                 result = check.execute()
                 assert result[0].resource_id == AWS_ACCOUNT_NUMBER
-                assert result[0].resource_arn == AWS_ACCOUNT_ARN
+                assert (
+                    result[0].resource_arn
+                    == f"arn:aws:cloudtrail:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:trail"
+                )
                 assert result[0].region == AWS_REGION_US_EAST_1
                 assert result[0].status == "FAIL"
                 assert (
@@ -258,7 +263,10 @@ class Test_cloudtrail_multi_region_enabled_logging_management_events:
                 check = cloudtrail_multi_region_enabled_logging_management_events()
                 result = check.execute()
                 assert result[0].resource_id == AWS_ACCOUNT_NUMBER
-                assert result[0].resource_arn == AWS_ACCOUNT_ARN
+                assert (
+                    result[0].resource_arn
+                    == f"arn:aws:cloudtrail:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:trail"
+                )
                 assert result[0].region == AWS_REGION_US_EAST_1
                 assert result[0].status == "FAIL"
                 assert (

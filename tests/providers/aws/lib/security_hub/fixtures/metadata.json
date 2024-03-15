@@ -1,7 +1,7 @@
 {
   "Categories": [
-    "cat1",
-    "cat2"
+    "cat-one",
+    "cat-two"
   ],
   "CheckID": "iam_user_accesskey_unused",
   "CheckTitle": "Ensure Access Keys unused are disabled",

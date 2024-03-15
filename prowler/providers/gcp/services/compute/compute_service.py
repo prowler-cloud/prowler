@@ -13,6 +13,7 @@ class Compute(GCPService):
         self.instances = []
         self.networks = []
         self.subnets = []
+        self.addresses = []
         self.firewalls = []
         self.projects = []
         self.load_balancers = []
@@ -25,6 +26,7 @@ class Compute(GCPService):
         self.__get_networks__()
         self.__threading_call__(self.__get_subnetworks__, self.regions)
         self.__get_firewalls__()
+        self.__threading_call__(self.__get_addresses__, self.regions)
 
     def __get_regions__(self):
         for project_id in self.project_ids:
@@ -197,6 +199,36 @@ class Compute(GCPService):
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
+    def __get_addresses__(self, region):
+        for project_id in self.project_ids:
+            try:
+                request = self.client.addresses().list(
+                    project=project_id, region=region
+                )
+                while request is not None:
+                    response = request.execute(
+                        http=self.__get_AuthorizedHttp_client__()
+                    )
+                    for address in response.get("items", []):
+                        self.addresses.append(
+                            Address(
+                                name=address["name"],
+                                id=address["id"],
+                                project_id=project_id,
+                                type=address.get("addressType", "EXTERNAL"),
+                                ip=address["address"],
+                                region=region,
+                            )
+                        )
+
+                    request = self.client.subnetworks().list_next(
+                        previous_request=request, previous_response=response
+                    )
+            except Exception as error:
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+
     def __get_firewalls__(self):
         for project_id in self.project_ids:
             try:
@@ -294,6 +326,15 @@ class Subnet(BaseModel):
     network: str
     project_id: str
     flow_logs: bool
+    region: str
+
+
+class Address(BaseModel):
+    name: str
+    id: str
+    ip: str
+    type: str
+    project_id: str
     region: str
 
 

@@ -4,7 +4,6 @@ from boto3 import client
 from moto import mock_aws
 
 from tests.providers.aws.audit_info_utils import (
-    AWS_ACCOUNT_ARN,
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_US_EAST_1,
     set_mocked_aws_audit_info,
@@ -54,7 +53,10 @@ class Test_s3_account_level_public_access_blocks:
                 == f"Block Public Access is configured for the account {AWS_ACCOUNT_NUMBER}."
             )
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
-            assert result[0].resource_arn == AWS_ACCOUNT_ARN
+            assert (
+                result[0].resource_arn
+                == f"arn:aws:s3:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:account"
+            )
             assert result[0].region == AWS_REGION_US_EAST_1
 
     @mock_aws
@@ -99,7 +101,10 @@ class Test_s3_account_level_public_access_blocks:
                 == f"Block Public Access is not configured for the account {AWS_ACCOUNT_NUMBER}."
             )
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
-            assert result[0].resource_arn == AWS_ACCOUNT_ARN
+            assert (
+                result[0].resource_arn
+                == f"arn:aws:s3:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:account"
+            )
             assert result[0].region == AWS_REGION_US_EAST_1
 
     @mock_aws

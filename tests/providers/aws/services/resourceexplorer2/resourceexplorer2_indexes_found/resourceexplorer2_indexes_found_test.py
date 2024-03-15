@@ -20,7 +20,12 @@ class Test_resourceexplorer2_indexes_found:
         resourceexplorer2_client.audited_account_arn = (
             f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
         )
+        resourceexplorer2_client.audited_partition = "aws"
         resourceexplorer2_client.region = AWS_REGION_US_EAST_1
+        resourceexplorer2_client.index_arn_template = f"arn:{resourceexplorer2_client.audited_partition}:resource-explorer:{resourceexplorer2_client.region}:{resourceexplorer2_client.audited_account}:index"
+        resourceexplorer2_client.__get_index_arn_template__ = mock.MagicMock(
+            return_value=resourceexplorer2_client.index_arn_template
+        )
         with mock.patch(
             "prowler.providers.aws.services.resourceexplorer2.resourceexplorer2_service.ResourceExplorer2",
             new=resourceexplorer2_client,
@@ -38,7 +43,10 @@ class Test_resourceexplorer2_indexes_found:
             assert result[0].status == "FAIL"
             assert result[0].status_extended == "No Resource Explorer Indexes found."
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
-            assert result[0].resource_arn == f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
+            assert (
+                result[0].resource_arn
+                == f"arn:aws:resource-explorer:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:index"
+            )
             assert result[0].region == AWS_REGION_US_EAST_1
 
     def test_one_index_found(self):
@@ -51,6 +59,11 @@ class Test_resourceexplorer2_indexes_found:
             f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
         )
         resourceexplorer2_client.region = AWS_REGION_US_EAST_1
+        resourceexplorer2_client.audited_partition = "aws"
+        resourceexplorer2_client.index_arn_template = f"arn:{resourceexplorer2_client.audited_partition}:resource-explorer:{resourceexplorer2_client.region}:{resourceexplorer2_client.audited_account}:index"
+        resourceexplorer2_client.__get_index_arn_template__ = mock.MagicMock(
+            return_value=resourceexplorer2_client.index_arn_template
+        )
         with mock.patch(
             "prowler.providers.aws.services.resourceexplorer2.resourceexplorer2_service.ResourceExplorer2",
             new=resourceexplorer2_client,

@@ -8,7 +8,9 @@ class ec2_ebs_default_encryption(Check):
         for ebs_encryption in ec2_client.ebs_encryption_by_default:
             report = Check_Report_AWS(self.metadata())
             report.region = ebs_encryption.region
-            report.resource_arn = ec2_client.audited_account_arn
+            report.resource_arn = ec2_client.__get_volume_arn_template__(
+                ebs_encryption.region
+            )
             report.resource_id = ec2_client.audited_account
             if ebs_encryption.status:
                 report.status = "PASS"

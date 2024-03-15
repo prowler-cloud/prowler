@@ -4,7 +4,6 @@ from boto3 import client
 from moto import mock_aws
 
 from tests.providers.aws.audit_info_utils import (
-    AWS_ACCOUNT_ARN,
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_SOUTH_2,
     AWS_REGION_EU_WEST_1,
@@ -35,18 +34,33 @@ class Test_config_recorder_all_regions_enabled:
             )
 
             check = config_recorder_all_regions_enabled()
-            result = check.execute()
+            results = check.execute()
 
-            assert (
-                len(result) == 2
-            )  # One fail result per region, since there are no recorders
-            assert result[0].status == "FAIL"
-            assert (
-                result[0].status_extended
-                == f"AWS Config recorder {AWS_ACCOUNT_NUMBER} is disabled."
-            )
-            assert result[0].resource_arn == AWS_ACCOUNT_ARN
-            assert result[0].resource_id == AWS_ACCOUNT_NUMBER
+            assert len(results) == 2
+            for result in results:
+                if result.region == AWS_REGION_EU_WEST_1:
+
+                    assert result.status == "FAIL"
+                    assert (
+                        result.status_extended
+                        == f"AWS Config recorder {AWS_ACCOUNT_NUMBER} is disabled."
+                    )
+                    assert (
+                        result.resource_arn
+                        == f"arn:aws:config:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:recorder"
+                    )
+                    assert result.resource_id == AWS_ACCOUNT_NUMBER
+                if result.region == AWS_REGION_EU_WEST_1:
+                    assert result.status == "FAIL"
+                    assert (
+                        result.status_extended
+                        == f"AWS Config recorder {AWS_ACCOUNT_NUMBER} is disabled."
+                    )
+                    assert (
+                        result.resource_arn
+                        == f"arn:aws:config:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:recorder"
+                    )
+                    assert result.resource_id == AWS_ACCOUNT_NUMBER
 
     @mock_aws
     def test_config_one_recoder_disabled(self):
@@ -84,7 +98,10 @@ class Test_config_recorder_all_regions_enabled:
                         == "AWS Config recorder default is disabled."
                     )
                     assert recorder.resource_id == "default"
-                    assert recorder.resource_arn == AWS_ACCOUNT_ARN
+                    assert (
+                        recorder.resource_arn
+                        == f"arn:aws:config:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:recorder"
+                    )
                     assert recorder.region == AWS_REGION_US_EAST_1
 
     @mock_aws
@@ -128,7 +145,10 @@ class Test_config_recorder_all_regions_enabled:
                         == "AWS Config recorder default is enabled."
                     )
                     assert recorder.resource_id == "default"
-                    assert recorder.resource_arn == AWS_ACCOUNT_ARN
+                    assert (
+                        recorder.resource_arn
+                        == f"arn:aws:config:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:recorder"
+                    )
                     assert recorder.region == AWS_REGION_US_EAST_1
 
     @mock_aws
@@ -171,7 +191,10 @@ class Test_config_recorder_all_regions_enabled:
                         == f"AWS Config recorder {AWS_ACCOUNT_NUMBER} is disabled."
                     )
                     assert recorder.resource_id == AWS_ACCOUNT_NUMBER
-                    assert recorder.resource_arn == AWS_ACCOUNT_ARN
+                    assert (
+                        recorder.resource_arn
+                        == f"arn:aws:config:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:recorder"
+                    )
                     assert recorder.region == AWS_REGION_US_EAST_1
                 else:
                     assert recorder.status == "FAIL"
@@ -180,5 +203,8 @@ class Test_config_recorder_all_regions_enabled:
                         == f"AWS Config recorder {AWS_ACCOUNT_NUMBER} is disabled."
                     )
                     assert recorder.resource_id == AWS_ACCOUNT_NUMBER
-                    assert recorder.resource_arn == AWS_ACCOUNT_ARN
-                    assert recorder.region == "eu-south-2"
+                    assert (
+                        recorder.resource_arn
+                        == f"arn:aws:config:{AWS_REGION_EU_SOUTH_2}:{AWS_ACCOUNT_NUMBER}:recorder"
+                    )
+                    assert recorder.region == AWS_REGION_EU_SOUTH_2

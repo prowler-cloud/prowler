@@ -23,7 +23,7 @@ Each file version of a framework will have the following structure at high level
   "Requirements": [
     {
       "Id": "<unique-id>",
-      "Description": "Requiemente full description",
+      "Description": "Requirement full description",
       "Checks": [
         "Here is the prowler check or checks that is going to be executed"
       ],
@@ -38,4 +38,4 @@ Each file version of a framework will have the following structure at high level
 }
 ```
 
-Finally, to have a proper output file for your reports, your framework data model has to be created in `prowler/lib/outputs/models.py` and also the CLI table output in `prowler/lib/outputs/compliance.py`.
+Finally, to have a proper output file for your reports, your framework data model has to be created in `prowler/lib/outputs/models.py` and also the CLI table output in `prowler/lib/outputs/compliance.py`. Also, you need to add a new conditional in `prowler/lib/outputs/file_descriptors.py` if you create a new CSV model.

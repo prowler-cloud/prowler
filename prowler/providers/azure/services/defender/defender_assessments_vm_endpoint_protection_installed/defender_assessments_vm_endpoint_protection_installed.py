@@ -10,7 +10,6 @@ class defender_assessments_vm_endpoint_protection_installed(Check):
             subscription_name,
             assessments,
         ) in defender_client.assessments.items():
-            pass
 
             if (
                 "Install endpoint protection solution on virtual machines"

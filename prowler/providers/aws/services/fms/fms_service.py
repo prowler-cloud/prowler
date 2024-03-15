@@ -11,6 +11,7 @@ class FMS(AWSService):
     def __init__(self, audit_info):
         # # Call AWSService's __init__
         super().__init__(__class__.__name__, audit_info, global_service=True)
+        self.policy_arn_template = f"arn:{self.audited_partition}:fms:{self.region}:{self.audited_account}:policy"
         self.fms_admin_account = True
         self.fms_policies = []
         self.__list_policies__()

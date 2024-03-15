@@ -4,7 +4,6 @@ from boto3 import client
 from moto import mock_aws
 
 from tests.providers.aws.audit_info_utils import (
-    AWS_ACCOUNT_ARN,
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_US_EAST_1,
     set_mocked_aws_audit_info,
@@ -49,7 +48,10 @@ class Test_iam_password_policy_uppercase:
                 == "IAM password policy does not require at least one uppercase letter."
             )
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
-            assert result[0].resource_arn == AWS_ACCOUNT_ARN
+            assert (
+                result[0].resource_arn
+                == f"arn:aws:iam:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:password-policy"
+            )
             assert result[0].region == AWS_REGION_US_EAST_1
 
     @mock_aws
@@ -82,5 +84,8 @@ class Test_iam_password_policy_uppercase:
                 == "IAM password policy requires at least one uppercase letter."
             )
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
-            assert result[0].resource_arn == AWS_ACCOUNT_ARN
+            assert (
+                result[0].resource_arn
+                == f"arn:aws:iam:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:password-policy"
+            )
             assert result[0].region == AWS_REGION_US_EAST_1
