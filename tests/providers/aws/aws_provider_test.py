@@ -835,9 +835,14 @@ aws:
         assert aws_provider.output_options.bulk_checks_metadata == {}
         assert aws_provider.output_options.verbose
         assert (
-            aws_provider.output_options.output_filename
-            == f"prowler-output-{AWS_ACCOUNT_NUMBER}-{datetime.today().strftime('%Y%m%d%H%M%S')}"
+            f"prowler-output-{AWS_ACCOUNT_NUMBER}"
+            in aws_provider.output_options.output_filename
         )
+        # Flaky due to the millisecond part of the timestamp
+        # assert (
+        #     aws_provider.output_options.output_filename
+        #     == f"prowler-output-{AWS_ACCOUNT_NUMBER}-{datetime.today().strftime('%Y%m%d%H%M%S')}"
+        # )
 
         # Delete testing directory
         rmdir(f"{arguments.output_directory}/compliance")

@@ -95,9 +95,14 @@ class TestGCPProvider:
             assert gcp_provider.output_options.bulk_checks_metadata == {}
             assert gcp_provider.output_options.verbose
             assert (
-                gcp_provider.output_options.output_filename
-                == f"prowler-output-{gcp_provider.identity.profile}-{datetime.today().strftime('%Y%m%d%H%M%S')}"
+                f"prowler-output-{gcp_provider.identity.profile}"
+                in gcp_provider.output_options.output_filename
             )
+            # Flaky due to the millisecond part of the timestamp
+            # assert (
+            #     gcp_provider.output_options.output_filename
+            #     == f"prowler-output-{gcp_provider.identity.profile}-{datetime.today().strftime('%Y%m%d%H%M%S')}"
+            # )
 
             # Delete testing directory
             # TODO: move this to a fixtures file

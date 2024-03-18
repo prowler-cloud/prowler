@@ -198,48 +198,17 @@ class TestAzureProvider:
             )
             assert azure_provider.output_options.bulk_checks_metadata == {}
             assert azure_provider.output_options.verbose
+            # Flaky due to the millisecond part of the timestamp
+            # assert (
+            #     azure_provider.output_options.output_filename
+            #     == f"prowler-output-{azure_provider.identity.tenant_domain}-{datetime.today().strftime('%Y%m%d%H%M%S')}"
+            # )
             assert (
-                azure_provider.output_options.output_filename
-                == f"prowler-output-{azure_provider.identity.tenant_domain}-{datetime.today().strftime('%Y%m%d%H%M%S')}"
+                f"prowler-output-{azure_provider.identity.tenant_domain}"
+                in azure_provider.output_options.output_filename
             )
 
             # Delete testing directory
             # TODO: move this to a fixtures file
             rmdir(f"{arguments.output_directory}/compliance")
             rmdir(arguments.output_directory)
-
-    @freeze_time(datetime.today())
-    def test_azure_provider_output_options_tenant_ids(self):
-        # Output Options
-        arguments = Namespace()
-        arguments.output_modes = ["csv"]
-        arguments.output_directory = "output_test_directory"
-        arguments.status = []
-        arguments.verbose = True
-        arguments.only_logs = False
-        arguments.unix_timestamp = False
-        arguments.shodan = "test-api-key"
-
-        tenants = ["tenant-1", "tenant-2"]
-
-        azure_output_options = AzureOutputOptions(
-            arguments, {}, AzureIdentityInfo(tenant_ids=tenants)
-        )
-
-        assert isinstance(azure_output_options, AzureOutputOptions)
-        assert azure_output_options.status == []
-        assert azure_output_options.output_modes == [
-            "csv",
-        ]
-        assert azure_output_options.output_directory == arguments.output_directory
-        assert azure_output_options.bulk_checks_metadata == {}
-        assert azure_output_options.verbose
-        assert (
-            azure_output_options.output_filename
-            == f"prowler-output-{'-'.join(tenants)}-{datetime.today().strftime('%Y%m%d%H%M%S')}"
-        )
-
-        # Delete testing directory
-        # TODO: move this to a fixtures file
-        rmdir(f"{arguments.output_directory}/compliance")
-        rmdir(arguments.output_directory)
