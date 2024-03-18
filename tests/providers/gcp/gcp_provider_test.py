@@ -1,82 +1,105 @@
-# def mock_set_gcp_credentials(*_):
-#     return (None, "project")
+from argparse import Namespace
+from datetime import datetime
+from os import rmdir
 
+from freezegun import freeze_time
+from mock import patch
 
-# def mock_get_project_ids(*_):
-#     return ["project"]
-# def mock_print_audit_credentials(*_):
-#     pass
-
-
-# @patch.object(GCP_Provider, "__set_credentials__", new=mock_set_gcp_credentials)
-#     @patch.object(GCP_Provider, "get_project_ids", new=mock_get_project_ids)
-#     @patch.object(Audit_Info, "print_gcp_credentials", new=mock_print_audit_credentials)
-#     def test_set_audit_info_gcp(self):
-#         provider = "gcp"
-#         arguments = {
-#             "profile": None,
-#             "role": None,
-#             "session_duration": None,
-#             "external_id": None,
-#             "regions": None,
-#             "organizations_role": None,
-#             "subscriptions": None,
-#             # We need to set exactly one auth method
-#             "credentials_file": None,
-#             "project_ids": ["project"],
-#             "config_file": default_config_file_path,
-#         }
-
-#         audit_info = set_provider_audit_info(provider, arguments)
-#         assert isinstance(audit_info, GCP_Audit_Info)
-
-#     def test_set_provider_output_options_gcp(self):
-#         #  Set the cloud provider
-#         provider = "gcp"
-#         # Set the arguments passed
-#         arguments = Namespace()
-#         arguments.quiet = True
-#         arguments.output_modes = ["csv"]
-#         arguments.output_directory = "output_test_directory"
-#         arguments.verbose = True
-#         arguments.output_filename = "output_test_filename"
-#         arguments.only_logs = False
-#         arguments.unix_timestamp = False
-
-#         audit_info = self.set_mocked_gcp_audit_info()
-#         mutelist_file = ""
-#         bulk_checks_metadata = {}
-#         output_options = set_provider_output_options(
-#             provider, arguments, audit_info, mutelist_file, bulk_checks_metadata
-#         )
-#         assert isinstance(output_options, Gcp_Output_Options)
-#         assert output_options.is_quiet
-#         assert output_options.output_modes == ["csv"]
-#         assert output_options.output_directory == arguments.output_directory
-#         assert output_options.mutelist_file == ""
-#         assert output_options.bulk_checks_metadata == {}
-#         assert output_options.verbose
-#         assert output_options.output_filename == arguments.output_filename
-
-#         # Delete testing directory
-#         rmdir(arguments.output_directory)
-
-# from argparse import Namespace
-# from prowler.config.config import default_config_file_path
-# from prowler.providers.gcp.gcp_provider import GcpProvider
+from prowler.config.config import default_config_file_path
+from prowler.providers.gcp.gcp_provider import GcpProvider
+from prowler.providers.gcp.models import GCPIdentityInfo, GCPOutputOptions, GCPProject
 
 
 class TestGCPProvider:
-    # def test_gcp_provider(self):
-    #     arguments = Namespace()
+    def test_gcp_provider(self):
+        arguments = Namespace()
+        arguments.project_ids = []
+        arguments.credentials_file = ""
+        arguments.config_file = default_config_file_path
 
-    #     arguments.config_file = default_config_file_path
+        projects = {
+            "test-project": GCPProject(
+                number="55555555",
+                id="project/55555555",
+                name="test-project",
+                labels="",
+                lifecycle_state="",
+            )
+        }
+        with patch(
+            "prowler.providers.gcp.gcp_provider.GcpProvider.setup_session",
+            return_value={None, ""},
+        ), patch(
+            "prowler.providers.gcp.gcp_provider.GcpProvider.get_projects",
+            return_value=projects,
+        ), patch(
+            "prowler.providers.gcp.gcp_provider.GcpProvider.update_projects_with_organizations",
+            return_value=None,
+        ):
+            gcp_provider = GcpProvider(arguments)
+            assert gcp_provider.session is None
+            assert gcp_provider.project_ids == ["test-project"]
+            assert gcp_provider.projects == projects
+            assert gcp_provider.identity == GCPIdentityInfo(
+                profile="default", default_project_id=""
+            )
+            assert gcp_provider.audit_config is None
 
-        # with patch(
-        #     "prowler.providers.azure.azure_provider.AzureProvider.setup_identity",
-        #     return_value=AzureIdentityInfo(),
-        # ), patch(
-        #     "prowler.providers.azure.azure_provider.AzureProvider.get_locations",
-        #     return_value={},
-        # ):
-        # gcp_provider = GcpProvider(arguments)
+    @freeze_time(datetime.today())
+    def test_gcp_provider_output_options(self):
+        arguments = Namespace()
+        arguments.project_ids = []
+        arguments.credentials_file = ""
+        arguments.config_file = default_config_file_path
+
+        # Output options
+        arguments.status = []
+        arguments.output_modes = ["csv"]
+        arguments.output_directory = "output_test_directory"
+        arguments.verbose = True
+        arguments.only_logs = False
+        arguments.unix_timestamp = False
+        arguments.shodan = "test-api-key"
+
+        projects = {
+            "test-project": GCPProject(
+                number="55555555",
+                id="project/55555555",
+                name="test-project",
+                labels="",
+                lifecycle_state="",
+            )
+        }
+        with patch(
+            "prowler.providers.gcp.gcp_provider.GcpProvider.setup_session",
+            return_value={None, ""},
+        ), patch(
+            "prowler.providers.gcp.gcp_provider.GcpProvider.get_projects",
+            return_value=projects,
+        ), patch(
+            "prowler.providers.gcp.gcp_provider.GcpProvider.update_projects_with_organizations",
+            return_value=None,
+        ):
+            gcp_provider = GcpProvider(arguments)
+            gcp_provider.output_options = arguments, {}
+
+            assert isinstance(gcp_provider.output_options, GCPOutputOptions)
+            assert gcp_provider.output_options.status == []
+            assert gcp_provider.output_options.output_modes == [
+                "csv",
+            ]
+            assert (
+                gcp_provider.output_options.output_directory
+                == arguments.output_directory
+            )
+            assert gcp_provider.output_options.bulk_checks_metadata == {}
+            assert gcp_provider.output_options.verbose
+            assert (
+                gcp_provider.output_options.output_filename
+                == f"prowler-output-{gcp_provider.identity.profile}-{datetime.today().strftime('%Y%m%d%H%M%S')}"
+            )
+
+            # Delete testing directory
+            # TODO: move this to a fixtures file
+            rmdir(f"{arguments.output_directory}/compliance")
+            rmdir(arguments.output_directory)
