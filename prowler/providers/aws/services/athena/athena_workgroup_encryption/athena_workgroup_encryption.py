@@ -12,7 +12,7 @@ class athena_workgroup_encryption(Check):
             # Only check for enabled and used workgroups (has recent queries)
             if (
                 workgroup.state == "ENABLED" and workgroup.queries
-            ) or not athena_client.provider.scan_unused_services:
+            ) or athena_client.provider.scan_unused_services:
                 report = Check_Report_AWS(self.metadata())
                 report.region = workgroup.region
                 report.resource_id = workgroup.name

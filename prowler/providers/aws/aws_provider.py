@@ -72,7 +72,7 @@ class AwsProvider(Provider):
         input_regions = getattr(arguments, "region", set())
         organizations_role_arn = getattr(arguments, "organizations_role", None)
 
-        # Set if unused services must be ignored
+        # Set if unused services must be scanned
         scan_unused_services = getattr(arguments, "scan_unused_services", None)
         ########
 
