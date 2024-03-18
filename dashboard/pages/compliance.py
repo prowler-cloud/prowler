@@ -1,4 +1,4 @@
-# Importing Packages
+# Standard library imports
 import glob
 import importlib
 import math
@@ -6,6 +6,7 @@ import os
 import re
 import warnings
 
+# Third-party imports
 import dash
 import numpy as np
 import pandas as pd
@@ -14,56 +15,54 @@ import plotly.graph_objs as go
 from dash import callback, dcc, html
 from dash.dependencies import Input, Output
 
+# Suppress warnings
 warnings.filterwarnings("ignore")
 
-# Get the current working directory
-current_directory = os.getcwd()
-
-# Specify the folder path (assuming "Data" is in the current directory)
-folder_path = f"{os.path.join(current_directory)}/../output/compliance"
-
-# Use glob to find all CSV files in the folder
-csv_files = glob.glob(os.path.join(folder_path, "*.csv"))
-csv_files = [file for file in csv_files]
+# Global variables
+# TODO: Create a flag to let the user put a custom path
+folder_path = f"{os.getcwd()}/output/compliance"
+csv_files = [file for file in glob.glob(os.path.join(folder_path, "*.csv"))]
 
 
-# take the names of the compliance reports and put them in a list
-dfs = []
-results = []
-for file in csv_files:
-    df = pd.read_csv(file, sep=";", on_bad_lines="skip")
-    if "CHECKID" in df.columns and "mitre" not in file.split("/")[-1]:
-        dfs.append(df)
-        result = file
-        result = result.split("/")[-1]
-        result = re.sub(r"^.*?_", "", result)
-        result = result.replace(".csv", "")
-        result = result.upper()
-        if "AWS" in result:
-            if "AWS_" in result:
-                result = result.replace("_AWS", "")
-            else:
-                result = result.replace("_AWS", " - AWS")
-        if "GCP" in result:
-            result = result.replace("_GCP", " - GCP")
-        results.append(result)
+def load_csv_files(csv_files):
+    """Load CSV files into a single pandas DataFrame."""
+    dfs = []
+    results = []
+    for file in csv_files:
+        df = pd.read_csv(file, sep=";", on_bad_lines="skip")
+        if "CHECKID" in df.columns and "mitre" not in file.split("/")[-1]:
+            dfs.append(df)
+            result = file
+            result = result.split("/")[-1]
+            result = re.sub(r"^.*?_", "", result)
+            result = result.replace(".csv", "")
+            result = result.upper()
+            if "AWS" in result:
+                if "AWS_" in result:
+                    result = result.replace("_AWS", "")
+                else:
+                    result = result.replace("_AWS", " - AWS")
+            if "GCP" in result:
+                result = result.replace("_GCP", " - GCP")
+            results.append(result)
 
-unique_results = set(results)
-results = list(unique_results)
+    unique_results = set(results)
+    results = list(unique_results)
 
-# Check if there is any CIS report in the list and divide it in level 1 and level 2
-new_results = []
-for compliance_name in results:
-    if "CIS_" in compliance_name:
-        results.remove(compliance_name)
-        new_results.append(compliance_name + " - Level_1")
-        new_results.append(compliance_name + " - Level_2")
+    # Check if there is any CIS report in the list and divide it in level 1 and level 2
+    new_results = []
+    for compliance_name in results:
+        if "CIS_" in compliance_name:
+            results.remove(compliance_name)
+            new_results.append(compliance_name + " - Level_1")
+            new_results.append(compliance_name + " - Level_2")
 
-results = results + new_results
-results.sort()
+    results = results + new_results
+    results.sort()
+    return pd.concat(dfs, ignore_index=True), results
 
-# creating dataframe
-data = pd.concat(dfs, ignore_index=True)
+
+data, results = load_csv_files(csv_files)
 
 
 data["ASSESSMENTDATE"] = pd.to_datetime(data["ASSESSMENTDATE"])
@@ -485,24 +484,22 @@ def display_data(
 
             if (
                 "REQUIREMENTS_ATTRIBUTES_SECTION" in df.columns
-                and df["REQUIREMENTS_ATTRIBUTES_SECTION"].isnull().values.any() == False
+                and not df["REQUIREMENTS_ATTRIBUTES_SECTION"].isnull().values.any()
             ):
                 pie_2 = get_polar_graph(df, "REQUIREMENTS_ATTRIBUTES_SECTION")
             elif (
                 "REQUIREMENTS_ATTRIBUTES_CATEGORIA" in df.columns
-                and df["REQUIREMENTS_ATTRIBUTES_CATEGORIA"].isnull().values.any()
-                == False
+                and not df["REQUIREMENTS_ATTRIBUTES_CATEGORIA"].isnull().values.any()
             ):
                 pie_2 = get_polar_graph(df, "REQUIREMENTS_ATTRIBUTES_CATEGORIA")
             elif (
                 "REQUIREMENTS_ATTRIBUTES_CATEGORY" in df.columns
-                and df["REQUIREMENTS_ATTRIBUTES_CATEGORY"].isnull().values.any()
-                == False
+                and not df["REQUIREMENTS_ATTRIBUTES_CATEGORY"].isnull().values.any()
             ):
                 pie_2 = get_polar_graph(df, "REQUIREMENTS_ATTRIBUTES_CATEGORY")
             elif (
                 "REQUIREMENTS_ATTRIBUTES_SERVICE" in df.columns
-                and df["REQUIREMENTS_ATTRIBUTES_SERVICE"].isnull().values.any() == False
+                and not df["REQUIREMENTS_ATTRIBUTES_SERVICE"].isnull().values.any()
             ):
                 pie_2 = get_polar_graph(df, "REQUIREMENTS_ATTRIBUTES_SERVICE")
             else:
@@ -523,7 +520,7 @@ def display_data(
     """Show the analytics - table"""
     #############################################################################
 
-    if analytics_input == None:
+    if not analytics_input:
         analytics_input = ""
 
     table_output = [

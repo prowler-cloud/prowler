@@ -15,13 +15,15 @@ import plotly.graph_objects as go
 from dash import callback, ctx, dcc, html
 from dash.dependencies import Input, Output
 
+from dashboard.lib.cards import create_provider_card
+from dashboard.lib.dropdowns import create_date_dropdown
+
 # Suppress warnings
 warnings.filterwarnings("ignore")
 
 # Global variables
-current_directory = os.getcwd()
 # TODO: Create a flag to let the user put a custom path
-folder_path = f"{current_directory}/output"
+folder_path = f"{os.getcwd()}/output"
 csv_files = [file for file in glob.glob(os.path.join(folder_path, "*.csv"))]
 
 # Import logos providers
@@ -84,82 +86,27 @@ data["ASSESSMENT_TIME"] = data["ASSESSMENT_TIME"].apply(lambda x: x.split(" ")[0
 data["TIMESTAMP"] = data["TIMESTAMP"].dt.strftime("%Y-%m-%d")
 data["TIMESTAMP"] = pd.to_datetime(data["TIMESTAMP"])
 
-#############################################################################
-"""
-                Select Date - Dropdown
-"""
-#############################################################################
+# Assessment Date Dropdown
+assesment_times = list(data["ASSESSMENT_TIME"].unique())
+assesment_times.sort()
+assesment_times.reverse()
+date_dropdown = create_date_dropdown(assesment_times)
 
-# Dropdown all options
-select_assessment_date = list(data["ASSESSMENT_TIME"].unique())
-select_assessment_date.sort()
-select_assessment_date.reverse()
-
-# Get the value of the current selected date from the dropdown report-date-filter
-list_files = ""
-
-dropdown3 = html.Div(
-    [
-        html.Div(
-            [
-                html.Label(
-                    "Assessment date (last available scan) ",
-                    className="text-prowler-stone-900 font-bold text-sm",
-                ),
-                html.Img(
-                    id="info-file-over",
-                    src="/assets/images/icons/help-black.png",
-                    className="w-5",
-                    title=list_files,
-                ),
-            ],
-            style={"display": "inline-flex"},
-        ),
-        dcc.Dropdown(
-            id="report-date-filter",
-            options=[
-                {"label": account, "value": account}
-                for account in select_assessment_date
-            ],
-            value=select_assessment_date[0],  # Initial selection is ALL
-            clearable=False,
-            multi=False,
-            style={"color": "#000000", "width": "100%"},
-        ),
-    ],
+# Cloud Account Dropdown
+accounts = (
+    ["All"] + list(data["ACCOUNT_UID"].unique()) + list(data["ACCOUNT_NAME"].unique())
 )
-
-#############################################################################
-"""
-                Select Cloud Account - Dropdown
-"""
-#############################################################################
-
-# Dropdown all options
-select_account_dropdown_list = ["All"]
-select_account_dropdown_list = (
-    select_account_dropdown_list
-    + list(data["ACCOUNT_UID"].unique())
-    + list(data["ACCOUNT_NAME"].unique())
-)
-list_items = []
-# delete nan values
-for item in select_account_dropdown_list:
-    if item.__class__.__name__ == "str":
-        list_items.append(item)
-
-select_account_dropdown_list = list_items
 
 # for item in the list, we are adding the provider name depending on the account
-for i in range(len(select_account_dropdown_list)):
-    if select_account_dropdown_list[i] in list(data["ACCOUNT_UID"].unique()):
-        select_account_dropdown_list[i] = select_account_dropdown_list[i] + " - AWS"
-    elif select_account_dropdown_list[i] in list(data["ACCOUNT_NAME"].unique()):
-        select_account_dropdown_list[i] = select_account_dropdown_list[i] + " - AZURE"
-    elif select_account_dropdown_list[i] in list(data["ACCOUNT_UID"].unique()):
-        select_account_dropdown_list[i] = select_account_dropdown_list[i] + " - GCP"
-    elif select_account_dropdown_list[i] in list(data["ACCOUNT_UID"].unique()):
-        select_account_dropdown_list[i] = select_account_dropdown_list[i] + " - K8S"
+for i in range(len(accounts)):
+    if accounts[i] in list(data["ACCOUNT_UID"].unique()):
+        accounts[i] = accounts[i] + " - AWS"
+    elif accounts[i] in list(data["ACCOUNT_NAME"].unique()):
+        accounts[i] = accounts[i] + " - AZURE"
+    elif accounts[i] in list(data["ACCOUNT_UID"].unique()):
+        accounts[i] = accounts[i] + " - GCP"
+    elif accounts[i] in list(data["ACCOUNT_UID"].unique()):
+        accounts[i] = accounts[i] + " - K8S"
 
 dropdown1 = html.Div(
     [
@@ -169,10 +116,7 @@ dropdown1 = html.Div(
         ),
         dcc.Dropdown(
             id="cloud-account-filter",
-            options=[
-                {"label": account, "value": account}
-                for account in select_account_dropdown_list
-            ],
+            options=[{"label": account, "value": account} for account in accounts],
             value=["All"],  # Initial selection is ALL
             style={"color": "#000000", "width": "100%"},
             multi=True,
@@ -243,7 +187,7 @@ layout = html.Div(
         ),
         html.Div(
             [
-                html.Div([dropdown3], className=""),
+                html.Div([date_dropdown], className=""),
                 html.Div([dropdown1], className=""),
                 html.Div([dropdown2], className=""),
             ],
@@ -324,9 +268,8 @@ layout = html.Div(
     Input("cloud-account-filter", "value"),
     Input("region-filter", "value"),
     Input("report-date-filter", "value"),
-    Input("download_link", "n_clicks"),
 )
-def filter_data(cloud_account_values, region_account_values, assessent_value):
+def filter_data(cloud_account_values, region_account_values, assessment_value):
     filtered_data = data.copy()
 
     # Take the latest date of de data
@@ -342,13 +285,13 @@ def filter_data(cloud_account_values, region_account_values, assessent_value):
     ]
     # We are taking the latest date if there is only one account
     # Filter Assessment Time
-    if assessent_value in account_date:
-        updated_assessent_value = assessent_value
+    if assessment_value in account_date:
+        updated_assessment_value = assessment_value
     else:
-        updated_assessent_value = account_date[0]
-        assessent_value = account_date[0]
+        updated_assessment_value = account_date[0]
+        assessment_value = account_date[0]
     filtered_data = filtered_data[
-        filtered_data["ASSESSMENT_TIME"] == updated_assessent_value
+        filtered_data["ASSESSMENT_TIME"] == updated_assessment_value
     ]
 
     # Select the files in the list_files that have the same date as the selected date
@@ -358,7 +301,7 @@ def filter_data(cloud_account_values, region_account_values, assessent_value):
         if "CHECK_ID" in df.columns:
             df["TIMESTAMP"] = pd.to_datetime(df["TIMESTAMP"])
             df["TIMESTAMP"] = df["TIMESTAMP"].dt.strftime("%Y-%m-%d")
-            if df["TIMESTAMP"][0].split(" ")[0] == updated_assessent_value:
+            if df["TIMESTAMP"][0].split(" ")[0] == updated_assessment_value:
                 list_files.append(file)
 
     # append all the names of the files
@@ -371,7 +314,7 @@ def filter_data(cloud_account_values, region_account_values, assessent_value):
 
     # Change the account selector to the values that are allowed
     filtered_data = filtered_data[
-        filtered_data["ASSESSMENT_TIME"] == updated_assessent_value
+        filtered_data["ASSESSMENT_TIME"] == updated_assessment_value
     ]
     all_account_ids = filtered_data["ACCOUNT_UID"].unique()
     all_account_names = filtered_data["ACCOUNT_NAME"].unique()
@@ -441,82 +384,8 @@ def filter_data(cloud_account_values, region_account_values, assessent_value):
 
     region_filter_options = ["All"] + list(filtered_data["REGION"].unique())
 
-    # Select issues that are failed
-    filtered_data_table = filtered_data[filtered_data["STATUS"] == "FAIL"]
-
-    # Count of accounts and checks executed for each provider
-
-    accounts_aws = len(
-        filtered_data[filtered_data["PROVIDER"] == "aws"]["ACCOUNT_UID"].unique()
-    )
-    checks_executed_aws = len(
-        filtered_data[filtered_data["PROVIDER"] == "aws"]["CHECK_ID"].unique()
-    )
-    failed_aws = len(
-        filtered_data[
-            (filtered_data["PROVIDER"] == "aws") & (filtered_data["STATUS"] == "FAIL")
-        ]
-    )
-    passed_aws = len(
-        filtered_data[
-            (filtered_data["PROVIDER"] == "aws") & (filtered_data["STATUS"] == "PASS")
-        ]
-    )
-
-    accounts_azure = len(
-        filtered_data[filtered_data["PROVIDER"] == "azure"]["ACCOUNT_NAME"].unique()
-    )
-
-    checks_executed_azure = len(
-        filtered_data[filtered_data["PROVIDER"] == "azure"]["CHECK_ID"].unique()
-    )
-
-    failed_azure = len(
-        filtered_data[
-            (filtered_data["PROVIDER"] == "azure") & (filtered_data["STATUS"] == "FAIL")
-        ]
-    )
-    passed_azure = len(
-        filtered_data[
-            (filtered_data["PROVIDER"] == "azure") & (filtered_data["STATUS"] == "PASS")
-        ]
-    )
-
-    accounts_gcp = len(
-        filtered_data[filtered_data["PROVIDER"] == "gcp"]["ACCOUNT_UID"].unique()
-    )
-    checks_executed_gcp = len(
-        filtered_data[filtered_data["PROVIDER"] == "gcp"]["CHECK_ID"].unique()
-    )
-    failed_gcp = len(
-        filtered_data[
-            (filtered_data["PROVIDER"] == "gcp") & (filtered_data["STATUS"] == "FAIL")
-        ]
-    )
-    passed_gcp = len(
-        filtered_data[
-            (filtered_data["PROVIDER"] == "gcp") & (filtered_data["STATUS"] == "PASS")
-        ]
-    )
-
-    accounts_k8s = len(
-        filtered_data[filtered_data["PROVIDER"] == "kubernetes"]["ACCOUNT_UID"].unique()
-    )
-    checks_executed_k8s = len(
-        filtered_data[filtered_data["PROVIDER"] == "kubernetes"]["CHECK_ID"].unique()
-    )
-    failed_k8s = len(
-        filtered_data[
-            (filtered_data["PROVIDER"] == "kubernetes")
-            & (filtered_data["STATUS"] == "FAIL")
-        ]
-    )
-    passed_k8s = len(
-        filtered_data[
-            (filtered_data["PROVIDER"] == "kubernetes")
-            & (filtered_data["STATUS"] == "PASS")
-        ]
-    )
+    # Select failed findings
+    fails_findings = filtered_data[filtered_data["STATUS"] == "FAIL"]
 
     if len(filtered_data_sp) == 0:
         fig = px.pie()
@@ -744,16 +613,12 @@ def filter_data(cloud_account_values, region_account_values, assessent_value):
 
         # SORT BY SEVERITY
         severity_dict = {"critical": 3, "high": 2, "medium": 1, "low": 0}
-        filtered_data_table["SEVERITY"] = filtered_data_table["SEVERITY"].map(
-            severity_dict
-        )
-        filtered_data_table = filtered_data_table.sort_values(
-            by=["SEVERITY"], ascending=False
-        )
-        filtered_data_table["SEVERITY"] = filtered_data_table["SEVERITY"].replace(
+        fails_findings["SEVERITY"] = fails_findings["SEVERITY"].map(severity_dict)
+        fails_findings = fails_findings.sort_values(by=["SEVERITY"], ascending=False)
+        fails_findings["SEVERITY"] = fails_findings["SEVERITY"].replace(
             {3: "critical", 2: "high", 1: "medium", 0: "low"}
         )
-        table_data = filtered_data_table.copy()
+        table_data = fails_findings.copy()
         # Append the value from the colum 'ACCOUNT_NAME' to the 'ACCOUNT_UID' column
         for subscription in table_data["ACCOUNT_NAME"].unique():
             table_data.loc[
@@ -858,408 +723,17 @@ def filter_data(cloud_account_values, region_account_values, assessent_value):
     ]
 
     #####################################################################
-    """AWS Card"""
-    #####################################################################
+    # Create Provider Cards
+    aws_card = create_provider_card("aws", aws_provider_logo, "Accounts", filtered_data)
+    azure_card = create_provider_card(
+        "azure", azure_provider_logo, "Subscriptions", filtered_data
+    )
+    gcp_card = create_provider_card("gcp", gcp_provider_logo, "Projects", filtered_data)
+    k8s_card = create_provider_card(
+        "kubernetes", ks8_provider_logo, "Clusters", filtered_data
+    )
 
-    # Card de aws en la que se muestra AWS y la parte de abajo el numero de fails y pass en total
-    aws_card = [
-        html.Div(
-            [
-                html.Div(
-                    [
-                        html.Div(
-                            [
-                                html.Div(
-                                    [
-                                        html.Div([aws_provider_logo], className="w-8"),
-                                    ],
-                                    className="p-2 shadow-box-up rounded-full",
-                                ),
-                                html.H5(
-                                    "AWS accounts",
-                                    className="text-base font-semibold leading-snug tracking-normal text-gray-900",
-                                ),
-                            ],
-                            className="flex justify-between items-center mb-3",
-                        ),
-                        html.Div(
-                            [
-                                html.Div(
-                                    [
-                                        html.Span(
-                                            "Accounts",
-                                            className="text-prowler-stone-900 inline-block text-3xs font-bold uppercase transition-all rounded-lg text-prowler-stone-900 shadow-box-up px-4 py-1 text-center col-span-6 flex justify-center items-center",
-                                        ),
-                                        html.Div(
-                                            accounts_aws,
-                                            className="inline-block text-xs  text-prowler-stone-900 font-bold shadow-box-down px-4 py-1 rounded-lg text-center col-span-5 col-end-13",
-                                        ),
-                                    ],
-                                    className="grid grid-cols-12",
-                                ),
-                                html.Div(
-                                    [
-                                        html.Span(
-                                            "Checks",
-                                            className="text-prowler-stone-900 inline-block text-3xs font-bold uppercase transition-all rounded-lg text-prowler-stone-900 shadow-box-up px-4 py-1 text-center col-span-6 flex justify-center items-center",
-                                        ),
-                                        html.Div(
-                                            checks_executed_aws,
-                                            className="inline-block text-xs  text-prowler-stone-900 font-bold shadow-box-down px-4 py-1 rounded-lg text-center col-span-5 col-end-13",
-                                        ),
-                                    ],
-                                    className="grid grid-cols-12",
-                                ),
-                                html.Div(
-                                    [
-                                        html.Span(
-                                            "FAILED",
-                                            className="text-prowler-stone-900 inline-block text-3xs font-bold uppercase transition-all rounded-lg text-prowler-stone-900 shadow-box-up px-4 py-1 text-center col-span-6 flex justify-center items-center",
-                                        ),
-                                        html.Div(
-                                            [
-                                                html.Div(
-                                                    failed_aws,
-                                                    className="m-[2px] px-4 py-1 rounded-lg bg-gradient-failed",
-                                                ),
-                                            ],
-                                            className="inline-block text-xs font-bold shadow-box-down  rounded-lg text-center col-span-5 col-end-13",
-                                        ),
-                                    ],
-                                    className="grid grid-cols-12",
-                                ),
-                                html.Div(
-                                    [
-                                        html.Span(
-                                            "PASSED",
-                                            className="text-prowler-stone-900 inline-block text-3xs font-bold uppercase transition-all rounded-lg text-prowler-stone-900 shadow-box-up px-4 py-1 text-center col-span-6 flex justify-center items-center",
-                                        ),
-                                        html.Div(
-                                            [
-                                                html.Div(
-                                                    passed_aws,
-                                                    className="m-[2px] px-4 py-1 rounded-lg bg-gradient-passed",
-                                                ),
-                                            ],
-                                            className="inline-block text-xs font-bold shadow-box-down rounded-lg text-center col-span-5 col-end-13",
-                                        ),
-                                    ],
-                                    className="grid grid-cols-12",
-                                ),
-                            ],
-                            className="grid gap-x-8 gap-y-4",
-                        ),
-                    ],
-                    className="px-4 py-3",
-                ),
-            ],
-            className="relative flex flex-col bg-white shadow-provider rounded-xl w-full transition ease-in-out delay-100 hover:-translate-y-1 hover:scale-110 hover:z-50 hover:cursor-pointer",
-        )
-    ]
-
-    #####################################################################
-    """Azure Card"""
-    #####################################################################
-    # Card de azure en la que se muestra Azure y la parte de abajo el numero de fails y pass en total
-    azure_card = [
-        html.Div(
-            [
-                html.Div(
-                    [
-                        html.Div(
-                            [
-                                html.Div(
-                                    [
-                                        html.Div(
-                                            [azure_provider_logo], className="w-8"
-                                        ),
-                                    ],
-                                    className="p-2 shadow-box-up rounded-full",
-                                ),
-                                html.H5(
-                                    "AZURE subscriptions",
-                                    className="text-base font-semibold leading-snug tracking-normal text-gray-900",
-                                ),
-                            ],
-                            className="flex justify-between items-center mb-3",
-                        ),
-                        html.Div(
-                            [
-                                html.Div(
-                                    [
-                                        html.Span(
-                                            "Subscriptions",
-                                            className="text-prowler-stone-900 inline-block text-3xs font-bold uppercase transition-all rounded-lg text-prowler-stone-900 shadow-box-up px-4 py-1 text-center col-span-6 flex justify-center items-center",
-                                        ),
-                                        html.Div(
-                                            accounts_azure,
-                                            className="inline-block text-xs  text-prowler-stone-900 font-bold shadow-box-down px-4 py-1 rounded-lg text-center col-span-5 col-end-13",
-                                        ),
-                                    ],
-                                    className="grid grid-cols-12",
-                                ),
-                                html.Div(
-                                    [
-                                        html.Span(
-                                            "Checks",
-                                            className="text-prowler-stone-900 inline-block text-3xs font-bold uppercase transition-all rounded-lg text-prowler-stone-900 shadow-box-up px-4 py-1 text-center col-span-6 flex justify-center items-center",
-                                        ),
-                                        html.Div(
-                                            checks_executed_azure,
-                                            className="inline-block text-xs  text-prowler-stone-900 font-bold shadow-box-down px-4 py-1 rounded-lg text-center col-span-5 col-end-13",
-                                        ),
-                                    ],
-                                    className="grid grid-cols-12",
-                                ),
-                                html.Div(
-                                    [
-                                        html.Span(
-                                            "FAILED",
-                                            className="text-prowler-stone-900 inline-block text-3xs font-bold uppercase transition-all rounded-lg text-prowler-stone-900 shadow-box-up px-4 py-1 text-center col-span-6 flex justify-center items-center",
-                                        ),
-                                        html.Div(
-                                            [
-                                                html.Div(
-                                                    failed_azure,
-                                                    className="m-[2px] px-4 py-1 rounded-lg bg-gradient-failed",
-                                                ),
-                                            ],
-                                            className="inline-block text-xs font-bold shadow-box-down rounded-lg text-center col-span-5 col-end-13",
-                                        ),
-                                    ],
-                                    className="grid grid-cols-12",
-                                ),
-                                html.Div(
-                                    [
-                                        html.Span(
-                                            "PASSED",
-                                            className="text-prowler-stone-900 inline-block text-3xs font-bold uppercase transition-all rounded-lg text-prowler-stone-900 shadow-box-up px-4 py-1 text-center col-span-6 flex justify-center items-center",
-                                        ),
-                                        html.Div(
-                                            [
-                                                html.Div(
-                                                    passed_azure,
-                                                    className="m-[2px] px-4 py-1 rounded-lg bg-gradient-passed",
-                                                ),
-                                            ],
-                                            className="inline-block text-xs font-bold shadow-box-down rounded-lg text-center col-span-5 col-end-13",
-                                        ),
-                                    ],
-                                    className="grid grid-cols-12",
-                                ),
-                            ],
-                            className="grid gap-x-8 gap-y-4",
-                        ),
-                    ],
-                    className="px-4 py-3",
-                ),
-            ],
-            className="relative flex flex-col bg-white shadow-provider rounded-xl w-full transition ease-in-out delay-100 hover:-translate-y-1 hover:scale-110 hover:z-50 hover:cursor-pointer",
-        )
-    ]
-
-    #####################################################################
-    """GCP Card"""
-    #####################################################################
-    # Card de gcp en la que se muestra GCP y la parte de abajo el numero de fails y pass en total
-    gcp_card = [
-        html.Div(
-            [
-                html.Div(
-                    [
-                        html.Div(
-                            [
-                                html.Div(
-                                    [
-                                        html.Div([gcp_provider_logo], className="w-8"),
-                                    ],
-                                    className="p-2 shadow-box-up rounded-full",
-                                ),
-                                html.H5(
-                                    "GCP projects",
-                                    className="text-base font-semibold leading-snug tracking-normal text-gray-900",
-                                ),
-                            ],
-                            className="flex justify-between items-center mb-3",
-                        ),
-                        html.Div(
-                            [
-                                html.Div(
-                                    [
-                                        html.Span(
-                                            "Projects",
-                                            className="text-prowler-stone-900 inline-block text-3xs font-bold uppercase transition-all rounded-lg text-prowler-stone-900 shadow-box-up px-4 py-1 text-center col-span-6 flex justify-center items-center",
-                                        ),
-                                        html.Div(
-                                            accounts_gcp,
-                                            className="inline-block text-xs  text-prowler-stone-900 font-bold shadow-box-down px-4 py-1 rounded-lg text-center col-span-5 col-end-13",
-                                        ),
-                                    ],
-                                    className="grid grid-cols-12",
-                                ),
-                                html.Div(
-                                    [
-                                        html.Span(
-                                            "Checks",
-                                            className="text-prowler-stone-900 inline-block text-3xs font-bold uppercase transition-all rounded-lg text-prowler-stone-900 shadow-box-up px-4 py-1 text-center col-span-6 flex justify-center items-center",
-                                        ),
-                                        html.Div(
-                                            checks_executed_gcp,
-                                            className="inline-block text-xs  text-prowler-stone-900 font-bold shadow-box-down px-4 py-1 rounded-lg text-center col-span-5 col-end-13",
-                                        ),
-                                    ],
-                                    className="grid grid-cols-12",
-                                ),
-                                html.Div(
-                                    [
-                                        html.Span(
-                                            "FAILED",
-                                            className="text-prowler-stone-900 inline-block text-3xs font-bold uppercase transition-all rounded-lg text-prowler-stone-900 shadow-box-up px-4 py-1 text-center col-span-6 flex justify-center items-center",
-                                        ),
-                                        html.Div(
-                                            [
-                                                html.Div(
-                                                    failed_gcp,
-                                                    className="m-[2px] px-4 py-1 rounded-lg bg-gradient-failed",
-                                                ),
-                                            ],
-                                            className="inline-block text-xs font-bold shadow-box-down rounded-lg text-center col-span-5 col-end-13",
-                                        ),
-                                    ],
-                                    className="grid grid-cols-12",
-                                ),
-                                html.Div(
-                                    [
-                                        html.Span(
-                                            "PASSED",
-                                            className="text-prowler-stone-900 inline-block text-3xs font-bold uppercase transition-all rounded-lg text-prowler-stone-900 shadow-box-up px-4 py-1 text-center col-span-6 flex justify-center items-center",
-                                        ),
-                                        html.Div(
-                                            [
-                                                html.Div(
-                                                    passed_gcp,
-                                                    className="m-[2px] px-4 py-1 rounded-lg bg-gradient-passed",
-                                                ),
-                                            ],
-                                            className="inline-block text-xs font-bold shadow-box-down rounded-lg text-center col-span-5 col-end-13",
-                                        ),
-                                    ],
-                                    className="grid grid-cols-12",
-                                ),
-                            ],
-                            className="grid gap-x-8 gap-y-4",
-                        ),
-                    ],
-                    className="px-4 py-3",
-                ),
-            ],
-            className="relative flex flex-col bg-white shadow-provider rounded-xl w-full transition ease-in-out delay-100 hover:-translate-y-1 hover:scale-110 hover:z-50 hover:cursor-pointer",
-        )
-    ]
-
-    #####################################################################
-    """K8S Card"""
-    #####################################################################
-    # Card de k8s en la que se muestra K8S y la parte de abajo el numero de fails y pass en total
-    k8s_card = [
-        html.Div(
-            [
-                html.Div(
-                    [
-                        html.Div(
-                            [
-                                html.Div(
-                                    [
-                                        html.Div([ks8_provider_logo], className="w-8"),
-                                    ],
-                                    className="p-2 shadow-box-up rounded-full",
-                                ),
-                                html.H5(
-                                    "K8s clusters",
-                                    className="text-base font-semibold leading-snug tracking-normal text-gray-900",
-                                ),
-                            ],
-                            className="flex justify-between items-center mb-3",
-                        ),
-                        html.Div(
-                            [
-                                html.Div(
-                                    [
-                                        html.Span(
-                                            "Clusters",
-                                            className="text-prowler-stone-900 inline-block text-3xs font-bold uppercase transition-all rounded-lg text-prowler-stone-900 shadow-box-up px-4 py-1 text-center col-span-6 flex justify-center items-center",
-                                        ),
-                                        html.Div(
-                                            accounts_k8s,
-                                            className="inline-block text-xs  text-prowler-stone-900 font-bold shadow-box-down px-4 py-1 rounded-lg text-center col-span-5 col-end-13",
-                                        ),
-                                    ],
-                                    className="grid grid-cols-12",
-                                ),
-                                html.Div(
-                                    [
-                                        html.Span(
-                                            "Checks",
-                                            className="text-prowler-stone-900 inline-block text-3xs font-bold uppercase transition-all rounded-lg text-prowler-stone-900 shadow-box-up px-4 py-1 text-center col-span-6 flex justify-center items-center",
-                                        ),
-                                        html.Div(
-                                            checks_executed_k8s,
-                                            className="inline-block text-xs  text-prowler-stone-900 font-bold shadow-box-down px-4 py-1 rounded-lg text-center col-span-5 col-end-13",
-                                        ),
-                                    ],
-                                    className="grid grid-cols-12",
-                                ),
-                                html.Div(
-                                    [
-                                        html.Span(
-                                            "FAILED",
-                                            className="text-prowler-stone-900 inline-block text-3xs font-bold uppercase transition-all rounded-lg text-prowler-stone-900 shadow-box-up px-4 py-1 text-center col-span-6 flex justify-center items-center",
-                                        ),
-                                        html.Div(
-                                            [
-                                                html.Div(
-                                                    failed_k8s,
-                                                    className="m-[2px] px-4 py-1 rounded-lg bg-gradient-failed",
-                                                ),
-                                            ],
-                                            className="inline-block text-xs font-bold shadow-box-down  rounded-lg text-center col-span-5 col-end-13",
-                                        ),
-                                    ],
-                                    className="grid grid-cols-12",
-                                ),
-                                html.Div(
-                                    [
-                                        html.Span(
-                                            "PASSED",
-                                            className="text-prowler-stone-900 inline-block text-3xs font-bold uppercase transition-all rounded-lg text-prowler-stone-900 shadow-box-up px-4 py-1 text-center col-span-6 flex justify-center items-center",
-                                        ),
-                                        html.Div(
-                                            [
-                                                html.Div(
-                                                    passed_k8s,
-                                                    className="m-[2px] px-4 py-1 rounded-lg bg-gradient-passed",
-                                                ),
-                                            ],
-                                            className="inline-block text-xs font-bold shadow-box-down rounded-lg text-center col-span-5 col-end-13",
-                                        ),
-                                    ],
-                                    className="grid grid-cols-12",
-                                ),
-                            ],
-                            className="grid gap-x-8 gap-y-4",
-                        ),
-                    ],
-                    className="px-4 py-3",
-                ),
-            ],
-            className="relative flex flex-col bg-white shadow-provider rounded-xl w-full transition ease-in-out delay-100 hover:-translate-y-1 hover:scale-110 hover:z-50 hover:cursor-pointer",
-        )
-    ]
-
-    #####################################################################
-    """Subscribe Card"""
-    #####################################################################
-    # Card de subscribe en la que se muestra el boton de subscribe
+    # Subscribe to prowler SaaS card
     subscribe_card = [
         html.Div(
             html.A(
@@ -1286,7 +760,7 @@ def filter_data(cloud_account_values, region_account_values, assessent_value):
             cloud_accounts_options,
             region_account_values,
             region_filter_options,
-            assessent_value,
+            assessment_value,
             aws_card,
             azure_card,
             gcp_card,
@@ -1305,7 +779,7 @@ def filter_data(cloud_account_values, region_account_values, assessent_value):
             cloud_accounts_options,
             region_account_values,
             region_filter_options,
-            assessent_value,
+            assessment_value,
             aws_card,
             azure_card,
             gcp_card,
