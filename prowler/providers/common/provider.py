@@ -141,20 +141,22 @@ class Provider(ABC):
         """
         return set()
 
-    # @property
-    # @abstractmethod
-    # def mutelist(self):
-    #     """
-    #     mutelist method returns the provider's mutelist.
-    #     This method needs to be created in each provider.
-    #     """
-    #     raise NotImplementedError()
+    @property
+    @abstractmethod
+    def mutelist(self):
+        """
+        mutelist method returns the provider's mutelist.
 
-    # @mutelist.setter
-    # @abstractmethod
-    # def mutelist(self, path: str):
-    #     """
-    #     mutelist.setter sets the provider's mutelist.
-    #     This method needs to be created in each provider.
-    #     """
-    #     raise NotImplementedError()
+        This method needs to be created in each provider.
+        """
+        raise NotImplementedError()
+
+    @mutelist.setter
+    @abstractmethod
+    def mutelist(self, path: str):
+        """
+        mutelist.setter sets the provider's mutelist.
+
+        This method needs to be created in each provider.
+        """
+        raise NotImplementedError()

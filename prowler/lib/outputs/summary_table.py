@@ -7,6 +7,7 @@ from prowler.config.config import (
     csv_file_suffix,
     json_asff_file_suffix,
     json_ocsf_file_suffix,
+    orange_color,
 )
 from prowler.lib.logger import logger
 
@@ -48,6 +49,7 @@ def display_summary_table(
                 "High": 0,
                 "Medium": 0,
                 "Low": 0,
+                "Muted": 0,
             }
             findings_table = {
                 "Provider": [],
@@ -57,8 +59,9 @@ def display_summary_table(
                 "High": [],
                 "Medium": [],
                 "Low": [],
+                "Muted": [],
             }
-            pass_count = fail_count = 0
+            pass_count = fail_count = muted_count = 0
             for finding in findings:
                 # If new service and not first, add previous row
                 if (
@@ -67,14 +70,17 @@ def display_summary_table(
                 ):
                     add_service_to_table(findings_table, current)
 
-                    current["Total"] = current["Critical"] = current["High"] = current[
-                        "Medium"
-                    ] = current["Low"] = 0
+                    current["Total"] = current["Muted"] = current["Critical"] = current[
+                        "High"
+                    ] = current["Medium"] = current["Low"] = 0
 
                 current["Service"] = finding.check_metadata.ServiceName
                 current["Provider"] = finding.check_metadata.Provider
 
                 current["Total"] += 1
+                if finding.muted:
+                    muted_count += 1
+                    current["Muted"] += 1
                 if finding.status == "PASS":
                     pass_count += 1
                 elif finding.status == "FAIL":
@@ -97,6 +103,7 @@ def display_summary_table(
                 [
                     f"{Fore.RED}{round(fail_count / len(findings) * 100, 2)}% ({fail_count}) Failed{Style.RESET_ALL}",
                     f"{Fore.GREEN}{round(pass_count / len(findings) * 100, 2)}% ({pass_count}) Passed{Style.RESET_ALL}",
+                    f"{orange_color}{round(muted_count / len(findings) * 100, 2)}% ({muted_count}) Muted{Style.RESET_ALL}",
                 ]
             ]
             print(tabulate(overview_table, tablefmt="rounded_grid"))
@@ -149,6 +156,7 @@ def add_service_to_table(findings_table, current):
         current["Status"] = f"{Fore.RED}FAIL ({total_fails}){Style.RESET_ALL}"
     else:
         current["Status"] = f"{Fore.GREEN}PASS ({current['Total']}){Style.RESET_ALL}"
+
     findings_table["Provider"].append(current["Provider"])
     findings_table["Service"].append(current["Service"])
     findings_table["Status"].append(current["Status"])
@@ -160,3 +168,4 @@ def add_service_to_table(findings_table, current):
         f"{Fore.YELLOW}{current['Medium']}{Style.RESET_ALL}"
     )
     findings_table["Low"].append(f"{Fore.BLUE}{current['Low']}{Style.RESET_ALL}")
+    findings_table["Muted"].append(f"{orange_color}{current['Muted']}{Style.RESET_ALL}")

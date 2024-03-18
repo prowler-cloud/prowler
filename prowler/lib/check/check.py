@@ -19,9 +19,9 @@ from prowler.lib.check.compliance_models import load_compliance_framework
 from prowler.lib.check.custom_checks_metadata import update_check_metadata
 from prowler.lib.check.models import Check, load_check_metadata
 from prowler.lib.logger import logger
+from prowler.lib.mutelist.mutelist import mutelist_findings
 from prowler.lib.outputs.outputs import report
 from prowler.lib.utils.utils import open_file, parse_json_file
-from prowler.providers.aws.lib.mutelist.mutelist import mutelist_findings
 from prowler.providers.common.common import get_global_provider
 from prowler.providers.common.models import Audit_Metadata
 
@@ -422,6 +422,7 @@ def execute_checks(
     checks_to_execute: list,
     global_provider: Any,
     custom_checks_metadata: Any,
+    mutelist_file: str,
 ) -> list:
     # List to store all the check's findings
     all_findings = []
@@ -484,6 +485,11 @@ def execute_checks(
                     f"{check_name} - {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
     else:
+        # Print the mutelist (if any) that is being used
+        if mutelist_file:
+            print(
+                f"{Style.BRIGHT}Using the following Mute List: {Style.RESET_ALL}{Fore.YELLOW}{mutelist_file}{Style.RESET_ALL}\n"
+            )
         # Default execution
         checks_num = len(checks_to_execute)
         plural_string = "checks"
@@ -542,52 +548,55 @@ def execute(
     checks_executed: set,
     custom_checks_metadata: Any,
 ):
-    # Import check module
-    check_module_path = f"prowler.providers.{global_provider.type}.services.{service}.{check_name}.{check_name}"
-    lib = import_check(check_module_path)
-    # Recover functions from check
-    check_to_execute = getattr(lib, check_name)
-    c = check_to_execute()
+    try:
+        # Import check module
+        check_module_path = f"prowler.providers.{global_provider.type}.services.{service}.{check_name}.{check_name}"
+        lib = import_check(check_module_path)
+        # Recover functions from check
+        check_to_execute = getattr(lib, check_name)
+        c = check_to_execute()
 
-    # Update check metadata to reflect that in the outputs
-    if custom_checks_metadata and custom_checks_metadata["Checks"].get(c.CheckID):
-        c = update_check_metadata(c, custom_checks_metadata["Checks"][c.CheckID])
+        # Update check metadata to reflect that in the outputs
+        if custom_checks_metadata and custom_checks_metadata["Checks"].get(c.CheckID):
+            c = update_check_metadata(c, custom_checks_metadata["Checks"][c.CheckID])
 
-    # Run check
-    check_findings = run_check(c, global_provider.output_options)
+        # Run check
+        check_findings = run_check(c, global_provider.output_options)
 
-    # Update Audit Status
-    services_executed.add(service)
-    checks_executed.add(check_name)
-    global_provider.audit_metadata = update_audit_metadata(
-        global_provider.audit_metadata, services_executed, checks_executed
-    )
-
-    # Mute List findings
-    if hasattr(global_provider, "mutelist") and global_provider.mutelist:
-        check_findings = mutelist_findings(
-            global_provider.mutelist,
-            global_provider.identity.account,
-            check_findings,
+        # Update Audit Status
+        services_executed.add(service)
+        checks_executed.add(check_name)
+        global_provider.audit_metadata = update_audit_metadata(
+            global_provider.audit_metadata, services_executed, checks_executed
         )
 
-    # Report the check's findings
-    report(check_findings, global_provider)
-
-    if os.environ.get("PROWLER_REPORT_LIB_PATH"):
-        try:
-            logger.info("Using custom report interface ...")
-            lib = os.environ["PROWLER_REPORT_LIB_PATH"]
-            outputs_module = importlib.import_module(lib)
-            custom_report_interface = getattr(outputs_module, "report")
-
-            # TODO: review this call and see if we can remove the global_provider.output_options since it is contained in the global_provider
-            custom_report_interface(
-                check_findings, global_provider.output_options, global_provider
+        # Mute List findings
+        if hasattr(global_provider, "mutelist") and global_provider.mutelist:
+            check_findings = mutelist_findings(
+                global_provider,
+                check_findings,
             )
-        except Exception:
-            sys.exit(1)
 
+        # Report the check's findings
+        report(check_findings, global_provider)
+
+        if os.environ.get("PROWLER_REPORT_LIB_PATH"):
+            try:
+                logger.info("Using custom report interface ...")
+                lib = os.environ["PROWLER_REPORT_LIB_PATH"]
+                outputs_module = importlib.import_module(lib)
+                custom_report_interface = getattr(outputs_module, "report")
+
+                # TODO: review this call and see if we can remove the global_provider.output_options since it is contained in the global_provider
+                custom_report_interface(
+                    check_findings, global_provider.output_options, global_provider
+                )
+            except Exception:
+                sys.exit(1)
+    except Exception as error:
+        logger.error(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+        )
     return check_findings
 
 

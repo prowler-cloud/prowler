@@ -120,16 +120,6 @@ def init_parser(self):
         help="Same as -B but do not use the assumed role credentials to put objects to the bucket, instead uses the initial credentials.",
     )
 
-    # Mute List
-    mutelist_subparser = aws_parser.add_argument_group("Mute List")
-    mutelist_subparser.add_argument(
-        "-w",
-        "--mutelist-file",
-        nargs="?",
-        default=None,
-        help="Path for mutelist yaml file. See example prowler/config/aws_mutelist.yaml for reference and format. It also accepts AWS DynamoDB Table or Lambda ARNs or S3 URIs, see more in https://docs.prowler.cloud/en/latest/tutorials/mutelist/",
-    )
-
     # Based Scans
     aws_based_scans_subparser = aws_parser.add_argument_group("AWS Based Scans")
     aws_based_scans_parser = aws_based_scans_subparser.add_mutually_exclusive_group()

@@ -33,20 +33,22 @@ mutelist_schema = Schema(
 )
 
 
-def parse_mutelist_file(session: Session, aws_account: str, mutelist_path: str):
+def parse_mutelist_file(
+    mutelist_path: str, aws_session: Session = None, aws_account: str = None
+):
     try:
         # Check if file is a S3 URI
         if re.search("^s3://([^/]+)/(.*?([^/]+))$", mutelist_path):
             bucket = mutelist_path.split("/")[2]
             key = ("/").join(mutelist_path.split("/")[3:])
-            s3_client = session.client("s3")
+            s3_client = aws_session.client("s3")
             mutelist = yaml.safe_load(
                 s3_client.get_object(Bucket=bucket, Key=key)["Body"]
             )["Mute List"]
         # Check if file is a Lambda Function ARN
         elif re.search(r"^arn:(\w+):lambda:", mutelist_path):
             lambda_region = mutelist_path.split(":")[3]
-            lambda_client = session.client("lambda", region_name=lambda_region)
+            lambda_client = aws_session.client("lambda", region_name=lambda_region)
             lambda_response = lambda_client.invoke(
                 FunctionName=mutelist_path, InvocationType="RequestResponse"
             )
@@ -59,7 +61,9 @@ def parse_mutelist_file(session: Session, aws_account: str, mutelist_path: str):
         ):
             mutelist = {"Accounts": {}}
             table_region = mutelist_path.split(":")[3]
-            dynamodb_resource = session.resource("dynamodb", region_name=table_region)
+            dynamodb_resource = aws_session.resource(
+                "dynamodb", region_name=table_region
+            )
             dynamo_table = dynamodb_resource.Table(mutelist_path.split("/")[1])
             response = dynamo_table.scan(
                 FilterExpression=Attr("Accounts").is_in([aws_account, "*"])
@@ -109,21 +113,50 @@ def parse_mutelist_file(session: Session, aws_account: str, mutelist_path: str):
 
 
 def mutelist_findings(
-    mutelist: dict,
-    audited_account: str,
+    global_provider: Any,
     check_findings: list[Any],
 ):
     # Check if finding is muted
     for finding in check_findings:
-        if is_muted(
-            mutelist,
-            audited_account,
-            finding.check_metadata.CheckID,
-            finding.region,
-            finding.resource_id,
-            unroll_tags(finding.resource_tags),
-        ):
-            finding.status = "MUTED"
+        # TODO: Move this mapping to the execute_check function and pass that output to the mutelist and the report
+        if global_provider.type == "aws":
+            finding.muted = is_muted(
+                global_provider.mutelist,
+                global_provider.identity.account,
+                finding.check_metadata.CheckID,
+                finding.region,
+                finding.resource_id,
+                unroll_tags(finding.resource_tags),
+            )
+        elif global_provider.type == "azure":
+            finding.muted = is_muted(
+                global_provider.mutelist,
+                finding.subscription,
+                finding.check_metadata.CheckID,
+                # TODO: add region to the findings when we add Azure Locations
+                # finding.region,
+                "",
+                finding.resource_name,
+                unroll_tags(finding.resource_tags),
+            )
+        elif global_provider.type == "gcp":
+            finding.muted = is_muted(
+                global_provider.mutelist,
+                finding.project_id,
+                finding.check_metadata.CheckID,
+                finding.location,
+                finding.resource_name,
+                unroll_tags(finding.resource_tags),
+            )
+        elif global_provider.type == "kubernetes":
+            finding.muted = is_muted(
+                global_provider.mutelist,
+                global_provider.identity.cluster,
+                finding.check_metadata.CheckID,
+                finding.namespace,
+                finding.resource_name,
+                unroll_tags(finding.resource_tags),
+            )
     return check_findings
 
 
