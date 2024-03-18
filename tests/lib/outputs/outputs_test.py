@@ -9,7 +9,6 @@ from prowler.config.config import (
     csv_file_suffix,
     json_asff_file_suffix,
     json_ocsf_file_suffix,
-    orange_color,
     output_file_timestamp,
 )
 from prowler.lib.check.compliance_models import (
@@ -96,8 +95,8 @@ class TestOutputs:
                 remove(expected[index][output_mode].name)
 
     def test_set_report_color(self):
-        test_status = ["PASS", "FAIL", "ERROR", "MUTED"]
-        test_colors = [Fore.GREEN, Fore.RED, Fore.BLACK, orange_color]
+        test_status = ["PASS", "FAIL", "ERROR", "MANUAL"]
+        test_colors = [Fore.GREEN, Fore.RED, Fore.BLACK, Fore.YELLOW]
 
         for status in test_status:
             assert set_report_color(status) in test_colors
