@@ -81,7 +81,7 @@ class Test_Parser:
         assert not parsed.shodan
         assert not parsed.mutelist_file
         assert not parsed.resource_tags
-        assert not parsed.ignore_unused_services
+        assert not parsed.scan_unused_services
 
     def test_default_parser_no_arguments_azure(self):
         provider = "azure"
@@ -1041,11 +1041,11 @@ class Test_Parser:
         parsed = self.parser.parse(command)
         assert parsed.aws_retries_max_attempts == int(max_retries)
 
-    def test_aws_parser_ignore_unused_services(self):
-        argument = "--ignore-unused-services"
+    def test_aws_parser_scan_unused_services(self):
+        argument = "--scan-unused-services"
         command = [prowler_command, argument]
         parsed = self.parser.parse(command)
-        assert parsed.ignore_unused_services
+        assert parsed.scan_unused_services
 
     def test_aws_parser_config_file(self):
         argument = "--config-file"

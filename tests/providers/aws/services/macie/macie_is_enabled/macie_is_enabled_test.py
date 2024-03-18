@@ -141,7 +141,7 @@ class Test_macie_is_enabled:
         ]
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
-        macie_client.provider._ignore_unused_services = True
+        macie_client.provider._scan_unused_services = True
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
@@ -192,7 +192,7 @@ class Test_macie_is_enabled:
         macie_client.__get_session_arn_template__ = mock.MagicMock(
             return_value=macie_client.session_arn_template
         )
-        macie_client.provider._ignore_unused_services = True
+        macie_client.provider._scan_unused_services = True
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
         with mock.patch(

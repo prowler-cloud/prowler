@@ -88,7 +88,7 @@ def set_mocked_aws_provider(
     expected_checks: list[str] = [],
     profile_region: str = None,
     audit_config: dict = {},
-    ignore_unused_services: bool = False,
+    scan_unused_services: bool = False,
     # assumed_role_info: AWSAssumeRole = None,
     audit_session: session.Session = session.Session(
         profile_name=None,
@@ -114,7 +114,7 @@ def set_mocked_aws_provider(
     provider._identity.profile_region = profile_region
     provider._identity.audited_regions = audited_regions
     # Mock Configiration
-    provider._ignore_unused_services = ignore_unused_services
+    provider._scan_unused_services = scan_unused_services
     provider._enabled_regions = (
         enabled_regions if enabled_regions else set(audited_regions)
     )

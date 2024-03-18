@@ -18,7 +18,7 @@ class s3_account_level_public_access_blocks(Check):
             report.resource_id = s3control_client.audited_account
             report.resource_arn = s3_client.account_arn_template
             findings.append(report)
-        elif s3_client.buckets or not s3_client.provider.ignore_unused_services:
+        elif s3_client.buckets or not s3_client.provider.scan_unused_services:
             report.status = "FAIL"
             report.status_extended = f"Block Public Access is not configured for the account {s3control_client.audited_account}."
             report.region = s3control_client.region

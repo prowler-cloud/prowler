@@ -437,7 +437,7 @@ class Test_networkfirewall_in_all_vpc:
         }
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
-        vpc_client.provider._ignore_unused_services = True
+        vpc_client.provider._scan_unused_services = True
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
@@ -502,7 +502,7 @@ class Test_networkfirewall_in_all_vpc:
         }
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
-        vpc_client.provider._ignore_unused_services = True
+        vpc_client.provider._scan_unused_services = True
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",

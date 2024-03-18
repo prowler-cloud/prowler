@@ -147,14 +147,14 @@ def init_parser(self):
         help="Set the maximum attemps for the Boto3 standard retrier config (Default: 3)",
     )
 
-    # Ignore Unused Services
-    ignore_unused_services_subparser = aws_parser.add_argument_group(
-        "Ignore Unused Services"
+    # Scan Unused Services
+    scan_unused_services_subparser = aws_parser.add_argument_group(
+        "Scan Unused Services"
     )
-    ignore_unused_services_subparser.add_argument(
-        "--ignore-unused-services",
+    scan_unused_services_subparser.add_argument(
+        "--scan-unused-services",
         action="store_true",
-        help="Ignore findings in unused services",
+        help="Scan unused services",
     )
 
 

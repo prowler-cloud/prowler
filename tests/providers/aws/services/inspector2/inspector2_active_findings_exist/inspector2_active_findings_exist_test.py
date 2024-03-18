@@ -266,7 +266,7 @@ class Test_inspector2_active_findings_exist:
         ecr_client.provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         awslambda_client.aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         inspector2_client.aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
-        inspector2_client.provider._ignore_unused_services = True
+        inspector2_client.provider._scan_unused_services = True
         inspector2_client.audited_account = AWS_ACCOUNT_NUMBER
         inspector2_client.audited_account_arn = (
             f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"

@@ -127,7 +127,7 @@ class Test_s3_account_level_public_access_blocks:
         from prowler.providers.aws.services.s3.s3_service import S3, S3Control
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
-        aws_provider._ignore_unused_services = True
+        aws_provider._scan_unused_services = True
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",

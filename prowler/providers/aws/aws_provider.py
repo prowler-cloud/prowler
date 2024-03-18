@@ -47,7 +47,7 @@ class AwsProvider(Provider):
     _organizations_metadata: AWSOrganizationsInfo
     _audit_resources: list = []
     _audit_config: dict
-    _ignore_unused_services: bool = False
+    _scan_unused_services: bool = False
     _enabled_regions: set = set()
     _mutelist: dict
     _output_options: AWSOutputOptions
@@ -73,7 +73,7 @@ class AwsProvider(Provider):
         organizations_role_arn = getattr(arguments, "organizations_role", None)
 
         # Set if unused services must be ignored
-        ignore_unused_services = getattr(arguments, "ignore_unused_services", None)
+        scan_unused_services = getattr(arguments, "scan_unused_services", None)
         ########
 
         ######## AWS Session
@@ -221,7 +221,7 @@ class AwsProvider(Provider):
         )
 
         # Set ignore unused services
-        self._ignore_unused_services = ignore_unused_services
+        self._scan_unused_services = scan_unused_services
 
         # Audit Config
         self._audit_config = {}
@@ -251,8 +251,8 @@ class AwsProvider(Provider):
         return self._audit_resources
 
     @property
-    def ignore_unused_services(self):
-        return self._ignore_unused_services
+    def scan_unused_services(self):
+        return self._scan_unused_services
 
     @property
     def audit_config(self):
