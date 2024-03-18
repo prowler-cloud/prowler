@@ -148,12 +148,14 @@ class Check_Report_Azure(Check_Report):
     resource_name: str
     resource_id: str
     subscription: str
+    location: str
 
     def __init__(self, metadata):
         super().__init__(metadata)
         self.resource_name = ""
         self.resource_id = ""
         self.subscription = ""
+        self.location = ""
 
 
 @dataclass
