@@ -2,6 +2,7 @@ from argparse import Namespace
 
 from boto3 import session
 from botocore.config import Config
+from mock import MagicMock
 from moto import mock_aws
 
 from prowler.providers.aws.aws_provider import AwsProvider
@@ -69,6 +70,9 @@ def set_mocked_aws_provider(
 ) -> AwsProvider:
 
     provider = AwsProvider(arguments)
+
+    # Output options
+    provider.output_options = MagicMock(), {}
 
     # Mock Session
     provider._session.session_config = None
