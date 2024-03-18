@@ -16,7 +16,8 @@ from dash import callback, ctx, dcc, html
 from dash.dependencies import Input, Output
 
 from dashboard.lib.cards import create_provider_card
-from dashboard.lib.dropdowns import create_date_dropdown
+from dashboard.lib.dropdowns import create_date_dropdown, create_region_dropdown
+from dashboard.lib.layouts import create_layout
 
 # Suppress warnings
 warnings.filterwarnings("ignore")
@@ -108,7 +109,7 @@ for i in range(len(accounts)):
     elif accounts[i] in list(data["ACCOUNT_UID"].unique()):
         accounts[i] = accounts[i] + " - K8S"
 
-dropdown1 = html.Div(
+account_dropdown = html.Div(
     [
         html.Label(
             "Account:",
@@ -125,124 +126,15 @@ dropdown1 = html.Div(
     ],
 )
 
-#############################################################################
-"""
-                Select Region - Dropdown
-"""
-#############################################################################
-
-# Dropdown all options
-select_account_dropdown_list = ["All"]
-select_account_dropdown_list = select_account_dropdown_list + list(
-    data["REGION"].unique()
-)
-
-list_items = []
-# delete nan values
-for item in select_account_dropdown_list:
-    if item.__class__.__name__ == "str":
-        list_items.append(item)
-
-select_account_dropdown_list = list_items
-
-dropdown2 = html.Div(
-    [
-        html.Label(
-            "Region:",
-            className="text-prowler-stone-900 font-bold text-sm",
-        ),
-        dcc.Dropdown(
-            id="region-filter",
-            options=[
-                {"label": account, "value": account}
-                for account in select_account_dropdown_list
-            ],
-            value=["All"],  # Initial selection is ALL
-            clearable=False,
-            multi=True,
-            style={"color": "#000000", "width": "100%"},
-        ),
-    ],
-)
+# Region Dropdown
+regions = ["All"] + list(data["REGION"].unique())
+region_dropdown = create_region_dropdown(regions)
 
 # Initializing the Dash App
 dash.register_page(__name__, path="/")
 
-#####################################################################
-"""LAYOUT"""
-#####################################################################
-
-layout = html.Div(
-    [
-        dcc.Location(id="url", refresh=False),
-        html.Div(
-            [
-                html.H1(
-                    "Scan Overview",
-                    className="text-prowler-stone-900 text-2xxl font-bold",
-                ),
-                html.Div(className="d-flex flex-wrap", id="subscribe_card"),
-            ],
-            className="flex justify-between border-b border-prowler-500 pb-3",
-        ),
-        html.Div(
-            [
-                html.Div([date_dropdown], className=""),
-                html.Div([dropdown1], className=""),
-                html.Div([dropdown2], className=""),
-            ],
-            className="grid gap-x-4 gap-y-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-y-0",
-        ),
-        html.Div(
-            [
-                html.Div(className="flex", id="aws_card"),
-                html.Div(className="flex", id="azure_card"),
-                html.Div(className="flex", id="gcp_card"),
-                html.Div(className="flex", id="k8s_card"),
-            ],
-            className="grid gap-x-4 gap-y-4 sm:grid-cols-2 lg:grid-cols-4 lg:gap-y-0",
-        ),
-        html.H4(
-            "Count of Failed Findings by severity",
-            className="text-prowler-stone-900 text-lg font-bold",
-        ),
-        html.Div(
-            [
-                html.Div(
-                    className="flex flex-col col-span-12 sm:col-span-6 lg:col-span-3 gap-y-4",
-                    id="status_graph",
-                ),
-                html.Div(
-                    className="flex flex-col col-span-12 sm:col-span-6 lg:col-span-3 gap-y-4",
-                    id="two_pie_chart",
-                ),
-                html.Div(
-                    className="flex flex-col col-span-12 sm:col-span-6 lg:col-span-6 col-end-13 gap-y-4",
-                    id="line_plot",
-                ),
-            ],
-            className="grid gap-x-4 gap-y-4 grid-cols-12 lg:gap-y-0",
-        ),
-        html.Div(
-            [
-                html.H4(
-                    "Top 25 Failed Findings by Severity",
-                    className="text-prowler-stone-900 text-lg font-bold",
-                ),
-                html.Button(
-                    "Download this table as CSV",
-                    id="download_link",
-                    n_clicks=0,
-                    className="border-solid border-2 border-prowler-stone-900/10 hover:border-solid hover:border-2 hover:border-prowler-stone-900/10 text-prowler-stone-900 inline-block px-4 py-2 text-xs font-bold uppercase transition-all rounded-lg text-gray-900 hover:bg-prowler-stone-900/10 flex justify-end w-fit",
-                ),
-                dcc.Download(id="download-data"),
-            ],
-            className="flex justify-between items-center",
-        ),
-        html.Div(id="table", className="grid"),
-    ],
-    className="grid gap-x-8 gap-y-8 2xl:container mx-auto",
-)
+# Create the layout
+layout = create_layout(account_dropdown, date_dropdown, region_dropdown)
 
 
 # Callback to display selected value

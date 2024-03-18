@@ -1,7 +1,7 @@
 from dash import dcc, html
 
 
-def create_date_dropdown(assesment_times: list) -> list:
+def create_date_dropdown(assesment_times: list) -> html.Div:
     """
     Dropdown to select the date of the last available scan for each account.
     Args:
@@ -34,6 +34,32 @@ def create_date_dropdown(assesment_times: list) -> list:
                 value=assesment_times[0],  # Initial selection is ALL
                 clearable=False,
                 multi=False,
+                style={"color": "#000000", "width": "100%"},
+            ),
+        ],
+    )
+
+
+def create_region_dropdown(regions: list) -> html.Div:
+    """
+    Dropdown to select the region of the account.
+    Args:
+        regions (list): List of regions of the account.
+    Returns:
+        html.Div: Dropdown to select the region of the account.
+    """
+    return html.Div(
+        [
+            html.Label(
+                "Region:",
+                className="text-prowler-stone-900 font-bold text-sm",
+            ),
+            dcc.Dropdown(
+                id="region-filter",
+                options=[{"label": region, "value": region} for region in regions],
+                value=["All"],  # Initial selection is ALL
+                clearable=False,
+                multi=True,
                 style={"color": "#000000", "width": "100%"},
             ),
         ],
