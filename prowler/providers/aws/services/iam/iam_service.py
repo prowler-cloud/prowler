@@ -796,9 +796,9 @@ class IAM(AWSService):
                         response = self.client.get_service_last_accessed_details(
                             JobId=details["JobId"]
                         )
-                    self.last_accessed_services[(user.name, user.arn)] = response[
-                        "ServicesLastAccessed"
-                    ]
+                    self.last_accessed_services[(user.name, user.arn)] = response.get(
+                        "ServicesLastAccessed", {}
+                    )
 
                 except ClientError as error:
                     if error.response["Error"]["Code"] == "NoSuchEntity":
