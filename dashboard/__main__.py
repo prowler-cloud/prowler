@@ -11,21 +11,21 @@ warnings.filterwarnings("ignore")
 
 #############################################################################
 """
-	DASH BOARD SETTINGS
+DASHBOARD SETTINGS
 """
 #############################################################################
 # Initialize the app - incorporate css
-app = dash.Dash(
+dashboard = dash.Dash(
     __name__,
     external_stylesheets=[dbc.themes.DARKLY],
     use_pages=True,
     suppress_callback_exceptions=True,
 )
-app.title = "Prowler Dashboard"
+dashboard.title = "Prowler Dashboard"
 
 #####################################################################
 """
-	LOGO
+LOGO
 """
 #####################################################################
 prowler_logo = html.Img(src="assets/logo.png", alt="Prowler Logo")
@@ -104,7 +104,7 @@ def generate_help_menu():
 
 
 # Layout
-app.layout = html.Div(
+dashboard.layout = html.Div(
     [
         dcc.Location(id="url", refresh=False),
         html.Link(rel="icon", href="assets/favicon.ico"),
@@ -128,7 +128,7 @@ app.layout = html.Div(
 
 
 # Callback to update navigation bar
-@app.callback(Output("navigation-bar", "children"), [Input("url", "pathname")])
+@dashboard.callback(Output("navigation-bar", "children"), [Input("url", "pathname")])
 def update_nav_bar(pathname):
     return html.Div(
         [
@@ -162,8 +162,3 @@ def update_nav_bar(pathname):
         ],
         className="flex flex-col bg-prowler-stone-900 py-7 h-full",
     )
-
-
-# Running App
-if __name__ == "__main__":
-    app.run_server(debug=True, port=11666)
