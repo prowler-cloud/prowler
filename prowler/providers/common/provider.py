@@ -140,3 +140,21 @@ class Provider(ABC):
         This is a fallback that returns None if the service has not implemented this function.
         """
         return set()
+
+    @property
+    @abstractmethod
+    def mutelist(self):
+        """
+        mutelist method returns the provider's mutelist.
+        This method needs to be created in each provider.
+        """
+        raise NotImplementedError()
+
+    @mutelist.setter
+    @abstractmethod
+    def mutelist(self, path: str):
+        """
+        mutelist.setter sets the provider's mutelist.
+        This method needs to be created in each provider.
+        """
+        raise NotImplementedError()
