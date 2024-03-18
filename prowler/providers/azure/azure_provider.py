@@ -29,8 +29,7 @@ class AzureProvider(Provider):
     _region_config: AzureRegionConfig
     _locations: dict
     _output_options: AzureOutputOptions
-    # TODO: enforce the mutelist for the Provider class
-    # _mutelist: dict = {}
+    _mutelist: dict
     # TODO: this is not optional, enforce for all providers
     audit_metadata: Audit_Metadata
 

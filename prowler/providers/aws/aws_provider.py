@@ -49,8 +49,7 @@ class AwsProvider(Provider):
     _audit_config: dict
     _ignore_unused_services: bool = False
     _enabled_regions: set = set()
-    # TODO: enforce the mutelist for the Provider class
-    _mutelist: dict = {}
+    _mutelist: dict
     _output_options: AWSOutputOptions
     # TODO: this is not optional, enforce for all providers
     audit_metadata: Audit_Metadata
