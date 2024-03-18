@@ -11,7 +11,6 @@ class Test_network_public_ip_shodan:
     def test_no_public_ip_addresses(self):
         network_client = mock.MagicMock
         network_client.public_ip_addresses = {}
-        network_client.audit_info = mock.MagicMock
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
@@ -43,7 +42,6 @@ class Test_network_public_ip_shodan:
             "isp": "Microsoft Corporation",
             "country_name": "country_name",
         }
-        network_client.audit_info = mock.MagicMock
 
         network_client.public_ip_addresses = {
             AZURE_SUBSCRIPTION: [

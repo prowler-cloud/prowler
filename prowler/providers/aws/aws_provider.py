@@ -553,7 +553,6 @@ Caller Identity ARN: {Fore.YELLOW}[{self._identity.identity_arn}]{Style.RESET_AL
         json_regions = set(
             data["services"][service]["regions"][self._identity.partition]
         )
-        # Check for input aws audit_info.audited_regions
         if self._identity.audited_regions:
             # Get common regions between input and json
             regions = json_regions.intersection(self._identity.audited_regions)
@@ -813,7 +812,7 @@ Caller Identity ARN: {Fore.YELLOW}[{self._identity.identity_arn}]{Style.RESET_AL
     # TODO: review this function
     # Maybe this should be done within the AwsProvider and not in __main__.py
     def get_checks_to_execute_by_audit_resources(self) -> set[str]:
-        # Once the audit_info is set and we have the eventual checks from arn, it is time to exclude the others
+        # Once the provider is set and we have the eventual checks from arn, it is time to exclude the others
         try:
             checks = set()
             # TODO: self._audit_resources should be a list[ARN] instead of list[str]
