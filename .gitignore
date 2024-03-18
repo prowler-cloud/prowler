@@ -11,6 +11,7 @@ venv/
 build/
 dist/
 *.egg-info/
+*/__pycache__/*.pyc
 
 # Session
 Session.vim
@@ -51,3 +52,6 @@ junit-reports/
 .coverage*
 .coverage
 coverage*
+
+# Node
+node_modules
