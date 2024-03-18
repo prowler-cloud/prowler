@@ -25,9 +25,10 @@ from prowler.lib.check.check import (
 )
 from prowler.lib.check.models import load_check_metadata
 from prowler.providers.aws.aws_provider import AwsProvider
+from tests.providers.aws.utils import AWS_REGION_EU_WEST_1
 
-AWS_ACCOUNT_NUMBER = "123456789012"
-AWS_REGION = "us-east-1"
+# AWS_ACCOUNT_NUMBER = "123456789012"
+# AWS_REGION = "us-east-1"
 
 expected_packages = [
     ModuleInfo(
@@ -431,7 +432,7 @@ class TestCheck:
             f"{pathlib.Path().absolute()}/tests/lib/check/fixtures/checks_folder"
         )
         # Create bucket and upload checks folder
-        s3_client = client("s3", region_name=AWS_REGION)
+        s3_client = client("s3", region_name=AWS_REGION_EU_WEST_1)
         s3_client.create_bucket(Bucket="test")
         # Iterate through the files in the folder and upload each one
         for subdir, _, files in os.walk(test_checks_folder):

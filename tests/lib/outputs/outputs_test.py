@@ -8,7 +8,7 @@ from colorama import Fore
 from prowler.config.config import (
     csv_file_suffix,
     json_asff_file_suffix,
-    json_file_suffix,
+    json_ocsf_file_suffix,
     orange_color,
     output_file_timestamp,
 )
@@ -61,7 +61,7 @@ class TestOutputs:
             },
             {
                 "json-ocsf": open_file(
-                    f"{output_directory}/{output_filename}{json_asff_file_suffix}",
+                    f"{output_directory}/{output_filename}{json_ocsf_file_suffix}",
                     "a",
                 )
             },
@@ -70,12 +70,12 @@ class TestOutputs:
                     f"{output_directory}/{output_filename}{csv_file_suffix}",
                     "a",
                 ),
-                "json-ocsf": open_file(
-                    f"{output_directory}/{output_filename}{json_file_suffix}",
-                    "a",
-                ),
                 "json-asff": open_file(
                     f"{output_directory}/{output_filename}{json_asff_file_suffix}",
+                    "a",
+                ),
+                "json-ocsf": open_file(
+                    f"{output_directory}/{output_filename}{json_ocsf_file_suffix}",
                     "a",
                 ),
             },
@@ -115,34 +115,47 @@ class TestOutputs:
 
     def test_generate_common_csv_fields(self):
         expected = [
-            "assessment_start_time",
-            "finding_unique_id",
+            "auth_method",
+            "timestamp",
+            "account_uid",
+            "account_name",
+            "account_email",
+            "account_organization_uid",
+            "account_organization_name",
+            "account_tags",
+            "finding_uid",
             "provider",
             "check_id",
             "check_title",
             "check_type",
             "status",
             "status_extended",
+            "muted",
             "service_name",
             "subservice_name",
             "severity",
             "resource_type",
+            "resource_uid",
+            "resource_name",
             "resource_details",
             "resource_tags",
+            "partition",
+            "region",
             "description",
             "risk",
             "related_url",
             "remediation_recommendation_text",
             "remediation_recommendation_url",
-            "remediation_recommendation_code_nativeiac",
-            "remediation_recommendation_code_terraform",
-            "remediation_recommendation_code_cli",
-            "remediation_recommendation_code_other",
+            "remediation_code_nativeiac",
+            "remediation_code_terraform",
+            "remediation_code_cli",
+            "remediation_code_other",
             "compliance",
             "categories",
             "depends_on",
             "related_to",
             "notes",
+            "prowler_version",
         ]
 
         assert generate_csv_fields(FindingOutput) == expected
@@ -250,241 +263,6 @@ class TestOutputs:
         assert parse_json_tags([None]) == {}
         assert parse_json_tags([{}]) == {}
         assert parse_json_tags(None) == {}
-
-
-class TestOutputJSONOCSF:
-    # def test_fill_json_ocsf_iso_format_timestamp(self):
-    #     aws_provider = set_mocked_aws_provider()
-    #     finding = Check_Report(
-    #         load_check_metadata(
-    #             f"{path.dirname(path.realpath(__file__))}/fixtures/metadata.json"
-    #         ).json()
-    #     )
-    #     finding.resource_details = "Test resource details"
-    #     finding.resource_id = "test-resource"
-    #     finding.resource_arn = "test-arn"
-    #     finding.region = "eu-west-1"
-    #     finding.status = "PASS"
-    #     finding.status_extended = "This is a test"
-    #     # TODO: fill_json_ocsf
-    #     expected = Check_Output_JSON_OCSF(
-    #         finding=Finding(
-    #             title="Ensure Access Keys unused are disabled",
-    #             desc="Ensure Access Keys unused are disabled",
-    #             supporting_data={
-    #                 "Risk": "Risk associated.",
-    #                 "Notes": "additional information",
-    #             },
-    #             remediation=Remediation_OCSF(
-    #                 kb_articles=[
-    #                     "code or URL to the code location.",
-    #                     "code or URL to the code location.",
-    #                     "cli command or URL to the cli command location.",
-    #                     "cli command or URL to the cli command location.",
-    #                     "https://myfp.com/recommendations/dangerous_things_and_how_to_fix_them.html",
-    #                 ],
-    #                 desc="Run sudo yum update and cross your fingers and toes.",
-    #             ),
-    #             types=["Software and Configuration Checks"],
-    #             src_url="https://serviceofficialsiteorpageforthissubject",
-    #             uid="prowler-aws-iam_user_accesskey_unused-123456789012-eu-west-1-test-resource",
-    #             related_events=[
-    #                 "othercheck1",
-    #                 "othercheck2",
-    #                 "othercheck3",
-    #                 "othercheck4",
-    #             ],
-    #         ),
-    #         resources=[
-    #             Resources(
-    #                 group=Group(name="iam"),
-    #                 region="eu-west-1",
-    #                 name="test-resource",
-    #                 uid="test-arn",
-    #                 labels=[],
-    #                 type="AwsIamAccessAnalyzer",
-    #                 details="Test resource details",
-    #             )
-    #         ],
-    #         status_detail="This is a test",
-    #         compliance=Compliance_OCSF(
-    #             status="Success", requirements=[], status_detail="This is a test"
-    #         ),
-    #         message="This is a test",
-    #         severity_id=2,
-    #         severity="Low",
-    #         cloud=Cloud(
-    #             account=Account(name="", uid="123456789012"),
-    #             region="eu-west-1",
-    #             org=Organization(uid="", name=""),
-    #             provider="aws",
-    #             project_uid="",
-    #         ),
-    #         time=timestamp.isoformat(),
-    #         metadata=Metadata(
-    #             original_time=timestamp.isoformat(),
-    #             profiles=["default"],
-    #             product=Product(
-    #                 language="en",
-    #                 name="Prowler",
-    #                 version=prowler_version,
-    #                 vendor_name="Prowler/ProwlerPro",
-    #                 feature=Feature(
-    #                     name="iam_user_accesskey_unused",
-    #                     uid="iam_user_accesskey_unused",
-    #                     version=prowler_version,
-    #                 ),
-    #             ),
-    #             version="1.0.0-rc.3",
-    #         ),
-    #         state_id=0,
-    #         state="New",
-    #         status_id=1,
-    #         status="Success",
-    #         type_uid=200101,
-    #         type_name="Security Finding: Create",
-    #         impact_id=0,
-    #         impact="Unknown",
-    #         confidence_id=0,
-    #         confidence="Unknown",
-    #         activity_id=1,
-    #         activity_name="Create",
-    #         category_uid=2,
-    #         category_name="Findings",
-    #         class_uid=2001,
-    #         class_name="Security Finding",
-    #     )
-    #     output_options = mock.MagicMock()
-    #     output_options.unix_timestamp = False
-    #     assert fill_json_ocsf(aws_provider, finding, output_options) == expected
-
-    # def test_fill_json_ocsf_unix_timestamp(self):
-    #     input_audit_info = AWS_Audit_Info(
-    #         session_config=None,
-    #         original_session=None,
-    #         audit_session=None,
-    #         audited_account=AWS_ACCOUNT_ID,
-    #         audited_account_arn=f"arn:aws:iam::{AWS_ACCOUNT_ID}:root",
-    #         audited_identity_arn="test-arn",
-    #         audited_user_id="test",
-    #         audited_partition="aws",
-    #         profile="default",
-    #         profile_region="eu-west-1",
-    #         credentials=None,
-    #         assumed_role_info=None,
-    #         audited_regions=["eu-west-2", "eu-west-1"],
-    #         organizations_metadata=None,
-    #         audit_resources=None,
-    #         mfa_enabled=False,
-    #         audit_metadata=Audit_Metadata(
-    #             services_scanned=0,
-    #             expected_checks=[],
-    #             completed_checks=0,
-    #             audit_progress=0,
-    #         ),
-    #     )
-    #     finding = Check_Report(
-    #         load_check_metadata(
-    #             f"{path.dirname(path.realpath(__file__))}/fixtures/metadata.json"
-    #         ).json()
-    #     )
-    #     finding.resource_details = "Test resource details"
-    #     finding.resource_id = "test-resource"
-    #     finding.resource_arn = "test-arn"
-    #     finding.region = "eu-west-1"
-    #     finding.status = "PASS"
-    #     finding.status_extended = "This is a test"
-
-    #     expected = Check_Output_JSON_OCSF(
-    #         finding=Finding(
-    #             title="Ensure Access Keys unused are disabled",
-    #             desc="Ensure Access Keys unused are disabled",
-    #             supporting_data={
-    #                 "Risk": "Risk associated.",
-    #                 "Notes": "additional information",
-    #             },
-    #             remediation=Remediation_OCSF(
-    #                 kb_articles=[
-    #                     "code or URL to the code location.",
-    #                     "code or URL to the code location.",
-    #                     "cli command or URL to the cli command location.",
-    #                     "cli command or URL to the cli command location.",
-    #                     "https://myfp.com/recommendations/dangerous_things_and_how_to_fix_them.html",
-    #                 ],
-    #                 desc="Run sudo yum update and cross your fingers and toes.",
-    #             ),
-    #             types=["Software and Configuration Checks"],
-    #             src_url="https://serviceofficialsiteorpageforthissubject",
-    #             uid="prowler-aws-iam_user_accesskey_unused-123456789012-eu-west-1-test-resource",
-    #             related_events=[
-    #                 "othercheck1",
-    #                 "othercheck2",
-    #                 "othercheck3",
-    #                 "othercheck4",
-    #             ],
-    #         ),
-    #         resources=[
-    #             Resources(
-    #                 group=Group(name="iam"),
-    #                 region="eu-west-1",
-    #                 name="test-resource",
-    #                 uid="test-arn",
-    #                 labels=[],
-    #                 type="AwsIamAccessAnalyzer",
-    #                 details="Test resource details",
-    #             )
-    #         ],
-    #         status_detail="This is a test",
-    #         compliance=Compliance_OCSF(
-    #             status="Success", requirements=[], status_detail="This is a test"
-    #         ),
-    #         message="This is a test",
-    #         severity_id=2,
-    #         severity="Low",
-    #         cloud=Cloud(
-    #             account=Account(name="", uid="123456789012"),
-    #             region="eu-west-1",
-    #             org=Organization(uid="", name=""),
-    #             provider="aws",
-    #             project_uid="",
-    #         ),
-    #         time=int(mktime(timestamp.timetuple())),
-    #         metadata=Metadata(
-    #             original_time=int(mktime(timestamp.timetuple())),
-    #             profiles=["default"],
-    #             product=Product(
-    #                 language="en",
-    #                 name="Prowler",
-    #                 version=prowler_version,
-    #                 vendor_name="Prowler/ProwlerPro",
-    #                 feature=Feature(
-    #                     name="iam_user_accesskey_unused",
-    #                     uid="iam_user_accesskey_unused",
-    #                     version=prowler_version,
-    #                 ),
-    #             ),
-    #             version="1.0.0-rc.3",
-    #         ),
-    #         state_id=0,
-    #         state="New",
-    #         status_id=1,
-    #         status="Success",
-    #         type_uid=200101,
-    #         type_name="Security Finding: Create",
-    #         impact_id=0,
-    #         impact="Unknown",
-    #         confidence_id=0,
-    #         confidence="Unknown",
-    #         activity_id=1,
-    #         activity_name="Create",
-    #         category_uid=2,
-    #         category_name="Findings",
-    #         class_uid=2001,
-    #         class_name="Security Finding",
-    #     )
-    #     output_options = mock.MagicMock()
-    #     output_options.unix_timestamp = True
-    #     assert fill_json_ocsf(input_audit_info, finding, output_options) == expected
 
     def test_extract_findings_statistics_different_resources(self):
         finding_1 = mock.MagicMock()

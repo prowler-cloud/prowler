@@ -103,6 +103,7 @@ def generate_provider_output(provider, finding, csv_data) -> FindingOutput:
         return finding_output
 
 
+# TODO: add test for outputs_unix_timestamp
 def fill_common_finding_data(finding: dict, unix_timestamp: bool) -> dict:
     finding_data = {
         "timestamp": outputs_unix_timestamp(unix_timestamp, timestamp),

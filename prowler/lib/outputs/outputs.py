@@ -99,9 +99,7 @@ def report(check_findings, provider):
                         if finding.check_metadata.Provider == "aws":
                             if "json-asff" in file_descriptors:
                                 # Initialize this field using the class within fill_json_asff not here
-                                json_asff_finding = fill_json_asff(
-                                    provider, finding, output_options
-                                )
+                                json_asff_finding = fill_json_asff(provider, finding)
 
                                 json.dump(
                                     json_asff_finding.dict(exclude_none=True),

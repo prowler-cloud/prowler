@@ -37,7 +37,7 @@ def prepare_security_hub_findings(
         region = finding.region
 
         # Format the finding in the JSON ASFF format
-        finding_json_asff = fill_json_asff(provider, finding, output_options)
+        finding_json_asff = fill_json_asff(provider, finding)
 
         # Include that finding within their region in the JSON format
         security_hub_findings_per_region[region].append(
