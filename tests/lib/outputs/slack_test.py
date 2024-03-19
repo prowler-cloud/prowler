@@ -333,7 +333,5 @@ class TestSlackIntegration:
         ), mock.patch(
             "prowler.lib.outputs.slack.WebClient", new=mocked_web_client
         ):
-            response = send_slack_message(
-                "test-token", "test-channel", {}, "provider", {}
-            )
+            response = send_slack_message("test-token", "test-channel", {}, "provider")
             assert response == mocked_slack_response
