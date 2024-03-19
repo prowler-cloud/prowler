@@ -39,7 +39,7 @@ class config_recorder_all_regions_enabled(Check):
                 config_client.audit_config.get("mute_non_default_regions", False)
                 and not recorder.region == config_client.region
             ):
-                report.status = "MUTED"
+                report.muted = True
 
             findings.append(report)
 

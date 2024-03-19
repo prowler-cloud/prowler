@@ -29,7 +29,7 @@ class securityhub_enabled(Check):
                 securityhub_client.audit_config.get("mute_non_default_regions", False)
                 and not securityhub.region == securityhub_client.region
             ):
-                report.status = "MUTED"
+                report.muted = True
 
             findings.append(report)
 

@@ -160,7 +160,8 @@ class Test_guardduty_is_enabled:
             check = guardduty_is_enabled()
             result = check.execute()
             assert len(result) == 1
-            assert result[0].status == "MUTED"
+            assert result[0].status == "FAIL"
+            assert result[0].muted
             assert (
                 result[0].status_extended
                 == f"GuardDuty detector {DETECTOR_ID} not configured."

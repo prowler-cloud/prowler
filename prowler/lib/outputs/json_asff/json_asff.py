@@ -11,16 +11,17 @@ from prowler.lib.outputs.json_asff.models import (
 from prowler.lib.utils.utils import hash_sha512
 
 
-def generate_json_asff_status(status: str) -> str:
+def generate_json_asff_status(status: str, muted: bool = False) -> str:
     json_asff_status = ""
-    if status == "PASS":
-        json_asff_status = "PASSED"
-    elif status == "FAIL":
-        json_asff_status = "FAILED"
-    elif status == "MUTED":
+    if muted:
         json_asff_status = "MUTED"
     else:
-        json_asff_status = "NOT_AVAILABLE"
+        if status == "PASS":
+            json_asff_status = "PASSED"
+        elif status == "FAIL":
+            json_asff_status = "FAILED"
+        else:
+            json_asff_status = "NOT_AVAILABLE"
 
     return json_asff_status
 
@@ -84,7 +85,7 @@ def fill_json_asff(provider, finding):
                 compliance_summary.append(item)
 
         # Ensures finding_status matches allowed values in ASFF
-        finding_status = generate_json_asff_status(finding.status)
+        finding_status = generate_json_asff_status(finding.status, finding.muted)
 
         json_asff_output = Check_Output_JSON_ASFF(
             # The following line cannot be changed because it is the format we use to generate unique findings for AWS Security Hub
