@@ -56,6 +56,7 @@ class App(AzureService):
                                 ),
                                 https_only=getattr(app, "https_only", False),
                                 identity=getattr(app, "identity", None),
+                                kind=getattr(app, "kind", "app"),
                             )
                         }
                     )
@@ -108,3 +109,4 @@ class WebApp:
     auth_enabled: bool = False
     https_only: bool = False
     monitor_diagnostic_settings: list[DiagnosticSetting] = None
+    kind: str = "app"
