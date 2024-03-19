@@ -3,7 +3,7 @@
 ???+ note
     Currently only available on the AWS provider.
 
-Bu default, Prowler only scans the cloud services that are used (where resources are created) for reducing the number of findings in Prowler's reports. If you want Prowler to also scan unused services, you can use the following command:
+By default, Prowler only scans the cloud services that are used (where resources are created) to reduce the number of findings in Prowler's reports. If you want Prowler to also scan unused services, you can use the following command:
 
 ```console
 prowler <provider> --scan-unused-services
