@@ -15,17 +15,23 @@ import plotly.graph_objs as go
 from dash import callback, dcc, html
 from dash.dependencies import Input, Output
 
+from dashboard.lib.dropdowns import create_account_dropdown_compliance, create_compliance_dropdown, create_region_dropdown_compliance, create_date_dropdown_compliance
+from dashboard.lib.layouts import create_layout_compliance
+
+# Config import
+from dashboard.config import folder_path_compliance
+
 # Suppress warnings
 warnings.filterwarnings("ignore")
 
 # Global variables
 # TODO: Create a flag to let the user put a custom path
-folder_path = f"{os.getcwd()}/output/compliance"
-csv_files = [file for file in glob.glob(os.path.join(folder_path, "*.csv"))]
+
+csv_files = [file for file in glob.glob(os.path.join(folder_path_compliance, "*.csv"))]
 
 
 def load_csv_files(csv_files):
-    """Load CSV files into a single pandas DataFrame."""
+    # Load CSV files into a single pandas DataFrame.
     dfs = []
     results = []
     for file in csv_files:
@@ -64,7 +70,6 @@ def load_csv_files(csv_files):
 
 data, results = load_csv_files(csv_files)
 
-
 data["ASSESSMENTDATE"] = pd.to_datetime(data["ASSESSMENTDATE"])
 data["ASSESSMENT_TIME"] = data["ASSESSMENTDATE"].dt.strftime("%Y-%m-%d %H:%M:%S")
 
@@ -79,30 +84,12 @@ data_values = aux
 
 data = data[data["ASSESSMENT_TIME"].isin(data_values)]
 data["ASSESSMENT_TIME"] = data["ASSESSMENT_TIME"].apply(lambda x: x.split(" ")[0])
-#############################################################################
-"""
-        Select Compliance - Dropdown
-"""
-#############################################################################
 
-dropdown1 = html.Div(
-    [
-        html.Label("Compliance:", className="text-prowler-stone-900 font-bold text-sm"),
-        dcc.Dropdown(
-            id="report-compliance-filter",
-            options=[{"label": i, "value": i} for i in results],
-            value="CIS_1.5 - AWS - Level_1",  # Initial selection is "CIS_1.5 - AWS - Level_1
-            clearable=False,
-            style={"color": "#000000"},
-        ),
-    ],
-)
+# Select Compliance - Dropdown
 
-#############################################################################
-"""
-        Select Account - Dropdown
-"""
-#############################################################################
+compliance_dropdown = create_compliance_dropdown(results)
+
+# Select Account - Dropdown
 
 select_account_dropdown_list = ["All"]
 select_account_dropdown_list = (
@@ -115,36 +102,13 @@ for item in select_account_dropdown_list:
     if item.__class__.__name__ == "str":
         list_items.append(item)
 
-select_account_dropdown_list = list_items
+account_dropdown = create_account_dropdown_compliance(list_items)
 
-dropdown2 = html.Div(
-    [
-        html.Label(
-            "Account / Subscription / Project / Cluster:",
-            className="text-prowler-stone-900 font-bold text-sm",
-        ),
-        dcc.Dropdown(
-            id="account-filter",
-            options=[{"label": i, "value": i} for i in select_account_dropdown_list],
-            value=["All"],  # Initial selection is ALL
-            clearable=False,
-            multi=True,
-            style={"color": "#000000"},
-        ),
-    ],
-)
+# Select Region - Dropdown
 
-#############################################################################
-"""
-        Select Region - Dropdown
-"""
-#############################################################################
-
-# Dropdown all options
 select_region_dropdown_list = ["All"]
 select_region_dropdown_list = (
     select_region_dropdown_list
-    + list(data["REGION"].unique())
     + list(data["REGION"].unique())
 )
 
@@ -153,125 +117,33 @@ for item in select_region_dropdown_list:
     if item.__class__.__name__ == "str":
         list_items.append(item)
 
-select_region_dropdown_list = list_items
-
-dropdown3 = html.Div(
-    [
-        html.Label(
-            "Region / Location / Namespace:",
-            className="text-prowler-stone-900 font-bold text-sm",
-        ),
-        dcc.Dropdown(
-            id="region-filter-analytics",
-            options=[{"label": i, "value": i} for i in select_region_dropdown_list],
-            value=["All"],  # Initial selection is ALL
-            clearable=False,
-            multi=True,
-            style={"color": "#000000"},
-        ),
-    ],
-)
-
-#############################################################################
-"""
-        Select Date - Dropdown
-"""
-#############################################################################
+region_dropdown = create_region_dropdown_compliance(list_items)
 
 # Dropdown all options
-select_account_dropdown_list = list(data["ASSESSMENT_TIME"].unique())
+select_date_dropdown_list = list(data["ASSESSMENT_TIME"].unique())
 
-dropdown4 = html.Div(
-    [
-        html.Label(
-            "Assesment Date:", className="text-prowler-stone-900 font-bold text-sm"
-        ),
-        dcc.Dropdown(
-            id="date-filter-analytics",
-            options=[
-                {"label": account, "value": account}
-                for account in select_account_dropdown_list
-            ],
-            value=select_account_dropdown_list[0],
-            clearable=False,
-            multi=False,
-            style={"color": "#000000", "width": "100%"},
-        ),
-    ],
-)
+date_dropdown = create_date_dropdown_compliance(select_date_dropdown_list)
 
 
 dash.register_page(__name__)
 
-layout = html.Div(
-    [
-        dcc.Location(id="url", refresh=False),
-        html.Div(
-            [
-                html.H1(
-                    "Compliance", className="text-prowler-stone-900 text-2xxl font-bold"
-                ),
-                html.A(
-                    [
-                        html.Img(src="assets/favicon.ico", className="w-5 mr-3"),
-                        html.Span("Subscribe to prowler SaaS"),
-                    ],
-                    href="https://prowler.pro/",
-                    target="_blank",
-                    className="text-prowler-stone-900 inline-flex px-4 py-2 text-xs font-bold uppercase transition-all rounded-lg text-gray-900 hover:bg-prowler-stone-900/10 border-solid border-1 hover:border-prowler-stone-900/10 hover:border-solid hover:border-1 border-prowler-stone-900/10",
-                ),
-            ],
-            className="flex justify-between border-b border-prowler-500 pb-3",
-        ),
-        html.Div(
-            [
-                html.Div([dropdown4], className=""),
-                html.Div([dropdown2], className=""),
-                html.Div([dropdown3], className=""),
-                html.Div([dropdown1], className=""),
-            ],
-            className="grid gap-x-4 gap-y-4 sm:grid-cols-2 lg:grid-cols-4 lg:gap-y-0",
-        ),
-        html.Div(
-            [
-                html.Div(
-                    className="flex flex-col col-span-12 md:col-span-4 gap-y-4",
-                    id="overall_status_result_graph",
-                ),
-                html.Div(
-                    className="flex flex-col col-span-12 md:col-span-7 md:col-end-13 gap-y-4",
-                    id="security_level_graph",
-                ),
-                html.Div(
-                    className="flex flex-col col-span-12 md:col-span-2 gap-y-4", id=""
-                ),
-            ],
-            className="grid gap-x-4 gap-y-4 grid-cols-12 lg:gap-y-0",
-        ),
-        html.H4(
-            "Details compliance:", className="text-prowler-stone-900 text-lg font-bold"
-        ),
-        html.Div(className="flex flex-wrap", id="output"),
-    ],
-    className="grid gap-x-8 gap-y-8 2xl:container mx-auto",
-)
-
+layout = create_layout_compliance(account_dropdown, date_dropdown, region_dropdown, compliance_dropdown)
 
 @callback(
     [
         Output("output", "children"),
         Output("overall_status_result_graph", "children"),
         Output("security_level_graph", "children"),
-        Output("account-filter", "value"),
-        Output("account-filter", "options"),
-        Output("region-filter-analytics", "value"),
-        Output("region-filter-analytics", "options"),
+        Output("cloud-account-filter-compliance", "value"),
+        Output("cloud-account-filter-compliance", "options"),
+        Output("region-filter-compliance", "value"),
+        Output("region-filter-compliance", "options"),
         Output("date-filter-analytics", "value"),
         Output("date-filter-analytics", "options"),
     ],
     Input("report-compliance-filter", "value"),
-    Input("account-filter", "value"),
-    Input("region-filter-analytics", "value"),
+    Input("cloud-account-filter-compliance", "value"),
+    Input("region-filter-compliance", "value"),
     Input("date-filter-analytics", "value"),
 )
 def display_data(
@@ -313,26 +185,23 @@ def display_data(
 
     else:
 
-        # Get the current working directory
-        current_directory = os.getcwd()
-
-        # Specify the folder path (assuming "Data" is in the current directory)
-        folder_path = os.path.join(current_directory) + "/output"
-
         # Use glob to find all CSV files in the folder
-        csv_files = glob.glob(os.path.join(folder_path, "*.csv"))
+        csv_files = glob.glob(os.path.join(folder_path_compliance, "*.csv"))
         # Take only the files that match the compliance selected
         csv_files = [file for file in csv_files if analytics_input in file]
 
-        dfs = []
+        def load_csv_files(csv_files):
+            """Load CSV files into a single pandas DataFrame."""
+            dfs = []
+            for file in csv_files:
+                df = pd.read_csv(file, sep=";", on_bad_lines="skip")
+                dfs.append(df.astype(str))
+            return pd.concat(dfs, ignore_index=True)
+        
+        data = load_csv_files(csv_files)
 
-        # Loop through the list of CSV files and store in a single df
-        for csv in csv_files:
-            temp = pd.read_csv(csv, sep=";", on_bad_lines="skip")
-            dfs.append(temp)
-
-        # creating dataframe
-        data = pd.concat(dfs, ignore_index=True)
+        if "gcp" in analytics_input:
+            data = data.rename(columns={"LOCATION": "REGION"})
 
         # Filter the chosen level of the CIS
         if is_level_1:
@@ -340,7 +209,6 @@ def display_data(
 
         if data.columns.str.contains("PROJECTID").any():
             data.rename(columns={"PROJECTID": "ACCOUNTID"}, inplace=True)
-            data.rename(columns={"REGION": "REGION"}, inplace=True)
 
         # Filter ACCOUNT
         if account_filter == ["All"]:
@@ -446,9 +314,10 @@ def display_data(
                 analytics_input = analytics_input + "_aws"
             try:
                 current = analytics_input.replace(".", "_")
-                compliance_module = importlib.import_module(f"compliance.{current}")
+                compliance_module = importlib.import_module(f"dashboard.compliance.{current}")
                 table = compliance_module.get_table(data)
-            except ModuleNotFoundError:
+            except ModuleNotFoundError as e:
+                print(e)
                 table = html.Div(
                     [
                         html.H5(
@@ -469,17 +338,11 @@ def display_data(
             df = df.sort_values(by=["counts"], ascending=False)
             df = df.reset_index(drop=True)
 
-            ########################################################
-            """PIE CHARTS 1"""
-            ########################################################
+            # Pie 1
 
             pie_1 = get_pie(df)
 
-            ########################################################
-            """PIE CHARTS 2"""
-            ########################################################
-
-            # Usamos data para seleccionar las columnas que queremos, en este caso secciones
+            # Get the pie2 depending on the compliance
             df = data.copy()
 
             if (
@@ -516,58 +379,16 @@ def display_data(
                     style={"height": "250px", "width": "250px", "right": "0px"},
                 )
 
-    #############################################################################
-    """Show the analytics - table"""
-    #############################################################################
+    # Analytics table
 
     if not analytics_input:
         analytics_input = ""
 
-    table_output = [
-        html.Div(
-            [
-                html.H5(
-                    f"{current_compliance}",
-                    className="text-prowler-stone-900 text-md font-bold uppercase mb-4",
-                ),
-                table,
-            ],
-            className="relative flex flex-col bg-white shadow-provider rounded-xl px-4 py-3 flex-wrap w-full",
-        ),
-    ]
+    table_output = get_table(current_compliance, table)
 
-    overall_status_result_graph = [
-        html.Span(
-            "Overall Status by Result",
-            className="text-center text-prowler-stone-900 uppercase text-xs font-bold",
-        ),
-        html.Div(
-            [pie_1],
-            className="",
-            style={
-                "display": "flex",
-                "justify-content": "center",
-                "align-items": "center",
-            },
-        ),
-    ]
+    overall_status_result_graph = get_graph(pie_1, "Overall Status Result")
 
-    security_level_graph = [
-        html.Span(
-            "Security level",
-            className="text-center text-prowler-stone-900 uppercase text-xs font-bold",
-        ),
-        html.Div(
-            [pie_2],
-            className="",
-            style={
-                "display": "flex",
-                "justify-content": "center",
-                "align-items": "center",
-                "margin-top": "7%",
-            },
-        ),
-    ]
+    security_level_graph = get_graph(pie_2, "Security Level")
 
     return (
         table_output,
@@ -580,6 +401,24 @@ def display_data(
         date_filter_analytics,
         options_date,
     )
+
+def get_graph(pie, title):
+    return [
+        html.Span(
+            title,
+            className="text-center text-prowler-stone-900 uppercase text-xs font-bold",
+        ),
+        html.Div(
+            [pie],
+            className="",
+            style={
+                "display": "flex",
+                "justify-content": "center",
+                "align-items": "center",
+                "margin-top": "7%",
+            },
+        ),
+    ]
 
 
 def get_polar_graph(df, column_name):
@@ -657,6 +496,7 @@ def get_pie(df):
         "PASS": "#36B37E",
         "INFO": "#2684FF",
         "WARN": "#260000",
+        "MANUAL": "#8332A8",
     }
 
     # Use the color_discrete_map parameter to map categories to custom colors
@@ -691,3 +531,17 @@ def get_pie(df):
     )
 
     return pie
+
+def get_table(current_compliance, table):
+    return [
+        html.Div(
+            [
+                html.H5(
+                    f"{current_compliance}",
+                    className="text-prowler-stone-900 text-md font-bold uppercase mb-4",
+                ),
+                table,
+            ],
+            className="relative flex flex-col bg-white shadow-provider rounded-xl px-4 py-3 flex-wrap w-full",
+        ),
+    ]

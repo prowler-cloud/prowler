@@ -16,16 +16,18 @@ from dash import callback, ctx, dcc, html
 from dash.dependencies import Input, Output
 
 from dashboard.lib.cards import create_provider_card
-from dashboard.lib.dropdowns import create_date_dropdown, create_region_dropdown
-from dashboard.lib.layouts import create_layout
+from dashboard.lib.dropdowns import create_date_dropdown, create_region_dropdown, create_account_dropdown
+from dashboard.lib.layouts import create_layout_overview
+
+# Config import
+from dashboard.config import folder_path_overview
 
 # Suppress warnings
 warnings.filterwarnings("ignore")
 
 # Global variables
 # TODO: Create a flag to let the user put a custom path
-folder_path = f"{os.getcwd()}/output"
-csv_files = [file for file in glob.glob(os.path.join(folder_path, "*.csv"))]
+csv_files = [file for file in glob.glob(os.path.join(folder_path_overview, "*.csv"))]
 
 # Import logos providers
 aws_provider_logo = html.Img(
@@ -103,28 +105,14 @@ for i in range(len(accounts)):
     if accounts[i] in list(data["ACCOUNT_UID"].unique()):
         accounts[i] = accounts[i] + " - AWS"
     elif accounts[i] in list(data["ACCOUNT_NAME"].unique()):
-        accounts[i] = accounts[i] + " - AZURE"
-    elif accounts[i] in list(data["ACCOUNT_UID"].unique()):
-        accounts[i] = accounts[i] + " - GCP"
-    elif accounts[i] in list(data["ACCOUNT_UID"].unique()):
-        accounts[i] = accounts[i] + " - K8S"
+        if "azure" in list(data[data["ACCOUNT_NAME"] == accounts[i]]["PROVIDER"]):
+            accounts[i] = accounts[i] + " - AZURE"
+        elif "gcp" in list(data[data["ACCOUNT_NAME"] == accounts[i]]["PROVIDER"]):
+            accounts[i] = accounts[i] + " - GCP"
+        elif "k8s" in list(data[data["ACCOUNT_NAME"] == accounts[i]]["PROVIDER"]):
+            accounts[i] = accounts[i] + " - K8S"
 
-account_dropdown = html.Div(
-    [
-        html.Label(
-            "Account:",
-            className="text-prowler-stone-900 font-bold text-sm",
-        ),
-        dcc.Dropdown(
-            id="cloud-account-filter",
-            options=[{"label": account, "value": account} for account in accounts],
-            value=["All"],  # Initial selection is ALL
-            style={"color": "#000000", "width": "100%"},
-            multi=True,
-            clearable=False,
-        ),
-    ],
-)
+account_dropdown = create_account_dropdown(accounts)
 
 # Region Dropdown
 regions = ["All"] + list(data["REGION"].unique())
@@ -134,7 +122,7 @@ region_dropdown = create_region_dropdown(regions)
 dash.register_page(__name__, path="/")
 
 # Create the layout
-layout = create_layout(account_dropdown, date_dropdown, region_dropdown)
+layout = create_layout_overview(account_dropdown, date_dropdown, region_dropdown)
 
 
 # Callback to display selected value
@@ -216,14 +204,16 @@ def filter_data(cloud_account_values, region_account_values, assessment_value):
     for item in all_items:
         if item not in cloud_accounts_options and item.__class__.__name__ == "str":
             # append the provider name depending on the account
-            if item in list(filtered_data["ACCOUNT_UID"].unique()):
+            # for item in the list, we are adding the provider name depending on the account
+            if item in list(data["ACCOUNT_UID"].unique()):
                 cloud_accounts_options.append(item + " - AWS")
-            elif item in list(filtered_data["ACCOUNT_NAME"].unique()):
-                cloud_accounts_options.append(item + " - AZURE")
-            elif item in list(filtered_data["ACCOUNT_UID"].unique()):
-                cloud_accounts_options.append(item + " - GCP")
-            elif item in list(filtered_data["ACCOUNT_UID"].unique()):
-                cloud_accounts_options.append(item + " - K8S")
+            elif item in list(data["ACCOUNT_NAME"].unique()):
+                if "azure" in list(data[data["ACCOUNT_NAME"] == item]["PROVIDER"]):
+                    cloud_accounts_options.append(item + " - AZURE")
+                elif "gcp" in list(data[data["ACCOUNT_NAME"] == item]["PROVIDER"]):
+                    cloud_accounts_options.append(item + " - GCP")
+                elif "k8s" in list(data[data["ACCOUNT_NAME"] == item]["PROVIDER"]):
+                    cloud_accounts_options.append(item + " - K8S")
 
     cloud_accounts_options = ["All"] + cloud_accounts_options
 
@@ -382,51 +372,14 @@ def filter_data(cloud_account_values, region_account_values, assessment_value):
     else:
         df = filtered_data.copy()
 
-        ########################################################
-        """PIE CHARTS 1"""
-        ########################################################
-
-        # Define custom colors
-        color_mapping = {
-            "FAIL": "#FF7452",
-            "PASS": "#36B37E",
-            "INFO": "#2684FF",
-            "WARN": "#260000",
-        }
-
-        # Use the color_discrete_map parameter to map categories to custom colors
-        fig1 = px.pie(
-            df,
-            names="STATUS",
-            hole=0,
-            color="STATUS",
-            color_discrete_map=color_mapping,
-        )
-        fig1.update_traces(
-            hovertemplate=None,
-            textposition="outside",
-            textinfo="percent+label",
-            rotation=50,
-        )
-
-        fig1.update_layout(
-            margin=dict(l=0, r=0, t=0, b=0),
-            autosize=True,
-            showlegend=False,
-            font=dict(size=17, color="#8a8d93"),
-            hoverlabel=dict(font_size=14),
-            paper_bgcolor="#FFF",
-        )
-
-        ########################################################
-        """PIE CHARTS 2"""
-        ########################################################
+        # Status Pie Chart
         df1 = filtered_data[filtered_data["STATUS"] == "FAIL"]
 
         color_mapping_pass_fail = {
             "FAIL": "#FF7452",
             "PASS": "#36B37E",
             "INFO": "#2684FF",
+            "MANUAL": "#8332A8",
         }
         # Define custom colors
         color_mapping = {
@@ -466,16 +419,16 @@ def filter_data(cloud_account_values, region_account_values, assessment_value):
             config={"displayModeBar": False},
             style={"height": "300px", "overflow-y": "auto"},
         )
-        colors = [
+
+        # Figure for the bar chart
+
+        color_bars = [
             color_mapping["critical"],
             color_mapping["high"],
             color_mapping["medium"],
             color_mapping["low"],
         ]
 
-        ########################################################
-        """PIE CHARTS 3"""
-        ########################################################
         figure_bars = go.Figure(
             data=[
                 go.Bar(
@@ -483,7 +436,7 @@ def filter_data(cloud_account_values, region_account_values, assessment_value):
                     .value_counts()
                     .index,  # assign x as the dataframe column 'x'
                     y=df1["SEVERITY"].value_counts().values,
-                    marker=dict(color=colors),
+                    marker=dict(color=color_bars),
                     textposition="auto",
                 )
             ],
@@ -499,11 +452,8 @@ def filter_data(cloud_account_values, region_account_values, assessment_value):
             config={"displayModeBar": False},
             style={"height": "400px", "overflow-y": "auto", "margin-top": "0px"},
         )
-        ########################################################
-        """TABLE"""
-        ########################################################
 
-        # SORT BY SEVERITY
+        # TABLE
         severity_dict = {"critical": 3, "high": 2, "medium": 1, "low": 0}
         fails_findings["SEVERITY"] = fails_findings["SEVERITY"].map(severity_dict)
         fails_findings = fails_findings.sort_values(by=["SEVERITY"], ascending=False)
@@ -563,9 +513,7 @@ def filter_data(cloud_account_values, region_account_values, assessment_value):
                 className="table-overview",
             )
 
-    #####################################################################
-    """Status Graphic"""
-    #####################################################################
+    # Status Graphic
     status_graph = [
         html.Span(
             "Status",
@@ -579,9 +527,7 @@ def filter_data(cloud_account_values, region_account_values, assessment_value):
         ),
     ]
 
-    #####################################################################
-    """Layout two pie charts"""
-    #####################################################################
+    # Layout two pie charts
     two_pie_chart = [
         html.Span(
             "Severity",
@@ -595,10 +541,7 @@ def filter_data(cloud_account_values, region_account_values, assessment_value):
         ),
     ]
 
-    #####################################################################
-    """Layout Line PLOT"""
-    #####################################################################
-
+    # Layout Line PLOT
     line_plot = [
         html.Span(
             "Security Posture Evolution (last 7 days)",
@@ -607,14 +550,11 @@ def filter_data(cloud_account_values, region_account_values, assessment_value):
         html.Div([line_chart], className=""),
     ]
 
-    #####################################################################
-    """Table"""
-    #####################################################################
+    # Table
     table_card = [
         html.Div([table], className="grid grid-cols-auto"),
     ]
 
-    #####################################################################
     # Create Provider Cards
     aws_card = create_provider_card("aws", aws_provider_logo, "Accounts", filtered_data)
     azure_card = create_provider_card(

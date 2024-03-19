@@ -8,12 +8,8 @@ from dash.dependencies import Input, Output
 
 warnings.filterwarnings("ignore")
 
+# Dashboard settings and setup
 
-#############################################################################
-"""
-DASHBOARD SETTINGS
-"""
-#############################################################################
 # Initialize the app - incorporate css
 dashboard = dash.Dash(
     __name__,
@@ -23,11 +19,7 @@ dashboard = dash.Dash(
 )
 dashboard.title = "Prowler Dashboard"
 
-#####################################################################
-"""
-LOGO
-"""
-#####################################################################
+# Logo
 prowler_logo = html.Img(src="assets/logo.png", alt="Prowler Logo")
 
 menu_icons = {

@@ -6,8 +6,8 @@ from dash import dash_table, dcc, html
 
 warnings.filterwarnings("ignore")
 import dash_table
-from common_methods import map_status_to_icon, version_tuple
-
+from dashboard.common_methods import map_status_to_icon, version_tuple
+from dashboard.config import pass_emoji, fail_emoji
 
 def get_table(data):
     aux = data[
@@ -41,13 +41,13 @@ def get_table(data):
 
     for section in aux["REQUIREMENTS_ATTRIBUTES_SECTION"].unique():
         success_section = (
-            findings_counts_section.loc[section, "✅"]
-            if "✅" in findings_counts_section.columns
+            findings_counts_section.loc[section, pass_emoji]
+            if pass_emoji in findings_counts_section.columns
             else 0
         )
         failed_section = (
-            findings_counts_section.loc[section, "❌"]
-            if "❌" in findings_counts_section.columns
+            findings_counts_section.loc[section, fail_emoji]
+            if fail_emoji in findings_counts_section.columns
             else 0
         )
 
@@ -146,13 +146,13 @@ def get_table(data):
                 & (aux["REQUIREMENTS_ID"] == req_id)
             ]
             success_req = (
-                findings_counts_id.loc[req_id, "✅"]
-                if "✅" in findings_counts_id.columns
+                findings_counts_id.loc[req_id, pass_emoji]
+                if pass_emoji in findings_counts_id.columns
                 else 0
             )
             failed_req = (
-                findings_counts_id.loc[req_id, "❌"]
-                if "❌" in findings_counts_id.columns
+                findings_counts_id.loc[req_id, fail_emoji]
+                if fail_emoji in findings_counts_id.columns
                 else 0
             )
 

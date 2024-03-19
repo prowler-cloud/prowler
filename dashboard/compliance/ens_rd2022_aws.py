@@ -6,8 +6,8 @@ from dash import dash_table, dcc, html
 
 warnings.filterwarnings("ignore")
 import dash_table
-from common_methods import map_status_to_icon
-
+from dashboard.common_methods import map_status_to_icon
+from dashboard.config import pass_emoji, fail_emoji
 
 def get_table(data):
     aux = data[
@@ -36,13 +36,13 @@ def get_table(data):
 
     for tipo in aux["REQUIREMENTS_ATTRIBUTES_TIPO"].unique():
         success_tipo = (
-            findings_counts_tipo.loc[tipo, "✅"]
-            if "✅" in findings_counts_tipo.columns
+            findings_counts_tipo.loc[tipo, pass_emoji]
+            if pass_emoji in findings_counts_tipo.columns
             else 0
         )
         failed_tipo = (
-            findings_counts_tipo.loc[tipo, "❌"]
-            if "❌" in findings_counts_tipo.columns
+            findings_counts_tipo.loc[tipo, fail_emoji]
+            if fail_emoji in findings_counts_tipo.columns
             else 0
         )
 
@@ -141,13 +141,13 @@ def get_table(data):
                 & (aux["REQUIREMENTS_ID"] == req_id)
             ]
             success_req_id = (
-                findings_counts_req_id.loc[req_id, "✅"]
-                if "✅" in findings_counts_req_id.columns
+                findings_counts_req_id.loc[req_id, pass_emoji]
+                if pass_emoji in findings_counts_req_id.columns
                 else 0
             )
             failed_req_id = (
-                findings_counts_req_id.loc[req_id, "❌"]
-                if "❌" in findings_counts_req_id.columns
+                findings_counts_req_id.loc[req_id, fail_emoji]
+                if fail_emoji in findings_counts_req_id.columns
                 else 0
             )
 

@@ -1,4 +1,5 @@
 import re
+from dashboard.config import pass_emoji, fail_emoji, info_emoji, manual_emoji
 
 
 def version_tuple(version):
@@ -35,9 +36,11 @@ def version_tuple(version):
 
 def map_status_to_icon(status):
     if status == "FAIL":
-        return "❌"
+        return fail_emoji
     elif status == "PASS":
-        return "✅"
+        return pass_emoji
     elif status == "INFO":
-        return "ℹ️"
+        return info_emoji
+    elif status == "MANUAL":
+        return manual_emoji
     return status

@@ -6,15 +6,17 @@ from dash import dash_table, dcc, html
 
 warnings.filterwarnings("ignore")
 import dash_table
-from dashboard.common_methods import map_status_to_icon, version_tuple
+from dashboard.common_methods import map_status_to_icon
+
 from dashboard.config import pass_emoji, fail_emoji
+
+
 
 def get_table(data):
     aux = data[
         [
             "REQUIREMENTS_ID",
             "REQUIREMENTS_ATTRIBUTES_SECTION",
-            "REQUIREMENTS_DESCRIPTION",
             "CHECKID",
             "STATUS",
             "REGION",
@@ -23,9 +25,6 @@ def get_table(data):
         ]
     ].copy()
     aux["STATUS"] = aux["STATUS"].apply(map_status_to_icon)
-    aux.sort_values(
-        by="REQUIREMENTS_ID", key=lambda x: x.map(version_tuple), inplace=True
-    )
     aux["REQUIREMENTS_ID"] = aux["REQUIREMENTS_ID"].astype(str)
     aux.drop_duplicates(keep="first", inplace=True)
 
@@ -254,17 +253,8 @@ def get_table(data):
 
             graph_div_req = html.Div(graph_req, className="graph-section-req")
 
-            title_internal = (
-                f"{req_id} - {specific_data['REQUIREMENTS_DESCRIPTION'].iloc[0]}"
-            )
-            # Cut the title if it's too long
-            title_internal = (
-                title_internal[:130] + " ..."
-                if len(title_internal) > 130
-                else title_internal
-            )
             internal_accordion_item = dbc.AccordionItem(
-                title=title_internal,
+                title=req_id,
                 children=[html.Div([data_table], className="inner-accordion-content")],
             )
 
