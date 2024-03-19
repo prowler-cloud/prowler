@@ -6,10 +6,10 @@ from prowler.config.config import aws_logo, azure_logo, gcp_logo, square_logo_im
 from prowler.lib.logger import logger
 
 
-def send_slack_message(token, channel, stats, provider, audit_info):
+def send_slack_message(token, channel, stats, provider):
     try:
         client = WebClient(token=token)
-        identity, logo = create_message_identity(provider, audit_info)
+        identity, logo = create_message_identity(provider)
         response = client.chat_postMessage(
             username="Prowler",
             icon_url=square_logo_img,
