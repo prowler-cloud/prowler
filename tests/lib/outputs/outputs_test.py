@@ -95,8 +95,8 @@ class TestOutputs:
                 remove(expected[index][output_mode].name)
 
     def test_set_report_color(self):
-        test_status = ["PASS", "FAIL", "ERROR", "MANUAL"]
-        test_colors = [Fore.GREEN, Fore.RED, Fore.BLACK, Fore.YELLOW]
+        test_status = ["PASS", "FAIL", "MANUAL"]
+        test_colors = [Fore.GREEN, Fore.RED, Fore.YELLOW]
 
         for status in test_status:
             assert set_report_color(status) in test_colors
