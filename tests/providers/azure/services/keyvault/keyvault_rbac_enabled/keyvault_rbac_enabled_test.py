@@ -3,7 +3,6 @@ from uuid import uuid4
 
 from azure.mgmt.keyvault.v2023_07_01.models import VaultProperties
 
-from prowler.providers.azure.services.keyvault.keyvault_service import KeyVaultInfo
 from tests.providers.azure.azure_fixtures import (
     AZURE_SUBSCRIPTION_ID,
     set_mocked_azure_provider,
@@ -34,23 +33,6 @@ class Test_keyvault_rbac_enabled:
         keyvault_client = mock.MagicMock
         keyvault_name = "Keyvault Name"
         keyvault_id = str(uuid4())
-        keyvault_client.key_vaults = {
-            AZURE_SUBSCRIPTION_ID: [
-                KeyVaultInfo(
-                    id=keyvault_id,
-                    name=keyvault_name,
-                    location="location",
-                    resource_group="resource_group",
-                    properties=VaultProperties(
-                        tenant_id="tenantid",
-                        sku="sku",
-                        enable_rbac_authorization=False,
-                    ),
-                    keys=[],
-                    secrets=[],
-                )
-            ]
-        }
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
@@ -62,7 +44,27 @@ class Test_keyvault_rbac_enabled:
             from prowler.providers.azure.services.keyvault.keyvault_rbac_enabled.keyvault_rbac_enabled import (
                 keyvault_rbac_enabled,
             )
+            from prowler.providers.azure.services.keyvault.keyvault_service import (
+                KeyVaultInfo,
+            )
 
+            keyvault_client.key_vaults = {
+                AZURE_SUBSCRIPTION_ID: [
+                    KeyVaultInfo(
+                        id=keyvault_id,
+                        name=keyvault_name,
+                        location="location",
+                        resource_group="resource_group",
+                        properties=VaultProperties(
+                            tenant_id="tenantid",
+                            sku="sku",
+                            enable_rbac_authorization=False,
+                        ),
+                        keys=[],
+                        secrets=[],
+                    )
+                ]
+            }
             check = keyvault_rbac_enabled()
             result = check.execute()
             assert len(result) == 1
@@ -79,23 +81,6 @@ class Test_keyvault_rbac_enabled:
         keyvault_client = mock.MagicMock
         keyvault_name = "Keyvault Name"
         keyvault_id = str(uuid4())
-        keyvault_client.key_vaults = {
-            AZURE_SUBSCRIPTION_ID: [
-                KeyVaultInfo(
-                    id=keyvault_id,
-                    name=keyvault_name,
-                    location="location",
-                    resource_group="resource_group",
-                    properties=VaultProperties(
-                        tenant_id="tenantid",
-                        sku="sku",
-                        enable_rbac_authorization=True,
-                    ),
-                    keys=[],
-                    secrets=[],
-                )
-            ]
-        }
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
@@ -107,7 +92,27 @@ class Test_keyvault_rbac_enabled:
             from prowler.providers.azure.services.keyvault.keyvault_rbac_enabled.keyvault_rbac_enabled import (
                 keyvault_rbac_enabled,
             )
+            from prowler.providers.azure.services.keyvault.keyvault_service import (
+                KeyVaultInfo,
+            )
 
+            keyvault_client.key_vaults = {
+                AZURE_SUBSCRIPTION_ID: [
+                    KeyVaultInfo(
+                        id=keyvault_id,
+                        name=keyvault_name,
+                        location="location",
+                        resource_group="resource_group",
+                        properties=VaultProperties(
+                            tenant_id="tenantid",
+                            sku="sku",
+                            enable_rbac_authorization=True,
+                        ),
+                        keys=[],
+                        secrets=[],
+                    )
+                ]
+            }
             check = keyvault_rbac_enabled()
             result = check.execute()
             assert len(result) == 1

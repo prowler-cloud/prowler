@@ -43,9 +43,9 @@ class Test_glue_data_catalogs_metadata_encryption_enabled:
                 password_kms_id=None,
             )
         ]
+        glue_client.region = AWS_REGION_US_EAST_1
         glue_client.audited_account = AWS_ACCOUNT_NUMBER
         glue_client.audited_partition = AWS_COMMERCIAL_PARTITION
-        glue_client.region = AWS_REGION_US_EAST_1
         glue_client.data_catalog_arn_template = f"arn:{glue_client.audited_partition}:glue:{glue_client.region}:{glue_client.audited_account}:data-catalog"
         glue_client.__get_data_catalog_arn_template__ = mock.MagicMock(
             return_value=glue_client.data_catalog_arn_template
@@ -85,10 +85,10 @@ class Test_glue_data_catalogs_metadata_encryption_enabled:
                 password_kms_id=None,
             )
         ]
-        glue_client.audited_account = AWS_ACCOUNT_NUMBER
         glue_client.provider._scan_unused_services = False
-        glue_client.audited_partition = AWS_COMMERCIAL_PARTITION
         glue_client.region = AWS_REGION_US_EAST_1
+        glue_client.audited_account = AWS_ACCOUNT_NUMBER
+        glue_client.audited_partition = AWS_COMMERCIAL_PARTITION
         glue_client.data_catalog_arn_template = f"arn:{glue_client.audited_partition}:glue:{glue_client.region}:{glue_client.audited_account}:data-catalog"
         glue_client.__get_data_catalog_arn_template__ = mock.MagicMock(
             return_value=glue_client.data_catalog_arn_template
@@ -120,10 +120,10 @@ class Test_glue_data_catalogs_metadata_encryption_enabled:
                 password_kms_id=None,
             )
         ]
-        glue_client.audited_account = AWS_ACCOUNT_NUMBER
         glue_client.provider._scan_unused_services = False
-        glue_client.audited_partition = AWS_COMMERCIAL_PARTITION
         glue_client.region = AWS_REGION_US_EAST_1
+        glue_client.audited_account = AWS_ACCOUNT_NUMBER
+        glue_client.audited_partition = AWS_COMMERCIAL_PARTITION
         glue_client.data_catalog_arn_template = f"arn:{glue_client.audited_partition}:glue:{glue_client.region}:{glue_client.audited_account}:data-catalog"
         glue_client.__get_data_catalog_arn_template__ = mock.MagicMock(
             return_value=glue_client.data_catalog_arn_template
@@ -163,9 +163,9 @@ class Test_glue_data_catalogs_metadata_encryption_enabled:
                 password_kms_id=None,
             )
         ]
+        glue_client.region = AWS_REGION_US_EAST_1
         glue_client.audited_account = AWS_ACCOUNT_NUMBER
         glue_client.audited_partition = AWS_COMMERCIAL_PARTITION
-        glue_client.region = AWS_REGION_US_EAST_1
         glue_client.data_catalog_arn_template = f"arn:{glue_client.audited_partition}:glue:{glue_client.region}:{glue_client.audited_account}:data-catalog"
         glue_client.__get_data_catalog_arn_template__ = mock.MagicMock(
             return_value=glue_client.data_catalog_arn_template
