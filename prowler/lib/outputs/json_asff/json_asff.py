@@ -85,7 +85,7 @@ def fill_json_asff(provider, finding):
                 compliance_summary.append(item)
 
         # Ensures finding_status matches allowed values in ASFF
-        finding_status = generate_json_asff_status(finding.status)
+        finding_status = generate_json_asff_status(finding.status, finding.muted)
 
         json_asff_output = Check_Output_JSON_ASFF(
             # The following line cannot be changed because it is the format we use to generate unique findings for AWS Security Hub
