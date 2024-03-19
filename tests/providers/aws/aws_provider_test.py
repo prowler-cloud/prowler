@@ -240,11 +240,11 @@ class TestAWSProvider:
     def test_aws_provider_default(self):
         arguments = Namespace()
         arguments.mfa = False
-        arguments.ignore_unused_services = True
+        arguments.scan_unused_services = True
         aws_provider = AwsProvider(arguments)
 
         assert aws_provider.type == "aws"
-        assert aws_provider.ignore_unused_services is True
+        assert aws_provider.scan_unused_services is True
         assert aws_provider.audit_config == {}
         assert aws_provider.session.current_session.region_name == AWS_REGION_US_EAST_1
 
@@ -359,7 +359,7 @@ class TestAWSProvider:
             aws_provider = AwsProvider(arguments)
 
             assert aws_provider.type == "aws"
-            assert aws_provider.ignore_unused_services is None
+            assert aws_provider.scan_unused_services is None
             assert aws_provider.audit_config == {}
             assert (
                 aws_provider.session.current_session.region_name == AWS_REGION_US_EAST_1

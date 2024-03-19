@@ -51,7 +51,7 @@ class Test_athena_workgroup_enforce_configuration:
         from prowler.providers.aws.services.athena.athena_service import Athena
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
-        aws_provider._ignore_unused_services = True
+        aws_provider._scan_unused_services = False
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
