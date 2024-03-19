@@ -5,7 +5,7 @@ from prowler.providers.azure.lib.audit_info.models import Azure_Audit_Info
 class AzureService:
     def __init__(
         self,
-        service: str,
+        service: object,
         audit_info: Azure_Audit_Info,
     ):
         self.clients = self.__set_clients__(
