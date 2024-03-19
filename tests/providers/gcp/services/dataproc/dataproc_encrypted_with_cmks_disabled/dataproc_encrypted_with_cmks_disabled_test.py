@@ -25,18 +25,8 @@ class Test_dataproc_encrypted_with_cmks_disabled:
             assert len(result) == 0
 
     def test_one_compliant_cluster(self):
-        from prowler.providers.gcp.services.dataproc.dataproc_service import Cluster
-
-        cluster = Cluster(
-            name="test",
-            id="1234567890",
-            encryption_config={"gcePdKmsKeyName": "test"},
-            project_id=GCP_PROJECT_ID,
-        )
-
         dataproc_client = mock.MagicMock
         dataproc_client.project_ids = [GCP_PROJECT_ID]
-        dataproc_client.clusters = [cluster]
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
@@ -45,6 +35,16 @@ class Test_dataproc_encrypted_with_cmks_disabled:
             "prowler.providers.gcp.services.dataproc.dataproc_encrypted_with_cmks_disabled.dataproc_encrypted_with_cmks_disabled.dataproc_client",
             new=dataproc_client,
         ):
+            from prowler.providers.gcp.services.dataproc.dataproc_service import Cluster
+
+            cluster = Cluster(
+                name="test",
+                id="1234567890",
+                encryption_config={"gcePdKmsKeyName": "test"},
+                project_id=GCP_PROJECT_ID,
+            )
+            dataproc_client.clusters = [cluster]
+
             from prowler.providers.gcp.services.dataproc.dataproc_encrypted_with_cmks_disabled.dataproc_encrypted_with_cmks_disabled import (
                 dataproc_encrypted_with_cmks_disabled,
             )

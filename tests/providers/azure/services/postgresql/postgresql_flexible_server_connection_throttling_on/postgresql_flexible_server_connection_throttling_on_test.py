@@ -3,7 +3,7 @@ from uuid import uuid4
 
 from prowler.providers.azure.services.postgresql.postgresql_service import Server
 from tests.providers.azure.azure_fixtures import (
-    AZURE_SUBSCRIPTION,
+    AZURE_SUBSCRIPTION_ID,
     set_mocked_azure_provider,
 )
 
@@ -33,7 +33,7 @@ class Test_postgresql_flexible_server_connection_throttling_on:
         postgresql_server_name = "Postgres Flexible Server Name"
         postgresql_server_id = str(uuid4())
         postgresql_client.flexible_servers = {
-            AZURE_SUBSCRIPTION: [
+            AZURE_SUBSCRIPTION_ID: [
                 Server(
                     id=postgresql_server_id,
                     name=postgresql_server_name,
@@ -66,9 +66,9 @@ class Test_postgresql_flexible_server_connection_throttling_on:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Flexible Postgresql server {postgresql_server_name} from subscription {AZURE_SUBSCRIPTION} has connection_throttling disabled"
+                == f"Flexible Postgresql server {postgresql_server_name} from subscription {AZURE_SUBSCRIPTION_ID} has connection_throttling disabled"
             )
-            assert result[0].subscription == AZURE_SUBSCRIPTION
+            assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == postgresql_server_name
             assert result[0].resource_id == postgresql_server_id
 
@@ -77,7 +77,7 @@ class Test_postgresql_flexible_server_connection_throttling_on:
         postgresql_server_name = "Postgres Flexible Server Name"
         postgresql_server_id = str(uuid4())
         postgresql_client.flexible_servers = {
-            AZURE_SUBSCRIPTION: [
+            AZURE_SUBSCRIPTION_ID: [
                 Server(
                     id=postgresql_server_id,
                     name=postgresql_server_name,
@@ -110,8 +110,8 @@ class Test_postgresql_flexible_server_connection_throttling_on:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Flexible Postgresql server {postgresql_server_name} from subscription {AZURE_SUBSCRIPTION} has connection_throttling enabled"
+                == f"Flexible Postgresql server {postgresql_server_name} from subscription {AZURE_SUBSCRIPTION_ID} has connection_throttling enabled"
             )
-            assert result[0].subscription == AZURE_SUBSCRIPTION
+            assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == postgresql_server_name
             assert result[0].resource_id == postgresql_server_id

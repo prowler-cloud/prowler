@@ -10,6 +10,7 @@ def set_mocked_gcp_provider(
     project_ids: list[str] = [], default_project_id: str = "", profile: str = ""
 ) -> GcpProvider:
     provider = MagicMock()
+    provider.type = "gcp"
     provider.session = None
     provider.project_ids = project_ids
     provider.identity = GCPIdentityInfo(

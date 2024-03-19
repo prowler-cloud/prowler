@@ -3,7 +3,7 @@ from uuid import uuid4
 
 from prowler.providers.azure.services.defender.defender_service import Assesment
 from tests.providers.azure.azure_fixtures import (
-    AZURE_SUBSCRIPTION,
+    AZURE_SUBSCRIPTION_ID,
     set_mocked_azure_provider,
 )
 
@@ -32,7 +32,7 @@ class Test_defender_auto_provisioning_vulnerabilty_assessments_machines_on:
         resource_id = str(uuid4())
         defender_client = mock.MagicMock
         defender_client.assessments = {
-            AZURE_SUBSCRIPTION: {
+            AZURE_SUBSCRIPTION_ID: {
                 "Machines should have a vulnerability assessment solution": Assesment(
                     resource_id=resource_id,
                     resource_name="vm1",
@@ -58,9 +58,9 @@ class Test_defender_auto_provisioning_vulnerabilty_assessments_machines_on:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Vulnerability assessment is not set up in all VMs in subscription {AZURE_SUBSCRIPTION}."
+                == f"Vulnerability assessment is not set up in all VMs in subscription {AZURE_SUBSCRIPTION_ID}."
             )
-            assert result[0].subscription == AZURE_SUBSCRIPTION
+            assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == "vm1"
             assert result[0].resource_id == resource_id
 
@@ -68,7 +68,7 @@ class Test_defender_auto_provisioning_vulnerabilty_assessments_machines_on:
         resource_id = str(uuid4())
         defender_client = mock.MagicMock
         defender_client.assessments = {
-            AZURE_SUBSCRIPTION: {
+            AZURE_SUBSCRIPTION_ID: {
                 "Machines should have a vulnerability assessment solution": Assesment(
                     resource_id=resource_id,
                     resource_name="vm1",
@@ -94,8 +94,8 @@ class Test_defender_auto_provisioning_vulnerabilty_assessments_machines_on:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Vulnerability assessment is set up in all VMs in subscription {AZURE_SUBSCRIPTION}."
+                == f"Vulnerability assessment is set up in all VMs in subscription {AZURE_SUBSCRIPTION_ID}."
             )
-            assert result[0].subscription == AZURE_SUBSCRIPTION
+            assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == "vm1"
             assert result[0].resource_id == resource_id

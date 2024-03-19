@@ -5,7 +5,7 @@ from azure.mgmt.keyvault.v2023_07_01.models import KeyAttributes, VaultPropertie
 
 from prowler.providers.azure.services.keyvault.keyvault_service import Key, KeyVaultInfo
 from tests.providers.azure.azure_fixtures import (
-    AZURE_SUBSCRIPTION,
+    AZURE_SUBSCRIPTION_ID,
     set_mocked_azure_provider,
 )
 
@@ -33,7 +33,7 @@ class Test_keyvault_key_expiration_set_in_non_rbac:
     def test_no_keys(self):
         keyvault_client = mock.MagicMock
         keyvault_client.key_vaults = {
-            AZURE_SUBSCRIPTION: [
+            AZURE_SUBSCRIPTION_ID: [
                 KeyVaultInfo(
                     id="id",
                     name="name",
@@ -76,7 +76,7 @@ class Test_keyvault_key_expiration_set_in_non_rbac:
             attributes=KeyAttributes(expires=None, enabled=True),
         )
         keyvault_client.key_vaults = {
-            AZURE_SUBSCRIPTION: [
+            AZURE_SUBSCRIPTION_ID: [
                 KeyVaultInfo(
                     id=keyvault_id,
                     name=keyvault_name,
@@ -108,9 +108,9 @@ class Test_keyvault_key_expiration_set_in_non_rbac:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Keyvault {keyvault_name} from subscription {AZURE_SUBSCRIPTION} has the key {key_name} without expiration date set."
+                == f"Keyvault {keyvault_name} from subscription {AZURE_SUBSCRIPTION_ID} has the key {key_name} without expiration date set."
             )
-            assert result[0].subscription == AZURE_SUBSCRIPTION
+            assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == keyvault_name
             assert result[0].resource_id == keyvault_id
 
@@ -126,7 +126,7 @@ class Test_keyvault_key_expiration_set_in_non_rbac:
             attributes=KeyAttributes(expires=49394, enabled=True),
         )
         keyvault_client.key_vaults = {
-            AZURE_SUBSCRIPTION: [
+            AZURE_SUBSCRIPTION_ID: [
                 KeyVaultInfo(
                     id=keyvault_id,
                     name=keyvault_name,
@@ -158,8 +158,8 @@ class Test_keyvault_key_expiration_set_in_non_rbac:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Keyvault {keyvault_name} from subscription {AZURE_SUBSCRIPTION} has all the keys with expiration date set."
+                == f"Keyvault {keyvault_name} from subscription {AZURE_SUBSCRIPTION_ID} has all the keys with expiration date set."
             )
-            assert result[0].subscription == AZURE_SUBSCRIPTION
+            assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == keyvault_name
             assert result[0].resource_id == keyvault_id

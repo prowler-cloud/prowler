@@ -8,7 +8,7 @@ from prowler.providers.azure.services.storage.storage_service import (
     BlobProperties,
 )
 from tests.providers.azure.azure_fixtures import (
-    AZURE_SUBSCRIPTION,
+    AZURE_SUBSCRIPTION_ID,
     set_mocked_azure_provider,
 )
 
@@ -39,7 +39,7 @@ class Test_storage_ensure_soft_delete_is_enabled:
         storage_client = mock.MagicMock
         storage_account_blob_properties = None
         storage_client.storage_accounts = {
-            AZURE_SUBSCRIPTION: [
+            AZURE_SUBSCRIPTION_ID: [
                 Account(
                     id=storage_account_id,
                     name=storage_account_name,
@@ -86,7 +86,7 @@ class Test_storage_ensure_soft_delete_is_enabled:
             container_delete_retention_policy=DeleteRetentionPolicy(enabled=False),
         )
         storage_client.storage_accounts = {
-            AZURE_SUBSCRIPTION: [
+            AZURE_SUBSCRIPTION_ID: [
                 Account(
                     id=storage_account_id,
                     name=storage_account_name,
@@ -121,9 +121,9 @@ class Test_storage_ensure_soft_delete_is_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Storage account {storage_account_name} from subscription {AZURE_SUBSCRIPTION} has soft delete disabled."
+                == f"Storage account {storage_account_name} from subscription {AZURE_SUBSCRIPTION_ID} has soft delete disabled."
             )
-            assert result[0].subscription == AZURE_SUBSCRIPTION
+            assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == storage_account_name
             assert result[0].resource_id == storage_account_id
 
@@ -141,7 +141,7 @@ class Test_storage_ensure_soft_delete_is_enabled:
             container_delete_retention_policy=DeleteRetentionPolicy(enabled=True),
         )
         storage_client.storage_accounts = {
-            AZURE_SUBSCRIPTION: [
+            AZURE_SUBSCRIPTION_ID: [
                 Account(
                     id=storage_account_id,
                     name=storage_account_name,
@@ -176,8 +176,8 @@ class Test_storage_ensure_soft_delete_is_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Storage account {storage_account_name} from subscription {AZURE_SUBSCRIPTION} has soft delete enabled."
+                == f"Storage account {storage_account_name} from subscription {AZURE_SUBSCRIPTION_ID} has soft delete enabled."
             )
-            assert result[0].subscription == AZURE_SUBSCRIPTION
+            assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == storage_account_name
             assert result[0].resource_id == storage_account_id

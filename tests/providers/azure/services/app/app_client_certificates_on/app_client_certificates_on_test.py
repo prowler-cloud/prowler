@@ -3,7 +3,7 @@ from uuid import uuid4
 
 from prowler.providers.azure.services.app.app_service import WebApp
 from tests.providers.azure.azure_fixtures import (
-    AZURE_SUBSCRIPTION,
+    AZURE_SUBSCRIPTION_ID,
     set_mocked_azure_provider,
 )
 
@@ -30,7 +30,7 @@ class Test_app_client_certificates_on:
 
     def test_app_subscription_empty(self):
         app_client = mock.MagicMock
-        app_client.apps = {AZURE_SUBSCRIPTION: {}}
+        app_client.apps = {AZURE_SUBSCRIPTION_ID: {}}
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
@@ -51,7 +51,7 @@ class Test_app_client_certificates_on:
         resource_id = f"/subscriptions/{uuid4()}"
         app_client = mock.MagicMock
         app_client.apps = {
-            AZURE_SUBSCRIPTION: {
+            AZURE_SUBSCRIPTION_ID: {
                 "app_id-1": WebApp(
                     resource_id=resource_id,
                     auth_enabled=True,
@@ -80,17 +80,17 @@ class Test_app_client_certificates_on:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Clients are required to present a certificate for app 'app_id-1' in subscription '{AZURE_SUBSCRIPTION}'."
+                == f"Clients are required to present a certificate for app 'app_id-1' in subscription '{AZURE_SUBSCRIPTION_ID}'."
             )
             assert result[0].resource_id == resource_id
             assert result[0].resource_name == "app_id-1"
-            assert result[0].subscription == AZURE_SUBSCRIPTION
+            assert result[0].subscription == AZURE_SUBSCRIPTION_ID
 
     def test_app_client_certificates_off(self):
         resource_id = f"/subscriptions/{uuid4()}"
         app_client = mock.MagicMock
         app_client.apps = {
-            AZURE_SUBSCRIPTION: {
+            AZURE_SUBSCRIPTION_ID: {
                 "app_id-1": WebApp(
                     resource_id=resource_id,
                     auth_enabled=True,
@@ -119,8 +119,8 @@ class Test_app_client_certificates_on:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Clients are not required to present a certificate for app 'app_id-1' in subscription '{AZURE_SUBSCRIPTION}'."
+                == f"Clients are not required to present a certificate for app 'app_id-1' in subscription '{AZURE_SUBSCRIPTION_ID}'."
             )
             assert result[0].resource_id == resource_id
             assert result[0].resource_name == "app_id-1"
-            assert result[0].subscription == AZURE_SUBSCRIPTION
+            assert result[0].subscription == AZURE_SUBSCRIPTION_ID

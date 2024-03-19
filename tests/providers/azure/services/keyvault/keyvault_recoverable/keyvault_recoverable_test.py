@@ -8,7 +8,7 @@ from prowler.providers.azure.services.keyvault.keyvault_service import (
     Secret,
 )
 from tests.providers.azure.azure_fixtures import (
-    AZURE_SUBSCRIPTION,
+    AZURE_SUBSCRIPTION_ID,
     set_mocked_azure_provider,
 )
 
@@ -39,7 +39,7 @@ class Test_keyvault_recoverable:
         keyvault_name = "Keyvault Name"
         keyvault_id = str(uuid4())
         keyvault_client.key_vaults = {
-            AZURE_SUBSCRIPTION: [
+            AZURE_SUBSCRIPTION_ID: [
                 KeyVaultInfo(
                     id=keyvault_id,
                     name=keyvault_name,
@@ -75,9 +75,9 @@ class Test_keyvault_recoverable:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Keyvault {keyvault_name} from subscription {AZURE_SUBSCRIPTION} is not recoverable."
+                == f"Keyvault {keyvault_name} from subscription {AZURE_SUBSCRIPTION_ID} is not recoverable."
             )
-            assert result[0].subscription == AZURE_SUBSCRIPTION
+            assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == keyvault_name
             assert result[0].resource_id == keyvault_id
 
@@ -100,7 +100,7 @@ class Test_keyvault_recoverable:
             attributes=SecretAttributes(expires=84934, enabled=True),
         )
         keyvault_client.key_vaults = {
-            AZURE_SUBSCRIPTION: [
+            AZURE_SUBSCRIPTION_ID: [
                 KeyVaultInfo(
                     id=keyvault_id,
                     name=keyvault_name,
@@ -136,9 +136,9 @@ class Test_keyvault_recoverable:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Keyvault {keyvault_name} from subscription {AZURE_SUBSCRIPTION} is not recoverable."
+                == f"Keyvault {keyvault_name} from subscription {AZURE_SUBSCRIPTION_ID} is not recoverable."
             )
-            assert result[0].subscription == AZURE_SUBSCRIPTION
+            assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == keyvault_name
             assert result[0].resource_id == keyvault_id
 
@@ -154,7 +154,7 @@ class Test_keyvault_recoverable:
             attributes=SecretAttributes(expires=None, enabled=False),
         )
         keyvault_client.key_vaults = {
-            AZURE_SUBSCRIPTION: [
+            AZURE_SUBSCRIPTION_ID: [
                 KeyVaultInfo(
                     id=keyvault_id,
                     name=keyvault_name,
@@ -190,8 +190,8 @@ class Test_keyvault_recoverable:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Keyvault {keyvault_name} from subscription {AZURE_SUBSCRIPTION} is recoverable."
+                == f"Keyvault {keyvault_name} from subscription {AZURE_SUBSCRIPTION_ID} is recoverable."
             )
-            assert result[0].subscription == AZURE_SUBSCRIPTION
+            assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == keyvault_name
             assert result[0].resource_id == keyvault_id

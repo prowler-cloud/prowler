@@ -2,7 +2,7 @@ from unittest import mock
 
 from prowler.providers.azure.services.network.network_service import PublicIp
 from tests.providers.azure.azure_fixtures import (
-    AZURE_SUBSCRIPTION,
+    AZURE_SUBSCRIPTION_ID,
     set_mocked_azure_provider,
 )
 
@@ -44,7 +44,7 @@ class Test_network_public_ip_shodan:
         }
 
         network_client.public_ip_addresses = {
-            AZURE_SUBSCRIPTION: [
+            AZURE_SUBSCRIPTION_ID: [
                 PublicIp(
                     id=public_ip_id,
                     name=public_ip_name,
@@ -80,6 +80,6 @@ class Test_network_public_ip_shodan:
                 result[0].status_extended
                 == f"Public IP {ip_address} listed in Shodan with open ports {str(shodan_info['ports'])} and ISP {shodan_info['isp']} in {shodan_info['country_name']}. More info at https://www.shodan.io/host/{ip_address}."
             )
-            assert result[0].subscription == AZURE_SUBSCRIPTION
+            assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == public_ip_name
             assert result[0].resource_id == public_ip_id

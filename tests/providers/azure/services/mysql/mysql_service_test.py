@@ -6,14 +6,14 @@ from prowler.providers.azure.services.mysql.mysql_service import (
     MySQL,
 )
 from tests.providers.azure.azure_fixtures import (
-    AZURE_SUBSCRIPTION,
+    AZURE_SUBSCRIPTION_ID,
     set_mocked_azure_provider,
 )
 
 
 def mock_mysql_get_servers(_):
     return {
-        AZURE_SUBSCRIPTION: {
+        AZURE_SUBSCRIPTION_ID: {
             "test": FlexibleServer(
                 resource_id="/subscriptions/resource_id",
                 location="location",
@@ -52,7 +52,7 @@ class Test_MySQL_Service:
     def test__get_client__(self):
         mysql = MySQL(set_mocked_azure_provider())
         assert (
-            mysql.clients[AZURE_SUBSCRIPTION].__class__.__name__
+            mysql.clients[AZURE_SUBSCRIPTION_ID].__class__.__name__
             == "MySQLManagementClient"
         )
 
@@ -64,28 +64,33 @@ class Test_MySQL_Service:
         mysql = MySQL(set_mocked_azure_provider())
         assert len(mysql.flexible_servers) == 1
         assert (
-            mysql.flexible_servers[AZURE_SUBSCRIPTION]["test"].resource_id
+            mysql.flexible_servers[AZURE_SUBSCRIPTION_ID]["test"].resource_id
             == "/subscriptions/resource_id"
         )
-        assert mysql.flexible_servers[AZURE_SUBSCRIPTION]["test"].location == "location"
-        assert mysql.flexible_servers[AZURE_SUBSCRIPTION]["test"].version == "version"
         assert (
-            len(mysql.flexible_servers[AZURE_SUBSCRIPTION]["test"].configurations) == 1
+            mysql.flexible_servers[AZURE_SUBSCRIPTION_ID]["test"].location == "location"
         )
         assert (
-            mysql.flexible_servers[AZURE_SUBSCRIPTION]["test"]
+            mysql.flexible_servers[AZURE_SUBSCRIPTION_ID]["test"].version == "version"
+        )
+        assert (
+            len(mysql.flexible_servers[AZURE_SUBSCRIPTION_ID]["test"].configurations)
+            == 1
+        )
+        assert (
+            mysql.flexible_servers[AZURE_SUBSCRIPTION_ID]["test"]
             .configurations["test"]
             .resource_id
             == "/subscriptions/test/resource_id"
         )
         assert (
-            mysql.flexible_servers[AZURE_SUBSCRIPTION]["test"]
+            mysql.flexible_servers[AZURE_SUBSCRIPTION_ID]["test"]
             .configurations["test"]
             .description
             == "description"
         )
         assert (
-            mysql.flexible_servers[AZURE_SUBSCRIPTION]["test"]
+            mysql.flexible_servers[AZURE_SUBSCRIPTION_ID]["test"]
             .configurations["test"]
             .value
             == "value"

@@ -1,3 +1,5 @@
+# This file needs to be named with the provider at the beginning since there is a limitation in pytest and two tests files cannot have the same name
+# https://github.com/pytest-dev/pytest/issues/774#issuecomment-112343498
 from kubernetes import client
 
 from prowler.providers.kubernetes.lib.service.service import KubernetesService

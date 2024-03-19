@@ -5,7 +5,7 @@ from azure.mgmt.network.models._models import SecurityRule
 
 from prowler.providers.azure.services.network.network_service import SecurityGroup
 from tests.providers.azure.azure_fixtures import (
-    AZURE_SUBSCRIPTION,
+    AZURE_SUBSCRIPTION_ID,
     set_mocked_azure_provider,
 )
 
@@ -39,7 +39,7 @@ class Test_network_ssh_internet_access_restricted:
         security_group_id = str(uuid4())
 
         network_client.security_groups = {
-            AZURE_SUBSCRIPTION: [
+            AZURE_SUBSCRIPTION_ID: [
                 SecurityGroup(
                     id=security_group_id,
                     name=security_group_name,
@@ -69,9 +69,9 @@ class Test_network_ssh_internet_access_restricted:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Security Group {security_group_name} from subscription {AZURE_SUBSCRIPTION} has SSH internet access restricted."
+                == f"Security Group {security_group_name} from subscription {AZURE_SUBSCRIPTION_ID} has SSH internet access restricted."
             )
-            assert result[0].subscription == AZURE_SUBSCRIPTION
+            assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == security_group_name
             assert result[0].resource_id == security_group_id
 
@@ -81,7 +81,7 @@ class Test_network_ssh_internet_access_restricted:
         security_group_id = str(uuid4())
 
         network_client.security_groups = {
-            AZURE_SUBSCRIPTION: [
+            AZURE_SUBSCRIPTION_ID: [
                 SecurityGroup(
                     id=security_group_id,
                     name=security_group_name,
@@ -119,9 +119,9 @@ class Test_network_ssh_internet_access_restricted:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Security Group {security_group_name} from subscription {AZURE_SUBSCRIPTION} has SSH internet access allowed."
+                == f"Security Group {security_group_name} from subscription {AZURE_SUBSCRIPTION_ID} has SSH internet access allowed."
             )
-            assert result[0].subscription == AZURE_SUBSCRIPTION
+            assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == security_group_name
             assert result[0].resource_id == security_group_id
 
@@ -131,7 +131,7 @@ class Test_network_ssh_internet_access_restricted:
         security_group_id = str(uuid4())
 
         network_client.security_groups = {
-            AZURE_SUBSCRIPTION: [
+            AZURE_SUBSCRIPTION_ID: [
                 SecurityGroup(
                     id=security_group_id,
                     name=security_group_name,
@@ -169,9 +169,9 @@ class Test_network_ssh_internet_access_restricted:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Security Group {security_group_name} from subscription {AZURE_SUBSCRIPTION} has SSH internet access allowed."
+                == f"Security Group {security_group_name} from subscription {AZURE_SUBSCRIPTION_ID} has SSH internet access allowed."
             )
-            assert result[0].subscription == AZURE_SUBSCRIPTION
+            assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == security_group_name
             assert result[0].resource_id == security_group_id
 
@@ -181,7 +181,7 @@ class Test_network_ssh_internet_access_restricted:
         security_group_id = str(uuid4())
 
         network_client.security_groups = {
-            AZURE_SUBSCRIPTION: [
+            AZURE_SUBSCRIPTION_ID: [
                 SecurityGroup(
                     id=security_group_id,
                     name=security_group_name,
@@ -219,8 +219,8 @@ class Test_network_ssh_internet_access_restricted:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Security Group {security_group_name} from subscription {AZURE_SUBSCRIPTION} has SSH internet access restricted."
+                == f"Security Group {security_group_name} from subscription {AZURE_SUBSCRIPTION_ID} has SSH internet access restricted."
             )
-            assert result[0].subscription == AZURE_SUBSCRIPTION
+            assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == security_group_name
             assert result[0].resource_id == security_group_id

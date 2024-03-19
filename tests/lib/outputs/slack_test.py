@@ -8,7 +8,11 @@ from prowler.lib.outputs.slack import (
     send_slack_message,
 )
 from tests.providers.aws.utils import AWS_ACCOUNT_NUMBER, set_mocked_aws_provider
-from tests.providers.azure.azure_fixtures import set_mocked_azure_provider
+from tests.providers.azure.azure_fixtures import (
+    AZURE_SUBSCRIPTION_ID,
+    AZURE_SUBSCRIPTION_NAME,
+    set_mocked_azure_provider,
+)
 from tests.providers.gcp.gcp_fixtures import set_mocked_gcp_provider
 
 
@@ -33,7 +37,7 @@ class TestSlackIntegration:
         azure_provider = set_mocked_azure_provider()
 
         assert create_message_identity(azure_provider) == (
-            "Azure Subscriptions:\n- *subscription 1: qwerty*\n- *subscription 2: asdfg*\n",
+            f"Azure Subscriptions:\n- *{AZURE_SUBSCRIPTION_ID}: {AZURE_SUBSCRIPTION_NAME}*\n",
             azure_logo,
         )
 

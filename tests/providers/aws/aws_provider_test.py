@@ -245,7 +245,6 @@ class TestAWSProvider:
 
         assert aws_provider.type == "aws"
         assert aws_provider.ignore_unused_services is True
-        assert aws_provider.mutelist == {}
         assert aws_provider.audit_config == {}
         assert aws_provider.session.current_session.region_name == AWS_REGION_US_EAST_1
 
@@ -361,7 +360,6 @@ class TestAWSProvider:
 
             assert aws_provider.type == "aws"
             assert aws_provider.ignore_unused_services is None
-            assert aws_provider.mutelist == {}
             assert aws_provider.audit_config == {}
             assert (
                 aws_provider.session.current_session.region_name == AWS_REGION_US_EAST_1

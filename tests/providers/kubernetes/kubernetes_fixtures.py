@@ -32,6 +32,7 @@ KUBERNETES_CONFIG = {
 def set_mocked_kubernetes_provider() -> KubernetesProvider:
     provider = MagicMock()
 
+    provider.type = "kubernetes"
     provider.identity = KubernetesIdentityInfo(context=None, cluster=None, user=None)
     provider.identity.context = None
     provider.session = KubernetesSession(api_client=client.ApiClient, context=None)

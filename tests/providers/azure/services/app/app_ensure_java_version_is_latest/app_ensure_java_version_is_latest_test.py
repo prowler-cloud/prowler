@@ -3,7 +3,7 @@ from uuid import uuid4
 
 from prowler.providers.azure.services.app.app_service import WebApp
 from tests.providers.azure.azure_fixtures import (
-    AZURE_SUBSCRIPTION,
+    AZURE_SUBSCRIPTION_ID,
     set_mocked_azure_provider,
 )
 
@@ -30,7 +30,7 @@ class Test_app_ensure_java_version_is_latest:
 
     def test_app_subscriptions_empty(self):
         app_client = mock.MagicMock
-        app_client.apps = {AZURE_SUBSCRIPTION: {}}
+        app_client.apps = {AZURE_SUBSCRIPTION_ID: {}}
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
@@ -51,7 +51,7 @@ class Test_app_ensure_java_version_is_latest:
         resource_id = f"/subscriptions/{uuid4()}"
         app_client = mock.MagicMock
         app_client.apps = {
-            AZURE_SUBSCRIPTION: {
+            AZURE_SUBSCRIPTION_ID: {
                 "app_id-1": WebApp(
                     resource_id=resource_id,
                     auth_enabled=True,
@@ -82,7 +82,7 @@ class Test_app_ensure_java_version_is_latest:
         resource_id = f"/subscriptions/{uuid4()}"
         app_client = mock.MagicMock
         app_client.apps = {
-            AZURE_SUBSCRIPTION: {
+            AZURE_SUBSCRIPTION_ID: {
                 "app_id-1": WebApp(
                     resource_id=resource_id,
                     auth_enabled=True,
@@ -115,17 +115,17 @@ class Test_app_ensure_java_version_is_latest:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Java version is set to 'java 17' for app 'app_id-1' in subscription '{AZURE_SUBSCRIPTION}'."
+                == f"Java version is set to 'java 17' for app 'app_id-1' in subscription '{AZURE_SUBSCRIPTION_ID}'."
             )
             assert result[0].resource_id == resource_id
             assert result[0].resource_name == "app_id-1"
-            assert result[0].subscription == AZURE_SUBSCRIPTION
+            assert result[0].subscription == AZURE_SUBSCRIPTION_ID
 
     def test_app_linux_java_version_not_latest(self):
         resource_id = f"/subscriptions/{uuid4()}"
         app_client = mock.MagicMock
         app_client.apps = {
-            AZURE_SUBSCRIPTION: {
+            AZURE_SUBSCRIPTION_ID: {
                 "app_id-1": WebApp(
                     resource_id=resource_id,
                     auth_enabled=True,
@@ -158,17 +158,17 @@ class Test_app_ensure_java_version_is_latest:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Java version is set to 'Tomcat|9.0-java11', but should be set to 'java 17' for app 'app_id-1' in subscription '{AZURE_SUBSCRIPTION}'."
+                == f"Java version is set to 'Tomcat|9.0-java11', but should be set to 'java 17' for app 'app_id-1' in subscription '{AZURE_SUBSCRIPTION_ID}'."
             )
             assert result[0].resource_id == resource_id
             assert result[0].resource_name == "app_id-1"
-            assert result[0].subscription == AZURE_SUBSCRIPTION
+            assert result[0].subscription == AZURE_SUBSCRIPTION_ID
 
     def test_app_windows_java_version_latest(self):
         resource_id = f"/subscriptions/{uuid4()}"
         app_client = mock.MagicMock
         app_client.apps = {
-            AZURE_SUBSCRIPTION: {
+            AZURE_SUBSCRIPTION_ID: {
                 "app_id-1": WebApp(
                     resource_id=resource_id,
                     auth_enabled=True,
@@ -201,17 +201,17 @@ class Test_app_ensure_java_version_is_latest:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Java version is set to 'java 17' for app 'app_id-1' in subscription '{AZURE_SUBSCRIPTION}'."
+                == f"Java version is set to 'java 17' for app 'app_id-1' in subscription '{AZURE_SUBSCRIPTION_ID}'."
             )
             assert result[0].resource_id == resource_id
             assert result[0].resource_name == "app_id-1"
-            assert result[0].subscription == AZURE_SUBSCRIPTION
+            assert result[0].subscription == AZURE_SUBSCRIPTION_ID
 
     def test_app_windows_java_version_not_latest(self):
         resource_id = f"/subscriptions/{uuid4()}"
         app_client = mock.MagicMock
         app_client.apps = {
-            AZURE_SUBSCRIPTION: {
+            AZURE_SUBSCRIPTION_ID: {
                 "app_id-1": WebApp(
                     resource_id=resource_id,
                     auth_enabled=True,
@@ -244,17 +244,17 @@ class Test_app_ensure_java_version_is_latest:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Java version is set to 'java11', but should be set to 'java 17' for app 'app_id-1' in subscription '{AZURE_SUBSCRIPTION}'."
+                == f"Java version is set to 'java11', but should be set to 'java 17' for app 'app_id-1' in subscription '{AZURE_SUBSCRIPTION_ID}'."
             )
             assert result[0].resource_id == resource_id
             assert result[0].resource_name == "app_id-1"
-            assert result[0].subscription == AZURE_SUBSCRIPTION
+            assert result[0].subscription == AZURE_SUBSCRIPTION_ID
 
     def test_app_linux_php_version_latest(self):
         resource_id = f"/subscriptions/{uuid4()}"
         app_client = mock.MagicMock
         app_client.apps = {
-            AZURE_SUBSCRIPTION: {
+            AZURE_SUBSCRIPTION_ID: {
                 "app_id-1": WebApp(
                     resource_id=resource_id,
                     auth_enabled=True,
