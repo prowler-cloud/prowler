@@ -5,7 +5,7 @@ from prowler.providers.azure.services.entra.entra_service import (
     Entra,
     User,
 )
-from tests.providers.azure.azure_fixtures import DOMAIN, set_mocked_azure_audit_info
+from tests.providers.azure.azure_fixtures import DOMAIN, set_mocked_azure_provider
 
 
 async def mock_entra_get_users(_):
@@ -33,21 +33,21 @@ async def mock_entra_get_authorization_policy(_):
 )
 class Test_Entra_Service:
     def test__get_client__(self):
-        entra_client = Entra(set_mocked_azure_audit_info())
+        entra_client = Entra(set_mocked_azure_provider())
         assert entra_client.clients[DOMAIN].__class__.__name__ == "GraphServiceClient"
 
     def test__get_subscriptions__(self):
-        entra_client = Entra(set_mocked_azure_audit_info())
+        entra_client = Entra(set_mocked_azure_provider())
         assert entra_client.subscriptions.__class__.__name__ == "dict"
 
     def test__get_users__(self):
-        entra_client = Entra(set_mocked_azure_audit_info())
+        entra_client = Entra(set_mocked_azure_provider())
         assert len(entra_client.users) == 1
         assert entra_client.users["user-1@tenant1.es"].id == "id-1"
         assert entra_client.users["user-1@tenant1.es"].name == "User 1"
 
     def test__get_authorization_policy__(self):
-        entra_client = Entra(set_mocked_azure_audit_info())
+        entra_client = Entra(set_mocked_azure_provider())
         assert entra_client.authorization_policy.id == "id-1"
         assert entra_client.authorization_policy.name == "Name 1"
         assert entra_client.authorization_policy.description == "Description 1"

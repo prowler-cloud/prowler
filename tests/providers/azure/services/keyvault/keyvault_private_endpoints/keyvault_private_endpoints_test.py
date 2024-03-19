@@ -6,7 +6,6 @@ from azure.mgmt.keyvault.v2023_07_01.models import (
     VaultProperties,
 )
 
-from prowler.providers.azure.services.keyvault.keyvault_service import KeyVaultInfo
 from tests.providers.azure.azure_fixtures import (
     AZURE_SUBSCRIPTION_ID,
     set_mocked_azure_provider,
@@ -37,24 +36,6 @@ class Test_keyvault_private_endpoints:
         keyvault_client = mock.MagicMock
         keyvault_name = "Keyvault Name"
         keyvault_id = str(uuid4())
-        keyvault_client.key_vaults = {
-            AZURE_SUBSCRIPTION_ID: [
-                KeyVaultInfo(
-                    id=keyvault_id,
-                    name=keyvault_name,
-                    location="location",
-                    resource_group="resource_group",
-                    properties=VaultProperties(
-                        tenant_id="tenantid",
-                        sku="sku",
-                        enable_rbac_authorization=False,
-                        private_endpoint_connections=None,
-                    ),
-                    keys=[],
-                    secrets=[],
-                )
-            ]
-        }
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
@@ -66,6 +47,28 @@ class Test_keyvault_private_endpoints:
             from prowler.providers.azure.services.keyvault.keyvault_private_endpoints.keyvault_private_endpoints import (
                 keyvault_private_endpoints,
             )
+            from prowler.providers.azure.services.keyvault.keyvault_service import (
+                KeyVaultInfo,
+            )
+
+            keyvault_client.key_vaults = {
+                AZURE_SUBSCRIPTION_ID: [
+                    KeyVaultInfo(
+                        id=keyvault_id,
+                        name=keyvault_name,
+                        location="location",
+                        resource_group="resource_group",
+                        properties=VaultProperties(
+                            tenant_id="tenantid",
+                            sku="sku",
+                            enable_rbac_authorization=False,
+                            private_endpoint_connections=None,
+                        ),
+                        keys=[],
+                        secrets=[],
+                    )
+                ]
+            }
 
             check = keyvault_private_endpoints()
             result = check.execute()
@@ -86,23 +89,6 @@ class Test_keyvault_private_endpoints:
         private_endpoint = PrivateEndpointConnectionItem(
             id="id",
         )
-        keyvault_client.key_vaults = {
-            AZURE_SUBSCRIPTION_ID: [
-                KeyVaultInfo(
-                    id=keyvault_id,
-                    name=keyvault_name,
-                    location="location",
-                    resource_group="resource_group",
-                    properties=VaultProperties(
-                        tenant_id="tenantid",
-                        sku="sku",
-                        enable_rbac_authorization=True,
-                    ),
-                    keys=[],
-                    secrets=[],
-                )
-            ]
-        }
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
@@ -114,7 +100,27 @@ class Test_keyvault_private_endpoints:
             from prowler.providers.azure.services.keyvault.keyvault_private_endpoints.keyvault_private_endpoints import (
                 keyvault_private_endpoints,
             )
+            from prowler.providers.azure.services.keyvault.keyvault_service import (
+                KeyVaultInfo,
+            )
 
+            keyvault_client.key_vaults = {
+                AZURE_SUBSCRIPTION_ID: [
+                    KeyVaultInfo(
+                        id=keyvault_id,
+                        name=keyvault_name,
+                        location="location",
+                        resource_group="resource_group",
+                        properties=VaultProperties(
+                            tenant_id="tenantid",
+                            sku="sku",
+                            enable_rbac_authorization=True,
+                        ),
+                        keys=[],
+                        secrets=[],
+                    )
+                ]
+            }
             keyvault_client.key_vaults[AZURE_SUBSCRIPTION_ID][
                 0
             ].properties.private_endpoint_connections = [private_endpoint]

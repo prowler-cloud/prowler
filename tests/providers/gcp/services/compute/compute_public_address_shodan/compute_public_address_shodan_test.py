@@ -1,7 +1,7 @@
 from unittest import mock
 
 from prowler.providers.gcp.services.compute.compute_service import Address
-from tests.providers.gcp.lib.audit_info_utils import GCP_PROJECT_ID
+from tests.providers.gcp.gcp_fixtures import GCP_PROJECT_ID, set_mocked_gcp_provider
 
 
 class Test_compute_public_address_shodan:
@@ -11,11 +11,11 @@ class Test_compute_public_address_shodan:
         compute_client.audit_info = mock.MagicMock
 
         with mock.patch(
-            "prowler.providers.gcp.services.compute.compute_service.Network",
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_gcp_provider(),
+        ), mock.patch(
+            "prowler.providers.gcp.services.compute.compute_public_address_shodan.compute_public_address_shodan.compute_client",
             new=compute_client,
-        ) as service_client, mock.patch(
-            "prowler.providers.gcp.services.compute.compute_client.compute_client",
-            new=service_client,
         ):
             from prowler.providers.gcp.services.compute.compute_public_address_shodan.compute_public_address_shodan import (
                 compute_public_address_shodan,
@@ -52,11 +52,11 @@ class Test_compute_public_address_shodan:
         ]
 
         with mock.patch(
-            "prowler.providers.gcp.services.compute.compute_service.Network",
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_gcp_provider(),
+        ), mock.patch(
+            "prowler.providers.gcp.services.compute.compute_public_address_shodan.compute_public_address_shodan.compute_client",
             new=compute_client,
-        ) as service_client, mock.patch(
-            "prowler.providers.gcp.services.compute.compute_client.compute_client",
-            new=service_client,
         ), mock.patch(
             "prowler.providers.gcp.services.compute.compute_public_address_shodan.compute_public_address_shodan.shodan.Shodan.host",
             return_value=shodan_info,
