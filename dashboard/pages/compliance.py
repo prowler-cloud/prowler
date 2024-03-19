@@ -3,6 +3,7 @@ import glob
 import importlib
 import math
 import os
+import csv
 import re
 import warnings
 
@@ -27,7 +28,16 @@ warnings.filterwarnings("ignore")
 # Global variables
 # TODO: Create a flag to let the user put a custom path
 
-csv_files = [file for file in glob.glob(os.path.join(folder_path_compliance, "*.csv"))]
+csv_files = []
+
+for file in glob.glob(os.path.join(folder_path_compliance, "*.csv")):
+    with open(file, 'r', newline='') as csvfile:
+        reader = csv.reader(csvfile)
+        num_rows = sum(1 for row in reader)  
+        if num_rows > 1: 
+            csv_files.append(file)
+
+
 
 
 def load_csv_files(csv_files):
@@ -185,20 +195,18 @@ def display_data(
 
     else:
 
-        # Use glob to find all CSV files in the folder
-        csv_files = glob.glob(os.path.join(folder_path_compliance, "*.csv"))
         # Take only the files that match the compliance selected
-        csv_files = [file for file in csv_files if analytics_input in file]
+        files = [file for file in csv_files if analytics_input in file]
 
-        def load_csv_files(csv_files):
+        def load_csv_files(files):
             """Load CSV files into a single pandas DataFrame."""
             dfs = []
-            for file in csv_files:
+            for file in files:
                 df = pd.read_csv(file, sep=";", on_bad_lines="skip")
                 dfs.append(df.astype(str))
             return pd.concat(dfs, ignore_index=True)
         
-        data = load_csv_files(csv_files)
+        data = load_csv_files(files)
 
         if "gcp" in analytics_input:
             data = data.rename(columns={"LOCATION": "REGION"})
@@ -317,7 +325,6 @@ def display_data(
                 compliance_module = importlib.import_module(f"dashboard.compliance.{current}")
                 table = compliance_module.get_table(data)
             except ModuleNotFoundError as e:
-                print(e)
                 table = html.Div(
                     [
                         html.H5(

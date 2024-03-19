@@ -2,6 +2,7 @@
 import glob
 import os
 import warnings
+import csv
 from datetime import datetime, timedelta
 from itertools import product
 
@@ -27,7 +28,15 @@ warnings.filterwarnings("ignore")
 
 # Global variables
 # TODO: Create a flag to let the user put a custom path
-csv_files = [file for file in glob.glob(os.path.join(folder_path_overview, "*.csv"))]
+csv_files = []
+
+for file in glob.glob(os.path.join(folder_path_overview, "*.csv")):
+    with open(file, 'r', newline='') as csvfile:
+        reader = csv.reader(csvfile)
+        num_rows = sum(1 for row in reader)  
+        if num_rows > 1: 
+            csv_files.append(file)
+
 
 # Import logos providers
 aws_provider_logo = html.Img(
