@@ -107,9 +107,7 @@ class TestOutputs:
         with pytest.raises(Exception) as exc:
             set_report_color(test_status)
 
-        assert "Invalid Report Status. Must be PASS, FAIL, ERROR or MUTED" in str(
-            exc.value
-        )
+        assert "Invalid Report Status. Must be PASS, FAIL or MANUAL" in str(exc.value)
         assert exc.type == Exception
 
     def test_generate_common_csv_fields(self):
