@@ -1,7 +1,12 @@
 from unittest import mock
 
 from prowler.providers.aws.services.glue.glue_service import CatalogEncryptionSetting
-from tests.providers.aws.utils import AWS_REGION_US_EAST_1, set_mocked_aws_provider
+from tests.providers.aws.utils import (
+    AWS_ACCOUNT_NUMBER,
+    AWS_COMMERCIAL_PARTITION,
+    AWS_REGION_US_EAST_1,
+    set_mocked_aws_provider,
+)
 
 
 class Test_glue_data_catalogs_connection_passwords_encryption_enabled:
@@ -37,8 +42,8 @@ class Test_glue_data_catalogs_connection_passwords_encryption_enabled:
                 password_kms_id=None,
             )
         ]
-        glue_client.audited_account = "12345678912"
-        glue_client.audited_partition = "aws"
+        glue_client.audited_account = AWS_ACCOUNT_NUMBER
+        glue_client.audited_partition = AWS_COMMERCIAL_PARTITION
         glue_client.region = AWS_REGION_US_EAST_1
         glue_client.data_catalog_arn_template = f"arn:{glue_client.audited_partition}:glue:{glue_client.region}:{glue_client.audited_account}:data-catalog"
         glue_client.__get_data_catalog_arn_template__ = mock.MagicMock(
@@ -62,7 +67,8 @@ class Test_glue_data_catalogs_connection_passwords_encryption_enabled:
                 result[0].status_extended
                 == "Glue data catalog connection password is not encrypted."
             )
-            assert result[0].resource_id == "12345678912"
+            assert result[0].resource_id == AWS_ACCOUNT_NUMBER
+            assert result[0].resource_arn == glue_client.data_catalog_arn_template
             assert result[0].region == AWS_REGION_US_EAST_1
 
     def test_glue_catalog_password_unencrypted_ignoring(self):
@@ -78,8 +84,8 @@ class Test_glue_data_catalogs_connection_passwords_encryption_enabled:
                 password_kms_id=None,
             )
         ]
-        glue_client.audited_account = "12345678912"
-        glue_client.audited_partition = "aws"
+        glue_client.audited_account = AWS_ACCOUNT_NUMBER
+        glue_client.audited_partition = AWS_COMMERCIAL_PARTITION
         glue_client.region = AWS_REGION_US_EAST_1
         glue_client.data_catalog_arn_template = f"arn:{glue_client.audited_partition}:glue:{glue_client.region}:{glue_client.audited_account}:data-catalog"
         glue_client.__get_data_catalog_arn_template__ = mock.MagicMock(
@@ -113,8 +119,8 @@ class Test_glue_data_catalogs_connection_passwords_encryption_enabled:
                 password_kms_id=None,
             )
         ]
-        glue_client.audited_account = "12345678912"
-        glue_client.audited_partition = "aws"
+        glue_client.audited_account = AWS_ACCOUNT_NUMBER
+        glue_client.audited_partition = AWS_COMMERCIAL_PARTITION
         glue_client.region = AWS_REGION_US_EAST_1
         glue_client.data_catalog_arn_template = f"arn:{glue_client.audited_partition}:glue:{glue_client.region}:{glue_client.audited_account}:data-catalog"
         glue_client.__get_data_catalog_arn_template__ = mock.MagicMock(
@@ -139,7 +145,8 @@ class Test_glue_data_catalogs_connection_passwords_encryption_enabled:
                 result[0].status_extended
                 == "Glue data catalog connection password is not encrypted."
             )
-            assert result[0].resource_id == "12345678912"
+            assert result[0].resource_id == AWS_ACCOUNT_NUMBER
+            assert result[0].resource_arn == glue_client.data_catalog_arn_template
             assert result[0].region == AWS_REGION_US_EAST_1
 
     def test_glue_catalog_encrypted(self):
@@ -154,7 +161,13 @@ class Test_glue_data_catalogs_connection_passwords_encryption_enabled:
                 password_kms_id="kms-key",
             )
         ]
-        glue_client.audited_account = "12345678912"
+        glue_client.audited_account = AWS_ACCOUNT_NUMBER
+        glue_client.audited_partition = "aws"
+        glue_client.region = AWS_REGION_US_EAST_1
+        glue_client.data_catalog_arn_template = f"arn:{glue_client.audited_partition}:glue:{glue_client.region}:{glue_client.audited_account}:data-catalog"
+        glue_client.__get_data_catalog_arn_template__ = mock.MagicMock(
+            return_value=glue_client.data_catalog_arn_template
+        )
 
         with mock.patch(
             "prowler.providers.aws.services.glue.glue_service.Glue",
@@ -174,5 +187,6 @@ class Test_glue_data_catalogs_connection_passwords_encryption_enabled:
                 result[0].status_extended
                 == "Glue data catalog connection password is encrypted with KMS key kms-key."
             )
-            assert result[0].resource_id == "12345678912"
+            assert result[0].resource_id == AWS_ACCOUNT_NUMBER
+            assert result[0].resource_arn == glue_client.data_catalog_arn_template
             assert result[0].region == AWS_REGION_US_EAST_1
