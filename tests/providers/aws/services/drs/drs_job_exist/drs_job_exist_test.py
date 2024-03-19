@@ -176,7 +176,8 @@ class Test_drs_job_exist:
             result = check.execute()
 
             assert len(result) == 1
-            assert result[0].status == "MUTED"
+            assert result[0].status == "FAIL"
+            assert result[0].muted
             assert result[0].status_extended == "DRS is not enabled for this region."
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
             assert (

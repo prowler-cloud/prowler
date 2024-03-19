@@ -185,7 +185,8 @@ class Test_config_recorder_all_regions_enabled:
             # Search for the recorder just created
             for recorder in result:
                 if recorder.region == AWS_REGION_US_EAST_1:
-                    assert recorder.status == "MUTED"
+                    assert recorder.muted
+                    assert recorder.status == "FAIL"
                     assert (
                         recorder.status_extended
                         == f"AWS Config recorder {AWS_ACCOUNT_NUMBER} is disabled."

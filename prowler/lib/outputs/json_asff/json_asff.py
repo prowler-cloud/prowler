@@ -11,16 +11,17 @@ from prowler.lib.outputs.json_asff.models import (
 from prowler.lib.utils.utils import hash_sha512
 
 
-def generate_json_asff_status(status: str) -> str:
+def generate_json_asff_status(status: str, muted: bool = False) -> str:
     json_asff_status = ""
-    if status == "PASS":
-        json_asff_status = "PASSED"
-    elif status == "FAIL":
-        json_asff_status = "FAILED"
-    elif status == "MUTED":
+    if muted:
         json_asff_status = "MUTED"
     else:
-        json_asff_status = "NOT_AVAILABLE"
+        if status == "PASS":
+            json_asff_status = "PASSED"
+        elif status == "FAIL":
+            json_asff_status = "FAILED"
+        else:
+            json_asff_status = "NOT_AVAILABLE"
 
     return json_asff_status
 

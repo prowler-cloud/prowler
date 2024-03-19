@@ -93,7 +93,8 @@ class Test_accessanalyzer_enabled:
             result = check.execute()
 
             assert len(result) == 1
-            assert result[0].status == "MUTED"
+            assert result[0].status == "FAIL"
+            assert result[0].muted
             assert (
                 result[0].status_extended
                 == f"IAM Access Analyzer in account {AWS_ACCOUNT_NUMBER} is not enabled."
