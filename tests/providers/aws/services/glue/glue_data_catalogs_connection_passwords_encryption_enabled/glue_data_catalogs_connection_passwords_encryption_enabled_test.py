@@ -91,7 +91,7 @@ class Test_glue_data_catalogs_connection_passwords_encryption_enabled:
         glue_client.__get_data_catalog_arn_template__ = mock.MagicMock(
             return_value=glue_client.data_catalog_arn_template
         )
-        glue_client.provider._ignore_unused_services = True
+        glue_client.provider._scan_unused_services = False
         with mock.patch(
             "prowler.providers.aws.services.glue.glue_service.Glue",
             glue_client,
@@ -119,14 +119,14 @@ class Test_glue_data_catalogs_connection_passwords_encryption_enabled:
                 password_kms_id=None,
             )
         ]
-        glue_client.audited_account = AWS_ACCOUNT_NUMBER
         glue_client.audited_partition = AWS_COMMERCIAL_PARTITION
         glue_client.region = AWS_REGION_US_EAST_1
+        glue_client.audited_account = AWS_ACCOUNT_NUMBER
         glue_client.data_catalog_arn_template = f"arn:{glue_client.audited_partition}:glue:{glue_client.region}:{glue_client.audited_account}:data-catalog"
         glue_client.__get_data_catalog_arn_template__ = mock.MagicMock(
             return_value=glue_client.data_catalog_arn_template
         )
-        glue_client.provider._ignore_unused_services = True
+        glue_client.provider._scan_unused_services = False
         with mock.patch(
             "prowler.providers.aws.services.glue.glue_service.Glue",
             glue_client,
@@ -161,9 +161,9 @@ class Test_glue_data_catalogs_connection_passwords_encryption_enabled:
                 password_kms_id="kms-key",
             )
         ]
-        glue_client.audited_account = AWS_ACCOUNT_NUMBER
-        glue_client.audited_partition = "aws"
+        glue_client.audited_partition = AWS_COMMERCIAL_PARTITION
         glue_client.region = AWS_REGION_US_EAST_1
+        glue_client.audited_account = AWS_ACCOUNT_NUMBER
         glue_client.data_catalog_arn_template = f"arn:{glue_client.audited_partition}:glue:{glue_client.region}:{glue_client.audited_account}:data-catalog"
         glue_client.__get_data_catalog_arn_template__ = mock.MagicMock(
             return_value=glue_client.data_catalog_arn_template

@@ -3,10 +3,6 @@ from uuid import uuid4
 
 from azure.mgmt.keyvault.v2023_07_01.models import SecretAttributes, VaultProperties
 
-from prowler.providers.azure.services.keyvault.keyvault_service import (
-    KeyVaultInfo,
-    Secret,
-)
 from tests.providers.azure.azure_fixtures import (
     AZURE_SUBSCRIPTION_ID,
     set_mocked_azure_provider,
@@ -35,21 +31,6 @@ class Test_keyvault_non_rbac_secret_expiration_set:
 
     def test_no_secrets(self):
         keyvault_client = mock.MagicMock
-        keyvault_client.key_vaults = {
-            AZURE_SUBSCRIPTION_ID: [
-                KeyVaultInfo(
-                    id="id",
-                    name="name",
-                    location="location",
-                    resource_group="resource_group",
-                    properties=VaultProperties(
-                        tenant_id="tenantid", sku="sku", enable_rbac_authorization=False
-                    ),
-                    keys=[],
-                    secrets=[],
-                )
-            ]
-        }
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
@@ -61,6 +42,27 @@ class Test_keyvault_non_rbac_secret_expiration_set:
             from prowler.providers.azure.services.keyvault.keyvault_non_rbac_secret_expiration_set.keyvault_non_rbac_secret_expiration_set import (
                 keyvault_non_rbac_secret_expiration_set,
             )
+            from prowler.providers.azure.services.keyvault.keyvault_service import (
+                KeyVaultInfo,
+            )
+
+            keyvault_client.key_vaults = {
+                AZURE_SUBSCRIPTION_ID: [
+                    KeyVaultInfo(
+                        id="id",
+                        name="name",
+                        location="location",
+                        resource_group="resource_group",
+                        properties=VaultProperties(
+                            tenant_id="tenantid",
+                            sku="sku",
+                            enable_rbac_authorization=False,
+                        ),
+                        keys=[],
+                        secrets=[],
+                    )
+                ]
+            }
 
             check = keyvault_non_rbac_secret_expiration_set()
             result = check.execute()
@@ -71,28 +73,6 @@ class Test_keyvault_non_rbac_secret_expiration_set:
         keyvault_name = "Keyvault Name"
         keyvault_id = str(uuid4())
         secret_name = "Secret"
-        secret = Secret(
-            id="id",
-            name=secret_name,
-            enabled=True,
-            location="location",
-            attributes=SecretAttributes(expires=None, enabled=True),
-        )
-        keyvault_client.key_vaults = {
-            AZURE_SUBSCRIPTION_ID: [
-                KeyVaultInfo(
-                    id=keyvault_id,
-                    name=keyvault_name,
-                    location="location",
-                    resource_group="resource_group",
-                    properties=VaultProperties(
-                        tenant_id="tenantid", sku="sku", enable_rbac_authorization=False
-                    ),
-                    keys=[],
-                    secrets=[secret],
-                )
-            ]
-        }
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
@@ -104,7 +84,35 @@ class Test_keyvault_non_rbac_secret_expiration_set:
             from prowler.providers.azure.services.keyvault.keyvault_non_rbac_secret_expiration_set.keyvault_non_rbac_secret_expiration_set import (
                 keyvault_non_rbac_secret_expiration_set,
             )
+            from prowler.providers.azure.services.keyvault.keyvault_service import (
+                KeyVaultInfo,
+                Secret,
+            )
 
+            secret = Secret(
+                id="id",
+                name=secret_name,
+                enabled=True,
+                location="location",
+                attributes=SecretAttributes(expires=None, enabled=True),
+            )
+            keyvault_client.key_vaults = {
+                AZURE_SUBSCRIPTION_ID: [
+                    KeyVaultInfo(
+                        id=keyvault_id,
+                        name=keyvault_name,
+                        location="location",
+                        resource_group="resource_group",
+                        properties=VaultProperties(
+                            tenant_id="tenantid",
+                            sku="sku",
+                            enable_rbac_authorization=False,
+                        ),
+                        keys=[],
+                        secrets=[secret],
+                    )
+                ]
+            }
             check = keyvault_non_rbac_secret_expiration_set()
             result = check.execute()
             assert len(result) == 1
@@ -123,35 +131,6 @@ class Test_keyvault_non_rbac_secret_expiration_set:
         keyvault_id = str(uuid4())
         secret1_name = "Secret1"
         secret2_name = "Secret2"
-        secret1 = Secret(
-            id="id",
-            name=secret1_name,
-            enabled=True,
-            location="location",
-            attributes=SecretAttributes(expires=None),
-        )
-        secret2 = Secret(
-            id="id",
-            name=secret2_name,
-            enabled=True,
-            location="location",
-            attributes=SecretAttributes(expires=84934),
-        )
-        keyvault_client.key_vaults = {
-            AZURE_SUBSCRIPTION_ID: [
-                KeyVaultInfo(
-                    id=keyvault_id,
-                    name=keyvault_name,
-                    location="location",
-                    resource_group="resource_group",
-                    properties=VaultProperties(
-                        tenant_id="tenantid", sku="sku", enable_rbac_authorization=False
-                    ),
-                    keys=[],
-                    secrets=[secret1, secret2],
-                )
-            ]
-        }
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
@@ -163,7 +142,42 @@ class Test_keyvault_non_rbac_secret_expiration_set:
             from prowler.providers.azure.services.keyvault.keyvault_non_rbac_secret_expiration_set.keyvault_non_rbac_secret_expiration_set import (
                 keyvault_non_rbac_secret_expiration_set,
             )
+            from prowler.providers.azure.services.keyvault.keyvault_service import (
+                KeyVaultInfo,
+                Secret,
+            )
 
+            secret1 = Secret(
+                id="id",
+                name=secret1_name,
+                enabled=True,
+                location="location",
+                attributes=SecretAttributes(expires=None),
+            )
+            secret2 = Secret(
+                id="id",
+                name=secret2_name,
+                enabled=True,
+                location="location",
+                attributes=SecretAttributes(expires=84934),
+            )
+            keyvault_client.key_vaults = {
+                AZURE_SUBSCRIPTION_ID: [
+                    KeyVaultInfo(
+                        id=keyvault_id,
+                        name=keyvault_name,
+                        location="location",
+                        resource_group="resource_group",
+                        properties=VaultProperties(
+                            tenant_id="tenantid",
+                            sku="sku",
+                            enable_rbac_authorization=False,
+                        ),
+                        keys=[],
+                        secrets=[secret1, secret2],
+                    )
+                ]
+            }
             check = keyvault_non_rbac_secret_expiration_set()
             result = check.execute()
             assert len(result) == 1
@@ -180,28 +194,6 @@ class Test_keyvault_non_rbac_secret_expiration_set:
         keyvault_client = mock.MagicMock
         keyvault_name = "Keyvault Name"
         keyvault_id = str(uuid4())
-        secret = Secret(
-            id="id",
-            name="name",
-            enabled=False,
-            location="location",
-            attributes=SecretAttributes(expires=None),
-        )
-        keyvault_client.key_vaults = {
-            AZURE_SUBSCRIPTION_ID: [
-                KeyVaultInfo(
-                    id=keyvault_id,
-                    name=keyvault_name,
-                    location="location",
-                    resource_group="resource_group",
-                    properties=VaultProperties(
-                        tenant_id="tenantid", sku="sku", enable_rbac_authorization=False
-                    ),
-                    keys=[],
-                    secrets=[secret],
-                )
-            ]
-        }
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
@@ -213,7 +205,35 @@ class Test_keyvault_non_rbac_secret_expiration_set:
             from prowler.providers.azure.services.keyvault.keyvault_non_rbac_secret_expiration_set.keyvault_non_rbac_secret_expiration_set import (
                 keyvault_non_rbac_secret_expiration_set,
             )
+            from prowler.providers.azure.services.keyvault.keyvault_service import (
+                KeyVaultInfo,
+                Secret,
+            )
 
+            secret = Secret(
+                id="id",
+                name="name",
+                enabled=False,
+                location="location",
+                attributes=SecretAttributes(expires=None),
+            )
+            keyvault_client.key_vaults = {
+                AZURE_SUBSCRIPTION_ID: [
+                    KeyVaultInfo(
+                        id=keyvault_id,
+                        name=keyvault_name,
+                        location="location",
+                        resource_group="resource_group",
+                        properties=VaultProperties(
+                            tenant_id="tenantid",
+                            sku="sku",
+                            enable_rbac_authorization=False,
+                        ),
+                        keys=[],
+                        secrets=[secret],
+                    )
+                ]
+            }
             check = keyvault_non_rbac_secret_expiration_set()
             result = check.execute()
             assert len(result) == 1
