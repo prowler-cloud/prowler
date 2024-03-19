@@ -1,5 +1,6 @@
 from unittest.mock import patch
 
+from prowler.providers.azure.models import AzureIdentityInfo
 from prowler.providers.azure.services.entra.entra_service import (
     AuthorizationPolicy,
     Entra,
@@ -33,7 +34,9 @@ async def mock_entra_get_authorization_policy(_):
 )
 class Test_Entra_Service:
     def test__get_client__(self):
-        entra_client = Entra(set_mocked_azure_provider())
+        entra_client = Entra(
+            set_mocked_azure_provider(identity=AzureIdentityInfo(tenant_domain=DOMAIN))
+        )
         assert entra_client.clients[DOMAIN].__class__.__name__ == "GraphServiceClient"
 
     def test__get_subscriptions__(self):

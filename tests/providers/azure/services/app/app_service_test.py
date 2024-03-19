@@ -9,7 +9,7 @@ from tests.providers.azure.azure_fixtures import (
 )
 
 
-def mock_app_get_apps(self):
+def mock_app_get_apps(_):
     return {
         AZURE_SUBSCRIPTION_ID: {
             "app_id-1": WebApp(
