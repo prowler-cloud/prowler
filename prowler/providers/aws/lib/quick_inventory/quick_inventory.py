@@ -1,7 +1,6 @@
 import csv
 import json
 from copy import deepcopy
-from typing import Any
 
 from alive_progress import alive_bar
 from botocore.client import ClientError
@@ -15,36 +14,37 @@ from prowler.config.config import (
     output_file_timestamp,
 )
 from prowler.lib.logger import logger
+from prowler.providers.aws.aws_provider import AwsProvider
 from prowler.providers.aws.lib.arn.models import get_arn_resource_type
 from prowler.providers.aws.lib.s3.s3 import send_to_s3_bucket
 
 
-def quick_inventory(provider: Any, args):
+def quick_inventory(provider: AwsProvider, args):
     resources = []
     global_resources = []
     total_resources_per_region = {}
     iam_was_scanned = False
     # If not inputed regions, check all of them
-    if not provider.audited_regions:
+    if not provider.identity.audited_regions:
         # EC2 client for describing all regions
-        ec2_client = provider.audit_session.client(
-            "ec2", region_name=provider.profile_region
+        ec2_client = provider.session.current_session.client(
+            "ec2", region_name=provider.identity.profile_region
         )
         # Get all the available regions
-        provider.audited_regions = [
+        provider.identity.audited_regions = [
             region["RegionName"] for region in ec2_client.describe_regions()["Regions"]
         ]
 
     with alive_bar(
-        total=len(provider.audited_regions),
+        total=len(provider.identity.audited_regions),
         ctrl_c=False,
         bar="blocks",
         spinner="classic",
         stats=False,
         enrich_print=False,
     ) as bar:
-        for region in sorted(provider.audited_regions):
-            bar.title = f"Inventorying AWS Account {orange_color}{provider.audited_account}{Style.RESET_ALL}"
+        for region in sorted(provider.identity.audited_regions):
+            bar.title = f"Inventorying AWS Account {orange_color}{provider.identity.account}{Style.RESET_ALL}"
             resources_in_region = []
             # {
             #   eu-west-1: 100,...
@@ -53,13 +53,15 @@ def quick_inventory(provider: Any, args):
             try:
                 # Scan IAM only once
                 if not iam_was_scanned:
-                    global_resources.extend(get_iam_resources(provider.audit_session))
+                    global_resources.extend(
+                        get_iam_resources(provider.session.current_session)
+                    )
                     iam_was_scanned = True
 
                 # Get regional S3 buckets since none-tagged buckets are not supported by the resourcegroupstaggingapi
                 resources_in_region.extend(get_regional_buckets(provider, region))
 
-                client = provider.audit_session.client(
+                client = provider.session.current_session.client(
                     "resourcegroupstaggingapi", region_name=region
                 )
                 # Get all the resources
@@ -109,7 +111,7 @@ def quick_inventory(provider: Any, args):
     inventory_table = create_inventory_table(resources, total_resources_per_region)
 
     print(
-        f"\nQuick Inventory of AWS Account {Fore.YELLOW}{provider.audited_account}{Style.RESET_ALL}:"
+        f"\nQuick Inventory of AWS Account {Fore.YELLOW}{provider.identity.account}{Style.RESET_ALL}:"
     )
 
     print(
@@ -209,19 +211,19 @@ def create_inventory_table(resources: list, resources_in_region: dict) -> dict:
     return inventory_table
 
 
-def create_output(resources: list, provider: Any, args):
+def create_output(resources: list, provider: AwsProvider, args):
     json_output = []
     # Check if custom output filename was input, if not, set the default
     if not hasattr(args, "output_filename") or args.output_filename is None:
         output_file = (
-            f"prowler-inventory-{provider.audited_account}-{output_file_timestamp}"
+            f"prowler-inventory-{provider.identity.account}-{output_file_timestamp}"
         )
     else:
         output_file = args.output_filename
 
     for item in sorted(resources, key=lambda d: d["arn"]):
         resource = {}
-        resource["AWS_AccountID"] = provider.audited_account
+        resource["AWS_AccountID"] = provider.identity.account
         resource["AWS_Region"] = item["arn"].split(":")[3]
         resource["AWS_Partition"] = item["arn"].split(":")[1]
         resource["AWS_Service"] = item["arn"].split(":")[2]
@@ -288,7 +290,7 @@ def create_output(resources: list, provider: Any, args):
             # Check if -B was input
             if args.output_bucket:
                 output_bucket = args.output_bucket
-                bucket_session = provider.audit_session
+                bucket_session = provider.session.current_session
             # Check if -D was input
             elif args.output_bucket_no_assume:
                 output_bucket = args.output_bucket_no_assume
@@ -302,9 +304,9 @@ def create_output(resources: list, provider: Any, args):
             )
 
 
-def get_regional_buckets(provider: Any, region: str) -> list:
+def get_regional_buckets(provider: AwsProvider, region: str) -> list:
     regional_buckets = []
-    s3_client = provider.audit_session.client("s3", region_name=region)
+    s3_client = provider.session.current_session.client("s3", region_name=region)
     try:
         buckets = s3_client.list_buckets()
         for bucket in buckets["Buckets"]:
@@ -327,7 +329,7 @@ def get_regional_buckets(provider: Any, region: str) -> list:
                             f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                         )
                 bucket_arn = (
-                    f"arn:{provider.audited_partition}:s3:{region}::{bucket['Name']}"
+                    f"arn:{provider.identity.partition}:s3:{region}::{bucket['Name']}"
                 )
                 regional_buckets.append({"arn": bucket_arn, "tags": bucket_tags})
     except Exception as error:
