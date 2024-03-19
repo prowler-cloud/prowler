@@ -4,7 +4,7 @@ from uuid import uuid4
 from azure.mgmt.network.models._models import FlowLog, RetentionPolicyParameters
 
 from prowler.providers.azure.services.network.network_service import NetworkWatcher
-from tests.providers.azure.azure_fixtures import AZURE_SUBSCRIPTION
+from tests.providers.azure.azure_fixtures import AZURE_SUBSCRIPTION_ID
 
 
 class Test_network_flow_log_captured_sent:
@@ -33,7 +33,7 @@ class Test_network_flow_log_captured_sent:
         network_watcher_id = str(uuid4())
 
         network_client.network_watchers = {
-            AZURE_SUBSCRIPTION: [
+            AZURE_SUBSCRIPTION_ID: [
                 NetworkWatcher(
                     id=network_watcher_id,
                     name=network_watcher_name,
@@ -60,9 +60,9 @@ class Test_network_flow_log_captured_sent:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Network Watcher {network_watcher_name} from subscription {AZURE_SUBSCRIPTION} has no flow logs"
+                == f"Network Watcher {network_watcher_name} from subscription {AZURE_SUBSCRIPTION_ID} has no flow logs"
             )
-            assert result[0].subscription == AZURE_SUBSCRIPTION
+            assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == network_watcher_name
             assert result[0].resource_id == network_watcher_id
 
@@ -72,7 +72,7 @@ class Test_network_flow_log_captured_sent:
         network_watcher_id = str(uuid4())
 
         network_client.network_watchers = {
-            AZURE_SUBSCRIPTION: [
+            AZURE_SUBSCRIPTION_ID: [
                 NetworkWatcher(
                     id=network_watcher_id,
                     name=network_watcher_name,
@@ -104,9 +104,9 @@ class Test_network_flow_log_captured_sent:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Network Watcher {network_watcher_name} from subscription {AZURE_SUBSCRIPTION} has flow logs disabled"
+                == f"Network Watcher {network_watcher_name} from subscription {AZURE_SUBSCRIPTION_ID} has flow logs disabled"
             )
-            assert result[0].subscription == AZURE_SUBSCRIPTION
+            assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == network_watcher_name
             assert result[0].resource_id == network_watcher_id
 
@@ -116,7 +116,7 @@ class Test_network_flow_log_captured_sent:
         network_watcher_id = str(uuid4())
 
         network_client.network_watchers = {
-            AZURE_SUBSCRIPTION: [
+            AZURE_SUBSCRIPTION_ID: [
                 NetworkWatcher(
                     id=network_watcher_id,
                     name=network_watcher_name,
@@ -148,8 +148,8 @@ class Test_network_flow_log_captured_sent:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Network Watcher {network_watcher_name} from subscription {AZURE_SUBSCRIPTION} has flow logs that are captured and sent to Log Analytics workspace"
+                == f"Network Watcher {network_watcher_name} from subscription {AZURE_SUBSCRIPTION_ID} has flow logs that are captured and sent to Log Analytics workspace"
             )
-            assert result[0].subscription == AZURE_SUBSCRIPTION
+            assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == network_watcher_name
             assert result[0].resource_id == network_watcher_id
