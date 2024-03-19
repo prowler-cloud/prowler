@@ -1,7 +1,7 @@
 from re import search
 from unittest import mock
 
-from prowler.providers.gcp.services.iam.iam_service import Organization
+from tests.providers.gcp.gcp_fixtures import set_mocked_gcp_provider
 
 
 class Test_iam_organization_essential_contacts_configured:
@@ -11,6 +11,9 @@ class Test_iam_organization_essential_contacts_configured:
         essentialcontacts_client.region = "global"
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_gcp_provider(),
+        ), mock.patch(
             "prowler.providers.gcp.services.iam.iam_organization_essential_contacts_configured.iam_organization_essential_contacts_configured.essentialcontacts_client",
             new=essentialcontacts_client,
         ):
@@ -23,16 +26,26 @@ class Test_iam_organization_essential_contacts_configured:
             assert len(result) == 0
 
     def test_iam_org_with_contacts(self):
+        cloudresourcemanager_client = mock.MagicMock
         essentialcontacts_client = mock.MagicMock
-        essentialcontacts_client.organizations = [
-            Organization(id="test_id", name="test", contacts=True)
-        ]
         essentialcontacts_client.region = "global"
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_gcp_provider(),
+        ), mock.patch(
             "prowler.providers.gcp.services.iam.iam_organization_essential_contacts_configured.iam_organization_essential_contacts_configured.essentialcontacts_client",
             new=essentialcontacts_client,
+        ), mock.patch(
+            "prowler.providers.gcp.services.iam.iam_service.cloudresourcemanager_client",
+            new=cloudresourcemanager_client,
         ):
+            from prowler.providers.gcp.services.iam.iam_service import Organization
+
+            essentialcontacts_client.organizations = [
+                Organization(id="test_id", name="test", contacts=True)
+            ]
+
             from prowler.providers.gcp.services.iam.iam_organization_essential_contacts_configured.iam_organization_essential_contacts_configured import (
                 iam_organization_essential_contacts_configured,
             )
@@ -51,16 +64,26 @@ class Test_iam_organization_essential_contacts_configured:
             assert result[0].location == "global"
 
     def test_iam_org_without_contacts(self):
+        cloudresourcemanager_client = mock.MagicMock
         essentialcontacts_client = mock.MagicMock
-        essentialcontacts_client.organizations = [
-            Organization(id="test_id", name="test", contacts=False)
-        ]
         essentialcontacts_client.region = "global"
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_gcp_provider(),
+        ), mock.patch(
             "prowler.providers.gcp.services.iam.iam_organization_essential_contacts_configured.iam_organization_essential_contacts_configured.essentialcontacts_client",
             new=essentialcontacts_client,
+        ), mock.patch(
+            "prowler.providers.gcp.services.iam.iam_service.cloudresourcemanager_client",
+            new=cloudresourcemanager_client,
         ):
+            from prowler.providers.gcp.services.iam.iam_service import Organization
+
+            essentialcontacts_client.organizations = [
+                Organization(id="test_id", name="test", contacts=False)
+            ]
+
             from prowler.providers.gcp.services.iam.iam_organization_essential_contacts_configured.iam_organization_essential_contacts_configured import (
                 iam_organization_essential_contacts_configured,
             )

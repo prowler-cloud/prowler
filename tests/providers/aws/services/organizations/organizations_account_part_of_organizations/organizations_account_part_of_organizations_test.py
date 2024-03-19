@@ -17,7 +17,9 @@ from tests.providers.aws.utils import (
 class Test_organizations_account_part_of_organizations:
     @mock_aws
     def test_no_organization(self):
-        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_EU_WEST_1], create_default_organization=False
+        )
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",

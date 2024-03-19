@@ -2,7 +2,10 @@ from unittest import mock
 
 from prowler.providers.azure.services.monitor.monitor_service import DiagnosticSetting
 from prowler.providers.azure.services.storage.storage_service import Account
-from tests.providers.azure.azure_fixtures import AZURE_SUBSCRIPTION
+from tests.providers.azure.azure_fixtures import (
+    AZURE_SUBSCRIPTION_ID,
+    set_mocked_azure_provider,
+)
 
 
 class Test_monitor_storage_account_with_activity_logs_cmk_encrypted:
@@ -13,6 +16,9 @@ class Test_monitor_storage_account_with_activity_logs_cmk_encrypted:
         monitor_client.diagnostics_settings = {}
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.monitor.monitor_storage_account_with_activity_logs_cmk_encrypted.monitor_storage_account_with_activity_logs_cmk_encrypted.monitor_client",
             new=monitor_client,
         ):
@@ -26,8 +32,11 @@ class Test_monitor_storage_account_with_activity_logs_cmk_encrypted:
 
     def test_no_diagnostic_settings(self):
         monitor_client = mock.MagicMock
-        monitor_client.diagnostics_settings = {AZURE_SUBSCRIPTION: []}
+        monitor_client.diagnostics_settings = {AZURE_SUBSCRIPTION_ID: []}
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.monitor.monitor_storage_account_with_activity_logs_cmk_encrypted.monitor_storage_account_with_activity_logs_cmk_encrypted.monitor_client",
             new=monitor_client,
         ):
@@ -43,7 +52,7 @@ class Test_monitor_storage_account_with_activity_logs_cmk_encrypted:
         monitor_client = mock.MagicMock
         storage_client = mock.MagicMock
         monitor_client.diagnostics_settings = {
-            AZURE_SUBSCRIPTION: [
+            AZURE_SUBSCRIPTION_ID: [
                 DiagnosticSetting(
                     id="id",
                     logs=[
@@ -77,7 +86,7 @@ class Test_monitor_storage_account_with_activity_logs_cmk_encrypted:
             ]
         }
         storage_client.storage_accounts = {
-            AZURE_SUBSCRIPTION: [
+            AZURE_SUBSCRIPTION_ID: [
                 Account(
                     id="/subscriptions/1234a5-123a-123a-123a-1234567890ab/resourceGroups/rg/providers/Microsoft.Storage/storageAccounts/storageaccountname1",
                     name="storageaccountname1",
@@ -122,6 +131,9 @@ class Test_monitor_storage_account_with_activity_logs_cmk_encrypted:
         }
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.monitor.monitor_storage_account_with_activity_logs_cmk_encrypted.monitor_storage_account_with_activity_logs_cmk_encrypted.monitor_client",
             new=monitor_client,
         ):
@@ -136,7 +148,7 @@ class Test_monitor_storage_account_with_activity_logs_cmk_encrypted:
                 check = monitor_storage_account_with_activity_logs_cmk_encrypted()
                 result = check.execute()
                 assert len(result) == 2
-                assert result[0].subscription == AZURE_SUBSCRIPTION
+                assert result[0].subscription == AZURE_SUBSCRIPTION_ID
                 assert result[0].status == "PASS"
                 assert result[0].resource_name == "storageaccountname1"
                 assert (
@@ -145,7 +157,7 @@ class Test_monitor_storage_account_with_activity_logs_cmk_encrypted:
                 )
                 assert (
                     result[0].status_extended
-                    == f"Storage account {storage_client.storage_accounts[AZURE_SUBSCRIPTION][0].name} storing activity log in subscription {AZURE_SUBSCRIPTION} is encrypted with Customer Managed Key or not necessary."
+                    == f"Storage account {storage_client.storage_accounts[AZURE_SUBSCRIPTION_ID][0].name} storing activity log in subscription {AZURE_SUBSCRIPTION_ID} is encrypted with Customer Managed Key or not necessary."
                 )
                 assert result[1].status == "FAIL"
                 assert result[1].resource_name == "storageaccountname2"
@@ -155,5 +167,5 @@ class Test_monitor_storage_account_with_activity_logs_cmk_encrypted:
                 )
                 assert (
                     result[1].status_extended
-                    == f"Storage account {storage_client.storage_accounts[AZURE_SUBSCRIPTION][1].name} storing activity log in subscription {AZURE_SUBSCRIPTION} is not encrypted with Customer Managed Key."
+                    == f"Storage account {storage_client.storage_accounts[AZURE_SUBSCRIPTION_ID][1].name} storing activity log in subscription {AZURE_SUBSCRIPTION_ID} is not encrypted with Customer Managed Key."
                 )

@@ -1,6 +1,6 @@
 from argparse import Namespace
 
-from boto3 import session
+from boto3 import client, session
 from botocore.config import Config
 from moto import mock_aws
 
@@ -20,8 +20,6 @@ AWS_REGION_EU_WEST_1 = "eu-west-1"
 AWS_REGION_EU_WEST_1_AZA = "eu-west-1a"
 AWS_REGION_EU_WEST_1_AZB = "eu-west-1b"
 AWS_REGION_EU_WEST_2 = "eu-west-2"
-AWS_REGION_CN_NORTHWEST_1 = "cn-northwest-1"
-AWS_REGION_CN_NORTH_1 = "cn-north-1"
 AWS_REGION_EU_SOUTH_2 = "eu-south-2"
 AWS_REGION_EU_SOUTH_3 = "eu-south-3"
 AWS_REGION_US_WEST_2 = "us-west-2"
@@ -30,7 +28,8 @@ AWS_REGION_EU_CENTRAL_1 = "eu-central-1"
 
 
 # China Regions
-AWS_REGION_CHINA_NORHT_1 = "cn-north-1"
+AWS_REGION_CN_NORTHWEST_1 = "cn-northwest-1"
+AWS_REGION_CN_NORTH_1 = "cn-north-1"
 
 # Gov Cloud Regions
 AWS_REGION_GOV_CLOUD_US_EAST_1 = "us-gov-east-1"
@@ -44,37 +43,8 @@ AWS_GOV_CLOUD_PARTITION = "aws-us-gov"
 AWS_CHINA_PARTITION = "aws-cn"
 AWS_ISO_PARTITION = "aws-iso"
 
-# Commercial Regions
-AWS_REGION_US_EAST_1 = "us-east-1"
-AWS_REGION_US_EAST_1_AZA = "us-east-1a"
-AWS_REGION_US_EAST_1_AZB = "us-east-1b"
-AWS_REGION_EU_WEST_1 = "eu-west-1"
-AWS_REGION_EU_WEST_1_AZA = "eu-west-1a"
-AWS_REGION_EU_WEST_1_AZB = "eu-west-1b"
-AWS_REGION_EU_WEST_2 = "eu-west-2"
-AWS_REGION_CN_NORTHWEST_1 = "cn-northwest-1"
-AWS_REGION_CN_NORTH_1 = "cn-north-1"
-AWS_REGION_EU_SOUTH_2 = "eu-south-2"
-AWS_REGION_EU_SOUTH_3 = "eu-south-3"
-AWS_REGION_US_WEST_2 = "us-west-2"
-AWS_REGION_US_EAST_2 = "us-east-2"
-AWS_REGION_EU_CENTRAL_1 = "eu-central-1"
-
-
-# China Regions
-AWS_REGION_CHINA_NORHT_1 = "cn-north-1"
-
-# Gov Cloud Regions
-AWS_REGION_GOV_CLOUD_US_EAST_1 = "us-gov-east-1"
-
-# Iso Regions
-AWS_REGION_ISO_GLOBAL = "aws-iso-global"
-
-# AWS Partitions
-AWS_COMMERCIAL_PARTITION = "aws"
-AWS_GOV_CLOUD_PARTITION = "aws-us-gov"
-AWS_CHINA_PARTITION = "aws-cn"
-AWS_ISO_PARTITION = "aws-iso"
+# EC2
+EXAMPLE_AMI_ID = "ami-12c6146b"
 
 
 # Mocked AWS Provider
@@ -89,16 +59,28 @@ def set_mocked_aws_provider(
     profile_region: str = None,
     audit_config: dict = {},
     ignore_unused_services: bool = False,
-    # assumed_role_info: AWSAssumeRole = None,
     audit_session: session.Session = session.Session(
         profile_name=None,
         botocore_session=None,
     ),
     original_session: session.Session = None,
     enabled_regions: set = None,
+    arguments: Namespace = Namespace(),
+    create_default_organization: bool = True,
 ) -> AwsProvider:
-    # Create default AWS Provider
-    provider = AwsProvider(Namespace())
+    if create_default_organization:
+        # Create default AWS Organization
+        create_default_aws_organization()
+
+    # Default arguments
+    arguments = set_default_provider_arguments(arguments)
+
+    # AWS Provider
+    provider = AwsProvider(arguments)
+
+    # Output options
+    provider.output_options = arguments, {}
+
     # Mock Session
     provider._session.session_config = None
     provider._session.original_session = original_session
@@ -130,3 +112,36 @@ def set_mocked_aws_provider(
     )
 
     return provider
+
+
+def set_default_provider_arguments(arguments: Namespace) -> Namespace:
+    arguments.status = []
+    arguments.output_modes = []
+    arguments.output_directory = ""
+    arguments.verbose = False
+    arguments.only_logs = False
+    arguments.unix_timestamp = False
+    arguments.shodan = None
+    arguments.security_hub = False
+    arguments.send_sh_only_fails = False
+
+    return arguments
+
+
+@mock_aws
+def create_default_aws_organization():
+    # Create default AWS Organization
+    organizations_client = client("organizations", region_name=AWS_REGION_US_EAST_1)
+
+    mockname = "mock-account"
+    mockdomain = "moto-example.org"
+    mockemail = "@".join([mockname, mockdomain])
+
+    _ = organizations_client.create_organization(FeatureSet="ALL")["Organization"]["Id"]
+    account_id = organizations_client.create_account(
+        AccountName=mockname, Email=mockemail
+    )["CreateAccountStatus"]["AccountId"]
+
+    _ = organizations_client.tag_resource(
+        ResourceId=account_id, Tags=[{"Key": "test", "Value": "aws-provider"}]
+    )
