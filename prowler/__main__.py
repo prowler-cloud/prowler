@@ -161,10 +161,8 @@ def prowler():
             checks_to_execute, excluded_services, provider
         )
 
-    # Once the audit_info is set and we have the eventual checks based on the resource identifier,
+    # Once the provider is set and we have the eventual checks based on the resource identifier,
     # it is time to check what Prowler's checks are going to be executed
-    # TODO: the following if is done within the function
-    # if global_provider.audit_resources:
     checks_from_resources = global_provider.get_checks_to_execute_by_audit_resources()
     if checks_from_resources:
         checks_to_execute = checks_to_execute.intersection(checks_from_resources)
@@ -211,7 +209,7 @@ def prowler():
     #             os.environ["SLACK_CHANNEL_ID"],
     #             stats,
     #             provider,
-    #             audit_info,
+    #             provider,
     #         )
     #     else:
     #         logger.critical(

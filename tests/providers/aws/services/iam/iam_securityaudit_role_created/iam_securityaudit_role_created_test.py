@@ -12,7 +12,6 @@ from tests.providers.aws.utils import AWS_REGION_US_EAST_1, set_mocked_aws_provi
 class Test_iam_securityaudit_role_created:
     @mock_aws(config={"iam": {"load_aws_managed_policies": True}})
     def test_securityaudit_role_created(self):
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         iam = client("iam")
         role_name = "test_securityaudit_role_created"
         assume_role_policy_document = {
@@ -32,6 +31,8 @@ class Test_iam_securityaudit_role_created:
             RoleName=role_name,
             PolicyArn="arn:aws:iam::aws:policy/SecurityAudit",
         )
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",

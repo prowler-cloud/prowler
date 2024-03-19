@@ -79,7 +79,6 @@ class Test_Parser:
         assert not parsed.output_bucket
         assert not parsed.output_bucket_no_assume
         assert not parsed.shodan
-        assert not parsed.mutelist_file
         assert not parsed.resource_tags
         assert not parsed.scan_unused_services
 

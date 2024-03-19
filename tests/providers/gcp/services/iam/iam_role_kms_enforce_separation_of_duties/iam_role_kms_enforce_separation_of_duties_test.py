@@ -1,7 +1,7 @@
 from re import search
 from unittest import mock
 
-from tests.providers.gcp.lib.audit_info_utils import GCP_PROJECT_ID
+from tests.providers.gcp.gcp_fixtures import GCP_PROJECT_ID, set_mocked_gcp_provider
 
 
 class Test_iam_role_kms_enforce_separation_of_duties:
@@ -12,6 +12,9 @@ class Test_iam_role_kms_enforce_separation_of_duties:
         cloudresourcemanager_client.region = "global"
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_gcp_provider(),
+        ), mock.patch(
             "prowler.providers.gcp.services.iam.iam_role_kms_enforce_separation_of_duties.iam_role_kms_enforce_separation_of_duties.cloudresourcemanager_client",
             new=cloudresourcemanager_client,
         ):
@@ -59,6 +62,9 @@ class Test_iam_role_kms_enforce_separation_of_duties:
         cloudresourcemanager_client.region = "global"
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_gcp_provider(),
+        ), mock.patch(
             "prowler.providers.gcp.services.iam.iam_role_kms_enforce_separation_of_duties.iam_role_kms_enforce_separation_of_duties.cloudresourcemanager_client",
             new=cloudresourcemanager_client,
         ):
@@ -107,6 +113,9 @@ class Test_iam_role_kms_enforce_separation_of_duties:
         cloudresourcemanager_client.region = "global"
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_gcp_provider(),
+        ), mock.patch(
             "prowler.providers.gcp.services.iam.iam_role_kms_enforce_separation_of_duties.iam_role_kms_enforce_separation_of_duties.cloudresourcemanager_client",
             new=cloudresourcemanager_client,
         ):

@@ -2,7 +2,7 @@ from datetime import datetime, timedelta, timezone
 from re import search
 from unittest import mock
 
-from tests.providers.gcp.lib.audit_info_utils import GCP_PROJECT_ID
+from tests.providers.gcp.gcp_fixtures import GCP_PROJECT_ID, set_mocked_gcp_provider
 
 
 class Test_apikeys_key_rotated_in_90_days:
@@ -11,6 +11,9 @@ class Test_apikeys_key_rotated_in_90_days:
         apikeys_client.keys = []
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_gcp_provider(),
+        ), mock.patch(
             "prowler.providers.gcp.services.apikeys.apikeys_key_rotated_in_90_days.apikeys_key_rotated_in_90_days.apikeys_client",
             new=apikeys_client,
         ):
@@ -41,6 +44,9 @@ class Test_apikeys_key_rotated_in_90_days:
         apikeys_client.region = "global"
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_gcp_provider(),
+        ), mock.patch(
             "prowler.providers.gcp.services.apikeys.apikeys_key_rotated_in_90_days.apikeys_key_rotated_in_90_days.apikeys_client",
             new=apikeys_client,
         ):
@@ -78,6 +84,9 @@ class Test_apikeys_key_rotated_in_90_days:
         apikeys_client.region = "global"
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_gcp_provider(),
+        ), mock.patch(
             "prowler.providers.gcp.services.apikeys.apikeys_key_rotated_in_90_days.apikeys_key_rotated_in_90_days.apikeys_client",
             new=apikeys_client,
         ):
