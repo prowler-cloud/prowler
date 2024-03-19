@@ -1,15 +1,15 @@
-# Ignore Unused Services
+# Scan Unused Services
 
 ???+ note
     Currently only available on the AWS provider.
 
-Prowler allows you to ignore unused services findings, so you can reduce the number of findings in Prowler's reports.
+By default, Prowler only scans the cloud services that are used (where resources are created) to reduce the number of findings in Prowler's reports. If you want Prowler to also scan unused services, you can use the following command:
 
 ```console
-prowler <provider> --ignore-unused-services
+prowler <provider> --scan-unused-services
 ```
 
-## Services that can be ignored
+## Services that are ignored
 ### AWS
 #### Athena
 When you create an AWS Account, Athena will create a default primary workgroup for you.

@@ -19,7 +19,7 @@ class macie_is_enabled(Check):
                 findings.append(report)
             else:
                 if (
-                    not macie_client.provider.ignore_unused_services
+                    macie_client.provider.scan_unused_services
                     or session.region in s3_client.regions_with_buckets
                 ):
                     if session.status == "PAUSED":

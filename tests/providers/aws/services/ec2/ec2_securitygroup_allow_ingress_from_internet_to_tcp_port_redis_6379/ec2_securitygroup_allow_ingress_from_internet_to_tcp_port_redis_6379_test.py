@@ -243,7 +243,7 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_redis_6379:
                 AWS_REGION_EU_WEST_1,
             ]
         )
-        aws_provider._ignore_unused_services = True
+        aws_provider._scan_unused_services = False
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
@@ -281,7 +281,7 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_redis_6379:
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
         aws_provider = set_mocked_aws_provider()
-        aws_provider._ignore_unused_services = True
+        aws_provider._scan_unused_services = False
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
