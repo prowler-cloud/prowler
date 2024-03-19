@@ -13,7 +13,9 @@ from tests.providers.aws.utils import AWS_REGION_EU_WEST_1, set_mocked_aws_provi
 class Test_organizations_delegated_administrators:
     @mock_aws
     def test_no_organization(self):
-        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_EU_WEST_1], create_default_organization=False
+        )
         aws_provider._audit_config = {
             "organizations_trusted_delegated_administrators": []
         }

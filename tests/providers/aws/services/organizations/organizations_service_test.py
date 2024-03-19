@@ -26,7 +26,9 @@ class Test_Organizations_Service:
         conn = client("organizations", region_name=AWS_REGION_EU_WEST_1)
         response = conn.create_organization()
         # Mock
-        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_EU_WEST_1], create_default_organization=False
+        )
         organizations = Organizations(aws_provider)
         # Tests
         assert len(organizations.organizations) == 1

@@ -1,8 +1,7 @@
 from argparse import Namespace
 
-from boto3 import session
+from boto3 import client, session
 from botocore.config import Config
-from mock import MagicMock
 from moto import mock_aws
 
 from prowler.providers.aws.aws_provider import AwsProvider
@@ -67,12 +66,20 @@ def set_mocked_aws_provider(
     original_session: session.Session = None,
     enabled_regions: set = None,
     arguments: Namespace = Namespace(),
+    create_default_organization: bool = True,
 ) -> AwsProvider:
+    if create_default_organization:
+        # Create default AWS Organization
+        create_default_aws_organization()
 
+    # Default arguments
+    arguments = set_default_provider_arguments(arguments)
+
+    # AWS Provider
     provider = AwsProvider(arguments)
 
     # Output options
-    provider.output_options = MagicMock(), {}
+    provider.output_options = arguments, {}
 
     # Mock Session
     provider._session.session_config = None
@@ -105,3 +112,36 @@ def set_mocked_aws_provider(
     )
 
     return provider
+
+
+def set_default_provider_arguments(arguments: Namespace) -> Namespace:
+    arguments.status = []
+    arguments.output_modes = []
+    arguments.output_directory = ""
+    arguments.verbose = False
+    arguments.only_logs = False
+    arguments.unix_timestamp = False
+    arguments.shodan = None
+    arguments.security_hub = False
+    arguments.send_sh_only_fails = False
+
+    return arguments
+
+
+@mock_aws
+def create_default_aws_organization():
+    # Create default AWS Organization
+    organizations_client = client("organizations", region_name=AWS_REGION_US_EAST_1)
+
+    mockname = "mock-account"
+    mockdomain = "moto-example.org"
+    mockemail = "@".join([mockname, mockdomain])
+
+    _ = organizations_client.create_organization(FeatureSet="ALL")["Organization"]["Id"]
+    account_id = organizations_client.create_account(
+        AccountName=mockname, Email=mockemail
+    )["CreateAccountStatus"]["AccountId"]
+
+    _ = organizations_client.tag_resource(
+        ResourceId=account_id, Tags=[{"Key": "test", "Value": "aws-provider"}]
+    )
