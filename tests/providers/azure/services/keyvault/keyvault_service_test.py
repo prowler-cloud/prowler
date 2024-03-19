@@ -6,7 +6,64 @@ from tests.providers.azure.azure_fixtures import (
     set_mocked_azure_provider,
 )
 
+# TODO: we have to fix this test not to use MagicMock but set the KeyVault service while mocking the import ot the Monitor client
+# from prowler.providers.azure.services.keyvault.keyvault_service import (
+#     DiagnosticSetting,
+#     Key,
+#     KeyVault,
+#     KeyVaultInfo,
+#     Secret,
+# )
+# def mock_keyvault_get_key_vaults(_, __):
+#     keyvault_info = KeyVaultInfo(
+#         id="id",
+#         name="name",
+#         location="location",
+#         resource_group="resource_group",
+#         properties=None,
+#         keys=[
+#             Key(
+#                 id="id",
+#                 name="name",
+#                 enabled=True,
+#                 location="location",
+#                 attributes=None,
+#                 rotation_policy=None,
+#             )
+#         ],
+#         secrets=[
+#             Secret(
+#                 id="id",
+#                 name="name",
+#                 enabled=True,
+#                 location="location",
+#                 attributes=None,
+#             )
+#         ],
+#         monitor_diagnostic_settings=[
+#             DiagnosticSetting(
+#                 id="id",
+#                 storage_account_id="storage_account_id",
+#                 logs=[
+#                     mock.MagicMock(
+#                         categoty_group="audit", category="None", enabled=True
+#                     ),
+#                     mock.MagicMock(
+#                         categoty_group="allLogs", category="None", enabled=False
+#                     ),
+#                 ],
+#                 name="name",
+#                 storage_account_name="storage_account_name",
+#             )
+#         ],
+#     )
+#     return {AZURE_SUBSCRIPTION_ID: [keyvault_info]}
 
+
+# @patch(
+#     "prowler.providers.azure.services.keyvault.keyvault_service.KeyVault.__get_key_vaults__",
+#     new=mock_keyvault_get_key_vaults,
+# )
 class Test_keyvault_service:
     def test_keyvault_service_(self):
         with patch(
@@ -23,6 +80,7 @@ class Test_keyvault_service:
                 Secret,
             )
 
+            # keyvault = KeyVault(set_mocked_azure_provider())
             keyvault = MagicMock()
 
             keyvault.key_vaults = {
