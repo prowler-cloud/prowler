@@ -2,6 +2,7 @@ from unittest import mock
 from uuid import uuid4
 
 from prowler.providers.azure.services.entra.entra_service import AuthorizationPolicy
+from tests.providers.azure.azure_fixtures import set_mocked_azure_provider
 
 
 class Test_entra_policy_ensure_default_user_cannot_create_tenants:
@@ -10,6 +11,9 @@ class Test_entra_policy_ensure_default_user_cannot_create_tenants:
         entra_client.authorization_policy = {}
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.entra.entra_policy_ensure_default_user_cannot_create_tenants.entra_policy_ensure_default_user_cannot_create_tenants.entra_client",
             new=entra_client,
         ):
@@ -36,6 +40,9 @@ class Test_entra_policy_ensure_default_user_cannot_create_tenants:
         }
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.entra.entra_policy_ensure_default_user_cannot_create_tenants.entra_policy_ensure_default_user_cannot_create_tenants.entra_client",
             new=entra_client,
         ):
@@ -53,7 +60,7 @@ class Test_entra_policy_ensure_default_user_cannot_create_tenants:
             )
             assert result[0].resource_name == "Test"
             assert result[0].resource_id == id
-            assert result[0].subscription == "All from tenant 'test.omnimicrosoft.com'"
+            assert result[0].subscription == "Tenant: 'test.omnimicrosoft.com'"
 
     def test_entra_default_user_role_permissions_allowed_to_create_tenants(self):
         id = str(uuid4())
@@ -70,6 +77,9 @@ class Test_entra_policy_ensure_default_user_cannot_create_tenants:
         }
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.entra.entra_policy_ensure_default_user_cannot_create_tenants.entra_policy_ensure_default_user_cannot_create_tenants.entra_client",
             new=entra_client,
         ):
@@ -87,4 +97,4 @@ class Test_entra_policy_ensure_default_user_cannot_create_tenants:
             )
             assert result[0].resource_name == "Test"
             assert result[0].resource_id == id
-            assert result[0].subscription == "All from tenant 'test.omnimicrosoft.com'"
+            assert result[0].subscription == "Tenant: 'test.omnimicrosoft.com'"
