@@ -25,7 +25,7 @@ class Test_entra_policy_ensure_default_user_cannot_create_apps:
         id = str(uuid4())
         entra_client = mock.MagicMock
         entra_client.authorization_policy = {
-            "test.com": AuthorizationPolicy(
+            "test.omnimicrosoft.com": AuthorizationPolicy(
                 id=id,
                 name="Test",
                 description="Test",
@@ -53,13 +53,13 @@ class Test_entra_policy_ensure_default_user_cannot_create_apps:
             )
             assert result[0].resource_name == "Test"
             assert result[0].resource_id == id
-            assert result[0].subscription == "All from tenant 'test.com'"
+            assert result[0].subscription == "Tenant: 'test.omnimicrosoft.com'"
 
     def test_entra_default_user_role_permissions_allowed_to_create_apps(self):
         id = str(uuid4())
         entra_client = mock.MagicMock
         entra_client.authorization_policy = {
-            "test.com": AuthorizationPolicy(
+            "test.omnimicrosoft.com": AuthorizationPolicy(
                 id=id,
                 name="Test",
                 description="Test",
@@ -87,4 +87,4 @@ class Test_entra_policy_ensure_default_user_cannot_create_apps:
             )
             assert result[0].resource_name == "Test"
             assert result[0].resource_id == id
-            assert result[0].subscription == "All from tenant 'test.com'"
+            assert result[0].subscription == "Tenant: 'test.omnimicrosoft.com'"
