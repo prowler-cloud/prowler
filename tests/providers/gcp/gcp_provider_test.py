@@ -43,7 +43,7 @@ class TestGCPProvider:
             assert gcp_provider.identity == GCPIdentityInfo(
                 profile="default", default_project_id=""
             )
-            assert gcp_provider.audit_config is None
+            assert gcp_provider.audit_config == {"shodan_api_key": None}
 
     @freeze_time(datetime.today())
     def test_gcp_provider_output_options(self):
