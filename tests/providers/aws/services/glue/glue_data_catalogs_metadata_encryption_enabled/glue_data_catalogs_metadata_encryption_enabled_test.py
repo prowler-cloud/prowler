@@ -85,7 +85,7 @@ class Test_glue_data_catalogs_metadata_encryption_enabled:
                 password_kms_id=None,
             )
         ]
-        glue_client.audit_info.ignore_unused_services = True
+        glue_client.provider._ignore_unused_services = True
         glue_client.region = AWS_REGION_US_EAST_1
         glue_client.audited_account = AWS_ACCOUNT_NUMBER
         glue_client.audited_partition = AWS_COMMERCIAL_PARTITION
@@ -120,7 +120,7 @@ class Test_glue_data_catalogs_metadata_encryption_enabled:
                 password_kms_id=None,
             )
         ]
-        glue_client.audit_info.ignore_unused_services = True
+        glue_client.provider._ignore_unused_services = True
         glue_client.region = AWS_REGION_US_EAST_1
         glue_client.audited_account = AWS_ACCOUNT_NUMBER
         glue_client.audited_partition = AWS_COMMERCIAL_PARTITION
