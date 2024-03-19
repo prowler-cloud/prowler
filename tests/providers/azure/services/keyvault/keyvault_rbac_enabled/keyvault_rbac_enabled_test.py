@@ -4,8 +4,10 @@ from uuid import uuid4
 from azure.mgmt.keyvault.v2023_07_01.models import VaultProperties
 
 from prowler.providers.azure.services.keyvault.keyvault_service import KeyVaultInfo
-
-AZURE_SUBSCRIPTION = str(uuid4())
+from tests.providers.azure.azure_fixtures import (
+    AZURE_SUBSCRIPTION_ID,
+    set_mocked_azure_provider,
+)
 
 
 class Test_keyvault_rbac_enabled:
@@ -14,6 +16,9 @@ class Test_keyvault_rbac_enabled:
         keyvault_client.key_vaults = {}
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.keyvault.keyvault_rbac_enabled.keyvault_rbac_enabled.keyvault_client",
             new=keyvault_client,
         ):
@@ -30,7 +35,7 @@ class Test_keyvault_rbac_enabled:
         keyvault_name = "Keyvault Name"
         keyvault_id = str(uuid4())
         keyvault_client.key_vaults = {
-            AZURE_SUBSCRIPTION: [
+            AZURE_SUBSCRIPTION_ID: [
                 KeyVaultInfo(
                     id=keyvault_id,
                     name=keyvault_name,
@@ -48,6 +53,9 @@ class Test_keyvault_rbac_enabled:
         }
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.keyvault.keyvault_rbac_enabled.keyvault_rbac_enabled.keyvault_client",
             new=keyvault_client,
         ):
@@ -61,9 +69,9 @@ class Test_keyvault_rbac_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Keyvault {keyvault_name} from subscription {AZURE_SUBSCRIPTION} is not using RBAC for access control."
+                == f"Keyvault {keyvault_name} from subscription {AZURE_SUBSCRIPTION_ID} is not using RBAC for access control."
             )
-            assert result[0].subscription == AZURE_SUBSCRIPTION
+            assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == keyvault_name
             assert result[0].resource_id == keyvault_id
 
@@ -72,7 +80,7 @@ class Test_keyvault_rbac_enabled:
         keyvault_name = "Keyvault Name"
         keyvault_id = str(uuid4())
         keyvault_client.key_vaults = {
-            AZURE_SUBSCRIPTION: [
+            AZURE_SUBSCRIPTION_ID: [
                 KeyVaultInfo(
                     id=keyvault_id,
                     name=keyvault_name,
@@ -90,6 +98,9 @@ class Test_keyvault_rbac_enabled:
         }
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.keyvault.keyvault_rbac_enabled.keyvault_rbac_enabled.keyvault_client",
             new=keyvault_client,
         ):
@@ -103,8 +114,8 @@ class Test_keyvault_rbac_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Keyvault {keyvault_name} from subscription {AZURE_SUBSCRIPTION} is using RBAC for access control."
+                == f"Keyvault {keyvault_name} from subscription {AZURE_SUBSCRIPTION_ID} is using RBAC for access control."
             )
-            assert result[0].subscription == AZURE_SUBSCRIPTION
+            assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == keyvault_name
             assert result[0].resource_id == keyvault_id

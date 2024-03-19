@@ -36,16 +36,16 @@ class Check_Output_JSON_ASFF(BaseModel):
     Id: str = ""
     ProductArn: str = ""
     RecordState: str = "ACTIVE"
-    ProductFields: ProductFields = None  # type: ignore
+    ProductFields: ProductFields
     GeneratorId: str = ""
     AwsAccountId: str = ""
     Types: list[str] = None
     FirstObservedAt: str = ""
     UpdatedAt: str = ""
     CreatedAt: str = ""
-    Severity: Severity = None  # type: ignore
+    Severity: Severity
     Title: str = ""
     Description: str = ""
     Resources: list[Resource] = None
-    Compliance: Compliance = None  # type: ignore
+    Compliance: Compliance
     Remediation: dict = None

@@ -1,7 +1,7 @@
 from unittest import mock
 
 from prowler.providers.gcp.services.gke.gke_service import Cluster, NodePool
-from tests.providers.gcp.lib.audit_info_utils import GCP_PROJECT_ID
+from tests.providers.gcp.gcp_fixtures import GCP_PROJECT_ID, set_mocked_gcp_provider
 
 
 class Test_gke_cluster_no_default_service_account:
@@ -10,6 +10,9 @@ class Test_gke_cluster_no_default_service_account:
         gke_client.clusters = {}
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_gcp_provider(),
+        ), mock.patch(
             "prowler.providers.gcp.services.gke.gke_cluster_no_default_service_account.gke_cluster_no_default_service_account.gke_client",
             new=gke_client,
         ):
@@ -40,6 +43,9 @@ class Test_gke_cluster_no_default_service_account:
         gke_client.region = "global"
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_gcp_provider(),
+        ), mock.patch(
             "prowler.providers.gcp.services.gke.gke_cluster_no_default_service_account.gke_cluster_no_default_service_account.gke_client",
             new=gke_client,
         ):
@@ -80,6 +86,9 @@ class Test_gke_cluster_no_default_service_account:
         gke_client.region = "global"
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_gcp_provider(),
+        ), mock.patch(
             "prowler.providers.gcp.services.gke.gke_cluster_no_default_service_account.gke_cluster_no_default_service_account.gke_client",
             new=gke_client,
         ):
@@ -127,6 +136,9 @@ class Test_gke_cluster_no_default_service_account:
         gke_client.region = "global"
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_gcp_provider(),
+        ), mock.patch(
             "prowler.providers.gcp.services.gke.gke_cluster_no_default_service_account.gke_cluster_no_default_service_account.gke_client",
             new=gke_client,
         ):
@@ -174,6 +186,9 @@ class Test_gke_cluster_no_default_service_account:
         gke_client.region = "global"
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_gcp_provider(),
+        ), mock.patch(
             "prowler.providers.gcp.services.gke.gke_cluster_no_default_service_account.gke_cluster_no_default_service_account.gke_client",
             new=gke_client,
         ):

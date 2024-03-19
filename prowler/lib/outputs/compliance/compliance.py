@@ -23,7 +23,7 @@ from prowler.lib.outputs.compliance.mitre_attack_aws import (
 
 
 def add_manual_controls(
-    output_options, audit_info, file_descriptors, input_compliance_frameworks
+    output_options, provider, file_descriptors, input_compliance_frameworks
 ):
     try:
         # Check if MANUAL control was already added to output
@@ -41,7 +41,7 @@ def add_manual_controls(
             fill_compliance(
                 output_options,
                 manual_finding,
-                audit_info,
+                provider,
                 file_descriptors,
                 input_compliance_frameworks,
             )

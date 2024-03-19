@@ -7,15 +7,13 @@ from prowler.lib.outputs.slack import (
     create_message_identity,
     send_slack_message,
 )
-from prowler.providers.azure.lib.audit_info.models import (
-    Azure_Audit_Info,
-    AzureIdentityInfo,
-    AzureRegionConfig,
+from tests.providers.aws.utils import AWS_ACCOUNT_NUMBER, set_mocked_aws_provider
+from tests.providers.azure.azure_fixtures import (
+    AZURE_SUBSCRIPTION_ID,
+    AZURE_SUBSCRIPTION_NAME,
+    set_mocked_azure_provider,
 )
-from prowler.providers.common.models import Audit_Metadata
-from prowler.providers.gcp.lib.audit_info.models import GCP_Audit_Info
-
-AWS_ACCOUNT_ID = "123456789012"
+from tests.providers.gcp.gcp_fixtures import set_mocked_gcp_provider
 
 
 def mock_create_message_blocks(*_):
@@ -26,75 +24,36 @@ def mock_create_message_identity(*_):
     return "", ""
 
 
-class Test_Slack_Integration:
-    def test_create_message_identity(self):
-        # TODO(Audit_Info): use provider here
-        aws_audit_info = AWS_Audit_Info(
-            session_config=None,
-            original_session=None,
-            audit_session=None,
-            audited_account=AWS_ACCOUNT_ID,
-            audited_account_arn=f"arn:aws:iam::{AWS_ACCOUNT_ID}:root",
-            audited_identity_arn="test-arn",
-            audited_user_id="test",
-            audited_partition="aws",
-            profile="default",
-            profile_region="eu-west-1",
-            credentials=None,
-            assumed_role_info=None,
-            audited_regions=["eu-west-2", "eu-west-1"],
-            organizations_metadata=None,
-            audit_resources=None,
-            mfa_enabled=False,
-            audit_metadata=Audit_Metadata(
-                services_scanned=0,
-                expected_checks=[],
-                completed_checks=0,
-                audit_progress=0,
-            ),
-            audit_config=None,
-        )
-        gcp_audit_info = GCP_Audit_Info(
-            credentials=None,
-            default_project_id="test-project1",
-            project_ids=["test-project1", "test-project2"],
-            audit_resources=None,
-            audit_metadata=None,
-            audit_config=None,
-        )
-        azure_audit_info = Azure_Audit_Info(
-            credentials=None,
-            identity=AzureIdentityInfo(
-                identity_id="",
-                identity_type="",
-                tenant_ids=[],
-                domain="",
-                subscriptions={
-                    "subscription 1": "qwerty",
-                    "subscription 2": "asdfg",
-                },
-            ),
-            audit_resources=None,
-            audit_metadata=None,
-            audit_config=None,
-            AzureRegionConfig=AzureRegionConfig(),
-            locations=None,
-        )
-        assert create_message_identity("aws", aws_audit_info) == (
-            f"AWS Account *{aws_audit_info.audited_account}*",
+class TestSlackIntegration:
+    def test_create_message_identity_aws(self):
+        aws_provider = set_mocked_aws_provider()
+
+        assert create_message_identity(aws_provider) == (
+            f"AWS Account *{aws_provider.identity.account}*",
             aws_logo,
         )
-        assert create_message_identity("gcp", gcp_audit_info) == (
-            f"GCP Projects *{', '.join(gcp_audit_info.project_ids)}*",
-            gcp_logo,
-        )
-        assert create_message_identity("azure", azure_audit_info) == (
-            "Azure Subscriptions:\n- *subscription 1: qwerty*\n- *subscription 2: asdfg*\n",
+
+    def test_create_message_identity_azure(self):
+        azure_provider = set_mocked_azure_provider()
+
+        assert create_message_identity(azure_provider) == (
+            f"Azure Subscriptions:\n- *{AZURE_SUBSCRIPTION_ID}: {AZURE_SUBSCRIPTION_NAME}*\n",
             azure_logo,
         )
 
+    def test_create_message_identity_gcp(self):
+        gcp_provider = set_mocked_gcp_provider(
+            project_ids=["test-project1", "test-project2"],
+            default_project_id="test-project1",
+        )
+
+        assert create_message_identity(gcp_provider) == (
+            f"GCP Projects *{', '.join(gcp_provider.project_ids)}*",
+            gcp_logo,
+        )
+
     def test_create_message_blocks(self):
-        aws_identity = f"AWS Account *{AWS_ACCOUNT_ID}*"
+        aws_identity = f"AWS Account *{AWS_ACCOUNT_NUMBER}*"
         azure_identity = "Azure Subscriptions:\n- *subscription 1: qwerty*\n- *subscription 2: asdfg*\n"
         gcp_identity = "GCP Project *gcp-project*"
         stats = {}

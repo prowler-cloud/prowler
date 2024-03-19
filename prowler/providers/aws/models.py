@@ -70,7 +70,7 @@ class AWSSession:
 class AWSCallerIdentity:
     user_id: str
     account: str
-    arn: str
+    arn: ARN
     region: str
 
 

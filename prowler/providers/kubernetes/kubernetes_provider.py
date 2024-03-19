@@ -225,7 +225,7 @@ class KubernetesProvider(Provider):
             )
             sys.exit(1)
 
-    def get_all_namespaces(self):
+    def get_all_namespaces(self) -> list[str]:
         """
         Retrieves all namespaces.
         Returns:

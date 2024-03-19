@@ -1,14 +1,13 @@
 from uuid import uuid4
 
 from azure.identity import DefaultAzureCredential
+from mock import MagicMock
 
-from prowler.providers.azure.lib.audit_info.models import (
-    Azure_Audit_Info,
-    Azure_Identity_Info,
-    Azure_Region_Config,
-)
+from prowler.providers.azure.azure_provider import AzureProvider
+from prowler.providers.azure.models import AzureIdentityInfo, AzureRegionConfig
 
-AZURE_SUBSCRIPTION = str(uuid4())
+AZURE_SUBSCRIPTION_ID = str(uuid4())
+AZURE_SUBSCRIPTION_NAME = "Subscription Name"
 
 # Azure Identity
 IDENTITY_ID = "00000000-0000-0000-0000-000000000000"
@@ -18,26 +17,26 @@ DOMAIN = "user.onmicrosoft.com"
 
 
 # Mocked Azure Audit Info
-def set_mocked_azure_audit_info(
+def set_mocked_azure_provider(
     credentials: DefaultAzureCredential = DefaultAzureCredential(),
-    identity: Azure_Identity_Info = Azure_Identity_Info(
+    identity: AzureIdentityInfo = AzureIdentityInfo(
         identity_id=IDENTITY_ID,
         identity_type=IDENTITY_TYPE,
         tenant_ids=TENANT_IDS,
         domain=DOMAIN,
-        subscriptions={AZURE_SUBSCRIPTION: "id_subscription"},
+        subscriptions={AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME},
     ),
     audit_config: dict = None,
-    azure_region_config: Azure_Region_Config = Azure_Region_Config(),
+    azure_region_config: AzureRegionConfig = AzureRegionConfig(),
     locations: list = None,
-):
-    audit_info = Azure_Audit_Info(
-        credentials=credentials,
-        identity=identity,
-        audit_metadata=None,
-        audit_resources=None,
-        audit_config=audit_config,
-        azure_region_config=azure_region_config,
-        locations=locations,
-    )
-    return audit_info
+) -> AzureProvider:
+
+    provider = MagicMock()
+    provider.type = "azure"
+    provider.session.credentials = credentials
+    provider.identity.locations = locations
+    provider.identity = identity
+    provider.audit_config = audit_config
+    provider.region_config = azure_region_config
+
+    return provider

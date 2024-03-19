@@ -6,8 +6,8 @@ from prowler.providers.azure.services.storage.storage_service import (
     Storage,
 )
 from tests.providers.azure.azure_fixtures import (
-    AZURE_SUBSCRIPTION,
-    set_mocked_azure_audit_info,
+    AZURE_SUBSCRIPTION_ID,
+    set_mocked_azure_provider,
 )
 
 
@@ -20,7 +20,7 @@ def mock_storage_get_storage_accounts(_):
         container_delete_retention_policy=None,
     )
     return {
-        AZURE_SUBSCRIPTION: [
+        AZURE_SUBSCRIPTION_ID: [
             Account(
                 id="id",
                 name="name",
@@ -45,51 +45,59 @@ def mock_storage_get_storage_accounts(_):
 )
 class Test_Storage_Service:
     def test__get_client__(self):
-        storage = Storage(set_mocked_azure_audit_info())
+        storage = Storage(set_mocked_azure_provider())
         assert (
-            storage.clients[AZURE_SUBSCRIPTION].__class__.__name__
+            storage.clients[AZURE_SUBSCRIPTION_ID].__class__.__name__
             == "StorageManagementClient"
         )
 
     def test__get_storage_accounts__(self):
-        storage = Storage(set_mocked_azure_audit_info())
+        storage = Storage(set_mocked_azure_provider())
         assert (
-            storage.storage_accounts[AZURE_SUBSCRIPTION][0].__class__.__name__
+            storage.storage_accounts[AZURE_SUBSCRIPTION_ID][0].__class__.__name__
             == "Account"
         )
-        assert storage.storage_accounts[AZURE_SUBSCRIPTION][0].id == "id"
-        assert storage.storage_accounts[AZURE_SUBSCRIPTION][0].name == "name"
+        assert storage.storage_accounts[AZURE_SUBSCRIPTION_ID][0].id == "id"
+        assert storage.storage_accounts[AZURE_SUBSCRIPTION_ID][0].name == "name"
         assert (
-            storage.storage_accounts[AZURE_SUBSCRIPTION][0].resouce_group_name is None
-        )
-        assert (
-            storage.storage_accounts[AZURE_SUBSCRIPTION][0].enable_https_traffic_only
-            is False
-        )
-        assert (
-            storage.storage_accounts[AZURE_SUBSCRIPTION][0].infrastructure_encryption
-            is False
-        )
-        assert (
-            storage.storage_accounts[AZURE_SUBSCRIPTION][0].allow_blob_public_access
+            storage.storage_accounts[AZURE_SUBSCRIPTION_ID][0].resouce_group_name
             is None
         )
-        assert storage.storage_accounts[AZURE_SUBSCRIPTION][0].network_rule_set is None
-        assert storage.storage_accounts[AZURE_SUBSCRIPTION][0].encryption_type == "None"
         assert (
-            storage.storage_accounts[AZURE_SUBSCRIPTION][0].minimum_tls_version is None
+            storage.storage_accounts[AZURE_SUBSCRIPTION_ID][0].enable_https_traffic_only
+            is False
         )
         assert (
-            storage.storage_accounts[AZURE_SUBSCRIPTION][
+            storage.storage_accounts[AZURE_SUBSCRIPTION_ID][0].infrastructure_encryption
+            is False
+        )
+        assert (
+            storage.storage_accounts[AZURE_SUBSCRIPTION_ID][0].allow_blob_public_access
+            is None
+        )
+        assert (
+            storage.storage_accounts[AZURE_SUBSCRIPTION_ID][0].network_rule_set is None
+        )
+        assert (
+            storage.storage_accounts[AZURE_SUBSCRIPTION_ID][0].encryption_type == "None"
+        )
+        assert (
+            storage.storage_accounts[AZURE_SUBSCRIPTION_ID][0].minimum_tls_version
+            is None
+        )
+        assert (
+            storage.storage_accounts[AZURE_SUBSCRIPTION_ID][
                 0
             ].key_expiration_period_in_days
             is None
         )
         assert (
-            storage.storage_accounts[AZURE_SUBSCRIPTION][0].private_endpoint_connections
+            storage.storage_accounts[AZURE_SUBSCRIPTION_ID][
+                0
+            ].private_endpoint_connections
             is None
         )
-        assert storage.storage_accounts[AZURE_SUBSCRIPTION][
+        assert storage.storage_accounts[AZURE_SUBSCRIPTION_ID][
             0
         ].blob_properties == BlobProperties(
             id="id",
@@ -100,32 +108,33 @@ class Test_Storage_Service:
         )
 
     def test__get_blob_properties__(self):
-        storage = Storage(set_mocked_azure_audit_info())
+        storage = Storage(set_mocked_azure_provider())
         assert (
-            storage.storage_accounts[AZURE_SUBSCRIPTION][
+            storage.storage_accounts[AZURE_SUBSCRIPTION_ID][
                 0
             ].blob_properties.__class__.__name__
             == "BlobProperties"
         )
         assert (
-            storage.storage_accounts[AZURE_SUBSCRIPTION][0].blob_properties.id == "id"
+            storage.storage_accounts[AZURE_SUBSCRIPTION_ID][0].blob_properties.id
+            == "id"
         )
         assert (
-            storage.storage_accounts[AZURE_SUBSCRIPTION][0].blob_properties.name
+            storage.storage_accounts[AZURE_SUBSCRIPTION_ID][0].blob_properties.name
             == "name"
         )
         assert (
-            storage.storage_accounts[AZURE_SUBSCRIPTION][0].blob_properties.type
+            storage.storage_accounts[AZURE_SUBSCRIPTION_ID][0].blob_properties.type
             == "type"
         )
         assert (
-            storage.storage_accounts[AZURE_SUBSCRIPTION][
+            storage.storage_accounts[AZURE_SUBSCRIPTION_ID][
                 0
             ].blob_properties.default_service_version
             is None
         )
         assert (
-            storage.storage_accounts[AZURE_SUBSCRIPTION][
+            storage.storage_accounts[AZURE_SUBSCRIPTION_ID][
                 0
             ].blob_properties.container_delete_retention_policy
             is None

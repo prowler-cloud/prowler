@@ -1,7 +1,10 @@
 from unittest import mock
 
 from prowler.providers.azure.services.monitor.monitor_service import DiagnosticSetting
-from tests.providers.azure.azure_fixtures import AZURE_SUBSCRIPTION
+from tests.providers.azure.azure_fixtures import (
+    AZURE_SUBSCRIPTION_ID,
+    set_mocked_azure_provider,
+)
 
 
 class Test_monitor_diagnostic_setting_with_appropriate_categories:
@@ -12,6 +15,9 @@ class Test_monitor_diagnostic_setting_with_appropriate_categories:
         monitor_client.diagnostics_settings = {}
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.monitor.monitor_diagnostic_setting_with_appropriate_categories.monitor_diagnostic_setting_with_appropriate_categories.monitor_client",
             new=monitor_client,
         ):
@@ -26,8 +32,11 @@ class Test_monitor_diagnostic_setting_with_appropriate_categories:
 
     def test_no_diagnostic_settings(self):
         monitor_client = mock.MagicMock
-        monitor_client.diagnostics_settings = {AZURE_SUBSCRIPTION: []}
+        monitor_client.diagnostics_settings = {AZURE_SUBSCRIPTION_ID: []}
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.monitor.monitor_diagnostic_setting_with_appropriate_categories.monitor_diagnostic_setting_with_appropriate_categories.monitor_client",
             new=monitor_client,
         ):
@@ -38,19 +47,19 @@ class Test_monitor_diagnostic_setting_with_appropriate_categories:
             check = monitor_diagnostic_setting_with_appropriate_categories()
             result = check.execute()
             assert len(result) == 1
-            assert result[0].subscription == AZURE_SUBSCRIPTION
+            assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].status == "FAIL"
             assert result[0].resource_id == "Monitor"
             assert result[0].resource_name == "Monitor"
             assert (
                 result[0].status_extended
-                == f"There are no diagnostic settings capturing appropiate categories in subscription {AZURE_SUBSCRIPTION}."
+                == f"There are no diagnostic settings capturing appropiate categories in subscription {AZURE_SUBSCRIPTION_ID}."
             )
 
     def test_diagnostic_settings_configured(self):
         monitor_client = mock.MagicMock
         monitor_client.diagnostics_settings = {
-            AZURE_SUBSCRIPTION: [
+            AZURE_SUBSCRIPTION_ID: [
                 DiagnosticSetting(
                     id="id",
                     logs=[
@@ -85,6 +94,9 @@ class Test_monitor_diagnostic_setting_with_appropriate_categories:
         }
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.monitor.monitor_diagnostic_setting_with_appropriate_categories.monitor_diagnostic_setting_with_appropriate_categories.monitor_client",
             new=monitor_client,
         ):
@@ -95,11 +107,11 @@ class Test_monitor_diagnostic_setting_with_appropriate_categories:
             check = monitor_diagnostic_setting_with_appropriate_categories()
             result = check.execute()
             assert len(result) == 1
-            assert result[0].subscription == AZURE_SUBSCRIPTION
+            assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].status == "PASS"
             assert result[0].resource_id == "Monitor"
             assert result[0].resource_name == "Monitor"
             assert (
                 result[0].status_extended
-                == f"There is at least one diagnostic setting capturing appropiate categories in subscription {AZURE_SUBSCRIPTION}."
+                == f"There is at least one diagnostic setting capturing appropiate categories in subscription {AZURE_SUBSCRIPTION_ID}."
             )
