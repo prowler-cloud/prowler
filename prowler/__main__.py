@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import sys
+from os import environ
 
 from colorama import Fore, Style
 
@@ -35,6 +36,7 @@ from prowler.lib.logger import logger, set_logging_config
 from prowler.lib.outputs.compliance.compliance import display_compliance_table
 from prowler.lib.outputs.json.json import close_json
 from prowler.lib.outputs.outputs import extract_findings_statistics
+from prowler.lib.outputs.slack import send_slack_message
 from prowler.lib.outputs.summary_table import display_summary_table
 from prowler.providers.aws.lib.s3.s3 import send_to_s3_bucket
 from prowler.providers.aws.lib.security_hub.security_hub import (
@@ -201,21 +203,19 @@ def prowler():
     # Extract findings stats
     stats = extract_findings_statistics(findings)
 
-    # TODO: adapt the slack integration for the new AWS provider
-    # if args.slack:
-    #     if "SLACK_API_TOKEN" in os.environ and "SLACK_CHANNEL_ID" in os.environ:
-    #         _ = send_slack_message(
-    #             os.environ["SLACK_API_TOKEN"],
-    #             os.environ["SLACK_CHANNEL_ID"],
-    #             stats,
-    #             provider,
-    #             provider,
-    #         )
-    #     else:
-    #         logger.critical(
-    #             "Slack integration needs SLACK_API_TOKEN and SLACK_CHANNEL_ID environment variables (see more in https://docs.prowler.cloud/en/latest/tutorials/integrations/#slack)."
-    #         )
-    #         sys.exit(1)
+    if args.slack:
+        if "SLACK_API_TOKEN" in environ and "SLACK_CHANNEL_ID" in environ:
+            _ = send_slack_message(
+                environ["SLACK_API_TOKEN"],
+                environ["SLACK_CHANNEL_ID"],
+                stats,
+                provider,
+            )
+        else:
+            logger.critical(
+                "Slack integration needs SLACK_API_TOKEN and SLACK_CHANNEL_ID environment variables (see more in https://docs.prowler.cloud/en/latest/tutorials/integrations/#slack)."
+            )
+            sys.exit(1)
 
     if args.output_modes:
         for mode in args.output_modes:
