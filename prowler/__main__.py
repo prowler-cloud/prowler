@@ -46,6 +46,7 @@ from prowler.providers.aws.lib.security_hub.security_hub import (
     verify_security_hub_integration_enabled_per_region,
 )
 from prowler.providers.common.common import set_global_provider_object
+from prowler.providers.common.quick_inventory import run_provider_quick_inventory
 
 
 def prowler():
@@ -178,11 +179,10 @@ def prowler():
     # Setup Output Options
     global_provider.output_options = (args, bulk_checks_metadata)
 
-    # TODO: adapt the quick inventory for the new AWS provider
     # Run the quick inventory for the provider if available
-    # if hasattr(args, "quick_inventory") and args.quick_inventory:
-    #     run_provider_quick_inventory(provider, global_provider.identity, args)
-    #     sys.exit()
+    if hasattr(args, "quick_inventory") and args.quick_inventory:
+        run_provider_quick_inventory(global_provider, args)
+        sys.exit()
 
     # Execute checks
     findings = []
