@@ -264,7 +264,7 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_54
 
         aws_provider = set_mocked_aws_provider(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1],
-            scan_unused_services=True,
+            scan_unused_services=False,
         )
 
         with mock.patch(
@@ -306,7 +306,7 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_54
 
         aws_provider = set_mocked_aws_provider(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1],
-            scan_unused_services=True,
+            scan_unused_services=False,
         )
 
         with mock.patch(

@@ -58,7 +58,7 @@ def set_mocked_aws_provider(
     expected_checks: list[str] = [],
     profile_region: str = None,
     audit_config: dict = {},
-    scan_unused_services: bool = False,
+    scan_unused_services: bool = True,
     audit_session: session.Session = session.Session(
         profile_name=None,
         botocore_session=None,

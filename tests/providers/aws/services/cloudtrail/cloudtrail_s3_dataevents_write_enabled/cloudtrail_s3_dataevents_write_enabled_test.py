@@ -135,7 +135,7 @@ class Test_cloudtrail_s3_dataevents_write_enabled:
         from prowler.providers.aws.services.s3.s3_service import S3
 
         aws_provider = set_mocked_aws_provider()
-        aws_provider._scan_unused_services = True
+        aws_provider._scan_unused_services = False
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
@@ -168,7 +168,7 @@ class Test_cloudtrail_s3_dataevents_write_enabled:
         from prowler.providers.aws.services.s3.s3_service import S3
 
         aws_provider = set_mocked_aws_provider()
-        aws_provider._scan_unused_services = True
+        aws_provider._scan_unused_services = False
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",

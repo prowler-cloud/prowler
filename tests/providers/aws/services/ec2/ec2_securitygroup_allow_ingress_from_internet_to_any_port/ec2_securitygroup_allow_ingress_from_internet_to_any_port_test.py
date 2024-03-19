@@ -265,7 +265,7 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_any_port:
             expected_checks=[
                 "ec2_securitygroup_allow_ingress_from_internet_to_any_port"
             ],
-            scan_unused_services=True,
+            scan_unused_services=False,
         )
 
         with mock.patch(
@@ -308,7 +308,7 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_any_port:
             expected_checks=[
                 "ec2_securitygroup_allow_ingress_from_internet_to_any_port"
             ],
-            scan_unused_services=True,
+            scan_unused_services=False,
         )
 
         with mock.patch(

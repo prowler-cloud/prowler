@@ -91,7 +91,7 @@ class Test_glue_data_catalogs_connection_passwords_encryption_enabled:
         glue_client.__get_data_catalog_arn_template__ = mock.MagicMock(
             return_value=glue_client.data_catalog_arn_template
         )
-        glue_client.provider._scan_unused_services = True
+        glue_client.provider._scan_unused_services = False
         with mock.patch(
             "prowler.providers.aws.services.glue.glue_service.Glue",
             glue_client,
@@ -126,7 +126,7 @@ class Test_glue_data_catalogs_connection_passwords_encryption_enabled:
         glue_client.__get_data_catalog_arn_template__ = mock.MagicMock(
             return_value=glue_client.data_catalog_arn_template
         )
-        glue_client.provider._scan_unused_services = True
+        glue_client.provider._scan_unused_services = False
         with mock.patch(
             "prowler.providers.aws.services.glue.glue_service.Glue",
             glue_client,
