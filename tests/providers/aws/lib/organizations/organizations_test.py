@@ -1,13 +1,11 @@
-import json
-
 import boto3
 from moto import mock_aws
 
-from prowler.providers.aws.lib.audit_info.models import AWS_Organizations_Info
 from prowler.providers.aws.lib.organizations.organizations import (
     get_organizations_metadata,
     parse_organizations_metadata,
 )
+from prowler.providers.aws.models import AWSOrganizationsInfo
 from tests.providers.aws.utils import AWS_ACCOUNT_NUMBER, AWS_REGION_US_EAST_1
 
 
@@ -15,8 +13,6 @@ class Test_AWS_Organizations:
     @mock_aws
     def test_organizations(self):
         client = boto3.client("organizations", region_name=AWS_REGION_US_EAST_1)
-        iam_client = boto3.client("iam", region_name=AWS_REGION_US_EAST_1)
-        sts_client = boto3.client("sts", region_name=AWS_REGION_US_EAST_1)
 
         mockname = "mock-account"
         mockdomain = "moto-example.org"
@@ -31,53 +27,47 @@ class Test_AWS_Organizations:
             ResourceId=account_id, Tags=[{"Key": "key", "Value": "value"}]
         )
 
-        trust_policy_document = {
-            "Version": "2012-10-17",
-            "Statement": {
-                "Effect": "Allow",
-                "Principal": {"AWS": f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"},
-                "Action": "sts:AssumeRole",
-            },
-        }
-        iam_role_arn = iam_client.role_arn = iam_client.create_role(
-            RoleName="test-role",
-            AssumeRolePolicyDocument=json.dumps(trust_policy_document),
-        )["Role"]["Arn"]
-        session_name = "new-session"
-        assumed_role = sts_client.assume_role(
-            RoleArn=iam_role_arn, RoleSessionName=session_name
-        )
-
-        metadata, tags = get_organizations_metadata(account_id, assumed_role)
+        metadata, tags = get_organizations_metadata(account_id, boto3.Session())
         org = parse_organizations_metadata(metadata, tags)
 
-        assert org.account_details_email == mockemail
-        assert org.account_details_name == mockname
+        assert isinstance(org, AWSOrganizationsInfo)
+        assert org.account_email == mockemail
+        assert org.account_name == mockname
         assert (
-            org.account_details_arn
+            org.organization_account_arn
             == f"arn:aws:organizations::{AWS_ACCOUNT_NUMBER}:account/{org_id}/{account_id}"
         )
-        assert org.account_details_org == org_id
-        assert org.account_details_tags == "key:value"
+        assert (
+            org.organization_arn
+            == f"arn:aws:organizations::{AWS_ACCOUNT_NUMBER}:organization/{org_id}"
+        )
+        assert org.organization_id == org_id
+        assert org.account_tags == "key:value"
 
     def test_parse_organizations_metadata(self):
         tags = {"Tags": [{"Key": "test-key", "Value": "test-value"}]}
-        name = "test-name"
-        email = "test-email"
-        organization_name = "test-org"
+        name = "mock-account"
+        email = "mock-account@moto-example.org"
+        organization_name = "o-v4bzbxm7ib"
         arn = f"arn:aws:organizations::{AWS_ACCOUNT_NUMBER}:organization/{organization_name}"
         metadata = {
             "Account": {
-                "Name": name,
-                "Email": email,
-                "Arn": arn,
+                "Id": AWS_ACCOUNT_NUMBER,
+                "Arn": f"arn:aws:organizations::123456789012:account/o-v4bzbxm7ib/{AWS_ACCOUNT_NUMBER}",
+                "Email": "mock-account@moto-example.org",
+                "Name": "mock-account",
+                "Status": "ACTIVE",
             }
         }
+
         org = parse_organizations_metadata(metadata, tags)
 
-        assert isinstance(org, AWS_Organizations_Info)
-        assert org.account_details_email == email
-        assert org.account_details_name == name
-        assert org.account_details_arn == arn
-        assert org.account_details_org == organization_name
-        assert org.account_details_tags == "test-key:test-value"
+        assert isinstance(org, AWSOrganizationsInfo)
+        assert org.account_email == email
+        assert org.account_name == name
+        assert (
+            org.organization_account_arn
+            == f"arn:aws:organizations::{AWS_ACCOUNT_NUMBER}:account/{organization_name}/{AWS_ACCOUNT_NUMBER}"
+        )
+        assert org.organization_arn == arn
+        assert org.account_tags == "test-key:test-value"

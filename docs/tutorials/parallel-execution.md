@@ -42,7 +42,7 @@ while read service; do
     echo "$(date '+%Y-%m-%d %H:%M:%S'): Starting job for service: ${service}"
 
     # Run the command in the background
-    (prowler -p "$profile" -s "$service" -F "${account_id}-${service}" --ignore-unused-services --only-logs; echo "$(date '+%Y-%m-%d %H:%M:%S') - ${service} has completed") &
+    (prowler -p "$profile" -s "$service" -F "${account_id}-${service}"  --only-logs; echo "$(date '+%Y-%m-%d %H:%M:%S') - ${service} has completed") &
 
     # Check if we have reached the maximum number of processes
     while [ $(jobs -r | wc -l) -ge ${MAX_PROCESSES} ]; do
@@ -98,7 +98,7 @@ $jobs = @()
 foreach ($service in $services) {
     # Start the command as a job
     $job = Start-Job -ScriptBlock {
-        prowler -p ${using:profile} -s ${using:service} -F "${using:account_id}-${using:service}" --ignore-unused-services --only-logs
+        prowler -p ${using:profile} -s ${using:service} -F "${using:account_id}-${using:service}" --only-logs
 	      $endTimestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
         Write-Output "${endTimestamp} - $using:service has completed"
     }

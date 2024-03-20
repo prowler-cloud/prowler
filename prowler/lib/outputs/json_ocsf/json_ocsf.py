@@ -93,6 +93,7 @@ def fill_json_ocsf(finding_output: FindingOutput) -> DetectionFinding:
                     uid=finding_output.resource_uid,
                     group=Group(name=finding_output.service_name),
                     type=finding_output.resource_type,
+                    # TODO: this should be included only if using the Cloud profile
                     cloud_partition=finding_output.partition,
                     region=finding_output.region,
                 )
@@ -118,21 +119,19 @@ def fill_json_ocsf(finding_output: FindingOutput) -> DetectionFinding:
             # TODO: Get the PID of the namespace (we only have the name of the namespace)
             # detection_finding.namespace_pid=,
         else:
-            detection_finding.cloud = (
-                Cloud(
-                    account=Account(
-                        name=finding_output.account_name,
-                        type_id=cloud_account_type.value,
-                        type=cloud_account_type.name,
-                        uid=finding_output.account_uid,
-                    ),
-                    org=Organization(
-                        uid=finding_output.account_organization_uid,
-                        name=finding_output.account_organization_name,
-                    ),
-                    provider=finding_output.provider,
-                    region=finding_output.region,
+            detection_finding.cloud = Cloud(
+                account=Account(
+                    name=finding_output.account_name,
+                    type_id=cloud_account_type.value,
+                    type=cloud_account_type.name,
+                    uid=finding_output.account_uid,
                 ),
+                org=Organization(
+                    uid=finding_output.account_organization_uid,
+                    name=finding_output.account_organization_name,
+                ),
+                provider=finding_output.provider,
+                region=finding_output.region,
             )
 
         return detection_finding

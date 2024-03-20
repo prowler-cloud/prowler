@@ -19,6 +19,7 @@ def arn_type(arn: str) -> bool:
     return arn
 
 
+# TODO: review this function just to parse the ARN not to re-instantiate it
 def parse_iam_credentials_arn(arn: str) -> ARN:
     arn_parsed = ARN(arn)
     # First check if region is empty (in IAM ARN's region is always empty)

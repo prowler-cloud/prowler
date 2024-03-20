@@ -4,7 +4,6 @@ from botocore.client import ClientError
 from prowler.config.config import timestamp_utc
 from prowler.lib.logger import logger
 from prowler.lib.outputs.json_asff.json_asff import fill_json_asff
-from prowler.lib.outputs.json_asff.models import Check_Output_JSON_ASFF
 
 SECURITY_HUB_INTEGRATION_NAME = "prowler/prowler"
 SECURITY_HUB_MAX_BATCH = 100
@@ -29,10 +28,8 @@ def prepare_security_hub_findings(
             continue
 
         # Handle status filters, if any
-        if (
-            not output_options.status
-            or finding.status in output_options.status
-            or output_options.send_sh_only_fails
+        if (finding.status != "FAIL" and output_options.send_sh_only_fails) or (
+            output_options.status and finding.status not in output_options.status
         ):
             continue
 
@@ -40,9 +37,7 @@ def prepare_security_hub_findings(
         region = finding.region
 
         # Format the finding in the JSON ASFF format
-        finding_json_asff = fill_json_asff(
-            Check_Output_JSON_ASFF(), provider, finding, output_options
-        )
+        finding_json_asff = fill_json_asff(provider, finding)
 
         # Include that finding within their region in the JSON format
         security_hub_findings_per_region[region].append(

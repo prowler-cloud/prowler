@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import sys
+from os import environ
 
 from colorama import Fore, Style
 
@@ -35,6 +36,7 @@ from prowler.lib.logger import logger, set_logging_config
 from prowler.lib.outputs.compliance.compliance import display_compliance_table
 from prowler.lib.outputs.json.json import close_json
 from prowler.lib.outputs.outputs import extract_findings_statistics
+from prowler.lib.outputs.slack import send_slack_message
 from prowler.lib.outputs.summary_table import display_summary_table
 from prowler.providers.aws.lib.s3.s3 import send_to_s3_bucket
 from prowler.providers.aws.lib.security_hub.security_hub import (
@@ -44,6 +46,7 @@ from prowler.providers.aws.lib.security_hub.security_hub import (
     verify_security_hub_integration_enabled_per_region,
 )
 from prowler.providers.common.common import set_global_provider_object
+from prowler.providers.common.quick_inventory import run_provider_quick_inventory
 
 
 def prowler():
@@ -161,10 +164,8 @@ def prowler():
             checks_to_execute, excluded_services, provider
         )
 
-    # Once the audit_info is set and we have the eventual checks based on the resource identifier,
+    # Once the provider is set and we have the eventual checks based on the resource identifier,
     # it is time to check what Prowler's checks are going to be executed
-    # TODO: the following if is done within the function
-    # if global_provider.audit_resources:
     checks_from_resources = global_provider.get_checks_to_execute_by_audit_resources()
     if checks_from_resources:
         checks_to_execute = checks_to_execute.intersection(checks_from_resources)
@@ -173,17 +174,15 @@ def prowler():
     checks_to_execute = sorted(checks_to_execute)
 
     # Setup Mute List
-    if hasattr(args, "mutelist_file"):
-        global_provider.mutelist = args.mutelist_file
+    global_provider.mutelist = args.mutelist_file
 
     # Setup Output Options
     global_provider.output_options = (args, bulk_checks_metadata)
 
-    # TODO: adapt the quick inventory for the new AWS provider
     # Run the quick inventory for the provider if available
-    # if hasattr(args, "quick_inventory") and args.quick_inventory:
-    #     run_provider_quick_inventory(provider, global_provider.identity, args)
-    #     sys.exit()
+    if hasattr(args, "quick_inventory") and args.quick_inventory:
+        run_provider_quick_inventory(global_provider, args)
+        sys.exit()
 
     # Execute checks
     findings = []
@@ -203,21 +202,19 @@ def prowler():
     # Extract findings stats
     stats = extract_findings_statistics(findings)
 
-    # TODO: adapt the slack integration for the new AWS provider
-    # if args.slack:
-    #     if "SLACK_API_TOKEN" in os.environ and "SLACK_CHANNEL_ID" in os.environ:
-    #         _ = send_slack_message(
-    #             os.environ["SLACK_API_TOKEN"],
-    #             os.environ["SLACK_CHANNEL_ID"],
-    #             stats,
-    #             provider,
-    #             audit_info,
-    #         )
-    #     else:
-    #         logger.critical(
-    #             "Slack integration needs SLACK_API_TOKEN and SLACK_CHANNEL_ID environment variables (see more in https://docs.prowler.cloud/en/latest/tutorials/integrations/#slack)."
-    #         )
-    #         sys.exit(1)
+    if args.slack:
+        if "SLACK_API_TOKEN" in environ and "SLACK_CHANNEL_ID" in environ:
+            _ = send_slack_message(
+                environ["SLACK_API_TOKEN"],
+                environ["SLACK_CHANNEL_ID"],
+                stats,
+                provider,
+            )
+        else:
+            logger.critical(
+                "Slack integration needs SLACK_API_TOKEN and SLACK_CHANNEL_ID environment variables (see more in https://docs.prowler.cloud/en/latest/tutorials/integrations/#slack)."
+            )
+            sys.exit(1)
 
     if args.output_modes:
         for mode in args.output_modes:

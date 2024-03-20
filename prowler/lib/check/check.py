@@ -128,12 +128,12 @@ def parse_checks_from_folder(provider, input_folder: str) -> int:
     try:
         imported_checks = 0
         # Check if input folder is a S3 URI
-        if provider.provider == "aws" and re.search(
+        if provider.type == "aws" and re.search(
             "^s3://([^/]+)/(.*?([^/]+))/$", input_folder
         ):
             bucket = input_folder.split("/")[2]
             key = ("/").join(input_folder.split("/")[3:])
-            s3_resource = provider.session.session.resource("s3")
+            s3_resource = provider.session.current_session.resource("s3")
             bucket = s3_resource.Bucket(bucket)
             for obj in bucket.objects.filter(Prefix=key):
                 if not os.path.exists(os.path.dirname(obj.key)):
@@ -150,7 +150,7 @@ def parse_checks_from_folder(provider, input_folder: str) -> int:
                     # Copy checks to specific provider/service folder
                     check_service = check.name.split("_")[0]
                     prowler_dir = prowler.__path__
-                    prowler_module = f"{prowler_dir[0]}/providers/{provider.provider}/services/{check_service}/{check.name}"
+                    prowler_module = f"{prowler_dir[0]}/providers/{provider.type}/services/{check_service}/{check.name}"
                     if os.path.exists(prowler_module):
                         shutil.rmtree(prowler_module)
                     shutil.copytree(check_module, prowler_module)

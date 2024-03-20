@@ -32,7 +32,7 @@ class guardduty_is_enabled(Check):
                 guardduty_client.audit_config.get("mute_non_default_regions", False)
                 and not detector.region == guardduty_client.region
             ):
-                report.status = "MUTED"
+                report.muted = True
 
             findings.append(report)
 

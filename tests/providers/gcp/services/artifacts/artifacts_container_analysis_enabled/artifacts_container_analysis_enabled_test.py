@@ -1,7 +1,7 @@
 from unittest import mock
 
 from prowler.providers.gcp.services.serviceusage.serviceusage_service import Service
-from tests.providers.gcp.lib.audit_info_utils import GCP_PROJECT_ID
+from tests.providers.gcp.gcp_fixtures import GCP_PROJECT_ID, set_mocked_gcp_provider
 
 
 class Test_artifacts_container_analysis_enabled:
@@ -12,6 +12,9 @@ class Test_artifacts_container_analysis_enabled:
         serviceusage_client.region = "global"
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_gcp_provider(),
+        ), mock.patch(
             "prowler.providers.gcp.services.artifacts.artifacts_container_analysis_enabled.artifacts_container_analysis_enabled.serviceusage_client",
             new=serviceusage_client,
         ):
@@ -47,6 +50,9 @@ class Test_artifacts_container_analysis_enabled:
         serviceusage_client.region = "global"
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_gcp_provider(),
+        ), mock.patch(
             "prowler.providers.gcp.services.artifacts.artifacts_container_analysis_enabled.artifacts_container_analysis_enabled.serviceusage_client",
             new=serviceusage_client,
         ):

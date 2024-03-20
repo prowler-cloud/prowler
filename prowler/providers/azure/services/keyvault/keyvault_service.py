@@ -12,9 +12,11 @@ from azure.mgmt.keyvault.v2023_07_01.models import (
 from prowler.lib.logger import logger
 from prowler.providers.azure.azure_provider import AzureProvider
 from prowler.providers.azure.lib.service.service import AzureService
+from prowler.providers.azure.services.monitor.monitor_client import monitor_client
+from prowler.providers.azure.services.monitor.monitor_service import DiagnosticSetting
 
 
-########################## Storage
+########################## KeyVault
 class KeyVault(AzureService):
     def __init__(self, provider: AzureProvider):
         super().__init__(KeyVaultManagementClient, provider)
@@ -49,6 +51,9 @@ class KeyVault(AzureService):
                             properties=keyvault_properties,
                             keys=keys,
                             secrets=secrets,
+                            monitor_diagnostic_settings=self.__get_vault_monitor_settings__(
+                                keyvault_name, resource_group, subscription
+                            ),
                         )
                     )
             except Exception as error:
@@ -120,6 +125,25 @@ class KeyVault(AzureService):
             )
         return secrets
 
+    def __get_vault_monitor_settings__(
+        self, keyvault_name, resource_group, subscription
+    ):
+        logger.info(
+            f"KeyVault - Getting monitor diagnostics settings for {keyvault_name}..."
+        )
+        monitor_diagnostics_settings = []
+        try:
+            monitor_diagnostics_settings = monitor_client.diagnostic_settings_with_uri(
+                self.subscriptions[subscription],
+                f"subscriptions/{self.subscriptions[subscription]}/resourceGroups/{resource_group}/providers/Microsoft.KeyVault/vaults/{keyvault_name}",
+                monitor_client.clients[subscription],
+            )
+        except Exception as error:
+            logger.error(
+                f"Subscription name: {self.subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return monitor_diagnostics_settings
+
 
 @dataclass
 class Key:
@@ -149,3 +173,4 @@ class KeyVaultInfo:
     properties: VaultProperties
     keys: list[Key] = None
     secrets: list[Secret] = None
+    monitor_diagnostic_settings: list[DiagnosticSetting] = None

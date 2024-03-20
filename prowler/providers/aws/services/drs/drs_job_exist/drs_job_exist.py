@@ -25,7 +25,7 @@ class drs_job_exist(Check):
                 drs_client.audit_config.get("mute_non_default_regions", False)
                 and not drs.region == drs_client.region
             ):
-                report.status = "MUTED"
+                report.muted = True
 
             findings.append(report)
 

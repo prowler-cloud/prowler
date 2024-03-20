@@ -173,7 +173,8 @@ class Test_securityhub_enabled:
             check = securityhub_enabled()
             result = check.execute()
 
-            assert result[0].status == "MUTED"
+            assert result[0].status == "FAIL"
+            assert result[0].muted
             assert (
                 result[0].status_extended
                 == "Security Hub is enabled but without any standard or integration."
