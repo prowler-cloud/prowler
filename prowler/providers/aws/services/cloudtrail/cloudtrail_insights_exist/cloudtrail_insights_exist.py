@@ -8,7 +8,6 @@ class cloudtrail_insights_exist(Check):
     def execute(self):
         findings = []
         for trail in cloudtrail_client.trails.values():
-            print(trail.arn)
             if trail.is_logging:
                 report = Check_Report_AWS(self.metadata())
                 report.region = trail.region
