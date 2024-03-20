@@ -8,6 +8,10 @@ env:
   RELEASE_TAG: ${{ github.event.release.tag_name }}
   PYTHON_VERSION: 3.11
   CACHE: "poetry"
+  # This base branch is used to create a PR with the updated version
+  # We'd need to handle the base branch for v4 and v3, since they will be
+  # `master` and `3.0-dev`, respectively
+  GITHUB_BASE_BRANCH: "master"
 
 jobs:
   release-prowler-job:
@@ -74,7 +78,7 @@ jobs:
 
             By submitting this pull request, I confirm that my contribution is made under the terms of the Apache 2.0 license." |\
             gh pr create \
-              --base main \
+              --base ${{ env.GITHUB_BASE_BRANCH }} \
               --head release-${{ env.RELEASE_TAG }} \
               --title "chore(release): update Prowler Version to ${{ env.RELEASE_TAG }}." \
               --body-file -
