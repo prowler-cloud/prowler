@@ -163,7 +163,7 @@ class Test_cloudtrail_multi_region_enabled:
         trail_us = cloudtrail_client_us_east_1.create_trail(
             Name=trail_name_us, S3BucketName=bucket_name_us, IsMultiRegionTrail=False
         )
-        cloudtrail_client_eu_west_1.create_trail(
+        _ = cloudtrail_client_eu_west_1.create_trail(
             Name=trail_name_eu, S3BucketName=bucket_name_eu, IsMultiRegionTrail=False
         )
         _ = cloudtrail_client_us_east_1.start_logging(Name=trail_name_us)
@@ -194,7 +194,7 @@ class Test_cloudtrail_multi_region_enabled:
                 result = check.execute()
                 assert len(result) == len(current_audit_info.audited_regions)
                 for report in result:
-                    if report.resource_id == trail_name_us:
+                    if report.region == AWS_REGION_US_EAST_1:
                         assert report.status == "PASS"
                         assert search(
                             "is not multiregion and it is logging",
@@ -269,7 +269,7 @@ class Test_cloudtrail_multi_region_enabled:
 
                 check = cloudtrail_multi_region_enabled()
                 result = check.execute()
-                assert len(result) == 1
+                assert len(result) == len(current_audit_info.audited_regions)
                 for report in result:
                     if report.region == AWS_REGION_US_EAST_1:
                         assert report.status == "PASS"
