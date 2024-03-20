@@ -58,6 +58,7 @@ class Test_app_http_logs_enabled:
                         client_cert_mode="Ignore",
                         https_only=False,
                         identity=None,
+                        kind="webapps",
                     )
                 }
             }
@@ -69,7 +70,7 @@ class Test_app_http_logs_enabled:
             assert result[0].resource_id == "resource_id"
             assert (
                 result[0].status_extended
-                == f"Logging for app app1 HTTP Logs is disabled in subscription {AZURE_SUBSCRIPTION}."
+                == f"App app1 does not have a diagnostic setting in subscription {AZURE_SUBSCRIPTION}."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION
 
@@ -96,6 +97,7 @@ class Test_app_http_logs_enabled:
                         configurations=None,
                         client_cert_mode="Ignore",
                         https_only=False,
+                        kind="functionapp",
                         identity=mock.MagicMock,
                         monitor_diagnostic_settings=[
                             DiagnosticSetting(
@@ -138,6 +140,7 @@ class Test_app_http_logs_enabled:
                         configurations=None,
                         client_cert_mode="Ignore",
                         https_only=False,
+                        kind="WebApp",
                         identity=mock.MagicMock,
                         monitor_diagnostic_settings=[
                             DiagnosticSetting(
@@ -145,7 +148,7 @@ class Test_app_http_logs_enabled:
                                 logs=[
                                     mock.MagicMock(
                                         category="AppServiceHTTPLogs",
-                                        enabled=False,
+                                        enabled=True,
                                     ),
                                     mock.MagicMock(
                                         category="AppServiceConsoleLogs",
@@ -178,20 +181,12 @@ class Test_app_http_logs_enabled:
             }
             check = app_http_logs_enabled()
             result = check.execute()
-            assert len(result) == 2
+            assert len(result) == 1
             assert result[0].status == "PASS"
             assert result[0].subscription == AZURE_SUBSCRIPTION
-            assert result[0].resource_name == "name_diagnostic_setting1"
-            assert result[0].resource_id == "id1/id1"
+            assert result[0].resource_name == "app_id-2"
+            assert result[0].resource_id == "resource_id2"
             assert (
                 result[0].status_extended
-                == f"Diagnostic setting name_diagnostic_setting1 has logging for app app_id-1 HTTP Logs enabled in subscription {AZURE_SUBSCRIPTION}"
-            )
-            assert result[1].status == "FAIL"
-            assert result[1].subscription == AZURE_SUBSCRIPTION
-            assert result[1].resource_name == "name_diagnostic_setting2"
-            assert result[1].resource_id == "id2/id2"
-            assert (
-                result[1].status_extended
-                == f"Diagnostic setting name_diagnostic_setting2 has not logging for app app_id-2 HTTP Logs enabled in subscription {AZURE_SUBSCRIPTION}"
+                == f"App app_id-2 has HTTP Logs enabled in diagnostic setting name_diagnostic_setting2 in subscription {AZURE_SUBSCRIPTION}"
             )
