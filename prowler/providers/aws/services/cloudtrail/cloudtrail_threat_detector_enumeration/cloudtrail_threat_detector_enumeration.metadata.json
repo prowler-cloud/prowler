@@ -1,6 +1,6 @@
 {
   "Provider": "aws",
-  "CheckID": "cloudtrail_threat_detector_privilege_escalation",
+  "CheckID": "cloudtrail_threat_detector_enumeration",
   "CheckTitle": "Ensure CloudTrail Insight is enabled",
   "CheckType": [
     "Software and Configuration Checks",
