@@ -57,7 +57,7 @@ jobs:
           git commit -m "chore(release): ${{ env.RELEASE_TAG }}" --no-verify -S
 
           # Replace the tag with the version updated
-          git tag -fa ${{ env.RELEASE_TAG }} -m "chore(release): ${{ env.RELEASE_TAG }}"
+          git tag -fa ${{ env.RELEASE_TAG }} -m "chore(release): ${{ env.RELEASE_TAG }}" --sign
 
           # Push the tag
           git push -f origin ${{ env.RELEASE_TAG }}
