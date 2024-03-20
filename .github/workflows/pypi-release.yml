@@ -77,22 +77,22 @@ jobs:
           poetry config pypi-token.pypi ${{ secrets.PYPI_API_TOKEN }}
           poetry publish
 
-          - name: Create PR to update version in the branch
-          run: |
-            echo "### Description
-
-            This PR updates Prowler Version to ${{ env.RELEASE_TAG }}.
-
-            ### License
-
-            By submitting this pull request, I confirm that my contribution is made under the terms of the Apache 2.0 license." |\
-            gh pr create \
-              --base ${{ env.GITHUB_BASE_BRANCH }} \
-              --head release-${{ env.RELEASE_TAG }} \
-              --title "chore(release): update Prowler Version to ${{ env.RELEASE_TAG }}." \
-              --body-file -
-          env:
-            GH_TOKEN: ${{ secrets.PROWLER_ACCESS_TOKEN }}
+      - name: Create PR to update version in the branch
+        run: |
+          echo "### Description
+          
+          This PR updates Prowler Version to ${{ env.RELEASE_TAG }}.
+          
+          ### License
+          
+          By submitting this pull request, I confirm that my contribution is made under the terms of the Apache 2.0 license." |\
+          gh pr create \
+            --base ${{ env.GITHUB_BASE_BRANCH }} \
+            --head release-${{ env.RELEASE_TAG }} \
+            --title "chore(release): update Prowler Version to ${{ env.RELEASE_TAG }}." \
+            --body-file -
+        env:
+          GH_TOKEN: ${{ secrets.PROWLER_ACCESS_TOKEN }}
 
       - name: Replicate PyPI package
         run: |
