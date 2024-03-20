@@ -27,8 +27,8 @@ class Entra(AzureService):
         self.security_default = asyncio.get_event_loop().run_until_complete(
             self.__get_security_default__()
         )
-        self.trusted_locations = asyncio.get_event_loop().run_until_complete(
-            self.__get_trusted_locations__()
+        self.named_locations = asyncio.get_event_loop().run_until_complete(
+            self.__get_named_locations__()
         )
         self.directory_roles = asyncio.get_event_loop().run_until_complete(
             self.__get_directory_roles__()
@@ -135,21 +135,27 @@ class Entra(AzureService):
 
         return security_defaults
 
-    async def __get_trusted_locations__(self):
-        trusted_locations = {}
+    async def __get_named_locations__(self):
+        named_locations = {}
         try:
             for tenant, client in self.clients.items():
-                trusted_locations_list = (
+                named_locations_list = (
                     await client.identity.conditional_access.named_locations.get()
                 )
-                trusted_locations.update({tenant: {}})
-                for trusted_location in trusted_locations_list.value:
-                    trusted_locations[tenant].update(
+                named_locations.update({tenant: {}})
+                for named_location in getattr(named_locations_list, "value", []):
+                    named_locations[tenant].update(
                         {
-                            trusted_location.id: {
-                                "name": trusted_location.display_name,
-                                "address": trusted_location.address,
-                            }
+                            named_location.id: NamedLocation(
+                                name=named_location.display_name,
+                                ip_ranges_addresses=[
+                                    getattr(ip_range, "cidr_address", None)
+                                    for ip_range in getattr(
+                                        named_location, "ip_ranges", []
+                                    )
+                                ],
+                                is_trusted=getattr(named_location, "is_trusted", False),
+                            )
                         }
                     )
         except Exception as error:
@@ -157,7 +163,7 @@ class Entra(AzureService):
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-        return trusted_locations
+        return named_locations
 
     async def __get_directory_roles__(self):
         directory_roles_with_members = {}
@@ -219,6 +225,12 @@ class SecurityDefault(BaseModel):
     id: str
     name: str
     is_enabled: bool
+
+
+class NamedLocation(BaseModel):
+    name: str
+    ip_ranges_addresses: list[str]
+    is_trusted: bool
 
 
 class DirectoryRole(BaseModel):
