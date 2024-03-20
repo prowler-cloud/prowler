@@ -10,7 +10,7 @@ class cloudtrail_multi_region_enabled(Check):
         for region in cloudtrail_client.regional_clients.keys():
             report = Check_Report_AWS(self.metadata())
             report.region = region
-            for trail in cloudtrail_client.trails:
+            for trail in cloudtrail_client.trails.values():
                 if trail.region == region:
                     if trail.is_logging:
                         report.status = "PASS"

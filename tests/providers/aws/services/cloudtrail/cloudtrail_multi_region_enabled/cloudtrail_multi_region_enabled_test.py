@@ -269,7 +269,7 @@ class Test_cloudtrail_multi_region_enabled:
 
                 check = cloudtrail_multi_region_enabled()
                 result = check.execute()
-                assert len(result) == len(current_audit_info.audited_regions)
+                assert len(result) == 1
                 for report in result:
                     if report.region == AWS_REGION_US_EAST_1:
                         assert report.status == "PASS"

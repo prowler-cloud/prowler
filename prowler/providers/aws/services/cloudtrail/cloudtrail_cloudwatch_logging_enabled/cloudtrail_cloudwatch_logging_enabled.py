@@ -11,7 +11,7 @@ maximum_time_without_logging = 1
 class cloudtrail_cloudwatch_logging_enabled(Check):
     def execute(self):
         findings = []
-        for trail in cloudtrail_client.trails:
+        for trail in cloudtrail_client.trails.values():
             if trail.name:
                 report = Check_Report_AWS(self.metadata())
                 report.region = trail.region

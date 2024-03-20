@@ -8,7 +8,7 @@ from prowler.providers.aws.services.s3.s3_client import s3_client
 class cloudtrail_bucket_requires_mfa_delete(Check):
     def execute(self):
         findings = []
-        for trail in cloudtrail_client.trails:
+        for trail in cloudtrail_client.trails.values():
             if trail.is_logging:
                 trail_bucket_is_in_account = False
                 trail_bucket = trail.s3_bucket
