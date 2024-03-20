@@ -24,8 +24,8 @@ class Entra(AzureService):
         self.group_settings = asyncio.get_event_loop().run_until_complete(
             self.__get_group_settings__()
         )
-        self.security_default_enabled = asyncio.get_event_loop().run_until_complete(
-            self.__get_security_default_enabled__()
+        self.security_default = asyncio.get_event_loop().run_until_complete(
+            self.__get_security_default__()
         )
         self.trusted_locations = asyncio.get_event_loop().run_until_complete(
             self.__get_trusted_locations__()
@@ -112,20 +112,28 @@ class Entra(AzureService):
 
         return group_settings
 
-    async def __get_security_default_enabled__(self):
+    async def __get_security_default__(self):
         try:
-            security_default_enabled = {}
+            security_defaults = {}
             for tenant, client in self.clients.items():
                 security_default = (
                     await client.policies.identity_security_defaults_enforcement_policy.get()
                 )
-                security_default_enabled.update({tenant: security_default.is_enabled})
+                security_defaults.update(
+                    {
+                        tenant: SecurityDefault(
+                            id=security_default.id,
+                            name=security_default.display_name,
+                            is_enabled=security_default.is_enabled,
+                        ),
+                    }
+                )
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-        return security_default_enabled
+        return security_defaults
 
     async def __get_trusted_locations__(self):
         trusted_locations = {}
@@ -205,6 +213,12 @@ class GroupSetting:
     name: Optional[str]
     template_id: Optional[str]
     settings: list[SettingValue]
+
+
+class SecurityDefault(BaseModel):
+    id: str
+    name: str
+    is_enabled: bool
 
 
 class DirectoryRole(BaseModel):
