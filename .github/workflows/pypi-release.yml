@@ -12,6 +12,7 @@ env:
   # We'd need to handle the base branch for v4 and v3, since they will be
   # `master` and `3.0-dev`, respectively
   GITHUB_BASE_BRANCH: "master"
+  GIT_COMMITTER_EMAIL: "sergio@prowler.com"
 
 jobs:
   release-prowler-job:
@@ -37,15 +38,23 @@ jobs:
         run: |
           poetry version ${{ env.RELEASE_TAG }}
 
+      - name: Import GPG key
+        uses: crazy-max/ghaction-import-gpg@v4
+        with:
+          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.GPG_PASSPHRASE }}
+          git_user_signingkey: true
+          git_commit_gpgsign: true
+
       - name: Push updated version to the release tag
         run: |
           # Configure Git
           git config user.name "github-actions"
-          git config user.email "<noreply@github.com>"
+          git config user.email "${{ env.GIT_COMMITTER_EMAIL }}"
 
           # Add the files with the version changed
           git add prowler/config/config.py pyproject.toml
-          git commit -m "chore(release): ${{ env.RELEASE_TAG }}" --no-verify
+          git commit -m "chore(release): ${{ env.RELEASE_TAG }}" --no-verify -S
 
           # Replace the tag with the version updated
           git tag -fa ${{ env.RELEASE_TAG }} -m "chore(release): ${{ env.RELEASE_TAG }}"
