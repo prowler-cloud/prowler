@@ -270,10 +270,14 @@ def fill_compliance(output_options, finding, audit_info, file_descriptors):
                         attributes_values = ""
                         attributes_comments = ""
                         for attribute in requirement.Attributes:
-                            attributes_aws_services += attribute.AWSService + "\n"
-                            attributes_categories += attribute.Category + "\n"
-                            attributes_values += attribute.Value + "\n"
-                            attributes_comments += attribute.Comment + "\n"
+                            attributes_aws_services += attribute.AWSService + ", "
+                            attributes_categories += attribute.Category + ", "
+                            attributes_values += attribute.Value + ", "
+                            attributes_comments += attribute.Comment + ", "
+                        attributes_aws_services = attributes_aws_services[:-2]
+                        attributes_categories = attributes_categories[:-2]
+                        attributes_values = attributes_values[:-2]
+                        attributes_comments = attributes_comments[:-2]
                         compliance_row = Check_Output_MITRE_ATTACK(
                             Provider=finding.check_metadata.Provider,
                             Description=compliance.Description,
