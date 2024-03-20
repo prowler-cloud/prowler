@@ -8,7 +8,7 @@ from prowler.providers.aws.services.s3.s3_client import s3_client
 class cloudtrail_s3_dataevents_write_enabled(Check):
     def execute(self):
         findings = []
-        for trail in cloudtrail_client.trails:
+        for trail in cloudtrail_client.trails.values():
             for data_event in trail.data_events:
                 # Classic event selectors
                 if not data_event.is_advanced:
