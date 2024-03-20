@@ -1,5 +1,6 @@
 import re
-from dashboard.config import pass_emoji, fail_emoji, info_emoji, manual_emoji
+
+from dashboard.config import fail_emoji, info_emoji, manual_emoji, pass_emoji
 
 
 def version_tuple(version):
@@ -44,3 +45,6 @@ def map_status_to_icon(status):
     elif status == "MANUAL":
         return manual_emoji
     return status
+
+
+# def get_section_containers_cis()

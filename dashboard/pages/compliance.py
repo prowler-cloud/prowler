@@ -1,9 +1,9 @@
 # Standard library imports
+import csv
 import glob
 import importlib
 import math
 import os
-import csv
 import re
 import warnings
 
@@ -16,11 +16,15 @@ import plotly.graph_objs as go
 from dash import callback, dcc, html
 from dash.dependencies import Input, Output
 
-from dashboard.lib.dropdowns import create_account_dropdown_compliance, create_compliance_dropdown, create_region_dropdown_compliance, create_date_dropdown_compliance
-from dashboard.lib.layouts import create_layout_compliance
-
 # Config import
 from dashboard.config import folder_path_compliance
+from dashboard.lib.dropdowns import (
+    create_account_dropdown_compliance,
+    create_compliance_dropdown,
+    create_date_dropdown_compliance,
+    create_region_dropdown_compliance,
+)
+from dashboard.lib.layouts import create_layout_compliance
 
 # Suppress warnings
 warnings.filterwarnings("ignore")
@@ -29,15 +33,12 @@ warnings.filterwarnings("ignore")
 # TODO: Create a flag to let the user put a custom path
 
 csv_files = []
-
 for file in glob.glob(os.path.join(folder_path_compliance, "*.csv")):
-    with open(file, 'r', newline='') as csvfile:
+    with open(file, "r", newline="") as csvfile:
         reader = csv.reader(csvfile)
-        num_rows = sum(1 for row in reader)  
-        if num_rows > 1: 
+        num_rows = sum(1 for row in reader)
+        if num_rows > 1:
             csv_files.append(file)
-
-
 
 
 def load_csv_files(csv_files):
@@ -46,7 +47,7 @@ def load_csv_files(csv_files):
     results = []
     for file in csv_files:
         df = pd.read_csv(file, sep=";", on_bad_lines="skip")
-        if "CHECKID" in df.columns and "mitre" not in file.split("/")[-1]:
+        if "CHECKID" in df.columns:
             dfs.append(df)
             result = file
             result = result.split("/")[-1]
@@ -60,6 +61,8 @@ def load_csv_files(csv_files):
                     result = result.replace("_AWS", " - AWS")
             if "GCP" in result:
                 result = result.replace("_GCP", " - GCP")
+            if "AZURE" in result:
+                result = result.replace("_AZURE", " - AZURE")
             results.append(result)
 
     unique_results = set(results)
@@ -75,69 +78,114 @@ def load_csv_files(csv_files):
 
     results = results + new_results
     results.sort()
-    return pd.concat(dfs, ignore_index=True), results
+    # Handle the case where there are no CSV files
+    try:
+        data = pd.concat(dfs, ignore_index=True)
+    except ValueError:
+        data = None
+    return data, results
 
 
 data, results = load_csv_files(csv_files)
 
-data["ASSESSMENTDATE"] = pd.to_datetime(data["ASSESSMENTDATE"])
-data["ASSESSMENT_TIME"] = data["ASSESSMENTDATE"].dt.strftime("%Y-%m-%d %H:%M:%S")
+if data is None:
+    dash.register_page(__name__)
+    layout = html.Div(
+        [
+            html.Div(
+                [
+                    html.H5(
+                        "No data found, check if the CSV files are in the correct folder.",
+                        className="card-title",
+                        style={"text-align": "left"},
+                    )
+                ],
+                style={
+                    "width": "99%",
+                    "margin-right": "0.8%",
+                    "margin-bottom": "10px",
+                },
+            )
+        ]
+    )
+else:
 
-data_values = data["ASSESSMENT_TIME"].unique()
-data_values.sort()
-data_values = data_values[::-1]
-aux = []
-for value in data_values:
-    if value.split(" ")[0] not in [aux[i].split(" ")[0] for i in range(len(aux))]:
-        aux.append(value)
-data_values = aux
+    data["ASSESSMENTDATE"] = pd.to_datetime(data["ASSESSMENTDATE"])
+    data["ASSESSMENT_TIME"] = data["ASSESSMENTDATE"].dt.strftime("%Y-%m-%d %H:%M:%S")
 
-data = data[data["ASSESSMENT_TIME"].isin(data_values)]
-data["ASSESSMENT_TIME"] = data["ASSESSMENT_TIME"].apply(lambda x: x.split(" ")[0])
+    data_values = data["ASSESSMENT_TIME"].unique()
+    data_values.sort()
+    data_values = data_values[::-1]
+    aux = []
+    for value in data_values:
+        if value.split(" ")[0] not in [aux[i].split(" ")[0] for i in range(len(aux))]:
+            aux.append(value)
+    data_values = aux
 
-# Select Compliance - Dropdown
+    data = data[data["ASSESSMENT_TIME"].isin(data_values)]
+    data["ASSESSMENT_TIME"] = data["ASSESSMENT_TIME"].apply(lambda x: x.split(" ")[0])
 
-compliance_dropdown = create_compliance_dropdown(results)
+    # Select Compliance - Dropdown
 
-# Select Account - Dropdown
+    compliance_dropdown = create_compliance_dropdown(results)
 
-select_account_dropdown_list = ["All"]
-select_account_dropdown_list = (
-    select_account_dropdown_list
-    + list(data["ACCOUNTID"].unique())
-    + list(data["PROJECTID"].unique())
-)
-list_items = []
-for item in select_account_dropdown_list:
-    if item.__class__.__name__ == "str":
-        list_items.append(item)
+    # Select Account - Dropdown
 
-account_dropdown = create_account_dropdown_compliance(list_items)
+    select_account_dropdown_list = ["All"]
+    # Append to the list the unique values of the columns ACCOUNTID, PROJECTID and SUBSCRIPTIONID if they exist
+    if "ACCOUNTID" in data.columns:
+        select_account_dropdown_list = select_account_dropdown_list + list(
+            data["ACCOUNTID"].unique()
+        )
+    if "PROJECTID" in data.columns:
+        select_account_dropdown_list = select_account_dropdown_list + list(
+            data["PROJECTID"].unique()
+        )
+    if "SUBSCRIPTIONID" in data.columns:
+        select_account_dropdown_list = select_account_dropdown_list + list(
+            data["SUBSCRIPTIONID"].unique()
+        )
 
-# Select Region - Dropdown
+    list_items = []
+    for item in select_account_dropdown_list:
+        if item.__class__.__name__ == "str":
+            list_items.append(item)
 
-select_region_dropdown_list = ["All"]
-select_region_dropdown_list = (
-    select_region_dropdown_list
-    + list(data["REGION"].unique())
-)
+    account_dropdown = create_account_dropdown_compliance(list_items)
 
-list_items = []
-for item in select_region_dropdown_list:
-    if item.__class__.__name__ == "str":
-        list_items.append(item)
+    # Select Region - Dropdown
 
-region_dropdown = create_region_dropdown_compliance(list_items)
+    select_region_dropdown_list = ["All"]
+    # Append to the list the unique values of the column REGION or LOCATION if it exists
+    if "REGION" in data.columns:
+        select_region_dropdown_list = select_region_dropdown_list + list(
+            data["REGION"].unique()
+        )
+    if "LOCATION" in data.columns:
+        select_region_dropdown_list = select_region_dropdown_list + list(
+            data["LOCATION"].unique()
+        )
 
-# Dropdown all options
-select_date_dropdown_list = list(data["ASSESSMENT_TIME"].unique())
+    # Clear the list from None and NaN values
+    list_items = []
+    for item in select_region_dropdown_list:
+        if item.__class__.__name__ == "str":
+            list_items.append(item)
 
-date_dropdown = create_date_dropdown_compliance(select_date_dropdown_list)
+    region_dropdown = create_region_dropdown_compliance(list_items)
 
+    # Select Date - Dropdown
 
-dash.register_page(__name__)
+    date_dropdown = create_date_dropdown_compliance(
+        list(data["ASSESSMENT_TIME"].unique())
+    )
 
-layout = create_layout_compliance(account_dropdown, date_dropdown, region_dropdown, compliance_dropdown)
+    dash.register_page(__name__)
+
+    layout = create_layout_compliance(
+        account_dropdown, date_dropdown, region_dropdown, compliance_dropdown
+    )
+
 
 @callback(
     [
@@ -169,222 +217,201 @@ def display_data(
     analytics_input = analytics_input.replace("_level_1", "").replace("_level_2", "")
 
     # Filter the data based on the compliance selected
-    if analytics_input == "All":
-        analytics_input = None
-        fig = px.pie(template="plotly")
-        table = dcc.Graph(figure=fig, config={"displayModeBar": False})
+    files = [file for file in csv_files if analytics_input in file]
+
+    def load_csv_files(files):
+        """Load CSV files into a single pandas DataFrame."""
+        dfs = []
+        for file in files:
+            df = pd.read_csv(file, sep=";", on_bad_lines="skip")
+            dfs.append(df.astype(str))
+        return pd.concat(dfs, ignore_index=True)
+
+    data = load_csv_files(files)
+
+    # Rename the column LOCATION to REGION for GCP or Azure
+    if "gcp" in analytics_input or "azure" in analytics_input:
+        data = data.rename(columns={"LOCATION": "REGION"})
+
+    # Filter the chosen level of the CIS
+    if is_level_1:
+        data = data[data["REQUIREMENTS_ATTRIBUTES_PROFILE"] == "Level 1"]
+
+    # Rename the column PROJECTID to ACCOUNTID for GCP
+    if data.columns.str.contains("PROJECTID").any():
+        data.rename(columns={"PROJECTID": "ACCOUNTID"}, inplace=True)
+
+    # Rename the column SUBSCRIPTIONID to ACCOUNTID for Azure
+    if data.columns.str.contains("SUBSCRIPTIONID").any():
+        data.rename(columns={"SUBSCRIPTIONID": "ACCOUNTID"}, inplace=True)
+
+    # Filter ACCOUNT
+    if account_filter == ["All"]:
+        updated_cloud_account_values = data["ACCOUNTID"].unique()
+    elif "All" in account_filter and len(account_filter) > 1:
+        # Remove 'All' from the list
+        account_filter.remove("All")
+        updated_cloud_account_values = account_filter
+    elif len(account_filter) == 0:
+        updated_cloud_account_values = data["ACCOUNTID"].unique()
+        account_filter = ["All"]
+    else:
+        updated_cloud_account_values = account_filter
+
+    data = data[data["ACCOUNTID"].isin(updated_cloud_account_values)]
+
+    account_filter_options = list(data["ACCOUNTID"].unique())
+    account_filter_options = account_filter_options + ["All"]
+    for item in account_filter_options:
+        if item.__class__.__name__ != "str":
+            if item is None or math.isnan(item):
+                account_filter_options.remove(item)
+
+    # Filter REGION
+    if region_filter_analytics == ["All"]:
+        updated_region_account_values = data["REGION"].unique()
+    elif "All" in region_filter_analytics and len(region_filter_analytics) > 1:
+        # Remove 'All' from the list
+        region_filter_analytics.remove("All")
+        updated_region_account_values = region_filter_analytics
+    elif len(region_filter_analytics) == 0:
+        updated_region_account_values = data["REGION"].unique()
+        region_filter_analytics = ["All"]
+    else:
+        updated_region_account_values = region_filter_analytics
+
+    data = data[data["REGION"].isin(updated_region_account_values)]
+
+    region_filter_options = list(data["REGION"].unique())
+    region_filter_options = region_filter_options + ["All"]
+    for item in region_filter_options:
+        if item == "nan" or item.__class__.__name__ != "str":
+            region_filter_options.remove(item)
+
+    data["ASSESSMENTDATE"] = pd.to_datetime(data["ASSESSMENTDATE"], errors="coerce")
+    data["ASSESSMENTDATE"] = data["ASSESSMENTDATE"].dt.strftime("%Y-%m-%d %H:%M:%S")
+
+    # Choosing the date that is the most recent
+    data_values = data["ASSESSMENTDATE"].unique()
+    data_values.sort()
+    data_values = data_values[::-1]
+    aux = []
+
+    data_values = [str(i) for i in data_values]
+    for value in data_values:
+        if value.split(" ")[0] not in [aux[i].split(" ")[0] for i in range(len(aux))]:
+            aux.append(value)
+    data_values = [str(i) for i in aux]
+
+    data = data[data["ASSESSMENTDATE"].isin(data_values)]
+    data["ASSESSMENTDATE"] = data["ASSESSMENTDATE"].apply(lambda x: x.split(" ")[0])
+
+    options_date = data["ASSESSMENTDATE"].unique()
+    options_date.sort()
+    options_date = options_date[::-1]
+
+    # Filter DATE
+    if date_filter_analytics in options_date:
+        data = data[data["ASSESSMENTDATE"] == date_filter_analytics]
+    else:
+        date_filter_analytics = options_date[0]
+        data = data[data["ASSESSMENTDATE"] == date_filter_analytics]
+
+    if data.empty:
         fig = px.pie()
-        fig.update_layout(
-            margin=dict(l=0, r=0, t=0, b=0),
-            autosize=True,
-            showlegend=False,
-            font=dict(size=17, color="#8a8d93"),
-            hoverlabel=dict(font_size=14),
-            paper_bgcolor="#303030",
-        )
         pie_1 = dcc.Graph(
             figure=fig,
             config={"displayModeBar": False},
             style={"height": "250px", "width": "250px", "right": "0px"},
         )
-        pie_2 = dcc.Graph(
-            figure=fig,
-            config={"displayModeBar": False},
-            style={"height": "250px", "width": "250px", "right": "0px"},
-        )
 
+        return [
+            html.Div(
+                [
+                    html.H5(
+                        "No data found for this compliance",
+                        className="card-title",
+                        style={"text-align": "left"},
+                    )
+                ],
+                style={
+                    "width": "99%",
+                    "margin-right": "0.8%",
+                    "margin-bottom": "10px",
+                },
+            )
+        ]
     else:
+        # Check cases where the compliance start with AWS_
+        if "aws_" in analytics_input:
+            analytics_input = analytics_input + "_aws"
+        try:
+            current = analytics_input.replace(".", "_")
+            compliance_module = importlib.import_module(
+                f"dashboard.compliance.{current}"
+            )
+            table = compliance_module.get_table(data)
+        except ModuleNotFoundError:
+            table = html.Div(
+                [
+                    html.H5(
+                        "No data found for this compliance",
+                        className="card-title",
+                        style={"text-align": "left", "color": "black"},
+                    )
+                ],
+                style={
+                    "width": "99%",
+                    "margin-right": "0.8%",
+                    "margin-bottom": "10px",
+                },
+            )
 
-        # Take only the files that match the compliance selected
-        files = [file for file in csv_files if analytics_input in file]
+        df = data.copy()
+        df = df.groupby(["STATUS"]).size().reset_index(name="counts")
+        df = df.sort_values(by=["counts"], ascending=False)
+        df = df.reset_index(drop=True)
 
-        def load_csv_files(files):
-            """Load CSV files into a single pandas DataFrame."""
-            dfs = []
-            for file in files:
-                df = pd.read_csv(file, sep=";", on_bad_lines="skip")
-                dfs.append(df.astype(str))
-            return pd.concat(dfs, ignore_index=True)
-        
-        data = load_csv_files(files)
+        # Pie 1
 
-        if "gcp" in analytics_input:
-            data = data.rename(columns={"LOCATION": "REGION"})
+        pie_1 = get_pie(df)
 
-        # Filter the chosen level of the CIS
-        if is_level_1:
-            data = data[data["REQUIREMENTS_ATTRIBUTES_PROFILE"] == "Level 1"]
+        # Get the pie2 depending on the compliance
+        df = data.copy()
 
-        if data.columns.str.contains("PROJECTID").any():
-            data.rename(columns={"PROJECTID": "ACCOUNTID"}, inplace=True)
-
-        # Filter ACCOUNT
-        if account_filter == ["All"]:
-            updated_cloud_account_values = data["ACCOUNTID"].unique()
-        elif "All" in account_filter and len(account_filter) > 1:
-            # Remove 'All' from the list
-            account_filter.remove("All")
-            updated_cloud_account_values = account_filter
-        elif len(account_filter) == 0:
-            updated_cloud_account_values = data["ACCOUNTID"].unique()
-            account_filter = ["All"]
+        if (
+            "REQUIREMENTS_ATTRIBUTES_SECTION" in df.columns
+            and not df["REQUIREMENTS_ATTRIBUTES_SECTION"].isnull().values.any()
+        ):
+            pie_2 = get_polar_graph(df, "REQUIREMENTS_ATTRIBUTES_SECTION")
+        elif (
+            "REQUIREMENTS_ATTRIBUTES_CATEGORIA" in df.columns
+            and not df["REQUIREMENTS_ATTRIBUTES_CATEGORIA"].isnull().values.any()
+        ):
+            pie_2 = get_polar_graph(df, "REQUIREMENTS_ATTRIBUTES_CATEGORIA")
+        elif (
+            "REQUIREMENTS_ATTRIBUTES_CATEGORY" in df.columns
+            and not df["REQUIREMENTS_ATTRIBUTES_CATEGORY"].isnull().values.any()
+        ):
+            pie_2 = get_polar_graph(df, "REQUIREMENTS_ATTRIBUTES_CATEGORY")
+        elif (
+            "REQUIREMENTS_ATTRIBUTES_SERVICE" in df.columns
+            and not df["REQUIREMENTS_ATTRIBUTES_SERVICE"].isnull().values.any()
+        ):
+            pie_2 = get_polar_graph(df, "REQUIREMENTS_ATTRIBUTES_SERVICE")
         else:
-            updated_cloud_account_values = account_filter
-
-        data = data[data["ACCOUNTID"].isin(updated_cloud_account_values)]
-
-        account_filter_options = list(data["ACCOUNTID"].unique())
-        account_filter_options = account_filter_options + ["All"]
-        for item in account_filter_options:
-            if item.__class__.__name__ != "str":
-                if item is None or math.isnan(item):
-                    account_filter_options.remove(item)
-
-        # Filter REGION
-        if region_filter_analytics == ["All"]:
-            updated_region_account_values = data["REGION"].unique()
-        elif "All" in region_filter_analytics and len(region_filter_analytics) > 1:
-            # Remove 'All' from the list
-            region_filter_analytics.remove("All")
-            updated_region_account_values = region_filter_analytics
-        elif len(region_filter_analytics) == 0:
-            updated_region_account_values = data["REGION"].unique()
-            region_filter_analytics = ["All"]
-        else:
-            updated_region_account_values = region_filter_analytics
-
-        data = data[data["REGION"].isin(updated_region_account_values)]
-
-        region_filter_options = list(data["REGION"].unique())
-        region_filter_options = region_filter_options + ["All"]
-        for item in region_filter_options:
-            if item.__class__.__name__ != "str":
-                region_filter_options.remove(item)
-
-        data["ASSESSMENTDATE"] = pd.to_datetime(data["ASSESSMENTDATE"], errors="coerce")
-        data["ASSESSMENTDATE"] = data["ASSESSMENTDATE"].dt.strftime("%Y-%m-%d %H:%M:%S")
-
-        # Choosing the date that is the most recent
-        data_values = data["ASSESSMENTDATE"].unique()
-        data_values.sort()
-        data_values = data_values[::-1]
-        aux = []
-
-        data_values = [str(i) for i in data_values]
-        for value in data_values:
-            if value.split(" ")[0] not in [
-                aux[i].split(" ")[0] for i in range(len(aux))
-            ]:
-                aux.append(value)
-        data_values = [str(i) for i in aux]
-
-        data = data[data["ASSESSMENTDATE"].isin(data_values)]
-        data["ASSESSMENTDATE"] = data["ASSESSMENTDATE"].apply(lambda x: x.split(" ")[0])
-
-        options_date = data["ASSESSMENTDATE"].unique()
-        options_date.sort()
-        options_date = options_date[::-1]
-
-        # Filter DATE
-        if date_filter_analytics in options_date:
-            data = data[data["ASSESSMENTDATE"] == date_filter_analytics]
-        else:
-            date_filter_analytics = options_date[0]
-            data = data[data["ASSESSMENTDATE"] == date_filter_analytics]
-
-        if data.empty:
             fig = px.pie()
-            pie_1 = dcc.Graph(
+            fig.update_layout(
+                margin=dict(l=0, r=0, t=0, b=0),
+                autosize=True,
+                showlegend=False,
+                paper_bgcolor="#303030",
+            )
+            pie_2 = dcc.Graph(
                 figure=fig,
                 config={"displayModeBar": False},
                 style={"height": "250px", "width": "250px", "right": "0px"},
             )
-
-            return [
-                html.Div(
-                    [
-                        html.H5(
-                            "No data found for this compliance",
-                            className="card-title",
-                            style={"text-align": "left"},
-                        )
-                    ],
-                    style={
-                        "width": "99%",
-                        "margin-right": "0.8%",
-                        "margin-bottom": "10px",
-                    },
-                )
-            ]
-        else:
-            # Check cases where the compliance start with AWS_
-            if "aws_" in analytics_input:
-                analytics_input = analytics_input + "_aws"
-            try:
-                current = analytics_input.replace(".", "_")
-                compliance_module = importlib.import_module(f"dashboard.compliance.{current}")
-                table = compliance_module.get_table(data)
-            except ModuleNotFoundError as e:
-                table = html.Div(
-                    [
-                        html.H5(
-                            "No data found for this compliance",
-                            className="card-title",
-                            style={"text-align": "left", "color": "black"},
-                        )
-                    ],
-                    style={
-                        "width": "99%",
-                        "margin-right": "0.8%",
-                        "margin-bottom": "10px",
-                    },
-                )
-
-            df = data.copy()
-            df = df.groupby(["STATUS"]).size().reset_index(name="counts")
-            df = df.sort_values(by=["counts"], ascending=False)
-            df = df.reset_index(drop=True)
-
-            # Pie 1
-
-            pie_1 = get_pie(df)
-
-            # Get the pie2 depending on the compliance
-            df = data.copy()
-
-            if (
-                "REQUIREMENTS_ATTRIBUTES_SECTION" in df.columns
-                and not df["REQUIREMENTS_ATTRIBUTES_SECTION"].isnull().values.any()
-            ):
-                pie_2 = get_polar_graph(df, "REQUIREMENTS_ATTRIBUTES_SECTION")
-            elif (
-                "REQUIREMENTS_ATTRIBUTES_CATEGORIA" in df.columns
-                and not df["REQUIREMENTS_ATTRIBUTES_CATEGORIA"].isnull().values.any()
-            ):
-                pie_2 = get_polar_graph(df, "REQUIREMENTS_ATTRIBUTES_CATEGORIA")
-            elif (
-                "REQUIREMENTS_ATTRIBUTES_CATEGORY" in df.columns
-                and not df["REQUIREMENTS_ATTRIBUTES_CATEGORY"].isnull().values.any()
-            ):
-                pie_2 = get_polar_graph(df, "REQUIREMENTS_ATTRIBUTES_CATEGORY")
-            elif (
-                "REQUIREMENTS_ATTRIBUTES_SERVICE" in df.columns
-                and not df["REQUIREMENTS_ATTRIBUTES_SERVICE"].isnull().values.any()
-            ):
-                pie_2 = get_polar_graph(df, "REQUIREMENTS_ATTRIBUTES_SERVICE")
-            else:
-                fig = px.pie()
-                fig.update_layout(
-                    margin=dict(l=0, r=0, t=0, b=0),
-                    autosize=True,
-                    showlegend=False,
-                    paper_bgcolor="#303030",
-                )
-                pie_2 = dcc.Graph(
-                    figure=fig,
-                    config={"displayModeBar": False},
-                    style={"height": "250px", "width": "250px", "right": "0px"},
-                )
 
     # Analytics table
 
@@ -408,6 +435,7 @@ def display_data(
         date_filter_analytics,
         options_date,
     )
+
 
 def get_graph(pie, title):
     return [
@@ -538,6 +566,7 @@ def get_pie(df):
     )
 
     return pie
+
 
 def get_table(current_compliance, table):
     return [

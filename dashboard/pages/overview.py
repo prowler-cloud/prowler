@@ -1,8 +1,8 @@
 # Standard library imports
+import csv
 import glob
 import os
 import warnings
-import csv
 from datetime import datetime, timedelta
 from itertools import product
 
@@ -16,12 +16,15 @@ import plotly.graph_objects as go
 from dash import callback, ctx, dcc, html
 from dash.dependencies import Input, Output
 
-from dashboard.lib.cards import create_provider_card
-from dashboard.lib.dropdowns import create_date_dropdown, create_region_dropdown, create_account_dropdown
-from dashboard.lib.layouts import create_layout_overview
-
 # Config import
 from dashboard.config import folder_path_overview
+from dashboard.lib.cards import create_provider_card
+from dashboard.lib.dropdowns import (
+    create_account_dropdown,
+    create_date_dropdown,
+    create_region_dropdown,
+)
+from dashboard.lib.layouts import create_layout_overview
 
 # Suppress warnings
 warnings.filterwarnings("ignore")
@@ -31,10 +34,10 @@ warnings.filterwarnings("ignore")
 csv_files = []
 
 for file in glob.glob(os.path.join(folder_path_overview, "*.csv")):
-    with open(file, 'r', newline='') as csvfile:
+    with open(file, "r", newline="") as csvfile:
         reader = csv.reader(csvfile)
-        num_rows = sum(1 for row in reader)  
-        if num_rows > 1: 
+        num_rows = sum(1 for row in reader)
+        if num_rows > 1:
             csv_files.append(file)
 
 
@@ -60,78 +63,110 @@ def load_csv_files(csv_files):
         df = pd.read_csv(file, sep=";", on_bad_lines="skip")
         if "CHECK_ID" in df.columns:
             dfs.append(df.astype(str))
-    return pd.concat(dfs, ignore_index=True)
+    # Handle the case where there are no files
+    try:
+        data = pd.concat(dfs, ignore_index=True)
+    except ValueError:
+        data = None
+    return data
 
 
 data = load_csv_files(csv_files)
 
-# Fixing Date datatype
-data["TIMESTAMP"] = pd.to_datetime(data["TIMESTAMP"])
-data["ASSESSMENT_TIME"] = data["TIMESTAMP"].dt.strftime("%Y-%m-%d %H:%M:%S")
+if data is None:
+    # Initializing the Dash App
+    dash.register_page(__name__, path="/")
 
-data_valid = pd.DataFrame()
-for account in data["ACCOUNT_UID"].unique():
-    all_times = data[data["ACCOUNT_UID"] == account]["ASSESSMENT_TIME"].unique()
-    all_times.sort()
-    all_times = all_times[::-1]
-    times = []
-    # select the last ASSESSMENT_TIME in the day for each account
-    for time in all_times:
-        if time.split(" ")[0] not in [
-            times[i].split(" ")[0] for i in range(len(times))
-        ]:
-            times.append(time)
-    # select the data from the last ASSESSMENT_TIME of the day
-    data_valid = pd.concat(
+    layout = html.Div(
         [
-            data_valid,
-            data[
-                (data["ACCOUNT_UID"] == account) & (data["ASSESSMENT_TIME"].isin(times))
-            ],
+            html.H1(
+                "No data available",
+                className="text-prowler-stone-900 text-2xxl font-bold",
+            ),
+            html.Div(className="flex justify-between border-b border-prowler-500 pb-3"),
+            html.Div(
+                [
+                    html.Div(
+                        "Check the data folder to see if the files are in the correct format",
+                        className="text-prowler-stone-900 text-lg font-bold",
+                    )
+                ],
+                className="grid gap-x-4 gap-y-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-y-0",
+            ),
         ]
     )
+else:
 
-data = data_valid
-# Select only the day in the data
-data["ASSESSMENT_TIME"] = data["ASSESSMENT_TIME"].apply(lambda x: x.split(" ")[0])
+    # Fixing Date datatype
+    data["TIMESTAMP"] = pd.to_datetime(data["TIMESTAMP"])
+    data["ASSESSMENT_TIME"] = data["TIMESTAMP"].dt.strftime("%Y-%m-%d %H:%M:%S")
 
-data["TIMESTAMP"] = data["TIMESTAMP"].dt.strftime("%Y-%m-%d")
-data["TIMESTAMP"] = pd.to_datetime(data["TIMESTAMP"])
+    data_valid = pd.DataFrame()
+    for account in data["ACCOUNT_UID"].unique():
+        all_times = data[data["ACCOUNT_UID"] == account]["ASSESSMENT_TIME"].unique()
+        all_times.sort()
+        all_times = all_times[::-1]
+        times = []
+        # select the last ASSESSMENT_TIME in the day for each account
+        for time in all_times:
+            if time.split(" ")[0] not in [
+                times[i].split(" ")[0] for i in range(len(times))
+            ]:
+                times.append(time)
+        # select the data from the last ASSESSMENT_TIME of the day
+        data_valid = pd.concat(
+            [
+                data_valid,
+                data[
+                    (data["ACCOUNT_UID"] == account)
+                    & (data["ASSESSMENT_TIME"].isin(times))
+                ],
+            ]
+        )
 
-# Assessment Date Dropdown
-assesment_times = list(data["ASSESSMENT_TIME"].unique())
-assesment_times.sort()
-assesment_times.reverse()
-date_dropdown = create_date_dropdown(assesment_times)
+    data = data_valid
+    # Select only the day in the data
+    data["ASSESSMENT_TIME"] = data["ASSESSMENT_TIME"].apply(lambda x: x.split(" ")[0])
 
-# Cloud Account Dropdown
-accounts = (
-    ["All"] + list(data["ACCOUNT_UID"].unique()) + list(data["ACCOUNT_NAME"].unique())
-)
+    data["TIMESTAMP"] = data["TIMESTAMP"].dt.strftime("%Y-%m-%d")
+    data["TIMESTAMP"] = pd.to_datetime(data["TIMESTAMP"])
 
-# for item in the list, we are adding the provider name depending on the account
-for i in range(len(accounts)):
-    if accounts[i] in list(data["ACCOUNT_UID"].unique()):
-        accounts[i] = accounts[i] + " - AWS"
-    elif accounts[i] in list(data["ACCOUNT_NAME"].unique()):
-        if "azure" in list(data[data["ACCOUNT_NAME"] == accounts[i]]["PROVIDER"]):
-            accounts[i] = accounts[i] + " - AZURE"
-        elif "gcp" in list(data[data["ACCOUNT_NAME"] == accounts[i]]["PROVIDER"]):
-            accounts[i] = accounts[i] + " - GCP"
-        elif "k8s" in list(data[data["ACCOUNT_NAME"] == accounts[i]]["PROVIDER"]):
-            accounts[i] = accounts[i] + " - K8S"
+    # Assessment Date Dropdown
+    assesment_times = list(data["ASSESSMENT_TIME"].unique())
+    assesment_times.sort()
+    assesment_times.reverse()
+    date_dropdown = create_date_dropdown(assesment_times)
 
-account_dropdown = create_account_dropdown(accounts)
+    # Cloud Account Dropdown
+    accounts = (
+        ["All"]
+        + list(data["ACCOUNT_UID"].unique())
+        + list(data["ACCOUNT_NAME"].unique())
+    )
 
-# Region Dropdown
-regions = ["All"] + list(data["REGION"].unique())
-region_dropdown = create_region_dropdown(regions)
+    # for item in the list, we are adding the provider name depending on the account
+    for i in range(len(accounts)):
+        if accounts[i] in list(data["ACCOUNT_UID"].unique()):
+            accounts[i] = accounts[i] + " - AWS"
+        elif accounts[i] in list(data["ACCOUNT_NAME"].unique()):
+            if "azure" in list(data[data["ACCOUNT_NAME"] == accounts[i]]["PROVIDER"]):
+                accounts[i] = accounts[i] + " - AZURE"
+            elif "gcp" in list(data[data["ACCOUNT_NAME"] == accounts[i]]["PROVIDER"]):
+                accounts[i] = accounts[i] + " - GCP"
+            elif "k8s" in list(data[data["ACCOUNT_NAME"] == accounts[i]]["PROVIDER"]):
+                accounts[i] = accounts[i] + " - K8S"
 
-# Initializing the Dash App
-dash.register_page(__name__, path="/")
+    account_dropdown = create_account_dropdown(accounts)
 
-# Create the layout
-layout = create_layout_overview(account_dropdown, date_dropdown, region_dropdown)
+    # Region Dropdown
+    regions = ["All"] + list(data["REGION"].unique())
+    region_dropdown = create_region_dropdown(regions)
+
+    # Initializing the Dash App
+    dash.register_page(__name__, path="/")
+
+    # Create the layout
+    layout = create_layout_overview(account_dropdown, date_dropdown, region_dropdown)
 
 
 # Callback to display selected value
