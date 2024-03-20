@@ -55,39 +55,6 @@ class Entra(AzureService):
 
         return users
 
-    async def __get_directory_roles__(self):
-        directory_roles_with_members = {}
-        try:
-            for tenant, client in self.clients.items():
-                directory_roles_with_members.update({tenant: {}})
-                directory_roles = await client.directory_roles.get()
-                for directory_role in directory_roles.value:
-                    directory_role_members = (
-                        await client.directory_roles.by_directory_role_id(
-                            directory_role.id
-                        ).members.get()
-                    )
-                    directory_roles_with_members[tenant].update(
-                        {
-                            directory_role.display_name: DirectoryRole(
-                                id=directory_role.id,
-                                members=[
-                                    User(
-                                        id=member.id,
-                                        name=member.display_name,
-                                    )
-                                    for member in directory_role_members.value
-                                ],
-                            )
-                        }
-                    )
-
-        except Exception as error:
-            logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
-        return directory_roles_with_members
-
     async def __get_authorization_policy__(self):
         authorization_policy = {}
         try:
@@ -183,6 +150,39 @@ class Entra(AzureService):
             )
 
         return trusted_locations
+
+    async def __get_directory_roles__(self):
+        directory_roles_with_members = {}
+        try:
+            for tenant, client in self.clients.items():
+                directory_roles_with_members.update({tenant: {}})
+                directory_roles = await client.directory_roles.get()
+                for directory_role in directory_roles.value:
+                    directory_role_members = (
+                        await client.directory_roles.by_directory_role_id(
+                            directory_role.id
+                        ).members.get()
+                    )
+                    directory_roles_with_members[tenant].update(
+                        {
+                            directory_role.display_name: DirectoryRole(
+                                id=directory_role.id,
+                                members=[
+                                    User(
+                                        id=member.id,
+                                        name=member.display_name,
+                                    )
+                                    for member in directory_role_members.value
+                                ],
+                            )
+                        }
+                    )
+
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return directory_roles_with_members
 
 
 class User(BaseModel):
