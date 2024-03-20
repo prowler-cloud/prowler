@@ -88,7 +88,7 @@ class Test_Cloudtrail_Service:
         )
         cloudtrail = Cloudtrail(audit_info)
         assert len(cloudtrail.trails) == 2
-        for trail in cloudtrail.trails:
+        for trail in cloudtrail.trails.values():
             if trail.name:
                 assert trail.name == trail_name_us or trail.name == trail_name_eu
                 assert not trail.is_multiregion
@@ -145,7 +145,7 @@ class Test_Cloudtrail_Service:
         )
         cloudtrail = Cloudtrail(audit_info)
         assert len(cloudtrail.trails) == len(audit_info.audited_regions)
-        for trail in cloudtrail.trails:
+        for trail in cloudtrail.trails.values():
             if trail.name:
                 if trail.name == trail_name_us:
                     assert not trail.is_multiregion
@@ -189,7 +189,7 @@ class Test_Cloudtrail_Service:
         )
         cloudtrail = Cloudtrail(audit_info)
         assert len(cloudtrail.trails) == len(audit_info.audited_regions)
-        for trail in cloudtrail.trails:
+        for trail in cloudtrail.trails.values():
             if trail.name:
                 if trail.name == trail_name_us:
                     assert not trail.is_multiregion
@@ -237,7 +237,7 @@ class Test_Cloudtrail_Service:
         )
         cloudtrail = Cloudtrail(audit_info)
         assert len(cloudtrail.trails) == len(audit_info.audited_regions)
-        for trail in cloudtrail.trails:
+        for trail in cloudtrail.trails.values():
             if trail.name:
                 if trail.name == trail_name_us:
                     assert not trail.is_multiregion
