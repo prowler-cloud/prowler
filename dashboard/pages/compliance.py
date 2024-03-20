@@ -379,7 +379,9 @@ def display_data(
         # Get the pie2 depending on the compliance
         df = data.copy()
 
-        if (
+        if "pci" in analytics_input:
+            pie_2 = get_polar_graph(df, "REQUIREMENTS_ID")
+        elif (
             "REQUIREMENTS_ATTRIBUTES_SECTION" in df.columns
             and not df["REQUIREMENTS_ATTRIBUTES_SECTION"].isnull().values.any()
         ):

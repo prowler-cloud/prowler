@@ -96,7 +96,6 @@ if data is None:
         ]
     )
 else:
-
     # Fixing Date datatype
     data["TIMESTAMP"] = pd.to_datetime(data["TIMESTAMP"])
     data["ASSESSMENT_TIME"] = data["TIMESTAMP"].dt.strftime("%Y-%m-%d %H:%M:%S")
