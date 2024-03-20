@@ -190,6 +190,7 @@ class Test_cloudtrail_cloudwatch_logging_enabled:
 
                 check = cloudtrail_cloudwatch_logging_enabled()
                 result = check.execute()
+                # len of result should be 2 -> (1 per trail)
                 assert len(result) == 2
                 for report in result:
                     if report.resource_id == trail_name_us:
