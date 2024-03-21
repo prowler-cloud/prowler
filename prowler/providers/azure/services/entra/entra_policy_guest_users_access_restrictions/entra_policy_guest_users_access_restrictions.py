@@ -1,29 +1,28 @@
+from uuid import UUID
+
 from prowler.lib.check.models import Check, Check_Report_Azure
 from prowler.providers.azure.services.entra.entra_client import entra_client
 
 
-class entra_policy_ensure_default_user_cannot_create_apps(Check):
+class entra_policy_guest_users_access_restrictions(Check):
     def execute(self) -> Check_Report_Azure:
+        GUEST_USER_ACCESS_RESTRICTICTED = UUID("2af84b1e-32c8-42b7-82bc-daa82404023b")
         findings = []
 
         for tenant_domain, auth_policy in entra_client.authorization_policy.items():
-
             report = Check_Report_Azure(self.metadata())
             report.status = "FAIL"
             report.subscription = f"Tenant: '{tenant_domain}'"
             report.resource_name = getattr(auth_policy, "name", "Authorization Policy")
             report.resource_id = getattr(auth_policy, "id", "authorizationPolicy")
-            report.status_extended = "App creation is not disabled for non-admin users."
+            report.status_extended = "Guest user access is not restricted to properties and memberships of their own directory objects"
 
-            if getattr(
-                auth_policy, "default_user_role_permissions", None
-            ) and not getattr(
-                auth_policy.default_user_role_permissions,
-                "allowed_to_create_apps",
-                True,
+            if (
+                getattr(auth_policy, "guest_user_role_id", None)
+                == GUEST_USER_ACCESS_RESTRICTICTED
             ):
                 report.status = "PASS"
-                report.status_extended = "App creation is disabled for non-admin users."
+                report.status_extended = "Guest user access is restricted to properties and memberships of their own directory objects"
 
             findings.append(report)
 
