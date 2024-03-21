@@ -2,6 +2,7 @@ import grp
 import json
 import os
 import pwd
+import re
 import sys
 import tempfile
 from datetime import datetime
@@ -165,9 +166,14 @@ def is_owned_by_root(file_path: str) -> bool:
         return False
 
 
-def strip_ansi_codes(s):
-    import re
-
+def strip_ansi_codes(s: str):
+    """
+    Strips ANSI escape codes from a string.
+    Args:
+        s (str): The string to strip.
+    Returns:
+        str: The string without ANSI escape codes.
+    """
     ansi_escape = re.compile(r"(?:\x1B[@-_][0-?]*[ -/]*[@-~])")
     return ansi_escape.sub("", s)
 
