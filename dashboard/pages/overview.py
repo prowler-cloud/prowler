@@ -202,16 +202,43 @@ def filter_data(
 ):
     filtered_data = data.copy()
 
+    # For all the data, we will add to the status column the value 'MUTED(FAIL)' and 'MUTED(PASS)' depending on the value of the column 'STATUS' and 'MUTED'
+    filtered_data["STATUS"] = filtered_data.apply(
+        lambda x: (
+            "MUTED(FAIL)"
+            if x["STATUS"] == "FAIL" and x["MUTED"] == "True"
+            else x["STATUS"]
+        ),
+        axis=1,
+    )
+    filtered_data["STATUS"] = filtered_data.apply(
+        lambda x: (
+            "MUTED(PASS)"
+            if x["STATUS"] == "PASS" and x["MUTED"] == "True"
+            else x["STATUS"]
+        ),
+        axis=1,
+    )
+    filtered_data["STATUS"] = filtered_data.apply(
+        lambda x: (
+            "MUTED(MANUAL)"
+            if x["STATUS"] == "MANUAL" and x["MUTED"] == "True"
+            else x["STATUS"]
+        ),
+        axis=1,
+    )
+
     # Take the latest date of de data
-    account_date = data["ASSESSMENT_TIME"].unique()
+    account_date = filtered_data["ASSESSMENT_TIME"].unique()
     account_date.sort()
     account_date = account_date[::-1]
 
     start_date = datetime.strptime(account_date[0], "%Y-%m-%d") - timedelta(days=7)
     end_date = datetime.strptime(account_date[0], "%Y-%m-%d")
 
-    filtered_data_sp = data[
-        (data["TIMESTAMP"] >= start_date) & (data["TIMESTAMP"] <= end_date)
+    filtered_data_sp = filtered_data[
+        (filtered_data["TIMESTAMP"] >= start_date)
+        & (filtered_data["TIMESTAMP"] <= end_date)
     ]
     # We are taking the latest date if there is only one account
     # Filter Assessment Time
@@ -328,7 +355,9 @@ def filter_data(
     region_filter_options = ["All"] + list(copy_data["REGION"].unique())
 
     # Select failed findings
-    fails_findings = filtered_data[filtered_data["STATUS"] == "FAIL"]
+    fails_findings_default = filtered_data[filtered_data["STATUS"] == "FAIL"]
+    fails_findings_muted = filtered_data[filtered_data["STATUS"] == "MUTED(FAIL)"]
+    fails_findings = pd.concat([fails_findings_default, fails_findings_muted])
 
     if len(filtered_data_sp) == 0:
         fig = px.pie()
@@ -386,7 +415,10 @@ def filter_data(
                 "FAIL": "#FF7452",
                 "PASS": "#36B37E",
                 "INFO": "#2684FF",
-                "WARN": "#260000",
+                "MANUAL": "#8332A8",
+                "MUTED(FAIL)": "#fca903",
+                "MUTED(PASS)": "#03fccf",
+                "MUTED(MANUAL)": "#b33696",
             }
 
             # Create a single line plot for both 'FAIL' and 'PASS' statuses
@@ -441,6 +473,9 @@ def filter_data(
             "PASS": "#36B37E",
             "INFO": "#2684FF",
             "MANUAL": "#8332A8",
+            "MUTED(FAIL)": "#fca903",
+            "MUTED(PASS)": "#03fccf",
+            "MUTED(MANUAL)": "#b33696",
         }
         # Define custom colors
         color_mapping = {
