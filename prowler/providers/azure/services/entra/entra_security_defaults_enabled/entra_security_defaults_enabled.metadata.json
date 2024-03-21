@@ -1,6 +1,6 @@
 {
   "Provider": "azure",
-  "CheckID": "entra_ensure_security_default_enabled",
+  "CheckID": "entra_security_defaults_enabled",
   "CheckTitle": "Ensure Security Defaults is enabled on Microsoft Entra ID",
   "CheckType": [],
   "ServiceName": "entra",

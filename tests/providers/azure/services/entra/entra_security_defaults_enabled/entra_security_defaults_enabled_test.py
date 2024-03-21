@@ -4,21 +4,21 @@ from uuid import uuid4
 from tests.providers.azure.azure_fixtures import DOMAIN
 
 
-class Test_entra_ensure_security_default_enabled:
+class Test_entra_security_defaults_enabled:
     def test_entra_no_tenants(self):
         entra_client = mock.MagicMock
 
         with mock.patch(
-            "prowler.providers.azure.services.entra.entra_ensure_security_default_enabled.entra_ensure_security_default_enabled.entra_client",
+            "prowler.providers.azure.services.entra.entra_security_defaults_enabled.entra_security_defaults_enabled.entra_client",
             new=entra_client,
         ):
-            from prowler.providers.azure.services.entra.entra_ensure_security_default_enabled.entra_ensure_security_default_enabled import (
-                entra_ensure_security_default_enabled,
+            from prowler.providers.azure.services.entra.entra_security_defaults_enabled.entra_security_defaults_enabled import (
+                entra_security_defaults_enabled,
             )
 
             entra_client.security_default = {}
 
-            check = entra_ensure_security_default_enabled()
+            check = entra_security_defaults_enabled()
             result = check.execute()
             assert len(result) == 0
 
@@ -26,16 +26,16 @@ class Test_entra_ensure_security_default_enabled:
         entra_client = mock.MagicMock
 
         with mock.patch(
-            "prowler.providers.azure.services.entra.entra_ensure_security_default_enabled.entra_ensure_security_default_enabled.entra_client",
+            "prowler.providers.azure.services.entra.entra_security_defaults_enabled.entra_security_defaults_enabled.entra_client",
             new=entra_client,
         ):
-            from prowler.providers.azure.services.entra.entra_ensure_security_default_enabled.entra_ensure_security_default_enabled import (
-                entra_ensure_security_default_enabled,
+            from prowler.providers.azure.services.entra.entra_security_defaults_enabled.entra_security_defaults_enabled import (
+                entra_security_defaults_enabled,
             )
 
             entra_client.security_default = {DOMAIN: {}}
 
-            check = entra_ensure_security_default_enabled()
+            check = entra_security_defaults_enabled()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
@@ -48,11 +48,11 @@ class Test_entra_ensure_security_default_enabled:
         entra_client = mock.MagicMock
 
         with mock.patch(
-            "prowler.providers.azure.services.entra.entra_ensure_security_default_enabled.entra_ensure_security_default_enabled.entra_client",
+            "prowler.providers.azure.services.entra.entra_security_defaults_enabled.entra_security_defaults_enabled.entra_client",
             new=entra_client,
         ):
-            from prowler.providers.azure.services.entra.entra_ensure_security_default_enabled.entra_ensure_security_default_enabled import (
-                entra_ensure_security_default_enabled,
+            from prowler.providers.azure.services.entra.entra_security_defaults_enabled.entra_security_defaults_enabled import (
+                entra_security_defaults_enabled,
             )
             from prowler.providers.azure.services.entra.entra_service import (
                 SecurityDefault,
@@ -64,7 +64,7 @@ class Test_entra_ensure_security_default_enabled:
                 DOMAIN: SecurityDefault(id=id, name="Sec Default", is_enabled=True)
             }
 
-            check = entra_ensure_security_default_enabled()
+            check = entra_security_defaults_enabled()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
@@ -77,11 +77,11 @@ class Test_entra_ensure_security_default_enabled:
         entra_client = mock.MagicMock
 
         with mock.patch(
-            "prowler.providers.azure.services.entra.entra_ensure_security_default_enabled.entra_ensure_security_default_enabled.entra_client",
+            "prowler.providers.azure.services.entra.entra_security_defaults_enabled.entra_security_defaults_enabled.entra_client",
             new=entra_client,
         ):
-            from prowler.providers.azure.services.entra.entra_ensure_security_default_enabled.entra_ensure_security_default_enabled import (
-                entra_ensure_security_default_enabled,
+            from prowler.providers.azure.services.entra.entra_security_defaults_enabled.entra_security_defaults_enabled import (
+                entra_security_defaults_enabled,
             )
             from prowler.providers.azure.services.entra.entra_service import (
                 SecurityDefault,
@@ -93,7 +93,7 @@ class Test_entra_ensure_security_default_enabled:
                 DOMAIN: SecurityDefault(id=id, name="Sec Default", is_enabled=False)
             }
 
-            check = entra_ensure_security_default_enabled()
+            check = entra_security_defaults_enabled()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
