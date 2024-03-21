@@ -44,7 +44,6 @@ class TestSlackIntegration:
     def test_create_message_identity_gcp(self):
         gcp_provider = set_mocked_gcp_provider(
             project_ids=["test-project1", "test-project2"],
-            default_project_id="test-project1",
         )
 
         assert create_message_identity(gcp_provider) == (

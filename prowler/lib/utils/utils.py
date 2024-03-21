@@ -12,6 +12,7 @@ from os.path import exists
 from time import mktime
 from typing import Optional
 
+from colorama import Style
 from detect_secrets import SecretsCollection
 from detect_secrets.settings import default_settings
 
@@ -162,3 +163,42 @@ def is_owned_by_root(file_path: str) -> bool:
             f"{file_path}: {e.__class__.__name__}[{e.__traceback__.tb_lineno}]: {e}"
         )
         return False
+
+
+def strip_ansi_codes(s):
+    import re
+
+    ansi_escape = re.compile(r"(?:\x1B[@-_][0-?]*[ -/]*[@-~])")
+    return ansi_escape.sub("", s)
+
+
+def print_boxes(messages: list, report_title: str):
+    """
+    Prints a series of messages in a box format.
+    Args:
+        messages (list): A list of messages to print.
+    """
+    # Determine the length of the longest message
+    max_length = max(len(strip_ansi_codes(message)) for message in messages)
+    # Adding a bit of padding for aesthetics
+    padding = 4
+    box_width = max_length + padding
+    # Print the top border
+    print(f"{Style.BRIGHT}+{'-' * (box_width)}+{Style.RESET_ALL}")
+    # Print report title
+    space_padding = box_width - len(strip_ansi_codes(report_title)) - 1
+    print(
+        f"{Style.BRIGHT}|{Style.RESET_ALL} {report_title}{' ' * space_padding}{Style.BRIGHT}|{Style.RESET_ALL}"
+    )
+    print(f"{Style.BRIGHT}+{'-' * (box_width)}+{Style.RESET_ALL}")
+
+    # Print each message centered within the box
+    for message in messages:
+        space_padding = box_width - len(strip_ansi_codes(message)) - 1
+        # Ensure message is properly padded
+        print(
+            f"{Style.BRIGHT}|{Style.RESET_ALL} {message}{' ' * space_padding}{Style.BRIGHT}|{Style.RESET_ALL}"
+        )
+
+    # Print the bottom border
+    print(f"{Style.BRIGHT}+{'-' * (box_width)}+{Style.RESET_ALL}\n")
