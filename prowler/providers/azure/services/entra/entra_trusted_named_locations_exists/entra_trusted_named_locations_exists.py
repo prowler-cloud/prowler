@@ -2,7 +2,7 @@ from prowler.lib.check.models import Check, Check_Report_Azure
 from prowler.providers.azure.services.entra.entra_client import entra_client
 
 
-class entra_ensure_exists_trusted_locations(Check):
+class entra_trusted_named_locations_exists(Check):
     def execute(self) -> Check_Report_Azure:
         findings = []
 

@@ -3,21 +3,21 @@ from unittest import mock
 from tests.providers.azure.azure_fixtures import DOMAIN
 
 
-class Test_entra_ensure_exists_trusted_locations:
+class Test_entra_trusted_named_locations_exists:
     def test_entra_no_tenants(self):
         entra_client = mock.MagicMock
 
         with mock.patch(
-            "prowler.providers.azure.services.entra.entra_ensure_exists_trusted_locations.entra_ensure_exists_trusted_locations.entra_client",
+            "prowler.providers.azure.services.entra.entra_trusted_named_locations_exists.entra_trusted_named_locations_exists.entra_client",
             new=entra_client,
         ):
-            from prowler.providers.azure.services.entra.entra_ensure_exists_trusted_locations.entra_ensure_exists_trusted_locations import (
-                entra_ensure_exists_trusted_locations,
+            from prowler.providers.azure.services.entra.entra_trusted_named_locations_exists.entra_trusted_named_locations_exists import (
+                entra_trusted_named_locations_exists,
             )
 
             entra_client.named_locations = {}
 
-            check = entra_ensure_exists_trusted_locations()
+            check = entra_trusted_named_locations_exists()
             result = check.execute()
             assert len(result) == 0
 
@@ -25,16 +25,16 @@ class Test_entra_ensure_exists_trusted_locations:
         entra_client = mock.MagicMock
 
         with mock.patch(
-            "prowler.providers.azure.services.entra.entra_ensure_exists_trusted_locations.entra_ensure_exists_trusted_locations.entra_client",
+            "prowler.providers.azure.services.entra.entra_trusted_named_locations_exists.entra_trusted_named_locations_exists.entra_client",
             new=entra_client,
         ):
-            from prowler.providers.azure.services.entra.entra_ensure_exists_trusted_locations.entra_ensure_exists_trusted_locations import (
-                entra_ensure_exists_trusted_locations,
+            from prowler.providers.azure.services.entra.entra_trusted_named_locations_exists.entra_trusted_named_locations_exists import (
+                entra_trusted_named_locations_exists,
             )
 
             entra_client.named_locations = {DOMAIN: {}}
 
-            check = entra_ensure_exists_trusted_locations()
+            check = entra_trusted_named_locations_exists()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
@@ -50,14 +50,14 @@ class Test_entra_ensure_exists_trusted_locations:
         entra_client = mock.MagicMock
 
         with mock.patch(
-            "prowler.providers.azure.services.entra.entra_ensure_exists_trusted_locations.entra_ensure_exists_trusted_locations.entra_client",
+            "prowler.providers.azure.services.entra.entra_trusted_named_locations_exists.entra_trusted_named_locations_exists.entra_client",
             new=entra_client,
         ):
-            from prowler.providers.azure.services.entra.entra_ensure_exists_trusted_locations.entra_ensure_exists_trusted_locations import (
-                entra_ensure_exists_trusted_locations,
-            )
             from prowler.providers.azure.services.entra.entra_service import (
                 NamedLocation,
+            )
+            from prowler.providers.azure.services.entra.entra_trusted_named_locations_exists.entra_trusted_named_locations_exists import (
+                entra_trusted_named_locations_exists,
             )
 
             entra_client.named_locations = {
@@ -70,7 +70,7 @@ class Test_entra_ensure_exists_trusted_locations:
                 }
             }
 
-            check = entra_ensure_exists_trusted_locations()
+            check = entra_trusted_named_locations_exists()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
@@ -86,14 +86,14 @@ class Test_entra_ensure_exists_trusted_locations:
         entra_client = mock.MagicMock
 
         with mock.patch(
-            "prowler.providers.azure.services.entra.entra_ensure_exists_trusted_locations.entra_ensure_exists_trusted_locations.entra_client",
+            "prowler.providers.azure.services.entra.entra_trusted_named_locations_exists.entra_trusted_named_locations_exists.entra_client",
             new=entra_client,
         ):
-            from prowler.providers.azure.services.entra.entra_ensure_exists_trusted_locations.entra_ensure_exists_trusted_locations import (
-                entra_ensure_exists_trusted_locations,
-            )
             from prowler.providers.azure.services.entra.entra_service import (
                 NamedLocation,
+            )
+            from prowler.providers.azure.services.entra.entra_trusted_named_locations_exists.entra_trusted_named_locations_exists import (
+                entra_trusted_named_locations_exists,
             )
 
             entra_client.named_locations = {
@@ -104,7 +104,7 @@ class Test_entra_ensure_exists_trusted_locations:
                 }
             }
 
-            check = entra_ensure_exists_trusted_locations()
+            check = entra_trusted_named_locations_exists()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
@@ -120,14 +120,14 @@ class Test_entra_ensure_exists_trusted_locations:
         entra_client = mock.MagicMock
 
         with mock.patch(
-            "prowler.providers.azure.services.entra.entra_ensure_exists_trusted_locations.entra_ensure_exists_trusted_locations.entra_client",
+            "prowler.providers.azure.services.entra.entra_trusted_named_locations_exists.entra_trusted_named_locations_exists.entra_client",
             new=entra_client,
         ):
-            from prowler.providers.azure.services.entra.entra_ensure_exists_trusted_locations.entra_ensure_exists_trusted_locations import (
-                entra_ensure_exists_trusted_locations,
-            )
             from prowler.providers.azure.services.entra.entra_service import (
                 NamedLocation,
+            )
+            from prowler.providers.azure.services.entra.entra_trusted_named_locations_exists.entra_trusted_named_locations_exists import (
+                entra_trusted_named_locations_exists,
             )
 
             entra_client.named_locations = {
@@ -140,7 +140,7 @@ class Test_entra_ensure_exists_trusted_locations:
                 }
             }
 
-            check = entra_ensure_exists_trusted_locations()
+            check = entra_trusted_named_locations_exists()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"

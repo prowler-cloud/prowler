@@ -1,6 +1,6 @@
 {
   "Provider": "azure",
-  "CheckID": "entra_ensure_exists_trusted_locations",
+  "CheckID": "entra_trusted_named_locations_exists",
   "CheckTitle": "Ensure Trusted Locations Are Defined",
   "CheckType": [],
   "ServiceName": "entra",
