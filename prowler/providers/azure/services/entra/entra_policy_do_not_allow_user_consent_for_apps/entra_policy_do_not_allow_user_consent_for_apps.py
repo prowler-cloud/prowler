@@ -12,7 +12,7 @@ class entra_policy_do_not_allow_user_consent_for_apps(Check):
             report.subscription = f"Tenant: '{tenant_domain}'"
             report.resource_name = getattr(auth_policy, "name", "Authorization Policy")
             report.resource_id = getattr(auth_policy, "id", "authorizationPolicy")
-            report.status_extended = "Allow user consent for apps is not disabled"
+            report.status_extended = "Entra allows users to consent apps accessing company data on their behalf"
 
             if getattr(auth_policy, "default_user_role_permissions", None) and not any(
                 "ManagePermissionGrantsForSelf" in policy_assigned
@@ -23,7 +23,7 @@ class entra_policy_do_not_allow_user_consent_for_apps(Check):
                 )
             ):
                 report.status = "PASS"
-                report.status_extended = "Allow user consent for apps is disabled"
+                report.status_extended = "Entra does not allow users to consent apps accessing company data on their behalf"
 
             findings.append(report)
 

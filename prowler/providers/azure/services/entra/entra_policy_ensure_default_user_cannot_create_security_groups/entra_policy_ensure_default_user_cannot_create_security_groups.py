@@ -13,9 +13,7 @@ class entra_policy_ensure_default_user_cannot_create_security_groups(Check):
             report.subscription = f"Tenant: '{tenant_domain}'"
             report.resource_name = getattr(auth_policy, "name", "Authorization Policy")
             report.resource_id = getattr(auth_policy, "id", "authorizationPolicy")
-            report.status_extended = (
-                "Security group creation is not disabled for non-admin users."
-            )
+            report.status_extended = "Non-privileged users are able to create security groups via the Access Panel and the Azure administration portal."
 
             if getattr(
                 auth_policy, "default_user_role_permissions", None
@@ -25,9 +23,7 @@ class entra_policy_ensure_default_user_cannot_create_security_groups(Check):
                 True,
             ):
                 report.status = "PASS"
-                report.status_extended = (
-                    "Security group creation is disabled for non-admin users."
-                )
+                report.status_extended = "Non-privileged users are not able to create security groups via the Access Panel and the Azure administration portal."
 
             findings.append(report)
 
