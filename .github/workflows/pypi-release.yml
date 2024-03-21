@@ -21,6 +21,31 @@ jobs:
       POETRY_VIRTUALENVS_CREATE: "false"
     name: Release Prowler to PyPI
     steps:
+      - name: Get base branch regarding Prowler version
+        run: |
+          PROWLER_VERSION="${{ env.RELEASE_TAG }}"
+          BASE_BRANCH=""
+
+          case ${PROWLER_VERSION%%.*} in
+          3)
+              echo "Releasing Prowler v3 with tag ${PROWLER_VERSION}"
+              # TODO: modify it once v4 is ready
+              # echo "BASE_BRANCH=3.0-dev" >> "${GITHUB_ENV}"
+              echo "BASE_BRANCH=master" >> "${GITHUB_ENV}"
+              ;;
+          4)
+              echo "Releasing Prowler v4 with tag ${PROWLER_VERSION}"
+              # TODO: modify it once v4 is ready
+              # echo "BASE_BRANCH=master" >> "${GITHUB_ENV}"
+              echo "Not available, aborting..."
+              exit 1
+              ;;
+          *)
+              echo "Releasing another Prowler major version, aborting..."
+              exit 1
+              ;;
+          esac
+
       - uses: actions/checkout@v4
 
       - name: Install dependencies
@@ -62,7 +87,6 @@ jobs:
           # Push the tag
           git push -f origin ${{ env.RELEASE_TAG }}
 
-
       - name: Create new branch for the version update
         run: |
           git switch -c release-${{ env.RELEASE_TAG }}
@@ -80,14 +104,14 @@ jobs:
       - name: Create PR to update version in the branch
         run: |
           echo "### Description
-          
+
           This PR updates Prowler Version to ${{ env.RELEASE_TAG }}.
-          
+
           ### License
-          
+
           By submitting this pull request, I confirm that my contribution is made under the terms of the Apache 2.0 license." |\
           gh pr create \
-            --base ${{ env.GITHUB_BASE_BRANCH }} \
+            --base ${{ env.BASE_BRANCH }} \
             --head release-${{ env.RELEASE_TAG }} \
             --title "chore(release): update Prowler Version to ${{ env.RELEASE_TAG }}." \
             --body-file -
