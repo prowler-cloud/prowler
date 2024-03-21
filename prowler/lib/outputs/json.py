@@ -100,7 +100,17 @@ def fill_json_asff(finding_output, audit_info, finding, output_options):
         if not finding.check_metadata.Remediation.Recommendation.Url:
             finding.check_metadata.Remediation.Recommendation.Url = "https://docs.aws.amazon.com/securityhub/latest/userguide/what-is-securityhub.html"
         finding_output.Remediation = {
-            "Recommendation": finding.check_metadata.Remediation.Recommendation
+            "Recommendation": {
+                "Text": (
+                    (
+                        finding.check_metadata.Remediation.Recommendation.Text[:509]
+                        + "..."
+                    )
+                    if len(finding.check_metadata.Remediation.Recommendation.Text) > 512
+                    else finding.check_metadata.Remediation.Recommendation.Text
+                ),
+                "Url": finding.check_metadata.Remediation.Recommendation.Url,
+            }
         }
 
         return finding_output
