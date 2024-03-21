@@ -2,7 +2,7 @@ from prowler.lib.check.models import Check, Check_Report_Azure
 from prowler.providers.azure.services.entra.entra_client import entra_client
 
 
-class entra_esure_there_are_less_than_five_global_admins(Check):
+class entra_users_less_than_five_global_admins(Check):
     def execute(self) -> Check_Report_Azure:
         findings = []
 

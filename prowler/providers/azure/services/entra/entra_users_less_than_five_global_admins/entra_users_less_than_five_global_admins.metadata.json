@@ -1,6 +1,6 @@
 {
   "Provider": "azure",
-  "CheckID": "entra_esure_there_are_less_than_five_global_admins",
+  "CheckID": "entra_users_less_than_five_global_admins",
   "CheckTitle": "Ensure fewer than 5 users have global administrator assignment",
   "CheckType": [],
   "ServiceName": "entra",

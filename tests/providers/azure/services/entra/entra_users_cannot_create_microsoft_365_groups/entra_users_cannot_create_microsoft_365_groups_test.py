@@ -4,21 +4,21 @@ from uuid import uuid4
 from tests.providers.azure.azure_fixtures import DOMAIN
 
 
-class Test_entra_ensure_users_cannot_create_microsoft_365_groups:
+class Test_entra_users_cannot_create_microsoft_365_groups:
     def test_entra_no_tenant(self):
         entra_client = mock.MagicMock
 
         with mock.patch(
-            "prowler.providers.azure.services.entra.entra_ensure_users_cannot_create_microsoft_365_groups.entra_ensure_users_cannot_create_microsoft_365_groups.entra_client",
+            "prowler.providers.azure.services.entra.entra_users_cannot_create_microsoft_365_groups.entra_users_cannot_create_microsoft_365_groups.entra_client",
             new=entra_client,
         ):
-            from prowler.providers.azure.services.entra.entra_ensure_users_cannot_create_microsoft_365_groups.entra_ensure_users_cannot_create_microsoft_365_groups import (
-                entra_ensure_users_cannot_create_microsoft_365_groups,
+            from prowler.providers.azure.services.entra.entra_users_cannot_create_microsoft_365_groups.entra_users_cannot_create_microsoft_365_groups import (
+                entra_users_cannot_create_microsoft_365_groups,
             )
 
             entra_client.group_settings = {}
 
-            check = entra_ensure_users_cannot_create_microsoft_365_groups()
+            check = entra_users_cannot_create_microsoft_365_groups()
             result = check.execute()
             assert len(result) == 0
 
@@ -26,16 +26,16 @@ class Test_entra_ensure_users_cannot_create_microsoft_365_groups:
         entra_client = mock.MagicMock
 
         with mock.patch(
-            "prowler.providers.azure.services.entra.entra_ensure_users_cannot_create_microsoft_365_groups.entra_ensure_users_cannot_create_microsoft_365_groups.entra_client",
+            "prowler.providers.azure.services.entra.entra_users_cannot_create_microsoft_365_groups.entra_users_cannot_create_microsoft_365_groups.entra_client",
             new=entra_client,
         ):
-            from prowler.providers.azure.services.entra.entra_ensure_users_cannot_create_microsoft_365_groups.entra_ensure_users_cannot_create_microsoft_365_groups import (
-                entra_ensure_users_cannot_create_microsoft_365_groups,
+            from prowler.providers.azure.services.entra.entra_users_cannot_create_microsoft_365_groups.entra_users_cannot_create_microsoft_365_groups import (
+                entra_users_cannot_create_microsoft_365_groups,
             )
 
             entra_client.group_settings = {DOMAIN: {}}
 
-            check = entra_ensure_users_cannot_create_microsoft_365_groups()
+            check = entra_users_cannot_create_microsoft_365_groups()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
@@ -48,14 +48,14 @@ class Test_entra_ensure_users_cannot_create_microsoft_365_groups:
         entra_client = mock.MagicMock
 
         with mock.patch(
-            "prowler.providers.azure.services.entra.entra_ensure_users_cannot_create_microsoft_365_groups.entra_ensure_users_cannot_create_microsoft_365_groups.entra_client",
+            "prowler.providers.azure.services.entra.entra_users_cannot_create_microsoft_365_groups.entra_users_cannot_create_microsoft_365_groups.entra_client",
             new=entra_client,
         ):
-            from prowler.providers.azure.services.entra.entra_ensure_users_cannot_create_microsoft_365_groups.entra_ensure_users_cannot_create_microsoft_365_groups import (
-                entra_ensure_users_cannot_create_microsoft_365_groups,
-            )
             from prowler.providers.azure.services.entra.entra_service import (
                 GroupSetting,
+            )
+            from prowler.providers.azure.services.entra.entra_users_cannot_create_microsoft_365_groups.entra_users_cannot_create_microsoft_365_groups import (
+                entra_users_cannot_create_microsoft_365_groups,
             )
 
             id = str(uuid4())
@@ -75,7 +75,7 @@ class Test_entra_ensure_users_cannot_create_microsoft_365_groups:
                 }
             }
 
-            check = entra_ensure_users_cannot_create_microsoft_365_groups()
+            check = entra_users_cannot_create_microsoft_365_groups()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
@@ -90,14 +90,14 @@ class Test_entra_ensure_users_cannot_create_microsoft_365_groups:
         entra_client = mock.MagicMock
 
         with mock.patch(
-            "prowler.providers.azure.services.entra.entra_ensure_users_cannot_create_microsoft_365_groups.entra_ensure_users_cannot_create_microsoft_365_groups.entra_client",
+            "prowler.providers.azure.services.entra.entra_users_cannot_create_microsoft_365_groups.entra_users_cannot_create_microsoft_365_groups.entra_client",
             new=entra_client,
         ):
-            from prowler.providers.azure.services.entra.entra_ensure_users_cannot_create_microsoft_365_groups.entra_ensure_users_cannot_create_microsoft_365_groups import (
-                entra_ensure_users_cannot_create_microsoft_365_groups,
-            )
             from prowler.providers.azure.services.entra.entra_service import (
                 GroupSetting,
+            )
+            from prowler.providers.azure.services.entra.entra_users_cannot_create_microsoft_365_groups.entra_users_cannot_create_microsoft_365_groups import (
+                entra_users_cannot_create_microsoft_365_groups,
             )
 
             id = str(uuid4())
@@ -117,7 +117,7 @@ class Test_entra_ensure_users_cannot_create_microsoft_365_groups:
                 }
             }
 
-            check = entra_ensure_users_cannot_create_microsoft_365_groups()
+            check = entra_users_cannot_create_microsoft_365_groups()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
@@ -130,14 +130,14 @@ class Test_entra_ensure_users_cannot_create_microsoft_365_groups:
         entra_client = mock.MagicMock
 
         with mock.patch(
-            "prowler.providers.azure.services.entra.entra_ensure_users_cannot_create_microsoft_365_groups.entra_ensure_users_cannot_create_microsoft_365_groups.entra_client",
+            "prowler.providers.azure.services.entra.entra_users_cannot_create_microsoft_365_groups.entra_users_cannot_create_microsoft_365_groups.entra_client",
             new=entra_client,
         ):
-            from prowler.providers.azure.services.entra.entra_ensure_users_cannot_create_microsoft_365_groups.entra_ensure_users_cannot_create_microsoft_365_groups import (
-                entra_ensure_users_cannot_create_microsoft_365_groups,
-            )
             from prowler.providers.azure.services.entra.entra_service import (
                 GroupSetting,
+            )
+            from prowler.providers.azure.services.entra.entra_users_cannot_create_microsoft_365_groups.entra_users_cannot_create_microsoft_365_groups import (
+                entra_users_cannot_create_microsoft_365_groups,
             )
 
             id = str(uuid4())
@@ -153,7 +153,7 @@ class Test_entra_ensure_users_cannot_create_microsoft_365_groups:
                 }
             }
 
-            check = entra_ensure_users_cannot_create_microsoft_365_groups()
+            check = entra_users_cannot_create_microsoft_365_groups()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"

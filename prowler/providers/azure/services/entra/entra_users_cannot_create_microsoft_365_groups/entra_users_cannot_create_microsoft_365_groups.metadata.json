@@ -1,6 +1,6 @@
 {
   "Provider": "azure",
-  "CheckID": "entra_ensure_users_cannot_create_microsoft_365_groups",
+  "CheckID": "entra_users_cannot_create_microsoft_365_groups",
   "CheckTitle": "Ensure that 'Users can create Microsoft 365 groups in Azure portals, API or PowerShell' is set to 'No'",
   "CheckType": [],
   "ServiceName": "entra",
