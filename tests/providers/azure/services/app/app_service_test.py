@@ -115,34 +115,34 @@ class Test_App_Service:
         assert app_service.__get_client_cert_mode__(True, "Foo") == "Ignore"
 
     def test__get_app_monitor_settings(self):
-        app_service = App(set_mocked_azure_audit_info())
+        app_service = App(set_mocked_azure_provider())
         assert (
-            app_service.apps[AZURE_SUBSCRIPTION]["app_id-1"]
+            app_service.apps[AZURE_SUBSCRIPTION_ID]["app_id-1"]
             .monitor_diagnostic_settings[0]
             .id
             == "id2/id2"
         )
         assert (
-            app_service.apps[AZURE_SUBSCRIPTION]["app_id-1"]
+            app_service.apps[AZURE_SUBSCRIPTION_ID]["app_id-1"]
             .monitor_diagnostic_settings[0]
             .logs[0]
             .category
             == "AppServiceHTTPLogs"
         )
         assert (
-            app_service.apps[AZURE_SUBSCRIPTION]["app_id-1"]
+            app_service.apps[AZURE_SUBSCRIPTION_ID]["app_id-1"]
             .monitor_diagnostic_settings[0]
             .storage_account_name
             == "storage_account_name2"
         )
         assert (
-            app_service.apps[AZURE_SUBSCRIPTION]["app_id-1"]
+            app_service.apps[AZURE_SUBSCRIPTION_ID]["app_id-1"]
             .monitor_diagnostic_settings[0]
             .storage_account_id
             == "storage_account_id2"
         )
         assert (
-            app_service.apps[AZURE_SUBSCRIPTION]["app_id-1"]
+            app_service.apps[AZURE_SUBSCRIPTION_ID]["app_id-1"]
             .monitor_diagnostic_settings[0]
             .name
             == "name_diagnostic_setting2"

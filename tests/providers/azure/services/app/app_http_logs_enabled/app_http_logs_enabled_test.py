@@ -1,6 +1,6 @@
 from unittest import mock
 
-from tests.providers.azure.azure_fixtures import AZURE_SUBSCRIPTION
+from tests.providers.azure.azure_fixtures import AZURE_SUBSCRIPTION_ID
 
 
 class Test_app_http_logs_enabled:
@@ -24,7 +24,7 @@ class Test_app_http_logs_enabled:
 
     def test_app_subscriptions_empty(self):
         app_client = mock.MagicMock
-        app_client.apps = {AZURE_SUBSCRIPTION: {}}
+        app_client.apps = {AZURE_SUBSCRIPTION_ID: {}}
 
         with mock.patch(
             "prowler.providers.azure.services.app.app_register_with_identity.app_register_with_identity.app_client",
@@ -50,7 +50,7 @@ class Test_app_http_logs_enabled:
             from prowler.providers.azure.services.app.app_service import WebApp
 
             app_client.apps = {
-                AZURE_SUBSCRIPTION: {
+                AZURE_SUBSCRIPTION_ID: {
                     "app1": WebApp(
                         resource_id="resource_id",
                         auth_enabled=True,
@@ -70,9 +70,9 @@ class Test_app_http_logs_enabled:
             assert result[0].resource_id == "resource_id"
             assert (
                 result[0].status_extended
-                == f"App app1 does not have a diagnostic setting in subscription {AZURE_SUBSCRIPTION}."
+                == f"App app1 does not have a diagnostic setting in subscription {AZURE_SUBSCRIPTION_ID}."
             )
-            assert result[0].subscription == AZURE_SUBSCRIPTION
+            assert result[0].subscription == AZURE_SUBSCRIPTION_ID
 
     def test_diagnostic_setting_configured(self):
         app_client = mock.MagicMock
@@ -90,7 +90,7 @@ class Test_app_http_logs_enabled:
             )
 
             app_client.apps = {
-                AZURE_SUBSCRIPTION: {
+                AZURE_SUBSCRIPTION_ID: {
                     "app_id-1": WebApp(
                         resource_id="resource_id1",
                         auth_enabled=True,
@@ -183,10 +183,10 @@ class Test_app_http_logs_enabled:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
-            assert result[0].subscription == AZURE_SUBSCRIPTION
+            assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == "app_id-2"
             assert result[0].resource_id == "resource_id2"
             assert (
                 result[0].status_extended
-                == f"App app_id-2 has HTTP Logs enabled in diagnostic setting name_diagnostic_setting2 in subscription {AZURE_SUBSCRIPTION}"
+                == f"App app_id-2 has HTTP Logs enabled in diagnostic setting name_diagnostic_setting2 in subscription {AZURE_SUBSCRIPTION_ID}"
             )
