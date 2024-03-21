@@ -2,7 +2,10 @@ from dash import dcc, html
 
 
 def create_layout_overview(
-    account_dropdown: html.Div, date_dropdown: html.Div, region_dropdown: html.Div
+    account_dropdown: html.Div,
+    date_dropdown: html.Div,
+    region_dropdown: html.Div,
+    download_button: html.Button,
 ) -> html.Div:
     """
     Create the layout of the dashboard.
@@ -70,12 +73,7 @@ def create_layout_overview(
                         "Top 25 Failed Findings by Severity",
                         className="text-prowler-stone-900 text-lg font-bold",
                     ),
-                    html.Button(
-                        "Download this table as CSV",
-                        id="download_link",
-                        n_clicks=0,
-                        className="border-solid border-2 border-prowler-stone-900/10 hover:border-solid hover:border-2 hover:border-prowler-stone-900/10 text-prowler-stone-900 inline-block px-4 py-2 text-xs font-bold uppercase transition-all rounded-lg text-gray-900 hover:bg-prowler-stone-900/10 flex justify-end w-fit",
-                    ),
+                    download_button,
                     dcc.Download(id="download-data"),
                 ],
                 className="flex justify-between items-center",
@@ -85,14 +83,21 @@ def create_layout_overview(
         className="grid gap-x-8 gap-y-8 2xl:container mx-auto",
     )
 
-def create_layout_compliance(account_dropdown: html.Div, date_dropdown: html.Div, region_dropdown: html.Div, compliance_dropdown: html.Div) -> html.Div:
+
+def create_layout_compliance(
+    account_dropdown: html.Div,
+    date_dropdown: html.Div,
+    region_dropdown: html.Div,
+    compliance_dropdown: html.Div,
+) -> html.Div:
     return html.Div(
         [
             dcc.Location(id="url", refresh=False),
             html.Div(
                 [
                     html.H1(
-                        "Compliance", className="text-prowler-stone-900 text-2xxl font-bold"
+                        "Compliance",
+                        className="text-prowler-stone-900 text-2xxl font-bold",
                     ),
                     html.A(
                         [
@@ -126,13 +131,15 @@ def create_layout_compliance(account_dropdown: html.Div, date_dropdown: html.Div
                         id="security_level_graph",
                     ),
                     html.Div(
-                        className="flex flex-col col-span-12 md:col-span-2 gap-y-4", id=""
+                        className="flex flex-col col-span-12 md:col-span-2 gap-y-4",
+                        id="",
                     ),
                 ],
                 className="grid gap-x-4 gap-y-4 grid-cols-12 lg:gap-y-0",
             ),
             html.H4(
-                "Details compliance:", className="text-prowler-stone-900 text-lg font-bold"
+                "Details compliance:",
+                className="text-prowler-stone-900 text-lg font-bold",
             ),
             html.Div(className="flex flex-wrap", id="output"),
         ],

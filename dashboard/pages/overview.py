@@ -9,7 +9,6 @@ from itertools import product
 # Third-party imports
 import dash
 import dash_bootstrap_components as dbc
-import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
@@ -137,23 +136,18 @@ else:
     date_dropdown = create_date_dropdown(assesment_times)
 
     # Cloud Account Dropdown
-    accounts = (
-        ["All"]
-        + list(data["ACCOUNT_UID"].unique())
-        + list(data["ACCOUNT_NAME"].unique())
-    )
+    accounts = []
+    for account in data["ACCOUNT_NAME"].unique():
+        if "azure" in list(data[data["ACCOUNT_NAME"] == account]["PROVIDER"]):
+            accounts.append(account + " - AZURE")
+        if "gcp" in list(data[data["ACCOUNT_NAME"] == account]["PROVIDER"]):
+            accounts.append(account + " - GCP")
 
-    # for item in the list, we are adding the provider name depending on the account
-    for i in range(len(accounts)):
-        if accounts[i] in list(data["ACCOUNT_UID"].unique()):
-            accounts[i] = accounts[i] + " - AWS"
-        elif accounts[i] in list(data["ACCOUNT_NAME"].unique()):
-            if "azure" in list(data[data["ACCOUNT_NAME"] == accounts[i]]["PROVIDER"]):
-                accounts[i] = accounts[i] + " - AZURE"
-            elif "gcp" in list(data[data["ACCOUNT_NAME"] == accounts[i]]["PROVIDER"]):
-                accounts[i] = accounts[i] + " - GCP"
-            elif "k8s" in list(data[data["ACCOUNT_NAME"] == accounts[i]]["PROVIDER"]):
-                accounts[i] = accounts[i] + " - K8S"
+    for account in data["ACCOUNT_UID"].unique():
+        if "aws" in list(data[data["ACCOUNT_UID"] == account]["PROVIDER"]):
+            accounts.append(account + " - AWS")
+        if "kubernetes" in list(data[data["ACCOUNT_UID"] == account]["PROVIDER"]):
+            accounts.append(account + " - K8S")
 
     account_dropdown = create_account_dropdown(accounts)
 
@@ -161,11 +155,21 @@ else:
     regions = ["All"] + list(data["REGION"].unique())
     region_dropdown = create_region_dropdown(regions)
 
+    # Create the download button
+    download_button = html.Button(
+        "Download this table as CSV",
+        id="download_link",
+        n_clicks=0,
+        className="border-solid border-2 border-prowler-stone-900/10 hover:border-solid hover:border-2 hover:border-prowler-stone-900/10 text-prowler-stone-900 inline-block px-4 py-2 text-xs font-bold uppercase transition-all rounded-lg text-gray-900 hover:bg-prowler-stone-900/10 flex justify-end w-fit",
+    )
+
     # Initializing the Dash App
     dash.register_page(__name__, path="/")
 
     # Create the layout
-    layout = create_layout_overview(account_dropdown, date_dropdown, region_dropdown)
+    layout = create_layout_overview(
+        account_dropdown, date_dropdown, region_dropdown, download_button
+    )
 
 
 # Callback to display selected value
@@ -191,8 +195,11 @@ else:
     Input("cloud-account-filter", "value"),
     Input("region-filter", "value"),
     Input("report-date-filter", "value"),
+    Input("download_link", "n_clicks"),
 )
-def filter_data(cloud_account_values, region_account_values, assessment_value):
+def filter_data(
+    cloud_account_values, region_account_values, assessment_value, n_clicks
+):
     filtered_data = data.copy()
 
     # Take the latest date of de data
@@ -239,26 +246,35 @@ def filter_data(cloud_account_values, region_account_values, assessment_value):
     filtered_data = filtered_data[
         filtered_data["ASSESSMENT_TIME"] == updated_assessment_value
     ]
-    all_account_ids = filtered_data["ACCOUNT_UID"].unique()
-    all_account_names = filtered_data["ACCOUNT_NAME"].unique()
-    all_items = np.concatenate((all_account_ids, all_account_names))
+    # fill all_account_ids with the account_uid for the provider aws and kubernetes
+    all_account_ids = []
+    for account in filtered_data["ACCOUNT_UID"].unique():
+        if "aws" in list(data[data["ACCOUNT_UID"] == account]["PROVIDER"]):
+            all_account_ids.append(account)
+        if "kubernetes" in list(data[data["ACCOUNT_UID"] == account]["PROVIDER"]):
+            all_account_ids.append(account)
 
-    cloud_accounts_options = []
+    all_account_names = []
+    for account in filtered_data["ACCOUNT_NAME"].unique():
+        if "azure" in list(data[data["ACCOUNT_NAME"] == account]["PROVIDER"]):
+            all_account_names.append(account)
+        if "gcp" in list(data[data["ACCOUNT_NAME"] == account]["PROVIDER"]):
+            all_account_names.append(account)
+
+    all_items = all_account_ids + all_account_names + ["All"]
+
+    cloud_accounts_options = ["All"]
     for item in all_items:
         if item not in cloud_accounts_options and item.__class__.__name__ == "str":
             # append the provider name depending on the account
-            # for item in the list, we are adding the provider name depending on the account
-            if item in list(data["ACCOUNT_UID"].unique()):
+            if "aws" in list(data[data["ACCOUNT_UID"] == item]["PROVIDER"]):
                 cloud_accounts_options.append(item + " - AWS")
-            elif item in list(data["ACCOUNT_NAME"].unique()):
-                if "azure" in list(data[data["ACCOUNT_NAME"] == item]["PROVIDER"]):
-                    cloud_accounts_options.append(item + " - AZURE")
-                elif "gcp" in list(data[data["ACCOUNT_NAME"] == item]["PROVIDER"]):
-                    cloud_accounts_options.append(item + " - GCP")
-                elif "k8s" in list(data[data["ACCOUNT_NAME"] == item]["PROVIDER"]):
-                    cloud_accounts_options.append(item + " - K8S")
-
-    cloud_accounts_options = ["All"] + cloud_accounts_options
+            elif "azure" in list(data[data["ACCOUNT_NAME"] == item]["PROVIDER"]):
+                cloud_accounts_options.append(item + " - AZURE")
+            elif "gcp" in list(data[data["ACCOUNT_NAME"] == item]["PROVIDER"]):
+                cloud_accounts_options.append(item + " - GCP")
+            elif "kubernetes" in list(data[data["ACCOUNT_UID"] == item]["PROVIDER"]):
+                cloud_accounts_options.append(item + " - K8S")
 
     # Filter ACCOUNT
     if cloud_account_values == ["All"]:
@@ -287,8 +303,10 @@ def filter_data(cloud_account_values, region_account_values, assessment_value):
         | filtered_data["ACCOUNT_NAME"].isin(values_choice)
     ]
 
+    copy_data = filtered_data.copy()
     # Filter REGION
     # Check if filtered data contains an aws account
+    # TODO - Handle azure locations
     if not filtered_data["PROVIDER"].str.contains("azure").any():
         if region_account_values == ["All"]:
             updated_region_account_values = filtered_data["REGION"].unique()
@@ -307,7 +325,7 @@ def filter_data(cloud_account_values, region_account_values, assessment_value):
             filtered_data["REGION"].isin(updated_region_account_values)
         ]
 
-    region_filter_options = ["All"] + list(filtered_data["REGION"].unique())
+    region_filter_options = ["All"] + list(copy_data["REGION"].unique())
 
     # Select failed findings
     fails_findings = filtered_data[filtered_data["STATUS"] == "FAIL"]
@@ -622,9 +640,8 @@ def filter_data(cloud_account_values, region_account_values, assessment_value):
             ),
         )
     ]
-
     if ctx.triggered_id == "download_link":
-        csv_data = dcc.send_data_frame(table_data.to_csv, "mydf.csv")
+        csv_data = dcc.send_data_frame(table_data[:25].to_csv, "mydf.csv")
         return (
             status_graph,
             two_pie_chart,
