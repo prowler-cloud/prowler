@@ -27,19 +27,18 @@ def write_compliance_row_mitre_attack_aws(
         requirement_description = requirement.Description
         requirement_id = requirement.Id
         requirement_name = requirement.Name
-        attributes_aws_services = ""
-        attributes_categories = ""
-        attributes_values = ""
-        attributes_comments = ""
-        for attribute in requirement.Attributes:
-            attributes_aws_services += attribute.AWSService + ", "
-            attributes_categories += attribute.Category + ", "
-            attributes_values += attribute.Value + ", "
-            attributes_comments += attribute.Comment + ", "
-        attributes_aws_services = attributes_aws_services.rstrip(", ")
-        attributes_categories = attributes_categories.rstrip(", ")
-        attributes_values = attributes_values.rstrip(", ")
-        attributes_comments = attributes_comments.rstrip(", ")
+        attributes_aws_services = ", ".join(
+            attribute.AWSService for attribute in requirement.Attributes
+        )
+        attributes_categories = ", ".join(
+            attribute.Category for attribute in requirement.Attributes
+        )
+        attributes_values = ", ".join(
+            attribute.Value for attribute in requirement.Attributes
+        )
+        attributes_comments = ", ".join(
+            attribute.Comment for attribute in requirement.Attributes
+        )
         compliance_row = Check_Output_MITRE_ATTACK(
             Provider=finding.check_metadata.Provider,
             Description=compliance.Description,
