@@ -15,9 +15,7 @@ class GCP_Provider:
         input_project_ids: list,
     ):
         logger.info("Instantiating GCP Provider ...")
-        self.credentials, self.default_project_id = self.__set_credentials__(
-            credentials_file
-        )
+        self.credentials, _ = self.__set_credentials__(credentials_file)
 
         self.project_ids = []
         accessible_projects = self.get_project_ids()
@@ -60,7 +58,7 @@ class GCP_Provider:
         os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = client_secrets_path
 
     def get_credentials(self):
-        return self.credentials, self.default_project_id, self.project_ids
+        return self.credentials, self.project_ids
 
     def get_project_ids(self):
         try:
