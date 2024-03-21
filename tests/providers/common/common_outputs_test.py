@@ -44,7 +44,6 @@ class Test_Common_Output_Options:
     def set_mocked_gcp_audit_info(self):
         audit_info = GCP_Audit_Info(
             credentials=None,
-            default_project_id="test-project1",
             project_ids=["test-project1", "test-project2"],
             audit_resources=None,
             audit_metadata=None,
