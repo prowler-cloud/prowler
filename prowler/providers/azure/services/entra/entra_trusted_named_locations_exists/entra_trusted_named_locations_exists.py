@@ -22,6 +22,7 @@ class entra_trusted_named_locations_exists(Check):
                 if named_location.ip_ranges_addresses and named_location.is_trusted:
                     report.status = "PASS"
                     report.status_extended = f"Exits trusted location with trusted IP ranges, this IPs ranges are: {[ip_range for ip_range in named_location.ip_ranges_addresses if ip_range]}"
+                    break
 
             findings.append(report)
 
