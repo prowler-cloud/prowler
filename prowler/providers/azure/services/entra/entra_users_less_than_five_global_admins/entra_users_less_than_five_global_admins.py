@@ -11,8 +11,6 @@ class entra_users_less_than_five_global_admins(Check):
             report.status = "FAIL"
             report.subscription = f"Tenant: '{tenant_domain}'"
             report.resource_name = "Global Administrator"
-            report.resource_id = "Global Administrator"
-            report.status_extended = "There are more than five global administrators."
 
             if "Global Administrator" in directory_roles:
                 report.resource_id = getattr(
