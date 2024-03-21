@@ -20,7 +20,7 @@ class awslambda_function_invoke_api_operations_cloudtrail_logging_enabled(Check)
                 f"Lambda function {function.name} is not recorded by CloudTrail."
             )
             lambda_recorded_cloudtrail = False
-            for trail in cloudtrail_client.trails:
+            for trail in cloudtrail_client.trails.values():
                 for data_event in trail.data_events:
                     # classic event selectors
                     if not data_event.is_advanced:
