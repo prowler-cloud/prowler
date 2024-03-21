@@ -37,7 +37,7 @@ class GcpProvider(Provider):
         input_project_ids = arguments.project_ids
         credentials_file = arguments.credentials_file
 
-        self._session, _ = self.setup_session(credentials_file)
+        self._session = self.setup_session(credentials_file)
 
         self._project_ids = []
         self._projects = {}
@@ -148,9 +148,10 @@ class GcpProvider(Provider):
             if credentials_file:
                 self.__set_gcp_creds_env_var__(credentials_file)
 
-            return auth.default(
+            credentials, _ = auth.default(
                 scopes=["https://www.googleapis.com/auth/cloud-platform"]
             )
+            return credentials
         except Exception as error:
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
