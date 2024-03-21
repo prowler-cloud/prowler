@@ -1,3 +1,5 @@
+from typing import Any
+
 from prowler.lib.logger import logger
 from prowler.providers.azure.lib.audit_info.models import Azure_Audit_Info
 
@@ -5,7 +7,7 @@ from prowler.providers.azure.lib.audit_info.models import Azure_Audit_Info
 class AzureService:
     def __init__(
         self,
-        service: str,
+        service: Any,
         audit_info: Azure_Audit_Info,
     ):
         self.clients = self.__set_clients__(
