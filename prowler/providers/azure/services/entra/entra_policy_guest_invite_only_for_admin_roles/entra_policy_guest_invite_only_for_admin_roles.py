@@ -10,15 +10,16 @@ class entra_policy_guest_invite_only_for_admin_roles(Check):
             report = Check_Report_Azure(self.metadata())
             report.status = "FAIL"
             report.subscription = f"Tenant: '{tenant_domain}'"
-            report.resource_name = auth_policy.name
-            report.resource_id = auth_policy.id
+            report.resource_name = getattr(auth_policy, "name", "Authorization Policy")
+            report.resource_id = getattr(auth_policy, "id", "authorizationPolicy")
             report.status_extended = (
                 "Guest invite settings are not restricted for admins roles only"
             )
 
             if (
-                auth_policy.guest_invite_settings == "adminsAndGuestInviters"
-                or auth_policy.guest_invite_settings == "none"
+                getattr(auth_policy, "guest_invite_settings", "everyone")
+                == "adminsAndGuestInviters"
+                or getattr(auth_policy, "guest_invite_settings", "everyone") == "none"
             ):
                 report.status = "PASS"
                 report.status_extended = (

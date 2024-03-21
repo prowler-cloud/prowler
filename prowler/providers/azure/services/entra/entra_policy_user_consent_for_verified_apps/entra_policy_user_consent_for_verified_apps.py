@@ -10,11 +10,11 @@ class entra_policy_user_consent_for_verified_apps(Check):
             report = Check_Report_Azure(self.metadata())
             report.status = "PASS"
             report.subscription = f"Tenant: '{tenant_domain}'"
-            report.resource_name = auth_policy.name
-            report.resource_id = auth_policy.id
+            report.resource_name = getattr(auth_policy, "name", "Authorization Policy")
+            report.resource_id = getattr(auth_policy, "id", "authorizationPolicy")
             report.status_extended = "All users can consent for permissions classified as 'low impact', for apps from verified publishers or apps registered in this organization or require administrator to consent."
 
-            if auth_policy.default_user_role_permissions and any(
+            if getattr(auth_policy, "default_user_role_permissions", None) and any(
                 "ManagePermissionGrantsForSelf.microsoft-user-default-legacy"
                 in policy_assigned
                 for policy_assigned in getattr(

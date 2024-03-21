@@ -10,11 +10,11 @@ class entra_policy_do_not_allow_user_consent_for_apps(Check):
             report = Check_Report_Azure(self.metadata())
             report.status = "FAIL"
             report.subscription = f"Tenant: '{tenant_domain}'"
-            report.resource_name = auth_policy.name
-            report.resource_id = auth_policy.id
+            report.resource_name = getattr(auth_policy, "name", "Authorization Policy")
+            report.resource_id = getattr(auth_policy, "id", "authorizationPolicy")
             report.status_extended = "Allow user consent for apps is not disabled"
 
-            if auth_policy.default_user_role_permissions and not any(
+            if getattr(auth_policy, "default_user_role_permissions", None) and not any(
                 "ManagePermissionGrantsForSelf" in policy_assigned
                 for policy_assigned in getattr(
                     auth_policy.default_user_role_permissions,
