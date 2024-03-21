@@ -36,10 +36,10 @@ def write_compliance_row_mitre_attack_aws(
             attributes_categories += attribute.Category + ", "
             attributes_values += attribute.Value + ", "
             attributes_comments += attribute.Comment + ", "
-        attributes_aws_services = attributes_aws_services[:-2]
-        attributes_categories = attributes_categories[:-2]
-        attributes_values = attributes_values[:-2]
-        attributes_comments = attributes_comments[:-2]
+        attributes_aws_services = attributes_aws_services.rstrip(", ")
+        attributes_categories = attributes_categories.rstrip(", ")
+        attributes_values = attributes_values.rstrip(", ")
+        attributes_comments = attributes_comments.rstrip(", ")
         compliance_row = Check_Output_MITRE_ATTACK(
             Provider=finding.check_metadata.Provider,
             Description=compliance.Description,
