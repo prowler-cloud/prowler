@@ -8,7 +8,7 @@ from prowler.providers.aws.services.s3.s3_client import s3_client
 class cloudtrail_logs_s3_bucket_is_not_publicly_accessible(Check):
     def execute(self):
         findings = []
-        for trail in cloudtrail_client.trails:
+        for trail in cloudtrail_client.trails.values():
             if trail.name:
                 trail_bucket_is_in_account = False
                 trail_bucket = trail.s3_bucket
