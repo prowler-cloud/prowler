@@ -10,23 +10,21 @@ class entra_ensure_users_cannot_create_microsoft_365_groups(Check):
             report = Check_Report_Azure(self.metadata())
             report.status = "FAIL"
             report.subscription = f"Tenant: '{tenant_domain}'"
-            report.resource_name = "Group.Unified"
-            report.resource_id = "Group.Unified"
+            report.resource_name = "Microsoft365 Groups"
+            report.resource_id = "Microsoft365 Groups"
             report.status_extended = "Users can create Microsoft 365 groups."
 
-            for group_setting_id, group_setting in group_settings.items():
+            for group_setting in group_settings.values():
                 if group_setting.name == "Group.Unified":
                     for setting_value in group_setting.settings:
-                        if getattr(setting_value, "name", "") == "EnableGroupCreation":
-                            report.resource_name = group_setting.name
-                            report.resource_id = group_setting_id
-
-                            if setting_value.value != "true":
-                                report.status = "PASS"
-                                report.status_extended = (
-                                    "Users cannot create Microsoft 365 groups."
-                                )
-
+                        if (
+                            getattr(setting_value, "name", "") == "EnableGroupCreation"
+                            and setting_value.value != "true"
+                        ):
+                            report.status = "PASS"
+                            report.status_extended = (
+                                "Users cannot create Microsoft 365 groups."
+                            )
                             break
 
             findings.append(report)

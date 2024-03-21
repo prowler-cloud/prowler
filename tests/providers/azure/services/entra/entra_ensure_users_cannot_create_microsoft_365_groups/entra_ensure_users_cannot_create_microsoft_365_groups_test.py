@@ -41,8 +41,8 @@ class Test_entra_ensure_users_cannot_create_microsoft_365_groups:
             assert result[0].status == "FAIL"
             assert result[0].status_extended == "Users can create Microsoft 365 groups."
             assert result[0].subscription == f"Tenant: '{DOMAIN}'"
-            assert result[0].resource_name == "Group.Unified"
-            assert result[0].resource_id == "Group.Unified"
+            assert result[0].resource_name == "Microsoft365 Groups"
+            assert result[0].resource_id == "Microsoft365 Groups"
 
     def test_entra_users_cannot_create_microsoft_365_groups(self):
         entra_client = mock.MagicMock
@@ -83,8 +83,8 @@ class Test_entra_ensure_users_cannot_create_microsoft_365_groups:
                 result[0].status_extended == "Users cannot create Microsoft 365 groups."
             )
             assert result[0].subscription == f"Tenant: '{DOMAIN}'"
-            assert result[0].resource_name == "Group.Unified"
-            assert result[0].resource_id == id
+            assert result[0].resource_name == "Microsoft365 Groups"
+            assert result[0].resource_id == "Microsoft365 Groups"
 
     def test_entra_users_can_create_microsoft_365_groups(self):
         entra_client = mock.MagicMock
@@ -123,8 +123,8 @@ class Test_entra_ensure_users_cannot_create_microsoft_365_groups:
             assert result[0].status == "FAIL"
             assert result[0].status_extended == "Users can create Microsoft 365 groups."
             assert result[0].subscription == f"Tenant: '{DOMAIN}'"
-            assert result[0].resource_name == "Group.Unified"
-            assert result[0].resource_id == id
+            assert result[0].resource_name == "Microsoft365 Groups"
+            assert result[0].resource_id == "Microsoft365 Groups"
 
     def test_entra_users_can_create_microsoft_365_groups_no_setting(self):
         entra_client = mock.MagicMock
@@ -159,5 +159,5 @@ class Test_entra_ensure_users_cannot_create_microsoft_365_groups:
             assert result[0].status == "FAIL"
             assert result[0].status_extended == "Users can create Microsoft 365 groups."
             assert result[0].subscription == f"Tenant: '{DOMAIN}'"
-            assert result[0].resource_name == "Group.Unified"
-            assert result[0].resource_id == "Group.Unified"
+            assert result[0].resource_name == "Microsoft365 Groups"
+            assert result[0].resource_id == "Microsoft365 Groups"
