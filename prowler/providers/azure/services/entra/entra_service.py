@@ -56,6 +56,9 @@ class Entra(AzureService):
         return users
 
     async def __get_authorization_policy__(self):
+        GUEST_USER_ACCESS_NO_RESTRICTICTED = UUID(
+            "a0b1b346-4d3e-4e8b-98f8-753987be4970"
+        )
         authorization_policy = {}
         try:
             for tenant, client in self.clients.items():
@@ -77,7 +80,7 @@ class Entra(AzureService):
                             guest_user_role_id=getattr(
                                 auth_policy,
                                 "guest_user_role_id",
-                                UUID("a0b1b346-4d3e-4e8b-98f8-753987be4970"),
+                                GUEST_USER_ACCESS_NO_RESTRICTICTED,
                             ),
                         )
                     }
