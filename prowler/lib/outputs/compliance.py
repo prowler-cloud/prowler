@@ -312,6 +312,7 @@ def fill_compliance(output_options, finding, audit_info, file_descriptors):
                         attributes_comments = ", ".join(
                             attribute.Comment for attribute in requirement.Attributes
                         )
+
                         compliance_row = Check_Output_MITRE_ATTACK(
                             Provider=finding.check_metadata.Provider,
                             Description=compliance.Description,
