@@ -24,7 +24,7 @@ class entra_policy_user_consent_for_verified_apps(Check):
                 )
             ):
                 report.status = "FAIL"
-                report.status_extended = "All users can consent for any app to access the organization's data."
+                report.status_extended = "Entra allows users to consent apps accessing company data on their behalf."
 
             findings.append(report)
 

@@ -1,6 +1,6 @@
 {
   "Provider": "azure",
-  "CheckID": "entra_policy_do_not_allow_user_consent_for_apps",
+  "CheckID": "entra_policy_restricts_user_consent_for_apps",
   "CheckTitle": "Ensure 'User consent for applications' is set to 'Do not allow user consent'",
   "CheckType": [],
   "ServiceName": "entra",

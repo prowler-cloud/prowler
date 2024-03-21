@@ -4,21 +4,21 @@ from uuid import UUID, uuid4
 from tests.providers.azure.azure_fixtures import DOMAIN
 
 
-class Test_entra_policy_guest_user_access_restricted_to_own_directory_objects:
+class Test_entra_policy_guest_users_access_restrictions:
     def test_entra_no_tenants(self):
         entra_client = mock.MagicMock
 
         with mock.patch(
-            "prowler.providers.azure.services.entra.entra_policy_guest_user_access_restricted_to_own_directory_objects.entra_policy_guest_user_access_restricted_to_own_directory_objects.entra_client",
+            "prowler.providers.azure.services.entra.entra_policy_guest_users_access_restrictions.entra_policy_guest_users_access_restrictions.entra_client",
             new=entra_client,
         ):
-            from prowler.providers.azure.services.entra.entra_policy_guest_user_access_restricted_to_own_directory_objects.entra_policy_guest_user_access_restricted_to_own_directory_objects import (
-                entra_policy_guest_user_access_restricted_to_own_directory_objects,
+            from prowler.providers.azure.services.entra.entra_policy_guest_users_access_restrictions.entra_policy_guest_users_access_restrictions import (
+                entra_policy_guest_users_access_restrictions,
             )
 
             entra_client.authorization_policy = {}
 
-            check = entra_policy_guest_user_access_restricted_to_own_directory_objects()
+            check = entra_policy_guest_users_access_restrictions()
             result = check.execute()
             assert len(result) == 0
 
@@ -26,16 +26,16 @@ class Test_entra_policy_guest_user_access_restricted_to_own_directory_objects:
         entra_client = mock.MagicMock
 
         with mock.patch(
-            "prowler.providers.azure.services.entra.entra_policy_guest_user_access_restricted_to_own_directory_objects.entra_policy_guest_user_access_restricted_to_own_directory_objects.entra_client",
+            "prowler.providers.azure.services.entra.entra_policy_guest_users_access_restrictions.entra_policy_guest_users_access_restrictions.entra_client",
             new=entra_client,
         ):
-            from prowler.providers.azure.services.entra.entra_policy_guest_user_access_restricted_to_own_directory_objects.entra_policy_guest_user_access_restricted_to_own_directory_objects import (
-                entra_policy_guest_user_access_restricted_to_own_directory_objects,
+            from prowler.providers.azure.services.entra.entra_policy_guest_users_access_restrictions.entra_policy_guest_users_access_restrictions import (
+                entra_policy_guest_users_access_restrictions,
             )
 
             entra_client.authorization_policy = {DOMAIN: {}}
 
-            check = entra_policy_guest_user_access_restricted_to_own_directory_objects()
+            check = entra_policy_guest_users_access_restrictions()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
@@ -52,11 +52,11 @@ class Test_entra_policy_guest_user_access_restricted_to_own_directory_objects:
         id = str(uuid4())
 
         with mock.patch(
-            "prowler.providers.azure.services.entra.entra_policy_guest_user_access_restricted_to_own_directory_objects.entra_policy_guest_user_access_restricted_to_own_directory_objects.entra_client",
+            "prowler.providers.azure.services.entra.entra_policy_guest_users_access_restrictions.entra_policy_guest_users_access_restrictions.entra_client",
             new=entra_client,
         ):
-            from prowler.providers.azure.services.entra.entra_policy_guest_user_access_restricted_to_own_directory_objects.entra_policy_guest_user_access_restricted_to_own_directory_objects import (
-                entra_policy_guest_user_access_restricted_to_own_directory_objects,
+            from prowler.providers.azure.services.entra.entra_policy_guest_users_access_restrictions.entra_policy_guest_users_access_restrictions import (
+                entra_policy_guest_users_access_restrictions,
             )
             from prowler.providers.azure.services.entra.entra_service import (
                 AuthorizationPolicy,
@@ -73,7 +73,7 @@ class Test_entra_policy_guest_user_access_restricted_to_own_directory_objects:
                 )
             }
 
-            check = entra_policy_guest_user_access_restricted_to_own_directory_objects()
+            check = entra_policy_guest_users_access_restrictions()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
@@ -90,11 +90,11 @@ class Test_entra_policy_guest_user_access_restricted_to_own_directory_objects:
         id = str(uuid4())
 
         with mock.patch(
-            "prowler.providers.azure.services.entra.entra_policy_guest_user_access_restricted_to_own_directory_objects.entra_policy_guest_user_access_restricted_to_own_directory_objects.entra_client",
+            "prowler.providers.azure.services.entra.entra_policy_guest_users_access_restrictions.entra_policy_guest_users_access_restrictions.entra_client",
             new=entra_client,
         ):
-            from prowler.providers.azure.services.entra.entra_policy_guest_user_access_restricted_to_own_directory_objects.entra_policy_guest_user_access_restricted_to_own_directory_objects import (
-                entra_policy_guest_user_access_restricted_to_own_directory_objects,
+            from prowler.providers.azure.services.entra.entra_policy_guest_users_access_restrictions.entra_policy_guest_users_access_restrictions import (
+                entra_policy_guest_users_access_restrictions,
             )
             from prowler.providers.azure.services.entra.entra_service import (
                 AuthorizationPolicy,
@@ -111,7 +111,7 @@ class Test_entra_policy_guest_user_access_restricted_to_own_directory_objects:
                 )
             }
 
-            check = entra_policy_guest_user_access_restricted_to_own_directory_objects()
+            check = entra_policy_guest_users_access_restrictions()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
@@ -128,11 +128,11 @@ class Test_entra_policy_guest_user_access_restricted_to_own_directory_objects:
         id = str(uuid4())
 
         with mock.patch(
-            "prowler.providers.azure.services.entra.entra_policy_guest_user_access_restricted_to_own_directory_objects.entra_policy_guest_user_access_restricted_to_own_directory_objects.entra_client",
+            "prowler.providers.azure.services.entra.entra_policy_guest_users_access_restrictions.entra_policy_guest_users_access_restrictions.entra_client",
             new=entra_client,
         ):
-            from prowler.providers.azure.services.entra.entra_policy_guest_user_access_restricted_to_own_directory_objects.entra_policy_guest_user_access_restricted_to_own_directory_objects import (
-                entra_policy_guest_user_access_restricted_to_own_directory_objects,
+            from prowler.providers.azure.services.entra.entra_policy_guest_users_access_restrictions.entra_policy_guest_users_access_restrictions import (
+                entra_policy_guest_users_access_restrictions,
             )
             from prowler.providers.azure.services.entra.entra_service import (
                 AuthorizationPolicy,
@@ -149,7 +149,7 @@ class Test_entra_policy_guest_user_access_restricted_to_own_directory_objects:
                 )
             }
 
-            check = entra_policy_guest_user_access_restricted_to_own_directory_objects()
+            check = entra_policy_guest_users_access_restrictions()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"

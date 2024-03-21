@@ -4,21 +4,21 @@ from uuid import uuid4
 from tests.providers.azure.azure_fixtures import DOMAIN
 
 
-class Test_entra_policy_do_not_allow_user_consent_for_apps:
+class Test_entra_policy_restricts_user_consent_for_apps:
     def test_entra_no_tenants(self):
         entra_client = mock.MagicMock
 
         with mock.patch(
-            "prowler.providers.azure.services.entra.entra_policy_do_not_allow_user_consent_for_apps.entra_policy_do_not_allow_user_consent_for_apps.entra_client",
+            "prowler.providers.azure.services.entra.entra_policy_restricts_user_consent_for_apps.entra_policy_restricts_user_consent_for_apps.entra_client",
             new=entra_client,
         ):
-            from prowler.providers.azure.services.entra.entra_policy_do_not_allow_user_consent_for_apps.entra_policy_do_not_allow_user_consent_for_apps import (
-                entra_policy_do_not_allow_user_consent_for_apps,
+            from prowler.providers.azure.services.entra.entra_policy_restricts_user_consent_for_apps.entra_policy_restricts_user_consent_for_apps import (
+                entra_policy_restricts_user_consent_for_apps,
             )
 
             entra_client.authorization_policy = {}
 
-            check = entra_policy_do_not_allow_user_consent_for_apps()
+            check = entra_policy_restricts_user_consent_for_apps()
             result = check.execute()
             assert len(result) == 0
 
@@ -26,16 +26,16 @@ class Test_entra_policy_do_not_allow_user_consent_for_apps:
         entra_client = mock.MagicMock
 
         with mock.patch(
-            "prowler.providers.azure.services.entra.entra_policy_do_not_allow_user_consent_for_apps.entra_policy_do_not_allow_user_consent_for_apps.entra_client",
+            "prowler.providers.azure.services.entra.entra_policy_restricts_user_consent_for_apps.entra_policy_restricts_user_consent_for_apps.entra_client",
             new=entra_client,
         ):
-            from prowler.providers.azure.services.entra.entra_policy_do_not_allow_user_consent_for_apps.entra_policy_do_not_allow_user_consent_for_apps import (
-                entra_policy_do_not_allow_user_consent_for_apps,
+            from prowler.providers.azure.services.entra.entra_policy_restricts_user_consent_for_apps.entra_policy_restricts_user_consent_for_apps import (
+                entra_policy_restricts_user_consent_for_apps,
             )
 
             entra_client.authorization_policy = {DOMAIN: {}}
 
-            check = entra_policy_do_not_allow_user_consent_for_apps()
+            check = entra_policy_restricts_user_consent_for_apps()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
@@ -51,11 +51,11 @@ class Test_entra_policy_do_not_allow_user_consent_for_apps:
         entra_client = mock.MagicMock
 
         with mock.patch(
-            "prowler.providers.azure.services.entra.entra_policy_do_not_allow_user_consent_for_apps.entra_policy_do_not_allow_user_consent_for_apps.entra_client",
+            "prowler.providers.azure.services.entra.entra_policy_restricts_user_consent_for_apps.entra_policy_restricts_user_consent_for_apps.entra_client",
             new=entra_client,
         ):
-            from prowler.providers.azure.services.entra.entra_policy_do_not_allow_user_consent_for_apps.entra_policy_do_not_allow_user_consent_for_apps import (
-                entra_policy_do_not_allow_user_consent_for_apps,
+            from prowler.providers.azure.services.entra.entra_policy_restricts_user_consent_for_apps.entra_policy_restricts_user_consent_for_apps import (
+                entra_policy_restricts_user_consent_for_apps,
             )
             from prowler.providers.azure.services.entra.entra_service import (
                 AuthorizationPolicy,
@@ -72,7 +72,7 @@ class Test_entra_policy_do_not_allow_user_consent_for_apps:
 
             entra_client.authorization_policy = {DOMAIN: auth_policy}
 
-            check = entra_policy_do_not_allow_user_consent_for_apps()
+            check = entra_policy_restricts_user_consent_for_apps()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
@@ -88,11 +88,11 @@ class Test_entra_policy_do_not_allow_user_consent_for_apps:
         entra_client = mock.MagicMock
 
         with mock.patch(
-            "prowler.providers.azure.services.entra.entra_policy_do_not_allow_user_consent_for_apps.entra_policy_do_not_allow_user_consent_for_apps.entra_client",
+            "prowler.providers.azure.services.entra.entra_policy_restricts_user_consent_for_apps.entra_policy_restricts_user_consent_for_apps.entra_client",
             new=entra_client,
         ):
-            from prowler.providers.azure.services.entra.entra_policy_do_not_allow_user_consent_for_apps.entra_policy_do_not_allow_user_consent_for_apps import (
-                entra_policy_do_not_allow_user_consent_for_apps,
+            from prowler.providers.azure.services.entra.entra_policy_restricts_user_consent_for_apps.entra_policy_restricts_user_consent_for_apps import (
+                entra_policy_restricts_user_consent_for_apps,
             )
             from prowler.providers.azure.services.entra.entra_service import (
                 AuthorizationPolicy,
@@ -112,7 +112,7 @@ class Test_entra_policy_do_not_allow_user_consent_for_apps:
 
             entra_client.authorization_policy = {DOMAIN: auth_policy}
 
-            check = entra_policy_do_not_allow_user_consent_for_apps()
+            check = entra_policy_restricts_user_consent_for_apps()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
@@ -128,11 +128,11 @@ class Test_entra_policy_do_not_allow_user_consent_for_apps:
         entra_client = mock.MagicMock
 
         with mock.patch(
-            "prowler.providers.azure.services.entra.entra_policy_do_not_allow_user_consent_for_apps.entra_policy_do_not_allow_user_consent_for_apps.entra_client",
+            "prowler.providers.azure.services.entra.entra_policy_restricts_user_consent_for_apps.entra_policy_restricts_user_consent_for_apps.entra_client",
             new=entra_client,
         ):
-            from prowler.providers.azure.services.entra.entra_policy_do_not_allow_user_consent_for_apps.entra_policy_do_not_allow_user_consent_for_apps import (
-                entra_policy_do_not_allow_user_consent_for_apps,
+            from prowler.providers.azure.services.entra.entra_policy_restricts_user_consent_for_apps.entra_policy_restricts_user_consent_for_apps import (
+                entra_policy_restricts_user_consent_for_apps,
             )
             from prowler.providers.azure.services.entra.entra_service import (
                 AuthorizationPolicy,
@@ -154,7 +154,7 @@ class Test_entra_policy_do_not_allow_user_consent_for_apps:
 
             entra_client.authorization_policy = {DOMAIN: auth_policy}
 
-            check = entra_policy_do_not_allow_user_consent_for_apps()
+            check = entra_policy_restricts_user_consent_for_apps()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"

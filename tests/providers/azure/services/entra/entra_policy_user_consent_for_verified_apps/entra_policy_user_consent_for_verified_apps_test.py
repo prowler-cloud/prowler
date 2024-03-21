@@ -101,5 +101,5 @@ class Test_entra_policy_user_consent_for_verified_apps:
             assert result[0].resource_id == auth_policy.id
             assert (
                 result[0].status_extended
-                == "All users can consent for any app to access the organization's data."
+                == "Entra allows users to consent apps accessing company data on their behalf."
             )
