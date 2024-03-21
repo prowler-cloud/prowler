@@ -44,7 +44,7 @@ class Test_entra_policy_do_not_allow_user_consent_for_apps:
             assert result[0].resource_id == "authorizationPolicy"
             assert (
                 result[0].status_extended
-                == "Allow user consent for apps is not disabled"
+                == "Entra allows users to consent apps accessing company data on their behalf"
             )
 
     def test_entra_tenant_no_default_user_role_permissions(self):
@@ -81,7 +81,7 @@ class Test_entra_policy_do_not_allow_user_consent_for_apps:
             assert result[0].resource_id == auth_policy.id
             assert (
                 result[0].status_extended
-                == "Allow user consent for apps is not disabled"
+                == "Entra allows users to consent apps accessing company data on their behalf"
             )
 
     def test_entra_tenant_no_consent(self):
@@ -120,7 +120,8 @@ class Test_entra_policy_do_not_allow_user_consent_for_apps:
             assert result[0].resource_name == "Authorization Policy"
             assert result[0].resource_id == auth_policy.id
             assert (
-                result[0].status_extended == "Allow user consent for apps is disabled"
+                result[0].status_extended
+                == "Entra does not allow users to consent apps accessing company data on their behalf"
             )
 
     def test_entra_tenant_legacy_consent(self):
@@ -162,5 +163,5 @@ class Test_entra_policy_do_not_allow_user_consent_for_apps:
             assert result[0].resource_id == auth_policy.id
             assert (
                 result[0].status_extended
-                == "Allow user consent for apps is not disabled"
+                == "Entra allows users to consent apps accessing company data on their behalf"
             )
