@@ -59,7 +59,7 @@ class Test_entra_policy_user_consent_for_verified_apps:
             assert result[0].resource_id == auth_policy.id
             assert (
                 result[0].status_extended
-                == "All users can consent for permissions classified as 'low impact', for apps from verified publishers or apps registered in this organization or require administrator to consent."
+                == "Entra does not allow users to consent non-verified apps accessing company data on their behalf."
             )
 
     def test_entra_tenant_legacy_consent(self):
