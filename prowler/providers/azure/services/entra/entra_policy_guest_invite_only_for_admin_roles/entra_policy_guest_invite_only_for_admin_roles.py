@@ -12,9 +12,7 @@ class entra_policy_guest_invite_only_for_admin_roles(Check):
             report.subscription = f"Tenant: '{tenant_domain}'"
             report.resource_name = getattr(auth_policy, "name", "Authorization Policy")
             report.resource_id = getattr(auth_policy, "id", "authorizationPolicy")
-            report.status_extended = (
-                "Guest invite settings are not restricted for admins roles only"
-            )
+            report.status_extended = "Guest invitations are not restricted to users with specific administrative roles only."
 
             if (
                 getattr(auth_policy, "guest_invite_settings", "everyone")
@@ -22,9 +20,7 @@ class entra_policy_guest_invite_only_for_admin_roles(Check):
                 or getattr(auth_policy, "guest_invite_settings", "everyone") == "none"
             ):
                 report.status = "PASS"
-                report.status_extended = (
-                    "Guest invite settings are restricted for admins roles only"
-                )
+                report.status_extended = "Guest invitations are restricted to users with specific administrative roles only."
 
             findings.append(report)
 

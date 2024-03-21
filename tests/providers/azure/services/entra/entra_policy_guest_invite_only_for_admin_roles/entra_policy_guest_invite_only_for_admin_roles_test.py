@@ -44,7 +44,7 @@ class Test_entra_policy_guest_invite_only_for_admin_roles:
             assert result[0].resource_id == "authorizationPolicy"
             assert (
                 result[0].status_extended
-                == "Guest invite settings are not restricted for admins roles only"
+                == "Guest invitations are not restricted to users with specific administrative roles only."
             )
 
     def test_entra_tenant_policy_allow_invites_from_everyone(self):
@@ -78,7 +78,7 @@ class Test_entra_policy_guest_invite_only_for_admin_roles:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert result[0].status_extended == (
-                "Guest invite settings are not restricted for admins roles only"
+                "Guest invitations are not restricted to users with specific administrative roles only."
             )
             assert result[0].resource_name == "TestPolicy"
             assert result[0].resource_id == id
@@ -115,7 +115,7 @@ class Test_entra_policy_guest_invite_only_for_admin_roles:
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert result[0].status_extended == (
-                "Guest invite settings are restricted for admins roles only"
+                "Guest invitations are restricted to users with specific administrative roles only."
             )
             assert result[0].resource_name == "TestPolicy"
             assert result[0].resource_id == id
@@ -152,7 +152,7 @@ class Test_entra_policy_guest_invite_only_for_admin_roles:
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert result[0].status_extended == (
-                "Guest invite settings are restricted for admins roles only"
+                "Guest invitations are restricted to users with specific administrative roles only."
             )
             assert result[0].resource_name == "TestPolicy"
             assert result[0].resource_id == id
