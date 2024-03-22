@@ -28,7 +28,7 @@ class TestGCPProvider:
         }
         with patch(
             "prowler.providers.gcp.gcp_provider.GcpProvider.setup_session",
-            return_value=(None, ""),
+            return_value=None,
         ), patch(
             "prowler.providers.gcp.gcp_provider.GcpProvider.get_projects",
             return_value=projects,
@@ -70,7 +70,7 @@ class TestGCPProvider:
         }
         with patch(
             "prowler.providers.gcp.gcp_provider.GcpProvider.setup_session",
-            return_value=(None, ""),
+            return_value=None,
         ), patch(
             "prowler.providers.gcp.gcp_provider.GcpProvider.get_projects",
             return_value=projects,
