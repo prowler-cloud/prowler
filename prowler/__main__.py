@@ -50,6 +50,10 @@ from prowler.providers.common.quick_inventory import run_provider_quick_inventor
 
 
 def prowler():
+    if sys.argv[1] == "dashboard":
+        from dashboard.__main__ import dashboard
+
+        sys.exit(dashboard.run(debug=True, port=11666, use_reloader=False))
     # Parse Arguments
     parser = ProwlerArgumentParser()
     args = parser.parse()
