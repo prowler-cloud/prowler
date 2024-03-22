@@ -385,7 +385,6 @@ Azure Identity Type: {Fore.YELLOW}[{audit_info.identity.identity_type}]{Style.RE
 
         (
             gcp_audit_info.credentials,
-            gcp_audit_info.default_project_id,
             gcp_audit_info.project_ids,
         ) = gcp_provider.get_credentials()
 

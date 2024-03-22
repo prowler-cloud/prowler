@@ -62,7 +62,6 @@ jobs:
           # Push the tag
           git push -f origin ${{ env.RELEASE_TAG }}
 
-
       - name: Create new branch for the version update
         run: |
           git switch -c release-${{ env.RELEASE_TAG }}
