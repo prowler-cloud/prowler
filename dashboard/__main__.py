@@ -21,7 +21,7 @@ print(
     f"{Fore.GREEN}Loading all CSV files from the folder {folder_path_overview} ...\n{Style.RESET_ALL}"
 )
 cli.show_server_banner = lambda *x: click.echo(
-    f"If you are a {Fore.GREEN}{Style.BRIGHT}Prowler SaaS{Style.RESET_ALL} customer and you want to use your data from your S3 bucket,\nrun: `{orange_color}aws s3 cp s3://<your-bucket>/output/csv ./output --recursive{Style.RESET_ALL}`\nand then run `prowler dashboard` again to load the new files."
+    f"{Fore.YELLOW}NOTE:{Style.RESET_ALL} If you are a {Fore.GREEN}{Style.BRIGHT}Prowler SaaS{Style.RESET_ALL} customer and you want to use your data from your S3 bucket,\nrun: `{orange_color}aws s3 cp s3://<your-bucket>/output/csv ./output --recursive{Style.RESET_ALL}`\nand then run `prowler dashboard` again to load the new files."
 )
 
 # Initialize the app - incorporate css
