@@ -1,6 +1,7 @@
+import importlib
+import pkgutil
 import sys
 from importlib import import_module
-from pkgutil import iter_modules
 
 from prowler.lib.logger import logger
 
@@ -12,8 +13,11 @@ global_provider = None
 def get_available_providers() -> list[str]:
     """get_available_providers returns a list of the available providers"""
     providers = []
-    for _, provider, _ in iter_modules([providers_path.replace(".", "/")]):
-        if provider != "common":
+    # Dynamically import the package based on its string path
+    prowler_providers = importlib.import_module(providers_path)
+    # Iterate over all modules found in the prowler_providers package
+    for _, provider, ispkg in pkgutil.iter_modules(prowler_providers.__path__):
+        if provider != "common" and ispkg:
             providers.append(provider)
     return providers
 
