@@ -95,6 +95,35 @@ if data is None:
         ]
     )
 else:
+    # This handles the case where we are using v3 outputs
+    if "ASSESSMENT_START_TIME" in data.columns:
+        data["ASSESSMENT_START_TIME"] = data["ASSESSMENT_START_TIME"].str.replace(
+            "T", " "
+        )
+        # for each row, we are going to take the ASSESMENT_START_TIME if is not null and put it in the TIMESTAMP column
+        data["TIMESTAMP"] = data.apply(
+            lambda x: (
+                x["ASSESSMENT_START_TIME"]
+                if pd.isnull(x["TIMESTAMP"])
+                else x["TIMESTAMP"]
+            ),
+            axis=1,
+        )
+        # Rename the column 'ACCOUNT_ID' to 'ACCOUNT_UID' for null values
+        data["ACCOUNT_UID"] = data.apply(
+            lambda x: (
+                x["ACCOUNT_ID"] if pd.isnull(x["ACCOUNT_UID"]) else x["ACCOUNT_UID"]
+            ),
+            axis=1,
+        )
+        # Rename the column RESOURCE_ID to RESOURCE_UID
+        data["RESOURCE_UID"] = data.apply(
+            lambda x: (
+                x["RESOURCE_ID"] if pd.isnull(x["RESOURCE_UID"]) else x["RESOURCE_UID"]
+            ),
+            axis=1,
+        )
+
     # Fixing Date datatype
     data["TIMESTAMP"] = pd.to_datetime(data["TIMESTAMP"])
     data["ASSESSMENT_TIME"] = data["TIMESTAMP"].dt.strftime("%Y-%m-%d %H:%M:%S")
@@ -121,7 +150,6 @@ else:
                 ],
             ]
         )
-
     data = data_valid
     # Select only the day in the data
     data["ASSESSMENT_TIME"] = data["ASSESSMENT_TIME"].apply(lambda x: x.split(" ")[0])
@@ -253,9 +281,28 @@ def filter_data(cloud_account_values, region_account_values, assessment_value):
     for file in csv_files:
         df = pd.read_csv(file, sep=";", on_bad_lines="skip")
         if "CHECK_ID" in df.columns:
+            # This handles the case where we are using v3 outputs
+            if "TIMESTAMP" not in df.columns:
+                # Rename the column 'ASSESSMENT_START_TIME' to 'TIMESTAMP'
+                df.rename(columns={"ASSESSMENT_START_TIME": "TIMESTAMP"}, inplace=True)
+                df["TIMESTAMP"] = df["TIMESTAMP"].str.replace("T", " ")
+            elif "ASSESSMENT_START_TIME" in df.columns:
+                df["ASSESSMENT_START_TIME"] = df["ASSESSMENT_START_TIME"].str.replace(
+                    "T", " "
+                )
+                # for each row, we are going to take the ASSESMENT_START_TIME if is not null and put it in the TIMESTAMP column
+                df["TIMESTAMP"] = df.apply(
+                    lambda x: (
+                        x["ASSESSMENT_START_TIME"]
+                        if pd.isnull(x["TIMESTAMP"])
+                        else x["TIMESTAMP"]
+                    ),
+                    axis=1,
+                )
+
             df["TIMESTAMP"] = pd.to_datetime(df["TIMESTAMP"])
             df["TIMESTAMP"] = df["TIMESTAMP"].dt.strftime("%Y-%m-%d")
-            if df["TIMESTAMP"][0].split(" ")[0] == updated_assessment_value:
+            if df["TIMESTAMP"][0] == updated_assessment_value:
                 list_files.append(file)
 
     # append all the names of the files
@@ -270,6 +317,7 @@ def filter_data(cloud_account_values, region_account_values, assessment_value):
     filtered_data = filtered_data[
         filtered_data["ASSESSMENT_TIME"] == updated_assessment_value
     ]
+
     # fill all_account_ids with the account_uid for the provider aws and kubernetes
     all_account_ids = []
     for account in filtered_data["ACCOUNT_UID"].unique():
@@ -460,8 +508,6 @@ def filter_data(cloud_account_values, region_account_values, assessment_value):
         table = dcc.Graph(figure=fig, config={"displayModeBar": False})
 
     else:
-        df = filtered_data.copy()
-
         # Status Pie Chart
         df1 = filtered_data[filtered_data["STATUS"] == "FAIL"]
 
@@ -554,11 +600,12 @@ def filter_data(cloud_account_values, region_account_values, assessment_value):
             {3: "critical", 2: "high", 1: "medium", 0: "low"}
         )
         table_data = fails_findings.copy()
-        # Append the value from the colum 'ACCOUNT_NAME' to the 'ACCOUNT_UID' column
+
         for subscription in table_data["ACCOUNT_NAME"].unique():
-            table_data.loc[
-                table_data["ACCOUNT_NAME"] == subscription, "ACCOUNT_UID"
-            ] = subscription
+            if "nan" not in str(subscription):
+                table_data.loc[
+                    table_data["ACCOUNT_NAME"] == subscription, "ACCOUNT_UID"
+                ] = subscription
 
         table_data["RISK"] = table_data["RISK"].str.slice(0, 50)
         table_data["CHECK_ID"] = (
