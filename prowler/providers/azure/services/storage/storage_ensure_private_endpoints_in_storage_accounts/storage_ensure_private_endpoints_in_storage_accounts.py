@@ -11,6 +11,7 @@ class storage_ensure_private_endpoints_in_storage_accounts(Check):
                 report.subscription = subscription
                 report.resource_name = storage_account.name
                 report.resource_id = storage_account.id
+                report.location = storage_account.location
                 if storage_account.private_endpoint_connections:
                     report.status = "PASS"
                     report.status_extended = f"Storage account {storage_account.name} from subscription {subscription} has private endpoint connections."

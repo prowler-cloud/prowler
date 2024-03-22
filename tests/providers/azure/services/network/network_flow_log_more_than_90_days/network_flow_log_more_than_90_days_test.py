@@ -74,6 +74,7 @@ class Test_network_flow_log_more_than_90_days:
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == network_watcher_name
             assert result[0].resource_id == network_watcher_id
+            assert result[0].location == "location"
 
     def test_network_network_watchers_flow_logs_disabled(self):
         network_client = mock.MagicMock
@@ -121,6 +122,7 @@ class Test_network_flow_log_more_than_90_days:
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == network_watcher_name
             assert result[0].resource_id == network_watcher_id
+            assert result[0].location == "location"
 
     def test_network_network_watchers_flow_logs_retention_days_80(self):
         network_client = mock.MagicMock
@@ -168,6 +170,7 @@ class Test_network_flow_log_more_than_90_days:
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == network_watcher_name
             assert result[0].resource_id == network_watcher_id
+            assert result[0].location == "location"
 
     def test_network_network_watchers_flow_logs_well_configured(self):
         network_client = mock.MagicMock
@@ -215,3 +218,4 @@ class Test_network_flow_log_more_than_90_days:
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == network_watcher_name
             assert result[0].resource_id == network_watcher_id
+            assert result[0].location == "location"

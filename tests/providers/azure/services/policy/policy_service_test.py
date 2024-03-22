@@ -22,7 +22,7 @@ def mock_policy_assigments(_):
     "prowler.providers.azure.services.policy.policy_service.Policy.__get_policy_assigments__",
     new=mock_policy_assigments,
 )
-class Test_AppInsights_Service:
+class Test_Policy_Service:
     def test__get_client__(self):
         policy = Policy(set_mocked_azure_provider())
         assert (

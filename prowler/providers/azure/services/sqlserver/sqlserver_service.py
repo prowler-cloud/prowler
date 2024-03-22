@@ -48,6 +48,10 @@ class SQLServer(AzureService):
                             subscription, resource_group, sql_server.name
                         )
                     )
+                    location = self.__get_location__(
+                        subscription, resource_group, sql_server.name
+                    )
+
                     sql_servers[subscription].append(
                         Server(
                             id=sql_server.id,
@@ -63,6 +67,7 @@ class SQLServer(AzureService):
                             ),
                             vulnerability_assessment=vulnerability_assessment,
                             security_alert_policies=security_alert_policies,
+                            location=location,
                         )
                     )
             except Exception as error:
@@ -164,6 +169,12 @@ class SQLServer(AzureService):
         )
         return security_alert_policies
 
+    def __get_location__(self, subscription, resouce_group_name, server_name):
+        client = self.clients[subscription]
+        location = client.servers.get(resouce_group_name, server_name).location
+
+        return location
+
 
 @dataclass
 class Database:
@@ -184,6 +195,7 @@ class Server:
     administrators: ServerExternalAdministrator
     auditing_policies: ServerBlobAuditingPolicy
     firewall_rules: FirewallRule
+    location: str
     encryption_protector: EncryptionProtector = None
     databases: list[Database] = None
     vulnerability_assessment: ServerVulnerabilityAssessment = None

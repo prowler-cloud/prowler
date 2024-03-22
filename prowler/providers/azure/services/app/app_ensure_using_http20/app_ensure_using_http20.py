@@ -16,6 +16,7 @@ class app_ensure_using_http20(Check):
                 report.subscription = subscription_name
                 report.resource_name = app_name
                 report.resource_id = app.resource_id
+                report.location = app.location
                 report.status_extended = f"HTTP/2.0 is not enabled for app '{app_name}' in subscription '{subscription_name}'."
 
                 if app.configurations and getattr(

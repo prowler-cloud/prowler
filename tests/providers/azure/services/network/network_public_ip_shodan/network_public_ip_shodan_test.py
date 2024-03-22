@@ -48,7 +48,7 @@ class Test_network_public_ip_shodan:
                 PublicIp(
                     id=public_ip_id,
                     name=public_ip_name,
-                    location=None,
+                    location="location",
                     ip_address=ip_address,
                 )
             ]
@@ -83,3 +83,4 @@ class Test_network_public_ip_shodan:
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == public_ip_name
             assert result[0].resource_id == public_ip_id
+            assert result[0].location == "location"

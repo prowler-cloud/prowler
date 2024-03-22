@@ -45,6 +45,7 @@ class Test_sqlserver_microsoft_defender_enabled:
                     auditing_policies=[],
                     firewall_rules=None,
                     security_alert_policies=None,
+                    location="location",
                 )
             ]
         }
@@ -79,6 +80,7 @@ class Test_sqlserver_microsoft_defender_enabled:
                     auditing_policies=[],
                     firewall_rules=None,
                     security_alert_policies=ServerSecurityAlertPolicy(state="Disabled"),
+                    location="location",
                 )
             ]
         }
@@ -105,6 +107,7 @@ class Test_sqlserver_microsoft_defender_enabled:
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == sql_server_name
             assert result[0].resource_id == sql_server_id
+            assert result[0].location == "location"
 
     def test_sql_servers_microsoft_defender_enabled(self):
         sqlserver_client = mock.MagicMock
@@ -121,6 +124,7 @@ class Test_sqlserver_microsoft_defender_enabled:
                     auditing_policies=[],
                     firewall_rules=None,
                     security_alert_policies=ServerSecurityAlertPolicy(state="Enabled"),
+                    location="location",
                 )
             ]
         }
@@ -147,3 +151,4 @@ class Test_sqlserver_microsoft_defender_enabled:
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == sql_server_name
             assert result[0].resource_id == sql_server_id
+            assert result[0].location == "location"

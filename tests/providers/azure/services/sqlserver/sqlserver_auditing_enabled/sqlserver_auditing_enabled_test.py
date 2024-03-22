@@ -48,7 +48,8 @@ class Test_sqlserver_auditing_enabled:
                     administrators=ServerExternalAdministrator(),
                     auditing_policies=[ServerBlobAuditingPolicy(state="Disabled")],
                     firewall_rules=FirewallRule(),
-                )
+                    location="location",
+                ),
             ]
         }
 
@@ -74,6 +75,7 @@ class Test_sqlserver_auditing_enabled:
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == sql_server_name
             assert result[0].resource_id == sql_server_id
+            assert result[0].location == "location"
 
     def test_sql_servers_auditing_enabled(self):
         sqlserver_client = mock.MagicMock
@@ -89,6 +91,7 @@ class Test_sqlserver_auditing_enabled:
                     administrators=ServerExternalAdministrator(),
                     auditing_policies=[ServerBlobAuditingPolicy(state="Enabled")],
                     firewall_rules=FirewallRule(),
+                    location="location",
                 )
             ]
         }
@@ -115,3 +118,4 @@ class Test_sqlserver_auditing_enabled:
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == sql_server_name
             assert result[0].resource_id == sql_server_id
+            assert result[0].location == "location"

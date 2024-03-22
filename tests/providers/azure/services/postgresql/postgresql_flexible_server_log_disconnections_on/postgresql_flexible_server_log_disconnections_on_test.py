@@ -45,6 +45,7 @@ class Test_postgresql_flexible_server_log_disconnections_on:
                     connection_throttling="OFF",
                     log_retention_days="3",
                     firewall=None,
+                    location="location",
                 )
             ]
         }
@@ -71,6 +72,7 @@ class Test_postgresql_flexible_server_log_disconnections_on:
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == postgresql_server_name
             assert result[0].resource_id == postgresql_server_id
+            assert result[0].location == "location"
 
     def test_flexible_servers_log_connections_on(self):
         postgresql_client = mock.MagicMock
@@ -89,6 +91,7 @@ class Test_postgresql_flexible_server_log_disconnections_on:
                     connection_throttling="ON",
                     log_retention_days="3",
                     firewall=None,
+                    location="location",
                 )
             ]
         }
@@ -115,3 +118,4 @@ class Test_postgresql_flexible_server_log_disconnections_on:
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == postgresql_server_name
             assert result[0].resource_id == postgresql_server_id
+            assert result[0].location == "location"

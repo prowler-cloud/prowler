@@ -17,6 +17,7 @@ class network_public_ip_shodan(Check):
                     report.subscription = subscription
                     report.resource_name = ip.name
                     report.resource_id = ip.id
+                    report.location = ip.location
                     try:
                         shodan_info = api.host(ip.ip_address)
                         report.status = "FAIL"

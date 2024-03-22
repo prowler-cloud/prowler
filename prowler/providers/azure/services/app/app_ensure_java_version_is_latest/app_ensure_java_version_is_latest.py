@@ -22,6 +22,7 @@ class app_ensure_java_version_is_latest(Check):
                     report.subscription = subscription_name
                     report.resource_name = app_name
                     report.resource_id = app.resource_id
+                    report.location = app.location
                     java_latest_version = app_client.audit_config.get(
                         "java_latest_version", "17"
                     )

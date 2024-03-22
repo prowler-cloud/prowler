@@ -14,6 +14,7 @@ class vm_ensure_attached_disks_encrypted_with_cmk(Check):
                     report.subscription = subscription_name
                     report.resource_name = disk.resource_name
                     report.resource_id = disk.resource_id
+                    report.location = disk.location
                     report.status_extended = f"Disk '{disk_id}' is encrypted with a customer-managed key in subscription {subscription_name}."
 
                     if (

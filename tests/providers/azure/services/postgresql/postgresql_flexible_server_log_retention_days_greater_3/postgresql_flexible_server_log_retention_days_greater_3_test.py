@@ -45,6 +45,7 @@ class Test_postgresql_flexible_server_log_retention_days_greater_3:
                     connection_throttling="OFF",
                     log_retention_days=None,
                     firewall=None,
+                    location="location",
                 )
             ]
         }
@@ -71,6 +72,7 @@ class Test_postgresql_flexible_server_log_retention_days_greater_3:
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == postgresql_server_name
             assert result[0].resource_id == postgresql_server_id
+            assert result[0].location == "location"
 
     def test_flexible_servers_log_retention_days_3(self):
         postgresql_client = mock.MagicMock
@@ -90,6 +92,7 @@ class Test_postgresql_flexible_server_log_retention_days_greater_3:
                     connection_throttling="OFF",
                     log_retention_days=log_retention_days,
                     firewall=None,
+                    location="location",
                 )
             ]
         }
@@ -116,6 +119,7 @@ class Test_postgresql_flexible_server_log_retention_days_greater_3:
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == postgresql_server_name
             assert result[0].resource_id == postgresql_server_id
+            assert result[0].location == "location"
 
     def test_flexible_servers_log_retention_days_4(self):
         postgresql_client = mock.MagicMock
@@ -135,6 +139,7 @@ class Test_postgresql_flexible_server_log_retention_days_greater_3:
                     connection_throttling="OFF",
                     log_retention_days=log_retention_days,
                     firewall=None,
+                    location="location",
                 )
             ]
         }
@@ -161,6 +166,7 @@ class Test_postgresql_flexible_server_log_retention_days_greater_3:
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == postgresql_server_name
             assert result[0].resource_id == postgresql_server_id
+            assert result[0].location == "location"
 
     def test_flexible_servers_log_retention_days_8(self):
         postgresql_client = mock.MagicMock
@@ -180,6 +186,7 @@ class Test_postgresql_flexible_server_log_retention_days_greater_3:
                     connection_throttling="OFF",
                     log_retention_days=log_retention_days,
                     firewall=None,
+                    location="location",
                 )
             ]
         }
@@ -206,3 +213,4 @@ class Test_postgresql_flexible_server_log_retention_days_greater_3:
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == postgresql_server_name
             assert result[0].resource_id == postgresql_server_id
+            assert result[0].location == "location"

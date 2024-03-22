@@ -133,6 +133,7 @@ class Test_monitor_diagnostic_settings_exists:
                             minimum_tls_version="TLS1_2",
                             private_endpoint_connections=[],
                             key_expiration_period_in_days=365,
+                            location="euwest",
                             blob_properties=mock.MagicMock(
                                 id="id",
                                 name="name",
@@ -153,6 +154,7 @@ class Test_monitor_diagnostic_settings_exists:
                             minimum_tls_version="TLS1_2",
                             private_endpoint_connections=[],
                             key_expiration_period_in_days=365,
+                            location="euwest",
                             blob_properties=mock.MagicMock(
                                 id="id",
                                 name="name",

@@ -16,6 +16,7 @@ class app_ensure_http_is_redirected_to_https(Check):
                 report.subscription = subscription_name
                 report.resource_name = app_name
                 report.resource_id = app.resource_id
+                report.location = app.location
                 report.status_extended = f"HTTP is redirected to HTTPS for app '{app_name}' in subscription '{subscription_name}'."
 
                 if not app.https_only:

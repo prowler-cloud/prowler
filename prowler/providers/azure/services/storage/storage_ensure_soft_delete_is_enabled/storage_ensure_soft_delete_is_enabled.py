@@ -12,6 +12,7 @@ class storage_ensure_soft_delete_is_enabled(Check):
                     report.subscription = subscription
                     report.resource_name = storage_account.name
                     report.resource_id = storage_account.id
+                    report.location = storage_account.location
                     if getattr(
                         storage_account.blob_properties.container_delete_retention_policy,
                         "enabled",

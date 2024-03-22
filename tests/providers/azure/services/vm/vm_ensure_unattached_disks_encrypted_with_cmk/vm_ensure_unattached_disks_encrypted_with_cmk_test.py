@@ -58,6 +58,7 @@ class Test_vm_ensure_unattached_disks_encrypted_with_cmk:
                     resource_name="test-disk",
                     vms_attached=[],
                     encryption_type="EncryptionAtRestWithPlatformKey",
+                    location="location",
                 )
             }
         }
@@ -80,6 +81,7 @@ class Test_vm_ensure_unattached_disks_encrypted_with_cmk:
             assert result[0].status == "FAIL"
             assert result[0].resource_id == resource_id
             assert result[0].resource_name == "test-disk"
+            assert result[0].location == "location"
             assert (
                 result[0].status_extended
                 == f"Disk '{disk_id}' is not encrypted with a customer-managed key in subscription {AZURE_SUBSCRIPTION_ID}."
@@ -96,6 +98,7 @@ class Test_vm_ensure_unattached_disks_encrypted_with_cmk:
                     resource_name="test-disk",
                     vms_attached=[],
                     encryption_type="EncryptionAtRestWithCustomerKey",
+                    location="location",
                 )
             }
         }
@@ -118,6 +121,7 @@ class Test_vm_ensure_unattached_disks_encrypted_with_cmk:
             assert result[0].status == "PASS"
             assert result[0].resource_id == resource_id
             assert result[0].resource_name == "test-disk"
+            assert result[0].location == "location"
             assert (
                 result[0].status_extended
                 == f"Disk '{disk_id}' is encrypted with a customer-managed key in subscription {AZURE_SUBSCRIPTION_ID}."
@@ -135,12 +139,14 @@ class Test_vm_ensure_unattached_disks_encrypted_with_cmk:
                     resource_id=resource_id_1,
                     resource_name="test-disk",
                     vms_attached=[],
+                    location="location",
                     encryption_type="EncryptionAtRestWithPlatformKey",
                 ),
                 disk_id_2: Disk(
                     resource_id=resource_id_2,
                     resource_name="test-disk-2",
                     vms_attached=[],
+                    location="location2",
                     encryption_type="EncryptionAtRestWithCustomerKey",
                 ),
             }
@@ -164,6 +170,7 @@ class Test_vm_ensure_unattached_disks_encrypted_with_cmk:
             assert result[0].status == "FAIL"
             assert result[0].resource_id == resource_id_1
             assert result[0].resource_name == "test-disk"
+            assert result[0].location == "location"
             assert (
                 result[0].status_extended
                 == f"Disk '{disk_id_1}' is not encrypted with a customer-managed key in subscription {AZURE_SUBSCRIPTION_ID}."
@@ -171,6 +178,7 @@ class Test_vm_ensure_unattached_disks_encrypted_with_cmk:
             assert result[1].status == "PASS"
             assert result[1].resource_id == resource_id_2
             assert result[1].resource_name == "test-disk-2"
+            assert result[1].location == "location2"
             assert (
                 result[1].status_extended
                 == f"Disk '{disk_id_2}' is encrypted with a customer-managed key in subscription {AZURE_SUBSCRIPTION_ID}."
@@ -185,6 +193,7 @@ class Test_vm_ensure_unattached_disks_encrypted_with_cmk:
                 disk_id: Disk(
                     resource_id=resource_id,
                     resource_name="test-disk",
+                    location="location",
                     vms_attached=[uuid4()],
                     encryption_type="EncryptionAtRestWithCustomerKey",
                 )

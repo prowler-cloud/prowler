@@ -55,6 +55,7 @@ class Test_vm_ensure_using_managed_disks:
                 vm_id: VirtualMachine(
                     resource_id="/subscriptions/resource_id",
                     resource_name="VMTest",
+                    location="location",
                     storage_profile=mock.MagicMock(
                         os_disk=mock.MagicMock(
                             create_option="FromImage",
@@ -83,6 +84,7 @@ class Test_vm_ensure_using_managed_disks:
             assert result[0].status == "PASS"
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == "VMTest"
+            assert result[0].location == "location"
             assert result[0].resource_id == vm_id
             assert (
                 result[0].status_extended
@@ -97,6 +99,7 @@ class Test_vm_ensure_using_managed_disks:
                 vm_id: VirtualMachine(
                     resource_id="/subscriptions/resource_id",
                     resource_name="VMTest",
+                    location="location",
                     storage_profile=mock.MagicMock(
                         os_disk=mock.MagicMock(
                             create_option="FromImage",
@@ -126,6 +129,7 @@ class Test_vm_ensure_using_managed_disks:
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == "VMTest"
             assert result[0].resource_id == vm_id
+            assert result[0].location == "location"
             assert (
                 result[0].status_extended
                 == f"VM VMTest is not using managed disks in subscription {AZURE_SUBSCRIPTION_ID}"
@@ -139,6 +143,7 @@ class Test_vm_ensure_using_managed_disks:
                 vm_id: VirtualMachine(
                     resource_id="/subscriptions/resource_id",
                     resource_name="VMTest",
+                    location="location",
                     storage_profile=mock.MagicMock(
                         os_disk=mock.MagicMock(
                             create_option="FromImage",
@@ -168,6 +173,7 @@ class Test_vm_ensure_using_managed_disks:
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == "VMTest"
             assert result[0].resource_id == vm_id
+            assert result[0].location == "location"
             assert (
                 result[0].status_extended
                 == f"VM VMTest is not using managed disks in subscription {AZURE_SUBSCRIPTION_ID}"
