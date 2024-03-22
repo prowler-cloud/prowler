@@ -32,6 +32,13 @@ def create_provider_card(
             & (filtered_data["STATUS"] == "PASS")
         ]
     )
+    # Take the values in the MUTED colum that are true for the provider
+    muted = len(
+        filtered_data[
+            (filtered_data["PROVIDER"] == provider) & (filtered_data["MUTED"] == "True")
+        ]
+    )
+
     return [
         html.Div(
             [
@@ -109,6 +116,24 @@ def create_provider_card(
                                                 html.Div(
                                                     passes,
                                                     className="m-[2px] px-4 py-1 rounded-lg bg-gradient-passed",
+                                                ),
+                                            ],
+                                            className="inline-block text-xs font-bold shadow-box-down rounded-lg text-center col-span-5 col-end-13",
+                                        ),
+                                    ],
+                                    className="grid grid-cols-12",
+                                ),
+                                html.Div(
+                                    [
+                                        html.Span(
+                                            "MUTED",
+                                            className="text-prowler-stone-900 inline-block text-3xs font-bold uppercase transition-all rounded-lg text-prowler-stone-900 shadow-box-up px-4 py-1 text-center col-span-6 flex justify-center items-center",
+                                        ),
+                                        html.Div(
+                                            [
+                                                html.Div(
+                                                    muted,
+                                                    className="m-[2px] px-4 py-1 rounded-lg bg-gradient-muted",
                                                 ),
                                             ],
                                             className="inline-block text-xs font-bold shadow-box-down rounded-lg text-center col-span-5 col-end-13",

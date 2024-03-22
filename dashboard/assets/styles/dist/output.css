@@ -890,6 +890,10 @@ video {
   background-image: linear-gradient(127.43deg, #F1F5F8 -177.68%, #4ADE80 87.35%);
 }
 
+.bg-gradient-muted {
+    background-image: linear-gradient(127.43deg, #F1F5F8 -177.68%, #d7943c 87.35%);
+}
+
 .p-2 {
   padding: 0.5rem;
 }
