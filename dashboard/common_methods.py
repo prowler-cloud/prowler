@@ -55,7 +55,6 @@ def get_section_containers_cis(data, section_1, section_2):
     data["STATUS"] = data["STATUS"].apply(map_status_to_icon)
     data.sort_values(by=section_1, key=lambda x: x.map(version_tuple), inplace=True)
     data[section_1] = data[section_1].astype(str)
-    data.drop_duplicates(keep="first", inplace=True)
 
     findings_counts_section = (
         data.groupby([section_2, "STATUS"]).size().unstack(fill_value=0)
@@ -325,7 +324,6 @@ def get_section_containers_format1(data, section_1, section_2):
     data["STATUS"] = data["STATUS"].apply(map_status_to_icon)
     data.sort_values(by=section_2, key=lambda x: x.map(version_tuple), inplace=True)
     data[section_2] = data[section_2].astype(str)
-    data.drop_duplicates(keep="first", inplace=True)
 
     findings_counts_section = (
         data.groupby([section_1, "STATUS"]).size().unstack(fill_value=0)
@@ -582,7 +580,7 @@ def get_section_containers_format1(data, section_1, section_2):
 
 def get_section_containers_format2(data, section_1, section_2):
     data["STATUS"] = data["STATUS"].apply(map_status_to_icon)
-    data.drop_duplicates(keep="first", inplace=True)
+
     findings_counts_section = (
         data.groupby([section_2, "STATUS"]).size().unstack(fill_value=0)
     )
@@ -841,7 +839,6 @@ def get_section_containers_format3(data, section_1, section_2):
     data["STATUS"] = data["STATUS"].apply(map_status_to_icon)
     data.sort_values(by=section_2, key=lambda x: x.map(version_tuple), inplace=True)
     data[section_2] = data[section_2].astype(str)
-    data.drop_duplicates(keep="first", inplace=True)
 
     findings_counts_section = (
         data.groupby([section_1, "STATUS"]).size().unstack(fill_value=0)
@@ -1118,7 +1115,6 @@ def get_section_containers_format3(data, section_1, section_2):
 def get_section_containers_rbi(data, section_1):
     data["STATUS"] = data["STATUS"].apply(map_status_to_icon)
     data[section_1] = data[section_1].astype(str)
-    data.drop_duplicates(keep="first", inplace=True)
     findings_counts_id = (
         data.groupby([section_1, "STATUS"]).size().unstack(fill_value=0)
     )
@@ -1264,7 +1260,7 @@ def get_section_containers_rbi(data, section_1):
 
 def get_section_container_iso(data, section_1, section_2):
     data["STATUS"] = data["STATUS"].apply(map_status_to_icon)
-    data.drop_duplicates(keep="first", inplace=True)
+
     data.sort_values(
         by=section_1,
         key=lambda x: x.map(version_tuple),
@@ -1543,7 +1539,7 @@ def get_section_containers_pci(data, section_1):
 
     data["STATUS"] = data["STATUS"].apply(map_status_to_icon)
     data[section_1] = data[section_1].astype(str)
-    data.drop_duplicates(keep="first", inplace=True)
+
     findings_counts_service = (
         data.groupby([section_1, "STATUS"]).size().unstack(fill_value=0)
     )

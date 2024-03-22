@@ -350,6 +350,7 @@ def display_data(
             compliance_module = importlib.import_module(
                 f"dashboard.compliance.{current}"
             )
+            data.drop_duplicates(keep="first", inplace=True)
             table = compliance_module.get_table(data)
         except ModuleNotFoundError:
             table = html.Div(
@@ -370,10 +371,8 @@ def display_data(
         df = data.copy()
         df = df.groupby(["STATUS"]).size().reset_index(name="counts")
         df = df.sort_values(by=["counts"], ascending=False)
-        df = df.reset_index(drop=True)
 
         # Pie 1
-
         pie_1 = get_pie(df)
 
         # Get the pie2 depending on the compliance
@@ -465,8 +464,6 @@ def get_polar_graph(df, column_name):
     categories_pass = df_pass[column_name]
     # sort the categories
     categories_pass = sorted(categories_pass, key=lambda x: (isinstance(x, str), x))
-    df_pass = df_pass.sort_values(by=["counts"], ascending=False)
-    df_pass = df_pass.reset_index(drop=True)
     values_pass = df_pass.counts
     trace_pass = go.Scatterpolar(
         r=values_pass,
@@ -484,8 +481,6 @@ def get_polar_graph(df, column_name):
     categories_fail = df_fail[column_name]
     # sort the categories
     categories_fail = sorted(categories_fail, key=lambda x: (isinstance(x, str), x))
-    df_fail = df_fail.sort_values(by=["counts"], ascending=False)
-    df_fail = df_fail.reset_index(drop=True)
     values_fail = df_fail.counts
     trace_fail = go.Scatterpolar(
         r=values_fail,
