@@ -195,10 +195,9 @@ else:
     Input("cloud-account-filter", "value"),
     Input("region-filter", "value"),
     Input("report-date-filter", "value"),
-    Input("download_link", "n_clicks"),
 )
 def filter_data(
-    cloud_account_values, region_account_values, assessment_value, n_clicks
+    cloud_account_values, region_account_values, assessment_value
 ):
     filtered_data = data.copy()
 
