@@ -3,6 +3,8 @@ name: build-lint-push-containers
 on:
   push:
     branches:
+      # TODO: update it for v3 and v4
+      # - "v3-dev"
       - "master"
     paths-ignore:
       - ".github/**"
@@ -13,15 +15,27 @@ on:
     types: [published]
 
 env:
+  # AWS Configuration
   AWS_REGION_STG: eu-west-1
   AWS_REGION_PLATFORM: eu-west-1
   AWS_REGION: us-east-1
+
+  # Container's configuration
   IMAGE_NAME: prowler
+  DOCKERFILE_PATH: ./Dockerfile
+
+  # Tags
   LATEST_TAG: latest
   STABLE_TAG: stable
-  TEMPORARY_TAG: temporary
-  DOCKERFILE_PATH: ./Dockerfile
-  PYTHON_VERSION: 3.9
+  # The RELEASE_TAG is set during runtime in releases
+  RELEASE_TAG: ""
+  # The PROWLER_VERSION and PROWLER_VERSION_MAJOR are set during runtime in releases
+  PROWLER_VERSION: ""
+  PROWLER_VERSION_MAJOR: ""
+  # TEMPORARY_TAG: temporary
+
+  # Python configuration
+  PYTHON_VERSION: 3.11
 
 jobs:
   # Build Prowler OSS container
@@ -30,11 +44,12 @@ jobs:
     runs-on: ubuntu-latest
     env:
       POETRY_VIRTUALENVS_CREATE: "false"
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup python (release)
+      - name: Setup Python (release)
         if: github.event_name == 'release'
         uses: actions/setup-python@v5
         with:
@@ -46,10 +61,52 @@ jobs:
           pipx install poetry
           pipx inject poetry poetry-bumpversion
 
+      - name: Get Prowler version (latest)
+        if: github.event_name == 'push'
+        run: |
+          PROWLER_VERSION="$(poetry version -s 2>/dev/null)"
+
+          case ${PROWLER_VERSION%%.*} in
+          3)
+              echo "LATEST="v3-latest" >> "${GITHUB_ENV}"
+              ;;
+          4)
+              # Nothing to be done here, latest tag for v4 is "latest"
+              echo "LATEST="latest" >> "${GITHUB_ENV}"
+              ;;
+          *)
+              # Fallback if any other version is present
+              echo "Releasing another Prowler major version, aborting..."
+              exit 1
+              ;;
+          esac
+
+      - name: Get Prowler version (release)
+        if: github.event_name == 'release'
+        run: |
+          PROWLER_VERSION="${{ github.event.release.tag_name }}"
+          # Store prowler version major just for the release
+          PROWLER_VERSION_MAJOR="${PROWLER_VERSION%%.*}"
+
+          case ${PROWLER_VERSION_MAJOR} in
+          3)
+              echo "STABLE_TAG="v3-stable" >> "${GITHUB_ENV}"
+              ;;
+          4)
+              # Nothing to be done here, latest tag for v4 is "latest"
+              echo "STABLE_TAG="stable" >> "${GITHUB_ENV}"
+              ;;
+          *)
+              # Fallback if any other version is present
+              echo "Releasing another Prowler major version, aborting..."
+              exit 1
+              ;;
+          esac
+
       - name: Update Prowler version (release)
         if: github.event_name == 'release'
         run: |
-          poetry version ${{ github.event.release.tag_name }}
+          poetry version "${{ env.PROWLER_VERSION }}"
 
       - name: Login to DockerHub
         uses: docker/login-action@v3
@@ -90,9 +147,9 @@ jobs:
           context: .
           push: true
           tags: |
-            ${{ secrets.DOCKER_HUB_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ github.event.release.tag_name }}
+            ${{ secrets.DOCKER_HUB_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ env.PROWLER_VERSION }}
             ${{ secrets.DOCKER_HUB_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ env.STABLE_TAG }}
-            ${{ secrets.PUBLIC_ECR_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ github.event.release.tag_name }}
+            ${{ secrets.PUBLIC_ECR_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ env.PROWLER_VERSION }}
             ${{ secrets.PUBLIC_ECR_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ env.STABLE_TAG }}
           file: ${{ env.DOCKERFILE_PATH }}
           cache-from: type=gha
@@ -107,11 +164,21 @@ jobs:
         run: |
           LATEST_COMMIT_HASH=$(echo ${{ github.event.after }} | cut -b -7)
           echo "LATEST_COMMIT_HASH=${LATEST_COMMIT_HASH}" >> $GITHUB_ENV
-      - name: Dispatch event for latest
-        if: github.event_name == 'push'
+
+      - name: Dispatch event (latest)
+        if: github.event_name == 'push' && ${{ env. PROWLER_VERSION_MAJOR }} == '3'
         run: |
-          curl https://api.github.com/repos/${{ secrets.DISPATCH_OWNER }}/${{ secrets.DISPATCH_REPO }}/dispatches -H "Accept: application/vnd.github+json" -H "Authorization: Bearer ${{ secrets.ACCESS_TOKEN }}" -H "X-GitHub-Api-Version: 2022-11-28" --data '{"event_type":"dispatch","client_payload":{"version":"latest", "tag": "${{ env.LATEST_COMMIT_HASH }}"}}'
-      - name: Dispatch event for release
-        if: github.event_name == 'release'
+          curl https://api.github.com/repos/${{ secrets.DISPATCH_OWNER }}/${{ secrets.DISPATCH_REPO }}/dispatches \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${{ secrets.ACCESS_TOKEN }}" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            --data '{"event_type":"dispatch","client_payload":{"version":"latest", "tag": "${{ env.LATEST_COMMIT_HASH }}"}}'
+
+      - name: Dispatch event (release)
+        if: github.event_name == 'push' && ${{ env. PROWLER_VERSION_MAJOR }} == '3'
         run: |
-          curl https://api.github.com/repos/${{ secrets.DISPATCH_OWNER }}/${{ secrets.DISPATCH_REPO }}/dispatches -H "Accept: application/vnd.github+json" -H "Authorization: Bearer ${{ secrets.ACCESS_TOKEN }}" -H "X-GitHub-Api-Version: 2022-11-28" --data '{"event_type":"dispatch","client_payload":{"version":"release", "tag":"${{ github.event.release.tag_name }}"}}'
+          curl https://api.github.com/repos/${{ secrets.DISPATCH_OWNER }}/${{ secrets.DISPATCH_REPO }}/dispatches \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${{ secrets.ACCESS_TOKEN }}" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            --data '{"event_type":"dispatch","client_payload":{"version":"release", "tag":"${{ github.event.release.tag_name }}"}}'
