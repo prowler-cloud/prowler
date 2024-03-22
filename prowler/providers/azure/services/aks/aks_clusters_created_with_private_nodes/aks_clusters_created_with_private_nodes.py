@@ -14,7 +14,6 @@ class aks_clusters_created_with_private_nodes(Check):
                 report.resource_name = cluster.name
                 report.resource_id = cluster_id
                 report.location = cluster.location
-                report.location = cluster.location
                 report.status_extended = f"Cluster '{cluster.name}' was created with private nodes in subscription '{subscription_name}'"
 
                 for agent_pool in cluster.agent_pool_profiles:

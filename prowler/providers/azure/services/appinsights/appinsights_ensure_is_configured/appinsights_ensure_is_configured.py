@@ -14,9 +14,6 @@ class appinsights_ensure_is_configured(Check):
             report.subscription = subscription_name
             report.resource_name = "AppInsights"
             report.resource_id = "AppInsights"
-            for component in components.items():
-                report.location = component[1].location
-                break
             report.status_extended = f"There is at least one AppInsight configured in susbscription {subscription_name}."
 
             if len(components) < 1:
