@@ -196,9 +196,7 @@ else:
     Input("region-filter", "value"),
     Input("report-date-filter", "value"),
 )
-def filter_data(
-    cloud_account_values, region_account_values, assessment_value
-):
+def filter_data(cloud_account_values, region_account_values, assessment_value):
     filtered_data = data.copy()
 
     # For all the data, we will add to the status column the value 'MUTED (FAIL)' and 'MUTED (PASS)' depending on the value of the column 'STATUS' and 'MUTED'
