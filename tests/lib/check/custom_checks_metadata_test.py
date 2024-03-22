@@ -85,7 +85,7 @@ class TestCustomChecksMetadata:
     def test_parse_custom_checks_metadata_file_for_kubernetes(self):
         assert parse_custom_checks_metadata_file(
             KUBERNETES_PROVIDER, CUSTOM_CHECKS_METADATA_FIXTURE_FILE
-        ) == {"Checks": {"bigquery_dataset_cmk_encryption": {"Severity": "low"}}}
+        ) == {"Checks": {"apiserver_anonymous_requests": {"Severity": "low"}}}
 
     def test_parse_custom_checks_metadata_file_for_aws_validation_error(self, caplog):
         caplog.set_level(logging.CRITICAL)

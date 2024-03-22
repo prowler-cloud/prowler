@@ -17,7 +17,7 @@ class Audit_Metadata(BaseModel):
 
 
 class ProviderOutputOptions:
-    status: bool
+    status: list[str]
     output_modes: list
     output_directory: str
     bulk_checks_metadata: dict

@@ -147,14 +147,14 @@ def init_parser(self):
         help="Set the maximum attemps for the Boto3 standard retrier config (Default: 3)",
     )
 
-    # Ignore Unused Services
-    ignore_unused_services_subparser = aws_parser.add_argument_group(
-        "Ignore Unused Services"
+    # Scan Unused Services
+    scan_unused_services_subparser = aws_parser.add_argument_group(
+        "Scan Unused Services"
     )
-    ignore_unused_services_subparser.add_argument(
-        "--ignore-unused-services",
+    scan_unused_services_subparser.add_argument(
+        "--scan-unused-services",
         action="store_true",
-        help="Ignore findings in unused services",
+        help="Scan unused services",
     )
 
 
@@ -200,7 +200,7 @@ def validate_role_session_name(session_name):
     validates that the role session name is valid
     Documentation: https://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRole.html
     """
-    if fullmatch("[\w+=,.@-]{2,64}", session_name):
+    if fullmatch(r"[\w+=,.@-]{2,64}", session_name):
         return session_name
     else:
         raise ArgumentTypeError(

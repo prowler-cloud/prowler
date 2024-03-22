@@ -13,12 +13,12 @@ def get_provider_data_mapping(provider) -> dict:
         try:
             provider_value = attrgetter(provider_field)(provider)
             data[generic_field] = provider_value
-        except AttributeError as error:
+        except AttributeError:
+            data[generic_field] = ""
+        except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-            data[generic_field] = None
-
     return data
 
 
@@ -40,15 +40,16 @@ def generate_provider_output(provider, finding, csv_data) -> FindingOutput:
             csv_data["auth_method"] = (
                 f"{provider.identity.identity_type}: {provider.identity.identity_id}"
             )
-
-            csv_data["account_uid"] = provider.identity.subscriptions[
-                finding.subscription
-            ]
-            csv_data["account_name"] = finding.subscription
             # Get the first tenant domain ID, just in case
             csv_data["account_organization_uid"] = csv_data["account_organization_uid"][
                 0
             ]
+            csv_data["account_uid"] = (
+                csv_data["account_organization_uid"]
+                if "Tenant:" in finding.subscription
+                else provider.identity.subscriptions[finding.subscription]
+            )
+            csv_data["account_name"] = finding.subscription
             csv_data["resource_name"] = finding.resource_name
             csv_data["resource_uid"] = finding.resource_id
             # TODO: pending to get location from Azure resources (finding.location)
@@ -103,6 +104,7 @@ def generate_provider_output(provider, finding, csv_data) -> FindingOutput:
         return finding_output
 
 
+# TODO: add test for outputs_unix_timestamp
 def fill_common_finding_data(finding: dict, unix_timestamp: bool) -> dict:
     finding_data = {
         "timestamp": outputs_unix_timestamp(unix_timestamp, timestamp),

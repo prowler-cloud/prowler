@@ -35,7 +35,7 @@ class accessanalyzer_enabled(Check):
                     )
                     and not analyzer.region == accessanalyzer_client.region
                 ):
-                    report.status = "MUTED"
+                    report.muted = True
 
             findings.append(report)
 

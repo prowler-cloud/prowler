@@ -6,7 +6,7 @@ from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_COMMERCIAL_PARTITION,
     AWS_REGION_US_EAST_1,
-    set_mocked_aws_audit_info,
+    set_mocked_aws_provider,
 )
 
 
@@ -22,10 +22,10 @@ def mock_generate_regional_clients(provider, service):
     "prowler.providers.aws.aws_provider.AwsProvider.generate_regional_clients",
     new=mock_generate_regional_clients,
 )
-class Test_AWSService:
+class TestAWSService:
     def test_AWSService_init(self):
         service_name = "s3"
-        provider = set_mocked_aws_audit_info()
+        provider = set_mocked_aws_provider()
         service = AWSService(service_name, provider)
 
         assert service.provider == provider
@@ -46,7 +46,7 @@ class Test_AWSService:
 
     def test_AWSService_init_global_service(self):
         service_name = "cloudfront"
-        provider = set_mocked_aws_audit_info()
+        provider = set_mocked_aws_provider()
         service = AWSService(service_name, provider, global_service=True)
 
         assert service.provider == provider

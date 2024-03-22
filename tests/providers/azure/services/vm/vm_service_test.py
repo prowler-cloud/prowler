@@ -8,14 +8,14 @@ from prowler.providers.azure.services.vm.vm_service import (
     VirtualMachines,
 )
 from tests.providers.azure.azure_fixtures import (
-    AZURE_SUBSCRIPTION,
-    set_mocked_azure_audit_info,
+    AZURE_SUBSCRIPTION_ID,
+    set_mocked_azure_provider,
 )
 
 
 def mock_vm_get_virtual_machines(_):
     return {
-        AZURE_SUBSCRIPTION: {
+        AZURE_SUBSCRIPTION_ID: {
             "vm_id-1": VirtualMachine(
                 resource_id="/subscriptions/resource_id",
                 resource_name="VMTest",
@@ -33,7 +33,7 @@ def mock_vm_get_virtual_machines(_):
 
 def mock_vm_get_disks(_):
     return {
-        AZURE_SUBSCRIPTION: {
+        AZURE_SUBSCRIPTION_ID: {
             "disk_id-1": Disk(
                 resource_id="disk_id-1",
                 resource_name="DiskTest",
@@ -54,38 +54,40 @@ def mock_vm_get_disks(_):
 )
 class Test_AppInsights_Service:
     def test__get_client__(self):
-        app_insights = VirtualMachines(set_mocked_azure_audit_info())
+        app_insights = VirtualMachines(set_mocked_azure_provider())
         assert (
-            app_insights.clients[AZURE_SUBSCRIPTION].__class__.__name__
+            app_insights.clients[AZURE_SUBSCRIPTION_ID].__class__.__name__
             == "ComputeManagementClient"
         )
 
     def test__get_subscriptions__(self):
-        app_insights = VirtualMachines(set_mocked_azure_audit_info())
+        app_insights = VirtualMachines(set_mocked_azure_provider())
         assert app_insights.subscriptions.__class__.__name__ == "dict"
 
     def test__get_virtual_machines(self):
-        virtual_machines = VirtualMachines(set_mocked_azure_audit_info())
+        virtual_machines = VirtualMachines(set_mocked_azure_provider())
         assert len(virtual_machines.virtual_machines) == 1
         assert (
-            virtual_machines.virtual_machines[AZURE_SUBSCRIPTION]["vm_id-1"].resource_id
+            virtual_machines.virtual_machines[AZURE_SUBSCRIPTION_ID][
+                "vm_id-1"
+            ].resource_id
             == "/subscriptions/resource_id"
         )
         assert (
-            virtual_machines.virtual_machines[AZURE_SUBSCRIPTION][
+            virtual_machines.virtual_machines[AZURE_SUBSCRIPTION_ID][
                 "vm_id-1"
             ].resource_name
             == "VMTest"
         )
         assert (
-            virtual_machines.virtual_machines[AZURE_SUBSCRIPTION][
+            virtual_machines.virtual_machines[AZURE_SUBSCRIPTION_ID][
                 "vm_id-1"
             ].storage_profile.os_disk.managed_disk.id
             == "managed_disk_id"
         )
         assert (
             len(
-                virtual_machines.virtual_machines[AZURE_SUBSCRIPTION][
+                virtual_machines.virtual_machines[AZURE_SUBSCRIPTION_ID][
                     "vm_id-1"
                 ].storage_profile.data_disks
             )
@@ -93,12 +95,12 @@ class Test_AppInsights_Service:
         )
 
     def test__get_disks(self):
-        disks = VirtualMachines(set_mocked_azure_audit_info()).disks
+        disks = VirtualMachines(set_mocked_azure_provider()).disks
         assert len(disks) == 1
-        assert disks[AZURE_SUBSCRIPTION]["disk_id-1"].resource_id == "disk_id-1"
-        assert disks[AZURE_SUBSCRIPTION]["disk_id-1"].resource_name == "DiskTest"
-        assert disks[AZURE_SUBSCRIPTION]["disk_id-1"].vms_attached == ["managed_by"]
+        assert disks[AZURE_SUBSCRIPTION_ID]["disk_id-1"].resource_id == "disk_id-1"
+        assert disks[AZURE_SUBSCRIPTION_ID]["disk_id-1"].resource_name == "DiskTest"
+        assert disks[AZURE_SUBSCRIPTION_ID]["disk_id-1"].vms_attached == ["managed_by"]
         assert (
-            disks[AZURE_SUBSCRIPTION]["disk_id-1"].encryption_type
+            disks[AZURE_SUBSCRIPTION_ID]["disk_id-1"].encryption_type
             == "EncryptionAtRestWithPlatformKey"
         )

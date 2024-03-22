@@ -5,7 +5,10 @@ from prowler.providers.azure.services.mysql.mysql_service import (
     Configuration,
     FlexibleServer,
 )
-from tests.providers.azure.azure_fixtures import AZURE_SUBSCRIPTION
+from tests.providers.azure.azure_fixtures import (
+    AZURE_SUBSCRIPTION_ID,
+    set_mocked_azure_provider,
+)
 
 
 class Test_mysql_flexible_server_ssl_connection_enabled:
@@ -14,6 +17,9 @@ class Test_mysql_flexible_server_ssl_connection_enabled:
         mysql_client.flexible_servers = {}
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.mysql.mysql_flexible_server_ssl_connection_enabled.mysql_flexible_server_ssl_connection_enabled.mysql_client",
             new=mysql_client,
         ):
@@ -27,9 +33,12 @@ class Test_mysql_flexible_server_ssl_connection_enabled:
 
     def test_mysql_no_servers(self):
         mysql_client = mock.MagicMock
-        mysql_client.flexible_servers = {AZURE_SUBSCRIPTION: {}}
+        mysql_client.flexible_servers = {AZURE_SUBSCRIPTION_ID: {}}
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.mysql.mysql_flexible_server_ssl_connection_enabled.mysql_flexible_server_ssl_connection_enabled.mysql_client",
             new=mysql_client,
         ):
@@ -45,7 +54,7 @@ class Test_mysql_flexible_server_ssl_connection_enabled:
         server_name = str(uuid4())
         mysql_client = mock.MagicMock
         mysql_client.flexible_servers = {
-            AZURE_SUBSCRIPTION: {
+            AZURE_SUBSCRIPTION_ID: {
                 server_name: FlexibleServer(
                     resource_id="/subscriptions/resource_id",
                     location="location",
@@ -62,6 +71,9 @@ class Test_mysql_flexible_server_ssl_connection_enabled:
         }
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.mysql.mysql_flexible_server_ssl_connection_enabled.mysql_flexible_server_ssl_connection_enabled.mysql_client",
             new=mysql_client,
         ):
@@ -73,7 +85,7 @@ class Test_mysql_flexible_server_ssl_connection_enabled:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
-            assert result[0].subscription == AZURE_SUBSCRIPTION
+            assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == server_name
             assert (
                 result[0].resource_id
@@ -81,14 +93,14 @@ class Test_mysql_flexible_server_ssl_connection_enabled:
             )
             assert (
                 result[0].status_extended
-                == f"SSL connection is enabled for server {server_name} in subscription {AZURE_SUBSCRIPTION}."
+                == f"SSL connection is enabled for server {server_name} in subscription {AZURE_SUBSCRIPTION_ID}."
             )
 
     def test_mysql_ssl_connection_disabled(self):
         server_name = str(uuid4())
         mysql_client = mock.MagicMock
         mysql_client.flexible_servers = {
-            AZURE_SUBSCRIPTION: {
+            AZURE_SUBSCRIPTION_ID: {
                 server_name: FlexibleServer(
                     resource_id="/subscriptions/resource_id",
                     location="location",
@@ -105,6 +117,9 @@ class Test_mysql_flexible_server_ssl_connection_enabled:
         }
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.mysql.mysql_flexible_server_ssl_connection_enabled.mysql_flexible_server_ssl_connection_enabled.mysql_client",
             new=mysql_client,
         ):
@@ -116,7 +131,7 @@ class Test_mysql_flexible_server_ssl_connection_enabled:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert result[0].subscription == AZURE_SUBSCRIPTION
+            assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == server_name
             assert (
                 result[0].resource_id
@@ -124,14 +139,14 @@ class Test_mysql_flexible_server_ssl_connection_enabled:
             )
             assert (
                 result[0].status_extended
-                == f"SSL connection is disabled for server {server_name} in subscription {AZURE_SUBSCRIPTION}."
+                == f"SSL connection is disabled for server {server_name} in subscription {AZURE_SUBSCRIPTION_ID}."
             )
 
     def test_mysql_ssl_connection_no_configuration(self):
         server_name = str(uuid4())
         mysql_client = mock.MagicMock
         mysql_client.flexible_servers = {
-            AZURE_SUBSCRIPTION: {
+            AZURE_SUBSCRIPTION_ID: {
                 server_name: FlexibleServer(
                     resource_id="/subscriptions/resource_id",
                     location="location",
@@ -142,6 +157,9 @@ class Test_mysql_flexible_server_ssl_connection_enabled:
         }
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.mysql.mysql_flexible_server_ssl_connection_enabled.mysql_flexible_server_ssl_connection_enabled.mysql_client",
             new=mysql_client,
         ):
@@ -153,12 +171,12 @@ class Test_mysql_flexible_server_ssl_connection_enabled:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert result[0].subscription == AZURE_SUBSCRIPTION
+            assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == server_name
             assert result[0].resource_id == server_name
             assert (
                 result[0].status_extended
-                == f"SSL connection is disabled for server {server_name} in subscription {AZURE_SUBSCRIPTION}."
+                == f"SSL connection is disabled for server {server_name} in subscription {AZURE_SUBSCRIPTION_ID}."
             )
 
     def test_mysql_ssl_connection_enabled_and_disabled(self):
@@ -166,7 +184,7 @@ class Test_mysql_flexible_server_ssl_connection_enabled:
         server_name_2 = str(uuid4())
         mysql_client = mock.MagicMock
         mysql_client.flexible_servers = {
-            AZURE_SUBSCRIPTION: {
+            AZURE_SUBSCRIPTION_ID: {
                 server_name_1: FlexibleServer(
                     resource_id="/subscriptions/resource_id",
                     location="location",
@@ -195,6 +213,9 @@ class Test_mysql_flexible_server_ssl_connection_enabled:
         }
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.mysql.mysql_flexible_server_ssl_connection_enabled.mysql_flexible_server_ssl_connection_enabled.mysql_client",
             new=mysql_client,
         ):
@@ -206,7 +227,7 @@ class Test_mysql_flexible_server_ssl_connection_enabled:
             result = check.execute()
             assert len(result) == 2
             assert result[0].status == "PASS"
-            assert result[0].subscription == AZURE_SUBSCRIPTION
+            assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == server_name_1
             assert (
                 result[0].resource_id
@@ -214,10 +235,10 @@ class Test_mysql_flexible_server_ssl_connection_enabled:
             )
             assert (
                 result[0].status_extended
-                == f"SSL connection is enabled for server {server_name_1} in subscription {AZURE_SUBSCRIPTION}."
+                == f"SSL connection is enabled for server {server_name_1} in subscription {AZURE_SUBSCRIPTION_ID}."
             )
             assert result[1].status == "FAIL"
-            assert result[1].subscription == AZURE_SUBSCRIPTION
+            assert result[1].subscription == AZURE_SUBSCRIPTION_ID
             assert result[1].resource_name == server_name_2
             assert (
                 result[1].resource_id
@@ -225,5 +246,5 @@ class Test_mysql_flexible_server_ssl_connection_enabled:
             )
             assert (
                 result[1].status_extended
-                == f"SSL connection is disabled for server {server_name_2} in subscription {AZURE_SUBSCRIPTION}."
+                == f"SSL connection is disabled for server {server_name_2} in subscription {AZURE_SUBSCRIPTION_ID}."
             )

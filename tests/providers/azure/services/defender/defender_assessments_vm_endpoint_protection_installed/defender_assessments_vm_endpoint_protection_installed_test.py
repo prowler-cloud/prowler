@@ -2,7 +2,10 @@ from unittest import mock
 from uuid import uuid4
 
 from prowler.providers.azure.services.defender.defender_service import Assesment
-from tests.providers.azure.azure_fixtures import AZURE_SUBSCRIPTION
+from tests.providers.azure.azure_fixtures import (
+    AZURE_SUBSCRIPTION_ID,
+    set_mocked_azure_provider,
+)
 
 
 class Test_defender_assessments_vm_endpoint_protection_installed:
@@ -11,6 +14,9 @@ class Test_defender_assessments_vm_endpoint_protection_installed:
         defender_client.assessments = {}
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.defender.defender_assessments_vm_endpoint_protection_installed.defender_assessments_vm_endpoint_protection_installed.defender_client",
             new=defender_client,
         ):
@@ -24,9 +30,12 @@ class Test_defender_assessments_vm_endpoint_protection_installed:
 
     def test_defender_subscriptions_with_no_assessments(self):
         defender_client = mock.MagicMock
-        defender_client.assessments = {AZURE_SUBSCRIPTION: {}}
+        defender_client.assessments = {AZURE_SUBSCRIPTION_ID: {}}
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.defender.defender_assessments_vm_endpoint_protection_installed.defender_assessments_vm_endpoint_protection_installed.defender_client",
             new=defender_client,
         ):
@@ -42,7 +51,7 @@ class Test_defender_assessments_vm_endpoint_protection_installed:
         defender_client = mock.MagicMock
         resource_id = str(uuid4())
         defender_client.assessments = {
-            AZURE_SUBSCRIPTION: {
+            AZURE_SUBSCRIPTION_ID: {
                 "Install endpoint protection solution on virtual machines": Assesment(
                     resource_id=resource_id,
                     resource_name="vm1",
@@ -52,6 +61,9 @@ class Test_defender_assessments_vm_endpoint_protection_installed:
         }
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.defender.defender_assessments_vm_endpoint_protection_installed.defender_assessments_vm_endpoint_protection_installed.defender_client",
             new=defender_client,
         ):
@@ -65,7 +77,7 @@ class Test_defender_assessments_vm_endpoint_protection_installed:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Endpoint protection is set up in all VMs in subscription {AZURE_SUBSCRIPTION}."
+                == f"Endpoint protection is set up in all VMs in subscription {AZURE_SUBSCRIPTION_ID}."
             )
             assert result[0].resource_name == "vm1"
             assert result[0].resource_id == resource_id
@@ -74,7 +86,7 @@ class Test_defender_assessments_vm_endpoint_protection_installed:
         defender_client = mock.MagicMock
         resource_id = str(uuid4())
         defender_client.assessments = {
-            AZURE_SUBSCRIPTION: {
+            AZURE_SUBSCRIPTION_ID: {
                 "Install endpoint protection solution on virtual machines": Assesment(
                     resource_id=resource_id,
                     resource_name="vm1",
@@ -84,6 +96,9 @@ class Test_defender_assessments_vm_endpoint_protection_installed:
         }
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.defender.defender_assessments_vm_endpoint_protection_installed.defender_assessments_vm_endpoint_protection_installed.defender_client",
             new=defender_client,
         ):
@@ -97,7 +112,7 @@ class Test_defender_assessments_vm_endpoint_protection_installed:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Endpoint protection is not set up in all VMs in subscription {AZURE_SUBSCRIPTION}."
+                == f"Endpoint protection is not set up in all VMs in subscription {AZURE_SUBSCRIPTION_ID}."
             )
             assert result[0].resource_name == "vm1"
             assert result[0].resource_id == resource_id

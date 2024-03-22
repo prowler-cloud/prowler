@@ -138,6 +138,7 @@ class AzureProvider(Provider):
         self._mutelist = mutelist
 
     # TODO: this should be moved to the argparse, if not we need to enforce it from the Provider
+    # previously was using the AzureException
     def validate_arguments(
         self, az_cli_auth, sp_env_auth, browser_auth, managed_entity_auth, tenant_id
     ):
@@ -297,7 +298,8 @@ Azure Identity Type: {Fore.YELLOW}[{self._identity.identity_type}]{Style.RESET_A
                             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
                         )
 
-            asyncio.run(get_azure_identity())
+            asyncio.get_event_loop().run_until_complete(get_azure_identity())
+
         # Managed identities only can be assigned resource, resource group and subscription scope permissions
         elif managed_entity_auth:
             identity.identity_id = "Default Managed Identity ID"

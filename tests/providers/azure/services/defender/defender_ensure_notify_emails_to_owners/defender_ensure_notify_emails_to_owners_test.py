@@ -2,7 +2,10 @@ from unittest import mock
 from uuid import uuid4
 
 from prowler.providers.azure.services.defender.defender_service import SecurityContacts
-from tests.providers.azure.azure_fixtures import AZURE_SUBSCRIPTION
+from tests.providers.azure.azure_fixtures import (
+    AZURE_SUBSCRIPTION_ID,
+    set_mocked_azure_provider,
+)
 
 
 class Test_defender_ensure_notify_emails_to_owners:
@@ -11,6 +14,9 @@ class Test_defender_ensure_notify_emails_to_owners:
         defender_client.security_contacts = {}
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.defender.defender_ensure_notify_emails_to_owners.defender_ensure_notify_emails_to_owners.defender_client",
             new=defender_client,
         ):
@@ -26,7 +32,7 @@ class Test_defender_ensure_notify_emails_to_owners:
         resource_id = str(uuid4())
         defender_client = mock.MagicMock
         defender_client.security_contacts = {
-            AZURE_SUBSCRIPTION: {
+            AZURE_SUBSCRIPTION_ID: {
                 "default": SecurityContacts(
                     resource_id=resource_id,
                     emails="",
@@ -40,6 +46,9 @@ class Test_defender_ensure_notify_emails_to_owners:
         }
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.defender.defender_ensure_notify_emails_to_owners.defender_ensure_notify_emails_to_owners.defender_client",
             new=defender_client,
         ):
@@ -53,9 +62,9 @@ class Test_defender_ensure_notify_emails_to_owners:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"The Owner role is not notified for subscription {AZURE_SUBSCRIPTION}."
+                == f"The Owner role is not notified for subscription {AZURE_SUBSCRIPTION_ID}."
             )
-            assert result[0].subscription == AZURE_SUBSCRIPTION
+            assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == "default"
             assert result[0].resource_id == resource_id
 
@@ -63,7 +72,7 @@ class Test_defender_ensure_notify_emails_to_owners:
         resource_id = str(uuid4())
         defender_client = mock.MagicMock
         defender_client.security_contacts = {
-            AZURE_SUBSCRIPTION: {
+            AZURE_SUBSCRIPTION_ID: {
                 "default": SecurityContacts(
                     resource_id=resource_id,
                     emails="",
@@ -77,6 +86,9 @@ class Test_defender_ensure_notify_emails_to_owners:
         }
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.defender.defender_ensure_notify_emails_to_owners.defender_ensure_notify_emails_to_owners.defender_client",
             new=defender_client,
         ):
@@ -90,9 +102,9 @@ class Test_defender_ensure_notify_emails_to_owners:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"The Owner role is not notified for subscription {AZURE_SUBSCRIPTION}."
+                == f"The Owner role is not notified for subscription {AZURE_SUBSCRIPTION_ID}."
             )
-            assert result[0].subscription == AZURE_SUBSCRIPTION
+            assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == "default"
             assert result[0].resource_id == resource_id
 
@@ -100,7 +112,7 @@ class Test_defender_ensure_notify_emails_to_owners:
         resource_id = str(uuid4())
         defender_client = mock.MagicMock
         defender_client.security_contacts = {
-            AZURE_SUBSCRIPTION: {
+            AZURE_SUBSCRIPTION_ID: {
                 "default": SecurityContacts(
                     resource_id=resource_id,
                     emails="test@test.es",
@@ -114,6 +126,9 @@ class Test_defender_ensure_notify_emails_to_owners:
         }
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.defender.defender_ensure_notify_emails_to_owners.defender_ensure_notify_emails_to_owners.defender_client",
             new=defender_client,
         ):
@@ -127,18 +142,18 @@ class Test_defender_ensure_notify_emails_to_owners:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"The Owner role is notified for subscription {AZURE_SUBSCRIPTION}."
+                == f"The Owner role is notified for subscription {AZURE_SUBSCRIPTION_ID}."
             )
-            assert result[0].subscription == AZURE_SUBSCRIPTION
+            assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == "default"
             assert result[0].resource_id == resource_id
 
     def test_defender_default_security_contact_not_found(self):
         defender_client = mock.MagicMock
         defender_client.security_contacts = {
-            AZURE_SUBSCRIPTION: {
+            AZURE_SUBSCRIPTION_ID: {
                 "default": SecurityContacts(
-                    resource_id=f"/subscriptions/{AZURE_SUBSCRIPTION}/providers/Microsoft.Security/securityContacts/default",
+                    resource_id=f"/subscriptions/{AZURE_SUBSCRIPTION_ID}/providers/Microsoft.Security/securityContacts/default",
                     emails="",
                     phone="",
                     alert_notifications_minimal_severity="",
@@ -150,6 +165,9 @@ class Test_defender_ensure_notify_emails_to_owners:
         }
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.defender.defender_ensure_notify_emails_to_owners.defender_ensure_notify_emails_to_owners.defender_client",
             new=defender_client,
         ):
@@ -163,11 +181,11 @@ class Test_defender_ensure_notify_emails_to_owners:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"The Owner role is not notified for subscription {AZURE_SUBSCRIPTION}."
+                == f"The Owner role is not notified for subscription {AZURE_SUBSCRIPTION_ID}."
             )
-            assert result[0].subscription == AZURE_SUBSCRIPTION
+            assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == "default"
             assert (
                 result[0].resource_id
-                == f"/subscriptions/{AZURE_SUBSCRIPTION}/providers/Microsoft.Security/securityContacts/default"
+                == f"/subscriptions/{AZURE_SUBSCRIPTION_ID}/providers/Microsoft.Security/securityContacts/default"
             )

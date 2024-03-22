@@ -19,7 +19,6 @@ from prowler.lib.outputs.compliance.compliance import (
 from prowler.lib.outputs.csv.csv import generate_csv_fields
 from prowler.lib.outputs.file_descriptors import fill_file_descriptors
 from prowler.lib.outputs.json_asff.json_asff import fill_json_asff
-from prowler.lib.outputs.json_asff.models import Check_Output_JSON_ASFF
 from prowler.lib.outputs.json_ocsf.json_ocsf import fill_json_ocsf
 from prowler.lib.outputs.utils import unroll_dict
 
@@ -105,13 +104,10 @@ def report(check_findings, provider):
                         if finding.check_metadata.Provider == "aws":
                             if "json-asff" in file_descriptors:
                                 # Initialize this field using the class within fill_json_asff not here
-                                finding_output = Check_Output_JSON_ASFF()
-                                fill_json_asff(
-                                    finding_output, provider, finding, output_options
-                                )
+                                json_asff_finding = fill_json_asff(provider, finding)
 
                                 json.dump(
-                                    finding_output.dict(exclude_none=True),
+                                    json_asff_finding.dict(exclude_none=True),
                                     file_descriptors["json-asff"],
                                     indent=4,
                                 )
@@ -177,12 +173,10 @@ def set_report_color(status: str, muted: bool = False) -> str:
         color = Fore.GREEN
     elif status == "FAIL":
         color = Fore.RED
-    elif status == "ERROR":
-        color = Fore.BLACK
     elif status == "MANUAL":
         color = Fore.YELLOW
     else:
-        raise Exception("Invalid Report Status. Must be PASS, FAIL, ERROR or MUTED")
+        raise Exception("Invalid Report Status. Must be PASS, FAIL or MANUAL.")
     return color
 
 

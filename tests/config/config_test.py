@@ -2,16 +2,17 @@ import os
 import pathlib
 from unittest import mock
 
+import pytest
 from requests import Response
 
 from prowler.config.config import (
-    change_config_var,
     check_current_version,
     get_available_compliance_frameworks,
     load_and_validate_config_file,
+    update_provider_config,
 )
 from prowler.providers.aws.aws_provider import get_aws_available_regions
-from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
+from tests.providers.aws.utils import set_mocked_aws_provider
 
 MOCK_PROWLER_VERSION = "3.3.0"
 MOCK_OLD_PROWLER_VERSION = "0.0.0"
@@ -78,61 +79,30 @@ class Test_Config:
             == f"Prowler {MOCK_OLD_PROWLER_VERSION} (latest is {MOCK_PROWLER_VERSION}, upgrade for the latest features)"
         )
 
-    def test_change_config_var_aws(self):
-        audit_info = AWS_Audit_Info(
-            session_config=None,
-            original_session=None,
-            audit_session=None,
-            audited_account=None,
-            audited_account_arn=None,
-            audited_user_id=None,
-            audited_partition="aws",
-            audited_identity_arn=None,
-            profile=None,
-            profile_region=None,
-            credentials=None,
-            assumed_role_info=None,
-            audited_regions=["us-east-1", "eu-west-1"],
-            organizations_metadata=None,
-            audit_resources=None,
-            mfa_enabled=False,
-            audit_metadata=None,
-            audit_config={"shodan_api_key": ""},
+    def test_update_provider_config_aws(self):
+        aws_provider = set_mocked_aws_provider(
+            audit_config={"shodan_api_key": "DEFAULT-KEY"}
         )
 
-        updated_audit_info = change_config_var("shodan_api_key", "XXXXXX", audit_info)
-        assert audit_info == updated_audit_info
-        assert audit_info.audit_config.get(
-            "shodan_api_key"
-        ) == updated_audit_info.audit_config.get("shodan_api_key")
+        with mock.patch(
+            "prowler.config.config.get_global_provider",
+            return_value=aws_provider,
+        ):
+            update_provider_config("shodan_api_key", "TEST-API-KEY")
+            assert aws_provider.audit_config.get("shodan_api_key") == "TEST-API-KEY"
 
-    def test_change_config_var_aws_not_present(self):
-        audit_info = AWS_Audit_Info(
-            session_config=None,
-            original_session=None,
-            audit_session=None,
-            audited_account=None,
-            audited_account_arn=None,
-            audited_user_id=None,
-            audited_partition="aws",
-            audited_identity_arn=None,
-            profile=None,
-            profile_region=None,
-            credentials=None,
-            assumed_role_info=None,
-            audited_regions=["us-east-1", "eu-west-1"],
-            organizations_metadata=None,
-            audit_resources=None,
-            mfa_enabled=False,
-            audit_metadata=None,
-            audit_config={},
+    def test_update_provider_config_aws_not_present(self):
+        aws_provider = set_mocked_aws_provider(
+            audit_config={"shodan_api_key": "DEFAULT-KEY"}
         )
 
-        updated_audit_info = change_config_var("not_found", "no_value", audit_info)
-        assert audit_info == updated_audit_info
-        assert updated_audit_info.audit_config.get("not_found") is None
+        with mock.patch(
+            "prowler.config.config.get_global_provider",
+            return_value=aws_provider,
+        ):
 
-    # Test load_and_validate_config_file
+            update_provider_config("not_found", "no_value")
+            assert aws_provider.audit_config.get("not_found") is None
 
     def test_get_available_compliance_frameworks(self):
         compliance_frameworks = [
@@ -202,3 +172,10 @@ class Test_Config:
         assert load_and_validate_config_file("aws", config_test_file) == config_aws
         assert load_and_validate_config_file("gcp", config_test_file) == {}
         assert load_and_validate_config_file("azure", config_test_file) == {}
+
+    def test_load_and_validate_config_file_invalid_config_file_path(self):
+        provider = "aws"
+        config_file_path = "invalid/path/to/config.yaml"
+
+        with pytest.raises(SystemExit):
+            load_and_validate_config_file(provider, config_file_path)

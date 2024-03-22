@@ -8,7 +8,7 @@ from prowler.providers.aws.services.s3.s3_client import s3_client
 class cloudtrail_s3_dataevents_write_enabled(Check):
     def execute(self):
         findings = []
-        for trail in cloudtrail_client.trails:
+        for trail in cloudtrail_client.trails.values():
             for data_event in trail.data_events:
                 # Classic event selectors
                 if not data_event.is_advanced:
@@ -50,7 +50,7 @@ class cloudtrail_s3_dataevents_write_enabled(Check):
                             report.status_extended = f"Trail {trail.name} from home region {trail.home_region} has an advanced data event selector to record all S3 object-level API operations."
                             findings.append(report)
         if not findings and (
-            s3_client.buckets or not cloudtrail_client.provider.ignore_unused_services
+            s3_client.buckets or cloudtrail_client.provider.scan_unused_services
         ):
             report = Check_Report_AWS(self.metadata())
             report.region = cloudtrail_client.region
