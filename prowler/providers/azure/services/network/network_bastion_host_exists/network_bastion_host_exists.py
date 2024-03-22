@@ -11,14 +11,9 @@ class network_bastion_host_exists(Check):
                 status_extended = (
                     f"Bastion Host from subscription {subscription} does not exist"
                 )
-                location = "N/A"
-                resource_id = "N/A"
             else:
                 bastion_names = ", ".join(
                     [bastion_host.name for bastion_host in bastion_hosts]
-                )
-                resource_id = ", ".join(
-                    [bastion_host.id for bastion_host in bastion_hosts]
                 )
                 status = "PASS"
                 status_extended = f"Bastion Host from subscription {subscription} available are: {bastion_names}"
