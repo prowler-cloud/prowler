@@ -32,7 +32,7 @@ class ApiGatewayV2(AWSService):
                                 arn=arn,
                                 id=apigw["ApiId"],
                                 region=regional_client.region,
-                                name=apigw["Name"],
+                                name=apigw.get("Name", ""),
                                 tags=[apigw.get("Tags")],
                             )
                         )
