@@ -8,10 +8,7 @@ env:
   RELEASE_TAG: ${{ github.event.release.tag_name }}
   PYTHON_VERSION: 3.11
   CACHE: "poetry"
-  # This base branch is used to create a PR with the updated version
-  # We'd need to handle the base branch for v4 and v3, since they will be
-  # `master` and `3.0-dev`, respectively
-  GITHUB_BASE_BRANCH: "master"
+  # TODO: create a bot user for this kind of tasks, like prowler-bot
   GIT_COMMITTER_EMAIL: "sergio@prowler.com"
 
 jobs:
@@ -24,21 +21,13 @@ jobs:
       - name: Get base branch regarding Prowler version
         run: |
           PROWLER_VERSION="${{ env.RELEASE_TAG }}"
-          BASE_BRANCH=""
 
           case ${PROWLER_VERSION%%.*} in
           3)
               echo "Releasing Prowler v3 with tag ${PROWLER_VERSION}"
-              # TODO: modify it once v4 is ready
-              # echo "BASE_BRANCH=3.0-dev" >> "${GITHUB_ENV}"
-              echo "BASE_BRANCH=master" >> "${GITHUB_ENV}"
               ;;
           4)
               echo "Releasing Prowler v4 with tag ${PROWLER_VERSION}"
-              # TODO: modify it once v4 is ready
-              # echo "BASE_BRANCH=master" >> "${GITHUB_ENV}"
-              echo "Not available, aborting..."
-              exit 1
               ;;
           *)
               echo "Releasing another Prowler major version, aborting..."
@@ -100,23 +89,6 @@ jobs:
         run: |
           poetry config pypi-token.pypi ${{ secrets.PYPI_API_TOKEN }}
           poetry publish
-
-      - name: Create PR to update version in the branch
-        run: |
-          echo "### Description
-
-          This PR updates Prowler Version to ${{ env.RELEASE_TAG }}.
-
-          ### License
-
-          By submitting this pull request, I confirm that my contribution is made under the terms of the Apache 2.0 license." |\
-          gh pr create \
-            --base ${{ env.BASE_BRANCH }} \
-            --head release-${{ env.RELEASE_TAG }} \
-            --title "chore(release): update Prowler Version to ${{ env.RELEASE_TAG }}." \
-            --body-file -
-        env:
-          GH_TOKEN: ${{ secrets.PROWLER_ACCESS_TOKEN }}
 
       - name: Replicate PyPI package
         run: |
