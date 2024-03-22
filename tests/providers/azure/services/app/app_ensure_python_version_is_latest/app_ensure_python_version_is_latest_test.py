@@ -1,7 +1,6 @@
 from unittest import mock
 from uuid import uuid4
 
-from prowler.providers.azure.services.app.app_service import WebApp
 from tests.providers.azure.azure_fixtures import (
     AZURE_SUBSCRIPTION_ID,
     set_mocked_azure_provider,
@@ -50,20 +49,6 @@ class Test_app_ensure_python_version_is_latest:
     def test_app_configurations_none(self):
         resource_id = f"/subscriptions/{uuid4()}"
         app_client = mock.MagicMock
-        app_client.apps = {
-            AZURE_SUBSCRIPTION_ID: {
-                "app_id-1": WebApp(
-                    resource_id=resource_id,
-                    auth_enabled=True,
-                    configurations=None,
-                    client_cert_mode="Ignore",
-                    https_only=False,
-                    location="West Europe",
-                    identity=None,
-                )
-            }
-        }
-
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
             return_value=set_mocked_azure_provider(),
@@ -74,7 +59,21 @@ class Test_app_ensure_python_version_is_latest:
             from prowler.providers.azure.services.app.app_ensure_python_version_is_latest.app_ensure_python_version_is_latest import (
                 app_ensure_python_version_is_latest,
             )
+            from prowler.providers.azure.services.app.app_service import WebApp
 
+            app_client.apps = {
+                AZURE_SUBSCRIPTION_ID: {
+                    "app_id-1": WebApp(
+                        resource_id=resource_id,
+                        auth_enabled=True,
+                        configurations=None,
+                        client_cert_mode="Ignore",
+                        https_only=False,
+                        identity=None,
+                        location="West Europe",
+                    )
+                }
+            }
             check = app_ensure_python_version_is_latest()
             result = check.execute()
             assert len(result) == 0
@@ -82,19 +81,6 @@ class Test_app_ensure_python_version_is_latest:
     def test_app_python_version_latest(self):
         resource_id = f"/subscriptions/{uuid4()}"
         app_client = mock.MagicMock
-        app_client.apps = {
-            AZURE_SUBSCRIPTION_ID: {
-                "app_id-1": WebApp(
-                    resource_id=resource_id,
-                    auth_enabled=True,
-                    configurations=mock.MagicMock(linux_fx_version="python|3.12"),
-                    client_cert_mode="Ignore",
-                    https_only=False,
-                    location="West Europe",
-                    identity=None,
-                )
-            }
-        }
 
         app_client.audit_config = {"python_latest_version": "3.12"}
 
@@ -108,7 +94,21 @@ class Test_app_ensure_python_version_is_latest:
             from prowler.providers.azure.services.app.app_ensure_python_version_is_latest.app_ensure_python_version_is_latest import (
                 app_ensure_python_version_is_latest,
             )
+            from prowler.providers.azure.services.app.app_service import WebApp
 
+            app_client.apps = {
+                AZURE_SUBSCRIPTION_ID: {
+                    "app_id-1": WebApp(
+                        resource_id=resource_id,
+                        auth_enabled=True,
+                        configurations=mock.MagicMock(linux_fx_version="python|3.12"),
+                        client_cert_mode="Ignore",
+                        https_only=False,
+                        identity=None,
+                        location="West Europe",
+                    )
+                }
+            }
             check = app_ensure_python_version_is_latest()
             result = check.execute()
             assert len(result) == 1
@@ -125,19 +125,6 @@ class Test_app_ensure_python_version_is_latest:
     def test_app_python_version_not_latest(self):
         resource_id = f"/subscriptions/{uuid4()}"
         app_client = mock.MagicMock
-        app_client.apps = {
-            AZURE_SUBSCRIPTION_ID: {
-                "app_id-1": WebApp(
-                    resource_id=resource_id,
-                    auth_enabled=True,
-                    configurations=mock.MagicMock(linux_fx_version="python|3.10"),
-                    client_cert_mode="Ignore",
-                    https_only=False,
-                    location="West Europe",
-                    identity=None,
-                )
-            }
-        }
 
         app_client.audit_config = {"python_latest_version": "3.12"}
 
@@ -151,7 +138,21 @@ class Test_app_ensure_python_version_is_latest:
             from prowler.providers.azure.services.app.app_ensure_python_version_is_latest.app_ensure_python_version_is_latest import (
                 app_ensure_python_version_is_latest,
             )
+            from prowler.providers.azure.services.app.app_service import WebApp
 
+            app_client.apps = {
+                AZURE_SUBSCRIPTION_ID: {
+                    "app_id-1": WebApp(
+                        resource_id=resource_id,
+                        auth_enabled=True,
+                        configurations=mock.MagicMock(linux_fx_version="python|3.10"),
+                        client_cert_mode="Ignore",
+                        https_only=False,
+                        identity=None,
+                        location="West Europe",
+                    )
+                }
+            }
             check = app_ensure_python_version_is_latest()
             result = check.execute()
             assert len(result) == 1

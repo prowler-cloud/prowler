@@ -1,10 +1,12 @@
-from prowler.config.config import prowler_version, timestamp_utc
+from prowler.config.config import timestamp_utc
 from prowler.lib.logger import logger
 from prowler.lib.outputs.compliance.compliance import get_check_compliance
 from prowler.lib.outputs.json_asff.models import (
     Check_Output_JSON_ASFF,
     Compliance,
     ProductFields,
+    Recommendation,
+    Remediation,
     Resource,
     Severity,
 )
@@ -94,7 +96,6 @@ def fill_json_asff(provider, finding):
             Id=f"prowler-{finding.check_metadata.CheckID}-{provider.identity.account}-{finding.region}-{hash_sha512(finding.resource_id)}",
             ProductArn=f"arn:{provider.identity.partition}:securityhub:{finding.region}::product/prowler/prowler",
             ProductFields=ProductFields(
-                ProviderVersion=prowler_version,
                 ProwlerResourceName=finding.resource_arn,
             ),
             GeneratorId="prowler-" + finding.check_metadata.CheckID,
@@ -105,12 +106,7 @@ def fill_json_asff(provider, finding):
             CreatedAt=timestamp,
             Severity=Severity(Label=finding.check_metadata.Severity.upper()),
             Title=finding.check_metadata.CheckTitle,
-            # Description should NOT be longer than 1024 characters
-            Description=(
-                (finding.status_extended[:1000] + "...")
-                if len(finding.status_extended) > 1000
-                else finding.status_extended
-            ),
+            Description=finding.status_extended,
             Resources=[
                 Resource(
                     Id=finding.resource_arn,
@@ -125,9 +121,12 @@ def fill_json_asff(provider, finding):
                 AssociatedStandards=associated_standards,
                 RelatedRequirements=compliance_summary,
             ),
-            Remediation={
-                "Recommendation": finding.check_metadata.Remediation.Recommendation
-            },
+            Remediation=Remediation(
+                Recommendation=Recommendation(
+                    Text=finding.check_metadata.Remediation.Recommendation.Text,
+                    Url=finding.check_metadata.Remediation.Recommendation.Url,
+                )
+            ),
         )
         return json_asff_output
     except Exception as error:

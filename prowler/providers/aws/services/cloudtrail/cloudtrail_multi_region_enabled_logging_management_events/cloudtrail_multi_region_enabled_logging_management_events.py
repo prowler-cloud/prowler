@@ -16,7 +16,7 @@ class cloudtrail_multi_region_enabled_logging_management_events(Check):
         report.resource_id = cloudtrail_client.audited_account
         report.resource_arn = cloudtrail_client.trail_arn_template
 
-        for trail in cloudtrail_client.trails:
+        for trail in cloudtrail_client.trails.values():
             if trail.is_logging:
                 if trail.is_multiregion:
                     for event in trail.data_events:

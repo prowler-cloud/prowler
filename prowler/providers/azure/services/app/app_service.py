@@ -6,6 +6,8 @@ from azure.mgmt.web.models import ManagedServiceIdentity, SiteConfigResource
 from prowler.lib.logger import logger
 from prowler.providers.azure.azure_provider import AzureProvider
 from prowler.providers.azure.lib.service.service import AzureService
+from prowler.providers.azure.services.monitor.monitor_client import monitor_client
+from prowler.providers.azure.services.monitor.monitor_service import DiagnosticSetting
 
 
 ########################## App
@@ -49,9 +51,13 @@ class App(AzureService):
                                     getattr(app, "client_cert_enabled", False),
                                     getattr(app, "client_cert_mode", "Ignore"),
                                 ),
+                                monitor_diagnostic_settings=self.__get_app_monitor_settings__(
+                                    app.name, app.resource_group, subscription_name
+                                ),
                                 https_only=getattr(app, "https_only", False),
                                 identity=getattr(app, "identity", None),
                                 location=app.location,
+                                kind=getattr(app, "kind", "app"),
                             )
                         }
                     )
@@ -79,6 +85,21 @@ class App(AzureService):
 
         return cert_mode
 
+    def __get_app_monitor_settings__(self, app_name, resource_group, subscription):
+        logger.info(f"App - Getting monitor diagnostics settings for {app_name}...")
+        monitor_diagnostics_settings = []
+        try:
+            monitor_diagnostics_settings = monitor_client.diagnostic_settings_with_uri(
+                self.subscriptions[subscription],
+                f"subscriptions/{self.subscriptions[subscription]}/resourceGroups/{resource_group}/providers/Microsoft.Web/sites/{app_name}",
+                monitor_client.clients[subscription],
+            )
+        except Exception as error:
+            logger.error(
+                f"Subscription name: {self.subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return monitor_diagnostics_settings
+
 
 @dataclass
 class WebApp:
@@ -89,3 +110,5 @@ class WebApp:
     client_cert_mode: str = "Ignore"
     auth_enabled: bool = False
     https_only: bool = False
+    monitor_diagnostic_settings: list[DiagnosticSetting] = None
+    kind: str = "app"

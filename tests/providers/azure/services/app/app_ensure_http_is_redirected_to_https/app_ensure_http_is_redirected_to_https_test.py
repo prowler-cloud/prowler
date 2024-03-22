@@ -1,7 +1,6 @@
 from unittest import mock
 from uuid import uuid4
 
-from prowler.providers.azure.services.app.app_service import WebApp
 from tests.providers.azure.azure_fixtures import (
     AZURE_SUBSCRIPTION_ID,
     set_mocked_azure_provider,
@@ -50,19 +49,6 @@ class Test_app_ensure_http_is_redirected_to_https:
     def test_app_http_to_https(self):
         resource_id = f"/subscriptions/{uuid4()}"
         app_client = mock.MagicMock
-        app_client.apps = {
-            AZURE_SUBSCRIPTION_ID: {
-                "app_id-1": WebApp(
-                    resource_id=resource_id,
-                    auth_enabled=True,
-                    configurations=mock.MagicMock(),
-                    client_cert_mode="Ignore",
-                    https_only=False,
-                    location="West Europe",
-                    identity=None,
-                )
-            }
-        }
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
@@ -74,7 +60,21 @@ class Test_app_ensure_http_is_redirected_to_https:
             from prowler.providers.azure.services.app.app_ensure_http_is_redirected_to_https.app_ensure_http_is_redirected_to_https import (
                 app_ensure_http_is_redirected_to_https,
             )
+            from prowler.providers.azure.services.app.app_service import WebApp
 
+            app_client.apps = {
+                AZURE_SUBSCRIPTION_ID: {
+                    "app_id-1": WebApp(
+                        resource_id=resource_id,
+                        auth_enabled=True,
+                        configurations=mock.MagicMock(),
+                        client_cert_mode="Ignore",
+                        https_only=False,
+                        identity=None,
+                        location="West Europe",
+                    )
+                }
+            }
             check = app_ensure_http_is_redirected_to_https()
             result = check.execute()
             assert len(result) == 1
@@ -91,19 +91,6 @@ class Test_app_ensure_http_is_redirected_to_https:
     def test_app_http_to_https_enabled(self):
         resource_id = f"/subscriptions/{uuid4()}"
         app_client = mock.MagicMock
-        app_client.apps = {
-            AZURE_SUBSCRIPTION_ID: {
-                "app_id-1": WebApp(
-                    resource_id=resource_id,
-                    auth_enabled=True,
-                    configurations=mock.MagicMock(),
-                    client_cert_mode="Ignore",
-                    https_only=True,
-                    location="West Europe",
-                    identity=None,
-                )
-            }
-        }
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
@@ -115,7 +102,21 @@ class Test_app_ensure_http_is_redirected_to_https:
             from prowler.providers.azure.services.app.app_ensure_http_is_redirected_to_https.app_ensure_http_is_redirected_to_https import (
                 app_ensure_http_is_redirected_to_https,
             )
+            from prowler.providers.azure.services.app.app_service import WebApp
 
+            app_client.apps = {
+                AZURE_SUBSCRIPTION_ID: {
+                    "app_id-1": WebApp(
+                        resource_id=resource_id,
+                        auth_enabled=True,
+                        configurations=mock.MagicMock(),
+                        client_cert_mode="Ignore",
+                        https_only=True,
+                        identity=None,
+                        location="West Europe",
+                    )
+                }
+            }
             check = app_ensure_http_is_redirected_to_https()
             result = check.execute()
             assert len(result) == 1

@@ -13,6 +13,8 @@ from prowler.lib.outputs.json_asff.models import (
     Check_Output_JSON_ASFF,
     Compliance,
     ProductFields,
+    Recommendation,
+    Remediation,
     Resource,
     Severity,
 )
@@ -116,27 +118,25 @@ class TestOutputJSONASFF:
                 RelatedRequirements=[],
                 AssociatedStandards=[],
             ),
-            Remediation={
-                "Recommendation": finding.check_metadata.Remediation.Recommendation,
-                # "Code": finding.check_metadata.Remediation.Code,
-            },
-        )
-
-        expected.Remediation["Recommendation"].Text = (
-            finding.check_metadata.Remediation.Recommendation.Text
-        )
-        expected.Remediation["Recommendation"].Url = (
-            "https://docs.aws.amazon.com/securityhub/latest/userguide/what-is-securityhub.html"
+            Remediation=Remediation(
+                Recommendation=Recommendation(
+                    Text=finding.check_metadata.Remediation.Recommendation.Text,
+                    Url="https://docs.aws.amazon.com/securityhub/latest/userguide/what-is-securityhub.html",
+                )
+            ),
         )
 
         assert fill_json_asff(aws_provider, finding) == expected
 
-    def test_fill_json_asff_with_long_description(self):
+    def test_fill_json_asff_with_long_description_and_remediation_recommendation_text(
+        self,
+    ):
         aws_provider = set_mocked_aws_provider()
         finding = Check_Report(load_check_metadata(METADATA_FIXTURE_PATH).json())
 
         # Empty the Remediation.Recomendation.URL
         finding.check_metadata.Remediation.Recommendation.Url = ""
+        finding.check_metadata.Remediation.Recommendation.Text = "x" * 513
 
         finding.resource_details = "Test resource details"
         finding.resource_id = "test-resource"
@@ -161,7 +161,7 @@ class TestOutputJSONASFF:
             CreatedAt=timestamp,
             Severity=Severity(Label=finding.check_metadata.Severity.upper()),
             Title=finding.check_metadata.CheckTitle,
-            Description=finding.status_extended[:1000] + "...",
+            Description=f"{finding.status_extended[:1021]}...",
             Resources=[
                 Resource(
                     Id="test-arn",
@@ -175,20 +175,40 @@ class TestOutputJSONASFF:
                 RelatedRequirements=[],
                 AssociatedStandards=[],
             ),
-            Remediation={
-                "Recommendation": finding.check_metadata.Remediation.Recommendation,
-                # "Code": finding.check_metadata.Remediation.Code,
-            },
+            Remediation=Remediation(
+                Recommendation=Recommendation(
+                    Text=f"{'x' * 509}...",
+                    Url="https://docs.aws.amazon.com/securityhub/latest/userguide/what-is-securityhub.html",
+                )
+            ),
         )
+        output_json_asff = fill_json_asff(aws_provider, finding)
 
-        expected.Remediation["Recommendation"].Text = (
-            finding.check_metadata.Remediation.Recommendation.Text
+        assert isinstance(output_json_asff, Check_Output_JSON_ASFF)
+        assert output_json_asff.Id == expected.Id
+        assert output_json_asff.ProductArn == expected.ProductArn
+        assert output_json_asff.ProductFields == expected.ProductFields
+        assert output_json_asff.GeneratorId == expected.GeneratorId
+        assert output_json_asff.AwsAccountId == expected.AwsAccountId
+        assert output_json_asff.Types == expected.Types
+        assert output_json_asff.FirstObservedAt == expected.FirstObservedAt
+        assert output_json_asff.UpdatedAt == expected.UpdatedAt
+        assert output_json_asff.CreatedAt == expected.CreatedAt
+        assert output_json_asff.Severity == expected.Severity
+        assert output_json_asff.Title == expected.Title
+        assert output_json_asff.Description == expected.Description
+        assert output_json_asff.Resources == expected.Resources
+        assert output_json_asff.Compliance == expected.Compliance
+        assert isinstance(output_json_asff.Remediation, Remediation)
+        assert isinstance(output_json_asff.Remediation.Recommendation, Recommendation)
+        assert (
+            output_json_asff.Remediation.Recommendation.Text
+            == expected.Remediation.Recommendation.Text
         )
-        expected.Remediation["Recommendation"].Url = (
-            "https://docs.aws.amazon.com/securityhub/latest/userguide/what-is-securityhub.html"
+        assert (
+            output_json_asff.Remediation.Recommendation.Url
+            == expected.Remediation.Recommendation.Url
         )
-
-        assert fill_json_asff(aws_provider, finding) == expected
 
     def test_fill_json_asff_with_long_associated_standards(self):
         aws_provider = set_mocked_aws_provider()
@@ -424,17 +444,12 @@ class TestOutputJSONASFF:
                         {"StandardsId": "FedRamp-Moderate-Revision-4"},
                     ],
                 ),
-                Remediation={
-                    "Recommendation": finding.check_metadata.Remediation.Recommendation,
-                    # "Code": finding.check_metadata.Remediation.Code,
-                },
-            )
-
-            expected.Remediation["Recommendation"].Text = (
-                finding.check_metadata.Remediation.Recommendation.Text
-            )
-            expected.Remediation["Recommendation"].Url = (
-                "https://docs.aws.amazon.com/securityhub/latest/userguide/what-is-securityhub.html"
+                Remediation=Remediation(
+                    Recommendation=Recommendation(
+                        Text=finding.check_metadata.Remediation.Recommendation.Text,
+                        Url="https://docs.aws.amazon.com/securityhub/latest/userguide/what-is-securityhub.html",
+                    )
+                ),
             )
 
             assert fill_json_asff(aws_provider, finding) == expected

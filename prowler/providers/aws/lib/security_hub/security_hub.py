@@ -82,7 +82,7 @@ def verify_security_hub_integration_enabled_per_region(
         error_message = client_error.response["Error"]["Message"]
         if (
             error_code == "InvalidAccessException"
-            and f"Account {aws_account_number} is not subscribed to AWS Security Hub in region {region}"
+            and f"Account {aws_account_number} is not subscribed to AWS Security Hub"
             in error_message
         ):
             logger.warning(

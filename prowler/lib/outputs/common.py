@@ -13,12 +13,12 @@ def get_provider_data_mapping(provider) -> dict:
         try:
             provider_value = attrgetter(provider_field)(provider)
             data[generic_field] = provider_value
-        except AttributeError as error:
+        except AttributeError:
+            data[generic_field] = ""
+        except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-            data[generic_field] = None
-
     return data
 
 
