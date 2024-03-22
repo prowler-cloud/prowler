@@ -74,6 +74,7 @@ class Test_network_udp_internet_access_restricted:
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == security_group_name
             assert result[0].resource_id == security_group_id
+            assert result[0].location == "location"
 
     def test_network_security_groups_invalid_security_rules(self):
         network_client = mock.MagicMock
@@ -123,6 +124,7 @@ class Test_network_udp_internet_access_restricted:
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == security_group_name
             assert result[0].resource_id == security_group_id
+            assert result[0].location == "location"
 
     def test_network_security_groups_valid_security_rules(self):
         network_client = mock.MagicMock
@@ -172,3 +174,4 @@ class Test_network_udp_internet_access_restricted:
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == security_group_name
             assert result[0].resource_id == security_group_id
+            assert result[0].location == "location"

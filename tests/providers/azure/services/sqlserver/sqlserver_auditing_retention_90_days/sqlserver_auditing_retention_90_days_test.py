@@ -46,6 +46,7 @@ class Test_sqlserver_auditing_retention_90_days:
                     firewall_rules=None,
                     databases=None,
                     encryption_protector=None,
+                    location="location",
                 )
             ]
         }
@@ -72,6 +73,7 @@ class Test_sqlserver_auditing_retention_90_days:
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == sql_server_name
             assert result[0].resource_id == sql_server_id
+            assert result[0].location == "location"
 
     def test_sql_servers_auditing_retention_less_than_90_days(self):
         sqlserver_client = mock.MagicMock
@@ -91,6 +93,7 @@ class Test_sqlserver_auditing_retention_90_days:
                     firewall_rules=None,
                     databases=None,
                     encryption_protector=None,
+                    location="location",
                 )
             ]
         }
@@ -117,6 +120,7 @@ class Test_sqlserver_auditing_retention_90_days:
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == sql_server_name
             assert result[0].resource_id == sql_server_id
+            assert result[0].location == "location"
 
     def test_sql_servers_auditing_retention_greater_than_90_days(self):
         sqlserver_client = mock.MagicMock
@@ -136,6 +140,7 @@ class Test_sqlserver_auditing_retention_90_days:
                     firewall_rules=None,
                     databases=None,
                     encryption_protector=None,
+                    location="location",
                 )
             ]
         }
@@ -162,6 +167,7 @@ class Test_sqlserver_auditing_retention_90_days:
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == sql_server_name
             assert result[0].resource_id == sql_server_id
+            assert result[0].location == "location"
 
     def test_sql_servers_two_auditing_policies_with_auditing_retention_greater_than_90_days(
         self,
@@ -184,6 +190,7 @@ class Test_sqlserver_auditing_retention_90_days:
                     firewall_rules=None,
                     databases=None,
                     encryption_protector=None,
+                    location="location",
                 )
             ]
         }
@@ -210,6 +217,7 @@ class Test_sqlserver_auditing_retention_90_days:
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == sql_server_name
             assert result[0].resource_id == sql_server_id
+            assert result[0].location == "location"
 
     def test_sql_servers_two_auditing_policies_with_one_auditing_retention_less_than_90_days(
         self,
@@ -232,6 +240,7 @@ class Test_sqlserver_auditing_retention_90_days:
                     firewall_rules=None,
                     databases=None,
                     encryption_protector=None,
+                    location="location",
                 )
             ]
         }
@@ -258,3 +267,4 @@ class Test_sqlserver_auditing_retention_90_days:
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == sql_server_name
             assert result[0].resource_id == sql_server_id
+            assert result[0].location == "location"

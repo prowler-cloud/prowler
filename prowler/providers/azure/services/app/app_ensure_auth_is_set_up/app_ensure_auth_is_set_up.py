@@ -16,6 +16,7 @@ class app_ensure_auth_is_set_up(Check):
                 report.subscription = subscription_name
                 report.resource_name = app_name
                 report.resource_id = app.resource_id
+                report.location = app.location
                 report.status_extended = f"Authentication is set up for app '{app_name}' in subscription '{subscription_name}'."
 
                 if not app.auth_enabled:

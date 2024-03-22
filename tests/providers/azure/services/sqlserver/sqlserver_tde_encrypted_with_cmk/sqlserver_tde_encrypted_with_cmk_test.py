@@ -48,6 +48,7 @@ class Test_sqlserver_tde_encrypted_with_cmk:
                     auditing_policies=None,
                     firewall_rules=None,
                     databases=None,
+                    location="location",
                 )
             ]
         }
@@ -84,6 +85,7 @@ class Test_sqlserver_tde_encrypted_with_cmk:
                 Server(
                     id=sql_server_id,
                     name=sql_server_name,
+                    location="location",
                     public_network_access="",
                     minimal_tls_version="",
                     administrators=None,
@@ -119,6 +121,7 @@ class Test_sqlserver_tde_encrypted_with_cmk:
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == sql_server_name
             assert result[0].resource_id == sql_server_id
+            assert result[0].location == "location"
 
     def test_sql_servers_database_encryption_disabled(self):
         sqlserver_client = mock.MagicMock
@@ -137,6 +140,7 @@ class Test_sqlserver_tde_encrypted_with_cmk:
                 Server(
                     id=sql_server_id,
                     name=sql_server_name,
+                    location="location",
                     public_network_access="",
                     minimal_tls_version="",
                     administrators=None,
@@ -172,6 +176,7 @@ class Test_sqlserver_tde_encrypted_with_cmk:
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == sql_server_name
             assert result[0].resource_id == sql_server_id
+            assert result[0].location == "location"
 
     def test_sql_servers_database_encryption_enabled(self):
         sqlserver_client = mock.MagicMock
@@ -190,6 +195,7 @@ class Test_sqlserver_tde_encrypted_with_cmk:
                 Server(
                     id=sql_server_id,
                     name=sql_server_name,
+                    location="location",
                     public_network_access="",
                     minimal_tls_version="",
                     administrators=None,
@@ -225,3 +231,4 @@ class Test_sqlserver_tde_encrypted_with_cmk:
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == sql_server_name
             assert result[0].resource_id == sql_server_id
+            assert result[0].location == "location"

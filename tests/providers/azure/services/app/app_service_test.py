@@ -18,6 +18,7 @@ def mock_app_get_apps(_):
                 identity=ManagedServiceIdentity(type="SystemAssigned"),
                 auth_enabled=True,
                 client_cert_mode="Required",
+                location="West Europe",
                 https_only=True,
             )
         }
@@ -51,6 +52,10 @@ class Test_App_Service:
         assert (
             app_service.apps[AZURE_SUBSCRIPTION_ID]["app_id-1"].client_cert_mode
             == "Required"
+        )
+        assert (
+            app_service.apps[AZURE_SUBSCRIPTION_ID]["app_id-1"].location
+            == "West Europe"
         )
         assert app_service.apps[AZURE_SUBSCRIPTION_ID]["app_id-1"].https_only
         assert (

@@ -38,7 +38,7 @@ class Test_cosmosdb_account_use_aad_and_rbac:
                     id=account_id,
                     name=account_name,
                     kind=None,
-                    location=None,
+                    location="westeu",
                     type=None,
                     tags=None,
                     is_virtual_network_filter_enabled=None,
@@ -70,6 +70,7 @@ class Test_cosmosdb_account_use_aad_and_rbac:
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == account_name
             assert result[0].resource_id == account_id
+            assert result[0].location == "westeu"
 
     def test_accounts_disable_local_auth_true(self):
         cosmosdb_client = mock.MagicMock
@@ -81,7 +82,7 @@ class Test_cosmosdb_account_use_aad_and_rbac:
                     id=account_id,
                     name=account_name,
                     kind=None,
-                    location=None,
+                    location="westeu",
                     type=None,
                     tags=None,
                     is_virtual_network_filter_enabled=None,
@@ -113,3 +114,4 @@ class Test_cosmosdb_account_use_aad_and_rbac:
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == account_name
             assert result[0].resource_id == account_id
+            assert result[0].location == "westeu"

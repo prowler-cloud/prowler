@@ -58,6 +58,7 @@ class Test_app_ensure_python_version_is_latest:
                     configurations=None,
                     client_cert_mode="Ignore",
                     https_only=False,
+                    location="West Europe",
                     identity=None,
                 )
             }
@@ -89,6 +90,7 @@ class Test_app_ensure_python_version_is_latest:
                     configurations=mock.MagicMock(linux_fx_version="python|3.12"),
                     client_cert_mode="Ignore",
                     https_only=False,
+                    location="West Europe",
                     identity=None,
                 )
             }
@@ -118,6 +120,7 @@ class Test_app_ensure_python_version_is_latest:
             assert result[0].resource_id == resource_id
             assert result[0].resource_name == "app_id-1"
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
+            assert result[0].location == "West Europe"
 
     def test_app_python_version_not_latest(self):
         resource_id = f"/subscriptions/{uuid4()}"
@@ -130,6 +133,7 @@ class Test_app_ensure_python_version_is_latest:
                     configurations=mock.MagicMock(linux_fx_version="python|3.10"),
                     client_cert_mode="Ignore",
                     https_only=False,
+                    location="West Europe",
                     identity=None,
                 )
             }
@@ -159,3 +163,4 @@ class Test_app_ensure_python_version_is_latest:
             assert result[0].resource_id == resource_id
             assert result[0].resource_name == "app_id-1"
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
+            assert result[0].location == "West Europe"

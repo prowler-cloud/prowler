@@ -58,6 +58,7 @@ class Test_app_ensure_http_is_redirected_to_https:
                     configurations=mock.MagicMock(),
                     client_cert_mode="Ignore",
                     https_only=False,
+                    location="West Europe",
                     identity=None,
                 )
             }
@@ -85,6 +86,7 @@ class Test_app_ensure_http_is_redirected_to_https:
             assert result[0].resource_name == "app_id-1"
             assert result[0].resource_id == resource_id
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
+            assert result[0].location == "West Europe"
 
     def test_app_http_to_https_enabled(self):
         resource_id = f"/subscriptions/{uuid4()}"
@@ -97,6 +99,7 @@ class Test_app_ensure_http_is_redirected_to_https:
                     configurations=mock.MagicMock(),
                     client_cert_mode="Ignore",
                     https_only=True,
+                    location="West Europe",
                     identity=None,
                 )
             }
@@ -124,3 +127,4 @@ class Test_app_ensure_http_is_redirected_to_https:
             assert result[0].resource_name == "app_id-1"
             assert result[0].resource_id == resource_id
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
+            assert result[0].location == "West Europe"

@@ -14,6 +14,7 @@ class network_watcher_enabled(Check):
                 report = Check_Report_Azure(self.metadata())
                 report.subscription = subscription
                 report.resource_name = "Network Watcher"
+                report.location = location
                 report.resource_id = f"/subscriptions/{subscription}/providers/Microsoft.Network/networkWatchers/{location}"
                 if location not in nw_locations:
                     report.status = "FAIL"

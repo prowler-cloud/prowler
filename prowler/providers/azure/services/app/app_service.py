@@ -51,6 +51,7 @@ class App(AzureService):
                                 ),
                                 https_only=getattr(app, "https_only", False),
                                 identity=getattr(app, "identity", None),
+                                location=app.location,
                             )
                         }
                     )
@@ -84,6 +85,7 @@ class WebApp:
     resource_id: str
     configurations: SiteConfigResource
     identity: ManagedServiceIdentity
+    location: str
     client_cert_mode: str = "Ignore"
     auth_enabled: bool = False
     https_only: bool = False

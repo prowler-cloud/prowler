@@ -11,6 +11,7 @@ class network_flow_log_more_than_90_days(Check):
                 report.subscription = subscription
                 report.resource_name = network_watcher.name
                 report.resource_id = network_watcher.id
+                report.location = network_watcher.location
                 if network_watcher.flow_logs:
                     report.status = "PASS"
                     report.status_extended = f"Network Watcher {network_watcher.name} from subscription {subscription} has flow logs enabled for more than 90 days"

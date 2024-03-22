@@ -155,7 +155,7 @@ class Check_Report_Azure(Check_Report):
         self.resource_name = ""
         self.resource_id = ""
         self.subscription = ""
-        self.location = ""
+        self.location = "global"
 
 
 @dataclass

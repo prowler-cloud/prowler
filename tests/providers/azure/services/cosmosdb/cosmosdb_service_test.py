@@ -14,7 +14,7 @@ def mock_cosmosdb_get_accounts(_):
                 id="account_id",
                 name="account_name",
                 kind=None,
-                location=None,
+                location="westeu",
                 type=None,
                 tags=None,
                 is_virtual_network_filter_enabled=None,
@@ -44,7 +44,7 @@ class Test_CosmosDB_Service:
         assert account.accounts[AZURE_SUBSCRIPTION_ID][0].id == "account_id"
         assert account.accounts[AZURE_SUBSCRIPTION_ID][0].name == "account_name"
         assert account.accounts[AZURE_SUBSCRIPTION_ID][0].kind is None
-        assert account.accounts[AZURE_SUBSCRIPTION_ID][0].location is None
+        assert account.accounts[AZURE_SUBSCRIPTION_ID][0].location == "westeu"
         assert account.accounts[AZURE_SUBSCRIPTION_ID][0].type is None
         assert account.accounts[AZURE_SUBSCRIPTION_ID][0].tags is None
         assert (

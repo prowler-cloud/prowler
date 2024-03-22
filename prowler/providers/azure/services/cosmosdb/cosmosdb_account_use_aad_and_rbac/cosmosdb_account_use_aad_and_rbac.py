@@ -12,6 +12,7 @@ class cosmosdb_account_use_aad_and_rbac(Check):
                 report.resource_name = account.name
                 report.resource_id = account.id
                 report.status = "FAIL"
+                report.location = account.location
                 report.status_extended = f"CosmosDB account {account.name} from subscription {subscription} is not using AAD and RBAC"
                 if account.disable_local_auth:
                     report.status = "PASS"

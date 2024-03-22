@@ -34,6 +34,7 @@ def mock_sqlserver_get_sql_servers(_):
             Server(
                 id="id",
                 name="name",
+                location="location",
                 public_network_access="public_network_access",
                 minimal_tls_version="minimal_tls_version",
                 administrators=None,
@@ -80,6 +81,7 @@ class Test_SqlServer_Service:
         )
         assert sql_server.sql_servers[AZURE_SUBSCRIPTION_ID][0].id == "id"
         assert sql_server.sql_servers[AZURE_SUBSCRIPTION_ID][0].name == "name"
+        assert sql_server.sql_servers[AZURE_SUBSCRIPTION_ID][0].location == "location"
         assert (
             sql_server.sql_servers[AZURE_SUBSCRIPTION_ID][0].public_network_access
             == "public_network_access"

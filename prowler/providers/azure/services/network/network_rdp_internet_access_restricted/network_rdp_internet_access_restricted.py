@@ -12,6 +12,7 @@ class network_rdp_internet_access_restricted(Check):
                 report.resource_name = security_group.name
                 report.resource_id = security_group.id
                 report.status = "PASS"
+                report.location = security_group.location
                 report.status_extended = f"Security Group {security_group.name} from subscription {subscription} has RDP internet access restricted."
                 rule_fail_condition = any(
                     (

@@ -13,7 +13,9 @@ from tests.providers.azure.azure_fixtures import (
 def mock_policy_assigments(_):
     return {
         AZURE_SUBSCRIPTION_ID: {
-            "policy-1": PolicyAssigment(id="id-1", enforcement_mode="Default")
+            "policy-1": PolicyAssigment(
+                id="id-1", enforcement_mode="Default", location="westeurope"
+            )
         }
     }
 
@@ -49,4 +51,8 @@ class Test_AppInsights_Service:
         assert (
             policy.policy_assigments[AZURE_SUBSCRIPTION_ID]["policy-1"].enforcement_mode
             == "Default"
+        )
+        assert (
+            policy.policy_assigments[AZURE_SUBSCRIPTION_ID]["policy-1"].location
+            == "westeurope"
         )

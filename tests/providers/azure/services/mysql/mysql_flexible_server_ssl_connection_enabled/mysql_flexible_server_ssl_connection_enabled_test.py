@@ -87,6 +87,7 @@ class Test_mysql_flexible_server_ssl_connection_enabled:
             assert result[0].status == "PASS"
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == server_name
+            assert result[0].location == "location"
             assert (
                 result[0].resource_id
                 == f"/subscriptions/{server_name}/configurations/require_secure_transport"
@@ -133,6 +134,7 @@ class Test_mysql_flexible_server_ssl_connection_enabled:
             assert result[0].status == "FAIL"
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == server_name
+            assert result[0].location == "location"
             assert (
                 result[0].resource_id
                 == f"/subscriptions/{server_name}/configurations/require_secure_transport"
@@ -174,6 +176,7 @@ class Test_mysql_flexible_server_ssl_connection_enabled:
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == server_name
             assert result[0].resource_id == server_name
+            assert result[0].location == "location"
             assert (
                 result[0].status_extended
                 == f"SSL connection is disabled for server {server_name} in subscription {AZURE_SUBSCRIPTION_ID}."
@@ -229,6 +232,7 @@ class Test_mysql_flexible_server_ssl_connection_enabled:
             assert result[0].status == "PASS"
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == server_name_1
+            assert result[0].location == "location"
             assert (
                 result[0].resource_id
                 == f"/subscriptions/{server_name_1}/configurations/require_secure_transport"
@@ -240,6 +244,7 @@ class Test_mysql_flexible_server_ssl_connection_enabled:
             assert result[1].status == "FAIL"
             assert result[1].subscription == AZURE_SUBSCRIPTION_ID
             assert result[1].resource_name == server_name_2
+            assert result[0].location == "location"
             assert (
                 result[1].resource_id
                 == f"/subscriptions/{server_name_2}/configurations/require_secure_transport"

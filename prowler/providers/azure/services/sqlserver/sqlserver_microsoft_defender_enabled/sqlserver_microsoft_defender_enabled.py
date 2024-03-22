@@ -13,6 +13,7 @@ class sqlserver_microsoft_defender_enabled(Check):
                     report.resource_name = sql_server.name
                     report.resource_id = sql_server.id
                     report.status = "FAIL"
+                    report.location = sql_server.location
                     report.status_extended = f"SQL Server {sql_server.name} from subscription {subscription} has microsoft defender disabled."
                     if sql_server.security_alert_policies.state == "Enabled":
                         report.status = "PASS"

@@ -28,6 +28,7 @@ class Policy(AzureService):
                             policy_assigment.name: PolicyAssigment(
                                 id=policy_assigment.id,
                                 enforcement_mode=policy_assigment.enforcement_mode,
+                                location=policy_assigment.location,
                             )
                         }
                     )
@@ -43,3 +44,4 @@ class Policy(AzureService):
 class PolicyAssigment:
     id: str
     enforcement_mode: str
+    location: str
