@@ -39,6 +39,7 @@ def create_date_dropdown(assesment_times: list) -> html.Div:
         ],
     )
 
+
 def create_date_dropdown_compliance(assesment_times: list) -> html.Div:
     """
     Dropdown to select the date of the last available scan for each account.
@@ -55,8 +56,7 @@ def create_date_dropdown_compliance(assesment_times: list) -> html.Div:
             dcc.Dropdown(
                 id="date-filter-analytics",
                 options=[
-                    {"label": account, "value": account}
-                    for account in assesment_times
+                    {"label": account, "value": account} for account in assesment_times
                 ],
                 value=assesment_times[0],
                 clearable=False,
@@ -92,6 +92,7 @@ def create_region_dropdown(regions: list) -> html.Div:
         ],
     )
 
+
 def create_region_dropdown_compliance(regions: list) -> html.Div:
     """
     Dropdown to select the region of the account.
@@ -116,6 +117,7 @@ def create_region_dropdown_compliance(regions: list) -> html.Div:
             ),
         ],
     )
+
 
 def create_account_dropdown(accounts: list) -> html.Div:
     """
@@ -142,6 +144,7 @@ def create_account_dropdown(accounts: list) -> html.Div:
         ],
     )
 
+
 def create_account_dropdown_compliance(accounts: list) -> html.Div:
     """
     Dropdown to select the account.
@@ -166,6 +169,8 @@ def create_account_dropdown_compliance(accounts: list) -> html.Div:
             ),
         ],
     )
+
+
 def create_compliance_dropdown(compliance: list) -> html.Div:
     """
     Dropdown to select the compliance.
@@ -175,14 +180,16 @@ def create_compliance_dropdown(compliance: list) -> html.Div:
         html.Div: Dropdown to select the compliance.
     """
     return html.Div(
-    [
-        html.Label("Compliance:", className="text-prowler-stone-900 font-bold text-sm"),
-        dcc.Dropdown(
-            id="report-compliance-filter",
-            options=[{"label": i, "value": i} for i in compliance],
-            value=compliance[0],  
-            clearable=False,
-            style={"color": "#000000"},
-        ),
-    ],
-)
+        [
+            html.Label(
+                "Compliance:", className="text-prowler-stone-900 font-bold text-sm"
+            ),
+            dcc.Dropdown(
+                id="report-compliance-filter",
+                options=[{"label": i, "value": i} for i in compliance],
+                value=compliance[0],
+                clearable=False,
+                style={"color": "#000000"},
+            ),
+        ],
+    )
