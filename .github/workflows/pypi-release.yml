@@ -6,7 +6,13 @@ on:
 
 env:
   RELEASE_TAG: ${{ github.event.release.tag_name }}
-  GITHUB_BRANCH: master
+  PYTHON_VERSION: 3.11
+  CACHE: "poetry"
+  # This base branch is used to create a PR with the updated version
+  # We'd need to handle the base branch for v4 and v3, since they will be
+  # `master` and `3.0-dev`, respectively
+  GITHUB_BASE_BRANCH: "master"
+  GIT_COMMITTER_EMAIL: "sergio@prowler.com"
 
 jobs:
   release-prowler-job:
@@ -15,56 +21,110 @@ jobs:
       POETRY_VIRTUALENVS_CREATE: "false"
     name: Release Prowler to PyPI
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - name: Get base branch regarding Prowler version
+        run: |
+          PROWLER_VERSION="${{ env.RELEASE_TAG }}"
+          BASE_BRANCH=""
+
+          case ${PROWLER_VERSION%%.*} in
+          3)
+              echo "Releasing Prowler v3 with tag ${PROWLER_VERSION}"
+              # TODO: modify it once v4 is ready
+              # echo "BASE_BRANCH=3.0-dev" >> "${GITHUB_ENV}"
+              echo "BASE_BRANCH=master" >> "${GITHUB_ENV}"
+              ;;
+          4)
+              echo "Releasing Prowler v4 with tag ${PROWLER_VERSION}"
+              # TODO: modify it once v4 is ready
+              # echo "BASE_BRANCH=master" >> "${GITHUB_ENV}"
+              echo "Not available, aborting..."
+              exit 1
+              ;;
+          *)
+              echo "Releasing another Prowler major version, aborting..."
+              exit 1
+              ;;
+          esac
+
       - uses: actions/checkout@v4
-        with:
-          ref: ${{ env.GITHUB_BRANCH }}
+
       - name: Install dependencies
         run: |
           pipx install poetry
           pipx inject poetry poetry-bumpversion
-      - name: setup python
+
+      - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: 3.9
-          cache: 'poetry'
-      - name: Change version and Build package
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: ${{ env.CACHE }}
+
+      - name: Update Poetry and config version
         run: |
           poetry version ${{ env.RELEASE_TAG }}
+
+      - name: Import GPG key
+        uses: crazy-max/ghaction-import-gpg@v4
+        with:
+          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.GPG_PASSPHRASE }}
+          git_user_signingkey: true
+          git_commit_gpgsign: true
+
+      - name: Push updated version to the release tag
+        run: |
+          # Configure Git
           git config user.name "github-actions"
-          git config user.email "<noreply@github.com>"
+          git config user.email "${{ env.GIT_COMMITTER_EMAIL }}"
+
+          # Add the files with the version changed
           git add prowler/config/config.py pyproject.toml
-          git commit -m "chore(release): ${{ env.RELEASE_TAG }}" --no-verify
-          git tag -fa ${{ env.RELEASE_TAG }} -m "chore(release): ${{ env.RELEASE_TAG }}"
+          git commit -m "chore(release): ${{ env.RELEASE_TAG }}" --no-verify -S
+
+          # Replace the tag with the version updated
+          git tag -fa ${{ env.RELEASE_TAG }} -m "chore(release): ${{ env.RELEASE_TAG }}" --sign
+
+          # Push the tag
           git push -f origin ${{ env.RELEASE_TAG }}
+
+      - name: Create new branch for the version update
+        run: |
+          git switch -c release-${{ env.RELEASE_TAG }}
+          git push --set-upstream origin release-${{ env.RELEASE_TAG }}
+
+      - name: Build Prowler package
+        run: |
           poetry build
-      - name: Publish prowler package to PyPI
+
+      - name: Publish Prowler package to PyPI
         run: |
           poetry config pypi-token.pypi ${{ secrets.PYPI_API_TOKEN }}
           poetry publish
-      # Create pull request with new version
-      - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v6
-        with:
-          token: ${{ secrets.PROWLER_ACCESS_TOKEN }}
-          commit-message: "chore(release): update Prowler Version to ${{ env.RELEASE_TAG }}."
-          branch: release-${{ env.RELEASE_TAG }}
-          labels: "status/waiting-for-revision, severity/low"
-          title: "chore(release): update Prowler Version to ${{ env.RELEASE_TAG }}"
-          body: |
-            ### Description
 
-            This PR updates Prowler Version to ${{ env.RELEASE_TAG }}.
+      - name: Create PR to update version in the branch
+        run: |
+          echo "### Description
 
-            ### License
+          This PR updates Prowler Version to ${{ env.RELEASE_TAG }}.
 
-            By submitting this pull request, I confirm that my contribution is made under the terms of the Apache 2.0 license.
-      - name: Replicate PyPi Package
+          ### License
+
+          By submitting this pull request, I confirm that my contribution is made under the terms of the Apache 2.0 license." |\
+          gh pr create \
+            --base ${{ env.BASE_BRANCH }} \
+            --head release-${{ env.RELEASE_TAG }} \
+            --title "chore(release): update Prowler Version to ${{ env.RELEASE_TAG }}." \
+            --body-file -
+        env:
+          GH_TOKEN: ${{ secrets.PROWLER_ACCESS_TOKEN }}
+
+      - name: Replicate PyPI package
         run: |
           rm -rf ./dist && rm -rf ./build && rm -rf prowler.egg-info
           pip install toml
           python util/replicate_pypi_package.py
           poetry build
+
       - name: Publish prowler-cloud package to PyPI
         run: |
           poetry config pypi-token.pypi ${{ secrets.PYPI_API_TOKEN }}

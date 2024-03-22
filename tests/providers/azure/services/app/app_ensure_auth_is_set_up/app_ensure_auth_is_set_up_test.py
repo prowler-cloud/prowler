@@ -1,7 +1,6 @@
 from unittest import mock
 from uuid import uuid4
 
-from prowler.providers.azure.services.app.app_service import WebApp
 from tests.providers.azure.azure_fixtures import (
     AZURE_SUBSCRIPTION_ID,
     set_mocked_azure_provider,
@@ -50,18 +49,6 @@ class Test_app_ensure_auth_is_set_up:
     def test_app_auth_enabled(self):
         resource_id = f"/subscriptions/{uuid4()}"
         app_client = mock.MagicMock
-        app_client.apps = {
-            AZURE_SUBSCRIPTION_ID: {
-                "app_id-1": WebApp(
-                    resource_id=resource_id,
-                    auth_enabled=True,
-                    configurations=mock.MagicMock(),
-                    client_cert_mode="Ignore",
-                    https_only=False,
-                    identity=None,
-                )
-            }
-        }
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
@@ -73,7 +60,20 @@ class Test_app_ensure_auth_is_set_up:
             from prowler.providers.azure.services.app.app_ensure_auth_is_set_up.app_ensure_auth_is_set_up import (
                 app_ensure_auth_is_set_up,
             )
+            from prowler.providers.azure.services.app.app_service import WebApp
 
+            app_client.apps = {
+                AZURE_SUBSCRIPTION_ID: {
+                    "app_id-1": WebApp(
+                        resource_id=resource_id,
+                        auth_enabled=True,
+                        configurations=mock.MagicMock(),
+                        client_cert_mode="Ignore",
+                        https_only=False,
+                        identity=None,
+                    )
+                }
+            }
             check = app_ensure_auth_is_set_up()
             result = check.execute()
             assert len(result) == 1
@@ -89,18 +89,6 @@ class Test_app_ensure_auth_is_set_up:
     def test_app_auth_disabled(self):
         resource_id = f"/subscriptions/{uuid4()}"
         app_client = mock.MagicMock
-        app_client.apps = {
-            AZURE_SUBSCRIPTION_ID: {
-                "app_id-1": WebApp(
-                    resource_id=resource_id,
-                    auth_enabled=False,
-                    configurations=mock.MagicMock(),
-                    client_cert_mode="Ignore",
-                    https_only=False,
-                    identity=None,
-                )
-            }
-        }
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
@@ -112,7 +100,20 @@ class Test_app_ensure_auth_is_set_up:
             from prowler.providers.azure.services.app.app_ensure_auth_is_set_up.app_ensure_auth_is_set_up import (
                 app_ensure_auth_is_set_up,
             )
+            from prowler.providers.azure.services.app.app_service import WebApp
 
+            app_client.apps = {
+                AZURE_SUBSCRIPTION_ID: {
+                    "app_id-1": WebApp(
+                        resource_id=resource_id,
+                        auth_enabled=False,
+                        configurations=mock.MagicMock(),
+                        client_cert_mode="Ignore",
+                        https_only=False,
+                        identity=None,
+                    )
+                }
+            }
             check = app_ensure_auth_is_set_up()
             result = check.execute()
             assert len(result) == 1
