@@ -65,7 +65,7 @@ def prowler():
     custom_checks_metadata_file = args.custom_checks_metadata_file
 
     if not args.no_banner:
-        print_banner(args)
+        print_banner(args.verbose)
 
     # We treat the compliance framework as another output format
     if compliance_framework:

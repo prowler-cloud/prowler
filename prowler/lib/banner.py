@@ -3,7 +3,7 @@ from colorama import Fore, Style
 from prowler.config.config import banner_color, orange_color, prowler_version, timestamp
 
 
-def print_banner(args):
+def print_banner(verbose: bool):
     banner = rf"""{banner_color}                         _
  _ __  _ __ _____      _| | ___ _ __
 | '_ \| '__/ _ \ \ /\ / / |/ _ \ '__|
@@ -15,7 +15,7 @@ def print_banner(args):
 """
     print(banner)
 
-    if args.verbose:
+    if verbose:
         print(
             f"""
 Color code for results:

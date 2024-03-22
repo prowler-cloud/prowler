@@ -1,14 +1,28 @@
 # Importing Packages
+import sys
 import warnings
 
+import click
 import dash
 import dash_bootstrap_components as dbc
+from colorama import Fore, Style
 from dash import dcc, html
 from dash.dependencies import Input, Output
 
+from dashboard.config import folder_path_overview
+from prowler.config.config import orange_color
+from prowler.lib.banner import print_banner
+
 warnings.filterwarnings("ignore")
 
-# Dashboard settings and setup
+cli = sys.modules["flask.cli"]
+print_banner(verbose=False)
+print(
+    f"{Fore.GREEN}Loading all CSV files from the folder {folder_path_overview} ...\n{Style.RESET_ALL}"
+)
+cli.show_server_banner = lambda *x: click.echo(
+    f"If you are a {Fore.GREEN}{Style.BRIGHT}Prowler SaaS{Style.RESET_ALL} customer and you want to use your data from your S3 bucket,\nrun: `{orange_color}aws s3 cp s3://<your-bucket>/output/csv ./output --recursive{Style.RESET_ALL}`\nand then run `prowler dashboard` again to load the new files."
+)
 
 # Initialize the app - incorporate css
 dashboard = dash.Dash(
@@ -16,8 +30,8 @@ dashboard = dash.Dash(
     external_stylesheets=[dbc.themes.DARKLY],
     use_pages=True,
     suppress_callback_exceptions=True,
+    title="Prowler Dashboard",
 )
-dashboard.title = "Prowler Dashboard"
 
 # Logo
 prowler_logo = html.Img(src="assets/logo.png", alt="Prowler Logo")
