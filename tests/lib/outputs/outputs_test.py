@@ -577,7 +577,7 @@ class Test_Outputs:
             fill_json_asff(input, input_audit_info, finding, output_options) == expected
         )
 
-    def test_fill_json_asff_with_long_description(self):
+    def test_fill_json_asff_with_long_description_and_recommendation_text(self):
         input_audit_info = AWS_Audit_Info(
             session_config=None,
             original_session=None,
@@ -610,13 +610,16 @@ class Test_Outputs:
 
         # Empty the Remediation.Recomendation.URL
         finding.check_metadata.Remediation.Recommendation.Url = ""
+        # It has to be limited to 509+...
+        finding.check_metadata.Remediation.Recommendation.Text = "x" * 513
 
         finding.resource_details = "Test resource details"
         finding.resource_id = "test-resource"
         finding.resource_arn = "test-arn"
         finding.region = "eu-west-1"
         finding.status = "PASS"
-        finding.status_extended = "x" * 2000  # it has to be limited to 1000+...
+        # It has to be limited to 1000+...
+        finding.status_extended = "x" * 2000
 
         expected = Check_Output_JSON_ASFF()
         expected.Id = f"prowler-{finding.check_metadata.CheckID}-123456789012-eu-west-1-{hash_sha512('test-resource')}"
@@ -654,16 +657,13 @@ class Test_Outputs:
             # "Code": finding.check_metadata.Remediation.Code,
         }
 
-        expected.Remediation["Recommendation"].Text = (
-            finding.check_metadata.Remediation.Recommendation.Text
-        )
+        expected.Remediation["Recommendation"].Text = "x" * 512
         expected.Remediation["Recommendation"].Url = (
             "https://docs.aws.amazon.com/securityhub/latest/userguide/what-is-securityhub.html"
         )
 
         input = Check_Output_JSON_ASFF()
         output_options = mock.MagicMock()
-
         assert (
             fill_json_asff(input, input_audit_info, finding, output_options) == expected
         )
