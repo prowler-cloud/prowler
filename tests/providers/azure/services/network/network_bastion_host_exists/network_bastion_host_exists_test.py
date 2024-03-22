@@ -37,8 +37,7 @@ class Test_network_bastion_host_exists:
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == "Bastion Host"
-            assert result[0].resource_id == "N/A"
-            assert result[0].location == "N/A"
+            assert result[0].resource_id == "Bastion Host"
 
     def test_network_bastion_host_exists(self):
         network_client = mock.MagicMock
@@ -79,5 +78,4 @@ class Test_network_bastion_host_exists:
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == "Bastion Host"
-            assert result[0].resource_id == bastion_host_id
-            assert result[0].location == "location"
+            assert result[0].resource_id == "Bastion Host"

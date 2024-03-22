@@ -85,7 +85,7 @@ class Test_appinsights_ensure_is_configured:
             assert result[0].status == "PASS"
             assert result[0].resource_id == "AppInsights"
             assert result[0].resource_name == "AppInsights"
-            assert result[0].location == "westeurope"
+            assert result[0].location == "global"
             assert (
                 result[0].status_extended
                 == f"There is at least one AppInsight configured in susbscription {AZURE_SUBSCRIPTION_ID}."

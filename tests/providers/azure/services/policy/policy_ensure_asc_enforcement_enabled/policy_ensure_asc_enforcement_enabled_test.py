@@ -52,9 +52,7 @@ class Test_policy_ensure_asc_enforcement_enabled:
         resource_id = uuid4()
         policy_client.policy_assigments = {
             AZURE_SUBSCRIPTION_ID: {
-                "policy-1": PolicyAssigment(
-                    id=resource_id, enforcement_mode="Default", location="westeurope"
-                )
+                "policy-1": PolicyAssigment(id=resource_id, enforcement_mode="Default")
             }
         }
 
@@ -79,7 +77,7 @@ class Test_policy_ensure_asc_enforcement_enabled:
         policy_client.policy_assigments = {
             AZURE_SUBSCRIPTION_ID: {
                 "SecurityCenterBuiltIn": PolicyAssigment(
-                    id=resource_id, enforcement_mode="Default", location="westeurope"
+                    id=resource_id, enforcement_mode="Default"
                 )
             }
         }
@@ -106,7 +104,6 @@ class Test_policy_ensure_asc_enforcement_enabled:
             assert result[0].resource_id == resource_id
             assert result[0].resource_name == "SecurityCenterBuiltIn"
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
-            assert result[0].location == "westeurope"
 
     def test_policy_subscription_asc_not_default(self):
         policy_client = mock.MagicMock
@@ -116,7 +113,6 @@ class Test_policy_ensure_asc_enforcement_enabled:
                 "SecurityCenterBuiltIn": PolicyAssigment(
                     id=resource_id,
                     enforcement_mode="DoNotEnforce",
-                    location="westeurope",
                 )
             }
         }
@@ -143,4 +139,3 @@ class Test_policy_ensure_asc_enforcement_enabled:
             assert result[0].resource_id == resource_id
             assert result[0].resource_name == "SecurityCenterBuiltIn"
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
-            assert result[0].location == "westeurope"

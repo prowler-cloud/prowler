@@ -13,7 +13,6 @@ class policy_ensure_asc_enforcement_enabled(Check):
                 report.subscription = subscription_name
                 report.resource_name = "SecurityCenterBuiltIn"
                 report.resource_id = policies["SecurityCenterBuiltIn"].id
-                report.location = policies["SecurityCenterBuiltIn"].location
                 report.status_extended = f"Policy assigment '{policies['SecurityCenterBuiltIn'].id}' is configured with enforcement mode '{policies['SecurityCenterBuiltIn'].enforcement_mode}'."
 
                 if policies["SecurityCenterBuiltIn"].enforcement_mode != "Default":

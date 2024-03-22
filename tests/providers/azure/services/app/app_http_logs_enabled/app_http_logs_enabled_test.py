@@ -71,6 +71,7 @@ class Test_app_http_logs_enabled:
                         https_only=False,
                         identity=None,
                         kind="webapps",
+                        location="West Europe",
                     )
                 }
             }
@@ -114,6 +115,7 @@ class Test_app_http_logs_enabled:
                         https_only=False,
                         kind="functionapp",
                         identity=mock.MagicMock,
+                        location="West Europe",
                         monitor_diagnostic_settings=[
                             DiagnosticSetting(
                                 id="id1/id1",
@@ -157,6 +159,7 @@ class Test_app_http_logs_enabled:
                         https_only=False,
                         kind="WebApp",
                         identity=mock.MagicMock,
+                        location="West Europe",
                         monitor_diagnostic_settings=[
                             DiagnosticSetting(
                                 id="id2/id2",

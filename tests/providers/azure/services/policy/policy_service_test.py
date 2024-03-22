@@ -13,9 +13,7 @@ from tests.providers.azure.azure_fixtures import (
 def mock_policy_assigments(_):
     return {
         AZURE_SUBSCRIPTION_ID: {
-            "policy-1": PolicyAssigment(
-                id="id-1", enforcement_mode="Default", location="westeurope"
-            )
+            "policy-1": PolicyAssigment(id="id-1", enforcement_mode="Default")
         }
     }
 
@@ -24,7 +22,7 @@ def mock_policy_assigments(_):
     "prowler.providers.azure.services.policy.policy_service.Policy.__get_policy_assigments__",
     new=mock_policy_assigments,
 )
-class Test_AppInsights_Service:
+class Test_Policy_Service:
     def test__get_client__(self):
         policy = Policy(set_mocked_azure_provider())
         assert (
@@ -51,8 +49,4 @@ class Test_AppInsights_Service:
         assert (
             policy.policy_assigments[AZURE_SUBSCRIPTION_ID]["policy-1"].enforcement_mode
             == "Default"
-        )
-        assert (
-            policy.policy_assigments[AZURE_SUBSCRIPTION_ID]["policy-1"].location
-            == "westeurope"
         )
