@@ -5992,7 +5992,9 @@
           "us-west-2"
         ],
         "aws-cn": [],
-        "aws-us-gov": []
+        "aws-us-gov": [
+          "us-gov-west-1"
+        ]
       }
     },
     "lexv2-models": {
@@ -6011,7 +6013,9 @@
           "us-west-2"
         ],
         "aws-cn": [],
-        "aws-us-gov": []
+        "aws-us-gov": [
+          "us-gov-west-1"
+        ]
       }
     },
     "license-manager": {
