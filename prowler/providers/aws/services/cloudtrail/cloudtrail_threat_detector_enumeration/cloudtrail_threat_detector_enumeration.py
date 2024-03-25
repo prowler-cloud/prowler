@@ -5,7 +5,7 @@ from prowler.providers.aws.services.cloudtrail.cloudtrail_client import (
     cloudtrail_client,
 )
 
-ENTROPY_THRESHOLD = 0.7
+ENTROPY_THRESHOLD = cloudtrail_client.audit_config.get("threat_detection_entropy", 0.7)
 THREAT_DETECTION_DAYS = cloudtrail_client.audit_config.get("threat_detection_days", 1)
 ENUMERATION_ACTIONS = [
     "DescribeAccessEntry",
