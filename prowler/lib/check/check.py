@@ -7,6 +7,7 @@ import shutil
 import sys
 import traceback
 from pkgutil import walk_packages
+from resource import setrlimit
 from types import ModuleType
 from typing import Any
 
@@ -449,9 +450,11 @@ def execute_checks(
             # Check ulimit for the maximum system open files
             soft, _ = getrlimit(RLIMIT_NOFILE)
             if soft < 4096:
-                logger.warning(
-                    f"Your session file descriptors limit ({soft} open files) is below 4096. We recommend to increase it to avoid errors. Solve it running this command `ulimit -n 4096`. For more info visit https://docs.prowler.cloud/en/latest/troubleshooting/"
+                logger.info(
+                    f"Your session file descriptors limit ({soft} open files) is below 4096. Updating file descriptors session limit to 4096 during execution only."
                 )
+                # Set the ulimit to 4096
+                setrlimit(RLIMIT_NOFILE, (4096, 4096))
         except Exception as error:
             logger.error("Unable to retrieve ulimit default settings")
             logger.error(
