@@ -156,15 +156,16 @@ else:
     # Select Region - Dropdown
 
     select_region_dropdown_list = ["All"]
-    # Handle the case where the column REGION or LOCATION is empty
-    data["REGION"] = data["REGION"].fillna("-")
-    data["LOCATION"] = data["LOCATION"].fillna("-")
     # Append to the list the unique values of the column REGION or LOCATION if it exists
     if "REGION" in data.columns:
+        # Handle the case where the column REGION is empty
+        data["REGION"] = data["REGION"].fillna("-")
         select_region_dropdown_list = select_region_dropdown_list + list(
             data["REGION"].unique()
         )
     if "LOCATION" in data.columns:
+        # Handle the case where the column LOCATION is empty
+        data["LOCATION"] = data["LOCATION"].fillna("-")
         select_region_dropdown_list = select_region_dropdown_list + list(
             data["LOCATION"].unique()
         )
