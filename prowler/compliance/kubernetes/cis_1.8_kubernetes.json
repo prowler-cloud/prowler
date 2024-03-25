@@ -1621,7 +1621,9 @@
     {
       "Id": "4.1.5",
       "Description": "Ensure that the --kubeconfig kubelet.conf file permissions are set to 600 or more restrictive",
-      "Checks": [],
+      "Checks": [
+        "kubelet_conf_file_permissions"
+      ],
       "Attributes": [
         {
           "Section": "4.1 Worker Node Configuration Files",
@@ -1641,7 +1643,9 @@
     {
       "Id": "4.1.6",
       "Description": "Ensure that the --kubeconfig kubelet.conf file ownership is set to root:root",
-      "Checks": [],
+      "Checks": [
+        "kubelet_conf_file_ownership"
+      ],
       "Attributes": [
         {
           "Section": "4.1 Worker Node Configuration Files",
@@ -1763,7 +1767,9 @@
     {
       "Id": "4.2.2",
       "Description": "Ensure that the --authorization-mode argument is not set to AlwaysAllow",
-      "Checks": [],
+      "Checks": [
+        "kubelet_authorization_mode"
+      ],
       "Attributes": [
         {
           "Section": "4.2 Kubelet",
@@ -1783,7 +1789,9 @@
     {
       "Id": "4.2.3",
       "Description": "Ensure that the --client-ca-file argument is set as appropriate",
-      "Checks": [],
+      "Checks": [
+        "kubelet_client_ca_file_set"
+      ],
       "Attributes": [
         {
           "Section": "4.2 Kubelet",
@@ -1803,7 +1811,9 @@
     {
       "Id": "4.2.4",
       "Description": "Verify that the --read-only-port argument is set to 0",
-      "Checks": [],
+      "Checks": [
+        "kubelet_disable_read_only_port"
+      ],
       "Attributes": [
         {
           "Section": "4.2 Kubelet",
@@ -1823,7 +1833,9 @@
     {
       "Id": "4.2.5",
       "Description": "Ensure that the --streaming-connection-idle-timeout argument is not set to 0",
-      "Checks": [],
+      "Checks": [
+        "kubelet_streaming_connection_timeout"
+      ],
       "Attributes": [
         {
           "Section": "4.2 Kubelet",
@@ -1843,7 +1855,9 @@
     {
       "Id": "4.2.6",
       "Description": "Ensure that the --make-iptables-util-chains argument is set to true",
-      "Checks": [],
+      "Checks": [
+        "kubelet_manage_iptables"
+      ],
       "Attributes": [
         {
           "Section": "4.2 Kubelet",
@@ -1883,7 +1897,9 @@
     {
       "Id": "4.2.8",
       "Description": "Ensure that the eventRecordQPS argument is set to a level which ensures appropriate event capture",
-      "Checks": [],
+      "Checks": [
+        "kubelet_event_record_qps"
+      ],
       "Attributes": [
         {
           "Section": "4.2 Kubelet",
@@ -1903,7 +1919,9 @@
     {
       "Id": "4.2.9",
       "Description": "Ensure that the --tls-cert-file and --tls-private-key-file arguments are set as appropriate",
-      "Checks": [],
+      "Checks": [
+        "kubelet_tls_cert_and_key"
+      ],
       "Attributes": [
         {
           "Section": "4.2 Kubelet",
@@ -1923,7 +1941,9 @@
     {
       "Id": "4.2.10",
       "Description": "Ensure that the --rotate-certificates argument is not set to false",
-      "Checks": [],
+      "Checks": [
+        "kubelet_rotate_certificates"
+      ],
       "Attributes": [
         {
           "Section": "4.2 Kubelet",
