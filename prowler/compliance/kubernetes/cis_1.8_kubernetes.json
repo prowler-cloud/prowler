@@ -1108,7 +1108,7 @@
       "Id": "1.3.2",
       "Description": "Ensure that the --profiling argument is set to false",
       "Checks": [
-        "controller_manager_disable_profiling"
+        "controllermanager_disable_profiling"
       ],
       "Attributes": [
         {
@@ -1705,7 +1705,9 @@
     {
       "Id": "4.1.9",
       "Description": "If the kubelet config.yaml configuration file is being used validate permissions set to 600 or more restrictive",
-      "Checks": [],
+      "Checks": [
+        "kubelet_config_yaml_permissions"
+      ],
       "Attributes": [
         {
           "Section": "4.1 Worker Node Configuration Files",
@@ -1725,7 +1727,9 @@
     {
       "Id": "4.1.10",
       "Description": "If the kubelet config.yaml configuration file is being used validate file ownership is set to root:root",
-      "Checks": [],
+      "Checks": [
+        "kubelet_config_yaml_ownership"
+      ],
       "Attributes": [
         {
           "Section": "4.1 Worker Node Configuration Files",
@@ -1983,7 +1987,9 @@
     {
       "Id": "4.2.12",
       "Description": "Ensure that the Kubelet only makes use of Strong Cryptographic Ciphers",
-      "Checks": [],
+      "Checks": [
+        "kubelet_strong_ciphers_only"
+      ],
       "Attributes": [
         {
           "Section": "4.2 Kubelet",
