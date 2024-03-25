@@ -26,7 +26,9 @@ class AppInsights(AzureService):
                     components[subscription_name].update(
                         {
                             component.app_id: Component(
-                                resource_id=component.id, resource_name=component.name
+                                resource_id=component.id,
+                                resource_name=component.name,
+                                location=component.location,
                             )
                         }
                     )
@@ -42,3 +44,4 @@ class AppInsights(AzureService):
 class Component:
     resource_id: str
     resource_name: str
+    location: str

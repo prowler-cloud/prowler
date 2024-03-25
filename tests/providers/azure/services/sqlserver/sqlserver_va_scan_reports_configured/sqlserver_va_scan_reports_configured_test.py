@@ -42,6 +42,7 @@ class Test_sqlserver_va_scan_reports_configured:
                 Server(
                     id=sql_server_id,
                     name=sql_server_name,
+                    location="location",
                     public_network_access="",
                     minimal_tls_version="",
                     administrators=None,
@@ -76,6 +77,7 @@ class Test_sqlserver_va_scan_reports_configured:
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == sql_server_name
             assert result[0].resource_id == sql_server_id
+            assert result[0].location == "location"
 
     def test_sql_servers_no_vulnerability_assessment_emails(self):
         sqlserver_client = mock.MagicMock
@@ -86,6 +88,7 @@ class Test_sqlserver_va_scan_reports_configured:
                 Server(
                     id=sql_server_id,
                     name=sql_server_name,
+                    location="location",
                     public_network_access="",
                     minimal_tls_version="",
                     administrators=None,
@@ -125,6 +128,7 @@ class Test_sqlserver_va_scan_reports_configured:
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == sql_server_name
             assert result[0].resource_id == sql_server_id
+            assert result[0].location == "location"
 
     def test_sql_servers_vulnerability_assessment_emails_none(self):
         sqlserver_client = mock.MagicMock
@@ -135,6 +139,7 @@ class Test_sqlserver_va_scan_reports_configured:
                 Server(
                     id=sql_server_id,
                     name=sql_server_name,
+                    location="location",
                     public_network_access="",
                     minimal_tls_version="",
                     administrators=None,
@@ -174,6 +179,7 @@ class Test_sqlserver_va_scan_reports_configured:
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == sql_server_name
             assert result[0].resource_id == sql_server_id
+            assert result[0].location == "location"
 
     def test_sql_servers_vulnerability_assessment_no_email_subscription_admins(self):
         sqlserver_client = mock.MagicMock
@@ -184,6 +190,7 @@ class Test_sqlserver_va_scan_reports_configured:
                 Server(
                     id=sql_server_id,
                     name=sql_server_name,
+                    location="location",
                     public_network_access="",
                     minimal_tls_version="",
                     administrators=None,
@@ -223,6 +230,7 @@ class Test_sqlserver_va_scan_reports_configured:
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == sql_server_name
             assert result[0].resource_id == sql_server_id
+            assert result[0].location == "location"
 
     def test_sql_servers_vulnerability_assessment_both_emails(self):
         sqlserver_client = mock.MagicMock
@@ -233,6 +241,7 @@ class Test_sqlserver_va_scan_reports_configured:
                 Server(
                     id=sql_server_id,
                     name=sql_server_name,
+                    location="location",
                     public_network_access="",
                     minimal_tls_version="",
                     administrators=None,
@@ -272,3 +281,4 @@ class Test_sqlserver_va_scan_reports_configured:
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == sql_server_name
             assert result[0].resource_id == sql_server_id
+            assert result[0].location == "location"

@@ -15,7 +15,7 @@ class Cloudtrail(AWSService):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
         self.trail_arn_template = f"arn:{self.audited_partition}:cloudtrail:{self.region}:{self.audited_account}:trail"
-        self.trails = []
+        self.trails = {}
         self.__threading_call__(self.__get_trails__)
         self.__get_trail_status__()
         self.__get_insight_selectors__()
@@ -45,27 +45,23 @@ class Cloudtrail(AWSService):
                         kms_key_id = trail["KmsKeyId"]
                     if "CloudWatchLogsLogGroupArn" in trail:
                         log_group_arn = trail["CloudWatchLogsLogGroupArn"]
-                    self.trails.append(
-                        Trail(
-                            name=trail["Name"],
-                            is_multiregion=trail["IsMultiRegionTrail"],
-                            home_region=trail["HomeRegion"],
-                            arn=trail["TrailARN"],
-                            region=regional_client.region,
-                            is_logging=False,
-                            log_file_validation_enabled=trail[
-                                "LogFileValidationEnabled"
-                            ],
-                            latest_cloudwatch_delivery_time=None,
-                            s3_bucket=trail["S3BucketName"],
-                            kms_key=kms_key_id,
-                            log_group_arn=log_group_arn,
-                            data_events=[],
-                            has_insight_selectors=trail.get("HasInsightSelectors"),
-                        )
+                    self.trails[trail["TrailARN"]] = Trail(
+                        name=trail["Name"],
+                        is_multiregion=trail["IsMultiRegionTrail"],
+                        home_region=trail["HomeRegion"],
+                        arn=trail["TrailARN"],
+                        region=regional_client.region,
+                        is_logging=False,
+                        log_file_validation_enabled=trail["LogFileValidationEnabled"],
+                        latest_cloudwatch_delivery_time=None,
+                        s3_bucket=trail["S3BucketName"],
+                        kms_key=kms_key_id,
+                        log_group_arn=log_group_arn,
+                        data_events=[],
+                        has_insight_selectors=trail.get("HasInsightSelectors"),
                     )
             if trails_count == 0:
-                self.trails.append(
+                self.trails[self.__get_trail_arn_template__(regional_client.region)] = (
                     Trail(
                         region=regional_client.region,
                     )
@@ -79,7 +75,7 @@ class Cloudtrail(AWSService):
     def __get_trail_status__(self):
         logger.info("Cloudtrail - Getting trail status")
         try:
-            for trail in self.trails:
+            for trail in self.trails.values():
                 for region, client in self.regional_clients.items():
                     if trail.region == region and trail.name:
                         status = client.get_trail_status(Name=trail.arn)
@@ -97,7 +93,7 @@ class Cloudtrail(AWSService):
     def __get_event_selectors__(self):
         logger.info("Cloudtrail - Getting event selector")
         try:
-            for trail in self.trails:
+            for trail in self.trails.values():
                 for region, client in self.regional_clients.items():
                     if trail.region == region and trail.name:
                         data_events = client.get_event_selectors(TrailName=trail.arn)
@@ -131,7 +127,7 @@ class Cloudtrail(AWSService):
         logger.info("Cloudtrail - Getting trail insight selectors...")
 
         try:
-            for trail in self.trails:
+            for trail in self.trails.values():
                 for region, client in self.regional_clients.items():
                     if trail.region == region and trail.name:
                         insight_selectors = None
@@ -196,7 +192,7 @@ class Cloudtrail(AWSService):
     def __list_tags_for_resource__(self):
         logger.info("CloudTrail - List Tags...")
         try:
-            for trail in self.trails:
+            for trail in self.trails.values():
                 # Check if trails are in this account and region
                 if (
                     trail.region == trail.home_region

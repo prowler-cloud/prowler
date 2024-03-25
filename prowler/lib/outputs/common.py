@@ -13,12 +13,12 @@ def get_provider_data_mapping(provider) -> dict:
         try:
             provider_value = attrgetter(provider_field)(provider)
             data[generic_field] = provider_value
-        except AttributeError as error:
+        except AttributeError:
+            data[generic_field] = ""
+        except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-            data[generic_field] = None
-
     return data
 
 
@@ -52,8 +52,7 @@ def generate_provider_output(provider, finding, csv_data) -> FindingOutput:
             csv_data["account_name"] = finding.subscription
             csv_data["resource_name"] = finding.resource_name
             csv_data["resource_uid"] = finding.resource_id
-            # TODO: pending to get location from Azure resources (finding.location)
-            csv_data["region"] = ""
+            csv_data["region"] = finding.location
 
         elif provider.type == "gcp":
             csv_data["auth_method"] = f"Principal: {csv_data['auth_method']}"

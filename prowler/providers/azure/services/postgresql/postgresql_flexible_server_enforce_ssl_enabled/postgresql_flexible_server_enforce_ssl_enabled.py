@@ -17,6 +17,7 @@ class postgresql_flexible_server_enforce_ssl_enabled(Check):
                 report.resource_name = server.name
                 report.resource_id = server.id
                 report.status = "FAIL"
+                report.location = server.location
                 report.status_extended = f"Flexible Postgresql server {server.name} from subscription {subscription} has enforce ssl disabled"
                 if server.require_secure_transport == "ON":
                     report.status = "PASS"

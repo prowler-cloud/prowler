@@ -48,6 +48,7 @@ class Test_sqlserver_tde_encryption_enabled:
                     auditing_policies=None,
                     firewall_rules=None,
                     databases=None,
+                    location="location",
                 )
             ]
         }
@@ -93,6 +94,7 @@ class Test_sqlserver_tde_encryption_enabled:
                     firewall_rules=None,
                     databases=[database],
                     encryption_protector=None,
+                    location="location",
                 )
             ]
         }
@@ -119,6 +121,7 @@ class Test_sqlserver_tde_encryption_enabled:
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == database_name
             assert result[0].resource_id == database_id
+            assert result[0].location == "location"
 
     def test_sql_servers_database_encryption_enabled(self):
         sqlserver_client = mock.MagicMock
@@ -146,6 +149,7 @@ class Test_sqlserver_tde_encryption_enabled:
                     firewall_rules=None,
                     databases=[database],
                     encryption_protector=None,
+                    location="location",
                 )
             ]
         }
@@ -172,3 +176,4 @@ class Test_sqlserver_tde_encryption_enabled:
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == database_name
             assert result[0].resource_id == database_id
+            assert result[0].location == "location"

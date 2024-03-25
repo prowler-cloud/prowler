@@ -39,6 +39,7 @@ class Test_sqlserver_unrestricted_inbound_access:
                 Server(
                     id=sql_server_id,
                     name=sql_server_name,
+                    location="location",
                     public_network_access="",
                     minimal_tls_version="",
                     administrators=None,
@@ -74,6 +75,7 @@ class Test_sqlserver_unrestricted_inbound_access:
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == sql_server_name
             assert result[0].resource_id == sql_server_id
+            assert result[0].location == "location"
 
     def test_sql_servers_restricted_inbound_access(self):
         sqlserver_client = mock.MagicMock
@@ -84,6 +86,7 @@ class Test_sqlserver_unrestricted_inbound_access:
                 Server(
                     id=sql_server_id,
                     name=sql_server_name,
+                    location="location",
                     public_network_access="",
                     minimal_tls_version="",
                     administrators=None,
@@ -119,3 +122,4 @@ class Test_sqlserver_unrestricted_inbound_access:
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == sql_server_name
             assert result[0].resource_id == sql_server_id
+            assert result[0].location == "location"

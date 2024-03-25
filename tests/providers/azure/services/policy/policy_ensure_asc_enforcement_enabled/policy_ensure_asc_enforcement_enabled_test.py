@@ -111,7 +111,8 @@ class Test_policy_ensure_asc_enforcement_enabled:
         policy_client.policy_assigments = {
             AZURE_SUBSCRIPTION_ID: {
                 "SecurityCenterBuiltIn": PolicyAssigment(
-                    id=resource_id, enforcement_mode="DoNotEnforce"
+                    id=resource_id,
+                    enforcement_mode="DoNotEnforce",
                 )
             }
         }

@@ -19,6 +19,7 @@ class mysql_flexible_server_ssl_connection_enabled(Check):
                 report.subscription = subscription_name
                 report.resource_name = server_name
                 report.resource_id = server_name
+                report.location = server.location
                 report.status_extended = f"SSL connection is disabled for server {server_name} in subscription {subscription_name}."
 
                 if "require_secure_transport" in server.configurations:

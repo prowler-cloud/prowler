@@ -43,14 +43,18 @@ class Monitor(AzureService):
                     DiagnosticSetting(
                         id=setting.id,
                         name=setting.id.split("/")[-1],
-                        storage_account_name=setting.storage_account_id.split("/")[-1],
+                        storage_account_name=(
+                            setting.storage_account_id.split("/")[-1]
+                            if getattr(setting, "storage_account_id", None)
+                            else None
+                        ),
                         logs=setting.logs,
                         storage_account_id=setting.storage_account_id,
                     )
                 )
         except Exception as error:
             logger.error(
-                f"Subscription name: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                f"Subscription id: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
         return diagnostics_settings
 

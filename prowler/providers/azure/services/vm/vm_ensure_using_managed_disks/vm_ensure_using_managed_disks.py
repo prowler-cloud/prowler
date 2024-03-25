@@ -13,6 +13,7 @@ class vm_ensure_using_managed_disks(Check):
                 report.subscription = subscription_name
                 report.resource_name = vm.resource_name
                 report.resource_id = vm_id
+                report.location = vm.location
                 report.status_extended = f"VM {vm.resource_name} is using managed disks in subscription {subscription_name}"
 
                 using_managed_disks = (

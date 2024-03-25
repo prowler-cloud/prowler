@@ -33,6 +33,7 @@ def mock_storage_get_storage_accounts(_):
                 minimum_tls_version=None,
                 key_expiration_period_in_days=None,
                 private_endpoint_connections=None,
+                location="westeurope",
                 blob_properties=blob_properties,
             )
         ]
@@ -80,6 +81,9 @@ class Test_Storage_Service:
         )
         assert (
             storage.storage_accounts[AZURE_SUBSCRIPTION_ID][0].encryption_type == "None"
+        )
+        assert (
+            storage.storage_accounts[AZURE_SUBSCRIPTION_ID][0].location == "westeurope"
         )
         assert (
             storage.storage_accounts[AZURE_SUBSCRIPTION_ID][0].minimum_tls_version

@@ -46,9 +46,9 @@ class Account:
     id: str
     name: str
     kind: str
-    location: str
     type: str
     tags: dict
     is_virtual_network_filter_enabled: bool
+    location: str
     private_endpoint_connections: list[PrivateEndpointConnection] = None
     disable_local_auth: bool = False

@@ -15,6 +15,7 @@ class sqlserver_tde_encrypted_with_cmk(Check):
                     report.subscription = subscription
                     report.resource_name = sql_server.name
                     report.resource_id = sql_server.id
+                    report.location = sql_server.location
                     found_disabled = False
                     if (
                         sql_server.encryption_protector.server_key_type

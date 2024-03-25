@@ -58,6 +58,7 @@ class Test_aks_network_policy_enabled:
                     private_fqdn=None,
                     network_policy="network_policy",
                     agent_pool_profiles=[mock.MagicMock(enable_node_public_ip=False)],
+                    location="westeurope",
                     rbac_enabled=True,
                 )
             }
@@ -85,6 +86,7 @@ class Test_aks_network_policy_enabled:
             assert result[0].resource_name == "cluster_name"
             assert result[0].resource_id == cluster_id
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
+            assert result[0].location == "westeurope"
 
     def test_aks_network_policy_disabled(self):
         aks_client = mock.MagicMock
@@ -97,6 +99,7 @@ class Test_aks_network_policy_enabled:
                     private_fqdn=None,
                     network_policy=None,
                     agent_pool_profiles=[mock.MagicMock(enable_node_public_ip=False)],
+                    location="westeurope",
                     rbac_enabled=True,
                 )
             }
@@ -124,3 +127,4 @@ class Test_aks_network_policy_enabled:
             assert result[0].resource_name == "cluster_name"
             assert result[0].resource_id == cluster_id
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
+            assert result[0].location == "westeurope"

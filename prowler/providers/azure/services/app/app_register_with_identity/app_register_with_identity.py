@@ -16,6 +16,7 @@ class app_register_with_identity(Check):
                 report.subscription = subscription_name
                 report.resource_name = app_name
                 report.resource_id = app.resource_id
+                report.location = app.location
                 report.status_extended = f"App '{app_name}' in subscription '{subscription_name}' has an identity configured."
 
                 if not app.identity:

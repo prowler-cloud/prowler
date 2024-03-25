@@ -46,6 +46,7 @@ class Test_storage_key_rotation_90_dayss:
                     encryption_type="None",
                     minimum_tls_version="TLS1_1",
                     key_expiration_period_in_days=expiration_days,
+                    location="westeurope",
                     private_endpoint_connections=None,
                 )
             ]
@@ -73,6 +74,7 @@ class Test_storage_key_rotation_90_dayss:
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == storage_account_name
             assert result[0].resource_id == storage_account_id
+            assert result[0].location == "westeurope"
 
     def test_storage_storage_key_rotation_90_days(self):
         storage_account_id = str(uuid4())
@@ -92,6 +94,7 @@ class Test_storage_key_rotation_90_dayss:
                     encryption_type="None",
                     minimum_tls_version="TLS1_2",
                     key_expiration_period_in_days=expiration_days,
+                    location="westeurope",
                     private_endpoint_connections=None,
                 )
             ]
@@ -119,6 +122,7 @@ class Test_storage_key_rotation_90_dayss:
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == storage_account_name
             assert result[0].resource_id == storage_account_id
+            assert result[0].location == "westeurope"
 
     def test_storage_storage_no_key_rotation(self):
         storage_account_id = str(uuid4())
@@ -137,6 +141,7 @@ class Test_storage_key_rotation_90_dayss:
                     encryption_type="None",
                     minimum_tls_version="TLS1_2",
                     key_expiration_period_in_days=None,
+                    location="westeurope",
                     private_endpoint_connections=None,
                 )
             ]
@@ -164,3 +169,4 @@ class Test_storage_key_rotation_90_dayss:
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == storage_account_name
             assert result[0].resource_id == storage_account_id
+            assert result[0].location == "westeurope"

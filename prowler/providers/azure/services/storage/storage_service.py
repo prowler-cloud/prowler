@@ -51,6 +51,7 @@ class Storage(AzureService):
                             minimum_tls_version=storage_account.minimum_tls_version,
                             private_endpoint_connections=storage_account.private_endpoint_connections,
                             key_expiration_period_in_days=key_expiration_period_in_days,
+                            location=storage_account.location,
                         )
                     )
             except Exception as error:
@@ -103,4 +104,5 @@ class Account:
     minimum_tls_version: str
     private_endpoint_connections: PrivateEndpointConnection
     key_expiration_period_in_days: str
+    location: str
     blob_properties: BlobProperties = None

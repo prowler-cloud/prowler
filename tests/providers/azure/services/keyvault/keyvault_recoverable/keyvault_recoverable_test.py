@@ -54,7 +54,7 @@ class Test_keyvault_recoverable:
                     KeyVaultInfo(
                         id=keyvault_id,
                         name=keyvault_name,
-                        location="location",
+                        location="westeurope",
                         resource_group="resource_group",
                         properties=VaultProperties(
                             tenant_id="tenantid",
@@ -79,6 +79,7 @@ class Test_keyvault_recoverable:
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == keyvault_name
             assert result[0].resource_id == keyvault_id
+            assert result[0].location == "westeurope"
 
     def test_key_vaults_no_soft_delete(self):
         keyvault_client = mock.MagicMock
@@ -119,7 +120,7 @@ class Test_keyvault_recoverable:
                     KeyVaultInfo(
                         id=keyvault_id,
                         name=keyvault_name,
-                        location="location",
+                        location="westeurope",
                         resource_group="resource_group",
                         properties=VaultProperties(
                             tenant_id="tenantid",
@@ -144,6 +145,7 @@ class Test_keyvault_recoverable:
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == keyvault_name
             assert result[0].resource_id == keyvault_id
+            assert result[0].location == "westeurope"
 
     def test_key_vaults_valid_configuration(self):
         keyvault_client = mock.MagicMock
@@ -177,7 +179,7 @@ class Test_keyvault_recoverable:
                     KeyVaultInfo(
                         id=keyvault_id,
                         name=keyvault_name,
-                        location="location",
+                        location="westeurope",
                         resource_group="resource_group",
                         properties=VaultProperties(
                             tenant_id="tenantid",
@@ -202,3 +204,4 @@ class Test_keyvault_recoverable:
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == keyvault_name
             assert result[0].resource_id == keyvault_id
+            assert result[0].location == "westeurope"
