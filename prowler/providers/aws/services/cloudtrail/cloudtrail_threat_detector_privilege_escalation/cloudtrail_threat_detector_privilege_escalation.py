@@ -96,7 +96,6 @@ class cloudtrail_threat_detector_privilege_escalation(Check):
                 report.resource_tags = trail.tags
                 report.status = "FAIL"
                 report.status_extended = f"Potential privilege escalation detected from source IP {source_ip} with an entropy of {ENTROPY_THRESHOLD}."
-                print(actions)
                 findings.append(report)
         if not found_potential_privilege_escalation:
             report = Check_Report_AWS(self.metadata())
