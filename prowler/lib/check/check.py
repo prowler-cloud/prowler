@@ -448,13 +448,13 @@ def execute_checks(
             from resource import RLIMIT_NOFILE, getrlimit
 
             # Check ulimit for the maximum system open files
-            soft, _ = getrlimit(RLIMIT_NOFILE)
+            soft, hard = getrlimit(RLIMIT_NOFILE)
             if soft < 4096:
                 logger.info(
                     f"Your session file descriptors limit ({soft} open files) is below 4096. Updating file descriptors session limit to 4096 during execution only."
                 )
-                # Set the ulimit to 4096
-                setrlimit(RLIMIT_NOFILE, (4096, 4096))
+                # Set the soft ulimit to 4096
+                setrlimit(RLIMIT_NOFILE, (4096, hard))
         except Exception as error:
             logger.error("Unable to retrieve ulimit default settings")
             logger.error(
