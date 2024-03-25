@@ -2813,7 +2813,7 @@
           "Categoria": "planificación",
           "DescripcionControl": "Es recomendable que la entidad usuaria se apoye en el marco de trabajo AWS Well-Architected Framework",
           "Nivel": "alto",
-          "Tipo": "refuerzo",
+          "Tipo": "recomendacion",
           "Dimensiones": [
             "confidencialidad",
             "integridad",
@@ -2836,7 +2836,7 @@
           "Categoria": "planificación",
           "DescripcionControl": "Es recomendable que la entidad usuaria se apoye en el marco de trabajo AWS Well-Architected Framework",
           "Nivel": "alto",
-          "Tipo": "refuerzo",
+          "Tipo": "recomendacion",
           "Dimensiones": [
             "confidencialidad",
             "integridad",
@@ -2859,7 +2859,7 @@
           "Categoria": "planificación",
           "DescripcionControl": "Es recomendable que la entidad usuaria se apoye en el marco de trabajo AWS Well-Architected Framework",
           "Nivel": "alto",
-          "Tipo": "refuerzo",
+          "Tipo": "recomendacion",
           "Dimensiones": [
             "confidencialidad",
             "integridad",
@@ -2958,7 +2958,7 @@
           "Categoria": "planificación",
           "DescripcionControl": "En cuanto a la monitorización sobre el grado de consumo, utilizar la solución nativa Quota Monitor.",
           "Nivel": "alto",
-          "Tipo": "refuerzo",
+          "Tipo": "recomendacion",
           "Dimensiones": [
             "disponibilidad"
           ],
@@ -2977,7 +2977,7 @@
           "Categoria": "planificación",
           "DescripcionControl": "Para la creación de alarmas en materia de capacidad de las instancias, se debe configurar un tema de SNS que permita el envío de mails automáticos a la dirección de correo seleccionada.",
           "Nivel": "alto",
-          "Tipo": "refuerzo",
+          "Tipo": "recomendacion",
           "Dimensiones": [
             "disponibilidad"
           ],
@@ -2996,7 +2996,7 @@
           "Categoria": "planificación",
           "DescripcionControl": "Configurar alarmas correspondientes a las diferentes capacidades (SNS) como uso de CPU, capacidad de almacenamiento o latencia.",
           "Nivel": "alto",
-          "Tipo": "refuerzo",
+          "Tipo": "recomendacion",
           "Dimensiones": [
             "disponibilidad"
           ],
@@ -3015,7 +3015,7 @@
           "Categoria": "planificación",
           "DescripcionControl": "Visualizar las cuotas de servicio y configurar alarmas a través de la integración de AWS Service Quotas con CloudWatch.",
           "Nivel": "alto",
-          "Tipo": "refuerzo",
+          "Tipo": "recomendacion",
           "Dimensiones": [
             "disponibilidad"
           ],
@@ -3680,7 +3680,7 @@
           "Categoria": "control de acceso",
           "DescripcionControl": "Habilitar la información de usuario sobre la fecha de último uso de sus claves de acceso.",
           "Nivel": "alto",
-          "Tipo": "refuerzo",
+          "Tipo": "recomendacion",
           "Dimensiones": [
             "confidencialidad",
             "integridad",
@@ -3792,7 +3792,7 @@
           "Categoria": "explotación",
           "DescripcionControl": "Desplegar toda la infraestructura de AWS a través de código con el servicio AWS CloudFormation.",
           "Nivel": "alto",
-          "Tipo": "refuerzo",
+          "Tipo": "recomendacion",
           "Dimensiones": [
             "confidencialidad",
             "integridad",
@@ -3884,7 +3884,7 @@
           "Categoria": "explotación",
           "DescripcionControl": "Automatizar las operaciones estándar a llevar a cabo para la respuesta en caso de incidente a través de AWS System Manager",
           "Nivel": "alto",
-          "Tipo": "refuerzo",
+          "Tipo": "recomendacion",
           "Dimensiones": [
             "confidencialidad",
             "integridad",
@@ -3907,7 +3907,7 @@
           "Categoria": "explotación",
           "DescripcionControl": "Hacer uso de AWS System Manager Inventory para definir, a nivel de software, una lista blanca de aplicaciones.",
           "Nivel": "alto",
-          "Tipo": "refuerzo",
+          "Tipo": "recomendacion",
           "Dimensiones": [
             "confidencialidad",
             "integridad",
@@ -4224,7 +4224,7 @@
           "Categoria": "protección de la información",
           "DescripcionControl": "Habilitar CloudFormation Guard para el apoyo en las tareas de inspección de recursos no conformes implementados en el código fuente.",
           "Nivel": "alto",
-          "Tipo": "refuerzo",
+          "Tipo": "recomendacion",
           "Dimensiones": [
             "confidencialidad",
             "integridad",
@@ -4310,7 +4310,7 @@
           "Categoria": "protección de la información",
           "DescripcionControl": "La organización puede hacer uso de la nube de AWS como ubicación diferente para el almacenamiento de la copia de seguridad separada del resto o, incluo, utilizar los servicios de ubicación para separar una copia de seguridad en una ubicación diferente dentro de la propia nube.",
           "Nivel": "alto",
-          "Tipo": "refuerzo",
+          "Tipo": "recomendacion",
           "Dimensiones": [
             "disponibilidad"
           ],
