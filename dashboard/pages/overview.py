@@ -180,6 +180,8 @@ else:
     account_dropdown = create_account_dropdown(accounts)
 
     # Region Dropdown
+    # Handle the case where the region is null
+    data["REGION"] = data["REGION"].fillna("-")
     regions = ["All"] + list(data["REGION"].unique())
     region_dropdown = create_region_dropdown(regions)
 
@@ -379,23 +381,22 @@ def filter_data(cloud_account_values, region_account_values, assessment_value):
     # Filter REGION
     # Check if filtered data contains an aws account
     # TODO - Handle azure locations
-    if not filtered_data["PROVIDER"].str.contains("azure").any():
-        if region_account_values == ["All"]:
-            updated_region_account_values = filtered_data["REGION"].unique()
-        elif "All" in region_account_values and len(region_account_values) > 1:
-            # Remove 'All' from the list
-            region_account_values.remove("All")
-            updated_region_account_values = region_account_values
+    if region_account_values == ["All"]:
+        updated_region_account_values = filtered_data["REGION"].unique()
+    elif "All" in region_account_values and len(region_account_values) > 1:
+        # Remove 'All' from the list
+        region_account_values.remove("All")
+        updated_region_account_values = region_account_values
 
-        elif len(region_account_values) == 0:
-            updated_region_account_values = filtered_data["REGION"].unique()
-            region_account_values = ["All"]
-        else:
-            updated_region_account_values = region_account_values
+    elif len(region_account_values) == 0:
+        updated_region_account_values = filtered_data["REGION"].unique()
+        region_account_values = ["All"]
+    else:
+        updated_region_account_values = region_account_values
 
-        filtered_data = filtered_data[
-            filtered_data["REGION"].isin(updated_region_account_values)
-        ]
+    filtered_data = filtered_data[
+        filtered_data["REGION"].isin(updated_region_account_values)
+    ]
 
     region_filter_options = ["All"] + list(copy_data["REGION"].unique())
 
