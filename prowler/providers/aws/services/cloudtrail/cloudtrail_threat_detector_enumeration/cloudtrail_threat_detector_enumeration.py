@@ -1,8 +1,11 @@
+import json
+
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.cloudtrail.cloudtrail_client import (
     cloudtrail_client,
 )
 
+ENTROPY_THRESHOLD = 0.7
 THREAT_DETECTION_DAYS = cloudtrail_client.audit_config.get("threat_detection_days", 1)
 ENUMERATION_ACTIONS = [
     "DescribeAccessEntry",
@@ -101,27 +104,45 @@ ENUMERATION_ACTIONS = [
 class cloudtrail_threat_detector_enumeration(Check):
     def execute(self):
         findings = []
+        potential_enumeration = {}
+        found_potential_enumeration = False
         for trail in cloudtrail_client.trails:
-            print(
-                cloudtrail_client.__lookup_events__(
+            for event_name in ENUMERATION_ACTIONS:
+                for event_log in cloudtrail_client.__lookup_events__(
                     trail=trail,
-                    event_names=["ConsoleLogin"],
+                    event_name=event_name,
                     days=THREAT_DETECTION_DAYS,
-                )
-            )
+                ):
+                    event_log = json.loads(event_log["CloudTrailEvent"])
+                    if ".amazonaws.com" not in event_log["sourceIPAddress"]:
+                        if event_log["sourceIPAddress"] not in potential_enumeration:
+                            potential_enumeration[event_log["sourceIPAddress"]] = []
+                        if (
+                            event_name
+                            not in potential_enumeration[event_log["sourceIPAddress"]]
+                        ):
+                            potential_enumeration[event_log["sourceIPAddress"]].append(
+                                event_name
+                            )
+        for source_ip, actions in potential_enumeration.items():
+            if len(actions) / len(ENUMERATION_ACTIONS) > ENTROPY_THRESHOLD:
+                found_potential_enumeration = True
+                report = Check_Report_AWS(self.metadata())
+                report.region = trail.region
+                report.resource_id = trail.name
+                report.resource_arn = trail.arn
+                report.resource_tags = trail.tags
+                report.status = "FAIL"
+                report.status_extended = f"Potential privilege escalation detected from source IP {source_ip} with an entropy of {ENTROPY_THRESHOLD}."
+                print(actions)
+                findings.append(report)
+        if not found_potential_enumeration:
             report = Check_Report_AWS(self.metadata())
             report.region = trail.region
             report.resource_id = trail.name
             report.resource_arn = trail.arn
             report.resource_tags = trail.tags
-            report.status = "FAIL"
-            report.status_extended = (
-                f"Trail {trail.name} does not have insight selectors and it is logging."
-            )
-            if trail.has_insight_selectors:
-                report.status = "PASS"
-                report.status_extended = (
-                    f"Trail {trail.name} has insight selectors and it is logging."
-                )
+            report.status = "PASS"
+            report.status_extended = "No potential privilege escalation detected."
             findings.append(report)
         return findings
