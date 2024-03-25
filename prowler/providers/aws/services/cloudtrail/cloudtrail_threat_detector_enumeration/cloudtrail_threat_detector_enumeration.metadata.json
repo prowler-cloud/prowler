@@ -1,19 +1,15 @@
 {
   "Provider": "aws",
   "CheckID": "cloudtrail_threat_detector_enumeration",
-  "CheckTitle": "Ensure CloudTrail Insight is enabled",
-  "CheckType": [
-    "Software and Configuration Checks",
-    "Industry and Regulatory Standards",
-    "CIS AWS Foundations Benchmark"
-  ],
+  "CheckTitle": "Ensure there are no potential enumeration threats in CloudTrail",
+  "CheckType": [],
   "ServiceName": "cloudtrail",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
-  "Severity": "low",
+  "Severity": "critical",
   "ResourceType": "AwsCloudTrailTrail",
-  "Description": "Ensure CloudTrail Insight is enabled",
-  "Risk": "CloudTrail Insights provides a powerful way to search and analyze CloudTrail log data using pre-built queries and machine learning algorithms. This can help you to identify potential security threats and suspicious activity in near real-time, such as unauthorized access attempts, policy changes, or resource modifications.",
+  "Description": "This check ensures that there are no potential enumeration threats in CloudTrail.",
+  "Risk": "Potential enumeration threats in CloudTrail can lead to unauthorized access to resources.",
   "RelatedUrl": "",
   "Remediation": {
     "Code": {
@@ -23,8 +19,8 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Enable CloudTrail Insight",
-      "Url": "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/logging-insights-events-with-cloudtrail.html"
+      "Text": "To remediate this issue, ensure that there are no potential enumeration threats in CloudTrail.",
+      "Url": "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-concepts.html#cloudtrail-concepts-logging-data-events"
     }
   },
   "Categories": [

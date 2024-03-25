@@ -116,14 +116,10 @@ class cloudtrail_threat_detector_enumeration(Check):
                     event_log = json.loads(event_log["CloudTrailEvent"])
                     if ".amazonaws.com" not in event_log["sourceIPAddress"]:
                         if event_log["sourceIPAddress"] not in potential_enumeration:
-                            potential_enumeration[event_log["sourceIPAddress"]] = []
-                        if (
+                            potential_enumeration[event_log["sourceIPAddress"]] = set()
+                        potential_enumeration[event_log["sourceIPAddress"]].add(
                             event_name
-                            not in potential_enumeration[event_log["sourceIPAddress"]]
-                        ):
-                            potential_enumeration[event_log["sourceIPAddress"]].append(
-                                event_name
-                            )
+                        )
         for source_ip, actions in potential_enumeration.items():
             if len(actions) / len(ENUMERATION_ACTIONS) > ENTROPY_THRESHOLD:
                 found_potential_enumeration = True

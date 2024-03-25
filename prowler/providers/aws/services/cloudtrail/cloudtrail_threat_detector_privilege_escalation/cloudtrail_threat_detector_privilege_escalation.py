@@ -82,10 +82,10 @@ class cloudtrail_threat_detector_privilege_escalation(Check):
                         ):
                             potential_privilege_escalation[
                                 event_log["sourceIPAddress"]
-                            ] = []
+                            ] = set()
                         potential_privilege_escalation[
                             event_log["sourceIPAddress"]
-                        ].append(event_name)
+                        ].add(event_name)
         for source_ip, actions in potential_privilege_escalation.items():
             if len(actions) / len(PRIVILEGE_ESCALATION_ACTIONS) > ENTROPY_THRESHOLD:
                 found_potential_privilege_escalation = True
