@@ -65,6 +65,7 @@ class Test_network_flow_log_captured_sent:
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == network_watcher_name
             assert result[0].resource_id == network_watcher_id
+            assert result[0].location == "location"
 
     def test_network_network_watchers_flow_logs_disabled(self):
         network_client = mock.MagicMock
@@ -109,6 +110,7 @@ class Test_network_flow_log_captured_sent:
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == network_watcher_name
             assert result[0].resource_id == network_watcher_id
+            assert result[0].location == "location"
 
     def test_network_network_watchers_flow_logs_well_configured(self):
         network_client = mock.MagicMock
@@ -146,6 +148,7 @@ class Test_network_flow_log_captured_sent:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
+            assert result[0].location == "location"
             assert (
                 result[0].status_extended
                 == f"Network Watcher {network_watcher_name} from subscription {AZURE_SUBSCRIPTION_ID} has flow logs that are captured and sent to Log Analytics workspace"

@@ -17,6 +17,7 @@ class postgresql_flexible_server_allow_access_services_disabled(Check):
                 report.resource_name = server.name
                 report.resource_id = server.id
                 report.status = "FAIL"
+                report.location = server.location
                 report.status_extended = f"Flexible Postgresql server {server.name} from subscription {subscription} has allow public access from any Azure service enabled"
                 if not any(
                     rule.start_ip == "0.0.0.0" and rule.end_ip == "0.0.0.0"

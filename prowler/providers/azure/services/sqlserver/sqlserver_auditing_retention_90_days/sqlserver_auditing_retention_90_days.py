@@ -11,6 +11,7 @@ class sqlserver_auditing_retention_90_days(Check):
                 report.subscription = subscription
                 report.resource_name = sql_server.name
                 report.resource_id = sql_server.id
+                report.location = sql_server.location
                 has_failed = False
                 has_policy = False
                 for policy in sql_server.auditing_policies:

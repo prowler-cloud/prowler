@@ -13,6 +13,7 @@ class keyvault_key_expiration_set_in_non_rbac(Check):
                     report.resource_name = keyvault.name
                     report.resource_id = keyvault.id
                     report.status = "PASS"
+                    report.location = keyvault.location
                     report.status_extended = f"Keyvault {keyvault.name} from subscription {subscription} has all the keys with expiration date set."
                     has_key_without_expiration = False
                     for key in keyvault.keys:

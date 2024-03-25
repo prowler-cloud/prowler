@@ -42,6 +42,9 @@ class PostgreSQL(AzureService):
                     firewall = self.__get_firewall__(
                         subscription, resource_group, postgresql_server.name
                     )
+                    location = self.__get_location__(
+                        subscription, resource_group, postgresql_server.name
+                    )
                     flexible_servers[subscription].append(
                         Server(
                             id=postgresql_server.id,
@@ -54,6 +57,7 @@ class PostgreSQL(AzureService):
                             connection_throttling=connection_throttling,
                             log_retention_days=log_retention_days,
                             firewall=firewall,
+                            location=location,
                         )
                     )
             except Exception as error:
@@ -95,6 +99,11 @@ class PostgreSQL(AzureService):
             resouce_group_name, server_name, "log_disconnections"
         )
         return log_disconnections.value.upper()
+
+    def __get_location__(self, subscription, resouce_group_name, server_name):
+        client = self.clients[subscription]
+        location = client.servers.get(resouce_group_name, server_name).location
+        return location
 
     def __get_connection_throttling__(
         self, subscription, resouce_group_name, server_name
@@ -152,3 +161,4 @@ class Server:
     connection_throttling: str
     log_retention_days: str
     firewall: list[Firewall]
+    location: str

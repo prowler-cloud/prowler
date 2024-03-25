@@ -12,6 +12,7 @@ class keyvault_key_rotation_enabled(Check):
                     report.subscription = subscription
                     report.resource_name = keyvault.name
                     report.resource_id = keyvault.id
+                    report.location = keyvault.location
                     for key in keyvault.keys:
                         if (
                             key.rotation_policy

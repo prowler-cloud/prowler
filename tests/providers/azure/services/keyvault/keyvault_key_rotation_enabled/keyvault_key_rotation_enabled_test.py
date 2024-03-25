@@ -51,7 +51,7 @@ class Test_keyvault_key_rotation_enabled:
                     KeyVaultInfo(
                         id="id",
                         name="name",
-                        location="location",
+                        location="westeurope",
                         resource_group="resource_group",
                         properties=VaultProperties(
                             tenant_id="tenantid",
@@ -92,7 +92,7 @@ class Test_keyvault_key_rotation_enabled:
                     KeyVaultInfo(
                         id="id",
                         name=keyvault_name,
-                        location="location",
+                        location="westeurope",
                         resource_group="resource_group",
                         properties=VaultProperties(
                             tenant_id="tenantid",
@@ -124,6 +124,7 @@ class Test_keyvault_key_rotation_enabled:
             assert result[0].resource_name == keyvault_name
             assert result[0].resource_id == "id"
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
+            assert result[0].location == "westeurope"
 
     def test_key_with_rotation_policy(self):
         keyvault_client = mock.MagicMock
@@ -150,7 +151,7 @@ class Test_keyvault_key_rotation_enabled:
                     KeyVaultInfo(
                         id="id",
                         name=keyvault_name,
-                        location="location",
+                        location="westeurope",
                         resource_group="resource_group",
                         properties=VaultProperties(
                             tenant_id="tenantid",
@@ -190,3 +191,4 @@ class Test_keyvault_key_rotation_enabled:
             assert result[0].resource_name == keyvault_name
             assert result[0].resource_id == "id"
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
+            assert result[0].location == "westeurope"

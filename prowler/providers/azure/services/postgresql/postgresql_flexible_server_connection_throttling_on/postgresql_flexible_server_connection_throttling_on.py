@@ -17,6 +17,7 @@ class postgresql_flexible_server_connection_throttling_on(Check):
                 report.resource_name = server.name
                 report.resource_id = server.id
                 report.status = "FAIL"
+                report.location = server.location
                 report.status_extended = f"Flexible Postgresql server {server.name} from subscription {subscription} has connection_throttling disabled"
                 if server.connection_throttling == "ON":
                     report.status = "PASS"

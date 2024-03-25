@@ -45,6 +45,7 @@ class Test_storage_ensure_encryption_with_customer_managed_keys:
                     encryption_type="None",
                     minimum_tls_version=None,
                     key_expiration_period_in_days=None,
+                    location="westeurope",
                     private_endpoint_connections=None,
                 )
             ]
@@ -72,6 +73,7 @@ class Test_storage_ensure_encryption_with_customer_managed_keys:
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == storage_account_name
             assert result[0].resource_id == storage_account_id
+            assert result[0].location == "westeurope"
 
     def test_storage_storage_accounts_encryption_with_customer_managed_keys(self):
         storage_account_id = str(uuid4())
@@ -90,6 +92,7 @@ class Test_storage_ensure_encryption_with_customer_managed_keys:
                     encryption_type="Microsoft.Keyvault",
                     minimum_tls_version=None,
                     key_expiration_period_in_days=None,
+                    location="westeurope",
                     private_endpoint_connections=None,
                 )
             ]
@@ -117,3 +120,4 @@ class Test_storage_ensure_encryption_with_customer_managed_keys:
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == storage_account_name
             assert result[0].resource_id == storage_account_id
+            assert result[0].location == "westeurope"

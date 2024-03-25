@@ -52,8 +52,7 @@ def generate_provider_output(provider, finding, csv_data) -> FindingOutput:
             csv_data["account_name"] = finding.subscription
             csv_data["resource_name"] = finding.resource_name
             csv_data["resource_uid"] = finding.resource_id
-            # TODO: pending to get location from Azure resources (finding.location)
-            csv_data["region"] = ""
+            csv_data["region"] = finding.location
 
         elif provider.type == "gcp":
             csv_data["auth_method"] = f"Principal: {csv_data['auth_method']}"

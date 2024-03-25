@@ -58,6 +58,7 @@ class Test_aks_clusters_created_with_private_nodes:
                     private_fqdn="",
                     network_policy="network_policy",
                     agent_pool_profiles=[mock.MagicMock(enable_node_public_ip=True)],
+                    location="westeurope",
                     rbac_enabled=True,
                 )
             }
@@ -85,6 +86,7 @@ class Test_aks_clusters_created_with_private_nodes:
             assert result[0].resource_id == cluster_id
             assert result[0].resource_name == "cluster_name"
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
+            assert result[0].location == "westeurope"
 
     def test_aks_cluster_private_nodes(self):
         aks_client = mock.MagicMock
@@ -97,6 +99,7 @@ class Test_aks_clusters_created_with_private_nodes:
                     private_fqdn="private_fqdn",
                     network_policy="network_policy",
                     agent_pool_profiles=[mock.MagicMock(enable_node_public_ip=False)],
+                    location="westeurope",
                     rbac_enabled=True,
                 )
             }
@@ -124,6 +127,7 @@ class Test_aks_clusters_created_with_private_nodes:
             assert result[0].resource_id == cluster_id
             assert result[0].resource_name == "cluster_name"
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
+            assert result[0].location == "westeurope"
 
     def test_aks_cluster_public_and_private_nodes(self):
         aks_client = mock.MagicMock
@@ -140,6 +144,7 @@ class Test_aks_clusters_created_with_private_nodes:
                         mock.MagicMock(enable_node_public_ip=True),
                         mock.MagicMock(enable_node_public_ip=False),
                     ],
+                    location="westeurope",
                     rbac_enabled=True,
                 )
             }
@@ -167,3 +172,4 @@ class Test_aks_clusters_created_with_private_nodes:
             assert result[0].resource_id == cluster_id
             assert result[0].resource_name == "cluster_name"
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
+            assert result[0].location == "westeurope"

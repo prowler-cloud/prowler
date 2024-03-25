@@ -12,6 +12,7 @@ class cosmosdb_account_use_private_endpoints(Check):
                 report.resource_name = account.name
                 report.resource_id = account.id
                 report.status = "FAIL"
+                report.location = account.location
                 report.status_extended = f"CosmosDB account {account.name} from subscription {subscription} is not using private endpoints connections"
                 if account.private_endpoint_connections:
                     report.status = "PASS"

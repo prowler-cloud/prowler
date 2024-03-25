@@ -51,7 +51,7 @@ class Test_keyvault_rbac_secret_expiration_set:
                     KeyVaultInfo(
                         id="id",
                         name="name",
-                        location="location",
+                        location="westeurope",
                         resource_group="resource_group",
                         properties=VaultProperties(
                             tenant_id="tenantid",
@@ -100,7 +100,7 @@ class Test_keyvault_rbac_secret_expiration_set:
                     KeyVaultInfo(
                         id=keyvault_id,
                         name=keyvault_name,
-                        location="location",
+                        location="westeurope",
                         resource_group="resource_group",
                         properties=VaultProperties(
                             tenant_id="tenantid",
@@ -123,6 +123,7 @@ class Test_keyvault_rbac_secret_expiration_set:
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == keyvault_name
             assert result[0].resource_id == keyvault_id
+            assert result[0].location == "westeurope"
 
     def test_key_vaults_invalid_multiple_secrets(self):
         keyvault_client = mock.MagicMock
@@ -165,7 +166,7 @@ class Test_keyvault_rbac_secret_expiration_set:
                     KeyVaultInfo(
                         id=keyvault_id,
                         name=keyvault_name,
-                        location="location",
+                        location="westeurope",
                         resource_group="resource_group",
                         properties=VaultProperties(
                             tenant_id="tenantid",
@@ -188,6 +189,7 @@ class Test_keyvault_rbac_secret_expiration_set:
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == keyvault_name
             assert result[0].resource_id == keyvault_id
+            assert result[0].location == "westeurope"
 
     def test_key_vaults_valid_keys(self):
         keyvault_client = mock.MagicMock
@@ -221,7 +223,7 @@ class Test_keyvault_rbac_secret_expiration_set:
                     KeyVaultInfo(
                         id=keyvault_id,
                         name=keyvault_name,
-                        location="location",
+                        location="westeurope",
                         resource_group="resource_group",
                         properties=VaultProperties(
                             tenant_id="tenantid",
@@ -244,3 +246,4 @@ class Test_keyvault_rbac_secret_expiration_set:
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == keyvault_name
             assert result[0].resource_id == keyvault_id
+            assert result[0].location == "westeurope"

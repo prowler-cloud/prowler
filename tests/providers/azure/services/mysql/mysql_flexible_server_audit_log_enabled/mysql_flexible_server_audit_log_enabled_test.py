@@ -87,6 +87,7 @@ class Test_mysql_flexible_server_audit_log_enabled:
             assert result[0].status == "FAIL"
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == server_name
+            assert result[0].location == "location"
             assert (
                 result[0].resource_id
                 == f"/subscriptions/{server_name}/configurations/audit_log_enabled"
@@ -133,6 +134,7 @@ class Test_mysql_flexible_server_audit_log_enabled:
             assert result[0].status == "PASS"
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == server_name
+            assert result[0].location == "location"
             assert (
                 result[0].resource_id
                 == f"/subscriptions/{server_name}/configurations/audit_log_enabled"

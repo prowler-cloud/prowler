@@ -16,6 +16,7 @@ def mock_appinsights_get_components(_):
             "app_id-1": Component(
                 resource_id="/subscriptions/resource_id",
                 resource_name="AppInsightsTest",
+                location="westeurope",
             )
         }
     }
@@ -47,4 +48,8 @@ class Test_AppInsights_Service:
         assert (
             appinsights.components[AZURE_SUBSCRIPTION_ID]["app_id-1"].resource_name
             == "AppInsightsTest"
+        )
+        assert (
+            appinsights.components[AZURE_SUBSCRIPTION_ID]["app_id-1"].location
+            == "westeurope"
         )

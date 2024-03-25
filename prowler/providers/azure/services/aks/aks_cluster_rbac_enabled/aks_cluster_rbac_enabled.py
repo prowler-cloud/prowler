@@ -13,6 +13,7 @@ class aks_cluster_rbac_enabled(Check):
                 report.subscription = subscription_name
                 report.resource_name = cluster.name
                 report.resource_id = cluster_id
+                report.location = cluster.location
                 report.status_extended = f"RBAC is enabled for cluster '{cluster.name}' in subscription '{subscription_name}'."
 
                 if not cluster.rbac_enabled:

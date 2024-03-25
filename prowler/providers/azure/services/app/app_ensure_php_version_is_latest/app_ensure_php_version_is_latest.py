@@ -21,6 +21,7 @@ class app_ensure_php_version_is_latest(Check):
                     report.subscription = subscription_name
                     report.resource_name = app_name
                     report.resource_id = app.resource_id
+                    report.location = app.location
 
                     php_latest_version = app_client.audit_config.get(
                         "php_latest_version", "8.2"

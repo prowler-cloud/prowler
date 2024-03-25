@@ -15,6 +15,7 @@ class keyvault_non_rbac_secret_expiration_set(Check):
                     report.subscription = subscription
                     report.resource_name = keyvault.name
                     report.resource_id = keyvault.id
+                    report.location = keyvault.location
                     report.status = "PASS"
                     report.status_extended = f"Keyvault {keyvault.name} from subscription {subscription} has all the secrets with expiration date set."
                     has_secret_without_expiration = False
