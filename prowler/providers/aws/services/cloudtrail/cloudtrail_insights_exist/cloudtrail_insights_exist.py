@@ -7,7 +7,7 @@ from prowler.providers.aws.services.cloudtrail.cloudtrail_client import (
 class cloudtrail_insights_exist(Check):
     def execute(self):
         findings = []
-        for trail in cloudtrail_client.trails:
+        for trail in cloudtrail_client.trails.values():
             if trail.is_logging:
                 report = Check_Report_AWS(self.metadata())
                 report.region = trail.region

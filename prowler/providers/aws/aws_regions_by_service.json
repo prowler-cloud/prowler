@@ -5992,7 +5992,9 @@
           "us-west-2"
         ],
         "aws-cn": [],
-        "aws-us-gov": []
+        "aws-us-gov": [
+          "us-gov-west-1"
+        ]
       }
     },
     "lexv2-models": {
@@ -6011,7 +6013,9 @@
           "us-west-2"
         ],
         "aws-cn": [],
-        "aws-us-gov": []
+        "aws-us-gov": [
+          "us-gov-west-1"
+        ]
       }
     },
     "license-manager": {
@@ -7046,6 +7050,7 @@
           "ap-east-1",
           "ap-northeast-1",
           "ap-northeast-2",
+          "ap-northeast-3",
           "ap-south-1",
           "ap-southeast-1",
           "ap-southeast-2",
@@ -9966,21 +9971,9 @@
         ]
       }
     },
-    "supplychain": {
-      "regions": {
-        "aws": [
-          "eu-central-1",
-          "us-east-1",
-          "us-west-2"
-        ],
-        "aws-cn": [],
-        "aws-us-gov": []
-      }
-    },
     "support": {
       "regions": {
         "aws": [
-          "af-south-1",
           "ap-east-1",
           "ap-northeast-1",
           "ap-northeast-2",

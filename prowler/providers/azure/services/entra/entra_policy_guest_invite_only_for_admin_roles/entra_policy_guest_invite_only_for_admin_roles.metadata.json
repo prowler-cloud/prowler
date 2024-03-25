@@ -1,0 +1,30 @@
+{
+  "Provider": "azure",
+  "CheckID": "entra_policy_guest_invite_only_for_admin_roles",
+  "CheckTitle": "Ensure that 'Guest invite restrictions' is set to 'Only users assigned to specific admin roles can invite guest users'",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "#microsoft.graph.authorizationPolicy",
+  "Description": "Restrict invitations to users with specific administrative roles only.",
+  "Risk": "Restricting invitations to users with specific administrator roles ensures that only authorized accounts have access to cloud resources. This helps to maintain 'Need to Know' permissions and prevents inadvertent access to data. By default the setting Guest invite restrictions is set to Anyone in the organization can invite guest users including guests and non-admins. This would allow anyone within the organization to invite guests and non-admins to the tenant, posing a security risk.",
+  "RelatedUrl": "https://learn.microsoft.com/en-us/entra/external-id/external-collaboration-settings-configure",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "1. From Azure Home select the Portal Menu 2. Select Microsoft Entra ID 3. Then External Identities 4. Select External collaboration settings 5. Under Guest invite settings, for Guest invite restrictions, ensure that Only users assigned to specific admin roles can invite guest users is selected",
+      "Url": "https://learn.microsoft.com/en-us/answers/questions/685101/how-to-allow-only-admins-to-add-guests"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "With the option of Only users assigned to specific admin roles can invite guest users selected, users with specific admin roles will be in charge of sending invitations to the external users, requiring additional overhead by them to manage user accounts. This will mean coordinating with other departments as they are onboarding new users."
+}
