@@ -13,7 +13,7 @@ from prowler.providers.gcp.models import GCPIdentityInfo, GCPOutputOptions, GCPP
 class TestGCPProvider:
     def test_gcp_provider(self):
         arguments = Namespace()
-        arguments.project_ids = []
+        arguments.project_id = []
         arguments.credentials_file = ""
         arguments.config_file = default_config_file_path
 
@@ -48,13 +48,13 @@ class TestGCPProvider:
     @freeze_time(datetime.today())
     def test_gcp_provider_output_options(self):
         arguments = Namespace()
-        arguments.project_ids = []
+        arguments.project_id = []
         arguments.credentials_file = ""
         arguments.config_file = default_config_file_path
 
         # Output options
         arguments.status = []
-        arguments.output_modes = ["csv"]
+        arguments.output_formats = ["csv"]
         arguments.output_directory = "output_test_directory"
         arguments.verbose = True
         arguments.only_logs = False

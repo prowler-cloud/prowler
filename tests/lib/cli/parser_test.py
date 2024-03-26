@@ -42,9 +42,9 @@ class Test_Parser:
         parsed = self.parser.parse(command)
         assert parsed.provider == provider
         assert not parsed.status
-        assert len(parsed.output_modes) == 2
-        assert "csv" in parsed.output_modes
-        assert "json-ocsf" in parsed.output_modes
+        assert len(parsed.output_formats) == 2
+        assert "csv" in parsed.output_formats
+        assert "json-ocsf" in parsed.output_formats
         assert not parsed.output_filename
         assert "output" in parsed.output_directory
         assert not parsed.verbose
@@ -88,9 +88,9 @@ class Test_Parser:
         parsed = self.parser.parse(command)
         assert parsed.provider == provider
         assert not parsed.status
-        assert len(parsed.output_modes) == 2
-        assert "csv" in parsed.output_modes
-        assert "json-ocsf" in parsed.output_modes
+        assert len(parsed.output_formats) == 2
+        assert "csv" in parsed.output_formats
+        assert "json-ocsf" in parsed.output_formats
         assert not parsed.output_filename
         assert "output" in parsed.output_directory
         assert not parsed.verbose
@@ -114,7 +114,7 @@ class Test_Parser:
         assert not parsed.list_compliance
         assert not parsed.list_compliance_requirements
         assert not parsed.list_categories
-        assert len(parsed.subscription_ids) == 0
+        assert len(parsed.subscription_id) == 0
         assert not parsed.az_cli_auth
         assert not parsed.sp_env_auth
         assert not parsed.browser_auth
@@ -127,9 +127,9 @@ class Test_Parser:
         parsed = self.parser.parse(command)
         assert parsed.provider == provider
         assert not parsed.status
-        assert len(parsed.output_modes) == 2
-        assert "csv" in parsed.output_modes
-        assert "json-ocsf" in parsed.output_modes
+        assert len(parsed.output_formats) == 2
+        assert "csv" in parsed.output_formats
+        assert "json-ocsf" in parsed.output_formats
         assert not parsed.output_filename
         assert "output" in parsed.output_directory
         assert not parsed.verbose
@@ -161,9 +161,9 @@ class Test_Parser:
         parsed = self.parser.parse(command)
         assert parsed.provider == provider
         assert not parsed.severity
-        assert len(parsed.output_modes) == 2
-        assert "csv" in parsed.output_modes
-        assert "json-ocsf" in parsed.output_modes
+        assert len(parsed.output_formats) == 2
+        assert "csv" in parsed.output_formats
+        assert "json-ocsf" in parsed.output_formats
         assert not parsed.output_filename
         assert "output" in parsed.output_directory
         assert not parsed.verbose
@@ -189,7 +189,7 @@ class Test_Parser:
         assert not parsed.list_categories
         assert not parsed.kubeconfig_file
         assert not parsed.context
-        assert not parsed.namespaces
+        assert not parsed.namespace
 
     def test_root_parser_version_short(self):
         command = [prowler_command, "-v"]
@@ -259,36 +259,36 @@ class Test_Parser:
         parsed = self.parser.parse(command)
         assert parsed.ignore_exit_code_3
 
-    def test_root_parser_default_output_modes(self):
+    def test_root_parser_default_output_formats(self):
         command = [prowler_command]
         parsed = self.parser.parse(command)
-        assert len(parsed.output_modes) == 2
-        assert "csv" in parsed.output_modes
-        assert "json-ocsf" in parsed.output_modes
+        assert len(parsed.output_formats) == 2
+        assert "csv" in parsed.output_formats
+        assert "json-ocsf" in parsed.output_formats
 
-    def test_root_parser_output_modes_short(self):
+    def test_root_parser_output_formats_short(self):
         command = [prowler_command, "-M", "csv"]
         parsed = self.parser.parse(command)
-        assert len(parsed.output_modes) == 1
-        assert "csv" in parsed.output_modes
+        assert len(parsed.output_formats) == 1
+        assert "csv" in parsed.output_formats
 
-    def test_root_parser_output_modes_long(self):
+    def test_root_parser_output_formats_long(self):
         command = [prowler_command, "--output-modes", "csv"]
         parsed = self.parser.parse(command)
-        assert len(parsed.output_modes) == 1
-        assert "csv" in parsed.output_modes
+        assert len(parsed.output_formats) == 1
+        assert "csv" in parsed.output_formats
 
-    def test_root_parser_output_modes_short_json_ocsf(self):
+    def test_root_parser_output_formats_short_json_ocsf(self):
         command = [prowler_command, "-M", "json-ocsf"]
         parsed = self.parser.parse(command)
-        assert len(parsed.output_modes) == 1
-        assert "json-ocsf" in parsed.output_modes
+        assert len(parsed.output_formats) == 1
+        assert "json-ocsf" in parsed.output_formats
 
-    def test_root_parser_output_modes_long_json_ocsf(self):
+    def test_root_parser_output_formats_long_json_ocsf(self):
         command = [prowler_command, "--output-modes", "json-ocsf"]
         parsed = self.parser.parse(command)
-        assert len(parsed.output_modes) == 1
-        assert "json-ocsf" in parsed.output_modes
+        assert len(parsed.output_formats) == 1
+        assert "json-ocsf" in parsed.output_formats
 
     def test_root_parser_output_filename_short(self):
         filename = "test_output.txt"
@@ -1112,16 +1112,16 @@ class Test_Parser:
         assert parsed.provider == "azure"
         assert parsed.managed_identity_auth
 
-    def test_parser_azure_subscription_ids(self):
+    def test_parser_azure_subscription_id(self):
         argument = "--subscription-ids"
         subscription_1 = "test_subscription_1"
         subscription_2 = "test_subscription_2"
         command = [prowler_command, "azure", argument, subscription_1, subscription_2]
         parsed = self.parser.parse(command)
         assert parsed.provider == "azure"
-        assert len(parsed.subscription_ids) == 2
-        assert parsed.subscription_ids[0] == subscription_1
-        assert parsed.subscription_ids[1] == subscription_2
+        assert len(parsed.subscription_id) == 2
+        assert parsed.subscription_id[0] == subscription_1
+        assert parsed.subscription_id[1] == subscription_2
 
     def test_parser_azure_region(self):
         argument = "--azure-region"
@@ -1163,16 +1163,16 @@ class Test_Parser:
         assert parsed.provider == "gcp"
         assert parsed.credentials_file == file
 
-    def test_parser_gcp_project_ids(self):
-        argument = "--project-ids"
+    def test_parser_gcp_project_id(self):
+        argument = "--project-id"
         project_1 = "test_project_1"
         project_2 = "test_project_2"
         command = [prowler_command, "gcp", argument, project_1, project_2]
         parsed = self.parser.parse(command)
         assert parsed.provider == "gcp"
-        assert len(parsed.project_ids) == 2
-        assert parsed.project_ids[0] == project_1
-        assert parsed.project_ids[1] == project_2
+        assert len(parsed.project_id) == 2
+        assert parsed.project_id[0] == project_1
+        assert parsed.project_id[1] == project_2
 
     def test_parser_kubernetes_auth_kubeconfig_file(self):
         argument = "--kubeconfig-file"
@@ -1191,13 +1191,13 @@ class Test_Parser:
         assert parsed.context == context
 
     def test_parser_kubernetes_auth_namespace(self):
-        argument = "--namespaces"
+        argument = "--namespace"
         namespace_1 = "default"
         namespace_2 = "kube-system"
         command = [prowler_command, "kubernetes", argument, namespace_1, namespace_2]
         parsed = self.parser.parse(command)
         assert parsed.provider == "kubernetes"
-        assert parsed.namespaces == [namespace_1, namespace_2]
+        assert parsed.namespace == [namespace_1, namespace_2]
 
     def test_validate_azure_region_valid_regions(self):
         expected_regions = [
