@@ -106,7 +106,18 @@ class cloudtrail_threat_detector_enumeration(Check):
         findings = []
         potential_enumeration = {}
         found_potential_enumeration = False
-        for trail in cloudtrail_client.trails:
+        multiregion_trail = None
+        # Check if any trail is multi-region so we only need to check once
+        for trail in cloudtrail_client.trails.values():
+            if trail.is_multiregion:
+                multiregion_trail = trail
+                break
+        trails_to_scan = (
+            cloudtrail_client.trails.values()
+            if not multiregion_trail
+            else [multiregion_trail]
+        )
+        for trail in trails_to_scan:
             for event_name in ENUMERATION_ACTIONS:
                 for event_log in cloudtrail_client.__lookup_events__(
                     trail=trail,

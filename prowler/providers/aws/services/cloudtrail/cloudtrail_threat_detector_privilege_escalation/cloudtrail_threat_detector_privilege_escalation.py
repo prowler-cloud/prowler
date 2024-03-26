@@ -67,7 +67,17 @@ class cloudtrail_threat_detector_privilege_escalation(Check):
         findings = []
         potential_privilege_escalation = {}
         found_potential_privilege_escalation = False
-        for trail in cloudtrail_client.trails:
+        multiregion_trail = None
+        # Check if any trail is multi-region so we only need to check once
+        for trail in cloudtrail_client.trails.values():
+            if trail.is_multiregion:
+                multiregion_trail = trail
+        trails_to_scan = (
+            cloudtrail_client.trails.values()
+            if not multiregion_trail
+            else [multiregion_trail]
+        )
+        for trail in trails_to_scan:
             for event_name in PRIVILEGE_ESCALATION_ACTIONS:
                 for event_log in cloudtrail_client.__lookup_events__(
                     trail=trail,
