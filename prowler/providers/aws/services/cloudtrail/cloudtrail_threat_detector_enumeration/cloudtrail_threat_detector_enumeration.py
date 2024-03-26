@@ -140,7 +140,7 @@ class cloudtrail_threat_detector_enumeration(Check):
                 report.resource_arn = trail.arn
                 report.resource_tags = trail.tags
                 report.status = "FAIL"
-                report.status_extended = f"Potential privilege escalation detected from source IP {source_ip} with an entropy of {ENTROPY_THRESHOLD}."
+                report.status_extended = f"Potential enumeration attack detected from source IP {source_ip} with an entropy of {ENTROPY_THRESHOLD}."
                 findings.append(report)
         if not found_potential_enumeration:
             report = Check_Report_AWS(self.metadata())
@@ -149,6 +149,6 @@ class cloudtrail_threat_detector_enumeration(Check):
             report.resource_arn = trail.arn
             report.resource_tags = trail.tags
             report.status = "PASS"
-            report.status_extended = "No potential privilege escalation detected."
+            report.status_extended = "No potential enumeration attack detected."
             findings.append(report)
         return findings

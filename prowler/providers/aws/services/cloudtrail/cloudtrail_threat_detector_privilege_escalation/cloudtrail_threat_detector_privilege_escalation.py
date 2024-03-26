@@ -72,6 +72,7 @@ class cloudtrail_threat_detector_privilege_escalation(Check):
         for trail in cloudtrail_client.trails.values():
             if trail.is_multiregion:
                 multiregion_trail = trail
+                break
         trails_to_scan = (
             cloudtrail_client.trails.values()
             if not multiregion_trail
@@ -105,7 +106,7 @@ class cloudtrail_threat_detector_privilege_escalation(Check):
                 report.resource_arn = trail.arn
                 report.resource_tags = trail.tags
                 report.status = "FAIL"
-                report.status_extended = f"Potential privilege escalation detected from source IP {source_ip} with an entropy of {ENTROPY_THRESHOLD}."
+                report.status_extended = f"Potential privilege escalation attack detected from source IP {source_ip} with an entropy of {ENTROPY_THRESHOLD}."
                 findings.append(report)
         if not found_potential_privilege_escalation:
             report = Check_Report_AWS(self.metadata())
@@ -114,6 +115,8 @@ class cloudtrail_threat_detector_privilege_escalation(Check):
             report.resource_arn = trail.arn
             report.resource_tags = trail.tags
             report.status = "PASS"
-            report.status_extended = "No potential privilege escalation detected."
+            report.status_extended = (
+                "No potential privilege escalation attack detected."
+            )
             findings.append(report)
         return findings
