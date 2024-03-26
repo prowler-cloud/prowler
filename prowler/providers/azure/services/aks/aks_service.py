@@ -31,6 +31,7 @@ class AKS(AzureService):
                                     name=cluster.name,
                                     public_fqdn=cluster.fqdn,
                                     private_fqdn=cluster.private_fqdn,
+                                    location=cluster.location,
                                     network_policy=(
                                         getattr(
                                             cluster.network_profile,
@@ -63,3 +64,4 @@ class Cluster:
     network_policy: str
     agent_pool_profiles: list[ManagedClusterAgentPoolProfile]
     rbac_enabled: bool
+    location: str

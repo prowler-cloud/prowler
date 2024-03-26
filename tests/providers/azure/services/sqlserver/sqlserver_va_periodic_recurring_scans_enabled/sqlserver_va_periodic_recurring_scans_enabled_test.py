@@ -50,6 +50,7 @@ class Test_sqlserver_va_periodic_recurring_scans_enabled:
                     databases=None,
                     encryption_protector=None,
                     vulnerability_assessment=None,
+                    location="location",
                 )
             ]
         }
@@ -76,6 +77,7 @@ class Test_sqlserver_va_periodic_recurring_scans_enabled:
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == sql_server_name
             assert result[0].resource_id == sql_server_id
+            assert result[0].location == "location"
 
     def test_sql_servers_no_vulnerability_assessment_storage_container_path(self):
         sqlserver_client = mock.MagicMock
@@ -86,6 +88,7 @@ class Test_sqlserver_va_periodic_recurring_scans_enabled:
                 Server(
                     id=sql_server_id,
                     name=sql_server_name,
+                    location="location",
                     public_network_access="",
                     minimal_tls_version="",
                     administrators=None,
@@ -122,6 +125,7 @@ class Test_sqlserver_va_periodic_recurring_scans_enabled:
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == sql_server_name
             assert result[0].resource_id == sql_server_id
+            assert result[0].location == "location"
 
     def test_sql_servers_vulnerability_assessment_recuring_scans_disabled(self):
         sqlserver_client = mock.MagicMock
@@ -132,6 +136,7 @@ class Test_sqlserver_va_periodic_recurring_scans_enabled:
                 Server(
                     id=sql_server_id,
                     name=sql_server_name,
+                    location="location",
                     public_network_access="",
                     minimal_tls_version="",
                     administrators=None,
@@ -171,6 +176,7 @@ class Test_sqlserver_va_periodic_recurring_scans_enabled:
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == sql_server_name
             assert result[0].resource_id == sql_server_id
+            assert result[0].location == "location"
 
     def test_sql_servers_vulnerability_assessment_recuring_scans_enabled(self):
         sqlserver_client = mock.MagicMock
@@ -181,6 +187,7 @@ class Test_sqlserver_va_periodic_recurring_scans_enabled:
                 Server(
                     id=sql_server_id,
                     name=sql_server_name,
+                    location="location",
                     public_network_access="",
                     minimal_tls_version="",
                     administrators=None,
@@ -220,3 +227,4 @@ class Test_sqlserver_va_periodic_recurring_scans_enabled:
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == sql_server_name
             assert result[0].resource_id == sql_server_id
+            assert result[0].location == "location"

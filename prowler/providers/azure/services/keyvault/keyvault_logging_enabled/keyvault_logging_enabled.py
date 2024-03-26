@@ -16,6 +16,7 @@ class keyvault_logging_enabled(Check):
                     report.subscription = subscription_name
                     report.resource_name = keyvault.name
                     report.resource_id = keyvault.id
+                    report.location = keyvault.location
                     report.status_extended = f"There are no diagnostic settings capturing audit logs for Key Vault {keyvault_name} in subscription {subscription_name}."
                     findings.append(report)
                 else:
@@ -24,6 +25,7 @@ class keyvault_logging_enabled(Check):
                         report.subscription = subscription_name
                         report.resource_name = diagnostic_setting.name
                         report.resource_id = diagnostic_setting.id
+                        report.location = keyvault.location
                         report.status = "FAIL"
                         report.status_extended = f"Diagnostic setting {diagnostic_setting.name} for Key Vault {keyvault_name} in subscription {subscription_name} does not have audit logging."
                         audit = False

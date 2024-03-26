@@ -123,6 +123,7 @@ class Test_monitor_storage_account_with_activity_logs_is_private:
                             minimum_tls_version="TLS1_2",
                             private_endpoint_connections=[],
                             key_expiration_period_in_days=365,
+                            location="euwest",
                             blob_properties=mock.MagicMock(
                                 id="id",
                                 name="name",
@@ -143,6 +144,7 @@ class Test_monitor_storage_account_with_activity_logs_is_private:
                             minimum_tls_version="TLS1_2",
                             private_endpoint_connections=[],
                             key_expiration_period_in_days=365,
+                            location="euwest",
                             blob_properties=mock.MagicMock(
                                 id="id",
                                 name="name",
@@ -158,6 +160,7 @@ class Test_monitor_storage_account_with_activity_logs_is_private:
                 assert len(result) == 2
                 assert result[0].subscription == AZURE_SUBSCRIPTION_ID
                 assert result[0].status == "FAIL"
+                assert result[0].location == "euwest"
                 assert (
                     result[0].resource_id
                     == "/subscriptions/1234a5-123a-123a-123a-1234567890ab/resourceGroups/rg/providers/Microsoft.Storage/storageAccounts/storageaccountname1"
@@ -169,6 +172,7 @@ class Test_monitor_storage_account_with_activity_logs_is_private:
                 )
                 assert result[1].subscription == AZURE_SUBSCRIPTION_ID
                 assert result[1].status == "PASS"
+                assert result[1].location == "euwest"
                 assert (
                     result[1].resource_id
                     == "/subscriptions/1224a5-123a-123a-123a-1234567890ab/resourceGroups/rg/providers/Microsoft.Storage/storageAccounts/storageaccountname2"

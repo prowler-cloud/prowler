@@ -19,6 +19,7 @@ class mysql_flexible_server_audit_log_enabled(Check):
                 report.subscription = subscription_name
                 report.resource_name = server_name
                 report.resource_id = server_name
+                report.location = server.location
                 report.status_extended = f"Audit log is disabled for server {server_name} in subscription {subscription_name}."
 
                 if "audit_log_enabled" in server.configurations:

@@ -81,6 +81,7 @@ class Test_mysql_flexible_server_minimum_tls_version_12:
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == server_name
             assert result[0].resource_id == server_name
+            assert result[0].location == "location"
             assert (
                 result[0].status_extended
                 == f"TLS version is not configured in server {server_name} in subscription {AZURE_SUBSCRIPTION_ID}."
@@ -122,6 +123,7 @@ class Test_mysql_flexible_server_minimum_tls_version_12:
             assert result[0].status == "PASS"
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == server_name
+            assert result[0].location == "location"
             assert (
                 result[0].resource_id
                 == f"/subscriptions/{server_name}/configurations/tls_version"
@@ -167,6 +169,7 @@ class Test_mysql_flexible_server_minimum_tls_version_12:
             assert result[0].status == "PASS"
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == server_name
+            assert result[0].location == "location"
             assert (
                 result[0].resource_id
                 == f"/subscriptions/{server_name}/configurations/tls_version"
@@ -212,6 +215,7 @@ class Test_mysql_flexible_server_minimum_tls_version_12:
             assert result[0].status == "FAIL"
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == server_name
+            assert result[0].location == "location"
             assert (
                 result[0].resource_id
                 == f"/subscriptions/{server_name}/configurations/tls_version"
@@ -257,6 +261,7 @@ class Test_mysql_flexible_server_minimum_tls_version_12:
             assert result[0].status == "FAIL"
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == server_name
+            assert result[0].location == "location"
             assert (
                 result[0].resource_id
                 == f"/subscriptions/{server_name}/configurations/tls_version"

@@ -11,13 +11,9 @@ class network_bastion_host_exists(Check):
                 status_extended = (
                     f"Bastion Host from subscription {subscription} does not exist"
                 )
-                resource_id = "N/A"
             else:
                 bastion_names = ", ".join(
                     [bastion_host.name for bastion_host in bastion_hosts]
-                )
-                resource_id = ", ".join(
-                    [bastion_host.id for bastion_host in bastion_hosts]
                 )
                 status = "PASS"
                 status_extended = f"Bastion Host from subscription {subscription} available are: {bastion_names}"
@@ -25,7 +21,7 @@ class network_bastion_host_exists(Check):
             report = Check_Report_Azure(self.metadata())
             report.subscription = subscription
             report.resource_name = "Bastion Host"
-            report.resource_id = resource_id
+            report.resource_id = "Bastion Host"
             report.status = status
             report.status_extended = status_extended
             findings.append(report)

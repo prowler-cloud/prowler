@@ -19,6 +19,7 @@ class mysql_flexible_server_minimum_tls_version_12(Check):
                 report.subscription = subscription_name
                 report.resource_name = server_name
                 report.resource_id = server_name
+                report.location = server.location
                 report.status_extended = f"TLS version is not configured in server {server_name} in subscription {subscription_name}."
 
                 if "tls_version" in server.configurations:

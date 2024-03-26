@@ -10,6 +10,7 @@ class storage_default_network_access_rule_is_denied(Check):
                 report = Check_Report_Azure(self.metadata())
                 report.subscription = subscription
                 report.status = "PASS"
+                report.location = storage_account.location
                 report.status_extended = f"Storage account {storage_account.name} from subscription {subscription} has network access rule set to Deny."
                 report.resource_name = storage_account.name
                 report.resource_id = storage_account.id

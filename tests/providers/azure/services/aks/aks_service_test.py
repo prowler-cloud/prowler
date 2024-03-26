@@ -16,6 +16,7 @@ def mock_aks_get_clusters(_):
                 private_fqdn="private_fqdn",
                 network_policy="network_policy",
                 agent_pool_profiles=[],
+                location="westeurope",
                 rbac_enabled=True,
             )
         }
@@ -59,5 +60,8 @@ class Test_AppInsights_Service:
         assert (
             aks.clusters[AZURE_SUBSCRIPTION_ID]["cluster_id-1"].agent_pool_profiles
             == []
+        )
+        assert (
+            aks.clusters[AZURE_SUBSCRIPTION_ID]["cluster_id-1"].location == "westeurope"
         )
         assert aks.clusters[AZURE_SUBSCRIPTION_ID]["cluster_id-1"].rbac_enabled

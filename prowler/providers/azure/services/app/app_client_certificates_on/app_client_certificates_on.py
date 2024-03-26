@@ -16,6 +16,7 @@ class app_client_certificates_on(Check):
                 report.subscription = subscription_name
                 report.resource_name = app_name
                 report.resource_id = app.resource_id
+                report.location = app.location
                 report.status_extended = f"Clients are required to present a certificate for app '{app_name}' in subscription '{subscription_name}'."
 
                 if app.client_cert_mode != "Required":

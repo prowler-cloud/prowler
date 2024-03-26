@@ -12,6 +12,7 @@ class cosmosdb_account_firewall_use_selected_networks(Check):
                 report.resource_name = account.name
                 report.resource_id = account.id
                 report.status = "FAIL"
+                report.location = account.location
                 report.status_extended = f"CosmosDB account {account.name} from subscription {subscription} has firewall rules that allow access from all networks."
                 if account.is_virtual_network_filter_enabled:
                     report.status = "PASS"

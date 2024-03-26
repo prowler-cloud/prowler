@@ -81,7 +81,7 @@ class Test_keyvault_logging_enabled:
                     KeyVaultInfo(
                         id="id",
                         name="name_keyvault",
-                        location="location",
+                        location="westeurope",
                         resource_group="resource_group",
                         properties=VaultProperties(
                             tenant_id="tenantid",
@@ -114,7 +114,7 @@ class Test_keyvault_logging_enabled:
                     KeyVaultInfo(
                         id="id2",
                         name="name_keyvault2",
-                        location="location2",
+                        location="eastus",
                         resource_group="resource_group2",
                         properties=VaultProperties(
                             tenant_id="tenantid",
@@ -153,6 +153,7 @@ class Test_keyvault_logging_enabled:
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == "name_diagnostic_setting"
             assert result[0].resource_id == "id/id"
+            assert result[0].location == "westeurope"
             assert (
                 result[0].status_extended
                 == f"Diagnostic setting name_diagnostic_setting for Key Vault name_keyvault in subscription {AZURE_SUBSCRIPTION_ID} does not have audit logging."
@@ -161,6 +162,7 @@ class Test_keyvault_logging_enabled:
             assert result[1].subscription == AZURE_SUBSCRIPTION_ID
             assert result[1].resource_name == "name_diagnostic_setting2"
             assert result[1].resource_id == "id2/id2"
+            assert result[1].location == "eastus"
             assert (
                 result[1].status_extended
                 == f"Diagnostic setting name_diagnostic_setting2 for Key Vault name_keyvault2 in subscription {AZURE_SUBSCRIPTION_ID} has audit logging."

@@ -19,6 +19,7 @@ def mock_vm_get_virtual_machines(_):
             "vm_id-1": VirtualMachine(
                 resource_id="/subscriptions/resource_id",
                 resource_name="VMTest",
+                location="location",
                 storage_profile=StorageProfile(
                     os_disk=OSDisk(
                         create_option="FromImage",
@@ -36,6 +37,7 @@ def mock_vm_get_disks(_):
         AZURE_SUBSCRIPTION_ID: {
             "disk_id-1": Disk(
                 resource_id="disk_id-1",
+                location="location",
                 resource_name="DiskTest",
                 vms_attached=["managed_by"],
                 encryption_type="EncryptionAtRestWithPlatformKey",
@@ -67,6 +69,9 @@ class Test_AppInsights_Service:
     def test__get_virtual_machines(self):
         virtual_machines = VirtualMachines(set_mocked_azure_provider())
         assert len(virtual_machines.virtual_machines) == 1
+        assert (virtual_machines.virtual_machines[AZURE_SUBSCRIPTION_ID])[
+            "vm_id-1"
+        ].location == "location"
         assert (
             virtual_machines.virtual_machines[AZURE_SUBSCRIPTION_ID][
                 "vm_id-1"
@@ -99,6 +104,7 @@ class Test_AppInsights_Service:
         assert len(disks) == 1
         assert disks[AZURE_SUBSCRIPTION_ID]["disk_id-1"].resource_id == "disk_id-1"
         assert disks[AZURE_SUBSCRIPTION_ID]["disk_id-1"].resource_name == "DiskTest"
+        assert disks[AZURE_SUBSCRIPTION_ID]["disk_id-1"].location == "location"
         assert disks[AZURE_SUBSCRIPTION_ID]["disk_id-1"].vms_attached == ["managed_by"]
         assert (
             disks[AZURE_SUBSCRIPTION_ID]["disk_id-1"].encryption_type

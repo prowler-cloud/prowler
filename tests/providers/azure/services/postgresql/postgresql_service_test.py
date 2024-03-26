@@ -31,6 +31,7 @@ def mock_sqlserver_get_postgresql_flexible_servers(_):
                 connection_throttling="ON",
                 log_retention_days="3",
                 firewall=[firewall],
+                location="location",
             )
         ]
     }
@@ -56,6 +57,9 @@ class Test_SqlServer_Service:
         )
         assert postgesql.flexible_servers[AZURE_SUBSCRIPTION_ID][0].id == "id"
         assert postgesql.flexible_servers[AZURE_SUBSCRIPTION_ID][0].name == "name"
+        assert (
+            postgesql.flexible_servers[AZURE_SUBSCRIPTION_ID][0].location == "location"
+        )
         assert (
             postgesql.flexible_servers[AZURE_SUBSCRIPTION_ID][0].resource_group
             == "resource_group"

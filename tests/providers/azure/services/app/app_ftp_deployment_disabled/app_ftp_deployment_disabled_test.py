@@ -71,6 +71,7 @@ class Test_app_ftp_deployment_disabled:
                         client_cert_mode="Ignore",
                         https_only=False,
                         identity=None,
+                        location="West Europe",
                     )
                 }
             }
@@ -85,6 +86,7 @@ class Test_app_ftp_deployment_disabled:
             assert result[0].resource_id == resource_id
             assert result[0].resource_name == "app_id-1"
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
+            assert result[0].location == "West Europe"
 
     def test_app_ftp_deployment_disabled(self):
         resource_id = f"/subscriptions/{uuid4()}"
@@ -111,6 +113,7 @@ class Test_app_ftp_deployment_disabled:
                         client_cert_mode="Ignore",
                         https_only=False,
                         identity=None,
+                        location="West Europe",
                     )
                 }
             }
@@ -125,6 +128,7 @@ class Test_app_ftp_deployment_disabled:
             assert result[0].resource_id == resource_id
             assert result[0].resource_name == "app_id-1"
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
+            assert result[0].location == "West Europe"
 
     def test_app_ftp_deploy_enabled(self):
         resource_id = f"/subscriptions/{uuid4()}"
@@ -151,6 +155,7 @@ class Test_app_ftp_deployment_disabled:
                         client_cert_mode="Ignore",
                         https_only=False,
                         identity=None,
+                        location="West Europe",
                     )
                 }
             }
@@ -165,3 +170,4 @@ class Test_app_ftp_deployment_disabled:
             assert result[0].resource_id == resource_id
             assert result[0].resource_name == "app_id-1"
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
+            assert result[0].location == "West Europe"

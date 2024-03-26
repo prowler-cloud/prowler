@@ -54,6 +54,7 @@ class Test_postgresql_flexible_server_allow_access_services_disabled:
                     connection_throttling="OFF",
                     log_retention_days="3",
                     firewall=[firewall],
+                    location="location",
                 )
             ]
         }
@@ -80,6 +81,7 @@ class Test_postgresql_flexible_server_allow_access_services_disabled:
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == postgresql_server_name
             assert result[0].resource_id == postgresql_server_id
+            assert result[0].location == "location"
 
     def test_flexible_servers_dont_allow_public_access(self):
         postgresql_client = mock.MagicMock
@@ -104,6 +106,7 @@ class Test_postgresql_flexible_server_allow_access_services_disabled:
                     connection_throttling="OFF",
                     log_retention_days="3",
                     firewall=[firewall],
+                    location="location",
                 )
             ]
         }
@@ -130,3 +133,4 @@ class Test_postgresql_flexible_server_allow_access_services_disabled:
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == postgresql_server_name
             assert result[0].resource_id == postgresql_server_id
+            assert result[0].location == "location"

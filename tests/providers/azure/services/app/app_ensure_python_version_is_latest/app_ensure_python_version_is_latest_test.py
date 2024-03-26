@@ -49,7 +49,6 @@ class Test_app_ensure_python_version_is_latest:
     def test_app_configurations_none(self):
         resource_id = f"/subscriptions/{uuid4()}"
         app_client = mock.MagicMock
-
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
             return_value=set_mocked_azure_provider(),
@@ -71,6 +70,7 @@ class Test_app_ensure_python_version_is_latest:
                         client_cert_mode="Ignore",
                         https_only=False,
                         identity=None,
+                        location="West Europe",
                     )
                 }
             }
@@ -105,6 +105,7 @@ class Test_app_ensure_python_version_is_latest:
                         client_cert_mode="Ignore",
                         https_only=False,
                         identity=None,
+                        location="West Europe",
                     )
                 }
             }
@@ -119,6 +120,7 @@ class Test_app_ensure_python_version_is_latest:
             assert result[0].resource_id == resource_id
             assert result[0].resource_name == "app_id-1"
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
+            assert result[0].location == "West Europe"
 
     def test_app_python_version_not_latest(self):
         resource_id = f"/subscriptions/{uuid4()}"
@@ -147,6 +149,7 @@ class Test_app_ensure_python_version_is_latest:
                         client_cert_mode="Ignore",
                         https_only=False,
                         identity=None,
+                        location="West Europe",
                     )
                 }
             }
@@ -161,3 +164,4 @@ class Test_app_ensure_python_version_is_latest:
             assert result[0].resource_id == resource_id
             assert result[0].resource_name == "app_id-1"
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
+            assert result[0].location == "West Europe"

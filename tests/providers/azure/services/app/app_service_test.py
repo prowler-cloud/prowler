@@ -86,6 +86,7 @@ class Test_App_Service:
                         auth_enabled=True,
                         client_cert_mode="Required",
                         https_only=True,
+                        location="West Europe",
                         monitor_diagnostic_settings=[
                             DiagnosticSetting(
                                 id="id2/id2",
@@ -136,6 +137,10 @@ class Test_App_Service:
         assert (
             app_service.apps[AZURE_SUBSCRIPTION_ID]["app_id-1"].client_cert_mode
             == "Required"
+        )
+        assert (
+            app_service.apps[AZURE_SUBSCRIPTION_ID]["app_id-1"].location
+            == "West Europe"
         )
         assert app_service.apps[AZURE_SUBSCRIPTION_ID]["app_id-1"].https_only
         assert (
