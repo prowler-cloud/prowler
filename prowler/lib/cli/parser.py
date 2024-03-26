@@ -25,6 +25,10 @@ class ProwlerArgumentParser:
             prog="prowler",
             formatter_class=RawTextHelpFormatter,
             epilog="""
+Available components:
+    dashboard           Prowler local dashboard
+
+
 To see the different available options on a specific provider, run:
     prowler {provider} -h|--help
 Detailed documentation at https://docs.prowler.cloud
@@ -32,17 +36,17 @@ Detailed documentation at https://docs.prowler.cloud
         )
         # Default
         self.parser.add_argument(
-            "-v",
             "--version",
+            "-v",
             action="store_true",
-            help="show Prowler version",
+            help="Show Prowler version",
         )
         # Common arguments parser
         self.common_providers_parser = argparse.ArgumentParser(add_help=False)
 
         # Providers Parser
         self.subparsers = self.parser.add_subparsers(
-            title="Prowler Available Cloud Providers",
+            title="Available cloud providers",
             dest="provider",
         )
 
@@ -126,22 +130,23 @@ Detailed documentation at https://docs.prowler.cloud
             choices=finding_statuses,
         )
         common_outputs_parser.add_argument(
-            "-M",
+            "--output-formats",
             "--output-modes",
+            "-M",
             nargs="+",
-            help="Output modes, by default csv and json",
+            help="Output modes, by default csv and json-oscf are saved. When using AWS Security Hub integration, json-asff output is also saved.",
             default=["csv", "json-ocsf"],
             choices=["csv", "json-asff", "json-ocsf"],
         )
         common_outputs_parser.add_argument(
-            "-F",
             "--output-filename",
+            "-F",
             nargs="?",
             help="Custom output report name without the file extension, if not specified will use default output/prowler-output-ACCOUNT_NUM-OUTPUT_DATE.format",
         )
         common_outputs_parser.add_argument(
-            "-o",
             "--output-directory",
+            "-o",
             nargs="?",
             help="Custom output directory, by default the folder where Prowler is stored",
             default=default_output_directory,
@@ -149,21 +154,16 @@ Detailed documentation at https://docs.prowler.cloud
         common_outputs_parser.add_argument(
             "--verbose",
             action="store_true",
-            help="Display detailed information about findings",
+            help="Runs showing all checks executed and results",
         )
         common_outputs_parser.add_argument(
-            "-z",
             "--ignore-exit-code-3",
+            "-z",
             action="store_true",
             help="Failed checks do not trigger exit code 3",
         )
         common_outputs_parser.add_argument(
-            "-b", "--no-banner", action="store_true", help="Hide Prowler banner"
-        )
-        common_outputs_parser.add_argument(
-            "--slack",
-            action="store_true",
-            help="Send a summary of the execution with a Slack APP in your channel. Environment variables SLACK_API_TOKEN and SLACK_CHANNEL_ID are required (see more in https://docs.prowler.cloud/en/latest/tutorials/integrations/#slack).",
+            "--no-banner", "-b", action="store_true", help="Hide Prowler banner"
         )
         common_outputs_parser.add_argument(
             "--unix-timestamp",
@@ -201,10 +201,17 @@ Detailed documentation at https://docs.prowler.cloud
             "Exclude checks/services to run"
         )
         exclude_checks_parser.add_argument(
-            "-e", "--excluded-checks", nargs="+", help="Checks to exclude"
+            "--excluded-check",
+            "--excluded-checks",
+            "-e",
+            nargs="+",
+            help="Checks to exclude",
         )
         exclude_checks_parser.add_argument(
-            "--excluded-services", nargs="+", help="Services to exclude"
+            "--excluded-service",
+            "--excluded-services",
+            nargs="+",
+            help="Services to exclude",
         )
 
     def __init_checks_parser__(self):
@@ -215,21 +222,29 @@ Detailed documentation at https://docs.prowler.cloud
         # The following arguments needs to be set exclusivelly
         group = common_checks_parser.add_mutually_exclusive_group()
         group.add_argument(
-            "-c", "--checks", nargs="+", help="List of checks to be executed."
+            "--check",
+            "--checks",
+            "-c",
+            nargs="+",
+            help="List of checks to be executed.",
         )
         group.add_argument(
-            "-C",
             "--checks-file",
+            "-C",
             nargs="?",
             help="JSON file containing the checks to be executed. See config/checklist_example.json",
         )
         group.add_argument(
-            "-s", "--services", nargs="+", help="List of services to be executed."
+            "--service",
+            "--services",
+            "-s",
+            nargs="+",
+            help="List of services to be executed.",
         )
         common_checks_parser.add_argument(
             "--severity",
             nargs="+",
-            help=f"List of severities to be executed {valid_severities}",
+            help=f"Severities to be executed {valid_severities}",
             choices=valid_severities,
         )
         group.add_argument(
@@ -239,15 +254,16 @@ Detailed documentation at https://docs.prowler.cloud
             choices=available_compliance_frameworks,
         )
         group.add_argument(
+            "--category",
             "--categories",
             nargs="+",
             help="List of categories to be executed.",
             default=[],
-            # Pending validate choices
+            # TODO: Pending validate choices
         )
         common_checks_parser.add_argument(
-            "-x",
             "--checks-folder",
+            "-x",
             nargs="?",
             help="Specify external directory with custom checks (each check must have a folder with the required files, see more in https://docs.prowler.cloud/en/latest/tutorials/misc/#custom-checks).",
         )
@@ -259,23 +275,27 @@ Detailed documentation at https://docs.prowler.cloud
         )
         list_group = list_checks_parser.add_mutually_exclusive_group()
         list_group.add_argument(
-            "-l", "--list-checks", action="store_true", help="List checks"
+            "--list-checks", "-l", action="store_true", help="List checks"
         )
         list_group.add_argument(
             "--list-checks-json",
             action="store_true",
-            help="Output a list of checks in json for use with --checks-file",
+            help="Output a list of checks in json format to use with --checks-file option",
         )
         list_group.add_argument(
-            "--list-services", action="store_true", help="List services"
+            "--list-services",
+            action="store_true",
+            help="List covered services by given provider",
         )
         list_group.add_argument(
-            "--list-compliance", action="store_true", help="List compliance frameworks"
+            "--list-compliance",
+            action="store_true",
+            help="List all available compliance frameworks",
         )
         list_group.add_argument(
             "--list-compliance-requirements",
             nargs="+",
-            help="List compliance requirements for a given compliance framework",
+            help="List requirements and checks per compliance framework",
             choices=available_compliance_frameworks,
         )
         list_group.add_argument(
@@ -290,8 +310,8 @@ Detailed documentation at https://docs.prowler.cloud
         )
         provider = sys.argv[1] if len(sys.argv) > 1 else "aws"
         mutelist_subparser.add_argument(
-            "-w",
             "--mutelist-file",
+            "-w",
             nargs="?",
             default=get_default_mute_file_path(provider),
             help="Path for mutelist yaml file. See example prowler/config/<provider>_mutelist.yaml for reference and format. For AWS provider, it also accepts AWS DynamoDB Table, Lambda ARNs or S3 URIs, see more in https://docs.prowler.cloud/en/latest/tutorials/mutelist/",
@@ -323,10 +343,15 @@ Detailed documentation at https://docs.prowler.cloud
             "3rd Party Integrations"
         )
         third_party_subparser.add_argument(
-            "-N",
             "--shodan",
+            "-N",
             nargs="?",
             default=None,
             metavar="SHODAN_API_KEY",
-            help="Shodan API key.",
+            help="Check if any public IPs in your Cloud environments are exposed in Shodan.",
+        )
+        third_party_subparser.add_argument(
+            "--slack",
+            action="store_true",
+            help="Send a summary of the execution with a Slack APP in your channel. Environment variables SLACK_API_TOKEN and SLACK_CHANNEL_ID are required (see more in https://docs.prowler.cloud/en/latest/tutorials/integrations/#slack).",
         )

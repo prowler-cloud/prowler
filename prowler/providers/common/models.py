@@ -28,7 +28,7 @@ class ProviderOutputOptions:
 
     def __init__(self, arguments, bulk_checks_metadata):
         self.status = arguments.status
-        self.output_modes = arguments.output_modes
+        self.output_modes = arguments.output_formats
         self.output_directory = arguments.output_directory
         self.verbose = arguments.verbose
         self.bulk_checks_metadata = bulk_checks_metadata
@@ -43,8 +43,8 @@ class ProviderOutputOptions:
         # Check output directory, if it is not created -> create it
         if arguments.output_directory:
             if not isdir(arguments.output_directory):
-                if arguments.output_modes:
+                if arguments.output_formats:
                     makedirs(arguments.output_directory, exist_ok=True)
             if not isdir(arguments.output_directory + "/compliance"):
-                if arguments.output_modes:
+                if arguments.output_formats:
                     makedirs(arguments.output_directory + "/compliance", exist_ok=True)
