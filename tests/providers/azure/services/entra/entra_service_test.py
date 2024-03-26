@@ -116,6 +116,10 @@ class Test_Entra_Service:
         assert len(entra_client.users) == 1
         assert entra_client.users[DOMAIN]["user-1@tenant1.es"].id == "id-1"
         assert entra_client.users[DOMAIN]["user-1@tenant1.es"].name == "User 1"
+        assert (
+            len(entra_client.users[DOMAIN]["user-1@tenant1.es"].authentication_methods)
+            == 0
+        )
 
     def test__get_authorization_policy__(self):
         entra_client = Entra(set_mocked_azure_audit_info())

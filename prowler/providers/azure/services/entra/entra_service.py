@@ -1,6 +1,6 @@
 import asyncio
 from dataclasses import dataclass
-from typing import Optional
+from typing import Any, Optional
 from uuid import UUID
 
 from msgraph import GraphServiceClient
@@ -44,7 +44,13 @@ class Entra(AzureService):
                     users[tenant].update(
                         {
                             user.user_principal_name: User(
-                                id=user.id, name=user.display_name
+                                id=user.id,
+                                name=user.display_name,
+                                authentication_methods=(
+                                    await client.users.by_user_id(
+                                        user.id
+                                    ).authentication.methods.get()
+                                ).value,
                             )
                         }
                     )
@@ -185,11 +191,11 @@ class Entra(AzureService):
                             directory_role.display_name: DirectoryRole(
                                 id=directory_role.id,
                                 members=[
-                                    User(
-                                        id=member.id,
-                                        name=member.display_name,
-                                    )
+                                    self.users[tenant][member.user_principal_name]
                                     for member in directory_role_members.value
+                                    if self.users[tenant].get(
+                                        member.user_principal_name, None
+                                    )
                                 ],
                             )
                         }
@@ -205,6 +211,7 @@ class Entra(AzureService):
 class User(BaseModel):
     id: str
     name: str
+    authentication_methods: list[Any] = []
 
 
 @dataclass
