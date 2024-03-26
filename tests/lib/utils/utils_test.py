@@ -15,6 +15,7 @@ from prowler.lib.utils.utils import (
     open_file,
     outputs_unix_timestamp,
     parse_json_file,
+    strip_ansi_codes,
     validate_ip_address,
 )
 
@@ -162,3 +163,21 @@ class TestFilePermissions:
         assert not is_owned_by_root("not_existing_file")
         # Not valid for darwin systems
         # assert is_owned_by_root("/etc/passwd")
+
+
+class TestStripAnsiCodes:
+    def test_strip_ansi_codes_no_alteration(self):
+        input_string = "\x1B[31mHello\x1B[0m World"
+        expected_output = "Hello World"
+
+        actual_output = strip_ansi_codes(input_string)
+
+        assert actual_output == expected_output
+
+    def test_strip_ansi_codes_empty_string(self):
+        input_string = ""
+        expected_output = ""
+
+        actual_output = strip_ansi_codes(input_string)
+
+        assert actual_output == expected_output
