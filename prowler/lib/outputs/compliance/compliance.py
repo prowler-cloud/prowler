@@ -38,6 +38,7 @@ def add_manual_controls(
             manual_finding.region = ""
             manual_finding.location = ""
             manual_finding.project_id = ""
+            manual_finding.namespace = ""
             fill_compliance(
                 output_options,
                 manual_finding,
@@ -284,12 +285,12 @@ def display_compliance_table(
                                     fail_count += 1
                                 elif finding.status == "PASS":
                                     pass_count += 1
-                                if attribute.Profile == "Level 1":
+                                if "Level 1" in attribute.Profile:
                                     if finding.status == "FAIL":
                                         sections[section]["Level 1"]["FAIL"] += 1
                                     else:
                                         sections[section]["Level 1"]["PASS"] += 1
-                                elif attribute.Profile == "Level 2":
+                                elif "Level 2" in attribute.Profile:
                                     if finding.status == "FAIL":
                                         sections[section]["Level 2"]["FAIL"] += 1
                                     else:

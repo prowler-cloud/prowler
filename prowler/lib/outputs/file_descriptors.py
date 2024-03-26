@@ -16,6 +16,7 @@ from prowler.lib.outputs.compliance.models import (
     Check_Output_CSV_ENS_RD2022,
     Check_Output_CSV_GCP_CIS,
     Check_Output_CSV_Generic_Compliance,
+    Check_Output_CSV_KUBERNETES_CIS,
     Check_Output_MITRE_ATTACK,
 )
 from prowler.lib.outputs.csv.csv import generate_csv_fields
@@ -81,6 +82,21 @@ def fill_file_descriptors(output_modes, output_directory, output_filename, provi
                     if "cis_" in output_mode:
                         file_descriptor = initialize_file_descriptor(
                             filename, output_mode, Check_Output_CSV_GCP_CIS
+                        )
+                        file_descriptors.update({output_mode: file_descriptor})
+                    else:
+                        file_descriptor = initialize_file_descriptor(
+                            filename,
+                            output_mode,
+                            Check_Output_CSV_Generic_Compliance,
+                        )
+                        file_descriptors.update({output_mode: file_descriptor})
+
+                elif provider.type == "kubernetes":
+                    filename = f"{output_directory}/compliance/{output_filename}_{output_mode}{csv_file_suffix}"
+                    if "cis_" in output_mode:
+                        file_descriptor = initialize_file_descriptor(
+                            filename, output_mode, Check_Output_CSV_KUBERNETES_CIS
                         )
                         file_descriptors.update({output_mode: file_descriptor})
                     else:
