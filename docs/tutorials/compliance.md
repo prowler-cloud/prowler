@@ -31,6 +31,7 @@ Currently, the available frameworks are:
 - `cis_2.0_aws`
 - `cis_2.0_gcp`
 - `cis_3.0_aws`
+- `cis_1.8_kubernetes`
 - `cisa_aws`
 - `ens_rd2022_aws`
 - `fedramp_low_revision_4_aws`

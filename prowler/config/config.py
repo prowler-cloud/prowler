@@ -30,7 +30,7 @@ actual_directory = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))
 
 def get_available_compliance_frameworks(provider=None):
     available_compliance_frameworks = []
-    providers = ["aws", "gcp", "azure"]
+    providers = ["aws", "gcp", "azure", "kubernetes"]
     if provider:
         providers = [provider]
     for provider in providers:

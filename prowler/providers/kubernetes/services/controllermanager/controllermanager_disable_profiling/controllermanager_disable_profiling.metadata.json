@@ -1,6 +1,6 @@
 {
   "Provider": "kubernetes",
-  "CheckID": "controller_manager_disable_profiling",
+  "CheckID": "controllermanager_disable_profiling",
   "CheckTitle": "Ensure that the --profiling argument is set to false",
   "CheckType": [],
   "ServiceName": "controller-manager",
