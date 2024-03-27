@@ -14,7 +14,7 @@ from prowler.config.config import aws_services_json_file, load_and_validate_conf
 from prowler.lib.check.check import list_modules, recover_checks_from_service
 from prowler.lib.logger import logger
 from prowler.lib.mutelist.mutelist import parse_mutelist_file
-from prowler.lib.utils.utils import open_file, parse_json_file
+from prowler.lib.utils.utils import open_file, parse_json_file, print_boxes
 from prowler.providers.aws.config import (
     AWS_STS_GLOBAL_ENDPOINT_REGION,
     BOTO3_USER_AGENT_EXTRA,
@@ -491,30 +491,23 @@ class AwsProvider(Provider):
         profile = (
             self._identity.profile if self._identity.profile is not None else "default"
         )
-        # TODO: rename AWS Filter Region to AWS Regions, and UserId to User ID
-        # review new banner
-        #       report = f"""
-        # The current audit for AWS will use the following credentials:
-
-        # CLI Profile: {Fore.YELLOW}[{profile}]{Style.RESET_ALL} Regions: {Fore.YELLOW}[{regions}]{Style.RESET_ALL}
-        # Account: {Fore.YELLOW}[{self._identity.account}]{Style.RESET_ALL} User ID: {Fore.YELLOW}[{self._identity.user_id}]{Style.RESET_ALL}
-        # Caller Identity ARN: {Fore.YELLOW}[{self._identity.identity_arn}]{Style.RESET_ALL}
-        # """
-        report = f"""
-This report is being generated using credentials below:
-
-AWS-CLI Profile: {Fore.YELLOW}[{profile}]{Style.RESET_ALL} AWS Filter Region: {Fore.YELLOW}[{regions}]{Style.RESET_ALL}
-AWS Account: {Fore.YELLOW}[{self._identity.account}]{Style.RESET_ALL} UserId: {Fore.YELLOW}[{self._identity.user_id}]{Style.RESET_ALL}
-Caller Identity ARN: {Fore.YELLOW}[{self._identity.identity_arn}]{Style.RESET_ALL}
-"""
+        report_lines = [
+            f"{Style.BRIGHT}AWS-CLI Profile: {Style.RESET_ALL}{Fore.YELLOW}{profile}{Style.RESET_ALL}",
+            f"{Style.BRIGHT}AWS Regions: {Style.RESET_ALL}{Fore.YELLOW}{regions}{Style.RESET_ALL}",
+            f"{Style.BRIGHT}AWS Account: {Style.RESET_ALL}{Fore.YELLOW}{self._identity.account}{Style.RESET_ALL}",
+            f"{Style.BRIGHT}User Id: {Style.RESET_ALL}{Fore.YELLOW}{self._identity.user_id}{Style.RESET_ALL}",
+            f"{Style.BRIGHT}Caller Identity ARN: {Style.RESET_ALL}{Fore.YELLOW}{self._identity.identity_arn}{Style.RESET_ALL}",
+        ]
         # If -A is set, print Assumed Role ARN
         if (
             hasattr(self, "_assumed_role")
             and self._assumed_role.info.role_arn is not None
         ):
-            report += f"""Assumed Role ARN: {Fore.YELLOW}[{self._assumed_role.info.role_arn.arn}]{Style.RESET_ALL}
-        """
-        print(report)
+            report_lines.append(
+                f"Assumed Role ARN: {Fore.YELLOW}[{self._assumed_role.info.role_arn.arn}]{Style.RESET_ALL}"
+            )
+        report_title = f"{Style.BRIGHT}Prowler is using the AWS credentials below:{Style.RESET_ALL}"
+        print_boxes(report_lines, report_title)
 
     def generate_regional_clients(
         self,

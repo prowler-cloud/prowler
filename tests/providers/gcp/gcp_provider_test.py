@@ -28,7 +28,7 @@ class TestGCPProvider:
         }
         with patch(
             "prowler.providers.gcp.gcp_provider.GcpProvider.setup_session",
-            return_value=(None, ""),
+            return_value=None,
         ), patch(
             "prowler.providers.gcp.gcp_provider.GcpProvider.get_projects",
             return_value=projects,
@@ -40,9 +40,7 @@ class TestGCPProvider:
             assert gcp_provider.session is None
             assert gcp_provider.project_ids == ["test-project"]
             assert gcp_provider.projects == projects
-            assert gcp_provider.identity == GCPIdentityInfo(
-                profile="default", default_project_id=""
-            )
+            assert gcp_provider.identity == GCPIdentityInfo(profile="default")
             assert gcp_provider.audit_config == {"shodan_api_key": None}
 
     @freeze_time(datetime.today())
@@ -72,7 +70,7 @@ class TestGCPProvider:
         }
         with patch(
             "prowler.providers.gcp.gcp_provider.GcpProvider.setup_session",
-            return_value=(None, ""),
+            return_value=None,
         ), patch(
             "prowler.providers.gcp.gcp_provider.GcpProvider.get_projects",
             return_value=projects,
