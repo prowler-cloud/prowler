@@ -173,7 +173,7 @@ class Cloudtrail(AWSService):
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __lookup_events__(self, trail, event_name, days):
+    def __lookup_events__(self, trail, event_name, minutes):
         logger.info("CloudTrail - Lookup Events...")
         try:
             regional_client = self.regional_clients[trail.region]
@@ -181,7 +181,7 @@ class Cloudtrail(AWSService):
                 LookupAttributes=[
                     {"AttributeKey": "EventName", "AttributeValue": event_name}
                 ],
-                StartTime=datetime.now() - timedelta(days=days),
+                StartTime=datetime.now() - timedelta(minutes=minutes),
             )
             return response.get("Events")
         except Exception as error:

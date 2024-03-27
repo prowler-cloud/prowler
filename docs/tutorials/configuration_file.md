@@ -33,10 +33,10 @@ The following list includes all the AWS checks with configurable variables that 
 | `drs_job_exist`                                               | `mute_non_default_regions`                  | Boolean         |
 | `guardduty_is_enabled`                                        | `mute_non_default_regions`                  | Boolean         |
 | `securityhub_enabled`                                         | `mute_non_default_regions`                  | Boolean         |
-| `cloudtrail_threat_detector_privilege_escalation`             | `threat_detection_entropy`                  | Integer         |
-| `cloudtrail_threat_detector_privilege_escalation`             | `threat_detection_days`                     | Integer         |
-| `cloudtrail_threat_detector_enumeration`                      | `threat_detection_entropy`                  | Integer         |
-| `cloudtrail_threat_detector_enumeration`                      | `threat_detection_days`                     | Integer         |
+| `cloudtrail_threat_detection_privilege_escalation`             | `threat_detection_entropy`                  | Integer         |
+| `cloudtrail_threat_detection_privilege_escalation`             | `threat_detection_minutes`                     | Integer         |
+| `cloudtrail_threat_detection_enumeration`                      | `threat_detection_entropy`                  | Integer         |
+| `cloudtrail_threat_detection_enumeration`                      | `threat_detection_minutes`                     | Integer         |
 ## Azure
 
 ### Configurable Checks
@@ -105,10 +105,10 @@ aws:
   log_group_retention_days: 365
 
   # AWS CloudTrail Configuration
-  # aws.cloudtrail_threat_detector_privilege_escalation
-  # aws.cloudtrail_threat_detector_enumeration
+  # aws.cloudtrail_threat_detection_privilege_escalation
+  # aws.cloudtrail_threat_detection_enumeration
   threat_detection_entropy: 0.7 # 70% of actions found to decide if it is an attack event
-  threat_detection_days: 1
+  threat_detection_minutes: 1
 
   # AWS AppStream Session Configuration
   # aws.appstream_fleet_session_idle_disconnect_timeout

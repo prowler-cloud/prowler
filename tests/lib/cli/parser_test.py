@@ -1048,12 +1048,6 @@ class Test_Parser:
         parsed = self.parser.parse(command)
         assert parsed.scan_unused_services
 
-    def test_aws_parser_threat_detection(self):
-        argument = "--threat-detection"
-        command = [prowler_command, argument]
-        parsed = self.parser.parse(command)
-        assert parsed.threat_detection
-
     def test_aws_parser_config_file(self):
         argument = "--config-file"
         config_file = "./test-config.yaml"

@@ -496,7 +496,8 @@ class AwsProvider(Provider):
             f"{Style.BRIGHT}AWS Regions: {Style.RESET_ALL}{Fore.YELLOW}{regions}{Style.RESET_ALL}",
             f"{Style.BRIGHT}AWS Account: {Style.RESET_ALL}{Fore.YELLOW}{self._identity.account}{Style.RESET_ALL}",
             f"{Style.BRIGHT}User Id: {Style.RESET_ALL}{Fore.YELLOW}{self._identity.user_id}{Style.RESET_ALL}",
-            f"{Style.BRIGHT}Caller Identity ARN: {Style.RESET_ALL}{Fore.YELLOW}{self._identity.identity_arn}{Style.RESET_ALL}",
+            f"{Style.BRIGHT}Caller Identity ARN: {Style.RESET_ALL}",
+            f"{Fore.YELLOW}{self._identity.identity_arn}{Style.RESET_ALL}",
         ]
         # If -A is set, print Assumed Role ARN
         if (

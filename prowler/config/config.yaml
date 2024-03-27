@@ -41,10 +41,10 @@ aws:
   log_group_retention_days: 365
 
   # AWS CloudTrail Configuration
-  # aws.cloudtrail_threat_detector_privilege_escalation
-  # aws.cloudtrail_threat_detector_enumeration
-  threat_detection_entropy: 0.7 # 70% of actions found to decide if it is an attack event
-  threat_detection_days: 1
+  # aws.cloudtrail_threat_detection_privilege_escalation
+  # aws.cloudtrail_threat_detection_enumeration
+  threat_detection_entropy: 0.7 # Percentage of actions found to decide if it is an attack event, by default is 0.7 (70%)
+  threat_detection_minutes: 1440 # Past minutes to check for attacks, by default is 1440 minutes (24 hours)
 
   # AWS AppStream Session Configuration
   # aws.appstream_fleet_session_idle_disconnect_timeout

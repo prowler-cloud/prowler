@@ -173,11 +173,8 @@ def prowler():
     if checks_from_resources:
         checks_to_execute = checks_to_execute.intersection(checks_from_resources)
 
-    # If --threat-detection, only execute threat detection checks
-    if getattr(args, "threat_detection", False):
-        checks_to_execute = threat_detection_checks
-    # If --threat-detection is not set, exclude threat detection checks if any
-    else:
+    # Only execute threat detection checks if threat-detection category is set
+    if "threat-detection" not in categories:
         checks_to_execute = [
             check for check in checks_to_execute if check not in threat_detection_checks
         ]

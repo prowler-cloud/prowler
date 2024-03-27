@@ -6,7 +6,9 @@ from prowler.providers.aws.services.cloudtrail.cloudtrail_client import (
 )
 
 ENTROPY_THRESHOLD = cloudtrail_client.audit_config.get("threat_detection_entropy", 0.7)
-THREAT_DETECTION_DAYS = cloudtrail_client.audit_config.get("threat_detection_days", 1)
+THREAT_DETECTION_MINUTES = cloudtrail_client.audit_config.get(
+    "threat_detection_minutes", 1440
+)
 ENUMERATION_ACTIONS = [
     "DescribeAccessEntry",
     "DescribeAccountAttributes",
@@ -101,7 +103,7 @@ ENUMERATION_ACTIONS = [
 ]
 
 
-class cloudtrail_threat_detector_enumeration(Check):
+class cloudtrail_threat_detection_enumeration(Check):
     def execute(self):
         findings = []
         potential_enumeration = {}
@@ -122,7 +124,7 @@ class cloudtrail_threat_detector_enumeration(Check):
                 for event_log in cloudtrail_client.__lookup_events__(
                     trail=trail,
                     event_name=event_name,
-                    days=THREAT_DETECTION_DAYS,
+                    minutes=THREAT_DETECTION_MINUTES,
                 ):
                     event_log = json.loads(event_log["CloudTrailEvent"])
                     if ".amazonaws.com" not in event_log["sourceIPAddress"]:

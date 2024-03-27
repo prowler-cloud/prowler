@@ -1,6 +1,6 @@
 {
   "Provider": "aws",
-  "CheckID": "cloudtrail_threat_detector_privilege_escalation",
+  "CheckID": "cloudtrail_threat_detection_privilege_escalation",
   "CheckTitle": "Ensure there are no potential privilege escalation threats in CloudTrail",
   "CheckType": [],
   "ServiceName": "cloudtrail",
@@ -24,7 +24,7 @@
     }
   },
   "Categories": [
-    "forensics-ready"
+    "threat-detection"
   ],
   "DependsOn": [],
   "RelatedTo": [],

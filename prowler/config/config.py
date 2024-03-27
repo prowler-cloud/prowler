@@ -29,8 +29,8 @@ actual_directory = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))
 
 # AWS CloudTrail Threat Detection checks
 threat_detection_checks = [
-    "cloudtrail_threat_detector_privilege_escalation",
-    "cloudtrail_threat_detector_enumeration",
+    "cloudtrail_threat_detection_privilege_escalation",
+    "cloudtrail_threat_detection_enumeration",
 ]
 
 
