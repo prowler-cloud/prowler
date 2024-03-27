@@ -53,6 +53,10 @@ from prowler.providers.common.quick_inventory import run_provider_quick_inventor
 
 
 def prowler():
+    if sys.argv[1] == "dashboard":
+        from dashboard.__main__ import dashboard
+
+        sys.exit(dashboard.run(debug=True, port=11666, use_reloader=False))
     # Parse Arguments
     parser = ProwlerArgumentParser()
     args = parser.parse()
@@ -71,7 +75,7 @@ def prowler():
     custom_checks_metadata_file = args.custom_checks_metadata_file
 
     if not args.no_banner:
-        print_banner(args)
+        print_banner(args.verbose)
 
     # We treat the compliance framework as another output format
     if compliance_framework:
