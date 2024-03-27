@@ -33,10 +33,12 @@ The following list includes all the AWS checks with configurable variables that 
 | `drs_job_exist`                                               | `mute_non_default_regions`                  | Boolean         |
 | `guardduty_is_enabled`                                        | `mute_non_default_regions`                  | Boolean         |
 | `securityhub_enabled`                                         | `mute_non_default_regions`                  | Boolean         |
-| `cloudtrail_threat_detection_privilege_escalation`             | `threat_detection_entropy`                  | Integer         |
-| `cloudtrail_threat_detection_privilege_escalation`             | `threat_detection_minutes`                     | Integer         |
-| `cloudtrail_threat_detection_enumeration`                      | `threat_detection_entropy`                  | Integer         |
-| `cloudtrail_threat_detection_enumeration`                      | `threat_detection_minutes`                     | Integer         |
+| `cloudtrail_threat_detection_privilege_escalation`             | `threat_detection_privilege_escalation_entropy` | Integer         |
+| `cloudtrail_threat_detection_privilege_escalation`             | `threat_detection_privilege_escalation_minutes` | Integer         |
+| `cloudtrail_threat_detection_privilege_escalation`             | `threat_detection_privilege_escalation_actions` | List of Strings         |
+| `cloudtrail_threat_detection_enumeration`                      | `threat_detection_enumeration_entropy`      | Integer         |
+| `cloudtrail_threat_detection_enumeration`                      | `threat_detection_enumeration_minutes`      | Integer         |
+| `cloudtrail_threat_detection_enumeration`                      | `threat_detection_enumeration_actions`      | List of Strings         |
 ## Azure
 
 ### Configurable Checks
