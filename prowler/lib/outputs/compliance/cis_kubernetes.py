@@ -5,12 +5,13 @@ from prowler.lib.utils.utils import outputs_unix_timestamp
 
 
 def generate_compliance_row_cis_kubernetes(
-    finding, compliance, requirement, attribute, output_options
+    finding, compliance, requirement, attribute, output_options, provider
 ):
     compliance_row = Check_Output_CSV_KUBERNETES_CIS(
         Provider=finding.check_metadata.Provider,
         Description=compliance.Description,
-        Region=finding.namespace,
+        Context=provider.identity.context,
+        Namespace=finding.namespace,
         AssessmentDate=outputs_unix_timestamp(output_options.unix_timestamp, timestamp),
         Requirements_Id=requirement.Id,
         Requirements_Description=requirement.Description,
