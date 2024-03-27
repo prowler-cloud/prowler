@@ -80,6 +80,7 @@ def create_layout_overview(
             ),
             html.Div(id="table", className="grid"),
             html.Img(
+                referrerPolicy="no-referrer-when-downgrade",
                 src="https://prowlerpro.matomo.cloud/matomo.php?idsite=2&amp;rec=1&amp;action_name=dashboard-overview",
                 alt="",
             ),
@@ -147,6 +148,7 @@ def create_layout_compliance(
             ),
             html.Div(className="flex flex-wrap", id="output"),
             html.Img(
+                referrerPolicy="no-referrer-when-downgrade",
                 src="https://prowlerpro.matomo.cloud/matomo.php?idsite=2&amp;rec=1&amp;action_name=dashboard-compliance",
                 alt="",
             ),
