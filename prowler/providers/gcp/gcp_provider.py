@@ -10,6 +10,7 @@ from googleapiclient.errors import HttpError
 from prowler.config.config import load_and_validate_config_file
 from prowler.lib.logger import logger
 from prowler.lib.mutelist.mutelist import parse_mutelist_file
+from prowler.lib.utils.utils import print_boxes
 from prowler.providers.common.models import Audit_Metadata
 from prowler.providers.common.provider import Provider
 from prowler.providers.gcp.models import (
@@ -36,7 +37,7 @@ class GcpProvider(Provider):
         input_project_ids = arguments.project_ids
         credentials_file = arguments.credentials_file
 
-        self._session, default_project_id = self.setup_session(credentials_file)
+        self._session = self.setup_session(credentials_file)
 
         self._project_ids = []
         self._projects = {}
@@ -66,7 +67,6 @@ class GcpProvider(Provider):
 
         self._identity = GCPIdentityInfo(
             profile=getattr(self.session, "_service_account_email", "default"),
-            default_project_id=default_project_id,
         )
 
         # TODO: move this to the providers, pending for AWS, GCP, AZURE and K8s
@@ -148,9 +148,10 @@ class GcpProvider(Provider):
             if credentials_file:
                 self.__set_gcp_creds_env_var__(credentials_file)
 
-            return auth.default(
+            credentials, _ = auth.default(
                 scopes=["https://www.googleapis.com/auth/cloud-platform"]
             )
+            return credentials
         except Exception as error:
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -167,12 +168,12 @@ class GcpProvider(Provider):
     def print_credentials(self):
         # TODO: Beautify audited profile, set "default" if there is no profile set
         # TODO: improve print_credentials with more data like name, number, organization
-        report = f"""
-This report is being generated using credentials below:
-
-GCP Account: {Fore.YELLOW}[{self.identity.profile}]{Style.RESET_ALL}  GCP Project IDs: {Fore.YELLOW}[{", ".join(self.project_ids)}]{Style.RESET_ALL}
-"""
-        print(report)
+        report_lines = [
+            f"{Style.BRIGHT}GCP Account:{Style.RESET_ALL} {Fore.YELLOW}{self.identity.profile}{Style.RESET_ALL}",
+            f"{Style.BRIGHT}GCP Project IDs:{Style.RESET_ALL} {Fore.YELLOW}{', '.join(self.project_ids)}{Style.RESET_ALL}",
+        ]
+        report_title = f"{Style.BRIGHT}Prowler is using the GCP credentials below:{Style.RESET_ALL}"
+        print_boxes(report_lines, report_title)
 
     def get_projects(self) -> dict[str, GCPProject]:
         try:
