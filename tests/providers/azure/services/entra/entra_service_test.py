@@ -3,6 +3,7 @@ from unittest.mock import patch
 from prowler.providers.azure.models import AzureIdentityInfo
 from prowler.providers.azure.services.entra.entra_service import (
     AuthorizationPolicy,
+    ConditionalAccessPolicy,
     DirectoryRole,
     Entra,
     GroupSetting,
@@ -79,6 +80,24 @@ async def mock_entra_get_directory_roles(_):
     }
 
 
+async def mock_entra_get_conditional_access_policy(_):
+    return {
+        DOMAIN: {
+            "id-1": ConditionalAccessPolicy(
+                id="id-1",
+                state="enabled",
+                name="Test",
+                users={"include": ["All"], "exclude": []},
+                target_resources={
+                    "include": ["797f4846-ba00-4fd7-ba43-dac1f8f63013"],
+                    "exclude": [],
+                },
+                access_controls={"grant": ["MFA"], "block": []},
+            )
+        }
+    }
+
+
 @patch(
     "prowler.providers.azure.services.entra.entra_service.Entra.__get_users__",
     new=mock_entra_get_users,
@@ -103,6 +122,10 @@ async def mock_entra_get_directory_roles(_):
     "prowler.providers.azure.services.entra.entra_service.Entra.__get_directory_roles__",
     new=mock_entra_get_directory_roles,
 )
+@patch(
+    "prowler.providers.azure.services.entra.entra_service.Entra.__get_conditional_access_policy__",
+    new=mock_entra_get_conditional_access_policy,
+)
 class Test_Entra_Service:
     def test__get_client__(self):
         entra_client = Entra(
@@ -119,6 +142,10 @@ class Test_Entra_Service:
         assert len(entra_client.users) == 1
         assert entra_client.users[DOMAIN]["user-1@tenant1.es"].id == "id-1"
         assert entra_client.users[DOMAIN]["user-1@tenant1.es"].name == "User 1"
+        assert (
+            len(entra_client.users[DOMAIN]["user-1@tenant1.es"].authentication_methods)
+            == 0
+        )
 
     def test__get_authorization_policy__(self):
         entra_client = Entra(set_mocked_azure_provider())
@@ -161,4 +188,37 @@ class Test_Entra_Service:
         assert (
             len(entra_client.directory_roles[DOMAIN]["GlobalAdministrator"].members)
             == 0
+        )
+
+    def test__get_conditional_access_policy__(self):
+        entra_client = Entra(set_mocked_azure_audit_info())
+        assert len(entra_client.conditional_access_policy) == 1
+        assert len(entra_client.conditional_access_policy[DOMAIN]) == 1
+        assert entra_client.conditional_access_policy[DOMAIN]["id-1"]
+        assert entra_client.conditional_access_policy[DOMAIN]["id-1"].name == "Test"
+        assert entra_client.conditional_access_policy[DOMAIN]["id-1"].state == "enabled"
+        assert entra_client.conditional_access_policy[DOMAIN]["id-1"].users[
+            "include"
+        ] == ["All"]
+        assert (
+            entra_client.conditional_access_policy[DOMAIN]["id-1"].users["exclude"]
+            == []
+        )
+        assert entra_client.conditional_access_policy[DOMAIN]["id-1"].target_resources[
+            "include"
+        ] == ["797f4846-ba00-4fd7-ba43-dac1f8f63013"]
+        assert (
+            entra_client.conditional_access_policy[DOMAIN]["id-1"].target_resources[
+                "exclude"
+            ]
+            == []
+        )
+        assert entra_client.conditional_access_policy[DOMAIN]["id-1"].access_controls[
+            "grant"
+        ] == ["MFA"]
+        assert (
+            entra_client.conditional_access_policy[DOMAIN]["id-1"].access_controls[
+                "block"
+            ]
+            == []
         )
