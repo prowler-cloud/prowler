@@ -507,4 +507,4 @@ class Test_AWS_Credentials:
         sts_client = create_sts_session(session, aws_region)
 
         assert sts_client._endpoint._endpoint_prefix == "sts"
-        assert sts_client._endpoint.host == f"https://sts.{aws_region}.amazonaws.com"
+        assert sts_client._endpoint.host == f"https://sts.{aws_region}.amazonaws.com.cn"
