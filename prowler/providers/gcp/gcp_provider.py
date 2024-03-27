@@ -34,7 +34,7 @@ class GcpProvider(Provider):
 
     def __init__(self, arguments):
         logger.info("Instantiating GCP Provider ...")
-        input_project_ids = arguments.project_ids
+        input_project_ids = arguments.project_id
         credentials_file = arguments.credentials_file
 
         self._session = self.setup_session(credentials_file)

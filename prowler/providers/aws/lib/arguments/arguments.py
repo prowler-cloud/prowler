@@ -14,19 +14,19 @@ def init_parser(self):
     # Authentication Methods
     aws_auth_subparser = aws_parser.add_argument_group("Authentication Modes")
     aws_auth_subparser.add_argument(
-        "-p",
         "--profile",
+        "-p",
         nargs="?",
         default=None,
         help="AWS profile to launch prowler with",
     )
     aws_auth_subparser.add_argument(
-        "-R",
         "--role",
+        "-R",
         nargs="?",
         default=None,
         help="ARN of the role to be assumed",
-        # Pending ARN validation
+        # TODO: Pending ARN validation
     )
     aws_auth_subparser.add_argument(
         "--role-session-name",
@@ -41,17 +41,17 @@ def init_parser(self):
         help="IAM entity enforces MFA so you need to input the MFA ARN and the TOTP",
     )
     aws_auth_subparser.add_argument(
-        "-T",
         "--session-duration",
+        "-T",
         nargs="?",
         default=3600,
         type=validate_session_duration,
         help="Assumed role session duration in seconds, must be between 900 and 43200. Default: 3600",
-        # Pending session duration validation
+        # TODO: Pending session duration validation
     )
     aws_auth_subparser.add_argument(
-        "-I",
         "--external-id",
+        "-I",
         nargs="?",
         default=None,
         help="External ID to be passed when assuming role",
@@ -59,9 +59,9 @@ def init_parser(self):
     # AWS Regions
     aws_regions_subparser = aws_parser.add_argument_group("AWS Regions")
     aws_regions_subparser.add_argument(
-        "-f",
         "--region",
         "--filter-region",
+        "-f",
         nargs="+",
         help="AWS region names to run Prowler against",
         choices=get_aws_available_regions(),
@@ -69,18 +69,18 @@ def init_parser(self):
     # AWS Organizations
     aws_orgs_subparser = aws_parser.add_argument_group("AWS Organizations")
     aws_orgs_subparser.add_argument(
-        "-O",
         "--organizations-role",
+        "-O",
         nargs="?",
         help="Specify AWS Organizations management role ARN to be assumed, to get Organization metadata",
     )
     # AWS Security Hub
     aws_security_hub_subparser = aws_parser.add_argument_group("AWS Security Hub")
     aws_security_hub_subparser.add_argument(
-        "-S",
         "--security-hub",
+        "-S",
         action="store_true",
-        help="Send check output to AWS Security Hub",
+        help="Send check output to AWS Security Hub and save json-asff outuput.",
     )
     aws_security_hub_subparser.add_argument(
         "--skip-sh-update",
@@ -95,8 +95,8 @@ def init_parser(self):
     # AWS Quick Inventory
     aws_quick_inventory_subparser = aws_parser.add_argument_group("Quick Inventory")
     aws_quick_inventory_subparser.add_argument(
-        "-i",
         "--quick-inventory",
+        "-i",
         action="store_true",
         help="Run Prowler Quick Inventory. The inventory will be stored in an output csv by default",
     )
@@ -104,16 +104,16 @@ def init_parser(self):
     aws_outputs_subparser = aws_parser.add_argument_group("AWS Outputs to S3")
     aws_outputs_bucket_parser = aws_outputs_subparser.add_mutually_exclusive_group()
     aws_outputs_bucket_parser.add_argument(
-        "-B",
         "--output-bucket",
+        "-B",
         nargs="?",
         type=validate_bucket,
         default=None,
         help="Custom output bucket, requires -M <mode> and it can work also with -o flag.",
     )
     aws_outputs_bucket_parser.add_argument(
-        "-D",
         "--output-bucket-no-assume",
+        "-D",
         nargs="?",
         type=validate_bucket,
         default=None,
@@ -124,6 +124,7 @@ def init_parser(self):
     aws_based_scans_subparser = aws_parser.add_argument_group("AWS Based Scans")
     aws_based_scans_parser = aws_based_scans_subparser.add_mutually_exclusive_group()
     aws_based_scans_parser.add_argument(
+        "--resource-tag",
         "--resource-tags",
         nargs="+",
         default=None,
@@ -131,6 +132,7 @@ def init_parser(self):
     )
     aws_based_scans_parser.add_argument(
         "--resource-arn",
+        "--resource-arns",
         nargs="+",
         type=arn_type,
         default=None,

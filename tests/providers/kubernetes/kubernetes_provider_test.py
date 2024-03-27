@@ -47,7 +47,7 @@ class TestKubernetesProvider:
             arguments.kubeconfig_file = "dummy_path"
             arguments.context = None
             arguments.only_logs = False
-            arguments.namespaces = None
+            arguments.namespace = None
             arguments.config_file = default_config_file_path
 
             # Instantiate the KubernetesProvider with mocked arguments
@@ -72,10 +72,10 @@ class TestKubernetesProvider:
         arguments.kubeconfig_file = "dummy_path"
         arguments.context = None
         arguments.only_logs = False
-        arguments.namespaces = None
+        arguments.namespace = None
         arguments.config_file = default_config_file_path
         arguments.status = []
-        arguments.output_modes = ["csv"]
+        arguments.output_formats = ["csv"]
         arguments.output_directory = "output_test_directory"
         arguments.verbose = True
         arguments.output_filename = "output_test_filename"

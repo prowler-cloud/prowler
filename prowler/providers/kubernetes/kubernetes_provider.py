@@ -37,11 +37,11 @@ class KubernetesProvider(Provider):
         """
         logger.info("Instantiating Kubernetes Provider ...")
         self._session = self.setup_session(arguments.kubeconfig_file, arguments.context)
-        if not arguments.namespaces:
+        if not arguments.namespace:
             logger.info("Retrieving all namespaces ...")
             self._namespaces = self.get_all_namespaces()
         else:
-            self._namespaces = arguments.namespaces
+            self._namespaces = arguments.namespace
 
         if not self._session.api_client:
             logger.critical("Failed to set up a Kubernetes session.")

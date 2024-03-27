@@ -56,11 +56,11 @@ def prowler():
 
     # Save Arguments
     provider = args.provider
-    checks = args.checks
-    excluded_checks = args.excluded_checks
-    excluded_services = args.excluded_services
-    services = args.services
-    categories = args.categories
+    checks = args.check
+    excluded_checks = args.excluded_check
+    excluded_services = args.excluded_service
+    services = args.service
+    categories = args.category
     checks_file = args.checks_file
     checks_folder = args.checks_folder
     severities = args.severity
@@ -72,10 +72,10 @@ def prowler():
 
     # We treat the compliance framework as another output format
     if compliance_framework:
-        args.output_modes.extend(compliance_framework)
+        args.output_formats.extend(compliance_framework)
     # If no input compliance framework, set all
     else:
-        args.output_modes.extend(get_available_compliance_frameworks(provider))
+        args.output_formats.extend(get_available_compliance_frameworks(provider))
 
     # Set Logger configuration
     set_logging_config(args.log_level, args.log_file, args.only_logs)
@@ -217,8 +217,8 @@ def prowler():
             )
             sys.exit(1)
 
-    if args.output_modes:
-        for mode in args.output_modes:
+    if args.output_formats:
+        for mode in args.output_formats:
             # Close json file if exists
             if "json" in mode:
                 close_json(
@@ -270,14 +270,14 @@ def prowler():
         # Prepare the findings to be sent to Security Hub
         security_hub_findings_per_region = prepare_security_hub_findings(
             findings,
-            provider,
+            global_provider,
             global_provider.output_options,
             aws_security_enabled_regions,
         )
 
         # Send the findings to Security Hub
         findings_sent_to_security_hub = batch_send_to_security_hub(
-            security_hub_findings_per_region, provider.session.current_session
+            security_hub_findings_per_region, global_provider.session.current_session
         )
 
         print(
@@ -291,7 +291,7 @@ def prowler():
             )
             findings_archived_in_security_hub = resolve_security_hub_previous_findings(
                 security_hub_findings_per_region,
-                provider,
+                global_provider,
             )
             print(
                 f"{Style.BRIGHT}{Fore.GREEN}\n{findings_archived_in_security_hub} findings archived in AWS Security Hub!{Style.RESET_ALL}"
