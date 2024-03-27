@@ -90,7 +90,7 @@ aws:
   # AWS CloudTrail Configuration
   # aws.cloudtrail_threat_detection_privilege_escalation
   threat_detection_privilege_escalation_entropy: 0.7 # Percentage of actions found to decide if it is an privilege_escalation attack event, by default is 0.7 (70%)
-  threat_detection_privilege_escalation_minutes: 1440 # Past minutes to check for privilege_escalation attacks, by default is 1440 minutes (24 hours)
+  threat_detection_privilege_escalation_minutes: 1440 # Past minutes to search from now for privilege_escalation attacks, by default is 1440 minutes (24 hours)
   threat_detection_privilege_escalation_actions: [
     "AddPermission",
     "AddRoleToInstanceProfile",
@@ -146,7 +146,7 @@ aws:
 ]
   # aws.cloudtrail_threat_detection_enumeration
   threat_detection_enumeration_entropy: 0.7 # Percentage of actions found to decide if it is an enumeration attack event, by default is 0.7 (70%)
-  threat_detection_enumeration_minutes: 1440 # Past minutes to check for enumeration attacks, by default is 1440 minutes (24 hours)
+  threat_detection_enumeration_minutes: 1440 # Past minutes to search from now for enumeration attacks, by default is 1440 minutes (24 hours)
   threat_detection_enumeration_actions: [
     "DescribeAccessEntry",
     "DescribeAccountAttributes",
