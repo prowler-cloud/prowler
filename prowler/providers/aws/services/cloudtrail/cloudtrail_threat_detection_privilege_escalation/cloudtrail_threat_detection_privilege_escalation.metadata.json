@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "cloudtrail_threat_detection_privilege_escalation",
+  "CheckTitle": "Ensure there are no potential privilege escalation threats in CloudTrail",
+  "CheckType": [],
+  "ServiceName": "cloudtrail",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "Severity": "critical",
+  "ResourceType": "AwsCloudTrailTrail",
+  "Description": "This check ensures that there are no potential privilege escalation threats in CloudTrail.",
+  "Risk": "Potential privilege escalation threats in CloudTrail can lead to unauthorized access to resources.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "To remediate this issue, ensure that there are no potential privilege escalation threats in CloudTrail.",
+      "Url": "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-concepts.html#cloudtrail-concepts-logging-data-events"
+    }
+  },
+  "Categories": [
+    "threat-detection"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
