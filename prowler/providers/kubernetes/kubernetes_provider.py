@@ -8,6 +8,7 @@ from kubernetes import client, config
 from prowler.config.config import load_and_validate_config_file
 from prowler.lib.logger import logger
 from prowler.lib.mutelist.mutelist import parse_mutelist_file
+from prowler.lib.utils.utils import print_boxes
 from prowler.providers.common.models import Audit_Metadata
 from prowler.providers.common.provider import Provider
 from prowler.providers.kubernetes.models import (
@@ -265,19 +266,18 @@ class KubernetesProvider(Provider):
         Prints the Kubernetes credentials.
         """
         if self._identity.context == "In-Cluster":
-            report = f"""
-This report is being generated using the Kubernetes configuration below:
-
-Kubernetes Pod: {Fore.YELLOW}[prowler]{Style.RESET_ALL}  Namespace: {Fore.YELLOW}[{self.get_pod_current_namespace()}]{Style.RESET_ALL}
-"""
-            print(report)
+            report_lines = [
+                f"{Style.BRIGHT}Kubernetes Pod:{Style.RESET_ALL} {Fore.YELLOW}prowler{Style.RESET_ALL}",
+                f"{Style.BRIGHT}Namespace:{Style.RESET_ALL} {Fore.YELLOW}{self.get_pod_current_namespace()}{Style.RESET_ALL}",
+            ]
         else:
             roles = self.get_context_user_roles()
             roles_str = ", ".join(roles) if roles else "No associated Roles"
-
-            report = f"""
-This report is being generated using the Kubernetes configuration below:
-
-Kubernetes Cluster: {Fore.YELLOW}[{self._identity.cluster}]{Style.RESET_ALL} User: {Fore.YELLOW}[{self._identity.user}]{Style.RESET_ALL} Namespaces: {Fore.YELLOW}[{', '.join(self.namespaces)}]{Style.RESET_ALL} Roles: {Fore.YELLOW}[{roles_str}]{Style.RESET_ALL}
-"""
-            print(report)
+            report_lines = [
+                f"{Style.BRIGHT}Kubernetes Cluster:{Style.RESET_ALL} {Fore.YELLOW}{self._identity.cluster}{Style.RESET_ALL}",
+                f"{Style.BRIGHT}User:{Style.RESET_ALL} {Fore.YELLOW}{self._identity.user}{Style.RESET_ALL}",
+                f"{Style.BRIGHT}Namespaces:{Style.RESET_ALL} {Fore.YELLOW}{', '.join(self.namespaces)}{Style.RESET_ALL}",
+                f"{Style.BRIGHT}Roles:{Style.RESET_ALL} {Fore.YELLOW}{roles_str}{Style.RESET_ALL}",
+            ]
+        report_title = f"{Style.BRIGHT}Prowler is using the Kubernetes credentials below:{Style.RESET_ALL}"
+        print_boxes(report_lines, report_title)

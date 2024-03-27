@@ -8,7 +8,6 @@ from prowler.providers.common.models import ProviderOutputOptions
 
 class GCPIdentityInfo(BaseModel):
     profile: str
-    default_project_id: str
 
 
 class GCPOrganization(BaseModel):
