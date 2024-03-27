@@ -43,6 +43,7 @@ class sns_topics_not_publicly_accessible(Check):
                             else:
                                 report.status = "FAIL"
                                 report.status_extended = f"SNS topic {topic.name} is public because its policy allows public access."
+                                break
 
             findings.append(report)
 
