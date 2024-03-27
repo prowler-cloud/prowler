@@ -88,6 +88,7 @@ class CIS_Requirement_Attribute(BaseModel):
     AuditProcedure: str
     AdditionalInformation: str
     References: str
+    DefaultValue: Optional[str]
 
 
 # Well Architected Requirement Attribute

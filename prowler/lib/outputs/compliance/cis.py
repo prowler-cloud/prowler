@@ -1,5 +1,8 @@
 from prowler.lib.outputs.compliance.cis_aws import generate_compliance_row_cis_aws
 from prowler.lib.outputs.compliance.cis_gcp import generate_compliance_row_cis_gcp
+from prowler.lib.outputs.compliance.cis_kubernetes import (
+    generate_compliance_row_cis_kubernetes,
+)
 from prowler.lib.outputs.csv.csv import write_csv
 
 
@@ -29,6 +32,12 @@ def write_compliance_row_cis(
                 elif compliance.Provider == "GCP":
                     (compliance_row, csv_header) = generate_compliance_row_cis_gcp(
                         finding, compliance, requirement, attribute, output_options
+                    )
+                elif compliance.Provider == "Kubernetes":
+                    (compliance_row, csv_header) = (
+                        generate_compliance_row_cis_kubernetes(
+                            finding, compliance, requirement, attribute, output_options
+                        )
                     )
 
                 write_csv(
