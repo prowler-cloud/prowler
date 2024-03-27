@@ -22,7 +22,7 @@ from prowler.lib.check.models import Check, load_check_metadata
 from prowler.lib.logger import logger
 from prowler.lib.mutelist.mutelist import mutelist_findings
 from prowler.lib.outputs.outputs import report
-from prowler.lib.utils.utils import open_file, parse_json_file
+from prowler.lib.utils.utils import open_file, parse_json_file, print_boxes
 from prowler.providers.common.common import get_global_provider
 from prowler.providers.common.models import Audit_Metadata
 
@@ -424,6 +424,7 @@ def execute_checks(
     global_provider: Any,
     custom_checks_metadata: Any,
     mutelist_file: str,
+    config_file: str,
 ) -> list:
     # List to store all the check's findings
     all_findings = []
@@ -488,11 +489,22 @@ def execute_checks(
                     f"{check_name} - {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
     else:
-        # Print the mutelist (if any) that is being used
+        # Prepare your messages
+        messages = [
+            f"{Style.BRIGHT}Config File: {Style.RESET_ALL}{Fore.YELLOW}{config_file}{Style.RESET_ALL}"
+        ]
         if mutelist_file:
-            print(
-                f"{Style.BRIGHT}Using the following Mute List: {Style.RESET_ALL}{Fore.YELLOW}{mutelist_file}{Style.RESET_ALL}\n"
+            messages.append(
+                f"{Style.BRIGHT}Mute List File: {Style.RESET_ALL}{Fore.YELLOW}{mutelist_file}{Style.RESET_ALL}"
             )
+        if global_provider.type == "aws":
+            messages.append(
+                f"{Style.BRIGHT}Scanning unused services and resources: {Style.RESET_ALL}{Fore.YELLOW}{global_provider.scan_unused_services}{Style.RESET_ALL}"
+            )
+        report_title = (
+            f"{Style.BRIGHT}Using the following configuration:{Style.RESET_ALL}"
+        )
+        print_boxes(messages, report_title)
         # Default execution
         checks_num = len(checks_to_execute)
         plural_string = "checks"
