@@ -79,6 +79,10 @@ def create_layout_overview(
                 className="flex justify-between items-center",
             ),
             html.Div(id="table", className="grid"),
+            html.Img(
+                src="https://prowlerpro.matomo.cloud/matomo.php?idsite=2&amp;rec=1&amp;action_name=Overview",
+                alt="",
+            ),
         ],
         className="grid gap-x-8 gap-y-8 2xl:container mx-auto",
     )
@@ -142,6 +146,10 @@ def create_layout_compliance(
                 className="text-prowler-stone-900 text-lg font-bold",
             ),
             html.Div(className="flex flex-wrap", id="output"),
+            html.Img(
+                src="https://prowlerpro.matomo.cloud/matomo.php?idsite=2&amp;rec=1&amp;action_name=Compliance",
+                alt="",
+            ),
         ],
         className="grid gap-x-8 gap-y-8 2xl:container mx-auto",
     )

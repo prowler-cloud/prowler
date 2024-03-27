@@ -237,6 +237,14 @@ def display_data(
     if "gcp" in analytics_input or "azure" in analytics_input:
         data = data.rename(columns={"LOCATION": "REGION"})
 
+    # Add the column ACCOUNTID to the data if the provider is kubernetes
+    if "kubernetes" in analytics_input:
+        data.rename(columns={"CONTEXT": "ACCOUNTID"}, inplace=True)
+        data.rename(columns={"NAMESPACE": "REGION"}, inplace=True)
+        if "REQUIREMENTS_ATTRIBUTES_PROFILE" in data.columns:
+            data["REQUIREMENTS_ATTRIBUTES_PROFILE"] = data[
+                "REQUIREMENTS_ATTRIBUTES_PROFILE"
+            ].apply(lambda x: x.split(" - ")[0])
     # Filter the chosen level of the CIS
     if is_level_1:
         data = data[data["REQUIREMENTS_ATTRIBUTES_PROFILE"] == "Level 1"]

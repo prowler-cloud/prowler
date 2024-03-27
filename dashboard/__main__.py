@@ -132,26 +132,6 @@ dashboard.layout = html.Div(
     className="h-screen mx-auto",
 )
 
-# Matomo integration
-script = """
-<script>
-    var _paq = window._paq = window._paq || [];
-    /* tracker methods like "setCustomDimension" should be called before "trackPageView" */
-    _paq.push(["setDocumentTitle", document.domain + "/" + document.title]);
-    _paq.push(["setDoNotTrack", true]);
-    _paq.push(["disableCookies"]);
-    _paq.push(['trackPageView']);
-    _paq.push(['enableLinkTracking']);
-    (function() {
-        var u="https://prowlerpro.matomo.cloud/";
-        _paq.push(['setTrackerUrl', u+'matomo.php']);
-        _paq.push(['setSiteId', '2']);
-        var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
-        g.async=true; g.src='https://cdn.matomo.cloud/prowlerpro.matomo.cloud/matomo.js'; s.parentNode.insertBefore(g,s);
-    })();
-</script>
-"""
-
 
 # Callback to update navigation bar
 @dashboard.callback(Output("navigation-bar", "children"), [Input("url", "pathname")])
@@ -185,7 +165,6 @@ def update_nav_bar(pathname):
                 [html.Ul(generate_help_menu(), className="")],
                 className="flex flex-col gap-y-6 mt-auto",
             ),
-            html.Script(script),
         ],
         className="flex flex-col bg-prowler-stone-900 py-7 h-full",
     )
