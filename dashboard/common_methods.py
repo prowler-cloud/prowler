@@ -1673,3 +1673,536 @@ def get_section_containers_pci(data, section_1):
         direct_internal_items.append(internal_section_container)
 
     return html.Div(direct_internal_items, className="compliance-data-layout")
+
+
+def get_section_containers_ens(data, section_1, section_2, section_3, section_4):
+    data["STATUS"] = data["STATUS"].apply(map_status_to_icon)
+
+    findings_counts_marco = (
+        data.groupby([section_1, "STATUS"]).size().unstack(fill_value=0)
+    )
+    findings_counts_categoria = (
+        data.groupby([section_2, "STATUS"]).size().unstack(fill_value=0)
+    )
+    findings_counts_idgrupocontrol = (
+        data.groupby([section_3, "STATUS"]).size().unstack(fill_value=0)
+    )
+    findings_counts_tipo = (
+        data.groupby([section_4, "STATUS"]).size().unstack(fill_value=0)
+    )
+
+    section_containers = []
+
+    for marco in data[section_1].unique():
+        success_marco = (
+            findings_counts_marco.loc[marco, pass_emoji]
+            if pass_emoji in findings_counts_marco.columns
+            else 0
+        )
+        failed_marco = (
+            findings_counts_marco.loc[marco, fail_emoji]
+            if fail_emoji in findings_counts_marco.columns
+            else 0
+        )
+
+        fig_name = go.Figure(
+            data=[
+                go.Bar(
+                    name="Failed",
+                    x=[failed_marco],
+                    y=[""],
+                    orientation="h",
+                    marker=dict(color="#A3231F"),
+                    width=[0.8],
+                ),
+                go.Bar(
+                    name="Success",
+                    x=[success_marco],
+                    y=[""],
+                    orientation="h",
+                    marker=dict(color="#1FB53F"),
+                    width=[0.8],
+                ),
+            ]
+        )
+
+        fig_name.update_layout(
+            barmode="stack",
+            margin=dict(l=10, r=10, t=10, b=10),
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)",
+            showlegend=False,
+            width=350,
+            height=30,
+            xaxis=dict(showticklabels=False, showgrid=False, zeroline=False),
+            yaxis=dict(showticklabels=False, showgrid=False, zeroline=False),
+            annotations=[
+                dict(
+                    x=success_marco + failed_marco,
+                    y=0,
+                    xref="x",
+                    yref="y",
+                    text=str(success_marco),
+                    showarrow=False,
+                    font=dict(color="#1FB53F", size=14),
+                    xanchor="left",
+                    yanchor="middle",
+                ),
+                dict(
+                    x=0,
+                    y=0,
+                    xref="x",
+                    yref="y",
+                    text=str(failed_marco),
+                    showarrow=False,
+                    font=dict(color="#A3231F", size=14),
+                    xanchor="right",
+                    yanchor="middle",
+                ),
+            ],
+        )
+
+        fig_name.add_annotation(
+            x=50,
+            y=0,
+            text="",
+            showarrow=False,
+            align="center",
+            xanchor="center",
+            yanchor="middle",
+            textangle=0,
+        )
+
+        fig_name.add_annotation(
+            x=failed_marco,
+            y=0.3,
+            text="|",
+            showarrow=False,
+            align="center",
+            xanchor="center",
+            yanchor="middle",
+            textangle=0,
+            font=dict(size=20),
+        )
+
+        graph_name = dcc.Graph(
+            figure=fig_name, config={"staticPlot": True}, className="info-bar"
+        )
+
+        graph_div = html.Div(graph_name, className="graph-section")
+
+        direct_internal_items = []
+
+        for categoria in data[data[section_1] == marco][section_2].unique():
+            specific_data = data[
+                (data[section_1] == marco) & (data[section_2] == categoria)
+            ]
+            success_categoria = (
+                findings_counts_categoria.loc[categoria, pass_emoji]
+                if pass_emoji in findings_counts_categoria.columns
+                else 0
+            )
+            failed_categoria = (
+                findings_counts_categoria.loc[categoria, fail_emoji]
+                if fail_emoji in findings_counts_categoria.columns
+                else 0
+            )
+
+            # Create the graph for req_id
+            fig_section = go.Figure(
+                data=[
+                    go.Bar(
+                        name="Failed",
+                        x=[failed_categoria],
+                        y=[""],
+                        orientation="h",
+                        marker=dict(color="#A3231F"),
+                    ),
+                    go.Bar(
+                        name="Success",
+                        x=[success_categoria],
+                        y=[""],
+                        orientation="h",
+                        marker=dict(color="#1FB53F"),
+                    ),
+                ]
+            )
+
+            fig_section.update_layout(
+                barmode="stack",
+                margin=dict(l=10, r=10, t=10, b=10),
+                paper_bgcolor="rgba(0,0,0,0)",
+                plot_bgcolor="rgba(0,0,0,0)",
+                showlegend=False,
+                width=350,
+                height=30,
+                xaxis=dict(showticklabels=False, showgrid=False, zeroline=False),
+                yaxis=dict(showticklabels=False, showgrid=False, zeroline=False),
+                annotations=[
+                    dict(
+                        x=success_categoria + failed_categoria,
+                        y=0,
+                        xref="x",
+                        yref="y",
+                        text=str(success_categoria),
+                        showarrow=False,
+                        font=dict(color="#1FB53F", size=14),
+                        xanchor="left",
+                        yanchor="middle",
+                    ),
+                    dict(
+                        x=0,
+                        y=0,
+                        xref="x",
+                        yref="y",
+                        text=str(failed_categoria),
+                        showarrow=False,
+                        font=dict(color="#A3231F", size=14),
+                        xanchor="right",
+                        yanchor="middle",
+                    ),
+                ],
+            )
+
+            fig_section.add_annotation(
+                x=50,
+                y=0,
+                text="",
+                showarrow=False,
+                align="center",
+                xanchor="center",
+                yanchor="middle",
+                textangle=0,
+            )
+
+            fig_section.add_annotation(
+                x=failed_categoria,
+                y=0.3,
+                text="|",
+                showarrow=False,
+                align="center",
+                xanchor="center",
+                yanchor="middle",
+                textangle=0,
+                font=dict(size=20),
+            )
+
+            graph_section = dcc.Graph(
+                figure=fig_section,
+                config={"staticPlot": True},
+                className="info-bar-child",
+            )
+
+            graph_div_section = html.Div(graph_section, className="graph-section-req")
+
+            direct_internal_items_idgrupocontrol = []
+
+            for idgrupocontrol in specific_data[
+                (specific_data[section_1] == marco)
+                & (specific_data[section_2] == categoria)
+            ][section_3].unique():
+                specific_data2 = specific_data[
+                    (specific_data[section_1] == marco)
+                    & (specific_data[section_2] == categoria)
+                    & (specific_data[section_3] == idgrupocontrol)
+                ]
+                success_idgrupocontrol = (
+                    findings_counts_idgrupocontrol.loc[idgrupocontrol, pass_emoji]
+                    if pass_emoji in findings_counts_idgrupocontrol.columns
+                    else 0
+                )
+                failed_idgrupocontrol = (
+                    findings_counts_idgrupocontrol.loc[idgrupocontrol, fail_emoji]
+                    if fail_emoji in findings_counts_idgrupocontrol.columns
+                    else 0
+                )
+
+                # Create the graph for req_id
+                fig_idgrupocontrol = go.Figure(
+                    data=[
+                        go.Bar(
+                            name="Failed",
+                            x=[failed_idgrupocontrol],
+                            y=[""],
+                            orientation="h",
+                            marker=dict(color="#A3231F"),
+                        ),
+                        go.Bar(
+                            name="Success",
+                            x=[success_idgrupocontrol],
+                            y=[""],
+                            orientation="h",
+                            marker=dict(color="#1FB53F"),
+                        ),
+                    ]
+                )
+
+                fig_idgrupocontrol.update_layout(
+                    barmode="stack",
+                    margin=dict(l=10, r=10, t=10, b=10),
+                    paper_bgcolor="rgba(0,0,0,0)",
+                    plot_bgcolor="rgba(0,0,0,0)",
+                    showlegend=False,
+                    width=350,
+                    height=30,
+                    xaxis=dict(showticklabels=False, showgrid=False, zeroline=False),
+                    yaxis=dict(showticklabels=False, showgrid=False, zeroline=False),
+                    annotations=[
+                        dict(
+                            x=success_idgrupocontrol + failed_idgrupocontrol,
+                            y=0,
+                            xref="x",
+                            yref="y",
+                            text=str(success_idgrupocontrol),
+                            showarrow=False,
+                            font=dict(color="#1FB53F", size=14),
+                            xanchor="left",
+                            yanchor="middle",
+                        ),
+                        dict(
+                            x=0,
+                            y=0,
+                            xref="x",
+                            yref="y",
+                            text=str(failed_idgrupocontrol),
+                            showarrow=False,
+                            font=dict(color="#A3231F", size=14),
+                            xanchor="right",
+                            yanchor="middle",
+                        ),
+                    ],
+                )
+
+                fig_idgrupocontrol.add_annotation(
+                    x=50,
+                    y=0,
+                    text="",
+                    showarrow=False,
+                    align="center",
+                    xanchor="center",
+                    yanchor="middle",
+                    textangle=0,
+                )
+
+                fig_idgrupocontrol.add_annotation(
+                    x=failed_idgrupocontrol,
+                    y=0.3,
+                    text="|",
+                    showarrow=False,
+                    align="center",
+                    xanchor="center",
+                    yanchor="middle",
+                    textangle=0,
+                    font=dict(size=20),
+                )
+
+                graph_idgrupocontrol = dcc.Graph(
+                    figure=fig_idgrupocontrol,
+                    config={"staticPlot": True},
+                    className="info-bar-child",
+                )
+
+                graph_div_idgrupocontrol = html.Div(
+                    graph_idgrupocontrol, className="graph-section-req"
+                )
+
+                direct_internal_items_tipo = []
+
+                for tipo in specific_data2[
+                    (specific_data2[section_1] == marco)
+                    & (specific_data2[section_2] == categoria)
+                    & (specific_data2[section_3] == idgrupocontrol)
+                ][section_4].unique():
+                    specific_data3 = specific_data2[
+                        (specific_data2[section_1] == marco)
+                        & (specific_data2[section_2] == categoria)
+                        & (specific_data2[section_3] == idgrupocontrol)
+                        & (specific_data2[section_4] == tipo)
+                    ]
+                    success_tipo = (
+                        findings_counts_tipo.loc[tipo, pass_emoji]
+                        if pass_emoji in findings_counts_tipo.columns
+                        else 0
+                    )
+                    failed_tipo = (
+                        findings_counts_tipo.loc[tipo, fail_emoji]
+                        if fail_emoji in findings_counts_tipo.columns
+                        else 0
+                    )
+                    # Create the DataTable for req_id
+                    data_table = dash_table.DataTable(
+                        data=specific_data3.to_dict("records"),
+                        columns=[
+                            {"name": i, "id": i}
+                            for i in [
+                                "CHECKID",
+                                "STATUS",
+                                "REGION",
+                                "ACCOUNTID",
+                                "RESOURCEID",
+                            ]
+                        ],
+                        style_table={"overflowX": "auto"},
+                        style_as_list_view=True,
+                        style_cell={"textAlign": "left", "padding": "5px"},
+                    )
+
+                    # Create the graph for req_id
+                    fig_tipo = go.Figure(
+                        data=[
+                            go.Bar(
+                                name="Failed",
+                                x=[failed_tipo],
+                                y=[""],
+                                orientation="h",
+                                marker=dict(color="#A3231F"),
+                            ),
+                            go.Bar(
+                                name="Success",
+                                x=[success_tipo],
+                                y=[""],
+                                orientation="h",
+                                marker=dict(color="#1FB53F"),
+                            ),
+                        ]
+                    )
+
+                    fig_tipo.update_layout(
+                        barmode="stack",
+                        margin=dict(l=10, r=10, t=10, b=10),
+                        paper_bgcolor="rgba(0,0,0,0)",
+                        plot_bgcolor="rgba(0,0,0,0)",
+                        showlegend=False,
+                        width=350,
+                        height=30,
+                        xaxis=dict(
+                            showticklabels=False, showgrid=False, zeroline=False
+                        ),
+                        yaxis=dict(
+                            showticklabels=False, showgrid=False, zeroline=False
+                        ),
+                        annotations=[
+                            dict(
+                                x=success_tipo + failed_tipo,
+                                y=0,
+                                xref="x",
+                                yref="y",
+                                text=str(success_tipo),
+                                showarrow=False,
+                                font=dict(color="#1FB53F", size=14),
+                                xanchor="left",
+                                yanchor="middle",
+                            ),
+                            dict(
+                                x=0,
+                                y=0,
+                                xref="x",
+                                yref="y",
+                                text=str(failed_tipo),
+                                showarrow=False,
+                                font=dict(color="#A3231F", size=14),
+                                xanchor="right",
+                                yanchor="middle",
+                            ),
+                        ],
+                    )
+
+                    fig_tipo.add_annotation(
+                        x=50,
+                        y=0,
+                        text="",
+                        showarrow=False,
+                        align="center",
+                        xanchor="center",
+                        yanchor="middle",
+                        textangle=0,
+                    )
+
+                    fig_tipo.add_annotation(
+                        x=failed_tipo,
+                        y=0.3,
+                        text="|",
+                        showarrow=False,
+                        align="center",
+                        xanchor="center",
+                        yanchor="middle",
+                        textangle=0,
+                        font=dict(size=20),
+                    )
+
+                    graph_tipo = dcc.Graph(
+                        figure=fig_tipo,
+                        config={"staticPlot": True},
+                        className="info-bar-child",
+                    )
+
+                    graph_div_tipo = html.Div(graph_tipo, className="graph-section-req")
+                    internal_accordion_item_3 = dbc.AccordionItem(
+                        title=tipo,
+                        children=[
+                            html.Div([data_table], className="inner-accordion-content")
+                        ],
+                    )
+                    internal_section_container_3 = html.Div(
+                        [
+                            graph_div_tipo,
+                            dbc.Accordion(
+                                [internal_accordion_item_3],
+                                start_collapsed=True,
+                                flush=True,
+                            ),
+                        ],
+                        className="accordion-inner--child",
+                    )
+                    direct_internal_items_tipo.append(internal_section_container_3)
+
+                internal_accordion_item_2 = dbc.AccordionItem(
+                    title=idgrupocontrol,
+                    children=direct_internal_items_tipo,
+                )
+                internal_section_container_2 = html.Div(
+                    [
+                        graph_div_idgrupocontrol,
+                        dbc.Accordion(
+                            [internal_accordion_item_2],
+                            start_collapsed=True,
+                            flush=True,
+                        ),
+                    ],
+                    className="accordion-inner--child",
+                )
+                direct_internal_items_idgrupocontrol.append(
+                    internal_section_container_2
+                )
+
+            internal_accordion_item = dbc.AccordionItem(
+                title=categoria,
+                children=direct_internal_items_idgrupocontrol,
+            )
+
+            internal_section_container = html.Div(
+                [
+                    graph_div_section,
+                    dbc.Accordion(
+                        [internal_accordion_item], start_collapsed=True, flush=True
+                    ),
+                ],
+                className="accordion-inner--child",
+            )
+
+            direct_internal_items.append(internal_section_container)
+
+        accordion_item = dbc.AccordionItem(
+            title=f"{marco}", children=direct_internal_items
+        )
+        section_container = html.Div(
+            [
+                graph_div,
+                dbc.Accordion([accordion_item], start_collapsed=True, flush=True),
+            ],
+            className="accordion-inner",
+        )
+
+        section_containers.append(section_container)
+
+    return html.Div(section_containers, className="compliance-data-layout")

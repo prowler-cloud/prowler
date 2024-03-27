@@ -1,6 +1,6 @@
 import warnings
 
-from dashboard.common_methods import get_section_containers_format2
+from dashboard.common_methods import get_section_containers_ens
 
 warnings.filterwarnings("ignore")
 
@@ -8,7 +8,9 @@ warnings.filterwarnings("ignore")
 def get_table(data):
     aux = data[
         [
-            "REQUIREMENTS_ID",
+            "REQUIREMENTS_ATTRIBUTES_MARCO",
+            "REQUIREMENTS_ATTRIBUTES_CATEGORIA",
+            "REQUIREMENTS_ATTRIBUTES_IDGRUPOCONTROL",
             "REQUIREMENTS_ATTRIBUTES_TIPO",
             "CHECKID",
             "STATUS",
@@ -18,6 +20,10 @@ def get_table(data):
         ]
     ]
 
-    return get_section_containers_format2(
-        aux, "REQUIREMENTS_ATTRIBUTES_TIPO", "REQUIREMENTS_ID"
+    return get_section_containers_ens(
+        aux,
+        "REQUIREMENTS_ATTRIBUTES_MARCO",
+        "REQUIREMENTS_ATTRIBUTES_CATEGORIA",
+        "REQUIREMENTS_ATTRIBUTES_IDGRUPOCONTROL",
+        "REQUIREMENTS_ATTRIBUTES_TIPO",
     )
