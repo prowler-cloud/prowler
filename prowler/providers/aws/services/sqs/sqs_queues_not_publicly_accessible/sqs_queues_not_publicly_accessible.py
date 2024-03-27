@@ -41,9 +41,11 @@ class sqs_queues_not_publicly_accessible(Check):
                                 else:
                                     report.status = "FAIL"
                                     report.status_extended = f"SQS queue {queue.id} is public because its policy allows public access, and the condition does not limit access to resources within the same account."
+                                    break
                             else:
                                 report.status = "FAIL"
                                 report.status_extended = f"SQS queue {queue.id} is public because its policy allows public access."
+                                break
             findings.append(report)
 
         return findings
