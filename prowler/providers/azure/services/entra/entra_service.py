@@ -1,6 +1,6 @@
 import asyncio
 from dataclasses import dataclass
-from typing import Optional
+from typing import Any, List, Optional
 from uuid import UUID
 
 from msgraph import GraphServiceClient
@@ -33,6 +33,9 @@ class Entra(AzureService):
         self.directory_roles = asyncio.get_event_loop().run_until_complete(
             self.__get_directory_roles__()
         )
+        self.conditional_access_policy = asyncio.get_event_loop().run_until_complete(
+            self.__get_conditional_access_policy__()
+        )
 
     async def __get_users__(self):
         users = {}
@@ -44,7 +47,13 @@ class Entra(AzureService):
                     users[tenant].update(
                         {
                             user.user_principal_name: User(
-                                id=user.id, name=user.display_name
+                                id=user.id,
+                                name=user.display_name,
+                                authentication_methods=(
+                                    await client.users.by_user_id(
+                                        user.id
+                                    ).authentication.methods.get()
+                                ).value,
                             )
                         }
                     )
@@ -185,11 +194,11 @@ class Entra(AzureService):
                             directory_role.display_name: DirectoryRole(
                                 id=directory_role.id,
                                 members=[
-                                    User(
-                                        id=member.id,
-                                        name=member.display_name,
-                                    )
+                                    self.users[tenant][member.user_principal_name]
                                     for member in directory_role_members.value
+                                    if self.users[tenant].get(
+                                        member.user_principal_name, None
+                                    )
                                 ],
                             )
                         }
@@ -201,10 +210,88 @@ class Entra(AzureService):
             )
         return directory_roles_with_members
 
+    async def __get_conditional_access_policy__(self):
+        conditional_access_policy = {}
+        try:
+            for tenant, client in self.clients.items():
+                conditional_access_policies = (
+                    await client.identity.conditional_access.policies.get()
+                )
+                conditional_access_policy.update({tenant: {}})
+                for policy in getattr(conditional_access_policies, "value", []):
+                    conditions = getattr(policy, "conditions", None)
+
+                    included_apps = []
+                    excluded_apps = []
+
+                    if getattr(conditions, "applications", None):
+                        if getattr(conditions.applications, "include_applications", []):
+                            included_apps = conditions.applications.include_applications
+                        elif getattr(
+                            conditions.applications, "include_user_actions", []
+                        ):
+                            included_apps = conditions.applications.include_user_actions
+
+                        if getattr(conditions.applications, "exclude_applications", []):
+                            excluded_apps = conditions.applications.exclude_applications
+                        elif getattr(
+                            conditions.applications, "exclude_user_actions", []
+                        ):
+                            excluded_apps = conditions.applications.exclude_user_actions
+
+                    grant_access_controls = []
+                    block_access_controls = []
+
+                    for access_control in (
+                        getattr(policy.grant_controls, "built_in_controls")
+                        if policy.grant_controls
+                        else []
+                    ):
+                        if "Grant" in str(access_control):
+                            grant_access_controls.append(str(access_control))
+                        else:
+                            block_access_controls.append(str(access_control))
+
+                    conditional_access_policy[tenant].update(
+                        {
+                            policy.id: ConditionalAccessPolicy(
+                                name=policy.display_name,
+                                state=getattr(policy, "state", "None"),
+                                users={
+                                    "include": (
+                                        getattr(conditions.users, "include_users", [])
+                                        if getattr(conditions, "users", None)
+                                        else []
+                                    ),
+                                    "exclude": (
+                                        getattr(conditions.users, "exclude_users", [])
+                                        if getattr(conditions, "users", None)
+                                        else []
+                                    ),
+                                },
+                                target_resources={
+                                    "include": included_apps,
+                                    "exclude": excluded_apps,
+                                },
+                                access_controls={
+                                    "grant": grant_access_controls,
+                                    "block": block_access_controls,
+                                },
+                            )
+                        }
+                    )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+        return conditional_access_policy
+
 
 class User(BaseModel):
     id: str
     name: str
+    authentication_methods: List[Any] = []
 
 
 @dataclass
@@ -221,7 +308,7 @@ class AuthorizationPolicy:
 class GroupSetting:
     name: Optional[str]
     template_id: Optional[str]
-    settings: list[SettingValue]
+    settings: List[SettingValue]
 
 
 class SecurityDefault(BaseModel):
@@ -232,10 +319,18 @@ class SecurityDefault(BaseModel):
 
 class NamedLocation(BaseModel):
     name: str
-    ip_ranges_addresses: list[str]
+    ip_ranges_addresses: List[str]
     is_trusted: bool
 
 
 class DirectoryRole(BaseModel):
     id: str
-    members: list[User]
+    members: List[User]
+
+
+class ConditionalAccessPolicy(BaseModel):
+    name: str
+    state: str
+    users: dict[str, List[str]]
+    target_resources: dict[str, List[str]]
+    access_controls: dict[str, List[str]]
