@@ -1,3 +1,4 @@
+from unittest import mock
 from unittest.mock import patch
 
 from azure.mgmt.compute.models import ManagedDiskParameters, OSDisk, StorageProfile
@@ -19,6 +20,13 @@ def mock_vm_get_virtual_machines(_):
             "vm_id-1": VirtualMachine(
                 resource_id="/subscriptions/resource_id",
                 resource_name="VMTest",
+                security_profile=mock.MagicMock(
+                    security_type="TrustedLaunch",
+                    uefi_settings=mock.MagicMock(
+                        secure_boot_enabled=True,
+                        v_tpm_enabled=True,
+                    ),
+                ),
                 storage_profile=StorageProfile(
                     os_disk=OSDisk(
                         create_option="FromImage",
@@ -76,6 +84,24 @@ class Test_AppInsights_Service:
                 "vm_id-1"
             ].resource_name
             == "VMTest"
+        )
+        assert (
+            virtual_machines.virtual_machines[AZURE_SUBSCRIPTION][
+                "vm_id-1"
+            ].security_profile.security_type
+            == "TrustedLaunch"
+        )
+        assert (
+            virtual_machines.virtual_machines[AZURE_SUBSCRIPTION][
+                "vm_id-1"
+            ].security_profile.uefi_settings.secure_boot_enabled
+            is True
+        )
+        assert (
+            virtual_machines.virtual_machines[AZURE_SUBSCRIPTION][
+                "vm_id-1"
+            ].security_profile.uefi_settings.v_tpm_enabled
+            is True
         )
         assert (
             virtual_machines.virtual_machines[AZURE_SUBSCRIPTION][

@@ -31,6 +31,7 @@ class VirtualMachines(AzureService):
                                 resource_id=vm.id,
                                 resource_name=vm.name,
                                 storage_profile=getattr(vm, "storage_profile", None),
+                                security_profile=vm.security_profile,
                             )
                         }
                     )
@@ -77,10 +78,23 @@ class VirtualMachines(AzureService):
 
 
 @dataclass
+class UefiSettings:
+    secure_boot_enabled: bool
+    v_tpm_enabled: bool
+
+
+@dataclass
+class SecurityProfile:
+    security_type: str
+    uefi_settings: UefiSettings
+
+
+@dataclass
 class VirtualMachine:
     resource_id: str
     resource_name: str
     storage_profile: StorageProfile
+    security_profile: SecurityProfile
 
 
 @dataclass
