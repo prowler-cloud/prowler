@@ -157,6 +157,14 @@ def init_parser(self):
         help="Scan unused services",
     )
 
+    # Threat Detection checks
+    threat_detection_subparser = aws_parser.add_argument_group("Threat Detection")
+    threat_detection_subparser.add_argument(
+        "--threat-detection",
+        action="store_true",
+        help="Run CloudTrail threat detection checks to detect potential privilege escalation or enumeration attacks",
+    )
+
 
 def validate_session_duration(duration):
     """validate_session_duration validates that the AWS STS Assume Role Session Duration is between 900 and 43200 seconds."""
