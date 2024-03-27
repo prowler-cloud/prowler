@@ -49,6 +49,7 @@ class Test_entra_conditional_access_policy_require_mfa_for_management_api:
 
     def test_entra_tenant_policy_no_mfa(self):
         entra_client = mock.MagicMock
+        policy_id = str(uuid4())
 
         with mock.patch(
             "prowler.providers.azure.services.entra.entra_conditional_access_policy_require_mfa_for_management_api.entra_conditional_access_policy_require_mfa_for_management_api.entra_client",
@@ -69,7 +70,7 @@ class Test_entra_conditional_access_policy_require_mfa_for_management_api:
                 access_controls={"grant": ["grant"]},
             )
 
-            entra_client.conditional_access_policy = {DOMAIN: {str(uuid4()): policy}}
+            entra_client.conditional_access_policy = {DOMAIN: {policy_id: policy}}
 
             check = entra_conditional_access_policy_require_mfa_for_management_api()
             result = check.execute()
@@ -85,6 +86,7 @@ class Test_entra_conditional_access_policy_require_mfa_for_management_api:
 
     def test_entra_tenant_policy_mfa(self):
         entra_client = mock.MagicMock
+        policy_id = str(uuid4())
 
         with mock.patch(
             "prowler.providers.azure.services.entra.entra_conditional_access_policy_require_mfa_for_management_api.entra_conditional_access_policy_require_mfa_for_management_api.entra_client",
@@ -105,7 +107,7 @@ class Test_entra_conditional_access_policy_require_mfa_for_management_api:
                 access_controls={"grant": ["grant", "MFA"]},
             )
 
-            entra_client.conditional_access_policy = {DOMAIN: {str(uuid4()): policy}}
+            entra_client.conditional_access_policy = {DOMAIN: {policy_id: policy}}
 
             check = entra_conditional_access_policy_require_mfa_for_management_api()
             result = check.execute()
@@ -113,7 +115,7 @@ class Test_entra_conditional_access_policy_require_mfa_for_management_api:
             assert result[0].status == "PASS"
             assert result[0].subscription == f"Tenant: {DOMAIN}"
             assert result[0].resource_name == "Test Policy"
-            assert result[0].resource_id != "Conditional Access Policy"
+            assert result[0].resource_id == policy_id
             assert (
                 result[0].status_extended
                 == "Conditional Access Policy requires MFA for management API."
@@ -121,6 +123,7 @@ class Test_entra_conditional_access_policy_require_mfa_for_management_api:
 
     def test_entra_tenant_policy_mfa_disabled(self):
         entra_client = mock.MagicMock
+        policy_id = str(uuid4())
 
         with mock.patch(
             "prowler.providers.azure.services.entra.entra_conditional_access_policy_require_mfa_for_management_api.entra_conditional_access_policy_require_mfa_for_management_api.entra_client",
@@ -141,7 +144,7 @@ class Test_entra_conditional_access_policy_require_mfa_for_management_api:
                 access_controls={"grant": ["grant", "MFA"]},
             )
 
-            entra_client.conditional_access_policy = {DOMAIN: {str(uuid4()): policy}}
+            entra_client.conditional_access_policy = {DOMAIN: {policy_id: policy}}
 
             check = entra_conditional_access_policy_require_mfa_for_management_api()
             result = check.execute()
@@ -157,6 +160,7 @@ class Test_entra_conditional_access_policy_require_mfa_for_management_api:
 
     def test_entra_tenant_policy_mfa_no_target(self):
         entra_client = mock.MagicMock
+        policy_id = str(uuid4())
 
         with mock.patch(
             "prowler.providers.azure.services.entra.entra_conditional_access_policy_require_mfa_for_management_api.entra_conditional_access_policy_require_mfa_for_management_api.entra_client",
@@ -177,7 +181,7 @@ class Test_entra_conditional_access_policy_require_mfa_for_management_api:
                 access_controls={"grant": ["grant", "MFA"]},
             )
 
-            entra_client.conditional_access_policy = {DOMAIN: {str(uuid4()): policy}}
+            entra_client.conditional_access_policy = {DOMAIN: {policy_id: policy}}
 
             check = entra_conditional_access_policy_require_mfa_for_management_api()
             result = check.execute()
@@ -193,6 +197,7 @@ class Test_entra_conditional_access_policy_require_mfa_for_management_api:
 
     def test_entra_tenant_policy_mfa_no_users(self):
         entra_client = mock.MagicMock
+        policy_id = str(uuid4())
 
         with mock.patch(
             "prowler.providers.azure.services.entra.entra_conditional_access_policy_require_mfa_for_management_api.entra_conditional_access_policy_require_mfa_for_management_api.entra_client",
@@ -213,7 +218,7 @@ class Test_entra_conditional_access_policy_require_mfa_for_management_api:
                 access_controls={"grant": ["grant", "MFA"]},
             )
 
-            entra_client.conditional_access_policy = {DOMAIN: {str(uuid4()): policy}}
+            entra_client.conditional_access_policy = {DOMAIN: {policy_id: policy}}
 
             check = entra_conditional_access_policy_require_mfa_for_management_api()
             result = check.execute()
