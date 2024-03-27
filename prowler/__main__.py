@@ -197,6 +197,7 @@ def prowler():
             global_provider,
             custom_checks_metadata,
             getattr(args, "mutelist_file", None),
+            args.config_file,
         )
     else:
         logger.error(

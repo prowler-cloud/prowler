@@ -11,6 +11,7 @@ from msgraph import GraphServiceClient
 from prowler.config.config import load_and_validate_config_file
 from prowler.lib.logger import logger
 from prowler.lib.mutelist.mutelist import parse_mutelist_file
+from prowler.lib.utils.utils import print_boxes
 from prowler.providers.azure.lib.regions.regions import get_regions_config
 from prowler.providers.azure.models import (
     AzureIdentityInfo,
@@ -175,14 +176,14 @@ class AzureProvider(Provider):
         for key, value in self._identity.subscriptions.items():
             intermediate = key + ": " + value
             printed_subscriptions.append(intermediate)
-        report = f"""
-This report is being generated using the identity below:
-
-Azure Tenant ID: {Fore.YELLOW}[{self._identity.tenant_ids[0]}]{Style.RESET_ALL} Azure Tenant Domain: {Fore.YELLOW}[{self._identity.tenant_domain}]{Style.RESET_ALL} Azure Region: {Fore.YELLOW}[{self.region_config.name}]{Style.RESET_ALL}
-Azure Subscriptions: {Fore.YELLOW}{printed_subscriptions}{Style.RESET_ALL}
-Azure Identity Type: {Fore.YELLOW}[{self._identity.identity_type}]{Style.RESET_ALL} Azure Identity ID: {Fore.YELLOW}[{self._identity.identity_id}]{Style.RESET_ALL}
-"""
-        print(report)
+        report_lines = [
+            f"{Style.BRIGHT}Azure Tenant Domain:{Style.RESET_ALL} {Fore.YELLOW}{self._identity.tenant_domain}{Style.RESET_ALL} {Style.BRIGHT}Azure Tenant ID:{Style.RESET_ALL} {Fore.YELLOW}{self._identity.tenant_ids[0]}{Style.RESET_ALL}",
+            f"{Style.BRIGHT}Azure Region:{Style.RESET_ALL} {Fore.YELLOW}{self.region_config.name}{Style.RESET_ALL}",
+            f"{Style.BRIGHT}Azure Subscriptions:{Style.RESET_ALL} {Fore.YELLOW}{printed_subscriptions}{Style.RESET_ALL}",
+            f"{Style.BRIGHT}Azure Identity Type:{Style.RESET_ALL} {Fore.YELLOW}{self._identity.identity_type}{Style.RESET_ALL} {Style.BRIGHT}Azure Identity ID:{Style.RESET_ALL} {Fore.YELLOW}{self._identity.identity_id}{Style.RESET_ALL}",
+        ]
+        report_title = f"{Style.BRIGHT}Prowler is using the Azure credentials below:{Style.RESET_ALL}"
+        print_boxes(report_lines, report_title)
 
     # TODO: setup_session or setup_credentials?
     def setup_session(
