@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Optional
 
 from botocore.client import ClientError
@@ -168,6 +168,22 @@ class Cloudtrail(AWSService):
                                 "InsightType"
                             )
 
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def __lookup_events__(self, trail, event_name, minutes):
+        logger.info("CloudTrail - Lookup Events...")
+        try:
+            regional_client = self.regional_clients[trail.region]
+            response = regional_client.lookup_events(
+                LookupAttributes=[
+                    {"AttributeKey": "EventName", "AttributeValue": event_name}
+                ],
+                StartTime=datetime.now() - timedelta(minutes=minutes),
+            )
+            return response.get("Events")
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

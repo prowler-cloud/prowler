@@ -6,7 +6,10 @@ from os import environ
 
 from colorama import Fore, Style
 
-from prowler.config.config import get_available_compliance_frameworks
+from prowler.config.config import (
+    get_available_compliance_frameworks,
+    threat_detection_checks,
+)
 from prowler.lib.banner import print_banner
 from prowler.lib.check.check import (
     bulk_load_checks_metadata,
@@ -169,6 +172,12 @@ def prowler():
     checks_from_resources = global_provider.get_checks_to_execute_by_audit_resources()
     if checks_from_resources:
         checks_to_execute = checks_to_execute.intersection(checks_from_resources)
+
+    # Only execute threat detection checks if threat-detection category is set
+    if "threat-detection" not in categories:
+        checks_to_execute = [
+            check for check in checks_to_execute if check not in threat_detection_checks
+        ]
 
     # Sort final check list
     checks_to_execute = sorted(checks_to_execute)
