@@ -29,9 +29,10 @@ Available components:
     dashboard           Prowler local dashboard
 
 
-To see the different available options on a specific provider, run:
-    prowler {provider} -h|--help
-Detailed documentation at https://docs.prowler.cloud
+To see the different available options on a specific component, run:
+    prowler {provider|dashboard} -h|--help
+
+Detailed documentation at https://docs.prowler.com
 """,
         )
         # Default
