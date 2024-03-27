@@ -65,7 +65,7 @@ class TestSlackIntegration:
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": f"Hey there 👋 \n I'm *Prowler*, _the handy cloud security tool_ :cloud::key:\n\n I have just finished the security assessment on your {aws_identity} with a total of *{stats['findings_count']}* findings.",
+                    "text": f"Hey there 👋 \n I'm *Prowler*, _the handy multi-cloud security tool_ :cloud::key:\n\n I have just finished the security assessment on your {aws_identity} with a total of *{stats['findings_count']}* findings.",
                 },
                 "accessory": {
                     "type": "image",
@@ -145,7 +145,7 @@ class TestSlackIntegration:
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": f"Hey there 👋 \n I'm *Prowler*, _the handy cloud security tool_ :cloud::key:\n\n I have just finished the security assessment on your {azure_identity} with a total of *{stats['findings_count']}* findings.",
+                    "text": f"Hey there 👋 \n I'm *Prowler*, _the handy multi-cloud security tool_ :cloud::key:\n\n I have just finished the security assessment on your {azure_identity} with a total of *{stats['findings_count']}* findings.",
                 },
                 "accessory": {
                     "type": "image",
@@ -225,7 +225,7 @@ class TestSlackIntegration:
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": f"Hey there 👋 \n I'm *Prowler*, _the handy cloud security tool_ :cloud::key:\n\n I have just finished the security assessment on your {gcp_identity} with a total of *{stats['findings_count']}* findings.",
+                    "text": f"Hey there 👋 \n I'm *Prowler*, _the handy multi-cloud security tool_ :cloud::key:\n\n I have just finished the security assessment on your {gcp_identity} with a total of *{stats['findings_count']}* findings.",
                 },
                 "accessory": {
                     "type": "image",
