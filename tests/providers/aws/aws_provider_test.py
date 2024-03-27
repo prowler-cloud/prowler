@@ -1070,7 +1070,9 @@ aws:
         assert sts_session._service_model.service_name == "sts"
         assert sts_session._client_config.region_name == aws_region
         assert sts_session._endpoint._endpoint_prefix == "sts"
-        assert sts_session._endpoint.host == f"https://sts.{aws_region}.amazonaws.com"
+        assert (
+            sts_session._endpoint.host == f"https://sts.{aws_region}.amazonaws.com.cn"
+        )
 
     @mock_aws
     @patch(
