@@ -116,7 +116,7 @@ def set_mocked_aws_provider(
 
 def set_default_provider_arguments(arguments: Namespace) -> Namespace:
     arguments.status = []
-    arguments.output_modes = []
+    arguments.output_formats = []
     arguments.output_directory = ""
     arguments.verbose = False
     arguments.only_logs = False

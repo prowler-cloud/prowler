@@ -15,6 +15,7 @@ def init_parser(self):
     # Subscriptions
     gcp_subscriptions_subparser = gcp_parser.add_argument_group("Projects")
     gcp_subscriptions_subparser.add_argument(
+        "--project-id",
         "--project-ids",
         nargs="+",
         default=[],

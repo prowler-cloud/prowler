@@ -16,7 +16,9 @@ prowler_command = "prowler"
 
 # capsys
 # https://docs.pytest.org/en/7.1.x/how-to/capture-stdout-stderr.html
-prowler_default_usage_error = "usage: prowler [-h] [-v] {aws,azure,gcp,kubernetes} ..."
+prowler_default_usage_error = (
+    "usage: prowler [-h] [--version] {aws,azure,gcp,kubernetes} ..."
+)
 
 
 def mock_get_available_providers():
@@ -42,9 +44,9 @@ class Test_Parser:
         parsed = self.parser.parse(command)
         assert parsed.provider == provider
         assert not parsed.status
-        assert len(parsed.output_modes) == 2
-        assert "csv" in parsed.output_modes
-        assert "json-ocsf" in parsed.output_modes
+        assert len(parsed.output_formats) == 2
+        assert "csv" in parsed.output_formats
+        assert "json-ocsf" in parsed.output_formats
         assert not parsed.output_filename
         assert "output" in parsed.output_directory
         assert not parsed.verbose
@@ -54,15 +56,15 @@ class Test_Parser:
         assert parsed.log_level == "CRITICAL"
         assert not parsed.log_file
         assert not parsed.only_logs
-        assert not parsed.checks
+        assert not parsed.check
         assert not parsed.checks_file
         assert not parsed.checks_folder
-        assert not parsed.services
+        assert not parsed.service
         assert not parsed.severity
         assert not parsed.compliance
-        assert len(parsed.categories) == 0
-        assert not parsed.excluded_checks
-        assert not parsed.excluded_services
+        assert len(parsed.category) == 0
+        assert not parsed.excluded_check
+        assert not parsed.excluded_service
         assert not parsed.list_checks
         assert not parsed.list_services
         assert not parsed.list_compliance
@@ -79,7 +81,7 @@ class Test_Parser:
         assert not parsed.output_bucket
         assert not parsed.output_bucket_no_assume
         assert not parsed.shodan
-        assert not parsed.resource_tags
+        assert not parsed.resource_tag
         assert not parsed.scan_unused_services
 
     def test_default_parser_no_arguments_azure(self):
@@ -88,9 +90,9 @@ class Test_Parser:
         parsed = self.parser.parse(command)
         assert parsed.provider == provider
         assert not parsed.status
-        assert len(parsed.output_modes) == 2
-        assert "csv" in parsed.output_modes
-        assert "json-ocsf" in parsed.output_modes
+        assert len(parsed.output_formats) == 2
+        assert "csv" in parsed.output_formats
+        assert "json-ocsf" in parsed.output_formats
         assert not parsed.output_filename
         assert "output" in parsed.output_directory
         assert not parsed.verbose
@@ -100,21 +102,21 @@ class Test_Parser:
         assert parsed.log_level == "CRITICAL"
         assert not parsed.log_file
         assert not parsed.only_logs
-        assert not parsed.checks
+        assert not parsed.check
         assert not parsed.checks_file
         assert not parsed.checks_folder
-        assert not parsed.services
+        assert not parsed.service
         assert not parsed.severity
         assert not parsed.compliance
-        assert len(parsed.categories) == 0
-        assert not parsed.excluded_checks
-        assert not parsed.excluded_services
+        assert len(parsed.category) == 0
+        assert not parsed.excluded_check
+        assert not parsed.excluded_service
         assert not parsed.list_checks
         assert not parsed.list_services
         assert not parsed.list_compliance
         assert not parsed.list_compliance_requirements
         assert not parsed.list_categories
-        assert len(parsed.subscription_ids) == 0
+        assert len(parsed.subscription_id) == 0
         assert not parsed.az_cli_auth
         assert not parsed.sp_env_auth
         assert not parsed.browser_auth
@@ -127,9 +129,9 @@ class Test_Parser:
         parsed = self.parser.parse(command)
         assert parsed.provider == provider
         assert not parsed.status
-        assert len(parsed.output_modes) == 2
-        assert "csv" in parsed.output_modes
-        assert "json-ocsf" in parsed.output_modes
+        assert len(parsed.output_formats) == 2
+        assert "csv" in parsed.output_formats
+        assert "json-ocsf" in parsed.output_formats
         assert not parsed.output_filename
         assert "output" in parsed.output_directory
         assert not parsed.verbose
@@ -139,15 +141,15 @@ class Test_Parser:
         assert parsed.log_level == "CRITICAL"
         assert not parsed.log_file
         assert not parsed.only_logs
-        assert not parsed.checks
+        assert not parsed.check
         assert not parsed.checks_file
         assert not parsed.checks_folder
-        assert not parsed.services
+        assert not parsed.service
         assert not parsed.severity
         assert not parsed.compliance
-        assert len(parsed.categories) == 0
-        assert not parsed.excluded_checks
-        assert not parsed.excluded_services
+        assert len(parsed.category) == 0
+        assert not parsed.excluded_check
+        assert not parsed.excluded_service
         assert not parsed.list_checks
         assert not parsed.list_services
         assert not parsed.list_compliance
@@ -161,9 +163,9 @@ class Test_Parser:
         parsed = self.parser.parse(command)
         assert parsed.provider == provider
         assert not parsed.severity
-        assert len(parsed.output_modes) == 2
-        assert "csv" in parsed.output_modes
-        assert "json-ocsf" in parsed.output_modes
+        assert len(parsed.output_formats) == 2
+        assert "csv" in parsed.output_formats
+        assert "json-ocsf" in parsed.output_formats
         assert not parsed.output_filename
         assert "output" in parsed.output_directory
         assert not parsed.verbose
@@ -173,15 +175,15 @@ class Test_Parser:
         assert parsed.log_level == "CRITICAL"
         assert not parsed.log_file
         assert not parsed.only_logs
-        assert not parsed.checks
+        assert not parsed.check
         assert not parsed.checks_file
         assert not parsed.checks_folder
-        assert not parsed.services
+        assert not parsed.service
         assert not parsed.severity
         assert not parsed.compliance
-        assert len(parsed.categories) == 0
-        assert not parsed.excluded_checks
-        assert not parsed.excluded_services
+        assert len(parsed.category) == 0
+        assert not parsed.excluded_check
+        assert not parsed.excluded_service
         assert not parsed.list_checks
         assert not parsed.list_services
         assert not parsed.list_compliance
@@ -189,7 +191,7 @@ class Test_Parser:
         assert not parsed.list_categories
         assert not parsed.kubeconfig_file
         assert not parsed.context
-        assert not parsed.namespaces
+        assert not parsed.namespace
 
     def test_root_parser_version_short(self):
         command = [prowler_command, "-v"]
@@ -259,36 +261,36 @@ class Test_Parser:
         parsed = self.parser.parse(command)
         assert parsed.ignore_exit_code_3
 
-    def test_root_parser_default_output_modes(self):
+    def test_root_parser_default_output_formats(self):
         command = [prowler_command]
         parsed = self.parser.parse(command)
-        assert len(parsed.output_modes) == 2
-        assert "csv" in parsed.output_modes
-        assert "json-ocsf" in parsed.output_modes
+        assert len(parsed.output_formats) == 2
+        assert "csv" in parsed.output_formats
+        assert "json-ocsf" in parsed.output_formats
 
-    def test_root_parser_output_modes_short(self):
+    def test_root_parser_output_formats_short(self):
         command = [prowler_command, "-M", "csv"]
         parsed = self.parser.parse(command)
-        assert len(parsed.output_modes) == 1
-        assert "csv" in parsed.output_modes
+        assert len(parsed.output_formats) == 1
+        assert "csv" in parsed.output_formats
 
-    def test_root_parser_output_modes_long(self):
+    def test_root_parser_output_formats_long(self):
         command = [prowler_command, "--output-modes", "csv"]
         parsed = self.parser.parse(command)
-        assert len(parsed.output_modes) == 1
-        assert "csv" in parsed.output_modes
+        assert len(parsed.output_formats) == 1
+        assert "csv" in parsed.output_formats
 
-    def test_root_parser_output_modes_short_json_ocsf(self):
+    def test_root_parser_output_formats_short_json_ocsf(self):
         command = [prowler_command, "-M", "json-ocsf"]
         parsed = self.parser.parse(command)
-        assert len(parsed.output_modes) == 1
-        assert "json-ocsf" in parsed.output_modes
+        assert len(parsed.output_formats) == 1
+        assert "json-ocsf" in parsed.output_formats
 
-    def test_root_parser_output_modes_long_json_ocsf(self):
+    def test_root_parser_output_formats_long_json_ocsf(self):
         command = [prowler_command, "--output-modes", "json-ocsf"]
         parsed = self.parser.parse(command)
-        assert len(parsed.output_modes) == 1
-        assert "json-ocsf" in parsed.output_modes
+        assert len(parsed.output_formats) == 1
+        assert "json-ocsf" in parsed.output_formats
 
     def test_root_parser_output_filename_short(self):
         filename = "test_output.txt"
@@ -402,22 +404,22 @@ class Test_Parser:
         excluded_checks = "check_test"
         command = [prowler_command, "-e", excluded_checks]
         parsed = self.parser.parse(command)
-        assert excluded_checks in parsed.excluded_checks
+        assert excluded_checks in parsed.excluded_check
 
     def test_exclude_checks_parser_excluded_checks_short_two(self):
         excluded_checks_1 = "check_test_1"
         excluded_checks_2 = "check_test_2"
         command = [prowler_command, "-e", excluded_checks_1, excluded_checks_2]
         parsed = self.parser.parse(command)
-        assert len(parsed.excluded_checks) == 2
-        assert excluded_checks_1 in parsed.excluded_checks
-        assert excluded_checks_2 in parsed.excluded_checks
+        assert len(parsed.excluded_check) == 2
+        assert excluded_checks_1 in parsed.excluded_check
+        assert excluded_checks_2 in parsed.excluded_check
 
     def test_exclude_checks_parser_excluded_checks_long(self):
         excluded_check = "check_test"
         command = [prowler_command, "--excluded-checks", excluded_check]
         parsed = self.parser.parse(command)
-        assert excluded_check in parsed.excluded_checks
+        assert excluded_check in parsed.excluded_check
 
     def test_exclude_checks_parser_excluded_checks_long_two(self):
         excluded_checks_1 = "check_test_1"
@@ -429,15 +431,15 @@ class Test_Parser:
             excluded_checks_2,
         ]
         parsed = self.parser.parse(command)
-        assert len(parsed.excluded_checks) == 2
-        assert excluded_checks_1 in parsed.excluded_checks
-        assert excluded_checks_2 in parsed.excluded_checks
+        assert len(parsed.excluded_check) == 2
+        assert excluded_checks_1 in parsed.excluded_check
+        assert excluded_checks_2 in parsed.excluded_check
 
     def test_exclude_checks_parser_excluded_services_long(self):
         excluded_service = "accessanalyzer"
         command = [prowler_command, "--excluded-services", excluded_service]
         parsed = self.parser.parse(command)
-        assert excluded_service in parsed.excluded_services
+        assert excluded_service in parsed.excluded_service
 
     def test_exclude_checks_parser_excluded_services_long_two(self):
         excluded_service_1 = "accessanalyzer"
@@ -449,17 +451,17 @@ class Test_Parser:
             excluded_service_2,
         ]
         parsed = self.parser.parse(command)
-        assert len(parsed.excluded_services) == 2
-        assert excluded_service_1 in parsed.excluded_services
-        assert excluded_service_2 in parsed.excluded_services
+        assert len(parsed.excluded_service) == 2
+        assert excluded_service_1 in parsed.excluded_service
+        assert excluded_service_2 in parsed.excluded_service
 
     def test_checks_parser_checks_short(self):
         check = "check_test_1"
         argument = "-c"
         command = [prowler_command, argument, check]
         parsed = self.parser.parse(command)
-        assert len(parsed.checks) == 1
-        assert check in parsed.checks
+        assert len(parsed.check) == 1
+        assert check in parsed.check
 
     def test_checks_parser_checks_short_two(self):
         check_1 = "check_test_1"
@@ -467,17 +469,17 @@ class Test_Parser:
         argument = "-c"
         command = [prowler_command, argument, check_1, check_2]
         parsed = self.parser.parse(command)
-        assert len(parsed.checks) == 2
-        assert check_1 in parsed.checks
-        assert check_2 in parsed.checks
+        assert len(parsed.check) == 2
+        assert check_1 in parsed.check
+        assert check_2 in parsed.check
 
     def test_checks_parser_checks_long(self):
         check = "check_test_1"
         argument = "--checks"
         command = [prowler_command, argument, check]
         parsed = self.parser.parse(command)
-        assert len(parsed.checks) == 1
-        assert check in parsed.checks
+        assert len(parsed.check) == 1
+        assert check in parsed.check
 
     def test_checks_parser_checks_long_two(self):
         check_1 = "check_test_1"
@@ -485,9 +487,9 @@ class Test_Parser:
         argument = "--checks"
         command = [prowler_command, argument, check_1, check_2]
         parsed = self.parser.parse(command)
-        assert len(parsed.checks) == 2
-        assert check_1 in parsed.checks
-        assert check_2 in parsed.checks
+        assert len(parsed.check) == 2
+        assert check_1 in parsed.check
+        assert check_2 in parsed.check
 
     def test_checks_parser_checks_file_short(self):
         argument = "-C"
@@ -522,7 +524,7 @@ class Test_Parser:
         service_1 = "iam"
         command = [prowler_command, argument, service_1]
         parsed = self.parser.parse(command)
-        assert service_1 in parsed.services
+        assert service_1 in parsed.service
 
     def test_checks_parser_services_short_two(self):
         argument = "-s"
@@ -530,16 +532,16 @@ class Test_Parser:
         service_2 = "s3"
         command = [prowler_command, argument, service_1, service_2]
         parsed = self.parser.parse(command)
-        assert len(parsed.services) == 2
-        assert service_1 in parsed.services
-        assert service_2 in parsed.services
+        assert len(parsed.service) == 2
+        assert service_1 in parsed.service
+        assert service_2 in parsed.service
 
     def test_checks_parser_services_long(self):
         argument = "--services"
         service_1 = "iam"
         command = [prowler_command, argument, service_1]
         parsed = self.parser.parse(command)
-        assert service_1 in parsed.services
+        assert service_1 in parsed.service
 
     def test_checks_parser_services_long_two(self):
         argument = "--services"
@@ -547,9 +549,9 @@ class Test_Parser:
         service_2 = "s3"
         command = [prowler_command, argument, service_1, service_2]
         parsed = self.parser.parse(command)
-        assert len(parsed.services) == 2
-        assert service_1 in parsed.services
-        assert service_2 in parsed.services
+        assert len(parsed.service) == 2
+        assert service_1 in parsed.service
+        assert service_2 in parsed.service
 
     def test_checks_parser_services_with_severity(self):
         argument1 = "--services"
@@ -558,8 +560,8 @@ class Test_Parser:
         severity = "low"
         command = [prowler_command, argument1, service_1, argument2, severity]
         parsed = self.parser.parse(command)
-        assert len(parsed.services) == 1
-        assert service_1 in parsed.services
+        assert len(parsed.service) == 1
+        assert service_1 in parsed.service
         assert len(parsed.severity) == 1
         assert severity in parsed.severity
 
@@ -654,8 +656,8 @@ class Test_Parser:
         category = "secrets"
         command = [prowler_command, argument, category]
         parsed = self.parser.parse(command)
-        assert len(parsed.categories) == 1
-        assert category in parsed.categories
+        assert len(parsed.category) == 1
+        assert category in parsed.category
 
     def test_checks_parser_categories_two(self):
         argument = "--categories"
@@ -663,9 +665,9 @@ class Test_Parser:
         category_2 = "forensics"
         command = [prowler_command, argument, category_1, category_2]
         parsed = self.parser.parse(command)
-        assert len(parsed.categories) == 2
-        assert category_1 in parsed.categories
-        assert category_2 in parsed.categories
+        assert len(parsed.category) == 2
+        assert category_1 in parsed.category
+        assert category_2 in parsed.category
 
     def test_list_checks_parser_list_checks_short(self):
         argument = "-l"
@@ -1011,9 +1013,9 @@ class Test_Parser:
         scan_tag2 = "Key2=Value2"
         command = [prowler_command, argument, scan_tag1, scan_tag2]
         parsed = self.parser.parse(command)
-        assert len(parsed.resource_tags) == 2
-        assert scan_tag1 in parsed.resource_tags
-        assert scan_tag2 in parsed.resource_tags
+        assert len(parsed.resource_tag) == 2
+        assert scan_tag1 in parsed.resource_tag
+        assert scan_tag2 in parsed.resource_tag
 
     def test_aws_parser_resource_arn(self):
         argument = "--resource-arn"
@@ -1118,16 +1120,16 @@ class Test_Parser:
         assert parsed.provider == "azure"
         assert parsed.managed_identity_auth
 
-    def test_parser_azure_subscription_ids(self):
+    def test_parser_azure_subscription_id(self):
         argument = "--subscription-ids"
         subscription_1 = "test_subscription_1"
         subscription_2 = "test_subscription_2"
         command = [prowler_command, "azure", argument, subscription_1, subscription_2]
         parsed = self.parser.parse(command)
         assert parsed.provider == "azure"
-        assert len(parsed.subscription_ids) == 2
-        assert parsed.subscription_ids[0] == subscription_1
-        assert parsed.subscription_ids[1] == subscription_2
+        assert len(parsed.subscription_id) == 2
+        assert parsed.subscription_id[0] == subscription_1
+        assert parsed.subscription_id[1] == subscription_2
 
     def test_parser_azure_region(self):
         argument = "--azure-region"
@@ -1169,16 +1171,16 @@ class Test_Parser:
         assert parsed.provider == "gcp"
         assert parsed.credentials_file == file
 
-    def test_parser_gcp_project_ids(self):
-        argument = "--project-ids"
+    def test_parser_gcp_project_id(self):
+        argument = "--project-id"
         project_1 = "test_project_1"
         project_2 = "test_project_2"
         command = [prowler_command, "gcp", argument, project_1, project_2]
         parsed = self.parser.parse(command)
         assert parsed.provider == "gcp"
-        assert len(parsed.project_ids) == 2
-        assert parsed.project_ids[0] == project_1
-        assert parsed.project_ids[1] == project_2
+        assert len(parsed.project_id) == 2
+        assert parsed.project_id[0] == project_1
+        assert parsed.project_id[1] == project_2
 
     def test_parser_kubernetes_auth_kubeconfig_file(self):
         argument = "--kubeconfig-file"
@@ -1197,13 +1199,13 @@ class Test_Parser:
         assert parsed.context == context
 
     def test_parser_kubernetes_auth_namespace(self):
-        argument = "--namespaces"
+        argument = "--namespace"
         namespace_1 = "default"
         namespace_2 = "kube-system"
         command = [prowler_command, "kubernetes", argument, namespace_1, namespace_2]
         parsed = self.parser.parse(command)
         assert parsed.provider == "kubernetes"
-        assert parsed.namespaces == [namespace_1, namespace_2]
+        assert parsed.namespace == [namespace_1, namespace_2]
 
     def test_validate_azure_region_valid_regions(self):
         expected_regions = [
