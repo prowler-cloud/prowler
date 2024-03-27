@@ -20,6 +20,7 @@ def init_parser(self):
         help="The name of the kubeconfig context to use. By default, current_context from config file will be used.",
     )
     k8s_auth_subparser.add_argument(
+        "--namespace",
         "--namespaces",
         nargs="+",
         metavar="NAMESPACES",

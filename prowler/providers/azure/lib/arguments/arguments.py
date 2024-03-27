@@ -32,6 +32,7 @@ def init_parser(self):
     # Subscriptions
     azure_subscriptions_subparser = azure_parser.add_argument_group("Subscriptions")
     azure_subscriptions_subparser.add_argument(
+        "--subscription-id",
         "--subscription-ids",
         nargs="+",
         default=[],
