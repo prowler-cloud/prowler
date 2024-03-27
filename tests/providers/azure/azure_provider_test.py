@@ -19,7 +19,7 @@ from prowler.providers.azure.models import (
 class TestAzureProvider:
     def test_azure_provider(self):
         arguments = Namespace()
-        arguments.subscription_ids = None
+        arguments.subscription_id = None
         arguments.tenant_id = None
         # We need to set exactly one auth method
         arguments.az_cli_auth = True
@@ -63,7 +63,7 @@ class TestAzureProvider:
 
     def test_azure_provider_not_auth_methods(self):
         arguments = Namespace()
-        arguments.subscription_ids = None
+        arguments.subscription_id = None
         arguments.tenant_id = None
         # We need to set exactly one auth method
         arguments.az_cli_auth = None
@@ -92,7 +92,7 @@ class TestAzureProvider:
 
     def test_azure_provider_browser_auth_but_not_tenant_id(self):
         arguments = Namespace()
-        arguments.subscription_ids = None
+        arguments.subscription_id = None
         arguments.tenant_id = None
         # We need to set exactly one auth method
         arguments.az_cli_auth = None
@@ -121,7 +121,7 @@ class TestAzureProvider:
 
     def test_azure_provider_not_browser_auth_but_tenant_id(self):
         arguments = Namespace()
-        arguments.subscription_ids = None
+        arguments.subscription_id = None
         arguments.tenant_id = "test-tenant-id"
         # We need to set exactly one auth method
         arguments.az_cli_auth = None
@@ -151,7 +151,7 @@ class TestAzureProvider:
     @freeze_time(datetime.today())
     def test_azure_provider_output_options_with_domain(self):
         arguments = Namespace()
-        arguments.subscription_ids = None
+        arguments.subscription_id = None
         arguments.tenant_id = None
 
         # We need to set exactly one auth method
@@ -164,7 +164,7 @@ class TestAzureProvider:
         arguments.azure_region = "AzureCloud"
 
         # Output Options
-        arguments.output_modes = ["csv"]
+        arguments.output_formats = ["csv"]
         arguments.output_directory = "output_test_directory"
         arguments.status = []
         arguments.verbose = True

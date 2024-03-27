@@ -36,7 +36,7 @@ class AzureProvider(Provider):
 
     def __init__(self, arguments):
         logger.info("Setting Azure provider ...")
-        subscription_ids = arguments.subscription_ids
+        subscription_ids = arguments.subscription_id
 
         logger.info("Checking if any credentials mode is set ...")
         az_cli_auth = arguments.az_cli_auth

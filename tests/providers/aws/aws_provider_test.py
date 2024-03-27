@@ -809,7 +809,7 @@ aws:
     def test_set_provider_output_options_aws_no_output_filename(self):
         arguments = Namespace()
         arguments.status = ["FAIL"]
-        arguments.output_modes = ["csv"]
+        arguments.output_formats = ["csv"]
         arguments.output_directory = "output_test_directory"
         arguments.verbose = True
         arguments.security_hub = True
@@ -851,7 +851,7 @@ aws:
     def test_set_provider_output_options_aws(self):
         arguments = Namespace()
         arguments.status = []
-        arguments.output_modes = ["csv"]
+        arguments.output_formats = ["csv"]
         arguments.output_directory = "output_test_directory"
         arguments.verbose = True
         arguments.output_filename = "output_test_filename"
