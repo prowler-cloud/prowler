@@ -191,7 +191,7 @@ class Test_Entra_Service:
         )
 
     def test__get_conditional_access_policy__(self):
-        entra_client = Entra(set_mocked_azure_audit_info())
+        entra_client = Entra(set_mocked_azure_provider())
         assert len(entra_client.conditional_access_policy) == 1
         assert len(entra_client.conditional_access_policy[DOMAIN]) == 1
         assert entra_client.conditional_access_policy[DOMAIN]["id-1"]
