@@ -99,6 +99,11 @@ def load_checks_to_execute(
                 check_name = check_info[0]
                 checks_to_execute.add(check_name)
 
+        # Only execute threat detection checks if threat-detection category is set
+        if "threat-detection" not in categories:
+            for threat_detection_check in check_categories["threat-detection"]:
+                checks_to_execute.discard(threat_detection_check)
+
         # Check Aliases
         checks_to_execute = update_checks_to_execute_with_aliases(
             checks_to_execute, check_aliases

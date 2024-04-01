@@ -27,12 +27,6 @@ valid_severities = ["critical", "high", "medium", "low", "informational"]
 # Compliance
 actual_directory = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))
 
-# AWS CloudTrail Threat Detection checks
-threat_detection_checks = [
-    "cloudtrail_threat_detection_privilege_escalation",
-    "cloudtrail_threat_detection_enumeration",
-]
-
 
 def get_available_compliance_frameworks(provider=None):
     available_compliance_frameworks = []
