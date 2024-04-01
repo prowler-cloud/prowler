@@ -5,6 +5,7 @@ from prowler.config.config import aws_logo, azure_logo, gcp_logo
 from prowler.lib.outputs.slack import (
     create_message_blocks,
     create_message_identity,
+    create_title,
     send_slack_message,
 )
 from tests.providers.aws.utils import AWS_ACCOUNT_NUMBER, set_mocked_aws_provider
@@ -65,7 +66,7 @@ class TestSlackIntegration:
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": f"Hey there 👋 \n I'm *Prowler*, _the handy cloud security tool_ :cloud::key:\n\n I have just finished the security assessment on your {aws_identity} with a total of *{stats['findings_count']}* findings.",
+                    "text": create_title(aws_identity, stats),
                 },
                 "accessory": {
                     "type": "image",
@@ -145,7 +146,7 @@ class TestSlackIntegration:
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": f"Hey there 👋 \n I'm *Prowler*, _the handy cloud security tool_ :cloud::key:\n\n I have just finished the security assessment on your {azure_identity} with a total of *{stats['findings_count']}* findings.",
+                    "text": create_title(azure_identity, stats),
                 },
                 "accessory": {
                     "type": "image",
@@ -225,7 +226,7 @@ class TestSlackIntegration:
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": f"Hey there 👋 \n I'm *Prowler*, _the handy cloud security tool_ :cloud::key:\n\n I have just finished the security assessment on your {gcp_identity} with a total of *{stats['findings_count']}* findings.",
+                    "text": create_title(gcp_identity, stats),
                 },
                 "accessory": {
                     "type": "image",
