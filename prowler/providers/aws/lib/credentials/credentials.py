@@ -69,6 +69,9 @@ Caller Identity ARN: {Fore.YELLOW}[{audit_info.audited_identity_arn}]{Style.RESE
 def create_sts_session(
     session: session.Session, aws_region: str
 ) -> session.Session.client:
-    return session.client(
-        "sts", aws_region, endpoint_url=f"https://sts.{aws_region}.amazonaws.com"
+    sts_endpoint_url = (
+        f"https://sts.{aws_region}.amazonaws.com"
+        if "cn-" not in aws_region
+        else f"https://sts.{aws_region}.amazonaws.com.cn"
     )
+    return session.client("sts", aws_region, endpoint_url=sts_endpoint_url)
