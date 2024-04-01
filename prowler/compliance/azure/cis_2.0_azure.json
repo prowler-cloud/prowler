@@ -7,7 +7,9 @@
     {
       "Id": "1.1.1",
       "Description": "Ensure Security Defaults is enabled on Azure Active Directory",
-      "Checks": [],
+      "Checks": [
+        "entra_security_defaults_enabled"
+      ],
       "Attributes": [
         {
           "Section": "1.1 Security Defaults",
@@ -27,7 +29,9 @@
     {
       "Id": "1.1.2",
       "Description": "Ensure that 'Multi-Factor Auth Status' is 'Enabled' for all Privileged Users",
-      "Checks": [],
+      "Checks": [
+        "entra_privileged_user_has_mfa"
+      ],
       "Attributes": [
         {
           "Section": "1.1 Security Defaults",
@@ -47,7 +51,9 @@
     {
       "Id": "1.1.3",
       "Description": "Ensure that 'Multi-Factor Auth Status' is 'Enabled' for all Non-Privileged Users",
-      "Checks": [],
+      "Checks": [
+        "entra_non_privileged_user_has_mfa"
+      ],
       "Attributes": [
         {
           "Section": "1.1 Security Defaults",
@@ -87,7 +93,9 @@
     {
       "Id": "1.2.1",
       "Description": "Ensure Trusted Locations Are Defined",
-      "Checks": [],
+      "Checks": [
+        "entra_trusted_named_locations_exists"
+      ],
       "Attributes": [
         {
           "Section": "1.2 Conditional Access",
@@ -185,6 +193,26 @@
       ]
     },
     {
+      "Id": "1.2.6",
+      "Description": "Ensure Multi-factor Authentication is Required for Azure Management",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "1.2 Conditional Access",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "For designated users, they will be prompted to use their multi-factor authentication (MFA) process on logins.",
+          "RationaleStatement": "Enabling multi-factor authentication is a recommended setting to limit the use of Administrative actions and to prevent intruders from changing settings.",
+          "ImpactStatement": "There is an increased cost, as Conditional Access policies require Azure AD Premium. Similarly, they may require additional overhead to maintain if users lose access to their MFA.",
+          "RemediationProcedure": "From Azure Portal 1. From Azure Home select the Portal Menu and select Azure Active Directory. 2. Select Security. 3. Select Conditional Access. 4. Click + New policy. 5. Enter a name for the policy. 6. Select Users or workload identities. 7. Under Include, select All users. 8. Under Exclude, check Users and groups. 9. Select users this policy should not apply to and click Select. 10. Select Cloud apps or actions. 11. Select Select apps. 12. Check the box next to Microsoft Azure Management and click Select. 13. Select Grant. 14. Under Grant access, check Require multifactor authentication and click Select. 15. Set Enable policy to Report-only. 16. Click Create. After testing the policy in report-only mode, update the Enable policy setting from Report-only to On.",
+          "AuditProcedure": "From Azure Portal 1. From Azure Home select the Portal Menu and select Azure Active Directory. 2. Scroll down in the menu on the left, and select Security. 3. Select on the left side Conditional Access. 4. Select the policy you wish to audit. 5. View under Users and Groups the corresponding users and groups to whom the policy is applied. 6. View under Exclude to determine which Users and groups to whom the policy is not applied.",
+          "AdditionalInformation": "These policies should be tested by using the What If tool in the References. Setting these can and will create issues with administrators changing settings until they use an MFA device linked to their accounts. An emergency access account is recommended for this eventuality if all administrators are locked out. Please see the documentation in the references for further information. Similarly further testing can also be done via the insights and reporting resource in References which monitors Azure sign ins.",
+          "DefaultValue": "MFA is not enabled by default for administrative actions.",
+          "References": "https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-identity-management#im-7-restrict-resource-access-based-on--conditions:https://docs.microsoft.com/en-us/azure/active-directory/conditional-access/concept-conditional-access-users-groups"
+        }
+      ]
+    },
+    {
       "Id": "1.3",
       "Description": "Ensure that 'Users can create Azure AD Tenants' is set to 'No'",
       "Checks": [
@@ -207,6 +235,210 @@
       ]
     },
     {
+      "Id": "1.4",
+      "Description": "Ensure Access Review is Set Up for External Users in Azure AD Privileged Identity Management",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "1.2 Conditional Access",
+          "Profile": "Level 2",
+          "AssessmentStatus": "Manual",
+          "Description": "This recommendation extends guest access review by utilizing the Azure AD Privileged Identity Management feature provided in Azure AD Premium P2. Azure AD is extended to include Azure AD B2B collaboration, allowing you to invite people from outside your organization to be guest users in your cloud account and sign in with their own work, school, or social identities. Guest users allow you to share your company's applications and services with users from any other organization, while maintaining control over your own corporate data. Work with external partners, large or small, even if they don't have Azure AD or an IT department. A simple invitation and redemption process lets partners use their own credentials to access your company's resources a a guest user.",
+          "RationaleStatement": "Guest users in the Azure AD are generally required for collaboration purposes in Office 365, and may also be required for Azure functions in enterprises with multiple Azure tenants. Guest users should be reviewed on a regular basis, at least annually. Guest users should not be granted administrative roles where possible. Guest users are typically added outside your employee on-boarding/off-boarding process and could potentially be overlooked indefinitely, leading to a potential vulnerability. Guest users should be reviewed on a monthly basis to ensure that inactive and unneeded accounts are removed.",
+          "ImpactStatement": "Until you have a business need to provide guest access to any user, avoid creating guest users. If guest accounts are being used, they should be removed when no longer required.",
+          "RemediationProcedure": "From Azure Portal 1. From the Azure Portal home page click the portal menu in the top left. 2. Select Azure Active Directory 3. Select Users in the left column under the Manage heading. 4. Next to the search box select the filter option. 5. Search for and select User Type 6. In the third drop down Value select Guest. 7. Review the guest users in your Active Directory. 8. For those you wish to delete, select the checkbox on the left then the Delete option in the top row. From Azure CLI With the information from the audit procedure, to remove a Guest user run the following command with their User Principal Value. Remove-AzureADUser -ObjectId '<UserPrincipalName@emailaddress.com' From PowerShell With the information from the audit procedure, to remove a Guest user run the following command with their User Principal Value. Remove-AzureADUser -ObjectId '<UserPrincipalName@emailaddress.com>'",
+          "AuditProcedure": "From Azure Portal 1. From the Azure Portal home page click the portal menu in the top left. 2. Select Azure Active Directory 3. Select Users in the left column under the Manage heading. 4. Next to the search box select the filter option. 5. Search for and select User Type 6. In the third drop down Value select Guest. 7. Review the guest users in your Active Directory. From Azure CLI Run the following command: az ad user list -Filter 'UserType eq 'Guest'' From PowerShell Run the following command: Get-AzureADUser -Filter 'UserType eq 'Guest'",
+          "AdditionalInformation": "",
+          "DefaultValue": "By default no guest users are created",
+          "References": "https://docs.microsoft.com/en-us/azure/active-directory/b2b/user-properties:https://docs.microsoft.com/en-us/azure/active-directory/fundamentals/add-users-azure-active-directory#delete-a-user:https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-privileged-access#pa-3-review-and-reconcile-user-access-regularly:https://docs.microsoft.com/en-us/azure/active-directory/governance/manage-guest-access-with-access-reviews:https://www.microsoft.com/en-us/security/business/identity-access-management/azure-ad-pricing"
+        }
+      ]
+    },
+    {
+      "Id": "1.5",
+      "Description": "Ensure Guest Users Are Reviewed on a Regular Basis",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "1.2 Conditional Access",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Azure AD is extended to include Azure AD B2B collaboration, allowing you to invite people from outside your organization to be guest users in your cloud account and sign in with their own work, school, or social identities. Guest users allow you to share your company's applications and services with users from any other organization, while maintaining control over your own corporate data. Work with external partners, large or small, even if they don't have Azure AD or an IT department. A simple invitation and redemption process lets partners use their own credentials to access your company's resources as a guest user. Guest users in every subscription should be review on a regular basis to ensure that inactive and unneeded accounts are removed.",
+          "RationaleStatement": "Guest users in the Azure AD are generally required for collaboration purposes in Office 365, and may also be required for Azure functions in enterprises with multiple Azure tenants. Guest users are typically added outside your employee on-boarding/off- boarding process and could potentially be overlooked indefinitely, leading to a potential vulnerability. To prevent this, guest users should be reviewed on a regular basis. During this audit, guest users should also be determined to not have administrative privileges.",
+          "ImpactStatement": "Before removing guest users, determine their use and scope. Like removing any user, there may be unforeseen consequences to systems if it is deleted.",
+          "RemediationProcedure": "From Azure Portal 1. From Azure Home select the Portal Menu 2. Select Azure Active Directory 3. Select Users 4. Click on Add filter 5. Select User type 6. Select Guest from the Value dropdown 7. Click Apply 8. Delete all Guest users that are no longer required or are inactive From Azure CLI Before deleting the user, set it to inactive using the ID from the Audit Procedure to determine if there are any dependent systems. az ad user update --id <exampleaccountid@domain.com> --account-enabled {false} After determining that there are no dependent systems delete the user. Remove-AzureADUser -ObjectId <exampleaccountid@domain.com> From Azure PowerShell Before deleting the user, set it to inactive using the ID from the Audit Procedure to determine if there are any dependent systems. Set-AzureADUser -ObjectId '<exampleaccountid@domain.com>' -AccountEnabled false After determining that there are no dependent systems delete the user. PS C:\\>Remove-AzureADUser -ObjectId <exampleaccountid@domain.com>",
+          "AuditProcedure": "From Azure Portal 1. From Azure Home select the Portal Menu 2. Select Azure Active Directory 3. Select Users 4. Click on Add filter 5. Select User type 6. Select Guest from the Value dropdown 7. Click Apply 8. Audit the listed guest users From Azure CLI az ad user list --query '[?userType=='Guest']' Ensure all users listed are still required and not inactive. From Azure PowerShell Get-AzureADUser |Where-Object {$_.UserType -like 'Guest'} |Select-Object DisplayName, UserPrincipalName, UserType -Unique",
+          "AdditionalInformation": "It is good practice to use a dynamic security group to manage guest users.To create the dynamic security group:1. Navigate to the 'Active Directory' blade in the Azure Portal2. Select the 'Groups' item3. Create new4. Type of 'dynamic'5. Use the following dynamic selection rule. '(user.userType -eq 'Guest')'6. Once the group has been created, select access reviews option and create anew access review with a period of monthly and send to relevant administratorsfor review.",
+          "DefaultValue": "By default no guest users are created.",
+          "References": "https://docs.microsoft.com/en-us/azure/active-directory/b2b/user-properties:https://docs.microsoft.com/en-us/azure/active-directory/fundamentals/add-users-azure-active-directory#delete-a-user:https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-privileged-access#pa-3-review-and-reconcile-user-access-regularly:https://www.microsoft.com/en-us/security/business/identity-access-management/azure-ad-pricing:https://docs.microsoft.com/en-us/azure/active-directory/reports-monitoring/howto-manage-inactive-user-accounts:https://docs.microsoft.com/en-us/azure/active-directory/fundamentals/active-directory-users-restore"
+        }
+      ]
+    },
+    {
+      "Id": "1.6",
+      "Description": "Ensure That 'Number of methods required to reset' is set to '2'",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "1.2 Conditional Access",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Ensures that two alternate forms of identification are provided before allowing a password reset.",
+          "RationaleStatement": "A Self-service Password Reset (SSPR) through Azure Multi-factor Authentication (MFA) ensures the user's identity is confirmed using two separate methods of identification. With multiple methods set, an attacker would have to compromise both methods before they could maliciously reset a user's password.",
+          "ImpactStatement": "There may be administrative overhead, as users who lose access to their secondary authentication methods will need an administrator with permissions to remove it. There will also need to be organization-wide security policies and training to teach administrators to verify the identity of the requesting user so that social engineering can not render this setting useless.",
+          "RemediationProcedure": "From Azure Portal 1. From Azure Home select the Portal Menu 2. Select Azure Active Directory 3. Then Users 4. Select Password reset 5. Then Authentication methods 6. Set the Number of methods required to reset to 2",
+          "AuditProcedure": "From Azure Portal 1. From Azure Home select the Portal Menu 2. Select Azure Active Directory 3. Then Users 4. Select Password reset 5. Then Authentication methods 6. Ensure that Number of methods required to reset is set to 2",
+          "AdditionalInformation": "",
+          "DefaultValue": "By default, the Number of methods required to reset is set to 2.",
+          "References": "https://docs.microsoft.com/en-us/azure/active-directory/authentication/tutorial-enable-sspr:https://docs.microsoft.com/en-us/azure/active-directory/authentication/concept-registration-mfa-sspr-combined:https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-identity-management#im-4-use-strong-authentication-controls-for-all-azure-active-directory-based-access:https://docs.microsoft.com/en-us/azure/active-directory/active-directory-passwords-faq#password-reset-registration:https://docs.microsoft.com/en-us/azure/active-directory/authentication/howto-sspr-deployment:https://docs.microsoft.com/en-us/azure/active-directory/authentication/concept-authentication-methods"
+        }
+      ]
+    },
+    {
+      "Id": "1.7",
+      "Description": "Ensure that a Custom Bad Password List is set to 'Enforce' for your Organization",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "1.2 Conditional Access",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Microsoft Azure provides a Global Banned Password policy that applies to Azure administrative and normal user accounts. This is not applied to user accounts that are synced from an on-premise Active Directory unless Azure AD Connect is used and you enable EnforceCloudPasswordPolicyForPasswordSyncedUsers. Please see the list in default values on the specifics of this policy. To further password security, it is recommended to further define a custom banned password policy.",
+          "RationaleStatement": "Enabling this gives your organization further customization on what secure passwords are allowed. Setting a bad password list enables your organization to fine-tune its password policy further, depending on your needs. Removing easy-to-guess passwords increases the security of access to your Azure resources.",
+          "ImpactStatement": "Increasing needed password complexity might increase overhead on administration of user accounts. Licensing requirement for Global Banned Password List and Custom Banned Password list requires Azure AD Premium P1 or P2. On-premises Active Directory Domain Services users that are not synchronized to Azure AD also benefit from Azure AD Password Protection based on existing licensing for synchronized users.",
+          "RemediationProcedure": "From Azure Portal 1. From Azure Home select the Portal Menu 2. Select Azure Active Directory 3. Select Security. 4. Under Manage, select Authentication Methods. 5. Select Password Protection. 6. Set the Enforce custom list option to Yes. 7. Double click the custom banned password list to add a string.",
+          "AuditProcedure": "From Azure Portal 1. From Azure Home select the Portal Menu 2. Select Azure Active directory. 3. Select 'Security'. 4. Under Manage, select Authentication Methods. 5. Select Password Protection. 6. Ensure Enforce custom list is set to Yes. 7. Scroll through the list to view the enforced passwords.",
+          "AdditionalInformation": "",
+          "DefaultValue": "By default the custom bad password list is not 'Enabled'. Organizational-specific terms can be added to the custom banned password list, such as the following examples: • Brand names • Product names • Locations, such as company headquarters • Company-specific internal terms • Abbreviations that have specific company meaning • Months and weekdays with your company's local languages The default Azure bad password policy is already applied to your resources which applies the following basic requirements: Characters allowed: • Uppercase characters (A - Z) • Lowercase characters (a - z) • Numbers (0 - 9) • Symbols: • @ # $ % ^ & * - _ ! + = [ ] { } | \\ : ' , . ? / ` ~ ' ( )  < > • blank space Characters not allowed: • Unicode characters • Password length Passwords require • A minimum of eight characters • A maximum of 256 characters Password complexity: Passwords require three out of four of the following categories: • Uppercase characters • Lowercase characters • Numbers • Symbols Note: Password complexity check isn't required for Education tenants. Password not recently used: • When a user changes or resets their password, the new password can't be the same as the current or recently used passwords. • Password isn't banned by Azure AD Password Protection. • The password can't be on the global list of banned passwords for Azure AD Password Protection, or on the customizable list of banned passwords specific to your organization.",
+          "References": "https://docs.microsoft.com/en-us/azure/active-directory/authentication/concept-password-ban-bad-combined-policy:https://docs.microsoft.com/en-us/azure/active-directory/authentication/concept-password-ban-bad:https://docs.microsoft.com/en-us/powershell/module/Azuread/:https://www.microsoft.com/en-us/research/publication/password-guidance/:https://docs.microsoft.com/en-us/azure/active-directory/authentication/tutorial-configure-custom-password-protection:https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-identity-management#im-6-use-strong-authentication-controls"
+        }
+      ]
+    },
+    {
+      "Id": "1.8",
+      "Description": "Ensure that 'Number of days before users are asked to re-confirm their authentication information' is not set to '0'",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "1.2 Conditional Access",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Ensure that the number of days before users are asked to re-confirm their authentication information is not set to 0.",
+          "RationaleStatement": "This setting is necessary if you have setup 'Require users to register when signing in option'. If authentication re-confirmation is disabled, registered users will never be prompted to re-confirm their existing authentication information. If the authentication information for a user changes, such as a phone number or email, then the password reset information for that user reverts to the previously registered authentication information.",
+          "ImpactStatement": "Users will be prompted for their multifactor authentication at the duration set here.",
+          "RemediationProcedure": "From Azure Portal 1. From Azure Home select the Portal Menu 2. Select Azure Active Directory 3. Then Users 4. Select Password reset 5. Then Registration 6. Set the Number of days before users are asked to re-confirm their authentication information to your organization-defined frequency.",
+          "AuditProcedure": "From Azure Portal 1. From Azure Home select the Portal Menu 2. Select Azure Active Directory 3. Then Users 4. Select Password reset 5. Then Registration 6. Ensure that Number of days before users are asked to re-confirm their authentication information is not set to 0",
+          "AdditionalInformation": "",
+          "DefaultValue": "By default, the Number of days before users are asked to re-confirm their authentication information is set to '180 days'.",
+          "References": "https://docs.microsoft.com/en-us/azure/active-directory/active-directory-passwords-how-it-works#registration:https://docs.microsoft.com/en-us/azure/active-directory/authentication/howto-sspr-deployment:https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-governance-strategy#gs-6-define-identity-and-privileged-access-strategy:https://docs.microsoft.com/en-us/azure/active-directory/authentication/concept-authentication-methods"
+        }
+      ]
+    },
+    {
+      "Id": "1.9",
+      "Description": "Ensure that 'Notify users on password resets?' is set to 'Yes'",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "1.2 Conditional Access",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Ensure that users are notified on their primary and secondary emails on password resets.",
+          "RationaleStatement": "User notification on password reset is a proactive way of confirming password reset activity. It helps the user to recognize unauthorized password reset activities.",
+          "ImpactStatement": "Users will receive emails alerting them to password changes to both their primary and secondary emails.",
+          "RemediationProcedure": "From Azure Portal 1. From Azure Home select the Portal Menu 2. Select Azure Active Directory 3. Select Users 4. Select Password reset 5. Under Manage, select Notifications 6. Set Notify users on password resets? to Yes",
+          "AuditProcedure": "From Azure Portal 1. From Azure Home select the Portal Menu 2. Select Azure Active Directory 3. Select Users 4. Go to Password reset 5. Under Manage, select Notifications 6. Ensure that Notify users on password resets? is set to Yes",
+          "AdditionalInformation": "",
+          "DefaultValue": "By default, Notify users on password resets? is set to 'Yes'.",
+          "References": "https://docs.microsoft.com/en-us/azure/active-directory/authentication/tutorial-enable-sspr#set-up-notifications-and-customizations:https://docs.microsoft.com/en-us/azure/active-directory/active-directory-passwords-how-it-works#notifications:https://docs.microsoft.com/en-us/azure/active-directory/authentication/howto-sspr-deployment:https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-governance-strategy#gs-6-define-identity-and-privileged-access-strategy"
+        }
+      ]
+    },
+    {
+      "Id": "1.10",
+      "Description": "Ensure That 'Notify all admins when other admins reset their password?' is set to 'Yes'",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "1.2 Conditional Access",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Ensure that all Global Administrators are notified if any other administrator resets their password.",
+          "RationaleStatement": "Global Administrator accounts are sensitive. Any password reset activity notification, when sent to all Global Administrators, ensures that all Global administrators can passively confirm if such a reset is a common pattern within their group. For example, if all Global Administrators change their password every 30 days, any password reset activity before that may require administrator(s) to evaluate any unusual activity and confirm its origin.",
+          "ImpactStatement": "All Global Administrators will receive a notification from Azure every time a password is reset. This is useful for auditing procedures to confirm that there are no out of the ordinary password resets for Global Administrators. There is additional overhead, however, in the time required for Global Administrators to audit the notifications. This setting is only useful if all Global Administrators pay attention to the notifications, and audit each one.",
+          "RemediationProcedure": "From Azure Portal 1. From Azure Home select the Portal Menu 2. Select Azure Active Directory 3. Select Users 4. Select Password reset 5. Under Manage, select Notifications 6. Set Notify all admins when other admins reset their password? to Yes",
+          "AuditProcedure": "From Azure Portal 1. From Azure Home select the Portal Menu 2. Select Azure Active Directory 3. Select Users 4. Select Password reset 5. Under Manage, select Notifications 6. Ensure that notify all admins when other admins reset their password? is set to Yes",
+          "AdditionalInformation": "",
+          "DefaultValue": "By default, Notify all admins when other admins reset their password? is set to 'No'.",
+          "References": "https://docs.microsoft.com/en-us/azure/active-directory/active-directory-passwords-how-it-works#notifications:https://docs.microsoft.com/en-us/azure/active-directory/authentication/howto-sspr-deployment:https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-governance-strategy#gs-6-define-identity-and-privileged-access-strategy:https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-privileged-access#pa-1-protect-and-limit-highly-privileged-users:https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-privileged-access#pa-2-restrict-administrative-access-to-business-critical-systems:https://docs.microsoft.com/en-us/azure/active-directory/authentication/tutorial-enable-sspr#set-up-notifications-and-customizations"
+        }
+      ]
+    },
+    {
+      "Id": "1.11",
+      "Description": "Ensure `User consent for applications` is set to `Do not allow user consent`",
+      "Checks": [
+        "entra_policy_restricts_user_consent_for_apps"
+      ],
+      "Attributes": [
+        {
+          "Section": "1.2 Conditional Access",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Require administrators to provide consent for applications before use.",
+          "RationaleStatement": "If Azure Active Directory is running as an identity provider for third-party applications, permissions and consent should be limited to administrators or pre-approved. Malicious applications may attempt to exfiltrate data or abuse privileged user accounts.",
+          "ImpactStatement": "Enforcing this setting may create additional requests that administrators need to review.",
+          "RemediationProcedure": "From Azure Portal 1. From Azure Home select the Portal Menu 2. Select Azure Active Directory 3. Select Enterprise Applications 4. Select Consent and permissions 5. Select User consent settings 6. Set User consent for applications to Do not allow user consent 7. Click save",
+          "AuditProcedure": "From Azure Portal 1. From Azure Home select the Portal Menu 2. Select Azure Active Directory 3. Select Enterprise Applications 4. Select Consent and permissions 5. Select User consent settings 6. Ensure User consent for applications is set to Do not allow user consent From PowerShell Connect-MsolService Get-MsolCompanyInformation | Select-Object UsersPermissionToUserConsentToAppEnabled Command should return UsersPermissionToUserConsentToAppEnabled with the value of False",
+          "AdditionalInformation": "",
+          "DefaultValue": "By default, Users consent for applications is set to Allow user consent for apps.",
+          "References": "https://nicksnettravels.builttoroam.com/post/2017/01/24/Admin-Consent-for-Permissions-in-Azure-Active-Directory.aspx:https://docs.microsoft.com/en-us/azure/active-directory/manage-apps/configure-user-consent#configure-user-consent-to-applications:https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-privileged-access#pa-1-protect-and-limit-highly-privileged-users:https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-privileged-access#pa-2-restrict-administrative-access-to-business-critical-systems:https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-governance-strategy#gs-2-define-enterprise-segmentation-strategy:https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-governance-strategy#gs-6-define-identity-and-privileged-access-strategy"
+        }
+      ]
+    },
+    {
+      "Id": "1.12",
+      "Description": "Ensure ‘User consent for applications’ Is Set To ‘Allow for Verified Publishers’ ",
+      "Checks": [
+        "entra_policy_user_consent_for_verified_apps"
+      ],
+      "Attributes": [
+        {
+          "Section": "1.2 Conditional Access",
+          "Profile": "Level 2",
+          "AssessmentStatus": "Manual",
+          "Description": "Allow users to provide consent for selected permissions when a request is coming from a verified publisher.",
+          "RationaleStatement": "If Azure Active Directory is running as an identity provider for third-party applications, permissions and consent should be limited to administrators or pre-approved. Malicious applications may attempt to exfiltrate data or abuse privileged user accounts.",
+          "ImpactStatement": "Enforcing this setting may create additional requests that administrators need to review.",
+          "RemediationProcedure": "From Azure Portal 1. From Azure Home select the Portal Menu 2. Select Azure Active Directory 3. Select Enterprise Applications 4. Select Consent and permissions 5. Select User consent settings 6. Under User consent for applications, select Allow user consent for apps from verified publishers, for selected permissions 7. Select Save From PowerShell Connect-MsolService Set-MsolCompanyInformation --UsersPermissionToUserConsentToAppEnabled $False",
+          "AuditProcedure": "From Azure Portal 1. From Azure Home select the Portal Menu 2. Select Azure Active Directory 3. Select Enterprise Applications 4. Select Consent and permissions 5. Select User consent settings 6. Under User consent for applications, ensure Allow user consent for apps from verified publishers, for selected permissions is selected From PowerShell Connect-MsolService Get-MsolCompanyInformation | Select-Object UsersPermissionToUserConsentToAppEnabled Command should return UsersPermissionToUserConsentToAppEnabled with the value of False",
+          "AdditionalInformation": "",
+          "DefaultValue": "By default, User consent for applications is set to Allow user consent for apps.",
+          "References": "https://docs.microsoft.com/en-us/azure/active-directory/manage-apps/configure-user-consent#configure-user-consent-to-applications:https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-privileged-access#pa-1-protect-and-limit-highly-privileged-users:https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-privileged-access#pa-2-restrict-administrative-access-to-business-critical-systems:https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-governance-strategy#gs-2-define-enterprise-segmentation-strategy:https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-governance-strategy#gs-6-define-identity-and-privileged-access-strategy:https://docs.microsoft.com/en-us/powershell/module/msonline/set-msolcompanysettings?view=azureadps-1.0:https://docs.microsoft.com/en-us/powershell/module/msonline/get-msolcompanyinformation?view=azureadps-1.0"
+        }
+      ]
+    },
+    {
+      "Id": "1.13",
+      "Description": "Ensure that 'Users can add gallery apps to My Apps' is set to 'No'",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "1.2 Conditional Access",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Require administrators to provide consent for the apps before use.",
+          "RationaleStatement": "Unless Azure Active Directory is running as an identity provider for third-party applications, do not allow users to use their identity outside of your cloud environment. User profiles contain private information such as phone numbers and email addresses which could then be sold off to other third parties without requiring any further consent from the user.",
+          "ImpactStatement": "Can cause additional requests to administrators that need to be fulfilled quite often.",
+          "RemediationProcedure": "From Azure Portal 1. From Azure Home select the Portal Menu 2. Select Azure Active Directory 3. Then Users 4. Select User settings 5. Then Manage how end users launch and view their applications 6. Set Users can add gallery apps to My Apps to No",
+          "AuditProcedure": "From Azure Portal 1. From Azure Home select the Portal Menu 2. Select Azure Active Directory 3. Then Users 4. Select User settings 5. Then Manage how end users launch and view their applications, and ensure that Users can add gallery apps to My Apps is set to No",
+          "AdditionalInformation": "",
+          "DefaultValue": "By default, Users can add gallery apps to My Apps is set to No.",
+          "References": "https://blogs.msdn.microsoft.com/exchangedev/2014/06/05/managing-user-consent-for-applications-using-office-365-apis/:https://nicksnettravels.builttoroam.com/post/2017/01/24/Admin-Consent-for-Permissions-in-Azure-Active-Directory.aspx:https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-governance-strategy#gs-1-define-asset-management-and-data-protection-strategy:https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-privileged-access#pa-1-protect-and-limit-highly-privileged-users:https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-privileged-access#pa-2-restrict-administrative-access-to-business-critical-systems"
+        }
+      ]
+    },
+    {
       "Id": "1.14",
       "Description": "Ensure That 'Users Can Register Applications' Is Set to 'No'",
       "Checks": [
@@ -225,6 +457,174 @@
           "AdditionalInformation": "",
           "DefaultValue": "By default, Users can register applications is set to 'Yes'.",
           "References": "https://docs.microsoft.com/en-us/azure/active-directory/roles/delegate-app-roles#restrict-who-can-create-applications:https://docs.microsoft.com/en-us/azure/active-directory/develop/active-directory-how-applications-are-added#who-has-permission-to-add-applications-to-my-azure-ad-instance:https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-governance-strategy#gs-1-define-asset-management-and-data-protection-strategy:https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-privileged-access#pa-1-protect-and-limit-highly-privileged-users:https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-privileged-access#pa-2-restrict-administrative-access-to-business-critical-systems:https://blogs.msdn.microsoft.com/exchangedev/2014/06/05/managing-user-consent-for-applications-using-office-365-apis/:https://nicksnettravels.builttoroam.com/post/2017/01/24/Admin-Consent-for-Permissions-in-Azure-Active-Directory.aspx:https://docs.microsoft.com/en-us/powershell/module/msonline/get-msolcompanyinformation?view=azureadps-1.0:https://docs.microsoft.com/en-us/powershell/module/msonline/set-msolcompanysettings?view=azureadps-1.0"
+        }
+      ]
+    },
+    {
+      "Id": "1.15",
+      "Description": "Ensure That 'Guest users access restrictions' is set to 'Guest user access is restricted to properties and memberships of their own directory objects' ",
+      "Checks": [
+        "entra_policy_guest_users_access_restrictions"
+      ],
+      "Attributes": [
+        {
+          "Section": "1.2 Conditional Access",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Limit guest user permissions.",
+          "RationaleStatement": "Limiting guest access ensures that guest accounts do not have permission for certain directory tasks, such as enumerating users, groups or other directory resources, and cannot be assigned to administrative roles in your directory. Guest access has three levels of restriction. 1. Guest users have the same access as members (most inclusive), 2. Guest users have limited access to properties and memberships of directory objects (default value), 3. Guest user access is restricted to properties and memberships of their own directory objects (most restrictive). The recommended option is the 3rd, most restrictive: 'Guest user access is restricted to their own directory object'.",
+          "ImpactStatement": "This may create additional requests for permissions to access resources that administrators will need to approve.",
+          "RemediationProcedure": "From Azure Portal 1. From Azure Home select the Portal Menu 2. Select Azure Active Directory 3. Then External Identities 4. Select External collaboration settings 5. Under Guest user access, change Guest user access restrictions to be Guest user access is restricted to properties and memberships of their own directory objects From PowerShell 1. From a PowerShell session enter Set-AzureADMSAuthorizationPolicy - GuestUserRoleId '2af84b1e-32c8-42b7-82bc-daa82404023b' 2. Check that the setting was applied by entering Get- AzureADMSAuthorizationPolicy 3. Make certain that the GuestUserRoleId is equal to the earlier entered value of 2af84b1e-32c8-42b7-82bc-daa82404023b.",
+          "AuditProcedure": "From Azure Portal 1. From Azure Home select the Portal Menu 2. Select Azure Active Directory 3. Then External Identities 4. Select External collaboration settings 5. Under Guest user access, ensure that Guest user access restrictions is set to Guest user access is restricted to properties and memberships of their own directory objects From PowerShell 1. Enter the following Get-AzureADMSAuthorizationPolicy Which will give a result like: Id : authorizationPolicy OdataType : Description : Used to manage authorization related settings across the company. DisplayName : Authorization Policy EnabledPreviewFeatures : {} GuestUserRoleId : 10dae51f-b6af-4016-8d66- 8c2a99b929b3 PermissionGrantPolicyIdsAssignedToDefaultUserRole : {user-default-legacy} If the GuestUserRoleID property does not equal 2af84b1e-32c8-42b7-82bc- daa82404023b then it is not set to most restrictive.",
+          "AdditionalInformation": "",
+          "DefaultValue": "By default, Guest user access restrictions is set to Guest user access is restricted to properties and memberships of their own directory objects",
+          "References": "https://docs.microsoft.com/en-us/azure/active-directory/fundamentals/users-default-permissions#member-and-guest-users:https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-privileged-access#pa-5-automate-entitlement-management:https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-governance-strategy#gs-2-define-enterprise-segmentation-strategy:https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-governance-strategy#gs-6-define-identity-and-privileged-access-strategy:https://docs.microsoft.com/en-us/azure/active-directory/enterprise-users/users-restrict-guest-permissions"
+        }
+      ]
+    },
+    {
+      "Id": "1.16",
+      "Description": "Ensure that 'Guest invite restrictions' is set to 'Only users assigned to specific admin roles can invite guest users'",
+      "Checks": [
+        "entra_policy_guest_invite_only_for_admin_roles"
+      ],
+      "Attributes": [
+        {
+          "Section": "1.2 Conditional Access",
+          "Profile": "Level 2",
+          "AssessmentStatus": "Manual",
+          "Description": "Restrict invitations to users with specific administrative roles only.",
+          "RationaleStatement": "Restricting invitations to users with specific administrator roles ensures that only authorized accounts have access to cloud resources. This helps to maintain 'Need to Know' permissions and prevents inadvertent access to data. By default the setting Guest invite restrictions is set to Anyone in the organization can invite guest users including guests and non-admins. This would allow anyone within the organization to invite guests and non-admins to the tenant, posing a security risk.",
+          "ImpactStatement": "With the option of Only users assigned to specific admin roles can invite guest users selected, users with specific admin roles will be in charge of sending invitations to the external users, requiring additional overhead by them to manage user accounts. This will mean coordinating with other departments as they are onboarding new users.",
+          "RemediationProcedure": "From Azure Portal 1. From Azure Home select the Portal Menu 2. Select Azure Active Directory 3. Then External Identities 4. Select External collaboration settings 5. Under Guest invite settings, for Guest invite restrictions, ensure that Only users assigned to specific admin roles can invite guest users is selected",
+          "AuditProcedure": "Audit: From Azure Portal 1. From Azure Home select the Portal Menu 2. Select Azure Active Directory 3. Then External Identities 4. External collaboration settings 5. Under Guest invite settings, for Guest invite restrictions, ensure that that Only users assigned to specific admin roles can invite guest users is selected Note: This setting has 4 levels of restriction, which include: • Anyone in the organization can invite guest users including guests and non- admins (most inclusive), • Member users and users assigned to specific admin roles can invite guest users including guests with member permissions, • Only users assigned to specific admin roles can invite guest users, • No one in the organization can invite guest users including admins (most restrictive).",
+          "AdditionalInformation": "",
+          "DefaultValue": "By default, Guest invite restrictions is set to Anyone in the organization can invite guest users including guests and non-admins",
+          "References": " https://docs.microsoft.com/en-us/azure/active-directory/active-directory-b2b-delegate-invitations:https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-governance-strategy#gs-6-define-identity-and-privileged-access-strategy:https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-governance-strategy#gs-2-define-enterprise-segmentation-strategy:https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-privileged-access#pa-5-automate-entitlement-management"
+        }
+      ]
+    },
+    {
+      "Id": "1.17",
+      "Description": "Ensure That 'Restrict access to Azure AD administration portal' is Set to 'Yes'",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "1.2 Conditional Access",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Restrict access to the Azure AD administration portal to administrators only. NOTE: This only affects access to the Azure AD administrator's web portal. This setting does not prohibit privileged users from using other methods such as Rest API or Powershell to obtain sensitive information from Azure AD.",
+          "RationaleStatement": "The Azure AD administrative portal has sensitive data and permission settings. All non-administrators should be prohibited from accessing any Azure AD data in the administration portal to avoid exposure.",
+          "ImpactStatement": "All administrative tasks will need to be done by Administrators, causing additional overhead in management of users and resources.",
+          "RemediationProcedure": "From Azure Portal 1. From Azure Home select the Portal Menu 2. Select Azure Active Directory 3. Then Users 4. Select User settings 5. Set Restrict access to Azure AD administration portal to Yes",
+          "AuditProcedure": "From Azure Portal 1. From Azure Home select the Portal Menu 2. Select Azure Active Directory 3. Then Users 4. Select User settings 5. Ensure that Restrict access to Azure AD administration portal is set to Yes",
+          "AdditionalInformation": "",
+          "DefaultValue": "By default, Restrict access to Azure AD administration portal is set to No",
+          "References": " https://docs.microsoft.com/en-us/azure/active-directory/active-directory-assign-admin-roles-azure-portal:https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-governance-strategy#gs-2-define-enterprise-segmentation-strategy:https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-governance-strategy#gs-6-define-identity-and-privileged-access-strategy:https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-privileged-access#pa-1-protect-and-limit-highly-privileged-users:https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-privileged-access#pa-2-restrict-administrative-access-to-business-critical-systems"
+        }
+      ]
+    },
+    {
+      "Id": "1.18",
+      "Description": "Ensure that 'Restrict user ability to access groups features in the Access Pane' is Set to 'Yes'",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "1.2 Conditional Access",
+          "Profile": "Level 2",
+          "AssessmentStatus": "Manual",
+          "Description": "Restricts group creation to administrators with permissions only.",
+          "RationaleStatement": "Self-service group management enables users to create and manage security groups or Office 365 groups in Azure Active Directory (Azure AD). Unless a business requires this day-to-day delegation for some users, self-service group management should be disabled.",
+          "ImpactStatement": "Setting to Yes could create administrative overhead by customers seeking certain group memberships that will have to be manually managed by administrators with appropriate permissions.",
+          "RemediationProcedure": "From Azure Portal 1. From Azure Home select the Portal Menu 2. Select Azure Active Directory 3. Select Groups 4. Select General under Settings 5. Ensure that Restrict user ability to access groups features in the Access Panel is set to Yes",
+          "AuditProcedure": "From Azure Portal 1. From Azure Home select the Portal Menu 2. Select Azure Active Directory 3. Select Groups 4. Select General under Settings 5. Ensure that Restrict user ability to access groups features in the Access Panel is set to Yes",
+          "AdditionalInformation": "",
+          "DefaultValue": "By default, Restrict user ability to access groups features in the Access Pane is set to No",
+          "References": "https://docs.microsoft.com/en-us/azure/active-directory/active-directory-accessmanagement-self-service-group-management:https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-privileged-access#pa-1-protect-and-limit-highly-privileged-users:https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-privileged-access#pa-5-automate-entitlement-management:https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-privileged-access#pa-2-restrict-administrative-access-to-business-critical-systems:https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-governance-strategy#gs-2-define-enterprise-segmentation-strategy:https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-governance-strategy#gs-6-define-identity-and-privileged-access-strategy"
+        }
+      ]
+    },
+    {
+      "Id": "1.19",
+      "Description": "Ensure that 'Users can create security groups in Azure portals, API or PowerShell' is set to 'No'",
+      "Checks": [
+        "entra_policy_default_users_cannot_create_security_groups"
+      ],
+      "Attributes": [
+        {
+          "Section": "1.2 Conditional Access",
+          "Profile": "Level 2",
+          "AssessmentStatus": "Manual",
+          "Description": "Restrict security group creation to administrators only.",
+          "RationaleStatement": "When creating security groups is enabled, all users in the directory are allowed to create new security groups and add members to those groups. Unless a business requires this day-to-day delegation, security group creation should be restricted to administrators only.",
+          "ImpactStatement": "Enabling this setting could create a number of requests that would need to be managed by an administrator.",
+          "RemediationProcedure": "From Azure Portal 1. From Azure Home select the Portal Menu 2. Select Azure Active Directory 3. Select Groups 4. Select General under Settings 5. Set Users can create security groups in Azure portals, API or PowerShell to No",
+          "AuditProcedure": "From Azure Portal 1. From Azure Home select the Portal Menu 2. Select Azure Active Directory 3. Select Groups 4. Select General under Settings 5. Ensure that Users can create security groups in Azure portals, API or PowerShell is set to No",
+          "AdditionalInformation": "",
+          "DefaultValue": "By default, Users can create security groups in Azure portals, API or PowerShell is set to Yes",
+          "References": "https://docs.microsoft.com/en-us/azure/active-directory/active-directory-accessmanagement-self-service-group-management#making-a-group-available-for-end-user-self-service:https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-governance-strategy#gs-6-define-identity-and-privileged-access-strategy:https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-governance-strategy#gs-2-define-enterprise-segmentation-strategy:https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-privileged-access#pa-1-protect-and-limit-highly-privileged-users:https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-privileged-access#pa-5-automate-entitlement-management:https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-privileged-access#pa-2-restrict-administrative-access-to-business-critical-systems"
+        }
+      ]
+    },
+    {
+      "Id": "1.20",
+      "Description": "Ensure that 'Owners can manage group membership requests in the Access Panel' is set to 'No'",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "1.2 Conditional Access",
+          "Profile": "Level 2",
+          "AssessmentStatus": "Manual",
+          "Description": "Restrict security group management to administrators only.",
+          "RationaleStatement": "Restricting security group management to administrators only prohibits users from making changes to security groups. This ensures that security groups are appropriately managed and their management is not delegated to non-administrators.",
+          "ImpactStatement": "Group Membership for user accounts will need to be handled by Admins and cause administrative overhead.",
+          "RemediationProcedure": "From Azure Portal 1. From Azure Home select the Portal Menu 2. Select Azure Active Directory 3. Then Groups 4. Select General in settings 5. Set Owners can manage group membership requests in the Access Panel to No",
+          "AuditProcedure": "From Azure Portal 1. From Azure Home select the Portal Menu 2. Select Azure Active Directory 3. Then Groups 4. Select General in settings 5. Ensure that Owners can manage group membership requests in the Access Panel is set to No",
+          "AdditionalInformation": "",
+          "DefaultValue": "By default, Owners can manage group membership requests in the Access Panel is set to No.",
+          "References": "https://docs.microsoft.com/en-us/azure/active-directory/active-directory-accessmanagement-self-service-group-management#making-a-group-available-for-end-user-self-service:https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-privileged-access#pa-1-protect-and-limit-highly-privileged-users:https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-privileged-access#pa-5-automate-entitlement-management:https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-privileged-access#pa-8-choose-approval-process-for-microsoft-support:https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-governance-strategy#gs-2-define-enterprise-segmentation-strategy:https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-governance-strategy#gs-6-define-identity-and-privileged-access-strategy"
+        }
+      ]
+    },
+    {
+      "Id": "1.21",
+      "Description": "Ensure that 'Users can create Microsoft 365 groups in Azure portals, API or PowerShell' is set to 'No'",
+      "Checks": [
+        "entra_users_cannot_create_microsoft_365_groups"
+      ],
+      "Attributes": [
+        {
+          "Section": "1.2 Conditional Access",
+          "Profile": "Level 2",
+          "AssessmentStatus": "Manual",
+          "Description": "Restrict Microsoft 365 group creation to administrators only.",
+          "RationaleStatement": "Restricting Microsoft 365 group creation to administrators only ensures that creation of Microsoft 365 groups is controlled by the administrator. Appropriate groups should be created and managed by the administrator and group creation rights should not be delegated to any other user.",
+          "ImpactStatement": "Enabling this setting could create a number of requests that would need to be managed by an administrator.",
+          "RemediationProcedure": "From Azure Portal 1. From Azure Home select the Portal Menu 2. Select Azure Active Directory 3. Then Groups 4. Select General in settings 5. Set Users can create Microsoft 365 groups in Azure portals, API or PowerShell to No",
+          "AuditProcedure": "From Azure Portal 1. From Azure Home select the Portal Menu 2. Select Azure Active Directory 3. Then Groups 4. Select General in setting 5. Ensure that Users can create Microsoft 365 groups in Azure portals, API or PowerShell is set to No",
+          "AdditionalInformation": "",
+          "DefaultValue": "By default, Users can create Microsoft 365 groups in Azure portals, API or PowerShell is set to Yes.",
+          "References": "https://whitepages.unlimitedviz.com/2017/01/disable-office-365-groups-2/:https://support.office.com/en-us/article/Control-who-can-create-Office-365-Groups-4c46c8cb-17d0-44b5-9776-005fced8e618:https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-governance-strategy#gs-6-define-identity-and-privileged-access-strategy:https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-governance-strategy#gs-2-define-enterprise-segmentation-strategy:https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-privileged-access#pa-1-protect-and-limit-highly-privileged-users:https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-privileged-access#pa-5-automate-entitlement-management:https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-privileged-access#pa-2-restrict-administrative-access-to-business-critical-systems"
+        }
+      ]
+    },
+    {
+      "Id": "1.22",
+      "Description": "Ensure that 'Require Multi-Factor Authentication to register or join devices with Azure AD' is set to 'Yes'",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "1.2 Conditional Access",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Joining or registering devices to the active directory should require Multi-factor authentication.",
+          "RationaleStatement": "Multi-factor authentication is recommended when adding devices to Azure AD. When set to Yes, users who are adding devices from the internet must first use the second method of authentication before their device is successfully added to the directory. This ensures that rogue devices are not added to the domain using a compromised user account. Note: Some Microsoft documentation suggests to use conditional access policies for joining a domain from certain whitelisted networks or devices. Even with these in place, using Multi-Factor Authentication is still recommended, as it creates a process for review before joining the domain.",
+          "ImpactStatement": "A slight impact of additional overhead, as Administrators will now have to approve every access to the domain.",
+          "RemediationProcedure": "From Azure Portal 1. From Azure Home select the Portal Menu 2. Select Azure Active Directory 3. Select Devices 4. Select Device settings 5. Set Require Multi-Factor Authentication to register or join devices with Azure AD to Yes",
+          "AuditProcedure": "From Azure Portal 1. From Azure Home select the Portal Menu 2. Select Azure Active Directory 3. Select Devices 4. Select Device settings 5. Ensure that Require Multi-Factor Authentication to register or join devices with Azure AD is set to Yes",
+          "AdditionalInformation": "",
+          "DefaultValue": "By default, Require Multi-Factor Authentication to register or join devices with Azure AD is set to No.",
+          "References": "https://blogs.technet.microsoft.com/janketil/2016/02/29/azure-mfa-for-enrollment-in-intune-and-azure-ad-device-registration-explained/:https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-identity-management#im-4-use-strong-authentication-controls-for-all-azure-active-directory-based-access"
         }
       ]
     },
@@ -625,6 +1025,26 @@
       ]
     },
     {
+      "Id": "2.1.17",
+      "Description": "Ensure that Auto provisioning of 'Microsoft Defender for Containers components' is Set to 'On'",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "2.1 Microsoft Defender for Cloud",
+          "Profile": "Level 2",
+          "AssessmentStatus": "Manual",
+          "Description": "Enable automatic provisioning of the Microsoft Defender for Containers components.",
+          "RationaleStatement": "As with any compute resource, Container environments require hardening and run-time protection to ensure safe operations and detection of threats and vulnerabilities.",
+          "ImpactStatement": "Microsoft Defender for Containers will require additional licensing.",
+          "RemediationProcedure": "From Azure Portal 1. From Azure Home select the Portal Menu 2. Select Microsoft Defender for Cloud 3. Then Environment Settings 4. Select a subscription 5. Then Auto Provisioning in the left column. 6. Set Microsoft Defender for Containers components to On",
+          "AuditProcedure": "From Azure Portal 1. From Azure Home select the Portal Menu 2. Select Microsoft Defender for Cloud 3. Then Environment Settings 4. Select a subscription 5. Then Auto Provisioning in the left column. 6. Ensure that Microsoft Defender for Containers components is set to On Repeat the above for any additional subscriptions.",
+          "AdditionalInformation": "",
+          "DefaultValue": "By default, Microsoft Defender for Containers is disabled. If Defender for Containers is enabled from the Microsoft Defender for Cloud portal, auto provisioning will be enabled.",
+          "References": "https://docs.microsoft.com/en-us/azure/defender-for-cloud/defender-for-containers-introduction:https://docs.microsoft.com/en-us/azure/defender-for-cloud/enable-data-collection?tabs=autoprovision-containers:https://msdn.microsoft.com/en-us/library/mt704062.aspx:https://msdn.microsoft.com/en-us/library/mt704063.aspx:https://docs.microsoft.com/en-us/rest/api/securitycenter/autoprovisioningsettings/list:https://docs.microsoft.com/en-us/rest/api/securitycenter/autoprovisioningsettings/create:https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-incident-response#ir-2-preparation--setup-incident-notification"
+        }
+      ]
+    },
+    {
       "Id": "2.1.18",
       "Description": "Ensure That 'All users with the following roles' is set to 'Owner'",
       "Checks": [
@@ -801,6 +1221,26 @@
       ]
     },
     {
+      "Id": "3.3",
+      "Description": "Ensure that 'Enable key rotation reminders' is enabled for each Storage Account",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "3. Storage Accounts",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Access Keys authenticate application access requests to data contained in Storage Accounts. A periodic rotation of these keys is recommended to ensure that potentially compromised keys cannot result in a long-term exploitable credential. The 'Rotation Reminder' is an automatic reminder feature for a manual procedure.",
+          "RationaleStatement": "Reminders such as those generated by this recommendation will help maintain a regular and healthy cadence for activities which improve the overall efficacy of a security program. Cryptographic key rotation periods will vary depending on your organization's security requirements and the type of data which is being stored in the Storage Account. For example, PCI DSS mandates that cryptographic keys be replaced or rotated 'regularly,' and advises that keys for static data stores be rotated every 'few months.' For the purposes of this recommendation, 90 days will prescribed for the reminder. Review and adjustment of the 90 day period is recommended, and may even be necessary. Your organization's security requirements should dictate the appropriate setting.",
+          "ImpactStatement": "This recommendation only creates a periodic reminder to regenerate access keys. Regenerating access keys can affect services in Azure as well as the organization's applications that are dependent on the storage account. All clients that use the access key to access the storage account must be updated to use the new key.",
+          "RemediationProcedure": "From Azure Portal 1. Go to Storage Accounts 2. For each Storage Account that is not compliant, go to Access keys 3. Click Set rotation reminder 4. Check Enable key rotation reminders 5. In the Send reminders field select Custom, then set the Remind me every field to 90 and the period drop down to Days. 6. Click Save",
+          "AuditProcedure": "From Azure Portal 1. Go to Storage Accounts 2. For each Storage Account, go to Access keys 3. Click Set rotation reminder If the checkbox for Enable key rotation reminders is already checked, that Storage Account is compliant. Review the Remind me every field for a desirable periodic setting that fits your security program's needs.",
+          "AdditionalInformation": "",
+          "DefaultValue": "By default, Key rotation reminders is not configured.",
+          "References": "https://docs.microsoft.com/en-us/azure/storage/common/storage-create-storage-account#regenerate-storage-access-keys:https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-privileged-access#pa-1-protect-and-limit-highly-privileged-users:https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-privileged-access#pa-2-restrict-administrative-access-to-business-critical-systems:https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-identity-management#im-2-manage-application-identities-securely-and-automatically:https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-governance-strategy#gs-6-define-identity-and-privileged-access-strategy:https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-identity-management#im-8-restrict-the-exposure-of-credential-and-secrets:https://www.pcidssguide.com/pci-dss-key-rotation-requirements/:https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-57pt1r5.pdf"
+        }
+      ]
+    },
+    {
       "Id": "3.4",
       "Description": "Ensure that Storage Account Access Keys are Periodically Regenerated",
       "Checks": [
@@ -819,6 +1259,46 @@
           "AdditionalInformation": "",
           "DefaultValue": "By default, access keys are not regenerated periodically.",
           "References": "https://docs.microsoft.com/en-us/azure/storage/common/storage-create-storage-account#regenerate-storage-access-keys:https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-privileged-access#pa-1-protect-and-limit-highly-privileged-users:https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-privileged-access#pa-2-restrict-administrative-access-to-business-critical-systems:https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-identity-management#im-2-manage-application-identities-securely-and-automatically:https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-governance-strategy#gs-6-define-identity-and-privileged-access-strategy:https://www.pcidssguide.com/pci-dss-key-rotation-requirements/:https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-57pt1r5.pdf"
+        }
+      ]
+    },
+    {
+      "Id": "3.5",
+      "Description": "Ensure Storage Logging is Enabled for Queue Service for 'Read', 'Write', and 'Delete' requests",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "3. Storage Accounts",
+          "Profile": "Level 2",
+          "AssessmentStatus": "Automated",
+          "Description": "The Storage Queue service stores messages that may be read by any client who has access to the storage account. A queue can contain an unlimited number of messages, each of which can be up to 64KB in size using version 2011-08-18 or newer. Storage Logging happens server-side and allows details for both successful and failed requests to be recorded in the storage account. These logs allow users to see the details of read, write, and delete operations against the queues. Storage Logging log entries contain the following information about individual requests: Timing information such as start time, end-to-end latency, and server latency, authentication details, concurrency information, and the sizes of the request and response messages.",
+          "RationaleStatement": "Storage Analytics logs contain detailed information about successful and failed requests to a storage service. This information can be used to monitor individual requests and to diagnose issues with a storage service. Requests are logged on a best-effort basis. Storage Analytics logging is not enabled by default for your storage account.",
+          "ImpactStatement": "Enabling this setting can have a high impact on the cost of the log analytics service and data storage used by logging more data per each request. Do not enable this without determining your need for this level of logging, and do not forget to check in on data usage and projected cost. Some users have seen their logging costs increase from $10 per month to $10,000 per month.",
+          "RemediationProcedure": "From Azure Portal 1. Go to Storage Accounts. 2. Select the specific Storage Account. 3. Click the Diagnostics settings (classic) blade from Monitoring (classic) section. 4. Set the Status to On, if set to Off. 5. Select Queue properties. 6. Select Read, Write and Delete options under the Logging section to enable Storage Logging for Queue service.From Azure CLI Use the below command to enable the Storage Logging for Queue service. az storage logging update --account-name <storageAccountName> --account-key <storageAccountKey> --services q --log rwd --retention 90",
+          "AuditProcedure": "From Azure Portal: 1. Go to Storage Accounts. 2. Select the specific Storage Account. 3. Click the Diagnostics settings (classic) blade from Monitoring (classic) section. 4. Ensure the Status is set to On, if set to Off. 5. Select Queue properties. 6. Ensure Read Write Delete options are selected under the Logging section. From Azure CLI Ensure the below command's output contains properties delete, read and write set to true. az storage logging show --services q --account-name <storageAccountName>",
+          "AdditionalInformation": "We cannot practically generalize detailed audit log requirements for every queue due to their nature and intent. This recommendation may be applicable to storage account queue services where the security is paramount.",
+          "DefaultValue": "By default storage account queue services are not logged.",
+          "References": "https://docs.microsoft.com/en-us/rest/api/storageservices/about-storage-analytics-logging:https://docs.microsoft.com/en-us/cli/azure/storage/logging?view=azure-cli-latest:https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-logging-threat-detection#lt-4-enable-logging-for-azure-resources:https://docs.microsoft.com/en-us/azure/storage/queues/monitor-queue-storage?tabs=azure-portal"
+        }
+      ]
+    },
+    {
+      "Id": "3.6",
+      "Description": "Ensure that Shared Access Signature Tokens Expire Within an Hour",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "3. Storage Accounts",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Expire shared access signature tokens within an hour.",
+          "RationaleStatement": "A shared access signature (SAS) is a URI that grants restricted access rights to Azure Storage resources. A shared access signature can be provided to clients who should not be trusted with the storage account key but for whom it may be necessary to delegate access to certain storage account resources. Providing a shared access signature URI to these clients allows them access to a resource for a specified period of time. This time should be set as low as possible and preferably no longer than an hour.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "When generating shared access signature tokens, use start and end time such that it falls within an hour. From Azure Portal 1. Go to Storage Accounts 2. For each storage account, go to Shared access signature 3. Set Start and expiry date/time within an hour",
+          "AuditProcedure": "Currently, SAS token expiration times cannot be audited. Until Microsoft makes token expiration time a setting rather than a token creation parameter, this recommendation would require a manual verification.",
+          "AdditionalInformation": "",
+          "DefaultValue": "By default, expiration for shared access signature is set to 8 hours.",
+          "References": " https://docs.microsoft.com/en-us/rest/api/storageservices/delegating-access-with-a-shared-access-signature:https://docs.microsoft.com/en-us/azure/storage/common/storage-sas-overview"
         }
       ]
     },
@@ -892,7 +1372,7 @@
       "Id": "3.10",
       "Description": "Ensure Private Endpoints are used to access Storage Accounts",
       "Checks": [
-        "storage_ensure_private_endpoints_used_to_access_storage_accounts"
+        "storage_ensure_private_endpoints_in_storage_accounts"
       ],
       "Attributes": [
         {
@@ -951,6 +1431,46 @@
           "AdditionalInformation": "",
           "DefaultValue": "By default, Encryption type is set to Microsoft Managed Keys.",
           "References": "https://docs.microsoft.com/en-us/azure/storage/common/storage-service-encryption:https://docs.microsoft.com/en-us/azure/security/fundamentals/data-encryption-best-practices#protect-data-at-rest:https://docs.microsoft.com/en-us/azure/storage/common/storage-service-encryption#azure-storage-encryption-versus-disk-encryption:https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-data-protection#dp-5-use-customer-managed-key-option-in-data-at-rest-encryption-when-required"
+        }
+      ]
+    },
+    {
+      "Id": "3.13",
+      "Description": "Ensure Storage logging is Enabled for Blob Service for 'Read', 'Write', and 'Delete' requests",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "3. Storage Accounts",
+          "Profile": "Level 2",
+          "AssessmentStatus": "Automated",
+          "Description": "The Storage Blob service provides scalable, cost-efficient object storage in the cloud. Storage Logging happens server-side and allows details for both successful and failed requests to be recorded in the storage account. These logs allow users to see the details of read, write, and delete operations against the blobs. Storage Logging log entries contain the following information about individual requests: timing information such as start time, end-to-end latency, and server latency; authentication details; concurrency information; and the sizes of the request and response messages.",
+          "RationaleStatement": "Storage Analytics logs contain detailed information about successful and failed requests to a storage service. This information can be used to monitor each individual request to a storage service for increased security or diagnostics. Requests are logged on a best- effort basis. Storage Analytics logging is not enabled by default for your storage account.",
+          "ImpactStatement": "Being a level 2, enabling this setting can have a high impact on the cost of data storage used for logging more data per each request. Do not enable this without determining your need for this level of logging or forget to check in on data usage and projected cost.",
+          "RemediationProcedure": "Remediation: From Azure Portal 1. From the default portal page select Storage Accounts. 2. Select the specific Storage Account. 3. Click the Diagnostics settings under the Monitoring section in the left column. 4. Select the 'blob' tab indented below the storage account. 5. Click '+ Add diagnostic setting'. 6. Select StorageRead, StorageWrite and StorageDelete options under the Logging section to enable Storage Logging for Blob service. 7. Select a destination for your logs to be sent to. From Azure CLI Use the below command to enable the Storage Logging for Blob service. az storage logging update --account-name <storageAccountName> --account-key <storageAccountKey> --services b --log rwd --retention 90",
+          "AuditProcedure": "From Azure Portal 1. From the default portal page select Storage Accounts. 2. Select the specific Storage Account. 3. Click the Diagnostics settings under the Monitoring section in the left column. 4. Select the 'blob' tab indented below the storage account. Then select the diagnostic setting listed. 5. Ensure StorageRead, StorageWrite, and StorageDelete options are selected under the Logging section and that they are sent to the correct destination. From Azure CLI Ensure the below command's output contains properties delete, read and write set to true. az storage logging show --services b --account-name <storageAccountName>",
+          "AdditionalInformation": "We cannot practically generalize detailed audit log requirements for every blob due to their nature and intent. This recommendation may be applicable to storage account blob service where the security is paramount.",
+          "DefaultValue": "By default, storage account blob service logging is disabled for read, write, and delete operations.",
+          "References": " https://docs.microsoft.com/en-us/rest/api/storageservices/about-storage-analytics-logging:https://docs.microsoft.com/en-us/cli/azure/storage/logging?view=azure-cli-latest:https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-logging-threat-detection#lt-3-enable-logging-for-security-investigation"
+        }
+      ]
+    },
+    {
+      "Id": "3.14",
+      "Description": "Ensure Storage Logging is Enabled for Table Service for 'Read', 'Write', and 'Delete' Requests",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "3. Storage Accounts",
+          "Profile": "Level 2",
+          "AssessmentStatus": "Automated",
+          "Description": "Azure Table storage is a service that stores structured NoSQL data in the cloud, providing a key/attribute store with a schema-less design. Storage Logging happens server-side and allows details for both successful and failed requests to be recorded in the storage account. These logs allow users to see the details of read, write, and delete operations against the tables. Storage Logging log entries contain the following information about individual requests: timing information such as start time, end-to-end latency, and server latency; authentication details; concurrency information; and the sizes of the request and response messages.",
+          "RationaleStatement": "Storage Analytics logs contain detailed information about successful and failed requests to a storage service. This information can be used to monitor each individual request to a storage service for increased security or diagnostics. Requests are logged on a best- effort basis. Storage Analytics logging is not enabled by default for your storage account",
+          "ImpactStatement": "Being a level 2, enabling this setting can have a high impact on the cost of data storage used for logging more data per each request. Do not enable this without determining your need for this level of logging or forget to check in on data usage and projected cost",
+          "RemediationProcedure": "From Azure Portal 1. From the default portal page select Storage Accounts. 2. Select the specific Storage Account. 3. Click the Diagnostics settings under the Monitoring section in the left column. 4. Select the 'table' tab indented below the storage account. 5. Click '+ Add diagnostic setting'. 6. Select StorageRead, StorageWrite and StorageDelete options under the Logging section to enable Storage Logging for Table service. 7. Select a destination for your logs to be sent to. From Azure CLI Use the below command to enable the Storage Logging for Table service. az storage logging update --account-name <storageAccountName> --account-key <storageAccountKey> --services t --log rwd --retention 90",
+          "AuditProcedure": "From Azure Portal 1. From the default portal page select Storage Accounts. 2. Select the specific Storage Account. 3. Click the Diagnostics settings under the Monitoring section in the left column. 4. Select the 'table' tab indented below the storage account. Then select the diagnostic setting listed. 5. Ensure StorageRead, StorageWrite, and StorageDelete options are selected under the Logging section and that they are sent to the correct destination. From Azure CLI Ensure the below command's output contains properties delete, read and write set to true. az storage logging show --services t --account-name <storageAccountName>",
+          "AdditionalInformation": "We cannot practically generalize detailed audit log requirements for every table due to their nature and intent. This recommendation may be applicable to storage account table service where the security is paramount.",
+          "DefaultValue": "By default, storage account table service logging is disabled for read, write, an delete operations",
+          "References": "https://docs.microsoft.com/en-us/rest/api/storageservices/about-storage-analytics-logging:https://docs.microsoft.com/en-us/cli/azure/storage/logging?view=azure-cli-latest:https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-logging-threat-detection#lt-4-enable-logging-for-azure-resources"
         }
       ]
     },
@@ -1068,7 +1588,7 @@
       "Id": "4.1.5",
       "Description": "Ensure that 'Data encryption' is set to 'On' on a SQL Database",
       "Checks": [
-        "sqlserver_tde_encrypted"
+        "sqlserver_tde_encryption_enabled"
       ],
       "Attributes": [
         {
@@ -1352,7 +1872,7 @@
     },
     {
       "Id": "4.3.7",
-      "Description": "Ensure 'Allow access to Azure services' for PostgreSQL Database Server is disabled ",
+      "Description": "Ensure 'Allow access to Azure services' for PostgreSQL Database Server is disabled",
       "Checks": [
         "postgresql_flexible_server_allow_access_services_disabled"
       ],
@@ -1369,6 +1889,26 @@
           "AdditionalInformation": "",
           "DefaultValue": "The Azure Postgres firewall is set to block all access by default.",
           "References": "https://docs.microsoft.com/en-us/azure/postgresql/concepts-firewall-rules:https://docs.microsoft.com/en-us/azure/postgresql/howto-manage-firewall-using-cli:https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-network-security#ns-1-establish-network-segmentation-boundaries:https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-network-security#ns-6-deploy-web-application-firewall"
+        }
+      ]
+    },
+    {
+      "Id": "4.3.8",
+      "Description": "Ensure 'Infrastructure double encryption' for PostgreSQL Database Server is 'Enabled'",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "4.3 PostgreSQL Database Server",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Automated",
+          "Description": "Azure Database for PostgreSQL servers should be created with 'infrastructure double encryption' enabled.",
+          "RationaleStatement": "If Double Encryption is enabled, another layer of encryption is implemented at the hardware level before the storage or network level. Information will be encrypted before it is even accessed, preventing both interception of data in motion if the network layer encryption is broken and data at rest in system resources such as memory or processor cache. Encryption will also be in place for any backups taken of the database, so the key will secure access the data in all forms. For the most secure implementation of key based encryption, it is recommended to use a Customer Managed asymmetric RSA 2048 Key in Azure Key Vault.",
+          "ImpactStatement": "The read and write speeds to the database will be impacted if both default encryption and Infrastructure Encryption are checked, as a secondary form of encryption requires more resource overhead for the cryptography of information. This cost is justified for information security. Customer managed keys are recommended for the most secure implementation, leading to overhead of key management. The key will also need to be backed up in a secure location, as loss of the key will mean loss of the information in the database.",
+          "RemediationProcedure": "It is not possible to enable 'infrastructure double encryption' on an existing Azure Database for PostgreSQL server. The remediation steps detail the creation of a new Azure Database for PostgreSQL server with 'infrastructure double encryption' enabled. From Azure Portal 1. Go through the normal process of database creation. 2. On step 2 titled 'Additional settings' ensure that 'Infrastructure double encryption enabled' is 'checked'. 3. Acknowledge that you understand this will impact database performance. 4. Finish database creation as normal. From Azure CLI az postgres server create --resource-group <resourcegroup> --name <servername> --location <location> --admin-user <adminusername> --admin- password <server_admin_password> --sku-name GP_Gen4_2 --version 11 -- infrastructure-encryption Enabled",
+          "AuditProcedure": "From Azure Portal 1. From Azure Home, click on more services. 2. Click on Databases. 3. Click on Azure Database for PostgreSQL servers. 4. Select the database by clicking on its name. 5. Under Security, click Data encryption. 6. Ensure that 'Infrastructure encryption enabled' is displayed and is 'checked'. From Azure CLI 1. Enter the command az postgres server configuration show --name <servername> --resource-group <resourcegroup> --query 'properties.infrastructureEncryption' -o tsv 2. Verify that Infrastructure encryption is enabled.",
+          "AdditionalInformation": "Flexible PostgreSQL Database Servers are still in preview. A recommendation will be created for Flexible Servers once the service is out of preview.",
+          "DefaultValue": "By Default, Double Encryption is disabled.",
+          "References": "https://docs.microsoft.com/en-us/azure/postgresql/howto-double-encryption:https://docs.microsoft.com/en-us/azure/postgresql/concepts-infrastructure-double-encryption:https://docs.microsoft.com/en-us/azure/postgresql/concepts-data-encryption-postgresql:https://docs.microsoft.com/en-us/azure/key-vault/keys/byok-specification:https://docs.microsoft.com/en-us/azure/postgresql/howto-double-encryption:https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-data-protection#dp-4-enable-data-at-rest-encryption-by-default"
         }
       ]
     },
@@ -1527,6 +2067,28 @@
       ]
     },
     {
+      "Id": "5.1.1",
+      "Description": "Ensure that a 'Diagnostic Setting' exists",
+      "Checks": [
+        "monitor_diagnostic_settings_exists"
+      ],
+      "Attributes": [
+        {
+          "Section": "5.1 Configuring Diagnostic Settings",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Enable Diagnostic settings for exporting activity logs. Diagnos tic settings are available for each individual resource within a subscription. Settings should be configured for allappropriate resources for your environment.",
+          "RationaleStatement": "A diagnostic setting controls how a diagnostic log is exported. By default, logs are retained only for 90 days. Diagnostic settings should be defined so that logs can be exported and stored for a longer duration in order to analyze security activities within an Azure subscription.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "From Azure Portal To enable Diagnostic Settings on a Subscription: 1. Go to Monitor 2. Click on Activity Log 3. Click on Export Activity Logs 4. Click + Add diagnostic setting 5. Enter a Diagnostic setting name 6. Select Categories for the diagnostic settings 7. Select the appropriate Destination details (this may be Log Analytics/Storage Account/Event Hub or Partner solution) 8. Click Save To enable Diagnostic Settings on a specific resource: 1. Go to Monitor 2. Click Diagnostic settings 3. Click on the resource that has a diagnostics status of disabled 4. Select Add Diagnostic Setting 5. Enter a Diagnostic setting name 6. Select the appropriate log, metric, and destination. (This may be Log Analytics/Storage account or Event Hub) 7. Click save Repeat these step for all resources as needed. From Azure CLI To configure Diagnostic Settings on a Subscription: az monitor diagnostic-settings subscription create --subscription <subscription id> --name <diagnostic settings name> --location <location> <[- -event-hub <event hub ID> --event-hub-auth-rule <event hub auth rule ID>] [-- storage-account <storage account ID>] [--workspace <log analytics workspace ID>] --logs '<JSON encoded categories>' (e.g. [{category:Security,enabled:true},{category:Administrative,enabled:true},{cat egory:Alert,enabled:true},{category:Policy,enabled:true}]) To configure Diagnostic Settings on a specific resource: az monitor diagnostic-settings create --subscription <subscription ID> -- resource <resource ID> --name <diagnostic settings name> <[--event-hub <event hub ID> --event-hub-rule <event hub auth rule ID>] [--storage-account <storage account ID>] [--workspace <log analytics workspace ID>] --logs <resource specific JSON encoded log settings> --metrics <metric settings (shorthand|json-file|yaml-file)> From PowerShell To configure Diagnostic Settings on a subscription: $logCategories = @(); $logCategories += New-AzDiagnosticSettingSubscriptionLogSettingsObject - Category Administrative -Enabled $true $logCategories += New-AzDiagnosticSettingSubscriptionLogSettingsObject - Category Security -Enabled $true $logCategories += New-AzDiagnosticSettingSubscriptionLogSettingsObject - Category ServiceHealth -Enabled $true $logCategories += New-AzDiagnosticSettingSubscriptionLogSettingsObject - Category Alert -Enabled $true $logCategories += New-AzDiagnosticSettingSubscriptionLogSettingsObject - Category Recommendation -Enabled $true $logCategories += New-AzDiagnosticSettingSubscriptionLogSettingsObject - Category Policy -Enabled $true $logCategories += New-AzDiagnosticSettingSubscriptionLogSettingsObject - Category Autoscale -Enabled $true $logCategories += New-AzDiagnosticSettingSubscriptionLogSettingsObject - Category ResourceHealth -Enabled $true New-AzSubscriptionDiagnosticSetting -SubscriptionId <subscription ID> -Name <Diagnostic settings name> <[-EventHubAuthorizationRule <event hub auth rule ID> -EventHubName <event hub name>] [-StorageAccountId <storage account ID>] [-WorkSpaceId <log analytics workspace ID>] [-MarketplacePartner ID <full ARM Marketplace resource ID>]> -Log $logCategories To configure Diagnostic Settings on a specific resource: $logCategories = @() $logCategories += New-AzDiagnosticSettingLogSettingsObject -Category <resource specific log category> -Enabled $true Repeat command and variable assignment for each Log category specific to the resource where this Diagnostic Setting will get configured. $metricCategories = @() $metricCategories += New-AzDiagnosticSettingMetricSettingsObject -Enabled $true [-Category <resource specific metric category | AllMetrics>] [- RetentionPolicyDay <Integer>] [-RetentionPolicyEnabled $true] Repeat command and variable assignment for each Metric category or use the 'AllMetrics' category. New-AzDiagnosticSetting -ResourceId <resource ID> -Name <Diagnostic settings name> -Log $logCategories -Metric $metricCategories [- EventHubAuthorizationRuleId <event hub auth rule ID> -EventHubName <event hub name>] [-StorageAccountId <storage account ID>] [-WorkspaceId <log analytics workspace ID>] [-MarketplacePartnerId <full ARM marketplace resource ID>]>",
+          "AuditProcedure": "From Azure Portal To identify Diagnostic Settings on a subscription: 1. Go to Monitor 2. Click Activity Log 3. Click Export Activity Logs 4. Select a Subscription 5. Ensure a Diagnostic settings exists for the selected Subscription To identify Diagnostic Settings on specific resources: 1. Go to Monitor 2. Click Diagnostic settings 3. Ensure that Diagnostics status is enabled on all appropriate resources. From Azure CLI To identify Diagnostic Settings on a subscription: az monitor diagnostic-settings subscription list --subscription <subscription ID> To identify Diagnostic Settings on a resource az monitor diagnostic-settings list --resource <resource Id> From PowerShell To identify Diagnostic Settings on a Subscription: Get-AzDiagnosticSetting -SubscriptionId <subscription ID> To identify Diagnostic Settings on a specific resource: Get-AzDiagnosticSetting -ResourceId <resource ID>",
+          "AdditionalInformation": "",
+          "DefaultValue": "By default, diagnostic setting is not set.",
+          "References": " https://docs.microsoft.com/en-us/azure/monitoring-and-diagnostics/monitoring-overview-activity-logs#export-the-activity-log-with-a-log-profile:https://learn.microsoft.com/en-us/cli/azure/monitor/diagnostic-settings?view=azure-cli-latest:https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-logging-threat-detection#lt-3-enable-logging-for-security-investigation"
+        }
+      ]
+    },
+    {
       "Id": "5.1.2",
       "Description": "Ensure Diagnostic Setting captures appropriate categories",
       "Checks": [
@@ -1618,7 +2180,7 @@
       "Id": "5.1.6",
       "Description": "Ensure that Network Security Group Flow logs are captured and sent to Log Analytics",
       "Checks": [
-        "network_flow_logs_captured_sent"
+        "network_flow_log_captured_sent"
       ],
       "Attributes": [
         {
@@ -1633,6 +2195,28 @@
           "AdditionalInformation": "",
           "DefaultValue": "By default Network Security Group logs are not sent to Log Analytics.",
           "References": "https://docs.microsoft.com/en-us/azure/network-watcher/network-watcher-nsg-flow-logging-portal:https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-logging-threat-detection#lt-4-enable-network-logging-for-security-investigation"
+        }
+      ]
+    },
+    {
+      "Id": "5.1.7",
+      "Description": "Ensure that logging for Azure AppService 'HTTP logs' is enabled",
+      "Checks": [
+        "app_http_logs_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "5.1 Configuring Diagnostic Settings",
+          "Profile": "Level 2",
+          "AssessmentStatus": "Manual",
+          "Description": "Enable AppServiceHTTPLogs diagnostic log category for Azure App Service instances to ensure all http requests are captured and centrally logged.",
+          "RationaleStatement": "Capturing web requests can be important supporting information for security analysts performing monitoring and incident response activities. Once logging, these logs can be ingested into SIEM or other central aggregation point for the organization.",
+          "ImpactStatement": "Log consumption and processing will incur additional cost.",
+          "RemediationProcedure": "From Azure Portal 1. Go to App Services For each App Service: 2. Go to Diagnostic Settings 3. Click Add Diagnostic Setting 4. Check the checkbox next to 'HTTP logs' 5. Configure a destination based on your specific logging consumption capability (for example Stream to an event hub and then consuming with SIEM integration for Event Hub logging).",
+          "AuditProcedure": "From Azure Portal 1. Go to App Services For each App Service: 2. Go to Diagnostic Settings 3. Ensure that 'HTTP logs' is configured to log to a destination aligned to your environments approach to log consumption (event hub, storage account, etc. dependent on what is consuming the logs such as SIEM or other log aggregation utility).",
+          "AdditionalInformation": "",
+          "DefaultValue": "Not configured.",
+          "References": "https://docs.microsoft.com/en-us/azure/app-service/troubleshoot-diagnostic-logs:https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-logging-threat-detection#lt-3-enable-logging-for-security-investigation"
         }
       ]
     },
@@ -1857,6 +2441,46 @@
       ]
     },
     {
+      "Id": "5.4",
+      "Description": "Ensure that Azure Monitor Resource Logging is Enabled for All Services that Support it",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "5.3 Configuring Application Insights",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Resource Logs capture activity to the data access plane while the Activity log is a subscription-level log for the control plane. Resource-level diagnostic logs provide insight into operations that were performed within that resource itself; for example, reading or updating a secret from a Key Vault. Currently, 95 Azure resources support Azure Monitoring (See the more information section for a complete list), including Network Security Groups, Load Balancers, Key Vault, AD, Logic Apps, and CosmosDB. The content of these logs varies by resource type. A number of back-end services were not configured to log and store Resource Logs for certain activities or for a sufficient length. It is crucial that monitoring is correctly configured to log all relevant activities and retain those logs for a sufficient length of time. Given that the mean time to detection in an enterprise is 240 days, a minimum retention period of two years is recommended.",
+          "RationaleStatement": "A lack of monitoring reduces the visibility into the data plane, and therefore an organization's ability to detect reconnaissance, authorization attempts or other malicious activity. Unlike Activity Logs, Resource Logs are not enabled by default. Specifically, without monitoring it would be impossible to tell which entities had accessed a data store that was breached. In addition, alerts for failed attempts to access APIs for Web Services or Databases are only possible when logging is enabled.",
+          "ImpactStatement": "Costs for monitoring varies with Log Volume. Not every resource needs to have logging enabled. It is important to determine the security classification of the data being processed by the given resource and adjust the logging based on which events need to be tracked. This is typically determined by governance and compliance requirements.",
+          "RemediationProcedure": "Azure Subscriptions should log every access and operation for all resources. Logs should be sent to Storage and a Log Analytics Workspace or equivalent third-party system. Logs should be kept in readily-accessible storage for a minimum of one year, and then moved to inexpensive cold storage for a duration of time as necessary. If retention policies are set but storing logs in a Storage Account is disabled (for example, if only Event Hubs or Log Analytics options are selected), the retention policies have no effect. Enable all monitoring at first, and then be more aggressive moving data to cold storage if the volume of data becomes a cost concern. From Azure Portal The specific steps for configuring resources within the Azure console vary depending on resource, but typically the steps are: 1. Go to the resource 2. Click on Diagnostic settings 3. In the blade that appears, click 'Add diagnostic setting' 4. Configure the diagnostic settings 5. Click on Save From Azure CLI For each resource, run the following making sure to use a resource appropriate JSON encoded category for the --logs option. az monitor diagnostic-settings create --name <diagnostic settings name> -- resource <resource ID> --logs '[{category:<resource specific category>,enabled:true,rentention-policy:{enabled:true,days:180}}]' --metrics '[{category:AllMetrics,enabled:true,retention- policy:{enabled:true,days:180}}]' <[--event-hub <event hub ID> --event-hub- rule <event hub auth rule ID> | --storage-account <storage account ID> |-- workspace <log analytics workspace ID> | --marketplace-partner-id <full resource ID of third-party solution>]> From PowerShell Create the log settings object $logSettings = @() $logSettings += New-AzDiagnosticSettingLogSettingsObject -Enabled $true - RetentionPolicyDay 180 -RetentionPolicyEnabled $true -Category <resource specific category> $logSettings += New-AzDiagnosticSettingLogSettingsObject -Enabled $true - RetentionPolicyDay 180 -RetentionPolicyEnabled $true -Category <resource specific category number 2> Create the metric settings object $metricSettings = @() $metricSettings += New-AzDiagnosticSettingMetricSettingsObject -Enabled $true -RetentionPolicyDay 180 -RetentionPolicyEnabled $true -Category AllMetrics Create the diagnostic setting for a specific resource New-AzDiagnosticSetting -Name '<diagnostic settings name>' -ResourceId <resource ID> -Log $logSettings -Metric $metricSettings",
+          "AuditProcedure": "From Azure Portal The specific steps for configuring resources within the Azure console vary depending on resource, but typically the steps are: 1. Go to the resource 2. Click on Diagnostic settings 3. In the blade that appears, click 'Add diagnostic setting' 4. Configure the diagnostic settings 5. Click on Save From Azure CLI List all resources for a subscription az resource list --subscription <subscription id> For each resource run the following az monitor diagnostic-settings list --resource <resource ID> An empty result means a diagnostic settings is not configured for that resource. An error message means a diagnostic settings is not supported for that resource. From PowerShell Get a list of resources in a subscription context and store in a variable $resources = Get-AzResource Loop through each resource to determine if a diagnostic setting is configured or not. foreach ($resource in $resources) {$diagnosticSetting = Get- AzDiagnosticSetting -ResourceId $resource.id -ErrorAction 'SilentlyContinue'; if ([string]::IsNullOrEmpty($diagnosticSetting)) {$message = 'Diagnostic Settings not configured for resource: ' + $resource.Name;Write-Output $message}else{$diagnosticSetting}} A result of Diagnostic Settings not configured for resource: <resource name> means a diagnostic settings is not configured for that resource. Otherwise, the output of the above command will show configured Diagnostic Settings for a resource.",
+          "AdditionalInformation": "Note: The CIS Benchmark covers some specific Diagnostic Logs separately. Section 3 - Storage Accounts: Ensure Storage Logging is Enabled for Queue Service for 'Read', 'Write', and 'Delete' requests Section 6 - Network: Ensure that Network Security Group Flow Log retention period is 'greater than 90 days' For an up-to-date list of Azure resources which support Azure Monitor, refer to the 'Supported Log Categories' reference.",
+          "DefaultValue": "By default, Azure Monitor Resource Logs are 'Disabled' for all resources",
+          "References": "https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-logging-threat-detection#lt-3-enable-logging-for-security-investigation:https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-logging-threat-detection#lt-5-centralize-security-log-management-and-analysis:https://docs.microsoft.com/en-us/azure/azure-monitor/essentials/monitor-azure-resource:Supported Log Categories: https://docs.microsoft.com/en-us/azure/azure-monitor/essentials/resource-logs-categories:Logs and Audit - Fundamentals: https://docs.microsoft.com/en-us/azure/security/fundamentals/log-audit:Collecting Logs: https://docs.microsoft.com/en-us/azure/azure-monitor/platform/collect-activity-logs:Key Vault Logging: https://docs.microsoft.com/en-us/azure/key-vault/key-vault-logging:Monitor Diagnostic Settings: https://docs.microsoft.com/en-us/cli/azure/monitor/diagnostic-settings?view=azure-cli-latest:Overview of Diagnostic Logs: https://docs.microsoft.com/en-us/azure/azure-monitor/platform/diagnostic-logs-overview:Supported Services for Diagnostic Logs: https://docs.microsoft.com/en-us/azure/azure-monitor/platform/diagnostic-logs-schema:Diagnostic Logs for CDNs: https://docs.microsoft.com/en-us/azure/cdn/cdn-azure-diagnostic-logs"
+        }
+      ]
+    },
+    {
+      "Id": "5.5",
+      "Description": "Ensure that SKU Basic/Consumption is not used on artifacts that need to be monitored (Particularly for Production Workloads)",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "5.3 Configuring Application Insights",
+          "Profile": "Level 2",
+          "AssessmentStatus": "Automated",
+          "Description": "The use of Basic or Free SKUs in Azure whilst cost effective have significant limitations in terms of what can be monitored and what support can be realized from Microsoft. Typically, these SKU’s do not have a service SLA and Microsoft will usually refuse to provide support for them. Consequently Basic/Free SKUs should never be used for production workloads.",
+          "RationaleStatement": "Typically, production workloads need to be monitored and should have an SLA with Microsoft, using Basic SKUs for any deployed product will mean that that these capabilities do not exist. The following resource types should use standard SKUs as a minimum. • Public IP Addresses • Network Load Balancers • REDIS Cache • SQL PaaS Databases • VPN Gateways",
+          "ImpactStatement": "The impact of enforcing Standard SKU's is twofold 1. There will be a cost increase 2. The monitoring and service level agreements will be available and will support the production service. All resources should be either tagged or in separate Management Groups/Subscriptions",
+          "RemediationProcedure": "Each artifact has its own process for upgrading from basic to standard SKU's and this should be followed if required.",
+          "AuditProcedure": "This needs to be audited by Azure Policy (one for each resource type) and denied for each artifact that is production. From Azure Portal 1. Open Azure Resource Graph Explorer 2. Click New query 3. Paste the following into the query window: Resources | where sku contains 'Basic' or sku contains 'consumption' | order by type 4. Click Run query then evaluate the results in the results window. From Azure CLI az graph query -q 'Resources | sku contains 'Basic' or sku contains 'consumption' | order by type' From PowerShell Get-AzResource | ?{ $_.Sku -EQ 'Basic'}",
+          "AdditionalInformation": "",
+          "DefaultValue": "Policy should enforce standard SKUs for the following artifacts:• Public IP Addresses• Network Load Balancers• REDIS Cache• SQL PaaS Databases• VPN Gateways",
+          "References": ""
+        }
+      ]
+    },
+    {
       "Id": "5.3.1",
       "Description": "Ensure Application Insights are Configured",
       "Checks": [
@@ -1992,7 +2616,7 @@
       "Id": "6.6",
       "Description": "Ensure that Network Watcher is 'Enabled'",
       "Checks": [
-        "network_network_watcher_enabled"
+        "network_watcher_enabled"
       ],
       "Attributes": [
         {
@@ -2007,6 +2631,26 @@
           "AdditionalInformation": "",
           "DefaultValue": "Network Watcher is automatically enabled. When you create or update a virtual network in your subscription, Network Watcher will be enabled automatically in your Virtual Network's region. There is no impact to your resources or associated charge for automatically enabling Network Watcher.",
           "References": "https://docs.microsoft.com/en-us/azure/network-watcher/network-watcher-monitoring-overview:https://docs.azure.cn/zh-cn/cli/network/watcher?view=azure-cli-latest#az_network_watcher_list:https://docs.azure.cn/zh-cn/cli/network/watcher?view=azure-cli-latest#az_network_watcher_configure:https://docs.microsoft.com/en-us/azure/network-watcher/network-watcher-create:https://docs.microsoft.com/en-us/azure/security/benchmarks/security-controls-v2-logging-threat-detection#lt-3-enable-logging-for-azure-network-activities:https://azure.microsoft.com/en-ca/pricing/details/network-watcher/"
+        }
+      ]
+    },
+    {
+      "Id": "6.7",
+      "Description": "Ensure that Public IP addresses are Evaluated on a Periodic Basis",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "6 Networking",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Public IP Addresses provide tenant accounts with Internet connectivity for resources contained within the tenant. During the creation of certain resources in Azure, a Public IP Address may be created. All Public IP Addresses within the tenant should be periodically reviewed for accuracy and necessity.",
+          "RationaleStatement": "Public IP Addresses allocated to the tenant should be periodically reviewed for necessity. Public IP Addresses that are not intentionally assigned and controlled present a publicly facing vector for threat actors and significant risk to the tenant.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "Remediation will vary significantly depending on your organization's security requirements for the resources attached to each individual Public IP address",
+          "AuditProcedure": "From Azure Portal 1. Open the All Resources blade 2. Click on Add Filter 3. In the Add Filter window, select the following: Filter: Type Operator: Equals Value: Public IP address 4. Click the Apply button 5. For each Public IP address in the list, use Overview (or Properties) to review the 'Associated to:' field and determine if the associated resource is still relevant to your tenant environment. If the associated resource is relevant, ensure that additional controls exist to mitigate risk (e.g. Firewalls, VPNs, Traffic Filtering, Virtual Gateway Appliances, Web Application Firewalls, etc.) on all subsequently attached resources. From Azure CLI List all Public IP addresses: az network public-ip list For each Public IP address in the output, review the 'name' property and determine if the associated resource is still relevant to your tenant environment. If the associated resource is relevant, ensure that additional controls exist to mitigate risk (e.g. Firewalls, VPNs, Traffic Filtering, Virtual Gateway Appliances, Web Application Firewalls, etc.) on all subsequently attached resources",
+          "AdditionalInformation": "",
+          "DefaultValue": "During Virtual Machine and Application creation, a setting may create and attach a public IP.",
+          "References": "https://docs.microsoft.com/en-us/cli/azure/network/public-ip?view=azure-cli-latest:https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-network-security"
         }
       ]
     },
@@ -2058,7 +2702,7 @@
       "Id": "7.3",
       "Description": "Ensure that 'OS and Data' disks are encrypted with Customer Managed Key (CMK)",
       "Checks": [
-        "vm_ensure_disks_encrypted_with_cmk"
+        "vm_ensure_attached_disks_encrypted_with_cmk"
       ],
       "Attributes": [
         {
@@ -2099,6 +2743,26 @@
       ]
     },
     {
+      "Id": "7.5",
+      "Description": "Ensure that Only Approved Extensions Are Installed",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "7 Virtual Machines",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "For added security, only install organization-approved extensions on VMs.",
+          "RationaleStatement": "Azure virtual machine extensions are small applications that provide post-deployment configuration and automation tasks on Azure virtual machines. These extensions run with administrative privileges and could potentially access anything on a virtual machine. The Azure Portal and community provide several such extensions. Each organization should carefully evaluate these extensions and ensure that only those that are approved for use are actually implemented.",
+          "ImpactStatement": "Functionality by unsupported extensions will be disabled.",
+          "RemediationProcedure": "From Azure Portal 1. Go to Virtual machines 2. For each virtual machine, go to Settings 3. Click on Extensions + applications 4. If there are unapproved extensions, uninstall them. From Azure CLI From the audit command identify the unapproved extensions, and use the below CLI command to remove an unapproved extension attached to VM. az vm extension delete --resource-group <resourceGroupName> --vm-name <vmName> --name <extensionName> From PowerShell For each VM and each insecure extension from the Audit Procedure run the following command. Remove-AzVMExtension -ResourceGroupName <ResourceGroupName> -Name <ExtensionName> -VMName <VirtualMachineName>",
+          "AuditProcedure": "From Azure Portal 1. Go to Virtual machines. 2. For each virtual machine, click on the server name to select it go to 3. In the new column menu, under Settings Click on Extensions + applications. 4. Ensure that all the listed extensions are approved by your organization for use. From Azure CLI Use the below command to list the extensions attached to a VM, and ensure the listed extensions are approved for use. az vm extension list --vm-name <vmName> --resource-group <sourceGroupName> -- query [*].name From PowerShell Get a list of VMs. Get-AzVM For each VM run the following command. Get-AzVMExtension -ResourceGroupName <VM Resource Group> -VMName <VM Name> Review each Name, ExtensionType, and ProvisioningState to make sure no unauthorized extensions are installed on any virtual machines.",
+          "AdditionalInformation": "",
+          "DefaultValue": "By default, no extensions are added to the virtual machines.",
+          "References": "https://docs.microsoft.com/en-us/azure/virtual-machines/windows/extensions-features:https://docs.microsoft.com/en-us/powershell/module/az.compute/?view=azps-7.5.0#vm-extensions:https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-asset-management#am-2-use-only-approved-services:https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-asset-management#am-5-use-only-approved-applications-in-virtual-machine"
+        }
+      ]
+    },
+    {
       "Id": "7.6",
       "Description": "Ensure that Endpoint Protection for all Virtual Machines is installed",
       "Checks": [
@@ -2117,6 +2781,26 @@
           "AdditionalInformation": "",
           "DefaultValue": "By default Endpoint Protection is disabled.",
           "References": "https://docs.microsoft.com/en-us/azure/security-center/security-center-install-endpoint-protection:https://docs.microsoft.com/en-us/azure/security/azure-security-antimalware:https://docs.microsoft.com/en-us/cli/azure/vm/extension?view=azure-cli-latest#az_vm_extension_list:https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-endpoint-security#es-1-use-endpoint-detection-and-response-edr"
+        }
+      ]
+    },
+    {
+      "Id": "7.7",
+      "Description": "[Legacy] Ensure that VHDs are Encrypted",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "7 Virtual Machines",
+          "Profile": "Level 2",
+          "AssessmentStatus": "Manual",
+          "Description": "NOTE: This is a legacy recommendation. Managed Disks are encrypted by default and recommended for all new VM implementations. VHD (Virtual Hard Disks) are stored in blob storage and are the old-style disks that were attached to Virtual Machines. The blob VHD was then leased to the VM. By default, storage accounts are not encrypted, and Microsoft Defender will then recommend that the OS disks should be encrypted. Storage accounts can be encrypted as a whole using PMK or CMK. This should be turned on for storage accounts containing VHDs",
+          "RationaleStatement": "While it is recommended to use Managed Disks which are encrypted by default, 'legacy' VHDs may exist for a variety of reasons and may need to remain in VHD format. VHDs are not encrypted by default, so this recommendation intends to address the security of these disks. In these niche cases, VHDs should be encrypted using the procedures in this recommendation to encrypt and protect the data content. If a virtual machine is using a VHD and can be converted to a managed disk, instructions for this procedure can be found in the resources section of this recommendation under the title 'Convert VHD to Managed Disk.'",
+          "ImpactStatement": "Depending on how the encryption is implemented will change the size of the impact. If provider-managed keys(PMK) are utilized, the impact is relatively low, but processes need to be put in place to regularly rotate the keys. If Customer-managed keys(CMK) are utilized, a key management process needs to be implemented to store and manage key rotation, thus the impact is medium to high depending on user maturity with key management.",
+          "RemediationProcedure": "From Azure Portal 1. Navigate to the storage account that you wish to encrypt 2. Select encryption 3. Select the encryption type that you wish to use If you wish to use a Microsoft-managed key (the default), you can save at this point and encryption will be applied to the account. If you select Customer-managed keys, it will ask for the location of the key (The default is an Azure Key Vault) and the key name. Once these are captured, save the configuration and the account will be encrypted using the provided key. From Azure CLI: Create the Key Vault az keyvault create --name <name> --resource-group <resourceGroup> --location <location> --enabled-for-disk-encryption Encrypt the disk and store the key in Key Vault az vm encryption enable -g <resourceGroup> --name <name> --disk-encryption- keyvault myKV From PowerShell This process uses a Key Vault to store the keys Create the Key Vault New-AzKeyvault -name <name> -ResourceGroupName <resourceGroup> -Location <location> -EnabledForDiskEncryption Encrypt the disk and store the key in Key Vault $KeyVault = Get-AzKeyVault -VaultName <name> -ResourceGroupName <resourceGroup> Set-AzVMDiskEncryptionExtension -ResourceGroupName <resourceGroup> -VMName <name> -DiskEncryptionKeyVaultUrl $KeyVault.VaultUri - DiskEncryptionKeyVaultId $KeyVault.ResourceId",
+          "AuditProcedure": "From Azure CLI For each virtual machine identify if the VM is using a legacy VHD by reviewing the VHD parameter in the output of the following command. The VHD parameter will contain the Storage Account name used for the VHD. az vm show --name <MyVM> --resource-group <MyResourceGroup> Next, identify if the storage account from the VHD parameter is encrypted by reviewing the encryption --> services --> blob --> enabled within the output of the following command and make sure its value is True. az storage account show --name <storage account name> --resource-group <resource group> From PowerShell: Determine whether the VM is using a VHD for the OS Disk and any Data disks. $virtualMachine = Get-AzVM --Name <vm name> --ResourceGroup <resource group name> |Select-Object -ExpandProperty StorageProfile $virtualMachine.OsDisk $virtualMachine.DataDisks Next, use the value from VHD to see if the storage blob holding the VHD is encrypted. $storageAccount = Get-AzStorageAccount -Name <storage account name from VHD setting> -ResourceGroupName <resource group name> $storageAccount.Encryption.Services.Blob",
+          "AdditionalInformation": "",
+          "DefaultValue": "The default value for encryption is 'NO Encryption'",
+          "References": "CLI: https://docs.microsoft.com/en-us/azure/virtual-machines/windows/disk-encryption-cli-quickstart:Powershell: https://docs.microsoft.com/en-us/azure/virtual-machines/windows/disk-encryption-powershell-quickstart:https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-data-protection#dp-5-encrypt-sensitive-data-at-rest:Convert VHD to Managed Disk: https://docs.microsoft.com/en-us/previous-versions/azure/virtual-machines/scripts/virtual-machines-powershell-sample-create-managed-disk-from-vhd"
         }
       ]
     },
@@ -2388,7 +3072,7 @@
       "Id": "9.5",
       "Description": "Ensure that Register with Azure Active Directory is enabled on App Service",
       "Checks": [
-        "app_register_with_entra_is_enabled"
+        "app_register_with_identity"
       ],
       "Attributes": [
         {
@@ -2498,7 +3182,7 @@
       "Id": "9.10",
       "Description": "Ensure FTP deployments are Disabled",
       "Checks": [
-        "app_ftp_deploy_disabled"
+        "app_ftp_deployment_disabled"
       ],
       "Attributes": [
         {
@@ -2513,6 +3197,46 @@
           "AdditionalInformation": "",
           "DefaultValue": "By default, FTP based deployment is All allowed",
           "References": "[Azure Web Service Deploy via FTP](https://docs.microsoft.com/en-us/azure/app-service/deploy-ftp):[Azure Web Service Deployment](https://docs.microsoft.com/en-us/azure/app-service/overview-security):https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-data-protection#dp-4-encrypt-sensitive-information-in-transit:https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-posture-vulnerability-management#pv-7-rapidly-and-automatically-remediate-software-vulnerabilities"
+        }
+      ]
+    },
+    {
+      "Id": "9.11",
+      "Description": "Ensure Azure Key Vaults are Used to Store Secrets",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "9 AppService",
+          "Profile": "Level 2",
+          "AssessmentStatus": "Manual",
+          "Description": "Azure Key Vault will store multiple types of sensitive information such as encryption keys, certificate thumbprints, and Managed Identity Credentials. Access to these 'Secrets' can be controlled through granular permissions.",
+          "RationaleStatement": "The credentials given to an application have permissions to create, delete, or modify data stored within the systems they access. If these credentials are stored within the application itself, anyone with access to the application or a copy of the code has access to them. Storing within Azure Key Vault as secrets increases security by controlling access. This also allows for updates of the credentials without redeploying the entire application.",
+          "ImpactStatement": "Integrating references to secrets within the key vault are required to be specifically integrated within the application code. This will require additional configuration to be made during the writing of an application, or refactoring of an already written one. There are also additional costs that are charged per 10000 requests to the Key Vault.",
+          "RemediationProcedure": "Remediation has 2 steps 1. Setup the Key Vault 2. Setup the App Service to use the Key Vault Step 1: Set up the Key Vault From Azure CLI az keyvault create --name '<name>' --resource-group '<myResourceGroup>' -- location myLocation From Powershell New-AzKeyvault -name <name> -ResourceGroupName <myResourceGroup> -Location <myLocation> Step 2: Set up the App Service to use the Key Vault Sample JSON Template for App Service Configuration: Page 488 { //... 'resources': [ { 'type': 'Microsoft.Storage/storageAccounts', 'name': '[variables('storageAccountName')]', //... }, { 'type': 'Microsoft.Insights/components', 'name': '[variables('appInsightsName')]', //... }, { 'type': 'Microsoft.Web/sites', 'name': '[variables('functionAppName')]', 'identity': { 'type': 'SystemAssigned' }, //... 'resources': [ { 'type': 'config', 'name': 'appsettings', //... 'dependsOn': [ '[resourceId('Microsoft.Web/sites', variables('functionAppName'))]', '[resourceId('Microsoft.KeyVault/vaults/', variables('keyVaultName'))]', '[resourceId('Microsoft.KeyVault/vaults/secrets', variables('keyVaultName'), variables('storageConnectionStringName'))]', '[resourceId('Microsoft.KeyVault/vaults/secrets', variables('keyVaultName'), variables('appInsightsKeyName'))]' ], 'properties': { 'AzureWebJobsStorage': '[concat('@Microsoft.KeyVault(SecretUri=', reference(variables('storageConnectionStringResourceId')).secretUriWithVersio n, ')')]', 'WEBSITE_CONTENTAZUREFILECONNECTIONSTRING': '[concat('@Microsoft.KeyVault(SecretUri=', reference(variables('storageConnectionStringResourceId')).secretUriWithVersio n, ')')]', 'APPINSIGHTS_INSTRUMENTATIONKEY': '[concat('@Microsoft.KeyVault(SecretUri=', reference(variables('appInsightsKeyResourceId')).secretUriWithVersion, ')')]', 'WEBSITE_ENABLE_SYNC_UPDATE_SITE': 'true' //... } }, { 'type': 'sourcecontrols', 'name': 'web', //... 'dependsOn': [ '[resourceId('Microsoft.Web/sites', variables('functionAppName'))]', '[resourceId('Microsoft.Web/sites/config', variables('functionAppName'), 'appsettings')]' ], } ] }, { 'type': 'Microsoft.KeyVault/vaults', 'name': '[variables('keyVaultName')]', //... 'dependsOn': [ '[resourceId('Microsoft.Web/sites', variables('functionAppName'))]' ], 'properties': { //... 'accessPolicies': [ { 'tenantId': '[reference(concat('Microsoft.Web/sites/', variables('functionAppName'), '/providers/Microsoft.ManagedIdentity/Identities/default'), '2015-08-31- PREVIEW').tenantId]', 'objectId': '[reference(concat('Microsoft.Web/sites/', variables('functionAppName'), '/providers/Microsoft.ManagedIdentity/Identities/default'), '2015-08-31- PREVIEW').principalId]', 'permissions': { 'secrets': [ 'get' ] } } ] }, 'resources': [ { 'type': 'secrets', 'name': '[variables('storageConnectionStringName')]', //... 'dependsOn': [ '[resourceId('Microsoft.KeyVault/vaults/', variables('keyVaultName'))]', '[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]' ], 'properties': { 'value': '[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storageAccountName'), ';AccountKey=', listKeys(variables('storageAccountResourceId'),'2015-05-01-preview').key1)]' } }, { 'type': 'secrets', 'name': '[variables('appInsightsKeyName')]', //... 'dependsOn': [ '[resourceId('Microsoft.KeyVault/vaults/', variables('keyVaultName'))]', '[resourceId('Microsoft.Insights/components', variables('appInsightsName'))]' ], 'properties': { 'value': '[reference(resourceId('microsoft.insights/components/', variables('appInsightsName')), '2015-05-01').InstrumentationKey]' } } ] } ] }",
+          "AuditProcedure": "From Azure Portal 1. Login to Azure Portal 2. In the expandable menu on the left go to Key Vaults 3. View the Key Vaults listed. From Azure CLI To list key vaults within a subscription run the following command: Get-AzKeyVault To list the secrets within these key vaults run the following command: Get-AzKeyVaultSecret [-VaultName] <vault name> From Powershell To list key vaults within a subscription run the following command: Get-AzKeyVault To list all secrets in a key vault run the following command: Get-AzKeyVaultSecret -VaultName '<vaultName'",
+          "AdditionalInformation": "",
+          "DefaultValue": "By default, no Azure Key Vaults are created.",
+          "References": " https://docs.microsoft.com/en-us/azure/app-service/app-service-key-vault-references:https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-identity-management#im-2-manage-application-identities-securely-and-automatically:https://docs.microsoft.com/en-us/cli/azure/keyvault?view=azure-cli-latest:https://docs.microsoft.com/en-us/cli/azure/keyvault?view=azure-cli-latest"
+        }
+      ]
+    },
+    {
+      "Id": "10.1",
+      "Description": "Ensure that Resource Locks are set for Mission-Critical Azure Resources",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "10 Miscellaneous",
+          "Profile": "Level 2",
+          "AssessmentStatus": "Manual",
+          "Description": "Resource Manager Locks provide a way for administrators to lock down Azure resources to prevent deletion of, or modifications to, a resource. These locks sit outside of the Role Based Access Controls (RBAC) hierarchy and, when applied, will place restrictions on the resource for all users. These locks are very useful when there is an important resource in a subscription that users should not be able to delete or change. Locks can help prevent accidental and malicious changes or deletion.",
+          "RationaleStatement": "As an administrator, it may be necessary to lock a subscription, resource group, or resource to prevent other users in the organization from accidentally deleting or modifying critical resources. The lock level can be set to to CanNotDelete or ReadOnly to achieve this purpose. • CanNotDelete means authorized users can still read and modify a resource, but they cannot delete the resource. • ReadOnly means authorized users can read a resource, but they cannot delete or update the resource. Applying this lock is similar to restricting all authorized users to the permissions granted by the Reader role.",
+          "ImpactStatement": "There can be unintended outcomes of locking a resource. Applying a lock to a parent service will cause it to be inherited by all resources within. Conversely, applying a lock to a resource may not apply to connected storage, leaving it unlocked. Please see the documentation for further information.",
+          "RemediationProcedure": "From Azure Portal 1. Navigate to the specific Azure Resource or Resource Group 2. For each mission critical resource, click on Locks 3. Click Add 4. Give the lock a name and a description, then select the type, Read-only or Delete as appropriate 5. Click OK From Azure CLI To lock a resource, provide the name of the resource, its resource type, and its resource group name. az lock create --name <LockName> --lock-type <CanNotDelete/Read-only> -- resource-group <resourceGroupName> --resource-name <resourceName> --resource- type <resourceType> From Powershell Get-AzResourceLock -ResourceName <Resource Name> -ResourceType <Resource Type> -ResourceGroupName <Resource Group Name> -Locktype <CanNotDelete/Read- only>",
+          "AuditProcedure": "From Azure Portal 1. Navigate to the specific Azure Resource or Resource Group 2. Click on Locks 3. Ensure the lock is defined with name and description, with type Read-only or Delete as appropriate. From Azure CLI Review the list of all locks set currently: az lock list --resource-group <resourcegroupname> --resource-name <resourcename> --namespace <Namespace> --resource-type <type> --parent '' From Powershell Run the following command to list all resources. Get-AzResource For each resource, run the following command to check for Resource Locks. Get-AzResourceLock -ResourceName <Resource Name> -ResourceType <Resource Type> -ResourceGroupName <Resource Group Name> Review the output of the Properties setting. Compliant settings will have the CanNotDelete or ReadOnly value.",
+          "AdditionalInformation": "",
+          "DefaultValue": "By default, no locks are set.",
+          "References": "https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-lock-resources:https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-manager-subscription-governance#azure-resource-locks:https://docs.microsoft.com/en-us/azure/governance/blueprints/concepts/resource-locking:https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-asset-management#am-4-limit-access-to-asset-management"
         }
       ]
     }

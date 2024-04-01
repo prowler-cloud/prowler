@@ -15,6 +15,7 @@ from prowler.lib.outputs.models import (
     Check_Output_CSV_AWS_CIS,
     Check_Output_CSV_AWS_ISO27001_2013,
     Check_Output_CSV_AWS_Well_Architected,
+    Check_Output_CSV_AZURE_CIS,
     Check_Output_CSV_ENS_RD2022,
     Check_Output_CSV_GCP_CIS,
     Check_Output_CSV_Generic_Compliance,
@@ -23,6 +24,7 @@ from prowler.lib.outputs.models import (
 )
 from prowler.lib.utils.utils import file_exists, open_file
 from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
+from prowler.providers.azure.lib.audit_info.models import Azure_Audit_Info
 from prowler.providers.common.outputs import get_provider_output_model
 from prowler.providers.gcp.lib.audit_info.models import GCP_Audit_Info
 
@@ -113,7 +115,16 @@ def fill_file_descriptors(output_modes, output_directory, output_filename, audit
                             filename, output_mode, audit_info, Check_Output_CSV_GCP_CIS
                         )
                         file_descriptors.update({output_mode: file_descriptor})
-
+                elif isinstance(audit_info, Azure_Audit_Info):
+                    filename = f"{output_directory}/{output_filename}_{output_mode}{csv_file_suffix}"
+                    if "cis_" in output_mode:
+                        file_descriptor = initialize_file_descriptor(
+                            filename,
+                            output_mode,
+                            audit_info,
+                            Check_Output_CSV_AZURE_CIS,
+                        )
+                        file_descriptors.update({output_mode: file_descriptor})
                 elif isinstance(audit_info, AWS_Audit_Info):
                     if output_mode == "json-asff":
                         filename = f"{output_directory}/{output_filename}{json_asff_file_suffix}"
