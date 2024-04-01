@@ -159,6 +159,14 @@ def init_parser(self):
         help="Scan unused services",
     )
 
+    # Prowler Fixer
+    prowler_fixer_subparser = aws_parser.add_argument_group("Prowler Fixer")
+    prowler_fixer_subparser.add_argument(
+        "--fix",
+        action="store_true",
+        help="Fix the failed findings that can be fixed by Prowler",
+    )
+
 
 def validate_session_duration(duration):
     """validate_session_duration validates that the AWS STS Assume Role Session Duration is between 900 and 43200 seconds."""

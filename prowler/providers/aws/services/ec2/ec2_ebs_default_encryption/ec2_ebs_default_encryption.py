@@ -22,3 +22,6 @@ class ec2_ebs_default_encryption(Check):
                 findings.append(report)
 
         return findings
+
+    def fixer(self, region):
+        return ec2_client.__enable_ebs_encryption_by_default__(region)
