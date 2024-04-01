@@ -4,7 +4,7 @@ on:
   push:
     branches:
       # TODO: update it for v3 and v4
-      # - "v3-dev"
+      # - "v3"
       - "master"
     paths-ignore:
       - ".github/**"
@@ -169,4 +169,4 @@ jobs:
             -H "Accept: application/vnd.github+json" \
             -H "Authorization: Bearer ${{ secrets.ACCESS_TOKEN }}" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
-            --data '{"event_type":"dispatch","client_payload":{"version":"release", "tag":"${{ github.event.release.tag_name }}"}}'
+            --data '{"event_type":"dispatch","client_payload":{"version":"release", "tag":"${{ env.PROWLER_VERSION }}"}}'
