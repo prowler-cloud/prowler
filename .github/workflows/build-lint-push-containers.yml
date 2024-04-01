@@ -81,7 +81,7 @@ jobs:
           #     echo "LATEST=v4-latest" >> "${GITHUB_ENV}"
           #     echo "STABLE_TAG=stable" >> "${GITHUB_ENV}"
           #     ;;
-          
+
           *)
               # Fallback if any other version is present
               echo "Releasing another Prowler major version, aborting..."
