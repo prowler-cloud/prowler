@@ -49,53 +49,39 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Python (release)
-        if: github.event_name == 'release'
+      - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
-      - name: Install dependencies (release)
-        if: github.event_name == 'release'
+      - name: Install Poetry
         run: |
           pipx install poetry
           pipx inject poetry poetry-bumpversion
 
-      - name: Get Prowler version (latest)
-        if: github.event_name == 'push'
+      - name: Get Prowler version
         run: |
           PROWLER_VERSION="$(poetry version -s 2>/dev/null)"
 
-          case ${PROWLER_VERSION%%.*} in
-          3)
-              echo "LATEST="v3-latest" >> "${GITHUB_ENV}"
-              ;;
-          4)
-              # Nothing to be done here, latest tag for v4 is "latest"
-              echo "LATEST="latest" >> "${GITHUB_ENV}"
-              ;;
-          *)
-              # Fallback if any other version is present
-              echo "Releasing another Prowler major version, aborting..."
-              exit 1
-              ;;
-          esac
-
-      - name: Get Prowler version (release)
-        if: github.event_name == 'release'
-        run: |
-          PROWLER_VERSION="${{ github.event.release.tag_name }}"
           # Store prowler version major just for the release
           PROWLER_VERSION_MAJOR="${PROWLER_VERSION%%.*}"
+          echo "PROWLER_VERSION_MAJOR=${PROWLER_VERSION_MAJOR}" >> "${GITHUB_ENV}"
 
           case ${PROWLER_VERSION_MAJOR} in
           3)
-              echo "STABLE_TAG="v3-stable" >> "${GITHUB_ENV}"
+              # TODO: update it for v3 and v4
+              # echo "LATEST=v3-latest" >> "${GITHUB_ENV}"
+              # echo "STABLE_TAG=v3-stable" >> "${GITHUB_ENV}"
+              echo "LATEST=latest" >> "${GITHUB_ENV}"
+              echo "STABLE_TAG=stable" >> "${GITHUB_ENV}"
               ;;
-          4)
-              # Nothing to be done here, latest tag for v4 is "latest"
-              echo "STABLE_TAG="stable" >> "${GITHUB_ENV}"
-              ;;
+
+          # TODO: uncomment for v3 and v4
+          # 4)
+          #     echo "LATEST=v4-latest" >> "${GITHUB_ENV}"
+          #     echo "STABLE_TAG=stable" >> "${GITHUB_ENV}"
+          #     ;;
+          
           *)
               # Fallback if any other version is present
               echo "Releasing another Prowler major version, aborting..."
@@ -106,7 +92,9 @@ jobs:
       - name: Update Prowler version (release)
         if: github.event_name == 'release'
         run: |
-          poetry version "${{ env.PROWLER_VERSION }}"
+          PROWLER_VERSION="${{ github.event.release.tag_name }}"
+          poetry version "${PROWLER_VERSION}"
+          echo "PROWLER_VERSION="${PROWLER_VERSION}" >> "${GITHUB_ENV}"
 
       - name: Login to DockerHub
         uses: docker/login-action@v3

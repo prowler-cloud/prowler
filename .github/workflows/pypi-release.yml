@@ -18,7 +18,7 @@ jobs:
       POETRY_VIRTUALENVS_CREATE: "false"
     name: Release Prowler to PyPI
     steps:
-      - name: Get base branch regarding Prowler version
+      - name: Get Prowler version
         run: |
           PROWLER_VERSION="${{ env.RELEASE_TAG }}"
 
@@ -75,11 +75,6 @@ jobs:
 
           # Push the tag
           git push -f origin ${{ env.RELEASE_TAG }}
-
-      - name: Create new branch for the version update
-        run: |
-          git switch -c release-${{ env.RELEASE_TAG }}
-          git push --set-upstream origin release-${{ env.RELEASE_TAG }}
 
       - name: Build Prowler package
         run: |
