@@ -39,6 +39,7 @@ class Entra(AzureService):
         )
 
     async def __get_users__(self):
+        logger.info("Entra - Getting users...")
         users = {}
         try:
             for tenant, client in self.clients.items():
@@ -59,13 +60,22 @@ class Entra(AzureService):
                         }
                     )
         except Exception as error:
-            logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
+            if (
+                error.__class__.__name__ == "ODataError"
+                and error.__dict__.get("response_status_code", None) == 403
+            ):
+                logger.error(
+                    "You need 'UserAuthenticationMethod.Read.All' permission to access this information. It only can be granted through Service Principal authentication."
+                )
+            else:
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
 
         return users
 
     async def __get_authorization_policy__(self):
+        logger.info("Entra - Getting authorization policy...")
         GUEST_USER_ACCESS_NO_RESTRICTICTED = UUID(
             "a0b1b346-4d3e-4e8b-98f8-753987be4970"
         )
@@ -103,6 +113,7 @@ class Entra(AzureService):
         return authorization_policy
 
     async def __get_group_settings__(self):
+        logger.info("Entra - Getting group settings...")
         group_settings = {}
         try:
             for tenant, client in self.clients.items():
@@ -126,6 +137,7 @@ class Entra(AzureService):
         return group_settings
 
     async def __get_security_default__(self):
+        logger.info("Entra - Getting security default...")
         try:
             security_defaults = {}
             for tenant, client in self.clients.items():
@@ -149,6 +161,7 @@ class Entra(AzureService):
         return security_defaults
 
     async def __get_named_locations__(self):
+        logger.info("Entra - Getting named locations...")
         named_locations = {}
         try:
             for tenant, client in self.clients.items():
@@ -179,6 +192,7 @@ class Entra(AzureService):
         return named_locations
 
     async def __get_directory_roles__(self):
+        logger.info("Entra - Getting directory roles...")
         directory_roles_with_members = {}
         try:
             for tenant, client in self.clients.items():
@@ -212,6 +226,7 @@ class Entra(AzureService):
         return directory_roles_with_members
 
     async def __get_conditional_access_policy__(self):
+        logger.info("Entra - Getting conditional access policy...")
         conditional_access_policy = {}
         try:
             for tenant, client in self.clients.items():
