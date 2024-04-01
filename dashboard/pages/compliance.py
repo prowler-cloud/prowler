@@ -9,10 +9,8 @@ import warnings
 
 # Third-party imports
 import dash
-import numpy as np
 import pandas as pd
 import plotly.express as px
-import plotly.graph_objs as go
 from dash import callback, dcc, html
 from dash.dependencies import Input, Output
 
@@ -390,28 +388,35 @@ def display_data(
         # Get the pie2 depending on the compliance
         df = data.copy()
 
+        current_filter = ""
+
         if "pci" in analytics_input:
-            pie_2 = get_polar_graph(df, "REQUIREMENTS_ID")
+            pie_2 = get_bar_graph(df, "REQUIREMENTS_ID")
+            current_filter = "req_id"
         elif (
             "REQUIREMENTS_ATTRIBUTES_SECTION" in df.columns
             and not df["REQUIREMENTS_ATTRIBUTES_SECTION"].isnull().values.any()
         ):
-            pie_2 = get_polar_graph(df, "REQUIREMENTS_ATTRIBUTES_SECTION")
+            pie_2 = get_bar_graph(df, "REQUIREMENTS_ATTRIBUTES_SECTION")
+            current_filter = "sections"
         elif (
             "REQUIREMENTS_ATTRIBUTES_CATEGORIA" in df.columns
             and not df["REQUIREMENTS_ATTRIBUTES_CATEGORIA"].isnull().values.any()
         ):
-            pie_2 = get_polar_graph(df, "REQUIREMENTS_ATTRIBUTES_CATEGORIA")
+            pie_2 = get_bar_graph(df, "REQUIREMENTS_ATTRIBUTES_CATEGORIA")
+            current_filter = "categorias"
         elif (
             "REQUIREMENTS_ATTRIBUTES_CATEGORY" in df.columns
             and not df["REQUIREMENTS_ATTRIBUTES_CATEGORY"].isnull().values.any()
         ):
-            pie_2 = get_polar_graph(df, "REQUIREMENTS_ATTRIBUTES_CATEGORY")
+            pie_2 = get_bar_graph(df, "REQUIREMENTS_ATTRIBUTES_CATEGORY")
+            current_filter = "categories"
         elif (
             "REQUIREMENTS_ATTRIBUTES_SERVICE" in df.columns
             and not df["REQUIREMENTS_ATTRIBUTES_SERVICE"].isnull().values.any()
         ):
-            pie_2 = get_polar_graph(df, "REQUIREMENTS_ATTRIBUTES_SERVICE")
+            pie_2 = get_bar_graph(df, "REQUIREMENTS_ATTRIBUTES_SERVICE")
+            current_filter = "services"
         else:
             fig = px.pie()
             fig.update_layout(
@@ -425,6 +430,7 @@ def display_data(
                 config={"displayModeBar": False},
                 style={"height": "250px", "width": "250px", "right": "0px"},
             )
+            current_filter = "none"
 
     # Analytics table
 
@@ -435,7 +441,9 @@ def display_data(
 
     overall_status_result_graph = get_graph(pie_1, "Overall Status Result")
 
-    security_level_graph = get_graph(pie_2, "Security Level")
+    security_level_graph = get_graph(
+        pie_2, f"Top 5 failed {current_filter} by findings"
+    )
 
     return (
         table_output,
@@ -469,68 +477,45 @@ def get_graph(pie, title):
     ]
 
 
-def get_polar_graph(df, column_name):
-    df = df[[column_name, "STATUS"]]
-    df_pass = df[df["STATUS"] == "PASS"]
-    df_pass = df_pass.groupby([column_name]).size().reset_index(name="counts")
-    categories_pass = df_pass[column_name]
-    # sort the categories
-    categories_pass = sorted(categories_pass, key=lambda x: (isinstance(x, str), x))
-    values_pass = df_pass.counts
-    trace_pass = go.Scatterpolar(
-        r=values_pass,
-        theta=categories_pass,
-        fill="toself",
-        fillcolor="lightgreen",
-        line=dict(color="green"),
-        hovertemplate="Passed Findings: %{r}<extra></extra>",
-        opacity=0.5,
-        name="Passed Findings",
+def get_bar_graph(df, column_name):
+    df = df[df["STATUS"] == "FAIL"]
+    df = df.groupby([column_name, "STATUS"]).size().reset_index(name="counts")
+    df = df.sort_values(by=["counts"], ascending=True)
+    # take the top 5
+    df = df.tail(5)
+
+    colums = df[column_name].unique()
+
+    # Cut the text if it is too long
+    for i in range(len(colums)):
+        if len(colums[i]) > 15:
+            colums[i] = colums[i][:15] + "..."
+
+    fig = px.bar(
+        df,
+        x="counts",
+        y=colums,
+        color="STATUS",
+        color_discrete_map={"FAIL": "#FF7452"},
+        orientation="h",
     )
 
-    df_fail = df[df["STATUS"] == "FAIL"]
-    df_fail = df_fail.groupby([column_name]).size().reset_index(name="counts")
-    categories_fail = df_fail[column_name]
-    # sort the categories
-    categories_fail = sorted(categories_fail, key=lambda x: (isinstance(x, str), x))
-    values_fail = df_fail.counts
-    trace_fail = go.Scatterpolar(
-        r=values_fail,
-        theta=categories_fail,
-        fill="toself",
-        fillcolor="lightcoral",
-        line=dict(color="red"),
-        hovertemplate="Failed Findings: %{r}<extra></extra>",
-        opacity=0.5,
-        name="Failed Findings",
-    )
-
-    values = max(max(values_pass), max(values_fail))
-
-    layout = go.Layout(
-        polar=dict(
-            radialaxis=dict(
-                visible=False,
-                range=[0, np.max(values)],
-            ),
-            bgcolor="#5d5e5e",
-        ),
-        showlegend=True,
-        paper_bgcolor="#FFF",
-        plot_bgcolor="black",
-        font=dict(color="#292524"),
+    fig.update_layout(
         margin=dict(l=0, r=0, t=0, b=0),
+        autosize=True,
+        showlegend=False,
+        xaxis_title=None,
+        yaxis_title=None,
+        font=dict(size=14, color="#292524"),
+        hoverlabel=dict(font_size=12),
+        paper_bgcolor="#FFF",
     )
 
-    fig = {"data": [trace_pass, trace_fail], "layout": layout}
-
-    pie = dcc.Graph(
+    return dcc.Graph(
         figure=fig,
         config={"displayModeBar": False},
-        style={"height": "14.5rem", "width": "100%"},
+        style={"height": "20rem", "width": "40rem"},
     )
-
-    return pie
 
 
 def get_pie(df):
