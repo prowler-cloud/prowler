@@ -1681,15 +1681,6 @@ def get_section_containers_ens(data, section_1, section_2, section_3, section_4)
     findings_counts_marco = (
         data.groupby([section_1, "STATUS"]).size().unstack(fill_value=0)
     )
-    findings_counts_categoria = (
-        data.groupby([section_2, "STATUS"]).size().unstack(fill_value=0)
-    )
-    findings_counts_idgrupocontrol = (
-        data.groupby([section_3, "STATUS"]).size().unstack(fill_value=0)
-    )
-    findings_counts_tipo = (
-        data.groupby([section_4, "STATUS"]).size().unstack(fill_value=0)
-    )
 
     section_containers = []
 
@@ -1797,6 +1788,13 @@ def get_section_containers_ens(data, section_1, section_2, section_3, section_4)
             specific_data = data[
                 (data[section_1] == marco) & (data[section_2] == categoria)
             ]
+
+            findings_counts_categoria = (
+                specific_data.groupby([section_2, "STATUS"])
+                .size()
+                .unstack(fill_value=0)
+            )
+
             success_categoria = (
                 findings_counts_categoria.loc[categoria, pass_emoji]
                 if pass_emoji in findings_counts_categoria.columns
@@ -1906,6 +1904,13 @@ def get_section_containers_ens(data, section_1, section_2, section_3, section_4)
                     & (specific_data[section_2] == categoria)
                     & (specific_data[section_3] == idgrupocontrol)
                 ]
+
+                findings_counts_idgrupocontrol = (
+                    specific_data2.groupby([section_3, "STATUS"])
+                    .size()
+                    .unstack(fill_value=0)
+                )
+
                 success_idgrupocontrol = (
                     findings_counts_idgrupocontrol.loc[idgrupocontrol, pass_emoji]
                     if pass_emoji in findings_counts_idgrupocontrol.columns
@@ -2019,6 +2024,13 @@ def get_section_containers_ens(data, section_1, section_2, section_3, section_4)
                         & (specific_data2[section_3] == idgrupocontrol)
                         & (specific_data2[section_4] == tipo)
                     ]
+
+                    findings_counts_tipo = (
+                        specific_data3.groupby([section_4, "STATUS"])
+                        .size()
+                        .unstack(fill_value=0)
+                    )
+
                     success_tipo = (
                         findings_counts_tipo.loc[tipo, pass_emoji]
                         if pass_emoji in findings_counts_tipo.columns
@@ -2029,7 +2041,8 @@ def get_section_containers_ens(data, section_1, section_2, section_3, section_4)
                         if fail_emoji in findings_counts_tipo.columns
                         else 0
                     )
-                    # Create the DataTable for req_id
+
+                    # Create the DataTable for each tipo
                     data_table = dash_table.DataTable(
                         data=specific_data3.to_dict("records"),
                         columns=[
