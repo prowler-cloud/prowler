@@ -1,6 +1,6 @@
 from unittest import mock
 
-from tests.providers.azure.azure_fixtures import DOMAIN
+from tests.providers.azure.azure_fixtures import DOMAIN, set_mocked_azure_provider
 
 
 class Test_entra_trusted_named_locations_exists:
@@ -8,6 +8,9 @@ class Test_entra_trusted_named_locations_exists:
         entra_client = mock.MagicMock
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.entra.entra_trusted_named_locations_exists.entra_trusted_named_locations_exists.entra_client",
             new=entra_client,
         ):
@@ -25,6 +28,9 @@ class Test_entra_trusted_named_locations_exists:
         entra_client = mock.MagicMock
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.entra.entra_trusted_named_locations_exists.entra_trusted_named_locations_exists.entra_client",
             new=entra_client,
         ):
@@ -50,6 +56,9 @@ class Test_entra_trusted_named_locations_exists:
         entra_client = mock.MagicMock
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.entra.entra_trusted_named_locations_exists.entra_trusted_named_locations_exists.entra_client",
             new=entra_client,
         ):
@@ -86,6 +95,9 @@ class Test_entra_trusted_named_locations_exists:
         entra_client = mock.MagicMock
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.entra.entra_trusted_named_locations_exists.entra_trusted_named_locations_exists.entra_client",
             new=entra_client,
         ):
@@ -120,6 +132,9 @@ class Test_entra_trusted_named_locations_exists:
         entra_client = mock.MagicMock
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.entra.entra_trusted_named_locations_exists.entra_trusted_named_locations_exists.entra_client",
             new=entra_client,
         ):

@@ -1,7 +1,7 @@
 from unittest import mock
 from uuid import uuid4
 
-from tests.providers.azure.azure_fixtures import DOMAIN
+from tests.providers.azure.azure_fixtures import DOMAIN, set_mocked_azure_provider
 
 
 class Test_entra_conditional_access_policy_require_mfa_for_management_api:
@@ -9,6 +9,9 @@ class Test_entra_conditional_access_policy_require_mfa_for_management_api:
         entra_client = mock.MagicMock
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.entra.entra_conditional_access_policy_require_mfa_for_management_api.entra_conditional_access_policy_require_mfa_for_management_api.entra_client",
             new=entra_client,
         ):
@@ -26,6 +29,9 @@ class Test_entra_conditional_access_policy_require_mfa_for_management_api:
         entra_client = mock.MagicMock
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.entra.entra_conditional_access_policy_require_mfa_for_management_api.entra_conditional_access_policy_require_mfa_for_management_api.entra_client",
             new=entra_client,
         ):
@@ -52,6 +58,9 @@ class Test_entra_conditional_access_policy_require_mfa_for_management_api:
         policy_id = str(uuid4())
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.entra.entra_conditional_access_policy_require_mfa_for_management_api.entra_conditional_access_policy_require_mfa_for_management_api.entra_client",
             new=entra_client,
         ):
@@ -89,6 +98,9 @@ class Test_entra_conditional_access_policy_require_mfa_for_management_api:
         policy_id = str(uuid4())
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.entra.entra_conditional_access_policy_require_mfa_for_management_api.entra_conditional_access_policy_require_mfa_for_management_api.entra_client",
             new=entra_client,
         ):
@@ -126,6 +138,9 @@ class Test_entra_conditional_access_policy_require_mfa_for_management_api:
         policy_id = str(uuid4())
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.entra.entra_conditional_access_policy_require_mfa_for_management_api.entra_conditional_access_policy_require_mfa_for_management_api.entra_client",
             new=entra_client,
         ):
@@ -163,6 +178,9 @@ class Test_entra_conditional_access_policy_require_mfa_for_management_api:
         policy_id = str(uuid4())
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.entra.entra_conditional_access_policy_require_mfa_for_management_api.entra_conditional_access_policy_require_mfa_for_management_api.entra_client",
             new=entra_client,
         ):
@@ -200,6 +218,9 @@ class Test_entra_conditional_access_policy_require_mfa_for_management_api:
         policy_id = str(uuid4())
 
         with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
             "prowler.providers.azure.services.entra.entra_conditional_access_policy_require_mfa_for_management_api.entra_conditional_access_policy_require_mfa_for_management_api.entra_client",
             new=entra_client,
         ):
