@@ -78,7 +78,7 @@ jobs:
 
           # TODO: uncomment for v3 and v4
           # 4)
-          #     echo "LATEST=v4-latest" >> "${GITHUB_ENV}"
+          #     echo "LATEST=latest" >> "${GITHUB_ENV}"
           #     echo "STABLE_TAG=stable" >> "${GITHUB_ENV}"
           #     ;;
 
@@ -147,7 +147,7 @@ jobs:
     needs: container-build-push
     runs-on: ubuntu-latest
     steps:
-      - name: Get latest commit info
+      - name: Get latest commit info (latest)
         if: github.event_name == 'push'
         run: |
           LATEST_COMMIT_HASH=$(echo ${{ github.event.after }} | cut -b -7)
@@ -163,7 +163,7 @@ jobs:
             --data '{"event_type":"dispatch","client_payload":{"version":"latest", "tag": "${{ env.LATEST_COMMIT_HASH }}"}}'
 
       - name: Dispatch event (release)
-        if: github.event_name == 'push' && ${{ env. PROWLER_VERSION_MAJOR }} == '3'
+        if: github.event_name == 'release' && ${{ env. PROWLER_VERSION_MAJOR }} == '3'
         run: |
           curl https://api.github.com/repos/${{ secrets.DISPATCH_OWNER }}/${{ secrets.DISPATCH_REPO }}/dispatches \
             -H "Accept: application/vnd.github+json" \
