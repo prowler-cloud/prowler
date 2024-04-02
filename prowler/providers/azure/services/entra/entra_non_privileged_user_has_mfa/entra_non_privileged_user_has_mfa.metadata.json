@@ -1,0 +1,30 @@
+{
+  "Provider": "azure",
+  "CheckID": "entra_non_privileged_user_has_mfa",
+  "CheckTitle": "Ensure that 'Multi-Factor Auth Status' is 'Enabled' for all Non-Privileged Users",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "#microsoft.graph.users",
+  "Description": "Enable multi-factor authentication for all non-privileged users.",
+  "Risk": "Multi-factor authentication requires an individual to present a minimum of two separate forms of authentication before access is granted. Multi-factor authentication provides additional assurance that the individual attempting to gain access is who they claim to be. With multi-factor authentication, an attacker would need to compromise at least two different authentication mechanisms, increasing the difficulty of compromise and thus reducing the risk.",
+  "RelatedUrl": "https://learn.microsoft.com/en-us/entra/identity/authentication/concept-mfa-howitworks",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/ActiveDirectory/multi-factor-authentication-for-all-non-privileged-users.html#",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Activate one of the available multi-factor authentication methods for users in Microsoft Entra ID.",
+      "Url": "https://learn.microsoft.com/en-us/entra/identity/authentication/tutorial-enable-azure-mfa"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Users would require two forms of authentication before any access is granted. Also, this requires an overhead for managing dual forms of authentication."
+}

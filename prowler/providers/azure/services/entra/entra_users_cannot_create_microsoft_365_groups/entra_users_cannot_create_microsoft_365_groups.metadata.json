@@ -1,0 +1,30 @@
+{
+  "Provider": "azure",
+  "CheckID": "entra_users_cannot_create_microsoft_365_groups",
+  "CheckTitle": "Ensure that 'Users can create Microsoft 365 groups in Azure portals, API or PowerShell' is set to 'No'",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Microsoft.Users/Settings",
+  "Description": "Restrict Microsoft 365 group creation to administrators only.",
+  "Risk": "Restricting Microsoft 365 group creation to administrators only ensures that creation of Microsoft 365 groups is controlled by the administrator. Appropriate groups should be created and managed by the administrator and group creation rights should not be delegated to any other user.",
+  "RelatedUrl": "https://learn.microsoft.com/en-us/microsoft-365/community/all-about-groups#microsoft-365-groups",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/ActiveDirectory/users-can-create-office-365-groups.html#",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "1. From Azure Home select the Portal Menu 2. Select Microsoft Entra ID 3. Then Groups 4. Select General in settings 5. Set Users can create Microsoft 365 groups in Azure portals, API or PowerShell to No",
+      "Url": "https://learn.microsoft.com/en-us/microsoft-365/solutions/manage-creation-of-groups?view=o365-worldwide&redirectSourcePath=%252fen-us%252farticle%252fControl-who-can-create-Office-365-Groups-4c46c8cb-17d0-44b5-9776-005fced8e618"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Enabling this setting could create a number of requests that would need to be managed by an administrator."
+}

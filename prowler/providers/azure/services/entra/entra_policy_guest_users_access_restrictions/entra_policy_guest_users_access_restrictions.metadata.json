@@ -1,0 +1,30 @@
+{
+  "Provider": "azure",
+  "CheckID": "entra_policy_guest_users_access_restrictions",
+  "CheckTitle": "Ensure That 'Guest users access restrictions' is set to 'Guest user access is restricted to properties and memberships of their own directory objects'",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "#microsoft.graph.authorizationPolicy",
+  "Description": "Limit guest user permissions.",
+  "Risk": "Limiting guest access ensures that guest accounts do not have permission for certain directory tasks, such as enumerating users, groups or other directory resources, and cannot be assigned to administrative roles in your directory. Guest access has three levels of restriction. 1. Guest users have the same access as members (most inclusive), 2. Guest users have limited access to properties and memberships of directory objects (default value), 3. Guest user access is restricted to properties and memberships of their own directory objects (most restrictive). The recommended option is the 3rd, most restrictive: 'Guest user access is restricted to their own directory object'.",
+  "RelatedUrl": "https://learn.microsoft.com/en-us/entra/identity/users/users-restrict-guest-permissions",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "1. From Azure Home select the Portal Menu 2. Select Microsoft Entra ID 3. Then External Identities 4. Select External collaboration settings 5. Under Guest user access, change Guest user access restrictions to be Guest user access is restricted to properties and memberships of their own directory objects",
+      "Url": "https://learn.microsoft.com/en-us/entra/fundamentals/users-default-permissions#member-and-guest-users"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This may create additional requests for permissions to access resources that administrators will need to approve. According to https://learn.microsoft.com/en-us/azure/active-directory/enterprise- users/users-restrict-guest-permissions#services-currently-not-supported Service without current support might have compatibility issues with the new guest restriction setting."
+}
