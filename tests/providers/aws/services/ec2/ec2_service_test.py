@@ -544,3 +544,19 @@ class Test_EC2_Service:
         assert ec2.volumes[0].tags == [
             {"Key": "test", "Value": "test"},
         ]
+
+    # Test EC2 EBS Enabling Encryption by Default
+    @mock_aws
+    def test__describe_ebs_encryption_by_default__(self):
+        # Generate EC2 Client
+        ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
+
+        # EC2 client for this test class
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
+        )
+        ec2 = EC2(aws_provider)
+
+        assert not ec2.__enable_ebs_encryption_by_default__()
+        ec2_client.enable_ebs_encryption_by_default()
+        assert ec2.__enable_ebs_encryption_by_default__()

@@ -399,6 +399,14 @@ def import_check(check_path: str) -> ModuleType:
 
 
 def run_check(check: Check, output_options) -> list:
+    """
+    Run the check and return the findings
+    Args:
+        check (Check): check class
+        output_options (Any): output options
+    Returns:
+        list: list of findings
+    """
     findings = []
     if output_options.verbose:
         print(
@@ -419,9 +427,16 @@ def run_check(check: Check, output_options) -> list:
         return findings
 
 
-def run_fixer(check_findings, check_name, c):
+def run_fixer(check_findings: list, check_name: str, check_class: Check):
+    """
+    Run the fixer for the check if it exists and there are any FAIL findings
+    Args:
+        check_findings (list): list of findings
+        check_name (str): check name
+        check_class (Check): check class
+    """
     try:
-        fixer = getattr(c, "fixer")
+        fixer = getattr(check_class, "fixer")
         # Check if there are any FAIL findings
         if any("FAIL" in finding.status for finding in check_findings):
             print(
@@ -593,14 +608,18 @@ def execute(
         lib = import_check(check_module_path)
         # Recover functions from check
         check_to_execute = getattr(lib, check_name)
-        c = check_to_execute()
+        check_class = check_to_execute()
 
         # Update check metadata to reflect that in the outputs
-        if custom_checks_metadata and custom_checks_metadata["Checks"].get(c.CheckID):
-            c = update_check_metadata(c, custom_checks_metadata["Checks"][c.CheckID])
+        if custom_checks_metadata and custom_checks_metadata["Checks"].get(
+            check_class.CheckID
+        ):
+            check_class = update_check_metadata(
+                check_class, custom_checks_metadata["Checks"][check_class.CheckID]
+            )
 
         # Run check
-        check_findings = run_check(c, global_provider.output_options)
+        check_findings = run_check(check_class, global_provider.output_options)
 
         # Update Audit Status
         services_executed.add(service)
@@ -621,7 +640,7 @@ def execute(
 
         # Prowler Fixer
         if args.fix and args.check:
-            run_fixer(check_findings, check_name, c)
+            run_fixer(check_findings, check_name, check_class)
 
         if os.environ.get("PROWLER_REPORT_LIB_PATH"):
             try:
