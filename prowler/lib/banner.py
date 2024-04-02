@@ -15,7 +15,7 @@ def print_banner(args):
 """
     print(banner)
 
-    if args.verbose or args.fix:
+    if args.verbose or getattr(args, "fix", False):
         print(
             f"""
 Color code for results:
