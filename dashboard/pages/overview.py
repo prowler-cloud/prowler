@@ -102,18 +102,40 @@ else:
             "T", " "
         )
         # for each row, we are going to take the ASSESMENT_START_TIME if is not null and put it in the TIMESTAMP column
-        data.rename(columns={"ASSESSMENT_START_TIME": "TIMESTAMP"}, inplace=True)
-    # Rename the column 'ACCOUNT_ID' to 'ACCOUNT_UID' for null values
+        data["TIMESTAMP"] = data.apply(
+            lambda x: (
+                x["ASSESSMENT_START_TIME"]
+                if pd.isnull(x["TIMESTAMP"])
+                else x["TIMESTAMP"]
+            ),
+            axis=1,
+        )
     if "ACCOUNT_ID" in data.columns:
-        data.rename(columns={"ACCOUNT_ID": "ACCOUNT_UID"}, inplace=True)
-        # Rename the column RESOURCE_ID to RESOURCE_UID
+        data["ACCOUNT_UID"] = data.apply(
+            lambda x: (
+                x["ACCOUNT_ID"] if pd.isnull(x["ACCOUNT_UID"]) else x["ACCOUNT_UID"]
+            ),
+            axis=1,
+        )
+    # Rename the column RESOURCE_ID to RESOURCE_UID
     if "RESOURCE_ID" in data.columns:
-        data.rename(columns={"RESOURCE_ID": "RESOURCE_UID"}, inplace=True)
+        data["RESOURCE_UID"] = data.apply(
+            lambda x: (
+                x["RESOURCE_ID"] if pd.isnull(x["RESOURCE_UID"]) else x["RESOURCE_UID"]
+            ),
+            axis=1,
+        )
     # Rename the column "SUBSCRIPTION" to "ACCOUNT_UID"
     if "SUBSCRIPTION" in data.columns:
-        data.rename(columns={"SUBSCRIPTION": "ACCOUNT_UID"}, inplace=True)
+        data["ACCOUNT_UID"] = data.apply(
+            lambda x: (
+                x["SUBSCRIPTION"] if pd.isnull(x["ACCOUNT_UID"]) else x["ACCOUNT_UID"]
+            ),
+            axis=1,
+        )
 
-    # Fixing Date datatype
+    # For the timestamp, remove the two columns and keep only the date
+
     data["TIMESTAMP"] = pd.to_datetime(data["TIMESTAMP"])
     data["ASSESSMENT_TIME"] = data["TIMESTAMP"].dt.strftime("%Y-%m-%d %H:%M:%S")
     data_valid = pd.DataFrame()
@@ -181,6 +203,16 @@ else:
     # Handle the case where the region is null
     data["REGION"].fillna("-")
     regions = ["All"] + list(data["REGION"].unique())
+    print(regions)
+    regions = [x for x in regions if str(x) != "nan" and x.__class__.__name__ == "str"]
+    # Correct the values
+    options = []
+    for value in regions:
+        if " " in value:
+            options.append(value.split(" ")[1])
+        else:
+            options.append(value)
+    regions = options
     region_dropdown = create_region_dropdown(regions)
 
     # Create the download button
@@ -416,6 +448,21 @@ def filter_data(cloud_account_values, region_account_values, assessment_value):
     ]
 
     region_filter_options = ["All"] + list(copy_data["REGION"].unique())
+    # clean the region_filter_options from null values
+    region_filter_options = [
+        x
+        for x in region_filter_options
+        if str(x) != "nan" and x.__class__.__name__ == "str"
+    ]
+    # Correct the values
+    options = []
+    for value in region_filter_options:
+        if " " in value:
+            options.append(value.split(" ")[1])
+        else:
+            options.append(value)
+
+    region_filter_options = options
 
     # Select failed findings
     fails_findings_default = filtered_data[filtered_data["STATUS"] == "FAIL"]
