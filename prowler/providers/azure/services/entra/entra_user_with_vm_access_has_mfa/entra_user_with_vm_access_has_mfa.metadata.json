@@ -1,13 +1,13 @@
 {
   "Provider": "azure",
-  "CheckID": "iam_role_assignment_priviledge_access_vm_has_mfa",
+  "CheckID": "entra_user_with_vm_access_has_mfa",
   "CheckTitle": "Ensure only MFA enabled identities can access privileged Virtual Machine",
   "CheckType": [],
   "ServiceName": "iam",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "Microsoft.Authorization/roleAssignments",
+  "ResourceType": "#microsoft.graph.users",
   "Description": "Verify identities without MFA that can log in to a privileged virtual machine using separate login credentials. An adversary can leverage the access to move laterally and perform actions with the virtual machine's managed identity. Make sure the virtual machine only has necessary permissions, and revoke the admin-level permissions according to the least privileges principal",
   "Risk": "Managed disks are by default encrypted on the underlying hardware, so no additional encryption is required for basic protection. It is available if additional encryption is required. Managed disks are by design more resilient that storage accounts. For ARM-deployed Virtual Machines, Azure Adviser will at some point recommend moving VHDs to managed disks both from a security and cost management perspective.",
   "RelatedUrl": "",
@@ -15,7 +15,7 @@
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/VirtualMachines/enable-active-directory-authentication.html#trendmicro",
+      "Other": "",
       "Terraform": ""
     },
     "Recommendation": {
@@ -26,5 +26,5 @@
   "Categories": [],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "this recommendation requires an Azure AD P2 License to implement. Ensure that identities that are provisioned to a virtual machine utilizes an RBAC/ABAC group and is allocated a role using Azure PIM, and the Role settings require MFA or use another PAM solution (like CyberArk) for accessing Virtual Machines."
+  "Notes": "This recommendation requires an Azure AD P2 License to implement. Ensure that identities that are provisioned to a virtual machine utilizes an RBAC/ABAC group and is allocated a role using Azure PIM, and the Role settings require MFA or use another PAM solution (like CyberArk) for accessing Virtual Machines."
 }
