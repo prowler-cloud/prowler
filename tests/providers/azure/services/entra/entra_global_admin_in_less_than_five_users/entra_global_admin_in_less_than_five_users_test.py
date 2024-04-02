@@ -4,7 +4,7 @@ from uuid import uuid4
 from tests.providers.azure.azure_fixtures import DOMAIN, set_mocked_azure_provider
 
 
-class Test_entra_users_less_than_five_global_admins:
+class Test_entra_global_admin_in_less_than_five_users:
     def test_entra_no_tenants(self):
         entra_client = mock.MagicMock
 
@@ -12,16 +12,16 @@ class Test_entra_users_less_than_five_global_admins:
             "prowler.providers.common.common.get_global_provider",
             return_value=set_mocked_azure_provider(),
         ), mock.patch(
-            "prowler.providers.azure.services.entra.entra_users_less_than_five_global_admins.entra_users_less_than_five_global_admins.entra_client",
+            "prowler.providers.azure.services.entra.entra_global_admin_in_less_than_five_users.entra_global_admin_in_less_than_five_users.entra_client",
             new=entra_client,
         ):
-            from prowler.providers.azure.services.entra.entra_users_less_than_five_global_admins.entra_users_less_than_five_global_admins import (
-                entra_users_less_than_five_global_admins,
+            from prowler.providers.azure.services.entra.entra_global_admin_in_less_than_five_users.entra_global_admin_in_less_than_five_users import (
+                entra_global_admin_in_less_than_five_users,
             )
 
             entra_client.directory_roles = {}
 
-            check = entra_users_less_than_five_global_admins()
+            check = entra_global_admin_in_less_than_five_users()
             result = check.execute()
             assert len(result) == 0
 
@@ -32,16 +32,16 @@ class Test_entra_users_less_than_five_global_admins:
             "prowler.providers.common.common.get_global_provider",
             return_value=set_mocked_azure_provider(),
         ), mock.patch(
-            "prowler.providers.azure.services.entra.entra_users_less_than_five_global_admins.entra_users_less_than_five_global_admins.entra_client",
+            "prowler.providers.azure.services.entra.entra_global_admin_in_less_than_five_users.entra_global_admin_in_less_than_five_users.entra_client",
             new=entra_client,
         ):
-            from prowler.providers.azure.services.entra.entra_users_less_than_five_global_admins.entra_users_less_than_five_global_admins import (
-                entra_users_less_than_five_global_admins,
+            from prowler.providers.azure.services.entra.entra_global_admin_in_less_than_five_users.entra_global_admin_in_less_than_five_users import (
+                entra_global_admin_in_less_than_five_users,
             )
 
             entra_client.directory_roles = {DOMAIN: {}}
 
-            check = entra_users_less_than_five_global_admins()
+            check = entra_global_admin_in_less_than_five_users()
             result = check.execute()
             assert len(result) == 0
 
@@ -52,15 +52,15 @@ class Test_entra_users_less_than_five_global_admins:
             "prowler.providers.common.common.get_global_provider",
             return_value=set_mocked_azure_provider(),
         ), mock.patch(
-            "prowler.providers.azure.services.entra.entra_users_less_than_five_global_admins.entra_users_less_than_five_global_admins.entra_client",
+            "prowler.providers.azure.services.entra.entra_global_admin_in_less_than_five_users.entra_global_admin_in_less_than_five_users.entra_client",
             new=entra_client,
         ):
+            from prowler.providers.azure.services.entra.entra_global_admin_in_less_than_five_users.entra_global_admin_in_less_than_five_users import (
+                entra_global_admin_in_less_than_five_users,
+            )
             from prowler.providers.azure.services.entra.entra_service import (
                 DirectoryRole,
                 User,
-            )
-            from prowler.providers.azure.services.entra.entra_users_less_than_five_global_admins.entra_users_less_than_five_global_admins import (
-                entra_users_less_than_five_global_admins,
             )
 
             id = str(uuid4())
@@ -79,7 +79,7 @@ class Test_entra_users_less_than_five_global_admins:
                 }
             }
 
-            check = entra_users_less_than_five_global_admins()
+            check = entra_global_admin_in_less_than_five_users()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
@@ -95,15 +95,15 @@ class Test_entra_users_less_than_five_global_admins:
             "prowler.providers.common.common.get_global_provider",
             return_value=set_mocked_azure_provider(),
         ), mock.patch(
-            "prowler.providers.azure.services.entra.entra_users_less_than_five_global_admins.entra_users_less_than_five_global_admins.entra_client",
+            "prowler.providers.azure.services.entra.entra_global_admin_in_less_than_five_users.entra_global_admin_in_less_than_five_users.entra_client",
             new=entra_client,
         ):
+            from prowler.providers.azure.services.entra.entra_global_admin_in_less_than_five_users.entra_global_admin_in_less_than_five_users import (
+                entra_global_admin_in_less_than_five_users,
+            )
             from prowler.providers.azure.services.entra.entra_service import (
                 DirectoryRole,
                 User,
-            )
-            from prowler.providers.azure.services.entra.entra_users_less_than_five_global_admins.entra_users_less_than_five_global_admins import (
-                entra_users_less_than_five_global_admins,
             )
 
             id = str(uuid4())
@@ -130,7 +130,7 @@ class Test_entra_users_less_than_five_global_admins:
                 }
             }
 
-            check = entra_users_less_than_five_global_admins()
+            check = entra_global_admin_in_less_than_five_users()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
@@ -149,15 +149,15 @@ class Test_entra_users_less_than_five_global_admins:
             "prowler.providers.common.common.get_global_provider",
             return_value=set_mocked_azure_provider(),
         ), mock.patch(
-            "prowler.providers.azure.services.entra.entra_users_less_than_five_global_admins.entra_users_less_than_five_global_admins.entra_client",
+            "prowler.providers.azure.services.entra.entra_global_admin_in_less_than_five_users.entra_global_admin_in_less_than_five_users.entra_client",
             new=entra_client,
         ):
+            from prowler.providers.azure.services.entra.entra_global_admin_in_less_than_five_users.entra_global_admin_in_less_than_five_users import (
+                entra_global_admin_in_less_than_five_users,
+            )
             from prowler.providers.azure.services.entra.entra_service import (
                 DirectoryRole,
                 User,
-            )
-            from prowler.providers.azure.services.entra.entra_users_less_than_five_global_admins.entra_users_less_than_five_global_admins import (
-                entra_users_less_than_five_global_admins,
             )
 
             id = str(uuid4())
@@ -182,7 +182,7 @@ class Test_entra_users_less_than_five_global_admins:
                 }
             }
 
-            check = entra_users_less_than_five_global_admins()
+            check = entra_global_admin_in_less_than_five_users()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
