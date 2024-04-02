@@ -24,6 +24,7 @@ from prowler.lib.check.check import (
     print_compliance_requirements,
     print_services,
     remove_custom_checks_module,
+    run_fixer,
 )
 from prowler.lib.check.checks_loader import load_checks_to_execute
 from prowler.lib.check.compliance import update_checks_metadata_with_compliance
@@ -210,6 +211,14 @@ def prowler():
             "There are no checks to execute. Please, check your input arguments"
         )
 
+    # Prowler Fixer
+    if args.fix:
+        # Check if there are any FAIL findings
+        if any("FAIL" in finding.status for finding in findings):
+            run_fixer(findings)
+        else:
+            print(f"{Style.BRIGHT}{Fore.GREEN}\nNo findings to fix!{Style.RESET_ALL}")
+        sys.exit()
     # Extract findings stats
     stats = extract_findings_statistics(findings)
 

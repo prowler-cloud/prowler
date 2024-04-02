@@ -427,32 +427,34 @@ def run_check(check: Check, output_options) -> list:
         return findings
 
 
-def run_fixer(check_findings: list, check_class: Check):
+def run_fixer(check_findings: list):
     """
     Run the fixer for the check if it exists and there are any FAIL findings
     Args:
         check_findings (list): list of findings
-        check_class (Check): check class
     """
-    try:
-        fixer = getattr(check_class, "fixer")
-        # Check if there are any FAIL findings
-        if any("FAIL" in finding.status for finding in check_findings):
-            print(
-                f"Fixing fails for check {Fore.YELLOW}{check_class.CheckID}{Style.RESET_ALL}...\n"
-            )
-            for finding in check_findings:
-                if finding.status == "FAIL":
-                    print(
-                        f"\t{orange_color}FIXING{Style.RESET_ALL} {finding.region}... {(Fore.GREEN + 'DONE') if fixer(finding.region) else (Fore.RED + 'ERROR')}{Style.RESET_ALL}\n"
-                    )
-            sys.exit()
-    except AttributeError:
-        logger.error(f"Fixer method not implemented for check {check_class.CheckID}")
-    except Exception as error:
-        logger.error(
-            f"{check_class.CheckID} - {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-        )
+    for finding in check_findings:
+        if finding.status == "FAIL":
+            try:
+                check_module_path = f"prowler.providers.{finding.check_metadata.Provider}.services.{finding.check_metadata.ServiceName}.{finding.check_metadata.CheckID}.{finding.check_metadata.CheckID}"
+                lib = import_check(check_module_path)
+                check_to_fix = getattr(lib, finding.check_metadata.CheckID)
+                check_class = check_to_fix()
+                fixer = getattr(check_class, "fixer")
+                print(
+                    f"\n{orange_color}FIXING{Style.RESET_ALL}{Fore.YELLOW} {finding.check_metadata.CheckID}{Style.RESET_ALL} in {finding.region}..."
+                )
+                print(
+                    f"{(Fore.GREEN + 'DONE') if fixer(finding.region) else (Fore.RED + 'ERROR')}{Style.RESET_ALL}"
+                )
+            except AttributeError:
+                logger.error(
+                    f"Fixer method not implemented for check {finding.check_metadata.CheckID}"
+                )
+            except Exception as error:
+                logger.error(
+                    f"{finding.check_metadata.CheckID} - {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
 
 
 def execute_checks(
@@ -460,7 +462,7 @@ def execute_checks(
     global_provider: Any,
     custom_checks_metadata: Any,
     mutelist_file: str,
-    args: Any,
+    config_file: str,
 ) -> list:
     # List to store all the check's findings
     all_findings = []
@@ -512,7 +514,6 @@ def execute_checks(
                     services_executed,
                     checks_executed,
                     custom_checks_metadata,
-                    args,
                 )
                 all_findings.extend(check_findings)
 
@@ -528,7 +529,7 @@ def execute_checks(
     else:
         # Prepare your messages
         messages = [
-            f"{Style.BRIGHT}Config File: {Style.RESET_ALL}{Fore.YELLOW}{args.config_file}{Style.RESET_ALL}"
+            f"{Style.BRIGHT}Config File: {Style.RESET_ALL}{Fore.YELLOW}{config_file}{Style.RESET_ALL}"
         ]
         if mutelist_file:
             messages.append(
@@ -573,7 +574,6 @@ def execute_checks(
                         services_executed,
                         checks_executed,
                         custom_checks_metadata,
-                        args,
                     )
                     all_findings.extend(check_findings)
 
@@ -600,7 +600,6 @@ def execute(
     services_executed: set,
     checks_executed: set,
     custom_checks_metadata: Any,
-    args: Any,
 ):
     try:
         # Import check module
@@ -637,10 +636,6 @@ def execute(
 
         # Report the check's findings
         report(check_findings, global_provider)
-
-        # Prowler Fixer
-        if args.fix and args.check:
-            run_fixer(check_findings, check_class)
 
         if os.environ.get("PROWLER_REPORT_LIB_PATH"):
             try:
