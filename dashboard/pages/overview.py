@@ -110,19 +110,23 @@ else:
             axis=1,
         )
         # Rename the column 'ACCOUNT_ID' to 'ACCOUNT_UID' for null values
-        data["ACCOUNT_UID"] = data.apply(
-            lambda x: (
-                x["ACCOUNT_ID"] if pd.isnull(x["ACCOUNT_UID"]) else x["ACCOUNT_UID"]
-            ),
-            axis=1,
-        )
+        if "ACCOUNT_ID" in data.columns:
+            data["ACCOUNT_UID"] = data.apply(
+                lambda x: (
+                    x["ACCOUNT_ID"] if pd.isnull(x["ACCOUNT_UID"]) else x["ACCOUNT_UID"]
+                ),
+                axis=1,
+            )
         # Rename the column RESOURCE_ID to RESOURCE_UID
-        data["RESOURCE_UID"] = data.apply(
-            lambda x: (
-                x["RESOURCE_ID"] if pd.isnull(x["RESOURCE_UID"]) else x["RESOURCE_UID"]
-            ),
-            axis=1,
-        )
+        if "RESOURCE_ID" in data.columns:
+            data["RESOURCE_UID"] = data.apply(
+                lambda x: (
+                    x["RESOURCE_ID"]
+                    if pd.isnull(x["RESOURCE_UID"])
+                    else x["RESOURCE_UID"]
+                ),
+                axis=1,
+            )
 
     # Fixing Date datatype
     data["TIMESTAMP"] = pd.to_datetime(data["TIMESTAMP"])
