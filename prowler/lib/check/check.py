@@ -454,13 +454,14 @@ def run_fixer(check_findings: list):
                     logger.error(f"Fixer method not implemented for check {check}")
                 else:
                     print(
-                        f"\nFixing fails for check {Fore.YELLOW}{check}{Style.RESET_ALL}...\n"
+                        f"\nFixing fails for check {Fore.YELLOW}{check}{Style.RESET_ALL}..."
                     )
                     for finding in findings:
                         if finding.status == "FAIL":
                             print(
-                                f"\t{orange_color}FIXING{Style.RESET_ALL} {finding.region}... {(Fore.GREEN + 'DONE') if fixer(finding.region) else (Fore.RED + 'ERROR')}{Style.RESET_ALL}\n"
+                                f"\t{orange_color}FIXING{Style.RESET_ALL} {finding.region}...\t{(Fore.GREEN + 'DONE') if fixer(finding.region) else (Fore.RED + 'ERROR')}{Style.RESET_ALL}"
                             )
+                    print()
     except Exception as error:
         logger.error(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
