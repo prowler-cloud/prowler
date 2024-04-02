@@ -507,7 +507,9 @@ class AwsProvider(Provider):
             report_lines.append(
                 f"Assumed Role ARN: {Fore.YELLOW}[{self._assumed_role.info.role_arn.arn}]{Style.RESET_ALL}"
             )
-        report_title = f"{Style.BRIGHT}Prowler is using the AWS credentials below:{Style.RESET_ALL}"
+        report_title = (
+            f"{Style.BRIGHT}Using the AWS credentials below:{Style.RESET_ALL}"
+        )
         print_boxes(report_lines, report_title)
 
     def generate_regional_clients(
