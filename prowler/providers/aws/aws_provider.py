@@ -496,7 +496,8 @@ class AwsProvider(Provider):
             f"{Style.BRIGHT}AWS Regions: {Style.RESET_ALL}{Fore.YELLOW}{regions}{Style.RESET_ALL}",
             f"{Style.BRIGHT}AWS Account: {Style.RESET_ALL}{Fore.YELLOW}{self._identity.account}{Style.RESET_ALL}",
             f"{Style.BRIGHT}User Id: {Style.RESET_ALL}{Fore.YELLOW}{self._identity.user_id}{Style.RESET_ALL}",
-            f"{Style.BRIGHT}Caller Identity ARN: {Style.RESET_ALL}{Fore.YELLOW}{self._identity.identity_arn}{Style.RESET_ALL}",
+            f"{Style.BRIGHT}Caller Identity ARN: {Style.RESET_ALL}",
+            f"{Fore.YELLOW}{self._identity.identity_arn}{Style.RESET_ALL}",
         ]
         # If -A is set, print Assumed Role ARN
         if (
@@ -921,9 +922,12 @@ def create_sts_session(
         sts_client = create_sts_session(session, 'us-west-2')
     """
     try:
-        return session.client(
-            "sts", aws_region, endpoint_url=f"https://sts.{aws_region}.amazonaws.com"
+        sts_endpoint_url = (
+            f"https://sts.{aws_region}.amazonaws.com"
+            if "cn-" not in aws_region
+            else f"https://sts.{aws_region}.amazonaws.com.cn"
         )
+        return session.client("sts", aws_region, endpoint_url=sts_endpoint_url)
     except Exception as error:
         logger.critical(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

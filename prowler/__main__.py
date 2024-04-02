@@ -70,6 +70,16 @@ def prowler():
     severities = args.severity
     compliance_framework = args.compliance
     custom_checks_metadata_file = args.custom_checks_metadata_file
+    default_execution = (
+        not checks
+        and not services
+        and not categories
+        and not excluded_checks
+        and not excluded_services
+        and not severities
+        and not checks_file
+        and not checks_folder
+    )
 
     if not args.no_banner:
         print_banner(args.verbose)
@@ -77,8 +87,8 @@ def prowler():
     # We treat the compliance framework as another output format
     if compliance_framework:
         args.output_formats.extend(compliance_framework)
-    # If no input compliance framework, set all
-    else:
+    # If no input compliance framework, set all, unless a specific service or check is input
+    elif default_execution:
         args.output_formats.extend(get_available_compliance_frameworks(provider))
 
     # Set Logger configuration
@@ -308,8 +318,8 @@ def prowler():
             global_provider,
             global_provider.output_options,
         )
-
-        if findings:
+        # Only display compliance table if there are findings and it is a default execution
+        if findings and default_execution:
             compliance_overview = False
             if not compliance_framework:
                 compliance_framework = get_available_compliance_frameworks(provider)

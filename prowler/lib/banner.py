@@ -9,7 +9,7 @@ def print_banner(verbose: bool):
 | '_ \| '__/ _ \ \ /\ / / |/ _ \ '__|
 | |_) | | | (_) \ V  V /| |  __/ |
 | .__/|_|  \___/ \_/\_/ |_|\___|_|v{prowler_version}
-|_|{Fore.BLUE} the handy cloud security tool
+|_|{Fore.BLUE} the handy multi-cloud security tool
 
 {Fore.YELLOW}Date: {timestamp.strftime("%Y-%m-%d %H:%M:%S")}{Style.RESET_ALL}
 """

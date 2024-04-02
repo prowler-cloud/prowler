@@ -56,6 +56,13 @@ class Test_vm_ensure_using_managed_disks:
                     resource_id="/subscriptions/resource_id",
                     resource_name="VMTest",
                     location="location",
+                    security_profile=mock.MagicMock(
+                        security_type="TrustedLaunch",
+                        uefi_settings=mock.MagicMock(
+                            secure_boot_enabled=True,
+                            v_tpm_enabled=True,
+                        ),
+                    ),
                     storage_profile=mock.MagicMock(
                         os_disk=mock.MagicMock(
                             create_option="FromImage",
@@ -63,7 +70,7 @@ class Test_vm_ensure_using_managed_disks:
                         ),
                         data_disks=[],
                     ),
-                )
+                ),
             }
         }
 
@@ -100,6 +107,13 @@ class Test_vm_ensure_using_managed_disks:
                     resource_id="/subscriptions/resource_id",
                     resource_name="VMTest",
                     location="location",
+                    security_profile=mock.MagicMock(
+                        security_type="TrustedLaunch",
+                        uefi_settings=mock.MagicMock(
+                            secure_boot_enabled=True,
+                            v_tpm_enabled=True,
+                        ),
+                    ),
                     storage_profile=mock.MagicMock(
                         os_disk=mock.MagicMock(
                             create_option="FromImage",
@@ -144,6 +158,13 @@ class Test_vm_ensure_using_managed_disks:
                     resource_id="/subscriptions/resource_id",
                     resource_name="VMTest",
                     location="location",
+                    security_profile=mock.MagicMock(
+                        security_type="TrustedLaunch",
+                        uefi_settings=mock.MagicMock(
+                            secure_boot_enabled=True,
+                            v_tpm_enabled=True,
+                        ),
+                    ),
                     storage_profile=mock.MagicMock(
                         os_disk=mock.MagicMock(
                             create_option="FromImage",

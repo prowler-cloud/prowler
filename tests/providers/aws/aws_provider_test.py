@@ -918,44 +918,6 @@ aws:
         assert get_caller_identity.arn.resource_type == "user"
 
     @mock_aws
-    def test_validate_credentials_commercial_partition_with_regions_none_and_profile_region_so_profile_region(
-        self,
-    ):
-        # AWS Region for AWS COMMERCIAL
-        aws_region = AWS_REGION_EU_WEST_1
-        aws_partition = AWS_COMMERCIAL_PARTITION
-        # Create a mock IAM user
-        iam_client = client("iam", region_name=aws_region)
-        iam_user = iam_client.create_user(UserName="test-user")["User"]
-        # Create a mock IAM access keys
-        access_key = iam_client.create_access_key(UserName=iam_user["UserName"])[
-            "AccessKey"
-        ]
-        access_key_id = access_key["AccessKeyId"]
-        secret_access_key = access_key["SecretAccessKey"]
-
-        # Create AWS session to validate
-        current_session = session.Session(
-            aws_access_key_id=access_key_id,
-            aws_secret_access_key=secret_access_key,
-            region_name=aws_region,
-        )
-
-        get_caller_identity = validate_aws_credentials(current_session, None)
-
-        assert isinstance(get_caller_identity, AWSCallerIdentity)
-
-        assert re.match("[0-9a-zA-Z]{20}", get_caller_identity.user_id)
-        assert get_caller_identity.account == AWS_ACCOUNT_NUMBER
-        assert get_caller_identity.region is None
-
-        assert isinstance(get_caller_identity.arn, ARN)
-        assert get_caller_identity.arn.partition == aws_partition
-        assert get_caller_identity.arn.region is None
-        assert get_caller_identity.arn.resource == "test-user"
-        assert get_caller_identity.arn.resource_type == "user"
-
-    @mock_aws
     @patch(
         "botocore.client.BaseClient._make_api_call", new=mock_get_caller_identity_china
     )
@@ -1070,7 +1032,9 @@ aws:
         assert sts_session._service_model.service_name == "sts"
         assert sts_session._client_config.region_name == aws_region
         assert sts_session._endpoint._endpoint_prefix == "sts"
-        assert sts_session._endpoint.host == f"https://sts.{aws_region}.amazonaws.com"
+        assert (
+            sts_session._endpoint.host == f"https://sts.{aws_region}.amazonaws.com.cn"
+        )
 
     @mock_aws
     @patch(

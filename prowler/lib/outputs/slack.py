@@ -57,6 +57,16 @@ def create_message_identity(provider):
         )
 
 
+def create_title(identity, stats):
+    try:
+        title = f"Hey there 👋 \n I'm *Prowler*, _the handy multi-cloud security tool_ :cloud::key:\n\n I have just finished the security assessment on your {identity} with a total of *{stats['findings_count']}* findings."
+        return title
+    except Exception as error:
+        logger.error(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+        )
+
+
 def create_message_blocks(identity, logo, stats):
     try:
         blocks = [
@@ -64,7 +74,7 @@ def create_message_blocks(identity, logo, stats):
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": f"Hey there 👋 \n I'm *Prowler*, _the handy cloud security tool_ :cloud::key:\n\n I have just finished the security assessment on your {identity} with a total of *{stats['findings_count']}* findings.",
+                    "text": create_title(identity, stats),
                 },
                 "accessory": {
                     "type": "image",
