@@ -244,6 +244,7 @@ Detailed documentation at https://docs.prowler.com
         )
         common_checks_parser.add_argument(
             "--severity",
+            "--severities",
             nargs="+",
             help=f"Severities to be executed {valid_severities}",
             choices=valid_severities,
