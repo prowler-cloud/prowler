@@ -29,5 +29,4 @@ class monitor_alert_create_update_public_ip_address_rule(Check):
                     break
 
             findings.append(report)
-
         return findings

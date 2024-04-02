@@ -87,6 +87,7 @@ class CIS_Requirement_Attribute(BaseModel):
     RemediationProcedure: str
     AuditProcedure: str
     AdditionalInformation: str
+    DefaultValue: Optional[str]
     References: str
     DefaultValue: Optional[str]
 
