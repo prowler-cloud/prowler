@@ -11,6 +11,7 @@ from prowler.lib.outputs.models import (
     Check_Output_CSV_AWS_CIS,
     Check_Output_CSV_AWS_ISO27001_2013,
     Check_Output_CSV_AWS_Well_Architected,
+    Check_Output_CSV_AZURE_CIS,
     Check_Output_CSV_ENS_RD2022,
     Check_Output_CSV_GCP_CIS,
     Check_Output_CSV_Generic_Compliance,
@@ -35,6 +36,7 @@ def add_manual_controls(output_options, audit_info, file_descriptors):
             manual_finding.region = ""
             manual_finding.location = ""
             manual_finding.project_id = ""
+            manual_finding.subscription = ""
             fill_compliance(
                 output_options, manual_finding, audit_info, file_descriptors
             )
@@ -161,7 +163,36 @@ def fill_compliance(output_options, finding, audit_info, file_descriptors):
                                 csv_header = generate_csv_fields(
                                     Check_Output_CSV_GCP_CIS
                                 )
-
+                            elif compliance.Provider == "AZURE":
+                                compliance_row = Check_Output_CSV_AZURE_CIS(
+                                    Provider=finding.check_metadata.Provider,
+                                    Description=compliance.Description,
+                                    Subscription=finding.subscription,
+                                    AssessmentDate=outputs_unix_timestamp(
+                                        output_options.unix_timestamp, timestamp
+                                    ),
+                                    Requirements_Id=requirement_id,
+                                    Requirements_Description=requirement_description,
+                                    Requirements_Attributes_Section=attribute.Section,
+                                    Requirements_Attributes_Profile=attribute.Profile,
+                                    Requirements_Attributes_AssessmentStatus=attribute.AssessmentStatus,
+                                    Requirements_Attributes_Description=attribute.Description,
+                                    Requirements_Attributes_RationaleStatement=attribute.RationaleStatement,
+                                    Requirements_Attributes_ImpactStatement=attribute.ImpactStatement,
+                                    Requirements_Attributes_RemediationProcedure=attribute.RemediationProcedure,
+                                    Requirements_Attributes_AuditProcedure=attribute.AuditProcedure,
+                                    Requirements_Attributes_AdditionalInformation=attribute.AdditionalInformation,
+                                    Requirements_Attributes_DefaultValue=attribute.DefaultValue,
+                                    Requirements_Attributes_References=attribute.References,
+                                    Status=finding.status,
+                                    StatusExtended=finding.status_extended,
+                                    ResourceId=finding.resource_id,
+                                    ResourceName=finding.resource_name,
+                                    CheckId=finding.check_metadata.CheckID,
+                                )
+                                csv_header = generate_csv_fields(
+                                    Check_Output_CSV_AZURE_CIS
+                                )
             elif (
                 "AWS-Well-Architected-Framework" in compliance.Framework
                 and compliance.Provider == "AWS"
