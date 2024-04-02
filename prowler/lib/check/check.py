@@ -473,7 +473,7 @@ def execute_checks(
     global_provider: Any,
     custom_checks_metadata: Any,
     mutelist_file: str,
-    args: Any,
+    config_file: str,
 ) -> list:
     # List to store all the check's findings
     all_findings = []
@@ -525,7 +525,6 @@ def execute_checks(
                     services_executed,
                     checks_executed,
                     custom_checks_metadata,
-                    args,
                 )
                 all_findings.extend(check_findings)
 
@@ -541,7 +540,7 @@ def execute_checks(
     else:
         # Prepare your messages
         messages = [
-            f"{Style.BRIGHT}Config File: {Style.RESET_ALL}{Fore.YELLOW}{args.config_file}{Style.RESET_ALL}"
+            f"{Style.BRIGHT}Config File: {Style.RESET_ALL}{Fore.YELLOW}{config_file}{Style.RESET_ALL}"
         ]
         if mutelist_file:
             messages.append(
@@ -586,7 +585,6 @@ def execute_checks(
                         services_executed,
                         checks_executed,
                         custom_checks_metadata,
-                        args,
                     )
                     all_findings.extend(check_findings)
 
@@ -613,7 +611,6 @@ def execute(
     services_executed: set,
     checks_executed: set,
     custom_checks_metadata: Any,
-    args: Any,
 ):
     try:
         # Import check module
@@ -632,7 +629,7 @@ def execute(
             )
 
         # Run check
-        check_findings = run_check(check_class, global_provider.output_options, args)
+        check_findings = run_check(check_class, global_provider.output_options)
 
         # Update Audit Status
         services_executed.add(service)
