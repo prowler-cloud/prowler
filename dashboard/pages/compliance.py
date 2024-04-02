@@ -66,16 +66,16 @@ def load_csv_files(csv_files):
 
     unique_results = set(results)
     results = list(unique_results)
-
     # Check if there is any CIS report in the list and divide it in level 1 and level 2
     new_results = []
+    old_results = results.copy()
     for compliance_name in results:
         if "CIS_" in compliance_name:
-            results.remove(compliance_name)
+            old_results.remove(compliance_name)
             new_results.append(compliance_name + " - Level_1")
             new_results.append(compliance_name + " - Level_2")
 
-    results = results + new_results
+    results = old_results + new_results
     results.sort()
     # Handle the case where there are no CSV files
     try:
