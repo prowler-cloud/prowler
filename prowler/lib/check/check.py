@@ -419,6 +419,27 @@ def run_check(check: Check, output_options) -> list:
         return findings
 
 
+def run_fixer(check_findings, check_name, c):
+    try:
+        fixer = getattr(c, "fixer")
+        # Check if there are any FAIL findings
+        if any("FAIL" in finding.status for finding in check_findings):
+            print(
+                f"Fixing fails for check {Fore.YELLOW}{check_name}{Style.RESET_ALL}...\n"
+            )
+            for finding in check_findings:
+                if finding.status == "FAIL":
+                    print(
+                        f"\t{orange_color}FIXING{Style.RESET_ALL} {finding.region}... {(Fore.GREEN + 'DONE') if fixer(finding.region) else (Fore.RED + 'ERROR')}{Style.RESET_ALL}\n"
+                    )
+    except AttributeError:
+        logger.error(f"Fixer method not implemented for check {check_name}")
+    except Exception as error:
+        logger.error(
+            f"{check_name} - {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+        )
+
+
 def execute_checks(
     checks_to_execute: list,
     global_provider: Any,
@@ -476,7 +497,7 @@ def execute_checks(
                     services_executed,
                     checks_executed,
                     custom_checks_metadata,
-                    args
+                    args,
                 )
                 all_findings.extend(check_findings)
 
@@ -600,18 +621,7 @@ def execute(
 
         # Prowler Fixer
         if args.fix and args.check:
-            try:
-                fixer = getattr(c, "fixer")
-                # Check if there are any FAIL findings
-                if any("FAIL" in finding.status for finding in check_findings):
-                    print(f"Fixing fails for check {Fore.YELLOW}{check_name}{Style.RESET_ALL}...\n")
-                    for finding in check_findings:
-                        if finding.status == "FAIL":
-                            print(f"\t{orange_color}FIXING{Style.RESET_ALL} {finding.region}... {Fore.GREEN + "DONE" if fixer(finding.region) else Fore.RED + "ERROR"}{Style.RESET_ALL}\n")
-            except AttributeError:
-                logger.error(
-                    f"Fixer method not implemented for check {check_name}"
-                )
+            run_fixer(check_findings, check_name, c)
 
         if os.environ.get("PROWLER_REPORT_LIB_PATH"):
             try:
