@@ -446,6 +446,7 @@ def run_fixer(check_findings: list, check_class: Check):
                     print(
                         f"\t{orange_color}FIXING{Style.RESET_ALL} {finding.region}... {(Fore.GREEN + 'DONE') if fixer(finding.region) else (Fore.RED + 'ERROR')}{Style.RESET_ALL}\n"
                     )
+            sys.exit()
     except AttributeError:
         logger.error(f"Fixer method not implemented for check {check_class.CheckID}")
     except Exception as error:
