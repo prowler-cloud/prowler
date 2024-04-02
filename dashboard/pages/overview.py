@@ -188,8 +188,6 @@ else:
                 accounts.append(account + " - AWS")
             if "kubernetes" in list(data[data["ACCOUNT_UID"] == account]["PROVIDER"]):
                 accounts.append(account + " - K8S")
-            if "azure" in list(data[data["ACCOUNT_UID"] == account]["PROVIDER"]):
-                accounts.append(account + " - AZURE")
 
     account_dropdown = create_account_dropdown(accounts)
 
@@ -355,8 +353,6 @@ def filter_data(cloud_account_values, region_account_values, assessment_value):
                 all_account_ids.append(account)
             if "kubernetes" in list(data[data["ACCOUNT_UID"] == account]["PROVIDER"]):
                 all_account_ids.append(account)
-            if "azure" in list(data[data["ACCOUNT_UID"] == account]["PROVIDER"]):
-                all_account_ids.append(account)
 
     all_account_names = []
     if "ACCOUNT_NAME" in filtered_data.columns:
@@ -377,8 +373,6 @@ def filter_data(cloud_account_values, region_account_values, assessment_value):
                     cloud_accounts_options.append(item + " - AWS")
                 if "kubernetes" in list(data[data["ACCOUNT_UID"] == item]["PROVIDER"]):
                     cloud_accounts_options.append(item + " - K8S")
-                if "azure" in list(data[data["ACCOUNT_UID"] == item]["PROVIDER"]):
-                    cloud_accounts_options.append(item + " - AZURE")
             if "ACCOUNT_NAME" in filtered_data.columns:
                 if "azure" in list(data[data["ACCOUNT_NAME"] == item]["PROVIDER"]):
                     cloud_accounts_options.append(item + " - AZURE")
