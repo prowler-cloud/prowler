@@ -468,7 +468,7 @@
       "Id": "1.25",
       "Description": "Ensure fewer than 5 users have global administrator assignment",
       "Checks": [
-        "entra_users_less_than_five_global_admins"
+        "entra_global_admin_in_less_than_five_users"
       ],
       "Attributes": [
         {
