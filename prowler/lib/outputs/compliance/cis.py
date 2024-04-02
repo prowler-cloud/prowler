@@ -36,7 +36,12 @@ def write_compliance_row_cis(
                 elif compliance.Provider == "Kubernetes":
                     (compliance_row, csv_header) = (
                         generate_compliance_row_cis_kubernetes(
-                            finding, compliance, requirement, attribute, output_options
+                            finding,
+                            compliance,
+                            requirement,
+                            attribute,
+                            output_options,
+                            provider,
                         )
                     )
 

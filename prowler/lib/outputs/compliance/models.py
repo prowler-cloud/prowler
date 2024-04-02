@@ -120,7 +120,8 @@ class Check_Output_CSV_KUBERNETES_CIS(BaseModel):
 
     Provider: str
     Description: str
-    Region: str
+    Context: str
+    Namespace: str
     AssessmentDate: str
     Requirements_Id: str
     Requirements_Description: str
