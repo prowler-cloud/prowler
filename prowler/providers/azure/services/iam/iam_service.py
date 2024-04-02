@@ -12,6 +12,7 @@ class IAM(AzureService):
     def __init__(self, audit_info):
         super().__init__(AuthorizationManagementClient, audit_info)
         self.roles, self.custom_roles = self.__get_roles__()
+        self.role_assignments = self.__get_role_assignments__()
 
     def __get_roles__(self):
         logger.info("IAM - Getting roles...")
@@ -52,6 +53,34 @@ class IAM(AzureService):
                 )
         return builtin_roles, custom_roles
 
+    def __get_role_assignments__(self):
+        logger.info("IAM - Getting role assignments...")
+        role_assignments = {}
+        for subscription, client in self.clients.items():
+            try:
+                role_assignments.update({subscription: {}})
+                all_role_assignments = client.role_assignments.list_for_subscription(
+                    filter="atScope()"
+                )
+                for role_assignment in all_role_assignments:
+                    role_assignments[subscription].update(
+                        {
+                            role_assignment.id: RoleAssignment(
+                                agent_id=role_assignment.principal_id,
+                                agent_type=role_assignment.principal_type,
+                                role_id=role_assignment.role_definition_id.split("/")[
+                                    -1
+                                ],
+                            )
+                        }
+                    )
+            except Exception as error:
+                logger.error(f"Subscription name: {subscription}")
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+        return role_assignments
+
 
 @dataclass
 class Role:
@@ -60,3 +89,10 @@ class Role:
     type: str
     assignable_scopes: list[str]
     permissions: list[Permission]
+
+
+@dataclass
+class RoleAssignment:
+    agent_id: str
+    agent_type: str
+    role_id: str
