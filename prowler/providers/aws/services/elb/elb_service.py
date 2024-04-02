@@ -105,3 +105,5 @@ class LoadBalancer(BaseModel):
     access_logs: Optional[bool]
     listeners: list[Listener]
     tags: Optional[list] = []
+    security_groups: list[str]
+    instances: list[str]
