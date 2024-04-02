@@ -277,6 +277,7 @@ class LoadBalancerv2(BaseModel):
     listeners: list[Listenerv2]
     scheme: Optional[str]
     tags: Optional[list] = []
+    security_groups: list[str]
 
 class TargetGroups(BaseModel):
     name: str
