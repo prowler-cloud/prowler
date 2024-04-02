@@ -37,7 +37,7 @@ class Test_entra_policy_default_users_cannot_create_security_groups:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert result[0].subscription == f"Tenant: '{DOMAIN}'"
+            assert result[0].subscription == f"Tenant: {DOMAIN}"
             assert result[0].resource_name == "Authorization Policy"
             assert result[0].resource_id == "authorizationPolicy"
             assert (
@@ -85,7 +85,7 @@ class Test_entra_policy_default_users_cannot_create_security_groups:
             )
             assert result[0].resource_name == "Test"
             assert result[0].resource_id == id
-            assert result[0].subscription == f"Tenant: '{DOMAIN}'"
+            assert result[0].subscription == f"Tenant: {DOMAIN}"
 
     def test_entra_default_user_role_permissions_not_allowed_to_create_security_groups(
         self,
@@ -127,4 +127,4 @@ class Test_entra_policy_default_users_cannot_create_security_groups:
             )
             assert result[0].resource_name == "Test"
             assert result[0].resource_id == id
-            assert result[0].subscription == f"Tenant: '{DOMAIN}'"
+            assert result[0].subscription == f"Tenant: {DOMAIN}"
