@@ -85,7 +85,7 @@ def prowler():
     )
 
     if not args.no_banner:
-        print_banner(args.verbose)
+        print_banner(args.verbose, getattr(args, "fixer", None))
 
     # We treat the compliance framework as another output format
     if compliance_framework:
