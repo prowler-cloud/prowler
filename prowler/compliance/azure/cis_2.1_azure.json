@@ -2757,7 +2757,9 @@
     {
       "Id": "7.8",
       "Description": "Ensure only MFA enabled identities can access privileged Virtual Machine",
-      "Checks": [],
+      "Checks": [
+        "entra_user_with_vm_access_has_mfa"
+      ],
       "Attributes": [
         {
           "Section": "7. Virtual Machines",
