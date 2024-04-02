@@ -203,7 +203,6 @@ else:
     # Handle the case where the region is null
     data["REGION"].fillna("-")
     regions = ["All"] + list(data["REGION"].unique())
-    print(regions)
     regions = [x for x in regions if str(x) != "nan" and x.__class__.__name__ == "str"]
     # Correct the values
     options = []

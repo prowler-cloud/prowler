@@ -2,7 +2,6 @@
 import csv
 import glob
 import importlib
-import math
 import os
 import re
 import warnings
@@ -61,6 +60,8 @@ def load_csv_files(csv_files):
                 result = result.replace("_GCP", " - GCP")
             if "AZURE" in result:
                 result = result.replace("_AZURE", " - AZURE")
+            if "KUBERNETES" in result:
+                result = result.replace("_KUBERNETES", " - KUBERNETES")
             results.append(result)
 
     unique_results = set(results)
@@ -143,10 +144,14 @@ else:
         select_account_dropdown_list = select_account_dropdown_list + list(
             data["SUBSCRIPTIONID"].unique()
         )
+    if "SUBSCRIPTION" in data.columns:
+        select_account_dropdown_list = select_account_dropdown_list + list(
+            data["SUBSCRIPTION"].unique()
+        )
 
     list_items = []
     for item in select_account_dropdown_list:
-        if item.__class__.__name__ == "str":
+        if item.__class__.__name__ == "str" and "nan" not in item:
             list_items.append(item)
 
     account_dropdown = create_account_dropdown_compliance(list_items)
@@ -254,6 +259,10 @@ def display_data(
     # Rename the column SUBSCRIPTIONID to ACCOUNTID for Azure
     if data.columns.str.contains("SUBSCRIPTIONID").any():
         data.rename(columns={"SUBSCRIPTIONID": "ACCOUNTID"}, inplace=True)
+    # Handle v3 azure cis compliance
+    if data.columns.str.contains("SUBSCRIPTION").any():
+        data.rename(columns={"SUBSCRIPTION": "ACCOUNTID"}, inplace=True)
+        data["REGION"] = "-"
 
     # Filter ACCOUNT
     if account_filter == ["All"]:
@@ -273,9 +282,8 @@ def display_data(
     account_filter_options = list(data["ACCOUNTID"].unique())
     account_filter_options = account_filter_options + ["All"]
     for item in account_filter_options:
-        if item.__class__.__name__ != "str":
-            if item is None or math.isnan(item):
-                account_filter_options.remove(item)
+        if "nan" in item or item.__class__.__name__ != "str" or item is None:
+            account_filter_options.remove(item)
 
     # Filter REGION
     if region_filter_analytics == ["All"]:
