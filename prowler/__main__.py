@@ -213,12 +213,14 @@ def prowler():
 
     # Prowler Fixer
     if args.fix:
+        print(f"{Style.BRIGHT}\nRunning Prowler Fixer...{Style.RESET_ALL}")
         # Check if there are any FAIL findings
         if any("FAIL" in finding.status for finding in findings):
             run_fixer(findings)
         else:
-            print(f"{Style.BRIGHT}{Fore.GREEN}\nNo findings to fix!{Style.RESET_ALL}")
+            print(f"{Style.BRIGHT}{Fore.GREEN}\nNo findings to fix!{Style.RESET_ALL}\n")
         sys.exit()
+
     # Extract findings stats
     stats = extract_findings_statistics(findings)
 

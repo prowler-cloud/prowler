@@ -433,28 +433,38 @@ def run_fixer(check_findings: list):
     Args:
         check_findings (list): list of findings
     """
-    for finding in check_findings:
-        if finding.status == "FAIL":
-            try:
-                check_module_path = f"prowler.providers.{finding.check_metadata.Provider}.services.{finding.check_metadata.ServiceName}.{finding.check_metadata.CheckID}.{finding.check_metadata.CheckID}"
-                lib = import_check(check_module_path)
-                check_to_fix = getattr(lib, finding.check_metadata.CheckID)
-                check_class = check_to_fix()
-                fixer = getattr(check_class, "fixer")
-                print(
-                    f"\n{orange_color}FIXING{Style.RESET_ALL}{Fore.YELLOW} {finding.check_metadata.CheckID}{Style.RESET_ALL} in {finding.region}..."
-                )
-                print(
-                    f"{(Fore.GREEN + 'DONE') if fixer(finding.region) else (Fore.RED + 'ERROR')}{Style.RESET_ALL}"
-                )
-            except AttributeError:
-                logger.error(
-                    f"Fixer method not implemented for check {finding.check_metadata.CheckID}"
-                )
-            except Exception as error:
-                logger.error(
-                    f"{finding.check_metadata.CheckID} - {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                )
+    try:
+        # Map findings to each check
+        findings_dict = {}
+        for finding in check_findings:
+            if finding.check_metadata.CheckID not in findings_dict:
+                findings_dict[finding.check_metadata.CheckID] = []
+            findings_dict[finding.check_metadata.CheckID].append(finding)
+
+        for check, findings in findings_dict.items():
+            # Check if there are any FAIL findings for the check
+            if any("FAIL" in finding.status for finding in findings):
+                try:
+                    check_module_path = f"prowler.providers.{findings[0].check_metadata.Provider}.services.{findings[0].check_metadata.ServiceName}.{check}.{check}"
+                    lib = import_check(check_module_path)
+                    check_to_fix = getattr(lib, check)
+                    check_class = check_to_fix()
+                    fixer = getattr(check_class, "fixer")
+                except AttributeError:
+                    logger.error(f"Fixer method not implemented for check {check}")
+                else:
+                    print(
+                        f"\nFixing fails for check {Fore.YELLOW}{check}{Style.RESET_ALL}...\n"
+                    )
+                    for finding in findings:
+                        if finding.status == "FAIL":
+                            print(
+                                f"\t{orange_color}FIXING{Style.RESET_ALL} {finding.region}... {(Fore.GREEN + 'DONE') if fixer(finding.region) else (Fore.RED + 'ERROR')}{Style.RESET_ALL}\n"
+                            )
+    except Exception as error:
+        logger.error(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+        )
 
 
 def execute_checks(
