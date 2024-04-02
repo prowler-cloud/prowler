@@ -705,6 +705,12 @@ class Test_Parser:
         parsed = self.parser.parse(command)
         assert parsed.list_categories
 
+    def test_list_checks_parser_list_fixers(self):
+        argument = "--list-fixers"
+        command = [prowler_command, argument]
+        parsed = self.parser.parse(command)
+        assert parsed.list_fixer
+
     def test_list_checks_parser_list_compliance_requirements_no_arguments(self):
         argument = "--list-compliance-requirements"
         command = [prowler_command, argument]
@@ -1047,6 +1053,12 @@ class Test_Parser:
         command = [prowler_command, argument]
         parsed = self.parser.parse(command)
         assert parsed.scan_unused_services
+
+    def test_aws_parser_fixer(self):
+        argument = "--fixer"
+        command = [prowler_command, argument]
+        parsed = self.parser.parse(command)
+        assert parsed.fixer
 
     def test_aws_parser_config_file(self):
         argument = "--config-file"

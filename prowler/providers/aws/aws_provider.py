@@ -496,8 +496,7 @@ class AwsProvider(Provider):
             f"{Style.BRIGHT}AWS Regions: {Style.RESET_ALL}{Fore.YELLOW}{regions}{Style.RESET_ALL}",
             f"{Style.BRIGHT}AWS Account: {Style.RESET_ALL}{Fore.YELLOW}{self._identity.account}{Style.RESET_ALL}",
             f"{Style.BRIGHT}User Id: {Style.RESET_ALL}{Fore.YELLOW}{self._identity.user_id}{Style.RESET_ALL}",
-            f"{Style.BRIGHT}Caller Identity ARN: {Style.RESET_ALL}",
-            f"{Fore.YELLOW}{self._identity.identity_arn}{Style.RESET_ALL}",
+            f"{Style.BRIGHT}Caller Identity ARN: {Style.RESET_ALL}{Fore.YELLOW}{self._identity.identity_arn}{Style.RESET_ALL}",
         ]
         # If -A is set, print Assumed Role ARN
         if (
@@ -507,7 +506,9 @@ class AwsProvider(Provider):
             report_lines.append(
                 f"Assumed Role ARN: {Fore.YELLOW}[{self._assumed_role.info.role_arn.arn}]{Style.RESET_ALL}"
             )
-        report_title = f"{Style.BRIGHT}Prowler is using the AWS credentials below:{Style.RESET_ALL}"
+        report_title = (
+            f"{Style.BRIGHT}Using the AWS credentials below:{Style.RESET_ALL}"
+        )
         print_boxes(report_lines, report_title)
 
     def generate_regional_clients(

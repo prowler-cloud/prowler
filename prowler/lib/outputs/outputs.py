@@ -23,7 +23,7 @@ from prowler.lib.outputs.json_ocsf.json_ocsf import fill_json_ocsf
 from prowler.lib.outputs.utils import unroll_dict
 
 
-def stdout_report(finding, color, verbose, status):
+def stdout_report(finding, color, verbose, status, fix):
     if finding.check_metadata.Provider == "aws":
         details = finding.region
     if finding.check_metadata.Provider == "azure":
@@ -33,7 +33,7 @@ def stdout_report(finding, color, verbose, status):
     if finding.check_metadata.Provider == "kubernetes":
         details = finding.namespace.lower()
 
-    if verbose and (not status or finding.status in status):
+    if (verbose or fix) and (not status or finding.status in status):
         if finding.muted:
             print(
                 f"\t{color}MUTED ({finding.status}){Style.RESET_ALL} {details}: {finding.status_extended}"
@@ -57,7 +57,7 @@ def report(check_findings, provider):
                 check_findings.sort(key=lambda x: x.subscription)
 
             # Generate the required output files
-            if output_options.output_modes:
+            if output_options.output_modes and not output_options.fixer:
                 # We have to create the required output files
                 file_descriptors = fill_file_descriptors(
                     output_options.output_modes,
@@ -70,7 +70,11 @@ def report(check_findings, provider):
                 # Print findings by stdout
                 color = set_report_color(finding.status, finding.muted)
                 stdout_report(
-                    finding, color, output_options.verbose, output_options.status
+                    finding,
+                    color,
+                    output_options.verbose,
+                    output_options.status,
+                    output_options.fixer,
                 )
 
                 if file_descriptors:

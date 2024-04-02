@@ -172,7 +172,9 @@ class GcpProvider(Provider):
             f"{Style.BRIGHT}GCP Account:{Style.RESET_ALL} {Fore.YELLOW}{self.identity.profile}{Style.RESET_ALL}",
             f"{Style.BRIGHT}GCP Project IDs:{Style.RESET_ALL} {Fore.YELLOW}{', '.join(self.project_ids)}{Style.RESET_ALL}",
         ]
-        report_title = f"{Style.BRIGHT}Prowler is using the GCP credentials below:{Style.RESET_ALL}"
+        report_title = (
+            f"{Style.BRIGHT}Using the GCP credentials below:{Style.RESET_ALL}"
+        )
         print_boxes(report_lines, report_title)
 
     def get_projects(self) -> dict[str, GCPProject]:

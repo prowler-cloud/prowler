@@ -36,6 +36,9 @@ def bulk_load_checks_metadata(provider: str) -> dict:
         # Build check path name
         check_name = check_info[0]
         check_path = check_info[1]
+        # Ignore fixer files
+        if check_name.endswith("_fixer"):
+            continue
         # Append metadata file extension
         metadata_file = f"{check_path}/{check_name}.metadata.json"
         # Load metadata
@@ -203,6 +206,20 @@ def list_services(provider: str) -> set:
     return sorted(available_services)
 
 
+def list_fixers(provider: str) -> set:
+    available_fixers = set()
+    checks = recover_checks_from_provider(provider)
+    # Build list of check's metadata files
+    for check_info in checks:
+        # Build check path name
+        check_name = check_info[0]
+        # Ignore non fixer files
+        if not check_name.endswith("_fixer"):
+            continue
+        available_fixers.add(check_name)
+    return sorted(available_fixers)
+
+
 def list_categories(bulk_checks_metadata: dict) -> set:
     available_categories = set()
     for check in bulk_checks_metadata.values():
@@ -234,6 +251,23 @@ def print_services(service_list: set):
     message = plural_string if services_num > 1 else singular_string
 
     for service in service_list:
+        print(f"- {service}")
+
+    print(message)
+
+
+def print_fixers(fixers_list: set):
+    services_num = len(fixers_list)
+    plural_string = (
+        f"\nThere are {Fore.YELLOW}{services_num}{Style.RESET_ALL} available fixers.\n"
+    )
+    singular_string = (
+        f"\nThere is {Fore.YELLOW}{services_num}{Style.RESET_ALL} available fixer.\n"
+    )
+
+    message = plural_string if services_num > 1 else singular_string
+
+    for service in fixers_list:
         print(f"- {service}")
 
     print(message)
@@ -399,8 +433,16 @@ def import_check(check_path: str) -> ModuleType:
 
 
 def run_check(check: Check, output_options) -> list:
+    """
+    Run the check and return the findings
+    Args:
+        check (Check): check class
+        output_options (Any): output options
+    Returns:
+        list: list of findings
+    """
     findings = []
-    if output_options.verbose:
+    if output_options.verbose or output_options.fixer:
         print(
             f"\nCheck ID: {check.CheckID} - {Fore.MAGENTA}{check.ServiceName}{Fore.YELLOW} [{check.Severity}]{Style.RESET_ALL}"
         )
@@ -417,6 +459,45 @@ def run_check(check: Check, output_options) -> list:
         )
     finally:
         return findings
+
+
+def run_fixer(check_findings: list):
+    """
+    Run the fixer for the check if it exists and there are any FAIL findings
+    Args:
+        check_findings (list): list of findings
+    """
+    try:
+        # Map findings to each check
+        findings_dict = {}
+        for finding in check_findings:
+            if finding.check_metadata.CheckID not in findings_dict:
+                findings_dict[finding.check_metadata.CheckID] = []
+            findings_dict[finding.check_metadata.CheckID].append(finding)
+
+        for check, findings in findings_dict.items():
+            # Check if there are any FAIL findings for the check
+            if any("FAIL" in finding.status for finding in findings):
+                try:
+                    check_module_path = f"prowler.providers.{findings[0].check_metadata.Provider}.services.{findings[0].check_metadata.ServiceName}.{check}.{check}_fixer"
+                    lib = import_check(check_module_path)
+                    fixer = getattr(lib, "fixer")
+                except AttributeError:
+                    logger.error(f"Fixer method not implemented for check {check}")
+                else:
+                    print(
+                        f"\nFixing fails for check {Fore.YELLOW}{check}{Style.RESET_ALL}..."
+                    )
+                    for finding in findings:
+                        if finding.status == "FAIL":
+                            print(
+                                f"\t{orange_color}FIXING{Style.RESET_ALL} {finding.region}... {(Fore.GREEN + 'DONE') if fixer(finding.region) else (Fore.RED + 'ERROR')}{Style.RESET_ALL}"
+                            )
+                    print()
+    except Exception as error:
+        logger.error(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+        )
 
 
 def execute_checks(
@@ -569,14 +650,18 @@ def execute(
         lib = import_check(check_module_path)
         # Recover functions from check
         check_to_execute = getattr(lib, check_name)
-        c = check_to_execute()
+        check_class = check_to_execute()
 
         # Update check metadata to reflect that in the outputs
-        if custom_checks_metadata and custom_checks_metadata["Checks"].get(c.CheckID):
-            c = update_check_metadata(c, custom_checks_metadata["Checks"][c.CheckID])
+        if custom_checks_metadata and custom_checks_metadata["Checks"].get(
+            check_class.CheckID
+        ):
+            check_class = update_check_metadata(
+                check_class, custom_checks_metadata["Checks"][check_class.CheckID]
+            )
 
         # Run check
-        check_findings = run_check(c, global_provider.output_options)
+        check_findings = run_check(check_class, global_provider.output_options)
 
         # Update Audit Status
         services_executed.add(service)
