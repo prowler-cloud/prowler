@@ -1,0 +1,30 @@
+{
+  "Provider": "azure",
+  "CheckID": "entra_trusted_named_locations_exists",
+  "CheckTitle": "Ensure Trusted Locations Are Defined",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "#microsoft.graph.ipNamedLocation",
+  "Description": "Microsoft Entra ID Conditional Access allows an organization to configure Named locations and configure whether those locations are trusted or untrusted. These settings provide organizations the means to specify Geographical locations for use in conditional access policies, or define actual IP addresses and IP ranges and whether or not those IP addresses and/or ranges are trusted by the organization.",
+  "Risk": "Defining trusted source IP addresses or ranges helps organizations create and enforce Conditional Access policies around those trusted or untrusted IP addresses and ranges. Users authenticating from trusted IP addresses and/or ranges may have less access restrictions or access requirements when compared to users that try to authenticate to Microsoft Entra ID from untrusted locations or untrusted source IP addresses/ranges.",
+  "RelatedUrl": "https://learn.microsoft.com/en-us/entra/identity/conditional-access/location-condition",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "1. Navigate to the Microsoft Entra ID Conditional Access Blade 2. Click on the Named locations blade 3. Within the Named locations blade, click on IP ranges location 4. Enter a name for this location setting in the Name text box 5. Click on the + sign 6. Add an IP Address Range in CIDR notation inside the text box that appears 7. Click on the Add button 8. Repeat steps 5 through 7 for each IP Range that needs to be added 9. If the information entered are trusted ranges, select the Mark as trusted location check box 10. Once finished, click on Create",
+      "Url": "https://learn.microsoft.com/en-us/security/benchmark/azure/mcsb-identity-management#im-7-restrict-resource-access-based-on--conditions"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "When configuring Named locations, the organization can create locations using Geographical location data or by defining source IP addresses or ranges. Configuring Named locations using a Country location does not provide the organization the ability to mark those locations as trusted, and any Conditional Access policy relying on those Countries location setting will not be able to use the All trusted locations setting within the Conditional Access policy. They instead will have to rely on the Select locations setting. This may add additional resource requirements when configuring, and will require thorough organizational testing. In general, Conditional Access policies may completely prevent users from authenticating to Microsoft Entra ID, and thorough testing is recommended. To avoid complete lockout, a 'Break Glass' account with full Global Administrator rights is recommended in the event all other administrators are locked out of authenticating to Microsoft Entra ID. This 'Break Glass' account should be excluded from Conditional Access Policies and should be configured with the longest pass phrase feasible. This account should only be used in the event of an emergency and complete administrator lockout."
+}

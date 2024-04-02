@@ -19,7 +19,7 @@
       "Terraform": "https://docs.bridgecrew.io/docs/ensure-virtual-machines-are-utilizing-managed-disks#terraform"
     },
     "Recommendation": {
-      "Text": "There are additional costs for managed disks based off of disk space allocated. When converting to managed disks, VMs will be powered off and back on.",
+      "Text": "1. Using the search feature, go to Virtual Machines 2. Select the virtual machine you would like to convert 3. Select Disks in the menu for the VM 4. At the top select Migrate to managed disks 5. You may follow the prompts to convert the disk and finish by selecting Migrate to start the process",
       "Url": "https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-data-protection#dp-4-enable-data-at-rest-encryption-by-default"
     }
   },

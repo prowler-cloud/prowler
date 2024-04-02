@@ -11,11 +11,13 @@ class entra_policy_ensure_default_user_cannot_create_apps(Check):
             report = Check_Report_Azure(self.metadata())
             report.status = "FAIL"
             report.subscription = f"Tenant: '{tenant_domain}'"
-            report.resource_name = auth_policy.name
-            report.resource_id = auth_policy.id
+            report.resource_name = getattr(auth_policy, "name", "Authorization Policy")
+            report.resource_id = getattr(auth_policy, "id", "authorizationPolicy")
             report.status_extended = "App creation is not disabled for non-admin users."
 
-            if auth_policy.default_user_role_permissions and not getattr(
+            if getattr(
+                auth_policy, "default_user_role_permissions", None
+            ) and not getattr(
                 auth_policy.default_user_role_permissions,
                 "allowed_to_create_apps",
                 True,
