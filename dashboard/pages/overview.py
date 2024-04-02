@@ -458,10 +458,10 @@ def filter_data(cloud_account_values, region_account_values, assessment_value):
             result_df["Status_count"].fillna(0, inplace=True)
 
             color_mapping = {
-                "FAIL": "#FF7452",
-                "PASS": "#36B37E",
+                "FAIL": "#e67272",
+                "PASS": "#54d283",
                 "INFO": "#2684FF",
-                "MANUAL": "#8332A8",
+                "MANUAL": "#636c78",
                 "MUTED (FAIL)": "#fca903",
                 "MUTED (PASS)": "#03fccf",
                 "MUTED (MANUAL)": "#b33696",
@@ -513,20 +513,20 @@ def filter_data(cloud_account_values, region_account_values, assessment_value):
         df1 = filtered_data[filtered_data["STATUS"] == "FAIL"]
 
         color_mapping_pass_fail = {
-            "FAIL": "#FF7452",
-            "PASS": "#36B37E",
+            "FAIL": "#e67272",
+            "PASS": "#54d283",
             "INFO": "#2684FF",
-            "MANUAL": "#8332A8",
+            "MANUAL": "#636c78",
             "MUTED (FAIL)": "#fca903",
             "MUTED (PASS)": "#03fccf",
             "MUTED (MANUAL)": "#b33696",
         }
         # Define custom colors
         color_mapping = {
-            "critical": "#800000",
-            "high": "#FF5630",
-            "medium": "#FF991F",
-            "low": "#FFC400",
+            "critical": "#951649",
+            "high": "#e11d48",
+            "medium": "#ee6f15",
+            "low": "#f9f5e6",
             "informational": "#3274d9",
         }
 

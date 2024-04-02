@@ -496,7 +496,7 @@ def get_bar_graph(df, column_name):
         x="counts",
         y=colums,
         color="STATUS",
-        color_discrete_map={"FAIL": "#FF7452"},
+        color_discrete_map={"FAIL": "#e67272"},
         orientation="h",
     )
 
@@ -521,11 +521,11 @@ def get_bar_graph(df, column_name):
 def get_pie(df):
     # Define custom colors
     color_mapping = {
-        "FAIL": "#FF7452",
-        "PASS": "#36B37E",
+        "FAIL": "#e67272",
+        "PASS": "#54d283",
         "INFO": "#2684FF",
         "WARN": "#260000",
-        "MANUAL": "#8332A8",
+        "MANUAL": "#636c78",
     }
 
     # Use the color_discrete_map parameter to map categories to custom colors
