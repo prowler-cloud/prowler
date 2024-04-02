@@ -232,11 +232,7 @@ class Test_Lambda_Service:
             }
             assert awslambda.functions[lambda_arn_2].region == AWS_REGION_US_EAST_1
             # Emtpy policy
-            assert awslambda.functions[lambda_arn_2].policy == {
-                "Id": "default",
-                "Statement": [],
-                "Version": "2012-10-17",
-            }
+            assert awslambda.functions[lambda_arn_2].policy == {}
 
             # Lambda Code
             with tempfile.TemporaryDirectory() as tmp_dir_name:
