@@ -73,8 +73,14 @@ def prowler():
     # We treat the compliance framework as another output format
     if compliance_framework:
         args.output_formats.extend(compliance_framework)
-    # If no input compliance framework, set all
-    else:
+    # If no input compliance framework, set all, unless a specific service or check is input
+    elif (
+        not checks
+        and not services
+        and not categories
+        and not excluded_checks
+        and not excluded_services
+    ):
         args.output_formats.extend(get_available_compliance_frameworks(provider))
 
     # Set Logger configuration
@@ -305,7 +311,14 @@ def prowler():
             global_provider.output_options,
         )
 
-        if findings:
+        if (
+            findings
+            and not checks
+            and not services
+            and not categories
+            and not excluded_checks
+            and not excluded_services
+        ):
             compliance_overview = False
             if not compliance_framework:
                 compliance_framework = get_available_compliance_frameworks(provider)
