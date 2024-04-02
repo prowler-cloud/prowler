@@ -33,11 +33,15 @@ def create_provider_card(
         ]
     )
     # Take the values in the MUTED colum that are true for the provider
-    muted = len(
-        filtered_data[
-            (filtered_data["PROVIDER"] == provider) & (filtered_data["MUTED"] == "True")
-        ]
-    )
+    if "MUTED" in filtered_data.columns:
+        muted = len(
+            filtered_data[
+                (filtered_data["PROVIDER"] == provider)
+                & (filtered_data["MUTED"] == "True")
+            ]
+        )
+    else:
+        muted = 0
 
     return [
         html.Div(

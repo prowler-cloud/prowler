@@ -95,43 +95,27 @@ if data is None:
         ]
     )
 else:
+
     # This handles the case where we are using v3 outputs
     if "ASSESSMENT_START_TIME" in data.columns:
         data["ASSESSMENT_START_TIME"] = data["ASSESSMENT_START_TIME"].str.replace(
             "T", " "
         )
         # for each row, we are going to take the ASSESMENT_START_TIME if is not null and put it in the TIMESTAMP column
-        data["TIMESTAMP"] = data.apply(
-            lambda x: (
-                x["ASSESSMENT_START_TIME"]
-                if pd.isnull(x["TIMESTAMP"])
-                else x["TIMESTAMP"]
-            ),
-            axis=1,
-        )
-        # Rename the column 'ACCOUNT_ID' to 'ACCOUNT_UID' for null values
-        if "ACCOUNT_ID" in data.columns:
-            data["ACCOUNT_UID"] = data.apply(
-                lambda x: (
-                    x["ACCOUNT_ID"] if pd.isnull(x["ACCOUNT_UID"]) else x["ACCOUNT_UID"]
-                ),
-                axis=1,
-            )
+        data.rename(columns={"ASSESSMENT_START_TIME": "TIMESTAMP"}, inplace=True)
+    # Rename the column 'ACCOUNT_ID' to 'ACCOUNT_UID' for null values
+    if "ACCOUNT_ID" in data.columns:
+        data.rename(columns={"ACCOUNT_ID": "ACCOUNT_UID"}, inplace=True)
         # Rename the column RESOURCE_ID to RESOURCE_UID
-        if "RESOURCE_ID" in data.columns:
-            data["RESOURCE_UID"] = data.apply(
-                lambda x: (
-                    x["RESOURCE_ID"]
-                    if pd.isnull(x["RESOURCE_UID"])
-                    else x["RESOURCE_UID"]
-                ),
-                axis=1,
-            )
+    if "RESOURCE_ID" in data.columns:
+        data.rename(columns={"RESOURCE_ID": "RESOURCE_UID"}, inplace=True)
+    # Rename the column "SUBSCRIPTION" to "ACCOUNT_UID"
+    if "SUBSCRIPTION" in data.columns:
+        data.rename(columns={"SUBSCRIPTION": "ACCOUNT_UID"}, inplace=True)
 
     # Fixing Date datatype
     data["TIMESTAMP"] = pd.to_datetime(data["TIMESTAMP"])
     data["ASSESSMENT_TIME"] = data["TIMESTAMP"].dt.strftime("%Y-%m-%d %H:%M:%S")
-
     data_valid = pd.DataFrame()
     for account in data["ACCOUNT_UID"].unique():
         all_times = data[data["ACCOUNT_UID"] == account]["ASSESSMENT_TIME"].unique()
@@ -169,23 +153,33 @@ else:
 
     # Cloud Account Dropdown
     accounts = []
-    for account in data["ACCOUNT_NAME"].unique():
-        if "azure" in list(data[data["ACCOUNT_NAME"] == account]["PROVIDER"]):
-            accounts.append(account + " - AZURE")
-        if "gcp" in list(data[data["ACCOUNT_NAME"] == account]["PROVIDER"]):
-            accounts.append(account + " - GCP")
+    if "ACCOUNT_NAME" in data.columns:
+        for account in data["ACCOUNT_NAME"].unique():
+            if "azure" in list(data[data["ACCOUNT_NAME"] == account]["PROVIDER"]):
+                accounts.append(account + " - AZURE")
+            if "gcp" in list(data[data["ACCOUNT_NAME"] == account]["PROVIDER"]):
+                accounts.append(account + " - GCP")
 
-    for account in data["ACCOUNT_UID"].unique():
-        if "aws" in list(data[data["ACCOUNT_UID"] == account]["PROVIDER"]):
-            accounts.append(account + " - AWS")
-        if "kubernetes" in list(data[data["ACCOUNT_UID"] == account]["PROVIDER"]):
-            accounts.append(account + " - K8S")
+    if "ACCOUNT_UID" in data.columns:
+        for account in data["ACCOUNT_UID"].unique():
+            if "aws" in list(data[data["ACCOUNT_UID"] == account]["PROVIDER"]):
+                accounts.append(account + " - AWS")
+            if "kubernetes" in list(data[data["ACCOUNT_UID"] == account]["PROVIDER"]):
+                accounts.append(account + " - K8S")
+            if "azure" in list(data[data["ACCOUNT_UID"] == account]["PROVIDER"]):
+                accounts.append(account + " - AZURE")
 
     account_dropdown = create_account_dropdown(accounts)
 
     # Region Dropdown
+    # Handle the case where there is location column
+    if "LOCATION" in data.columns:
+        data["REGION"] = data["LOCATION"]
+    # Hande the case where there is no region column
+    if "REGION" not in data.columns:
+        data["REGION"] = "-"
     # Handle the case where the region is null
-    data["REGION"] = data["REGION"].fillna("-")
+    data["REGION"].fillna("-")
     regions = ["All"] + list(data["REGION"].unique())
     region_dropdown = create_region_dropdown(regions)
 
@@ -232,32 +226,32 @@ else:
 )
 def filter_data(cloud_account_values, region_account_values, assessment_value):
     filtered_data = data.copy()
-
     # For all the data, we will add to the status column the value 'MUTED (FAIL)' and 'MUTED (PASS)' depending on the value of the column 'STATUS' and 'MUTED'
-    filtered_data["STATUS"] = filtered_data.apply(
-        lambda x: (
-            "MUTED (FAIL)"
-            if x["STATUS"] == "FAIL" and x["MUTED"] == "True"
-            else x["STATUS"]
-        ),
-        axis=1,
-    )
-    filtered_data["STATUS"] = filtered_data.apply(
-        lambda x: (
-            "MUTED (PASS)"
-            if x["STATUS"] == "PASS" and x["MUTED"] == "True"
-            else x["STATUS"]
-        ),
-        axis=1,
-    )
-    filtered_data["STATUS"] = filtered_data.apply(
-        lambda x: (
-            "MUTED (MANUAL)"
-            if x["STATUS"] == "MANUAL" and x["MUTED"] == "True"
-            else x["STATUS"]
-        ),
-        axis=1,
-    )
+    if "MUTED" in filtered_data.columns:
+        filtered_data["STATUS"] = filtered_data.apply(
+            lambda x: (
+                "MUTED (FAIL)"
+                if x["STATUS"] == "FAIL" and x["MUTED"] == "True"
+                else x["STATUS"]
+            ),
+            axis=1,
+        )
+        filtered_data["STATUS"] = filtered_data.apply(
+            lambda x: (
+                "MUTED (PASS)"
+                if x["STATUS"] == "PASS" and x["MUTED"] == "True"
+                else x["STATUS"]
+            ),
+            axis=1,
+        )
+        filtered_data["STATUS"] = filtered_data.apply(
+            lambda x: (
+                "MUTED (MANUAL)"
+                if x["STATUS"] == "MANUAL" and x["MUTED"] == "True"
+                else x["STATUS"]
+            ),
+            axis=1,
+        )
 
     # Take the latest date of de data
     account_date = filtered_data["ASSESSMENT_TIME"].unique()
@@ -305,12 +299,10 @@ def filter_data(cloud_account_values, region_account_values, assessment_value):
                     ),
                     axis=1,
                 )
-
             df["TIMESTAMP"] = pd.to_datetime(df["TIMESTAMP"])
             df["TIMESTAMP"] = df["TIMESTAMP"].dt.strftime("%Y-%m-%d")
             if df["TIMESTAMP"][0] == updated_assessment_value:
                 list_files.append(file)
-
     # append all the names of the files
     files_names = []
     for file in list_files:
@@ -326,18 +318,22 @@ def filter_data(cloud_account_values, region_account_values, assessment_value):
 
     # fill all_account_ids with the account_uid for the provider aws and kubernetes
     all_account_ids = []
-    for account in filtered_data["ACCOUNT_UID"].unique():
-        if "aws" in list(data[data["ACCOUNT_UID"] == account]["PROVIDER"]):
-            all_account_ids.append(account)
-        if "kubernetes" in list(data[data["ACCOUNT_UID"] == account]["PROVIDER"]):
-            all_account_ids.append(account)
+    if "ACCOUNT_UID" in filtered_data.columns:
+        for account in filtered_data["ACCOUNT_UID"].unique():
+            if "aws" in list(data[data["ACCOUNT_UID"] == account]["PROVIDER"]):
+                all_account_ids.append(account)
+            if "kubernetes" in list(data[data["ACCOUNT_UID"] == account]["PROVIDER"]):
+                all_account_ids.append(account)
+            if "azure" in list(data[data["ACCOUNT_UID"] == account]["PROVIDER"]):
+                all_account_ids.append(account)
 
     all_account_names = []
-    for account in filtered_data["ACCOUNT_NAME"].unique():
-        if "azure" in list(data[data["ACCOUNT_NAME"] == account]["PROVIDER"]):
-            all_account_names.append(account)
-        if "gcp" in list(data[data["ACCOUNT_NAME"] == account]["PROVIDER"]):
-            all_account_names.append(account)
+    if "ACCOUNT_NAME" in filtered_data.columns:
+        for account in filtered_data["ACCOUNT_NAME"].unique():
+            if "azure" in list(data[data["ACCOUNT_NAME"] == account]["PROVIDER"]):
+                all_account_names.append(account)
+            if "gcp" in list(data[data["ACCOUNT_NAME"] == account]["PROVIDER"]):
+                all_account_names.append(account)
 
     all_items = all_account_ids + all_account_names + ["All"]
 
@@ -345,14 +341,18 @@ def filter_data(cloud_account_values, region_account_values, assessment_value):
     for item in all_items:
         if item not in cloud_accounts_options and item.__class__.__name__ == "str":
             # append the provider name depending on the account
-            if "aws" in list(data[data["ACCOUNT_UID"] == item]["PROVIDER"]):
-                cloud_accounts_options.append(item + " - AWS")
-            elif "azure" in list(data[data["ACCOUNT_NAME"] == item]["PROVIDER"]):
-                cloud_accounts_options.append(item + " - AZURE")
-            elif "gcp" in list(data[data["ACCOUNT_NAME"] == item]["PROVIDER"]):
-                cloud_accounts_options.append(item + " - GCP")
-            elif "kubernetes" in list(data[data["ACCOUNT_UID"] == item]["PROVIDER"]):
-                cloud_accounts_options.append(item + " - K8S")
+            if "ACCOUNT_UID" in filtered_data.columns:
+                if "aws" in list(data[data["ACCOUNT_UID"] == item]["PROVIDER"]):
+                    cloud_accounts_options.append(item + " - AWS")
+                if "kubernetes" in list(data[data["ACCOUNT_UID"] == item]["PROVIDER"]):
+                    cloud_accounts_options.append(item + " - K8S")
+                if "azure" in list(data[data["ACCOUNT_UID"] == item]["PROVIDER"]):
+                    cloud_accounts_options.append(item + " - AZURE")
+            if "ACCOUNT_NAME" in filtered_data.columns:
+                if "azure" in list(data[data["ACCOUNT_NAME"] == item]["PROVIDER"]):
+                    cloud_accounts_options.append(item + " - AZURE")
+                if "gcp" in list(data[data["ACCOUNT_NAME"] == item]["PROVIDER"]):
+                    cloud_accounts_options.append(item + " - GCP")
 
     # Filter ACCOUNT
     if cloud_account_values == ["All"]:
@@ -376,15 +376,28 @@ def filter_data(cloud_account_values, region_account_values, assessment_value):
             values_choice.append(item)
 
     # Apply the filter
-    filtered_data = filtered_data[
-        filtered_data["ACCOUNT_UID"].isin(values_choice)
-        | filtered_data["ACCOUNT_NAME"].isin(values_choice)
-    ]
+    if (
+        "ACCOUNT_UID" in filtered_data.columns
+        and "ACCOUNT_NAME" in filtered_data.columns
+    ):
+        filtered_data = filtered_data[
+            filtered_data["ACCOUNT_UID"].isin(values_choice)
+            | filtered_data["ACCOUNT_NAME"].isin(values_choice)
+        ]
+    elif "ACCOUNT_UID" in filtered_data.columns:
+        filtered_data = filtered_data[filtered_data["ACCOUNT_UID"].isin(values_choice)]
+    elif "ACCOUNT_NAME" in filtered_data.columns:
+        filtered_data = filtered_data[filtered_data["ACCOUNT_NAME"].isin(values_choice)]
 
     copy_data = filtered_data.copy()
     # Filter REGION
+
     # Check if filtered data contains an aws account
     # TODO - Handle azure locations
+    if "LOCATION" in filtered_data.columns:
+        filtered_data.rename(columns={"LOCATION": "REGION"}, inplace=True)
+    if "REGION" not in filtered_data.columns:
+        filtered_data["REGION"] = "-"
     if region_account_values == ["All"]:
         updated_region_account_values = filtered_data["REGION"].unique()
     elif "All" in region_account_values and len(region_account_values) > 1:
@@ -606,11 +619,12 @@ def filter_data(cloud_account_values, region_account_values, assessment_value):
         )
         table_data = fails_findings.copy()
 
-        for subscription in table_data["ACCOUNT_NAME"].unique():
-            if "nan" not in str(subscription):
-                table_data.loc[
-                    table_data["ACCOUNT_NAME"] == subscription, "ACCOUNT_UID"
-                ] = subscription
+        if "ACCOUNT_NAME" in table_data.columns:
+            for subscription in table_data["ACCOUNT_NAME"].unique():
+                if "nan" not in str(subscription):
+                    table_data.loc[
+                        table_data["ACCOUNT_NAME"] == subscription, "ACCOUNT_UID"
+                    ] = subscription
 
         table_data["RISK"] = table_data["RISK"].str.slice(0, 50)
         table_data["CHECK_ID"] = (

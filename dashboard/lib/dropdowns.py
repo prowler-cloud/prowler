@@ -31,7 +31,7 @@ def create_date_dropdown(assesment_times: list) -> html.Div:
                 options=[
                     {"label": account, "value": account} for account in assesment_times
                 ],
-                value=assesment_times[0],  # Initial selection is ALL
+                value=assesment_times[0],
                 clearable=False,
                 multi=False,
                 style={"color": "#000000", "width": "100%"},
