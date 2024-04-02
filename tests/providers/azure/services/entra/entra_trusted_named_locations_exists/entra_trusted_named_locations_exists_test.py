@@ -48,7 +48,7 @@ class Test_entra_trusted_named_locations_exists:
                 result[0].status_extended
                 == "There is no trusted location with IP ranges defined."
             )
-            assert result[0].subscription == f"Tenant: '{DOMAIN}'"
+            assert result[0].subscription == f"Tenant: {DOMAIN}"
             assert result[0].resource_name == "Named Locations"
             assert result[0].resource_id == "Named Locations"
 
@@ -87,7 +87,7 @@ class Test_entra_trusted_named_locations_exists:
                 result[0].status_extended
                 == "Exits trusted location with trusted IP ranges, this IPs ranges are: ['192.168.0.1/24']"
             )
-            assert result[0].subscription == f"Tenant: '{DOMAIN}'"
+            assert result[0].subscription == f"Tenant: {DOMAIN}"
             assert result[0].resource_name == "Test Location"
             assert result[0].resource_id == "location_id"
 
@@ -124,7 +124,7 @@ class Test_entra_trusted_named_locations_exists:
                 result[0].status_extended
                 == "There is no trusted location with IP ranges defined."
             )
-            assert result[0].subscription == f"Tenant: '{DOMAIN}'"
+            assert result[0].subscription == f"Tenant: {DOMAIN}"
             assert result[0].resource_name == "Test Location"
             assert result[0].resource_id == "location_id"
 
@@ -163,6 +163,6 @@ class Test_entra_trusted_named_locations_exists:
                 result[0].status_extended
                 == "There is no trusted location with IP ranges defined."
             )
-            assert result[0].subscription == f"Tenant: '{DOMAIN}'"
+            assert result[0].subscription == f"Tenant: {DOMAIN}"
             assert result[0].resource_name == "Test Location"
             assert result[0].resource_id == "location_id"

@@ -9,7 +9,7 @@ class entra_global_admin_in_less_than_five_users(Check):
         for tenant_domain, directory_roles in entra_client.directory_roles.items():
             report = Check_Report_Azure(self.metadata())
             report.status = "FAIL"
-            report.subscription = f"Tenant: '{tenant_domain}'"
+            report.subscription = f"Tenant: {tenant_domain}"
             report.resource_name = "Global Administrator"
 
             if "Global Administrator" in directory_roles:

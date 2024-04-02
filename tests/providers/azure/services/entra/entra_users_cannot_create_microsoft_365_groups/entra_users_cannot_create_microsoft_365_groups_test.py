@@ -46,7 +46,7 @@ class Test_entra_users_cannot_create_microsoft_365_groups:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert result[0].status_extended == "Users can create Microsoft 365 groups."
-            assert result[0].subscription == f"Tenant: '{DOMAIN}'"
+            assert result[0].subscription == f"Tenant: {DOMAIN}"
             assert result[0].resource_name == "Microsoft365 Groups"
             assert result[0].resource_id == "Microsoft365 Groups"
 
@@ -91,7 +91,7 @@ class Test_entra_users_cannot_create_microsoft_365_groups:
             assert (
                 result[0].status_extended == "Users cannot create Microsoft 365 groups."
             )
-            assert result[0].subscription == f"Tenant: '{DOMAIN}'"
+            assert result[0].subscription == f"Tenant: {DOMAIN}"
             assert result[0].resource_name == "Microsoft365 Groups"
             assert result[0].resource_id == "Microsoft365 Groups"
 
@@ -134,7 +134,7 @@ class Test_entra_users_cannot_create_microsoft_365_groups:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert result[0].status_extended == "Users can create Microsoft 365 groups."
-            assert result[0].subscription == f"Tenant: '{DOMAIN}'"
+            assert result[0].subscription == f"Tenant: {DOMAIN}"
             assert result[0].resource_name == "Microsoft365 Groups"
             assert result[0].resource_id == "Microsoft365 Groups"
 
@@ -173,6 +173,6 @@ class Test_entra_users_cannot_create_microsoft_365_groups:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert result[0].status_extended == "Users can create Microsoft 365 groups."
-            assert result[0].subscription == f"Tenant: '{DOMAIN}'"
+            assert result[0].subscription == f"Tenant: {DOMAIN}"
             assert result[0].resource_name == "Microsoft365 Groups"
             assert result[0].resource_id == "Microsoft365 Groups"

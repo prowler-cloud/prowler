@@ -43,7 +43,7 @@ class Test_entra_policy_ensure_default_user_cannot_create_tenants:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert result[0].subscription == f"Tenant: '{DOMAIN}'"
+            assert result[0].subscription == f"Tenant: {DOMAIN}"
             assert result[0].resource_name == "Authorization Policy"
             assert result[0].resource_id == "authorizationPolicy"
             assert (
@@ -92,7 +92,7 @@ class Test_entra_policy_ensure_default_user_cannot_create_tenants:
             )
             assert result[0].resource_name == "Test"
             assert result[0].resource_id == id
-            assert result[0].subscription == f"Tenant: '{DOMAIN}'"
+            assert result[0].subscription == f"Tenant: {DOMAIN}"
 
     def test_entra_default_user_role_permissions_allowed_to_create_tenants(self):
         id = str(uuid4())
@@ -135,4 +135,4 @@ class Test_entra_policy_ensure_default_user_cannot_create_tenants:
             )
             assert result[0].resource_name == "Test"
             assert result[0].resource_id == id
-            assert result[0].subscription == f"Tenant: '{DOMAIN}'"
+            assert result[0].subscription == f"Tenant: {DOMAIN}"

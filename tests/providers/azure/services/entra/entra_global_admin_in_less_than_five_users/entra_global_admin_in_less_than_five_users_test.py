@@ -84,7 +84,7 @@ class Test_entra_global_admin_in_less_than_five_users:
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert result[0].status_extended == "There are 2 global administrators."
-            assert result[0].subscription == f"Tenant: '{DOMAIN}'"
+            assert result[0].subscription == f"Tenant: {DOMAIN}"
             assert result[0].resource_name == "Global Administrator"
             assert result[0].resource_id == id
 
@@ -138,7 +138,7 @@ class Test_entra_global_admin_in_less_than_five_users:
                 result[0].status_extended
                 == "There are 6 global administrators. It should be less than five."
             )
-            assert result[0].subscription == f"Tenant: '{DOMAIN}'"
+            assert result[0].subscription == f"Tenant: {DOMAIN}"
             assert result[0].resource_name == "Global Administrator"
             assert result[0].resource_id == id
 
@@ -190,6 +190,6 @@ class Test_entra_global_admin_in_less_than_five_users:
                 result[0].status_extended
                 == "There are 5 global administrators. It should be less than five."
             )
-            assert result[0].subscription == f"Tenant: '{DOMAIN}'"
+            assert result[0].subscription == f"Tenant: {DOMAIN}"
             assert result[0].resource_name == "Global Administrator"
             assert result[0].resource_id == id
