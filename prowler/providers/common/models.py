@@ -35,13 +35,14 @@ class ProviderOutputOptions:
         self.only_logs = arguments.only_logs
         self.unix_timestamp = arguments.unix_timestamp
         self.shodan_api_key = arguments.shodan
+        self.fix = arguments.fix
 
         # Shodan API Key
         if arguments.shodan:
             update_provider_config("shodan_api_key", arguments.shodan)
 
         # Check output directory, if it is not created -> create it
-        if arguments.output_directory:
+        if arguments.output_directory and not arguments.fix:
             if not isdir(arguments.output_directory):
                 if arguments.output_formats:
                     makedirs(arguments.output_directory, exist_ok=True)
