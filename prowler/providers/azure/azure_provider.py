@@ -182,7 +182,9 @@ class AzureProvider(Provider):
             f"{Style.BRIGHT}Azure Subscriptions:{Style.RESET_ALL} {Fore.YELLOW}{printed_subscriptions}{Style.RESET_ALL}",
             f"{Style.BRIGHT}Azure Identity Type:{Style.RESET_ALL} {Fore.YELLOW}{self._identity.identity_type}{Style.RESET_ALL} {Style.BRIGHT}Azure Identity ID:{Style.RESET_ALL} {Fore.YELLOW}{self._identity.identity_id}{Style.RESET_ALL}",
         ]
-        report_title = f"{Style.BRIGHT}Prowler is using the Azure credentials below:{Style.RESET_ALL}"
+        report_title = (
+            f"{Style.BRIGHT}Using the Azure credentials below:{Style.RESET_ALL}"
+        )
         print_boxes(report_lines, report_title)
 
     # TODO: setup_session or setup_credentials?

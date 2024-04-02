@@ -279,5 +279,7 @@ class KubernetesProvider(Provider):
                 f"{Style.BRIGHT}Namespaces:{Style.RESET_ALL} {Fore.YELLOW}{', '.join(self.namespaces)}{Style.RESET_ALL}",
                 f"{Style.BRIGHT}Roles:{Style.RESET_ALL} {Fore.YELLOW}{roles_str}{Style.RESET_ALL}",
             ]
-        report_title = f"{Style.BRIGHT}Prowler is using the Kubernetes credentials below:{Style.RESET_ALL}"
+        report_title = (
+            f"{Style.BRIGHT}Using the Kubernetes credentials below:{Style.RESET_ALL}"
+        )
         print_boxes(report_lines, report_title)
