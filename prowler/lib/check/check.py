@@ -427,12 +427,11 @@ def run_check(check: Check, output_options) -> list:
         return findings
 
 
-def run_fixer(check_findings: list, check_name: str, check_class: Check):
+def run_fixer(check_findings: list, check_class: Check):
     """
     Run the fixer for the check if it exists and there are any FAIL findings
     Args:
         check_findings (list): list of findings
-        check_name (str): check name
         check_class (Check): check class
     """
     try:
@@ -440,7 +439,7 @@ def run_fixer(check_findings: list, check_name: str, check_class: Check):
         # Check if there are any FAIL findings
         if any("FAIL" in finding.status for finding in check_findings):
             print(
-                f"Fixing fails for check {Fore.YELLOW}{check_name}{Style.RESET_ALL}...\n"
+                f"Fixing fails for check {Fore.YELLOW}{check_class.CheckID}{Style.RESET_ALL}...\n"
             )
             for finding in check_findings:
                 if finding.status == "FAIL":
@@ -448,10 +447,10 @@ def run_fixer(check_findings: list, check_name: str, check_class: Check):
                         f"\t{orange_color}FIXING{Style.RESET_ALL} {finding.region}... {(Fore.GREEN + 'DONE') if fixer(finding.region) else (Fore.RED + 'ERROR')}{Style.RESET_ALL}\n"
                     )
     except AttributeError:
-        logger.error(f"Fixer method not implemented for check {check_name}")
+        logger.error(f"Fixer method not implemented for check {check_class.CheckID}")
     except Exception as error:
         logger.error(
-            f"{check_name} - {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            f"{check_class.CheckID} - {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
         )
 
 
@@ -640,7 +639,7 @@ def execute(
 
         # Prowler Fixer
         if args.fix and args.check:
-            run_fixer(check_findings, check_name, check_class)
+            run_fixer(check_findings, check_class)
 
         if os.environ.get("PROWLER_REPORT_LIB_PATH"):
             try:
