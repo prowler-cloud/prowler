@@ -36,6 +36,9 @@ def bulk_load_checks_metadata(provider: str) -> dict:
         # Build check path name
         check_name = check_info[0]
         check_path = check_info[1]
+        # Ignore fixer files
+        if check_name.endswith("_fixer"):
+            continue
         # Append metadata file extension
         metadata_file = f"{check_path}/{check_name}.metadata.json"
         # Load metadata
@@ -194,6 +197,7 @@ def list_services(provider: str) -> set:
     available_services = set()
     checks_tuple = recover_checks_from_provider(provider)
     for _, check_path in checks_tuple:
+        print(check_path)
         # Format: /absolute_path/prowler/providers/{provider}/services/{service_name}/{check_name}
         if os.name == "nt":
             service_name = check_path.split("\\")[-2]
@@ -201,6 +205,20 @@ def list_services(provider: str) -> set:
             service_name = check_path.split("/")[-2]
         available_services.add(service_name)
     return sorted(available_services)
+
+
+def list_fixers(provider: str) -> set:
+    available_fixers = set()
+    checks = recover_checks_from_provider(provider)
+    # Build list of check's metadata files
+    for check_info in checks:
+        # Build check path name
+        check_name = check_info[0]
+        # Ignore non fixer files
+        if not check_name.endswith("_fixer"):
+            continue
+        available_fixers.add(check_name)
+    return sorted(available_fixers)
 
 
 def list_categories(bulk_checks_metadata: dict) -> set:
@@ -234,6 +252,23 @@ def print_services(service_list: set):
     message = plural_string if services_num > 1 else singular_string
 
     for service in service_list:
+        print(f"- {service}")
+
+    print(message)
+
+
+def print_fixers(fixers_list: set):
+    services_num = len(fixers_list)
+    plural_string = (
+        f"\nThere are {Fore.YELLOW}{services_num}{Style.RESET_ALL} available fixers.\n"
+    )
+    singular_string = (
+        f"\nThere is {Fore.YELLOW}{services_num}{Style.RESET_ALL} available fixer.\n"
+    )
+
+    message = plural_string if services_num > 1 else singular_string
+
+    for service in fixers_list:
         print(f"- {service}")
 
     print(message)
@@ -408,7 +443,7 @@ def run_check(check: Check, output_options) -> list:
         list: list of findings
     """
     findings = []
-    if output_options.verbose or output_options.fix:
+    if output_options.verbose or output_options.fixer:
         print(
             f"\nCheck ID: {check.CheckID} - {Fore.MAGENTA}{check.ServiceName}{Fore.YELLOW} [{check.Severity}]{Style.RESET_ALL}"
         )
@@ -445,11 +480,9 @@ def run_fixer(check_findings: list):
             # Check if there are any FAIL findings for the check
             if any("FAIL" in finding.status for finding in findings):
                 try:
-                    check_module_path = f"prowler.providers.{findings[0].check_metadata.Provider}.services.{findings[0].check_metadata.ServiceName}.{check}.{check}"
+                    check_module_path = f"prowler.providers.{findings[0].check_metadata.Provider}.services.{findings[0].check_metadata.ServiceName}.{check}.{check}_fixer"
                     lib = import_check(check_module_path)
-                    check_to_fix = getattr(lib, check)
-                    check_class = check_to_fix()
-                    fixer = getattr(check_class, "fixer")
+                    fixer = getattr(lib, "fixer")
                 except AttributeError:
                     logger.error(f"Fixer method not implemented for check {check}")
                 else:
@@ -459,7 +492,7 @@ def run_fixer(check_findings: list):
                     for finding in findings:
                         if finding.status == "FAIL":
                             print(
-                                f"\t{orange_color}FIXING{Style.RESET_ALL} {finding.region}...\t{(Fore.GREEN + 'DONE') if fixer(finding.region) else (Fore.RED + 'ERROR')}{Style.RESET_ALL}"
+                                f"\t{orange_color}FIXING{Style.RESET_ALL} {finding.region}... {(Fore.GREEN + 'DONE') if fixer(finding.region) else (Fore.RED + 'ERROR')}{Style.RESET_ALL}"
                             )
                     print()
     except Exception as error:

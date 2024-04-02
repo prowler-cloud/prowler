@@ -16,12 +16,14 @@ from prowler.lib.check.check import (
     execute_checks,
     list_categories,
     list_checks_json,
+    list_fixers,
     list_services,
     parse_checks_from_folder,
     print_categories,
     print_checks,
     print_compliance_frameworks,
     print_compliance_requirements,
+    print_fixers,
     print_services,
     remove_custom_checks_module,
     run_fixer,
@@ -93,6 +95,10 @@ def prowler():
 
     if args.list_services:
         print_services(list_services(provider))
+        sys.exit()
+
+    if args.list_fixer:
+        print_fixers(list_fixers(provider))
         sys.exit()
 
     # Load checks metadata
@@ -212,7 +218,7 @@ def prowler():
         )
 
     # Prowler Fixer
-    if global_provider.output_options.fix:
+    if global_provider.output_options.fixer:
         print(f"{Style.BRIGHT}\nRunning Prowler Fixer, please wait...{Style.RESET_ALL}")
         # Check if there are any FAIL findings
         if any("FAIL" in finding.status for finding in findings):

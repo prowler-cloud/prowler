@@ -410,18 +410,6 @@ class EC2(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __enable_ebs_encryption_by_default__(self, region):
-        try:
-            regional_client = self.regional_clients[region]
-            return regional_client.enable_ebs_encryption_by_default()[
-                "EbsEncryptionByDefault"
-            ]
-        except Exception as error:
-            logger.error(
-                f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
-            return False
-
 
 class Instance(BaseModel):
     id: str

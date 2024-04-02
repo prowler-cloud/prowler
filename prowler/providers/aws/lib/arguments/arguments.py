@@ -162,7 +162,7 @@ def init_parser(self):
     # Prowler Fixer
     prowler_fixer_subparser = aws_parser.add_argument_group("Prowler Fixer")
     prowler_fixer_subparser.add_argument(
-        "--fix",
+        "--fixer",
         action="store_true",
         help="Fix the failed findings that can be fixed by Prowler",
     )

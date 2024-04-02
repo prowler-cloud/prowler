@@ -57,7 +57,7 @@ def report(check_findings, provider):
                 check_findings.sort(key=lambda x: x.subscription)
 
             # Generate the required output files
-            if output_options.output_modes and not output_options.fix:
+            if output_options.output_modes and not output_options.fixer:
                 # We have to create the required output files
                 file_descriptors = fill_file_descriptors(
                     output_options.output_modes,
@@ -74,7 +74,7 @@ def report(check_findings, provider):
                     color,
                     output_options.verbose,
                     output_options.status,
-                    output_options.fix,
+                    output_options.fixer,
                 )
 
                 if file_descriptors:

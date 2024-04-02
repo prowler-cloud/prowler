@@ -291,6 +291,7 @@ Detailed documentation at https://docs.prowler.com
         )
         list_group.add_argument(
             "--list-compliance",
+            "--list-compliances",
             action="store_true",
             help="List all available compliance frameworks",
         )
@@ -304,6 +305,12 @@ Detailed documentation at https://docs.prowler.com
             "--list-categories",
             action="store_true",
             help="List the available check's categories",
+        )
+        list_group.add_argument(
+            "--list-fixer",
+            "--list-fixers",
+            action="store_true",
+            help="List fixers available for the provider",
         )
 
     def __init_mutelist_parser__(self):
