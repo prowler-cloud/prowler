@@ -102,21 +102,19 @@ else:
         data["ASSESSMENT_START_TIME"] = data["ASSESSMENT_START_TIME"].str.replace(
             "T", " "
         )
-        data.rename(columns={"ASSESSMENT_START_TIME": "TIMESTAMP"}, inplace=True)
-        # Unify the two columns named TIMESTAMP INTO one
+        data.rename(columns={"ASSESSMENT_START_TIME": "TIMESTAMP_AUX"}, inplace=True)
+        # Unify the columns
         data["TIMESTAMP"] = data.apply(
             lambda x: (
-                x["TIMESTAMP"]
-                if pd.isnull(x["TIMESTAMP"])
-                else x["TIMESTAMP"].split(" ")[0]
+                x["TIMESTAMP_AUX"] if pd.isnull(x["TIMESTAMP"]) else x["TIMESTAMP"]
             ),
             axis=1,
         )
     if "ACCOUNT_ID" in data.columns:
-        data.rename(columns={"ACCOUNT_ID": "ACCOUNT_UID"}, inplace=True)
+        data.rename(columns={"ACCOUNT_ID": "ACCOUNT_UID_AUX"}, inplace=True)
         data["ACCOUNT_UID"] = data.apply(
             lambda x: (
-                x["ACCOUNT_ID"]
+                x["ACCOUNT_UID_AUX"]
                 if pd.isnull(x["ACCOUNT_UID"])
                 else x["ACCOUNT_UID"]
             ),
@@ -124,22 +122,23 @@ else:
         )
     # Rename the column RESOURCE_ID to RESOURCE_UID
     if "RESOURCE_ID" in data.columns:
-        data.rename(columns={"RESOURCE_ID": "RESOURCE_UID"}, inplace=True)
+        data.rename(columns={"RESOURCE_ID": "RESOURCE_UID_AUX"}, inplace=True)
         data["RESOURCE_UID"] = data.apply(
             lambda x: (
-                x["RESOURCE_ID"] if pd.isnull(x["RESOURCE_UID"]) else x["RESOURCE_UID"]
+                x["RESOURCE_UID_AUX"]
+                if pd.isnull(x["RESOURCE_UID"])
+                else x["RESOURCE_UID"]
             ),
             axis=1,
         )
     # Rename the column "SUBSCRIPTION" to "ACCOUNT_UID"
     if "SUBSCRIPTION" in data.columns:
-        data.rename(columns={"SUBSCRIPTION": "ACCOUNT_UID"}, inplace=True)
-        # Unify the two columns named ACCOUNT_UID INTO one
+        data.rename(columns={"SUBSCRIPTION": "ACCOUNT_UID_AUX"}, inplace=True)
         data["ACCOUNT_UID"] = data.apply(
             lambda x: (
-                x["ACCOUNT_UID"]
+                x["ACCOUNT_UID_AUX"]
                 if pd.isnull(x["ACCOUNT_UID"])
-                else x["ACCOUNT_UID"].split(" ")[0]
+                else x["ACCOUNT_UID"]
             ),
             axis=1,
         )
@@ -324,10 +323,12 @@ def filter_data(cloud_account_values, region_account_values, assessment_value):
                 # This handles the case where we are using v3 outputs
                 if "TIMESTAMP" not in df.columns and df["PROVIDER"].unique() == "aws":
                     # Rename the column 'ASSESSMENT_START_TIME' to 'TIMESTAMP'
-                    df["ASSESSMENT_START_TIME"] = df["ASSESSMENT_START_TIME"].str.replace(
-                        "T", " "
+                    df["ASSESSMENT_START_TIME"] = df[
+                        "ASSESSMENT_START_TIME"
+                    ].str.replace("T", " ")
+                    df.rename(
+                        columns={"ASSESSMENT_START_TIME": "TIMESTAMP"}, inplace=True
                     )
-                    df.rename(columns={"ASSESSMENT_START_TIME": "TIMESTAMP"}, inplace=True)
                     df["TIMESTAMP"] = df["TIMESTAMP"].str.replace("T", " ")
                 df["TIMESTAMP"] = pd.to_datetime(df["TIMESTAMP"])
                 df["TIMESTAMP"] = df["TIMESTAMP"].dt.strftime("%Y-%m-%d")

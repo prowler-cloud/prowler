@@ -660,6 +660,10 @@ video {
   position: relative;
 }
 
+.z-10 {
+  z-index: 10;
+}
+
 .col-span-11 {
   grid-column: span 11 / span 11;
 }
@@ -727,6 +731,14 @@ video {
 
 .inline-flex {
   display: inline-flex;
+}
+
+.min-w-36 {
+  min-width: 9rem;
+}
+
+.min-w-44 {
+  min-width: 11rem;
 }
 
 .table {
@@ -892,6 +904,10 @@ video {
 
 .bg-gradient-muted {
     background-image: linear-gradient(127.43deg, #F1F5F8 -177.68%, #636c78 87.35%);
+}
+
+.p-3 {
+  padding: 0.75rem;
 }
 
 .p-2 {

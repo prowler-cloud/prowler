@@ -149,22 +149,24 @@ def update_nav_bar(pathname):
                 [html.Ul(generate_nav_links(pathname), className="")],
                 className="flex flex-col gap-y-6",
             ),
-            html.A(
-                [
-                    html.Span(
-                        [
-                            html.Img(src="assets/favicon.ico", className="w-5"),
-                            "Subscribe to prowler SaaS",
-                        ],
-                        className="flex items-center gap-x-3",
-                    ),
-                ],
-                href="https://prowler.com/",
-                target="_blank",
-                className="block mt-300 px-3 py-3 uppercase text-xs hover:bg-prowler-stone-950 hover:border-r-4 hover:border-solid hover:border-prowler-lime",
-            ),
             html.Nav(
-                [html.Ul(generate_help_menu(), className="")],
+                [
+                    html.A(
+                        [
+                            html.Span(
+                                [
+                                    html.Img(src="assets/favicon.ico", className="w-5"),
+                                    "Subscribe to prowler SaaS",
+                                ],
+                                className="flex items-center gap-x-3",
+                            ),
+                        ],
+                        href="https://prowler.com/",
+                        target="_blank",
+                        className="block p-3 uppercase text-xs hover:bg-prowler-stone-950 hover:border-r-4 hover:border-solid hover:border-prowler-lime",
+                    ),
+                    html.Ul(generate_help_menu(), className=""),
+                ],
                 className="flex flex-col gap-y-6 mt-auto",
             ),
         ],
