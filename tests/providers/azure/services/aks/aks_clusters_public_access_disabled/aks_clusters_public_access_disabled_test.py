@@ -1,7 +1,6 @@
 from unittest import mock
 from uuid import uuid4
 
-from prowler.providers.azure.services.aks.aks_service import Cluster
 from tests.providers.azure.azure_fixtures import AZURE_SUBSCRIPTION
 
 
@@ -41,18 +40,6 @@ class Test_aks_clusters_public_access_disabled:
     def test_aks_cluster_public_fqdn(self):
         aks_client = mock.MagicMock
         cluster_id = str(uuid4())
-        aks_client.clusters = {
-            AZURE_SUBSCRIPTION: {
-                cluster_id: Cluster(
-                    name="cluster_name",
-                    public_fqdn="public_fqdn",
-                    private_fqdn=None,
-                    network_policy="network_policy",
-                    agent_pool_profiles=[mock.MagicMock(enable_node_public_ip=False)],
-                    rbac_enabled=True,
-                )
-            }
-        }
 
         with mock.patch(
             "prowler.providers.azure.services.aks.aks_clusters_public_access_disabled.aks_clusters_public_access_disabled.aks_client",
@@ -61,6 +48,22 @@ class Test_aks_clusters_public_access_disabled:
             from prowler.providers.azure.services.aks.aks_clusters_public_access_disabled.aks_clusters_public_access_disabled import (
                 aks_clusters_public_access_disabled,
             )
+            from prowler.providers.azure.services.aks.aks_service import Cluster
+
+            aks_client.clusters = {
+                AZURE_SUBSCRIPTION: {
+                    cluster_id: Cluster(
+                        name="cluster_name",
+                        public_fqdn="public_fqdn",
+                        private_fqdn=None,
+                        network_policy="network_policy",
+                        agent_pool_profiles=[
+                            mock.MagicMock(enable_node_public_ip=False)
+                        ],
+                        rbac_enabled=True,
+                    )
+                }
+            }
 
             check = aks_clusters_public_access_disabled()
             result = check.execute()
@@ -77,18 +80,6 @@ class Test_aks_clusters_public_access_disabled:
     def test_aks_cluster_private_fqdn(self):
         aks_client = mock.MagicMock
         cluster_id = str(uuid4())
-        aks_client.clusters = {
-            AZURE_SUBSCRIPTION: {
-                cluster_id: Cluster(
-                    name="cluster_name",
-                    public_fqdn="public_fqdn",
-                    private_fqdn="private_fqdn",
-                    network_policy="network_policy",
-                    agent_pool_profiles=[mock.MagicMock(enable_node_public_ip=False)],
-                    rbac_enabled=True,
-                )
-            }
-        }
 
         with mock.patch(
             "prowler.providers.azure.services.aks.aks_clusters_public_access_disabled.aks_clusters_public_access_disabled.aks_client",
@@ -97,6 +88,22 @@ class Test_aks_clusters_public_access_disabled:
             from prowler.providers.azure.services.aks.aks_clusters_public_access_disabled.aks_clusters_public_access_disabled import (
                 aks_clusters_public_access_disabled,
             )
+            from prowler.providers.azure.services.aks.aks_service import Cluster
+
+            aks_client.clusters = {
+                AZURE_SUBSCRIPTION: {
+                    cluster_id: Cluster(
+                        name="cluster_name",
+                        public_fqdn="public_fqdn",
+                        private_fqdn="private_fqdn",
+                        network_policy="network_policy",
+                        agent_pool_profiles=[
+                            mock.MagicMock(enable_node_public_ip=False)
+                        ],
+                        rbac_enabled=True,
+                    )
+                }
+            }
 
             check = aks_clusters_public_access_disabled()
             result = check.execute()
@@ -113,18 +120,6 @@ class Test_aks_clusters_public_access_disabled:
     def test_aks_cluster_private_fqdn_with_public_ip(self):
         aks_client = mock.MagicMock
         cluster_id = str(uuid4())
-        aks_client.clusters = {
-            AZURE_SUBSCRIPTION: {
-                cluster_id: Cluster(
-                    name="cluster_name",
-                    public_fqdn="public_fqdn",
-                    private_fqdn="private_fqdn",
-                    network_policy="network_policy",
-                    agent_pool_profiles=[mock.MagicMock(enable_node_public_ip=True)],
-                    rbac_enabled=True,
-                )
-            }
-        }
 
         with mock.patch(
             "prowler.providers.azure.services.aks.aks_clusters_public_access_disabled.aks_clusters_public_access_disabled.aks_client",
@@ -133,6 +128,22 @@ class Test_aks_clusters_public_access_disabled:
             from prowler.providers.azure.services.aks.aks_clusters_public_access_disabled.aks_clusters_public_access_disabled import (
                 aks_clusters_public_access_disabled,
             )
+            from prowler.providers.azure.services.aks.aks_service import Cluster
+
+            aks_client.clusters = {
+                AZURE_SUBSCRIPTION: {
+                    cluster_id: Cluster(
+                        name="cluster_name",
+                        public_fqdn="public_fqdn",
+                        private_fqdn="private_fqdn",
+                        network_policy="network_policy",
+                        agent_pool_profiles=[
+                            mock.MagicMock(enable_node_public_ip=True)
+                        ],
+                        rbac_enabled=True,
+                    )
+                }
+            }
 
             check = aks_clusters_public_access_disabled()
             result = check.execute()

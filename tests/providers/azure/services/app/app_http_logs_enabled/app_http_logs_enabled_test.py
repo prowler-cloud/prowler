@@ -4,19 +4,18 @@ from tests.providers.azure.azure_fixtures import AZURE_SUBSCRIPTION
 
 
 class Test_app_http_logs_enabled:
-
     def test_app_http_logs_enabled_no_subscriptions(self):
         app_client = mock.MagicMock
-        app_client.apps = {}
 
         with mock.patch(
             "prowler.providers.azure.services.app.app_http_logs_enabled.app_http_logs_enabled.app_client",
             new=app_client,
         ):
-
             from prowler.providers.azure.services.app.app_http_logs_enabled.app_http_logs_enabled import (
                 app_http_logs_enabled,
             )
+
+            app_client.apps = {}
 
             check = app_http_logs_enabled()
             result = check.execute()
@@ -24,7 +23,6 @@ class Test_app_http_logs_enabled:
 
     def test_app_subscriptions_empty(self):
         app_client = mock.MagicMock
-        app_client.apps = {AZURE_SUBSCRIPTION: {}}
 
         with mock.patch(
             "prowler.providers.azure.services.app.app_register_with_identity.app_register_with_identity.app_client",
@@ -34,12 +32,14 @@ class Test_app_http_logs_enabled:
                 app_register_with_identity,
             )
 
+            app_client.apps = {AZURE_SUBSCRIPTION: {}}
+
             check = app_register_with_identity()
             result = check.execute()
             assert len(result) == 0
 
     def test_no_diagnostics_settings(self):
-        app_client = mock.MagicMock()
+        app_client = mock.MagicMock
         with mock.patch(
             "prowler.providers.azure.services.app.app_http_logs_enabled.app_http_logs_enabled.app_client",
             new=app_client,
