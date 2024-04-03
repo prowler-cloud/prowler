@@ -261,8 +261,14 @@ else:
     Input("cloud-account-filter", "value"),
     Input("region-filter", "value"),
     Input("report-date-filter", "value"),
+    Input("download_link", "n_clicks"),
 )
-def filter_data(cloud_account_values, region_account_values, assessment_value):
+def filter_data(
+    cloud_account_values, region_account_values, assessment_value, n_clicks
+):
+    # Use n_clicks for vulture
+    n_clicks = n_clicks
+    # Filter the data
     filtered_data = data.copy()
     # For all the data, we will add to the status column the value 'MUTED (FAIL)' and 'MUTED (PASS)' depending on the value of the column 'STATUS' and 'MUTED'
     if "MUTED" in filtered_data.columns:
