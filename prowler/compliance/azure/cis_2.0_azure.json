@@ -673,6 +673,26 @@
       ]
     },
     {
+      "Id": "1.25",
+      "Description": "Ensure That ‘Subscription Entering AAD Directory’ and ‘Subscription Leaving AAD Directory’ Is Set To ‘Permit No One’",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "1.2 Conditional Access",
+          "Profile": "Level 2",
+          "AssessmentStatus": "Manual",
+          "Description": "Users who are set as subscription owners are able to make administrative changes to the subscriptions and move them into and out of Azure Active Directories.",
+          "RationaleStatement": "Permissions to move subscriptions in and out of Azure Active Directory must only be given to appropriate administrative personnel. A subscription that is moved into an Azure Active Directory may be within a folder to which other users have elevated permissions. This prevents loss of data or unapproved changes of the objects within by potential bad actors.",
+          "ImpactStatement": "Subscriptions will need to have these settings turned off to be moved.",
+          "RemediationProcedure": "From Azure Portal 1. From the Azure Portal Home select the portal menu 2. Select Subscriptions 3. Select Manage Policies 4. Under Subscription leaving AAD directory and Subscription entering AAD directory select Permit no one",
+          "AuditProcedure": "From Azure Portal 1. From the Azure Portal Home select the portal menu 2. Select Subscriptions 3. Select Manage Policies 4. Ensure Subscription leaving AAD directory and Subscription entering AAD directory are set to Permit no one",
+          "AdditionalInformation": "",
+          "DefaultValue": "By default Subscription leaving AAD directory and Subscription entering AAD are set to Allow everyone (default)",
+          "References": "https://docs.microsoft.com/en-us/azure/cost-management-billing/manage/manage-azure-subscription-policy:https://docs.microsoft.com/en-us/azure/active-directory/fundamentals/active-directory-how-subscriptions-associated-directory:https://docs.microsoft.com/en-us/azure/cost-management-billing/manage/manage-azure-subscription-policy:https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-identity-management#im-2-protect-identity-and-authentication-systems"
+        }
+      ]
+    },
+    {
       "Id": "2.1.1",
       "Description": "Ensure That Microsoft Defender for Servers Is Set to 'On'",
       "Checks": [
