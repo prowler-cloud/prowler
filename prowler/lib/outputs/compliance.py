@@ -163,7 +163,7 @@ def fill_compliance(output_options, finding, audit_info, file_descriptors):
                                 csv_header = generate_csv_fields(
                                     Check_Output_CSV_GCP_CIS
                                 )
-                            elif compliance.Provider == "AZURE":
+                            elif compliance.Provider == "Azure":
                                 compliance_row = Check_Output_CSV_AZURE_CIS(
                                     Provider=finding.check_metadata.Provider,
                                     Description=compliance.Description,
