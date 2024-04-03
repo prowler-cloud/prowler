@@ -1,12 +1,10 @@
-from uuid import UUID
-
 from prowler.lib.check.models import Check, Check_Report_Azure
+from prowler.providers.azure.config import GUEST_USER_ACCESS_RESTRICTICTED
 from prowler.providers.azure.services.entra.entra_client import entra_client
 
 
 class entra_policy_guest_users_access_restrictions(Check):
     def execute(self) -> Check_Report_Azure:
-        GUEST_USER_ACCESS_RESTRICTICTED = UUID("2af84b1e-32c8-42b7-82bc-daa82404023b")
         findings = []
 
         for tenant_domain, auth_policy in entra_client.authorization_policy.items():

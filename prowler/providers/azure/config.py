@@ -1,3 +1,12 @@
+from uuid import UUID
+
+# Service management API
+WINDOWS_AZURE_SERVICE_MANAGEMENT_API = "797f4846-ba00-4fd7-ba43-dac1f8f63013"
+
+# Authorization policy roles
+GUEST_USER_ACCESS_NO_RESTRICTICTED = UUID("a0b1b346-4d3e-4e8b-98f8-753987be4970")
+GUEST_USER_ACCESS_RESTRICTICTED = UUID("2af84b1e-32c8-42b7-82bc-daa82404023b")
+
 # General built-in roles
 CONTRIBUTOR_ROLE_ID = "b24988ac-6180-42a0-ab88-20f7382dd24c"
 OWNER_ROLE_ID = "8e3af657-a8ff-443c-a75c-2fe8c4bcb635"
