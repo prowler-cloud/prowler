@@ -39,7 +39,7 @@ class Test_entra_policy_restricts_user_consent_for_apps:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert result[0].subscription == f"Tenant: '{DOMAIN}'"
+            assert result[0].subscription == f"Tenant: {DOMAIN}"
             assert result[0].resource_name == "Authorization Policy"
             assert result[0].resource_id == "authorizationPolicy"
             assert (
@@ -76,7 +76,7 @@ class Test_entra_policy_restricts_user_consent_for_apps:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert result[0].subscription == f"Tenant: '{DOMAIN}'"
+            assert result[0].subscription == f"Tenant: {DOMAIN}"
             assert result[0].resource_name == "Authorization Policy"
             assert result[0].resource_id == auth_policy.id
             assert (
@@ -116,7 +116,7 @@ class Test_entra_policy_restricts_user_consent_for_apps:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
-            assert result[0].subscription == f"Tenant: '{DOMAIN}'"
+            assert result[0].subscription == f"Tenant: {DOMAIN}"
             assert result[0].resource_name == "Authorization Policy"
             assert result[0].resource_id == auth_policy.id
             assert (
@@ -158,7 +158,7 @@ class Test_entra_policy_restricts_user_consent_for_apps:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert result[0].subscription == f"Tenant: '{DOMAIN}'"
+            assert result[0].subscription == f"Tenant: {DOMAIN}"
             assert result[0].resource_name == "Authorization Policy"
             assert result[0].resource_id == auth_policy.id
             assert (
