@@ -61,7 +61,8 @@ def load_csv_files(csv_files):
     for file in csv_files:
         df = pd.read_csv(file, sep=";", on_bad_lines="skip")
         if "CHECK_ID" in df.columns:
-            dfs.append(df.astype(str))
+            if "TIMESTAMP" in df.columns or df["PROVIDER"].unique() == "aws":
+                dfs.append(df.astype(str))
     # Handle the case where there are no files
     try:
         data = pd.concat(dfs, ignore_index=True)
@@ -101,24 +102,29 @@ else:
         data["ASSESSMENT_START_TIME"] = data["ASSESSMENT_START_TIME"].str.replace(
             "T", " "
         )
-        # for each row, we are going to take the ASSESMENT_START_TIME if is not null and put it in the TIMESTAMP column
+        data.rename(columns={"ASSESSMENT_START_TIME": "TIMESTAMP"}, inplace=True)
+        # Unify the two columns named TIMESTAMP INTO one
         data["TIMESTAMP"] = data.apply(
             lambda x: (
-                x["ASSESSMENT_START_TIME"]
+                x["TIMESTAMP"]
                 if pd.isnull(x["TIMESTAMP"])
-                else x["TIMESTAMP"]
+                else x["TIMESTAMP"].split(" ")[0]
             ),
             axis=1,
         )
     if "ACCOUNT_ID" in data.columns:
+        data.rename(columns={"ACCOUNT_ID": "ACCOUNT_UID"}, inplace=True)
         data["ACCOUNT_UID"] = data.apply(
             lambda x: (
-                x["ACCOUNT_ID"] if pd.isnull(x["ACCOUNT_UID"]) else x["ACCOUNT_UID"]
+                x["ACCOUNT_ID"]
+                if pd.isnull(x["ACCOUNT_UID"])
+                else x["ACCOUNT_UID"]
             ),
             axis=1,
         )
     # Rename the column RESOURCE_ID to RESOURCE_UID
     if "RESOURCE_ID" in data.columns:
+        data.rename(columns={"RESOURCE_ID": "RESOURCE_UID"}, inplace=True)
         data["RESOURCE_UID"] = data.apply(
             lambda x: (
                 x["RESOURCE_ID"] if pd.isnull(x["RESOURCE_UID"]) else x["RESOURCE_UID"]
@@ -127,9 +133,13 @@ else:
         )
     # Rename the column "SUBSCRIPTION" to "ACCOUNT_UID"
     if "SUBSCRIPTION" in data.columns:
+        data.rename(columns={"SUBSCRIPTION": "ACCOUNT_UID"}, inplace=True)
+        # Unify the two columns named ACCOUNT_UID INTO one
         data["ACCOUNT_UID"] = data.apply(
             lambda x: (
-                x["SUBSCRIPTION"] if pd.isnull(x["ACCOUNT_UID"]) else x["ACCOUNT_UID"]
+                x["ACCOUNT_UID"]
+                if pd.isnull(x["ACCOUNT_UID"])
+                else x["ACCOUNT_UID"].split(" ")[0]
             ),
             axis=1,
         )
@@ -310,28 +320,19 @@ def filter_data(cloud_account_values, region_account_values, assessment_value):
     for file in csv_files:
         df = pd.read_csv(file, sep=";", on_bad_lines="skip")
         if "CHECK_ID" in df.columns:
-            # This handles the case where we are using v3 outputs
-            if "TIMESTAMP" not in df.columns:
-                # Rename the column 'ASSESSMENT_START_TIME' to 'TIMESTAMP'
-                df.rename(columns={"ASSESSMENT_START_TIME": "TIMESTAMP"}, inplace=True)
-                df["TIMESTAMP"] = df["TIMESTAMP"].str.replace("T", " ")
-            elif "ASSESSMENT_START_TIME" in df.columns:
-                df["ASSESSMENT_START_TIME"] = df["ASSESSMENT_START_TIME"].str.replace(
-                    "T", " "
-                )
-                # for each row, we are going to take the ASSESMENT_START_TIME if is not null and put it in the TIMESTAMP column
-                df["TIMESTAMP"] = df.apply(
-                    lambda x: (
-                        x["ASSESSMENT_START_TIME"]
-                        if pd.isnull(x["TIMESTAMP"])
-                        else x["TIMESTAMP"]
-                    ),
-                    axis=1,
-                )
-            df["TIMESTAMP"] = pd.to_datetime(df["TIMESTAMP"])
-            df["TIMESTAMP"] = df["TIMESTAMP"].dt.strftime("%Y-%m-%d")
-            if df["TIMESTAMP"][0] == updated_assessment_value:
-                list_files.append(file)
+            if "TIMESTAMP" in df.columns or df["PROVIDER"].unique() == "aws":
+                # This handles the case where we are using v3 outputs
+                if "TIMESTAMP" not in df.columns and df["PROVIDER"].unique() == "aws":
+                    # Rename the column 'ASSESSMENT_START_TIME' to 'TIMESTAMP'
+                    df["ASSESSMENT_START_TIME"] = df["ASSESSMENT_START_TIME"].str.replace(
+                        "T", " "
+                    )
+                    df.rename(columns={"ASSESSMENT_START_TIME": "TIMESTAMP"}, inplace=True)
+                    df["TIMESTAMP"] = df["TIMESTAMP"].str.replace("T", " ")
+                df["TIMESTAMP"] = pd.to_datetime(df["TIMESTAMP"])
+                df["TIMESTAMP"] = df["TIMESTAMP"].dt.strftime("%Y-%m-%d")
+                if df["TIMESTAMP"][0] == updated_assessment_value:
+                    list_files.append(file)
     # append all the names of the files
     files_names = []
     for file in list_files:
@@ -418,18 +419,16 @@ def filter_data(cloud_account_values, region_account_values, assessment_value):
     # Filter REGION
 
     # Check if filtered data contains an aws account
-    # TODO - Handle azure locations
-    if "LOCATION" in filtered_data.columns:
-        filtered_data.rename(columns={"LOCATION": "REGION"}, inplace=True)
     if "REGION" not in filtered_data.columns:
         filtered_data["REGION"] = "-"
+    if "LOCATION" in filtered_data.columns:
+        filtered_data.rename(columns={"LOCATION": "REGION"}, inplace=True)
     if region_account_values == ["All"]:
         updated_region_account_values = filtered_data["REGION"].unique()
     elif "All" in region_account_values and len(region_account_values) > 1:
         # Remove 'All' from the list
         region_account_values.remove("All")
         updated_region_account_values = region_account_values
-
     elif len(region_account_values) == 0:
         updated_region_account_values = filtered_data["REGION"].unique()
         region_account_values = ["All"]
