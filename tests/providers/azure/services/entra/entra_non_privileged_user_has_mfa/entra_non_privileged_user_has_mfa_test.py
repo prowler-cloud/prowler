@@ -77,7 +77,10 @@ class Test_entra_non_privileged_user_has_mfa:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert result[0].status_extended == "User 'foo' does not have MFA enabled."
+            assert (
+                result[0].status_extended
+                == "Non-privileged user foo does not have MFA."
+            )
             assert result[0].resource_name == f"foo@{DOMAIN}"
             assert result[0].resource_id == user_id
             assert result[0].subscription == f"Tenant: {DOMAIN}"
@@ -114,7 +117,7 @@ class Test_entra_non_privileged_user_has_mfa:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
-            assert result[0].status_extended == "User 'foo' has MFA enabled."
+            assert result[0].status_extended == "Non-privileged user foo has MFA."
             assert result[0].resource_name == f"foo@{DOMAIN}"
             assert result[0].resource_id == user_id
             assert result[0].subscription == f"Tenant: {DOMAIN}"

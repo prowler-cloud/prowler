@@ -38,6 +38,7 @@ def add_manual_controls(
             manual_finding.region = ""
             manual_finding.location = ""
             manual_finding.project_id = ""
+            manual_finding.subscription = ""
             manual_finding.namespace = ""
             fill_compliance(
                 output_options,

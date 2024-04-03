@@ -2306,6 +2306,7 @@
           "ap-southeast-1",
           "ap-southeast-2",
           "ap-southeast-3",
+          "ap-southeast-4",
           "ca-central-1",
           "eu-central-1",
           "eu-central-2",
@@ -2833,6 +2834,22 @@
           "cn-north-1",
           "cn-northwest-1"
         ],
+        "aws-us-gov": []
+      }
+    },
+    "deadline-cloud": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "eu-central-1",
+          "eu-west-1",
+          "us-east-1",
+          "us-east-2",
+          "us-west-2"
+        ],
+        "aws-cn": [],
         "aws-us-gov": []
       }
     },

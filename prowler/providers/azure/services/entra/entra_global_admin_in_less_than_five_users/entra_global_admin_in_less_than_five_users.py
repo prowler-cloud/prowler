@@ -2,14 +2,14 @@ from prowler.lib.check.models import Check, Check_Report_Azure
 from prowler.providers.azure.services.entra.entra_client import entra_client
 
 
-class entra_users_less_than_five_global_admins(Check):
+class entra_global_admin_in_less_than_five_users(Check):
     def execute(self) -> Check_Report_Azure:
         findings = []
 
         for tenant_domain, directory_roles in entra_client.directory_roles.items():
             report = Check_Report_Azure(self.metadata())
             report.status = "FAIL"
-            report.subscription = f"Tenant: '{tenant_domain}'"
+            report.subscription = f"Tenant: {tenant_domain}"
             report.resource_name = "Global Administrator"
 
             if "Global Administrator" in directory_roles:

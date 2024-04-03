@@ -20,12 +20,12 @@ class entra_privileged_user_has_mfa(Check):
                     report.resource_name = user_domain_name
                     report.resource_id = user.id
                     report.status_extended = (
-                        f"User '{user.name}' does not have MFA enabled."
+                        f"Privileged user {user.name} does not have MFA."
                     )
 
                     if len(user.authentication_methods) > 1:
                         report.status = "PASS"
-                        report.status_extended = f"User '{user.name}' has MFA enabled."
+                        report.status_extended = f"Privileged user {user.name} has MFA."
 
                     findings.append(report)
 

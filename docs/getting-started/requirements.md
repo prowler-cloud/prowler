@@ -64,16 +64,17 @@ The other three cases does not need additional configuration, `--az-cli-auth` an
 
 To use each one you need to pass the proper flag to the execution. Prowler for Azure handles two types of permission scopes, which are:
 
-- **Azure Active Directory permissions**: Used to retrieve metadata from the identity assumed by Prowler and future AAD checks (not mandatory to have access to execute the tool)
+- **Microsoft Entra ID permissions**: Used to retrieve metadata from the identity assumed by Prowler (not mandatory to have access to execute the tool).
 - **Subscription scope permissions**: Required to launch the checks against your resources, mandatory to launch the tool.
 
 
-#### Azure Active Directory scope
+#### Microsoft Entra ID scope
 
 Microsoft Entra ID (AAD earlier) permissions required by the tool are the following:
 
 - `Directory.Read.All`
 - `Policy.Read.All`
+- `UserAuthenticationMethod.Read.All`
 
 The best way to assign it is through the Azure web console:
 
@@ -86,9 +87,10 @@ The best way to assign it is through the Azure web console:
 5. In the left menu bar, select "API permissions"
 6. Then click on "+ Add a permission" and select "Microsoft Graph"
 7. Once in the "Microsoft Graph" view, select "Application permissions"
-8. Finally, search for "Directory" and "Policy" and select the following permissions:
+8. Finally, search for "Directory", "Policy" and "UserAuthenticationMethod" select the following permissions:
     - `Directory.Read.All`
     - `Policy.Read.All`
+    - `UserAuthenticationMethod.Read.All`
     ![EntraID Permissions](../img/AAD-permissions.png)
 
 

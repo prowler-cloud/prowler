@@ -9,7 +9,7 @@ class entra_policy_restricts_user_consent_for_apps(Check):
         for tenant_domain, auth_policy in entra_client.authorization_policy.items():
             report = Check_Report_Azure(self.metadata())
             report.status = "FAIL"
-            report.subscription = f"Tenant: '{tenant_domain}'"
+            report.subscription = f"Tenant: {tenant_domain}"
             report.resource_name = getattr(auth_policy, "name", "Authorization Policy")
             report.resource_id = getattr(auth_policy, "id", "authorizationPolicy")
             report.status_extended = "Entra allows users to consent apps accessing company data on their behalf"

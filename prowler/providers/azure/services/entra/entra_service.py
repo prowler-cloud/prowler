@@ -12,6 +12,7 @@ from pydantic import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.providers.azure.azure_provider import AzureProvider
+from prowler.providers.azure.config import GUEST_USER_ACCESS_NO_RESTRICTICTED
 from prowler.providers.azure.lib.service.service import AzureService
 
 
@@ -76,9 +77,7 @@ class Entra(AzureService):
 
     async def __get_authorization_policy__(self):
         logger.info("Entra - Getting authorization policy...")
-        GUEST_USER_ACCESS_NO_RESTRICTICTED = UUID(
-            "a0b1b346-4d3e-4e8b-98f8-753987be4970"
-        )
+
         authorization_policy = {}
         try:
             for tenant, client in self.clients.items():

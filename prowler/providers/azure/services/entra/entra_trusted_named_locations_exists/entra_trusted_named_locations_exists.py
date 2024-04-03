@@ -9,7 +9,7 @@ class entra_trusted_named_locations_exists(Check):
         for tenant, named_locations in entra_client.named_locations.items():
             report = Check_Report_Azure(self.metadata())
             report.status = "FAIL"
-            report.subscription = f"Tenant: '{tenant}'"
+            report.subscription = f"Tenant: {tenant}"
             report.resource_name = "Named Locations"
             report.resource_id = "Named Locations"
             report.status_extended = (

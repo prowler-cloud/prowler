@@ -45,7 +45,7 @@ class Test_entra_policy_guest_invite_only_for_admin_roles:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert result[0].subscription == f"Tenant: '{DOMAIN}'"
+            assert result[0].subscription == f"Tenant: {DOMAIN}"
             assert result[0].resource_name == "Authorization Policy"
             assert result[0].resource_id == "authorizationPolicy"
             assert (
@@ -91,7 +91,7 @@ class Test_entra_policy_guest_invite_only_for_admin_roles:
             )
             assert result[0].resource_name == "TestPolicy"
             assert result[0].resource_id == id
-            assert result[0].subscription == f"Tenant: '{DOMAIN}'"
+            assert result[0].subscription == f"Tenant: {DOMAIN}"
 
     def test_entra_tenant_policy_allow_invites_from_admins(self):
         entra_client = mock.MagicMock
@@ -131,7 +131,7 @@ class Test_entra_policy_guest_invite_only_for_admin_roles:
             )
             assert result[0].resource_name == "TestPolicy"
             assert result[0].resource_id == id
-            assert result[0].subscription == f"Tenant: '{DOMAIN}'"
+            assert result[0].subscription == f"Tenant: {DOMAIN}"
 
     def test_entra_tenant_policy_allow_invites_from_none(self):
         entra_client = mock.MagicMock
@@ -171,4 +171,4 @@ class Test_entra_policy_guest_invite_only_for_admin_roles:
             )
             assert result[0].resource_name == "TestPolicy"
             assert result[0].resource_id == id
-            assert result[0].subscription == f"Tenant: '{DOMAIN}'"
+            assert result[0].subscription == f"Tenant: {DOMAIN}"

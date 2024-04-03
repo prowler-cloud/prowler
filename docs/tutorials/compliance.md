@@ -30,6 +30,8 @@ Currently, the available frameworks are:
 - `cis_1.5_aws`
 - `cis_2.0_aws`
 - `cis_2.0_gcp`
+- `cis_2.0_azure`
+- `cis_2.1_azure`
 - `cis_3.0_aws`
 - `cis_1.8_kubernetes`
 - `cisa_aws`
