@@ -37,6 +37,7 @@ nav:
       - Miscellaneous: tutorials/misc.md
       - Reporting: tutorials/reporting.md
       - Compliance: tutorials/compliance.md
+      - Dashboard: tutorials/dashboard.md
       - Quick Inventory: tutorials/quick-inventory.md
       - Slack Integration: tutorials/integrations.md
       - Configuration File: tutorials/configuration_file.md
