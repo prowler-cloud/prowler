@@ -1,11 +1,11 @@
 from prowler.lib.check.models import Check, Check_Report_Azure
+from prowler.providers.azure.config import WINDOWS_AZURE_SERVICE_MANAGEMENT_API
 from prowler.providers.azure.services.entra.entra_client import entra_client
 
 
 class entra_conditional_access_policy_require_mfa_for_management_api(Check):
     def execute(self) -> Check_Report_Azure:
         findings = []
-        WINDOWS_AZURE_SERVICE_MANAGEMENT_API = "797f4846-ba00-4fd7-ba43-dac1f8f63013"
 
         for (
             tenant_name,
