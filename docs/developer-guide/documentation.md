@@ -1,6 +1,6 @@
 ## Contribute with documentation
 
-We use `mkdocs` to build this Prowler documentation site so you can easily contribute back with new docs or improving them.
+We use `mkdocs` to build this Prowler documentation site so you can easily contribute back with new docs or improving them. To install all necessary dependencies use `poetry install --with docs`.
 
 1. Install `mkdocs` with your favorite package manager.
 2. Inside the `prowler` repository folder run `mkdocs serve` and point your browser to `http://localhost:8000` and you will see live changes to your local copy of this documentation site.
