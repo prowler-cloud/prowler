@@ -244,6 +244,14 @@ def display_data(
     # Add the column ACCOUNTID to the data if the provider is kubernetes
     if "kubernetes" in analytics_input:
         data.rename(columns={"CONTEXT": "ACCOUNTID"}, inplace=True)
+        # Clean k8s context name
+        for account in data["ACCOUNTID"].unique():
+            if "aws_" in account and "kubernetes" in list(
+                data[data["ACCOUNTID"] == account]["PROVIDER"]
+            ):
+                data["ACCOUNTID"] = data["ACCOUNTID"].replace(
+                    account, account.split("_")[4]
+                )
         data.rename(columns={"NAMESPACE": "REGION"}, inplace=True)
         if "REQUIREMENTS_ATTRIBUTES_PROFILE" in data.columns:
             data["REQUIREMENTS_ATTRIBUTES_PROFILE"] = data[
