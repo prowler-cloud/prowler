@@ -61,7 +61,8 @@ def load_csv_files(csv_files):
     for file in csv_files:
         df = pd.read_csv(file, sep=";", on_bad_lines="skip")
         if "CHECK_ID" in df.columns:
-            dfs.append(df.astype(str))
+            if "TIMESTAMP" in df.columns or df["PROVIDER"].unique() == "aws":
+                dfs.append(df.astype(str))
     # Handle the case where there are no files
     try:
         data = pd.concat(dfs, ignore_index=True)
@@ -101,35 +102,43 @@ else:
         data["ASSESSMENT_START_TIME"] = data["ASSESSMENT_START_TIME"].str.replace(
             "T", " "
         )
-        # for each row, we are going to take the ASSESMENT_START_TIME if is not null and put it in the TIMESTAMP column
+        data.rename(columns={"ASSESSMENT_START_TIME": "TIMESTAMP_AUX"}, inplace=True)
+        # Unify the columns
         data["TIMESTAMP"] = data.apply(
             lambda x: (
-                x["ASSESSMENT_START_TIME"]
-                if pd.isnull(x["TIMESTAMP"])
-                else x["TIMESTAMP"]
+                x["TIMESTAMP_AUX"] if pd.isnull(x["TIMESTAMP"]) else x["TIMESTAMP"]
             ),
             axis=1,
         )
     if "ACCOUNT_ID" in data.columns:
+        data.rename(columns={"ACCOUNT_ID": "ACCOUNT_UID_AUX"}, inplace=True)
         data["ACCOUNT_UID"] = data.apply(
             lambda x: (
-                x["ACCOUNT_ID"] if pd.isnull(x["ACCOUNT_UID"]) else x["ACCOUNT_UID"]
+                x["ACCOUNT_UID_AUX"]
+                if pd.isnull(x["ACCOUNT_UID"])
+                else x["ACCOUNT_UID"]
             ),
             axis=1,
         )
     # Rename the column RESOURCE_ID to RESOURCE_UID
     if "RESOURCE_ID" in data.columns:
+        data.rename(columns={"RESOURCE_ID": "RESOURCE_UID_AUX"}, inplace=True)
         data["RESOURCE_UID"] = data.apply(
             lambda x: (
-                x["RESOURCE_ID"] if pd.isnull(x["RESOURCE_UID"]) else x["RESOURCE_UID"]
+                x["RESOURCE_UID_AUX"]
+                if pd.isnull(x["RESOURCE_UID"])
+                else x["RESOURCE_UID"]
             ),
             axis=1,
         )
     # Rename the column "SUBSCRIPTION" to "ACCOUNT_UID"
     if "SUBSCRIPTION" in data.columns:
+        data.rename(columns={"SUBSCRIPTION": "ACCOUNT_UID_AUX"}, inplace=True)
         data["ACCOUNT_UID"] = data.apply(
             lambda x: (
-                x["SUBSCRIPTION"] if pd.isnull(x["ACCOUNT_UID"]) else x["ACCOUNT_UID"]
+                x["ACCOUNT_UID_AUX"]
+                if pd.isnull(x["ACCOUNT_UID"])
+                else x["ACCOUNT_UID"]
             ),
             axis=1,
         )
@@ -252,8 +261,14 @@ else:
     Input("cloud-account-filter", "value"),
     Input("region-filter", "value"),
     Input("report-date-filter", "value"),
+    Input("download_link", "n_clicks"),
 )
-def filter_data(cloud_account_values, region_account_values, assessment_value):
+def filter_data(
+    cloud_account_values, region_account_values, assessment_value, n_clicks
+):
+    # Use n_clicks for vulture
+    n_clicks = n_clicks
+    # Filter the data
     filtered_data = data.copy()
     # For all the data, we will add to the status column the value 'MUTED (FAIL)' and 'MUTED (PASS)' depending on the value of the column 'STATUS' and 'MUTED'
     if "MUTED" in filtered_data.columns:
@@ -310,28 +325,21 @@ def filter_data(cloud_account_values, region_account_values, assessment_value):
     for file in csv_files:
         df = pd.read_csv(file, sep=";", on_bad_lines="skip")
         if "CHECK_ID" in df.columns:
-            # This handles the case where we are using v3 outputs
-            if "TIMESTAMP" not in df.columns:
-                # Rename the column 'ASSESSMENT_START_TIME' to 'TIMESTAMP'
-                df.rename(columns={"ASSESSMENT_START_TIME": "TIMESTAMP"}, inplace=True)
-                df["TIMESTAMP"] = df["TIMESTAMP"].str.replace("T", " ")
-            elif "ASSESSMENT_START_TIME" in df.columns:
-                df["ASSESSMENT_START_TIME"] = df["ASSESSMENT_START_TIME"].str.replace(
-                    "T", " "
-                )
-                # for each row, we are going to take the ASSESMENT_START_TIME if is not null and put it in the TIMESTAMP column
-                df["TIMESTAMP"] = df.apply(
-                    lambda x: (
-                        x["ASSESSMENT_START_TIME"]
-                        if pd.isnull(x["TIMESTAMP"])
-                        else x["TIMESTAMP"]
-                    ),
-                    axis=1,
-                )
-            df["TIMESTAMP"] = pd.to_datetime(df["TIMESTAMP"])
-            df["TIMESTAMP"] = df["TIMESTAMP"].dt.strftime("%Y-%m-%d")
-            if df["TIMESTAMP"][0] == updated_assessment_value:
-                list_files.append(file)
+            if "TIMESTAMP" in df.columns or df["PROVIDER"].unique() == "aws":
+                # This handles the case where we are using v3 outputs
+                if "TIMESTAMP" not in df.columns and df["PROVIDER"].unique() == "aws":
+                    # Rename the column 'ASSESSMENT_START_TIME' to 'TIMESTAMP'
+                    df["ASSESSMENT_START_TIME"] = df[
+                        "ASSESSMENT_START_TIME"
+                    ].str.replace("T", " ")
+                    df.rename(
+                        columns={"ASSESSMENT_START_TIME": "TIMESTAMP"}, inplace=True
+                    )
+                    df["TIMESTAMP"] = df["TIMESTAMP"].str.replace("T", " ")
+                df["TIMESTAMP"] = pd.to_datetime(df["TIMESTAMP"])
+                df["TIMESTAMP"] = df["TIMESTAMP"].dt.strftime("%Y-%m-%d")
+                if df["TIMESTAMP"][0] == updated_assessment_value:
+                    list_files.append(file)
     # append all the names of the files
     files_names = []
     for file in list_files:
@@ -418,18 +426,16 @@ def filter_data(cloud_account_values, region_account_values, assessment_value):
     # Filter REGION
 
     # Check if filtered data contains an aws account
-    # TODO - Handle azure locations
-    if "LOCATION" in filtered_data.columns:
-        filtered_data.rename(columns={"LOCATION": "REGION"}, inplace=True)
     if "REGION" not in filtered_data.columns:
         filtered_data["REGION"] = "-"
+    if "LOCATION" in filtered_data.columns:
+        filtered_data.rename(columns={"LOCATION": "REGION"}, inplace=True)
     if region_account_values == ["All"]:
         updated_region_account_values = filtered_data["REGION"].unique()
     elif "All" in region_account_values and len(region_account_values) > 1:
         # Remove 'All' from the list
         region_account_values.remove("All")
         updated_region_account_values = region_account_values
-
     elif len(region_account_values) == 0:
         updated_region_account_values = filtered_data["REGION"].unique()
         region_account_values = ["All"]
@@ -574,9 +580,11 @@ def filter_data(cloud_account_values, region_account_values, assessment_value):
             "PASS": "#54d283",
             "INFO": "#2684FF",
             "MANUAL": "#636c78",
+            "WARNING": "#fca903",
             "MUTED (FAIL)": "#fca903",
             "MUTED (PASS)": "#03fccf",
             "MUTED (MANUAL)": "#b33696",
+            "MUTED (WARNING)": "#c7a45d",
         }
         # Define custom colors
         color_mapping = {
@@ -617,13 +625,8 @@ def filter_data(cloud_account_values, region_account_values, assessment_value):
             style={"height": "300px", "overflow-y": "auto"},
         )
 
-        # Figure for the bar chart
-
         color_bars = [
-            color_mapping["critical"],
-            color_mapping["high"],
-            color_mapping["medium"],
-            color_mapping["low"],
+            color_mapping[severity] for severity in df1["SEVERITY"].value_counts().index
         ]
 
         figure_bars = go.Figure(
@@ -651,11 +654,17 @@ def filter_data(cloud_account_values, region_account_values, assessment_value):
         )
 
         # TABLE
-        severity_dict = {"critical": 3, "high": 2, "medium": 1, "low": 0}
+        severity_dict = {
+            "critical": 4,
+            "high": 3,
+            "medium": 2,
+            "low": 1,
+            "informational": 0,
+        }
         fails_findings["SEVERITY"] = fails_findings["SEVERITY"].map(severity_dict)
         fails_findings = fails_findings.sort_values(by=["SEVERITY"], ascending=False)
         fails_findings["SEVERITY"] = fails_findings["SEVERITY"].replace(
-            {3: "critical", 2: "high", 1: "medium", 0: "low"}
+            {4: "critical", 3: "high", 2: "medium", 1: "low", 0: "informational"}
         )
         table_data = fails_findings.copy()
 
