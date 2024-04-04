@@ -1,7 +1,7 @@
 # Compliance
 Prowler allows you to execute checks based on requirements defined in compliance frameworks. By default, it will execute and give you an overview of the status of each compliance framework:
 
-<img src="../img/compliance.png"/>
+<img src="./img/compliance/compliance.png"/>
 
 > You can find CSVs containing detailed compliance results inside the compliance folder within Prowler's output folder.
 
@@ -12,7 +12,7 @@ prowler <provider> --compliance <compliance_framework>
 ```
 Standard results will be shown and additionally the framework information as the sample below for CIS AWS 1.5. For details a CSV file has been generated as well.
 
-<img src="../img/compliance-cis-sample1.png"/>
+<img src="./img/compliance/compliance-cis-sample1.png"/>
 
 ## List Available Compliance Frameworks
 In order to see which compliance frameworks are cover by Prowler, you can use option `--list-compliance`:
