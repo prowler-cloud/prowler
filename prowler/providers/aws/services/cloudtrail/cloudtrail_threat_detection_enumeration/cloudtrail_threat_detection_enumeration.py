@@ -47,7 +47,6 @@ class cloudtrail_threat_detection_enumeration(Check):
                             event_name
                         )
         for source_ip, actions in potential_enumeration.items():
-            print(len(actions) / len(ENUMERATION_ACTIONS))
             if len(actions) / len(ENUMERATION_ACTIONS) > THRESHOLD:
                 found_potential_enumeration = True
                 report = Check_Report_AWS(self.metadata())
