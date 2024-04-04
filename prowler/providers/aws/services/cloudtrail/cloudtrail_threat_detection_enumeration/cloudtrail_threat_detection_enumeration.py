@@ -51,19 +51,21 @@ class cloudtrail_threat_detection_enumeration(Check):
             if len(actions) / len(ENUMERATION_ACTIONS) > THRESHOLD:
                 found_potential_enumeration = True
                 report = Check_Report_AWS(self.metadata())
-                report.region = trail.region
-                report.resource_id = trail.name
-                report.resource_arn = trail.arn
-                report.resource_tags = trail.tags
+                report.region = cloudtrail_client.region
+                report.resource_id = cloudtrail_client.audited_account
+                report.resource_arn = cloudtrail_client.__get_trail_arn_template__(
+                    cloudtrail_client.region
+                )
                 report.status = "FAIL"
                 report.status_extended = f"Potential enumeration attack detected from source IP {source_ip} with an threshold of {ip_threshold}."
                 findings.append(report)
         if not found_potential_enumeration:
             report = Check_Report_AWS(self.metadata())
-            report.region = trail.region
-            report.resource_id = trail.name
-            report.resource_arn = trail.arn
-            report.resource_tags = trail.tags
+            report.region = cloudtrail_client.region
+            report.resource_id = cloudtrail_client.audited_account
+            report.resource_arn = cloudtrail_client.__get_trail_arn_template__(
+                cloudtrail_client.region
+            )
             report.status = "PASS"
             report.status_extended = "No potential enumeration attack detected."
             findings.append(report)

@@ -573,16 +573,14 @@ def execute_checks(
                 )
     else:
         # Prepare your messages
-        messages = [
-            f"{Style.BRIGHT}Config File: {Style.RESET_ALL}{Fore.YELLOW}{config_file}{Style.RESET_ALL}"
-        ]
+        messages = [f"Config File: {Fore.YELLOW}{config_file}{Style.RESET_ALL}"]
         if mutelist_file:
             messages.append(
-                f"{Style.BRIGHT}Mute List File: {Style.RESET_ALL}{Fore.YELLOW}{mutelist_file}{Style.RESET_ALL}"
+                f"Mute List File: {Fore.YELLOW}{mutelist_file}{Style.RESET_ALL}"
             )
         if global_provider.type == "aws":
             messages.append(
-                f"{Style.BRIGHT}Scanning unused services and resources: {Style.RESET_ALL}{Fore.YELLOW}{global_provider.scan_unused_services}{Style.RESET_ALL}"
+                f"Scanning unused services and resources: {Fore.YELLOW}{global_provider.scan_unused_services}{Style.RESET_ALL}"
             )
         report_title = (
             f"{Style.BRIGHT}Using the following configuration:{Style.RESET_ALL}"
@@ -595,7 +593,7 @@ def execute_checks(
 
         check_noun = plural_string if checks_num > 1 else singular_string
         print(
-            f"{Style.BRIGHT}Executing {checks_num} {check_noun}, please wait...{Style.RESET_ALL}\n"
+            f"{Style.BRIGHT}Executing {checks_num} {check_noun}, please wait...{Style.RESET_ALL}"
         )
         with alive_bar(
             total=len(checks_to_execute),

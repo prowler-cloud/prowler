@@ -184,21 +184,9 @@ def print_boxes(messages: list, report_title: str):
     Args:
         messages (list): A list of messages to print.
     """
-    max_length = 100
-    # Adding a bit of padding for aesthetics
-    padding = 4
-    box_width = max_length + padding
-    # Print the top border
-    print(f"{Style.BRIGHT}+{'-' * (box_width)}+{Style.RESET_ALL}")
-    # Print report title
-    space_padding = box_width - len(strip_ansi_codes(report_title)) - 1
-    print(
-        f"{Style.BRIGHT}|{Style.RESET_ALL} {report_title}{' ' * space_padding}{Style.BRIGHT}|{Style.RESET_ALL}"
-    )
-    print(f"{Style.BRIGHT}+{'-' * (box_width)}+{Style.RESET_ALL}")
-
+    print(f"{Style.BRIGHT}-> {report_title}{Style.RESET_ALL}")
     for message in messages:
         print(
-            f"{Style.BRIGHT}{Style.RESET_ALL}  ·{message}{Style.BRIGHT}{Style.RESET_ALL}"
+            f"{Style.BRIGHT}{Style.RESET_ALL}  · {message}{Style.BRIGHT}{Style.RESET_ALL}"
         )
     print()

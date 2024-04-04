@@ -267,17 +267,17 @@ class KubernetesProvider(Provider):
         """
         if self._identity.context == "In-Cluster":
             report_lines = [
-                f"{Style.BRIGHT}Kubernetes Pod:{Style.RESET_ALL} {Fore.YELLOW}prowler{Style.RESET_ALL}",
-                f"{Style.BRIGHT}Namespace:{Style.RESET_ALL} {Fore.YELLOW}{self.get_pod_current_namespace()}{Style.RESET_ALL}",
+                f"Kubernetes Pod: {Fore.YELLOW}prowler{Style.RESET_ALL}",
+                f"Namespace: {Fore.YELLOW}{self.get_pod_current_namespace()}{Style.RESET_ALL}",
             ]
         else:
             roles = self.get_context_user_roles()
             roles_str = ", ".join(roles) if roles else "No associated Roles"
             report_lines = [
-                f"{Style.BRIGHT}Kubernetes Cluster:{Style.RESET_ALL} {Fore.YELLOW}{self._identity.cluster}{Style.RESET_ALL}",
-                f"{Style.BRIGHT}User:{Style.RESET_ALL} {Fore.YELLOW}{self._identity.user}{Style.RESET_ALL}",
-                f"{Style.BRIGHT}Namespaces:{Style.RESET_ALL} {Fore.YELLOW}{', '.join(self.namespaces)}{Style.RESET_ALL}",
-                f"{Style.BRIGHT}Roles:{Style.RESET_ALL} {Fore.YELLOW}{roles_str}{Style.RESET_ALL}",
+                f"Kubernetes Cluster: {Fore.YELLOW}{self._identity.cluster}{Style.RESET_ALL}",
+                f"User: {Fore.YELLOW}{self._identity.user}{Style.RESET_ALL}",
+                f"Namespaces: {Fore.YELLOW}{', '.join(self.namespaces)}{Style.RESET_ALL}",
+                f"Roles: {Fore.YELLOW}{roles_str}{Style.RESET_ALL}",
             ]
         report_title = (
             f"{Style.BRIGHT}Using the Kubernetes credentials below:{Style.RESET_ALL}"
