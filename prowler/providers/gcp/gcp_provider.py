@@ -169,8 +169,8 @@ class GcpProvider(Provider):
         # TODO: Beautify audited profile, set "default" if there is no profile set
         # TODO: improve print_credentials with more data like name, number, organization
         report_lines = [
-            f"{Style.BRIGHT}GCP Account:{Style.RESET_ALL} {Fore.YELLOW}{self.identity.profile}{Style.RESET_ALL}",
-            f"{Style.BRIGHT}GCP Project IDs:{Style.RESET_ALL} {Fore.YELLOW}{', '.join(self.project_ids)}{Style.RESET_ALL}",
+            f"GCP Account: {Fore.YELLOW}{self.identity.profile}{Style.RESET_ALL}",
+            f"GCP Project IDs: {Fore.YELLOW}{', '.join(self.project_ids)}{Style.RESET_ALL}",
         ]
         report_title = (
             f"{Style.BRIGHT}Using the GCP credentials below:{Style.RESET_ALL}"

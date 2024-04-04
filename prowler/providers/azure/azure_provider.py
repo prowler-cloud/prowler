@@ -177,10 +177,10 @@ class AzureProvider(Provider):
             intermediate = key + ": " + value
             printed_subscriptions.append(intermediate)
         report_lines = [
-            f"{Style.BRIGHT}Azure Tenant Domain:{Style.RESET_ALL} {Fore.YELLOW}{self._identity.tenant_domain}{Style.RESET_ALL} {Style.BRIGHT}Azure Tenant ID:{Style.RESET_ALL} {Fore.YELLOW}{self._identity.tenant_ids[0]}{Style.RESET_ALL}",
-            f"{Style.BRIGHT}Azure Region:{Style.RESET_ALL} {Fore.YELLOW}{self.region_config.name}{Style.RESET_ALL}",
-            f"{Style.BRIGHT}Azure Subscriptions:{Style.RESET_ALL} {Fore.YELLOW}{printed_subscriptions}{Style.RESET_ALL}",
-            f"{Style.BRIGHT}Azure Identity Type:{Style.RESET_ALL} {Fore.YELLOW}{self._identity.identity_type}{Style.RESET_ALL} {Style.BRIGHT}Azure Identity ID:{Style.RESET_ALL} {Fore.YELLOW}{self._identity.identity_id}{Style.RESET_ALL}",
+            f"Azure Tenant Domain: {Fore.YELLOW}{self._identity.tenant_domain}{Style.RESET_ALL} Azure Tenant ID: {Fore.YELLOW}{self._identity.tenant_ids[0]}{Style.RESET_ALL}",
+            f"Azure Region: {Fore.YELLOW}{self.region_config.name}{Style.RESET_ALL}",
+            f"Azure Subscriptions: {Fore.YELLOW}{printed_subscriptions}{Style.RESET_ALL}",
+            f"Azure Identity Type: {Fore.YELLOW}{self._identity.identity_type}{Style.RESET_ALL} Azure Identity ID: {Fore.YELLOW}{self._identity.identity_id}{Style.RESET_ALL}",
         ]
         report_title = (
             f"{Style.BRIGHT}Using the Azure credentials below:{Style.RESET_ALL}"

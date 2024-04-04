@@ -18,7 +18,7 @@ def print_banner(verbose: bool, fixer: bool = False):
     if verbose or fixer:
         print(
             f"""
-Color code for results:
+{Style.BRIGHT}Color code for results:{Style.RESET_ALL}
 - {Fore.YELLOW}MANUAL (Manual check){Style.RESET_ALL}
 - {Fore.GREEN}PASS (Recommended value){Style.RESET_ALL}
 - {orange_color}MUTED (Muted by muted list){Style.RESET_ALL}

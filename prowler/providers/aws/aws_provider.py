@@ -492,11 +492,11 @@ class AwsProvider(Provider):
             self._identity.profile if self._identity.profile is not None else "default"
         )
         report_lines = [
-            f"{Style.BRIGHT}AWS-CLI Profile: {Style.RESET_ALL}{Fore.YELLOW}{profile}{Style.RESET_ALL}",
-            f"{Style.BRIGHT}AWS Regions: {Style.RESET_ALL}{Fore.YELLOW}{regions}{Style.RESET_ALL}",
-            f"{Style.BRIGHT}AWS Account: {Style.RESET_ALL}{Fore.YELLOW}{self._identity.account}{Style.RESET_ALL}",
-            f"{Style.BRIGHT}User Id: {Style.RESET_ALL}{Fore.YELLOW}{self._identity.user_id}{Style.RESET_ALL}",
-            f"{Style.BRIGHT}Caller Identity ARN: {Style.RESET_ALL}{Fore.YELLOW}{self._identity.identity_arn}{Style.RESET_ALL}",
+            f"AWS-CLI Profile: {Fore.YELLOW}{profile}{Style.RESET_ALL}",
+            f"AWS Regions: {Fore.YELLOW}{regions}{Style.RESET_ALL}",
+            f"AWS Account: {Fore.YELLOW}{self._identity.account}{Style.RESET_ALL}",
+            f"User Id: {Fore.YELLOW}{self._identity.user_id}{Style.RESET_ALL}",
+            f"Caller Identity ARN: {Fore.YELLOW}{self._identity.identity_arn}{Style.RESET_ALL}",
         ]
         # If -A is set, print Assumed Role ARN
         if (
