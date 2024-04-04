@@ -119,7 +119,9 @@ dashboard.layout = html.Div(
         # Placeholder for dynamic navigation bar
         html.Div(
             [
-                html.Div(id="navigation-bar", className="bg-prowler-stone-900"),
+                html.Div(
+                    id="navigation-bar", className="bg-prowler-stone-900 min-w-36 z-10"
+                ),
                 html.Div(
                     [
                         dash.page_container,
