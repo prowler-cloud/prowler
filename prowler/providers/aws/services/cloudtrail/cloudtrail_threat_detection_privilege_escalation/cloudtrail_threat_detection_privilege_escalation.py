@@ -6,7 +6,7 @@ from prowler.providers.aws.services.cloudtrail.cloudtrail_client import (
 )
 
 THRESHOLD = cloudtrail_client.audit_config.get(
-    "threat_detection_privilege_escalation_threshold", 0.7
+    "threat_detection_privilege_escalation_threshold", 0.1
 )
 THREAT_DETECTION_MINUTES = cloudtrail_client.audit_config.get(
     "threat_detection_privilege_escalation_minutes", 1440
