@@ -5,8 +5,8 @@ from prowler.providers.aws.services.cloudtrail.cloudtrail_client import (
     cloudtrail_client,
 )
 
-ENTROPY_THRESHOLD = cloudtrail_client.audit_config.get(
-    "threat_detection_privilege_escalation_entropy", 0.7
+THRESHOLD = cloudtrail_client.audit_config.get(
+    "threat_detection_privilege_escalation_threshold", 0.1
 )
 THREAT_DETECTION_MINUTES = cloudtrail_client.audit_config.get(
     "threat_detection_privilege_escalation_minutes", 1440
@@ -52,7 +52,8 @@ class cloudtrail_threat_detection_privilege_escalation(Check):
                             event_log["sourceIPAddress"]
                         ].add(event_name)
         for source_ip, actions in potential_privilege_escalation.items():
-            if len(actions) / len(PRIVILEGE_ESCALATION_ACTIONS) > ENTROPY_THRESHOLD:
+            ip_threshold = round(len(actions) / len(PRIVILEGE_ESCALATION_ACTIONS), 2)
+            if len(actions) / len(PRIVILEGE_ESCALATION_ACTIONS) > THRESHOLD:
                 found_potential_privilege_escalation = True
                 report = Check_Report_AWS(self.metadata())
                 report.region = trail.region
@@ -60,7 +61,7 @@ class cloudtrail_threat_detection_privilege_escalation(Check):
                 report.resource_arn = trail.arn
                 report.resource_tags = trail.tags
                 report.status = "FAIL"
-                report.status_extended = f"Potential privilege escalation attack detected from source IP {source_ip} with an entropy of {ENTROPY_THRESHOLD}."
+                report.status_extended = f"Potential privilege escalation attack detected from source IP {source_ip} with an threshold of {ip_threshold}."
                 findings.append(report)
         if not found_potential_privilege_escalation:
             report = Check_Report_AWS(self.metadata())

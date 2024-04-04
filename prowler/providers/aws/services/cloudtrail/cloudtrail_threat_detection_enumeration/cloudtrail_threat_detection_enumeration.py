@@ -5,8 +5,8 @@ from prowler.providers.aws.services.cloudtrail.cloudtrail_client import (
     cloudtrail_client,
 )
 
-ENTROPY_THRESHOLD = cloudtrail_client.audit_config.get(
-    "threat_detection_enumeration_entropy", 0.7
+THRESHOLD = cloudtrail_client.audit_config.get(
+    "threat_detection_enumeration_threshold", 0.1
 )
 THREAT_DETECTION_MINUTES = cloudtrail_client.audit_config.get(
     "threat_detection_enumeration_minutes", 1440
@@ -47,7 +47,8 @@ class cloudtrail_threat_detection_enumeration(Check):
                             event_name
                         )
         for source_ip, actions in potential_enumeration.items():
-            if len(actions) / len(ENUMERATION_ACTIONS) > ENTROPY_THRESHOLD:
+            ip_threshold = round(len(actions) / len(ENUMERATION_ACTIONS), 2)
+            if len(actions) / len(ENUMERATION_ACTIONS) > THRESHOLD:
                 found_potential_enumeration = True
                 report = Check_Report_AWS(self.metadata())
                 report.region = trail.region
@@ -55,7 +56,7 @@ class cloudtrail_threat_detection_enumeration(Check):
                 report.resource_arn = trail.arn
                 report.resource_tags = trail.tags
                 report.status = "FAIL"
-                report.status_extended = f"Potential enumeration attack detected from source IP {source_ip} with an entropy of {ENTROPY_THRESHOLD}."
+                report.status_extended = f"Potential enumeration attack detected from source IP {source_ip} with an threshold of {ip_threshold}."
                 findings.append(report)
         if not found_potential_enumeration:
             report = Check_Report_AWS(self.metadata())
