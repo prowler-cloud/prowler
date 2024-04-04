@@ -94,7 +94,7 @@ jobs:
         run: |
           PROWLER_VERSION="${{ github.event.release.tag_name }}"
           poetry version "${PROWLER_VERSION}"
-          echo "PROWLER_VERSION="${PROWLER_VERSION}" >> "${GITHUB_ENV}"
+          echo "PROWLER_VERSION=${PROWLER_VERSION}" >> "${GITHUB_ENV}"
 
       - name: Login to DockerHub
         uses: docker/login-action@v3
