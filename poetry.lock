@@ -2133,13 +2133,13 @@ files = [
 
 [[package]]
 name = "microsoft-kiota-abstractions"
-version = "1.2.0"
+version = "1.3.2"
 description = "Core abstractions for kiota generated libraries in Python"
 optional = false
 python-versions = "*"
 files = [
-    {file = "microsoft_kiota_abstractions-1.2.0-py2.py3-none-any.whl", hash = "sha256:09061cec7e9c9da8bc3eced4488118c8b4a7ebd26aa8de2b46c43f07fee5610a"},
-    {file = "microsoft_kiota_abstractions-1.2.0.tar.gz", hash = "sha256:2b38241402995952c5598923391dcbb84bd97e48c0d76f93e2817c69ba19e3f6"},
+    {file = "microsoft_kiota_abstractions-1.3.2-py2.py3-none-any.whl", hash = "sha256:ec4335df425874b1c0171a97c4b5ccdc4a9d076e1ecd3a5c2582af1cacc25016"},
+    {file = "microsoft_kiota_abstractions-1.3.2.tar.gz", hash = "sha256:acac0b34b443d3fc10a3a86dd996cdf92248080553a3768a77c23350541f1aa2"},
 ]
 
 [package.dependencies]
@@ -2183,6 +2183,21 @@ opentelemetry-api = ">=1.20.0"
 opentelemetry-sdk = ">=1.20.0"
 
 [[package]]
+name = "microsoft-kiota-serialization-form"
+version = "0.1.0"
+description = "Implementation of Kiota Serialization Interfaces for URI-Form encoded serialization"
+optional = false
+python-versions = "*"
+files = [
+    {file = "microsoft_kiota_serialization_form-0.1.0-py2.py3-none-any.whl", hash = "sha256:5bc76fb2fc67d7c1f878f876d252ea814e4fc38df505099b9b86de52d974380a"},
+    {file = "microsoft_kiota_serialization_form-0.1.0.tar.gz", hash = "sha256:663ece0cb1a41fe9ddfc9195aa3f15f219e14d2a1ee51e98c53ad8d795b2785d"},
+]
+
+[package.dependencies]
+microsoft-kiota_abstractions = ">=1.0.0,<2.0.0"
+pendulum = ">=3.0.0"
+
+[[package]]
 name = "microsoft-kiota-serialization-json"
 version = "1.0.1"
 description = "Implementation of Kiota Serialization interfaces for JSON"
@@ -2196,6 +2211,20 @@ files = [
 [package.dependencies]
 microsoft-kiota_abstractions = ">=1.0.0,<2.0.0"
 pendulum = ">=3.0.0b1"
+
+[[package]]
+name = "microsoft-kiota-serialization-multipart"
+version = "0.1.0"
+description = "Implementation of Kiota Serialization Interfaces for Multipart serialization"
+optional = false
+python-versions = "*"
+files = [
+    {file = "microsoft_kiota_serialization_multipart-0.1.0-py2.py3-none-any.whl", hash = "sha256:ef183902e77807806b8a181cdde53ba5bc04c6c9bdb2f7d80f8bad5d720e0015"},
+    {file = "microsoft_kiota_serialization_multipart-0.1.0.tar.gz", hash = "sha256:14e89e92582e6630ddbc70ac67b70bf189dacbfc41a96d3e1d10339e86c8dde5"},
+]
+
+[package.dependencies]
+microsoft-kiota_abstractions = ">=1.0.0,<2.0.0"
 
 [[package]]
 name = "microsoft-kiota-serialization-text"
@@ -2451,13 +2480,13 @@ dev = ["bumpver", "isort", "mypy", "pylint", "pytest", "yapf"]
 
 [[package]]
 name = "msgraph-sdk"
-version = "1.1.0"
+version = "1.2.0"
 description = "The Microsoft Graph Python SDK"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "msgraph-sdk-1.1.0.tar.gz", hash = "sha256:c81bbd7c82b1237a25baee46d2a40ea3eabd15e06c5e50621ad4a9045012da5d"},
-    {file = "msgraph_sdk-1.1.0-py3-none-any.whl", hash = "sha256:661b6ddcc76391434af505bef0c3729405418402b3a7e673f1d094cb4fd5f80a"},
+    {file = "msgraph-sdk-1.2.0.tar.gz", hash = "sha256:689eec74fcb5cb29446947e4761fa57edeeb3ec1dccd7975c44d12d8d9db9c4f"},
+    {file = "msgraph_sdk-1.2.0-py3-none-any.whl", hash = "sha256:4a9f706413c0a497cdfffd0b741122a5e73206333d566d115089cef9f4adadb7"},
 ]
 
 [package.dependencies]
@@ -2465,7 +2494,9 @@ azure-identity = ">=1.12.0"
 microsoft-kiota-abstractions = ">=1.0.0,<2.0.0"
 microsoft-kiota-authentication-azure = ">=1.0.0,<2.0.0"
 microsoft-kiota-http = ">=1.0.0,<2.0.0"
+microsoft-kiota-serialization-form = ">=0.1.0"
 microsoft-kiota-serialization-json = ">=1.0.0,<2.0.0"
+microsoft-kiota-serialization-multipart = ">=0.1.0"
 microsoft-kiota-serialization-text = ">=1.0.0,<2.0.0"
 msgraph-core = ">=1.0.0"
 
@@ -4465,4 +4496,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.13"
-content-hash = "4c3d437bd810c2186cff45dee54e0a97a4c58d1d39ffb956399fe686b8b00a13"
+content-hash = "3429a437f9c4c5417f3bfe77ad735cdecbf9bf69be2e77419b2a5d9d4a94a75d"
