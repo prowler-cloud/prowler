@@ -216,6 +216,8 @@ def list_fixers(provider: str) -> set:
         # Ignore non fixer files
         if not check_name.endswith("_fixer"):
             continue
+        # Remove _fixer suffix
+        check_name = check_name.replace("_fixer", "")
         available_fixers.add(check_name)
     return sorted(available_fixers)
 
@@ -257,15 +259,15 @@ def print_services(service_list: set):
 
 
 def print_fixers(fixers_list: set):
-    services_num = len(fixers_list)
+    fixers_num = len(fixers_list)
     plural_string = (
-        f"\nThere are {Fore.YELLOW}{services_num}{Style.RESET_ALL} available fixers.\n"
+        f"\nThere are {Fore.YELLOW}{fixers_num}{Style.RESET_ALL} available fixers.\n"
     )
     singular_string = (
-        f"\nThere is {Fore.YELLOW}{services_num}{Style.RESET_ALL} available fixer.\n"
+        f"\nThere is {Fore.YELLOW}{fixers_num}{Style.RESET_ALL} available fixer.\n"
     )
 
-    message = plural_string if services_num > 1 else singular_string
+    message = plural_string if fixers_num > 1 else singular_string
 
     for service in fixers_list:
         print(f"- {service}")
