@@ -580,9 +580,11 @@ def filter_data(
             "PASS": "#54d283",
             "INFO": "#2684FF",
             "MANUAL": "#636c78",
+            "WARNING": "#fca903",
             "MUTED (FAIL)": "#fca903",
             "MUTED (PASS)": "#03fccf",
             "MUTED (MANUAL)": "#b33696",
+            "MUTED (WARNING)": "#c7a45d",
         }
         # Define custom colors
         color_mapping = {
@@ -623,13 +625,8 @@ def filter_data(
             style={"height": "300px", "overflow-y": "auto"},
         )
 
-        # Figure for the bar chart
-
         color_bars = [
-            color_mapping["critical"],
-            color_mapping["high"],
-            color_mapping["medium"],
-            color_mapping["low"],
+            color_mapping[severity] for severity in df1["SEVERITY"].value_counts().index
         ]
 
         figure_bars = go.Figure(
@@ -657,11 +654,17 @@ def filter_data(
         )
 
         # TABLE
-        severity_dict = {"critical": 3, "high": 2, "medium": 1, "low": 0}
+        severity_dict = {
+            "critical": 4,
+            "high": 3,
+            "medium": 2,
+            "low": 1,
+            "informational": 0,
+        }
         fails_findings["SEVERITY"] = fails_findings["SEVERITY"].map(severity_dict)
         fails_findings = fails_findings.sort_values(by=["SEVERITY"], ascending=False)
         fails_findings["SEVERITY"] = fails_findings["SEVERITY"].replace(
-            {3: "critical", 2: "high", 1: "medium", 0: "low"}
+            {4: "critical", 3: "high", 2: "medium", 1: "low", 0: "informational"}
         )
         table_data = fails_findings.copy()
 
