@@ -35,7 +35,7 @@ dashboard = dash.Dash(
 
 # Logo
 prowler_logo = html.Img(
-    src="https://prowler.com/logo-dashboard.png", alt="Prowler Logo"
+    src="https://prowler.com/wp-content/uploads/logo-dashboard.png", alt="Prowler Logo"
 )
 
 menu_icons = {
