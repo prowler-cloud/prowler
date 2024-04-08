@@ -3,8 +3,7 @@ name: build-lint-push-containers
 on:
   push:
     branches:
-      # TODO: update it for v3 and v4
-      # - "v3"
+      - "v3"
       - "master"
     paths-ignore:
       - ".github/**"
