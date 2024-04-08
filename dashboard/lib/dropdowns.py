@@ -78,7 +78,7 @@ def create_region_dropdown(regions: list) -> html.Div:
     return html.Div(
         [
             html.Label(
-                "Region:",
+                "Region / Location / Namespace :",
                 className="text-prowler-stone-900 font-bold text-sm",
             ),
             dcc.Dropdown(
@@ -104,7 +104,7 @@ def create_region_dropdown_compliance(regions: list) -> html.Div:
     return html.Div(
         [
             html.Label(
-                "Region:",
+                "Region / Location / Namespace :",
                 className="text-prowler-stone-900 font-bold text-sm",
             ),
             dcc.Dropdown(
@@ -130,7 +130,7 @@ def create_account_dropdown(accounts: list) -> html.Div:
     return html.Div(
         [
             html.Label(
-                "Account:",
+                "Account / Subscription / Project / Cluster :",
                 className="text-prowler-stone-900 font-bold text-sm",
             ),
             dcc.Dropdown(
@@ -156,7 +156,7 @@ def create_account_dropdown_compliance(accounts: list) -> html.Div:
     return html.Div(
         [
             html.Label(
-                "Account:",
+                "Account / Subscription / Project / Cluster :",
                 className="text-prowler-stone-900 font-bold text-sm",
             ),
             dcc.Dropdown(
