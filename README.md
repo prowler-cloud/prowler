@@ -54,12 +54,7 @@ It contains hundreds of controls covering CIS, NIST 800, NIST CSF, CISA, RBI, Fe
 
 # 📖 Documentation
 
-The full documentation can now be found at [https://docs.prowler.com](https://docs.prowler.com/projects/prowler-open-source/en/latest/)
-
-## Looking for Prowler v2 documentation?
-For Prowler v2 Documentation, please go to https://github.com/prowler-cloud/prowler/tree/2.12.1.
-
-
+Install, Usage, Tutorials and Developer Guide is at https://docs.prowler.com/
 
 # 📃 License
 
