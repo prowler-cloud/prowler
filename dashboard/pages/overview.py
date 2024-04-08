@@ -313,6 +313,10 @@ else:
         Output("table-rows", "options"),
         Output("status-filter", "value"),
         Output("status-filter", "options"),
+        Output("aws_card", "n_clicks"),
+        Output("azure_card", "n_clicks"),
+        Output("gcp_card", "n_clicks"),
+        Output("k8s_card", "n_clicks"),
     ],
     Input("cloud-account-filter", "value"),
     Input("region-filter", "value"),
@@ -322,6 +326,10 @@ else:
     Input("service-filter", "value"),
     Input("table-rows", "value"),
     Input("status-filter", "value"),
+    Input("aws_card", "n_clicks"),
+    Input("azure_card", "n_clicks"),
+    Input("gcp_card", "n_clicks"),
+    Input("k8s_card", "n_clicks"),
 )
 def filter_data(
     cloud_account_values,
@@ -332,11 +340,33 @@ def filter_data(
     service_values,
     table_row_values,
     status_values,
+    aws_clicks,
+    azure_clicks,
+    gcp_clicks,
+    k8s_clicks,
 ):
     # Use n_clicks for vulture
     n_clicks = n_clicks
     # Filter the data
     filtered_data = data.copy()
+
+    if aws_clicks > 0:
+        filtered_data = data.copy()
+        filtered_data = filtered_data[filtered_data["PROVIDER"] == "aws"]
+        aws_clicks = 0
+    if azure_clicks > 0:
+        filtered_data = data.copy()
+        filtered_data = filtered_data[filtered_data["PROVIDER"] == "azure"]
+        azure_clicks = 0
+    if gcp_clicks > 0:
+        filtered_data = data.copy()
+        filtered_data = filtered_data[filtered_data["PROVIDER"] == "gcp"]
+        gcp_clicks = 0
+    if k8s_clicks > 0:
+        filtered_data = data.copy()
+        filtered_data = filtered_data[filtered_data["PROVIDER"] == "kubernetes"]
+        k8s_clicks = 0
+
     # For all the data, we will add to the status column the value 'MUTED (FAIL)' and 'MUTED (PASS)' depending on the value of the column 'STATUS' and 'MUTED'
     if "MUTED" in filtered_data.columns:
         filtered_data["STATUS"] = filtered_data.apply(
@@ -977,6 +1007,10 @@ def filter_data(
             table_row_options,
             status_values,
             status_filter_options,
+            aws_clicks,
+            azure_clicks,
+            gcp_clicks,
+            k8s_clicks,
         )
     else:
         return (
@@ -1004,4 +1038,8 @@ def filter_data(
             table_row_options,
             status_values,
             status_filter_options,
+            aws_clicks,
+            azure_clicks,
+            gcp_clicks,
+            k8s_clicks,
         )

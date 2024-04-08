@@ -51,10 +51,10 @@ def create_layout_overview(
             ),
             html.Div(
                 [
-                    html.Div(className="flex", id="aws_card"),
-                    html.Div(className="flex", id="azure_card"),
-                    html.Div(className="flex", id="gcp_card"),
-                    html.Div(className="flex", id="k8s_card"),
+                    html.Div(className="flex", id="aws_card", n_clicks=0),
+                    html.Div(className="flex", id="azure_card", n_clicks=0),
+                    html.Div(className="flex", id="gcp_card", n_clicks=0),
+                    html.Div(className="flex", id="k8s_card", n_clicks=0),
                 ],
                 className="grid gap-x-4 gap-y-4 sm:grid-cols-2 lg:grid-cols-4 lg:gap-y-0",
             ),
