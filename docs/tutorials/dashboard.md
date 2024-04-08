@@ -12,25 +12,25 @@ docker run toniblyx/prowler:latest dashboard
 ```
 
 The banner and additional info about the dashboard will be shown on your console:
-<img src="./img/dashboard/dashboard-banner.png">
+<img src="../img/dashboard/dashboard-banner.png">
 
 ## Overview Page
 
 The overview page provides a full impression of your findings obtained from Prowler:
 
-<img src="./img/dashboard/dashboard-overview.png">
+<img src="../img/dashboard/dashboard-overview.png">
 
 In this page you can do multiple functions:
 * Apply filters (Assessment Date / Account / Region)
 * See wich files has been scaned to generate the dashboard placing your mouse on the `?` icon:
-    <img src="./img/dashboard/dashboard-files-scanned.png">
+    <img src="../img/dashboard/dashboard-files-scanned.png">
 * Download the `Top 25 Failed Findings by Severity` table using the button `DOWNLOAD THIS TABLE AS CSV`
 
 ## Compliance Page
 
 This page shows all the info related to the compliance selected, you can apply multiple filters depending on your preferences.
 
-<img src="./img/dashboard/dashboard-compliance.png">
+<img src="../img/dashboard/dashboard-compliance.png">
 
 To add your own compliance to compliance page, add a file with the compliance name (using `_` instead of `.`) to the path `/dashboard/compliance`.
 
