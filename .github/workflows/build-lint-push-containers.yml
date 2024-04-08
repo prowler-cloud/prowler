@@ -68,12 +68,12 @@ jobs:
 
           case ${PROWLER_VERSION_MAJOR} in
           3)
-              echo "LATEST=v3-latest" >> "${GITHUB_ENV}"
+              echo "LATEST_TAG=v3-latest" >> "${GITHUB_ENV}"
               echo "STABLE_TAG=v3-stable" >> "${GITHUB_ENV}"
               ;;
 
           4)
-              echo "LATEST=latest" >> "${GITHUB_ENV}"
+              echo "LATEST_TAG=latest" >> "${GITHUB_ENV}"
               echo "STABLE_TAG=stable" >> "${GITHUB_ENV}"
               ;;
 
