@@ -143,7 +143,9 @@ class Entra(AzureService):
         try:
             security_defaults = {}
             for tenant, client in self.clients.items():
-                security_default = await client.policies.identity_security_defaults_enforcement_policy.get()
+                security_default = (
+                    await client.policies.identity_security_defaults_enforcement_policy.get()
+                )
                 security_defaults.update(
                     {
                         tenant: SecurityDefault(
