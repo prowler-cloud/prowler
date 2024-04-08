@@ -27,6 +27,10 @@ ENV PATH="$HOME/.local/bin:$PATH"
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir .
 
+# Remove deprecated dash dependencies
+RUN pip uninstall dash-html-components -y && \
+    pip uninstall dash-core-components -y
+
 # Remove Prowler directory and build files
 USER 0
 RUN rm -rf /home/prowler/prowler /home/prowler/pyproject.toml /home/prowler/README.md /home/prowler/build /home/prowler/prowler.egg-info
