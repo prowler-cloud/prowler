@@ -22,6 +22,7 @@ class Entra(AzureService):
 
         loop = get_event_loop()
 
+        # Get users first alone because it is a dependency for other attributes
         self.users = loop.run_until_complete(self.__get_users__())
 
         attributes = loop.run_until_complete(
