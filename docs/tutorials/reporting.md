@@ -113,7 +113,7 @@ And then by the provider specific columns:
 - RESOURCE_NAME
 
 ???+ note
-    Since Prowler v3 the CSV column delimiter is the semicolon (`;`)
+    Since Prowler v4 the CSV column delimiter is the semicolon (`;`)
 
 ### JSON
 
@@ -210,9 +210,6 @@ The following code is an example output of the JSON format:
     "Compliance": {}
 }]
 ```
-
-???+ note
-    Each finding is a `json` object within a list. This has changed in v3 since in v2 the format used was [ndjson](http://ndjson.org/).
 
 
 ### JSON-OCSF
