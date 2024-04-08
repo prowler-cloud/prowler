@@ -3,10 +3,8 @@ name: build-lint-push-containers
 on:
   push:
     branches:
-      # TODO: update it for v3 and v4
-      # Add master after changing branches
       - "v3"
-      - "v4"
+      - "master"
     paths-ignore:
       - ".github/**"
       - "README.md"
