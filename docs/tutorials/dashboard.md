@@ -5,6 +5,12 @@ Prowler allows you to run your own local dashboards using the csv outputs provid
 prowler dashboard
 ```
 
+To run Prowler local dashboard with docker, use:
+
+```sh
+docker run toniblyx/prowler:latest dashboard
+```
+
 The banner and additional info about the dashboard will be shown on your console:
 <img src="./img/dashboard/dashboard-banner.png">
 
@@ -25,6 +31,37 @@ In this page you can do multiple functions:
 This page shows all the info related to the compliance selected, you can apply multiple filters depending on your preferences.
 
 <img src="./img/dashboard/dashboard-compliance.png">
+
+To add your own compliance to compliance page, add a file with the compliance name (using `_` instead of `.`) to the path `/dashboard/compliance`.
+
+In this file use the format present in the others compliance files to create the table. Example for CIS 2.0:
+```python
+import warnings
+
+from dashboard.common_methods import get_section_containers_cis
+
+warnings.filterwarnings("ignore")
+
+
+def get_table(data):
+    aux = data[
+        [
+            "REQUIREMENTS_ID",
+            "REQUIREMENTS_DESCRIPTION",
+            "REQUIREMENTS_ATTRIBUTES_SECTION",
+            "CHECKID",
+            "STATUS",
+            "REGION",
+            "ACCOUNTID",
+            "RESOURCEID",
+        ]
+    ].copy()
+
+    return get_section_containers_cis(
+        aux, "REQUIREMENTS_ID", "REQUIREMENTS_ATTRIBUTES_SECTION"
+    )
+
+```
 
 ## S3 Integration
 
