@@ -18,3 +18,18 @@ updates:
     schedule:
       interval: "weekly"
     target-branch: master
+
+  - package-ecosystem: "pip" 
+    directory: "/" 
+    schedule:
+      interval: "weekly"
+    target-branch: v3
+    labels:
+      - "dependencies"
+      - "pip"
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    target-branch: v3
+
