@@ -53,7 +53,7 @@ from prowler.providers.common.quick_inventory import run_provider_quick_inventor
 
 
 def prowler():
-    if sys.argv[1] == "dashboard":
+    if len(sys.argv) > 1 and sys.argv[1] == "dashboard":
         from dashboard.__main__ import dashboard
 
         sys.exit(dashboard.run(debug=True, port=11666, use_reloader=False))
