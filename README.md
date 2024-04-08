@@ -98,7 +98,7 @@ python prowler.py -v
 
 # 📐✏️ High level architecture
 
-You can run Prowler from your workstation, a Kubernetes Job, an EC2 instance, Fargate or any other container, Codebuild, CloudShell and Cloud9.
+You can run Prowler from your workstation, a Kubernetes Job, a Google Compute Engine, an Azure VM, an EC2 instance, Fargate or any other container, CloudShell and many more.
 
 ![Architecture](docs/img/architecture.png)
 

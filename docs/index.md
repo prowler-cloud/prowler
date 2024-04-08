@@ -165,7 +165,7 @@ The container images are available here:
 
 ## High level architecture
 
-You can run Prowler from your workstation, an EC2 instance, Fargate or any other container, Codebuild, CloudShell, Cloud9 and many more.
+You can run Prowler from your workstation, a Kubernetes Job, a Google Compute Engine, an Azure VM, an EC2 instance, Fargate or any other container, CloudShell and many more.
 
 ![Architecture](img/architecture.png)
 ## Basic Usage
