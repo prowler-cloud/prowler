@@ -5,6 +5,12 @@ Prowler allows you to run your own local dashboards using the csv outputs provid
 prowler dashboard
 ```
 
+To run Prowler local dashboard with docker, use: 
+
+```sh
+docker run -e dashboard=dashboard <prowler-image>
+```
+
 The banner and additional info about the dashboard will be shown on your console:
 <img src="./img/dashboard/dashboard-banner.png">
 
