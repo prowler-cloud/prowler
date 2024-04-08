@@ -1,4 +1,4 @@
-import asyncio
+from asyncio import gather, get_event_loop
 from dataclasses import dataclass
 from typing import Any, List, Optional
 from uuid import UUID
@@ -19,25 +19,28 @@ from prowler.providers.azure.lib.service.service import AzureService
 class Entra(AzureService):
     def __init__(self, provider: AzureProvider):
         super().__init__(GraphServiceClient, provider)
-        self.users = asyncio.get_event_loop().run_until_complete(self.__get_users__())
-        self.authorization_policy = asyncio.get_event_loop().run_until_complete(
-            self.__get_authorization_policy__()
+
+        loop = get_event_loop()
+
+        self.users = loop.run_until_complete(self.__get_users__())
+
+        attributes = loop.run_until_complete(
+            gather(
+                self.__get_authorization_policy__(),
+                self.__get_group_settings__(),
+                self.__get_security_default__(),
+                self.__get_named_locations__(),
+                self.__get_directory_roles__(),
+                self.__get_conditional_access_policy__(),
+            )
         )
-        self.group_settings = asyncio.get_event_loop().run_until_complete(
-            self.__get_group_settings__()
-        )
-        self.security_default = asyncio.get_event_loop().run_until_complete(
-            self.__get_security_default__()
-        )
-        self.named_locations = asyncio.get_event_loop().run_until_complete(
-            self.__get_named_locations__()
-        )
-        self.directory_roles = asyncio.get_event_loop().run_until_complete(
-            self.__get_directory_roles__()
-        )
-        self.conditional_access_policy = asyncio.get_event_loop().run_until_complete(
-            self.__get_conditional_access_policy__()
-        )
+
+        self.authorization_policy = attributes[0]
+        self.group_settings = attributes[1]
+        self.security_default = attributes[2]
+        self.named_locations = attributes[3]
+        self.directory_roles = attributes[4]
+        self.conditional_access_policy = attributes[5]
 
     async def __get_users__(self):
         logger.info("Entra - Getting users...")
@@ -140,9 +143,7 @@ class Entra(AzureService):
         try:
             security_defaults = {}
             for tenant, client in self.clients.items():
-                security_default = (
-                    await client.policies.identity_security_defaults_enforcement_policy.get()
-                )
+                security_default = await client.policies.identity_security_defaults_enforcement_policy.get()
                 security_defaults.update(
                     {
                         tenant: SecurityDefault(
