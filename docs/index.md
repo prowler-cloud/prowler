@@ -1,8 +1,14 @@
-**Prowler** is an Open Source security tool to perform AWS, Azure and Google Cloud security best practices assessments, audits, incident response, continuous monitoring, hardening and forensics readiness. We have Prowler CLI (Command Line Interface) that we call Prowler Open Source and a service on top of it that we call <a href="https://prowler.com">Prowler SaaS</a>.
+**Prowler** is an Open Source security tool to perform AWS, Azure, Google Cloud and Kubernetes security best practices assessments, audits, incident response, continuous monitoring, hardening and forensics readiness, and also remediations! We have Prowler CLI (Command Line Interface) that we call Prowler Open Source and a service on top of it that we call <a href="https://prowler.com">Prowler SaaS</a>.
 
-![Prowler Execution](img/short-display.png)
+## Prowler CLI
 
-Prowler offers hundreds of controls covering more than 25 standards and compliance frameworks like CIS, PCI-DSS, ISO27001, GDPR, HIPAA, FFIEC, SOC2, AWS FTR, ENS and custom security frameworks.
+![Prowler CLI Execution](docs/img/short-display.png)
+
+## Prowler Dashboard
+
+![Prowler Dashboard](img/dashboard.png)
+
+It contains hundreds of controls covering CIS, NIST 800, NIST CSF, CISA, RBI, FedRAMP, PCI-DSS, GDPR, HIPAA, FFIEC, SOC2, GXP, AWS Well-Architected Framework Security Pillar, AWS Foundational Technical Review (FTR), ENS (Spanish National Security Scheme) and your custom security frameworks.
 
 ## Quick Start
 ### Installation
@@ -124,12 +130,12 @@ Prowler is available as a project in [PyPI](https://pypi.org/project/prowler/), 
     adduser prowler
     su prowler
     pip install prowler
-    cd /tmp || exit
+    cd /tmp
     prowler aws
     ```
 
     ???+ note
-        To download the results from AWS CloudShell, select Actions -> Download File and add the full path of each file. For the CSV file it will be something like `/home/cloudshell-user/output/prowler-output-123456789012-20221220191331.csv`
+        To download the results from AWS CloudShell, select Actions -> Download File and add the full path of each file. For the CSV file it will be something like `/tmp/output/prowler-output-123456789012-20221220191331.csv`
 
 === "Azure CloudShell"
 
@@ -293,9 +299,9 @@ prowler kubernetes --kubeconfig-file path
 
 For in-cluster execution, you can use the supplied yaml to run Prowler as a job:
 ```console
-kubectl apply -f job.yaml
-kubectl apply -f prowler-role.yaml
-kubectl apply -f prowler-rolebinding.yaml
+kubectl apply -f kubernetes/job.yaml
+kubectl apply -f kubernetes/prowler-role.yaml
+kubectl apply -f kubernetes/prowler-rolebinding.yaml
 kubectl get pods --> prowler-XXXXX
 kubectl logs prowler-XXXXX
 ```

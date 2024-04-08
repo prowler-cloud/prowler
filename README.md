@@ -41,7 +41,15 @@
 
 # Description
 
-`Prowler` is an Open Source security tool to perform AWS, GCP and Azure security best practices assessments, audits, incident response, continuous monitoring, hardening and forensics readiness.
+**Prowler** is an Open Source security tool to perform AWS, Azure, Google Cloud and Kubernetes security best practices assessments, audits, incident response, continuous monitoring, hardening and forensics readiness, and also remediations! We have Prowler CLI (Command Line Interface) that we call Prowler Open Source and a service on top of it that we call <a href="https://prowler.com">Prowler SaaS</a>.
+
+## Prowler CLI
+
+![Prowler CLI Execution](docs/img/short-display.png)
+
+## Prowler Dashboard
+
+![Prowler Dashboard](docs/img/dashboard.png)
 
 It contains hundreds of controls covering CIS, NIST 800, NIST CSF, CISA, RBI, FedRAMP, PCI-DSS, GDPR, HIPAA, FFIEC, SOC2, GXP, AWS Well-Architected Framework Security Pillar, AWS Foundational Technical Review (FTR), ENS (Spanish National Security Scheme) and your custom security frameworks.
 
@@ -51,6 +59,48 @@ It contains hundreds of controls covering CIS, NIST 800, NIST CSF, CISA, RBI, Fe
 | GCP | 75 | 11 -> `prowler gcp --list-services` | 1 -> `prowler gcp --list-compliance` | 2 -> `prowler gcp --list-categories`|
 | Azure | 127 | 16 -> `prowler azure --list-services` | 2 -> `prowler azure --list-compliance` | 2 -> `prowler azure --list-categories` |
 | Kubernetes | 83 | 7 -> `prowler kubernetes --list-services` | 1 -> `prowler kubernetes --list-compliance` | 7 -> `prowler kubernetes --list-categories` |
+
+# 💻 Installation
+
+## Pip package
+Prowler is available as a project in [PyPI](https://pypi.org/project/prowler-cloud/), thus can be installed using pip with Python >= 3.9, < 3.13:
+
+```console
+pip install prowler
+prowler -v
+```
+More details at [https://docs.prowler.com](https://docs.prowler.com/projects/prowler-open-source/en/latest/)
+
+## Containers
+
+The available versions of Prowler are the following:
+
+- `latest`: in sync with master branch (bear in mind that it is not a stable version)
+- `<x.y.z>` (release): you can find the releases [here](https://github.com/prowler-cloud/prowler/releases), those are stable releases.
+- `stable`: this tag always point to the latest release.
+
+The container images are available here:
+
+- [DockerHub](https://hub.docker.com/r/toniblyx/prowler/tags)
+- [AWS Public ECR](https://gallery.ecr.aws/prowler-cloud/prowler)
+
+## From Github
+
+Python >= 3.9, < 3.13 is required with pip and poetry:
+
+```
+git clone https://github.com/prowler-cloud/prowler
+cd prowler
+poetry shell
+poetry install
+python prowler.py -v
+```
+
+# 📐✏️ High level architecture
+
+You can run Prowler from your workstation, a Kubernetes Job, an EC2 instance, Fargate or any other container, Codebuild, CloudShell and Cloud9.
+
+![Architecture](docs/img/architecture.png)
 
 # 📖 Documentation
 
