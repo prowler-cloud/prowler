@@ -4,7 +4,7 @@ on:
   pull_request:
     branches:
       - 'master'
-      - 'prowler-4.0-dev'
+      - 'v3'
     paths:
       - 'docs/**'
 
