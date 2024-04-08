@@ -16,7 +16,21 @@ from dash import callback, ctx, dcc, html
 from dash.dependencies import Input, Output
 
 # Config import
-from dashboard.config import folder_path_overview
+from dashboard.config import (
+    critical_color,
+    fail_color,
+    folder_path_overview,
+    high_color,
+    info_color,
+    informational_color,
+    low_color,
+    manual_color,
+    medium_color,
+    muted_fail_color,
+    muted_manual_color,
+    muted_pass_color,
+    pass_color,
+)
 from dashboard.lib.cards import create_provider_card
 from dashboard.lib.dropdowns import (
     create_account_dropdown,
@@ -691,13 +705,13 @@ def filter_data(
             result_df["Status_count"].fillna(0, inplace=True)
 
             color_mapping = {
-                "FAIL": "#e67272",
-                "PASS": "#54d283",
-                "INFO": "#2684FF",
-                "MANUAL": "#636c78",
-                "MUTED (FAIL)": "#fca903",
-                "MUTED (PASS)": "#03fccf",
-                "MUTED (MANUAL)": "#b33696",
+                "FAIL": fail_color,
+                "PASS": pass_color,
+                "INFO": info_color,
+                "MANUAL": manual_color,
+                "MUTED (FAIL)": muted_fail_color,
+                "MUTED (PASS)": muted_pass_color,
+                "MUTED (MANUAL)": muted_manual_color,
             }
 
             # Create a single line plot for both 'FAIL' and 'PASS' statuses
@@ -746,23 +760,23 @@ def filter_data(
         df1 = filtered_data[filtered_data["STATUS"] == "FAIL"]
 
         color_mapping_pass_fail = {
-            "FAIL": "#e67272",
-            "PASS": "#54d283",
-            "INFO": "#2684FF",
-            "MANUAL": "#636c78",
-            "WARNING": "#fca903",
-            "MUTED (FAIL)": "#fca903",
-            "MUTED (PASS)": "#03fccf",
+            "FAIL": fail_color,
+            "PASS": pass_color,
+            "INFO": info_color,
+            "MANUAL": manual_color,
+            "WARNING": muted_fail_color,
+            "MUTED (FAIL)": muted_fail_color,
+            "MUTED (PASS)": muted_pass_color,
             "MUTED (MANUAL)": "#b33696",
             "MUTED (WARNING)": "#c7a45d",
         }
         # Define custom colors
         color_mapping = {
-            "critical": "#951649",
-            "high": "#e11d48",
-            "medium": "#ee6f15",
-            "low": "#f9f5e6",
-            "informational": "#3274d9",
+            "critical": critical_color,
+            "high": high_color,
+            "medium": medium_color,
+            "low": low_color,
+            "informational": informational_color,
         }
 
         # Use the color_discrete_map parameter to map categories to custom colors
