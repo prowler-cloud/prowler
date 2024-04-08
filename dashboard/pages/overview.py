@@ -22,6 +22,10 @@ from dashboard.lib.dropdowns import (
     create_account_dropdown,
     create_date_dropdown,
     create_region_dropdown,
+    create_service_dropdown,
+    create_severity_dropdown,
+    create_status_dropdown,
+    create_table_row_dropdown,
 )
 from dashboard.lib.layouts import create_layout_overview
 
@@ -221,6 +225,20 @@ else:
     regions = options
     region_dropdown = create_region_dropdown(regions)
 
+    # Severity Dropdown
+    severity = ["All"] + list(data["SEVERITY"].unique())
+    severity = [
+        x for x in severity if str(x) != "nan" and x.__class__.__name__ == "str"
+    ]
+
+    severity_dropdown = create_severity_dropdown(severity)
+
+    # Service Dropdown
+    service = ["All"] + list(data["SERVICE_NAME"].unique())
+    service = [x for x in service if str(x) != "nan" and x.__class__.__name__ == "str"]
+
+    service_dropdown = create_service_dropdown(service)
+
     # Create the download button
     download_button = html.Button(
         "Download this table as CSV",
@@ -229,12 +247,29 @@ else:
         className="border-solid border-2 border-prowler-stone-900/10 hover:border-solid hover:border-2 hover:border-prowler-stone-900/10 text-prowler-stone-900 inline-block px-4 py-2 text-xs font-bold uppercase transition-all rounded-lg text-gray-900 hover:bg-prowler-stone-900/10 flex justify-end w-fit",
     )
 
+    # Create the table row dropdown
+    table_row_values = [-1]
+    table_row_dropdown = create_table_row_dropdown(table_row_values)
+
+    # Create the status dropdown
+    status = ["All"] + list(data["STATUS"].unique())
+    status = [x for x in status if str(x) != "nan" and x.__class__.__name__ == "str"]
+
+    status_dropdown = create_status_dropdown(status)
+
     # Initializing the Dash App
     dash.register_page(__name__, path="/")
 
     # Create the layout
     layout = create_layout_overview(
-        account_dropdown, date_dropdown, region_dropdown, download_button
+        account_dropdown,
+        date_dropdown,
+        region_dropdown,
+        download_button,
+        severity_dropdown,
+        service_dropdown,
+        table_row_dropdown,
+        status_dropdown,
     )
 
 
@@ -257,14 +292,33 @@ else:
         Output("k8s_card", "children"),
         Output("subscribe_card", "children"),
         Output("info-file-over", "title"),
+        Output("severity-filter", "value"),
+        Output("severity-filter", "options"),
+        Output("service-filter", "value"),
+        Output("service-filter", "options"),
+        Output("table-rows", "value"),
+        Output("table-rows", "options"),
+        Output("status-filter", "value"),
+        Output("status-filter", "options"),
     ],
     Input("cloud-account-filter", "value"),
     Input("region-filter", "value"),
     Input("report-date-filter", "value"),
     Input("download_link", "n_clicks"),
+    Input("severity-filter", "value"),
+    Input("service-filter", "value"),
+    Input("table-rows", "value"),
+    Input("status-filter", "value"),
 )
 def filter_data(
-    cloud_account_values, region_account_values, assessment_value, n_clicks
+    cloud_account_values,
+    region_account_values,
+    assessment_value,
+    n_clicks,
+    severity_values,
+    service_values,
+    table_row_values,
+    status_values,
 ):
     # Use n_clicks for vulture
     n_clicks = n_clicks
@@ -422,7 +476,6 @@ def filter_data(
     elif "ACCOUNT_NAME" in filtered_data.columns:
         filtered_data = filtered_data[filtered_data["ACCOUNT_NAME"].isin(values_choice)]
 
-    copy_data = filtered_data.copy()
     # Filter REGION
 
     # Check if filtered data contains an aws account
@@ -446,7 +499,7 @@ def filter_data(
         filtered_data["REGION"].isin(updated_region_account_values)
     ]
 
-    region_filter_options = ["All"] + list(copy_data["REGION"].unique())
+    region_filter_options = ["All"] + list(filtered_data["REGION"].unique())
     # clean the region_filter_options from null values
     region_filter_options = [
         x
@@ -463,10 +516,60 @@ def filter_data(
 
     region_filter_options = options
 
-    # Select failed findings
-    fails_findings_default = filtered_data[filtered_data["STATUS"] == "FAIL"]
-    fails_findings_muted = filtered_data[filtered_data["STATUS"] == "MUTED (FAIL)"]
-    fails_findings = pd.concat([fails_findings_default, fails_findings_muted])
+    # Filter Severity
+    if severity_values == ["All"]:
+        updated_severity_values = filtered_data["SEVERITY"].unique()
+    elif "All" in severity_values and len(severity_values) > 1:
+        # Remove 'All' from the list
+        severity_values.remove("All")
+        updated_severity_values = severity_values
+    elif len(severity_values) == 0:
+        updated_severity_values = filtered_data["SEVERITY"].unique()
+        severity_values = ["All"]
+    else:
+        updated_severity_values = severity_values
+
+    filtered_data = filtered_data[
+        filtered_data["SEVERITY"].isin(updated_severity_values)
+    ]
+
+    severity_filter_options = ["All"] + list(filtered_data["SEVERITY"].unique())
+
+    # Filter Service
+    if service_values == ["All"]:
+        updated_service_values = filtered_data["SERVICE_NAME"].unique()
+    elif "All" in service_values and len(service_values) > 1:
+        # Remove 'All' from the list
+        service_values.remove("All")
+        updated_service_values = service_values
+    elif len(service_values) == 0:
+        updated_service_values = filtered_data["SERVICE_NAME"].unique()
+        service_values = ["All"]
+    else:
+        updated_service_values = service_values
+
+    filtered_data = filtered_data[
+        filtered_data["SERVICE_NAME"].isin(updated_service_values)
+    ]
+
+    service_filter_options = ["All"] + list(filtered_data["SERVICE_NAME"].unique())
+
+    # Filter Status
+    if status_values == ["All"]:
+        updated_status_values = filtered_data["STATUS"].unique()
+    elif "All" in status_values and len(status_values) > 1:
+        # Remove 'All' from the list
+        status_values.remove("All")
+        updated_status_values = status_values
+    elif len(status_values) == 0:
+        updated_status_values = filtered_data["STATUS"].unique()
+        status_values = ["All"]
+    else:
+        updated_status_values = status_values
+
+    filtered_data = filtered_data[filtered_data["STATUS"].isin(updated_status_values)]
+
+    status_filter_options = ["All"] + list(filtered_data["STATUS"].unique())
 
     if len(filtered_data_sp) == 0:
         fig = px.pie()
@@ -661,12 +764,13 @@ def filter_data(
             "low": 1,
             "informational": 0,
         }
-        fails_findings["SEVERITY"] = fails_findings["SEVERITY"].map(severity_dict)
-        fails_findings = fails_findings.sort_values(by=["SEVERITY"], ascending=False)
-        fails_findings["SEVERITY"] = fails_findings["SEVERITY"].replace(
+
+        filtered_data["SEVERITY"] = filtered_data["SEVERITY"].map(severity_dict)
+        filtered_data = filtered_data.sort_values(by=["SEVERITY"], ascending=False)
+        filtered_data["SEVERITY"] = filtered_data["SEVERITY"].replace(
             {4: "critical", 3: "high", 2: "medium", 1: "low", 0: "informational"}
         )
-        table_data = fails_findings.copy()
+        table_data = filtered_data.copy()
 
         if "ACCOUNT_NAME" in table_data.columns:
             for subscription in table_data["ACCOUNT_NAME"].unique():
@@ -704,15 +808,35 @@ def filter_data(
             }
         )
 
-        if len(table_data) > 25:
+        table_row_options = []
+
+        # Take the values from the table_row_values
+        if table_row_values == -1:
+            if len(table_data) >= 25:
+                table_row_values = 25
+            else:
+                table_row_values = "Full"
+
+        if len(table_data) >= 25:
+            table_row_options.append(25)
+        if len(table_data) >= 50:
+            table_row_options.append(50)
+        if len(table_data) >= 75:
+            table_row_options.append(75)
+        if len(table_data) >= 100:
+            table_row_options.append(100)
+        table_row_options.append("Full")
+
+        if table_row_values == "Full":
             table = dbc.Table.from_dataframe(
-                table_data[:25],
+                table_data,
                 striped=True,
                 bordered=False,
                 hover=True,
                 className="table-overview",
             )
         else:
+            table_data = table_data[:table_row_values]
             table = dbc.Table.from_dataframe(
                 table_data,
                 striped=True,
@@ -788,7 +912,9 @@ def filter_data(
         )
     ]
     if ctx.triggered_id == "download_link":
-        csv_data = dcc.send_data_frame(table_data[:25].to_csv, "mydf.csv")
+        csv_data = dcc.send_data_frame(
+            table_data.to_csv, "prowler-dashboard-export.csv"
+        )
         return (
             status_graph,
             two_pie_chart,
@@ -806,6 +932,14 @@ def filter_data(
             k8s_card,
             subscribe_card,
             list_files,
+            severity_values,
+            severity_filter_options,
+            service_values,
+            service_filter_options,
+            table_row_values,
+            table_row_options,
+            status_values,
+            status_filter_options,
         )
     else:
         return (
@@ -825,4 +959,12 @@ def filter_data(
             k8s_card,
             subscribe_card,
             list_files,
+            severity_values,
+            severity_filter_options,
+            service_values,
+            service_filter_options,
+            table_row_values,
+            table_row_options,
+            status_values,
+            status_filter_options,
         )
