@@ -8,7 +8,7 @@ prowler dashboard
 To run Prowler local dashboard with docker, use: 
 
 ```sh
-docker run -e dashboard=dashboard <prowler-image>
+docker run <prowler-image> dashboard
 ```
 
 The banner and additional info about the dashboard will be shown on your console:
