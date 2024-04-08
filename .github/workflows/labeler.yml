@@ -4,7 +4,7 @@ on:
     pull_request_target:
       branches:
         - "master"
-        - "prowler-4.0-dev"
+        - "v3"
 
 jobs:
   labeler:

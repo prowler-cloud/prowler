@@ -56,19 +56,21 @@ class cloudtrail_threat_detection_privilege_escalation(Check):
             if len(actions) / len(PRIVILEGE_ESCALATION_ACTIONS) > THRESHOLD:
                 found_potential_privilege_escalation = True
                 report = Check_Report_AWS(self.metadata())
-                report.region = trail.region
-                report.resource_id = trail.name
-                report.resource_arn = trail.arn
-                report.resource_tags = trail.tags
+                report.region = cloudtrail_client.region
+                report.resource_id = cloudtrail_client.audited_account
+                report.resource_arn = cloudtrail_client.__get_trail_arn_template__(
+                    cloudtrail_client.region
+                )
                 report.status = "FAIL"
                 report.status_extended = f"Potential privilege escalation attack detected from source IP {source_ip} with an threshold of {ip_threshold}."
                 findings.append(report)
         if not found_potential_privilege_escalation:
             report = Check_Report_AWS(self.metadata())
-            report.region = trail.region
-            report.resource_id = trail.name
-            report.resource_arn = trail.arn
-            report.resource_tags = trail.tags
+            report.region = cloudtrail_client.region
+            report.resource_id = cloudtrail_client.audited_account
+            report.resource_arn = cloudtrail_client.__get_trail_arn_template__(
+                cloudtrail_client.region
+            )
             report.status = "PASS"
             report.status_extended = (
                 "No potential privilege escalation attack detected."

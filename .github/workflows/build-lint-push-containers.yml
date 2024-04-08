@@ -3,8 +3,7 @@ name: build-lint-push-containers
 on:
   push:
     branches:
-      # TODO: update it for v3 and v4
-      # - "v3"
+      - "v3"
       - "master"
     paths-ignore:
       - ".github/**"
@@ -69,18 +68,14 @@ jobs:
 
           case ${PROWLER_VERSION_MAJOR} in
           3)
-              # TODO: update it for v3 and v4
-              # echo "LATEST=v3-latest" >> "${GITHUB_ENV}"
-              # echo "STABLE_TAG=v3-stable" >> "${GITHUB_ENV}"
+              echo "LATEST=v3-latest" >> "${GITHUB_ENV}"
+              echo "STABLE_TAG=v3-stable" >> "${GITHUB_ENV}"
+              ;;
+
+          4)
               echo "LATEST=latest" >> "${GITHUB_ENV}"
               echo "STABLE_TAG=stable" >> "${GITHUB_ENV}"
               ;;
-
-          # TODO: uncomment for v3 and v4
-          # 4)
-          #     echo "LATEST=latest" >> "${GITHUB_ENV}"
-          #     echo "STABLE_TAG=stable" >> "${GITHUB_ENV}"
-          #     ;;
 
           *)
               # Fallback if any other version is present

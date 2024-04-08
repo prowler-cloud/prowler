@@ -15,7 +15,8 @@ USER prowler
 
 # Copy necessary files
 WORKDIR /home/prowler
-COPY prowler/ /home/prowler/prowler/
+COPY prowler/  /home/prowler/prowler/
+COPY dashboard/ /home/prowler/dashboard/
 COPY pyproject.toml /home/prowler
 COPY README.md /home/prowler
 
