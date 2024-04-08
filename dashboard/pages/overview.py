@@ -884,6 +884,9 @@ def filter_data(
             else:
                 table_row_values = "Full"
 
+        if len(table_data) < 25:
+            table_row_values = "Full"
+
         if len(table_data) >= 25:
             table_row_options.append(25)
         if len(table_data) >= 50:
