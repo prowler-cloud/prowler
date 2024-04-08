@@ -1,14 +1,14 @@
-# Mute Listing
+# Mutelisting
 Sometimes you may find resources that are intentionally configured in a certain way that may be a bad practice but it is all right with it, for example an AWS S3 Bucket open to the internet hosting a web site, or an AWS Security Group with an open port needed in your use case.
 
-Mute List option works along with other options and adds a `MUTED` instead of `MANUAL`, `PASS` or `FAIL` to any output format.
+Mutelist option works along with other options and adds a `MUTED` instead of `MANUAL`, `PASS` or `FAIL` to any output format.
 
 You can use `-w`/`--mutelist-file` with the path of your mutelist yaml file:
 ```
 prowler <provider> -w mutelist.yaml
 ```
 
-## Mute List Yaml File Syntax
+## Mutelist Yaml File Syntax
 
 ???+ note
     For Azure provider, the Account ID is the Subscription Name and the Region is the Location.
@@ -19,7 +19,7 @@ prowler <provider> -w mutelist.yaml
 ???+ note
     For Kubernetes provider, the Account ID is the Cluster Name and the Region is the Namespace.
 
-The Mute List file is a YAML file with the following syntax:
+The Mutelist file is a YAML file with the following syntax:
 
 ```yaml
     ### Account, Check and/or Region can be * to apply for all the cases.
@@ -27,8 +27,8 @@ The Mute List file is a YAML file with the following syntax:
     ### Tags is an optional list that matches on tuples of 'key=value' and are "ANDed" together.
     ### Use an alternation Regex to match one of multiple tags with "ORed" logic.
     ### For each check you can except Accounts, Regions, Resources and/or Tags.
-    ###########################  MUTE LIST EXAMPLE  ###########################
-    Mute List:
+    ###########################  MUTELIST EXAMPLE  ###########################
+    Mutelist:
       Accounts:
         "123456789012":
           Checks:
@@ -97,7 +97,7 @@ The Mute List file is a YAML file with the following syntax:
 ## Mute specific AWS regions
 If you want to mute failed findings only in specific regions, create a file with the following syntax and run it with `prowler aws -w mutelist.yaml`:
 
-    Mute List:
+    Mutelist:
       Accounts:
       "*":
         Checks:
@@ -108,16 +108,16 @@ If you want to mute failed findings only in specific regions, create a file with
             Resources:
               - "*"
 
-## Default AWS Mute List
-For the AWS Provider, Prowler is executed with a Default AWS Mute List with the AWS Resources that should be muted such as all resources created by AWS Control Tower when setting up a landing zone.
-You can see this Mute List file in [`prowler/config/aws_mutelist.yaml`](https://github.com/prowler-cloud/prowler/blob/master/prowler/config/aws_allowlist.yaml).
+## Default AWS Mutelist
+For the AWS Provider, Prowler is executed with a Default AWS Mutelist with the AWS Resources that should be muted such as all resources created by AWS Control Tower when setting up a landing zone.
+You can see this Mutelist file in [`prowler/config/aws_mutelist.yaml`](https://github.com/prowler-cloud/prowler/blob/master/prowler/config/aws_allowlist.yaml).
 
-## Supported AWS Mute List Locations
+## Supported AWS Mutelist Locations
 
 The mutelisting flag supports the following AWS locations when using the AWS Provider:
 
 ### AWS S3 URI
-You will need to pass the S3 URI where your Mute List YAML file was uploaded to your bucket:
+You will need to pass the S3 URI where your Mutelist YAML file was uploaded to your bucket:
 ```
 prowler aws -w s3://<bucket>/<prefix>/mutelist.yaml
 ```
@@ -126,7 +126,7 @@ prowler aws -w s3://<bucket>/<prefix>/mutelist.yaml
 
 ### AWS DynamoDB Table ARN
 
-You will need to pass the DynamoDB Mute List Table ARN:
+You will need to pass the DynamoDB Mutelist Table ARN:
 
 ```
 prowler aws -w arn:aws:dynamodb:<region_name>:<account_id>:table/<table_name>
@@ -135,7 +135,7 @@ prowler aws -w arn:aws:dynamodb:<region_name>:<account_id>:table/<table_name>
 1. The DynamoDB Table must have the following String keys:
 <img src="../img/mutelist-keys.png"/>
 
-- The Mute List Table must have the following columns:
+- The Mutelist Table must have the following columns:
     - Accounts (String): This field can contain either an Account ID or an `*` (which applies to all the accounts that use this table as an mutelist).
     - Checks (String): This field can contain either a Prowler Check Name or an `*` (which applies to all the scanned checks).
     - Regions (List): This field contains a list of regions where this mutelist rule is applied (it can also contains an `*` to apply all scanned regions).
@@ -170,14 +170,14 @@ Make sure that the credentials that Prowler uses can invoke the Lambda Function:
         Resource: arn:aws:lambda:REGION:ACCOUNT_ID:function:FUNCTION_NAME
 ```
 
-The Lambda Function can then generate an Mute List dynamically. Here is the code an example Python Lambda Function that
-generates an Mute List:
+The Lambda Function can then generate an Mutelist dynamically. Here is the code an example Python Lambda Function that
+generates an Mutelist:
 
 ```
 def handler(event, context):
   checks = {}
   checks["vpc_flow_logs_enabled"] = { "Regions": [ "*" ], "Resources": [ "" ], Optional("Tags"): [ "key:value" ] }
 
-  al = { "Mute List": { "Accounts": { "*": { "Checks": checks } } } }
+  al = { "Mutelist": { "Accounts": { "*": { "Checks": checks } } } }
   return al
 ```

@@ -314,9 +314,7 @@ Detailed documentation at https://docs.prowler.com
         )
 
     def __init_mutelist_parser__(self):
-        mutelist_subparser = self.common_providers_parser.add_argument_group(
-            "Mute List"
-        )
+        mutelist_subparser = self.common_providers_parser.add_argument_group("Mutelist")
         provider = sys.argv[1] if len(sys.argv) > 1 else "aws"
         mutelist_subparser.add_argument(
             "--mutelist-file",

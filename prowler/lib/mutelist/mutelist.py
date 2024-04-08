@@ -44,7 +44,7 @@ def parse_mutelist_file(
             s3_client = aws_session.client("s3")
             mutelist = yaml.safe_load(
                 s3_client.get_object(Bucket=bucket, Key=key)["Body"]
-            )["Mute List"]
+            )["Mutelist"]
         # Check if file is a Lambda Function ARN
         elif re.search(r"^arn:(\w+):lambda:", mutelist_path):
             lambda_region = mutelist_path.split(":")[3]
@@ -53,7 +53,7 @@ def parse_mutelist_file(
                 FunctionName=mutelist_path, InvocationType="RequestResponse"
             )
             lambda_payload = lambda_response["Payload"].read()
-            mutelist = yaml.safe_load(lambda_payload)["Mute List"]
+            mutelist = yaml.safe_load(lambda_payload)["Mutelist"]
         # Check if file is a DynamoDB ARN
         elif re.search(
             r"^arn:aws(-cn|-us-gov)?:dynamodb:[a-z]{2}-[a-z-]+-[1-9]{1}:[0-9]{12}:table\/[a-zA-Z0-9._-]+$",
@@ -96,12 +96,12 @@ def parse_mutelist_file(
                     ] = item["Exceptions"]
         else:
             with open(mutelist_path) as f:
-                mutelist = yaml.safe_load(f)["Mute List"]
+                mutelist = yaml.safe_load(f)["Mutelist"]
         try:
             mutelist_schema.validate(mutelist)
         except Exception as error:
             logger.critical(
-                f"{error.__class__.__name__} -- Mute List YAML is malformed - {error}[{error.__traceback__.tb_lineno}]"
+                f"{error.__class__.__name__} -- Mutelist YAML is malformed - {error}[{error.__traceback__.tb_lineno}]"
             )
             sys.exit(1)
         return mutelist

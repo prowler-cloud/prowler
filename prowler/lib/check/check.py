@@ -576,7 +576,7 @@ def execute_checks(
         messages = [f"Config File: {Fore.YELLOW}{config_file}{Style.RESET_ALL}"]
         if mutelist_file:
             messages.append(
-                f"Mute List File: {Fore.YELLOW}{mutelist_file}{Style.RESET_ALL}"
+                f"Mutelist File: {Fore.YELLOW}{mutelist_file}{Style.RESET_ALL}"
             )
         if global_provider.type == "aws":
             messages.append(
@@ -670,7 +670,7 @@ def execute(
             global_provider.audit_metadata, services_executed, checks_executed
         )
 
-        # Mute List findings
+        # Mutelist findings
         if hasattr(global_provider, "mutelist") and global_provider.mutelist:
             check_findings = mutelist_findings(
                 global_provider,

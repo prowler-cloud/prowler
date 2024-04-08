@@ -529,7 +529,7 @@ aws:
                 }
             }
         }
-        mutelist_content = {"Mute List": mutelist}
+        mutelist_content = {"Mutelist": mutelist}
 
         config_file = tempfile.NamedTemporaryFile(delete=False)
         with open(config_file.name, "w") as allowlist_file:
