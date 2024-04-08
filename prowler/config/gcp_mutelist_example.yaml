@@ -5,7 +5,7 @@
 ### Use an alternation Regex to match one of multiple tags with "ORed" logic.
 ### For each check you can except Accounts, Regions, Resources and/or Tags.
 ###########################  MUTE LIST EXAMPLE  ###########################
-Mute List:
+Mutelist:
   Accounts:
     "gcp-project-id-1":
       Checks:

@@ -39,7 +39,7 @@ class TestMutelist:
         )
 
         with open("tests//lib/mutelist/fixtures/aws_mutelist.yaml") as f:
-            assert yaml.safe_load(f)["Mute List"] == parse_mutelist_file(
+            assert yaml.safe_load(f)["Mutelist"] == parse_mutelist_file(
                 "s3://test-mutelist/mutelist.yaml",
                 aws_provider.session.current_session,
                 aws_provider.identity.account,
