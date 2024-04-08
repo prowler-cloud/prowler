@@ -10,10 +10,10 @@ spec:
     spec:
       containers:
       - name: prowler
-        image: docker.io/prowler/kubernetes
+        image: toniblyx/prowler:latest
         command: ["prowler"]
         args: ["kubernetes", "-z"]
-        imagePullPolicy: Never
+        imagePullPolicy: Always
         volumeMounts:
             - name: var-lib-cni
               mountPath: /var/lib/cni
