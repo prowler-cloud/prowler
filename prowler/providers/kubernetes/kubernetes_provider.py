@@ -48,7 +48,7 @@ class KubernetesProvider(Provider):
             sys.exit(1)
 
         self._identity = KubernetesIdentityInfo(
-            context=self._session.context["name"].replace(":", "_").replace("/", "_"),
+            context=self._session.context["name"],
             user=self._session.context["context"]["user"],
             cluster=self._session.context["context"]["cluster"],
         )
