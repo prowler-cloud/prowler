@@ -32,6 +32,8 @@ This page shows all the info related to the compliance selected, you can apply m
 
 <img src="./img/dashboard/dashboard-compliance.png">
 
+To add your own compliance to compliance page, add a file with the compliance name (using `_` instead of `.`) to the path `/dashboard/compliance`
+
 ## S3 Integration
 
 If you are a Prowler Saas customer and you want to use your data from your S3 bucket, you can run:
