@@ -1,4 +1,4 @@
-# Providers
+# Provider
 
 In each Prowler provider we have a Python object called `<provider_name>_provider` which is in charge of keeping the credentials, the configuration and the state of each audit, and it's passed to each service during the `__init__`. 
 
