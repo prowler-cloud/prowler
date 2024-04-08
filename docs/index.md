@@ -121,12 +121,10 @@ Prowler is available as a project in [PyPI](https://pypi.org/project/prowler/), 
 
     ```
     sudo bash
-    env | grep AWS_CONTAINER_AUTHORIZATION_TOKEN
     adduser prowler
-    su - prowler
-    export AWS_CONTAINER_AUTHORIZATION_TOKEN=GIVEN-VALUE
-    export AWS_CONTAINER_CREDENTIALS_FULL_URI=http://localhost:1338/latest/meta-data/container/security-credentials
+    su prowler
     pip install prowler
+    cd /tmp || exit
     prowler aws
     ```
 
