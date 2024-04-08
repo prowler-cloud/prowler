@@ -27,7 +27,7 @@ The Mutelist file is a YAML file with the following syntax:
     ### Tags is an optional list that matches on tuples of 'key=value' and are "ANDed" together.
     ### Use an alternation Regex to match one of multiple tags with "ORed" logic.
     ### For each check you can except Accounts, Regions, Resources and/or Tags.
-    ###########################  MUTE LIST EXAMPLE  ###########################
+    ###########################  MUTELIST EXAMPLE  ###########################
     Mutelist:
       Accounts:
         "123456789012":
