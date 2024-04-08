@@ -234,10 +234,23 @@ else:
     severity_dropdown = create_severity_dropdown(severity)
 
     # Service Dropdown
-    service = ["All"] + list(data["SERVICE_NAME"].unique())
-    service = [x for x in service if str(x) != "nan" and x.__class__.__name__ == "str"]
+    services = []
+    for service in data["SERVICE_NAME"].unique():
+        if "aws" in list(data[data["SERVICE_NAME"] == service]["PROVIDER"]):
+            services.append(service + " - AWS")
+        if "kubernetes" in list(data[data["SERVICE_NAME"] == service]["PROVIDER"]):
+            services.append(service + " - K8S")
+        if "azure" in list(data[data["SERVICE_NAME"] == service]["PROVIDER"]):
+            services.append(service + " - AZURE")
+        if "gcp" in list(data[data["SERVICE_NAME"] == service]["PROVIDER"]):
+            services.append(service + " - GCP")
 
-    service_dropdown = create_service_dropdown(service)
+    services = ["All"] + services
+    services = [
+        x for x in services if str(x) != "nan" and x.__class__.__name__ == "str"
+    ]
+
+    service_dropdown = create_service_dropdown(services)
 
     # Create the download button
     download_button = html.Button(
@@ -535,24 +548,48 @@ def filter_data(
 
     severity_filter_options = ["All"] + list(filtered_data["SEVERITY"].unique())
 
+    service_filter_options = ["All"]
+
+    all_items = filtered_data["SERVICE_NAME"].unique()
+    for item in all_items:
+        if item not in service_filter_options and item.__class__.__name__ == "str":
+            if "aws" in list(
+                filtered_data[filtered_data["SERVICE_NAME"] == item]["PROVIDER"]
+            ):
+                service_filter_options.append(item + " - AWS")
+            if "kubernetes" in list(
+                filtered_data[filtered_data["SERVICE_NAME"] == item]["PROVIDER"]
+            ):
+                service_filter_options.append(item + " - K8S")
+            if "azure" in list(
+                filtered_data[filtered_data["SERVICE_NAME"] == item]["PROVIDER"]
+            ):
+                service_filter_options.append(item + " - AZURE")
+            if "gcp" in list(
+                filtered_data[filtered_data["SERVICE_NAME"] == item]["PROVIDER"]
+            ):
+                service_filter_options.append(item + " - GCP")
+
     # Filter Service
     if service_values == ["All"]:
         updated_service_values = filtered_data["SERVICE_NAME"].unique()
     elif "All" in service_values and len(service_values) > 1:
         # Remove 'All' from the list
+        updated_service_values = []
         service_values.remove("All")
-        updated_service_values = service_values
+        for item in service_values:
+            updated_service_values.append(item.split(" - ")[0])
     elif len(service_values) == 0:
         updated_service_values = filtered_data["SERVICE_NAME"].unique()
         service_values = ["All"]
     else:
-        updated_service_values = service_values
+        updated_service_values = []
+        for item in service_values:
+            updated_service_values.append(item.split(" - ")[0])
 
     filtered_data = filtered_data[
         filtered_data["SERVICE_NAME"].isin(updated_service_values)
     ]
-
-    service_filter_options = ["All"] + list(filtered_data["SERVICE_NAME"].unique())
 
     # Filter Status
     if status_values == ["All"]:
