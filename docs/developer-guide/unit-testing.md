@@ -64,7 +64,7 @@ In the following section we are going to explain all of the above scenarios with
 
 An important point for the AWS testing is that in each check we MUST have a unique `audit_info` which is the key object during the AWS execution to isolate the test execution.
 
-Check the [Audit Info](./audit-info.md) section to get more details.
+Check the [Provider](./provider.md) section to get more details.
 
 ```python
 # We need to import the AWS_Audit_Info and the Audit_Metadata
