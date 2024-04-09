@@ -2,6 +2,7 @@ import argparse
 import sys
 from argparse import RawTextHelpFormatter
 
+from dashboard.lib.arguments.arguments import init_dashboard_parser
 from prowler.config.config import (
     available_compliance_frameworks,
     check_current_version,
@@ -47,7 +48,7 @@ Detailed documentation at https://docs.prowler.com
 
         # Providers Parser
         self.subparsers = self.parser.add_subparsers(
-            title="Available cloud providers",
+            title="Available Cloud Providers",
             dest="provider",
         )
 
@@ -63,6 +64,9 @@ Detailed documentation at https://docs.prowler.com
 
         # Init Providers Arguments
         init_providers_parser(self)
+
+        # Dahboard Parser
+        init_dashboard_parser(self)
 
     def parse(self, args=None) -> argparse.Namespace:
         """

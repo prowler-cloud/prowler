@@ -53,16 +53,17 @@ from prowler.providers.common.quick_inventory import run_provider_quick_inventor
 
 
 def prowler():
-    if sys.argv[1] == "dashboard":
-        from dashboard.__main__ import dashboard
-
-        sys.exit(dashboard.run(debug=True, port=11666, use_reloader=False))
     # Parse Arguments
     parser = ProwlerArgumentParser()
     args = parser.parse()
 
     # Save Arguments
     provider = args.provider
+    if provider == "dashboard":
+        from dashboard.__main__ import dashboard
+
+        sys.exit(dashboard.run(debug=True, port=11666, use_reloader=False))
+
     checks = args.check
     excluded_checks = args.excluded_check
     excluded_services = args.excluded_service
