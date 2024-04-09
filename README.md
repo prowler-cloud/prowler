@@ -104,6 +104,23 @@ You can run Prowler from your workstation, a Kubernetes Job, a Google Compute En
 
 ![Architecture](docs/img/architecture.png)
 
+# Deprecations from v3
+
+## General
+- `Allowlist` now is called `Mutelist`.
+- The `--quiet` option has been deprecated, now use the `--status` flag to select the finding's status you want to get from PASS, FAIL or MANUAL.
+- All `INFO` finding's status has changed to `MANUAL`.
+- The CSV output format is common for all the providers.
+
+We have deprecated some of our outputs formats:
+- The HTML is replaced for the new Prowler Dashboard, run `prowler dashboard`.
+- The native JSON is replaced for the JSON [OCSF](https://schema.ocsf.io/) v1.1.0, common for all the providers.
+
+## AWS
+- Deprecate the AWS flag --sts-endpoint-region since we use AWS STS regional tokens.
+- To send only FAILS to AWS Security Hub, now use either `--send-sh-only-fails` or `--security-hub --status FAIL`.
+
+
 # 📖 Documentation
 
 Install, Usage, Tutorials and Developer Guide is at https://docs.prowler.com/
