@@ -7,7 +7,7 @@ sudo bash
 adduser prowler
 su prowler
 pip install prowler
-cd /tmp || exit
+cd /tmp
 prowler aws
 ```
 

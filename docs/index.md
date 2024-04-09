@@ -1,8 +1,20 @@
-**Prowler** is an Open Source security tool to perform AWS, Azure and Google Cloud security best practices assessments, audits, incident response, continuous monitoring, hardening and forensics readiness. We have Prowler CLI (Command Line Interface) that we call Prowler Open Source and a service on top of it that we call <a href="https://prowler.com">Prowler SaaS</a>.
+**Prowler** is an Open Source security tool to perform AWS, Azure, Google Cloud and Kubernetes security best practices assessments, audits, incident response, continuous monitoring, hardening and forensics readiness, and also remediations! We have Prowler CLI (Command Line Interface) that we call Prowler Open Source and a service on top of it that we call <a href="https://prowler.com">Prowler SaaS</a>.
 
-![Prowler Execution](img/short-display.png)
+## Prowler CLI
 
-Prowler offers hundreds of controls covering more than 25 standards and compliance frameworks like CIS, PCI-DSS, ISO27001, GDPR, HIPAA, FFIEC, SOC2, AWS FTR, ENS and custom security frameworks.
+```console
+prowler <provider>
+```
+![Prowler CLI Execution](img/short-display.png)
+
+## Prowler Dashboard
+
+```console
+prowler dashboard
+```
+![Prowler Dashboard](img/dashboard.png)
+
+It contains hundreds of controls covering CIS, NIST 800, NIST CSF, CISA, RBI, FedRAMP, PCI-DSS, GDPR, HIPAA, FFIEC, SOC2, GXP, AWS Well-Architected Framework Security Pillar, AWS Foundational Technical Review (FTR), ENS (Spanish National Security Scheme) and your custom security frameworks.
 
 ## Quick Start
 ### Installation
@@ -124,12 +136,12 @@ Prowler is available as a project in [PyPI](https://pypi.org/project/prowler/), 
     adduser prowler
     su prowler
     pip install prowler
-    cd /tmp || exit
+    cd /tmp
     prowler aws
     ```
 
     ???+ note
-        To download the results from AWS CloudShell, select Actions -> Download File and add the full path of each file. For the CSV file it will be something like `/home/cloudshell-user/output/prowler-output-123456789012-20221220191331.csv`
+        To download the results from AWS CloudShell, select Actions -> Download File and add the full path of each file. For the CSV file it will be something like `/tmp/output/prowler-output-123456789012-20221220191331.csv`
 
 === "Azure CloudShell"
 
@@ -148,9 +160,11 @@ Prowler is available as a project in [PyPI](https://pypi.org/project/prowler/), 
 
 The available versions of Prowler are the following:
 
-- `latest`: in sync with master branch (bear in mind that it is not a stable version)
+- `latest`: in sync with `master` branch (bear in mind that it is not a stable version)
+- `v3-latest`: in sync with `v3` branch (bear in mind that it is not a stable version)
 - `<x.y.z>` (release): you can find the releases [here](https://github.com/prowler-cloud/prowler/releases), those are stable releases.
 - `stable`: this tag always point to the latest release.
+- `v3-stable`: this tag always point to the latest release for v3.
 
 The container images are available here:
 
@@ -159,9 +173,27 @@ The container images are available here:
 
 ## High level architecture
 
-You can run Prowler from your workstation, an EC2 instance, Fargate or any other container, Codebuild, CloudShell, Cloud9 and many more.
+You can run Prowler from your workstation, a Kubernetes Job, a Google Compute Engine, an Azure VM, an EC2 instance, Fargate or any other container, CloudShell and many more.
 
 ![Architecture](img/architecture.png)
+
+## Deprecations from v3
+
+### General
+- `Allowlist` now is called `Mutelist`.
+- The `--quiet` option has been deprecated, now use the `--status` flag to select the finding's status you want to get from PASS, FAIL or MANUAL.
+- All `INFO` finding's status has changed to `MANUAL`.
+- The CSV output format is common for all the providers.
+
+We have deprecated some of our outputs formats:
+
+- The HTML is replaced for the new Prowler Dashboard, run `prowler dashboard`.
+- The native JSON is replaced for the JSON [OCSF](https://schema.ocsf.io/) v1.1.0, common for all the providers.
+
+### AWS
+- Deprecate the AWS flag --sts-endpoint-region since we use AWS STS regional tokens.
+- To send only FAILS to AWS Security Hub, now use either `--send-sh-only-fails` or `--security-hub --status FAIL`.
+
 ## Basic Usage
 
 To run Prowler, you will need to specify the provider (e.g `aws`, `gcp`, `azure` or `kubernetes`):
@@ -293,9 +325,9 @@ prowler kubernetes --kubeconfig-file path
 
 For in-cluster execution, you can use the supplied yaml to run Prowler as a job:
 ```console
-kubectl apply -f job.yaml
-kubectl apply -f prowler-role.yaml
-kubectl apply -f prowler-rolebinding.yaml
+kubectl apply -f kubernetes/job.yaml
+kubectl apply -f kubernetes/prowler-role.yaml
+kubectl apply -f kubernetes/prowler-rolebinding.yaml
 kubectl get pods --> prowler-XXXXX
 kubectl logs prowler-XXXXX
 ```
