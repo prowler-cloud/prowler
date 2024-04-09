@@ -6,7 +6,7 @@ By default, Prowler will generate a CSV, JSON-OSCF, JSON-OCSF and a HTML report,
 prowler <provider> -M csv json-ocsf json-asff
 ```
 
-By default, all compliance outputs will be generated when Prowler is executed. Compliance outputs will be placed inside `/output/compliance` directory.
+By default, all the compliance outputs will be generated when Prowler is executed. Compliance outputs will be placed inside the `/output/compliance` directory.
 
 ## Custom Output Flags
 By default, Prowler creates a file inside the `output` directory named `prowler-output-ACCOUNT_NUM-OUTPUT_DATE.format`.
@@ -42,8 +42,7 @@ Hereunder is the structure for each of the supported report formats by Prowler:
 
 ### CSV
 
-CSV format has a set of common columns for all the providers.
-The common columns are the following:
+The CSV format has a common format for all the providers. The following are the available columns:
 
 - AUTH_METHOD
 - TIMESTAMP
@@ -88,39 +87,7 @@ The common columns are the following:
 - PROWLER_VERSION
 
 ???+ note
-    Since Prowler v4 the CSV column delimiter is the semicolon (`;`)
-
-In the previous Prowler version, each provider had some columns different from the rest. These are the cases that have changed:
-
-- AWS
-
-    | V3 | V4 |
-    |---|---|
-    | profile | auth_method |
-    | account_id| account_uid |
-    | account_organization_arn | account_organization_uid |
-    | account_org | account_organization_name |
-    | resource_id | resource_name |
-    | resource_arn | resource_uid |
-    | finding_unique_id | finding_uid |
-    | assessment_start_time | timestamp |
-
-- AZURE
-
-    | V3 | V4 |
-    |---|---|
-    | tenant_domain | account_organization_name |
-    | subscription | account_uid |
-    | resource_id | resource_name |
-    | resource_arn | resource_uid |
-
-- GCP
-    | V3 | V4 |
-    |---|---|
-    | project_id | account_uid |
-    | location | region |
-    | resource_id | resource_name |
-    | resource_arn | resource_uid |
+    Since Prowler v3 the CSV column delimiter is the semicolon (`;`)
 
 
 ### JSON-OCSF
@@ -525,12 +492,31 @@ The following code is an example output of the [JSON-ASFF](https://docs.aws.amaz
 
 ## V4 Deprecations
 
-Some deprecations have been made to unify formats and improve outputs
+Some deprecations have been made to unify formats and improve outputs.
 
 ### HTML
 
-HTML output format has been deprecated
+HTML output format has been deprecated.
 
 ### JSON
 
-JSON format has been deprecated since new JSON output is JSON OSCF v1.1.08 (for Security Hub option the JSON format is JSON ASFF)
+Native JSON format has been deprecated in favor of JSON [OSCF](https://schema.ocsf.io/) `v1.1.0`.
+
+### CSV Columns
+
+In Prowler v3 each provider had some specific columns, different from the rest. These are the cases that have changed in Prowler v4:
+
+| Provider | V3 | V4 |
+| --- |---|---|
+| aws | profile | auth_method |
+| aws | account_id| account_uid |
+| aws | account_organization_arn | account_organization_uid |
+| aws | account_org | account_organization_name |
+| aws | finding_unique_id | finding_uid |
+| aws | assessment_start_time | timestamp |
+| azure | tenant_domain | account_organization_name |
+| azure | subscription | account_uid |
+| gcp | project_id | account_uid |
+| gcp | location | region |
+| aws / azure / gcp | resource_id | resource_name |
+| aws / azure / gcp | resource_arn | resource_uid |
