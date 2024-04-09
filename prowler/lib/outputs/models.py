@@ -536,6 +536,8 @@ class Check_Output_CSV_ENS_RD2022(BaseModel):
     Requirements_Attributes_Nivel: str
     Requirements_Attributes_Tipo: str
     Requirements_Attributes_Dimensiones: str
+    Requirements_Attributes_ModoEjecucion: str
+    Requirements_Attributes_Dependencias: Optional[str]
     Status: str
     StatusExtended: str
     ResourceId: str

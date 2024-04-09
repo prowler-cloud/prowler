@@ -84,6 +84,10 @@ def fill_compliance(output_options, finding, audit_info, file_descriptors):
                             Requirements_Attributes_Dimensiones=",".join(
                                 attribute.Dimensiones
                             ),
+                            Requirements_Attributes_ModoEjecucion=attribute.ModoEjecucion,
+                            Requirements_Attributes_Dependencias=",".join(
+                                attribute.Dependencias
+                            ),
                             Status=finding.status,
                             StatusExtended=finding.status_extended,
                             ResourceId=finding.resource_id,
