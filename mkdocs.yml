@@ -68,6 +68,7 @@ nav:
           - Subscriptions: tutorials/azure/subscriptions.md
       - Google Cloud:
           - Authentication: tutorials/gcp/authentication.md
+          - Projects: tutorials/gcp/projects.md
   - Developer Guide:
       - Introduction: developer-guide/introduction.md
       - Audit Info: developer-guide/audit-info.md

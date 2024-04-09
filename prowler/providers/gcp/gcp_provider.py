@@ -1,4 +1,5 @@
 import os
+import re
 import sys
 
 from colorama import Fore, Style
@@ -25,6 +26,7 @@ class GcpProvider(Provider):
     _type: str = "gcp"
     _session: Credentials
     _project_ids: list
+    _excluded_project_ids: list
     _identity: GCPIdentityInfo
     _audit_config: dict
     _output_options: GCPOutputOptions
@@ -35,12 +37,15 @@ class GcpProvider(Provider):
     def __init__(self, arguments):
         logger.info("Instantiating GCP Provider ...")
         input_project_ids = arguments.project_id
+        excluded_project_ids = arguments.excluded_project_id
         credentials_file = arguments.credentials_file
+        list_project_ids = arguments.list_project_id
 
         self._session = self.setup_session(credentials_file)
 
         self._project_ids = []
         self._projects = {}
+        self._excluded_project_ids = []
         accessible_projects = self.get_projects()
         if not accessible_projects:
             logger.critical("No Project IDs can be accessed via Google Credentials.")
@@ -48,19 +53,41 @@ class GcpProvider(Provider):
 
         if input_project_ids:
             for input_project in input_project_ids:
-                if input_project in accessible_projects.keys():
-                    self._projects[input_project] = accessible_projects[input_project]
-                    self._project_ids.append(accessible_projects[input_project].id)
-                else:
-                    logger.critical(
-                        f"Project {input_project} cannot be accessed via Google Credentials."
-                    )
-                    sys.exit(1)
+                for accessible_project in accessible_projects:
+                    if self.is_project_matching(input_project, accessible_project):
+                        self._projects[accessible_project] = accessible_projects[
+                            accessible_project
+                        ]
+                        self._project_ids.append(
+                            accessible_projects[accessible_project].id
+                        )
         else:
             # If not projects were input, all accessible projects are scanned by default
             for project_id, project in accessible_projects.items():
                 self._projects[project_id] = project
                 self._project_ids.append(project_id)
+
+        # Remove excluded projects if any input
+        if excluded_project_ids:
+            for excluded_project in excluded_project_ids:
+                for project_id in self._project_ids:
+                    if self.is_project_matching(excluded_project, project_id):
+                        self._excluded_project_ids.append(project_id)
+            for project_id in self._excluded_project_ids:
+                self._projects.pop(project_id)
+                self._project_ids.remove(project_id)
+
+        if not self._projects:
+            logger.critical(
+                "No Input Project IDs can be accessed via Google Credentials."
+            )
+            sys.exit(1)
+
+        if list_project_ids:
+            print(
+                f"{Fore.YELLOW}Available GCP Project IDs{Style.RESET_ALL}:\n{' '.join(self._project_ids)}\n"
+            )
+            sys.exit(0)
 
         # Update organizations info
         self.update_projects_with_organizations()
@@ -94,6 +121,10 @@ class GcpProvider(Provider):
     @property
     def project_ids(self):
         return self._project_ids
+
+    @property
+    def excluded_project_ids(self):
+        return self._excluded_project_ids
 
     @property
     def audit_config(self):
@@ -172,6 +203,10 @@ class GcpProvider(Provider):
             f"GCP Account: {Fore.YELLOW}{self.identity.profile}{Style.RESET_ALL}",
             f"GCP Project IDs: {Fore.YELLOW}{', '.join(self.project_ids)}{Style.RESET_ALL}",
         ]
+        if self.excluded_project_ids:
+            report_lines.append(
+                f"Excluded GCP Project IDs: {Fore.YELLOW}{', '.join(self.excluded_project_ids)}{Style.RESET_ALL}"
+            )
         report_title = (
             f"{Style.BRIGHT}Using the GCP credentials below:{Style.RESET_ALL}"
         )
@@ -269,3 +304,20 @@ class GcpProvider(Provider):
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+
+    def is_project_matching(self, input_project: str, project_to_match: str) -> bool:
+        """
+        Check if the input project matches the project to match
+        Args:
+            input_project: str
+            project_to_match: str
+        Returns:
+            bool
+        """
+        return (
+            "*" in input_project
+            and re.search(
+                "." + input_project if input_project.startswith("*") else input_project,
+                project_to_match,
+            )
+        ) or input_project == project_to_match

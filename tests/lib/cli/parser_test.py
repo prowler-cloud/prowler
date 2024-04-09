@@ -1188,6 +1188,24 @@ class Test_Parser:
         assert parsed.project_id[0] == project_1
         assert parsed.project_id[1] == project_2
 
+    def test_parser_gcp_excluded_project_id(self):
+        argument = "--excluded-project-id"
+        project_1 = "test_project_1"
+        project_2 = "test_project_2"
+        command = [prowler_command, "gcp", argument, project_1, project_2]
+        parsed = self.parser.parse(command)
+        assert parsed.provider == "gcp"
+        assert len(parsed.excluded_project_id) == 2
+        assert parsed.excluded_project_id[0] == project_1
+        assert parsed.excluded_project_id[1] == project_2
+
+    def test_parser_gcp_list_project_id(self):
+        argument = "--list-project-id"
+        command = [prowler_command, "gcp", argument]
+        parsed = self.parser.parse(command)
+        assert parsed.provider == "gcp"
+        assert parsed.list_project_id
+
     def test_parser_kubernetes_auth_kubeconfig_file(self):
         argument = "--kubeconfig-file"
         file = "config"
