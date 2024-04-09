@@ -6,6 +6,8 @@ By default, Prowler will generate a CSV, JSON, JSON-OCSF and a HTML report, howe
 prowler <provider> -M csv json json-ocsf json-asff html
 ```
 
+By default, all compliance outputs will be generated when Prowler is executed. Compliance outputs will be placed inside `/output/compliance` directory.
+
 ## Custom Output Flags
 By default, Prowler creates a file inside the `output` directory named `prowler-output-ACCOUNT_NUM-OUTPUT_DATE.format`.
 
@@ -33,188 +35,97 @@ By default, the timestamp format of the output files is ISO 8601. This can be ch
 Prowler supports natively the following output formats:
 
 - CSV
-- JSON
 - JSON-OCSF
 - JSON-ASFF
-- HTML
 
 Hereunder is the structure for each of the supported report formats by Prowler:
 
-### HTML
-![HTML Output](../img/output-html.png)
-
 ### CSV
 
-CSV format has a set of common columns for all the providers, and then provider specific columns.
+CSV format has a set of common columns for all the providers.
 The common columns are the following:
 
-- ASSESSMENT_START_TIME
-- FINDING_UNIQUE_ID
+- AUTH_METHOD
+- TIMESTAMP
+- ACCOUNT_UID
+- ACCOUNT_NAME
+- ACCOUNT_EMAIL
+- ACCOUNT_ORGANIZATION_UID
+- ACCOUNT_ORGANIZATION_NAME
+- ACCOUNT_TAGS
+- FINDING_UID
 - PROVIDER
 - CHECK_ID
 - CHECK_TITLE
 - CHECK_TYPE
 - STATUS
 - STATUS_EXTENDED
+- MUTED
 - SERVICE_NAME
 - SUBSERVICE_NAME
 - SEVERITY
 - RESOURCE_TYPE
+- RESOURCE_UID
+- RESOURCE_NAME
 - RESOURCE_DETAILS
 - RESOURCE_TAGS
+- PARTITION
+- REGION
 - DESCRIPTION
 - RISK
 - RELATED_URL
 - REMEDIATION_RECOMMENDATION_TEXT
 - REMEDIATION_RECOMMENDATION_URL
-- REMEDIATION_RECOMMENDATION_CODE_NATIVEIAC
-- REMEDIATION_RECOMMENDATION_CODE_TERRAFORM
-- REMEDIATION_RECOMMENDATION_CODE_CLI
-- REMEDIATION_RECOMMENDATION_CODE_OTHER
+- REMEDIATION_CODE_NATIVEIAC
+- REMEDIATION_CODE_TERRAFORM
+- REMEDIATION_CODE_CLI
+- REMEDIATION_CODE_OTHER
 - COMPLIANCE
 - CATEGORIES
 - DEPENDS_ON
 - RELATED_TO
 - NOTES
-
-And then by the provider specific columns:
-
-#### AWS
-
-- PROFILE
-- ACCOUNT_ID
-- ACCOUNT_NAME
-- ACCOUNT_EMAIL
-- ACCOUNT_ARN
-- ACCOUNT_ORG
-- ACCOUNT_TAGS
-- REGION
-- RESOURCE_ID
-- RESOURCE_ARN
-
-#### AZURE
-
-- TENANT_DOMAIN
-- SUBSCRIPTION
-- RESOURCE_ID
-- RESOURCE_NAME
-
-#### GCP
-
-- PROJECT_ID
-- LOCATION
-- RESOURCE_ID
-- RESOURCE_NAME
-
-#### KUBERNETES
-
-- NAMESPACE
-- RESOURCE_ID
-- RESOURCE_NAME
+- PROWLER_VERSION
 
 ???+ note
     Since Prowler v4 the CSV column delimiter is the semicolon (`;`)
 
-### JSON
+In the previous Prowler version, each provider had some columns different from the rest. These are the cases that have changed:
 
-The following code is an example output of the JSON format:
+- AWS
 
-```json
-[{
-    "AssessmentStartTime": "2022-12-01T14:16:57.354413",
-    "FindingUniqueId": "",
-    "Provider": "aws",
-    "Profile": "dev",
-    "AccountId": "ACCOUNT_ID",
-    "OrganizationsInfo": null,
-    "Region": "eu-west-1",
-    "CheckID": "rds_instance_minor_version_upgrade_enabled",
-    "CheckTitle": "Ensure RDS instances have minor version upgrade enabled.",
-    "CheckType": [],
-    "ServiceName": "rds",
-    "SubServiceName": "",
-    "Status": "PASS",
-    "StatusExtended": "RDS Instance rds-instance-id has minor version upgrade enabled.",
-    "Severity": "low",
-    "ResourceId": "rds-instance-id",
-    "ResourceArn": "",
-    "ResourceTags": {
-        "test": "test",
-        "enironment": "dev"
-    },
-    "ResourceType": "AwsRdsDbInstance",
-    "ResourceDetails": "",
-    "Description": "Ensure RDS instances have minor version upgrade enabled.",
-    "Risk": "Auto Minor Version Upgrade is a feature that you can enable to have your database automatically upgraded when a new minor database engine version is available. Minor version upgrades often patch security vulnerabilities and fix bugs and therefore should be applied.",
-    "RelatedUrl": "https://aws.amazon.com/blogs/database/best-practices-for-upgrading-amazon-rds-to-major-and-minor-versions-of-postgresql/",
-    "Remediation": {
-        "Code": {
-            "NativeIaC": "https://docs.bridgecrew.io/docs/ensure-aws-db-instance-gets-all-minor-upgrades-automatically#cloudformation",
-            "Terraform": "https://docs.bridgecrew.io/docs/ensure-aws-db-instance-gets-all-minor-upgrades-automatically#terraform",
-            "CLI": "aws rds modify-db-instance --db-instance-identifier <db_instance_id> --auto-minor-version-upgrade --apply-immediately",
-            "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/rds-auto-minor-version-upgrade.html"
-        },
-        "Recommendation": {
-            "Text": "Enable auto minor version upgrade for all databases and environments.",
-            "Url": "https://aws.amazon.com/blogs/database/best-practices-for-upgrading-amazon-rds-to-major-and-minor-versions-of-postgresql/"
-        }
-    },
-    "Categories": [],
-    "Notes": "",
-    "Compliance": {
-        "CIS-1.4": [
-            "1.20"
-        ],
-        "CIS-1.5": [
-            "1.20"
-        ]
-    }
-},
-{
-    "AssessmentStartTime": "2022-12-01T14:16:57.354413",
-    "FindingUniqueId": "",
-    "Provider": "aws",
-    "Profile": "dev",
-    "AccountId": "ACCOUNT_ID",
-    "OrganizationsInfo": null,
-    "Region": "eu-west-1",
-    "CheckID": "rds_instance_minor_version_upgrade_enabled",
-    "CheckTitle": "Ensure RDS instances have minor version upgrade enabled.",
-    "CheckType": [],
-    "ServiceName": "rds",
-    "SubServiceName": "",
-    "Status": "PASS",
-    "StatusExtended": "RDS Instance rds-instance-id has minor version upgrade enabled.",
-    "Severity": "low",
-    "ResourceId": "rds-instance-id",
-    "ResourceArn": "",
-    "ResourceType": "AwsRdsDbInstance",
-    "ResourceTags": {},
-    "Description": "Ensure RDS instances have minor version upgrade enabled.",
-    "Risk": "Auto Minor Version Upgrade is a feature that you can enable to have your database automatically upgraded when a new minor database engine version is available. Minor version upgrades often patch security vulnerabilities and fix bugs and therefore should be applied.",
-    "RelatedUrl": "https://aws.amazon.com/blogs/database/best-practices-for-upgrading-amazon-rds-to-major-and-minor-versions-of-postgresql/",
-    "Remediation": {
-        "Code": {
-            "NativeIaC": "https://docs.bridgecrew.io/docs/ensure-aws-db-instance-gets-all-minor-upgrades-automatically#cloudformation",
-            "Terraform": "https://docs.bridgecrew.io/docs/ensure-aws-db-instance-gets-all-minor-upgrades-automatically#terraform",
-            "CLI": "aws rds modify-db-instance --db-instance-identifier <db_instance_id> --auto-minor-version-upgrade --apply-immediately",
-            "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/rds-auto-minor-version-upgrade.html"
-        },
-        "Recommendation": {
-            "Text": "Enable auto minor version upgrade for all databases and environments.",
-            "Url": "https://aws.amazon.com/blogs/database/best-practices-for-upgrading-amazon-rds-to-major-and-minor-versions-of-postgresql/"
-        }
-    },
-    "Categories": [],
-    "Notes": "",
-    "Compliance": {}
-}]
-```
+    | V3 | V4 |
+    |---|---|
+    | profile | auth_method |
+    | account_id| account_uid |
+    | account_organization_arn | account_organization_uid |
+    | account_org | account_organization_name |
+    | resource_id | resource_name |
+    | resource_arn | resource_uid |
+    | finding_unique_id | finding_uid |
+    | assessment_start_time | timestamp |
+
+- AZURE
+
+    | V3 | V4 |
+    |---|---|
+    | tenant_domain | account_organization_name |
+    | subscription | account_uid |
+    | resource_id | resource_name |
+    | resource_arn | resource_uid |
+
+- GCP
+    | V3 | V4 |
+    |---|---|
+    | project_id | account_uid |
+    | location | region |
+    | resource_id | resource_name |
+    | resource_arn | resource_uid |
 
 
 ### JSON-OCSF
 
-Based on [Open Cybersecurity Schema Framework Security Finding v1.0.0-rc.3](https://schema.ocsf.io/1.0.0-rc.3/classes/security_finding?extensions=)
+Based on [Open Cybersecurity Schema Framework Security Finding v1.1.0](https://schema.ocsf.io/1.1.0/classes/detection_finding?extensions=)
 
 ```json
 [{
@@ -475,6 +386,9 @@ Based on [Open Cybersecurity Schema Framework Security Finding v1.0.0-rc.3](http
 
 ### JSON-ASFF
 
+???+ note
+    Only available when using Security Hub option
+
 The following code is an example output of the [JSON-ASFF](https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-findings-format-syntax.html) format:
 
 ```json
@@ -607,3 +521,16 @@ The following code is an example output of the [JSON-ASFF](https://docs.aws.amaz
 
 ???+ note
     Each finding is a `json` object within a list.
+
+
+## V4 Deprecations
+
+Some deprecations have been made to unify formats and improve outputs
+
+### HTML
+
+HTML output format has been deprecated
+
+### JSON
+
+JSON format has been deprecated since new JSON output is JSON OSCF v1.1.08 (for Security Hub option the JSON format is JSON ASFF)
