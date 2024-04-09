@@ -34,7 +34,6 @@ config_aws = {
     "max_disconnect_timeout_in_seconds": 300,
     "max_session_duration_seconds": 36000,
     "obsolete_lambda_runtimes": [
-        "python3.6",
         "java8",
         "go1.x",
         "provided",
