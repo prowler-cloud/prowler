@@ -1,8 +1,8 @@
 # Mutelisting
 Sometimes you may find resources that are intentionally configured in a certain way that may be a bad practice but it is all right with it, for example an AWS S3 Bucket open to the internet hosting a web site, or an AWS Security Group with an open port needed in your use case.
 
-Mutelist option works along with other options and will modify the output in the following way:
-- JSON-OCSF: `status_id` is `Suppressed` if the finding is muted.
+Mutelist option works along with other options and will modify the output in the following way if the finding is muted:
+- JSON-OCSF: `status_id` is `Suppressed`.
 - CSV: `muted` is `True`. The field `status` will keep the original status, `MANUAL`, `PASS` or `FAIL`, of the finding.
 
 
