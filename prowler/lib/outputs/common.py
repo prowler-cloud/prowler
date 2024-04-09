@@ -56,7 +56,7 @@ def generate_provider_output(provider, finding, csv_data) -> FindingOutput:
 
         elif provider.type == "gcp":
             csv_data["auth_method"] = f"Principal: {csv_data['auth_method']}"
-            csv_data["account_uid"] = provider.projects[finding.project_id].number
+            csv_data["account_uid"] = provider.projects[finding.project_id].id
             csv_data["account_name"] = provider.projects[finding.project_id].name
             csv_data["account_tags"] = provider.projects[finding.project_id].labels
             csv_data["resource_name"] = finding.resource_name
