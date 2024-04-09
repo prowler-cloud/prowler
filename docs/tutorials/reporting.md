@@ -9,13 +9,14 @@ prowler <provider> -M csv json-ocsf json-asff
 If you want to generate the JSON-ASFF (used by AWS Security Hub) report you can set it using the `-M/--output-modes/--output-formats`, like:
 
 ```console
-prowler <provider> --output-formats json-asff`
+prowler <provider> --output-formats json-asff
 ```
 
 By default, all the compliance outputs will be generated when Prowler is executed. Compliance outputs will be placed inside the `/output/compliance` directory.
 
 ## Custom Output Flags
-By default, Prowler creates a file inside the `output` directory named `prowler-output-ACCOUNT_NUM-OUTPUT_DATE.format`.
+By default, Prowler creates a file inside the `output` directory named:
+`prowler-output-ACCOUNT_NUM-OUTPUT_DATE.format`.
 
 However, both the output file name and directory can be personalised:
 
