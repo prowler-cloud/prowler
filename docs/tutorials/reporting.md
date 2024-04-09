@@ -1,9 +1,9 @@
 # Reporting
 
-By default, Prowler will generate a CSV, JSON, JSON-OCSF and a HTML report, however you could generate a JSON-ASFF (used by AWS Security Hub) report with `-M` or `--output-modes`:
+By default, Prowler will generate a CSV, JSON-OSCF, JSON-OCSF and a HTML report, however you could generate a JSON-ASFF (used by AWS Security Hub) report with `-M` or `--output-modes`:
 
 ```console
-prowler <provider> -M csv json json-ocsf json-asff html
+prowler <provider> -M csv json-ocsf json-asff
 ```
 
 By default, all compliance outputs will be generated when Prowler is executed. Compliance outputs will be placed inside `/output/compliance` directory.
@@ -15,16 +15,16 @@ However, both the output file name and directory can be personalised:
 
 - Custom output report name: you can use the flag `-F`/`--output-filename`
 ```console
-prowler <provider> -M csv json json-asff html -F <custom_report_name>
+prowler <provider> -M csv json-ocsf json-asff -F <custom_report_name>
 ```
 - Custom output directory: you can use the flag `-o`/`--output-directory`
 ```console
-prowler <provider> -M csv json json-asff html -o <custom_report_directory>
+prowler <provider> -M csv json-ocsf json-asff -o <custom_report_directory>
 ```
 ???+ note
     Both flags can be used simultaneously to provide a custom directory and filename.
     ```console
-    prowler <provider> -M csv json json-asff html \
+    prowler <provider> -M csv json-ocsf json-asff \
             -F <custom_report_name> -o <custom_report_directory>
     ```
 ## Output timestamp format
