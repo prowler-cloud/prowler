@@ -10,7 +10,7 @@ spec:
     spec:
       containers:
       - name: prowler
-        image: toniblyx/prowler:latest
+        image: toniblyx/prowler:stable
         command: ["prowler"]
         args: ["kubernetes", "-z"]
         imagePullPolicy: Always
