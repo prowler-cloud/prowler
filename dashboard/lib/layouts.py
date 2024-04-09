@@ -6,6 +6,10 @@ def create_layout_overview(
     date_dropdown: html.Div,
     region_dropdown: html.Div,
     download_button: html.Button,
+    severity_dropdown: html.Div,
+    service_dropdown: html.Div,
+    table_row_dropdown: html.Div,
+    status_dropdown: html.Div,
 ) -> html.Div:
     """
     Create the layout of the dashboard.
@@ -39,15 +43,23 @@ def create_layout_overview(
             ),
             html.Div(
                 [
-                    html.Div(className="flex", id="aws_card"),
-                    html.Div(className="flex", id="azure_card"),
-                    html.Div(className="flex", id="gcp_card"),
-                    html.Div(className="flex", id="k8s_card"),
+                    html.Div([severity_dropdown], className=""),
+                    html.Div([service_dropdown], className=""),
+                    html.Div([status_dropdown], className=""),
+                ],
+                className="grid gap-x-4 gap-y-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-y-0",
+            ),
+            html.Div(
+                [
+                    html.Div(className="flex", id="aws_card", n_clicks=0),
+                    html.Div(className="flex", id="azure_card", n_clicks=0),
+                    html.Div(className="flex", id="gcp_card", n_clicks=0),
+                    html.Div(className="flex", id="k8s_card", n_clicks=0),
                 ],
                 className="grid gap-x-4 gap-y-4 sm:grid-cols-2 lg:grid-cols-4 lg:gap-y-0",
             ),
             html.H4(
-                "Count of Failed Findings by severity",
+                "Count of Findings by severity",
                 className="text-prowler-stone-900 text-lg font-bold",
             ),
             html.Div(
@@ -70,10 +82,23 @@ def create_layout_overview(
             html.Div(
                 [
                     html.H4(
-                        "Top 25 Failed Findings by Severity",
+                        "Top Findings by Severity",
                         className="text-prowler-stone-900 text-lg font-bold",
                     ),
-                    download_button,
+                    html.Div(
+                        [
+                            (
+                                html.Label(
+                                    "Table Rows:",
+                                    className="text-prowler-stone-900 font-bold text-sm",
+                                    style={"margin-right": "10px"},
+                                )
+                            ),
+                            table_row_dropdown,
+                            download_button,
+                        ],
+                        className="flex justify-between items-center",
+                    ),
                     dcc.Download(id="download-data"),
                 ],
                 className="flex justify-between items-center",

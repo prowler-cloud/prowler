@@ -14,7 +14,13 @@ from dash import callback, dcc, html
 from dash.dependencies import Input, Output
 
 # Config import
-from dashboard.config import folder_path_compliance
+from dashboard.config import (
+    fail_color,
+    folder_path_compliance,
+    info_color,
+    manual_color,
+    pass_color,
+)
 from dashboard.lib.dropdowns import (
     create_account_dropdown_compliance,
     create_compliance_dropdown,
@@ -505,7 +511,7 @@ def get_bar_graph(df, column_name):
         x="counts",
         y=colums,
         color="STATUS",
-        color_discrete_map={"FAIL": "#e67272"},
+        color_discrete_map={"FAIL": fail_color},
         orientation="h",
     )
 
@@ -530,11 +536,11 @@ def get_bar_graph(df, column_name):
 def get_pie(df):
     # Define custom colors
     color_mapping = {
-        "FAIL": "#e67272",
-        "PASS": "#54d283",
-        "INFO": "#2684FF",
+        "FAIL": fail_color,
+        "PASS": pass_color,
+        "INFO": info_color,
         "WARN": "#260000",
-        "MANUAL": "#636c78",
+        "MANUAL": manual_color,
     }
 
     # Use the color_discrete_map parameter to map categories to custom colors
