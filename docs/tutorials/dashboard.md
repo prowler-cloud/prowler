@@ -26,8 +26,9 @@ The overview page provides a full impression of your findings obtained from Prow
 <img src="../img/dashboard/dashboard-overview.png">
 
 In this page you can do multiple functions:
+
 * Apply filters (Assessment Date / Account / Region)
-* See wich files has been scaned to generate the dashboard placing your mouse on the `?` icon:
+* See wich files has been scanned to generate the dashboard placing your mouse on the `?` icon:
     <img src="../img/dashboard/dashboard-files-scanned.png">
 * Download the `Top 25 Failed Findings by Severity` table using the button `DOWNLOAD THIS TABLE AS CSV`
 
