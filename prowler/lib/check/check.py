@@ -7,7 +7,6 @@ import shutil
 import sys
 import traceback
 from pkgutil import walk_packages
-from resource import setrlimit
 from types import ModuleType
 from typing import Any
 
@@ -529,7 +528,7 @@ def execute_checks(
 
     if os.name != "nt":
         try:
-            from resource import RLIMIT_NOFILE, getrlimit
+            from resource import RLIMIT_NOFILE, getrlimit, setrlimit
 
             # Check ulimit for the maximum system open files
             soft, hard = getrlimit(RLIMIT_NOFILE)
