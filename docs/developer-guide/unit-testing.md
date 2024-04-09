@@ -517,6 +517,8 @@ Coming soon ...
 
 For the Azure Provider we don't have any library to mock out the API calls we use. So in this scenario we inject the objects in the service client using [MagicMock](https://docs.python.org/3/library/unittest.mock.html#unittest.mock.MagicMock).
 
+In essence, we create object instances and we run the check that we are testing with that instance. In the test we ensure the check executed correctly and results with the expected values.
+
 The following code shows how to use MagicMock to create the service objects for a Azure check test.
 
 ```python
@@ -557,11 +559,8 @@ class Test_defender_ensure_defender_for_arm_is_on:
 
         # In this scenario we have to mock also the Defender service and the defender_client from the check to enforce that the defender_client used is the one created within this check because patch != import, and if you execute tests in parallel some objects can be already initialised hence the check won't be isolated.
         # In this case we don't use the Moto decorator, we use the mocked Defender client for both objects
-        with mock.patch(
-            "prowler.providers.azure.services.defender.defender_service.Defender",
-            new=defender_client,
-        ), mock.patch(
-            "prowler.providers.azure.services.defender.defender_client.defender_client",
+         with mock.patch(
+            "prowler.providers.azure.services.defender.defender_ensure_defender_for_arm_is_on.defender_ensure_defender_for_arm_is_on.defender_client",
             new=defender_client,
         ):
 
@@ -575,7 +574,7 @@ class Test_defender_ensure_defender_for_arm_is_on:
             check = defender_ensure_defender_for_arm_is_on()
 
             # And then, call the execute() function to run the check
-            # against the IAM client we've set up.
+            # against the Defender client we've set up.
             result = check.execute()
 
             # Last but not least, we need to assert all the fields
@@ -593,4 +592,171 @@ class Test_defender_ensure_defender_for_arm_is_on:
 
 ### Services
 
-Coming soon ...
+For the Azure Services tests, the idea is similar, we test that the functions we've done for capturing the values of the different objects using the Azure API work correctly. Again, we create an object instance and verify that the values captured for that instance are correct.
+
+The following code shows how a service test looks like.
+
+```python
+#We import patch from unittest.mock for simulating objects, the ones that we'll test with.
+from unittest.mock import patch
+
+#Importing FlowLogs from azure.mgmt.network.models allows us to create objects corresponding
+#to flow log settings for Azure networking resources.
+from azure.mgmt.network.models import FlowLog
+
+#We import the different classes of the Network Service so we can use them.
+from prowler.providers.azure.services.network.network_service import (
+    BastionHost,
+    Network,
+    NetworkWatcher,
+    PublicIp,
+    SecurityGroup,
+)
+
+#Azure constants
+from tests.providers.azure.azure_fixtures import (
+    AZURE_SUBSCRIPTION,
+    set_mocked_azure_audit_info,
+)
+
+#Mocks the behavior of a function responsible for retrieving security groups from a network service so
+#basically this is the instance for SecurityGroup that we are going to use
+def mock_network_get_security_groups(_):
+    return {
+        AZURE_SUBSCRIPTION: [
+            SecurityGroup(
+                id="id",
+                name="name",
+                location="location",
+                security_rules=[],
+            )
+        ]
+    }
+
+#We do the same for all the components we need, BastionHost, NetworkWatcher and PublicIp in this case
+
+def mock_network_get_bastion_hosts(_):
+    return {
+        AZURE_SUBSCRIPTION: [
+            BastionHost(
+                id="id",
+                name="name",
+                location="location",
+            )
+        ]
+    }
+
+def mock_network_get_network_watchers(_):
+    return {
+        AZURE_SUBSCRIPTION: [
+            NetworkWatcher(
+                id="id",
+                name="name",
+                location="location",
+                flow_logs=[FlowLog(enabled=True, retention_policy=90)],
+            )
+        ]
+    }
+
+def mock_network_get_public_ip_addresses(_):
+    return {
+        AZURE_SUBSCRIPTION: [
+            PublicIp(
+                id="id",
+                name="name",
+                location="location",
+                ip_address="ip_address",
+            )
+        ]
+    }
+
+#We use the 'path' decorator to replace during the test, the original get functions with the mock functions.
+
+#In this case we are replacing the '__get_security_groups__' with the 'mock_network_get_security_groups'.
+#We do the same for the rest of the functions.
+@patch(
+    "prowler.providers.azure.services.network.network_service.Network.__get_security_groups__",
+    new=mock_network_get_security_groups,
+)
+@patch(
+    "prowler.providers.azure.services.network.network_service.Network.__get_bastion_hosts__",
+    new=mock_network_get_bastion_hosts,
+)
+@patch(
+    "prowler.providers.azure.services.network.network_service.Network.__get_network_watchers__",
+    new=mock_network_get_network_watchers,
+)
+@patch(
+    "prowler.providers.azure.services.network.network_service.Network.__get_public_ip_addresses__",
+    new=mock_network_get_public_ip_addresses,
+)
+
+#We create the class for finally testing the methods
+class Test_Network_Service:
+
+    #Verifies that Network class initializes correctly a client object
+    def test__get_client__(self):
+        #Creates instance of the Network class with the audit information provided
+        network = Network(set_mocked_azure_audit_info())
+        #Checks if the client is not being initialize correctly
+        assert (
+            network.clients[AZURE_SUBSCRIPTION].__class__.__name__
+            == "NetworkManagementClient"
+        )
+
+    #Verifies Securiy Group are set correctly
+    def test__get_security_groups__(self):
+        network = Network(set_mocked_azure_audit_info())
+        assert (
+            network.security_groups[AZURE_SUBSCRIPTION][0].__class__.__name__
+            == "SecurityGroup"
+        )
+        #As you can see, every field must be right according to the mocking method
+        assert network.security_groups[AZURE_SUBSCRIPTION][0].id == "id"
+        assert network.security_groups[AZURE_SUBSCRIPTION][0].name == "name"
+        assert network.security_groups[AZURE_SUBSCRIPTION][0].location == "location"
+        assert network.security_groups[AZURE_SUBSCRIPTION][0].security_rules == []
+
+    #Verifies Network Watchers are set correctly
+    def test__get_network_watchers__(self):
+        network = Network(set_mocked_azure_audit_info())
+        assert (
+            network.network_watchers[AZURE_SUBSCRIPTION][0].__class__.__name__
+            == "NetworkWatcher"
+        )
+        assert network.network_watchers[AZURE_SUBSCRIPTION][0].id == "id"
+        assert network.network_watchers[AZURE_SUBSCRIPTION][0].name == "name"
+        assert network.network_watchers[AZURE_SUBSCRIPTION][0].location == "location"
+        assert network.network_watchers[AZURE_SUBSCRIPTION][0].flow_logs == [
+            FlowLog(enabled=True, retention_policy=90)
+        ]
+    #Verifies Flow Logs are set correctly
+    def __get_flow_logs__(self):
+        network = Network(set_mocked_azure_audit_info())
+        nw_name = "name"
+        assert (
+            network.network_watchers[AZURE_SUBSCRIPTION][0]
+            .flow_logs[nw_name][0]
+            .__class__.__name__
+            == "FlowLog"
+        )
+        assert network.network_watchers[AZURE_SUBSCRIPTION][0].flow_logs == [
+            FlowLog(enabled=True, retention_policy=90)
+        ]
+        assert (
+            network.network_watchers[AZURE_SUBSCRIPTION][0].flow_logs[0].enabled is True
+        )
+        assert (
+            network.network_watchers[AZURE_SUBSCRIPTION][0]
+            .flow_logs[0]
+            .retention_policy
+            == 90
+        )
+
+        ...
+```
+The code continues with some more verifications the same way.
+
+Hopefully this will result useful for understanding and creating new Azure Services checks.
+
+Please refer to the [Azure checks tests](./unit-testing.md#azure) for more information on how to create tests and check the existing services tests [here](https://github.com/prowler-cloud/prowler/tree/master/tests/providers/azure/services).
