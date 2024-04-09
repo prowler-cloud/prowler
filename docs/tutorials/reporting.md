@@ -255,7 +255,7 @@ Some deprecations have been made to unify formats and improve outputs.
 
 ### HTML
 
-HTML output format has been deprecated.
+HTML output format has been deprecated in favor of the new dashboard, use it with `prowler dashboard`. You can read more about it at [here](dashboard.md).
 
 ### JSON
 
