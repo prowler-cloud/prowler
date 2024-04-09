@@ -58,7 +58,7 @@ nav:
           - Scan Multiple AWS Accounts: tutorials/aws/multiaccount.md
           - Send reports to AWS S3: tutorials/aws/s3.md
           - AWS CloudShell: tutorials/aws/cloudshell.md
-          - Checks v2 to v3 Mapping: tutorials/aws/v2_to_v3_checks_mapping.md
+          - Checks v2 to v3 and v4 Mapping: tutorials/aws/v2_to_v3_checks_mapping.md
           - Tag-based Scan: tutorials/aws/tag-based-scan.md
           - Resource ARNs based Scan: tutorials/aws/resource-arn-based-scan.md
           - Boto3 Configuration: tutorials/aws/boto3-configuration.md
