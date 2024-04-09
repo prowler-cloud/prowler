@@ -46,6 +46,7 @@ class ENS_Requirement_Attribute(BaseModel):
     Tipo: ENS_Requirement_Attribute_Tipos
     Nivel: ENS_Requirement_Attribute_Nivel
     Dimensiones: list[ENS_Requirement_Attribute_Dimensiones]
+    ModoEjecucion: str
     Dependencias: list[str]
 
 
