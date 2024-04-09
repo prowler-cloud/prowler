@@ -1,14 +1,18 @@
 # Mutelisting
 Sometimes you may find resources that are intentionally configured in a certain way that may be a bad practice but it is all right with it, for example an AWS S3 Bucket open to the internet hosting a web site, or an AWS Security Group with an open port needed in your use case.
 
-Mutelist option works along with other options and adds a `MUTED` instead of `MANUAL`, `PASS` or `FAIL` to any output format.
+Mutelist option works along with other options and will modify the output in the following way if the finding is muted:
+
+- JSON-OCSF: `status_id` is `Suppressed`.
+- CSV: `muted` is `True`. The field `status` will keep the original status, `MANUAL`, `PASS` or `FAIL`, of the finding.
+
 
 You can use `-w`/`--mutelist-file` with the path of your mutelist yaml file:
 ```
 prowler <provider> -w mutelist.yaml
 ```
 
-## Mutelist Yaml File Syntax
+## Mutelist YAML File Syntax
 
 ???+ note
     For Azure provider, the Account ID is the Subscription Name and the Region is the Location.
@@ -94,7 +98,9 @@ The Mutelist file is a YAML file with the following syntax:
                 Tags:
                   - "environment=prod"   # Will ignore every resource except in account 123456789012 except the ones containing the string "test" and tag environment=prod
 ```
-## Mute specific AWS regions
+
+## AWS Mutelist
+### Mute specific AWS regions
 If you want to mute failed findings only in specific regions, create a file with the following syntax and run it with `prowler aws -w mutelist.yaml`:
 
     Mutelist:
@@ -108,15 +114,15 @@ If you want to mute failed findings only in specific regions, create a file with
             Resources:
               - "*"
 
-## Default AWS Mutelist
+### Default Mutelist
 For the AWS Provider, Prowler is executed with a Default AWS Mutelist with the AWS Resources that should be muted such as all resources created by AWS Control Tower when setting up a landing zone.
 You can see this Mutelist file in [`prowler/config/aws_mutelist.yaml`](https://github.com/prowler-cloud/prowler/blob/master/prowler/config/aws_allowlist.yaml).
 
-## Supported AWS Mutelist Locations
+### Supported Mutelist Locations
 
 The mutelisting flag supports the following AWS locations when using the AWS Provider:
 
-### AWS S3 URI
+#### AWS S3 URI
 You will need to pass the S3 URI where your Mutelist YAML file was uploaded to your bucket:
 ```
 prowler aws -w s3://<bucket>/<prefix>/mutelist.yaml
@@ -124,7 +130,7 @@ prowler aws -w s3://<bucket>/<prefix>/mutelist.yaml
 ???+ note
     Make sure that the used AWS credentials have `s3:GetObject` permissions in the S3 path where the mutelist file is located.
 
-### AWS DynamoDB Table ARN
+#### AWS DynamoDB Table ARN
 
 You will need to pass the DynamoDB Mutelist Table ARN:
 
@@ -150,7 +156,7 @@ The following example will mute all resources in all accounts for the EC2 checks
 ???+ note
     Make sure that the used AWS credentials have `dynamodb:PartiQLSelect` permissions in the table.
 
-### AWS Lambda ARN
+#### AWS Lambda ARN
 
 You will need to pass the AWS Lambda Function ARN:
 
