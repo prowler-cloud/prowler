@@ -2,10 +2,16 @@
 
 ## Prowler CLI
 
-![Prowler CLI Execution](docs/img/short-display.png)
+```console
+prowler <provider>
+```
+![Prowler CLI Execution](img/short-display.png)
 
 ## Prowler Dashboard
 
+```console
+prowler dashboard
+```
 ![Prowler Dashboard](img/dashboard.png)
 
 It contains hundreds of controls covering CIS, NIST 800, NIST CSF, CISA, RBI, FedRAMP, PCI-DSS, GDPR, HIPAA, FFIEC, SOC2, GXP, AWS Well-Architected Framework Security Pillar, AWS Foundational Technical Review (FTR), ENS (Spanish National Security Scheme) and your custom security frameworks.
