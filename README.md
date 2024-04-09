@@ -75,9 +75,11 @@ More details at [https://docs.prowler.com](https://docs.prowler.com/projects/pro
 
 The available versions of Prowler are the following:
 
-- `latest`: in sync with master branch (bear in mind that it is not a stable version)
+- `latest`: in sync with `master` branch (bear in mind that it is not a stable version)
+- `v3-latest`: in sync with `v3` branch (bear in mind that it is not a stable version)
 - `<x.y.z>` (release): you can find the releases [here](https://github.com/prowler-cloud/prowler/releases), those are stable releases.
 - `stable`: this tag always point to the latest release.
+- `v3-stable`: this tag always point to the latest release for v3.
 
 The container images are available here:
 
