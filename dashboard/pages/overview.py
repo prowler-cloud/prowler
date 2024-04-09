@@ -366,20 +366,32 @@ def filter_data(
 
     if aws_clicks > 0:
         filtered_data = data.copy()
-        filtered_data = filtered_data[filtered_data["PROVIDER"] == "aws"]
-        aws_clicks = 0
+        if aws_clicks % 2 != 0 and "aws" in list(data["PROVIDER"]):
+            filtered_data = filtered_data[filtered_data["PROVIDER"] == "aws"]
+            azure_clicks = 0
+            gcp_clicks = 0
+            k8s_clicks = 0
     if azure_clicks > 0:
         filtered_data = data.copy()
-        filtered_data = filtered_data[filtered_data["PROVIDER"] == "azure"]
-        azure_clicks = 0
+        if azure_clicks % 2 != 0 and "azure" in list(data["PROVIDER"]):
+            filtered_data = filtered_data[filtered_data["PROVIDER"] == "azure"]
+            aws_clicks = 0
+            gcp_clicks = 0
+            k8s_clicks = 0
     if gcp_clicks > 0:
         filtered_data = data.copy()
-        filtered_data = filtered_data[filtered_data["PROVIDER"] == "gcp"]
-        gcp_clicks = 0
+        if gcp_clicks % 2 != 0 and "gcp" in list(data["PROVIDER"]):
+            filtered_data = filtered_data[filtered_data["PROVIDER"] == "gcp"]
+            aws_clicks = 0
+            azure_clicks = 0
+            k8s_clicks = 0
     if k8s_clicks > 0:
         filtered_data = data.copy()
-        filtered_data = filtered_data[filtered_data["PROVIDER"] == "kubernetes"]
-        k8s_clicks = 0
+        if k8s_clicks % 2 != 0 and "kubernetes" in list(data["PROVIDER"]):
+            filtered_data = filtered_data[filtered_data["PROVIDER"] == "kubernetes"]
+            aws_clicks = 0
+            azure_clicks = 0
+            gcp_clicks = 0
 
     # For all the data, we will add to the status column the value 'MUTED (FAIL)' and 'MUTED (PASS)' depending on the value of the column 'STATUS' and 'MUTED'
     if "MUTED" in filtered_data.columns:
