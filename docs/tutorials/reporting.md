@@ -15,8 +15,7 @@ prowler <provider> --output-formats json-asff
 By default, all the compliance outputs will be generated when Prowler is executed. Compliance outputs will be placed inside the `/output/compliance` directory.
 
 ## Custom Output Flags
-By default, Prowler creates a file inside the `output` directory named:
-`prowler-output-ACCOUNT_NUM-OUTPUT_DATE.format`.
+By default, Prowler creates a file inside the `output` directory named: `prowler-output-ACCOUNT_NUM-OUTPUT_DATE.format`.
 
 However, both the output file name and directory can be personalised:
 
@@ -99,7 +98,7 @@ The CSV format has a common format for all the providers. The following are the 
 
 ### JSON-OCSF
 
-Based on [Open Cybersecurity Schema Framework Security Finding v1.1.0](https://schema.ocsf.io/1.1.0/classes/detection_finding?extensions=)
+The JSON-OCSF output format implements the [Detection Finding](https://schema.ocsf.io/1.1.0/classes/detection_finding) from the [OCSF v1.1.0](https://schema.ocsf.io/1.1.0)
 
 ```json
 [{
@@ -176,7 +175,7 @@ Based on [Open Cybersecurity Schema Framework Security Finding v1.1.0](https://s
 ### JSON-ASFF
 
 ???+ note
-    Only available when using Security Hub option
+    Only available when using `--security-hub` or `--output-formats json-asff`
 
 The following code is an example output of the [JSON-ASFF](https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-findings-format-syntax.html) format:
 
@@ -262,21 +261,65 @@ HTML output format has been deprecated.
 
 Native JSON format has been deprecated in favor of JSON [OCSF](https://schema.ocsf.io/) `v1.1.0`.
 
+The following is the mapping between the native JSON and the Detection Finding from the JSON-OCSF:
+
+| Native JSON Prowler v3 | JSON-OCSF v.1.1.0 |
+| --- |---|
+| AssessmentStartTime | event_time |
+| FindingUniqueId | finding_info.uid |
+| Provider | cloud.account.type |
+| CheckID | unmapped.check_id |
+| CheckTitle | finding_info.title |
+| CheckType | metadata.check_type |
+| ServiceName | resources.group.name |
+| SubServiceName | _Not mapped yet_ |
+| Status | status_code |
+| StatusExtended | status_detail |
+| Severity | severity |
+| ResourceType | resources.type |
+| ResourceDetails | PENDING |
+| Description | finding_info.desc |
+| Risk | unmapped.risk |
+| RelatedUrl | _Not mapped yet_ |
+| Remediation.Recommendation.Text | remediation.desc |
+| Remediation.Recommendation.Url | remediation.references |
+| Remediation.Code.NativeIaC | remediation.references |
+| Remediation.Code.Terraform | remediation.references |
+| Remediation.Code.CLI | remediation.references |
+| Remediation.Code.Other | remediation.references |
+| Compliance | _Not mapped yet_ |
+| Categories | unmapped.categories |
+| DependsOn | unmapped.depends_on |
+| RelatedTo | unmapped.related_to |
+| Notes | unmapped.notes |
+| Profile | _Not mapped yet_ |
+| AccountId | cloud.account.uid |
+| OrganizationsInfo.account_name | cloud.account.name |
+| OrganizationsInfo.account_email | _Not mapped yet_ |
+| OrganizationsInfo.account_arn | _Not mapped yet_ |
+| OrganizationsInfo.account_org | cloud.org.name |
+| OrganizationsInfo.account_tags | _Not mapped yet_ |
+| Region | resources.region |
+| ResourceId | resources.name |
+| ResourceArn | resources.uid |
+| ResourceTags | resources.labels |
+
+
 ### CSV Columns
 
 In Prowler v3 each provider had some specific columns, different from the rest. These are the cases that have changed in Prowler v4:
 
 | Provider | v3 | v4 |
 | --- |---|---|
-| aws | profile | auth_method |
-| aws | account_id| account_uid |
-| aws | account_organization_arn | account_organization_uid |
-| aws | account_org | account_organization_name |
-| aws | finding_unique_id | finding_uid |
-| aws | assessment_start_time | timestamp |
-| azure | tenant_domain | account_organization_name |
-| azure | subscription | account_uid |
-| gcp | project_id | account_uid |
-| gcp | location | region |
-| aws / azure / gcp | resource_id | resource_name |
-| aws / azure / gcp | resource_arn | resource_uid |
+| AWS | PROFILE | AUTH_METHOD |
+| AWS | ACCOUNT_ID| ACCOUNT_UID |
+| AWS | ACCOUNT_ORGANIZATION_ARN | ACCOUNT_ORGANIZATION_UID |
+| AWS | ACCOUNT_ORG | ACCOUNT_ORGANIZATION_NAME |
+| AWS | FINDING_UNIQUE_ID | FINDING_UID |
+| AWS | ASSESSMENT_START_TIME | TIMESTAMP |
+| AZURE | TENANT_DOMAIN | ACCOUNT_ORGANIZATION_NAME |
+| AZURE | SUBSCRIPTION | ACCOUNT_UID |
+| GCP | PROJECT_ID | ACCOUNT_UID |
+| GCP | LOCATION | REGION |
+| AWS / AZURE / GCP | RESOURCE_ID | RESOURCE_NAME |
+| AWS / AZURE / GCP | RESOURCE_ARN | RESOURCE_UID |
