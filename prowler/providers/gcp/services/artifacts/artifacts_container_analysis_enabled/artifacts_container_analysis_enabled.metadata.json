@@ -6,7 +6,7 @@
     "Security",
     "Configuration"
   ],
-  "ServiceName": "Artifact Registry",
+  "ServiceName": "artifactregistry",
   "SubServiceName": "Container Analysis",
   "ResourceIdTemplate": "",
   "Severity": "medium",
