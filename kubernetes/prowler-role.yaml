@@ -4,7 +4,7 @@ metadata:
   name: prowler-read-cluster
 rules:
 - apiGroups: [""]
-  resources: ["pods", "configmaps", "nodes"]
+  resources: ["pods", "configmaps", "nodes", "namespaces"]
   verbs: ["get", "list", "watch"]
 - apiGroups: ["rbac.authorization.k8s.io"]
   resources: ["clusterrolebindings", "rolebindings", "clusterroles", "roles"]
