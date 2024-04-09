@@ -1,9 +1,15 @@
 # Reporting
 
-By default, Prowler will generate the CSV and JSON-OCSF report. If you want to generate the JSON-ASFF (used by AWS Security Hub) report you can set it using the `-M/--output-modes/--output-formats`, like: `prowler --output-formats json-asff`.
+By default, Prowler will generate the CSV and JSON-[OCSF](https://schema.ocsf.io/) report.
 
 ```console
 prowler <provider> -M csv json-ocsf json-asff
+```
+
+If you want to generate the JSON-ASFF (used by AWS Security Hub) report you can set it using the `-M/--output-modes/--output-formats`, like:
+
+```console
+prowler <provider> --output-formats json-asff`
 ```
 
 By default, all the compliance outputs will be generated when Prowler is executed. Compliance outputs will be placed inside the `/output/compliance` directory.
@@ -164,7 +170,7 @@ Based on [Open Cybersecurity Schema Framework Security Finding v1.1.0](https://s
 ```
 
 ???+ note
-    Each finding is a `json` object.
+    Each finding is a `json` object within a list.
 
 ### JSON-ASFF
 
@@ -177,68 +183,6 @@ The following code is an example output of the [JSON-ASFF](https://docs.aws.amaz
 [{
     "SchemaVersion": "2018-10-08",
     "Id": "prowler-rds_instance_minor_version_upgrade_enabled-ACCOUNT_ID-eu-west-1-b1ade474a",
-    "ProductArn": "arn:aws:securityhub:eu-west-1::product/prowler/prowler",
-    "RecordState": "ACTIVE",
-    "ProductFields": {
-        "ProviderName": "Prowler",
-        "ProviderVersion": "3.0-beta-21Nov2022",
-        "ProwlerResourceName": "rds-instance-id"
-    },
-    "GeneratorId": "prowler-rds_instance_minor_version_upgrade_enabled",
-    "AwsAccountId": "ACCOUNT_ID",
-    "Types": [],
-    "FirstObservedAt": "2022-12-01T13:16:57Z",
-    "UpdatedAt": "2022-12-01T13:16:57Z",
-    "CreatedAt": "2022-12-01T13:16:57Z",
-    "Severity": {
-        "Label": "LOW"
-    },
-    "Title": "Ensure RDS instances have minor version upgrade enabled.",
-    "Description": "Ensure RDS instances have minor version upgrade enabled.",
-    "Resources": [
-        {
-            "Type": "AwsRdsDbInstance",
-            "Id": "rds-instance-id",
-            "Partition": "aws",
-            "Region": "eu-west-1"
-        }
-    ],
-    "Compliance": {
-        "Status": "PASSED",
-        "RelatedRequirements": [
-            "CISA your-systems-2 booting-up-thing-to-do-first-3",
-            "CIS-1.5 2.3.2",
-            "AWS-Foundational-Security-Best-Practices rds",
-            "RBI-Cyber-Security-Framework annex_i_6",
-            "FFIEC d3-cc-pm-b-1 d3-cc-pm-b-3"
-        ],
-        "AssociatedStandards": [
-            {
-                "StandardsId": "CISA"
-            },
-            {
-                "StandardsId": "CIS-1.5"
-            },
-            {
-                "StandardsId": "AWS-Foundational-Security-Best-Practices"
-            },
-            {
-                "StandardsId": "RBI-Cyber-Security-Framework"
-            },
-            {
-                "StandardsId": "FFIEC"
-            }
-        ]
-    },
-    "Remediation": {
-        "Recommendation": {
-            "Text": "Enable auto minor version upgrade for all databases and environments.",
-            "Url": "https://aws.amazon.com/blogs/database/best-practices-for-upgrading-amazon-rds-to-major-and-minor-versions-of-postgresql/"
-        }
-    }
-},{
-    "SchemaVersion": "2018-10-08",
-    "Id": "prowler-rds_instance_minor_version_upgrade_enabled-ACCOUNT_ID-eu-west-1-06d21d75e",
     "ProductArn": "arn:aws:securityhub:eu-west-1::product/prowler/prowler",
     "RecordState": "ACTIVE",
     "ProductFields": {
@@ -315,13 +259,13 @@ HTML output format has been deprecated.
 
 ### JSON
 
-Native JSON format has been deprecated in favor of JSON [OSCF](https://schema.ocsf.io/) `v1.1.0`.
+Native JSON format has been deprecated in favor of JSON [OCSF](https://schema.ocsf.io/) `v1.1.0`.
 
 ### CSV Columns
 
 In Prowler v3 each provider had some specific columns, different from the rest. These are the cases that have changed in Prowler v4:
 
-| Provider | V3 | V4 |
+| Provider | v3 | v4 |
 | --- |---|---|
 | aws | profile | auth_method |
 | aws | account_id| account_uid |
