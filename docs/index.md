@@ -111,7 +111,7 @@ Prowler is available as a project in [PyPI](https://pypi.org/project/prowler/), 
 
 === "AWS CloudShell"
 
-    After the migration of AWS CloudShell from Amazon Linux 2 to Amazon Linux 2023 [[1]](https://aws.amazon.com/about-aws/whats-new/2023/12/aws-cloudshell-migrated-al2023/) [2](https://docs.aws.amazon.com/cloudshell/latest/userguide/cloudshell-AL2023-migration.html), there is no longer a need to manually compile Python 3.9 as it's already included in AL2023. Prowler can thus be easily installed following the Generic method of installation via pip. Follow the steps below to successfully execute Prowler v3 in AWS CloudShell:
+    After the migration of AWS CloudShell from Amazon Linux 2 to Amazon Linux 2023 [[1]](https://aws.amazon.com/about-aws/whats-new/2023/12/aws-cloudshell-migrated-al2023/) [2](https://docs.aws.amazon.com/cloudshell/latest/userguide/cloudshell-AL2023-migration.html), there is no longer a need to manually compile Python 3.9 as it's already included in AL2023. Prowler can thus be easily installed following the Generic method of installation via pip. Follow the steps below to successfully execute Prowler v4 in AWS CloudShell:
 
     _Requirements_:
 
@@ -120,8 +120,12 @@ Prowler is available as a project in [PyPI](https://pypi.org/project/prowler/), 
     _Commands_:
 
     ```
+    sudo bash
+    adduser prowler
+    su prowler
     pip install prowler
-    prowler -v
+    cd /tmp || exit
+    prowler aws
     ```
 
     ???+ note
@@ -173,7 +177,7 @@ prowler <provider>
 ???+ note
     Running the `prowler` command without options will use your environment variable credentials, see [Requirements](./getting-started/requirements.md) section to review the credentials settings.
 
-If you miss the former output you can use `--verbose` but Prowler v3 is smoking fast, so you won't see much ;)
+If you miss the former output you can use `--verbose` but Prowler v4 is smoking fast, so you won't see much ;
 
 By default, Prowler will generate a CSV, JSON and HTML reports, however you can generate a JSON-ASFF (used by AWS Security Hub) report with `-M` or `--output-modes`:
 

@@ -195,7 +195,7 @@ def prowler():
     # Sort final check list
     checks_to_execute = sorted(checks_to_execute)
 
-    # Setup Mute List
+    # Setup Mutelist
     global_provider.mutelist = args.mutelist_file
 
     # Setup Output Options

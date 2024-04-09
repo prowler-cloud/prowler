@@ -1,4 +1,4 @@
-FROM python:3.11-alpine
+FROM python:3.12-alpine
 
 LABEL maintainer="https://github.com/prowler-cloud/prowler"
 
@@ -26,6 +26,10 @@ ENV PATH="$HOME/.local/bin:$PATH"
 #hadolint ignore=DL3013
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir .
+
+# Remove deprecated dash dependencies
+RUN pip uninstall dash-html-components -y && \
+    pip uninstall dash-core-components -y
 
 # Remove Prowler directory and build files
 USER 0
