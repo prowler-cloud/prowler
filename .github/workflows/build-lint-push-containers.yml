@@ -70,6 +70,7 @@ jobs:
           # Store prowler version major just for the release
           PROWLER_VERSION_MAJOR="${PROWLER_VERSION%%.*}"
           echo "PROWLER_VERSION_MAJOR=${PROWLER_VERSION_MAJOR}" >> "${GITHUB_ENV}"
+          echo "PROWLER_VERSION_MAJOR=${PROWLER_VERSION_MAJOR}" >> "${GITHUB_OUTPUT}"
 
           case ${PROWLER_VERSION_MAJOR} in
           3)
