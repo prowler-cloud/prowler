@@ -37,6 +37,7 @@ def write_compliance_row_ens_rd2022_aws(
                 Requirements_Attributes_Nivel=attribute.Nivel,
                 Requirements_Attributes_Tipo=attribute.Tipo,
                 Requirements_Attributes_Dimensiones=",".join(attribute.Dimensiones),
+                Requirements_Attributes_ModoEjecucion=attribute.ModoEjecucion,
                 Requirements_Attributes_Dependencias=",".join(attribute.Dependencias),
                 Status=finding.status,
                 StatusExtended=finding.status_extended,
