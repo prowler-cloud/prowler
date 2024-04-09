@@ -41,6 +41,8 @@ jobs:
   container-build-push:
     # needs: dockerfile-linter
     runs-on: ubuntu-latest
+    outputs:
+      prowler_version_major: ${{ steps.get-prowler-version.outputs.PROWLER_VERSION_MAJOR }}
     env:
       POETRY_VIRTUALENVS_CREATE: "false"
 
@@ -59,12 +61,14 @@ jobs:
           pipx inject poetry poetry-bumpversion
 
       - name: Get Prowler version
+        id: get-prowler-version
         run: |
           PROWLER_VERSION="$(poetry version -s 2>/dev/null)"
 
           # Store prowler version major just for the release
           PROWLER_VERSION_MAJOR="${PROWLER_VERSION%%.*}"
           echo "PROWLER_VERSION_MAJOR=${PROWLER_VERSION_MAJOR}" >> "${GITHUB_ENV}"
+          echo "PROWLER_VERSION_MAJOR=${PROWLER_VERSION_MAJOR}" >> "${GITHUB_OUTPUT}"
 
           case ${PROWLER_VERSION_MAJOR} in
           3)
@@ -149,16 +153,16 @@ jobs:
           echo "LATEST_COMMIT_HASH=${LATEST_COMMIT_HASH}" >> $GITHUB_ENV
 
       - name: Dispatch event (latest)
-        if: github.event_name == 'push' && ${{ env. PROWLER_VERSION_MAJOR }} == '3'
+        if: github.event_name == 'push' && ${{ needs.container-build-push.outputs.prowler_version_major == '3' }}
         run: |
           curl https://api.github.com/repos/${{ secrets.DISPATCH_OWNER }}/${{ secrets.DISPATCH_REPO }}/dispatches \
             -H "Accept: application/vnd.github+json" \
             -H "Authorization: Bearer ${{ secrets.ACCESS_TOKEN }}" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
-            --data '{"event_type":"dispatch","client_payload":{"version":"latest", "tag": "${{ env.LATEST_COMMIT_HASH }}"}}'
+            --data '{"event_type":"dispatch","client_payload":{"version":"v3-latest", "tag": "${{ env.LATEST_COMMIT_HASH }}"}}'
 
       - name: Dispatch event (release)
-        if: github.event_name == 'release' && ${{ env. PROWLER_VERSION_MAJOR }} == '3'
+        if: github.event_name == 'release' && ${{ needs.container-build-push.outputs.prowler_version_major == '3' }}
         run: |
           curl https://api.github.com/repos/${{ secrets.DISPATCH_OWNER }}/${{ secrets.DISPATCH_REPO }}/dispatches \
             -H "Accept: application/vnd.github+json" \
