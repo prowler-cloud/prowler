@@ -6,7 +6,7 @@
     "Security",
     "Configuration"
   ],
-  "ServiceName": "Google Container Registry (GCR)",
+  "ServiceName": "gcr",
   "SubServiceName": "Container Scanning",
   "ResourceIdTemplate": "",
   "Severity": "medium",
