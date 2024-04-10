@@ -62,50 +62,10 @@ For the AWS provider we have ways to test a Prowler check based on the following
 
 In the following section we are going to explain all of the above scenarios with examples. The main difference between those scenarios comes from if the [Moto](https://github.com/getmoto/moto) library covers the AWS API calls made by the service. You can check the covered API calls [here](https://github.com/getmoto/moto/blob/master/IMPLEMENTATION_COVERAGE.md).
 
-An important point for the AWS testing is that in each check we MUST have a unique `audit_info` which is the key object during the AWS execution to isolate the test execution.
+An important point for the AWS testing is that in each check we MUST have a mocked object, which the one that we test once we have it done. We can do this because of the provider which keeps credentials and configuration.
 
 Check the [Provider](./provider.md) section to get more details.
 
-```python
-# We need to import the AWS_Audit_Info and the Audit_Metadata
-# to set the audit_info to call AWS APIs
-from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
-from prowler.providers.common.models import Audit_Metadata
-
-AWS_ACCOUNT_NUMBER = "123456789012"
-
-def set_mocked_audit_info(self):
-  audit_info = AWS_Audit_Info(
-      session_config=None,
-      original_session=None,
-      audit_session=session.Session(
-          profile_name=None,
-          botocore_session=None,
-      ),
-      audit_config=None,
-      audited_account=AWS_ACCOUNT_NUMBER,
-      audited_account_arn=f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root",
-      audited_user_id=None,
-      audited_partition="aws",
-      audited_identity_arn=None,
-      profile=None,
-      profile_region=None,
-      credentials=None,
-      assumed_role_info=None,
-      audited_regions=["us-east-1", "eu-west-1"],
-      organizations_metadata=None,
-      audit_resources=None,
-      mfa_enabled=False,
-      audit_metadata=Audit_Metadata(
-          services_scanned=0,
-          expected_checks=[],
-          completed_checks=0,
-          audit_progress=0,
-      ),
-  )
-
-  return audit_info
-```
 ### Checks
 
 For the AWS tests examples we are going to use the tests for the `iam_password_policy_uppercase` check.
@@ -239,7 +199,9 @@ class Test_iam_password_policy_uppercase:
     # between checks
     current_audit_info = self.set_mocked_audit_info()
 
-    # In this scenario we have to mock also the IAM service and the iam_client from the check to enforce    # that the iam_client used is the one created within this check because patch != import, and if you     # execute tests in parallel some objects can be already initialised hence the check won't be isolated.
+    # In this scenario we have to mock also the IAM service and the iam_client from the check to enforce    
+    # that the iam_client used is the one created within this check because patch != import, and if you     
+    # execute tests in parallel some objects can be already initialised hence the check won't be isolated.
     # In this case we don't use the Moto decorator, we use the mocked IAM client for both objects
     with mock.patch(
         "prowler.providers.aws.services.iam.iam_service.IAM",
