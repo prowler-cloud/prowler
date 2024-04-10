@@ -107,6 +107,7 @@ def fill_json_ocsf(finding_output: FindingOutput) -> DetectionFinding:
             ),
             type_uid=DetectionFindingTypeID.Create,
             type_name=DetectionFindingTypeID.Create.name,
+            unmapped={"check_id": finding_output.check_id},
         )
 
         if finding_output.provider == "kubernetes":
