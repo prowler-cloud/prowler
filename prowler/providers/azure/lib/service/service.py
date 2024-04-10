@@ -18,6 +18,7 @@ class AzureService:
         self.subscriptions = provider.identity.subscriptions
         self.locations = provider.locations
         self.audit_config = provider.audit_config
+        self.fixer_config = provider.fixer_config
 
     def __set_clients__(self, identity, session, service, region_config):
         clients = {}

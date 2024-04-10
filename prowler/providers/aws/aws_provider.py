@@ -224,12 +224,14 @@ class AwsProvider(Provider):
         # Set ignore unused services
         self._scan_unused_services = scan_unused_services
 
+        # TODO: move this to the providers, pending for AWS, GCP, AZURE and K8s
         # Audit Config
-        self._audit_config = {}
-        if hasattr(arguments, "config_file"):
-            self._audit_config = load_and_validate_config_file(
-                self._type, arguments.config_file
-            )
+        self._audit_config = load_and_validate_config_file(
+            self._type, arguments.config_file
+        )
+        self._fixer_config = load_and_validate_config_file(
+            self._type, arguments.config_fixer
+        )
 
     @property
     def identity(self):
@@ -258,6 +260,10 @@ class AwsProvider(Provider):
     @property
     def audit_config(self):
         return self._audit_config
+
+    @property
+    def fixer_config(self):
+        return self._fixer_config
 
     @property
     def output_options(self):

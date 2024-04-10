@@ -31,6 +31,7 @@ class GCPService:
         # Only project ids that have their API enabled will be scanned
         self.project_ids = self.__is_api_active__(provider.project_ids)
         self.audit_config = provider.audit_config
+        self.fixer_config = provider.fixer_config
 
     def __get_client__(self):
         return self.client
