@@ -73,6 +73,9 @@ class TestOutputJSONOCSF:
         assert finding_json_ocsf.status_code == finding_output.status
         assert finding_json_ocsf.status_detail == finding_output.status_extended
 
+        # Unmapped Data
+        assert finding_json_ocsf.unmapped == {"check_id": finding_output.check_id}
+
         # ResourceDetails
         resource_details = finding_json_ocsf.resources
 
