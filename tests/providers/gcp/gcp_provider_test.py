@@ -14,6 +14,8 @@ class TestGCPProvider:
     def test_gcp_provider(self):
         arguments = Namespace()
         arguments.project_id = []
+        arguments.excluded_project_id = []
+        arguments.list_project_id = False
         arguments.credentials_file = ""
         arguments.config_file = default_config_file_path
 
@@ -47,6 +49,8 @@ class TestGCPProvider:
     def test_gcp_provider_output_options(self):
         arguments = Namespace()
         arguments.project_id = []
+        arguments.excluded_project_id = []
+        arguments.list_project_id = False
         arguments.credentials_file = ""
         arguments.config_file = default_config_file_path
 
@@ -106,3 +110,58 @@ class TestGCPProvider:
             # TODO: move this to a fixtures file
             rmdir(f"{arguments.output_directory}/compliance")
             rmdir(arguments.output_directory)
+
+    @freeze_time(datetime.today())
+    def test_is_project_matching(self):
+        arguments = Namespace()
+        arguments.project_id = []
+        arguments.excluded_project_id = []
+        arguments.list_project_id = False
+        arguments.credentials_file = ""
+        arguments.config_file = default_config_file_path
+
+        # Output options
+        arguments.status = []
+        arguments.output_formats = ["csv"]
+        arguments.output_directory = "output_test_directory"
+        arguments.verbose = True
+        arguments.only_logs = False
+        arguments.unix_timestamp = False
+        arguments.shodan = "test-api-key"
+
+        projects = {
+            "test-project": GCPProject(
+                number="55555555",
+                id="project/55555555",
+                name="test-project",
+                labels="",
+                lifecycle_state="",
+            )
+        }
+        with patch(
+            "prowler.providers.gcp.gcp_provider.GcpProvider.setup_session",
+            return_value=None,
+        ), patch(
+            "prowler.providers.gcp.gcp_provider.GcpProvider.get_projects",
+            return_value=projects,
+        ), patch(
+            "prowler.providers.gcp.gcp_provider.GcpProvider.update_projects_with_organizations",
+            return_value=None,
+        ):
+            gcp_provider = GcpProvider(arguments)
+            gcp_provider.output_options = arguments, {}
+        input_project = "sys-*"
+        project_to_match = "sys-12345678"
+        assert gcp_provider.is_project_matching(input_project, project_to_match)
+        input_project = "*prowler"
+        project_to_match = "test-prowler"
+        assert gcp_provider.is_project_matching(input_project, project_to_match)
+        input_project = "test-project"
+        project_to_match = "test-project"
+        assert gcp_provider.is_project_matching(input_project, project_to_match)
+        input_project = "*test*"
+        project_to_match = "prowler-test-project"
+        assert gcp_provider.is_project_matching(input_project, project_to_match)
+        input_project = "prowler-test-project"
+        project_to_match = "prowler-test"
+        assert not gcp_provider.is_project_matching(input_project, project_to_match)
