@@ -280,7 +280,7 @@ The following is the mapping between the native JSON and the Detection Finding f
 | ResourceDetails | _Not mapped yet_ |
 | Description | finding_info.desc |
 | Risk | unmapped.risk |
-| RelatedUrl | _Not mapped yet_ |
+| RelatedUrl | unmapped.related_url |
 | Remediation.Recommendation.Text | remediation.desc |
 | Remediation.Recommendation.Url | remediation.references |
 | Remediation.Code.NativeIaC | remediation.references |
