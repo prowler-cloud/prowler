@@ -163,9 +163,14 @@ def display_compliance_table(
                 "Medio": [],
                 "Bajo": [],
                 "Opcional": [],
+                "Muted": [],
             }
-            pass_count = fail_count = 0
+            pass_count = []
+            fail_count = []
+            muted_count = []
+            value_finding = 0
             for finding in findings:
+                value_finding += 1
                 check = bulk_checks_metadata[finding.check_metadata.CheckID]
                 check_compliances = check.Compliance
                 for compliance in check_compliances:
@@ -187,15 +192,26 @@ def display_compliance_table(
                                         "Alto": 0,
                                         "Medio": 0,
                                         "Bajo": 0,
+                                        "Muted": 0,
                                     }
-                                if finding.status == "FAIL":
-                                    if attribute.Tipo != "recomendacion":
-                                        fail_count += 1
-                                    marcos[marco_categoria][
-                                        "Estado"
-                                    ] = f"{Fore.RED}NO CUMPLE{Style.RESET_ALL}"
-                                elif finding.status == "PASS":
-                                    pass_count += 1
+                                if finding.muted and value_finding not in muted_count:
+                                    muted_count.append(value_finding)
+                                    marcos[marco_categoria]["Muted"] += 1
+                                else:
+                                    if finding.status == "FAIL":
+                                        if (
+                                            attribute.Tipo != "recomendacion"
+                                            and value_finding not in fail_count
+                                        ):
+                                            fail_count.append(value_finding)
+                                        marcos[marco_categoria][
+                                            "Estado"
+                                        ] = f"{Fore.RED}NO CUMPLE{Style.RESET_ALL}"
+                                    elif (
+                                        finding.status == "PASS"
+                                        and value_finding not in pass_count
+                                    ):
+                                        pass_count.append(value_finding)
                                 if attribute.Nivel == "opcional":
                                     marcos[marco_categoria]["Opcional"] += 1
                                 elif attribute.Nivel == "alto":
@@ -222,16 +238,20 @@ def display_compliance_table(
                 ens_compliance_table["Bajo"].append(
                     f"{Fore.YELLOW}{marcos[marco]['Bajo']}{Style.RESET_ALL}"
                 )
+                ens_compliance_table["Muted"].append(
+                    f"{orange_color}{marcos[marco]['Muted']}{Style.RESET_ALL}"
+                )
             if (
-                fail_count + pass_count > 1
+                len(fail_count) + len(pass_count) + len(muted_count) > 1
             ):  # If there are no resources, don't print the compliance table
                 print(
                     f"\nEstado de Cumplimiento de {Fore.YELLOW}{compliance_framework.upper()}{Style.RESET_ALL}:"
                 )
                 overview_table = [
                     [
-                        f"{Fore.RED}{round(fail_count / (fail_count + pass_count) * 100, 2)}% ({fail_count}) NO CUMPLE{Style.RESET_ALL}",
-                        f"{Fore.GREEN}{round(pass_count / (fail_count + pass_count) * 100, 2)}% ({pass_count}) CUMPLE{Style.RESET_ALL}",
+                        f"{Fore.RED}{round(len(fail_count) / len(findings) * 100, 2)}% ({len(fail_count)}) NO CUMPLE{Style.RESET_ALL}",
+                        f"{Fore.GREEN}{round(len(pass_count) / len(findings) * 100, 2)}% ({len(pass_count)}) CUMPLE{Style.RESET_ALL}",
+                        f"{orange_color}{round(len(muted_count) / len(findings) * 100, 2)}% ({len(muted_count)}) MUTED{Style.RESET_ALL}",
                     ]
                 ]
                 print(tabulate(overview_table, tablefmt="rounded_grid"))
@@ -262,9 +282,14 @@ def display_compliance_table(
                 "Section": [],
                 "Level 1": [],
                 "Level 2": [],
+                "Muted": [],
             }
-            pass_count = fail_count = 0
+            pass_count = []
+            fail_count = []
+            muted_count = []
+            value_finding = 0
             for finding in findings:
+                value_finding += 1
                 check = bulk_checks_metadata[finding.check_metadata.CheckID]
                 check_compliances = check.Compliance
                 for compliance in check_compliances:
@@ -281,21 +306,34 @@ def display_compliance_table(
                                         "Status": f"{Fore.GREEN}PASS{Style.RESET_ALL}",
                                         "Level 1": {"FAIL": 0, "PASS": 0},
                                         "Level 2": {"FAIL": 0, "PASS": 0},
+                                        "Muted": 0,
                                     }
-                                if finding.status == "FAIL":
-                                    fail_count += 1
-                                elif finding.status == "PASS":
-                                    pass_count += 1
+                                if finding.muted and value_finding not in muted_count:
+                                    muted_count.append(value_finding)
+                                    sections[section]["Muted"] += 1
+                                else:
+                                    if (
+                                        finding.status == "FAIL"
+                                        and value_finding not in fail_count
+                                    ):
+                                        fail_count.append(value_finding)
+                                    elif (
+                                        finding.status == "PASS"
+                                        and value_finding not in pass_count
+                                    ):
+                                        pass_count.append(value_finding)
                                 if "Level 1" in attribute.Profile:
-                                    if finding.status == "FAIL":
-                                        sections[section]["Level 1"]["FAIL"] += 1
-                                    else:
-                                        sections[section]["Level 1"]["PASS"] += 1
+                                    if not finding.muted:
+                                        if finding.status == "FAIL":
+                                            sections[section]["Level 1"]["FAIL"] += 1
+                                        else:
+                                            sections[section]["Level 1"]["PASS"] += 1
                                 elif "Level 2" in attribute.Profile:
-                                    if finding.status == "FAIL":
-                                        sections[section]["Level 2"]["FAIL"] += 1
-                                    else:
-                                        sections[section]["Level 2"]["PASS"] += 1
+                                    if not finding.muted:
+                                        if finding.status == "FAIL":
+                                            sections[section]["Level 2"]["FAIL"] += 1
+                                        else:
+                                            sections[section]["Level 2"]["PASS"] += 1
 
             # Add results to table
             sections = dict(sorted(sections.items()))
@@ -318,16 +356,20 @@ def display_compliance_table(
                     cis_compliance_table["Level 2"].append(
                         f"{Fore.GREEN}PASS({sections[section]['Level 2']['PASS']}){Style.RESET_ALL}"
                     )
+                cis_compliance_table["Muted"].append(
+                    f"{orange_color}{sections[section]['Muted']}{Style.RESET_ALL}"
+                )
             if (
-                fail_count + pass_count > 1
+                len(fail_count) + len(pass_count) + len(muted_count) > 1
             ):  # If there are no resources, don't print the compliance table
                 print(
                     f"\nCompliance Status of {Fore.YELLOW}{compliance_framework.upper()}{Style.RESET_ALL} Framework:"
                 )
                 overview_table = [
                     [
-                        f"{Fore.RED}{round(fail_count / (fail_count + pass_count) * 100, 2)}% ({fail_count}) FAIL{Style.RESET_ALL}",
-                        f"{Fore.GREEN}{round(pass_count / (fail_count + pass_count) * 100, 2)}% ({pass_count}) PASS{Style.RESET_ALL}",
+                        f"{Fore.RED}{round(len(fail_count) / len(findings) * 100, 2)}% ({len(fail_count)}) FAIL{Style.RESET_ALL}",
+                        f"{Fore.GREEN}{round(len(pass_count) / len(findings) * 100, 2)}% ({len(pass_count)}) PASS{Style.RESET_ALL}",
+                        f"{orange_color}{round(len(muted_count) / len(findings) * 100, 2)}% ({len(muted_count)}) MUTED{Style.RESET_ALL}",
                     ]
                 ]
                 print(tabulate(overview_table, tablefmt="rounded_grid"))
@@ -357,9 +399,14 @@ def display_compliance_table(
                 "Provider": [],
                 "Tactic": [],
                 "Status": [],
+                "Muted": [],
             }
-            pass_count = fail_count = 0
+            pass_count = []
+            fail_count = []
+            muted_count = []
+            value_finding = 0
             for finding in findings:
+                value_finding += 1
                 check = bulk_checks_metadata[finding.check_metadata.CheckID]
                 check_compliances = check.Compliance
                 for compliance in check_compliances:
@@ -370,14 +417,20 @@ def display_compliance_table(
                         for requirement in compliance.Requirements:
                             for tactic in requirement.Tactics:
                                 if tactic not in tactics:
-                                    tactics[tactic] = {"FAIL": 0, "PASS": 0}
-                                if finding.status == "FAIL":
-                                    fail_count += 1
-                                    tactics[tactic]["FAIL"] += 1
-                                elif finding.status == "PASS":
-                                    pass_count += 1
-                                    tactics[tactic]["PASS"] += 1
-
+                                    tactics[tactic] = {"FAIL": 0, "PASS": 0, "Muted": 0}
+                                if finding.muted:
+                                    if value_finding not in muted_count:
+                                        muted_count.append(value_finding)
+                                    tactics[tactic]["Muted"] += 1
+                                else:
+                                    if finding.status == "FAIL":
+                                        if value_finding not in fail_count:
+                                            fail_count.append(value_finding)
+                                        tactics[tactic]["FAIL"] += 1
+                                    elif finding.status == "PASS":
+                                        if value_finding not in pass_count:
+                                            pass_count.append(value_finding)
+                                        tactics[tactic]["PASS"] += 1
             # Add results to table
             tactics = dict(sorted(tactics.items()))
             for tactic in tactics:
@@ -391,16 +444,21 @@ def display_compliance_table(
                     mitre_compliance_table["Status"].append(
                         f"{Fore.GREEN}PASS({tactics[tactic]['PASS']}){Style.RESET_ALL}"
                     )
+                if tactics[tactic]["Muted"] > 0:
+                    mitre_compliance_table["Muted"].append(
+                        f"{orange_color}{tactics[tactic]['Muted']}{Style.RESET_ALL}"
+                    )
             if (
-                fail_count + pass_count > 1
+                len(fail_count) + len(pass_count) + len(muted_count) > 1
             ):  # If there are no resources, don't print the compliance table
                 print(
                     f"\nCompliance Status of {Fore.YELLOW}{compliance_framework.upper()}{Style.RESET_ALL} Framework:"
                 )
                 overview_table = [
                     [
-                        f"{Fore.RED}{round(fail_count / (fail_count + pass_count) * 100, 2)}% ({fail_count}) FAIL{Style.RESET_ALL}",
-                        f"{Fore.GREEN}{round(pass_count / (fail_count + pass_count) * 100, 2)}% ({pass_count}) PASS{Style.RESET_ALL}",
+                        f"{Fore.RED}{round(len(fail_count) / len(findings) * 100, 2)}% ({len(fail_count)}) FAIL{Style.RESET_ALL}",
+                        f"{Fore.GREEN}{round(len(pass_count) / len(findings) * 100, 2)}% ({len(pass_count)}) PASS{Style.RESET_ALL}",
+                        f"{orange_color}{round(len(muted_count) / len(findings) * 100, 2)}% ({len(muted_count)}) MUTED{Style.RESET_ALL}",
                     ]
                 ]
                 print(tabulate(overview_table, tablefmt="rounded_grid"))
@@ -425,8 +483,12 @@ def display_compliance_table(
                         f" - CSV: {output_directory}/compliance/{output_filename}_{compliance_framework}.csv\n"
                     )
         else:
-            pass_count = fail_count = 0
+            pass_count = []
+            fail_count = []
+            muted_count = []
+            value_finding = 0
             for finding in findings:
+                value_finding += 1
                 check = bulk_checks_metadata[finding.check_metadata.CheckID]
                 check_compliances = check.Compliance
                 for compliance in check_compliances:
@@ -438,20 +500,30 @@ def display_compliance_table(
                     ):
                         for requirement in compliance.Requirements:
                             for attribute in requirement.Attributes:
-                                if finding.status == "FAIL":
-                                    fail_count += 1
-                                elif finding.status == "PASS":
-                                    pass_count += 1
+                                if finding.muted and value_finding not in muted_count:
+                                    muted_count.append(value_finding)
+                                else:
+                                    if (
+                                        finding.status == "FAIL"
+                                        and value_finding not in fail_count
+                                    ):
+                                        fail_count.append(value_finding)
+                                    elif (
+                                        finding.status == "PASS"
+                                        and value_finding not in pass_count
+                                    ):
+                                        pass_count.append(value_finding)
             if (
-                fail_count + pass_count > 1
+                len(fail_count) + len(pass_count) + len(muted_count) > 1
             ):  # If there are no resources, don't print the compliance table
                 print(
                     f"\nCompliance Status of {Fore.YELLOW}{compliance_framework.upper()}{Style.RESET_ALL} Framework:"
                 )
                 overview_table = [
                     [
-                        f"{Fore.RED}{round(fail_count / (fail_count + pass_count) * 100, 2)}% ({fail_count}) FAIL{Style.RESET_ALL}",
-                        f"{Fore.GREEN}{round(pass_count / (fail_count + pass_count) * 100, 2)}% ({pass_count}) PASS{Style.RESET_ALL}",
+                        f"{Fore.RED}{round(len(fail_count) / len(findings) * 100, 2)}% ({len(fail_count)}) FAIL{Style.RESET_ALL}",
+                        f"{Fore.GREEN}{round(len(pass_count) / len(findings) * 100, 2)}% ({len(pass_count)}) PASS{Style.RESET_ALL}",
+                        f"{orange_color}{round(len(muted_count) / len(findings) * 100, 2)}% ({len(muted_count)}) MUTED{Style.RESET_ALL}",
                     ]
                 ]
                 print(tabulate(overview_table, tablefmt="rounded_grid"))
