@@ -2,6 +2,7 @@ import argparse
 import sys
 from argparse import RawTextHelpFormatter
 
+from dashboard.lib.arguments.arguments import init_dashboard_parser
 from prowler.config.config import (
     available_compliance_frameworks,
     check_current_version,
@@ -24,10 +25,17 @@ class ProwlerArgumentParser:
         self.parser = argparse.ArgumentParser(
             prog="prowler",
             formatter_class=RawTextHelpFormatter,
+            usage="prowler [-h] [--version] {aws,azure,gcp,kubernetes,dashboard} ...",
             epilog="""
-Available components:
-    dashboard           Prowler local dashboard
+Available Cloud Providers:
+  {aws,azure,gcp,kubernetes}
+    aws                 AWS Provider
+    azure               Azure Provider
+    gcp                 GCP Provider
+    kubernetes          Kubernetes Provider
 
+Available components:
+    dashboard           Local dashboard
 
 To see the different available options on a specific component, run:
     prowler {provider|dashboard} -h|--help
@@ -40,15 +48,14 @@ Detailed documentation at https://docs.prowler.com
             "--version",
             "-v",
             action="store_true",
-            help="Show Prowler version",
+            help="show Prowler version",
         )
         # Common arguments parser
         self.common_providers_parser = argparse.ArgumentParser(add_help=False)
 
         # Providers Parser
         self.subparsers = self.parser.add_subparsers(
-            title="Available cloud providers",
-            dest="provider",
+            title="Available Cloud Providers", dest="provider", help=argparse.SUPPRESS
         )
 
         self.__init_outputs_parser__()
@@ -63,6 +70,9 @@ Detailed documentation at https://docs.prowler.com
 
         # Init Providers Arguments
         init_providers_parser(self)
+
+        # Dahboard Parser
+        init_dashboard_parser(self)
 
     def parse(self, args=None) -> argparse.Namespace:
         """
@@ -97,11 +107,11 @@ Detailed documentation at https://docs.prowler.com
         # A provider is always required
         if not args.provider:
             self.parser.error(
-                "A provider is required to see its specific help options."
+                "A provider/component is required to see its specific help options."
             )
 
         # Only Logging Configuration
-        if args.only_logs or args.list_checks_json:
+        if args.provider != "dashboard" and (args.only_logs or args.list_checks_json):
             args.no_banner = True
 
         # Extra validation for provider arguments
