@@ -75,7 +75,6 @@ class TestOutputJSONOCSF:
 
         # Unmapped Data
         assert finding_json_ocsf.unmapped == {
-            "check_id": finding_output.check_id,
             "check_type": finding_output.check_type,
             "risk": finding_output.risk,
             "related_url": finding_output.related_url,
@@ -105,6 +104,7 @@ class TestOutputJSONOCSF:
         # Metadata
         metadata = finding_json_ocsf.metadata
         assert isinstance(metadata, Metadata)
+        assert metadata.event_code == finding_output.check_id
 
         metadata_product = metadata.product
         assert isinstance(metadata_product, Product)
