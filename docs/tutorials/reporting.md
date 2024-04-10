@@ -268,7 +268,7 @@ The following is the mapping between the native JSON and the Detection Finding f
 | AssessmentStartTime | event_time |
 | FindingUniqueId | finding_info.uid |
 | Provider | cloud.account.type |
-| CheckID | unmapped.check_id |
+| CheckID | metadata.event_code |
 | CheckTitle | finding_info.title |
 | CheckType | unmapped.check_type |
 | ServiceName | resources.group.name |
@@ -297,7 +297,7 @@ The following is the mapping between the native JSON and the Detection Finding f
 | OrganizationsInfo.account_name | cloud.account.name |
 | OrganizationsInfo.account_email | _Not mapped yet_ |
 | OrganizationsInfo.account_arn | _Not mapped yet_ |
-| OrganizationsInfo.account_org | cloud.org.name | 
+| OrganizationsInfo.account_org | cloud.org.name |
 | OrganizationsInfo.account_tags | cloud.account.labels _Available from OCSF 1.2_ |
 | Region | resources.region |
 | ResourceId | resources.name |

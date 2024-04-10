@@ -99,6 +99,7 @@ def fill_json_ocsf(finding_output: FindingOutput) -> DetectionFinding:
                 )
             ],
             metadata=Metadata(
+                event_code=finding_output.check_id,
                 product=Product(
                     name="Prowler",
                     vendor_name="Prowler",
@@ -108,7 +109,6 @@ def fill_json_ocsf(finding_output: FindingOutput) -> DetectionFinding:
             type_uid=DetectionFindingTypeID.Create,
             type_name=DetectionFindingTypeID.Create.name,
             unmapped={
-                "check_id": finding_output.check_id,
                 "check_type": finding_output.check_type,
                 "risk": finding_output.risk,
                 "related_url": finding_output.related_url,
