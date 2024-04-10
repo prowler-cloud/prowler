@@ -270,7 +270,7 @@ The following is the mapping between the native JSON and the Detection Finding f
 | Provider | cloud.account.type |
 | CheckID | unmapped.check_id |
 | CheckTitle | finding_info.title |
-| CheckType | metadata.check_type |
+| CheckType | unmapped.check_type |
 | ServiceName | resources.group.name |
 | SubServiceName | _Not mapped yet_ |
 | Status | status_code |
