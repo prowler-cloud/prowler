@@ -60,9 +60,10 @@ def prowler():
     # Save Arguments
     provider = args.provider
     if provider == "dashboard":
+        from dashboard import DASHBOARD_ARGS
         from dashboard.__main__ import dashboard
 
-        sys.exit(dashboard.run(debug=True, port=11666, use_reloader=False))
+        sys.exit(dashboard.run(**DASHBOARD_ARGS))
 
     checks = args.check
     excluded_checks = args.excluded_check
