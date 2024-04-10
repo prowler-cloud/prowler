@@ -277,7 +277,7 @@ The following is the mapping between the native JSON and the Detection Finding f
 | StatusExtended | status_detail |
 | Severity | severity |
 | ResourceType | resources.type |
-| ResourceDetails | PENDING |
+| ResourceDetails | _Not mapped yet_ |
 | Description | finding_info.desc |
 | Risk | unmapped.risk |
 | RelatedUrl | _Not mapped yet_ |
