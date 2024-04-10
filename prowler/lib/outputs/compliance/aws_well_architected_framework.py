@@ -50,6 +50,7 @@ def write_compliance_row_aws_well_architected_framework(
                     StatusExtended=finding.status_extended,
                     ResourceId=finding.resource_id,
                     CheckId=finding.check_metadata.CheckID,
+                    Muted=finding.muted,
                 )
 
                 csv_writer.writerow(compliance_row.__dict__)

@@ -45,5 +45,6 @@ def write_compliance_row_generic(
                 StatusExtended=finding.status_extended,
                 ResourceId=finding.resource_id,
                 CheckId=finding.check_metadata.CheckID,
+                Muted=finding.muted,
             )
             csv_writer.writerow(compliance_row.__dict__)
