@@ -529,7 +529,7 @@ aws:
                 }
             }
         }
-        mutelist_content = {"Mute List": mutelist}
+        mutelist_content = {"Mutelist": mutelist}
 
         config_file = tempfile.NamedTemporaryFile(delete=False)
         with open(config_file.name, "w") as allowlist_file:
@@ -558,7 +558,7 @@ aws:
         aws_provider = AwsProvider(arguments)
         response = aws_provider.generate_regional_clients("ec2")
 
-        assert len(response.keys()) == 27
+        assert len(response.keys()) == 29
 
     @mock_aws
     def test_generate_regional_clients_with_enabled_regions(self):

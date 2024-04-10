@@ -14,12 +14,13 @@
           "Categoria": "control de acceso",
           "DescripcionControl": "Es muy recomendable la utilización de un proveedor de identidades que permita administrar las identidades en un lugar centralizado, en vez de utilizar IAM para ello.",
           "Nivel": "alto",
-          "Tipo": "recomendacion",
+          "Tipo": "requisito",
           "Dimensiones": [
             "trazabilidad",
             "autenticidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -43,7 +44,8 @@
             "trazabilidad",
             "autenticidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -67,7 +69,8 @@
             "trazabilidad",
             "autenticidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -91,7 +94,8 @@
             "trazabilidad",
             "autenticidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -115,7 +119,8 @@
             "trazabilidad",
             "autenticidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -151,7 +156,8 @@
             "trazabilidad",
             "autenticidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -179,7 +185,8 @@
             "trazabilidad",
             "autenticidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -203,7 +210,8 @@
             "trazabilidad",
             "autenticidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -228,7 +236,8 @@
             "trazabilidad",
             "autenticidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -253,7 +262,8 @@
             "trazabilidad",
             "autenticidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -279,7 +289,8 @@
             "trazabilidad",
             "autenticidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -303,7 +314,8 @@
             "trazabilidad",
             "autenticidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -327,7 +339,8 @@
             "trazabilidad",
             "autenticidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -353,7 +366,8 @@
             "trazabilidad",
             "autenticidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -380,7 +394,8 @@
             "trazabilidad",
             "autenticidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -404,7 +419,11 @@
             "trazabilidad",
             "autenticidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": [
+            "op.acc.6.r2",
+            "op.acc.6.r4"
+          ]
         }
       ],
       "Checks": [
@@ -433,7 +452,11 @@
             "trazabilidad",
             "autenticidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": [
+            "op.acc.6.r1",
+            "op.acc.6.r4"
+          ]
         }
       ],
       "Checks": [
@@ -459,7 +482,11 @@
             "trazabilidad",
             "autenticidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": [
+            "op.acc.6.r1",
+            "op.acc.6.r3"
+          ]
         }
       ],
       "Checks": [
@@ -484,7 +511,8 @@
             "trazabilidad",
             "autenticidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -508,7 +536,8 @@
             "trazabilidad",
             "autenticidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -533,7 +562,8 @@
             "trazabilidad",
             "autenticidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -558,7 +588,8 @@
             "autenticidad",
             "disponibilidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -583,7 +614,8 @@
             "autenticidad",
             "disponibilidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -608,7 +640,8 @@
             "autenticidad",
             "disponibilidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -634,7 +667,8 @@
             "autenticidad",
             "disponibilidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -659,7 +693,8 @@
             "autenticidad",
             "disponibilidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -684,7 +719,8 @@
             "autenticidad",
             "disponibilidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -709,7 +745,8 @@
             "autenticidad",
             "disponibilidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -726,7 +763,7 @@
           "Categoria": "explotación",
           "DescripcionControl": "La entidad usuaria puede consultar el histórico de configuraciones de recursos en AWS Config.",
           "Nivel": "alto",
-          "Tipo": "recomendacion",
+          "Tipo": "refuerzo",
           "Dimensiones": [
             "confidencialidad",
             "integridad",
@@ -734,7 +771,8 @@
             "autenticidad",
             "disponibilidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -759,7 +797,8 @@
             "autenticidad",
             "disponibilidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -785,7 +824,8 @@
             "autenticidad",
             "disponibilidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -810,7 +850,8 @@
             "autenticidad",
             "disponibilidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -836,7 +877,8 @@
             "autenticidad",
             "disponibilidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -861,7 +903,8 @@
             "autenticidad",
             "disponibilidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -886,7 +929,8 @@
             "autenticidad",
             "disponibilidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -912,7 +956,8 @@
             "autenticidad",
             "disponibilidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -937,7 +982,8 @@
             "autenticidad",
             "disponibilidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -962,7 +1008,8 @@
             "autenticidad",
             "disponibilidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -981,11 +1028,12 @@
           "Categoria": "explotación",
           "DescripcionControl": "Habilitar la herramienta CloudTrail en todas las regiones. Este serviio está habilitado por defecto cuando se crea una nueva cuenta, pero es posible deshabilitarlo.",
           "Nivel": "alto",
-          "Tipo": "medida",
+          "Tipo": "requisito",
           "Dimensiones": [
             "trazabilidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -1002,11 +1050,12 @@
           "Categoria": "explotación",
           "DescripcionControl": "Establecer un filtro de métricas desde AWS CloudWatch para detectar cambios en las configuraciones de CloudTrail",
           "Nivel": "alto",
-          "Tipo": "medida",
+          "Tipo": "requisito",
           "Dimensiones": [
             "trazabilidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -1023,11 +1072,12 @@
           "Categoria": "explotación",
           "DescripcionControl": "Habilitar la validación de archivos en todos los trails, evitando así que estos se vean modificados o eliminados.",
           "Nivel": "alto",
-          "Tipo": "medida",
+          "Tipo": "requisito",
           "Dimensiones": [
             "trazabilidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -1044,11 +1094,12 @@
           "Categoria": "explotación",
           "DescripcionControl": "Habilitar la entrega continua de eventos de CloudTrail a un bucket S3 dedicado con el fin de unificar los archivos de registro.",
           "Nivel": "alto",
-          "Tipo": "medida",
+          "Tipo": "requisito",
           "Dimensiones": [
             "trazabilidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -1066,11 +1117,12 @@
           "Categoria": "explotación",
           "DescripcionControl": "Se deberán habilitar alertas para los siguientes eventos: * Llamadas no permitidas a la API, * Accesos no permitidos a la consola, * Todos los intentos de acceso sin el correcto uso de MFA, * Toda la actividad realizada sobre y por la cuenta root, * Cualquier cambio en las políticas IAM",
           "Nivel": "alto",
-          "Tipo": "medida",
+          "Tipo": "recomendacion",
           "Dimensiones": [
             "trazabilidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -1095,7 +1147,8 @@
           "Dimensiones": [
             "trazabilidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -1112,11 +1165,12 @@
           "Categoria": "explotación",
           "DescripcionControl": "Crear alertas utilizando herramientas como Amazon CloudWatch Events para anunciar el inicio de sesión y el uso de las credenciales de usuario root de la cuenta de administración",
           "Nivel": "alto",
-          "Tipo": "medida",
+          "Tipo": "requisito",
           "Dimensiones": [
             "trazabilidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -1137,7 +1191,8 @@
           "Dimensiones": [
             "trazabilidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -1161,7 +1216,8 @@
           "Dimensiones": [
             "trazabilidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -1185,7 +1241,8 @@
           "Dimensiones": [
             "trazabilidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -1207,7 +1264,8 @@
           "Dimensiones": [
             "trazabilidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -1228,7 +1286,8 @@
           "Dimensiones": [
             "trazabilidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -1249,7 +1308,8 @@
           "Dimensiones": [
             "trazabilidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -1270,7 +1330,8 @@
           "Dimensiones": [
             "trazabilidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -1297,13 +1358,14 @@
           "Dimensiones": [
             "trazabilidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
         "iam_policy_allows_privilege_escalation",
         "iam_customer_attached_policy_no_administrative_privileges",
-        "iam_customer_unattached_policy_no_administrative_privilege",
+        "iam_customer_unattached_policy_no_administrative_privileges",
         "iam_no_custom_policy_permissive_role_assumption",
         "iam_policy_attached_only_to_group_or_roles",
         "iam_role_cross_service_confused_deputy_prevention",
@@ -1324,7 +1386,8 @@
           "Dimensiones": [
             "trazabilidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -1347,7 +1410,8 @@
           "Dimensiones": [
             "trazabilidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -1368,7 +1432,8 @@
           "Dimensiones": [
             "trazabilidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -1389,7 +1454,8 @@
           "Dimensiones": [
             "trazabilidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -1410,7 +1476,8 @@
           "Dimensiones": [
             "trazabilidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -1431,7 +1498,8 @@
           "Dimensiones": [
             "trazabilidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -1456,7 +1524,8 @@
             "autenticidad",
             "disponibilidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -1481,7 +1550,8 @@
             "autenticidad",
             "disponibilidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -1507,7 +1577,8 @@
             "autenticidad",
             "disponibilidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -1532,7 +1603,8 @@
             "autenticidad",
             "disponibilidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -1557,7 +1629,8 @@
             "autenticidad",
             "disponibilidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -1582,7 +1655,8 @@
             "autenticidad",
             "disponibilidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -1607,7 +1681,8 @@
             "autenticidad",
             "disponibilidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -1632,7 +1707,8 @@
             "autenticidad",
             "disponibilidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -1657,7 +1733,8 @@
             "autenticidad",
             "disponibilidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -1682,7 +1759,8 @@
             "autenticidad",
             "disponibilidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -1707,7 +1785,8 @@
             "autenticidad",
             "disponibilidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -1724,7 +1803,7 @@
           "Categoria": "monitorización del sistema",
           "DescripcionControl": "Deberá habilitarse Amazon GuardDuty para todas las regiones tanto en la cuenta raíz como en las cuentas miembro de un entorno multi-cuenta.",
           "Nivel": "alto",
-          "Tipo": "medida",
+          "Tipo": "requisito",
           "Dimensiones": [
             "confidencialidad",
             "integridad",
@@ -1732,7 +1811,8 @@
             "autenticidad",
             "disponibilidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -1749,7 +1829,7 @@
           "Categoria": "monitorización del sistema",
           "DescripcionControl": "Todas las cuentas miembro deberán estar añadidas para la supervisión bajo la cuenta raíz.",
           "Nivel": "alto",
-          "Tipo": "medida",
+          "Tipo": "requisito",
           "Dimensiones": [
             "confidencialidad",
             "integridad",
@@ -1757,7 +1837,8 @@
             "autenticidad",
             "disponibilidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -1774,7 +1855,7 @@
           "Categoria": "monitorización del sistema",
           "DescripcionControl": "Utilizar Security Hub para obtener una vista consolidada de los hallazgos de seguridad en los servicios de AWS habilitados.",
           "Nivel": "alto",
-          "Tipo": "recomendacion",
+          "Tipo": "requisito",
           "Dimensiones": [
             "confidencialidad",
             "integridad",
@@ -1782,7 +1863,8 @@
             "autenticidad",
             "disponibilidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -1790,7 +1872,7 @@
       ]
     },
     {
-      "Id": "op.mon.3.aws.cwl.2",
+      "Id": "op.mon.3.aws.cwl.1",
       "Description": "Vigilancia",
       "Attributes": [
         {
@@ -1807,7 +1889,8 @@
             "autenticidad",
             "disponibilidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -1832,7 +1915,8 @@
             "autenticidad",
             "disponibilidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -1857,7 +1941,8 @@
             "autenticidad",
             "disponibilidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -1882,7 +1967,8 @@
             "autenticidad",
             "disponibilidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -1907,7 +1993,8 @@
             "autenticidad",
             "disponibilidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -1932,7 +2019,8 @@
             "autenticidad",
             "disponibilidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -1958,7 +2046,8 @@
             "autenticidad",
             "disponibilidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -1983,7 +2072,8 @@
             "autenticidad",
             "disponibilidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -2008,7 +2098,8 @@
             "autenticidad",
             "disponibilidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -2034,7 +2125,8 @@
             "autenticidad",
             "disponibilidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -2060,7 +2152,8 @@
             "autenticidad",
             "disponibilidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -2085,7 +2178,8 @@
             "autenticidad",
             "disponibilidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -2110,7 +2204,8 @@
             "autenticidad",
             "disponibilidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -2135,7 +2230,8 @@
             "autenticidad",
             "disponibilidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -2160,7 +2256,8 @@
             "autenticidad",
             "disponibilidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -2185,7 +2282,8 @@
             "autenticidad",
             "disponibilidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -2210,7 +2308,8 @@
             "autenticidad",
             "disponibilidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -2235,7 +2334,8 @@
             "autenticidad",
             "disponibilidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -2257,7 +2357,8 @@
             "integridad",
             "autenticidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -2279,7 +2380,8 @@
             "integridad",
             "autenticidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -2301,7 +2403,8 @@
             "integridad",
             "autenticidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -2323,7 +2426,8 @@
             "integridad",
             "autenticidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -2348,7 +2452,8 @@
             "autenticidad",
             "disponibilidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -2373,7 +2478,8 @@
             "autenticidad",
             "disponibilidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -2398,7 +2504,8 @@
             "autenticidad",
             "disponibilidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -2423,7 +2530,8 @@
             "autenticidad",
             "disponibilidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -2449,7 +2557,10 @@
             "autenticidad",
             "disponibilidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": [
+            "mp.com.4.r3"
+          ]
         }
       ],
       "Checks": [
@@ -2471,7 +2582,10 @@
             "confidencialidad",
             "integridad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": [
+            "mp.com.4.r2"
+          ]
         }
       ],
       "Checks": [
@@ -2494,7 +2608,8 @@
             "confidencialidad",
             "integridad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -2516,7 +2631,8 @@
             "confidencialidad",
             "integridad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -2538,7 +2654,8 @@
             "confidencialidad",
             "integridad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -2560,7 +2677,8 @@
             "confidencialidad",
             "integridad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -2582,7 +2700,8 @@
             "confidencialidad",
             "integridad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -2604,7 +2723,8 @@
             "confidencialidad",
             "integridad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -2626,7 +2746,8 @@
             "confidencialidad",
             "integridad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -2648,7 +2769,8 @@
             "confidencialidad",
             "integridad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -2673,7 +2795,8 @@
             "autenticidad",
             "disponibilidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -2699,7 +2822,8 @@
             "autenticidad",
             "disponibilidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -2724,7 +2848,8 @@
             "autenticidad",
             "disponibilidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -2749,7 +2874,8 @@
             "autenticidad",
             "disponibilidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -2770,7 +2896,8 @@
           "Dimensiones": [
             "disponibilidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -2796,7 +2923,8 @@
           "Dimensiones": [
             "disponibilidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -2821,7 +2949,8 @@
             "autenticidad",
             "disponibilidad"
           ],
-          "ModoEjecucion": "manual"
+          "ModoEjecucion": "manual",
+          "Dependencias": []
         }
       ],
       "Checks": []
@@ -2844,7 +2973,8 @@
             "autenticidad",
             "disponibilidad"
           ],
-          "ModoEjecucion": "manual"
+          "ModoEjecucion": "manual",
+          "Dependencias": []
         }
       ],
       "Checks": []
@@ -2867,7 +2997,8 @@
             "autenticidad",
             "disponibilidad"
           ],
-          "ModoEjecucion": "manual"
+          "ModoEjecucion": "manual",
+          "Dependencias": []
         }
       ],
       "Checks": []
@@ -2886,7 +3017,8 @@
           "Dimensiones": [
             "disponibilidad"
           ],
-          "ModoEjecucion": "manual"
+          "ModoEjecucion": "manual",
+          "Dependencias": []
         }
       ],
       "Checks": []
@@ -2905,7 +3037,8 @@
           "Dimensiones": [
             "disponibilidad"
           ],
-          "ModoEjecucion": "manual"
+          "ModoEjecucion": "manual",
+          "Dependencias": []
         }
       ],
       "Checks": []
@@ -2924,7 +3057,8 @@
           "Dimensiones": [
             "disponibilidad"
           ],
-          "ModoEjecucion": "manual"
+          "ModoEjecucion": "manual",
+          "Dependencias": []
         }
       ],
       "Checks": []
@@ -2943,7 +3077,8 @@
           "Dimensiones": [
             "disponibilidad"
           ],
-          "ModoEjecucion": "manual"
+          "ModoEjecucion": "manual",
+          "Dependencias": []
         }
       ],
       "Checks": []
@@ -2962,7 +3097,8 @@
           "Dimensiones": [
             "disponibilidad"
           ],
-          "ModoEjecucion": "manual"
+          "ModoEjecucion": "manual",
+          "Dependencias": []
         }
       ],
       "Checks": []
@@ -2981,7 +3117,8 @@
           "Dimensiones": [
             "disponibilidad"
           ],
-          "ModoEjecucion": "manual"
+          "ModoEjecucion": "manual",
+          "Dependencias": []
         }
       ],
       "Checks": []
@@ -3000,7 +3137,8 @@
           "Dimensiones": [
             "disponibilidad"
           ],
-          "ModoEjecucion": "manual"
+          "ModoEjecucion": "manual",
+          "Dependencias": []
         }
       ],
       "Checks": []
@@ -3019,7 +3157,8 @@
           "Dimensiones": [
             "disponibilidad"
           ],
-          "ModoEjecucion": "manual"
+          "ModoEjecucion": "manual",
+          "Dependencias": []
         }
       ],
       "Checks": []
@@ -3039,7 +3178,8 @@
             "trazabilidad",
             "autenticidad"
           ],
-          "ModoEjecucion": "manual"
+          "ModoEjecucion": "manual",
+          "Dependencias": []
         }
       ],
       "Checks": []
@@ -3059,7 +3199,8 @@
             "trazabilidad",
             "autenticidad"
           ],
-          "ModoEjecucion": "manual"
+          "ModoEjecucion": "manual",
+          "Dependencias": []
         }
       ],
       "Checks": []
@@ -3079,7 +3220,8 @@
             "trazabilidad",
             "autenticidad"
           ],
-          "ModoEjecucion": "manual"
+          "ModoEjecucion": "manual",
+          "Dependencias": []
         }
       ],
       "Checks": []
@@ -3099,7 +3241,8 @@
             "trazabilidad",
             "autenticidad"
           ],
-          "ModoEjecucion": "manual"
+          "ModoEjecucion": "manual",
+          "Dependencias": []
         }
       ],
       "Checks": []
@@ -3119,7 +3262,8 @@
             "trazabilidad",
             "autenticidad"
           ],
-          "ModoEjecucion": "manual"
+          "ModoEjecucion": "manual",
+          "Dependencias": []
         }
       ],
       "Checks": []
@@ -3139,7 +3283,8 @@
             "trazabilidad",
             "autenticidad"
           ],
-          "ModoEjecucion": "manual"
+          "ModoEjecucion": "manual",
+          "Dependencias": []
         }
       ],
       "Checks": []
@@ -3159,7 +3304,8 @@
             "trazabilidad",
             "autenticidad"
           ],
-          "ModoEjecucion": "manual"
+          "ModoEjecucion": "manual",
+          "Dependencias": []
         }
       ],
       "Checks": []
@@ -3181,7 +3327,8 @@
             "trazabilidad",
             "autenticidad"
           ],
-          "ModoEjecucion": "manual"
+          "ModoEjecucion": "manual",
+          "Dependencias": []
         }
       ],
       "Checks": []
@@ -3203,7 +3350,8 @@
             "trazabilidad",
             "autenticidad"
           ],
-          "ModoEjecucion": "manual"
+          "ModoEjecucion": "manual",
+          "Dependencias": []
         }
       ],
       "Checks": []
@@ -3225,7 +3373,8 @@
             "trazabilidad",
             "autenticidad"
           ],
-          "ModoEjecucion": "manual"
+          "ModoEjecucion": "manual",
+          "Dependencias": []
         }
       ],
       "Checks": []
@@ -3247,7 +3396,8 @@
             "trazabilidad",
             "autenticidad"
           ],
-          "ModoEjecucion": "manual"
+          "ModoEjecucion": "manual",
+          "Dependencias": []
         }
       ],
       "Checks": []
@@ -3269,7 +3419,8 @@
             "trazabilidad",
             "autenticidad"
           ],
-          "ModoEjecucion": "manual"
+          "ModoEjecucion": "manual",
+          "Dependencias": []
         }
       ],
       "Checks": []
@@ -3291,7 +3442,8 @@
             "trazabilidad",
             "autenticidad"
           ],
-          "ModoEjecucion": "manual"
+          "ModoEjecucion": "manual",
+          "Dependencias": []
         }
       ],
       "Checks": []
@@ -3313,7 +3465,8 @@
             "trazabilidad",
             "autenticidad"
           ],
-          "ModoEjecucion": "manual"
+          "ModoEjecucion": "manual",
+          "Dependencias": []
         }
       ],
       "Checks": []
@@ -3335,7 +3488,8 @@
             "trazabilidad",
             "autenticidad"
           ],
-          "ModoEjecucion": "manual"
+          "ModoEjecucion": "manual",
+          "Dependencias": []
         }
       ],
       "Checks": []
@@ -3357,7 +3511,8 @@
             "trazabilidad",
             "autenticidad"
           ],
-          "ModoEjecucion": "manual"
+          "ModoEjecucion": "manual",
+          "Dependencias": []
         }
       ],
       "Checks": []
@@ -3379,7 +3534,8 @@
             "trazabilidad",
             "autenticidad"
           ],
-          "ModoEjecucion": "manual"
+          "ModoEjecucion": "manual",
+          "Dependencias": []
         }
       ],
       "Checks": []
@@ -3401,7 +3557,8 @@
             "trazabilidad",
             "autenticidad"
           ],
-          "ModoEjecucion": "manual"
+          "ModoEjecucion": "manual",
+          "Dependencias": []
         }
       ],
       "Checks": []
@@ -3423,7 +3580,8 @@
             "trazabilidad",
             "autenticidad"
           ],
-          "ModoEjecucion": "manual"
+          "ModoEjecucion": "manual",
+          "Dependencias": []
         }
       ],
       "Checks": []
@@ -3445,7 +3603,8 @@
             "trazabilidad",
             "autenticidad"
           ],
-          "ModoEjecucion": "manual"
+          "ModoEjecucion": "manual",
+          "Dependencias": []
         }
       ],
       "Checks": []
@@ -3467,7 +3626,8 @@
             "trazabilidad",
             "autenticidad"
           ],
-          "ModoEjecucion": "manual"
+          "ModoEjecucion": "manual",
+          "Dependencias": []
         }
       ],
       "Checks": []
@@ -3489,10 +3649,13 @@
             "trazabilidad",
             "autenticidad"
           ],
-          "ModoEjecucion": "manual"
+          "ModoEjecucion": "automatico",
+          "Dependencias": []
         }
       ],
-      "Checks": []
+      "Checks": [
+        "ec2_instance_managed_by_ssm"
+      ]
     },
     {
       "Id": "op.acc.4.aws.iam.4",
@@ -3511,7 +3674,8 @@
             "trazabilidad",
             "autenticidad"
           ],
-          "ModoEjecucion": "manual"
+          "ModoEjecucion": "manual",
+          "Dependencias": []
         }
       ],
       "Checks": []
@@ -3533,7 +3697,8 @@
             "trazabilidad",
             "autenticidad"
           ],
-          "ModoEjecucion": "manual"
+          "ModoEjecucion": "manual",
+          "Dependencias": []
         }
       ],
       "Checks": []
@@ -3555,7 +3720,8 @@
             "trazabilidad",
             "autenticidad"
           ],
-          "ModoEjecucion": "manual"
+          "ModoEjecucion": "manual",
+          "Dependencias": []
         }
       ],
       "Checks": []
@@ -3577,7 +3743,8 @@
             "trazabilidad",
             "autenticidad"
           ],
-          "ModoEjecucion": "manual"
+          "ModoEjecucion": "manual",
+          "Dependencias": []
         }
       ],
       "Checks": []
@@ -3599,7 +3766,8 @@
             "trazabilidad",
             "autenticidad"
           ],
-          "ModoEjecucion": "manual"
+          "ModoEjecucion": "manual",
+          "Dependencias": []
         }
       ],
       "Checks": []
@@ -3621,7 +3789,8 @@
             "trazabilidad",
             "autenticidad"
           ],
-          "ModoEjecucion": "manual"
+          "ModoEjecucion": "manual",
+          "Dependencias": []
         }
       ],
       "Checks": []
@@ -3643,7 +3812,8 @@
             "trazabilidad",
             "autenticidad"
           ],
-          "ModoEjecucion": "manual"
+          "ModoEjecucion": "manual",
+          "Dependencias": []
         }
       ],
       "Checks": []
@@ -3665,7 +3835,8 @@
             "trazabilidad",
             "autenticidad"
           ],
-          "ModoEjecucion": "manual"
+          "ModoEjecucion": "manual",
+          "Dependencias": []
         }
       ],
       "Checks": []
@@ -3687,7 +3858,8 @@
             "trazabilidad",
             "autenticidad"
           ],
-          "ModoEjecucion": "manual"
+          "ModoEjecucion": "manual",
+          "Dependencias": []
         }
       ],
       "Checks": []
@@ -3709,7 +3881,8 @@
             "trazabilidad",
             "autenticidad"
           ],
-          "ModoEjecucion": "manual"
+          "ModoEjecucion": "manual",
+          "Dependencias": []
         }
       ],
       "Checks": []
@@ -3731,7 +3904,8 @@
             "trazabilidad",
             "autenticidad"
           ],
-          "ModoEjecucion": "manual"
+          "ModoEjecucion": "manual",
+          "Dependencias": []
         }
       ],
       "Checks": []
@@ -3754,7 +3928,8 @@
             "autenticidad",
             "disponibilidad"
           ],
-          "ModoEjecucion": "manual"
+          "ModoEjecucion": "manual",
+          "Dependencias": []
         }
       ],
       "Checks": []
@@ -3777,7 +3952,8 @@
             "autenticidad",
             "disponibilidad"
           ],
-          "ModoEjecucion": "manual"
+          "ModoEjecucion": "manual",
+          "Dependencias": []
         }
       ],
       "Checks": []
@@ -3800,7 +3976,8 @@
             "autenticidad",
             "disponibilidad"
           ],
-          "ModoEjecucion": "manual"
+          "ModoEjecucion": "manual",
+          "Dependencias": []
         }
       ],
       "Checks": []
@@ -3823,7 +4000,8 @@
             "autenticidad",
             "disponibilidad"
           ],
-          "ModoEjecucion": "manual"
+          "ModoEjecucion": "manual",
+          "Dependencias": []
         }
       ],
       "Checks": []
@@ -3846,7 +4024,8 @@
             "autenticidad",
             "disponibilidad"
           ],
-          "ModoEjecucion": "manual"
+          "ModoEjecucion": "manual",
+          "Dependencias": []
         }
       ],
       "Checks": []
@@ -3869,7 +4048,8 @@
             "autenticidad",
             "disponibilidad"
           ],
-          "ModoEjecucion": "manual"
+          "ModoEjecucion": "manual",
+          "Dependencias": []
         }
       ],
       "Checks": []
@@ -3892,7 +4072,8 @@
             "autenticidad",
             "disponibilidad"
           ],
-          "ModoEjecucion": "manual"
+          "ModoEjecucion": "manual",
+          "Dependencias": []
         }
       ],
       "Checks": []
@@ -3915,7 +4096,8 @@
             "autenticidad",
             "disponibilidad"
           ],
-          "ModoEjecucion": "manual"
+          "ModoEjecucion": "manual",
+          "Dependencias": []
         }
       ],
       "Checks": []
@@ -3938,7 +4120,8 @@
             "autenticidad",
             "disponibilidad"
           ],
-          "ModoEjecucion": "manual"
+          "ModoEjecucion": "manual",
+          "Dependencias": []
         }
       ],
       "Checks": []
@@ -3957,7 +4140,8 @@
           "Dimensiones": [
             "trazabilidad"
           ],
-          "ModoEjecucion": "manual"
+          "ModoEjecucion": "manual",
+          "Dependencias": []
         }
       ],
       "Checks": []
@@ -3976,7 +4160,8 @@
           "Dimensiones": [
             "trazabilidad"
           ],
-          "ModoEjecucion": "manual"
+          "ModoEjecucion": "manual",
+          "Dependencias": []
         }
       ],
       "Checks": []
@@ -3999,7 +4184,8 @@
             "autenticidad",
             "disponibilidad"
           ],
-          "ModoEjecucion": "manual"
+          "ModoEjecucion": "manual",
+          "Dependencias": []
         }
       ],
       "Checks": []
@@ -4022,7 +4208,8 @@
             "autenticidad",
             "disponibilidad"
           ],
-          "ModoEjecucion": "manual"
+          "ModoEjecucion": "manual",
+          "Dependencias": []
         }
       ],
       "Checks": []
@@ -4045,7 +4232,8 @@
             "autenticidad",
             "disponibilidad"
           ],
-          "ModoEjecucion": "manual"
+          "ModoEjecucion": "manual",
+          "Dependencias": []
         }
       ],
       "Checks": []
@@ -4064,7 +4252,8 @@
           "Dimensiones": [
             "disponibilidad"
           ],
-          "ModoEjecucion": "manual"
+          "ModoEjecucion": "manual",
+          "Dependencias": []
         }
       ],
       "Checks": []
@@ -4083,7 +4272,8 @@
           "Dimensiones": [
             "disponibilidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -4108,7 +4298,8 @@
             "autenticidad",
             "disponibilidad"
           ],
-          "ModoEjecucion": "manual"
+          "ModoEjecucion": "manual",
+          "Dependencias": []
         }
       ],
       "Checks": []
@@ -4131,10 +4322,13 @@
             "autenticidad",
             "disponibilidad"
           ],
-          "ModoEjecucion": "manual"
+          "ModoEjecucion": "automatico",
+          "Dependencias": []
         }
       ],
-      "Checks": []
+      "Checks": [
+        "cloudtrail_cloudwatch_logging_enabled"
+      ]
     },
     {
       "Id": "mp.com.2.aws.vpn.1",
@@ -4150,7 +4344,8 @@
           "Dimensiones": [
             "confidencialidad"
           ],
-          "ModoEjecucion": "manual"
+          "ModoEjecucion": "manual",
+          "Dependencias": []
         }
       ],
       "Checks": []
@@ -4169,7 +4364,8 @@
           "Dimensiones": [
             "confidencialidad"
           ],
-          "ModoEjecucion": "manual"
+          "ModoEjecucion": "manual",
+          "Dependencias": []
         }
       ],
       "Checks": []
@@ -4189,7 +4385,8 @@
             "integridad",
             "autenticidad"
           ],
-          "ModoEjecucion": "manual"
+          "ModoEjecucion": "manual",
+          "Dependencias": []
         }
       ],
       "Checks": []
@@ -4209,7 +4406,8 @@
             "confidencialidad",
             "integridad"
           ],
-          "ModoEjecucion": "manual"
+          "ModoEjecucion": "manual",
+          "Dependencias": []
         }
       ],
       "Checks": []
@@ -4232,7 +4430,8 @@
             "autenticidad",
             "disponibilidad"
           ],
-          "ModoEjecucion": "manual"
+          "ModoEjecucion": "manual",
+          "Dependencias": []
         }
       ],
       "Checks": []
@@ -4251,7 +4450,8 @@
           "Dimensiones": [
             "disponibilidad"
           ],
-          "ModoEjecucion": "manual"
+          "ModoEjecucion": "manual",
+          "Dependencias": []
         }
       ],
       "Checks": []
@@ -4270,7 +4470,8 @@
           "Dimensiones": [
             "disponibilidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -4293,7 +4494,8 @@
           "Dimensiones": [
             "disponibilidad"
           ],
-          "ModoEjecucion": "automático"
+          "ModoEjecucion": "automático",
+          "Dependencias": []
         }
       ],
       "Checks": [
@@ -4314,7 +4516,8 @@
           "Dimensiones": [
             "disponibilidad"
           ],
-          "ModoEjecucion": "manual"
+          "ModoEjecucion": "manual",
+          "Dependencias": []
         }
       ],
       "Checks": []
@@ -4337,7 +4540,8 @@
             "autenticidad",
             "disponibilidad"
           ],
-          "ModoEjecucion": "manual"
+          "ModoEjecucion": "manual",
+          "Dependencias": []
         }
       ],
       "Checks": []
@@ -4360,7 +4564,8 @@
             "autenticidad",
             "disponibilidad"
           ],
-          "ModoEjecucion": "manual"
+          "ModoEjecucion": "manual",
+          "Dependencias": []
         }
       ],
       "Checks": []
@@ -4383,7 +4588,8 @@
             "autenticidad",
             "disponibilidad"
           ],
-          "ModoEjecucion": "manual"
+          "ModoEjecucion": "manual",
+          "Dependencias": []
         }
       ],
       "Checks": []

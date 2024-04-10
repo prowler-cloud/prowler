@@ -42,7 +42,7 @@ nav:
       - Slack Integration: tutorials/integrations.md
       - Configuration File: tutorials/configuration_file.md
       - Logging: tutorials/logging.md
-      - Mute List: tutorials/mutelist.md
+      - Mutelist: tutorials/mutelist.md
       - Check Aliases: tutorials/check-aliases.md
       - Custom Metadata: tutorials/custom-checks-metadata.md
       - Scan Unused Services: tutorials/scan-unused-services.md
