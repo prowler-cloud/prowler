@@ -1008,8 +1008,9 @@ def filter_data(
         )
     ]
     if ctx.triggered_id == "download_link":
+
         csv_data = dcc.send_data_frame(
-            table_data.to_csv, "prowler-dashboard-export.csv"
+            table_data.to_csv, "prowler-dashboard-export.csv", index=False
         )
         return (
             status_graph,
