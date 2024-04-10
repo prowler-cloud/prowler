@@ -280,7 +280,7 @@ The following is the mapping between the native JSON and the Detection Finding f
 | ResourceDetails | _Not mapped yet_ |
 | Description | finding_info.desc |
 | Risk | unmapped.risk |
-| RelatedUrl | _Not mapped yet_ |
+| RelatedUrl | unmapped.related_url |
 | Remediation.Recommendation.Text | remediation.desc |
 | Remediation.Recommendation.Url | remediation.references |
 | Remediation.Code.NativeIaC | remediation.references |
@@ -297,8 +297,8 @@ The following is the mapping between the native JSON and the Detection Finding f
 | OrganizationsInfo.account_name | cloud.account.name |
 | OrganizationsInfo.account_email | _Not mapped yet_ |
 | OrganizationsInfo.account_arn | _Not mapped yet_ |
-| OrganizationsInfo.account_org | cloud.org.name |
-| OrganizationsInfo.account_tags | _Not mapped yet_ |
+| OrganizationsInfo.account_org | cloud.org.name | 
+| OrganizationsInfo.account_tags | cloud.account.labels _Available from OCSF 1.2_ |
 | Region | resources.region |
 | ResourceId | resources.name |
 | ResourceArn | resources.uid |
