@@ -5,6 +5,7 @@ Prowler allows you to follow a process of Threat Detection in AWS. To run checks
 prowler aws --category threat-detection
 ```
 This comand will run these checks:
+
 * cloudtrail_threat_detection_privilege_escalation
 * cloudtrail_threat_detection_enumeration
 
