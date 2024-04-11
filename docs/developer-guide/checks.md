@@ -6,14 +6,14 @@ Here you can find how to create new checks for Prowler.
 
 ## Introduction
 
-The checks are the foundamental piece of Prowler. A check is a simply piece of code that ensure if something is configured whith best cybersecurity practices, or is not and could be a breach of a cloud infrastructure. Furthemore, some information about the audition that is being doing over that resource (*metadata*).
+The checks are the foundamental piece of Prowler. A check is a simply piece of code that ensures if something is configured against cybersecurity best practices, and some metadata to give the final user more information of what is running and why.
 
 To create a new check for a supported Prowler provider, you will need to create a folder with the check name inside the specific service for the selected provider.
 
-We are going to use the `ec2_ami_public` check form the `AWS` provider as an example. So the folder name will `prowler/providers/aws/services/ec2/ec2_ami_public` (following the format `prowler/providers/<provider>/services/<service>/<check_name>`), with the name of check following the pattern: `service_subservice_resource_action`.
+We are going to use the `ec2_ami_public` check from the `AWS` provider as an example. So the folder name will be `prowler/providers/aws/services/ec2/ec2_ami_public` (following the format `prowler/providers/<provider>/services/<service>/<check_name>`), with the name of check following the pattern: `service_subservice_resource_action`.
 
 ???+ note
-    A subservice is more specific part of a service that is gonna be audit. Sometime it could be the shortened name of the class attribute that is gonna be acceded in the check.
+    A subservice is an specific component of a service that is gonna be audited. Sometimes it could be the shortened name of the class attribute that is gonna be accessed in the check.
 
 Inside that folder, we need to create three files:
 
@@ -117,7 +117,7 @@ All the checks MUST fill the `report.status` and `report.status_extended` with t
 
 All the checks MUST fill the `report.region` with the following criteria:
 
-- If the audited resource is regional use the `region` (the name changes depending on the provider<!--We should link a page with the changes here-->) attribute within the resource object.
+- If the audited resource is regional use the `region` (the name changes depending on the provider: `location` in Azure and GCP and `namespace` in K8s) attribute within the resource object.
 - If the audited resource is global use the `service_client.region` within the service client object.
 
 ### Resource ID, Name and ARN
@@ -146,7 +146,7 @@ All the checks MUST fill the `report.resource_id` and `report.resource_arn` with
 ### Python Model
 The following is the Python model for the check's class.
 
-As per August 5th 2023 the `Check_Metadata_Model` can be found [here](https://github.com/prowler-cloud/prowler/blob/master/prowler/lib/check/models.py#L36-L82).
+As per April 11th 2024 the `Check_Metadata_Model` can be found [here](https://github.com/prowler-cloud/prowler/blob/master/prowler/lib/check/models.py#L36-L82).
 
 ```python
 class Check(ABC, Check_Metadata_Model):
