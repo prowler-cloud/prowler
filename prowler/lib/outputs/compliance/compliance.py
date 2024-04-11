@@ -168,9 +168,7 @@ def display_compliance_table(
             pass_count = []
             fail_count = []
             muted_count = []
-            value_finding = 0
-            for finding in findings:
-                value_finding += 1
+            for index, finding in enumerate(findings):
                 check = bulk_checks_metadata[finding.check_metadata.CheckID]
                 check_compliances = check.Compliance
                 for compliance in check_compliances:
@@ -194,24 +192,25 @@ def display_compliance_table(
                                         "Bajo": 0,
                                         "Muted": 0,
                                     }
-                                if finding.muted and value_finding not in muted_count:
-                                    muted_count.append(value_finding)
-                                    marcos[marco_categoria]["Muted"] += 1
+                                if finding.muted:
+                                    if index not in muted_count:
+                                        muted_count.append(index)
+                                        marcos[marco_categoria]["Muted"] += 1
                                 else:
                                     if finding.status == "FAIL":
                                         if (
                                             attribute.Tipo != "recomendacion"
-                                            and value_finding not in fail_count
+                                            and index not in fail_count
                                         ):
-                                            fail_count.append(value_finding)
-                                        marcos[marco_categoria][
-                                            "Estado"
-                                        ] = f"{Fore.RED}NO CUMPLE{Style.RESET_ALL}"
+                                            fail_count.append(index)
+                                            marcos[marco_categoria][
+                                                "Estado"
+                                            ] = f"{Fore.RED}NO CUMPLE{Style.RESET_ALL}"
                                     elif (
                                         finding.status == "PASS"
-                                        and value_finding not in pass_count
+                                        and index not in pass_count
                                     ):
-                                        pass_count.append(value_finding)
+                                        pass_count.append(index)
                                 if attribute.Nivel == "opcional":
                                     marcos[marco_categoria]["Opcional"] += 1
                                 elif attribute.Nivel == "alto":
@@ -287,9 +286,7 @@ def display_compliance_table(
             pass_count = []
             fail_count = []
             muted_count = []
-            value_finding = 0
-            for finding in findings:
-                value_finding += 1
+            for index, finding in enumerate(findings):
                 check = bulk_checks_metadata[finding.check_metadata.CheckID]
                 check_compliances = check.Compliance
                 for compliance in check_compliances:
@@ -308,20 +305,21 @@ def display_compliance_table(
                                         "Level 2": {"FAIL": 0, "PASS": 0},
                                         "Muted": 0,
                                     }
-                                if finding.muted and value_finding not in muted_count:
-                                    muted_count.append(value_finding)
-                                    sections[section]["Muted"] += 1
+                                if finding.muted:
+                                    if index not in muted_count:
+                                        muted_count.append(index)
+                                        sections[section]["Muted"] += 1
                                 else:
                                     if (
                                         finding.status == "FAIL"
-                                        and value_finding not in fail_count
+                                        and index not in fail_count
                                     ):
-                                        fail_count.append(value_finding)
+                                        fail_count.append(index)
                                     elif (
                                         finding.status == "PASS"
-                                        and value_finding not in pass_count
+                                        and index not in pass_count
                                     ):
-                                        pass_count.append(value_finding)
+                                        pass_count.append(index)
                                 if "Level 1" in attribute.Profile:
                                     if not finding.muted:
                                         if finding.status == "FAIL":
@@ -404,9 +402,7 @@ def display_compliance_table(
             pass_count = []
             fail_count = []
             muted_count = []
-            value_finding = 0
-            for finding in findings:
-                value_finding += 1
+            for index, finding in enumerate(findings):
                 check = bulk_checks_metadata[finding.check_metadata.CheckID]
                 check_compliances = check.Compliance
                 for compliance in check_compliances:
@@ -419,18 +415,18 @@ def display_compliance_table(
                                 if tactic not in tactics:
                                     tactics[tactic] = {"FAIL": 0, "PASS": 0, "Muted": 0}
                                 if finding.muted:
-                                    if value_finding not in muted_count:
-                                        muted_count.append(value_finding)
-                                    tactics[tactic]["Muted"] += 1
+                                    if index not in muted_count:
+                                        muted_count.append(index)
+                                        tactics[tactic]["Muted"] += 1
                                 else:
                                     if finding.status == "FAIL":
-                                        if value_finding not in fail_count:
-                                            fail_count.append(value_finding)
-                                        tactics[tactic]["FAIL"] += 1
+                                        if index not in fail_count:
+                                            fail_count.append(index)
+                                            tactics[tactic]["FAIL"] += 1
                                     elif finding.status == "PASS":
-                                        if value_finding not in pass_count:
-                                            pass_count.append(value_finding)
-                                        tactics[tactic]["PASS"] += 1
+                                        if index not in pass_count:
+                                            pass_count.append(index)
+                                            tactics[tactic]["PASS"] += 1
             # Add results to table
             tactics = dict(sorted(tactics.items()))
             for tactic in tactics:
@@ -486,9 +482,7 @@ def display_compliance_table(
             pass_count = []
             fail_count = []
             muted_count = []
-            value_finding = 0
-            for finding in findings:
-                value_finding += 1
+            for index, finding in enumerate(findings):
                 check = bulk_checks_metadata[finding.check_metadata.CheckID]
                 check_compliances = check.Compliance
                 for compliance in check_compliances:
@@ -500,19 +494,20 @@ def display_compliance_table(
                     ):
                         for requirement in compliance.Requirements:
                             for attribute in requirement.Attributes:
-                                if finding.muted and value_finding not in muted_count:
-                                    muted_count.append(value_finding)
+                                if finding.muted:
+                                    if index not in muted_count:
+                                        muted_count.append(index)
                                 else:
                                     if (
                                         finding.status == "FAIL"
-                                        and value_finding not in fail_count
+                                        and index not in fail_count
                                     ):
-                                        fail_count.append(value_finding)
+                                        fail_count.append(index)
                                     elif (
                                         finding.status == "PASS"
-                                        and value_finding not in pass_count
+                                        and index not in pass_count
                                     ):
-                                        pass_count.append(value_finding)
+                                        pass_count.append(index)
             if (
                 len(fail_count) + len(pass_count) + len(muted_count) > 1
             ):  # If there are no resources, don't print the compliance table
