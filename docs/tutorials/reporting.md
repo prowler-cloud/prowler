@@ -287,7 +287,7 @@ The following is the mapping between the native JSON and the Detection Finding f
 | Remediation.Code.Terraform | remediation.references |
 | Remediation.Code.CLI | remediation.references |
 | Remediation.Code.Other | remediation.references |
-| Compliance | _Not mapped yet_ |
+| Compliance | unmapped.compliance |
 | Categories | unmapped.categories |
 | DependsOn | unmapped.depends_on |
 | RelatedTo | unmapped.related_to |
