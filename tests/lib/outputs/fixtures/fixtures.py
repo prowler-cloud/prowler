@@ -45,7 +45,7 @@ def generate_finding_output(status, severity, muted, region) -> FindingOutput:
         remediation_code_terraform="",
         remediation_code_cli="",
         remediation_code_other="",
-        compliance="",
+        compliance={"test-compliance": "test-compliance"},
         categories="test-category",
         depends_on="test-dependency",
         related_to="test-related-to",
