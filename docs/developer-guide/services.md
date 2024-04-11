@@ -4,7 +4,7 @@ Here you can find how to create a new service, or to complement an existing one,
 
 ## Introduction
 
-In Prowler a service is basically a solution that is ofered by a cloud provider i.e. [ec2](https://aws.amazon.com/ec2/). Essentially it is a class that store all necessary stuff that we will need later in checks to audit some aspects of our Cloud account.
+In Prowler, a service is basically a solution that is offered by a cloud provider i.e. [ec2](https://aws.amazon.com/ec2/). Essentially it is a class that stores all the necessary stuff that we will need later in the checks to audit some aspects of our Cloud account.
 
 To create a new service, you will need to create a folder inside the specific provider, i.e. `prowler/providers/<provider>/services/<new_service_name>/`.
 
