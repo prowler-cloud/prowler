@@ -1,23 +1,24 @@
 import sys
 
-from colorama import Fore, Style
-from tabulate import tabulate
-
-from prowler.config.config import orange_color
 from prowler.lib.check.models import Check_Report
 from prowler.lib.logger import logger
 from prowler.lib.outputs.compliance.aws_well_architected_framework import (
     write_compliance_row_aws_well_architected_framework,
 )
-from prowler.lib.outputs.compliance.cis import write_compliance_row_cis
+from prowler.lib.outputs.compliance.cis import get_cis_table, write_compliance_row_cis
 from prowler.lib.outputs.compliance.ens_rd2022_aws import (
+    get_ens_rd2022_aws_table,
     write_compliance_row_ens_rd2022_aws,
 )
-from prowler.lib.outputs.compliance.generic import write_compliance_row_generic
+from prowler.lib.outputs.compliance.generic import (
+    get_generic_compliance_table,
+    write_compliance_row_generic,
+)
 from prowler.lib.outputs.compliance.iso27001_2013_aws import (
     write_compliance_row_iso27001_2013_aws,
 )
 from prowler.lib.outputs.compliance.mitre_attack_aws import (
+    get_mitre_attack_table,
     write_compliance_row_mitre_attack_aws,
 )
 
@@ -154,379 +155,41 @@ def display_compliance_table(
 ):
     try:
         if "ens_rd2022_aws" == compliance_framework:
-            marcos = {}
-            ens_compliance_table = {
-                "Proveedor": [],
-                "Marco/Categoria": [],
-                "Estado": [],
-                "Alto": [],
-                "Medio": [],
-                "Bajo": [],
-                "Opcional": [],
-                "Muted": [],
-            }
-            pass_count = []
-            fail_count = []
-            muted_count = []
-            for index, finding in enumerate(findings):
-                check = bulk_checks_metadata[finding.check_metadata.CheckID]
-                check_compliances = check.Compliance
-                for compliance in check_compliances:
-                    if (
-                        compliance.Framework == "ENS"
-                        and compliance.Provider == "AWS"
-                        and compliance.Version == "RD2022"
-                    ):
-                        for requirement in compliance.Requirements:
-                            for attribute in requirement.Attributes:
-                                marco_categoria = (
-                                    f"{attribute.Marco}/{attribute.Categoria}"
-                                )
-                                # Check if Marco/Categoria exists
-                                if marco_categoria not in marcos:
-                                    marcos[marco_categoria] = {
-                                        "Estado": f"{Fore.GREEN}CUMPLE{Style.RESET_ALL}",
-                                        "Opcional": 0,
-                                        "Alto": 0,
-                                        "Medio": 0,
-                                        "Bajo": 0,
-                                        "Muted": 0,
-                                    }
-                                if finding.muted:
-                                    if index not in muted_count:
-                                        muted_count.append(index)
-                                        marcos[marco_categoria]["Muted"] += 1
-                                else:
-                                    if finding.status == "FAIL":
-                                        if (
-                                            attribute.Tipo != "recomendacion"
-                                            and index not in fail_count
-                                        ):
-                                            fail_count.append(index)
-                                            marcos[marco_categoria][
-                                                "Estado"
-                                            ] = f"{Fore.RED}NO CUMPLE{Style.RESET_ALL}"
-                                    elif (
-                                        finding.status == "PASS"
-                                        and index not in pass_count
-                                    ):
-                                        pass_count.append(index)
-                                if attribute.Nivel == "opcional":
-                                    marcos[marco_categoria]["Opcional"] += 1
-                                elif attribute.Nivel == "alto":
-                                    marcos[marco_categoria]["Alto"] += 1
-                                elif attribute.Nivel == "medio":
-                                    marcos[marco_categoria]["Medio"] += 1
-                                elif attribute.Nivel == "bajo":
-                                    marcos[marco_categoria]["Bajo"] += 1
-
-            # Add results to table
-            for marco in sorted(marcos):
-                ens_compliance_table["Proveedor"].append(compliance.Provider)
-                ens_compliance_table["Marco/Categoria"].append(marco)
-                ens_compliance_table["Estado"].append(marcos[marco]["Estado"])
-                ens_compliance_table["Opcional"].append(
-                    f"{Fore.BLUE}{marcos[marco]['Opcional']}{Style.RESET_ALL}"
-                )
-                ens_compliance_table["Alto"].append(
-                    f"{Fore.LIGHTRED_EX}{marcos[marco]['Alto']}{Style.RESET_ALL}"
-                )
-                ens_compliance_table["Medio"].append(
-                    f"{orange_color}{marcos[marco]['Medio']}{Style.RESET_ALL}"
-                )
-                ens_compliance_table["Bajo"].append(
-                    f"{Fore.YELLOW}{marcos[marco]['Bajo']}{Style.RESET_ALL}"
-                )
-                ens_compliance_table["Muted"].append(
-                    f"{orange_color}{marcos[marco]['Muted']}{Style.RESET_ALL}"
-                )
-            if (
-                len(fail_count) + len(pass_count) + len(muted_count) > 1
-            ):  # If there are no resources, don't print the compliance table
-                print(
-                    f"\nEstado de Cumplimiento de {Fore.YELLOW}{compliance_framework.upper()}{Style.RESET_ALL}:"
-                )
-                overview_table = [
-                    [
-                        f"{Fore.RED}{round(len(fail_count) / len(findings) * 100, 2)}% ({len(fail_count)}) NO CUMPLE{Style.RESET_ALL}",
-                        f"{Fore.GREEN}{round(len(pass_count) / len(findings) * 100, 2)}% ({len(pass_count)}) CUMPLE{Style.RESET_ALL}",
-                        f"{orange_color}{round(len(muted_count) / len(findings) * 100, 2)}% ({len(muted_count)}) MUTED{Style.RESET_ALL}",
-                    ]
-                ]
-                print(tabulate(overview_table, tablefmt="rounded_grid"))
-                if not compliance_overview:
-                    print(
-                        f"\nResultados de {Fore.YELLOW}{compliance_framework.upper()}{Style.RESET_ALL}:"
-                    )
-                    print(
-                        tabulate(
-                            ens_compliance_table,
-                            headers="keys",
-                            tablefmt="rounded_grid",
-                        )
-                    )
-                    print(
-                        f"{Style.BRIGHT}* Solo aparece el Marco/Categoria que contiene resultados.{Style.RESET_ALL}"
-                    )
-                    print(
-                        f"\nResultados detallados de {compliance_framework.upper()} en:"
-                    )
-                    print(
-                        f" - CSV: {output_directory}/compliance/{output_filename}_{compliance_framework}.csv\n"
-                    )
+            get_ens_rd2022_aws_table(
+                findings,
+                bulk_checks_metadata,
+                compliance_framework,
+                output_filename,
+                output_directory,
+                compliance_overview,
+            )
         elif "cis_" in compliance_framework:
-            sections = {}
-            cis_compliance_table = {
-                "Provider": [],
-                "Section": [],
-                "Level 1": [],
-                "Level 2": [],
-                "Muted": [],
-            }
-            pass_count = []
-            fail_count = []
-            muted_count = []
-            for index, finding in enumerate(findings):
-                check = bulk_checks_metadata[finding.check_metadata.CheckID]
-                check_compliances = check.Compliance
-                for compliance in check_compliances:
-                    if (
-                        compliance.Framework == "CIS"
-                        and compliance.Version in compliance_framework
-                    ):
-                        for requirement in compliance.Requirements:
-                            for attribute in requirement.Attributes:
-                                section = attribute.Section
-                                # Check if Section exists
-                                if section not in sections:
-                                    sections[section] = {
-                                        "Status": f"{Fore.GREEN}PASS{Style.RESET_ALL}",
-                                        "Level 1": {"FAIL": 0, "PASS": 0},
-                                        "Level 2": {"FAIL": 0, "PASS": 0},
-                                        "Muted": 0,
-                                    }
-                                if finding.muted:
-                                    if index not in muted_count:
-                                        muted_count.append(index)
-                                        sections[section]["Muted"] += 1
-                                else:
-                                    if (
-                                        finding.status == "FAIL"
-                                        and index not in fail_count
-                                    ):
-                                        fail_count.append(index)
-                                    elif (
-                                        finding.status == "PASS"
-                                        and index not in pass_count
-                                    ):
-                                        pass_count.append(index)
-                                if "Level 1" in attribute.Profile:
-                                    if not finding.muted:
-                                        if finding.status == "FAIL":
-                                            sections[section]["Level 1"]["FAIL"] += 1
-                                        else:
-                                            sections[section]["Level 1"]["PASS"] += 1
-                                elif "Level 2" in attribute.Profile:
-                                    if not finding.muted:
-                                        if finding.status == "FAIL":
-                                            sections[section]["Level 2"]["FAIL"] += 1
-                                        else:
-                                            sections[section]["Level 2"]["PASS"] += 1
-
-            # Add results to table
-            sections = dict(sorted(sections.items()))
-            for section in sections:
-                cis_compliance_table["Provider"].append(compliance.Provider)
-                cis_compliance_table["Section"].append(section)
-                if sections[section]["Level 1"]["FAIL"] > 0:
-                    cis_compliance_table["Level 1"].append(
-                        f"{Fore.RED}FAIL({sections[section]['Level 1']['FAIL']}){Style.RESET_ALL}"
-                    )
-                else:
-                    cis_compliance_table["Level 1"].append(
-                        f"{Fore.GREEN}PASS({sections[section]['Level 1']['PASS']}){Style.RESET_ALL}"
-                    )
-                if sections[section]["Level 2"]["FAIL"] > 0:
-                    cis_compliance_table["Level 2"].append(
-                        f"{Fore.RED}FAIL({sections[section]['Level 2']['FAIL']}){Style.RESET_ALL}"
-                    )
-                else:
-                    cis_compliance_table["Level 2"].append(
-                        f"{Fore.GREEN}PASS({sections[section]['Level 2']['PASS']}){Style.RESET_ALL}"
-                    )
-                cis_compliance_table["Muted"].append(
-                    f"{orange_color}{sections[section]['Muted']}{Style.RESET_ALL}"
-                )
-            if (
-                len(fail_count) + len(pass_count) + len(muted_count) > 1
-            ):  # If there are no resources, don't print the compliance table
-                print(
-                    f"\nCompliance Status of {Fore.YELLOW}{compliance_framework.upper()}{Style.RESET_ALL} Framework:"
-                )
-                overview_table = [
-                    [
-                        f"{Fore.RED}{round(len(fail_count) / len(findings) * 100, 2)}% ({len(fail_count)}) FAIL{Style.RESET_ALL}",
-                        f"{Fore.GREEN}{round(len(pass_count) / len(findings) * 100, 2)}% ({len(pass_count)}) PASS{Style.RESET_ALL}",
-                        f"{orange_color}{round(len(muted_count) / len(findings) * 100, 2)}% ({len(muted_count)}) MUTED{Style.RESET_ALL}",
-                    ]
-                ]
-                print(tabulate(overview_table, tablefmt="rounded_grid"))
-                if not compliance_overview:
-                    print(
-                        f"\nFramework {Fore.YELLOW}{compliance_framework.upper()}{Style.RESET_ALL} Results:"
-                    )
-                    print(
-                        tabulate(
-                            cis_compliance_table,
-                            headers="keys",
-                            tablefmt="rounded_grid",
-                        )
-                    )
-                    print(
-                        f"{Style.BRIGHT}* Only sections containing results appear.{Style.RESET_ALL}"
-                    )
-                    print(
-                        f"\nDetailed results of {compliance_framework.upper()} are in:"
-                    )
-                    print(
-                        f" - CSV: {output_directory}/compliance/{output_filename}_{compliance_framework}.csv\n"
-                    )
+            get_cis_table(
+                findings,
+                bulk_checks_metadata,
+                compliance_framework,
+                output_filename,
+                output_directory,
+                compliance_overview,
+            )
         elif "mitre_attack" in compliance_framework:
-            tactics = {}
-            mitre_compliance_table = {
-                "Provider": [],
-                "Tactic": [],
-                "Status": [],
-                "Muted": [],
-            }
-            pass_count = []
-            fail_count = []
-            muted_count = []
-            for index, finding in enumerate(findings):
-                check = bulk_checks_metadata[finding.check_metadata.CheckID]
-                check_compliances = check.Compliance
-                for compliance in check_compliances:
-                    if (
-                        "MITRE-ATTACK" in compliance.Framework
-                        and compliance.Version in compliance_framework
-                    ):
-                        for requirement in compliance.Requirements:
-                            for tactic in requirement.Tactics:
-                                if tactic not in tactics:
-                                    tactics[tactic] = {"FAIL": 0, "PASS": 0, "Muted": 0}
-                                if finding.muted:
-                                    if index not in muted_count:
-                                        muted_count.append(index)
-                                        tactics[tactic]["Muted"] += 1
-                                else:
-                                    if finding.status == "FAIL":
-                                        if index not in fail_count:
-                                            fail_count.append(index)
-                                            tactics[tactic]["FAIL"] += 1
-                                    elif finding.status == "PASS":
-                                        if index not in pass_count:
-                                            pass_count.append(index)
-                                            tactics[tactic]["PASS"] += 1
-            # Add results to table
-            tactics = dict(sorted(tactics.items()))
-            for tactic in tactics:
-                mitre_compliance_table["Provider"].append(compliance.Provider)
-                mitre_compliance_table["Tactic"].append(tactic)
-                if tactics[tactic]["FAIL"] > 0:
-                    mitre_compliance_table["Status"].append(
-                        f"{Fore.RED}FAIL({tactics[tactic]['FAIL']}){Style.RESET_ALL}"
-                    )
-                else:
-                    mitre_compliance_table["Status"].append(
-                        f"{Fore.GREEN}PASS({tactics[tactic]['PASS']}){Style.RESET_ALL}"
-                    )
-                if tactics[tactic]["Muted"] > 0:
-                    mitre_compliance_table["Muted"].append(
-                        f"{orange_color}{tactics[tactic]['Muted']}{Style.RESET_ALL}"
-                    )
-            if (
-                len(fail_count) + len(pass_count) + len(muted_count) > 1
-            ):  # If there are no resources, don't print the compliance table
-                print(
-                    f"\nCompliance Status of {Fore.YELLOW}{compliance_framework.upper()}{Style.RESET_ALL} Framework:"
-                )
-                overview_table = [
-                    [
-                        f"{Fore.RED}{round(len(fail_count) / len(findings) * 100, 2)}% ({len(fail_count)}) FAIL{Style.RESET_ALL}",
-                        f"{Fore.GREEN}{round(len(pass_count) / len(findings) * 100, 2)}% ({len(pass_count)}) PASS{Style.RESET_ALL}",
-                        f"{orange_color}{round(len(muted_count) / len(findings) * 100, 2)}% ({len(muted_count)}) MUTED{Style.RESET_ALL}",
-                    ]
-                ]
-                print(tabulate(overview_table, tablefmt="rounded_grid"))
-                if not compliance_overview:
-                    print(
-                        f"\nFramework {Fore.YELLOW}{compliance_framework.upper()}{Style.RESET_ALL} Results:"
-                    )
-                    print(
-                        tabulate(
-                            mitre_compliance_table,
-                            headers="keys",
-                            tablefmt="rounded_grid",
-                        )
-                    )
-                    print(
-                        f"{Style.BRIGHT}* Only sections containing results appear.{Style.RESET_ALL}"
-                    )
-                    print(
-                        f"\nDetailed results of {compliance_framework.upper()} are in:"
-                    )
-                    print(
-                        f" - CSV: {output_directory}/compliance/{output_filename}_{compliance_framework}.csv\n"
-                    )
+            get_mitre_attack_table(
+                findings,
+                bulk_checks_metadata,
+                compliance_framework,
+                output_filename,
+                output_directory,
+                compliance_overview,
+            )
         else:
-            pass_count = []
-            fail_count = []
-            muted_count = []
-            for index, finding in enumerate(findings):
-                check = bulk_checks_metadata[finding.check_metadata.CheckID]
-                check_compliances = check.Compliance
-                for compliance in check_compliances:
-                    if (
-                        compliance.Framework.upper()
-                        in compliance_framework.upper().replace("_", "-")
-                        and compliance.Version in compliance_framework.upper()
-                        and compliance.Provider in compliance_framework.upper()
-                    ):
-                        for requirement in compliance.Requirements:
-                            for attribute in requirement.Attributes:
-                                if finding.muted:
-                                    if index not in muted_count:
-                                        muted_count.append(index)
-                                else:
-                                    if (
-                                        finding.status == "FAIL"
-                                        and index not in fail_count
-                                    ):
-                                        fail_count.append(index)
-                                    elif (
-                                        finding.status == "PASS"
-                                        and index not in pass_count
-                                    ):
-                                        pass_count.append(index)
-            if (
-                len(fail_count) + len(pass_count) + len(muted_count) > 1
-            ):  # If there are no resources, don't print the compliance table
-                print(
-                    f"\nCompliance Status of {Fore.YELLOW}{compliance_framework.upper()}{Style.RESET_ALL} Framework:"
-                )
-                overview_table = [
-                    [
-                        f"{Fore.RED}{round(len(fail_count) / len(findings) * 100, 2)}% ({len(fail_count)}) FAIL{Style.RESET_ALL}",
-                        f"{Fore.GREEN}{round(len(pass_count) / len(findings) * 100, 2)}% ({len(pass_count)}) PASS{Style.RESET_ALL}",
-                        f"{orange_color}{round(len(muted_count) / len(findings) * 100, 2)}% ({len(muted_count)}) MUTED{Style.RESET_ALL}",
-                    ]
-                ]
-                print(tabulate(overview_table, tablefmt="rounded_grid"))
-            if not compliance_overview:
-                print(f"\nDetailed results of {compliance_framework.upper()} are in:")
-                print(
-                    f" - CSV: {output_directory}/compliance/{output_filename}_{compliance_framework}.csv\n"
-                )
+            get_generic_compliance_table(
+                findings,
+                bulk_checks_metadata,
+                compliance_framework,
+                output_filename,
+                output_directory,
+                compliance_overview,
+            )
     except Exception as error:
         logger.critical(
             f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
