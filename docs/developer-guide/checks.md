@@ -6,7 +6,7 @@ Here you can find how to create new checks for Prowler.
 
 ## Introduction
 
-The checks are the foundamental piece of Prowler. A check is a simply piece of code that ensures if something is configured against cybersecurity best practices, and some metadata to give the final user more information of what is running and why.
+The checks are the fundamental piece of Prowler. A check is a simply piece of code that ensures if something is configured against cybersecurity best practices. Then the check generates a finding with the result and includes the check's metadata to give the user more contextual information about the result, the risk and how to remediate it.
 
 To create a new check for a supported Prowler provider, you will need to create a folder with the check name inside the specific service for the selected provider.
 
