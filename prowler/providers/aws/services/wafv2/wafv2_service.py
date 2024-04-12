@@ -1,3 +1,4 @@
+from botocore.exceptions import ClientError
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
@@ -47,6 +48,16 @@ class WAFv2(AWSService):
                     acl.logging_enabled = bool(
                         logging_enabled["LoggingConfiguration"]["LogDestinationConfigs"]
                     )
+
+                except ClientError as error:
+                    if error.response["Error"]["Code"] == "WAFNonexistentItemException":
+                        logger.warning(
+                            f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
+                    else:
+                        logger.error(
+                            f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
                 except Exception as error:
                     logger.error(
                         f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
