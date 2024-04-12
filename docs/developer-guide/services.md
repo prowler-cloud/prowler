@@ -29,7 +29,7 @@ Each class is used to initialize the credentials and the API's clients to be use
 
 ## Service Class
 
-Due to the complexity and differencies of each provider API we are going to use an example service to guide you in how can it be created.
+Due to the complexity and differences of each provider API we are going to use an example service to guide you in how can it be created.
 
 The following is the `<service>_service.py` file:
 
