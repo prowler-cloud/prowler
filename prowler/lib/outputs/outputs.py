@@ -125,23 +125,12 @@ def report(check_findings, provider):
                         csv_data = {}
                         csv_data.update(provider_data_mapping)
                         csv_data.update(common_finding_data)
-                        csv_data["compliance"] = unroll_dict(
-                            get_check_compliance(finding, provider.type, output_options)
+                        csv_data["compliance"] = get_check_compliance(
+                            finding, provider.type, output_options
                         )
                         finding_output = generate_provider_output(
                             provider, finding, csv_data
                         )
-
-                        # CSV
-                        if "csv" in file_descriptors:
-                            csv_writer = DictWriter(
-                                file_descriptors["csv"],
-                                fieldnames=generate_csv_fields(FindingOutput),
-                                delimiter=";",
-                            )
-
-                            csv_writer.writerow(finding_output.dict())
-
                         # JSON
                         if "json-ocsf" in file_descriptors:
                             detection_finding = fill_json_ocsf(finding_output)
@@ -150,6 +139,19 @@ def report(check_findings, provider):
                                 detection_finding.json(exclude_none=True, indent=4)
                             )
                             file_descriptors["json-ocsf"].write(",")
+
+                        # CSV
+                        if "csv" in file_descriptors:
+                            finding_output.compliance = unroll_dict(
+                                finding_output.compliance
+                            )
+                            csv_writer = DictWriter(
+                                file_descriptors["csv"],
+                                fieldnames=generate_csv_fields(FindingOutput),
+                                delimiter=";",
+                            )
+
+                            csv_writer.writerow(finding_output.dict())
 
         else:  # No service resources in the whole account
             color = set_report_color("MANUAL")
