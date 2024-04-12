@@ -200,6 +200,7 @@ def extract_findings_statistics(findings: list) -> dict:
     total_fail = 0
     resources = set()
     findings_count = 0
+    all_fails_are_muted = True
 
     for finding in findings:
         # Save the resource_id
@@ -210,10 +211,13 @@ def extract_findings_statistics(findings: list) -> dict:
         if finding.status == "FAIL":
             total_fail += 1
             findings_count += 1
+            if not finding.muted and all_fails_are_muted:
+                all_fails_are_muted = False
 
     stats["total_pass"] = total_pass
     stats["total_fail"] = total_fail
     stats["resources_count"] = len(resources)
     stats["findings_count"] = findings_count
+    stats["all_fails_are_muted"] = all_fails_are_muted
 
     return stats

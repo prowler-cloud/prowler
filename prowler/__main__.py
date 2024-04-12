@@ -374,7 +374,11 @@ def prowler():
         remove_custom_checks_module(checks_folder, provider)
 
     # If there are failed findings exit code 3, except if -z is input
-    if not args.ignore_exit_code_3 and stats["total_fail"] > 0:
+    if (
+        not args.ignore_exit_code_3
+        and stats["total_fail"] > 0
+        and not stats["all_fails_are_muted"]
+    ):
         sys.exit(3)
 
 
