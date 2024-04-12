@@ -78,6 +78,7 @@ nav:
           - Tag-based Scan: tutorials/aws/tag-based-scan.md
           - Resource ARNs based Scan: tutorials/aws/resource-arn-based-scan.md
           - Boto3 Configuration: tutorials/aws/boto3-configuration.md
+          - Threat Detection: tutorials/aws/threat-detection.md
       - Azure:
           - Authentication: tutorials/azure/authentication.md
           - Non default clouds: tutorials/azure/use-non-default-cloud.md
