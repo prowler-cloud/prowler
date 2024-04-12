@@ -5,9 +5,15 @@ Here you can find how to create new checks for Prowler.
 **To create a check is required to have a Prowler provider service already created, so if the service is not present or the attribute you want to audit is not retrieved by the service, please refer to the [Service](./services.md) documentation.**
 
 ## Introduction
+
+The checks are the fundamental piece of Prowler. A check is a simply piece of code that ensures if something is configured against cybersecurity best practices. Then the check generates a finding with the result and includes the check's metadata to give the user more contextual information about the result, the risk and how to remediate it.
+
 To create a new check for a supported Prowler provider, you will need to create a folder with the check name inside the specific service for the selected provider.
 
-We are going to use the `ec2_ami_public` check form the `AWS` provider as an example. So the folder name will `prowler/providers/aws/services/ec2/ec2_ami_public` (following the format `prowler/providers/<provider>/services/<service>/<check_name>`), with the name of check following the pattern: `service_subservice/resource_action`.
+We are going to use the `ec2_ami_public` check from the `AWS` provider as an example. So the folder name will be `prowler/providers/aws/services/ec2/ec2_ami_public` (following the format `prowler/providers/<provider>/services/<service>/<check_name>`), with the name of check following the pattern: `service_subservice_resource_action`.
+
+???+ note
+    A subservice is an specific component of a service that is gonna be audited. Sometimes it could be the shortened name of the class attribute that is gonna be accessed in the check.
 
 Inside that folder, we need to create three files:
 
@@ -101,7 +107,7 @@ All the checks MUST fill the `report.status` and `report.status_extended` with t
 
 - Status -- `report.status`
     - `PASS` --> If the check is passing against the configured value.
-    - `FAIL` --> If the check is passing against the configured value.
+    - `FAIL` --> If the check is failing against the configured value.
     - `MANUAL` --> This value cannot be used unless a manual operation is required in order to determine if the `report.status` is whether `PASS` or `FAIL`.
 - Status Extended -- `report.status_extended`
     - MUST end in a dot `.`
@@ -111,7 +117,7 @@ All the checks MUST fill the `report.status` and `report.status_extended` with t
 
 All the checks MUST fill the `report.region` with the following criteria:
 
-- If the audited resource is regional use the `region` attribute within the resource object.
+- If the audited resource is regional use the `region` (the name changes depending on the provider: `location` in Azure and GCP and `namespace` in K8s) attribute within the resource object.
 - If the audited resource is global use the `service_client.region` within the service client object.
 
 ### Resource ID, Name and ARN
@@ -140,7 +146,7 @@ All the checks MUST fill the `report.resource_id` and `report.resource_arn` with
 ### Python Model
 The following is the Python model for the check's class.
 
-As per August 5th 2023 the `Check_Metadata_Model` can be found [here](https://github.com/prowler-cloud/prowler/blob/master/prowler/lib/check/models.py#L59-L80).
+As per April 11th 2024 the `Check_Metadata_Model` can be found [here](https://github.com/prowler-cloud/prowler/blob/master/prowler/lib/check/models.py#L36-L82).
 
 ```python
 class Check(ABC, Check_Metadata_Model):
