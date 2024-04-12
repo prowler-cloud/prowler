@@ -76,7 +76,6 @@ class TestOutputJSONOCSF:
         # Unmapped Data
         assert finding_json_ocsf.unmapped == {
             "check_type": finding_output.check_type,
-            "risk": finding_output.risk,
             "related_url": finding_output.related_url,
             "categories": finding_output.categories,
             "depends_on": finding_output.depends_on,

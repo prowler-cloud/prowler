@@ -279,7 +279,7 @@ The following is the mapping between the native JSON and the Detection Finding f
 | ResourceType | resources.type |
 | ResourceDetails | _Not mapped yet_ |
 | Description | finding_info.desc |
-| Risk | unmapped.risk |
+| Risk | risk_details _Available from OCSF 1.2_ |
 | RelatedUrl | unmapped.related_url |
 | Remediation.Recommendation.Text | remediation.desc |
 | Remediation.Recommendation.Url | remediation.references |
