@@ -69,7 +69,7 @@ class FindingOutput(BaseModel):
     remediation_code_terraform: str
     remediation_code_cli: str
     remediation_code_other: str
-    compliance: str
+    compliance: dict
     categories: str
     depends_on: str
     related_to: str

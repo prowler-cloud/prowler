@@ -115,6 +115,7 @@ def fill_json_ocsf(finding_output: FindingOutput) -> DetectionFinding:
                 "depends_on": finding_output.depends_on,
                 "related_to": finding_output.related_to,
                 "notes": finding_output.notes,
+                "compliance": finding_output.compliance,
             },
         )
 
