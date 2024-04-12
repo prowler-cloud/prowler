@@ -517,78 +517,120 @@ Coming soon ...
 
 For the Azure Provider we don't have any library to mock out the API calls we use. So in this scenario we inject the objects in the service client using [MagicMock](https://docs.python.org/3/library/unittest.mock.html#unittest.mock.MagicMock).
 
-The following code shows how to use MagicMock to create the service objects for a Azure check test.
+The following code shows how to use MagicMock to create the service objects for a Azure check test. It is a real example adapted for informative purposes.
 
-```python
+```python title="app_ensure_http_is_redirected_to_https_test.py"
 # We need to import the unittest.mock to allow us to patch some objects
 # not to use shared ones between test, hence to isolate the test
 from unittest import mock
 
 from uuid import uuid4
 
-# Azure Constants
-from tests.providers.azure.azure_fixtures import AZURE_SUBSCRIPTION
+# Import some constans values needed in almost every check
+from tests.providers.azure.azure_fixtures import (
+    AZURE_SUBSCRIPTION_ID,
+    set_mocked_azure_provider,
+)
 
+# We are going to create a test for the app_ensure_http_is_redirected_to_https check
+class Test_app_ensure_http_is_redirected_to_https:
 
-
-# We are going to create a test for the Test_defender_ensure_defender_for_arm_is_on check
-class Test_defender_ensure_defender_for_arm_is_on:
-
-    # We name the tests with test_<service>_<check_name>_<test_action>
-    def test_defender_defender_ensure_defender_for_arm_is_on_arm_pricing_tier_not_standard(self):
-        resource_id = str(uuid4())
-
+    # We name the tests with test_<check_name>_<test_action>
+    def test_app_http_to_https_disabled(self):
+        resource_id = f"/subscriptions/{uuid4()}"
         # Mocked client with MagicMock
-        defender_client = mock.MagicMock
+        app_client = mock.MagicMock
 
-        # Import the service resource model to create the mocked object
-        from prowler.providers.azure.services.defender.defender_service import Defender_Pricing
-
-        # Create the custom Defender object to be tested
-        defender_client.pricings = {
-            AZURE_SUBSCRIPTION: {
-                "Arm": Defender_Pricing(
-                    resource_id=resource_id,
-                    pricing_tier="Not Standard",
-                    free_trial_remaining_time=0,
-                )
-            }
-        }
-
-        # In this scenario we have to mock also the Defender service and the defender_client from the check to enforce that the defender_client used is the one created within this check because patch != import, and if you execute tests in parallel some objects can be already initialised hence the check won't be isolated.
-        # In this case we don't use the Moto decorator, we use the mocked Defender client for both objects
+        # In this scenario we have to mock the app_client from the check to enforce that the app_client used is the one created above
+        # And also is mocked the return value of get_global_provider function to return our Azure mocked provider defined in fixtures
         with mock.patch(
-            "prowler.providers.azure.services.defender.defender_service.Defender",
-            new=defender_client,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
         ), mock.patch(
-            "prowler.providers.azure.services.defender.defender_client.defender_client",
-            new=defender_client,
+            "prowler.providers.azure.services.app.app_ensure_http_is_redirected_to_https.app_ensure_http_is_redirected_to_https.app_client",
+            new=app_client,
         ):
-
-            # We import the check within the two mocks not to initialise the iam_client with some shared information from
-            # the current_audit_info or the Defender service.
-            from prowler.providers.azure.services.defender.defender_ensure_defender_for_arm_is_on.defender_ensure_defender_for_arm_is_on import (
-                defender_ensure_defender_for_arm_is_on,
+            # We import the check within the two mocks
+            from prowler.providers.azure.services.app.app_ensure_http_is_redirected_to_https.app_ensure_http_is_redirected_to_https import (
+                app_ensure_http_is_redirected_to_https,
             )
+            # Import the service resource model to create the mocked object
+            from prowler.providers.azure.services.app.app_service import WebApp
 
+            # Create the custom App object to be tested
+            app_client.apps = {
+                AZURE_SUBSCRIPTION_ID: {
+                    "app_id-1": WebApp(
+                        resource_id=resource_id,
+                        auth_enabled=True,
+                        configurations=mock.MagicMock(),
+                        client_cert_mode="Ignore",
+                        https_only=False,
+                        identity=None,
+                        location="West Europe",
+                    )
+                }
+            }
             # Once imported, we only need to instantiate the check's class
-            check = defender_ensure_defender_for_arm_is_on()
-
+            check = app_ensure_http_is_redirected_to_https()
             # And then, call the execute() function to run the check
-            # against the IAM client we've set up.
+            # against the App client we've set up.
             result = check.execute()
-
-            # Last but not least, we need to assert all the fields
-            # from the check's results
+            # Assert the expected results
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Defender plan Defender for ARM from subscription {AZURE_SUBSCRIPTION} is set to OFF (pricing tier not standard)"
+                == f"HTTP is not redirected to HTTPS for app 'app_id-1' in subscription '{AZURE_SUBSCRIPTION_ID}'."
             )
-            assert result[0].subscription == AZURE_SUBSCRIPTION
-            assert result[0].resource_name == "Defender plan ARM"
+            assert result[0].resource_name == "app_id-1"
             assert result[0].resource_id == resource_id
+            assert result[0].subscription == AZURE_SUBSCRIPTION_ID
+            assert result[0].location == "West Europe"
+
+    # Complementary test to make more coverage for different scenarios
+    def test_app_http_to_https_enabled(self):
+        resource_id = f"/subscriptions/{uuid4()}"
+        app_client = mock.MagicMock
+
+        with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
+            "prowler.providers.azure.services.app.app_ensure_http_is_redirected_to_https.app_ensure_http_is_redirected_to_https.app_client",
+            new=app_client,
+        ):
+            from prowler.providers.azure.services.app.app_ensure_http_is_redirected_to_https.app_ensure_http_is_redirected_to_https import (
+                app_ensure_http_is_redirected_to_https,
+            )
+            from prowler.providers.azure.services.app.app_service import WebApp
+
+            app_client.apps = {
+                AZURE_SUBSCRIPTION_ID: {
+                    "app_id-1": WebApp(
+                        resource_id=resource_id,
+                        auth_enabled=True,
+                        configurations=mock.MagicMock(),
+                        client_cert_mode="Ignore",
+                        https_only=True,
+                        identity=None,
+                        location="West Europe",
+                    )
+                }
+            }
+            check = app_ensure_http_is_redirected_to_https()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert (
+                result[0].status_extended
+                == f"HTTP is redirected to HTTPS for app 'app_id-1' in subscription '{AZURE_SUBSCRIPTION_ID}'."
+            )
+            assert result[0].resource_name == "app_id-1"
+            assert result[0].resource_id == resource_id
+            assert result[0].subscription == AZURE_SUBSCRIPTION_ID
+            assert result[0].location == "West Europe"
+
 ```
 
 ### Services
