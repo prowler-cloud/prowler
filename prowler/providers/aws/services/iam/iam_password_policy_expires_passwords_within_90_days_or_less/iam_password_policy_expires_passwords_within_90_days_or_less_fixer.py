@@ -20,6 +20,7 @@ def fixer(resource_id: str) -> bool:
         bool: True if IAM password policy is updated, False otherwise
     """
     try:
+        print(iam_client.fixer_config)
         iam_client.client.update_account_password_policy(
             MinimumPasswordLength=iam_client.password_policy.length,
             RequireSymbols=iam_client.password_policy.symbols,
@@ -27,7 +28,9 @@ def fixer(resource_id: str) -> bool:
             RequireUppercaseCharacters=iam_client.password_policy.uppercase,
             RequireLowercaseCharacters=iam_client.password_policy.lowercase,
             AllowUsersToChangePassword=iam_client.password_policy.allow_change,
-            MaxPasswordAge=iam_client.fixer_config.get("MaxPasswordAge", 90),
+            MaxPasswordAge=iam_client.fixer_config.get("iam_password_policy", {}).get(
+                "MaxPasswordAge", 90
+            ),
             PasswordReusePrevention=iam_client.password_policy.reuse_prevention,
             HardExpiry=iam_client.password_policy.hard_expiry,
         )

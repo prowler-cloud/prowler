@@ -23,7 +23,9 @@ def fixer(resource_id: str) -> bool:
         iam_client.client.update_account_password_policy(
             MinimumPasswordLength=iam_client.password_policy.length,
             RequireSymbols=iam_client.password_policy.symbols,
-            RequireNumbers=iam_client.fixer_config.get("RequireNumbers", True),
+            RequireNumbers=iam_client.fixer_config.get("iam_password_policy", {}).get(
+                "RequireNumbers", True
+            ),
             RequireUppercaseCharacters=iam_client.password_policy.uppercase,
             RequireLowercaseCharacters=iam_client.password_policy.lowercase,
             AllowUsersToChangePassword=iam_client.password_policy.allow_change,

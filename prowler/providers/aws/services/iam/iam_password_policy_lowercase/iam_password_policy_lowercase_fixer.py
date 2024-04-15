@@ -26,8 +26,8 @@ def fixer(resource_id: str) -> bool:
             RequireNumbers=iam_client.password_policy.numbers,
             RequireUppercaseCharacters=iam_client.password_policy.uppercase,
             RequireLowercaseCharacters=iam_client.fixer_config.get(
-                "RequireLowercaseCharacters", True
-            ),
+                "iam_password_policy", {}
+            ).get("RequireLowercaseCharacters", True),
             AllowUsersToChangePassword=iam_client.password_policy.allow_change,
             MaxPasswordAge=iam_client.password_policy.max_age,
             PasswordReusePrevention=iam_client.password_policy.reuse_prevention,
