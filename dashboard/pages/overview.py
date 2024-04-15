@@ -1035,7 +1035,7 @@ def filter_data(
             sort_mode="single",
             style_as_list_view=True,
             filter_action="native",
-            filter_options={"placeholder_text": "Filter"},
+            filter_options={"placeholder_text": "🔍"},
             style_filter={"background-color": "#3e403f", "color": "white"},
         )
 
