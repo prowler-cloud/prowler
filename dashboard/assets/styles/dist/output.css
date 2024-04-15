@@ -992,6 +992,12 @@ video {
   /* Firefox */
 }
 
+/*Styles for previous-vext-container from table*/
+.previous-next-container {
+  margin-top: 1rem;
+  color: #000;
+}
+
 #_dash-app-content {
   --tw-bg-opacity: 1;
   background-color: rgb(231 229 228 / var(--tw-bg-opacity));

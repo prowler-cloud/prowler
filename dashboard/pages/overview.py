@@ -914,13 +914,13 @@ def filter_data(
 
         # Take the values from the table_row_values
         if table_row_values == -1:
-            if len(table_data) >= 25:
-                table_row_values = 25
+            if len(table_data) < 25:
+                table_row_values = len(table_data)
             else:
-                table_row_values = "Full"
+                table_row_values = 25
 
         if len(table_data) < 25:
-            table_row_values = "Full"
+            table_row_values = table_row_values
 
         if len(table_data) >= 25:
             table_row_options.append(25)
@@ -930,10 +930,7 @@ def filter_data(
             table_row_options.append(75)
         if len(table_data) >= 100:
             table_row_options.append(100)
-        table_row_options.append("Full")
-
-        if table_row_values != "Full":
-            table_data = table_data[:table_row_values]
+        table_row_options.append(len(table_data))
 
         table = dash_table.DataTable(
             data=table_data.to_dict("records"),
@@ -948,6 +945,7 @@ def filter_data(
                 "layout": "fixed",
                 "backgroundColor": "rgb(41,37,36)",
             },
+            page_size=table_row_values,
             style_data_conditional=[
                 {
                     "if": {"row_index": "odd"},
@@ -1020,7 +1018,6 @@ def filter_data(
                 {"if": {"column_id": "Account ID"}, "max-width": "11%"},
             ],
             id="table-overview",
-            css=[{"selector": ".show-hide", "rule": "display: none"}],
         )
 
     # Status Graphic
