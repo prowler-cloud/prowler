@@ -41,5 +41,4 @@ aws:
     # KmsKeyId: "arn:aws:kms:us-east-1:123456789012:key/1234abcd-12ab-34cd-56ef-1234567890ab"
 
   # kms_cmk_rotation_enabled
-  kms_cmk_rotation_enabled:
-    RotationPeriodInDays: 365
+  # No configuration needed for this check

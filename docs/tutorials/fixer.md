@@ -139,4 +139,7 @@ aws:
     # CloudWatchLogsLogGroupArn: "arn:aws:logs:us-east-1:123456789012:log-group:my-cloudtrail-log-group"
     # CloudWatchLogsRoleArn: "arn:aws:iam::123456789012:role/my-cloudtrail-role"
     # KmsKeyId: "arn:aws:kms:us-east-1:123456789012:key/1234abcd-12ab-34cd-56ef-1234567890ab"
+
+  # kms_cmk_rotation_enabled
+  # No configuration needed for this check
 ```
