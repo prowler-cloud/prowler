@@ -2,7 +2,7 @@ from prowler.lib.logger import logger
 from prowler.providers.aws.services.kms.kms_client import kms_client
 
 
-def fixer(resource_id, region):
+def fixer(resource_id: str, region: str) -> bool:
     """
     Enable CMK rotation. Requires the kms:EnableKeyRotation permission:
     {
