@@ -16,7 +16,9 @@ from prowler.lib.utils.utils import hash_sha512
 def generate_json_asff_status(status: str, muted: bool = False) -> str:
     json_asff_status = ""
     if muted:
-        json_asff_status = "MUTED"
+        # Per AWS Security Hub "MUTED" is not a valid status
+        # https://docs.aws.amazon.com/securityhub/1.0/APIReference/API_Compliance.html
+        json_asff_status = "WARNING"
     else:
         if status == "PASS":
             json_asff_status = "PASSED"

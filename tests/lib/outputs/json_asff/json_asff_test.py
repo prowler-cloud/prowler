@@ -457,7 +457,7 @@ class TestOutputJSONASFF:
     def test_generate_json_asff_status(self):
         assert generate_json_asff_status("PASS") == "PASSED"
         assert generate_json_asff_status("FAIL") == "FAILED"
-        assert generate_json_asff_status("FAIL", True) == "MUTED"
+        assert generate_json_asff_status("FAIL", True) == "WARNING"
         assert generate_json_asff_status("SOMETHING ELSE") == "NOT_AVAILABLE"
 
     def test_generate_json_asff_resource_tags(self):
