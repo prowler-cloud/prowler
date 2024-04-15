@@ -186,7 +186,7 @@ Due to the complexity and differences of each provider use the rest of the provi
 - [Azure](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/azure/azure_provider.py)
 - [Kubernetes](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/kubernetes/kubernetes_provider.py)
 
-To facilitate understanding here is a pseudocode of how could be the most basic provider could be with examples.
+To facilitate understanding here is a pseudocode of how the most basic provider could be with examples.
 
 ```python title="Provider Example Class"
 
