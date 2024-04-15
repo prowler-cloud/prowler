@@ -437,74 +437,97 @@ Please refer to the [AWS checks tests](./unit-testing.md#checks) for more inform
 
 For the GCP Provider we don't have any library to mock out the API calls we use. So in this scenario we inject the objects in the service client using [MagicMock](https://docs.python.org/3/library/unittest.mock.html#unittest.mock.MagicMock).
 
-The following code shows how to use MagicMock to create the service objects for a GCP check test.
+The following code shows how to use MagicMock to create the service objects for a GCP check test. It is a real example adapted for informative purposes.
 
 ```python
-# We need to import the unittest.mock to allow us to patch some objects
-# not to use shared ones between test, hence to isolate the test
+from re import search
 from unittest import mock
 
-# GCP Constants
-GCP_PROJECT_ID = "123456789012"
+# Import some constant values needed in every check
+from tests.providers.gcp.gcp_fixtures import GCP_PROJECT_ID, set_mocked_gcp_provider
 
-# We are going to create a test for the compute_firewall_rdp_access_from_the_internet_allowed check
-class Test_compute_firewall_rdp_access_from_the_internet_allowed:
+# We are going to create a test for the compute_project_os_login_enabled check
+class Test_compute_project_os_login_enabled:
 
-    # We name the tests with test_<service>_<check_name>_<test_action>
-    def test_compute_compute_firewall_rdp_access_from_the_internet_allowed_one_compliant_rule_with_valid_port(self):
+    def test_one_compliant_project(self):
+        # Import the service resource model to create the mocked object
+        from prowler.providers.gcp.services.compute.compute_service import Project
+        # Create the custom Project object to be tested
+        project = Project(
+            id=GCP_PROJECT_ID,
+            enable_oslogin=True,
+        )
         # Mocked client with MagicMock
         compute_client = mock.MagicMock
-
-        # Assign GCP client configuration
         compute_client.project_ids = [GCP_PROJECT_ID]
-        compute_client.region = "global"
+        compute_client.projects = [project]
 
-        # Import the service resource model to create the mocked object
-        from prowler.providers.gcp.services.compute.compute_service import Firewall
-
-        # Create the custom Firewall object to be tested
-        firewall = Firewall(
-            name="test",
-            id="1234567890",
-            source_ranges=["0.0.0.0/0"],
-            direction="INGRESS",
-            allowed_rules=[{"IPProtocol": "tcp", "ports": ["443"]}],
-            project_id=GCP_PROJECT_ID,
-        )
-        compute_client.firewalls = [firewall]
-
-        # In this scenario we have to mock also the Compute service and the compute_client from the check to enforce that the compute_client used is the one created within this check because patch != import, and if you execute tests in parallel some objects can be already initialised hence the check won't be isolated.
-        # In this case we don't use the Moto decorator, we use the mocked Compute client for both objects
+        # In this scenario we have to mock the app_client from the check to enforce that the compute_client used is the one created above
+        # And also is mocked the return value of get_global_provider function to return our GCP mocked provider defined in fixtures
         with mock.patch(
-            "prowler.providers.gcp.services.compute.compute_service.Compute",
-            new=defender_client,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_gcp_provider(),
         ), mock.patch(
-            "prowler.providers.gcp.services.compute.compute_client.compute_client",
-            new=defender_client,
+            "prowler.providers.gcp.services.compute.compute_project_os_login_enabled.compute_project_os_login_enabled.compute_client",
+            new=compute_client,
         ):
-
-            # We import the check within the two mocks not to initialise the iam_client with some shared information from
-            # the current_audit_info or the Compute service.
-            from prowler.providers.gcp.services.compute.compute_firewall_rdp_access_from_the_internet_allowed.compute_firewall_rdp_access_from_the_internet_allowed import (
-                compute_firewall_rdp_access_from_the_internet_allowed,
+            # We import the check within the two mocks
+            from prowler.providers.gcp.services.compute.compute_project_os_login_enabled.compute_project_os_login_enabled import (
+                compute_project_os_login_enabled,
             )
-
             # Once imported, we only need to instantiate the check's class
-            check = compute_firewall_rdp_access_from_the_internet_allowed()
-
+            check = compute_project_os_login_enabled()
             # And then, call the execute() function to run the check
-            # against the IAM client we've set up.
+            # against the Compute client we've set up.
             result = check.execute()
-
-            # Last but not least, we need to assert all the fields
-            # from the check's results
+            # Assert the expected results
             assert len(result) == 1
             assert result[0].status == "PASS"
-            assert result[0].status_extended == f"Firewall {firewall.name} does not expose port 3389 (RDP) to the internet."
-            assert result[0].resource_name = firewall.name
-            assert result[0].resource_id == firewall.id
-            assert result[0].project_id = GCP_PROJECT_ID
-            assert result[0].location = compute_client.region
+            assert search(
+                f"Project {project.id} has OS Login enabled",
+                result[0].status_extended,
+            )
+            assert result[0].resource_id == project.id
+            assert result[0].location == "global"
+            assert result[0].project_id == GCP_PROJECT_ID
+
+    # Complementary test to make more coverage for different scenarios
+    def test_one_non_compliant_project(self):
+        from prowler.providers.gcp.services.compute.compute_service import Project
+
+        project = Project(
+            id=GCP_PROJECT_ID,
+            enable_oslogin=False,
+        )
+
+        compute_client = mock.MagicMock
+        compute_client.project_ids = [GCP_PROJECT_ID]
+        compute_client.projects = [project]
+
+        with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_gcp_provider(),
+        ), mock.patch(
+            "prowler.providers.gcp.services.compute.compute_project_os_login_enabled.compute_project_os_login_enabled.compute_client",
+            new=compute_client,
+        ):
+            from prowler.providers.gcp.services.compute.compute_project_os_login_enabled.compute_project_os_login_enabled import (
+                compute_project_os_login_enabled,
+            )
+
+            check = compute_project_os_login_enabled()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert search(
+                f"Project {project.id} does not have OS Login enabled",
+                result[0].status_extended,
+            )
+            assert result[0].resource_id == project.id
+            assert result[0].location == "global"
+            assert result[0].project_id == GCP_PROJECT_ID
+
 ```
 
 ### Services
@@ -517,80 +540,186 @@ Coming soon ...
 
 For the Azure Provider we don't have any library to mock out the API calls we use. So in this scenario we inject the objects in the service client using [MagicMock](https://docs.python.org/3/library/unittest.mock.html#unittest.mock.MagicMock).
 
-The following code shows how to use MagicMock to create the service objects for a Azure check test.
+The following code shows how to use MagicMock to create the service objects for a Azure check test. It is a real example adapted for informative purposes.
 
-```python
+```python title="app_ensure_http_is_redirected_to_https_test.py"
 # We need to import the unittest.mock to allow us to patch some objects
 # not to use shared ones between test, hence to isolate the test
 from unittest import mock
 
 from uuid import uuid4
 
-# Azure Constants
-from tests.providers.azure.azure_fixtures import AZURE_SUBSCRIPTION
+# Import some constans values needed in almost every check
+from tests.providers.azure.azure_fixtures import (
+    AZURE_SUBSCRIPTION_ID,
+    set_mocked_azure_provider,
+)
 
-
-
-# We are going to create a test for the Test_defender_ensure_defender_for_arm_is_on check
-class Test_defender_ensure_defender_for_arm_is_on:
+# We are going to create a test for the app_ensure_http_is_redirected_to_https check
+class Test_app_ensure_http_is_redirected_to_https:
 
     # We name the tests with test_<service>_<check_name>_<test_action>
-    def test_defender_defender_ensure_defender_for_arm_is_on_arm_pricing_tier_not_standard(self):
-        resource_id = str(uuid4())
-
+    def test_app_http_to_https_disabled(self):
+        resource_id = f"/subscriptions/{uuid4()}"
         # Mocked client with MagicMock
-        defender_client = mock.MagicMock
+        app_client = mock.MagicMock
 
-        # Import the service resource model to create the mocked object
-        from prowler.providers.azure.services.defender.defender_service import Defender_Pricing
-
-        # Create the custom Defender object to be tested
-        defender_client.pricings = {
-            AZURE_SUBSCRIPTION: {
-                "Arm": Defender_Pricing(
-                    resource_id=resource_id,
-                    pricing_tier="Not Standard",
-                    free_trial_remaining_time=0,
-                )
-            }
-        }
-
-        # In this scenario we have to mock also the Defender service and the defender_client from the check to enforce that the defender_client used is the one created within this check because patch != import, and if you execute tests in parallel some objects can be already initialised hence the check won't be isolated.
-        # In this case we don't use the Moto decorator, we use the mocked Defender client for both objects
+        # In this scenario we have to mock the app_client from the check to enforce that the app_client used is the one created above
+        # And also is mocked the return value of get_global_provider function to return our Azure mocked provider defined in fixtures
         with mock.patch(
-            "prowler.providers.azure.services.defender.defender_service.Defender",
-            new=defender_client,
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
         ), mock.patch(
-            "prowler.providers.azure.services.defender.defender_client.defender_client",
-            new=defender_client,
+            "prowler.providers.azure.services.app.app_ensure_http_is_redirected_to_https.app_ensure_http_is_redirected_to_https.app_client",
+            new=app_client,
         ):
-
-            # We import the check within the two mocks not to initialise the iam_client with some shared information from
-            # the current_audit_info or the Defender service.
-            from prowler.providers.azure.services.defender.defender_ensure_defender_for_arm_is_on.defender_ensure_defender_for_arm_is_on import (
-                defender_ensure_defender_for_arm_is_on,
+            # We import the check within the two mocks
+            from prowler.providers.azure.services.app.app_ensure_http_is_redirected_to_https.app_ensure_http_is_redirected_to_https import (
+                app_ensure_http_is_redirected_to_https,
             )
+            # Import the service resource model to create the mocked object
+            from prowler.providers.azure.services.app.app_service import WebApp
 
+            # Create the custom App object to be tested
+            app_client.apps = {
+                AZURE_SUBSCRIPTION_ID: {
+                    "app_id-1": WebApp(
+                        resource_id=resource_id,
+                        auth_enabled=True,
+                        configurations=mock.MagicMock(),
+                        client_cert_mode="Ignore",
+                        https_only=False,
+                        identity=None,
+                        location="West Europe",
+                    )
+                }
+            }
             # Once imported, we only need to instantiate the check's class
-            check = defender_ensure_defender_for_arm_is_on()
-
+            check = app_ensure_http_is_redirected_to_https()
             # And then, call the execute() function to run the check
-            # against the IAM client we've set up.
+            # against the App client we've set up.
             result = check.execute()
-
-            # Last but not least, we need to assert all the fields
-            # from the check's results
+            # Assert the expected results
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Defender plan Defender for ARM from subscription {AZURE_SUBSCRIPTION} is set to OFF (pricing tier not standard)"
+                == f"HTTP is not redirected to HTTPS for app 'app_id-1' in subscription '{AZURE_SUBSCRIPTION_ID}'."
             )
-            assert result[0].subscription == AZURE_SUBSCRIPTION
-            assert result[0].resource_name == "Defender plan ARM"
+            assert result[0].resource_name == "app_id-1"
             assert result[0].resource_id == resource_id
+            assert result[0].subscription == AZURE_SUBSCRIPTION_ID
+            assert result[0].location == "West Europe"
+
+    # Complementary test to make more coverage for different scenarios
+    def test_app_http_to_https_enabled(self):
+        resource_id = f"/subscriptions/{uuid4()}"
+        app_client = mock.MagicMock
+
+        with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_azure_provider(),
+        ), mock.patch(
+            "prowler.providers.azure.services.app.app_ensure_http_is_redirected_to_https.app_ensure_http_is_redirected_to_https.app_client",
+            new=app_client,
+        ):
+            from prowler.providers.azure.services.app.app_ensure_http_is_redirected_to_https.app_ensure_http_is_redirected_to_https import (
+                app_ensure_http_is_redirected_to_https,
+            )
+            from prowler.providers.azure.services.app.app_service import WebApp
+
+            app_client.apps = {
+                AZURE_SUBSCRIPTION_ID: {
+                    "app_id-1": WebApp(
+                        resource_id=resource_id,
+                        auth_enabled=True,
+                        configurations=mock.MagicMock(),
+                        client_cert_mode="Ignore",
+                        https_only=True,
+                        identity=None,
+                        location="West Europe",
+                    )
+                }
+            }
+            check = app_ensure_http_is_redirected_to_https()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert (
+                result[0].status_extended
+                == f"HTTP is redirected to HTTPS for app 'app_id-1' in subscription '{AZURE_SUBSCRIPTION_ID}'."
+            )
+            assert result[0].resource_name == "app_id-1"
+            assert result[0].resource_id == resource_id
+            assert result[0].subscription == AZURE_SUBSCRIPTION_ID
+            assert result[0].location == "West Europe"
+
 ```
 
 ### Services
 
-Coming soon ...
+For testing Azure services, we have to follow the same logic as with the Azure checks. We still mock all the API calls, but in this case, every method that uses an API call to set up an attribute is mocked with the [patch](https://docs.python.org/3/library/unittest.mock.html#unittest.mock.patch) decorator at the beginning of the class. Remember that every method of a service MUST be tested.
+
+The following code shows a real example of a testing class, but it has more comments than usual for educational purposes.
+
+```python title="AppInsights Service Test"
+# We need to import the unittest.mock.patch to allow us to patch some objects
+# not to use shared ones between test, hence to isolate the test
+from unittest.mock import patch
+# Import the models needed from the service file
+from prowler.providers.azure.services.appinsights.appinsights_service import (
+    AppInsights,
+    Component,
+)
+# Import some constans values needed in almost every check
+from tests.providers.azure.azure_fixtures import (
+    AZURE_SUBSCRIPTION_ID,
+    set_mocked_azure_provider,
+)
+
+# Function to mock the service function __get_components__, this function task is to return a possible value that real function could returns
+def mock_appinsights_get_components(_):
+    return {
+        AZURE_SUBSCRIPTION_ID: {
+            "app_id-1": Component(
+                resource_id="/subscriptions/resource_id",
+                resource_name="AppInsightsTest",
+                location="westeurope",
+            )
+        }
+    }
+
+# Patch decorator to use the mocked function instead the function with the real API call
+@patch(
+    "prowler.providers.azure.services.appinsights.appinsights_service.AppInsights.__get_components__",
+    new=mock_appinsights_get_components,
+)
+class Test_AppInsights_Service:
+    # Mandatory test for every service, this method test the instance of the client is correct
+    def test__get_client__(self):
+        app_insights = AppInsights(set_mocked_azure_provider())
+        assert (
+            app_insights.clients[AZURE_SUBSCRIPTION_ID].__class__.__name__
+            == "ApplicationInsightsManagementClient"
+        )
+    # Second typical method that test if subscriptions is defined inside the client object
+    def test__get_subscriptions__(self):
+        app_insights = AppInsights(set_mocked_azure_provider())
+        assert app_insights.subscriptions.__class__.__name__ == "dict"
+    # Test for the function __get_components__, inside this client is used the mocked function
+    def test__get_components__(self):
+        appinsights = AppInsights(set_mocked_azure_provider())
+        assert len(appinsights.components) == 1
+        assert (
+            appinsights.components[AZURE_SUBSCRIPTION_ID]["app_id-1"].resource_id
+            == "/subscriptions/resource_id"
+        )
+        assert (
+            appinsights.components[AZURE_SUBSCRIPTION_ID]["app_id-1"].resource_name
+            == "AppInsightsTest"
+        )
+        assert (
+            appinsights.components[AZURE_SUBSCRIPTION_ID]["app_id-1"].location
+            == "westeurope"
+        )
+```
