@@ -20,7 +20,6 @@ def fixer(resource_id: str) -> bool:
         bool: True if IAM password policy is updated, False otherwise
     """
     try:
-        print(iam_client.fixer_config)
         iam_client.client.update_account_password_policy(
             MinimumPasswordLength=iam_client.password_policy.length,
             RequireSymbols=iam_client.password_policy.symbols,
