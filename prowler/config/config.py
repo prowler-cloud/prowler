@@ -61,6 +61,9 @@ json_ocsf_file_suffix = ".ocsf.json"
 default_config_file_path = (
     f"{pathlib.Path(os.path.dirname(os.path.realpath(__file__)))}/config.yaml"
 )
+default_fixer_config_file_path = (
+    f"{pathlib.Path(os.path.dirname(os.path.realpath(__file__)))}/fixer_config.yaml"
+)
 
 
 def get_default_mute_file_path(provider: str):
@@ -117,15 +120,39 @@ def load_and_validate_config_file(provider: str, config_file_path: str) -> dict:
             # Not to introduce a breaking change we have to allow the old format config file without any provider keys
             # and a new format with a key for each provider to include their configuration values within
             # Check if the new format is passed
-            if "aws" in config_file or "gcp" in config_file or "azure" in config_file:
+            if (
+                "aws" in config_file
+                or "gcp" in config_file
+                or "azure" in config_file
+                or "kubernetes" in config_file
+            ):
                 config = config_file.get(provider, {})
             else:
                 config = config_file if config_file else {}
-                # Not to break Azure and GCP does not support neither use the old config format
-                if provider in ["azure", "gcp"]:
+                # Not to break Azure, K8s and GCP does not support neither use the old config format
+                if provider in ["azure", "gcp", "kubernetes"]:
                     config = {}
 
             return config
+
+    except Exception as error:
+        logger.critical(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+        )
+        sys.exit(1)
+
+
+def load_and_validate_fixer_config_file(
+    provider: str, fixer_config_file_path: str
+) -> dict:
+    """
+    load_and_validate_fixer_config_file reads the Prowler fixer config file in YAML format from the default location or the file passed with the --fixer-config flag
+    """
+    try:
+        with open(fixer_config_file_path) as f:
+            fixer_config_file = yaml.safe_load(f)
+
+            return fixer_config_file.get(provider, {})
 
     except Exception as error:
         logger.critical(

@@ -10,7 +10,11 @@ from botocore.credentials import RefreshableCredentials
 from botocore.session import get_session
 from colorama import Fore, Style
 
-from prowler.config.config import aws_services_json_file, load_and_validate_config_file
+from prowler.config.config import (
+    aws_services_json_file,
+    load_and_validate_config_file,
+    load_and_validate_fixer_config_file,
+)
 from prowler.lib.check.check import list_modules, recover_checks_from_service
 from prowler.lib.logger import logger
 from prowler.lib.mutelist.mutelist import parse_mutelist_file
@@ -224,11 +228,17 @@ class AwsProvider(Provider):
         # Set ignore unused services
         self._scan_unused_services = scan_unused_services
 
+        # TODO: move this to the providers, pending for AWS, GCP, AZURE and K8s
         # Audit Config
         self._audit_config = {}
         if hasattr(arguments, "config_file"):
             self._audit_config = load_and_validate_config_file(
                 self._type, arguments.config_file
+            )
+        self._fixer_config = {}
+        if hasattr(arguments, "fixer_config"):
+            self._fixer_config = load_and_validate_fixer_config_file(
+                self._type, arguments.fixer_config
             )
 
     @property
@@ -258,6 +268,10 @@ class AwsProvider(Provider):
     @property
     def audit_config(self):
         return self._audit_config
+
+    @property
+    def fixer_config(self):
+        return self._fixer_config
 
     @property
     def output_options(self):

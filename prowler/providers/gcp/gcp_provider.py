@@ -101,6 +101,9 @@ class GcpProvider(Provider):
         self._audit_config = load_and_validate_config_file(
             self._type, arguments.config_file
         )
+        self._fixer_config = load_and_validate_config_file(
+            self._type, arguments.fixer_config
+        )
 
     @property
     def identity(self):
@@ -129,6 +132,10 @@ class GcpProvider(Provider):
     @property
     def audit_config(self):
         return self._audit_config
+
+    @property
+    def fixer_config(self):
+        return self._fixer_config
 
     @property
     def output_options(self):

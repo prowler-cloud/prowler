@@ -7,6 +7,7 @@ from prowler.config.config import (
     available_compliance_frameworks,
     check_current_version,
     default_config_file_path,
+    default_fixer_config_file_path,
     default_output_directory,
     finding_statuses,
     get_default_mute_file_path,
@@ -342,6 +343,12 @@ Detailed documentation at https://docs.prowler.com
             nargs="?",
             default=default_config_file_path,
             help="Set configuration file path",
+        )
+        config_parser.add_argument(
+            "--fixer-config",
+            nargs="?",
+            default=default_fixer_config_file_path,
+            help="Set configuration fixer file path",
         )
 
     def __init_custom_checks_metadata_parser__(self):

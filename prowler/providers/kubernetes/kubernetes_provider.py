@@ -3,8 +3,8 @@ import sys
 from argparse import Namespace
 
 from colorama import Fore, Style
-from kubernetes import client, config
 
+from kubernetes import client, config
 from prowler.config.config import load_and_validate_config_file
 from prowler.lib.logger import logger
 from prowler.lib.mutelist.mutelist import parse_mutelist_file
@@ -58,6 +58,9 @@ class KubernetesProvider(Provider):
         self._audit_config = load_and_validate_config_file(
             self._type, arguments.config_file
         )
+        self._fixer_config = load_and_validate_config_file(
+            self._type, arguments.fixer_config
+        )
 
     @property
     def type(self):
@@ -78,6 +81,10 @@ class KubernetesProvider(Provider):
     @property
     def audit_config(self):
         return self._audit_config
+
+    @property
+    def fixer_config(self):
+        return self._fixer_config
 
     @property
     def output_options(self):

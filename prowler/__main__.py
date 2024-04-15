@@ -228,7 +228,15 @@ def prowler():
         print(f"{Style.BRIGHT}\nRunning Prowler Fixer, please wait...{Style.RESET_ALL}")
         # Check if there are any FAIL findings
         if any("FAIL" in finding.status for finding in findings):
-            run_fixer(findings)
+            fixed_findings = run_fixer(findings)
+            if not fixed_findings:
+                print(
+                    f"{Style.BRIGHT}{Fore.RED}\nThere were findings to fix, but the fixer failed or it is not implemented for those findings yet. {Style.RESET_ALL}\n"
+                )
+            else:
+                print(
+                    f"{Style.BRIGHT}{Fore.GREEN}\n{fixed_findings} findings fixed!{Style.RESET_ALL}\n"
+                )
         else:
             print(f"{Style.BRIGHT}{Fore.GREEN}\nNo findings to fix!{Style.RESET_ALL}\n")
         sys.exit()

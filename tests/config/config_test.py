@@ -9,6 +9,7 @@ from prowler.config.config import (
     check_current_version,
     get_available_compliance_frameworks,
     load_and_validate_config_file,
+    load_and_validate_fixer_config_file,
     update_provider_config,
 )
 from prowler.providers.aws.aws_provider import get_aws_available_regions
@@ -182,10 +183,46 @@ class Test_Config:
         assert load_and_validate_config_file("aws", config_test_file) == config_aws
         assert load_and_validate_config_file("gcp", config_test_file) == {}
         assert load_and_validate_config_file("azure", config_test_file) == {}
+        assert load_and_validate_config_file("kubernetes", config_test_file) == {}
 
     def test_load_and_validate_config_file_invalid_config_file_path(self):
         provider = "aws"
-        config_file_path = "invalid/path/to/config.yaml"
+        config_file_path = "invalid/path/to/fixer_config.yaml"
 
         with pytest.raises(SystemExit):
             load_and_validate_config_file(provider, config_file_path)
+
+    def test_load_and_validate_fixer_config_aws(self):
+        path = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))
+        config_test_file = f"{path}/fixtures/fixer_config.yaml"
+        provider = "aws"
+
+        assert load_and_validate_fixer_config_file(provider, config_test_file)
+
+    def test_load_and_validate_fixer_config_gcp(self):
+        path = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))
+        config_test_file = f"{path}/fixtures/fixer_config.yaml"
+        provider = "gcp"
+
+        assert load_and_validate_fixer_config_file(provider, config_test_file) == {}
+
+    def test_load_and_validate_fixer_config_kubernetes(self):
+        path = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))
+        config_test_file = f"{path}/fixtures/fixer_config.yaml"
+        provider = "kubernetes"
+
+        assert load_and_validate_fixer_config_file(provider, config_test_file) == {}
+
+    def test_load_and_validate_fixer_config_azure(self):
+        path = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))
+        config_test_file = f"{path}/fixtures/fixer_config.yaml"
+        provider = "azure"
+
+        assert load_and_validate_fixer_config_file(provider, config_test_file) == {}
+
+    def test_load_and_validate_fixer_config_invalid_fixer_config_path(self):
+        provider = "aws"
+        fixer_config_path = "invalid/path/to/fixer_config.yaml"
+
+        with pytest.raises(SystemExit):
+            load_and_validate_fixer_config_file(provider, fixer_config_path)

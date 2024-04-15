@@ -31,6 +31,7 @@ class AWSService:
         self.audit_resources = provider.audit_resources
         self.audited_checks = provider.audit_metadata.expected_checks
         self.audit_config = provider.audit_config
+        self.fixer_config = provider.fixer_config
 
         # AWS Session
         self.session = provider.session.current_session

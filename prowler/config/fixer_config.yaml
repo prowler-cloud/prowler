@@ -1,0 +1,19 @@
+# Fixer configuration file
+aws:
+  # ec2_ebs_default_encryption
+    # No configuration needed for this check
+
+  # s3_account_level_public_access_blocks
+    # No configuration needed for this check
+
+  # iam_password_policy_* checks:
+  iam_password_policy:
+      MinimumPasswordLength: 14
+      RequireSymbols: True
+      RequireNumbers: True
+      RequireUppercaseCharacters: True
+      RequireLowercaseCharacters: True
+      AllowUsersToChangePassword: True
+      MaxPasswordAge: 90
+      PasswordReusePrevention: 24
+      HardExpiry: False

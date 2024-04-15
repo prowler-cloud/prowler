@@ -5,7 +5,10 @@ from os import rmdir
 from freezegun import freeze_time
 from mock import patch
 
-from prowler.config.config import default_config_file_path
+from prowler.config.config import (
+    default_config_file_path,
+    default_fixer_config_file_path,
+)
 from prowler.providers.gcp.gcp_provider import GcpProvider
 from prowler.providers.gcp.models import GCPIdentityInfo, GCPOutputOptions, GCPProject
 
@@ -18,6 +21,7 @@ class TestGCPProvider:
         arguments.list_project_id = False
         arguments.credentials_file = ""
         arguments.config_file = default_config_file_path
+        arguments.fixer_config = default_fixer_config_file_path
 
         projects = {
             "test-project": GCPProject(
@@ -53,6 +57,7 @@ class TestGCPProvider:
         arguments.list_project_id = False
         arguments.credentials_file = ""
         arguments.config_file = default_config_file_path
+        arguments.fixer_config = default_fixer_config_file_path
 
         # Output options
         arguments.status = []
@@ -119,6 +124,7 @@ class TestGCPProvider:
         arguments.list_project_id = False
         arguments.credentials_file = ""
         arguments.config_file = default_config_file_path
+        arguments.fixer_config = default_fixer_config_file_path
 
         # Output options
         arguments.status = []

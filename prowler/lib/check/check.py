@@ -207,7 +207,7 @@ def list_services(provider: str) -> set:
 
 def list_fixers(provider: str) -> set:
     available_fixers = set()
-    checks = recover_checks_from_provider(provider)
+    checks = recover_checks_from_provider(provider, include_fixers=True)
     # Build list of check's metadata files
     for check_info in checks:
         # Build check path name
@@ -374,7 +374,9 @@ def parse_checks_from_compliance_framework(
     return checks_to_execute
 
 
-def recover_checks_from_provider(provider: str, service: str = None) -> list[tuple]:
+def recover_checks_from_provider(
+    provider: str, service: str = None, include_fixers: bool = False
+) -> list[tuple]:
     """
     Recover all checks from the selected provider and service
 
@@ -387,7 +389,11 @@ def recover_checks_from_provider(provider: str, service: str = None) -> list[tup
             # Format: "prowler.providers.{provider}.services.{service}.{check_name}.{check_name}"
             check_module_name = module_name.name
             # We need to exclude common shared libraries in services
-            if check_module_name.count(".") == 6 and "lib" not in check_module_name:
+            if (
+                check_module_name.count(".") == 6
+                and "lib" not in check_module_name
+                and (not check_module_name.endswith("_fixer") or include_fixers)
+            ):
                 check_path = module_name.module_finder.path
                 # Check name is the last part of the check_module_name
                 check_name = check_module_name.split(".")[-1]
@@ -462,15 +468,18 @@ def run_check(check: Check, output_options) -> list:
         return findings
 
 
-def run_fixer(check_findings: list):
+def run_fixer(check_findings: list) -> int:
     """
     Run the fixer for the check if it exists and there are any FAIL findings
     Args:
         check_findings (list): list of findings
+    Returns:
+        int: number of fixed findings
     """
     try:
         # Map findings to each check
         findings_dict = {}
+        fixed_findings = 0
         for finding in check_findings:
             if finding.check_metadata.CheckID not in findings_dict:
                 findings_dict[finding.check_metadata.CheckID] = []
@@ -483,7 +492,7 @@ def run_fixer(check_findings: list):
                     check_module_path = f"prowler.providers.{findings[0].check_metadata.Provider}.services.{findings[0].check_metadata.ServiceName}.{check}.{check}_fixer"
                     lib = import_check(check_module_path)
                     fixer = getattr(lib, "fixer")
-                except AttributeError:
+                except ModuleNotFoundError:
                     logger.error(f"Fixer method not implemented for check {check}")
                 else:
                     print(
@@ -491,10 +500,26 @@ def run_fixer(check_findings: list):
                     )
                     for finding in findings:
                         if finding.status == "FAIL":
-                            print(
-                                f"\t{orange_color}FIXING{Style.RESET_ALL} {finding.region}... {(Fore.GREEN + 'DONE') if fixer(finding.region) else (Fore.RED + 'ERROR')}{Style.RESET_ALL}"
-                            )
-                    print()
+                            # Check if fixer has region as argument to check if it is a region specific fixer
+                            if "region" in fixer.__code__.co_varnames:
+                                print(
+                                    f"\t{orange_color}FIXING{Style.RESET_ALL} {finding.region}... "
+                                )
+                                if fixer(finding.region):
+                                    fixed_findings += 1
+                                    print(f"\t{Fore.GREEN}DONE{Style.RESET_ALL}")
+                                else:
+                                    print(f"\t{Fore.RED}ERROR{Style.RESET_ALL}")
+                            else:
+                                print(
+                                    f"\t{orange_color}FIXING{Style.RESET_ALL} Resource {finding.resource_id}... "
+                                )
+                                if fixer(finding.resource_id):
+                                    fixed_findings += 1
+                                    print(f"\t\t{Fore.GREEN}DONE{Style.RESET_ALL}")
+                                else:
+                                    print(f"\t\t{Fore.RED}ERROR{Style.RESET_ALL}")
+        return fixed_findings
     except Exception as error:
         logger.error(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
