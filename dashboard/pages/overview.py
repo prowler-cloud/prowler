@@ -1136,7 +1136,8 @@ def filter_data(
         ctx.triggered_id == "download_link_csv"
         or ctx.triggered_id == "download_link_xlsx"
     ):
-
+        # Cut the data to the wanted rows
+        table_data = table_data.head(table_row_values)
         if ctx.triggered_id == "download_link_csv":
             csv_data = dcc.send_data_frame(
                 table_data.to_csv, "prowler-dashboard-export.csv", index=False
