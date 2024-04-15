@@ -124,6 +124,7 @@ class TestGCPProvider:
         arguments.list_project_id = False
         arguments.credentials_file = ""
         arguments.config_file = default_config_file_path
+        arguments.fixer_config = default_fixer_config_file_path
 
         # Output options
         arguments.status = []
