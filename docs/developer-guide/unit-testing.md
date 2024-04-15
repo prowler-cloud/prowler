@@ -532,9 +532,7 @@ class Test_compute_project_os_login_enabled:
 
 ### Services
 
-For testing Azure services, we have to follow the same logic as with the Azure checks. We still mock all the API calls, but in this case, every method that uses an API call to set up an attribute is mocked with the [patch](https://docs.python.org/3/library/unittest.mock.html#unittest.mock.patch) decorator at the beginning of the class. Remember that every method of a service MUST be tested.
-
-The following code shows a real example of a testing class, but it has more comments than usual for educational purposes.
+Coming soon ...
 
 ## Azure
 
