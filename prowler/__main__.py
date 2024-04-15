@@ -242,7 +242,7 @@ def prowler():
                 environ["SLACK_API_TOKEN"],
                 environ["SLACK_CHANNEL_ID"],
                 stats,
-                provider,
+                global_provider,
             )
         else:
             logger.critical(
