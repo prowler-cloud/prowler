@@ -658,4 +658,68 @@ class Test_app_ensure_http_is_redirected_to_https:
 
 ### Services
 
-Coming soon ...
+For testing Azure services, we have to follow the same logic as with the Azure checks. We still mock all the API calls, but in this case, every method that uses an API call to set up an attribute is mocked with the [patch](https://docs.python.org/3/library/unittest.mock.html#unittest.mock.patch) decorator at the beginning of the class. Remember that every method of a service MUST be tested.
+
+The following code shows a real example of a testing class, but it has more comments than usual for educational purposes.
+
+```python title=""
+# We need to import the unittest.mock.patch to allow us to patch some objects
+# not to use shared ones between test, hence to isolate the test
+from unittest.mock import patch
+# Import the models needed from the service file
+from prowler.providers.azure.services.appinsights.appinsights_service import (
+    AppInsights,
+    Component,
+)
+# Import some constans values needed in almost every check
+from tests.providers.azure.azure_fixtures import (
+    AZURE_SUBSCRIPTION_ID,
+    set_mocked_azure_provider,
+)
+
+# Function to mock the service function __get_components__, this function task is to return a possible value that real function could returns
+def mock_appinsights_get_components(_):
+    return {
+        AZURE_SUBSCRIPTION_ID: {
+            "app_id-1": Component(
+                resource_id="/subscriptions/resource_id",
+                resource_name="AppInsightsTest",
+                location="westeurope",
+            )
+        }
+    }
+
+# Patch decorator to use the mocked function instead the function with the real API call
+@patch(
+    "prowler.providers.azure.services.appinsights.appinsights_service.AppInsights.__get_components__",
+    new=mock_appinsights_get_components,
+)
+class Test_AppInsights_Service:
+    # Mandatory test for every service, this method test the instance of the client is correct
+    def test__get_client__(self):
+        app_insights = AppInsights(set_mocked_azure_provider())
+        assert (
+            app_insights.clients[AZURE_SUBSCRIPTION_ID].__class__.__name__
+            == "ApplicationInsightsManagementClient"
+        )
+    # Second typical method that test if subscriptions is defined inside the client object
+    def test__get_subscriptions__(self):
+        app_insights = AppInsights(set_mocked_azure_provider())
+        assert app_insights.subscriptions.__class__.__name__ == "dict"
+    # Test for the function __get_components__, inside this client is used the mocked function
+    def test__get_components__(self):
+        appinsights = AppInsights(set_mocked_azure_provider())
+        assert len(appinsights.components) == 1
+        assert (
+            appinsights.components[AZURE_SUBSCRIPTION_ID]["app_id-1"].resource_id
+            == "/subscriptions/resource_id"
+        )
+        assert (
+            appinsights.components[AZURE_SUBSCRIPTION_ID]["app_id-1"].resource_name
+            == "AppInsightsTest"
+        )
+        assert (
+            appinsights.components[AZURE_SUBSCRIPTION_ID]["app_id-1"].location
+            == "westeurope"
+        )
+```
