@@ -266,9 +266,15 @@ else:
     service_dropdown = create_service_dropdown(services)
 
     # Create the download button
-    download_button = html.Button(
+    download_button_csv = html.Button(
         "Download this table as CSV",
-        id="download_link",
+        id="download_link_csv",
+        n_clicks=0,
+        className="border-solid border-2 border-prowler-stone-900/10 hover:border-solid hover:border-2 hover:border-prowler-stone-900/10 text-prowler-stone-900 inline-block px-4 py-2 text-xs font-bold uppercase transition-all rounded-lg text-gray-900 hover:bg-prowler-stone-900/10 flex justify-end w-fit",
+    )
+    download_button_xlsx = html.Button(
+        "Download this table as CSV",
+        id="download_link_xlsx",
         n_clicks=0,
         className="border-solid border-2 border-prowler-stone-900/10 hover:border-solid hover:border-2 hover:border-prowler-stone-900/10 text-prowler-stone-900 inline-block px-4 py-2 text-xs font-bold uppercase transition-all rounded-lg text-gray-900 hover:bg-prowler-stone-900/10 flex justify-end w-fit",
     )
@@ -291,7 +297,8 @@ else:
         account_dropdown,
         date_dropdown,
         region_dropdown,
-        download_button,
+        download_button_csv,
+        download_button_xlsx,
         severity_dropdown,
         service_dropdown,
         table_row_dropdown,
@@ -334,7 +341,8 @@ else:
     Input("cloud-account-filter", "value"),
     Input("region-filter", "value"),
     Input("report-date-filter", "value"),
-    Input("download_link", "n_clicks"),
+    Input("download_link_csv", "n_clicks"),
+    Input("download_link_xlsx", "n_clicks"),
     Input("severity-filter", "value"),
     Input("service-filter", "value"),
     Input("table-rows", "value"),
@@ -348,7 +356,8 @@ def filter_data(
     cloud_account_values,
     region_account_values,
     assessment_value,
-    n_clicks,
+    n_clicks_csv,
+    n_clicks_xlsx,
     severity_values,
     service_values,
     table_row_values,
@@ -359,7 +368,8 @@ def filter_data(
     k8s_clicks,
 ):
     # Use n_clicks for vulture
-    n_clicks = n_clicks
+    n_clicks_csv = n_clicks_csv
+    n_clicks_xlsx = n_clicks_xlsx
     # Filter the data
     filtered_data = data.copy()
 
@@ -1079,11 +1089,21 @@ def filter_data(
             ),
         )
     ]
-    if ctx.triggered_id == "download_link":
+    if (
+        ctx.triggered_id == "download_link_csv"
+        or ctx.triggered_id == "download_link_xlsx"
+    ):
 
-        csv_data = dcc.send_data_frame(
-            table_data.to_csv, "prowler-dashboard-export.csv", index=False
-        )
+        if ctx.triggered_id == "download_link_csv":
+            csv_data = dcc.send_data_frame(
+                table_data.to_csv, "prowler-dashboard-export.csv", index=False
+            )
+        if ctx.triggered_id == "download_link_xlsx":
+            csv_data = dcc.send_data_frame(
+                table_data.to_excel,
+                "prowler-dashboard-export.xlsx",
+                index=False,
+            )
         return (
             status_graph,
             two_pie_chart,
