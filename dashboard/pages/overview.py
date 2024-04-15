@@ -938,12 +938,15 @@ def filter_data(
             data=table_data.to_dict("records"),
             style_data={"whiteSpace": "normal", "height": "auto", "color": "black"},
             columns=[
-                {"name": "Check ID", "id": "Check ID", "deletable": False},
+                {
+                    "name": "Check ID - Resource UID",
+                    "id": "Check ID",
+                    "deletable": False,
+                },
                 {
                     "name": "Severity",
                     "id": "Severity",
                     "deletable": False,
-                    "presentation": "dropdown",
                 },
                 {"name": "Status", "id": "Status", "deletable": False},
                 {"name": "Region", "id": "Region", "deletable": False},
@@ -1022,13 +1025,37 @@ def filter_data(
                 },
             ],
             style_cell_conditional=[
-                {"if": {"column_id": "Check ID"}, "max-width": "58%"},
-                {"if": {"column_id": "Severity"}, "max-width": "8%"},
-                {"if": {"column_id": "Status"}, "max-width": "7%"},
-                {"if": {"column_id": "Region"}, "max-width": "9%"},
-                {"if": {"column_id": "Service"}, "max-width": "6%"},
-                {"if": {"column_id": "Provider"}, "max-width": "7%"},
-                {"if": {"column_id": "Account ID"}, "max-width": "11%"},
+                {"if": {"column_id": "Check ID + Resource UID"}, "max-width": "58%"},
+                {
+                    "if": {"column_id": "Severity"},
+                    "max-width": "8%",
+                    "text-align": "center",
+                },
+                {
+                    "if": {"column_id": "Status"},
+                    "max-width": "7%",
+                    "text-align": "center",
+                },
+                {
+                    "if": {"column_id": "Region"},
+                    "max-width": "9%",
+                    "text-align": "center",
+                },
+                {
+                    "if": {"column_id": "Service"},
+                    "max-width": "6%",
+                    "text-align": "center",
+                },
+                {
+                    "if": {"column_id": "Provider"},
+                    "max-width": "7%",
+                    "text-align": "center",
+                },
+                {
+                    "if": {"column_id": "Account ID"},
+                    "max-width": "11%",
+                    "text-align": "center",
+                },
             ],
             id="table-overview",
             sort_action="native",
