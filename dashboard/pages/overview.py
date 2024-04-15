@@ -920,7 +920,7 @@ def filter_data(
                 table_row_values = 25
 
         if len(table_data) < 25:
-            table_row_values = table_row_values
+            table_row_values = len(table_data)
 
         if len(table_data) >= 25:
             table_row_options.append(25)
