@@ -14,7 +14,7 @@ prowler <provider> -c <check_to_fix_1> <check_to_fix_2> ... --fixer
     prowler <provider> --list-fixer
     ```
 
-## Writing a Fixer
+## Writing a Fixer
 To write a fixer, you need to create a file called `<check_id>_fixer.py` inside the check folder, with a function called `fixer` that receives either the region or the resource to be fixed as a parameter, and returns a boolean value indicating if the fix was successful or not.
 
 For example, the regional fixer for the `ec2_ebs_default_encryption` check, which enables EBS encryption by default in a region, would look like this:
@@ -95,7 +95,7 @@ def fixer(resource_id: str) -> bool:
         return True
 ```
 
-## Fixer Config file
+## Fixer Config file
 For some fixers, you can have configurable parameters depending on your use case. You can either use the default config file in `prowler/config/fixer_config.yaml` or create a custom config file and pass it to the fixer with the `--config-fixer` flag. The config file should be a YAML file with the following structure:
 ```yaml
 # Fixer configuration file
