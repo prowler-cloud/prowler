@@ -74,7 +74,15 @@ class TestOutputJSONOCSF:
         assert finding_json_ocsf.status_detail == finding_output.status_extended
 
         # Unmapped Data
-        assert finding_json_ocsf.unmapped == {"check_id": finding_output.check_id}
+        assert finding_json_ocsf.unmapped == {
+            "check_type": finding_output.check_type,
+            "related_url": finding_output.related_url,
+            "categories": finding_output.categories,
+            "depends_on": finding_output.depends_on,
+            "related_to": finding_output.related_to,
+            "notes": finding_output.notes,
+            "compliance": finding_output.compliance,
+        }
 
         # ResourceDetails
         resource_details = finding_json_ocsf.resources
@@ -96,6 +104,7 @@ class TestOutputJSONOCSF:
         # Metadata
         metadata = finding_json_ocsf.metadata
         assert isinstance(metadata, Metadata)
+        assert metadata.event_code == finding_output.check_id
 
         metadata_product = metadata.product
         assert isinstance(metadata_product, Product)

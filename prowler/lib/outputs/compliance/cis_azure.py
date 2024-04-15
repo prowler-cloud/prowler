@@ -30,6 +30,7 @@ def generate_compliance_row_cis_azure(
         ResourceId=finding.resource_id,
         ResourceName=finding.resource_name,
         CheckId=finding.check_metadata.CheckID,
+        Muted=finding.muted,
     )
     csv_header = generate_csv_fields(Check_Output_CSV_AZURE_CIS)
 

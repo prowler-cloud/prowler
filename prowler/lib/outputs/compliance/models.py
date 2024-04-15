@@ -29,6 +29,7 @@ class Check_Output_MITRE_ATTACK(BaseModel):
     StatusExtended: str
     ResourceId: str
     CheckId: str
+    Muted: bool
 
 
 class Check_Output_CSV_ENS_RD2022(BaseModel):
@@ -56,6 +57,7 @@ class Check_Output_CSV_ENS_RD2022(BaseModel):
     StatusExtended: str
     ResourceId: str
     CheckId: str
+    Muted: bool
 
 
 class Check_Output_CSV_AWS_CIS(BaseModel):
@@ -84,6 +86,7 @@ class Check_Output_CSV_AWS_CIS(BaseModel):
     StatusExtended: str
     ResourceId: str
     CheckId: str
+    Muted: bool
 
 
 class Check_Output_CSV_AZURE_CIS(BaseModel):
@@ -113,6 +116,7 @@ class Check_Output_CSV_AZURE_CIS(BaseModel):
     ResourceId: str
     ResourceName: str
     CheckId: str
+    Muted: bool
 
 
 class Check_Output_CSV_GCP_CIS(BaseModel):
@@ -142,6 +146,7 @@ class Check_Output_CSV_GCP_CIS(BaseModel):
     ResourceId: str
     ResourceName: str
     CheckId: str
+    Muted: bool
 
 
 class Check_Output_CSV_KUBERNETES_CIS(BaseModel):
@@ -171,6 +176,7 @@ class Check_Output_CSV_KUBERNETES_CIS(BaseModel):
     StatusExtended: str
     ResourceId: str
     CheckId: str
+    Muted: bool
 
 
 class Check_Output_CSV_Generic_Compliance(BaseModel):
@@ -194,6 +200,7 @@ class Check_Output_CSV_Generic_Compliance(BaseModel):
     StatusExtended: str
     ResourceId: str
     CheckId: str
+    Muted: bool
 
 
 class Check_Output_CSV_AWS_Well_Architected(BaseModel):
@@ -219,6 +226,7 @@ class Check_Output_CSV_AWS_Well_Architected(BaseModel):
     StatusExtended: str
     ResourceId: str
     CheckId: str
+    Muted: bool
 
 
 class Check_Output_CSV_AWS_ISO27001_2013(BaseModel):
@@ -239,3 +247,4 @@ class Check_Output_CSV_AWS_ISO27001_2013(BaseModel):
     StatusExtended: str
     ResourceId: str
     CheckId: str
+    Muted: bool

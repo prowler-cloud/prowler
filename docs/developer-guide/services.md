@@ -4,33 +4,36 @@ Here you can find how to create a new service, or to complement an existing one,
 
 ## Introduction
 
-To create a new service, you will need to create a folder inside the specific provider, i.e. `prowler/providers/<provider>/services/<service>/`.
+In Prowler, a service is basically a solution that is offered by a cloud provider i.e. [ec2](https://aws.amazon.com/ec2/). Essentially it is a class that stores all the necessary stuff that we will need later in the checks to audit some aspects of our Cloud account.
+
+To create a new service, you will need to create a folder inside the specific provider, i.e. `prowler/providers/<provider>/services/<new_service_name>/`.
 
 Inside that folder, you MUST create the following files:
 
 - An empty `__init__.py`: to make Python treat this service folder as a package.
-- A `<service>_service.py`, containing all the service's logic and API calls.
-- A `<service>_client_.py`, containing the initialization of the service's class we have just created so the checks's checks can use it.
+- A `<new_service_name>_service.py`, containing all the service's logic and API calls.
+- A `<new_service_name>_client_.py`, containing the initialization of the service's class we have just created so the checks's checks can use it.
 
 ## Service
 
 The Prowler's service structure is the following and the way to initialise it is just by importing the service client in a check.
 
-## Service Base Class
+### Service Base Class
 
 All the Prowler provider's services inherits from a base class depending on the provider used.
 
-- [AWS Service Base Class](https://github.com/prowler-cloud/prowler/blob/22f8855ad7dad2e976dabff78611b643e234beaf/prowler/providers/aws/lib/service/service.py)
-- [GCP Service Base Class](https://github.com/prowler-cloud/prowler/blob/22f8855ad7dad2e976dabff78611b643e234beaf/prowler/providers/gcp/lib/service/service.py)
-- [Azure Service Base Class](https://github.com/prowler-cloud/prowler/blob/22f8855ad7dad2e976dabff78611b643e234beaf/prowler/providers/azure/lib/service/service.py)
+- [AWS Service Base Class](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/aws/lib/service/service.py)
+- [GCP Service Base Class](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/azure/lib/service/service.py)
+- [Azure Service Base Class](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/gcp/lib/service/service.py)
+- [Kubernetes Service Base Class](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/kubernetes/lib/service/service.py)
 
 Each class is used to initialize the credentials and the API's clients to be used in the service. If some threading is used it must be coded there.
 
-## Service Class
+### Service Class
 
-Due to the complexity and differencies of each provider API we are going to use an example service to guide you in how can it be created.
+Due to the complexity and differences of each provider API we are going to use an example service to guide you in how can it be created.
 
-The following is the `<service>_service.py` file:
+The following is the `<new_service_name>_service.py` file:
 
 ```python title="Service Class"
 from datetime import datetime
@@ -176,9 +179,9 @@ class <Service>(ServiceParentClass):
             )
 ```
 
-### Service Models
+#### Service Models
 
-For each class object we need to model we use the Pydantic's [BaseModel](https://docs.pydantic.dev/latest/api/base_model/#pydantic.BaseModel) to take advantage of the data validation.
+Service models are classes that are used in the service to design all that we need to store in each class object extrated from API calls. We use the Pydantic's [BaseModel](https://docs.pydantic.dev/latest/api/base_model/#pydantic.BaseModel) to take advantage of the data validation.
 
 ```python title="Service Model"
 # In each service class we have to create some classes using
@@ -202,7 +205,7 @@ class <Item>(BaseModel):
     tags: Optional[list]
      """<Items>[].tags"""
 ```
-### Service Objects
+#### Service Objects
 In the service each group of resources should be created as a Python [dictionary](https://docs.python.org/3/tutorial/datastructures.html#dictionaries). This is because we are performing lookups all the time and the Python dictionary lookup has [O(1) complexity](https://en.wikipedia.org/wiki/Big_O_notation#Orders_of_common_functions).
 
 We MUST set as the dictionary key a unique ID, like the resource Unique ID or ARN.
@@ -213,17 +216,17 @@ self.vpcs = {}
 self.vpcs["vpc-01234567890abcdef"] = VPC_Object_Class()
 ```
 
-## Service Client
+### Service Client
 
 Each Prowler service requires a service client to use the service in the checks.
 
-The following is the `<service>_client.py` containing the initialization of the service's class we have just created so the service's checks can use them:
+The following is the `<new_service_name>_client.py` containing the initialization of the service's class we have just created so the service's checks can use them:
 
 ```python
 from prowler.providers.<provider>.lib.audit_info.audit_info import audit_info
-from prowler.providers.<provider>.services.<service>.<service>_service import <Service>
+from prowler.providers.<provider>.services.<new_service_name>.<new_service_name>_service import <Service>
 
-<service>_client = <Service>(audit_info)
+<new_service_name>_client = <Service>(audit_info)
 ```
 
 ## Permissions

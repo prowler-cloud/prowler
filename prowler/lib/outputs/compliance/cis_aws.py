@@ -29,6 +29,7 @@ def generate_compliance_row_cis_aws(
         StatusExtended=finding.status_extended,
         ResourceId=finding.resource_id,
         CheckId=finding.check_metadata.CheckID,
+        Muted=finding.muted,
     )
     csv_header = generate_csv_fields(Check_Output_CSV_AWS_CIS)
 

@@ -264,7 +264,7 @@ prowler aws --profile custom-profile -f us-east-1 eu-south-2
 ???+ note
     By default, `prowler` will scan all AWS regions.
 
-See more details about AWS Authentication in [Requirements](getting-started/requirements.md)
+See more details about AWS Authentication in [Requirements](getting-started/requirements.md#aws)
 
 ### Azure
 
@@ -284,7 +284,7 @@ prowler azure --browser-auth --tenant-id "XXXXXXXX"
 prowler azure --managed-identity-auth
 ```
 
-See more details about Azure Authentication in [Requirements](getting-started/requirements.md)
+See more details about Azure Authentication in [Requirements](getting-started/requirements.md#azure)
 
 Prowler by default scans all the subscriptions that is allowed to scan, if you want to scan a single subscription or various specific subscriptions you can use the following flag (using az cli auth as example):
 ```console
@@ -311,7 +311,7 @@ Prowler by default scans all the GCP Projects that is allowed to scan, if you wa
 prowler gcp --project-ids <Project ID 1> <Project ID 2> ... <Project ID N>
 ```
 
-See more details about GCP Authentication in [Requirements](getting-started/requirements.md)
+See more details about GCP Authentication in [Requirements](getting-started/requirements.md#google-cloud)
 
 ## Kubernetes
 

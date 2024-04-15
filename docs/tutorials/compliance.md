@@ -10,7 +10,7 @@ Prowler can analyze your environment based on a specific compliance framework an
 ```sh
 prowler <provider> --compliance <compliance_framework>
 ```
-Standard results will be shown and additionally the framework information as the sample below for CIS AWS 1.5. For details a CSV file has been generated as well.
+Standard results will be shown and additionally the framework information as the sample below for CIS AWS 2.0. For details a CSV file has been generated as well.
 
 <img src="../img/compliance/compliance-cis-sample1.png"/>
 

@@ -12,12 +12,25 @@ def init_parser(self):
         metavar="FILE_PATH",
         help="Authenticate using a Google Service Account Application Credentials JSON file",
     )
-    # Subscriptions
-    gcp_subscriptions_subparser = gcp_parser.add_argument_group("Projects")
-    gcp_subscriptions_subparser.add_argument(
+    # Projects
+    gcp_projects_subparser = gcp_parser.add_argument_group("Projects")
+    gcp_projects_subparser.add_argument(
         "--project-id",
         "--project-ids",
         nargs="+",
         default=[],
         help="GCP Project IDs to be scanned by Prowler",
+    )
+    gcp_projects_subparser.add_argument(
+        "--excluded-project-id",
+        "--excluded-project-ids",
+        nargs="+",
+        default=[],
+        help="Excluded GCP Project IDs to be scanned by Prowler",
+    )
+    gcp_projects_subparser.add_argument(
+        "--list-project-id",
+        "--list-project-ids",
+        action="store_true",
+        help="List available project IDs in Google Cloud which can be scanned by Prowler",
     )

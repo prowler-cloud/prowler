@@ -500,30 +500,12 @@ def run_fixer(check_findings: list) -> int:
                     )
                     for finding in findings:
                         if finding.status == "FAIL":
-                            # Check what type of fixer is:
-                            # - If it is a fixer for a specific resource and region
-                            # - If it is a fixer for a specific region
-                            # - If it is a fixer for a specific resource
-                            if (
-                                "region" in fixer.__code__.co_varnames
-                                and "resource_id" in fixer.__code__.co_varnames
-                            ):
-                                print(
-                                    f"\t{orange_color}FIXING{Style.RESET_ALL} {finding.resource_id} in {finding.region}... "
-                                )
-                                if fixer(
-                                    resource_id=finding.resource_id,
-                                    region=finding.region,
-                                ):
-                                    fixed_findings += 1
-                                    print(f"\t{Fore.GREEN}DONE{Style.RESET_ALL}")
-                                else:
-                                    print(f"\t{Fore.RED}ERROR{Style.RESET_ALL}")
-                            elif "region" in fixer.__code__.co_varnames:
+                            # Check if fixer has region as argument to check if it is a region specific fixer
+                            if "region" in fixer.__code__.co_varnames:
                                 print(
                                     f"\t{orange_color}FIXING{Style.RESET_ALL} {finding.region}... "
                                 )
-                                if fixer(region=finding.region):
+                                if fixer(finding.region):
                                     fixed_findings += 1
                                     print(f"\t{Fore.GREEN}DONE{Style.RESET_ALL}")
                                 else:
@@ -532,7 +514,7 @@ def run_fixer(check_findings: list) -> int:
                                 print(
                                     f"\t{orange_color}FIXING{Style.RESET_ALL} Resource {finding.resource_id}... "
                                 )
-                                if fixer(resource_id=finding.resource_id):
+                                if fixer(finding.resource_id):
                                     fixed_findings += 1
                                     print(f"\t\t{Fore.GREEN}DONE{Style.RESET_ALL}")
                                 else:
