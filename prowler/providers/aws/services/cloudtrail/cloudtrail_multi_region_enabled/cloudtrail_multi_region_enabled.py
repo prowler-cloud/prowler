@@ -12,7 +12,7 @@ class cloudtrail_multi_region_enabled(Check):
             report.region = region
             for trail in cloudtrail_client.trails.values():
                 if trail.region == region or trail.is_multiregion:
-                    if False:
+                    if trail.is_logging:
                         report.status = "PASS"
                         report.resource_id = trail.name
                         report.resource_arn = trail.arn
