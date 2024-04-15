@@ -331,6 +331,7 @@ Detailed documentation at https://docs.prowler.com
             "--mutelist-file",
             "-w",
             nargs="?",
+            # TODO(PRWLR-3519): this has to be done in the provider class not here
             default=get_default_mute_file_path(provider),
             help="Path for mutelist yaml file. See example prowler/config/<provider>_mutelist.yaml for reference and format. For AWS provider, it also accepts AWS DynamoDB Table, Lambda ARNs or S3 URIs, see more in https://docs.prowler.cloud/en/latest/tutorials/mutelist/",
         )
