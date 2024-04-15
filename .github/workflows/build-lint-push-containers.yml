@@ -43,6 +43,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       prowler_version_major: ${{ steps.get-prowler-version.outputs.PROWLER_VERSION_MAJOR }}
+      prowler_version: ${{ steps.update-prowler-version.outputs.PROWLER_VERSION }}
     env:
       POETRY_VIRTUALENVS_CREATE: "false"
 
@@ -89,12 +90,14 @@ jobs:
           esac
 
       - name: Update Prowler version (release)
+        id: update-prowler-version
         if: github.event_name == 'release'
         run: |
           PROWLER_VERSION="${{ github.event.release.tag_name }}"
           poetry version "${PROWLER_VERSION}"
           echo "PROWLER_VERSION=${PROWLER_VERSION}" >> "${GITHUB_ENV}"
-
+          echo "PROWLER_VERSION=${PROWLER_VERSION}" >> "${GITHUB_OUTPUT}"
+          
       - name: Login to DockerHub
         uses: docker/login-action@v3
         with:
@@ -153,7 +156,7 @@ jobs:
           echo "LATEST_COMMIT_HASH=${LATEST_COMMIT_HASH}" >> $GITHUB_ENV
 
       - name: Dispatch event (latest)
-        if: github.event_name == 'push' && ${{ needs.container-build-push.outputs.prowler_version_major == '3' }}
+        if: github.event_name == 'push' && needs.container-build-push.outputs.prowler_version_major == '3'
         run: |
           curl https://api.github.com/repos/${{ secrets.DISPATCH_OWNER }}/${{ secrets.DISPATCH_REPO }}/dispatches \
             -H "Accept: application/vnd.github+json" \
@@ -162,10 +165,10 @@ jobs:
             --data '{"event_type":"dispatch","client_payload":{"version":"v3-latest", "tag": "${{ env.LATEST_COMMIT_HASH }}"}}'
 
       - name: Dispatch event (release)
-        if: github.event_name == 'release' && ${{ needs.container-build-push.outputs.prowler_version_major == '3' }}
+        if: github.event_name == 'release' && needs.container-build-push.outputs.prowler_version_major == '3'
         run: |
           curl https://api.github.com/repos/${{ secrets.DISPATCH_OWNER }}/${{ secrets.DISPATCH_REPO }}/dispatches \
             -H "Accept: application/vnd.github+json" \
             -H "Authorization: Bearer ${{ secrets.ACCESS_TOKEN }}" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
-            --data '{"event_type":"dispatch","client_payload":{"version":"release", "tag":"${{ env.PROWLER_VERSION }}"}}'
+            --data '{"event_type":"dispatch","client_payload":{"version":"release", "tag":"${{ needs.container-build-push.outputs.prowler_version }}"}}'
