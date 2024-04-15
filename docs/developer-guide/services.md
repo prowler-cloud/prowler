@@ -22,15 +22,16 @@ The Prowler's service structure is the following and the way to initialise it is
 
 All the Prowler provider's services inherits from a base class depending on the provider used.
 
-- [AWS Service Base Class](https://github.com/prowler-cloud/prowler/blob/22f8855ad7dad2e976dabff78611b643e234beaf/prowler/providers/aws/lib/service/service.py)
-- [GCP Service Base Class](https://github.com/prowler-cloud/prowler/blob/22f8855ad7dad2e976dabff78611b643e234beaf/prowler/providers/gcp/lib/service/service.py)
-- [Azure Service Base Class](https://github.com/prowler-cloud/prowler/blob/22f8855ad7dad2e976dabff78611b643e234beaf/prowler/providers/azure/lib/service/service.py)
+- [AWS Service Base Class](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/aws/lib/service/service.py)
+- [GCP Service Base Class](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/azure/lib/service/service.py)
+- [Azure Service Base Class](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/gcp/lib/service/service.py)
+- [Kubernetes Service Base Class](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/kubernetes/lib/service/service.py)
 
 Each class is used to initialize the credentials and the API's clients to be used in the service. If some threading is used it must be coded there.
 
 ### Service Class
 
-Due to the complexity and differencies of each provider API we are going to use an example service to guide you in how can it be created.
+Due to the complexity and differences of each provider API we are going to use an example service to guide you in how can it be created.
 
 The following is the `<new_service_name>_service.py` file:
 
