@@ -22,24 +22,32 @@ def fixer(resource_id: str) -> bool:
     try:
         iam_client.client.update_account_password_policy(
             MinimumPasswordLength=iam_client.fixer_config.get(
-                "MinimumPasswordLength", 14
+                "iam_password_policy", {}
+            ).get("MinimumPasswordLength", 14),
+            RequireSymbols=iam_client.fixer_config.get("iam_password_policy", {}).get(
+                "RequireSymbols", True
             ),
-            RequireSymbols=iam_client.fixer_config.get("RequireSymbols", True),
-            RequireNumbers=iam_client.fixer_config.get("RequireNumbers", True),
+            RequireNumbers=iam_client.fixer_config.get("iam_password_policy", {}).get(
+                "RequireNumbers", True
+            ),
             RequireUppercaseCharacters=iam_client.fixer_config.get(
-                "RequireUppercaseCharacters", True
-            ),
+                "iam_password_policy", {}
+            ).get("RequireUppercaseCharacters", True),
             RequireLowercaseCharacters=iam_client.fixer_config.get(
-                "RequireLowercaseCharacters", True
-            ),
+                "iam_password_policy", {}
+            ).get("RequireLowercaseCharacters", True),
             AllowUsersToChangePassword=iam_client.fixer_config.get(
-                "AllowUsersToChangePassword", True
+                "iam_password_policy", {}
+            ).get("AllowUsersToChangePassword", True),
+            MaxPasswordAge=iam_client.fixer_config.get("iam_password_policy", {}).get(
+                "MaxPasswordAge", 90
             ),
-            MaxPasswordAge=iam_client.fixer_config.get("MaxPasswordAge", 90),
             PasswordReusePrevention=iam_client.fixer_config.get(
-                "PasswordReusePrevention", 24
+                "iam_password_policy", {}
+            ).get("PasswordReusePrevention", 24),
+            HardExpiry=iam_client.fixer_config.get("iam_password_policy", {}).get(
+                "HardExpiry", True
             ),
-            HardExpiry=iam_client.fixer_config.get("HardExpiry", True),
         )
     except Exception as error:
         logger.error(
