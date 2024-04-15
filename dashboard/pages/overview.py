@@ -941,7 +941,7 @@ def filter_data(
             style_data_conditional=[
                 {
                     "if": {"row_index": "odd"},
-                    "backgroundColor": "rgb(248, 248, 248)",
+                    "backgroundColor": "rgb(200, 200, 200)",
                     "width": "100%",
                 },
                 {
@@ -964,6 +964,40 @@ def filter_data(
                         "column_id": "Status",
                     },
                     "backgroundColor": manual_color,
+                },
+                {
+                    "if": {
+                        "filter_query": '{Status} = "INFO"',  # matching rows of a hidden column with the id, `id`
+                        "column_id": "Status",
+                    },
+                    "backgroundColor": info_color,
+                },
+                {
+                    "if": {
+                        "filter_query": '{Status} = "MUTED (FAIL)"',  # matching rows of a hidden column with the id, `id`
+                        "column_id": "Status",
+                    },
+                    "backgroundColor": muted_fail_color,
+                },
+                {
+                    "if": {
+                        "filter_query": '{Status} = "MUTED (PASS)"',  # matching rows of a hidden column with the id, `id`
+                        "column_id": "Status",
+                    },
+                    "backgroundColor": muted_pass_color,
+                },
+                {
+                    "if": {
+                        "filter_query": '{Status} = "MUTED (MANUAL)"',  # matching rows of a hidden column with the id, `id`
+                        "column_id": "Status",
+                    },
+                    "backgroundColor": muted_manual_color,
+                },
+                {
+                    "if": {
+                        "column_id": "Severity",
+                    },
+                    "text-transform": "capitalize",
                 },
             ],
             style_cell_conditional=[
