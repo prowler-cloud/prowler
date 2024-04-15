@@ -196,7 +196,6 @@ def __send_findings_to_security_hub__(
         for findings in list_chunked:
             batch_import = security_hub_client.batch_import_findings(Findings=findings)
             if batch_import["FailedCount"] > 0:
-                print(batch_import["FailedCount"])
                 failed_import = batch_import["FailedFindings"][0]
                 logger.error(
                     f"Failed to send findings to AWS Security Hub -- {failed_import['ErrorCode']} -- {failed_import['ErrorMessage']}"
