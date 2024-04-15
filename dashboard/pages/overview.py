@@ -8,11 +8,10 @@ from itertools import product
 
 # Third-party imports
 import dash
-import dash_bootstrap_components as dbc
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-from dash import callback, ctx, dcc, html
+from dash import callback, ctx, dash_table, dcc, html
 from dash.dependencies import Input, Output
 
 # Config import
@@ -923,23 +922,62 @@ def filter_data(
             table_row_options.append(100)
         table_row_options.append("Full")
 
-        if table_row_values == "Full":
-            table = dbc.Table.from_dataframe(
-                table_data,
-                striped=True,
-                bordered=False,
-                hover=True,
-                className="table-overview",
-            )
-        else:
+        if table_row_values != "Full":
             table_data = table_data[:table_row_values]
-            table = dbc.Table.from_dataframe(
-                table_data,
-                striped=True,
-                bordered=False,
-                hover=True,
-                className="table-overview",
-            )
+
+        table = dash_table.DataTable(
+            data=table_data.to_dict("records"),
+            style_data={"whiteSpace": "normal", "height": "auto", "color": "black"},
+            columns=[
+                {"name": i, "id": i, "deletable": False} for i in table_data.columns
+            ],
+            style_table={"table-layout": "fixed"},
+            style_cell={"textAlign": "left", "layout": "fixed"},
+            style_header={
+                "fontWeight": "bold",
+                "layout": "fixed",
+                "backgroundColor": "rgb(41,37,36)",
+            },
+            style_data_conditional=[
+                {
+                    "if": {"row_index": "odd"},
+                    "backgroundColor": "rgb(248, 248, 248)",
+                    "width": "100%",
+                },
+                {
+                    "if": {
+                        "filter_query": '{Status} = "FAIL"',  # matching rows of a hidden column with the id, `id`
+                        "column_id": "Status",
+                    },
+                    "backgroundColor": fail_color,
+                },
+                {
+                    "if": {
+                        "filter_query": '{Status} = "PASS"',  # matching rows of a hidden column with the id, `id`
+                        "column_id": "Status",
+                    },
+                    "backgroundColor": pass_color,
+                },
+                {
+                    "if": {
+                        "filter_query": '{Status} = "MANUAL"',  # matching rows of a hidden column with the id, `id`
+                        "column_id": "Status",
+                    },
+                    "backgroundColor": manual_color,
+                },
+            ],
+            style_cell_conditional=[
+                {"if": {"column_id": "Check ID"}, "max-width": "58%"},
+                {"if": {"column_id": "Severity"}, "max-width": "8%"},
+                {"if": {"column_id": "Status"}, "max-width": "7%"},
+                {"if": {"column_id": "Region"}, "max-width": "9%"},
+                {"if": {"column_id": "Service"}, "max-width": "6%"},
+                {"if": {"column_id": "Provider"}, "max-width": "7%"},
+                {"if": {"column_id": "Account ID"}, "max-width": "11%"},
+            ],
+            id="table-overview",
+            css=[{"selector": ".show-hide", "rule": "display: none"}],
+        )
 
     # Status Graphic
     status_graph = [
@@ -980,7 +1018,7 @@ def filter_data(
 
     # Table
     table_card = [
-        html.Div([table], className="grid grid-cols-auto"),
+        html.Div([table], className="grid grid-cols-auto w-full"),
     ]
 
     # Create Provider Cards
