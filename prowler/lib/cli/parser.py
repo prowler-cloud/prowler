@@ -334,7 +334,7 @@ Detailed documentation at https://docs.prowler.com
             help="Set configuration file path",
         )
         config_parser.add_argument(
-            "--config-fixer",
+            "--fixer-config",
             nargs="?",
             default=default_fixer_config_file_path,
             help="Set configuration fixer file path",
