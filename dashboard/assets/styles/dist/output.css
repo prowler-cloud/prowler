@@ -998,6 +998,13 @@ video {
   color: #000;
 }
 
+/*Style for input in filter table*/
+.dash-table-container .dash-spreadsheet-container .dash-spreadsheet-inner input:not([type=radio]):not([type=checkbox]) {
+  color: #FFF !important;
+  opacity: 1 !important;
+}
+
+
 #_dash-app-content {
   --tw-bg-opacity: 1;
   background-color: rgb(231 229 228 / var(--tw-bg-opacity));

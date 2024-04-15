@@ -932,11 +932,24 @@ def filter_data(
             table_row_options.append(100)
         table_row_options.append(len(table_data))
 
+        table_data["Severity"] = table_data["Severity"].str.capitalize()
+
         table = dash_table.DataTable(
             data=table_data.to_dict("records"),
             style_data={"whiteSpace": "normal", "height": "auto", "color": "black"},
             columns=[
-                {"name": i, "id": i, "deletable": False} for i in table_data.columns
+                {"name": "Check ID", "id": "Check ID", "deletable": False},
+                {
+                    "name": "Severity",
+                    "id": "Severity",
+                    "deletable": False,
+                    "presentation": "dropdown",
+                },
+                {"name": "Status", "id": "Status", "deletable": False},
+                {"name": "Region", "id": "Region", "deletable": False},
+                {"name": "Service", "id": "Service", "deletable": False},
+                {"name": "Provider", "id": "Provider", "deletable": False},
+                {"name": "Account ID", "id": "Account ID", "deletable": False},
             ],
             style_table={"table-layout": "fixed"},
             style_cell={"textAlign": "left", "layout": "fixed"},
@@ -1018,6 +1031,12 @@ def filter_data(
                 {"if": {"column_id": "Account ID"}, "max-width": "11%"},
             ],
             id="table-overview",
+            sort_action="native",
+            sort_mode="single",
+            style_as_list_view=True,
+            filter_action="native",
+            filter_options={"placeholder_text": "Filter"},
+            style_filter={"background-color": "#3e403f", "color": "white"},
         )
 
     # Status Graphic
