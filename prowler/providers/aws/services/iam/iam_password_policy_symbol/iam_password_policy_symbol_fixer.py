@@ -4,7 +4,7 @@ from prowler.providers.aws.services.iam.iam_client import iam_client
 
 def fixer(resource_id: str) -> bool:
     """
-    Enable IAM password policy to require symbols or the configurable value in prowler/config/config_fixer.yaml.
+    Enable IAM password policy to require symbols or the configurable value in prowler/config/fixer_config.yaml.
     Requires the iam:UpdateAccountPasswordPolicy permission:
     {
         "Version": "2012-10-17",
@@ -21,25 +21,15 @@ def fixer(resource_id: str) -> bool:
     """
     try:
         iam_client.client.update_account_password_policy(
-            MinimumPasswordLength=iam_client.fixer_config.get(
-                "MinimumPasswordLength", 14
-            ),
+            MinimumPasswordLength=iam_client.password_policy.length,
             RequireSymbols=iam_client.fixer_config.get("RequireSymbols", True),
-            RequireNumbers=iam_client.fixer_config.get("RequireNumbers", True),
-            RequireUppercaseCharacters=iam_client.fixer_config.get(
-                "RequireUppercaseCharacters", True
-            ),
-            RequireLowercaseCharacters=iam_client.fixer_config.get(
-                "RequireLowercaseCharacters", True
-            ),
-            AllowUsersToChangePassword=iam_client.fixer_config.get(
-                "AllowUsersToChangePassword", True
-            ),
-            MaxPasswordAge=iam_client.fixer_config.get("MaxPasswordAge", 90),
-            PasswordReusePrevention=iam_client.fixer_config.get(
-                "PasswordReusePrevention", 24
-            ),
-            HardExpiry=iam_client.fixer_config.get("HardExpiry", True),
+            RequireNumbers=iam_client.password_policy.numbers,
+            RequireUppercaseCharacters=iam_client.password_policy.uppercase,
+            RequireLowercaseCharacters=iam_client.password_policy.lowercase,
+            AllowUsersToChangePassword=iam_client.password_policy.allow_change,
+            MaxPasswordAge=iam_client.password_policy.max_age,
+            PasswordReusePrevention=iam_client.password_policy.reuse_prevention,
+            HardExpiry=iam_client.password_policy.hard_expiry,
         )
     except Exception as error:
         logger.error(

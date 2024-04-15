@@ -61,8 +61,8 @@ json_ocsf_file_suffix = ".ocsf.json"
 default_config_file_path = (
     f"{pathlib.Path(os.path.dirname(os.path.realpath(__file__)))}/config.yaml"
 )
-default_config_fixer_file_path = (
-    f"{pathlib.Path(os.path.dirname(os.path.realpath(__file__)))}/config_fixer.yaml"
+default_fixer_config_file_path = (
+    f"{pathlib.Path(os.path.dirname(os.path.realpath(__file__)))}/fixer_config.yaml"
 )
 
 

@@ -75,7 +75,7 @@ class GcpProvider(Provider):
             self._type, arguments.config_file
         )
         self._fixer_config = load_and_validate_config_file(
-            self._type, arguments.config_fixer
+            self._type, arguments.fixer_config
         )
 
     @property

@@ -5,7 +5,7 @@ from unittest.mock import patch
 from kubernetes import client
 from prowler.config.config import (
     default_config_file_path,
-    default_config_fixer_file_path,
+    default_fixer_config_file_path,
 )
 from prowler.providers.kubernetes.kubernetes_provider import KubernetesProvider
 from prowler.providers.kubernetes.models import (
@@ -51,7 +51,7 @@ class TestKubernetesProvider:
             arguments.only_logs = False
             arguments.namespace = None
             arguments.config_file = default_config_file_path
-            arguments.config_fixer = default_config_fixer_file_path
+            arguments.fixer_config = default_fixer_config_file_path
 
             # Instantiate the KubernetesProvider with mocked arguments
             kubernetes_provider = KubernetesProvider(arguments)
@@ -77,7 +77,7 @@ class TestKubernetesProvider:
         arguments.only_logs = False
         arguments.namespace = None
         arguments.config_file = default_config_file_path
-        arguments.config_fixer = default_config_fixer_file_path
+        arguments.fixer_config = default_fixer_config_file_path
         arguments.status = []
         arguments.output_formats = ["csv"]
         arguments.output_directory = "output_test_directory"

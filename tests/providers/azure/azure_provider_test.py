@@ -9,7 +9,7 @@ from mock import patch
 
 from prowler.config.config import (
     default_config_file_path,
-    default_config_fixer_file_path,
+    default_fixer_config_file_path,
 )
 from prowler.providers.azure.azure_provider import AzureProvider
 from prowler.providers.azure.models import (
@@ -31,7 +31,7 @@ class TestAzureProvider:
         arguments.managed_identity_auth = None
 
         arguments.config_file = default_config_file_path
-        arguments.config_fixer = default_config_fixer_file_path
+        arguments.fixer_config = default_fixer_config_file_path
         arguments.azure_region = "AzureCloud"
 
         with patch(
@@ -76,7 +76,7 @@ class TestAzureProvider:
         arguments.managed_identity_auth = None
 
         arguments.config_file = default_config_file_path
-        arguments.config_fixer = default_config_fixer_file_path
+        arguments.fixer_config = default_fixer_config_file_path
         arguments.azure_region = "AzureCloud"
 
         with patch(
@@ -106,7 +106,7 @@ class TestAzureProvider:
         arguments.managed_identity_auth = None
 
         arguments.config_file = default_config_file_path
-        arguments.config_fixer = default_config_fixer_file_path
+        arguments.fixer_config = default_fixer_config_file_path
         arguments.azure_region = "AzureCloud"
 
         with patch(
@@ -136,7 +136,7 @@ class TestAzureProvider:
         arguments.managed_identity_auth = None
 
         arguments.config_file = default_config_file_path
-        arguments.config_fixer = default_config_fixer_file_path
+        arguments.fixer_config = default_fixer_config_file_path
         arguments.azure_region = "AzureCloud"
 
         with patch(
@@ -168,7 +168,7 @@ class TestAzureProvider:
         arguments.managed_identity_auth = None
 
         arguments.config_file = default_config_file_path
-        arguments.config_fixer = default_config_fixer_file_path
+        arguments.fixer_config = default_fixer_config_file_path
         arguments.azure_region = "AzureCloud"
 
         # Output Options

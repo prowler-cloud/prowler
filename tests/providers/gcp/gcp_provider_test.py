@@ -7,7 +7,7 @@ from mock import patch
 
 from prowler.config.config import (
     default_config_file_path,
-    default_config_fixer_file_path,
+    default_fixer_config_file_path,
 )
 from prowler.providers.gcp.gcp_provider import GcpProvider
 from prowler.providers.gcp.models import GCPIdentityInfo, GCPOutputOptions, GCPProject
@@ -19,7 +19,7 @@ class TestGCPProvider:
         arguments.project_id = []
         arguments.credentials_file = ""
         arguments.config_file = default_config_file_path
-        arguments.config_fixer = default_config_fixer_file_path
+        arguments.fixer_config = default_fixer_config_file_path
 
         projects = {
             "test-project": GCPProject(
@@ -53,7 +53,7 @@ class TestGCPProvider:
         arguments.project_id = []
         arguments.credentials_file = ""
         arguments.config_file = default_config_file_path
-        arguments.config_fixer = default_config_fixer_file_path
+        arguments.fixer_config = default_fixer_config_file_path
 
         # Output options
         arguments.status = []

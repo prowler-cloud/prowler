@@ -6,7 +6,7 @@ from moto import mock_aws
 
 from prowler.config.config import (
     default_config_file_path,
-    default_config_fixer_file_path,
+    default_fixer_config_file_path,
 )
 from prowler.providers.aws.aws_provider import AwsProvider
 from prowler.providers.common.models import Audit_Metadata
@@ -129,7 +129,7 @@ def set_default_provider_arguments(arguments: Namespace) -> Namespace:
     arguments.security_hub = False
     arguments.send_sh_only_fails = False
     arguments.config_file = default_config_file_path
-    arguments.config_fixer = default_config_fixer_file_path
+    arguments.fixer_config = default_fixer_config_file_path
 
     return arguments
 

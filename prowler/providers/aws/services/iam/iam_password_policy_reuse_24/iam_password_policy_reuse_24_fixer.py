@@ -4,7 +4,7 @@ from prowler.providers.aws.services.iam.iam_client import iam_client
 
 def fixer(resource_id: str) -> bool:
     """
-    Enable IAM password policy to prevent reusing the 24 previous passwords or the configurable value in prowler/config/config_fixer.yaml.
+    Enable IAM password policy to prevent reusing the 24 previous passwords or the configurable value in prowler/config/fixer_config.yaml.
     Requires the iam:UpdateAccountPasswordPolicy permission:
     {
         "Version": "2012-10-17",
