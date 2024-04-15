@@ -88,7 +88,7 @@ nav:
           - Projects: tutorials/gcp/projects.md
   - Developer Guide:
       - Introduction: developer-guide/introduction.md
-      - Audit Info: developer-guide/audit-info.md
+      - Provider: developer-guide/provider.md
       - Services: developer-guide/services.md
       - Checks: developer-guide/checks.md
       - Documentation: developer-guide/documentation.md
