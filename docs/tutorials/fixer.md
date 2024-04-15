@@ -96,7 +96,7 @@ def fixer(resource_id: str) -> bool:
 ```
 
 ## Fixer Config file
-For some fixers, you can have configurable parameters depending on your use case. You can either use the default config file in `prowler/config/fixer_config.yaml` or create a custom config file and pass it to the fixer with the `--config-fixer` flag. The config file should be a YAML file with the following structure:
+For some fixers, you can have configurable parameters depending on your use case. You can either use the default config file in `prowler/config/fixer_config.yaml` or create a custom config file and pass it to the fixer with the `--fixer-config` flag. The config file should be a YAML file with the following structure:
 ```yaml
 # Fixer configuration file
 aws:
