@@ -443,7 +443,7 @@ The following code shows how to use MagicMock to create the service objects for 
 from re import search
 from unittest import mock
 
-# Import some constans values needed in every check
+# Import some constant values needed in every check
 from tests.providers.gcp.gcp_fixtures import GCP_PROJECT_ID, set_mocked_gcp_provider
 
 # We are going to create a test for the compute_project_os_login_enabled check
