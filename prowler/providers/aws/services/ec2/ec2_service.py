@@ -29,8 +29,7 @@ class EC2(AWSService):
         self.__threading_call__(self.__describe_snapshots__)
         self.__threading_call__(self.__determine_public_snapshots__, self.snapshots)
         self.network_interfaces = []
-        self.__threading_call__(self.__describe_public_network_interfaces__)
-        self.__threading_call__(self.__describe_sg_network_interfaces__)
+        self.__threading_call__(self.__describe_network_interfaces__)
         self.images = []
         self.__threading_call__(self.__describe_images__)
         self.volumes = []
@@ -243,7 +242,7 @@ class EC2(AWSService):
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __describe_public_network_interfaces__(self, regional_client):
+    def __describe_network_interfaces__(self, regional_client):
         try:
             # Get Network Interfaces with Public IPs
             describe_network_interfaces_paginator = regional_client.get_paginator(
@@ -251,44 +250,30 @@ class EC2(AWSService):
             )
             for page in describe_network_interfaces_paginator.paginate():
                 for interface in page["NetworkInterfaces"]:
-                    if interface.get("Association"):
-                        self.network_interfaces.append(
-                            NetworkInterface(
-                                public_ip=interface["Association"]["PublicIp"],
-                                type=interface["InterfaceType"],
-                                private_ip=interface["PrivateIpAddress"],
-                                subnet_id=interface["SubnetId"],
-                                vpc_id=interface["VpcId"],
-                                region=regional_client.region,
-                                tags=interface.get("TagSet"),
-                            )
-                        )
+                    eni = NetworkInterface(
+                        id=interface["NetworkInterfaceId"],
+                        association=interface.get("Association", {}),
+                        attachment=interface.get("Attachment", {}),
+                        private_ip=interface["PrivateIpAddress"],
+                        type=interface["InterfaceType"],
+                        subnet_id=interface["SubnetId"],
+                        vpc_id=interface["VpcId"],
+                        region=regional_client.region,
+                        tags=interface.get("TagSet"),
+                    )
+                    self.network_interfaces.append(eni)
+                    # Add Network Interface to Security Group
+                    # 'Groups': [
+                    #     {
+                    #         'GroupId': 'sg-xxxxx',
+                    #         'GroupName': 'default',
+                    #     },
+                    # ],
+                    for sg in interface.get("Groups", []):
+                        for security_group in self.security_groups:
+                            if security_group.id == sg["GroupId"]:
+                                security_group.network_interfaces.append(eni)
 
-        except Exception as error:
-            logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
-
-    def __describe_sg_network_interfaces__(self, regional_client):
-        try:
-            # Get Network Interfaces for Security Groups
-            for sg in self.security_groups:
-                regional_client = self.regional_clients[sg.region]
-                describe_network_interfaces_paginator = regional_client.get_paginator(
-                    "describe_network_interfaces"
-                )
-                for page in describe_network_interfaces_paginator.paginate(
-                    Filters=[
-                        {
-                            "Name": "group-id",
-                            "Values": [
-                                sg.id,
-                            ],
-                        },
-                    ],
-                ):
-                    for interface in page["NetworkInterfaces"]:
-                        sg.network_interfaces.append(interface["NetworkInterfaceId"])
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -449,6 +434,18 @@ class Volume(BaseModel):
     tags: Optional[list] = []
 
 
+class NetworkInterface(BaseModel):
+    id: str
+    association: dict
+    attachment: dict
+    private_ip: str
+    type: str
+    subnet_id: str
+    vpc_id: str
+    region: str
+    tags: Optional[list] = []
+
+
 class SecurityGroup(BaseModel):
     name: str
     arn: str
@@ -457,7 +454,7 @@ class SecurityGroup(BaseModel):
     vpc_id: str
     public_ports: bool
     associated_sgs: list
-    network_interfaces: list[str] = []
+    network_interfaces: list[NetworkInterface] = []
     ingress_rules: list[dict]
     egress_rules: list[dict]
     tags: Optional[list] = []
@@ -469,16 +466,6 @@ class NetworkACL(BaseModel):
     name: str
     region: str
     entries: list[dict]
-    tags: Optional[list] = []
-
-
-class NetworkInterface(BaseModel):
-    public_ip: str
-    private_ip: str
-    type: str
-    subnet_id: str
-    vpc_id: str
-    region: str
     tags: Optional[list] = []
 
 
