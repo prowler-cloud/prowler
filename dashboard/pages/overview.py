@@ -8,11 +8,10 @@ from itertools import product
 
 # Third-party imports
 import dash
-import dash_bootstrap_components as dbc
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-from dash import callback, ctx, dcc, html
+from dash import callback, ctx, dash_table, dcc, html
 from dash.dependencies import Input, Output
 
 # Config import
@@ -267,9 +266,15 @@ else:
     service_dropdown = create_service_dropdown(services)
 
     # Create the download button
-    download_button = html.Button(
+    download_button_csv = html.Button(
         "Download this table as CSV",
-        id="download_link",
+        id="download_link_csv",
+        n_clicks=0,
+        className="border-solid border-2 border-prowler-stone-900/10 hover:border-solid hover:border-2 hover:border-prowler-stone-900/10 text-prowler-stone-900 inline-block px-4 py-2 text-xs font-bold uppercase transition-all rounded-lg text-gray-900 hover:bg-prowler-stone-900/10 flex justify-end w-fit",
+    )
+    download_button_xlsx = html.Button(
+        "Download this table as XLSX",
+        id="download_link_xlsx",
         n_clicks=0,
         className="border-solid border-2 border-prowler-stone-900/10 hover:border-solid hover:border-2 hover:border-prowler-stone-900/10 text-prowler-stone-900 inline-block px-4 py-2 text-xs font-bold uppercase transition-all rounded-lg text-gray-900 hover:bg-prowler-stone-900/10 flex justify-end w-fit",
     )
@@ -292,7 +297,8 @@ else:
         account_dropdown,
         date_dropdown,
         region_dropdown,
-        download_button,
+        download_button_csv,
+        download_button_xlsx,
         severity_dropdown,
         service_dropdown,
         table_row_dropdown,
@@ -335,7 +341,8 @@ else:
     Input("cloud-account-filter", "value"),
     Input("region-filter", "value"),
     Input("report-date-filter", "value"),
-    Input("download_link", "n_clicks"),
+    Input("download_link_csv", "n_clicks"),
+    Input("download_link_xlsx", "n_clicks"),
     Input("severity-filter", "value"),
     Input("service-filter", "value"),
     Input("table-rows", "value"),
@@ -349,7 +356,8 @@ def filter_data(
     cloud_account_values,
     region_account_values,
     assessment_value,
-    n_clicks,
+    n_clicks_csv,
+    n_clicks_xlsx,
     severity_values,
     service_values,
     table_row_values,
@@ -360,7 +368,8 @@ def filter_data(
     k8s_clicks,
 ):
     # Use n_clicks for vulture
-    n_clicks = n_clicks
+    n_clicks_csv = n_clicks_csv
+    n_clicks_xlsx = n_clicks_xlsx
     # Filter the data
     filtered_data = data.copy()
 
@@ -905,13 +914,13 @@ def filter_data(
 
         # Take the values from the table_row_values
         if table_row_values == -1:
-            if len(table_data) >= 25:
-                table_row_values = 25
+            if len(table_data) < 25:
+                table_row_values = len(table_data)
             else:
-                table_row_values = "Full"
+                table_row_values = 25
 
         if len(table_data) < 25:
-            table_row_values = "Full"
+            table_row_values = len(table_data)
 
         if len(table_data) >= 25:
             table_row_options.append(25)
@@ -921,25 +930,141 @@ def filter_data(
             table_row_options.append(75)
         if len(table_data) >= 100:
             table_row_options.append(100)
-        table_row_options.append("Full")
+        table_row_options.append(len(table_data))
 
-        if table_row_values == "Full":
-            table = dbc.Table.from_dataframe(
-                table_data,
-                striped=True,
-                bordered=False,
-                hover=True,
-                className="table-overview",
-            )
-        else:
-            table_data = table_data[:table_row_values]
-            table = dbc.Table.from_dataframe(
-                table_data,
-                striped=True,
-                bordered=False,
-                hover=True,
-                className="table-overview",
-            )
+        table_data["Severity"] = table_data["Severity"].str.capitalize()
+
+        table = dash_table.DataTable(
+            data=table_data.to_dict("records"),
+            style_data={"whiteSpace": "normal", "height": "auto", "color": "black"},
+            columns=[
+                {
+                    "name": "Check ID - Resource UID",
+                    "id": "Check ID",
+                    "deletable": False,
+                },
+                {
+                    "name": "Severity",
+                    "id": "Severity",
+                    "deletable": False,
+                },
+                {"name": "Status", "id": "Status", "deletable": False},
+                {"name": "Region", "id": "Region", "deletable": False},
+                {"name": "Service", "id": "Service", "deletable": False},
+                {"name": "Provider", "id": "Provider", "deletable": False},
+                {"name": "Account ID", "id": "Account ID", "deletable": False},
+            ],
+            style_table={"table-layout": "fixed"},
+            style_cell={"textAlign": "left", "layout": "fixed"},
+            style_header={
+                "fontWeight": "bold",
+                "layout": "fixed",
+                "backgroundColor": "rgb(41,37,36)",
+            },
+            page_size=table_row_values,
+            style_data_conditional=[
+                {
+                    "if": {"row_index": "odd"},
+                    "backgroundColor": "rgb(200, 200, 200)",
+                    "width": "100%",
+                },
+                {
+                    "if": {
+                        "filter_query": '{Status} = "FAIL"',  # matching rows of a hidden column with the id, `id`
+                        "column_id": "Status",
+                    },
+                    "backgroundColor": fail_color,
+                },
+                {
+                    "if": {
+                        "filter_query": '{Status} = "PASS"',  # matching rows of a hidden column with the id, `id`
+                        "column_id": "Status",
+                    },
+                    "backgroundColor": pass_color,
+                },
+                {
+                    "if": {
+                        "filter_query": '{Status} = "MANUAL"',  # matching rows of a hidden column with the id, `id`
+                        "column_id": "Status",
+                    },
+                    "backgroundColor": manual_color,
+                },
+                {
+                    "if": {
+                        "filter_query": '{Status} = "INFO"',  # matching rows of a hidden column with the id, `id`
+                        "column_id": "Status",
+                    },
+                    "backgroundColor": info_color,
+                },
+                {
+                    "if": {
+                        "filter_query": '{Status} = "MUTED (FAIL)"',  # matching rows of a hidden column with the id, `id`
+                        "column_id": "Status",
+                    },
+                    "backgroundColor": muted_fail_color,
+                },
+                {
+                    "if": {
+                        "filter_query": '{Status} = "MUTED (PASS)"',  # matching rows of a hidden column with the id, `id`
+                        "column_id": "Status",
+                    },
+                    "backgroundColor": muted_pass_color,
+                },
+                {
+                    "if": {
+                        "filter_query": '{Status} = "MUTED (MANUAL)"',  # matching rows of a hidden column with the id, `id`
+                        "column_id": "Status",
+                    },
+                    "backgroundColor": muted_manual_color,
+                },
+                {
+                    "if": {
+                        "column_id": "Severity",
+                    },
+                    "text-transform": "capitalize",
+                },
+            ],
+            style_cell_conditional=[
+                {"if": {"column_id": "Check ID + Resource UID"}, "max-width": "58%"},
+                {
+                    "if": {"column_id": "Severity"},
+                    "max-width": "8%",
+                    "text-align": "center",
+                },
+                {
+                    "if": {"column_id": "Status"},
+                    "max-width": "7%",
+                    "text-align": "center",
+                },
+                {
+                    "if": {"column_id": "Region"},
+                    "max-width": "9%",
+                    "text-align": "center",
+                },
+                {
+                    "if": {"column_id": "Service"},
+                    "max-width": "6%",
+                    "text-align": "center",
+                },
+                {
+                    "if": {"column_id": "Provider"},
+                    "max-width": "7%",
+                    "text-align": "center",
+                },
+                {
+                    "if": {"column_id": "Account ID"},
+                    "max-width": "11%",
+                    "text-align": "center",
+                },
+            ],
+            id="table-overview",
+            sort_action="native",
+            sort_mode="single",
+            style_as_list_view=True,
+            filter_action="native",
+            filter_options={"placeholder_text": "🔍"},
+            style_filter={"background-color": "#3e403f", "color": "white"},
+        )
 
     # Status Graphic
     status_graph = [
@@ -980,7 +1105,7 @@ def filter_data(
 
     # Table
     table_card = [
-        html.Div([table], className="grid grid-cols-auto"),
+        html.Div([table], className="grid grid-cols-auto w-full"),
     ]
 
     # Create Provider Cards
@@ -1007,11 +1132,22 @@ def filter_data(
             ),
         )
     ]
-    if ctx.triggered_id == "download_link":
-
-        csv_data = dcc.send_data_frame(
-            table_data.to_csv, "prowler-dashboard-export.csv", index=False
-        )
+    if (
+        ctx.triggered_id == "download_link_csv"
+        or ctx.triggered_id == "download_link_xlsx"
+    ):
+        # Cut the data to the wanted rows
+        table_data = table_data.head(table_row_values)
+        if ctx.triggered_id == "download_link_csv":
+            csv_data = dcc.send_data_frame(
+                table_data.to_csv, "prowler-dashboard-export.csv", index=False
+            )
+        if ctx.triggered_id == "download_link_xlsx":
+            csv_data = dcc.send_data_frame(
+                table_data.to_excel,
+                "prowler-dashboard-export.xlsx",
+                index=False,
+            )
         return (
             status_graph,
             two_pie_chart,
