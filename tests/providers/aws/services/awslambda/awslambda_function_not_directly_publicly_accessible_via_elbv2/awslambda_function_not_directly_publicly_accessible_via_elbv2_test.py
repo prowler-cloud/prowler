@@ -1,8 +1,10 @@
-from unittest import mock
-from boto3 import client, resource
 from re import search
-from prowler.providers.aws.services.awslambda.awslambda_service import Function
+from unittest import mock
+
+from boto3 import client, resource
 from mock import patch
+from moto import mock_aws
+
 from tests.providers.aws.audit_info_utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_US_EAST_1,
@@ -10,7 +12,6 @@ from tests.providers.aws.audit_info_utils import (
     AWS_REGION_US_EAST_1_AZB,
     set_mocked_aws_audit_info,
 )
-from moto import mock_aws
 
 
 # Mock generate_regional_clients()
@@ -57,6 +58,8 @@ class Test_awslambda_function_not_directly_publicly_accessible_via_elbv2:
 
     @mock_aws
     def test_function_elbv2_public(self):
+        from prowler.providers.aws.services.awslambda.awslambda_service import Function
+
         # Lambda client
         lambda_client = mock.MagicMock
         function_name = "test-lambda"

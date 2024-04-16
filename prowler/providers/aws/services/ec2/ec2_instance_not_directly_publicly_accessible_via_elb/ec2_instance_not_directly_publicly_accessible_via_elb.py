@@ -8,9 +8,7 @@ class ec2_instance_not_directly_publicly_accessible_via_elb(Check):
         findings = []
         public_instances = {}
 
-        #classic load balancers
         for lb in elb_client.loadbalancers:
-            #check for public elbs
             if lb.scheme == "internet-facing" and len(lb.security_groups) > 0:
                 for instance in lb.instances:
                     public_instances[instance] = lb
@@ -25,10 +23,9 @@ class ec2_instance_not_directly_publicly_accessible_via_elb(Check):
                 report.status = "PASS"
                 report.status_extended = f"EC2 Instance {instance.id} is not behind a internet facing classic load balancer."
 
-                #if the instanceId of the public lb is the same as the instances that are active, fail
+                # if the instanceId of the public lb is the same as the instances that are active, fail
                 if instance.id in public_instances:
                     report.status = "FAIL"
                     report.status_extended = f"EC2 Instance {instance.id} is behind a internet facing classic load balancer {public_instances[instance.id].dns}."
                 findings.append(report)
         return findings
-    

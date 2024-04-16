@@ -53,24 +53,36 @@ class ELBv2(AWSService):
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-    
+
     def __describe_target_groups__(self, regional_client):
         logger.info("ELBv2 - Describing target groups...")
         try:
             for lb in self.loadbalancersv2:
                 try:
-                    if lb.scheme == 'internet-facing' and lb.type == "application" and len(lb.security_groups) > 0:
-                        describe_target_groups_paginator = regional_client.get_paginator(
-                            "describe_target_groups"
+                    if (
+                        lb.scheme == "internet-facing"
+                        and lb.type == "application"
+                        and len(lb.security_groups) > 0
+                    ):
+                        describe_target_groups_paginator = (
+                            regional_client.get_paginator("describe_target_groups")
                         )
-                        for page in describe_target_groups_paginator.paginate(LoadBalancerArn=lb.arn):
+                        for page in describe_target_groups_paginator.paginate(
+                            LoadBalancerArn=lb.arn
+                        ):
                             for target_group in page["TargetGroups"]:
-                                for target_health in regional_client.describe_target_health(TargetGroupArn=target_group["TargetGroupArn"])["TargetHealthDescriptions"]:
+                                for (
+                                    target_health
+                                ) in regional_client.describe_target_health(
+                                    TargetGroupArn=target_group["TargetGroupArn"]
+                                )[
+                                    "TargetHealthDescriptions"
+                                ]:
                                     tg = TargetGroups(
                                         name=target_group["TargetGroupName"],
                                         arn=target_group["TargetGroupArn"],
                                         target_type=target_group["TargetType"],
-                                        target=target_health['Target']['Id'],
+                                        target=target_health["Target"]["Id"],
                                     )
                                     if "DNSName" in lb:
                                         tg.lbdns = lb.dns
@@ -89,7 +101,7 @@ class ELBv2(AWSService):
                         f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
         except Exception as error:
-            logger.error (
+            logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
@@ -278,6 +290,7 @@ class LoadBalancerv2(BaseModel):
     scheme: Optional[str]
     tags: Optional[list] = []
     security_groups: list[str]
+
 
 class TargetGroups(BaseModel):
     name: str

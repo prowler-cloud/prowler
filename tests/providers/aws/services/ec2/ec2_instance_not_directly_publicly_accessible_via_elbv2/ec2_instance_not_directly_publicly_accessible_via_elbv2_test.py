@@ -1,5 +1,6 @@
-from unittest import mock
 from re import search
+from unittest import mock
+
 from boto3 import client, resource
 from moto import mock_aws
 
