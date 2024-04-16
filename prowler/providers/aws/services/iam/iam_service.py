@@ -219,11 +219,28 @@ class IAM(AWSService):
 
         except ClientError as error:
             if error.response["Error"]["Code"] == "NoSuchEntity":
-                # Password policy does not exist
-                stored_password_policy = None
+                # Password policy is the IAM default
+                stored_password_policy = PasswordPolicy(
+                    length=8,
+                    symbols=False,
+                    numbers=False,
+                    uppercase=False,
+                    lowercase=False,
+                    allow_change=True,
+                    expiration=False,
+                    max_age=None,
+                    reuse_prevention=None,
+                    hard_expiry=None,
+                )
                 logger.warning(
                     f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
+            elif error.response["Error"]["Code"] == "AccessDenied":
+                # User does not have permission to get password policy
+                logger.error(
+                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+                stored_password_policy = None
             else:
                 logger.error(
                     f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -615,6 +632,17 @@ class IAM(AWSService):
             roles = self.client.list_entities_for_policy(
                 PolicyArn=policy_arn, EntityFilter="Role"
             )["PolicyRoles"]
+            return roles
+        except ClientError as error:
+            if error.response["Error"]["Code"] == "AccessDenied":
+                logger.error(
+                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+                roles = None
+            else:
+                logger.error(
+                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
         except Exception as error:
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
