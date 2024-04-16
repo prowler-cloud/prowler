@@ -18,3 +18,7 @@ def set_mocked_gcp_provider(
     )
 
     return provider
+
+
+def mock_is_api_active(_, audited_project_ids):
+    return audited_project_ids
