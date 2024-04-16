@@ -1181,13 +1181,13 @@ testing = ["beautifulsoup4 (>=4.8.2)", "cryptography (<3.4)", "dash-testing-stub
 
 [[package]]
 name = "dash-bootstrap-components"
-version = "1.5.0"
+version = "1.6.0"
 description = "Bootstrap themed components for use in Plotly Dash"
 optional = false
-python-versions = ">=3.7, <4"
+python-versions = "<4,>=3.8"
 files = [
-    {file = "dash-bootstrap-components-1.5.0.tar.gz", hash = "sha256:083158c07434b9965e2d6c3e8ca72dbbe47dab23e676258cef9bf0ad47d2e250"},
-    {file = "dash_bootstrap_components-1.5.0-py3-none-any.whl", hash = "sha256:b487fec1a85e3d6a8564fe04c0a9cd9e846f75ea9e563456ed3879592889c591"},
+    {file = "dash_bootstrap_components-1.6.0-py3-none-any.whl", hash = "sha256:97f0f47b38363f18863e1b247462229266ce12e1e171cfb34d3c9898e6e5cd1e"},
+    {file = "dash_bootstrap_components-1.6.0.tar.gz", hash = "sha256:960a1ec9397574792f49a8241024fa3cecde0f5930c971a3fc81f016cbeb1095"},
 ]
 
 [package.dependencies]
@@ -4917,4 +4917,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.13"
-content-hash = "28b2c659befea82e5e3872ab1a1488b173fe40e0a223efb825a51babdcc5f9ed"
+content-hash = "e6de716ad7d297cf9913b5a944644b3eb7728485371caaf2cfb0c3e815e45259"
