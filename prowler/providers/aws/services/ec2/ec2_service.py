@@ -269,14 +269,26 @@ class EC2(AWSService):
                     #         'GroupName': 'default',
                     #     },
                     # ],
-                    for sg in interface.get("Groups", []):
-                        for security_group in self.security_groups:
-                            if security_group.id == sg["GroupId"]:
-                                security_group.network_interfaces.append(eni)
+                    self.__add_network_interfaces_to_security_groups__(
+                        eni, interface.get("Groups", [])
+                    )
 
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def __add_network_interfaces_to_security_groups__(
+        self, interface, interface_security_groups
+    ):
+        try:
+            for sg in interface_security_groups:
+                for security_group in self.security_groups:
+                    if security_group.id == sg["GroupId"]:
+                        security_group.network_interfaces.append(interface)
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
     def __get_instance_user_data__(self, instance):
