@@ -9,6 +9,7 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    open-pull-requests-limit: 10
     target-branch: master
     labels:
       - "dependencies"
@@ -17,12 +18,14 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    open-pull-requests-limit: 10
     target-branch: master
 
-  - package-ecosystem: "pip" 
-    directory: "/" 
+  - package-ecosystem: "pip"
+    directory: "/"
     schedule:
       interval: "weekly"
+    open-pull-requests-limit: 10
     target-branch: v3
     labels:
       - "dependencies"
@@ -32,8 +35,8 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    open-pull-requests-limit: 10
     target-branch: v3
     labels:
       - "github_actions"
       - "v3"
-
