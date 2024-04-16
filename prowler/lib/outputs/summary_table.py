@@ -45,6 +45,7 @@ def display_summary_table(
                 "Service": "",
                 "Provider": "",
                 "Total": 0,
+                "Pass": 0,
                 "Critical": 0,
                 "High": 0,
                 "Medium": 0,
@@ -70,9 +71,9 @@ def display_summary_table(
                 ):
                     add_service_to_table(findings_table, current)
 
-                    current["Total"] = current["Muted"] = current["Critical"] = current[
-                        "High"
-                    ] = current["Medium"] = current["Low"] = 0
+                    current["Total"] = current["Pass"] = current["Muted"] = current[
+                        "Critical"
+                    ] = current["High"] = current["Medium"] = current["Low"] = 0
 
                 current["Service"] = finding.check_metadata.ServiceName
                 current["Provider"] = finding.check_metadata.Provider
@@ -83,6 +84,7 @@ def display_summary_table(
                     current["Muted"] += 1
                 if finding.status == "PASS":
                     pass_count += 1
+                    current["Pass"] += 1
                 elif finding.status == "FAIL":
                     fail_count += 1
                     if finding.check_metadata.Severity == "critical":
@@ -155,7 +157,7 @@ def add_service_to_table(findings_table, current):
         )
         current["Status"] = f"{Fore.RED}FAIL ({total_fails}){Style.RESET_ALL}"
     else:
-        current["Status"] = f"{Fore.GREEN}PASS ({current['Total']}){Style.RESET_ALL}"
+        current["Status"] = f"{Fore.GREEN}PASS ({current['Pass']}){Style.RESET_ALL}"
 
     findings_table["Provider"].append(current["Provider"])
     findings_table["Service"].append(current["Service"])

@@ -18,28 +18,29 @@ class Account(AWSService):
         self.contacts_security = self.__get_alternate_contact__("SECURITY")
         self.contacts_operations = self.__get_alternate_contact__("OPERATIONS")
 
-        # Set of contact phone numbers
-        self.contact_phone_numbers = {
-            self.contact_base.phone_number,
-            self.contacts_billing.phone_number,
-            self.contacts_security.phone_number,
-            self.contacts_operations.phone_number,
-        }
+        if self.contact_base:
+            # Set of contact phone numbers
+            self.contact_phone_numbers = {
+                self.contact_base.phone_number,
+                self.contacts_billing.phone_number,
+                self.contacts_security.phone_number,
+                self.contacts_operations.phone_number,
+            }
 
-        # Set of contact names
-        self.contact_names = {
-            self.contact_base.name,
-            self.contacts_billing.name,
-            self.contacts_security.name,
-            self.contacts_operations.name,
-        }
+            # Set of contact names
+            self.contact_names = {
+                self.contact_base.name,
+                self.contacts_billing.name,
+                self.contacts_security.name,
+                self.contacts_operations.name,
+            }
 
-        # Set of contact emails
-        self.contact_emails = {
-            self.contacts_billing.email,
-            self.contacts_security.email,
-            self.contacts_operations.email,
-        }
+            # Set of contact emails
+            self.contact_emails = {
+                self.contacts_billing.email,
+                self.contacts_security.email,
+                self.contacts_operations.email,
+            }
 
     def __get_contact_information__(self):
         try:
@@ -53,10 +54,16 @@ class Account(AWSService):
                 phone_number=primary_account_contact.get("PhoneNumber"),
             )
         except Exception as error:
-            logger.error(
-                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
-            return Contact(type="PRIMARY")
+            if error.response["Error"]["Code"] == "AccessDeniedException":
+                logger.error(
+                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+                return None
+            else:
+                logger.error(
+                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+                return Contact(type="PRIMARY")
 
     def __get_alternate_contact__(self, contact_type: str):
         try:
