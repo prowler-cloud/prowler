@@ -35,7 +35,7 @@ class rds_instance_no_public_access(Check):
                                         any_address=True,
                                     ):
                                         report.status = "FAIL"
-                                        report.status_extended = f"RDS Instance {db_instance.id} is set as publicly accessible AND security group {security_group.name} ({security_group.id}) has {db_instance.engine} port {db_instance_port} open to the Internet."
+                                        report.status_extended = f"RDS Instance {db_instance.id} is set as publicly accessible AND security group {security_group.name} ({security_group.id}) has {db_instance.engine} port {db_instance_port} open to the Internet in endpoint {db_instance.endpoint.get('Address')}."
                                         break
             findings.append(report)
 
