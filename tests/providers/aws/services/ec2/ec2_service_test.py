@@ -336,6 +336,25 @@ class Test_EC2_Service:
             if result.region == AWS_REGION_US_EAST_1:
                 assert result.status
 
+    # Test EC2 get_snapshot_block_public_access_state
+    @mock_aws
+    def test__get_snapshot_block_public_access_state__(self):
+        ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
+        ec2_client.enable_snapshot_block_public_access(
+            State="block-all-sharing", DryRun=True
+        )
+
+        # EC2 client for this test class
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
+        )
+        ec2 = EC2(aws_provider)
+
+        assert len(ec2.ebs_block_public_access_snapshots_state) == 2
+        for result in ec2.ebs_block_public_access_snapshots_state:
+            if result.region == AWS_REGION_US_EAST_1:
+                assert result.status == "block-all-sharing"
+
     # Test EC2 Describe Addresses
     @mock_aws
     def test__describe_addresses__(self):

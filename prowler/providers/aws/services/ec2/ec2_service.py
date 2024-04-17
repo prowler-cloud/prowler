@@ -38,6 +38,8 @@ class EC2(AWSService):
         self.__threading_call__(self.__get_ebs_encryption_settings__)
         self.elastic_ips = []
         self.__threading_call__(self.__describe_ec2_addresses__)
+        self.ebs_block_public_access_snapshots_state = []
+        self.__threading_call__(self.__get_snapshot_block_public_access_state__)
 
     def __get_volume_arn_template__(self, region):
         return (
@@ -407,6 +409,26 @@ class EC2(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def __get_snapshot_block_public_access_state__(self, regional_client):
+        try:
+            snapshot_in_region = False
+            for snapshot in self.snapshots:
+                if snapshot.region == regional_client.region:
+                    snapshot_in_region = True
+            self.ebs_block_public_access_snapshots_state.append(
+                EbsSnapshotBlockPublicAccess(
+                    status=regional_client.get_snapshot_block_public_access_state()[
+                        "State"
+                    ],
+                    snapshots=snapshot_in_region,
+                    region=regional_client.region,
+                )
+            )
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
 
 class Instance(BaseModel):
     id: str
@@ -502,4 +524,10 @@ class Image(BaseModel):
 class EbsEncryptionByDefault(BaseModel):
     status: bool
     volumes: bool
+    region: str
+
+
+class EbsSnapshotBlockPublicAccess(BaseModel):
+    status: str
+    snapshots: bool
     region: str
