@@ -1,5 +1,12 @@
 import json
 import os
+
+try:
+    import grp
+    import pwd
+except ImportError:
+    pass
+
 import re
 import sys
 import tempfile
@@ -142,9 +149,6 @@ def is_owned_by_root(file_path: str) -> bool:
         bool: True if owned by root, False otherwise or None if file does not exist.
     """
     try:
-        import grp
-        import pwd
-
         # Get the file's status
         file_stat = os.stat(file_path)
 
