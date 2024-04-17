@@ -50,7 +50,7 @@ warnings.filterwarnings("ignore")
 csv_files = []
 
 for file in glob.glob(os.path.join(folder_path_overview, "*.csv")):
-    with open(file, "r", newline="") as csvfile:
+    with open(file, "r", newline="", encoding="utf-8") as csvfile:
         reader = csv.reader(csvfile)
         num_rows = sum(1 for row in reader)
         if num_rows > 1:
