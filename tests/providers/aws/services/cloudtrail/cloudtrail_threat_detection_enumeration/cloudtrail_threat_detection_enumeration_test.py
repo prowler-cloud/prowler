@@ -27,7 +27,7 @@ def mock__get_lookup_events__(trail=None, event_name=None, minutes=None, *_) -> 
     ]
 
 
-class Test_Cloudtrail_Threat_Detection_Enumeration:
+class Test_cloudtrail_threat_detection_enumeration:
     @mock_aws
     def test_no_trails(self):
         cloudtrail_client = mock.MagicMock()
@@ -41,10 +41,7 @@ class Test_Cloudtrail_Threat_Detection_Enumeration:
             "prowler.providers.common.common.get_global_provider",
             return_value=set_mocked_aws_provider(),
         ), mock.patch(
-            "prowler.providers.aws.services.cloudtrail.cloudtrail_service.Cloudtrail",
-            new=cloudtrail_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudtrail.cloudtrail_client.cloudtrail_client",
+            "prowler.providers.aws.services.cloudtrail.cloudtrail_threat_detection_enumeration.cloudtrail_threat_detection_enumeration.cloudtrail_client",
             new=cloudtrail_client,
         ):
             # Test Check
@@ -93,10 +90,7 @@ class Test_Cloudtrail_Threat_Detection_Enumeration:
             "prowler.providers.common.common.get_global_provider",
             return_value=set_mocked_aws_provider(),
         ), mock.patch(
-            "prowler.providers.aws.services.cloudtrail.cloudtrail_service.Cloudtrail",
-            new=cloudtrail_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudtrail.cloudtrail_client.cloudtrail_client",
+            "prowler.providers.aws.services.cloudtrail.cloudtrail_threat_detection_enumeration.cloudtrail_threat_detection_enumeration.cloudtrail_client",
             new=cloudtrail_client,
         ):
             # Test Check
@@ -145,10 +139,7 @@ class Test_Cloudtrail_Threat_Detection_Enumeration:
             "prowler.providers.common.common.get_global_provider",
             return_value=set_mocked_aws_provider(),
         ), mock.patch(
-            "prowler.providers.aws.services.cloudtrail.cloudtrail_service.Cloudtrail",
-            new=cloudtrail_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudtrail.cloudtrail_client.cloudtrail_client",
+            "prowler.providers.aws.services.cloudtrail.cloudtrail_threat_detection_enumeration.cloudtrail_threat_detection_enumeration.cloudtrail_client",
             new=cloudtrail_client,
         ):
             # Test Check
@@ -198,10 +189,7 @@ class Test_Cloudtrail_Threat_Detection_Enumeration:
             "prowler.providers.common.common.get_global_provider",
             return_value=set_mocked_aws_provider(),
         ), mock.patch(
-            "prowler.providers.aws.services.cloudtrail.cloudtrail_service.Cloudtrail",
-            new=cloudtrail_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudtrail.cloudtrail_client.cloudtrail_client",
+            "prowler.providers.aws.services.cloudtrail.cloudtrail_threat_detection_enumeration.cloudtrail_threat_detection_enumeration.cloudtrail_client",
             new=cloudtrail_client,
         ):
             # Test Check

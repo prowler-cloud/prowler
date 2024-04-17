@@ -5,20 +5,19 @@ from prowler.providers.aws.services.cloudtrail.cloudtrail_client import (
     cloudtrail_client,
 )
 
-THRESHOLD = cloudtrail_client.audit_config.get(
-    "threat_detection_enumeration_threshold", 0.1
-)
-THREAT_DETECTION_MINUTES = cloudtrail_client.audit_config.get(
-    "threat_detection_enumeration_minutes", 1440
-)
-ENUMERATION_ACTIONS = cloudtrail_client.audit_config.get(
-    "threat_detection_enumeration_actions", []
-)
-
 
 class cloudtrail_threat_detection_enumeration(Check):
     def execute(self):
         findings = []
+        threshold = cloudtrail_client.audit_config.get(
+            "threat_detection_enumeration_threshold", 0.1
+        )
+        threat_detection_minutes = cloudtrail_client.audit_config.get(
+            "threat_detection_enumeration_minutes", 1440
+        )
+        enumeration_actions = cloudtrail_client.audit_config.get(
+            "threat_detection_enumeration_actions", []
+        )
         potential_enumeration = {}
         found_potential_enumeration = False
         multiregion_trail = None
@@ -33,11 +32,11 @@ class cloudtrail_threat_detection_enumeration(Check):
             else [multiregion_trail]
         )
         for trail in trails_to_scan:
-            for event_name in ENUMERATION_ACTIONS:
+            for event_name in enumeration_actions:
                 for event_log in cloudtrail_client.__lookup_events__(
                     trail=trail,
                     event_name=event_name,
-                    minutes=THREAT_DETECTION_MINUTES,
+                    minutes=threat_detection_minutes,
                 ):
                     event_log = json.loads(event_log["CloudTrailEvent"])
                     if ".amazonaws.com" not in event_log["sourceIPAddress"]:
@@ -47,8 +46,8 @@ class cloudtrail_threat_detection_enumeration(Check):
                             event_name
                         )
         for source_ip, actions in potential_enumeration.items():
-            ip_threshold = round(len(actions) / len(ENUMERATION_ACTIONS), 2)
-            if len(actions) / len(ENUMERATION_ACTIONS) > THRESHOLD:
+            ip_threshold = round(len(actions) / len(enumeration_actions), 2)
+            if len(actions) / len(enumeration_actions) > threshold:
                 found_potential_enumeration = True
                 report = Check_Report_AWS(self.metadata())
                 report.region = cloudtrail_client.region

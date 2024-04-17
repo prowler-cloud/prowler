@@ -27,7 +27,7 @@ def mock__get_lookup_events__(trail=None, event_name=None, minutes=None, *_) -> 
     ]
 
 
-class Test_CloudTrail_Threat_Detection_Privilege_Escalation:
+class Test_cloudtrail_threat_detection_privilege_escalation:
     @mock_aws
     def test_no_trails(self):
         cloudtrail_client = mock.MagicMock()
@@ -41,10 +41,7 @@ class Test_CloudTrail_Threat_Detection_Privilege_Escalation:
             "prowler.providers.common.common.get_global_provider",
             return_value=set_mocked_aws_provider(),
         ), mock.patch(
-            "prowler.providers.aws.services.cloudtrail.cloudtrail_service.Cloudtrail",
-            new=cloudtrail_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudtrail.cloudtrail_client.cloudtrail_client",
+            "prowler.providers.aws.services.cloudtrail.cloudtrail_threat_detection_privilege_escalation.cloudtrail_threat_detection_privilege_escalation.cloudtrail_client",
             new=cloudtrail_client,
         ):
             # Test Check
@@ -70,9 +67,6 @@ class Test_CloudTrail_Threat_Detection_Privilege_Escalation:
 
     @mock_aws
     def test_no_potential_priviledge_escalation(self):
-        PRIVILEGE_ESCALATION_ACTIONS = []
-        THRESHOLD = 0.1
-        THREAT_DETECTION_MINUTES = 1440
         cloudtrail_client = mock.MagicMock()
         cloudtrail_client.trails = {"us-east-1": mock.MagicMock()}
         cloudtrail_client.trails["us-east-1"].is_multiregion = False
@@ -82,9 +76,9 @@ class Test_CloudTrail_Threat_Detection_Privilege_Escalation:
         cloudtrail_client.audited_account = AWS_ACCOUNT_NUMBER
         cloudtrail_client.region = AWS_REGION_US_EAST_1
         cloudtrail_client.audit_config = {
-            "threat_detection_privilege_escalation_actions": PRIVILEGE_ESCALATION_ACTIONS,
-            "threat_detection_privilege_escalation_threshold": THRESHOLD,
-            "threat_detection_privilege_escalation_minutes": THREAT_DETECTION_MINUTES,
+            "threat_detection_privilege_escalation_actions": [],
+            "threat_detection_privilege_escalation_threshold": 0.1,
+            "threat_detection_privilege_escalation_minutes": 1440,
         }
 
         cloudtrail_client.__lookup_events__ = mock__get_lookup_events__
@@ -94,10 +88,7 @@ class Test_CloudTrail_Threat_Detection_Privilege_Escalation:
             "prowler.providers.common.common.get_global_provider",
             return_value=set_mocked_aws_provider(),
         ), mock.patch(
-            "prowler.providers.aws.services.cloudtrail.cloudtrail_service.Cloudtrail",
-            new=cloudtrail_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudtrail.cloudtrail_client.cloudtrail_client",
+            "prowler.providers.aws.services.cloudtrail.cloudtrail_threat_detection_privilege_escalation.cloudtrail_threat_detection_privilege_escalation.cloudtrail_client",
             new=cloudtrail_client,
         ):
             # Test Check
@@ -123,9 +114,6 @@ class Test_CloudTrail_Threat_Detection_Privilege_Escalation:
 
     @mock_aws
     def test_potential_priviledge_escalation(self):
-        PRIVILEGE_ESCALATION_ACTIONS = ["CreateLoginProfile", "UpdateLoginProfile"]
-        THRESHOLD = 0.1
-        THREAT_DETECTION_MINUTES = 1440
         cloudtrail_client = mock.MagicMock()
         cloudtrail_client.trails = {"us-east-1": mock.MagicMock()}
         cloudtrail_client.trails["us-east-1"].is_multiregion = False
@@ -135,9 +123,12 @@ class Test_CloudTrail_Threat_Detection_Privilege_Escalation:
         cloudtrail_client.audited_account = AWS_ACCOUNT_NUMBER
         cloudtrail_client.region = AWS_REGION_US_EAST_1
         cloudtrail_client.audit_config = {
-            "threat_detection_privilege_escalation_actions": PRIVILEGE_ESCALATION_ACTIONS,
-            "threat_detection_privilege_escalation_threshold": THRESHOLD,
-            "threat_detection_privilege_escalation_minutes": THREAT_DETECTION_MINUTES,
+            "threat_detection_privilege_escalation_actions": [
+                "CreateLoginProfile",
+                "UpdateLoginProfile",
+            ],
+            "threat_detection_privilege_escalation_threshold": 0.1,
+            "threat_detection_privilege_escalation_minutes": 1440,
         }
 
         cloudtrail_client.__lookup_events__ = mock__get_lookup_events__
@@ -147,10 +138,7 @@ class Test_CloudTrail_Threat_Detection_Privilege_Escalation:
             "prowler.providers.common.common.get_global_provider",
             return_value=set_mocked_aws_provider(),
         ), mock.patch(
-            "prowler.providers.aws.services.cloudtrail.cloudtrail_service.Cloudtrail",
-            new=cloudtrail_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudtrail.cloudtrail_client.cloudtrail_client",
+            "prowler.providers.aws.services.cloudtrail.cloudtrail_threat_detection_privilege_escalation.cloudtrail_threat_detection_privilege_escalation.cloudtrail_client",
             new=cloudtrail_client,
         ):
             # Test Check
@@ -175,10 +163,7 @@ class Test_CloudTrail_Threat_Detection_Privilege_Escalation:
             )
 
     @mock_aws
-    def test_big_threshold(self):
-        PRIVILEGE_ESCALATION_ACTIONS = ["CreateLoginProfile", "UpdateLoginProfile"]
-        THRESHOLD = 2.0
-        THREAT_DETECTION_MINUTES = 1440
+    def test_bigger_threshold(self):
         cloudtrail_client = mock.MagicMock()
         cloudtrail_client.trails = {"us-east-1": mock.MagicMock()}
         cloudtrail_client.trails["us-east-1"].is_multiregion = False
@@ -188,9 +173,12 @@ class Test_CloudTrail_Threat_Detection_Privilege_Escalation:
         cloudtrail_client.audited_account = AWS_ACCOUNT_NUMBER
         cloudtrail_client.region = AWS_REGION_US_EAST_1
         cloudtrail_client.audit_config = {
-            "threat_detection_privilege_escalation_actions": PRIVILEGE_ESCALATION_ACTIONS,
-            "threat_detection_privilege_escalation_threshold": THRESHOLD,
-            "threat_detection_privilege_escalation_minutes": THREAT_DETECTION_MINUTES,
+            "threat_detection_privilege_escalation_actions": [
+                "CreateLoginProfile",
+                "UpdateLoginProfile",
+            ],
+            "threat_detection_privilege_escalation_threshold": 2.0,
+            "threat_detection_privilege_escalation_minutes": 1440,
         }
 
         cloudtrail_client.__lookup_events__ = mock__get_lookup_events__
@@ -200,10 +188,7 @@ class Test_CloudTrail_Threat_Detection_Privilege_Escalation:
             "prowler.providers.common.common.get_global_provider",
             return_value=set_mocked_aws_provider(),
         ), mock.patch(
-            "prowler.providers.aws.services.cloudtrail.cloudtrail_service.Cloudtrail",
-            new=cloudtrail_client,
-        ), mock.patch(
-            "prowler.providers.aws.services.cloudtrail.cloudtrail_client.cloudtrail_client",
+            "prowler.providers.aws.services.cloudtrail.cloudtrail_threat_detection_privilege_escalation.cloudtrail_threat_detection_privilege_escalation.cloudtrail_client",
             new=cloudtrail_client,
         ):
             # Test Check
