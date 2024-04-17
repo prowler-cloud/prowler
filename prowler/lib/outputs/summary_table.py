@@ -40,7 +40,8 @@ def display_summary_table(
             entity_type = "Context"
             audited_entities = provider.identity.context
 
-        if findings:
+        # Check if there are findings and that they are not all MANUAL
+        if findings and not all(finding.status == "MANUAL" for finding in findings):
             current = {
                 "Service": "",
                 "Provider": "",

@@ -1,3 +1,4 @@
+from botocore.client import ClientError
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
@@ -30,6 +31,16 @@ class ResourceExplorer2(AWSService):
                                 type=index["Type"],
                             )
                         )
+        except ClientError as error:
+            if error.response["Error"]["Code"] == "AccessDeniedException":
+                logger.error(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+                self.indexes = None
+            else:
+                logger.error(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

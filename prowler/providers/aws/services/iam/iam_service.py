@@ -117,6 +117,16 @@ class IAM(AWSService):
                                 is_service_role=is_service_role(role),
                             )
                         )
+        except ClientError as error:
+            if error.response["Error"]["Code"] == "AccessDenied":
+                logger.error(
+                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+                roles = None
+            else:
+                logger.error(
+                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
         except Exception as error:
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

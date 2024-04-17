@@ -16,7 +16,8 @@ class CloudWatch(AWSService):
         super().__init__(__class__.__name__, provider)
         self.metric_alarms = []
         self.__threading_call__(self.__describe_alarms__)
-        self.__list_tags_for_resource__()
+        if self.metric_alarms:
+            self.__list_tags_for_resource__()
 
     def __describe_alarms__(self, regional_client):
         logger.info("CloudWatch - Describing alarms...")
@@ -42,6 +43,16 @@ class CloudWatch(AWSService):
                                 region=regional_client.region,
                             )
                         )
+        except ClientError as error:
+            if error.response["Error"]["Code"] == "AccessDenied":
+                logger.error(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+                self.metric_alarms = None
+            else:
+                logger.error(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -72,15 +83,16 @@ class Logs(AWSService):
         self.log_groups = []
         self.__threading_call__(self.__describe_metric_filters__)
         self.__threading_call__(self.__describe_log_groups__)
-        if (
-            "cloudwatch_log_group_no_secrets_in_logs"
-            in provider.audit_metadata.expected_checks
-        ):
-            self.events_per_log_group_threshold = (
-                1000  # The threshold for number of events to return per log group.
-            )
-            self.__threading_call__(self.__get_log_events__)
-        self.__list_tags_for_resource__()
+        if self.log_groups:
+            if (
+                "cloudwatch_log_group_no_secrets_in_logs"
+                in provider.audit_metadata.expected_checks
+            ):
+                self.events_per_log_group_threshold = (
+                    1000  # The threshold for number of events to return per log group.
+                )
+                self.__threading_call__(self.__get_log_events__)
+            self.__list_tags_for_resource__()
 
     def __describe_metric_filters__(self, regional_client):
         logger.info("CloudWatch Logs - Describing metric filters...")
@@ -104,6 +116,16 @@ class Logs(AWSService):
                                 region=regional_client.region,
                             )
                         )
+        except ClientError as error:
+            if error.response["Error"]["Code"] == "AccessDeniedException":
+                logger.error(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+                self.metric_filters = None
+            else:
+                logger.error(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -136,6 +158,16 @@ class Logs(AWSService):
                                 region=regional_client.region,
                             )
                         )
+        except ClientError as error:
+            if error.response["Error"]["Code"] == "AccessDeniedException":
+                logger.error(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+                self.log_groups = None
+            else:
+                logger.error(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
