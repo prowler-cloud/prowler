@@ -38,6 +38,8 @@ class Backup(AWSService):
                             self.audit_resources,
                         )
                     ):
+                        if self.backup_vaults is None:
+                            self.backup_vaults = []
                         self.backup_vaults.append(
                             BackupVault(
                                 arn=configuration.get("BackupVaultArn"),
@@ -61,7 +63,8 @@ class Backup(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
             if error.response["Error"]["Code"] == "AccessDeniedException":
-                self.backup_vaults = None
+                if not self.backup_vaults:
+                    self.backup_vaults = None
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

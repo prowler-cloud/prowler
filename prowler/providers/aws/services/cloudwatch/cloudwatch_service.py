@@ -34,6 +34,8 @@ class CloudWatch(AWSService):
                         namespace = None
                         if "Namespace" in alarm:
                             namespace = alarm["Namespace"]
+                        if self.metric_alarms is None:
+                            self.metric_alarms = []
                         self.metric_alarms.append(
                             MetricAlarm(
                                 arn=alarm["AlarmArn"],
@@ -48,7 +50,8 @@ class CloudWatch(AWSService):
                 logger.error(
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
-                self.metric_alarms = None
+                if not self.metric_alarms:
+                    self.metric_alarms = None
             else:
                 logger.error(
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -106,6 +109,8 @@ class Logs(AWSService):
                     if not self.audit_resources or (
                         is_resource_filtered(arn, self.audit_resources)
                     ):
+                        if self.metric_filters is None:
+                            self.metric_filters = []
                         self.metric_filters.append(
                             MetricFilter(
                                 arn=arn,
@@ -121,7 +126,8 @@ class Logs(AWSService):
                 logger.error(
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
-                self.metric_filters = None
+                if not self.metric_filters:
+                    self.metric_filters = []
             else:
                 logger.error(
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -148,6 +154,8 @@ class Logs(AWSService):
                         if not retention_days:
                             never_expire = True
                             retention_days = 9999
+                        if self.log_groups is None:
+                            self.log_groups = []
                         self.log_groups.append(
                             LogGroup(
                                 arn=log_group["arn"],
@@ -163,7 +171,8 @@ class Logs(AWSService):
                 logger.error(
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
-                self.log_groups = None
+                if not self.log_groups:
+                    self.log_groups = None
             else:
                 logger.error(
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

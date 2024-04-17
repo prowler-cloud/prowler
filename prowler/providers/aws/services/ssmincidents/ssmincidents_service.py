@@ -50,7 +50,8 @@ class SSMIncidents(AWSService):
                 logger.error(
                     f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
-                self.replication_set = None
+                if not self.replication_set:
+                    self.replication_set = None
             else:
                 logger.error(
                     f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

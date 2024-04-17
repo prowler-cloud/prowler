@@ -24,6 +24,8 @@ class ResourceExplorer2(AWSService):
                     if not self.audit_resources or (
                         is_resource_filtered(index["Arn"], self.audit_resources)
                     ):
+                        if self.indexes is None:
+                            self.indexes = []
                         self.indexes.append(
                             Indexes(
                                 arn=index["Arn"],
@@ -36,7 +38,8 @@ class ResourceExplorer2(AWSService):
                 logger.error(
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
-                self.indexes = None
+                if not self.indexes:
+                    self.indexes = None
             else:
                 logger.error(
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

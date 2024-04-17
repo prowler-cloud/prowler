@@ -46,6 +46,8 @@ class Cloudtrail(AWSService):
                         kms_key_id = trail["KmsKeyId"]
                     if "CloudWatchLogsLogGroupArn" in trail:
                         log_group_arn = trail["CloudWatchLogsLogGroupArn"]
+                    if self.trails is None:
+                        self.trails = {}
                     self.trails[trail["TrailARN"]] = Trail(
                         name=trail["Name"],
                         is_multiregion=trail["IsMultiRegionTrail"],
@@ -62,6 +64,8 @@ class Cloudtrail(AWSService):
                         has_insight_selectors=trail.get("HasInsightSelectors"),
                     )
             if trails_count == 0:
+                if self.trails is None:
+                    self.trails = {}
                 self.trails[self.__get_trail_arn_template__(regional_client.region)] = (
                     Trail(
                         region=regional_client.region,
@@ -72,7 +76,8 @@ class Cloudtrail(AWSService):
                 logger.error(
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
-                self.trails = None
+                if not self.trails:
+                    self.trails = None
             else:
                 logger.error(
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
