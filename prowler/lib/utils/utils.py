@@ -1,7 +1,12 @@
-import grp
 import json
 import os
-import pwd
+
+try:
+    import grp
+    import pwd
+except ImportError:
+    pass
+
 import re
 import sys
 import tempfile
