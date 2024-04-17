@@ -24,7 +24,7 @@ def fixer(region):
     """
     try:
         regional_client = securityhub_client.regional_clients[region]
-        return regional_client.enable_security_hub(
+        regional_client.enable_security_hub(
             EnableDefaultStandards=securityhub_client.fixer_config.get(
                 "securityhub_enabled", {}
             ).get("EnableDefaultStandards", True)
@@ -34,3 +34,5 @@ def fixer(region):
             f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
         )
         return False
+    else:
+        return True
