@@ -18,9 +18,13 @@ class route53_dangling_ip_subdomain_takeover(Check):
                 # Gather Elastic IPs and Network Interfaces Public IPs inside the AWS Account
                 public_ips = []
                 public_ips.extend([eip.public_ip for eip in ec2_client.elastic_ips])
-                public_ips.extend(
-                    [interface.public_ip for interface in ec2_client.network_interfaces]
-                )
+                # Add public IPs from Network Interfaces
+                for network_interface in ec2_client.network_interfaces:
+                    if (
+                        network_interface.association
+                        and network_interface.association.get("PublicIp")
+                    ):
+                        public_ips.append(network_interface.association.get("PublicIp"))
                 for record in record_set.records:
                     # Check if record is an IP Address
                     if validate_ip_address(record):

@@ -369,51 +369,7 @@ class Test_EC2_Service:
 
     # Test EC2 Describe Network Interfaces
     @mock_aws
-    def test__describe_sg_network_interfaces__(self):
-        # Generate EC2 Client
-        ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
-        ec2_resource = resource("ec2", region_name=AWS_REGION_US_EAST_1)
-        # Create VPC, Subnet, SecurityGroup and Network Interface
-        vpc = ec2_resource.create_vpc(CidrBlock="10.0.0.0/16")
-        subnet = ec2_resource.create_subnet(VpcId=vpc.id, CidrBlock="10.0.0.0/18")
-        sg = ec2_resource.create_security_group(
-            GroupName="test-securitygroup", Description="n/a"
-        )
-        eni_id = subnet.create_network_interface(Groups=[sg.id]).id
-        ec2_client.modify_network_interface_attribute(
-            NetworkInterfaceId=eni_id, Groups=[sg.id]
-        )
-
-        # EC2 client for this test class
-        aws_provider = set_mocked_aws_provider(
-            [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
-        )
-        ec2 = EC2(aws_provider)
-
-        assert sg.id in str(ec2.security_groups)
-        for security_group in ec2.security_groups:
-            if security_group.id == sg.id:
-                assert security_group.name == "test-securitygroup"
-                assert (
-                    security_group.arn
-                    == f"arn:{aws_provider.identity.partition}:ec2:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:security-group/{security_group.id}"
-                )
-                assert re.match(r"sg-[0-9a-z]{17}", security_group.id)
-                assert security_group.region == AWS_REGION_US_EAST_1
-                assert eni_id in security_group.network_interfaces
-                assert security_group.ingress_rules == []
-                assert security_group.egress_rules == [
-                    {
-                        "IpProtocol": "-1",
-                        "IpRanges": [{"CidrIp": "0.0.0.0/0"}],
-                        "Ipv6Ranges": [],
-                        "PrefixListIds": [],
-                        "UserIdGroupPairs": [],
-                    }
-                ]
-
-    @mock_aws
-    def test__describe_public_network_interfaces__(self):
+    def test__describe_network_interfaces__(self):
         # Generate EC2 Client
         ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
         ec2_resource = resource("ec2", region_name=AWS_REGION_US_EAST_1)
@@ -436,23 +392,35 @@ class Test_EC2_Service:
         ec2_client.associate_address(
             NetworkInterfaceId=eni.id, AllocationId=eip["AllocationId"]
         )
+        # Attach ENI to Instance
+        ec2_resource.create_instances(
+            ImageId=EXAMPLE_AMI_ID,
+            MinCount=1,
+            MaxCount=1,
+            NetworkInterfaces=[{"DeviceIndex": 0, "NetworkInterfaceId": eni.id}],
+        )[0]
 
         # EC2 client for this test class
         aws_provider = set_mocked_aws_provider(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
         ec2 = EC2(aws_provider)
-
         assert len(ec2.network_interfaces) == 1
-        assert ec2.network_interfaces[0].public_ip == eip["PublicIp"]
+        assert ec2.network_interfaces[0].association
+        assert ec2.network_interfaces[0].attachment
+        assert ec2.network_interfaces[0].id == eni.id
         assert ec2.network_interfaces[0].private_ip == eni.private_ip_address
-        assert ec2.network_interfaces[0].type == eni.interface_type
         assert ec2.network_interfaces[0].subnet_id == subnet.id
+        assert ec2.network_interfaces[0].type == eni.interface_type
         assert ec2.network_interfaces[0].vpc_id == vpc.id
         assert ec2.network_interfaces[0].region == AWS_REGION_US_EAST_1
         assert ec2.network_interfaces[0].tags == [
             {"Key": "string", "Value": "string"},
         ]
+        # Check if ENI was added to security group
+        for sg in ec2.security_groups:
+            if sg.id == eni.groups[0]["GroupId"]:
+                assert sg.network_interfaces == ec2.network_interfaces
 
     # Test EC2 Describe Images
     @mock_aws
