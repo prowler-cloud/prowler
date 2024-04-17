@@ -33,7 +33,7 @@ aws:
   # cloudtrail_multi_region_enabled
   cloudtrail_multi_region_enabled:
     TrailName: "DefaultTrail"
-    S3BucketName: "bck-dev"
+    S3BucketName: "my-cloudtrail-bucket"
     IsMultiRegionTrail: True
     EnableLogFileValidation: True
     # CloudWatchLogsLogGroupArn: "arn:aws:logs:us-east-1:123456789012:log-group:my-cloudtrail-log-group"
