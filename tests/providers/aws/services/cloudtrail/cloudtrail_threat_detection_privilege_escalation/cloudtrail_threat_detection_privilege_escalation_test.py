@@ -41,10 +41,10 @@ class Test_CloudTrail_Threat_Detection_Privilege_Escalation:
             "prowler.providers.common.common.get_global_provider",
             return_value=set_mocked_aws_provider(),
         ), mock.patch(
-            "prowler.providers.aws.services.cloudtrail.cloudtrail_client.cloudtrail_client",
+            "prowler.providers.aws.services.cloudtrail.cloudtrail_service.Cloudtrail",
             new=cloudtrail_client,
         ), mock.patch(
-            "prowler.providers.aws.services.cloudtrail.cloudtrail_service.Cloudtrail",
+            "prowler.providers.aws.services.cloudtrail.cloudtrail_client.cloudtrail_client",
             new=cloudtrail_client,
         ):
             # Test Check
@@ -94,10 +94,10 @@ class Test_CloudTrail_Threat_Detection_Privilege_Escalation:
             "prowler.providers.common.common.get_global_provider",
             return_value=set_mocked_aws_provider(),
         ), mock.patch(
-            "prowler.providers.aws.services.cloudtrail.cloudtrail_client.cloudtrail_client",
+            "prowler.providers.aws.services.cloudtrail.cloudtrail_service.Cloudtrail",
             new=cloudtrail_client,
         ), mock.patch(
-            "prowler.providers.aws.services.cloudtrail.cloudtrail_service.Cloudtrail",
+            "prowler.providers.aws.services.cloudtrail.cloudtrail_client.cloudtrail_client",
             new=cloudtrail_client,
         ):
             # Test Check
@@ -147,10 +147,10 @@ class Test_CloudTrail_Threat_Detection_Privilege_Escalation:
             "prowler.providers.common.common.get_global_provider",
             return_value=set_mocked_aws_provider(),
         ), mock.patch(
-            "prowler.providers.aws.services.cloudtrail.cloudtrail_client.cloudtrail_client",
+            "prowler.providers.aws.services.cloudtrail.cloudtrail_service.Cloudtrail",
             new=cloudtrail_client,
         ), mock.patch(
-            "prowler.providers.aws.services.cloudtrail.cloudtrail_service.Cloudtrail",
+            "prowler.providers.aws.services.cloudtrail.cloudtrail_client.cloudtrail_client",
             new=cloudtrail_client,
         ):
             # Test Check
@@ -200,10 +200,10 @@ class Test_CloudTrail_Threat_Detection_Privilege_Escalation:
             "prowler.providers.common.common.get_global_provider",
             return_value=set_mocked_aws_provider(),
         ), mock.patch(
-            "prowler.providers.aws.services.cloudtrail.cloudtrail_client.cloudtrail_client",
+            "prowler.providers.aws.services.cloudtrail.cloudtrail_service.Cloudtrail",
             new=cloudtrail_client,
         ), mock.patch(
-            "prowler.providers.aws.services.cloudtrail.cloudtrail_service.Cloudtrail",
+            "prowler.providers.aws.services.cloudtrail.cloudtrail_client.cloudtrail_client",
             new=cloudtrail_client,
         ):
             # Test Check
