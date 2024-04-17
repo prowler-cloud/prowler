@@ -19,15 +19,15 @@ def mock__get_trail_arn_template__(region=None, *_) -> str:
 def mock__get_lookup_events__(trail=None, event_name=None, minutes=None, *_) -> list:
     return [
         {
-            "CloudTrailEvent": '{"sourceIPAddress": "172.28.7.0/24", "eventName": "CreateLoginProfile"}'
+            "CloudTrailEvent": '{"sourceIPAddress": "172.28.7.0/24", "eventName": "DescribeAccessEntry"}'
         },
         {
-            "CloudTrailEvent": '{"sourceIPAddress": "172.28.7.0/24", "eventName": "UpdateLoginProfile"}'
+            "CloudTrailEvent": '{"sourceIPAddress": "172.28.7.0/24", "eventName": "DescribeAccountAttributes"}'
         },
     ]
 
 
-class Test_CloudTrail_Threat_Detection_Privilege_Escalation:
+class Test_Cloudtrail_Threat_Detection_Enumeration:
     @mock_aws
     def test_no_trails(self):
         cloudtrail_client = mock.MagicMock()
@@ -48,18 +48,17 @@ class Test_CloudTrail_Threat_Detection_Privilege_Escalation:
             new=cloudtrail_client,
         ):
             # Test Check
-            from prowler.providers.aws.services.cloudtrail.cloudtrail_threat_detection_privilege_escalation.cloudtrail_threat_detection_privilege_escalation import (
-                cloudtrail_threat_detection_privilege_escalation,
+            from prowler.providers.aws.services.cloudtrail.cloudtrail_threat_detection_enumeration.cloudtrail_threat_detection_enumeration import (
+                cloudtrail_threat_detection_enumeration,
             )
 
-            check = cloudtrail_threat_detection_privilege_escalation()
+            check = cloudtrail_threat_detection_enumeration()
             result = check.execute()
 
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert (
-                result[0].status_extended
-                == "No potential privilege escalation attack detected."
+                result[0].status_extended == "No potential enumeration attack detected."
             )
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
             assert result[0].region == AWS_REGION_US_EAST_1
@@ -69,8 +68,8 @@ class Test_CloudTrail_Threat_Detection_Privilege_Escalation:
             )
 
     @mock_aws
-    def test_no_potential_priviledge_escalation(self):
-        PRIVILEGE_ESCALATION_ACTIONS = []
+    def test_no_potential_enumeration(self):
+        ENUMERATION_ACTIONS = []
         THRESHOLD = 0.1
         THREAT_DETECTION_MINUTES = 1440
         cloudtrail_client = mock.MagicMock()
@@ -82,9 +81,9 @@ class Test_CloudTrail_Threat_Detection_Privilege_Escalation:
         cloudtrail_client.audited_account = AWS_ACCOUNT_NUMBER
         cloudtrail_client.region = AWS_REGION_US_EAST_1
         cloudtrail_client.audit_config = {
-            "threat_detection_privilege_escalation_actions": PRIVILEGE_ESCALATION_ACTIONS,
-            "threat_detection_privilege_escalation_threshold": THRESHOLD,
-            "threat_detection_privilege_escalation_minutes": THREAT_DETECTION_MINUTES,
+            "threat_detection_enumeration_actions": ENUMERATION_ACTIONS,
+            "threat_detection_enumeration_threshold": THRESHOLD,
+            "threat_detection_enumeration_minutes": THREAT_DETECTION_MINUTES,
         }
 
         cloudtrail_client.__lookup_events__ = mock__get_lookup_events__
@@ -101,18 +100,17 @@ class Test_CloudTrail_Threat_Detection_Privilege_Escalation:
             new=cloudtrail_client,
         ):
             # Test Check
-            from prowler.providers.aws.services.cloudtrail.cloudtrail_threat_detection_privilege_escalation.cloudtrail_threat_detection_privilege_escalation import (
-                cloudtrail_threat_detection_privilege_escalation,
+            from prowler.providers.aws.services.cloudtrail.cloudtrail_threat_detection_enumeration.cloudtrail_threat_detection_enumeration import (
+                cloudtrail_threat_detection_enumeration,
             )
 
-            check = cloudtrail_threat_detection_privilege_escalation()
+            check = cloudtrail_threat_detection_enumeration()
             result = check.execute()
 
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert (
-                result[0].status_extended
-                == "No potential privilege escalation attack detected."
+                result[0].status_extended == "No potential enumeration attack detected."
             )
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
             assert result[0].region == AWS_REGION_US_EAST_1
@@ -122,8 +120,8 @@ class Test_CloudTrail_Threat_Detection_Privilege_Escalation:
             )
 
     @mock_aws
-    def test_potential_priviledge_escalation(self):
-        PRIVILEGE_ESCALATION_ACTIONS = ["CreateLoginProfile", "UpdateLoginProfile"]
+    def test_potential_enumeration(self):
+        ENUMERATION_ACTIONS = ["DescribeAccessEntry", "DescribeAccountAttributes"]
         THRESHOLD = 0.1
         THREAT_DETECTION_MINUTES = 1440
         cloudtrail_client = mock.MagicMock()
@@ -135,9 +133,9 @@ class Test_CloudTrail_Threat_Detection_Privilege_Escalation:
         cloudtrail_client.audited_account = AWS_ACCOUNT_NUMBER
         cloudtrail_client.region = AWS_REGION_US_EAST_1
         cloudtrail_client.audit_config = {
-            "threat_detection_privilege_escalation_actions": PRIVILEGE_ESCALATION_ACTIONS,
-            "threat_detection_privilege_escalation_threshold": THRESHOLD,
-            "threat_detection_privilege_escalation_minutes": THREAT_DETECTION_MINUTES,
+            "threat_detection_enumeration_actions": ENUMERATION_ACTIONS,
+            "threat_detection_enumeration_threshold": THRESHOLD,
+            "threat_detection_enumeration_minutes": THREAT_DETECTION_MINUTES,
         }
 
         cloudtrail_client.__lookup_events__ = mock__get_lookup_events__
@@ -154,18 +152,18 @@ class Test_CloudTrail_Threat_Detection_Privilege_Escalation:
             new=cloudtrail_client,
         ):
             # Test Check
-            from prowler.providers.aws.services.cloudtrail.cloudtrail_threat_detection_privilege_escalation.cloudtrail_threat_detection_privilege_escalation import (
-                cloudtrail_threat_detection_privilege_escalation,
+            from prowler.providers.aws.services.cloudtrail.cloudtrail_threat_detection_enumeration.cloudtrail_threat_detection_enumeration import (
+                cloudtrail_threat_detection_enumeration,
             )
 
-            check = cloudtrail_threat_detection_privilege_escalation()
+            check = cloudtrail_threat_detection_enumeration()
             result = check.execute()
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "Potential privilege escalation attack detected from source IP 172.28.7.0/24 with an threshold of 1.0."
+                == "Potential enumeration attack detected from source IP 172.28.7.0/24 with an threshold of 1.0."
             )
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
             assert result[0].region == AWS_REGION_US_EAST_1
@@ -176,7 +174,7 @@ class Test_CloudTrail_Threat_Detection_Privilege_Escalation:
 
     @mock_aws
     def test_big_threshold(self):
-        PRIVILEGE_ESCALATION_ACTIONS = ["CreateLoginProfile", "UpdateLoginProfile"]
+        ENUMERATION_ACTIONS = ["DescribeAccessEntry", "DescribeAccountAttributes"]
         THRESHOLD = 2.0
         THREAT_DETECTION_MINUTES = 1440
         cloudtrail_client = mock.MagicMock()
@@ -188,9 +186,9 @@ class Test_CloudTrail_Threat_Detection_Privilege_Escalation:
         cloudtrail_client.audited_account = AWS_ACCOUNT_NUMBER
         cloudtrail_client.region = AWS_REGION_US_EAST_1
         cloudtrail_client.audit_config = {
-            "threat_detection_privilege_escalation_actions": PRIVILEGE_ESCALATION_ACTIONS,
-            "threat_detection_privilege_escalation_threshold": THRESHOLD,
-            "threat_detection_privilege_escalation_minutes": THREAT_DETECTION_MINUTES,
+            "threat_detection_enumeration_actions": ENUMERATION_ACTIONS,
+            "threat_detection_enumeration_threshold": THRESHOLD,
+            "threat_detection_enumeration_minutes": THREAT_DETECTION_MINUTES,
         }
 
         cloudtrail_client.__lookup_events__ = mock__get_lookup_events__
@@ -207,18 +205,17 @@ class Test_CloudTrail_Threat_Detection_Privilege_Escalation:
             new=cloudtrail_client,
         ):
             # Test Check
-            from prowler.providers.aws.services.cloudtrail.cloudtrail_threat_detection_privilege_escalation.cloudtrail_threat_detection_privilege_escalation import (
-                cloudtrail_threat_detection_privilege_escalation,
+            from prowler.providers.aws.services.cloudtrail.cloudtrail_threat_detection_enumeration.cloudtrail_threat_detection_enumeration import (
+                cloudtrail_threat_detection_enumeration,
             )
 
-            check = cloudtrail_threat_detection_privilege_escalation()
+            check = cloudtrail_threat_detection_enumeration()
             result = check.execute()
 
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert (
-                result[0].status_extended
-                == "No potential privilege escalation attack detected."
+                result[0].status_extended == "No potential enumeration attack detected."
             )
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
             assert result[0].region == AWS_REGION_US_EAST_1

@@ -32,10 +32,6 @@ class cloudtrail_threat_detection_privilege_escalation(Check):
             if not multiregion_trail
             else [multiregion_trail]
         )
-        print(cloudtrail_client.__lookup_events__)
-        print(cloudtrail_client.__get_trail_arn_template__)
-        print(cloudtrail_client.trails)
-        print(PRIVILEGE_ESCALATION_ACTIONS)
         for trail in trails_to_scan:
             for event_name in PRIVILEGE_ESCALATION_ACTIONS:
                 for event_log in cloudtrail_client.__lookup_events__(
@@ -43,7 +39,6 @@ class cloudtrail_threat_detection_privilege_escalation(Check):
                     event_name=event_name,
                     minutes=THREAT_DETECTION_MINUTES,
                 ):
-                    print(event_log)
                     event_log = json.loads(event_log["CloudTrailEvent"])
                     if ".amazonaws.com" not in event_log["sourceIPAddress"]:
                         if (
@@ -56,7 +51,6 @@ class cloudtrail_threat_detection_privilege_escalation(Check):
                         potential_privilege_escalation[
                             event_log["sourceIPAddress"]
                         ].add(event_name)
-        print(potential_privilege_escalation)
         for source_ip, actions in potential_privilege_escalation.items():
             ip_threshold = round(len(actions) / len(PRIVILEGE_ESCALATION_ACTIONS), 2)
             if len(actions) / len(PRIVILEGE_ESCALATION_ACTIONS) > THRESHOLD:
