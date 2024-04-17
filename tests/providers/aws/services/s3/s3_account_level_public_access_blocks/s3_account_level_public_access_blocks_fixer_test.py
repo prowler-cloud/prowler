@@ -12,7 +12,7 @@ from tests.providers.aws.utils import (
 class Test_s3_account_level_public_access_block_fixer:
     @mock_aws
     def test_bucket_account_public_block_fixer(self):
-        from prowler.providers.aws.services.s3.s3_service import S3, S3Control
+        from prowler.providers.aws.services.s3.s3_service import S3Control
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
