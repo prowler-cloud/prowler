@@ -422,33 +422,34 @@ class IAM(AWSService):
     def __list_attached_role_policies__(self):
         logger.info("IAM - List Attached User Policies...")
         try:
-            for role in self.roles:
-                try:
-                    attached_role_policies = []
-                    list_attached_role_policies_paginator = self.client.get_paginator(
-                        "list_attached_role_policies"
-                    )
-                    for page in list_attached_role_policies_paginator.paginate(
-                        RoleName=role.name
-                    ):
-                        for policy in page["AttachedPolicies"]:
-                            attached_role_policies.append(policy)
-
-                    role.attached_policies = attached_role_policies
-                except ClientError as error:
-                    if error.response["Error"]["Code"] == "NoSuchEntity":
-                        logger.warning(
-                            f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            if self.roles:
+                for role in self.roles:
+                    try:
+                        attached_role_policies = []
+                        list_attached_role_policies_paginator = (
+                            self.client.get_paginator("list_attached_role_policies")
                         )
-                    else:
+                        for page in list_attached_role_policies_paginator.paginate(
+                            RoleName=role.name
+                        ):
+                            for policy in page["AttachedPolicies"]:
+                                attached_role_policies.append(policy)
+
+                        role.attached_policies = attached_role_policies
+                    except ClientError as error:
+                        if error.response["Error"]["Code"] == "NoSuchEntity":
+                            logger.warning(
+                                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                            )
+                        else:
+                            logger.error(
+                                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                            )
+
+                    except Exception as error:
                         logger.error(
                             f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                         )
-
-                except Exception as error:
-                    logger.error(
-                        f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                    )
 
         except Exception as error:
             logger.error(
@@ -575,65 +576,66 @@ class IAM(AWSService):
 
     def __list_inline_role_policies__(self):
         logger.info("IAM - List Inline Role Policies...")
-        for role in self.roles:
-            try:
-                inline_role_policies = []
-                get_role_inline_policies_paginator = self.client.get_paginator(
-                    "list_role_policies"
-                )
-                for page in get_role_inline_policies_paginator.paginate(
-                    RoleName=role.name
-                ):
-                    for policy in page["PolicyNames"]:
-                        try:
-                            inline_role_policies.append(policy)
-                            # Get inline policies & their policy documents here:
-                            inline_policy = self.client.get_role_policy(
-                                RoleName=role.name, PolicyName=policy
-                            )
-                            inline_role_policy_doc = inline_policy["PolicyDocument"]
-                            self.policies.append(
-                                Policy(
-                                    name=policy,
-                                    arn=role.arn,
-                                    entity=role.name,
-                                    type="Inline",
-                                    attached=True,
-                                    version_id="v1",
-                                    document=inline_role_policy_doc,
+        if self.roles:
+            for role in self.roles:
+                try:
+                    inline_role_policies = []
+                    get_role_inline_policies_paginator = self.client.get_paginator(
+                        "list_role_policies"
+                    )
+                    for page in get_role_inline_policies_paginator.paginate(
+                        RoleName=role.name
+                    ):
+                        for policy in page["PolicyNames"]:
+                            try:
+                                inline_role_policies.append(policy)
+                                # Get inline policies & their policy documents here:
+                                inline_policy = self.client.get_role_policy(
+                                    RoleName=role.name, PolicyName=policy
                                 )
-                            )
-                        except ClientError as error:
-                            if error.response["Error"]["Code"] == "NoSuchEntity":
-                                logger.warning(
-                                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                                inline_role_policy_doc = inline_policy["PolicyDocument"]
+                                self.policies.append(
+                                    Policy(
+                                        name=policy,
+                                        arn=role.arn,
+                                        entity=role.name,
+                                        type="Inline",
+                                        attached=True,
+                                        version_id="v1",
+                                        document=inline_role_policy_doc,
+                                    )
                                 )
-                            else:
+                            except ClientError as error:
+                                if error.response["Error"]["Code"] == "NoSuchEntity":
+                                    logger.warning(
+                                        f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                                    )
+                                else:
+                                    logger.error(
+                                        f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                                    )
+
+                            except Exception as error:
                                 logger.error(
                                     f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                                 )
 
-                        except Exception as error:
-                            logger.error(
-                                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                            )
+                    role.inline_policies = inline_role_policies
 
-                role.inline_policies = inline_role_policies
+                except ClientError as error:
+                    if error.response["Error"]["Code"] == "NoSuchEntity":
+                        logger.warning(
+                            f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
+                    else:
+                        logger.error(
+                            f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
 
-            except ClientError as error:
-                if error.response["Error"]["Code"] == "NoSuchEntity":
-                    logger.warning(
-                        f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                    )
-                else:
+                except Exception as error:
                     logger.error(
                         f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
-
-            except Exception as error:
-                logger.error(
-                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                )
 
     def __list_entities_role_for_policy__(self, policy_arn):
         logger.info("IAM - List Entities Role For Policy...")
@@ -755,21 +757,24 @@ class IAM(AWSService):
     def __list_tags_for_resource__(self):
         logger.info("IAM - List Tags...")
         try:
-            for role in self.roles:
-                try:
-                    response = self.client.list_role_tags(RoleName=role.name)["Tags"]
-                    role.tags = response
-                except ClientError as error:
-                    if error.response["Error"]["Code"] == "NoSuchEntity":
-                        role.tags = []
-                    else:
+            if self.roles:
+                for role in self.roles:
+                    try:
+                        response = self.client.list_role_tags(RoleName=role.name)[
+                            "Tags"
+                        ]
+                        role.tags = response
+                    except ClientError as error:
+                        if error.response["Error"]["Code"] == "NoSuchEntity":
+                            role.tags = []
+                        else:
+                            logger.error(
+                                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                            )
+                    except Exception as error:
                         logger.error(
                             f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                         )
-                except Exception as error:
-                    logger.error(
-                        f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                    )
 
         except Exception as error:
             logger.error(
