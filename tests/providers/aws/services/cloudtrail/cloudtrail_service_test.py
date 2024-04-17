@@ -251,3 +251,54 @@ class Test_Cloudtrail_Service:
                         trail.data_events[0].event_selector == data_events_response[0]
                     )
                     assert trail.data_events[0].is_advanced
+
+    @mock_aws
+    def test__lookup_events__(self):
+        cloudtrail_client_us_east_1 = client(
+            "cloudtrail", region_name=AWS_REGION_US_EAST_1
+        )
+        s3_client_us_east_1 = client("s3", region_name=AWS_REGION_US_EAST_1)
+        trail_name_us = "trail_test_us"
+        bucket_name_us = "bucket_test_us"
+        s3_client_us_east_1.create_bucket(Bucket=bucket_name_us)
+        cloudtrail_client_us_east_1.create_trail(
+            Name=trail_name_us,
+            S3BucketName=bucket_name_us,
+            IsMultiRegionTrail=False,
+            EnableLogFileValidation=True,
+        )
+        cloudtrail_client_us_east_1.start_logging(Name=trail_name_us)
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
+        )
+        cloudtrail = Cloudtrail(aws_provider)
+        assert len(cloudtrail.trails) == len(aws_provider.identity.audited_regions)
+
+    @mock_aws
+    def test__list_tags_for_resource__(self):
+        tag = "test-tag"
+        cloudtrail_client_us_east_1 = client(
+            "cloudtrail", region_name=AWS_REGION_US_EAST_1
+        )
+        s3_client_us_east_1 = client("s3", region_name=AWS_REGION_US_EAST_1)
+        trail_name_us = "trail_test_us"
+        bucket_name_us = "bucket_test_us"
+        s3_client_us_east_1.create_bucket(Bucket=bucket_name_us)
+        cloudtrail_client_us_east_1.create_trail(
+            Name=trail_name_us,
+            S3BucketName=bucket_name_us,
+            IsMultiRegionTrail=False,
+            EnableLogFileValidation=True,
+            TagsList=[
+                {"Key": "test", "Value": tag},
+            ],
+        )
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
+        )
+        cloudtrail = Cloudtrail(aws_provider)
+        assert len(cloudtrail.trails) == len(aws_provider.identity.audited_regions)
+        for trail in cloudtrail.trails.values():
+            if trail.name:
+                if trail.name == trail_name_us:
+                    assert trail.tags == [{"Key": "test", "Value": tag}]
