@@ -22,7 +22,7 @@ class Test_kms_cmk_rotation_enabled_fixer:
             "prowler.providers.common.common.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.kms.kms_cmk_rotation_enabled.kms_cmk_rotation_enabled.kms_client",
+            "prowler.providers.aws.services.kms.kms_cmk_rotation_enabled.kms_cmk_rotation_enabled_fixer.kms_client",
             new=KMS(aws_provider),
         ):
             # Test Check

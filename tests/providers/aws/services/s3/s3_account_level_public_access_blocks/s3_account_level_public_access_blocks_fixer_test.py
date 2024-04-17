@@ -20,10 +20,10 @@ class Test_s3_account_level_public_access_block_fixer:
             "prowler.providers.common.common.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.s3.s3_account_level_public_access_blocks.s3_account_level_public_access_blocks.s3_client",
+            "prowler.providers.aws.services.s3.s3_account_level_public_access_blocks.s3_account_level_public_access_blocks_fixer.s3_client",
             new=S3(aws_provider),
         ), mock.patch(
-            "prowler.providers.aws.services.s3.s3_account_level_public_access_blocks.s3_account_level_public_access_blocks.s3control_client",
+            "prowler.providers.aws.services.s3.s3_account_level_public_access_blocks.s3_account_level_public_access_blocks_fixer.s3control_client",
             new=S3Control(aws_provider),
         ):
             from prowler.providers.aws.services.s3.s3_account_level_public_access_blocks.s3_account_level_public_access_blocks_fixer import (

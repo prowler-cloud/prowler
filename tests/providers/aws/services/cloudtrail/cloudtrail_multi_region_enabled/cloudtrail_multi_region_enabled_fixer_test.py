@@ -33,7 +33,7 @@ class Test_cloudtrail_multi_region_enabled_fixer:
             return_value=aws_provider,
         ):
             with mock.patch(
-                "prowler.providers.aws.services.cloudtrail.cloudtrail_multi_region_enabled.cloudtrail_multi_region_enabled.cloudtrail_client",
+                "prowler.providers.aws.services.cloudtrail.cloudtrail_multi_region_enabled.cloudtrail_multi_region_enabled_fixer.cloudtrail_client",
                 new=Cloudtrail(aws_provider),
             ):
                 # Test Check
