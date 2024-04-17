@@ -10,8 +10,7 @@ class awslambda_function_not_directly_publicly_accessible_via_elbv2(Check):
         if awslambda_client.functions:
             public_lambda_functions = {}
             for target_group in elbv2_client.target_groups:
-                if target_group.target_type == "lambda":
-                    print(target_group)
+                if target_group.public and target_group.target_type == "lambda":
                     public_lambda_functions[target_group.target] = target_group.arn
 
             for function in awslambda_client.functions.values():

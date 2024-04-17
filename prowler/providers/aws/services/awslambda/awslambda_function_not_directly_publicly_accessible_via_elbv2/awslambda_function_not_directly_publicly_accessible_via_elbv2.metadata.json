@@ -14,9 +14,9 @@
   "Remediation": {
     "Code": {
       "CLI": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Lambda/function-exposed.html",
-      "NativeIaC": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Lambda/function-exposed.html",
+      "NativeIaC": "",
       "Other": "",
-      "Terraform": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Lambda/function-exposed.html"
+      "Terraform": ""
     },
     "Recommendation": {
       "Text": "Place security groups around public load balancers",

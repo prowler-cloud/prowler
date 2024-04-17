@@ -10,7 +10,7 @@ class ec2_instance_not_directly_publicly_accessible_via_elbv2(Check):
             public_instances = {}
 
             for tg in elbv2_client.target_groups:
-                if tg.target_type == "instance":
+                if tg.public and tg.target_type == "instance":
                     public_instances[tg.target] = tg.arn
 
             for instance in ec2_client.instances:
