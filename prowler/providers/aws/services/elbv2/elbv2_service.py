@@ -59,41 +59,32 @@ class ELBv2(AWSService):
         try:
             for lb in self.loadbalancersv2:
                 try:
-                    if (
-                        lb.scheme == "internet-facing"
-                        and lb.type == "application"
-                        and len(lb.security_groups) > 0
+                    describe_target_groups_paginator = regional_client.get_paginator(
+                        "describe_target_groups"
+                    )
+                    for page in describe_target_groups_paginator.paginate(
+                        LoadBalancerArn=lb.arn
                     ):
-                        describe_target_groups_paginator = (
-                            regional_client.get_paginator("describe_target_groups")
-                        )
-                        for page in describe_target_groups_paginator.paginate(
-                            LoadBalancerArn=lb.arn
-                        ):
-                            for target_group in page["TargetGroups"]:
-                                for (
-                                    target_health
-                                ) in regional_client.describe_target_health(
-                                    TargetGroupArn=target_group["TargetGroupArn"]
-                                )[
-                                    "TargetHealthDescriptions"
-                                ]:
-                                    tg = TargetGroups(
-                                        name=target_group["TargetGroupName"],
-                                        arn=target_group["TargetGroupArn"],
-                                        target_type=target_group["TargetType"],
-                                        target=target_health["Target"]["Id"],
-                                        public=(
-                                            True
-                                            if lb.scheme == "internet-facing"
-                                            and lb.type == "application"
-                                            and len(lb.security_groups) > 0
-                                            else False
-                                        ),
-                                    )
-                                    if "DNSName" in lb:
-                                        tg.lbdns = lb.dns
-                                    self.target_groups.append(tg)
+                        for target_group in page["TargetGroups"]:
+                            for target_health in regional_client.describe_target_health(
+                                TargetGroupArn=target_group["TargetGroupArn"]
+                            )["TargetHealthDescriptions"]:
+                                tg = TargetGroups(
+                                    name=target_group["TargetGroupName"],
+                                    arn=target_group["TargetGroupArn"],
+                                    target_type=target_group["TargetType"],
+                                    target=target_health["Target"]["Id"],
+                                    public=(
+                                        True
+                                        if lb.scheme == "internet-facing"
+                                        and lb.type == "application"
+                                        and len(lb.security_groups) > 0
+                                        else False
+                                    ),
+                                )
+                                if "DNSName" in lb:
+                                    tg.lbdns = lb.dns
+                                self.target_groups.append(tg)
                 except ClientError as error:
                     if error.response["Error"]["Code"] == "LoadBalancerNotFound":
                         logger.warning(
