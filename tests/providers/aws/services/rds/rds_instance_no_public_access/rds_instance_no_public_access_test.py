@@ -178,7 +178,7 @@ class Test_rds_instance_no_public_access:
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         aws_provider.audit_metadata.expected_checks = [
-            "ec2_securitygroup_allow_ingress_from_internet_to_any_port"
+            "ec2_securitygroup_allow_ingress_from_internet_to_all_ports"
         ]
 
         with mock.patch(
