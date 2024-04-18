@@ -17,7 +17,6 @@ from prowler.config.config import (
 )
 from prowler.lib.check.check import list_modules, recover_checks_from_service
 from prowler.lib.logger import logger
-from prowler.lib.mutelist.mutelist import parse_mutelist_file
 from prowler.lib.utils.utils import open_file, parse_json_file, print_boxes
 from prowler.providers.aws.config import (
     AWS_STS_GLOBAL_ENDPOINT_REGION,
@@ -54,7 +53,6 @@ class AwsProvider(Provider):
     _audit_config: dict
     _scan_unused_services: bool = False
     _enabled_regions: set = set()
-    _mutelist: dict = {}
     _output_options: AWSOutputOptions
     # TODO: this is not optional, enforce for all providers
     audit_metadata: Audit_Metadata
@@ -283,20 +281,6 @@ class AwsProvider(Provider):
         self._output_options = AWSOutputOptions(
             arguments, bulk_checks_metadata, self._identity
         )
-
-    @property
-    def mutelist(self):
-        return self._mutelist
-
-    @mutelist.setter
-    def mutelist(self, mutelist_path):
-        if mutelist_path:
-            mutelist = parse_mutelist_file(
-                mutelist_path, self._session.current_session, self._identity.account
-            )
-        else:
-            mutelist = {}
-        self._mutelist = mutelist
 
     @property
     def get_output_mapping(self):

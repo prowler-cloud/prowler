@@ -70,10 +70,11 @@ def get_default_mute_file_path(provider: str):
     """
     get_default_mute_file_path returns the default mute file path for the provider
     """
-    # TODO: crate default mutelist file for kubernetes, azure and gcp
-    if provider == "aws":
-        return f"{pathlib.Path(os.path.dirname(os.path.realpath(__file__)))}/{provider}_mutelist.yaml"
-    return None
+    # TODO: create default mutelist file for kubernetes, azure and gcp
+    mutelist_path = f"{pathlib.Path(os.path.dirname(os.path.realpath(__file__)))}/{provider}_mutelist.yaml"
+    if not os.path.isfile(mutelist_path):
+        mutelist_path = None
+    return mutelist_path
 
 
 def check_current_version():

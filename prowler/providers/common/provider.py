@@ -1,6 +1,9 @@
 from abc import ABC, abstractmethod
 from typing import Any
 
+from prowler.config.config import get_default_mute_file_path
+from prowler.lib.mutelist.mutelist import parse_mutelist_file
+
 # TODO: with this we can enforce that all classes ending with "Provider" needs to inherint from the Provider class
 # class ProviderMeta:
 #     def __init__(cls, name, bases, dct):
@@ -15,6 +18,8 @@ from typing import Any
 
 # TODO: enforce audit_metadata for all the providers
 class Provider(ABC):
+    _mutelist: dict
+    _mutelist_file_path: str
     """
     The Provider class is an abstract base class that defines the interface for all provider classes in the auditing system.
 
@@ -142,21 +147,31 @@ class Provider(ABC):
         return set()
 
     @property
-    @abstractmethod
     def mutelist(self):
         """
         mutelist method returns the provider's mutelist.
-
-        This method needs to be created in each provider.
         """
-        raise NotImplementedError()
+        return self._mutelist
+
+    @property
+    def mutelist_file_path(self):
+        """
+        mutelist method returns the provider's mutelist file path.
+        """
+        return self._mutelist_file_path
 
     @mutelist.setter
-    @abstractmethod
-    def mutelist(self, path: str):
+    def mutelist(self, mutelist_path):
         """
         mutelist.setter sets the provider's mutelist.
-
-        This method needs to be created in each provider.
         """
-        raise NotImplementedError()
+        # Set default mutelist path if none is set
+        if not mutelist_path:
+            mutelist_path = get_default_mute_file_path(self.type)
+        if mutelist_path:
+            mutelist = parse_mutelist_file(mutelist_path)
+        else:
+            mutelist = {}
+
+        self._mutelist = mutelist
+        self._mutelist_file_path = mutelist_path
