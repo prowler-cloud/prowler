@@ -62,6 +62,7 @@ def set_mocked_aws_provider(
     expected_checks: list[str] = [],
     profile_region: str = None,
     audit_config: dict = {},
+    fixer_config: dict = {},
     scan_unused_services: bool = True,
     audit_session: session.Session = session.Session(
         profile_name=None,
@@ -108,6 +109,7 @@ def set_mocked_aws_provider(
     provider._organizations_metadata = None
     provider._audit_resources = []
     provider._audit_config = audit_config
+    provider._fixer_config = fixer_config
     provider.audit_metadata = Audit_Metadata(
         services_scanned=0,
         expected_checks=expected_checks,

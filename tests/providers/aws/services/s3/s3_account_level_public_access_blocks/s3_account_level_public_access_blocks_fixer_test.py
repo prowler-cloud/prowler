@@ -12,7 +12,7 @@ from tests.providers.aws.utils import (
 class Test_s3_account_level_public_access_block_fixer:
     @mock_aws
     def test_bucket_account_public_block_fixer(self):
-        from prowler.providers.aws.services.s3.s3_service import S3, S3Control
+        from prowler.providers.aws.services.s3.s3_service import S3Control
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
@@ -20,10 +20,7 @@ class Test_s3_account_level_public_access_block_fixer:
             "prowler.providers.common.common.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.s3.s3_account_level_public_access_blocks.s3_account_level_public_access_blocks.s3_client",
-            new=S3(aws_provider),
-        ), mock.patch(
-            "prowler.providers.aws.services.s3.s3_account_level_public_access_blocks.s3_account_level_public_access_blocks.s3control_client",
+            "prowler.providers.aws.services.s3.s3_account_level_public_access_blocks.s3_account_level_public_access_blocks_fixer.s3control_client",
             new=S3Control(aws_provider),
         ):
             from prowler.providers.aws.services.s3.s3_account_level_public_access_blocks.s3_account_level_public_access_blocks_fixer import (
