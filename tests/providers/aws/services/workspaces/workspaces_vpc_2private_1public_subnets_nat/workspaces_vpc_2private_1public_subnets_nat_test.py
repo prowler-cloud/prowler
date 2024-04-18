@@ -1,7 +1,7 @@
 from unittest import mock
 from uuid import uuid4
 
-from boto3 import client
+from boto3 import client, resource
 from moto import mock_aws
 
 from prowler.providers.aws.services.vpc.vpc_service import VPC
@@ -343,17 +343,16 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
     def test_workspaces_vpc_two_private_subnet_one_public_and_nat(self):
         # EC2 Client
         ec2_client = client("ec2", region_name=AWS_REGION_EU_WEST_1)
-        vpc = ec2_client.create_vpc(
-            CidrBlock="172.28.7.0/24", InstanceTenancy="default"
-        )
+        ec2 = resource("ec2", region_name=AWS_REGION_EU_WEST_1)
+        vpc = ec2.create_vpc(CidrBlock="172.28.7.0/24", InstanceTenancy="default")
         # VPC Private
         subnet_private = ec2_client.create_subnet(
-            VpcId=vpc["Vpc"]["VpcId"],
+            VpcId=vpc.id,
             CidrBlock="172.28.7.0/26",
             AvailabilityZone=f"{AWS_REGION_EU_WEST_1}a",
         )
         route_table_private = ec2_client.create_route_table(
-            VpcId=vpc["Vpc"]["VpcId"],
+            VpcId=vpc.id,
         )
         ec2_client.create_route(
             DestinationCidrBlock="10.10.10.0",
@@ -365,12 +364,12 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
         )
         # VPC Private 2
         subnet_private_2 = ec2_client.create_subnet(
-            VpcId=vpc["Vpc"]["VpcId"],
+            VpcId=vpc.id,
             CidrBlock="172.28.7.64/26",
             AvailabilityZone=f"{AWS_REGION_EU_WEST_1}a",
         )
         route_table_private_2 = ec2_client.create_route_table(
-            VpcId=vpc["Vpc"]["VpcId"],
+            VpcId=vpc.id,
         )
         ec2_client.create_route(
             DestinationCidrBlock="10.10.10.0",
@@ -389,23 +388,17 @@ class Test_workspaces_vpc_2private_1public_subnets_nat:
             RouteTableId=route_table_private_2["RouteTable"]["RouteTableId"],
         )
         # VPC Public
-        subnet_public = ec2_client.create_subnet(
-            VpcId=vpc["Vpc"]["VpcId"],
-            CidrBlock="172.28.7.192/26",
-            AvailabilityZone=f"{AWS_REGION_EU_WEST_1}a",
-        )
-        route_table_public = ec2_client.create_route_table(
-            VpcId=vpc["Vpc"]["VpcId"],
-        )
-        igw = ec2_client.create_internet_gateway()
+        subnet_public = ec2.create_subnet(VpcId=vpc.id, CidrBlock="172.28.7.128/25")
+        # Create IGW and attach to VPC
+        igw = ec2.create_internet_gateway()
+        vpc.attach_internet_gateway(InternetGatewayId=igw.id)
+        # Set IGW as default route for public subnet
+        route_table = ec2.create_route_table(VpcId=vpc.id)
+        route_table.associate_with_subnet(SubnetId=subnet_public.id)
         ec2_client.create_route(
-            DestinationCidrBlock="0.0.0.0",
-            RouteTableId=route_table_public["RouteTable"]["RouteTableId"],
-            GatewayId=igw["InternetGateway"]["InternetGatewayId"],
-        )
-        ec2_client.associate_route_table(
-            RouteTableId=route_table_public["RouteTable"]["RouteTableId"],
-            SubnetId=subnet_public["Subnet"]["SubnetId"],
+            RouteTableId=route_table.id,
+            DestinationCidrBlock="0.0.0.0/0",
+            GatewayId=igw.id,
         )
         # Workspace Mock
         workspaces_client = mock.MagicMock
