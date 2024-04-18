@@ -40,6 +40,8 @@ class EC2(AWSService):
         self.__threading_call__(self.__describe_ec2_addresses__)
         self.ebs_block_public_access_snapshots_state = []
         self.__threading_call__(self.__get_snapshot_block_public_access_state__)
+        self.instance_metadata_defaults = []
+        self.__threading_call__(self.__get_instance_metadata_defaults__)
 
     def __get_volume_arn_template__(self, region):
         return (
@@ -429,6 +431,30 @@ class EC2(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def __get_instance_metadata_defaults__(self, regional_client):
+        try:
+            instances_in_region = False
+            for instance in self.instances:
+                if instance.region == regional_client.region:
+                    instances_in_region = True
+            self.instance_metadata_defaults.append(
+                InstanceMetadataDefaults(
+                    http_tokens=getattr(
+                        regional_client.get_instance_metadata_defaults()[
+                            "AccountLevel"
+                        ],
+                        "HttpTokens",
+                        None,
+                    ),
+                    instances=instances_in_region,
+                    region=regional_client.region,
+                )
+            )
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
 
 class Instance(BaseModel):
     id: str
@@ -530,4 +556,10 @@ class EbsEncryptionByDefault(BaseModel):
 class EbsSnapshotBlockPublicAccess(BaseModel):
     status: str
     snapshots: bool
+    region: str
+
+
+class InstanceMetadataDefaults(BaseModel):
+    http_tokens: Optional[str]
+    instances: bool
     region: str

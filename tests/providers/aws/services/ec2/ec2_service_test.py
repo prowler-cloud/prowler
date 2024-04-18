@@ -3,6 +3,8 @@ import re
 from base64 import b64decode
 from datetime import datetime
 
+import botocore
+import mock
 from boto3 import client, resource
 from dateutil.tz import tzutc
 from freezegun import freeze_time
@@ -18,6 +20,18 @@ from tests.providers.aws.utils import (
 
 EXAMPLE_AMI_ID = "ami-12c6146b"
 MOCK_DATETIME = datetime(2023, 1, 4, 7, 27, 30, tzinfo=tzutc())
+
+orig = botocore.client.BaseClient._make_api_call
+
+
+def mock_make_api_call(self, operation_name, kwarg):
+    if operation_name == "GetSnapshotBlockPublicAccess":
+        return {
+            "SnapshotBlockPublicAccess": {
+                "BlockPublicPolicy": True,
+                "Status": "block-all",
+            }
+        }
 
 
 class Test_EC2_Service:
@@ -337,23 +351,46 @@ class Test_EC2_Service:
                 assert result.status
 
     # Test EC2 get_snapshot_block_public_access_state
-    @mock_aws
     def test__get_snapshot_block_public_access_state__(self):
-        ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
-        ec2_client.enable_snapshot_block_public_access(
-            State="block-all-sharing", DryRun=True
+        # EC2 client for this test class
+        mocked_ec2_client = mock.MagicMock()
+        from prowler.providers.aws.services.ec2.ec2_service import (
+            EbsSnapshotBlockPublicAccess,
         )
 
-        # EC2 client for this test class
+        mocked_ec2_client.ebs_block_public_access_snapshots_state = [
+            EbsSnapshotBlockPublicAccess(
+                region=AWS_REGION_US_EAST_1,
+                status="block-all-sharing",
+                snapshots=True,
+            ),
+            EbsSnapshotBlockPublicAccess(
+                region=AWS_REGION_EU_WEST_1, status="block-all-sharing", snapshots=True
+            ),
+        ]
         aws_provider = set_mocked_aws_provider(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
         ec2 = EC2(aws_provider)
 
-        assert len(ec2.ebs_block_public_access_snapshots_state) == 2
-        for result in ec2.ebs_block_public_access_snapshots_state:
-            if result.region == AWS_REGION_US_EAST_1:
-                assert result.status == "block-all-sharing"
+        with mock.patch(
+            "prowler.providers.aws.services.ec2.ec2_service.EC2",
+            new=mocked_ec2_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.ec2.ec2_client.ec2_client",
+            new=mocked_ec2_client,
+        ):
+            ec2 = EC2(aws_provider)
+            assert len(ec2.ebs_block_public_access_snapshots_state) == 2
+            assert (
+                ec2.ebs_block_public_access_snapshots_state[0].region
+                == AWS_REGION_US_EAST_1
+            )
+            assert (
+                ec2.ebs_block_public_access_snapshots_state[0].status
+                == "block-all-sharing"
+            )
+            assert ec2.ebs_block_public_access_snapshots_state[0].snapshots
 
     # Test EC2 Describe Addresses
     @mock_aws
