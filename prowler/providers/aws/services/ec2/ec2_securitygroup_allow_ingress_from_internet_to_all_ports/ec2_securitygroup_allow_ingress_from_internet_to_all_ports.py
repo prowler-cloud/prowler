@@ -3,7 +3,7 @@ from prowler.providers.aws.services.ec2.ec2_client import ec2_client
 from prowler.providers.aws.services.vpc.vpc_client import vpc_client
 
 
-class ec2_securitygroup_allow_ingress_from_internet_to_any_port(Check):
+class ec2_securitygroup_allow_ingress_from_internet_to_all_ports(Check):
     def execute(self):
         findings = []
         for security_group in ec2_client.security_groups:

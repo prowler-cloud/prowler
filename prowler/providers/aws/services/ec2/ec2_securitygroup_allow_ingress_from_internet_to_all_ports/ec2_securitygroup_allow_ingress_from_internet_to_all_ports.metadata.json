@@ -1,9 +1,12 @@
 {
   "Provider": "aws",
-  "CheckID": "ec2_securitygroup_allow_ingress_from_internet_to_any_port",
+  "CheckID": "ec2_securitygroup_allow_ingress_from_internet_to_all_ports",
   "CheckTitle": "Ensure no security groups allow ingress from 0.0.0.0/0 or ::/0 to any port.",
   "CheckType": [
     "Infrastructure Security"
+  ],
+  "CheckAliases": [
+    "ec2_securitygroup_allow_ingress_from_internet_to_any_port"
   ],
   "ServiceName": "ec2",
   "SubServiceName": "securitygroup",
