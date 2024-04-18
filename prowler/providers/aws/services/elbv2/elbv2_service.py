@@ -295,4 +295,5 @@ class TargetGroups(BaseModel):
     arn: str
     target_type: str
     target: str
+    public: bool
     lbdns: Optional[str]
