@@ -936,7 +936,12 @@ def filter_data(
 
         table = dash_table.DataTable(
             data=table_data.to_dict("records"),
-            style_data={"whiteSpace": "normal", "height": "auto", "color": "black"},
+            style_data={
+                "whiteSpace": "normal",
+                "height": "auto",
+                "color": "black",
+                "fontFamily": "sans-serif",
+            },
             columns=[
                 {
                     "name": "Check ID - Resource UID",
@@ -960,6 +965,7 @@ def filter_data(
                 "fontWeight": "bold",
                 "layout": "fixed",
                 "backgroundColor": "rgb(41,37,36)",
+                "fontFamily": "sans-serif",
             },
             page_size=table_row_values,
             style_data_conditional=[
@@ -1063,7 +1069,11 @@ def filter_data(
             style_as_list_view=True,
             filter_action="native",
             filter_options={"placeholder_text": "🔍"},
-            style_filter={"background-color": "#3e403f", "color": "white"},
+            style_filter={
+                "background-color": "#3e403f",
+                "color": "white",
+                "fontFamily": "sans-serif",
+            },
         )
 
     # Status Graphic
