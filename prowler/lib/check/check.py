@@ -735,6 +735,11 @@ def execute(
                 )
             except Exception:
                 sys.exit(1)
+    except ModuleNotFoundError:
+        logger.error(
+            f"Check '{check_name}' was not found for the {global_provider.type.upper()} provider"
+        )
+        check_findings = []
     except Exception as error:
         logger.error(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
