@@ -27,3 +27,6 @@ informational_color = "#3274d9"
 # Folder output path
 folder_path_overview = os.getcwd() + "/output"
 folder_path_compliance = os.getcwd() + "/output/compliance"
+
+# Encoding
+encoding_format = "utf-8"
