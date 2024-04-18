@@ -23,7 +23,7 @@ class network_http_internet_access_restricted(Check):
                             and int(rule.destination_port_range.split("-")[1]) >= 80
                         )
                     )
-                    and rule.protocol in ["TCP", "*"]
+                    and rule.protocol in ["TCP", "Tcp", "*"]
                     and rule.source_address_prefix in ["Internet", "*", "0.0.0.0/0"]
                     and rule.access == "Allow"
                     and rule.direction == "Inbound"
