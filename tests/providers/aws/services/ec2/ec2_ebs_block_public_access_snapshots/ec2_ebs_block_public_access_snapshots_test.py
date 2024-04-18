@@ -4,33 +4,33 @@ from moto import mock_aws
 
 from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
-    AWS_REGION_EU_WEST_1,
     AWS_REGION_US_EAST_1,
     set_mocked_aws_provider,
 )
 
 
-def mock__get_snapshot_block_public_access_state__(status):
-    return [
-        mock.MagicMock(region=AWS_REGION_US_EAST_1, status=status),
-    ]
-
-
 class Test_ec2_ebs_block_public_access_snapshots:
     @mock_aws
     def test_ec2_ebs_block_public_access_state_unblocked(self):
-        from prowler.providers.aws.services.ec2.ec2_service import EC2
-
-        aws_provider = set_mocked_aws_provider(
-            [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
+        from prowler.providers.aws.services.ec2.ec2_service import (
+            EbsSnapshotBlockPublicAccess,
         )
+
+        ec2_client = mock.MagicMock()
+        ec2_client.ebs_block_public_access_snapshots_state = [
+            EbsSnapshotBlockPublicAccess(
+                status="unblocked", snapshots=True, region=AWS_REGION_US_EAST_1
+            )
+        ]
+        ec2_client.audited_account = AWS_ACCOUNT_NUMBER
+        ec2_client.region = AWS_REGION_US_EAST_1
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=aws_provider,
+            return_value=set_mocked_aws_provider(),
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_ebs_block_public_access_snapshots.ec2_ebs_block_public_access_snapshots.ec2_client",
-            new=EC2(aws_provider),
+            new=ec2_client,
         ):
             # Test Check
             from prowler.providers.aws.services.ec2.ec2_ebs_block_public_access_snapshots.ec2_ebs_block_public_access_snapshots import (
@@ -38,30 +38,100 @@ class Test_ec2_ebs_block_public_access_snapshots:
             )
 
             check = ec2_ebs_block_public_access_snapshots()
-            results = check.execute()
+            result = check.execute()
 
-            # One result per region
-            assert len(results) == 2
-            for result in results:
-                if result.region == AWS_REGION_US_EAST_1:
-                    assert result.status == "FAIL"
-                    assert (
-                        result.status_extended
-                        == "EBS Default Encryption is not activated."
-                    )
-                    assert result.resource_id == AWS_ACCOUNT_NUMBER
-                    assert (
-                        result.resource_arn
-                        == f"arn:aws:ec2:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:volume"
-                    )
-                if result.region == AWS_REGION_EU_WEST_1:
-                    assert result.status == "FAIL"
-                    assert (
-                        result.status_extended
-                        == "EBS Default Encryption is not activated."
-                    )
-                    assert result.resource_id == AWS_ACCOUNT_NUMBER
-                    assert (
-                        result.resource_arn
-                        == f"arn:aws:ec2:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:volume"
-                    )
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert (
+                result[0].status_extended
+                == f"EBS Snapshots for region {AWS_REGION_US_EAST_1} public access is not blocked."
+            )
+            assert (
+                result[0].resource_arn
+                == f"arn:aws:ec2:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}"
+            )
+            assert result[0].resource_id == AWS_ACCOUNT_NUMBER
+
+    @mock_aws
+    def test_ec2_ebs_block_public_access_state_block_new_sharing(self):
+        from prowler.providers.aws.services.ec2.ec2_service import (
+            EbsSnapshotBlockPublicAccess,
+        )
+
+        ec2_client = mock.MagicMock()
+        ec2_client.ebs_block_public_access_snapshots_state = [
+            EbsSnapshotBlockPublicAccess(
+                status="block-new-sharing", snapshots=True, region=AWS_REGION_US_EAST_1
+            )
+        ]
+        ec2_client.audited_account = AWS_ACCOUNT_NUMBER
+        ec2_client.region = AWS_REGION_US_EAST_1
+
+        with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_aws_provider(),
+        ), mock.patch(
+            "prowler.providers.aws.services.ec2.ec2_ebs_block_public_access_snapshots.ec2_ebs_block_public_access_snapshots.ec2_client",
+            new=ec2_client,
+        ):
+            # Test Check
+            from prowler.providers.aws.services.ec2.ec2_ebs_block_public_access_snapshots.ec2_ebs_block_public_access_snapshots import (
+                ec2_ebs_block_public_access_snapshots,
+            )
+
+            check = ec2_ebs_block_public_access_snapshots()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert (
+                result[0].status_extended
+                == f"EBS Snapshots for region {AWS_REGION_US_EAST_1} public access is not blocked for new snapshots."
+            )
+            assert (
+                result[0].resource_arn
+                == f"arn:aws:ec2:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}"
+            )
+            assert result[0].resource_id == AWS_ACCOUNT_NUMBER
+
+    @mock_aws
+    def test_ec2_ebs_block_public_access_state_block_all_sharing(self):
+        from prowler.providers.aws.services.ec2.ec2_service import (
+            EbsSnapshotBlockPublicAccess,
+        )
+
+        ec2_client = mock.MagicMock()
+        ec2_client.ebs_block_public_access_snapshots_state = [
+            EbsSnapshotBlockPublicAccess(
+                status="block-all-sharing", snapshots=True, region=AWS_REGION_US_EAST_1
+            )
+        ]
+        ec2_client.audited_account = AWS_ACCOUNT_NUMBER
+        ec2_client.region = AWS_REGION_US_EAST_1
+
+        with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_aws_provider(),
+        ), mock.patch(
+            "prowler.providers.aws.services.ec2.ec2_ebs_block_public_access_snapshots.ec2_ebs_block_public_access_snapshots.ec2_client",
+            new=ec2_client,
+        ):
+            # Test Check
+            from prowler.providers.aws.services.ec2.ec2_ebs_block_public_access_snapshots.ec2_ebs_block_public_access_snapshots import (
+                ec2_ebs_block_public_access_snapshots,
+            )
+
+            check = ec2_ebs_block_public_access_snapshots()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert (
+                result[0].status_extended
+                == f"EBS Snapshots for region {AWS_REGION_US_EAST_1} public access is blocked."
+            )
+            assert (
+                result[0].resource_arn
+                == f"arn:aws:ec2:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}"
+            )
+            assert result[0].resource_id == AWS_ACCOUNT_NUMBER
