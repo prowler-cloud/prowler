@@ -1,36 +1,12 @@
-from unittest.mock import MagicMock, patch
-from uuid import uuid4
+from unittest.mock import patch
 
 from prowler.providers.gcp.services.apikeys.apikeys_service import APIKeys
 from tests.providers.gcp.gcp_fixtures import (
     GCP_PROJECT_ID,
+    mock_api_client,
     mock_is_api_active,
     set_mocked_gcp_provider,
 )
-
-
-def mock_api_client(_, __, ___, ____):
-    client = MagicMock()
-    client.projects().locations().keys().list().execute.return_value = {
-        "keys": [
-            {
-                "displayName": "key1",
-                "uid": str(uuid4()),
-                "createTime": "2021-01-01T00:00:00Z",
-                "restrictions": {},
-            },
-            {
-                "displayName": "key2",
-                "uid": str(uuid4()),
-                "createTime": "2021-01-01T00:00:00Z",
-                "restrictions": {},
-            },
-        ]
-    }
-    # Next page is None to not enter in the while infinite loop
-    client.projects().locations().keys().list_next.return_value = None
-
-    return client
 
 
 @patch(
