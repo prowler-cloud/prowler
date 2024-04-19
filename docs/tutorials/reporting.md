@@ -103,10 +103,11 @@ The JSON-OCSF output format implements the [Detection Finding](https://schema.oc
 ```json
 [{
     "metadata": {
+        "event_code": "cloudtrail_multi_region_enabled",
         "product": {
             "name": "Prowler",
             "vendor_name": "Prowler",
-            "version": "4.0.0"
+            "version": "4.1.0"
         },
         "version": "1.1.0"
     },
@@ -123,7 +124,7 @@ The JSON-OCSF output format implements the [Detection Finding](https://schema.oc
         "desc": "Ensure CloudTrail is enabled in all regions",
         "product_uid": "prowler",
         "title": "Ensure CloudTrail is enabled in all regions",
-        "uid": "prowler-aws-cloudtrail_multi_region_enabled-xxxxxxxx-ap-northeast-1-xxxxxxxx"
+        "uid": "prowler-aws-cloudtrail_multi_region_enabled-123456789012-ap-northeast-1-123456789012"
     },
     "resources": [
         {
@@ -133,12 +134,12 @@ The JSON-OCSF output format implements the [Detection Finding](https://schema.oc
                 "name": "cloudtrail"
             },
             "labels": [],
-            "name": "xxxxxxxx",
+            "name": "123456789012",
             "type": "AwsCloudTrailTrail",
-            "uid": "arn:aws:cloudtrail:ap-northeast-1:xxxxxxxx:trail",
+            "uid": "arn:aws:cloudtrail:ap-northeast-1:123456789012:trail",
             "data": {
                 "details": ""
-            },
+            },     
         }
     ],
     "category_name": "Findings",
@@ -147,10 +148,10 @@ The JSON-OCSF output format implements the [Detection Finding](https://schema.oc
     "class_uid": 2004,
     "cloud": {
         "account": {
-            "name": "",
+            "name": "test-account",
             "type": "AWS_Account",
             "type_id": 10,
-            "uid": "xxxxxxxx"
+            "uid": "123456789012"
         },
         "org": {
             "name": "",
@@ -168,7 +169,49 @@ The JSON-OCSF output format implements the [Detection Finding](https://schema.oc
         ]
     },
     "type_uid": 200401,
-    "type_name": "Create"
+    "type_name": "Create",
+    "unmapped": {
+        "check_type": "Software and Configuration Checks,Industry and Regulatory Standards,CIS AWS Foundations Benchmark",
+        "related_url": "",
+        "categories": "forensics-ready",
+        "depends_on": "",
+        "related_to": "",
+        "notes": "",
+        "compliance": {
+            "CISA": [
+                "your-systems-3",
+                "your-data-2"
+            ],
+            "SOC2": [
+                "cc_2_1",
+                "cc_7_2",
+                "cc_a_1_2"
+            ],
+            "CIS-1.4": [
+                "3.1"
+            ],
+            "CIS-1.5": [
+                "3.1"
+            ],
+            "GDPR": [
+                "article_25",
+                "article_30"
+            ],
+            "AWS-Foundational-Security-Best-Practices": [
+                "cloudtrail"
+            ],
+            "ISO27001-2013": [
+                "A.12.4"
+            ],
+            "HIPAA": [
+                "164_308_a_1_ii_d",
+                "164_308_a_3_ii_a",
+                "164_308_a_6_ii",
+                "164_312_b",
+                "164_312_e_2_i"
+            ],
+        }
+    },
 }]
 ```
 
