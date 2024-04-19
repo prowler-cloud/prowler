@@ -25,7 +25,7 @@ def set_mocked_gcp_provider(
 def mock_api_client(GCPService, service, api_version, _):
     client = MagicMock()
 
-    mock_api_project_calls(client)
+    mock_api_project_calls(client, service)
     mock_api_dataset_calls(client)
     mock_api_tables_calls(client)
     mock_api_organization_calls(client)
@@ -48,7 +48,7 @@ def mock_is_api_active(_, audited_project_ids):
     return audited_project_ids
 
 
-def mock_api_project_calls(client: MagicMock):
+def mock_api_project_calls(client: MagicMock, service: str):
     client.projects().locations().keys().list().execute.return_value = {
         "keys": [
             {
@@ -114,28 +114,29 @@ def mock_api_project_calls(client: MagicMock):
     }
     client.projects().list_next.return_value = None
     # Used by dataproc client
-    cluster1_id = str(uuid4())
-    cluster2_id = str(uuid4())
+    if service == "dataproc":
+        cluster1_id = str(uuid4())
+        cluster2_id = str(uuid4())
 
-    client.projects().regions().clusters().list().execute.return_value = {
-        "clusters": [
-            {
-                "clusterName": "cluster1",
-                "clusterUuid": cluster1_id,
-                "config": {
-                    "encryptionConfig": {
-                        "gcePdKmsKeyName": "projects/123/locations/456/keyRings/789/cryptoKeys/123"
-                    }
+        client.projects().regions().clusters().list().execute.return_value = {
+            "clusters": [
+                {
+                    "clusterName": "cluster1",
+                    "clusterUuid": cluster1_id,
+                    "config": {
+                        "encryptionConfig": {
+                            "gcePdKmsKeyName": "projects/123/locations/456/keyRings/789/cryptoKeys/123"
+                        }
+                    },
                 },
-            },
-            {
-                "clusterName": "cluster2",
-                "clusterUuid": cluster2_id,
-                "config": {"encryptionConfig": {}},
-            },
-        ]
-    }
-    client.projects().regions().clusters().list_next().execute.return_value = None
+                {
+                    "clusterName": "cluster2",
+                    "clusterUuid": cluster2_id,
+                    "config": {"encryptionConfig": {}},
+                },
+            ]
+        }
+        client.projects().regions().clusters().list_next().execute.return_value = None
     # Used by gke client
     client.projects().locations().list().execute.return_value = {
         "locations": [{"name": "eu-west1"}]
