@@ -1,46 +1,16 @@
 from unittest.mock import MagicMock, patch
-from uuid import uuid4
 
 from tests.providers.gcp.gcp_fixtures import (
     GCP_PROJECT_ID,
+    mock_api_client,
     mock_is_api_active,
     set_mocked_gcp_provider,
 )
 
 
-def mock_api_client(_, __, ___, ____):
-    client = MagicMock()
-
-    # Mocking clusters
-    cluster1_id = str(uuid4())
-    cluster2_id = str(uuid4())
-
-    client.projects().regions().clusters().list().execute.return_value = {
-        "clusters": [
-            {
-                "clusterName": "cluster1",
-                "clusterUuid": cluster1_id,
-                "config": {
-                    "encryptionConfig": {
-                        "gcePdKmsKeyName": "projects/123/locations/456/keyRings/789/cryptoKeys/123"
-                    }
-                },
-            },
-            {
-                "clusterName": "cluster2",
-                "clusterUuid": cluster2_id,
-                "config": {"encryptionConfig": {}},
-            },
-        ]
-    }
-    client.projects().regions().clusters().list_next().execute.return_value = None
-
-    return client
-
-
 def mocked_compute_client(_, __):
     compute_client = MagicMock()
-    compute_client.regions = ["region1"]
+    compute_client.regions = ["europe-west1-b"]
 
     return compute_client
 

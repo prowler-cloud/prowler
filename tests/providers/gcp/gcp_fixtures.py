@@ -22,15 +22,24 @@ def set_mocked_gcp_provider(
     return provider
 
 
-def mock_api_client(_, __, ___, ____):
+def mock_api_client(GCPService, service, api_version, _):
     client = MagicMock()
 
     mock_api_project_calls(client)
     mock_api_dataset_calls(client)
     mock_api_tables_calls(client)
-
-    mock_api_cloudresourcemanager_client(client)
-    mock_api_cloudsql_client(client)
+    mock_api_organization_calls(client)
+    mock_api_instances_calls(client, service)
+    mock_api_buckets_calls(client)
+    mock_api_regions_calls(client)
+    mock_api_services_calls(client)
+    mock_api_networks_calls(client)
+    mock_api_subnetworks_calls(client)
+    mock_api_addresses_calls(client)
+    mock_api_firewall_calls(client)
+    mock_api_urlMaps_calls(client)
+    mock_api_managedZones_calls(client)
+    mock_api_policies_calls(client)
 
     return client
 
@@ -83,6 +92,88 @@ def mock_api_project_calls(client: MagicMock):
         ],
         "etag": "BwWWja0YfJA=",
         "version": 3,
+    }
+    # Used by compute client
+    client.projects().get().execute.return_value = {
+        "commonInstanceMetadata": {
+            "items": [
+                {
+                    "key": "enable-oslogin",
+                    "value": "TRUE",
+                },
+                {
+                    "key": "enable-oslogin",
+                    "value": "FALSE",
+                },
+                {
+                    "key": "testing-key",
+                    "value": "TRUE",
+                },
+            ]
+        }
+    }
+    client.projects().list_next.return_value = None
+    # Used by dataproc client
+    cluster1_id = str(uuid4())
+    cluster2_id = str(uuid4())
+
+    client.projects().regions().clusters().list().execute.return_value = {
+        "clusters": [
+            {
+                "clusterName": "cluster1",
+                "clusterUuid": cluster1_id,
+                "config": {
+                    "encryptionConfig": {
+                        "gcePdKmsKeyName": "projects/123/locations/456/keyRings/789/cryptoKeys/123"
+                    }
+                },
+            },
+            {
+                "clusterName": "cluster2",
+                "clusterUuid": cluster2_id,
+                "config": {"encryptionConfig": {}},
+            },
+        ]
+    }
+    client.projects().regions().clusters().list_next().execute.return_value = None
+    # Used by gke client
+    client.projects().locations().list().execute.return_value = {
+        "locations": [{"name": "eu-west1"}]
+    }
+    client.projects().locations().clusters().list().execute.return_value = {
+        "clusters": [
+            {
+                "name": "cluster1",
+                "id": "cluster1_id",
+                "location": "eu-west1",
+                "nodeConfig": {"serviceAccount": "service_account1"},
+                "nodePools": [
+                    {
+                        "name": "node_pool1",
+                        "locations": ["cluster1_location1"],
+                        "config": {"serviceAccount": "service_account1"},
+                    }
+                ],
+            },
+            {
+                "name": "cluster2",
+                "id": "cluster2_id",
+                "location": "eu-west1",
+                "nodeConfig": {"serviceAccount": "service_account2"},
+                "nodePools": [
+                    {
+                        "name": "node_pool2",
+                        "locations": ["cluster2_location1"],
+                        "config": {"serviceAccount": "service_account2"},
+                    },
+                    {
+                        "name": "node_pool3",
+                        "locations": ["cluster2_location2"],
+                        "config": {"serviceAccount": "service_account3"},
+                    },
+                ],
+            },
+        ]
     }
 
 
@@ -204,15 +295,391 @@ def mock_api_tables_calls(client: MagicMock):
     client.tables().list_next.return_value = None
 
 
-def mock_api_cloudresourcemanager_client(client: MagicMock):
+def mock_api_organization_calls(client: MagicMock):
     # Mocking organizations
     client.organizations().search().execute.return_value = {
         "organizations": [
-            {"name": "organizations/123456789", "displayName": "Organization 1"},
-            {"name": "organizations/987654321", "displayName": "Organization 2"},
+            {
+                "name": "organizations/123456789",
+                "displayName": "Organization 1",
+                "state": "ACTIVE",
+                "createTime": "2021-01-01T00:00:00Z",
+                "updateTime": "2021-01-01T00:00:00Z",
+                "deleteTime": "2021-01-01T00:00:00Z",
+                "etag": "",
+            },
+            {
+                "name": "organizations/987654321",
+                "displayName": "Organization 2",
+                "state": "DELETE_REQUESTED",
+                "createTime": "2021-01-01T00:00:00Z",
+                "updateTime": "2021-01-01T00:00:00Z",
+                "deleteTime": "2021-01-01T00:00:00Z",
+                "etag": "",
+            },
         ]
     }
 
 
-def mock_api_cloudsql_client(client: MagicMock):
-    pass
+def mock_api_instances_calls(client: MagicMock, service: str):
+    instance1_id = str(uuid4())
+    instance2_id = str(uuid4())
+    if service == "sqladmin":
+        client.instances().list().execute.return_value = {
+            "items": [
+                {
+                    "name": "instance1",
+                    "databaseVersion": "MYSQL_5_7",
+                    "region": "us-central1",
+                    "ipAddresses": [{"type": "PRIMARY", "ipAddress": "66.66.66.66"}],
+                    "settings": {
+                        "ipConfiguration": {
+                            "requireSsl": True,
+                            "authorizedNetworks": [{"value": "test"}],
+                        },
+                        "backupConfiguration": {"enabled": True},
+                        "databaseFlags": [],
+                    },
+                },
+                {
+                    "name": "instance2",
+                    "databaseVersion": "POSTGRES_9_6",
+                    "region": "us-central1",
+                    "ipAddresses": [{"type": "PRIMARY", "ipAddress": "22.22.22.22"}],
+                    "settings": {
+                        "ipConfiguration": {
+                            "requireSsl": False,
+                            "authorizedNetworks": [{"value": "test"}],
+                        },
+                        "backupConfiguration": {"enabled": False},
+                        "databaseFlags": [],
+                    },
+                },
+            ]
+        }
+    elif service == "compute":
+        client.instances().list().execute.return_value = {
+            "items": [
+                {
+                    "name": "instance1",
+                    "id": instance1_id,
+                    "metadata": {},
+                    "networkInterfaces": [
+                        {
+                            "accessConfigs": [
+                                {
+                                    "natIP": "nat_ip",
+                                    "type": "ONE_TO_ONE_NAT",
+                                }
+                            ],
+                        }
+                    ],
+                    "shieldedInstanceConfig": {
+                        "enableVtpm": True,
+                        "enableIntegrityMonitoring": True,
+                    },
+                    "confidentialInstanceConfig": {"enableConfidentialCompute": True},
+                    "serviceAccounts": [
+                        {
+                            "email": "test@test.es",
+                            "scopes": ["scope1", "scope2"],
+                        }
+                    ],
+                    "canIpForward": True,
+                    "disks": [
+                        {
+                            "deviceName": "disk1",
+                            "diskEncryptionKey": {"sha256": "sha256_key"},
+                            "diskSizeGb": 10,
+                            "diskType": "disk_type",
+                        }
+                    ],
+                },
+                {
+                    "name": "instance2",
+                    "id": instance2_id,
+                    "metadata": {},
+                    "networkInterfaces": [],
+                    "shieldedInstanceConfig": {
+                        "enableVtpm": False,
+                        "enableIntegrityMonitoring": False,
+                    },
+                    "confidentialInstanceConfig": {"enableConfidentialCompute": False},
+                    "serviceAccounts": [
+                        {
+                            "email": "test2@test.es",
+                            "scopes": ["scope3"],
+                        }
+                    ],
+                    "canIpForward": False,
+                    "disks": [
+                        {
+                            "deviceName": "disk2",
+                            "diskEncryptionKey": {"kmsKeyName": "kms_key"},
+                            "diskSizeGb": 20,
+                            "diskType": "disk_type",
+                        }
+                    ],
+                },
+            ]
+        }
+
+    client.instances().list_next.return_value = None
+
+
+def mock_api_buckets_calls(client: MagicMock):
+    bucket1_id = str(uuid4())
+    bucket2_id = str(uuid4())
+
+    client.buckets().list().execute.return_value = {
+        "items": [
+            {
+                "name": "bucket1",
+                "id": bucket1_id,
+                "location": "US",
+                "iamConfiguration": {"uniformBucketLevelAccess": {"enabled": True}},
+                "retentionPolicy": {"retentionPeriod": 10},
+            },
+            {
+                "name": "bucket2",
+                "id": bucket2_id,
+                "location": "EU",
+                "iamConfiguration": {"uniformBucketLevelAccess": {"enabled": False}},
+                "retentionPolicy": None,
+            },
+        ]
+    }
+
+    def mock_get_buckets_iam_policy(bucket):
+        return_value = MagicMock()
+        if bucket == bucket1_id:
+            return_value.execute.return_value = {"bindings": "allAuthenticatedUsers"}
+        elif bucket == bucket2_id:
+            return_value.execute.return_value = {"bindings": "nobody"}
+        return return_value
+
+    client.buckets().getIamPolicy = mock_get_buckets_iam_policy
+
+    client.buckets().list_next.return_value = None
+
+
+def mock_api_regions_calls(client: MagicMock):
+    region1_id = str(uuid4())
+
+    client.regions().list().execute.return_value = {
+        "items": [
+            {
+                "name": "europe-west1-b",
+                "id": region1_id,
+            }
+        ]
+    }
+    client.regions().list_next.return_value = None
+
+
+def mock_api_services_calls(client: MagicMock):
+    zone1_id = str(uuid4())
+
+    client.zones().list().execute.return_value = {
+        "items": [
+            {
+                "name": "zone1",
+                "id": zone1_id,
+            }
+        ]
+    }
+    client.zones().list_next.return_value = None
+
+
+def mock_api_networks_calls(client: MagicMock):
+    network1_id = str(uuid4())
+    network2_id = str(uuid4())
+    network3_id = str(uuid4())
+
+    client.networks().list().execute.return_value = {
+        "items": [
+            {
+                "name": "network1",
+                "id": network1_id,
+                "autoCreateSubnetworks": True,
+            },
+            {
+                "name": "network2",
+                "id": network2_id,
+                "autoCreateSubnetworks": False,
+            },
+            {"name": "network3", "id": network3_id},
+        ]
+    }
+    client.networks().list_next.return_value = None
+
+
+def mock_api_subnetworks_calls(client: MagicMock):
+    subnetwork1_id = str(uuid4())
+    subnetwork2_id = str(uuid4())
+    subnetwork3_id = str(uuid4())
+
+    client.subnetworks().list().execute.return_value = {
+        "items": [
+            {
+                "name": "subnetwork1",
+                "id": subnetwork1_id,
+                "enableFlowLogs": True,
+                "network": "region1/network1",
+            },
+            {
+                "name": "subnetwork2",
+                "id": subnetwork2_id,
+                "enableFlowLogs": False,
+                "network": "region1/network1",
+            },
+            {
+                "name": "subnetwork3",
+                "id": subnetwork3_id,
+                "enableFlowLogs": False,
+                "network": "region2/network3",
+            },
+        ]
+    }
+    client.subnetworks().list_next.return_value = None
+
+
+def mock_api_addresses_calls(client: MagicMock):
+    address1_id = str(uuid4())
+    address2_id = str(uuid4())
+    address3_id = str(uuid4())
+
+    client.addresses().list().execute.return_value = {
+        "items": [
+            {
+                "name": "address1",
+                "id": address1_id,
+                "address": "10.0.0.1",
+                "addressType": "INTERNAL",
+            },
+            {
+                "name": "address2",
+                "id": address2_id,
+                "address": "10.0.0.2",
+                "addressType": "INTERNAL",
+            },
+            {
+                "name": "address3",
+                "id": address3_id,
+                "address": "20.34.105.200",
+                "addressType": "EXTERNAL",
+            },
+        ]
+    }
+    client.addresses().list_next.return_value = None
+
+
+def mock_api_firewall_calls(client: MagicMock):
+    firewall1_id = str(uuid4())
+    firewall2_id = str(uuid4())
+    firewall3_id = str(uuid4())
+
+    client.firewalls().list().execute.return_value = {
+        "items": [
+            {
+                "name": "firewall1",
+                "id": firewall1_id,
+                "allowed": [{"IPProtocol": "UDP"}],
+                "sourceRanges": ["30.0.0.0/16"],
+                "direction": "INGRESS",
+            },
+            {
+                "name": "firewall2",
+                "id": firewall2_id,
+                "allowed": [{"IPProtocol": "TCP"}],
+                "sourceRanges": ["0.0.0.0/0"],
+                "direction": "EGRESS",
+            },
+            {
+                "name": "firewall3",
+                "id": firewall3_id,
+                "allowed": [{"IPProtocol": "TCP"}],
+                "sourceRanges": ["10.0.15.0/24"],
+                "direction": "INGRESS",
+            },
+        ]
+    }
+    client.firewalls().list_next.return_value = None
+
+
+def mock_api_urlMaps_calls(client: MagicMock):
+    url_map1_id = str(uuid4())
+    url_map2_id = str(uuid4())
+
+    client.urlMaps().list().execute.return_value = {
+        "items": [
+            {
+                "name": "url_map1",
+                "id": url_map1_id,
+                "defaultService": "service1",
+            },
+            {
+                "name": "url_map2",
+                "id": url_map2_id,
+                "defaultService": "service2",
+            },
+        ]
+    }
+    client.urlMaps().list_next.return_value = None
+
+    client.backendServices().get().execute.side_effect = [
+        {
+            "logConfig": {"enable": True},
+        },
+        {
+            "logConfig": {"enable": False},
+        },
+    ]
+
+
+def mock_api_managedZones_calls(client: MagicMock):
+    managed_zone1_id = str(uuid4())
+    managed_zone2_id = str(uuid4())
+
+    client.managedZones().list().execute.return_value = {
+        "managedZones": [
+            {
+                "name": "managed_zone1",
+                "id": managed_zone1_id,
+                "dnssecConfig": {"state": "on", "defaultKeySpecs": []},
+            },
+            {
+                "name": "managed_zone2",
+                "id": managed_zone2_id,
+                "dnssecConfig": {"state": "off", "defaultKeySpecs": []},
+            },
+        ]
+    }
+    client.managedZones().list_next.return_value = None
+
+
+def mock_api_policies_calls(client: MagicMock):
+    policy1_id = str(uuid4())
+    policy2_id = str(uuid4())
+
+    client.policies().list().execute.return_value = {
+        "policies": [
+            {
+                "name": "policy1",
+                "id": policy1_id,
+                "enableLogging": True,
+                "networks": [
+                    {
+                        "networkUrl": "https://www.googleapis.com/compute/v1/projects/project1/global/networks/network1"
+                    }
+                ],
+            },
+            {
+                "name": "policy2",
+                "id": policy2_id,
+                "enableLogging": False,
+                "networks": [],
+            },
+        ]
+    }
+    client.policies().list_next.return_value = None

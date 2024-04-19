@@ -1,51 +1,12 @@
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 from prowler.providers.gcp.services.cloudsql.cloudsql_service import CloudSQL
 from tests.providers.gcp.gcp_fixtures import (
     GCP_PROJECT_ID,
+    mock_api_client,
     mock_is_api_active,
     set_mocked_gcp_provider,
 )
-
-
-def mock_api_client(_, __, ___, ____):
-    client = MagicMock()
-    # Mocking instances
-    client.instances().list().execute.return_value = {
-        "items": [
-            {
-                "name": "instance1",
-                "databaseVersion": "MYSQL_5_7",
-                "region": "us-central1",
-                "ipAddresses": [{"type": "PRIMARY", "ipAddress": "66.66.66.66"}],
-                "settings": {
-                    "ipConfiguration": {
-                        "requireSsl": True,
-                        "authorizedNetworks": [{"value": "test"}],
-                    },
-                    "backupConfiguration": {"enabled": True},
-                    "databaseFlags": [],
-                },
-            },
-            {
-                "name": "instance2",
-                "databaseVersion": "POSTGRES_9_6",
-                "region": "us-central1",
-                "ipAddresses": [{"type": "PRIMARY", "ipAddress": "22.22.22.22"}],
-                "settings": {
-                    "ipConfiguration": {
-                        "requireSsl": False,
-                        "authorizedNetworks": [{"value": "test"}],
-                    },
-                    "backupConfiguration": {"enabled": False},
-                    "databaseFlags": [],
-                },
-            },
-        ]
-    }
-    client.instances().list_next.return_value = None
-
-    return client
 
 
 @patch(
@@ -57,7 +18,6 @@ def mock_api_client(_, __, ___, ____):
     new=mock_api_client,
 )
 class Test_CloudSQL_Service:
-
     def test__get_service__(self):
         cloudsql_client = CloudSQL(set_mocked_gcp_provider())
         assert cloudsql_client.service == "sqladmin"

@@ -1,57 +1,12 @@
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 from prowler.providers.gcp.services.gke.gke_service import GKE
 from tests.providers.gcp.gcp_fixtures import (
     GCP_PROJECT_ID,
+    mock_api_client,
     mock_is_api_active,
     set_mocked_gcp_provider,
 )
-
-
-def mock_api_client(_, __, ___, ____):
-    client = MagicMock()
-    # Mocking locations
-    client.projects().locations().list().execute.return_value = {
-        "locations": [{"name": "location1"}]
-    }
-    # Mocking clusters
-    client.projects().locations().clusters().list().execute.return_value = {
-        "clusters": [
-            {
-                "name": "cluster1",
-                "id": "cluster1_id",
-                "location": "location1",
-                "nodeConfig": {"serviceAccount": "service_account1"},
-                "nodePools": [
-                    {
-                        "name": "node_pool1",
-                        "locations": ["cluster1_location1"],
-                        "config": {"serviceAccount": "service_account1"},
-                    }
-                ],
-            },
-            {
-                "name": "cluster2",
-                "id": "cluster2_id",
-                "location": "location2",
-                "nodeConfig": {"serviceAccount": "service_account2"},
-                "nodePools": [
-                    {
-                        "name": "node_pool2",
-                        "locations": ["cluster2_location1"],
-                        "config": {"serviceAccount": "service_account2"},
-                    },
-                    {
-                        "name": "node_pool3",
-                        "locations": ["cluster2_location2"],
-                        "config": {"serviceAccount": "service_account3"},
-                    },
-                ],
-            },
-        ]
-    }
-
-    return client
 
 
 @patch(
@@ -75,7 +30,7 @@ class Test_GKE_Service:
         api_keys_client = GKE(set_mocked_gcp_provider(project_ids=[GCP_PROJECT_ID]))
         assert len(api_keys_client.locations) == 1
 
-        assert api_keys_client.locations[0].name == "location1"
+        assert api_keys_client.locations[0].name == "eu-west1"
         assert api_keys_client.locations[0].project_id == GCP_PROJECT_ID
 
     def test__get_clusters__(self):
@@ -86,7 +41,7 @@ class Test_GKE_Service:
         assert api_keys_client.clusters["cluster1_id"].name == "cluster1"
         assert api_keys_client.clusters["cluster1_id"].id.__class__.__name__ == "str"
         assert api_keys_client.clusters["cluster1_id"].project_id == GCP_PROJECT_ID
-        assert api_keys_client.clusters["cluster1_id"].location == "location1"
+        assert api_keys_client.clusters["cluster1_id"].location == "eu-west1"
         assert (
             api_keys_client.clusters["cluster1_id"].service_account
             == "service_account1"
@@ -106,7 +61,7 @@ class Test_GKE_Service:
         assert api_keys_client.clusters["cluster2_id"].name == "cluster2"
         assert api_keys_client.clusters["cluster2_id"].id.__class__.__name__ == "str"
         assert api_keys_client.clusters["cluster2_id"].project_id == GCP_PROJECT_ID
-        assert api_keys_client.clusters["cluster2_id"].location == "location2"
+        assert api_keys_client.clusters["cluster2_id"].location == "eu-west1"
         assert (
             api_keys_client.clusters["cluster2_id"].service_account
             == "service_account2"

@@ -1,49 +1,14 @@
-from unittest.mock import MagicMock, patch
-from uuid import uuid4
+from unittest.mock import patch
 
 from prowler.providers.gcp.services.cloudstorage.cloudstorage_service import (
     CloudStorage,
 )
 from tests.providers.gcp.gcp_fixtures import (
     GCP_PROJECT_ID,
+    mock_api_client,
     mock_is_api_active,
     set_mocked_gcp_provider,
 )
-
-
-def mock_api_client(_, __, ___, ____):
-    client = MagicMock()
-    # Mocking buckets
-
-    bucket1_id = str(uuid4())
-    bucket2_id = str(uuid4())
-
-    client.buckets().list().execute.return_value = {
-        "items": [
-            {
-                "name": "bucket1",
-                "id": bucket1_id,
-                "location": "US",
-                "iamConfiguration": {"uniformBucketLevelAccess": {"enabled": True}},
-                "retentionPolicy": {"retentionPeriod": 10},
-            },
-            {
-                "name": "bucket2",
-                "id": bucket2_id,
-                "location": "EU",
-                "iamConfiguration": {"uniformBucketLevelAccess": {"enabled": False}},
-                "retentionPolicy": None,
-            },
-        ]
-    }
-    # When getting the bucket IAM policy, the first bucket is public and the second is not
-    client.buckets().getIamPolicy().execute.side_effect = [
-        {"bindings": "allAuthenticatedUsers"},
-        {"bindings": "nobody"},
-    ]
-    client.buckets().list_next.return_value = None
-
-    return client
 
 
 @patch(

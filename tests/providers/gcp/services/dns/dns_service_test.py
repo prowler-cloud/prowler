@@ -1,63 +1,12 @@
-from unittest.mock import MagicMock, patch
-from uuid import uuid4
+from unittest.mock import patch
 
 from prowler.providers.gcp.services.dns.dns_service import DNS
 from tests.providers.gcp.gcp_fixtures import (
     GCP_PROJECT_ID,
+    mock_api_client,
     mock_is_api_active,
     set_mocked_gcp_provider,
 )
-
-
-def mock_api_client(_, __, ___, ____):
-    client = MagicMock()
-    # Mocking managed zones
-    managed_zone1_id = str(uuid4())
-    managed_zone2_id = str(uuid4())
-
-    client.managedZones().list().execute.return_value = {
-        "managedZones": [
-            {
-                "name": "managed_zone1",
-                "id": managed_zone1_id,
-                "dnssecConfig": {"state": "on", "defaultKeySpecs": []},
-            },
-            {
-                "name": "managed_zone2",
-                "id": managed_zone2_id,
-                "dnssecConfig": {"state": "off", "defaultKeySpecs": []},
-            },
-        ]
-    }
-    client.managedZones().list_next.return_value = None
-
-    # Mocking policies
-    policy1_id = str(uuid4())
-    policy2_id = str(uuid4())
-
-    client.policies().list().execute.return_value = {
-        "policies": [
-            {
-                "name": "policy1",
-                "id": policy1_id,
-                "enableLogging": True,
-                "networks": [
-                    {
-                        "networkUrl": "https://www.googleapis.com/compute/v1/projects/project1/global/networks/network1"
-                    }
-                ],
-            },
-            {
-                "name": "policy2",
-                "id": policy2_id,
-                "enableLogging": False,
-                "networks": [],
-            },
-        ]
-    }
-    client.policies().list_next.return_value = None
-
-    return client
 
 
 @patch(
