@@ -1,10 +1,11 @@
-from re import search
 from unittest import mock
 
 from boto3 import client, resource
 from moto import mock_aws
 
 from tests.providers.aws.utils import AWS_REGION_US_EAST_1, set_mocked_aws_provider
+
+HOSTED_ZONE_NAME = "testdns.aws.com."
 
 
 class Test_route53_dangling_ip_subdomain_takeover:
@@ -42,7 +43,7 @@ class Test_route53_dangling_ip_subdomain_takeover:
         conn = client("route53", region_name=AWS_REGION_US_EAST_1)
 
         conn.create_hosted_zone(
-            Name="testdns.aws.com.", CallerReference=str(hash("foo"))
+            Name=HOSTED_ZONE_NAME, CallerReference=str(hash("foo"))
         )["HostedZone"]["Id"]
 
         from prowler.providers.aws.services.ec2.ec2_service import EC2
@@ -77,9 +78,11 @@ class Test_route53_dangling_ip_subdomain_takeover:
         conn = client("route53", region_name=AWS_REGION_US_EAST_1)
 
         zone_id = conn.create_hosted_zone(
-            Name="testdns.aws.com.", CallerReference=str(hash("foo"))
+            Name=HOSTED_ZONE_NAME, CallerReference=str(hash("foo"))
         )["HostedZone"]["Id"]
 
+        record_set_name = "foo.bar.testdns.aws.com."
+        record_ip = "192.168.1.1"
         conn.change_resource_record_sets(
             HostedZoneId=zone_id,
             ChangeBatch={
@@ -87,9 +90,9 @@ class Test_route53_dangling_ip_subdomain_takeover:
                     {
                         "Action": "CREATE",
                         "ResourceRecordSet": {
-                            "Name": "foo.bar.testdns.aws.com",
+                            "Name": record_set_name,
                             "Type": "A",
-                            "ResourceRecords": [{"Value": "192.168.1.1"}],
+                            "ResourceRecords": [{"Value": record_ip}],
                         },
                     }
                 ]
@@ -122,9 +125,9 @@ class Test_route53_dangling_ip_subdomain_takeover:
 
                     assert len(result) == 1
                     assert result[0].status == "PASS"
-                    assert search(
-                        "is not a dangling IP",
-                        result[0].status_extended,
+                    assert (
+                        result[0].status_extended
+                        == f"Route53 record {record_ip} (name: {record_set_name}) in Hosted Zone {HOSTED_ZONE_NAME} is not a dangling IP."
                     )
                     assert (
                         result[0].resource_id
@@ -140,9 +143,11 @@ class Test_route53_dangling_ip_subdomain_takeover:
         conn = client("route53", region_name=AWS_REGION_US_EAST_1)
 
         zone_id = conn.create_hosted_zone(
-            Name="testdns.aws.com.", CallerReference=str(hash("foo"))
+            Name=HOSTED_ZONE_NAME, CallerReference=str(hash("foo"))
         )["HostedZone"]["Id"]
 
+        record_set_name = "foo.bar.testdns.aws.com."
+        record_ip = "17.5.7.3"
         conn.change_resource_record_sets(
             HostedZoneId=zone_id,
             ChangeBatch={
@@ -150,9 +155,9 @@ class Test_route53_dangling_ip_subdomain_takeover:
                     {
                         "Action": "CREATE",
                         "ResourceRecordSet": {
-                            "Name": "foo.bar.testdns.aws.com",
+                            "Name": record_set_name,
                             "Type": "A",
-                            "ResourceRecords": [{"Value": "17.5.7.3"}],
+                            "ResourceRecords": [{"Value": record_ip}],
                         },
                     }
                 ]
@@ -185,9 +190,9 @@ class Test_route53_dangling_ip_subdomain_takeover:
 
                     assert len(result) == 1
                     assert result[0].status == "PASS"
-                    assert search(
-                        "does not belong to AWS and it is not a dangling IP",
-                        result[0].status_extended,
+                    assert (
+                        result[0].status_extended
+                        == f"Route53 record {record_ip} (name: {record_set_name}) in Hosted Zone {HOSTED_ZONE_NAME} does not belong to AWS and it is not a dangling IP."
                     )
                     assert (
                         result[0].resource_id
@@ -203,9 +208,11 @@ class Test_route53_dangling_ip_subdomain_takeover:
         conn = client("route53", region_name=AWS_REGION_US_EAST_1)
 
         zone_id = conn.create_hosted_zone(
-            Name="testdns.aws.com.", CallerReference=str(hash("foo"))
+            Name=HOSTED_ZONE_NAME, CallerReference=str(hash("foo"))
         )["HostedZone"]["Id"]
 
+        record_set_name = "foo.bar.testdns.aws.com."
+        record_ip = "54.152.12.70"
         conn.change_resource_record_sets(
             HostedZoneId=zone_id,
             ChangeBatch={
@@ -213,9 +220,9 @@ class Test_route53_dangling_ip_subdomain_takeover:
                     {
                         "Action": "CREATE",
                         "ResourceRecordSet": {
-                            "Name": "foo.bar.testdns.aws.com",
+                            "Name": record_set_name,
                             "Type": "A",
-                            "ResourceRecords": [{"Value": "54.152.12.70"}],
+                            "ResourceRecords": [{"Value": record_ip}],
                         },
                     }
                 ]
@@ -248,9 +255,9 @@ class Test_route53_dangling_ip_subdomain_takeover:
 
                     assert len(result) == 1
                     assert result[0].status == "FAIL"
-                    assert search(
-                        "is a dangling IP",
-                        result[0].status_extended,
+                    assert (
+                        result[0].status_extended
+                        == f"Route53 record {record_ip} (name: {record_set_name}) in Hosted Zone {HOSTED_ZONE_NAME} is a dangling IP which can lead to a subdomain takeover attack."
                     )
                     assert (
                         result[0].resource_id
@@ -266,12 +273,15 @@ class Test_route53_dangling_ip_subdomain_takeover:
         conn = client("route53", region_name=AWS_REGION_US_EAST_1)
         ec2 = client("ec2", region_name=AWS_REGION_US_EAST_1)
 
-        ec2.allocate_address(Domain="vpc", Address="17.5.7.3")
+        address = "17.5.7.3"
+        ec2.allocate_address(Domain="vpc", Address=address)
 
         zone_id = conn.create_hosted_zone(
-            Name="testdns.aws.com.", CallerReference=str(hash("foo"))
+            Name=HOSTED_ZONE_NAME, CallerReference=str(hash("foo"))
         )["HostedZone"]["Id"]
 
+        record_set_name = "foo.bar.testdns.aws.com."
+        record_ip = address
         conn.change_resource_record_sets(
             HostedZoneId=zone_id,
             ChangeBatch={
@@ -279,9 +289,9 @@ class Test_route53_dangling_ip_subdomain_takeover:
                     {
                         "Action": "CREATE",
                         "ResourceRecordSet": {
-                            "Name": "foo.bar.testdns.aws.com",
+                            "Name": record_set_name,
                             "Type": "A",
-                            "ResourceRecords": [{"Value": "17.5.7.3"}],
+                            "ResourceRecords": [{"Value": record_ip}],
                         },
                     }
                 ]
@@ -314,9 +324,9 @@ class Test_route53_dangling_ip_subdomain_takeover:
 
                     assert len(result) == 1
                     assert result[0].status == "PASS"
-                    assert search(
-                        "is not a dangling IP",
-                        result[0].status_extended,
+                    assert (
+                        result[0].status_extended
+                        == f"Route53 record {record_ip} (name: {record_set_name}) in Hosted Zone {HOSTED_ZONE_NAME} is not a dangling IP."
                     )
                     assert (
                         result[0].resource_id
@@ -335,15 +345,18 @@ class Test_route53_dangling_ip_subdomain_takeover:
         vpc = ec2.create_vpc(CidrBlock="10.0.0.0/16")
         subnet = ec2.create_subnet(VpcId=vpc.id, CidrBlock="10.0.0.0/18")
         eni_id = ec2.create_network_interface(SubnetId=subnet.id).id
-        eip = ec2_client.allocate_address(Domain="vpc", Address="17.5.7.3")
+        address = "17.5.7.3"
+        eip = ec2_client.allocate_address(Domain="vpc", Address=address)
         ec2_client.associate_address(
             NetworkInterfaceId=eni_id, AllocationId=eip["AllocationId"]
         )
 
         zone_id = conn.create_hosted_zone(
-            Name="testdns.aws.com.", CallerReference=str(hash("foo"))
+            Name=HOSTED_ZONE_NAME, CallerReference=str(hash("foo"))
         )["HostedZone"]["Id"]
 
+        record_set_name = "foo.bar.testdns.aws.com."
+        record_ip = address
         conn.change_resource_record_sets(
             HostedZoneId=zone_id,
             ChangeBatch={
@@ -351,9 +364,9 @@ class Test_route53_dangling_ip_subdomain_takeover:
                     {
                         "Action": "CREATE",
                         "ResourceRecordSet": {
-                            "Name": "foo.bar.testdns.aws.com",
+                            "Name": record_set_name,
                             "Type": "A",
-                            "ResourceRecords": [{"Value": "17.5.7.3"}],
+                            "ResourceRecords": [{"Value": record_ip}],
                         },
                     }
                 ]
@@ -386,9 +399,9 @@ class Test_route53_dangling_ip_subdomain_takeover:
 
                     assert len(result) == 1
                     assert result[0].status == "PASS"
-                    assert search(
-                        "is not a dangling IP",
-                        result[0].status_extended,
+                    assert (
+                        result[0].status_extended
+                        == f"Route53 record {record_ip} (name: {record_set_name}) in Hosted Zone {HOSTED_ZONE_NAME} is not a dangling IP."
                     )
                     assert (
                         result[0].resource_id
