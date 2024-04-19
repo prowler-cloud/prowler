@@ -96,6 +96,7 @@ def fill_json_ocsf(finding_output: FindingOutput) -> DetectionFinding:
                     # TODO: this should be included only if using the Cloud profile
                     cloud_partition=finding_output.partition,
                     region=finding_output.region,
+                    data={"details": finding_output.resource_details},
                 )
             ],
             metadata=Metadata(
