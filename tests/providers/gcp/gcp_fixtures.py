@@ -25,7 +25,7 @@ def set_mocked_gcp_provider(
 def mock_api_client(GCPService, service, api_version, _):
     client = MagicMock()
 
-    mock_api_project_calls(client, service)
+    mock_api_projects_calls(client, service)
     mock_api_dataset_calls(client)
     mock_api_tables_calls(client)
     mock_api_organization_calls(client)
@@ -44,12 +44,11 @@ def mock_api_client(GCPService, service, api_version, _):
     return client
 
 
-# CAMBAIR LOS TESTS HECHOS PARA QUE NO USEN DECORADORES Y TODO EL SERVICIO SE PRUEBE EN UN SOLO MÉTODO COMO DATAPROC
 def mock_is_api_active(_, audited_project_ids):
     return audited_project_ids
 
 
-def mock_api_project_calls(client: MagicMock, service: str):
+def mock_api_projects_calls(client: MagicMock, service: str):
     client.projects().locations().keys().list().execute.return_value = {
         "keys": [
             {
@@ -142,6 +141,7 @@ def mock_api_project_calls(client: MagicMock, service: str):
     client.projects().locations().list().execute.return_value = {
         "locations": [{"name": "eu-west1"}]
     }
+    client.projects().locations().list_next.return_value = None
     client.projects().locations().clusters().list().execute.return_value = {
         "clusters": [
             {
@@ -177,6 +177,102 @@ def mock_api_project_calls(client: MagicMock, service: str):
             },
         ]
     }
+    # Used by KMS
+    client.projects().locations().keyRings().list().execute.return_value = {
+        "keyRings": [
+            {
+                "name": "projects/123/locations/eu-west1/keyRings/keyring1",
+                "createTime": "2021-01-01T00:00:00Z",
+            },
+            {
+                "name": "projects/123/locations/eu-west1/keyRings/keyring2",
+                "createTime": "2021-01-01T00:00:00Z",
+            },
+        ]
+    }
+    client.projects().locations().keyRings().list_next.return_value = None
+
+    def mock_list_crypto_keys(parent):
+        return_value = MagicMock()
+        if parent == "projects/123/locations/eu-west1/keyRings/keyring1":
+            return_value.execute.return_value = {
+                "cryptoKeys": [
+                    {
+                        "name": "projects/123/locations/eu-west1/keyRings/keyring1/cryptoKeys/key1",
+                        "createTime": "2021-01-01T00:00:00Z",
+                        "rotationPeriod": "7776000s",
+                    },
+                    {
+                        "name": "projects/123/locations/eu-west1/keyRings/keyring2/cryptoKeys/key2",
+                        "createTime": "2021-01-01T00:00:00Z",
+                    },
+                ]
+            }
+        elif parent == "projects/123/locations/eu-west1/keyRings/keyring2":
+            return_value.execute.return_value = {"cryptoKeys": []}
+        return return_value
+
+    client.projects().locations().keyRings().cryptoKeys().list = mock_list_crypto_keys
+
+    client.projects().locations().keyRings().cryptoKeys().list_next.return_value = None
+
+    def mock_get_crypto_keys_iam_policy(resource):
+        return_value = MagicMock()
+        if (
+            resource
+            == "projects/123/locations/eu-west1/keyRings/keyring1/cryptoKeys/key1"
+        ):
+            return_value.execute.return_value = {
+                "auditConfigs": [MagicMock()],
+                "bindings": [
+                    {
+                        "role": "roles/resourcemanager.organizationAdmin",
+                        "members": [
+                            "user:mike@example.com",
+                            "group:admins@example.com",
+                        ],
+                    },
+                    {
+                        "role": "roles/resourcemanager.organizationViewer",
+                        "members": [
+                            "domain:google.com",
+                            "serviceAccount:my-project-id@appspot.gserviceaccount.com",
+                        ],
+                        "condition": {
+                            "title": "expirable access",
+                            "description": "Does not grant access after Sep 2020",
+                            "expression": "request.time < timestamp('2020-10-01T00:00:00.000Z')",
+                        },
+                    },
+                ],
+            }
+        elif (
+            resource
+            == "projects/123/locations/eu-west1/keyRings/keyring2/cryptoKeys/key2"
+        ):
+            return_value.execute.return_value = {
+                "auditConfigs": [MagicMock()],
+                "bindings": [
+                    {
+                        "role": "roles/resourcemanager.organizationAdmin",
+                        "members": ["user:mike@example.com"],
+                    },
+                    {
+                        "role": "roles/resourcemanager.organizationViewer",
+                        "members": ["group:admins@example.com"],
+                        "condition": {
+                            "title": "expirable access",
+                            "description": "Does not grant access after Sep 2020",
+                            "expression": "request.time < timestamp('2020-10-01T00:00:00.000Z')",
+                        },
+                    },
+                ],
+            }
+        return return_value
+
+    client.projects().locations().keyRings().cryptoKeys().getIamPolicy = (
+        mock_get_crypto_keys_iam_policy
+    )
 
 
 def mock_api_dataset_calls(client: MagicMock):
