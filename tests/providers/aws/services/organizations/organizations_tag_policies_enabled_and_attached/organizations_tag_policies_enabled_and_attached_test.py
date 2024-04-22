@@ -14,7 +14,7 @@ from tests.providers.aws.utils import (
 # Needs to Mock manually
 
 
-class Test_organizations_tags_policies_enabled_and_attached:
+class Test_organizations_tag_policies_enabled_and_attached:
     def test_organization_no_organization(self):
         organizations_client = mock.MagicMock
         organizations_client.region = AWS_REGION_EU_WEST_1
@@ -34,15 +34,15 @@ class Test_organizations_tags_policies_enabled_and_attached:
             return_value=aws_provider,
         ):
             with mock.patch(
-                "prowler.providers.aws.services.organizations.organizations_tags_policies_enabled_and_attached.organizations_tags_policies_enabled_and_attached.organizations_client",
+                "prowler.providers.aws.services.organizations.organizations_tag_policies_enabled_and_attached.organizations_tag_policies_enabled_and_attached.organizations_client",
                 new=organizations_client,
             ):
                 # Test Check
-                from prowler.providers.aws.services.organizations.organizations_tags_policies_enabled_and_attached.organizations_tags_policies_enabled_and_attached import (
-                    organizations_tags_policies_enabled_and_attached,
+                from prowler.providers.aws.services.organizations.organizations_tag_policies_enabled_and_attached.organizations_tag_policies_enabled_and_attached import (
+                    organizations_tag_policies_enabled_and_attached,
                 )
 
-                check = organizations_tags_policies_enabled_and_attached()
+                check = organizations_tag_policies_enabled_and_attached()
                 result = check.execute()
 
                 assert len(result) == 1
@@ -85,15 +85,15 @@ class Test_organizations_tags_policies_enabled_and_attached:
             return_value=aws_provider,
         ):
             with mock.patch(
-                "prowler.providers.aws.services.organizations.organizations_tags_policies_enabled_and_attached.organizations_tags_policies_enabled_and_attached.organizations_client",
+                "prowler.providers.aws.services.organizations.organizations_tag_policies_enabled_and_attached.organizations_tag_policies_enabled_and_attached.organizations_client",
                 new=organizations_client,
             ):
                 # Test Check
-                from prowler.providers.aws.services.organizations.organizations_tags_policies_enabled_and_attached.organizations_tags_policies_enabled_and_attached import (
-                    organizations_tags_policies_enabled_and_attached,
+                from prowler.providers.aws.services.organizations.organizations_tag_policies_enabled_and_attached.organizations_tag_policies_enabled_and_attached import (
+                    organizations_tag_policies_enabled_and_attached,
                 )
 
-                check = organizations_tags_policies_enabled_and_attached()
+                check = organizations_tag_policies_enabled_and_attached()
                 result = check.execute()
 
                 assert len(result) == 1
@@ -139,15 +139,15 @@ class Test_organizations_tags_policies_enabled_and_attached:
             return_value=aws_provider,
         ):
             with mock.patch(
-                "prowler.providers.aws.services.organizations.organizations_tags_policies_enabled_and_attached.organizations_tags_policies_enabled_and_attached.organizations_client",
+                "prowler.providers.aws.services.organizations.organizations_tag_policies_enabled_and_attached.organizations_tag_policies_enabled_and_attached.organizations_client",
                 new=organizations_client,
             ):
                 # Test Check
-                from prowler.providers.aws.services.organizations.organizations_tags_policies_enabled_and_attached.organizations_tags_policies_enabled_and_attached import (
-                    organizations_tags_policies_enabled_and_attached,
+                from prowler.providers.aws.services.organizations.organizations_tag_policies_enabled_and_attached.organizations_tag_policies_enabled_and_attached import (
+                    organizations_tag_policies_enabled_and_attached,
                 )
 
-                check = organizations_tags_policies_enabled_and_attached()
+                check = organizations_tag_policies_enabled_and_attached()
                 result = check.execute()
 
                 assert len(result) == 1

@@ -672,7 +672,7 @@
         }
       ],
       "Checks": [
-        "organizations_tags_policies_enabled_and_attached"
+        "organizations_tag_policies_enabled_and_attached"
       ]
     },
     {
@@ -724,7 +724,7 @@
         }
       ],
       "Checks": [
-        "organizations_tags_policies_enabled_and_attached"
+        "organizations_tag_policies_enabled_and_attached"
       ]
     },
     {
@@ -1582,7 +1582,7 @@
         }
       ],
       "Checks": [
-        "organizations_tags_policies_enabled_and_attached"
+        "organizations_tag_policies_enabled_and_attached"
       ]
     },
     {
@@ -4499,7 +4499,7 @@
         }
       ],
       "Checks": [
-        "organizations_tags_policies_enabled_and_attached"
+        "organizations_tag_policies_enabled_and_attached"
       ]
     },
     {

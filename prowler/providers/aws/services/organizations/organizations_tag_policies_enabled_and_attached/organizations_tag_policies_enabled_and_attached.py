@@ -4,7 +4,7 @@ from prowler.providers.aws.services.organizations.organizations_client import (
 )
 
 
-class organizations_tags_policies_enabled_and_attached(Check):
+class organizations_tag_policies_enabled_and_attached(Check):
     def execute(self):
         findings = []
 
@@ -22,7 +22,7 @@ class organizations_tags_policies_enabled_and_attached(Check):
                     # Access Denied to list_policies
                     continue
                 for policy in org.policies:
-                    # We only check SCP policies here
+                    # We only check tag policies here
                     if policy.type != "TAG_POLICY":
                         continue
 
