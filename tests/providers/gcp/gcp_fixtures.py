@@ -296,6 +296,40 @@ def mock_api_projects_calls(client: MagicMock, service: str):
         ]
     }
     client.projects().metrics().list_next.return_value = None
+    # Used by monitoring
+    client.projects().alertPolicies().list().execute.return_value = {
+        "alertPolicies": [
+            {
+                "name": "alert_policy1",
+                "displayName": "Alert Policy 1",
+                "conditions": [
+                    {
+                        "conditionThreshold": {
+                            "filter": 'metric.type="compute.googleapis.com/instance/disk/write_bytes_count"',
+                            "comparison": "COMPARISON_GT",
+                            "thresholdValue": 1000,
+                        }
+                    }
+                ],
+                "enabled": True,
+            },
+            {
+                "name": "alert_policy2",
+                "displayName": "Alert Policy 2",
+                "conditions": [
+                    {
+                        "conditionThreshold": {
+                            "filter": 'metric.type="compute.googleapis.com/instance/disk/write_bytes_count"',
+                            "comparison": "COMPARISON_GT",
+                            "thresholdValue": 2000,
+                        }
+                    }
+                ],
+                "enabled": False,
+            },
+        ]
+    }
+    client.projects().alertPolicies().list_next.return_value = None
 
 
 def mock_api_dataset_calls(client: MagicMock):
