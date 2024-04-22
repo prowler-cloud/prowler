@@ -7,7 +7,6 @@ from colorama import Fore, Style
 from kubernetes import client, config
 from prowler.config.config import load_and_validate_config_file
 from prowler.lib.logger import logger
-from prowler.lib.mutelist.mutelist import parse_mutelist_file
 from prowler.lib.utils.utils import print_boxes
 from prowler.providers.common.models import Audit_Metadata
 from prowler.providers.common.provider import Provider
@@ -112,18 +111,6 @@ class KubernetesProvider(Provider):
             # "account_tags": "organizations_metadata.account_details_tags",
             # "partition": "identity.partition",
         }
-
-    @property
-    def mutelist(self):
-        return self._mutelist
-
-    @mutelist.setter
-    def mutelist(self, mutelist_path):
-        if mutelist_path:
-            mutelist = parse_mutelist_file(mutelist_path)
-        else:
-            mutelist = {}
-        self._mutelist = mutelist
 
     def setup_session(self, kubeconfig_file, input_context) -> KubernetesSession:
         """
