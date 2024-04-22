@@ -44,6 +44,7 @@ def mock_api_client(GCPService, service, api_version, _):
     return client
 
 
+# CAMBAIR LOS TESTS HECHOS PARA QUE NO USEN DECORADORES Y TODO EL SERVICIO SE PRUEBE EN UN SOLO MÉTODO COMO DATAPROC
 def mock_is_api_active(_, audited_project_ids):
     return audited_project_ids
 
