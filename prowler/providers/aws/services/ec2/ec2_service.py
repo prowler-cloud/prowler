@@ -437,15 +437,11 @@ class EC2(AWSService):
             for instance in self.instances:
                 if instance.region == regional_client.region:
                     instances_in_region = True
+            metadata_defaults = regional_client.get_instance_metadata_defaults()
+            account_level = metadata_defaults.get("AccountLevel", {})
             self.instance_metadata_defaults.append(
                 InstanceMetadataDefaults(
-                    http_tokens=getattr(
-                        regional_client.get_instance_metadata_defaults()[
-                            "AccountLevel"
-                        ],
-                        "HttpTokens",
-                        None,
-                    ),
+                    http_tokens=account_level.get("HttpTokens", None),
                     instances=instances_in_region,
                     region=regional_client.region,
                 )

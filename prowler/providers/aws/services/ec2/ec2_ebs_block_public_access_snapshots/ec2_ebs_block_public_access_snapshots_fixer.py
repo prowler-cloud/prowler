@@ -24,9 +24,10 @@ def fixer(region):
     try:
         regional_client = ec2_client.regional_clients[region]
         state = "block-all-sharing"
-        return regional_client.enable_snapshot_block_public_access(State=state)[
-            "block-all-sharing"
-        ]
+        return (
+            regional_client.enable_snapshot_block_public_access(State=state)["State"]
+            == state
+        )
     except Exception as error:
         logger.error(
             f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
