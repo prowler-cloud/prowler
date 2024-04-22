@@ -178,6 +178,8 @@ class <Service>(ServiceParentClass):
                 f"{<item>.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 ```
+???+note
+    To avoid fake findings, when Prowler can't retrieve the items, because an Access Denied or similar error, we set that items value as `None`.
 
 #### Service Models
 

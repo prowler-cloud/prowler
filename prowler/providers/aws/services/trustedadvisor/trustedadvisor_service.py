@@ -111,7 +111,7 @@ class TrustedAdvisor(AWSService):
                     f" {error.__class__.__name__}[{error.__traceback__.tb_lineno}]:"
                     f" {error}"
                 )
-                self.premium_support.enabled = None
+                self.premium_support = None
             else:
                 logger.error(
                     f"{self.region} --"

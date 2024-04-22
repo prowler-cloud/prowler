@@ -8,7 +8,7 @@ class trustedadvisor_premium_support_plan_subscribed(Check):
     def execute(self):
         findings = []
         if (
-            trustedadvisor_client.premium_support.enabled is not None
+            trustedadvisor_client.premium_support
             and trustedadvisor_client.audit_config.get(
                 "verify_premium_support_plans", True
             )
