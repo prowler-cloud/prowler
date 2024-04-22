@@ -32,7 +32,7 @@ def mock_api_client(GCPService, service, api_version, _):
     mock_api_instances_calls(client, service)
     mock_api_buckets_calls(client)
     mock_api_regions_calls(client)
-    mock_api_services_calls(client)
+    mock_api_zones_calls(client)
     mock_api_networks_calls(client)
     mock_api_subnetworks_calls(client)
     mock_api_addresses_calls(client)
@@ -41,6 +41,7 @@ def mock_api_client(GCPService, service, api_version, _):
     mock_api_managedZones_calls(client)
     mock_api_policies_calls(client)
     mock_api_sink_calls(client)
+    mock_api_services_calls(client)
 
     return client
 
@@ -632,7 +633,7 @@ def mock_api_regions_calls(client: MagicMock):
     client.regions().list_next.return_value = None
 
 
-def mock_api_services_calls(client: MagicMock):
+def mock_api_zones_calls(client: MagicMock):
     zone1_id = str(uuid4())
 
     client.zones().list().execute.return_value = {
@@ -858,3 +859,21 @@ def mock_api_sink_calls(client: MagicMock):
         ]
     }
     client.sinks().list_next.return_value = None
+
+
+def mock_api_services_calls(client: MagicMock):
+    client.services().list().execute.return_value = {
+        "services": [
+            {
+                "name": f"projects/{GCP_PROJECT_ID}/services/artifacts.googleapis.com",
+                "config": {"title": "artifacts.googleapis.com"},
+                "state": "ENABLED",
+            },
+            {
+                "name": f"projects/{GCP_PROJECT_ID}/services/bigquery.googleapis.com",
+                "config": {"title": "bigquery.googleapis.com"},
+                "state": "ENABLED",
+            },
+        ]
+    }
+    client.services().list_next.return_value = None
