@@ -27,5 +27,5 @@ class account_maintain_different_contact_details_to_security_billing_and_operati
             else:
                 report.status = "FAIL"
                 report.status_extended = "SECURITY, BILLING and OPERATIONS contacts not found or they are not different between each other and between ROOT contact."
-            return findings.append(report)
+            findings.append(report)
         return findings
