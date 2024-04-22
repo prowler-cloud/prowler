@@ -40,6 +40,7 @@ def mock_api_client(GCPService, service, api_version, _):
     mock_api_urlMaps_calls(client)
     mock_api_managedZones_calls(client)
     mock_api_policies_calls(client)
+    mock_api_sink_calls(client)
 
     return client
 
@@ -273,6 +274,28 @@ def mock_api_projects_calls(client: MagicMock, service: str):
     client.projects().locations().keyRings().cryptoKeys().getIamPolicy = (
         mock_get_crypto_keys_iam_policy
     )
+    # Used by logging
+    client.projects().metrics().list().execute.return_value = {
+        "metrics": [
+            {
+                "name": "metric1",
+                "filter": "resource.type=gae_app AND severity>=ERROR",
+                "metricDescriptor": {
+                    "name": "projects/123/metricDescriptors/custom.googleapis.com/invoice/paid/amount",
+                    "type": "custom.googleapis.com/invoice/paid/amount",
+                },
+            },
+            {
+                "name": "metric2",
+                "metricDescriptor": {
+                    "name": "projects/123/metricDescriptors/custom.googleapis.com/invoice/paid/amount",
+                    "type": "external.googleapis.com/prometheus/up",
+                },
+                "filter": "resource.type=gae_app AND severity>=ERROR",
+            },
+        ]
+    }
+    client.projects().metrics().list_next.return_value = None
 
 
 def mock_api_dataset_calls(client: MagicMock):
@@ -781,3 +804,23 @@ def mock_api_policies_calls(client: MagicMock):
         ]
     }
     client.policies().list_next.return_value = None
+
+
+def mock_api_sink_calls(client: MagicMock):
+    client.sinks().list().execute.return_value = {
+        "sinks": [
+            {
+                "name": "sink1",
+                "destination": "storage.googleapis.com/example-bucket",
+                "filter": "all",
+                "project_id": GCP_PROJECT_ID,
+            },
+            {
+                "name": "sink2",
+                "destination": f"bigquery.googleapis.com/projects/{GCP_PROJECT_ID}/datasets/example_dataset",
+                "filter": "all",
+                "project_id": GCP_PROJECT_ID,
+            },
+        ]
+    }
+    client.sinks().list_next.return_value = None
