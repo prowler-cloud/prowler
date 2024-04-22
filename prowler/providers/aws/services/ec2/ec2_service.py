@@ -456,26 +456,21 @@ class EC2(AWSService):
 
     def __get_attributes_for_regions__(self, regional_client):
         try:
+            has_instances = False
             for instance in self.instances:
                 if instance.region == regional_client.region:
-                    if regional_client.region not in self.attributes_for_regions:
-                        self.attributes_for_regions[regional_client.region] = {}
-                    self.attributes_for_regions[regional_client.region][
-                        "has_instances"
-                    ] = True
+                    has_instances = True
                     break
+            has_snapshots = False
             for snapshot in self.snapshots:
                 if snapshot.region == regional_client.region:
-                    if regional_client.region not in self.attributes_for_regions:
-                        self.attributes_for_regions[regional_client.region] = {}
-                    if (
-                        "has_snapshots"
-                        not in self.attributes_for_regions[regional_client.region]
-                    ):
-                        self.attributes_for_regions[regional_client.region][
-                            "has_snapshots"
-                        ] = True
+                    has_snapshots = True
                     break
+
+            self.attributes_for_regions[regional_client.region] = {
+                "has_instances": has_instances,
+                "has_snapshots": has_snapshots,
+            }
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
