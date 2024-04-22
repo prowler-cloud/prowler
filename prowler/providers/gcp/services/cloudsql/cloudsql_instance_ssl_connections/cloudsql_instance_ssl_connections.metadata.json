@@ -9,7 +9,7 @@
   "Severity": "medium",
   "ResourceType": "DatabaseInstance",
   "Description": "Ensure That the Cloud SQL Database Instance Requires All Incoming Connections To Use SSL",
-  "Risk": "SQL database connections if successfully trapped (MITM); can reveal sensitive data like credentials, database queries, query outputs etc. For security, it is recommended to always use SSL encryption when connecting to your instance. This recommendation is applicable for Postgresql, MySql generation 1, MySql generation 2 and SQL Server 2017 instances.",
+  "Risk": "SQL database connections if successfully trapped (MITM), can reveal sensitive data like credentials, database queries, query outputs etc. For security, it is recommended to always use SSL encryption when connecting to your instance. This recommendation is applicable for Postgresql, MySql generation 1, MySql generation 2 and SQL Server 2017 instances.",
   "RelatedUrl": "",
   "Remediation": {
     "Code": {

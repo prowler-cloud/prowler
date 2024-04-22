@@ -9,7 +9,7 @@
   "Severity": "high",
   "ResourceType": "AwsRedshiftCluster",
   "Description": "Check for Redshift Automatic Version Upgrade",
-  "Risk": "Without automatic version upgrade enabled; a critical Redshift Cluster version can become severly out of date",
+  "Risk": "Without automatic version upgrade enabled, a critical Redshift Cluster version can become severly out of date",
   "RelatedUrl": "https://docs.aws.amazon.com/redshift/latest/mgmt/managing-cluster-operations.html",
   "Remediation": {
     "Code": {

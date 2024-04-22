@@ -9,7 +9,7 @@
   "Severity": "medium",
   "ResourceType": "AwsRedshiftCluster",
   "Description": "Check if Redshift cluster has audit logging enabled",
-  "Risk": "If logs are not enabled; monitoring of service use and threat analysis is not possible.",
+  "Risk": "If logs are not enabled, monitoring of service use and threat analysis is not possible.",
   "RelatedUrl": "https://docs.aws.amazon.com/redshift/latest/mgmt/db-auditing.html",
   "Remediation": {
     "Code": {

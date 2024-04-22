@@ -22,7 +22,7 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "If you do not configure Amazon Cognito authentication; you can still protect Kibana using an IP-based access policy and a proxy server; HTTP basic authentication; or SAML.",
+      "Text": "If you do not configure Amazon Cognito authentication, you can still protect Kibana using an IP-based access policy and a proxy server, HTTP basic authentication, or SAML.",
       "Url": "https://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/es-ac.html"
     }
   },

@@ -23,7 +23,7 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "When creating ES Domains; enable 'Require HTTPS fo all traffic to the domain'",
+      "Text": "When creating ES Domains, enable 'Require HTTPS fo all traffic to the domain'",
       "Url": "https://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/es-createupdatedomains.html"
     }
   },
