@@ -215,7 +215,7 @@ def prowler():
             checks_to_execute,
             global_provider,
             custom_checks_metadata,
-            getattr(args, "mutelist_file", None),
+            global_provider.mutelist_file_path,
             args.config_file,
         )
     else:

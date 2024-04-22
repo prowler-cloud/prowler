@@ -10,7 +10,6 @@ from msgraph import GraphServiceClient
 
 from prowler.config.config import load_and_validate_config_file
 from prowler.lib.logger import logger
-from prowler.lib.mutelist.mutelist import parse_mutelist_file
 from prowler.lib.utils.utils import print_boxes
 from prowler.providers.azure.lib.regions.regions import get_regions_config
 from prowler.providers.azure.models import (
@@ -131,19 +130,6 @@ class AzureProvider(Provider):
             # "account_tags": "organizations_metadata.account_details_tags",
             "partition": "region_config.name",
         }
-
-    @property
-    def mutelist(self):
-        return self._mutelist
-
-    @mutelist.setter
-    def mutelist(self, mutelist_path):
-        if mutelist_path:
-            mutelist = parse_mutelist_file(mutelist_path)
-        else:
-            mutelist = {}
-
-        self._mutelist = mutelist
 
     # TODO: this should be moved to the argparse, if not we need to enforce it from the Provider
     # previously was using the AzureException

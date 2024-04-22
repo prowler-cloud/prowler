@@ -548,7 +548,12 @@ aws:
     def test_aws_provider_mutelist_none(self):
         arguments = Namespace()
         aws_provider = AwsProvider(arguments)
-        aws_provider.mutelist = None
+
+        with patch(
+            "prowler.providers.common.provider.get_default_mute_file_path",
+            return_value=None,
+        ):
+            aws_provider.mutelist = None
 
         assert aws_provider.mutelist == {}
 
