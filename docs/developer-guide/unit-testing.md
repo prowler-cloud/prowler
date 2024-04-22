@@ -62,50 +62,6 @@ For the AWS provider we have ways to test a Prowler check based on the following
 
 In the following section we are going to explain all of the above scenarios with examples. The main difference between those scenarios comes from if the [Moto](https://github.com/getmoto/moto) library covers the AWS API calls made by the service. You can check the covered API calls [here](https://github.com/getmoto/moto/blob/master/IMPLEMENTATION_COVERAGE.md).
 
-An important point for the AWS testing is that in each check we MUST have a unique `audit_info` which is the key object during the AWS execution to isolate the test execution.
-
-Check the [Audit Info](./audit-info.md) section to get more details.
-
-```python
-# We need to import the AWS_Audit_Info and the Audit_Metadata
-# to set the audit_info to call AWS APIs
-from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
-from prowler.providers.common.models import Audit_Metadata
-
-AWS_ACCOUNT_NUMBER = "123456789012"
-
-def set_mocked_audit_info(self):
-  audit_info = AWS_Audit_Info(
-      session_config=None,
-      original_session=None,
-      audit_session=session.Session(
-          profile_name=None,
-          botocore_session=None,
-      ),
-      audit_config=None,
-      audited_account=AWS_ACCOUNT_NUMBER,
-      audited_account_arn=f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root",
-      audited_user_id=None,
-      audited_partition="aws",
-      audited_identity_arn=None,
-      profile=None,
-      profile_region=None,
-      credentials=None,
-      assumed_role_info=None,
-      audited_regions=["us-east-1", "eu-west-1"],
-      organizations_metadata=None,
-      audit_resources=None,
-      mfa_enabled=False,
-      audit_metadata=Audit_Metadata(
-          services_scanned=0,
-          expected_checks=[],
-          completed_checks=0,
-          audit_progress=0,
-      ),
-  )
-
-  return audit_info
-```
 ### Checks
 
 For the AWS tests examples we are going to use the tests for the `iam_password_policy_uppercase` check.
@@ -148,29 +104,29 @@ class Test_iam_password_policy_uppercase:
     # policy we want to set to False the RequireUppercaseCharacters
     iam_client.update_account_password_policy(RequireUppercaseCharacters=False)
 
-    # We set a mocked audit_info for AWS not to share the same audit state
-    # between checks
-    current_audit_info = self.set_mocked_audit_info()
+    # We set a mocked aws_provider info for AWS not to share the same info
+    # between tests
+    aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
     # The Prowler service import MUST be made within the decorated
     # code not to make real API calls to the AWS service.
     from prowler.providers.aws.services.iam.iam_service import IAM
 
-    # Prowler for AWS uses a shared object called `current_audit_info` where it stores
-    # the audit's state, credentials and configuration.
+    # Prowler for AWS uses a shared object called aws_provider where it stores
+    # the info related with the provider
     with mock.patch(
-        "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-        new=current_audit_info,
+        "prowler.providers.common.common.get_global_provider",
+        return_value=aws_provider,
     ),
     # We have to mock also the iam_client from the check to enforce that the iam_client used is the one
     # created within this check because patch != import, and if you execute tests in parallel some objects
     # can be already initialised hence the check won't be isolated
       mock.patch(
         "prowler.providers.aws.services.iam.iam_password_policy_uppercase.iam_password_policy_uppercase.iam_client",
-        new=IAM(current_audit_info),
+        new=IAM(aws_provider),
     ):
         # We import the check within the two mocks not to initialise the iam_client with some shared information from
-        # the current_audit_info or the IAM service.
+        # the aws_provider or the IAM service.
         from prowler.providers.aws.services.iam.iam_password_policy_uppercase.iam_password_policy_uppercase import (
             iam_password_policy_uppercase,
         )
@@ -235,9 +191,9 @@ class Test_iam_password_policy_uppercase:
         expiration=True,
     )
 
-    # We set a mocked audit_info for AWS not to share the same audit state
-    # between checks
-    current_audit_info = self.set_mocked_audit_info()
+    # We set a mocked aws_provider info for AWS not to share the same info
+    # between tests
+    aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
     # In this scenario we have to mock also the IAM service and the iam_client from the check to enforce    # that the iam_client used is the one created within this check because patch != import, and if you     # execute tests in parallel some objects can be already initialised hence the check won't be isolated.
     # In this case we don't use the Moto decorator, we use the mocked IAM client for both objects
@@ -249,7 +205,7 @@ class Test_iam_password_policy_uppercase:
         new=mocked_iam_client,
     ):
         # We import the check within the two mocks not to initialise the iam_client with some shared information from
-        # the current_audit_info or the IAM service.
+        # the aws_provider or the IAM service.
         from prowler.providers.aws.services.iam.iam_password_policy_uppercase.iam_password_policy_uppercase import (
             iam_password_policy_uppercase,
         )
@@ -338,14 +294,20 @@ If the test your are creating belongs to a check that uses more than one provide
 
 ```python
 with mock.patch(
-    "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-    new=mock_audit_info,
+    "prowler.providers.common.common.get_global_provider",
+    return_value=set_mocked_aws_provider(
+        [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
+    ),
 ), mock.patch(
     "prowler.providers.aws.services.cloudtrail.cloudtrail_logs_s3_bucket_access_logging_enabled.cloudtrail_logs_s3_bucket_access_logging_enabled.cloudtrail_client",
-    new=Cloudtrail(mock_audit_info),
+    new=Cloudtrail(
+        set_mocked_aws_provider([AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1])
+    ),
 ), mock.patch(
     "prowler.providers.aws.services.cloudtrail.cloudtrail_logs_s3_bucket_access_logging_enabled.cloudtrail_logs_s3_bucket_access_logging_enabled.s3_client",
-    new=S3(mock_audit_info),
+    new=S3(
+        set_mocked_aws_provider([AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1])
+    ),
 ):
 ```
 
@@ -363,10 +325,10 @@ from prowler.providers.<provider>.services.<service>.<service>_client import <se
 ```
 2. `<service>_client.py`:
 ```python
-from prowler.providers.<provider>.lib.audit_info.audit_info import audit_info
+from prowler.providers.common.common.get_global_provider import mocked_provider
 from prowler.providers.<provider>.services.<service>.<service>_service import <SERVICE>
 
-<service>_client = <SERVICE>(audit_info)
+<service>_client = <SERVICE>(mocked_provider)
 ```
 
 Due to the above import path it's not the same to patch the following objects because if you run a bunch of tests, either in parallel or not, some clients can be already instantiated by another check, hence your test execution will be using another test's service instance:
@@ -386,17 +348,17 @@ Mocking a service client using the following code ...
 
 ```python title="Mocking the service_client"
 with mock.patch(
-    "prowler.providers.<provider>.lib.audit_info.audit_info.audit_info",
-    new=audit_info,
+    "prowler.providers.common.common.get_global_provider",
+    new=set_mocked_aws_provider([<region>]),
 ), mock.patch(
     "prowler.providers.<provider>.services.<service>.<check>.<check>.<service>_client",
-    new=<SERVICE>(audit_info),
+    new=<SERVICE>(set_mocked_aws_provider([<region>])),
 ):
 ```
 will cause that the service will be initialised twice:
 
-1. When the `<SERVICE>(audit_info)` is mocked out using `mock.patch` to have the object ready for the patching.
-2. At the `<service>_client.py` when we are patching it since the `mock.patch` needs to go to that object an initialise it, hence the `<SERVICE>(audit_info)` will be called again.
+1. When the `<SERVICE>(set_mocked_aws_provider([<region>]))` is mocked out using `mock.patch` to have the object ready for the patching.
+2. At the `<service>_client.py` when we are patching it since the `mock.patch` needs to go to that object an initialise it, hence the `<SERVICE>(set_mocked_aws_provider([<region>]))` will be called again.
 
 Then, when we import the `<service>_client.py` at `<check>.py`, since we are mocking where the object is used, Python will use the mocked one.
 
@@ -408,17 +370,17 @@ Mocking a service client using the following code ...
 
 ```python title="Mocking the service and the service_client"
 with mock.patch(
-    "prowler.providers.<provider>.lib.audit_info.audit_info.audit_info",
-    new=audit_info,
+    "prowler.providers.common.common.get_global_provider",
+    new=set_mocked_aws_provider([<region>]),
 ), mock.patch(
     "prowler.providers.<provider>.services.<service>.<SERVICE>",
-    new=<SERVICE>(audit_info),
+    new=<SERVICE>(set_mocked_aws_provider([<region>])),
 ) as service_client, mock.patch(
     "prowler.providers.<provider>.services.<service>.<service>_client.<service>_client",
     new=service_client,
 ):
 ```
-will cause that the service will be initialised once, just when the `<SERVICE>(audit_info)` is mocked out using `mock.patch`.
+will cause that the service will be initialised once, just when the `set_mocked_aws_provider([<region>])` is mocked out using `mock.patch`.
 
 Then, at the check_level when Python tries to import the client with `from prowler.providers.<provider>.services.<service>.<service>_client`, since it is already mocked out, the execution will continue using the `service_client` without getting into the `<service>_client.py`.
 
