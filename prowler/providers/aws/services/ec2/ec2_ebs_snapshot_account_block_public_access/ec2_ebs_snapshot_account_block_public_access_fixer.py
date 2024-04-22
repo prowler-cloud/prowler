@@ -23,7 +23,9 @@ def fixer(region):
     """
     try:
         regional_client = ec2_client.regional_clients[region]
-        state = "block-all-sharing"
+        state = ec2_client.fixer_config.get(
+            "ec2_ebs_snapshot_account_block_public_access", {}
+        ).get("State", "block-all-sharing")
         return (
             regional_client.enable_snapshot_block_public_access(State=state)["State"]
             == state

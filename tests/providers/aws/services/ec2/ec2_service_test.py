@@ -347,7 +347,7 @@ class Test_EC2_Service:
         )
 
         ec2_client = mock.MagicMock()
-        ec2_client.ebs_block_public_access_snapshots_state = [
+        ec2_client.ebs_block_public_access_snapshots_states = [
             EbsSnapshotBlockPublicAccess(
                 status="block-all-sharing", snapshots=True, region=AWS_REGION_US_EAST_1
             )
@@ -363,9 +363,36 @@ class Test_EC2_Service:
             new=ec2_client,
         ):
             assert (
-                ec2_client.ebs_block_public_access_snapshots_state[0].status
+                ec2_client.ebs_block_public_access_snapshots_states[0].status
                 == "block-all-sharing"
             )
+
+    # Test EC2 __get_attributes_for_regions__
+    @mock_aws
+    def test__get_attributes_for_regions__(self):
+        ec2_client = mock.MagicMock()
+        ec2_client.attributes_for_regions = {
+            AWS_REGION_US_EAST_1: {
+                "has_snapshots": True,
+                "has_volumes": True,
+            }
+        }
+        ec2_client.audited_account = AWS_ACCOUNT_NUMBER
+        ec2_client.region = AWS_REGION_US_EAST_1
+
+        with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_aws_provider(),
+        ), mock.patch(
+            "prowler.providers.aws.services.ec2.ec2_client.ec2_client",
+            new=ec2_client,
+        ):
+            assert ec2_client.attributes_for_regions[AWS_REGION_US_EAST_1][
+                "has_snapshots"
+            ]
+            assert ec2_client.attributes_for_regions[AWS_REGION_US_EAST_1][
+                "has_volumes"
+            ]
 
     # Test __get_instance_metadata_defaults__
     @mock_aws

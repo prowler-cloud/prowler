@@ -22,13 +22,14 @@ def mock_get_snapshot_block_public_access_state(status, snapshots, region):
     )
 
 
-def mock_enable_snapshot_block_public_access(State):
-    return {"State": State}
+def mock_modify_instance_metadata_defaults(HttpTokens):
+    if HttpTokens == "required":
+        return {"Return": True}
 
 
-class Test_ec2_ebs_block_public_access_snapshots_fixer:
+class Test_ec2_instance_account_imdsv2_enabled_fixer:
     @mock_aws
-    def test_ec2_ebs_block_public_access_snapshots_fixer(self):
+    def test_ec2_instance_account_imdsv2_enabled_fixer(self):
         ec2_service = mock.MagicMock()
         ec2_client = mock.MagicMock()
         ec2_service.regional_clients = {AWS_REGION_US_EAST_1: ec2_client}
@@ -39,14 +40,14 @@ class Test_ec2_ebs_block_public_access_snapshots_fixer:
             )
         ]
 
-        ec2_client.ebs_block_public_access_snapshots_state = [
+        ec2_client.ebs_block_public_access_snapshots_states = [
             mock_get_snapshot_block_public_access_state(
                 status="block-all-sharing", snapshots=True, region=AWS_REGION_US_EAST_1
             )
         ]
 
-        ec2_client.enable_snapshot_block_public_access = (
-            mock_enable_snapshot_block_public_access
+        ec2_client.modify_instance_metadata_defaults = (
+            mock_modify_instance_metadata_defaults
         )
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
@@ -55,11 +56,11 @@ class Test_ec2_ebs_block_public_access_snapshots_fixer:
             "prowler.providers.common.common.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_ebs_block_public_access_snapshots.ec2_ebs_block_public_access_snapshots_fixer.ec2_client",
+            "prowler.providers.aws.services.ec2.ec2_instance_account_imdsv2_enabled.ec2_instance_account_imdsv2_enabled_fixer.ec2_client",
             ec2_service,
         ):
 
-            from prowler.providers.aws.services.ec2.ec2_ebs_block_public_access_snapshots.ec2_ebs_block_public_access_snapshots_fixer import (
+            from prowler.providers.aws.services.ec2.ec2_instance_account_imdsv2_enabled.ec2_instance_account_imdsv2_enabled_fixer import (
                 fixer,
             )
 

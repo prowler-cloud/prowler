@@ -15,6 +15,7 @@ class EC2(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
+        self.account_arn_template = f"arn:{self.audited_partition}:ec2:{self.region}:{self.audited_account}:account"
         self.instances = []
         self.__threading_call__(self.__describe_instances__)
         self.__threading_call__(self.__get_instance_user_data__, self.instances)
@@ -38,7 +39,9 @@ class EC2(AWSService):
         self.__threading_call__(self.__get_ebs_encryption_settings__)
         self.elastic_ips = []
         self.__threading_call__(self.__describe_ec2_addresses__)
-        self.ebs_block_public_access_snapshots_state = []
+        self.attributes_for_regions = {}
+        self.__threading_call__(self.__get_attributes_for_regions__)
+        self.ebs_block_public_access_snapshots_states = []
         self.__threading_call__(self.__get_snapshot_block_public_access_state__)
         self.instance_metadata_defaults = []
         self.__threading_call__(self.__get_instance_metadata_defaults__)
@@ -413,16 +416,16 @@ class EC2(AWSService):
 
     def __get_snapshot_block_public_access_state__(self, regional_client):
         try:
-            snapshot_in_region = False
-            for snapshot in self.snapshots:
-                if snapshot.region == regional_client.region:
-                    snapshot_in_region = True
-            self.ebs_block_public_access_snapshots_state.append(
+            snapshots_in_region = self.attributes_for_regions.get(
+                regional_client.region, []
+            )
+            snapshots_in_region = snapshots_in_region.get("has_snapshots", False)
+            self.ebs_block_public_access_snapshots_states.append(
                 EbsSnapshotBlockPublicAccess(
                     status=regional_client.get_snapshot_block_public_access_state()[
                         "State"
                     ],
-                    snapshots=snapshot_in_region,
+                    snapshots=snapshots_in_region,
                     region=regional_client.region,
                 )
             )
@@ -433,10 +436,10 @@ class EC2(AWSService):
 
     def __get_instance_metadata_defaults__(self, regional_client):
         try:
-            instances_in_region = False
-            for instance in self.instances:
-                if instance.region == regional_client.region:
-                    instances_in_region = True
+            instances_in_region = self.attributes_for_regions.get(
+                regional_client.region, []
+            )
+            instances_in_region = instances_in_region.get("has_instances", False)
             metadata_defaults = regional_client.get_instance_metadata_defaults()
             account_level = metadata_defaults.get("AccountLevel", {})
             self.instance_metadata_defaults.append(
@@ -446,6 +449,33 @@ class EC2(AWSService):
                     region=regional_client.region,
                 )
             )
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def __get_attributes_for_regions__(self, regional_client):
+        try:
+            for instance in self.instances:
+                if instance.region == regional_client.region:
+                    if regional_client.region not in self.attributes_for_regions:
+                        self.attributes_for_regions[regional_client.region] = {}
+                    self.attributes_for_regions[regional_client.region][
+                        "has_instances"
+                    ] = True
+                    break
+            for snapshot in self.snapshots:
+                if snapshot.region == regional_client.region:
+                    if regional_client.region not in self.attributes_for_regions:
+                        self.attributes_for_regions[regional_client.region] = {}
+                    if (
+                        "has_snapshots"
+                        not in self.attributes_for_regions[regional_client.region]
+                    ):
+                        self.attributes_for_regions[regional_client.region][
+                            "has_snapshots"
+                        ] = True
+                    break
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
