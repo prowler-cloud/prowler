@@ -22,7 +22,6 @@ from prowler.lib.logger import logger
 from prowler.lib.mutelist.mutelist import mutelist_findings
 from prowler.lib.outputs.outputs import report
 from prowler.lib.utils.utils import open_file, parse_json_file, print_boxes
-from prowler.providers.common.common import get_global_provider
 from prowler.providers.common.models import Audit_Metadata
 
 
@@ -556,9 +555,6 @@ def execute_checks(
     # Services and checks executed for the Audit Status
     services_executed = set()
     checks_executed = set()
-
-    # TODO: why is this here?
-    global_provider = get_global_provider()
 
     # Initialize the Audit Metadata
     # TODO: this should be done in the provider class
