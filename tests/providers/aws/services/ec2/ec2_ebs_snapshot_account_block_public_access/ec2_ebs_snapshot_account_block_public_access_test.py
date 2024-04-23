@@ -92,7 +92,7 @@ class Test_ec2_ebs_snapshot_account_block_public_access:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "Public access is blocked for new EBS Snapshots."
+                == "Public access is blocked only for new EBS Snapshots."
             )
             assert (
                 result[0].resource_arn

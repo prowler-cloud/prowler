@@ -24,7 +24,7 @@ class ec2_ebs_snapshot_account_block_public_access(Check):
                 elif ebs_snapshot_block_status.status == "block-new-sharing":
                     report.status = "FAIL"
                     report.status_extended = (
-                        "Public access is blocked for new EBS Snapshots."
+                        "Public access is blocked only for new EBS Snapshots."
                     )
                 else:
                     report.status = "FAIL"
