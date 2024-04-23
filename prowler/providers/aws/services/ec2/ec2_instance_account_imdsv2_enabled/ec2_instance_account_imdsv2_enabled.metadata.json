@@ -21,7 +21,7 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Enable Instance Metadata Service Version 2 (IMDSv2) on the EC2 instances. For more information, see the AWS documentation.",
+      "Text": "Enable Instance Metadata Service Version 2 (IMDSv2) on the EC2 instances. Apply this configuration at the account level for each AWS Region to set the default instance metadata version.",
       "Url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-IMDS-new-instances.html#set-imdsv2-account-defaults"
     }
   },
