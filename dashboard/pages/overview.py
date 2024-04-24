@@ -84,7 +84,7 @@ def load_csv_files(csv_files):
     """Load CSV files into a single pandas DataFrame."""
     dfs = []
     for file in csv_files:
-        df = pd.read_csv(file, sep=";", on_bad_lines="skip")
+        df = pd.read_csv(file, sep=";", on_bad_lines="skip", encoding=encoding_format)
         if "CHECK_ID" in df.columns:
             if "TIMESTAMP" in df.columns or df["PROVIDER"].unique() == "aws":
                 dfs.append(df.astype(str))
@@ -463,7 +463,7 @@ def filter_data(
     # Select the files in the list_files that have the same date as the selected date
     list_files = []
     for file in csv_files:
-        df = pd.read_csv(file, sep=";", on_bad_lines="skip")
+        df = pd.read_csv(file, sep=";", on_bad_lines="skip", encoding=encoding_format)
         if "CHECK_ID" in df.columns:
             if "TIMESTAMP" in df.columns or df["PROVIDER"].unique() == "aws":
                 # This handles the case where we are using v3 outputs

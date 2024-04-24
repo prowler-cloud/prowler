@@ -28,7 +28,10 @@ informational_color = "#3274d9"
 folder_path_overview = os.getcwd() + "/output"
 folder_path_compliance = os.getcwd() + "/output/compliance"
 
-# Encoding
-encoding_format = "utf-8"
+# Encoding, if the os is windows, use cp1252
+if os.name == "nt":
+    encoding_format = "cp1252"
+else:
+    encoding_format = "utf-8"
 # Error action, it is recommended to use "ignore" or "replace"
 error_action = "ignore"
