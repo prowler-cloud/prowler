@@ -58,7 +58,7 @@ from prowler.providers.<provider>.lib.service.service import ServiceParentClass
 # Create a class for the Service
 ################## <Service>
 class <Service>(ServiceParentClass):
-    def __init__(self, provicer):
+    def __init__(self, provider):
         # Call Service Parent Class __init__
         # We use the __class__.__name__ to get it automatically
         # from the Service Class name but you can pass a custom

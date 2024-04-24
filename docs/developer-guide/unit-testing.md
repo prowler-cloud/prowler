@@ -104,8 +104,8 @@ class Test_iam_password_policy_uppercase:
     # policy we want to set to False the RequireUppercaseCharacters
     iam_client.update_account_password_policy(RequireUppercaseCharacters=False)
 
-    # We set a mocked aws_provider info for AWS not to share the same info
-    # between tests
+    # The aws_provider is mocked using set_mocked_aws_provider to use it as the return of the get_global_provider method.
+    # this mocked provider is defined in fixtures
     aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
     # The Prowler service import MUST be made within the decorated
@@ -191,8 +191,8 @@ class Test_iam_password_policy_uppercase:
         expiration=True,
     )
 
-    # We set a mocked aws_provider info for AWS not to share the same info
-    # between tests
+    # We set a mocked aws_provider to unify providers, this way will share provider info
+    # between tests
     aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
     # In this scenario we have to mock also the IAM service and the iam_client from the check to enforce    # that the iam_client used is the one created within this check because patch != import, and if you     # execute tests in parallel some objects can be already initialised hence the check won't be isolated.
@@ -325,7 +325,7 @@ from prowler.providers.<provider>.services.<service>.<service>_client import <se
 ```
 2. `<service>_client.py`:
 ```python
-from prowler.providers.common.common.get_global_provider import mocked_provider
+from prowler.providers.common.common import get_global_provider
 from prowler.providers.<provider>.services.<service>.<service>_service import <SERVICE>
 
 <service>_client = <SERVICE>(mocked_provider)
