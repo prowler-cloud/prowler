@@ -106,3 +106,43 @@ def _is_cidr_public(cidr: str, any_address: bool = False) -> bool:
         return True
     if not any_address:
         return ipaddress.ip_network(cidr).is_global
+
+
+def check_if_open_security_group_is_attached_to_instance(
+    security_group: Any, vpc_client: Any, port: str
+) -> list:
+    """
+    Check if the security group is attached to any EC2 instance
+
+    Args:
+        security_group: AWS Security Group
+        vpc_client: VPC Client
+        port: Port to check
+    Returns:
+        list: List of reports for each EC2 instance attached to the security group
+    """
+    reports = []
+    # Check if the security group is attached to any EC2 instance
+    for network_interface in security_group.network_interfaces:
+        instance_attached = network_interface.attachment.get("InstanceId")
+        if instance_attached:
+            report = {}
+            report["severity"] = "high"
+            # Check if the EC2 instance has a public IP
+            if not network_interface.association.get("PublicIp"):
+                report["details"] = (
+                    f"EC2 Instance {instance_attached} has {port} exposed to 0.0.0.0/0 on private ip address {network_interface.private_ip}."
+                )
+            else:
+                report["details"] = (
+                    f"EC2 Instance {instance_attached} has {port} exposed to 0.0.0.0/0 on public ip address {network_interface.association.get('PublicIp')}."
+                )
+                # Check if EC2 instance is in a public subnet
+                if vpc_client.vpc_subnets[network_interface.subnet_id].public:
+                    report["details"] = (
+                        f"EC2 Instance {instance_attached} has {port} exposed to 0.0.0.0/0 on public ip address {network_interface.association.get('PublicIp')} within public subnet {network_interface.subnet_id}."
+                    )
+                    report["severity"] = "critical"
+            report["instance_id"] = instance_attached
+            reports.append(report)
+    return reports

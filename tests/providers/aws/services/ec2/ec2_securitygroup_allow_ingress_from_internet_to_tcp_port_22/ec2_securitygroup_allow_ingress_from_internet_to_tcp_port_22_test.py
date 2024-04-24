@@ -331,6 +331,7 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22:
                         == f"EC2 Instance {instance_id} has SSH exposed to 0.0.0.0/0 on private ip address {network_interface.private_ip_address}."
                     )
                     assert sg.check_metadata.Severity == "high"
+                    assert sg.resource_details == instance_id
 
     @mock_aws
     def test_ec2_sg_attached_to_instance_with_public_ip(self):
@@ -414,6 +415,7 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22:
                         == f"EC2 Instance {instance_id} has SSH exposed to 0.0.0.0/0 on public ip address {public_ip}."
                     )
                     assert sg.check_metadata.Severity == "high"
+                    assert sg.resource_details == instance_id
 
     @mock_aws
     def test_ec2_sg_attached_to_instance_with_public_ip_in_public_subnet(self):
@@ -508,3 +510,127 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22:
                         == f"EC2 Instance {instance_id} has SSH exposed to 0.0.0.0/0 on public ip address {public_ip} within public subnet {subnet.id}."
                     )
                     assert sg.check_metadata.Severity == "critical"
+                    assert sg.resource_details == instance_id
+
+    @mock_aws
+    def test_ec2_sg_attached_to_2_instances_with_public_ip_in_public_subnet(self):
+        # Create EC2 Mocked Resources
+        ec2 = resource("ec2", region_name=AWS_REGION_US_EAST_1)
+        vpc = ec2.create_vpc(CidrBlock="10.0.0.0/16")
+        subnet = ec2.create_subnet(VpcId=vpc.id, CidrBlock="10.0.0.0/18")
+        network_interface = ec2.create_network_interface(SubnetId=subnet.id)
+        network_interface_2 = ec2.create_network_interface(SubnetId=subnet.id)
+        ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
+        # Create IGW and attach to VPC
+        igw = ec2.create_internet_gateway()
+        vpc.attach_internet_gateway(InternetGatewayId=igw.id)
+        # Set IGW as default route for public subnet
+        route_table = ec2.create_route_table(VpcId=vpc.id)
+        route_table.associate_with_subnet(SubnetId=subnet.id)
+        ec2_client.create_route(
+            RouteTableId=route_table.id,
+            DestinationCidrBlock="0.0.0.0/0",
+            GatewayId=igw.id,
+        )
+        # Associate public ip to network interfaces
+        ec2_client.associate_address(
+            AllocationId=ec2_client.allocate_address(Domain="vpc")["AllocationId"],
+            NetworkInterfaceId=network_interface.id,
+        )
+        ec2_client.associate_address(
+            AllocationId=ec2_client.allocate_address(Domain="vpc")["AllocationId"],
+            NetworkInterfaceId=network_interface_2.id,
+        )
+        default_sg = ec2_client.describe_security_groups(GroupNames=["default"])[
+            "SecurityGroups"
+        ][0]
+        default_sg_id = default_sg["GroupId"]
+        ec2_client.authorize_security_group_ingress(
+            GroupId=default_sg_id,
+            IpPermissions=[
+                {
+                    "IpProtocol": "tcp",
+                    "FromPort": 22,
+                    "ToPort": 22,
+                    "IpRanges": [{"CidrIp": "0.0.0.0/0"}],
+                }
+            ],
+        )
+        # Attach 2 instances to default sg
+        instance_id = ec2.create_instances(
+            NetworkInterfaces=[
+                {
+                    "NetworkInterfaceId": network_interface.id,
+                    "DeviceIndex": 0,
+                    "AssociatePublicIpAddress": True,
+                }
+            ],
+            MinCount=1,
+            MaxCount=1,
+            SecurityGroupIds=[default_sg_id],
+        )[0].id
+        instance_id_2 = ec2.create_instances(
+            NetworkInterfaces=[
+                {
+                    "NetworkInterfaceId": network_interface_2.id,
+                    "DeviceIndex": 0,
+                    "AssociatePublicIpAddress": True,
+                }
+            ],
+            MinCount=1,
+            MaxCount=1,
+            SecurityGroupIds=[default_sg_id],
+        )[0].id
+        # Get Instances public ip
+        public_ip = ec2_client.describe_instances(InstanceIds=[instance_id])[
+            "Reservations"
+        ][0]["Instances"][0]["PublicIpAddress"]
+        public_ip_2 = ec2_client.describe_instances(InstanceIds=[instance_id_2])[
+            "Reservations"
+        ][0]["Instances"][0]["PublicIpAddress"]
+
+        from prowler.providers.aws.services.ec2.ec2_service import EC2
+
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_US_EAST_1],
+        )
+
+        with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22.ec2_client",
+            new=EC2(aws_provider),
+        ), mock.patch(
+            "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22.vpc_client",
+            new=VPC(aws_provider),
+        ):
+            # Test Check
+            from prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22 import (
+                ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22,
+            )
+
+            check = ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22()
+            result = check.execute()
+
+            # One default sg per region
+            assert len(result) == 3
+            # Search changed sg
+            for sg in result:
+                if sg.resource_id == default_sg_id:
+                    if instance_id == sg.resource_details:
+                        assert sg.status == "FAIL"
+                        assert sg.region == AWS_REGION_US_EAST_1
+                        assert (
+                            sg.status_extended
+                            == f"EC2 Instance {instance_id} has SSH exposed to 0.0.0.0/0 on public ip address {public_ip} within public subnet {subnet.id}."
+                        )
+                        assert sg.check_metadata.Severity == "critical"
+                    elif instance_id_2 == sg.resource_details:
+                        assert sg.status == "FAIL"
+                        assert sg.region == AWS_REGION_US_EAST_1
+                        assert (
+                            sg.status_extended
+                            == f"EC2 Instance {instance_id_2} has SSH exposed to 0.0.0.0/0 on public ip address {public_ip_2} within public subnet {subnet.id}."
+                        )
+                        assert sg.check_metadata.Severity == "critical"

@@ -1,6 +1,9 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.ec2.ec2_client import ec2_client
-from prowler.providers.aws.services.ec2.lib.security_groups import check_security_group
+from prowler.providers.aws.services.ec2.lib.security_groups import (
+    check_if_open_security_group_is_attached_to_instance,
+    check_security_group,
+)
 from prowler.providers.aws.services.vpc.vpc_client import vpc_client
 
 
@@ -36,26 +39,25 @@ class ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22(Check):
                             sg_is_open = True
                             break
                 if sg_is_open:
-                    # Check if the security group is attached to any EC2 instance
-                    for network_interface in security_group.network_interfaces:
-                        instance_attached = network_interface.attachment.get(
-                            "InstanceId"
+                    instances_attached = (
+                        check_if_open_security_group_is_attached_to_instance(
+                            security_group=security_group,
+                            vpc_client=vpc_client,
+                            port="SSH",
                         )
-                        if instance_attached:
+                    )
+                    if instances_attached:
+                        for instance_attached in instances_attached:
                             report.status = "FAIL"
-                            report.check_metadata.Severity = "high"
-                            # Check if the EC2 instance has a public IP
-                            if not network_interface.association.get("PublicIp"):
-                                report.status_extended = f"EC2 Instance {instance_attached} has SSH exposed to 0.0.0.0/0 on private ip address {network_interface.private_ip}."
-                            else:
-                                report.status_extended = f"EC2 Instance {instance_attached} has SSH exposed to 0.0.0.0/0 on public ip address {network_interface.association.get('PublicIp')}."
-                                # Check if EC2 instance is in a public subnet
-                                if vpc_client.vpc_subnets[
-                                    network_interface.subnet_id
-                                ].public:
-                                    report.status_extended = f"EC2 Instance {instance_attached} has SSH exposed to 0.0.0.0/0 on public ip address {network_interface.association.get('PublicIp')} within public subnet {network_interface.subnet_id}."
-                                    report.check_metadata.Severity = "critical"
-
-                findings.append(report)
+                            report.check_metadata.Severity = instance_attached[
+                                "severity"
+                            ]
+                            report.status_extended = instance_attached["details"]
+                            report.resource_details = instance_attached["instance_id"]
+                            findings.append(report)
+                    else:
+                        findings.append(report)
+                else:
+                    findings.append(report)
 
         return findings
