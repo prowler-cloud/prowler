@@ -138,7 +138,7 @@ def mock_api_projects_calls(client: MagicMock, service: str):
             },
         ]
     }
-    client.projects().regions().clusters().list_next().execute.return_value = None
+    client.projects().regions().clusters().list_next.execute.return_value = None
     # Used by gke client
     client.projects().locations().list().execute.return_value = {
         "locations": [{"name": "eu-west1"}]
