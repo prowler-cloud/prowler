@@ -20,7 +20,7 @@ class Test_GKE_Service:
         ):
             gke_client = GKE(set_mocked_gcp_provider(project_ids=[GCP_PROJECT_ID]))
             assert gke_client.service == "container"
-            assert gke_client.project_ids.__class__.__name__ == "list"
+            assert gke_client.project_ids == [GCP_PROJECT_ID]
 
             assert len(gke_client.locations) == 1
             assert gke_client.locations[0].name == "eu-west1"

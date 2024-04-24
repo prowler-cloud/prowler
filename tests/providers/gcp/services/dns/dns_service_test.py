@@ -20,7 +20,7 @@ class Test_DNS_Service:
         ):
             api_keys_client = DNS(set_mocked_gcp_provider(project_ids=[GCP_PROJECT_ID]))
             assert api_keys_client.service == "dns"
-            assert api_keys_client.project_ids.__class__.__name__ == "list"
+            assert api_keys_client.project_ids == [GCP_PROJECT_ID]
 
             assert len(api_keys_client.managed_zones) == 2
             assert api_keys_client.managed_zones[0].name == "managed_zone1"

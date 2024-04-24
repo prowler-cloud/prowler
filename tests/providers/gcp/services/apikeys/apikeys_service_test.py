@@ -22,7 +22,7 @@ class Test_APIKeys_Service:
                 set_mocked_gcp_provider(project_ids=[GCP_PROJECT_ID])
             )
             assert api_keys_client.service == "apikeys"
-            assert api_keys_client.project_ids.__class__.__name__ == "list"
+            assert api_keys_client.project_ids == [GCP_PROJECT_ID]
 
             assert len(api_keys_client.keys) == 2
 

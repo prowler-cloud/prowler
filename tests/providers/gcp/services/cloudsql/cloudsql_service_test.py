@@ -22,7 +22,7 @@ class Test_CloudSQL_Service:
                 set_mocked_gcp_provider(project_ids=[GCP_PROJECT_ID])
             )
             assert cloudsql_client.service == "sqladmin"
-            assert cloudsql_client.project_ids.__class__.__name__ == "list"
+            assert cloudsql_client.project_ids == [GCP_PROJECT_ID]
 
             assert len(cloudsql_client.instances) == 2
 

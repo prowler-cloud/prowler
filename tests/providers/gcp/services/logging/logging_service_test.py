@@ -22,7 +22,7 @@ class Test_Logging_Service:
                 set_mocked_gcp_provider(project_ids=[GCP_PROJECT_ID])
             )
             assert logging_client.service == "logging"
-            assert logging_client.project_ids.__class__.__name__ == "list"
+            assert logging_client.project_ids == [GCP_PROJECT_ID]
 
             assert len(logging_client.sinks) == 2
 

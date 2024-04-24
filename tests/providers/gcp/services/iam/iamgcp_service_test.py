@@ -28,7 +28,7 @@ class Test_IAM_Service:
 
             iam_client = IAM(set_mocked_gcp_provider(project_ids=[GCP_PROJECT_ID]))
             assert iam_client.service == "iam"
-            assert iam_client.project_ids.__class__.__name__ == "list"
+            assert iam_client.project_ids == [GCP_PROJECT_ID]
 
             assert len(iam_client.service_accounts) == 2
             assert (
@@ -93,7 +93,7 @@ class Test_AccessApproval:
             )
 
             assert access_approval_client.service == "accessapproval"
-            assert access_approval_client.project_ids.__class__.__name__ == "list"
+            assert access_approval_client.project_ids == [GCP_PROJECT_ID]
 
             assert (
                 access_approval_client.settings[GCP_PROJECT_ID].name
@@ -129,7 +129,7 @@ class Test_EssentialContacts:
             )
 
             assert essential_contacts_client.service == "essentialcontacts"
-            assert essential_contacts_client.project_ids.__class__.__name__ == "list"
+            assert essential_contacts_client.project_ids == [GCP_PROJECT_ID]
 
             assert len(essential_contacts_client.organizations) == 2
 

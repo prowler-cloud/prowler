@@ -24,7 +24,7 @@ class Test_CloudResourceManager_Service:
                 set_mocked_gcp_provider(project_ids=[GCP_PROJECT_ID])
             )
             assert api_keys_client.service == "cloudresourcemanager"
-            assert api_keys_client.project_ids.__class__.__name__ == "list"
+            assert api_keys_client.project_ids == [GCP_PROJECT_ID]
 
             assert len(api_keys_client.projects) == 1
             assert api_keys_client.projects[0].id == GCP_PROJECT_ID

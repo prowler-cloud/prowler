@@ -32,7 +32,7 @@ class Test_Dataproc_Service:
             )
             assert dataproc_client.service == "dataproc"
 
-            assert dataproc_client.project_ids.__class__.__name__ == "list"
+            assert dataproc_client.project_ids == [GCP_PROJECT_ID]
 
             assert len(dataproc_client.clusters) == 2
 

@@ -20,7 +20,7 @@ class Test_KMS_Service:
         ):
             kms_client = KMS(set_mocked_gcp_provider(project_ids=[GCP_PROJECT_ID]))
             assert kms_client.service == "cloudkms"
-            assert kms_client.project_ids.__class__.__name__ == "list"
+            assert kms_client.project_ids == [GCP_PROJECT_ID]
 
             assert len(kms_client.locations) == 1
             assert kms_client.locations[0].name == "eu-west1"

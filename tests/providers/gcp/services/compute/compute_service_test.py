@@ -20,7 +20,7 @@ class Test_Compute_Service:
         ):
             compute_client = Compute(set_mocked_gcp_provider([GCP_PROJECT_ID]))
             assert compute_client.service == "compute"
-            assert compute_client.project_ids.__class__.__name__ == "list"
+            assert compute_client.project_ids == [GCP_PROJECT_ID]
 
             assert len(compute_client.regions) == 1
             assert "europe-west1-b" in compute_client.regions

@@ -22,7 +22,7 @@ class Test_BigQuery_Service:
                 set_mocked_gcp_provider(project_ids=[GCP_PROJECT_ID])
             )
             assert bigquery_client.service == "bigquery"
-            assert bigquery_client.project_ids.__class__.__name__ == "list"
+            assert bigquery_client.project_ids == [GCP_PROJECT_ID]
 
             assert len(bigquery_client.datasets) == 2
 

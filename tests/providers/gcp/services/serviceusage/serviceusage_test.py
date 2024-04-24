@@ -24,7 +24,7 @@ class Test_ServiceUsage_Service:
                 set_mocked_gcp_provider(project_ids=[GCP_PROJECT_ID])
             )
             assert serviceusage_client.service == "serviceusage"
-            assert serviceusage_client.project_ids.__class__.__name__ == "list"
+            assert serviceusage_client.project_ids == [GCP_PROJECT_ID]
 
             assert len(serviceusage_client.active_services[GCP_PROJECT_ID]) == 2
 

@@ -24,7 +24,7 @@ class Test_CloudStorage_Service:
                 set_mocked_gcp_provider(project_ids=[GCP_PROJECT_ID])
             )
             assert cloudstorage_client.service == "storage"
-            assert cloudstorage_client.project_ids.__class__.__name__ == "list"
+            assert cloudstorage_client.project_ids == [GCP_PROJECT_ID]
 
             assert len(cloudstorage_client.buckets) == 2
             assert cloudstorage_client.buckets[0].name == "bucket1"

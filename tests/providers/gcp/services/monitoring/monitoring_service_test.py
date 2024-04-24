@@ -22,7 +22,7 @@ class Test_Monitoring_Service:
                 set_mocked_gcp_provider(project_ids=[GCP_PROJECT_ID])
             )
             assert monitoring_client.service == "monitoring"
-            assert monitoring_client.project_ids.__class__.__name__ == "list"
+            assert monitoring_client.project_ids == [GCP_PROJECT_ID]
 
             assert len(monitoring_client.alert_policies) == 2
             assert monitoring_client.alert_policies[0].name == "alert_policy1"
