@@ -35,12 +35,12 @@ class EC2(AWSService):
         self.__threading_call__(self.__describe_images__)
         self.volumes = []
         self.__threading_call__(self.__describe_volumes__)
+        self.attributes_for_regions = {}
+        self.__threading_call__(self.__get_resources_for_regions__)
         self.ebs_encryption_by_default = []
         self.__threading_call__(self.__get_ebs_encryption_settings__)
         self.elastic_ips = []
         self.__threading_call__(self.__describe_ec2_addresses__)
-        self.attributes_for_regions = {}
-        self.__threading_call__(self.__get_attributes_for_regions__)
         self.ebs_block_public_access_snapshots_states = []
         self.__threading_call__(self.__get_snapshot_block_public_access_state__)
         self.instance_metadata_defaults = []
@@ -396,10 +396,10 @@ class EC2(AWSService):
 
     def __get_ebs_encryption_settings__(self, regional_client):
         try:
-            volumes_in_region = False
-            for volume in self.volumes:
-                if volume.region == regional_client.region:
-                    volumes_in_region = True
+            volumes_in_region = self.attributes_for_regions.get(
+                regional_client.region, []
+            )
+            volumes_in_region = volumes_in_region.get("has_volumes", False)
             self.ebs_encryption_by_default.append(
                 EbsEncryptionByDefault(
                     status=regional_client.get_ebs_encryption_by_default()[
@@ -454,7 +454,7 @@ class EC2(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def __get_attributes_for_regions__(self, regional_client):
+    def __get_resources_for_regions__(self, regional_client):
         try:
             has_instances = False
             for instance in self.instances:
@@ -466,10 +466,15 @@ class EC2(AWSService):
                 if snapshot.region == regional_client.region:
                     has_snapshots = True
                     break
-
+            has_volumes = False
+            for volume in self.volumes:
+                if volume.region == regional_client.region:
+                    has_volumes = True
+                    break
             self.attributes_for_regions[regional_client.region] = {
                 "has_instances": has_instances,
                 "has_snapshots": has_snapshots,
+                "has_volumes": has_volumes,
             }
         except Exception as error:
             logger.error(

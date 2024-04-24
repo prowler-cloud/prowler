@@ -367,32 +367,53 @@ class Test_EC2_Service:
                 == "block-all-sharing"
             )
 
-    # Test EC2 __get_attributes_for_regions__
+    # Test EC2 __get_resources_for_regions__
     @mock_aws
-    def test__get_attributes_for_regions__(self):
-        ec2_client = mock.MagicMock()
-        ec2_client.attributes_for_regions = {
-            AWS_REGION_US_EAST_1: {
-                "has_snapshots": True,
-                "has_volumes": True,
-            }
-        }
-        ec2_client.audited_account = AWS_ACCOUNT_NUMBER
-        ec2_client.region = AWS_REGION_US_EAST_1
-
-        with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
-            return_value=set_mocked_aws_provider(),
-        ), mock.patch(
-            "prowler.providers.aws.services.ec2.ec2_client.ec2_client",
-            new=ec2_client,
-        ):
-            assert ec2_client.attributes_for_regions[AWS_REGION_US_EAST_1][
-                "has_snapshots"
-            ]
-            assert ec2_client.attributes_for_regions[AWS_REGION_US_EAST_1][
-                "has_volumes"
-            ]
+    def test__get_resources_for_regions__(self):
+        # Generate EC2 Client
+        ec2_resource = resource("ec2", region_name=AWS_REGION_US_EAST_1)
+        ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
+        # Get AMI image
+        image_response = ec2_client.describe_images()
+        image_id = image_response["Images"][0]["ImageId"]
+        # Create EC2 Instances running
+        ec2_resource.create_instances(
+            MinCount=1,
+            MaxCount=1,
+            ImageId=image_id,
+        )
+        # Create Volume
+        volume_id = ec2_client.create_volume(
+            AvailabilityZone=AWS_REGION_US_EAST_1,
+            Encrypted=False,
+            Size=40,
+            TagSpecifications=[
+                {
+                    "ResourceType": "volume",
+                    "Tags": [
+                        {"Key": "test", "Value": "test"},
+                    ],
+                },
+            ],
+        )["VolumeId"]
+        ec2_client.create_snapshot(
+            VolumeId=volume_id,
+            TagSpecifications=[
+                {
+                    "ResourceType": "snapshot",
+                    "Tags": [
+                        {"Key": "test", "Value": "test"},
+                    ],
+                },
+            ],
+        )
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
+        )
+        ec2 = EC2(aws_provider)
+        assert ec2.attributes_for_regions[AWS_REGION_US_EAST_1]["has_snapshots"]
+        assert ec2.attributes_for_regions[AWS_REGION_US_EAST_1]["has_instances"]
+        assert ec2.attributes_for_regions[AWS_REGION_US_EAST_1]["has_volumes"]
 
     # Test __get_instance_metadata_defaults__
     @mock_aws
