@@ -30,6 +30,7 @@ from dashboard.lib.dropdowns import (
     create_region_dropdown_compliance,
 )
 from dashboard.lib.layouts import create_layout_compliance
+from prowler.lib.logger import logger
 
 # Suppress warnings
 warnings.filterwarnings("ignore")
@@ -39,13 +40,16 @@ warnings.filterwarnings("ignore")
 
 csv_files = []
 for file in glob.glob(os.path.join(folder_path_compliance, "*.csv")):
-    with open(
-        file, "r", newline="", encoding=encoding_format, errors=error_action
-    ) as csvfile:
-        reader = csv.reader(csvfile)
-        num_rows = sum(1 for row in reader)
-        if num_rows > 1:
-            csv_files.append(file)
+    try:
+        with open(
+            file, "r", newline="", encoding=encoding_format, errors=error_action
+        ) as csvfile:
+            reader = csv.reader(csvfile)
+            num_rows = sum(1 for row in reader)
+            if num_rows > 1:
+                csv_files.append(file)
+    except UnicodeDecodeError:
+        logger.error(f"Error decoding file: {file}")
 
 
 def load_csv_files(csv_files):

@@ -43,6 +43,7 @@ from dashboard.lib.dropdowns import (
     create_table_row_dropdown,
 )
 from dashboard.lib.layouts import create_layout_overview
+from prowler.lib.logger import logger
 
 # Suppress warnings
 warnings.filterwarnings("ignore")
@@ -55,10 +56,13 @@ for file in glob.glob(os.path.join(folder_path_overview, "*.csv")):
     with open(
         file, "r", newline="", encoding=encoding_format, errors=error_action
     ) as csvfile:
-        reader = csv.reader(csvfile)
-        num_rows = sum(1 for row in reader)
-        if num_rows > 1:
-            csv_files.append(file)
+        try:
+            reader = csv.reader(csvfile)
+            num_rows = sum(1 for row in reader)
+            if num_rows > 1:
+                csv_files.append(file)
+        except UnicodeDecodeError:
+            logger.error(f"Error decoding file: {file}")
 
 
 # Import logos providers
