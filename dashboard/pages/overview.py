@@ -18,6 +18,7 @@ from dash.dependencies import Input, Output
 from dashboard.config import (
     critical_color,
     encoding_format,
+    error_action,
     fail_color,
     folder_path_overview,
     high_color,
@@ -51,7 +52,9 @@ warnings.filterwarnings("ignore")
 csv_files = []
 
 for file in glob.glob(os.path.join(folder_path_overview, "*.csv")):
-    with open(file, "r", newline="", encoding=encoding_format) as csvfile:
+    with open(
+        file, "r", newline="", encoding=encoding_format, errors=error_action
+    ) as csvfile:
         reader = csv.reader(csvfile)
         num_rows = sum(1 for row in reader)
         if num_rows > 1:

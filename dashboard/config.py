@@ -30,3 +30,5 @@ folder_path_compliance = os.getcwd() + "/output/compliance"
 
 # Encoding
 encoding_format = "utf-8"
+# Error action, it is recommended to use "ignore" or "replace"
+error_action = "ignore"
