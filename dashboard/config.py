@@ -30,7 +30,7 @@ folder_path_overview = os.getcwd() + "/output"
 folder_path_compliance = os.getcwd() + "/output/compliance"
 
 # Encoding, if the os is windows, use cp1252. Use utf-8 if it is running using python3
-if os.name == "nt" and "python" not in sys.argv[0].lower():
+if os.name == "nt" and ".py" not in sys.argv[0].lower():
     encoding_format = "cp1252"
 else:
     encoding_format = "utf-8"
