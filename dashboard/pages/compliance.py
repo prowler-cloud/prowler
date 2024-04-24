@@ -57,7 +57,7 @@ def load_csv_files(csv_files):
     dfs = []
     results = []
     for file in csv_files:
-        df = pd.read_csv(file, sep=";", on_bad_lines="skip")
+        df = pd.read_csv(file, sep=";", on_bad_lines="skip", encoding=encoding_format)
         if "CHECKID" in df.columns:
             dfs.append(df)
             result = file
@@ -245,7 +245,9 @@ def display_data(
         """Load CSV files into a single pandas DataFrame."""
         dfs = []
         for file in files:
-            df = pd.read_csv(file, sep=";", on_bad_lines="skip")
+            df = pd.read_csv(
+                file, sep=";", on_bad_lines="skip", encoding=encoding_format
+            )
             dfs.append(df.astype(str))
         return pd.concat(dfs, ignore_index=True)
 
