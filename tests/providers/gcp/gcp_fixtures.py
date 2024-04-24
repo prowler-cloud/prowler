@@ -116,29 +116,29 @@ def mock_api_projects_calls(client: MagicMock, service: str):
     }
     client.projects().list_next.return_value = None
     # Used by dataproc client
-    if service == "dataproc":
-        cluster1_id = str(uuid4())
-        cluster2_id = str(uuid4())
 
-        client.projects().regions().clusters().list().execute.return_value = {
-            "clusters": [
-                {
-                    "clusterName": "cluster1",
-                    "clusterUuid": cluster1_id,
-                    "config": {
-                        "encryptionConfig": {
-                            "gcePdKmsKeyName": "projects/123/locations/456/keyRings/789/cryptoKeys/123"
-                        }
-                    },
+    cluster1_id = str(uuid4())
+    cluster2_id = str(uuid4())
+
+    client.projects().regions().clusters().list().execute.return_value = {
+        "clusters": [
+            {
+                "clusterName": "cluster1",
+                "clusterUuid": cluster1_id,
+                "config": {
+                    "encryptionConfig": {
+                        "gcePdKmsKeyName": "projects/123/locations/456/keyRings/789/cryptoKeys/123"
+                    }
                 },
-                {
-                    "clusterName": "cluster2",
-                    "clusterUuid": cluster2_id,
-                    "config": {"encryptionConfig": {}},
-                },
-            ]
-        }
-        client.projects().regions().clusters().list_next().execute.return_value = None
+            },
+            {
+                "clusterName": "cluster2",
+                "clusterUuid": cluster2_id,
+                "config": {"encryptionConfig": {}},
+            },
+        ]
+    }
+    client.projects().regions().clusters().list_next().execute.return_value = None
     # Used by gke client
     client.projects().locations().list().execute.return_value = {
         "locations": [{"name": "eu-west1"}]
