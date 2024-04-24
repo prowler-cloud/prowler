@@ -28,7 +28,7 @@ def mock_api_client(GCPService, service, api_version, _):
     mock_api_projects_calls(client, service)
     mock_api_dataset_calls(client)
     mock_api_tables_calls(client)
-    mock_api_organization_calls(client)
+    mock_api_organizations_calls(client)
     mock_api_instances_calls(client, service)
     mock_api_buckets_calls(client)
     mock_api_regions_calls(client)
@@ -331,6 +331,70 @@ def mock_api_projects_calls(client: MagicMock, service: str):
         ]
     }
     client.projects().alertPolicies().list_next.return_value = None
+    # Used by IAM
+    client.projects().serviceAccounts().list().execute.return_value = {
+        "accounts": [
+            {
+                "name": f"projects/{GCP_PROJECT_ID}/serviceAccounts/service-account1@{GCP_PROJECT_ID}.iam.gserviceaccount.com",
+                "email": "service-account1@gmail.com",
+                "displayName": "Service Account 1",
+            },
+            {
+                "name": f"projects/{GCP_PROJECT_ID}/serviceAccounts/service-account2@{GCP_PROJECT_ID}.iam.gserviceaccount.com",
+                "email": "service-account2@gmail.com",
+                "displayName": "Service Account 2",
+            },
+        ]
+    }
+    client.projects().serviceAccounts().list_next.return_value = None
+
+    def mock_list_service_accounts_keys(name):
+        return_value = MagicMock()
+        if (
+            name
+            == f"projects/{GCP_PROJECT_ID}/serviceAccounts/service-account1@gmail.com"
+        ):
+            return_value.execute.return_value = {
+                "keys": [
+                    {
+                        "name": "projects/{GCP_PROJECT_ID}/serviceAccounts/service-account1@{GCP_PROJECT_ID}.iam.gserviceaccount.com/keys/key1",
+                        "validAfterTime": "2021-01-01T00:00:00Z",
+                        "validBeforeTime": "2022-01-01T00:00:00Z",
+                        "keyOrigin": "GOOGLE_PROVIDED",
+                        "keyType": "SYSTEM_MANAGED",
+                    },
+                    {
+                        "name": "projects/{GCP_PROJECT_ID}/serviceAccounts/service-account1@{GCP_PROJECT_ID}.iam.gserviceaccount.com/keys/key2",
+                        "validAfterTime": "2021-01-01T00:00:00Z",
+                        "validBeforeTime": "2022-01-01T00:00:00Z",
+                        "keyOrigin": "ORIGIN_UNSPECIFIED",
+                        "keyType": "USER_MANAGED",
+                    },
+                ]
+            }
+        elif (
+            name
+            == f"projects/{GCP_PROJECT_ID}/serviceAccounts/service-account2@gmail.com"
+        ):
+            return_value.execute.return_value = {
+                "keys": [
+                    {
+                        "name": "projects/{GCP_PROJECT_ID}/serviceAccounts/service-account2@{GCP_PROJECT_ID}.iam.gserviceaccount.com/keys/key3",
+                        "validAfterTime": "2021-01-01T00:00:00Z",
+                        "validBeforeTime": "2022-01-01T00:00:00Z",
+                        "keyOrigin": "USER_PROVIDED",
+                        "keyType": "KEY_TYPE_UNSPECIFIED",
+                    },
+                ]
+            }
+        return return_value
+
+    client.projects().serviceAccounts().keys().list = mock_list_service_accounts_keys
+
+    client.projects().getAccessApprovalSettings().execute.return_value = {
+        "name": "projects/123/accessApprovalSettings",
+        "enrolledAncestor": True,
+    }
 
 
 def mock_api_dataset_calls(client: MagicMock):
@@ -451,8 +515,7 @@ def mock_api_tables_calls(client: MagicMock):
     client.tables().list_next.return_value = None
 
 
-def mock_api_organization_calls(client: MagicMock):
-    # Mocking organizations
+def mock_api_organizations_calls(client: MagicMock):
     client.organizations().search().execute.return_value = {
         "organizations": [
             {
@@ -475,6 +538,24 @@ def mock_api_organization_calls(client: MagicMock):
             },
         ]
     }
+
+    def mock_contact_organization_list(parent):
+        return_value = MagicMock()
+        if parent == "organizations/123456789":
+            return_value.execute.return_value = {
+                "contacts": [
+                    {
+                        "name": "contacts/1",
+                        "email": "contact1@example.es",
+                    },
+                    {"name": "contacts/2", "email": "contact2@example.es"},
+                ]
+            }
+        elif parent == "organizations/987654321":
+            return_value.execute.return_value = {"contacts": []}
+        return return_value
+
+    client.organizations().contacts().list = mock_contact_organization_list
 
 
 def mock_api_instances_calls(client: MagicMock, service: str):

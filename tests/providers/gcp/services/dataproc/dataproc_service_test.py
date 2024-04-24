@@ -11,6 +11,9 @@ from tests.providers.gcp.gcp_fixtures import (
 class Test_Dataproc_Service:
     def test_service(self):
         with patch(
+            "prowler.providers.gcp.lib.service.service.GCPService.__is_api_active__",
+            new=mock_is_api_active,
+        ), patch(
             "prowler.providers.gcp.lib.service.service.GCPService.__generate_client__",
             new=mock_api_client,
         ), patch(
@@ -19,9 +22,6 @@ class Test_Dataproc_Service:
         ), patch(
             "prowler.providers.gcp.services.dataproc.dataproc_service.compute_client.regions",
             new=["europe-west1-b"],
-        ), patch(
-            "prowler.providers.gcp.lib.service.service.GCPService.__is_api_active__",
-            new=mock_is_api_active,
         ):
             from prowler.providers.gcp.services.dataproc.dataproc_service import (
                 Dataproc,
