@@ -142,4 +142,11 @@ aws:
 
   # kms_cmk_rotation_enabled
   # No configuration needed for this check
+
+  # ec2_ebs_snapshot_account_block_public_access
+  ec2_ebs_snapshot_account_block_public_access:
+    State: "block-all-sharing"
+
+  # ec2_instance_account_imdsv2_enabled
+  # No configuration needed for this check
 ```
