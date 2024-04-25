@@ -87,7 +87,7 @@ class TestS3:
         )
 
         bucket_directory = get_s3_object_path(output_directory)
-        object_name = f"{bucket_directory}/{OUTPUT_MODE_CIS_1_4_AWS}/{filename}_{OUTPUT_MODE_CIS_1_4_AWS}{csv_file_suffix}"
+        object_name = f"{bucket_directory}/compliance/{filename}_{OUTPUT_MODE_CIS_1_4_AWS}{csv_file_suffix}"
 
         assert (
             client.get_object(
