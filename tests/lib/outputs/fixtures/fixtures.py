@@ -17,7 +17,7 @@ def generate_finding_output(status, severity, muted, region) -> FindingOutput:
         account_email="",
         account_organization_uid="test-organization-id",
         account_organization_name="test-organization",
-        account_tags="",
+        account_tags=["test-tag:test-value"],
         finding_uid="test-unique-finding",
         provider="aws",
         check_id="test-check-id",

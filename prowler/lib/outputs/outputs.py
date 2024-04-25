@@ -20,7 +20,7 @@ from prowler.lib.outputs.csv.csv import generate_csv_fields
 from prowler.lib.outputs.file_descriptors import fill_file_descriptors
 from prowler.lib.outputs.json_asff.json_asff import fill_json_asff
 from prowler.lib.outputs.json_ocsf.json_ocsf import fill_json_ocsf
-from prowler.lib.outputs.utils import unroll_dict
+from prowler.lib.outputs.utils import unroll_dict, unroll_list
 
 
 def stdout_report(finding, color, verbose, status, fix):
@@ -144,6 +144,9 @@ def report(check_findings, provider):
                         if "csv" in file_descriptors:
                             finding_output.compliance = unroll_dict(
                                 finding_output.compliance
+                            )
+                            finding_output.account_tags = unroll_list(
+                                finding_output.account_tags, ","
                             )
                             csv_writer = DictWriter(
                                 file_descriptors["csv"],

@@ -220,9 +220,9 @@ class GcpProvider(Provider):
                 response = request.execute()
 
                 for project in response.get("projects", []):
-                    labels = ""
+                    labels = []
                     for key, value in project.get("labels", {}).items():
-                        labels += f"{key}:{value},"
+                        labels.append(f"{key}:{value}")
 
                     project_id = project["projectId"]
                     gcp_project = GCPProject(
@@ -230,7 +230,7 @@ class GcpProvider(Provider):
                         id=project_id,
                         name=project["name"],
                         lifecycle_state=project["lifecycleState"],
-                        labels=labels.rstrip(","),
+                        labels=labels,
                     )
 
                     if (

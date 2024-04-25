@@ -73,6 +73,9 @@ class TestOutputJSONOCSF:
         assert finding_json_ocsf.status_code == finding_output.status
         assert finding_json_ocsf.status_detail == finding_output.status_extended
 
+        # Risk
+        assert finding_json_ocsf.risk_details == finding_output.risk
+
         # Unmapped Data
         assert finding_json_ocsf.unmapped == {
             "check_type": finding_output.check_type,
@@ -129,6 +132,7 @@ class TestOutputJSONOCSF:
         assert cloud_account.type_id == TypeID.AWS_Account
         assert cloud_account.type == TypeID.AWS_Account.name
         assert cloud_account.uid == finding_output.account_uid
+        assert cloud_account.labels == finding_output.account_tags
 
         cloud_organization = cloud.org
         assert isinstance(cloud_organization, Organization)
