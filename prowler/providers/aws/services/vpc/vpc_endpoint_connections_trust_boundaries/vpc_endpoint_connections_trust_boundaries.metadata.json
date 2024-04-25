@@ -17,7 +17,7 @@
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "https://docs.prowler.com/checks/networking_9#aws-vpc-endpoints-are-exposed",
+      "Other": "https://docs.prowler.com/checks/aws/networking-policies/networking_9#aws-vpc-endpoints-are-exposed",
       "Terraform": ""
     },
     "Recommendation": {

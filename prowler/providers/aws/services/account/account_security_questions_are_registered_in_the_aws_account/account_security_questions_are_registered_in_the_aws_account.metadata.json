@@ -17,7 +17,7 @@
     "Code": {
       "CLI": "No command available.",
       "NativeIaC": "",
-      "Other": "https://docs.prowler.com/checks/iam_15",
+      "Other": "https://docs.prowler.com/checks/aws/iam-policies/iam_15",
       "Terraform": ""
     },
     "Recommendation": {

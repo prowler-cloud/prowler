@@ -16,9 +16,9 @@
   "Remediation": {
     "Code": {
       "CLI": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudFront/cloudfront-integrated-with-waf.html",
-      "NativeIaC": "https://docs.prowler.com/checks/bc_aws_general_27#cloudformation",
-      "Other": "https://docs.prowler.com/checks/bc_aws_general_27#cloudfront-console",
-      "Terraform": "https://docs.prowler.com/checks/bc_aws_general_27#terraform"
+      "NativeIaC": "https://docs.prowler.com/checks/aws/general-policies/bc_aws_general_27#cloudformation",
+      "Other": "https://docs.prowler.com/checks/aws/general-policies/bc_aws_general_27#cloudfront-console",
+      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/bc_aws_general_27#terraform"
     },
     "Recommendation": {
       "Text": "Use AWS WAF to protect your service from common web exploits. These could affect availability and performance; compromise security; or consume excessive resources.",
