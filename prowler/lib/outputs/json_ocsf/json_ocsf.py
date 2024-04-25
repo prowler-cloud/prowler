@@ -137,7 +137,11 @@ def fill_json_ocsf(finding_output: FindingOutput) -> DetectionFinding:
                     type_id=cloud_account_type.value,
                     type=cloud_account_type.name,
                     uid=finding_output.account_uid,
-                    labels=finding_output.account_tags,
+                    labels=(
+                        finding_output.account_tags.split(",")
+                        if finding_output.account_tags
+                        else []
+                    ),
                 ),
                 org=Organization(
                     uid=finding_output.account_organization_uid,
