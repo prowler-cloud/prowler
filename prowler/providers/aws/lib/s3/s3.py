@@ -10,24 +10,25 @@ def send_to_s3_bucket(
     output_filename, output_directory, output_mode, output_bucket_name, audit_session
 ):
     try:
-        filename = ""
-        # Get only last part of the path
-        if output_mode == "csv":
-            filename = f"{output_filename}{csv_file_suffix}"
-        elif output_mode == "json-asff":
-            filename = f"{output_filename}{json_asff_file_suffix}"
-        elif output_mode == "json-ocsf":
-            filename = f"{output_filename}{json_ocsf_file_suffix}"
-        else:  # Compliance output mode
-            filename = f"{output_filename}_{output_mode}{csv_file_suffix}"
-
-        logger.info(f"Sending output file {filename} to S3 bucket {output_bucket_name}")
-        # File location
-        file_name = output_directory + "/" + filename
-
         # S3 Object name
         bucket_directory = get_s3_object_path(output_directory)
-        object_name = bucket_directory + "/" + output_mode + "/" + filename
+        filename = ""
+        # Get only last part of the path
+        if output_mode in ["csv", "json-asff", "json-ocsf"]:
+            if output_mode == "csv":
+                filename = f"{output_filename}{csv_file_suffix}"
+            elif output_mode == "json-asff":
+                filename = f"{output_filename}{json_asff_file_suffix}"
+            elif output_mode == "json-ocsf":
+                filename = f"{output_filename}{json_ocsf_file_suffix}"
+            file_name = output_directory + "/" + filename
+            object_name = bucket_directory + "/" + output_mode + "/" + filename
+        else:  # Compliance output mode
+            filename = f"{output_filename}_{output_mode}{csv_file_suffix}"
+            file_name = output_directory + "/compliance/" + filename
+            object_name = bucket_directory + "/compliance/" + filename
+
+        logger.info(f"Sending output file {filename} to S3 bucket {output_bucket_name}")
 
         s3_client = audit_session.client("s3")
         s3_client.upload_file(file_name, output_bucket_name, object_name)
