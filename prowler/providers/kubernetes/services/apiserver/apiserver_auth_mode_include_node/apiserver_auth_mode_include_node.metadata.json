@@ -14,7 +14,7 @@
   "Remediation": {
     "Code": {
       "CLI": "--authorization-mode=Node,RBAC",
-      "NativeIaC": "https://docs.prowler.com/checks/ensure-that-the-authorization-mode-argument-includes-node",
+      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-authorization-mode-argument-includes-node",
       "Other": "",
       "Terraform": ""
     },
