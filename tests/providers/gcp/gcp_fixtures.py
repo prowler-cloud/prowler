@@ -121,7 +121,7 @@ def mock_api_projects_calls(client: MagicMock):
     cluster2_id = str(uuid4())
 
     if client.projects().regions().clusters.__class__.__name__ == "dict":
-        client.projects().regions().clusters.return_value = MagicMock()
+        client.projects().regions().clusters = MagicMock()
 
     client.projects().regions().clusters().list().execute.return_value = {
         "clusters": [
