@@ -147,6 +147,10 @@ def mock_api_projects_calls(client: MagicMock):
         "locations": [{"name": "eu-west1"}]
     }
     client.projects().locations().list_next.return_value = None
+
+    if client.projects().locations().clusters.__class__.__name__ == "dict":
+        client.projects().locations().clusters = MagicMock()
+
     client.projects().locations().clusters().list().execute.return_value = {
         "clusters": [
             {
