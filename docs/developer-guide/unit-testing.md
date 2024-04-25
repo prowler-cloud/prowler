@@ -345,7 +345,7 @@ A useful read about this topic can be found in the following article: https://st
 
 Mocking a service client using the following code ...
 
-Since we are mocking the provider, it can me customized setting multiple attributes to the provider:
+Since we are mocking the provider, it can be customized setting multiple attributes to the provider:
 ```python
 def set_mocked_aws_provider(
     audited_regions: list[str] = [],
