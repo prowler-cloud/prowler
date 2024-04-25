@@ -25,7 +25,7 @@ def set_mocked_gcp_provider(
 def mock_api_client(GCPService, service, api_version, _):
     client = MagicMock()
 
-    mock_api_projects_calls(client, service)
+    mock_api_projects_calls(client)
     mock_api_dataset_calls(client)
     mock_api_tables_calls(client)
     mock_api_organizations_calls(client)
@@ -50,7 +50,7 @@ def mock_is_api_active(_, audited_project_ids):
     return audited_project_ids
 
 
-def mock_api_projects_calls(client: MagicMock, service: str):
+def mock_api_projects_calls(client: MagicMock):
     client.projects().locations().keys().list().execute.return_value = {
         "keys": [
             {
@@ -119,6 +119,9 @@ def mock_api_projects_calls(client: MagicMock, service: str):
 
     cluster1_id = str(uuid4())
     cluster2_id = str(uuid4())
+
+    if client.projects().regions().clusters.__class__.__name__ == "dict":
+        client.projects().regions().clusters().return_value = MagicMock()
 
     client.projects().regions().clusters().list().execute.return_value = {
         "clusters": [
