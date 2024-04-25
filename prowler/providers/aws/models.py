@@ -16,7 +16,7 @@ class AWSOrganizationsInfo:
     organization_account_arn: str
     organization_arn: str
     organization_id: str
-    account_tags: str
+    account_tags: list[str]
 
 
 @dataclass

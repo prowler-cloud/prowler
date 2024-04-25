@@ -30,9 +30,9 @@ def get_organizations_metadata(
 def parse_organizations_metadata(metadata: dict, tags: dict) -> AWSOrganizationsInfo:
     try:
         # Convert Tags dictionary to String
-        account_details_tags = ""
+        account_details_tags = []
         for tag in tags.get("Tags", {}):
-            account_details_tags += f"{tag['Key']}:{tag['Value']},"
+            account_details_tags.append(f"{tag['Key']}:{tag['Value']}")
 
         account_details = metadata.get("Account", {})
 
@@ -46,7 +46,7 @@ def parse_organizations_metadata(metadata: dict, tags: dict) -> AWSOrganizations
             organization_account_arn=aws_account_arn.arn,
             organization_arn=aws_organization_arn,
             organization_id=aws_organization_id,
-            account_tags=account_details_tags.rstrip(","),
+            account_tags=account_details_tags,
         )
     except Exception as error:
         logger.warning(

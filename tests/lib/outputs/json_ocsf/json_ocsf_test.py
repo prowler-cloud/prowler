@@ -132,11 +132,6 @@ class TestOutputJSONOCSF:
         assert cloud_account.type_id == TypeID.AWS_Account
         assert cloud_account.type == TypeID.AWS_Account.name
         assert cloud_account.uid == finding_output.account_uid
-        finding_output.account_tags = (
-            finding_output.account_tags.split(",")
-            if finding_output.account_tags
-            else []
-        )
         assert cloud_account.labels == finding_output.account_tags
 
         cloud_organization = cloud.org
