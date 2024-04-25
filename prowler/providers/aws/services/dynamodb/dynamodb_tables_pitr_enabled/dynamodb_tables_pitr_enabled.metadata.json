@@ -16,9 +16,9 @@
   "Remediation": {
     "Code": {
       "CLI": "aws dynamodb update-continuous-backups --table-name <table_name> --point-in-time-recovery-specification PointInTimeRecoveryEnabled=true",
-      "NativeIaC": "https://docs.bridgecrew.io/docs/general_6#cloudformation--serverless",
+      "NativeIaC": "https://docs.prowler.com/checks/general_6#cloudformation--serverless",
       "Other": "",
-      "Terraform": "https://docs.bridgecrew.io/docs/general_6#terraform"
+      "Terraform": "https://docs.prowler.com/checks/general_6#terraform"
     },
     "Recommendation": {
       "Text": "Enable point-in-time recovery, this is not enabled by default.",

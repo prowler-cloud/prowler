@@ -18,8 +18,8 @@
   "Remediation": {
     "Code": {
       "CLI": "",
-      "NativeIaC": "https://docs.bridgecrew.io/docs/elasticsearch_6#fix---builtime",
-      "Other": "https://docs.bridgecrew.io/docs/elasticsearch_6#aws-console",
+      "NativeIaC": "https://docs.prowler.com/checks/elasticsearch_6#fix---builtime",
+      "Other": "https://docs.prowler.com/checks/elasticsearch_6#aws-console",
       "Terraform": ""
     },
     "Recommendation": {

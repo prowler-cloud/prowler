@@ -18,7 +18,7 @@
   "Remediation": {
     "Code": {
       "CLI": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Elasticsearch/node-to-node-encryption.html",
-      "NativeIaC": "https://docs.bridgecrew.io/docs/elasticsearch_5#fix---builtime",
+      "NativeIaC": "https://docs.prowler.com/checks/elasticsearch_5#fix---builtime",
       "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Elasticsearch/node-to-node-encryption.html",
       "Terraform": ""
     },

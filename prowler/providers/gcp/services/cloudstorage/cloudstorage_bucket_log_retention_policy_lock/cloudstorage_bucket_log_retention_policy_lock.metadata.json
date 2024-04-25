@@ -16,7 +16,7 @@
       "CLI": "",
       "NativeIaC": "",
       "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudStorage/retention-policies-with-bucket-lock.html",
-      "Terraform": "https://docs.bridgecrew.io/docs/ensure-that-retention-policies-on-log-buckets-are-configured-using-bucket-lock#terraform"
+      "Terraform": "https://docs.prowler.com/checks/ensure-that-retention-policies-on-log-buckets-are-configured-using-bucket-lock#terraform"
     },
     "Recommendation": {
       "Text": "It is recommended to set up retention policies and configure Bucket Lock on all storage buckets that are used as log sinks.",

@@ -17,10 +17,10 @@
   "RelatedUrl": "",
   "Remediation": {
     "Code": {
-      "CLI": "https://docs.bridgecrew.io/docs/iam_47#cli-command",
+      "CLI": "https://docs.prowler.com/checks/iam_47#cli-command",
       "NativeIaC": "",
-      "Other": "https://docs.bridgecrew.io/docs/iam_47#aws-console",
-      "Terraform": "https://docs.bridgecrew.io/docs/iam_47#terraform"
+      "Other": "https://docs.prowler.com/checks/iam_47#aws-console",
+      "Terraform": "https://docs.prowler.com/checks/iam_47#terraform"
     },
     "Recommendation": {
       "Text": "It is more secure to start with a minimum set of permissions and grant additional permissions as necessary; rather than starting with permissions that are too lenient and then trying to tighten them later. List policies an analyze if permissions are the least possible to conduct business activities.",

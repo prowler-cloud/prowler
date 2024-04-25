@@ -17,7 +17,7 @@
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "https://docs.bridgecrew.io/docs/iam_18-maintain-contact-details#aws-console",
+      "Other": "https://docs.prowler.com/checks/iam_18-maintain-contact-details#aws-console",
       "Terraform": ""
     },
     "Recommendation": {
