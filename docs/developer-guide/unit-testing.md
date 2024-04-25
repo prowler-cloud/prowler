@@ -191,8 +191,7 @@ class Test_iam_password_policy_uppercase:
         expiration=True,
     )
 
-    # We set a mocked aws_provider to unify providers, this way will share provider info
-    # between tests
+    # We set a mocked aws_provider to unify providers, this way will isolate each test not to step on other tests configuration
     aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
     # In this scenario we have to mock also the IAM service and the iam_client from the check to enforce    # that the iam_client used is the one created within this check because patch != import, and if you     # execute tests in parallel some objects can be already initialised hence the check won't be isolated.
@@ -346,6 +345,29 @@ A useful read about this topic can be found in the following article: https://st
 
 Mocking a service client using the following code ...
 
+Since we are mocking the provider, it can me customized setting multiple attributes to the provider:
+```python
+def set_mocked_aws_provider(
+    audited_regions: list[str] = [],
+    audited_account: str = AWS_ACCOUNT_NUMBER,
+    audited_account_arn: str = AWS_ACCOUNT_ARN,
+    audited_partition: str = AWS_COMMERCIAL_PARTITION,
+    expected_checks: list[str] = [],
+    profile_region: str = None,
+    audit_config: dict = {},
+    fixer_config: dict = {},
+    scan_unused_services: bool = True,
+    audit_session: session.Session = session.Session(
+        profile_name=None,
+        botocore_session=None,
+    ),
+    original_session: session.Session = None,
+    enabled_regions: set = None,
+    arguments: Namespace = Namespace(),
+    create_default_organization: bool = True,
+) -> AwsProvider:
+```
+Once the needed attributes are set, you can use the mocked provider:
 ```python title="Mocking the service_client"
 with mock.patch(
     "prowler.providers.common.common.get_global_provider",

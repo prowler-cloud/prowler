@@ -223,10 +223,10 @@ Each Prowler service requires a service client to use the service in the checks.
 The following is the `<new_service_name>_client.py` containing the initialization of the service's class we have just created so the service's checks can use them:
 
 ```python
-from prowler.providers.common.common.get_global_provider import set_mocked_<provider>_provider
+from prowler.providers.common.common import get_global_provider
 from prowler.providers.<provider>.services.<new_service_name>.<new_service_name>_service import <Service>
 
-<new_service_name>_client = <Service>(set_mocked_<provider>_provider([<region>]))
+<new_service_name>_client = <Service>(get_global_provider())
 ```
 
 ## Permissions
