@@ -1,3 +1,4 @@
+import html
 import importlib
 import sys
 from os import path
@@ -30,9 +31,9 @@ def add_html_header(file_descriptor, audit_info):
         <!DOCTYPE html>
     <html lang="en">
     <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     <!-- Required meta tags -->
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
     <style>
         .read-more {
             color: #00f;
@@ -48,7 +49,7 @@ def add_html_header(file_descriptor, audit_info):
     </style>
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css"
-        integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+        integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous" />
     <!-- https://datatables.net/download/index with jQuery, DataTables, Buttons, SearchPanes, and Select //-->
     <link rel="stylesheet" type="text/css"
         href="https://cdn.datatables.net/v/dt/jqc-1.12.4/dt-1.10.25/b-1.7.1/sp-1.4.0/sl-1.3.3/datatables.min.css" />
@@ -78,13 +79,13 @@ def add_html_header(file_descriptor, audit_info):
     <div class="container-fluid">
         <div class="row mt-3">
         <div class="col-md-4">
-            <a href="""
+            <a href=\""""
             + html_logo_url
-            + """><img class="float-left card-img-left mt-4 mr-4 ml-4"
-                        src="""
+            + """\"><img class="float-left card-img-left mt-4 mr-4 ml-4"
+                        src=\""""
             + html_logo_img
-            + """
-                        alt="prowler-logo"></a>
+            + """\"
+                        alt="prowler-logo" /></a>
             <div class="card">
             <div class="card-header">
                 Report Information
@@ -182,13 +183,13 @@ def fill_html(file_descriptor, finding, output_options):
                     <td>{finding.check_metadata.Severity}</td>
                     <td>{finding.check_metadata.ServiceName}</td>
                     <td>{finding.location.lower() if isinstance(finding, Check_Report_GCP) else finding.region if isinstance(finding, Check_Report_AWS) else ""}</td>
-                    <td>{finding.check_metadata.CheckID.replace("_", "<wbr>_")}</td>
+                    <td>{finding.check_metadata.CheckID.replace("_", "<wbr />_")}</td>
                     <td>{finding.check_metadata.CheckTitle}</td>
-                    <td>{finding.resource_id.replace("<", "&lt;").replace(">", "&gt;").replace("_", "<wbr>_")}</td>
+                    <td>{finding.resource_id.replace("<", "&lt;").replace(">", "&gt;").replace("_", "<wbr />_")}</td>
                     <td>{parse_html_string(unroll_tags(finding.resource_tags))}</td>
-                    <td>{finding.status_extended.replace("<", "&lt;").replace(">", "&gt;").replace("_", "<wbr>_")}</td>
-                    <td><p class="show-read-more">{finding.check_metadata.Risk}</p></td>
-                    <td><p class="show-read-more">{finding.check_metadata.Remediation.Recommendation.Text}</p> <a class="read-more" href="{finding.check_metadata.Remediation.Recommendation.Url}"><i class="fas fa-external-link-alt"></i></a></td>
+                    <td>{finding.status_extended.replace("<", "&lt;").replace(">", "&gt;").replace("_", "<wbr />_")}</td>
+                    <td><p class="show-read-more">{html.escape(finding.check_metadata.Risk)}</p></td>
+                    <td><p class="show-read-more">{html.escape(finding.check_metadata.Remediation.Recommendation.Text)}</p> <a class="read-more" href="{finding.check_metadata.Remediation.Recommendation.Url}"><i class="fas fa-external-link-alt"></i></a></td>
                     <td><p class="show-read-more">{parse_html_string(unroll_dict(get_check_compliance(finding, finding.check_metadata.Provider, output_options)))}</p></td>
                 </tr>
                 """
@@ -246,8 +247,6 @@ def add_html_footer(output_filename, output_directory):
                </tbody>
             </table>
         </div>
-    </div>
-    </div>
     </div>
     <!-- Table search and paginator -->
     <!-- Optional JavaScript -->
