@@ -194,7 +194,7 @@ checks_v3_to_v2_mapping = {
     "opensearch_service_domains_node_to_node_encryption_enabled": "extra782",
     "opensearch_service_domains_not_publicly_accessible": "extra716",
     "opensearch_service_domains_updated_to_the_latest_service_software_version": "extra785",
-    "opensearch_service_domains_use_cognito_authentication_for_kibana": "extra780",
+    "opensearch_service_domains_use_cognito_or_saml_authentication_for_kibana": "extra780",
     "rds_instance_backup_enabled": "extra739",
     "rds_instance_deletion_protection": "extra7113",
     "rds_instance_enhanced_monitoring_enabled": "extra7132",

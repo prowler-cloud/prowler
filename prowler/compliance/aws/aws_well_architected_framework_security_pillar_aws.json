@@ -189,7 +189,7 @@
         "iam_user_mfa_enabled_console_access",
         "iam_user_two_active_access_key",
         "iam_user_no_setup_initial_access_key",
-        "opensearch_service_domains_use_cognito_authentication_for_kibana",
+        "opensearch_service_domains_use_cognito_or_saml_authentication_for_kibana",
         "sagemaker_notebook_instance_root_access_disabled",
         "iam_avoid_root_usage"
       ]

@@ -166,6 +166,7 @@ class Test_OpenSearchService_Service:
         assert opensearch.opensearch_domains[0].node_to_node_encryption
         assert opensearch.opensearch_domains[0].enforce_https
         assert opensearch.opensearch_domains[0].internal_user_database
+        assert opensearch.opensearch_domains[0].saml_enabled
         assert opensearch.opensearch_domains[0].update_available
         assert opensearch.opensearch_domains[0].version == "opensearch-version1"
         assert opensearch.opensearch_domains[0].tags == [
