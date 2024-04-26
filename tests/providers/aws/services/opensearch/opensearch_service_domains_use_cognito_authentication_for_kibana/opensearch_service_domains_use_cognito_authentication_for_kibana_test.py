@@ -105,7 +105,6 @@ class Test_opensearch_service_domains_use_cognito_authentication_for_kibana:
                 saml_enabled=True,
             )
         )
-        opensearch_client.opensearch_domains[0].logging = []
 
         with mock.patch(
             "prowler.providers.aws.services.opensearch.opensearch_service.OpenSearchService",
