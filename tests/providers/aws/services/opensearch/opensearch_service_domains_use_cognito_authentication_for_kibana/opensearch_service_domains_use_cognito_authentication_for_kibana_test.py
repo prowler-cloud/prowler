@@ -119,9 +119,12 @@ class Test_opensearch_service_domains_use_cognito_authentication_for_kibana:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
-            assert search(
-                "has either Amazon Cognito authentication or SAML authentication for Kibana enabled",
-                result[0].status_extended,
+            assert (
+                result[0].status_extended
+                == f"Opensearch domain {domain_name} has either Amazon Cognito or SAML authentication for Kibana enabled."
             )
+            assert result[0].region == AWS_REGION_EU_WEST_1
             assert result[0].resource_id == domain_name
+            assert result[0].resource_arn == domain_arn
+            assert result[0].resource_tags == []
             assert result[0].resource_arn == domain_arn
