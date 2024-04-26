@@ -117,6 +117,9 @@ class OpenSearchService(AWSService):
                 domain.internal_user_database = describe_domain["DomainStatus"][
                     "AdvancedSecurityOptions"
                 ]["InternalUserDatabaseEnabled"]
+                domain.saml_enabled = describe_domain["DomainStatus"][
+                    "AdvancedSecurityOptions"
+                ]["SAMLOptions"]["Enabled"]
                 domain.update_available = describe_domain["DomainStatus"][
                     "ServiceSoftwareOptions"
                 ]["UpdateAvailable"]
@@ -159,6 +162,7 @@ class OpenSearchDomain(BaseModel):
     node_to_node_encryption: bool = None
     enforce_https: bool = None
     internal_user_database: bool = None
+    saml_enabled: bool = None
     update_available: bool = None
     version: str = None
     tags: Optional[list] = []
