@@ -288,7 +288,7 @@ Note that this does not use Moto, to keep it simple, but if you use any `moto`-d
 
 #### Mocking more than one service
 
-Since we are mocking the provider, it can me customized setting multiple attributes to the provider:
+Since we are mocking the provider, it can be customized setting multiple attributes to the provider:
 ```python
 def set_mocked_aws_provider(
     audited_regions: list[str] = [],
