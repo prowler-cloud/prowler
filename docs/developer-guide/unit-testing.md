@@ -288,6 +288,29 @@ Note that this does not use Moto, to keep it simple, but if you use any `moto`-d
 
 #### Mocking more than one service
 
+Since we are mocking the provider, it can me customized setting multiple attributes to the provider:
+```python
+def set_mocked_aws_provider(
+    audited_regions: list[str] = [],
+    audited_account: str = AWS_ACCOUNT_NUMBER,
+    audited_account_arn: str = AWS_ACCOUNT_ARN,
+    audited_partition: str = AWS_COMMERCIAL_PARTITION,
+    expected_checks: list[str] = [],
+    profile_region: str = None,
+    audit_config: dict = {},
+    fixer_config: dict = {},
+    scan_unused_services: bool = True,
+    audit_session: session.Session = session.Session(
+        profile_name=None,
+        botocore_session=None,
+    ),
+    original_session: session.Session = None,
+    enabled_regions: set = None,
+    arguments: Namespace = Namespace(),
+    create_default_organization: bool = True,
+) -> AwsProvider:
+```
+
 If the test your are creating belongs to a check that uses more than one provider service, you should mock each of the services used. For example, the check `cloudtrail_logs_s3_bucket_access_logging_enabled` requires the CloudTrail and the S3 client, hence the service's mock part of the test will be as follows:
 
 
@@ -345,29 +368,7 @@ A useful read about this topic can be found in the following article: https://st
 
 Mocking a service client using the following code ...
 
-Since we are mocking the provider, it can be customized setting multiple attributes to the provider:
-```python
-def set_mocked_aws_provider(
-    audited_regions: list[str] = [],
-    audited_account: str = AWS_ACCOUNT_NUMBER,
-    audited_account_arn: str = AWS_ACCOUNT_ARN,
-    audited_partition: str = AWS_COMMERCIAL_PARTITION,
-    expected_checks: list[str] = [],
-    profile_region: str = None,
-    audit_config: dict = {},
-    fixer_config: dict = {},
-    scan_unused_services: bool = True,
-    audit_session: session.Session = session.Session(
-        profile_name=None,
-        botocore_session=None,
-    ),
-    original_session: session.Session = None,
-    enabled_regions: set = None,
-    arguments: Namespace = Namespace(),
-    create_default_organization: bool = True,
-) -> AwsProvider:
-```
-Once the needed attributes are set, you can use the mocked provider:
+Once the needed attributes are set for the mocked provider, you can use the mocked provider:
 ```python title="Mocking the service_client"
 with mock.patch(
     "prowler.providers.common.common.get_global_provider",
