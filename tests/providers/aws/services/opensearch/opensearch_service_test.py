@@ -79,7 +79,10 @@ def mock_make_api_call(self, operation_name, kwarg):
                 },
                 "ServiceSoftwareOptions": {"UpdateAvailable": True},
                 "DomainEndpointOptions": {"EnforceHTTPS": True},
-                "AdvancedSecurityOptions": {"InternalUserDatabaseEnabled": True},
+                "AdvancedSecurityOptions": {
+                    "InternalUserDatabaseEnabled": True,
+                    "SAMLOptions": {"Enabled": True},
+                },
             }
         }
     if operation_name == "ListTags":
@@ -166,6 +169,7 @@ class Test_OpenSearchService_Service:
         assert opensearch.opensearch_domains[0].node_to_node_encryption
         assert opensearch.opensearch_domains[0].enforce_https
         assert opensearch.opensearch_domains[0].internal_user_database
+        assert opensearch.opensearch_domains[0].saml_enabled
         assert opensearch.opensearch_domains[0].update_available
         assert opensearch.opensearch_domains[0].version == "opensearch-version1"
         assert opensearch.opensearch_domains[0].tags == [
