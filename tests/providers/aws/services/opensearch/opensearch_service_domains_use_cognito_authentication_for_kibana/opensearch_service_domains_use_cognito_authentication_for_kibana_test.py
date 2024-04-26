@@ -38,7 +38,7 @@ class Test_opensearch_service_domains_use_cognito_authentication_for_kibana:
                 region=AWS_REGION_EU_WEST_1,
                 arn=domain_arn,
                 cognito_options=False,
-                saml_enabled=False
+                saml_enabled=False,
             )
         )
         opensearch_client.opensearch_domains[0].logging = []
