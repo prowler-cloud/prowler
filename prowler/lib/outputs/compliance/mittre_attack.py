@@ -1,74 +1,91 @@
 from csv import DictWriter
+from importlib import import_module
 
 from colorama import Fore, Style
 from tabulate import tabulate
 
 from prowler.config.config import orange_color, timestamp
-from prowler.lib.outputs.compliance.models import Check_Output_MITRE_ATTACK
+from prowler.lib.logger import logger
 from prowler.lib.outputs.csv.csv import generate_csv_fields
 from prowler.lib.outputs.utils import unroll_list
 from prowler.lib.utils.utils import outputs_unix_timestamp
 
 
-def write_compliance_row_mitre_attack_aws(
+def write_compliance_row_mitre_attack(
     file_descriptors, finding, compliance, output_options, provider
 ):
-    compliance_output = compliance.Framework
-    if compliance.Version != "":
-        compliance_output += "_" + compliance.Version
-    if compliance.Provider != "":
-        compliance_output += "_" + compliance.Provider
+    try:
+        compliance_output = compliance.Framework
+        if compliance.Version != "":
+            compliance_output += "_" + compliance.Version
+        if compliance.Provider != "":
+            compliance_output += "_" + compliance.Provider
 
-    compliance_output = compliance_output.lower().replace("-", "_")
-    csv_header = generate_csv_fields(Check_Output_MITRE_ATTACK)
-    csv_writer = DictWriter(
-        file_descriptors[compliance_output],
-        fieldnames=csv_header,
-        delimiter=";",
-    )
-    for requirement in compliance.Requirements:
-        requirement_description = requirement.Description
-        requirement_id = requirement.Id
-        requirement_name = requirement.Name
-        attributes_aws_services = ", ".join(
-            attribute.AWSService for attribute in requirement.Attributes
+        mitre_attack_model_name = "Check_Output_MITRE_ATTACK_" + compliance.Provider
+        module = import_module("prowler.lib.outputs.compliance.models")
+        mitre_attack_model = getattr(module, mitre_attack_model_name)
+        compliance_output = compliance_output.lower().replace("-", "_")
+        csv_header = generate_csv_fields(mitre_attack_model)
+        csv_writer = DictWriter(
+            file_descriptors[compliance_output],
+            fieldnames=csv_header,
+            delimiter=";",
         )
-        attributes_categories = ", ".join(
-            attribute.Category for attribute in requirement.Attributes
-        )
-        attributes_values = ", ".join(
-            attribute.Value for attribute in requirement.Attributes
-        )
-        attributes_comments = ", ".join(
-            attribute.Comment for attribute in requirement.Attributes
-        )
-        compliance_row = Check_Output_MITRE_ATTACK(
-            Provider=finding.check_metadata.Provider,
-            Description=compliance.Description,
-            AccountId=provider.identity.account,
-            Region=finding.region,
-            AssessmentDate=outputs_unix_timestamp(
-                output_options.unix_timestamp, timestamp
-            ),
-            Requirements_Id=requirement_id,
-            Requirements_Description=requirement_description,
-            Requirements_Name=requirement_name,
-            Requirements_Tactics=unroll_list(requirement.Tactics),
-            Requirements_SubTechniques=unroll_list(requirement.SubTechniques),
-            Requirements_Platforms=unroll_list(requirement.Platforms),
-            Requirements_TechniqueURL=requirement.TechniqueURL,
-            Requirements_Attributes_AWSServices=attributes_aws_services,
-            Requirements_Attributes_Categories=attributes_categories,
-            Requirements_Attributes_Values=attributes_values,
-            Requirements_Attributes_Comments=attributes_comments,
-            Status=finding.status,
-            StatusExtended=finding.status_extended,
-            ResourceId=finding.resource_id,
-            CheckId=finding.check_metadata.CheckID,
-            Muted=finding.muted,
-        )
+        for requirement in compliance.Requirements:
+            requirement_description = requirement.Description
+            requirement_id = requirement.Id
+            requirement_name = requirement.Name
+            attributes_services = ", ".join(
+                attribute.Service for attribute in requirement.Attributes
+            )
+            attributes_categories = ", ".join(
+                attribute.Category for attribute in requirement.Attributes
+            )
+            attributes_values = ", ".join(
+                attribute.Value for attribute in requirement.Attributes
+            )
+            attributes_comments = ", ".join(
+                attribute.Comment for attribute in requirement.Attributes
+            )
 
-        csv_writer.writerow(compliance_row.__dict__)
+            common_data = {
+                "Provider": finding.check_metadata.Provider,
+                "Description": compliance.Description,
+                "AssessmentDate": outputs_unix_timestamp(
+                    output_options.unix_timestamp, timestamp
+                ),
+                "Requirements_Id": requirement_id,
+                "Requirements_Name": requirement_name,
+                "Requirements_Description": requirement_description,
+                "Requirements_Tactics": unroll_list(requirement.Tactics),
+                "Requirements_SubTechniques": unroll_list(requirement.SubTechniques),
+                "Requirements_Platforms": unroll_list(requirement.Platforms),
+                "Requirements_TechniqueURL": requirement.TechniqueURL,
+                "Requirements_Attributes_Services": attributes_services,
+                "Requirements_Attributes_Categories": attributes_categories,
+                "Requirements_Attributes_Values": attributes_values,
+                "Requirements_Attributes_Comments": attributes_comments,
+                "Status": finding.status,
+                "StatusExtended": finding.status_extended,
+                "ResourceId": finding.resource_id,
+                "CheckId": finding.check_metadata.CheckID,
+                "Muted": finding.muted,
+            }
+            if compliance.Provider == "AWS":
+                common_data["AccountId"] = provider.identity.account
+                common_data["Region"] = finding.region
+            elif compliance.Provider == "Azure":
+                common_data["SubscriptionId"] = unroll_list(
+                    provider.identity.subscriptions
+                )
+
+            compliance_row = mitre_attack_model(**common_data)
+
+            csv_writer.writerow(compliance_row.__dict__)
+    except Exception as error:
+        logger.critical(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+        )
 
 
 def get_mitre_attack_table(
@@ -92,12 +109,14 @@ def get_mitre_attack_table(
     for index, finding in enumerate(findings):
         check = bulk_checks_metadata[finding.check_metadata.CheckID]
         check_compliances = check.Compliance
+        # print(check_compliances)
         for compliance in check_compliances:
             if (
                 "MITRE-ATTACK" in compliance.Framework
                 and compliance.Version in compliance_framework
             ):
                 for requirement in compliance.Requirements:
+                    # print(requirement)
                     for tactic in requirement.Tactics:
                         if tactic not in tactics:
                             tactics[tactic] = {"FAIL": 0, "PASS": 0, "Muted": 0}

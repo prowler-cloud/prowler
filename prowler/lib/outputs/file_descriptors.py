@@ -18,7 +18,8 @@ from prowler.lib.outputs.compliance.models import (
     Check_Output_CSV_GCP_CIS,
     Check_Output_CSV_Generic_Compliance,
     Check_Output_CSV_KUBERNETES_CIS,
-    Check_Output_MITRE_ATTACK,
+    Check_Output_MITRE_ATTACK_AWS,
+    Check_Output_MITRE_ATTACK_Azure,
 )
 from prowler.lib.outputs.csv.csv import generate_csv_fields
 from prowler.lib.utils.utils import file_exists, open_file
@@ -117,6 +118,13 @@ def fill_file_descriptors(output_modes, output_directory, output_filename, provi
                             Check_Output_CSV_AZURE_CIS,
                         )
                         file_descriptors.update({output_mode: file_descriptor})
+                    elif output_mode == "mitre_attack_azure":
+                        file_descriptor = initialize_file_descriptor(
+                            filename,
+                            output_mode,
+                            Check_Output_MITRE_ATTACK_Azure,
+                        )
+                        file_descriptors.update({output_mode: file_descriptor})
                     else:
                         file_descriptor = initialize_file_descriptor(
                             filename,
@@ -170,7 +178,7 @@ def fill_file_descriptors(output_modes, output_directory, output_filename, provi
                             file_descriptor = initialize_file_descriptor(
                                 filename,
                                 output_mode,
-                                Check_Output_MITRE_ATTACK,
+                                Check_Output_MITRE_ATTACK_AWS,
                             )
                             file_descriptors.update({output_mode: file_descriptor})
 

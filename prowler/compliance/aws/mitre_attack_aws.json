@@ -36,49 +36,49 @@
       ],
       "Attributes": [
         {
-          "AWSService": "AWS CloudEndure Disaster Recovery",
+          "Service": "AWS CloudEndure Disaster Recovery",
           "Category": "Respond",
           "Value": "Significant",
           "Comment": "AWS CloudEndure Disaster Recovery enables the replication and recovery of servers into AWS Cloud. In the event that a public-facing application or server is compromised, AWS CloudEndure can be used to provision an instance of the server from a previous point in time within minutes. As a result, this mapping is given a score of Significant."
         },
         {
-          "AWSService": "AWS Config",
+          "Service": "AWS Config",
           "Category": "Protect",
           "Value": "Partial",
           "Comment": "The following AWS Config managed rules can identify configuration problems that should be fixed in order to ensure that applications intended for internal use cannot be accessed externally for exploitation: 'api-gw-endpoint-type-check' can ensure that Amazon API Gateway APIs are private and can only be accessed from within VPCs, 'elasticsearch-in-vpc-only' can ensure that Amazon ElasticSearch Service (Amazon ES) domains are in the same VPC and the domain endpoint is not public, 'lambda-function-public-access-prohibited' can verify that AWS Lambda functions are not publicly available, and 'ec2-instance-no-public-ip' can verify whether EC2 instances have public IP addresses. The following AWS Config managed rules can identify configuration problems that should be fixed in order to ensure that insecure applications are not installed and installed packages are kept updated, reducing the likelihood of adversary exploitation: the 'ec2-managedinstance-applications-blacklisted' managed rule verifies that a pre-defined list of applications are not installed on specified managed instances. It can be used to identify the presence of vulnerable applications (prompting removal before they can be exploited) and/or to identify the presence of allowed packages below a minimum version (prompting updates before they can be exploited). The 'ec2-managedinstance-platform-check' managed rule verifies that managed instances are running desired platform types, including using a desired version (as opposed to an out-of-date one). Both can reduce instances' attack surface for adversary exploitation. 'rds-automatic-minor-version-upgrade-enabled' can verify that Amazon RDS is being patched, and 'elastic-beanstalk-managed-updates-enabled' can verify that Elastic Beanstalk is being patched. Coverage factor is partial for these rules, since they are specific to a subset of the available AWS services that can be used to host public-facing applications and will only protect against certain forms of identifiable exploitation, resulting in an overall score of Partial."
         },
         {
-          "AWSService": "AWS RDS",
+          "Service": "AWS RDS",
           "Category": "Protect",
           "Value": "Partial",
           "Comment": "AWS RDS supports the automatic patching of minor versions of database instances. This can result in security flaws in the database instances being fixed before they can be exploited. This mapping is given a score of Partial because it does not protect against misconfigured database instances which may be susceptible to exploitation."
         },
         {
-          "AWSService": "AWS RDS",
+          "Service": "AWS RDS",
           "Category": "Respond",
           "Value": "Significant",
           "Comment": "AWS RDS supports the replication and recovery of database instances. In the event that a database instance is compromised, AWS RDS can be used to restore the database instance to a previous point in time. As a result, this mapping is given a score of Significant."
         },
         {
-          "AWSService": "Amazon GuardDuty",
+          "Service": "Amazon GuardDuty",
           "Category": "Detect",
           "Value": "Minimal",
           "Comment": "There is a GuardDuty finding type that captures when vulnerable publicly facing resources are leveraged to capture data not intended to be viewable (e.g., IAM credentials associated with the resource). UnauthorizedAccess:EC2/MetadataDNSRebind - This finding type only detects MetadataDNSRebind and is more focused on the EC2 instance and not the application running on the instance itself resulting in Minimal coverage."
         },
         {
-          "AWSService": "AWS Security Hub",
+          "Service": "AWS Security Hub",
           "Category": "Detect",
           "Value": "Partial",
           "Comment": "AWS Security Hub reports on EC2 instances that are missing security patches for vulnerabilities which could enable an adversary to exploit vulnerabilities through the attack lifecycle. AWS Security Hub provides this detection with the following managed insight. EC2 instances that have missing security patches for important vulnerabilities. This is scored as Partial because the checks associated with Security Hub would only report on missing patches for known vulnerabilities. It doesn't not cover zero-day vulnerabilities."
         },
         {
-          "AWSService": "AWS Web Application Firewall",
+          "Service": "AWS Web Application Firewall",
           "Category": "Protect",
           "Value": "Significant",
           "Comment": "The AWS WAF protects public-facing applications against a range of vulnerabilities including those listed in the OWASP Top 10. AWS WAF provides this protection via the following rule sets that block malicious traffic across a variety of operating systems and applications. AWSManagedRulesCommonRuleSet AWSManagedRulesKnownBadInputRuleSet AWSManagedRulesSQLiRuleSet AWSManagedRulesLinuxRuleSet AWSManagedRulesUnixRuleSet AWSManagedRulesWindowsRuleSet AWSManagedRulesPHPRuleSet AWSManagedRulesWordPressRuleSet. This is given a score of Significant because it protects against vulnerabilities across multiple operating systems (Windows, Linux, POSIX) and technologies (JavaScript, SQL, PHP, WordPress). Furthermore, it blocks the malicious content in near real-time."
         },
         {
-          "AWSService": "Amazon Inspector",
+          "Service": "Amazon Inspector",
           "Category": "Protect",
           "Value": "Partial",
           "Comment": "Amazon Inspector can detect known vulnerabilities on various Windows and Linux endpoints. Furthermore, the Amazon Inspector Best Practices assessment package can assess security controls for 'Enable Address Space Layout Randomization (ASLR)' and 'Enable Data Execution Prevention (DEP)' that makes it more difficult for an attacker to exploit vulnerabilities in software. This information can be used to patch, isolate, and remove vulnerable software and endpoints. Amazon Inspector does not directly protect against exploitation and it is not effective against zero-day attacks, vulnerabilities with no available patch, and software that may not be analyzed by the scanner. As a result, the score is capped at Partial."
@@ -124,7 +124,7 @@
       ],
       "Attributes": [
         {
-          "AWSService": "Amazon Virtual Private Cloud",
+          "Service": "Amazon Virtual Private Cloud",
           "Category": "Protect",
           "Value": "Partial",
           "Comment": "VPC network access control lists (NACLs) can isolate portions of the network that do not require network-wide access, limiting some attackers that leverage trusted relationships such as remote access for vendor maintenance. Coverage partial, Temporal Immediate."
@@ -198,61 +198,61 @@
       ],
       "Attributes": [
         {
-          "AWSService": "Amazon GuardDuty",
+          "Service": "Amazon GuardDuty",
           "Category": "Detect",
           "Value": "Partial",
           "Comment": "GuardDuty implements a finding that flags occurrences unattended behavior from an IAM User in the Account. PenTest:IAMUser/KaliLinux, PenTest:IAMUser/ParrotLinux, PenTest:IAMUser/PentooLinux, Policy:IAMUser/RootCredentialUsage, PrivilegeEscalation:IAMUser/AdministrativePermissions, UnauthorizedAccess:IAMUser/ConsoleLogin, UnauthorizedAccess:IAMUser/ConsoleLoginSuccess.B, UnauthorizedAccess:IAMUser/MaliciousIPCaller, UnauthorizedAccess:IAMUser/MaliciousIPCaller.Custom, UnauthorizedAccess:IAMUser/TorIPCaller, Policy:S3/AccountBlockPublicAccessDisabled, Policy:S3/BucketAnonymousAccessGranted, Policy:S3/BucketBlockPublicAccessDisabled, Policy:S3/BucketPublicAccessGranted, CredentialAccess:IAMUser/AnomalousBehavior, DefenseEvasion:IAMUser/AnomalousBehavior, Discovery:IAMUser/AnomalousBehavior, Exfiltration:IAMUser/AnomalousBehavior, Impact:IAMUser/AnomalousBehavior, Persistence:IAMUser/AnomalousBehavior, Recon:IAMUser/MaliciousIPCaller, Recon:IAMUser/MaliciousIPCaller.Custom, UnauthorizedAccess:IAMUser/InstanceCredentialExfiltration."
         },
         {
-          "AWSService": "AWS Config",
+          "Service": "AWS Config",
           "Category": "Protect",
           "Value": "Minimal",
           "Comment": "This control provides significant coverage for one of this technique's SubTechniques, resulting in an overall score of Minimal."
         },
         {
-          "AWSService": "AWS IAM",
+          "Service": "AWS IAM",
           "Category": "Detect",
           "Value": "Partial",
           "Comment": "This control provides detection capability for one of this technique's SubTechniques and some of its procedure examples resulting in an overall Partial protection score."
         },
         {
-          "AWSService": "AWS IAM",
+          "Service": "AWS IAM",
           "Category": "Protect",
           "Value": "Partial",
           "Comment": "This control provides protection capability for one of this technique's SubTechniques and some of its procedure examples resulting in an overall Partial protection score."
         },
         {
-          "AWSService": "AWS Single Sign-On",
+          "Service": "AWS Single Sign-On",
           "Category": "Protect",
           "Value": "Partial",
           "Comment": "This control provides protection capability for one of this technique's SubTechniques and some of its procedure examples resulting in an overall Partial protection score."
         },
         {
-          "AWSService": "AWS IoT Device Defender",
+          "Service": "AWS IoT Device Defender",
           "Category": "Detect",
           "Value": "Minimal",
           "Comment": "This control provides partial detection capability for one of this technique's SubTechniques and a few of its procedure examples resulting in an overall Minimal protection score."
         },
         {
-          "AWSService": "AWS IoT Device Defender",
+          "Service": "AWS IoT Device Defender",
           "Category": "Protect",
           "Value": "Minimal",
           "Comment": "This control provides partial protection for one of this technique's SubTechniques and a few of its procedure examples resulting in an overall Minimal protection score."
         },
         {
-          "AWSService": "AWS Organizations",
+          "Service": "AWS Organizations",
           "Category": "Protect",
           "Value": "Partial",
           "Comment": "This control may protect against malicious use of cloud accounts but may not mitigate exploitation of local, domain, or default accounts present within deployed resources."
         },
         {
-          "AWSService": "AWS Security Hub",
+          "Service": "AWS Security Hub",
           "Category": "Detect",
           "Value": "Minimal",
           "Comment": "AWS Security Hub detects suspicious activity by AWS accounts which could indicate valid accounts being leveraged by an adversary. AWS Security Hub provides these detections with the following managed insights. AWS principals with suspicious access key activity Credentials that may have leaked AWS resources with unauthorized access attempts IAM users with suspicious activity. AWS Security Hub also performs checks from the AWS Foundations CIS Benchmark and PCI-DSS security standard that, if implemented, would help towards detecting the misuse of valid accounts. AWS Security Hub provides these detections with the following checks. 3.1 Ensure a log metric filter and alarm exist for unauthorized API calls 3.2 Ensure a log metric filter and alarm exist for Management Console sign-in without MFA 3.3 Ensure a log metric filter and alarm exist for usage of root account 3.4 Ensure a log metric filter and alarm exist for IAM policy changes 3.6 Ensure a log metric filter and alarm exist for AWS Management Console authentication failures [PCI.CW.1] A log metric filter and alarm should exist for usage of the root user. By monitoring the root account, activity where accounts make unauthorized API calls, and changes to IAM permissions among other things, it may be possible to detect valid accounts that are being misused and are potentially compromised. This is scored as Minimal because it only supports a subset of the SubTechniques (1 of 4)."
         },
         {
-          "AWSService": "Amazon Cognito",
+          "Service": "Amazon Cognito",
           "Category": "Protect",
           "Value": "Minimal",
           "Comment": "This control provides partial protection for one of this technique's SubTechniques and a few of its procedure examples resulting in an overall Minimal protection score."
@@ -285,7 +285,7 @@
       ],
       "Attributes": [
         {
-          "AWSService": "AWS Web Application Firewall",
+          "Service": "AWS Web Application Firewall",
           "Category": "Protect",
           "Value": "Partial",
           "Comment": "The AWS WAF protects web applications from injection attacks that leverage command and scripting interpreters. AWS WAF provides this protection via the following rule sets that block malicious traffic across a variety of operating systems and applications. AWSManagedRulesCommonRuleSet AWSManagedRulesSQLiRuleSet AWSManagedRulesUnixRuleSet AWSManagedRulesWindowsRuleSet AWSManagedRulesPHPRuleSet AWSManagedRulesWordPressRuleSet. This is given a score of Partial (instead of Minimal) because while it only protects against a subset of SubTechniques (3 out of 8), it does provide protections for command and scripting interpreters that do not have SubTechniques (SQL, PHP, etc.). Furthermore, it blocks the malicious content in near real-time."
@@ -316,7 +316,7 @@
       ],
       "Attributes": [
         {
-          "AWSService": "AWS IAM",
+          "Service": "AWS IAM",
           "Category": "Protect",
           "Value": "Significant",
           "Comment": "Remove permissions to create, modify, or run serverless resources from users that do not explicitly require them."
@@ -346,7 +346,7 @@
       ],
       "Attributes": [
         {
-          "AWSService": "AWS Config",
+          "Service": "AWS Config",
           "Category": "Detect",
           "Value": "Minimal",
           "Comment": "This control provides significant coverage for one of this technique's SubTechniques, resulting in an overall score of Minimal."
@@ -391,25 +391,25 @@
       ],
       "Attributes": [
         {
-          "AWSService": "AWS Config",
+          "Service": "AWS Config",
           "Category": "Protect",
           "Value": "Minimal",
           "Comment": "This control provides significant coverage for one of this technique's SubTechniques, resulting in an overall score of Minimal."
         },
         {
-          "AWSService": "AWS IAM",
+          "Service": "AWS IAM",
           "Category": "Detect",
           "Value": "Minimal",
           "Comment": "This control may generate logs for creation and manipulation of accounts but the relevant security information would be handled by another security control."
         },
         {
-          "AWSService": "AWS Security Hub",
+          "Service": "AWS Security Hub",
           "Category": "Detect",
           "Value": "Minimal",
           "Comment": "AWS Security Hub performs a check from the AWS Foundations CIS Benchmark that, if implemented, would help towards detecting the manipulation of accounts. AWS Security Hub provides this detection with the following check. 3.4 Ensure a log metric filter and alarm exist for IAM policy changes. This is scored as Minimal because it only supports a subset of the SubTechniques (1 of 4)."
         },
         {
-          "AWSService": "Amazon GuardDuty",
+          "Service": "Amazon GuardDuty",
           "Category": "Detect",
           "Value": "Partial",
           "Comment": "GuardDuty has a finding types that flag events where an adversary may have compromised an AWS IAM User. Finding Type: Persistence:IAMUser/AnomalousBehavior."
@@ -442,7 +442,7 @@
       ],
       "Attributes": [
         {
-          "AWSService": "AWS Config",
+          "Service": "AWS Config",
           "Category": "Protect",
           "Value": "Minimal",
           "Comment": "This control provides partial coverage for one of this technique's SubTechniques, resulting in an overall score of Minimal."
@@ -505,7 +505,7 @@
       ],
       "Attributes": [
         {
-          "AWSService": "AWS Config",
+          "Service": "AWS Config",
           "Category": "Detect",
           "Value": "Minimal",
           "Comment": "The following AWS Config managed rules can identify running instances that are not using AMIs within a specified allow list: 'approved-amis-by-id' and 'approved-amis-by-tag', both of which are run on configuration changes. This does not provide detection of the image implanting itself, but does provide detection for any subsequent use of images that are implanted and not present within the allow list, resulting in a score of Minimal."
@@ -544,7 +544,7 @@
       ],
       "Attributes": [
         {
-          "AWSService": "AWS IAM",
+          "Service": "AWS IAM",
           "Category": "Protect",
           "Value": "Partial",
           "Comment": "This control provides coverage for one of this technique's SubTechniques, resulting in an overall score of Partial. Enforce MFA in IAM Users."
@@ -582,19 +582,19 @@
       ],
       "Attributes": [
         {
-          "AWSService": "AWS Config",
+          "Service": "AWS Config",
           "Category": "Detect",
           "Value": "Minimal",
           "Comment": "This control provides significant coverage for a minority of this technique's SubTechniques, resulting in an overall score of Minimal."
         },
         {
-          "AWSService": "AWS IoT Device Defender",
+          "Service": "AWS IoT Device Defender",
           "Category": "Detect",
           "Value": "Minimal",
           "Comment": "This control provides partial coverage for a minority of this technique's SubTechniques, resulting in an overall score of Minimal."
         },
         {
-          "AWSService": "AWS IoT Device Defender",
+          "Service": "AWS IoT Device Defender",
           "Category": "Respond",
           "Value": "Minimal",
           "Comment": "This control provides partial coverage for a minority of this technique's SubTechniques, resulting in an overall score of Minimal."
@@ -628,7 +628,7 @@
       ],
       "Attributes": [
         {
-          "AWSService": "AWS IAM",
+          "Service": "AWS IAM",
           "Category": "Protect",
           "Value": "Significant",
           "Comment": "Limit permissions for creating, deleting, and otherwise altering compute components in accordance with least privilege."
@@ -689,7 +689,7 @@
       ],
       "Attributes": [
         {
-          "AWSService": "AWS IAM",
+          "Service": "AWS IAM",
           "Category": "Protect",
           "Value": "Minimal",
           "Comment": "This control provides significant coverage for one of this technique's SubTechniques, resulting in an overall score of Minimal."
@@ -744,43 +744,43 @@
       ],
       "Attributes": [
         {
-          "AWSService": "AWS Config",
+          "Service": "AWS Config",
           "Category": "Protect",
           "Value": "Significant",
           "Comment": "This control provides significant coverage for all of this technique's sub-techniques, resulting in an overall score of Significant."
         },
         {
-          "AWSService": "AWS IAM",
+          "Service": "AWS IAM",
           "Category": "Protect",
           "Value": "Significant",
           "Comment": "This control provides significant coverage for all of this technique's sub-techniques, resulting in an overall score of Significant."
         },
         {
-          "AWSService": "AWS Single Sign-On",
+          "Service": "AWS Single Sign-On",
           "Category": "Protect",
           "Value": "Partial",
           "Comment": "This control may not provide any mitigation against password cracking."
         },
         {
-          "AWSService": "Amazon Cognito",
+          "Service": "Amazon Cognito",
           "Category": "Protect",
           "Value": "Significant",
           "Comment": "Amazon Cognito's MFA capability provides significant protection against password compromises, requiring the adversary to complete an additional authentication method before their access is permitted."
         },
         {
-          "AWSService": "AWS Security Hub",
+          "Service": "AWS Security Hub",
           "Category": "Detect",
           "Value": "Minimal",
           "Comment": "AWS Security Hub performs a check from the AWS Foundations CIS Benchmark that, if implemented, would help towards detecting the brute forcing of accounts. AWS Security Hub provides this detection with the following checks. 3.6 Ensure a log metric filter and alarm exist for AWS Management Console authentication failures. This is scored as Minimal because it only applies to the AWS Management Console and not other access mechanisms (e.g., CLI, SDK, etc.) and it only supports a subset of the sub-techniques (3 of 4). Furthermore, it does not detect brute-forcing methods for other components such as EC2 instances."
         },
         {
-          "AWSService": "Amazon GuardDuty",
+          "Service": "Amazon GuardDuty",
           "Category": "Detect",
           "Value": "Minimal",
           "Comment": "Finding types such as UnauthorizedAccess:EC2/RDPBruteForce, UnauthorizedAccess:EC2/SSHBruteForce, Impact:EC2/WinRMBruteForce, and Stealth:IAMUser/PasswordPolicyChange can detect when an EC2 instance may be involved in a brute force attack aimed at obtaining passwords. Due to the detection being limited to a specific set of application protocols, its coverage is Minimal resulting in a Minimal score."
         },
         {
-          "AWSService": "Amazon Inspector",
+          "Service": "Amazon Inspector",
           "Category": "Protect",
           "Value": "Minimal",
           "Comment": "The Amazon Inspector Best Practices assessment package can detect security control settings related to authentication and password policies on Linux endpoints. Specific security controls it can assess include 'Disable password authentication over SSH', 'Configure password maximum age', 'Configure password minimum length', and 'Configure password complexity' all of which impact the ability to brute force a password. This information can be used identify insecure configurations and harden the endpoints. Amazon Inspector does not directly protect against brute force attacks. Given Amazon Inspector can only assess these security controls on Linux platforms (although it also supports Windows), the coverage score is Minimal leading to an overall Minimal score."
@@ -815,7 +815,7 @@
       ],
       "Attributes": [
         {
-          "AWSService": "AWS IAM",
+          "Service": "AWS IAM",
           "Category": "Protect",
           "Value": "Partial",
           "Comment": "Limit IAM permissions from calling the sts:GetFederationToken API unless explicitly required, in accordance with least privilege."
@@ -882,31 +882,31 @@
       ],
       "Attributes": [
         {
-          "AWSService": "AWS CloudWatch",
+          "Service": "AWS CloudWatch",
           "Category": "Protect",
           "Value": "Significant",
           "Comment": "AWS CloudWatch uses TLS/SSL connections to communicate with other AWS resources which protects against network sniffing attacks. As a result, this mapping is given a score of Significant."
         },
         {
-          "AWSService": "AWS RDS",
+          "Service": "AWS RDS",
           "Category": "Protect",
           "Value": "Significant",
           "Comment": "AWS RDS and AWS RDS Proxy support TLS/SSL connections to database instances which protects against network sniffing attacks. As a result, this mapping is given a score of Significant."
         },
         {
-          "AWSService": "Amazon Virtual Private Cloud",
+          "Service": "Amazon Virtual Private Cloud",
           "Category": "Protect",
           "Value": "Significant",
           "Comment": "The VPC service's support for the AWS Virtual Private Network (VPN) can be used to encrypt traffic traversing over untrusted networks which can prevent information from being gathered via network sniffing."
         },
         {
-          "AWSService": "AWS IoT Device Defender",
+          "Service": "AWS IoT Device Defender",
           "Category": "Protect",
           "Value": "Partial",
           "Comment": "The following AWS IoT Device Defender audit checks and corresponding mitigation actions can identify and resolve configuration problems that should be fixed in order to ensure SSL/TLS encryption is enabled and secure to protect network traffic to/from IoT devices: 'CA certificate expiring' ('CA_CERTIFICATE_EXPIRING_CHECK' in the CLI and API), 'CA certificate key quality' ('CA_CERTIFICATE_KEY_QUALITY_CHECK' in the CLI and API), and 'CA certificate revoked but device certificates still active' ('REVOKED_CA_CERTIFICATE_STILL_ACTIVE_CHECK' in the CLI and API) can identify problems with certificate authority (CA) certificates being used for signing and support the 'UPDATE_CA_CERTIFICATE' mitigation action which can resolve them. 'Device certificate expiring' ('DEVICE_CERTIFICATE_EXPIRING_CHECK' in the CLI and API), 'Device certificate key quality' ('DEVICE_CERTIFICATE_KEY_QUALITY_CHECK' in the CLI and API), 'Device certificate shared' ('DEVICE_CERTIFICATE_SHARED_CHECK' in the CLI and API), and 'Revoked device certificate still active' ('REVOKED_DEVICE_CERTIFICATE_STILL_ACTIVE_CHECK' in the CLI and API) can identify problems with IoT devices' certificates and support the 'UPDATE_DEVICE_CERTIFICATE' and 'ADD_THINGS_TO_THING_GROUP' mitigation actions which can resolve them. Coverage factor is partial for these checks and mitigations, since they are specific to IoT device communication and can only mitigate behavior for adversaries who are unable to decrypt the relevant traffic, resulting in an overall score of Partial."
         },
         {
-          "AWSService": "AWS Config",
+          "Service": "AWS Config",
           "Category": "Protect",
           "Value": "Partial",
           "Comment": "The following AWS Config managed rules can identify configuration problems that should be fixed in order to ensure SSL/TLS encryption is enabled to protect network traffic: 'acm-certificate-expiration-check' for nearly expired certificates in AWS Certificate Manager (ACM); 'alb-http-to-https-redirection-check' for Application Load Balancer (ALB) HTTP listeners; 'api-gw-ssl-enabled' for API Gateway REST API stages; 'cloudfront-custom-ssl-certificate', 'cloudfront-sni-enabled', and 'cloudfront-viewer-policy-https', for Amazon CloudFront distributions; 'elb-acm-certificate-required', 'elb-custom-security-policy-ssl-check', 'elb-predefined-security-policy-ssl-check', and 'elb-tls-https-listeners-only' for Elastic Load Balancing (ELB) Classic Load Balancer listeners; 'redshift-require-tls-ssl' for Amazon Redshift cluster connections to SQL clients; 's3-bucket-ssl-requests-only' for requests for S3 bucket contents; and 'elasticsearch-node-to-node-encryption-check' for Amazon ElasticSearch Service node-to-node communications. The following AWS Config managed rules can identify configuration problems that should be fixed in order to ensure that private traffic is routed securely and only within VPCs rather than on the public Internet: 'api-gw-endpoint-type-check' for Amazon API Gateway APIs, 'elasticsearch-in-vpc-only' for Amazon ElasticSearch Service domains, and 'redshift-enhanced-vpc-routing-enabled' for Amazon Redshift cluster traffic. All of these are run on configuration changes except 'alb-http-to-https-redirection-check' and 'elasticsearch-in-vpc-only', which are run periodically. Coverage factor is partial for these rules, since they are specific to a subset of the available AWS services and can only mitigate behavior for adversaries who are unable to decrypt the relevant traffic and/or do not have access to traffic within the relevant VPCs, resulting in an overall score of Partial."
@@ -954,43 +954,43 @@
       ],
       "Attributes": [
         {
-          "AWSService": "AWS CloudHSM",
+          "Service": "AWS CloudHSM",
           "Category": "Protect",
           "Value": "Minimal",
           "Comment": "This control's protection is specific to a minority of this technique's sub-techniques and procedure examples resulting in a Minimal Coverage score and consequently an overall score of Minimal."
         },
         {
-          "AWSService": "AWS Config",
+          "Service": "AWS Config",
           "Category": "Protect",
           "Value": "Significant",
           "Comment": "The following AWS Config managed rules can identify insecure plaintext credentials within specific parts of a cloud environment: 'codebuild-project-envvar-awscred-check' for credentials (AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY) stored within environment variables, 'codebuild-project-source-repo-url-check' for personal access tokens and/or credentials within source repository URLs. The following AWS Config managed rules can identify configuration problems that should be fixed in order to ensure that the contents of secrets in AWS Secrets Manager (including credentials) are properly secured to avoid adversary access: 'secretsmanager-rotation-enabled-check', 'secretsmanager-scheduled-rotation-success-check', 'secretsmanager-secret-periodic-rotation', and 'secretsmanager-using-cmk'. This control provides partial coverage for a minority of this technique's sub-techniques, in addition to the parent coverage above, resulting in an overall score of Partial."
         },
         {
-          "AWSService": "AWS IoT Device Defender",
+          "Service": "AWS IoT Device Defender",
           "Category": "Detect",
           "Value": "Minimal",
           "Comment": "This control provides partial coverage for a minority of this technique's sub-techniques, resulting in an overall score of Minimal."
         },
         {
-          "AWSService": "AWS Key Management Service",
+          "Service": "AWS Key Management Service",
           "Category": "Protect",
           "Value": "Minimal",
           "Comment": "This control's protection is specific to a minority of this technique's sub-techniques and procedure examples resulting in a Minimal Coverage score and consequently an overall score of Minimal."
         },
         {
-          "AWSService": "AWS Secrets Manager",
+          "Service": "AWS Secrets Manager",
           "Category": "Protect",
           "Value": "Partial",
           "Comment": "This control is relevant for credentials stored in applications or configuration files but not credentials entered directly by a user."
         },
         {
-          "AWSService": "Amazon GuardDuty",
+          "Service": "Amazon GuardDuty",
           "Category": "Detect",
           "Value": "Minimal",
           "Comment": "This control provides minimal to partial coverage for a minority of this technique's sub-techniques, and without specific coverage for its procedures, resulting in an overall score of Minimal."
         },
         {
-          "AWSService": "Amazon Macie",
+          "Service": "Amazon Macie",
           "Category": "Protect",
           "Value": "Minimal",
           "Comment": "Macie only provides detection for the Credentials in Files sub-technique of this technique and only for the S3 storage type resulting in Minimal coverage and an overall Minimal score."
@@ -1040,25 +1040,25 @@
       ],
       "Attributes": [
         {
-          "AWSService": "AWS Network Firewall",
+          "Service": "AWS Network Firewall",
           "Category": "Protect",
           "Value": "Partial",
           "Comment": "AWS Network Firewall has the ability to pass, drop, or alert on traffic based on the network protocol as well as perform deep packet inspection on the payload. This functionality can be used to block adversaries from accessing resources from which to exfiltrate data as well as prevent resources from communicating with known-bad IP addresses and domains that might be used to receive exfiltrated data. This mapping is given a score of Partial because the known-bad IP addresses and domains would need to be known in advance and AWS Network Firewall wouldn't have deep packet inspection visibility into encrypted non-C2 protocols."
         },
         {
-          "AWSService": "Amazon GuardDuty",
+          "Service": "Amazon GuardDuty",
           "Category": "Detect",
           "Value": "Partial",
           "Comment": "The following GuardDuty finding type flags events where adversaries may steal data by exfiltrating it over a different protocol than that of the existing command-and-control channel. Trojan:EC2/DNSDataExfiltration Behavior:EC2/TrafficVolumeUnusual."
         },
         {
-          "AWSService": "AWS IoT Device Defender",
+          "Service": "AWS IoT Device Defender",
           "Category": "Detect",
           "Value": "Partial",
           "Comment": "This control provides partial coverage for this technique and all of its sub-techniques, resulting in an overall score of Partial."
         },
         {
-          "AWSService": "Amazon Virtual Private Cloud",
+          "Service": "Amazon Virtual Private Cloud",
           "Category": "Protect",
           "Value": "Partial",
           "Comment": "VPC security groups and network access control lists (NACLs) can limit access to external hosts and can therefore provide mitigation of this technique. For environments where Internet access is required, these controls can be used to block known malicious addresses. Because this latter protection is limited to known malicious endpoints, it provides Partial coverage resulting in an overall Partial score."
@@ -1082,7 +1082,7 @@
       ],
       "Attributes": [
         {
-          "AWSService": "Amazon Macie",
+          "Service": "Amazon Macie",
           "Category": "Detect",
           "Value": "Minimal",
           "Comment": "The following Macie findings can detect attempts to replicate data objects from a monitored bucket to an Amazon Web Services account that isn't part of your organization: Policy:IAMUser/S3BucketReplicatedExternally Policy:IAMUser/S3BucketSharedExternally. This type of detection is limited to only the S3 storage type and not other storage types available on the platform (such as file or block storage) and therefore has Minimal coverage resulting in a Minimal score."
@@ -1115,7 +1115,7 @@
       ],
       "Attributes": [
         {
-          "AWSService": "AWS Config",
+          "Service": "AWS Config",
           "Category": "Protect",
           "Value": "Minimal",
           "Comment": "The following AWS Config managed rules can identify configuration problems that should be fixed in order to ensure that storage volumes are encrypted, which may mitigate adversary attempts to automate collection within cloud environments: 'ec2-ebs-encryption-by-default' which is run periodically and 'encrypted-volumes' which is run on configuration changes. Coverage factor is minimal for these rules, since they are specific to EBS volumes and will only prevent certain forms of collection since adversaries with access to mounted volumes may be able to decrypt their contents, resulting in an overall score of Minimal."
@@ -1161,55 +1161,55 @@
       ],
       "Attributes": [
         {
-          "AWSService": "AWS Config",
+          "Service": "AWS Config",
           "Category": "Protect",
           "Value": "Significant",
           "Comment": "The following AWS Config managed rules can identify configuration problems that should be fixed in order to prevent malicious access of data within Amazon Simple Storage Service (S3) storage: 's3-account-level-public-access-blocks', 's3-bucket-level-public-access-prohibited', 's3-bucket-public-read-prohibited', 's3-bucket-policy-not-more-permissive', 'cloudfront-origin-access-identity-enabled', and 'cloudfront-default-root-object-configured' identify objects that are publicly available or subject to overly permissive access policies; 's3-bucket-blacklisted-actions-prohibited' checks whether bucket policies prohibit disallowed actions for principals from other AWS accounts; and 's3-bucket-policy-grantee-check' checks whether bucket policies appropriately control which AWS principals, federated users, service principals, IP addresses, and VPCs have access. All of these controls are run on configuration changes. The following AWS Config managed rules can identify configuration problems that should be fixed in order to prevent malicious access of data from other AWS services: 'dms-replication-not-public' for AWS Database Migration Service; 'emr-master-no-public-ip' for Amazon Elastic MapReduce (EMR); 'rds-cluster-iam-authentication-enabled', 'rds-instance-iam-authentication-enabled', 'rds-instance-public-access-check' and 'rds-snapshots-public-prohibited' for Amazon Relational Database Service; 'redshift-cluster-public-access-check' for Amazon Redshift; and 'sagemaker-notebook-no-direct-internet-access' for SageMaker. The following AWS Config managed rules can identify configuration problems that should be fixed in order to ensure that cloud storage data are encrypted to prevent malicious access: 'dax-encryption-enabled', 'dynamodb-table-encrypted-kms', and 'dynamodb-table-encryption-enabled' for Amazon DynamoDB table contents; 'efs-encrypted-check' for Amazon Elastic File System (EFS) file systems; 'elasticsearch-encrypted-at-rest' for Elasticsearch Service (ES) domains; 'rds-snapshot-encrypted' and 'rds-storage-encrypted' for Amazon Relational Database Service; 's3-bucket-server-side-encryption-enabled' and 's3-default-encryption-kms' for S3 storage; 'sns-encrypted-kms' for Amazon Simple Notification Service (SNS); 'redshift-cluster-configuration-check' and 'redshift-cluster-kms-enabled' for Redshift clusters; 'sagemaker-endpoint-configuration-kms-key-configured' and 'sagemaker-notebook-instance-kms-key-configured' for SageMaker. These rules provide a wide range of coverage for many AWS services, especially those most significant to procedures for this technique, resulting in an overall score of Significant."
         },
         {
-          "AWSService": "AWS IoT Device Defender",
+          "Service": "AWS IoT Device Defender",
           "Category": "Detect",
           "Value": "Partial",
           "Comment": "The following AWS IoT Device Defender cloud-side detection metrics can detect indicators that an adversary may be leveraging compromised AWS IoT devices and the Message Queuing Telemetry Transport (MQTT) protocol for unauthorized data transfer from cloud-side data sources: 'Source IP' ('aws:source-ip-address') values outside of expected IP address ranges may suggest that a device has been stolen. 'Messages sent' ('aws:num-messages-sent'), 'Messages received' ('aws:num-messages-received'), and 'Message size' ('aws:message-byte-size') values outside of expected norms may indicate that devices are sending and/or receiving non-standard traffic, which may include data retrieved from cloud storage. The following AWS IoT Device Defender device-side detection metrics can detect indicators that an adversary may be leveraging compromised AWS IoT devices and the Message Queuing Telemetry Transport (MQTT) protocol for unauthorized data transfer from cloud-side data sources: 'Bytes in' ('aws:all-bytes-in'), 'Bytes out' ('aws:all-bytes-out'), 'Packets in' ('aws:all-packets-in'), and 'Packets out' ('aws:all-packets-out') values outside of expected norms may indicate that devices are sending and/or receiving non-standard traffic, which may include data retrieved from cloud storage. Coverage factor is partial, since these metrics are limited to IoT device-based collection, resulting in an overall score of Partial."
         },
         {
-          "AWSService": "AWS Network Firewall",
+          "Service": "AWS Network Firewall",
           "Category": "Protect",
           "Value": "Partial",
           "Comment": "AWS Network Firewall has the ability to pass, drop, or alert on traffic based on the network protocol as well as perform deep packet inspection on the payload. This functionality can be used to block adversaries from accessing resources such as cloud storage objects by implementing restrictions on which IP addresses and domains can access the resources (e.g., allow lists). However, since cloud storage objects are located outside the virtual private cloud where the AWS Network Firewall protects, the mapping is only given a score of Partial."
         },
         {
-          "AWSService": "AWS RDS",
+          "Service": "AWS RDS",
           "Category": "Protect",
           "Value": "Significant",
           "Comment": "AWS RDS supports the encryption of the underlying storage for database instances, backups, read replicas, and snapshots using the AES-256 encryption algorithm. This can protect against an adversary from gaining access to a database instance in the event they get access to the underlying system where the database instance is hosted or to S3 where the backups are stored. Furthermore, with AWS RDS, there is a setting that specifies whether or not a database instances is publicly accessible. When public accessibility is turned off, the database instance will not be available outside the VPC in which it was created. As a result, this mapping is given a score of Significant."
         },
         {
-          "AWSService": "AWS S3",
+          "Service": "AWS S3",
           "Category": "Protect",
           "Value": "Significant",
           "Comment": "S3 provides full control of access via Identity and Access Management (IAM) policies and with its access control lists (ACLs). The S3 Block Public Access feature allows for policies limiting public access to Amazon S3 resources that are enforced regardless of how the resources are created or associated IAM policies. Server-side encryption can be enabled for data at rest and allows for use of S3-managed keys, AWS Key Management Service managed keys, or customer-provided keys."
         },
         {
-          "AWSService": "AWS Security Hub",
+          "Service": "AWS Security Hub",
           "Category": "Detect",
           "Value": "Partial",
           "Comment": "AWS Security Hub detects improperly secured data from S3 buckets such as public read and write access that may result in an adversary getting access to data in cloud storage. AWS Security Hub provides this detection with the following managed insight. S3 buckets with public write or read permissions. AWS Security Hub also performs checks from the AWS Foundations CIS Benchmark that, if implemented, would help towards detecting improperly secured S3 buckets which could result in them being discovered. AWS Security Hub provides this detection with the following check. 3.8 Ensure a log metric filter and alarm exist for S3 bucket policy changes. This is scored as Partial because it only detects when S3 buckets have public read or write access and doesn't detect improperly secured data in other storage types (e.g., DBs, NFS, etc.)."
         },
         {
-          "AWSService": "Amazon GuardDuty",
+          "Service": "Amazon GuardDuty",
           "Category": "Detect",
           "Value": "Partial",
           "Comment": "The following GuardDuty finding types flag events where adversaries may have access data objects from improperly secured cloud storage. UnauthorizedAccess:S3/MaliciousIPCaller.Custom UnauthorizedAccess:S3/TorIPCaller Impact:S3/MaliciousIPCaller Exfiltration:S3/MaliciousIPCaller Exfiltration:S3/ObjectRead.Unusual PenTest:S3/KaliLinux PenTest:S3/ParrotLinux PenTest:S3/PentooLinux UnauthorizedAccess:S3/MaliciousIPCaller.Custom UnauthorizedAccess:S3/TorIPCaller."
         },
         {
-          "AWSService": "Amazon Macie",
+          "Service": "Amazon Macie",
           "Category": "Detect",
           "Value": "Minimal",
           "Comment": "The following Macie findings can detect the collection of data from S3 buckets: Policy:IAMUser/S3BlockPublicAccessDisabled Policy:IAMUser/S3BucketEncryptionDisabled Policy:IAMUser/S3BucketPublic Policy:IAMUser/S3BucketReplicatedExternally Policy:IAMUser/S3BucketSharedExternally. This type of detection is limited to only the S3 storage type and not other storage types available on the platform (such as file or block storage) and therefore has Minimal coverage resulting in a Minimal score."
         },
         {
-          "AWSService": "Amazon Macie",
+          "Service": "Amazon Macie",
           "Category": "Protect",
           "Value": "Minimal",
           "Comment": "The following Macie findings can protect against collection of sensitive data from S3 buckets: SensitiveData:S3Object/Credentials SensitiveData:S3Object/CustomIdentifier SensitiveData:S3Object/Financial SensitiveData:S3Object/Multiple SensitiveData:S3Object/Personal. The ability to discover this type of sensitive data stored in a bucket may lead to hardening steps or removing the data altogether which would prevent an adversary from being able to collect the data. This type of protection is limited to only the S3 storage type and not other storage types available on the platform (such as file or block storage) and therefore has Minimal coverage resulting in a Minimal score."
@@ -1288,49 +1288,49 @@
       ],
       "Attributes": [
         {
-          "AWSService": "AWS CloudEndure Disaster Recovery",
+          "Service": "AWS CloudEndure Disaster Recovery",
           "Category": "Respond",
           "Value": "Significant",
           "Comment": "AWS CloudEndure Disaster Recovery enables the replication and recovery of servers into AWS Cloud. In the event that data on servers is destroyed, AWS CloudEndure can be used to provision an instance of the server from a previous point in time within minutes. As a result, this mapping is given a score of Significant."
         },
         {
-          "AWSService": "AWS Config",
+          "Service": "AWS Config",
           "Category": "Protect",
           "Value": "Partial",
           "Comment": "The following AWS Config managed rules can identify configuration problems that should be fixed in order to prevent malicious write access to data within Amazon Simple Storage Service (S3) storage, which may include data destruction: 's3-bucket-blacklisted-actions-prohibited' checks whether bucket policies prohibit disallowed actions (including S3:DeleteObject) for principals from other AWS accounts, 's3-bucket-default-lock-enabled' checks whether a bucket that should be locked in write-once-read-many (WORM) mode is configured to prevent modification, and 's3-bucket-public-write-prohibited' checks whether a bucket is configured to allow public access and modification. All of these controls are run on configuration changes. The following AWS Config managed rules can identify configuration problems that should be fixed in order to ensure backups and redundancy are in place which can mitigate the effects of data destruction: 'aurora-mysql-backtracking-enabled' for data in Aurora MySQL; 'db-instance-backup-enabled' and 'rds-in-backup-plan' for Amazon Relational Database Service (RDS) data; 'dynamodb-in-backup-plan' and 'dynamodb-pitr-enabled' for Amazon DynamoDB table contents; 'ebs-in-backup-plan' for Elastic Block Store (EBS) volumes; 'efs-in-backup-plan' for Amazon Elastic File System (EFS) file systems; 'elasticache-redis-cluster-automatic-backup-check' for Amazon ElastiCache Redis cluster data; 'redshift-backup-enabled' and 'redshift-cluster-maintenancesettings-check' for Redshift; 's3-bucket-replication-enabled' and 's3-bucket-versioning-enabled' for S3 storage; and 'cloudfront-origin-failover-enabled' for CloudFront. The following AWS Config managed rules provide specific detections for configuration problems that should be fixed in order to prevent malicious deletion of specific data: 'elb-deletion-protection-enabled' for Elastic Block Store (EBS) volumes, and 'rds-cluster-deletion-protection-enabled' and 'rds-instance-deletion-protection-enabled' for RDS data. Coverage factor is partial for these rules, since they are specific to a subset of the available AWS services and will only protect certain types of data against destruction, resulting in an overall score of Partial."
         },
         {
-          "AWSService": "AWS RDS",
+          "Service": "AWS RDS",
           "Category": "Detect",
           "Value": "Partial",
           "Comment": "AWS RDS generates events for database instances and includes the following events that may indicate that an adversary has destroyed the database instance. RDS-EVENT-0003: The DB instance has been deleted RDS-EVENT-0041: A DB snapshot has been deleted. This mapping is given a score of Partial because it can't differentiate between an authorized and unauthorized deletion."
         },
         {
-          "AWSService": "AWS RDS",
+          "Service": "AWS RDS",
           "Category": "Protect",
           "Value": "Significant",
           "Comment": "AWS RDS provides deletion protection which prevents any user from deleting a database instance. If applied, the setting may mitigate attempts to delete a database instance. As a result, this mapping is given a score of Significant."
         },
         {
-          "AWSService": "AWS RDS",
+          "Service": "AWS RDS",
           "Category": "Respond",
           "Value": "Significant",
           "Comment": "AWS RDS supports the replication and recovery of database instances. In the event that a database instance is deleted, AWS RDS can be used to restore the database instance to a previous point in time. As a result, this mapping is given a score of Significant."
         },
         {
-          "AWSService": "AWS S3",
+          "Service": "AWS S3",
           "Category": "Protect",
           "Value": "Significant",
           "Comment": "AWS S3 may protect against data destruction through application of several best practices. Multi-factor authentication can be enabled for delete operations and for changing the versioning state of a bucket. Versioning can be enabled to revert objects to a previous state after malicious destruction or corruption. S3 Object Lock can help prevent objects from being deleted or overwritten for a fixed amount of time or indefinitely. In addition, S3 Cross Region Replication can be used to replicate S3 buckets to another AWS region for add protection."
         },
         {
-          "AWSService": "AWS Security Hub",
+          "Service": "AWS Security Hub",
           "Category": "Detect",
           "Value": "Minimal",
           "Comment": "AWS Security Hub performs a check from the AWS Foundations CIS Benchmark that, if implemented, would help towards detecting the scheduled destruction of Customer Master Keys (CMKs) which are critical for being able to decrypt data. AWS Security Hub provides this detection with the following check. Ensure a log metric filter and alarm exist for disabling or scheduled deletion of customer created CMKs. This is scored as Minimal because CMKs only represent one type of data that could be destroyed by an adversary."
         },
         {
-          "AWSService": "Amazon GuardDuty",
+          "Service": "Amazon GuardDuty",
           "Category": "Detect",
           "Value": "Partial",
           "Comment": "The following GuardDuty finding type flags events where adversaries may destroy data and files on specific systems or in large numbers on a network to interrupt availability to systems, services, and network resources. Impact:S3/MaliciousIPCaller, Impact:IAMUser/AnomalousBehavior Stealth:S3/ServerAccessLoggingDisabled UnauthorizedAccess:S3/MaliciousIPCaller.Custom UnauthorizedAccess:S3/TorIPCaller PenTest:S3/PentooLinux PenTest:S3/ParrotLinux PenTest:S3/KaliLinux."
@@ -1365,25 +1365,25 @@
       ],
       "Attributes": [
         {
-          "AWSService": "AWS CloudEndure Disaster Recovery",
+          "Service": "AWS CloudEndure Disaster Recovery",
           "Category": "Respond",
           "Value": "Significant",
           "Comment": "AWS CloudEndure Disaster Recovery enables the replication and recovery of servers into AWS Cloud. In the event that data on servers is destroyed, AWS CloudEndure can be used to provision an instance of the server from a previous point in time within minutes. As a result, this mapping is given a score of Significant."
         },
         {
-          "AWSService": "AWS Config",
+          "Service": "AWS Config",
           "Category": "Protect",
           "Value": "Partial",
           "Comment": "The following AWS Config managed rules can identify configuration problems that should be fixed in order to prevent malicious changes to data encryption within Amazon Simple Storage Service (S3) storage: 's3-bucket-blacklisted-actions-prohibited' checks whether bucket policies prohibit disallowed actions (including encryption configuration changes) for principals from other AWS accounts, 's3-bucket-default-lock-enabled' checks whether a bucket that should be locked in write-once-read-many (WORM) mode is configured to prevent modification, and 's3-bucket-public-write-prohibited' checks whether a bucket is configured to allow public access and modification. All of these controls are run on configuration changes. The following AWS Config managed rules can identify configuration problems that should be fixed in order to ensure backups and redundancy are in place which can mitigate the effects of malicious changes to data encryption: 'aurora-mysql-backtracking-enabled' for data in Aurora MySQL; 'db-instance-backup-enabled' and 'rds-in-backup-plan' for Amazon Relational Database Service (RDS) data; 'dynamodb-in-backup-plan' and 'dynamodb-pitr-enabled' for Amazon DynamoDB table contents; 'ebs-in-backup-plan' for Elastic Block Store (EBS) volumes; 'efs-in-backup-plan' for Amazon Elastic File System (EFS) file systems; 'elasticache-redis-cluster-automatic-backup-check' for Amazon ElastiCache Redis cluster data; 'redshift-backup-enabled' and 'redshift-cluster-maintenancesettings-check' for Redshift; 's3-bucket-replication-enabled' and 's3-bucket-versioning-enabled' for S3 storage; and 'cloudfront-origin-failover-enabled' for CloudFront. Coverage factor is partial for these rules, since they are specific to a subset of the available AWS services and will only protect certain types of data against malicious encryption changes, resulting in an overall score of Partial."
         },
         {
-          "AWSService": "AWS RDS",
+          "Service": "AWS RDS",
           "Category": "Respond",
           "Value": "Significant",
           "Comment": "AWS RDS supports the replication and recovery of database instances. In the event that a database instance is encrypted by an adversary (e.g., ransomware), AWS RDS can be used to restore the database instance to a previous point in time. As a result, this mapping is given a score of Significant."
         },
         {
-          "AWSService": "Amazon GuardDuty",
+          "Service": "Amazon GuardDuty",
           "Category": "Detect",
           "Value": "Partial",
           "Comment": "The following GuardDuty finding type flags events where adversaries may encrypt data on target systems or on large numbers of systems in a network to interrupt availability to system and network resources. Impact:S3/MaliciousIPCaller Stealth:S3/ServerAccessLoggingDisabled UnauthorizedAccess:S3/MaliciousIPCaller.Custom UnauthorizedAccess:S3/TorIPCaller PenTest:S3/PentooLinux PenTest:S3/ParrotLinux PenTest:S3/KaliLinux"
@@ -1413,19 +1413,19 @@
       ],
       "Attributes": [
         {
-          "AWSService": "AWS CloudEndure Disaster Recovery",
+          "Service": "AWS CloudEndure Disaster Recovery",
           "Category": "Respond",
           "Value": "Significant",
           "Comment": "AWS CloudEndure Disaster Recovery enables the replication and recovery of servers into AWS Cloud. In the event that servers are defaced, AWS CloudEndure can be used to provision an instance of the server from a previous point in time within minutes. This mapping is given a score of Significant because it supports all of the sub-techniques (2 of 2)."
         },
         {
-          "AWSService": "AWS Config",
+          "Service": "AWS Config",
           "Category": "Protect",
           "Value": "Significant",
           "Comment": "This control provides significant coverage for all of this technique's sub-techniques, resulting in an overall score of Significant."
         },
         {
-          "AWSService": "Amazon GuardDuty",
+          "Service": "Amazon GuardDuty",
           "Category": "Detect",
           "Value": "Partial",
           "Comment": "GuardDuty provides multiple finding types that flag malicious activity against resources. These findings focus on API calls that look suspicious and although they do not flag events such as Defacement specifically, it can be inferred that these findings can result in mitigating this technique's negative impact. With this assumption the score is capped at Partial."
@@ -1486,25 +1486,25 @@
       ],
       "Attributes": [
         {
-          "AWSService": "AWS Shield",
+          "Service": "AWS Shield",
           "Category": "Respond",
           "Value": "Significant",
           "Comment": "AWS Shield is a service that protects against Distributed Denial of Service attacks. There are two tiers for this service Standard and Advanced. AWS Shield Standard defends against most common, frequently occurring network and transport (Layer 3 and 4 attacks) layer DDoS attacks that target your web site or applications. AWS Shield Advanced adds on to standard by providing additional detection and mitigation against large and sophisticated DDoS attacks. There is near real-time visibility into attacks. AWS Shield Advanced also comes with 24x7 access to the AWS DDoS Response Team (DRT)."
         },
         {
-          "AWSService": "AWS Config",
+          "Service": "AWS Config",
           "Category": "Protect",
           "Value": "Minimal",
           "Comment": "This control provides minimal coverage for this technique's sub-techniques as well as its procedures, resulting in an overall score of Minimal."
         },
         {
-          "AWSService": "AWS Network Firewall",
+          "Service": "AWS Network Firewall",
           "Category": "Protect",
           "Value": "Partial",
           "Comment": "AWS Network Firewall has the ability to pass, drop, or alert on traffic based on the network protocol as well as perform deep packet inspection on the payload. This functionality can be used to block adversaries from carrying out denial of service attacks by implementing restrictions on which IP addresses and domains can access the resources (e.g., allow lists) as well as which protocol traffic is permitted. That is, the AWS Network Firewall could block the source of the denial of service attack. This mapping is given a score of Partial because it only supports a subset of the sub-techniques (3 of 4) and because the source of the attack would have to be known before rules could be put in place to protect against it."
         },
         {
-          "AWSService": "Amazon Virtual Private Cloud",
+          "Service": "Amazon Virtual Private Cloud",
           "Category": "Protect",
           "Value": "Minimal",
           "Comment": "VPC security groups and network access control lists (NACLs) provides minimal protection for a majority of this control's sub-techniques and procedure examples resulting in an overall score of Minimal."
@@ -1533,19 +1533,19 @@
       ],
       "Attributes": [
         {
-          "AWSService": "AWS CloudEndure Disaster Recovery",
+          "Service": "AWS CloudEndure Disaster Recovery",
           "Category": "Respond",
           "Value": "Significant",
           "Comment": "AWS CloudEndure Disaster Recovery enables the replication and recovery of servers into AWS Cloud. In the event that servers are defaced, AWS CloudEndure can be used to provision an instance of the server from a previous point in time within minutes. This mapping is given a score of Significant because it supports all of the sub-techniques (2 of 2)."
         },
         {
-          "AWSService": "AWS RDS",
+          "Service": "AWS RDS",
           "Category": "Detect",
           "Value": "Partial",
           "Comment": "AWS RDS generates events for database instances and includes the following event that may indicate that an adversary has attempted to inhibit system recovery. RDS-EVENT-0028: Automatic backups for this DB instance have been disabled. This mapping is given a score of Partial because it can't differentiate between an authorized and unauthorized disabling of automatic backups."
         },
         {
-          "AWSService": "AWS RDS",
+          "Service": "AWS RDS",
           "Category": "Respond",
           "Value": "Significant",
           "Comment": "AWS RDS supports the replication and recovery of database instances. In the event that a database instance is compromised and modified to disrupt recovery, AWS RDS can be used to restore the database instance to a previous point in time. As a result, this mapping is given a score of Significant."
@@ -1590,25 +1590,25 @@
       ],
       "Attributes": [
         {
-          "AWSService": "AWS CloudWatch",
+          "Service": "AWS CloudWatch",
           "Category": "Detect",
           "Value": "Partial",
           "Comment": "AWS CloudWatch provides various metrics including CPU utilization, connections, disk space, memory, bytes sent/received, and the number of running containers among others. The following metrics (not an exhaustive list) could be used to detect if the usage of a resource has increased such as when an adversary hijacks a resource to perform intensive tasks. Linux/Mac OS ------------- cpu_time_active cpu_time_guest cpu_usage_active cpu_usage_guest disk_free disk_total disk_used ethtool_bw_in_allowance_exceeded ethtool_bw_out_allowance_exceeded ethtool_conntrack_allowance_exceeded mem_active mem_available_percent mem_free net_bytes_recv net_bytes_sent net_packets_sent net_packets_recv netstat_tcp_established netstat_tcp_listen processes_running processes_total swap_free swap_used. Containers ---------- CpuUtilized MemoryUtilized NetworkRxBytes NetworkTxBytes node_cpu_usage_total node_cpu_utilization node_filesystem_utilization node_memory_utilization. This mapping is given a score of Partial because it is not possible to differentiate between an authorized and unauthorized increase in resource utilization."
         },
         {
-          "AWSService": "AWS Config",
+          "Service": "AWS Config",
           "Category": "Detect",
           "Value": "Partial",
           "Comment": "The following AWS Config managed rules can identify configuration problems that should be fixed in order to ensure alarms exist for spikes in resource utilization, which help to identify malicious use of resources within a cloud environment: 'cloudwatch-alarm-action-check', 'cloudwatch-alarm-resource-check', 'cloudwatch-alarm-settings-check', 'desired-instance-tenancy', 'desired-instance-type', 'dynamodb-autoscaling-enabled', 'dynamodb-throughput-limit-check', 'ec2-instance-detailed-monitoring-enabled', and 'rds-enhanced-monitoring-enabled'. Coverage factor is partial for these rules, since they are specific to a subset of the available AWS services and will only detect resource hijacking that results in a change in utilization that is significant enough to trigger alarms, resulting in an overall score of Partial."
         },
         {
-          "AWSService": "AWS IoT Device Defender",
+          "Service": "AWS IoT Device Defender",
           "Category": "Detect",
           "Value": "Partial",
           "Comment": "The following AWS IoT Device Defender device-side detection metrics can detect indicators that an adversary may be leveraging compromised AWS IoT devices' resources to perform resource-intensive operations like mining cryptocurrency or performing denial of service attacks on other environments: 'Destination IPs' ('aws:destination-ip-addresses') outside of expected IP address ranges may suggest that a device is communicating with unexpected parties. 'Bytes in' ('aws:all-bytes-in'), 'Bytes out' ('aws:all-bytes-out'), 'Packets in' ('aws:all-packets-in'), and 'Packets out' ('aws:all-packets-out') values outside of expected norms may indicate that the device is sending and/or receiving non-standard traffic, which may include traffic related to resource hijacking activities. 'Listening TCP ports' ('aws:listening-tcp-ports'), 'Listening TCP port count' ('aws:num-listening-tcp-ports'), 'Established TCP connections count' ('aws:num-established-tcp-connections'), 'Listening UDP ports' ('aws:listening-udp-ports'), and 'Listening UDP port count' ('aws:num-listening-udp-ports') values outside of expected norms may indicate that devices are communicating via unexpected ports/protocols which may include traffic related to resource hijacking activities. Coverage factor is partial, since these metrics are limited to IoT device hijacking, resulting in an overall score of Partial."
         },
         {
-          "AWSService": "Amazon GuardDuty",
+          "Service": "Amazon GuardDuty",
           "Category": "Detect",
           "Value": "Partial",
           "Comment": "The following GuardDuty finding types flag events where adversaries may leverage the resources of co-opted systems in order to solve resource intensive problems which may impact system and/or hosted service availability. CryptoCurrency:EC2/BitcoinTool.B CryptoCurrency:EC2/BitcoinTool.B!DNS Impact:EC2/BitcoinDomainRequest.Reputation UnauthorizedAccess:EC2/TorRelay"
@@ -1666,31 +1666,31 @@
       ],
       "Attributes": [
         {
-          "AWSService": "AWS Config",
+          "Service": "AWS Config",
           "Category": "Protect",
           "Value": "Minimal",
           "Comment": "This control provides minimal coverage for this technique's sub-techniques as well as its procedures, resulting in an overall score of Minimal."
         },
         {
-          "AWSService": "AWS Network Firewall",
+          "Service": "AWS Network Firewall",
           "Category": "Protect",
           "Value": "Minimal",
           "Comment": "AWS Network Firewall has the ability to pass, drop, or alert on traffic based on the network protocol as well as perform deep packet inspection on the payload. This functionality can be used to block the sources of smaller-scale network denial of service attacks. While AWS Network Firewall supports both all sub-techniques (2 of 2), this mapping is given a score of Minimal because often times it is necessary to block the traffic at an Internet Service Provider or Content Provider Network level."
         },
         {
-          "AWSService": "AWS Shield",
+          "Service": "AWS Shield",
           "Category": "Respond",
           "Value": "Significant",
           "Comment": "AWS Shield is a service that protects against Distributed Denial of Service attacks. There are two tiers for this service Standard and Advanced. AWS Shield Standard defends against most common, frequently occurring network and transport (Layer 3 and 4 attacks) layer DDoS attacks that target your web site or applications. AWS Shield Advanced adds on to standard by providing additional detection and mitigation against large and sophisticated DDoS attacks. There is near real-time visibility into attacks. AWS Shield Advanced also comes with 24x7 access to the AWS DDoS Response Team (DRT)."
         },
         {
-          "AWSService": "Amazon GuardDuty",
+          "Service": "Amazon GuardDuty",
           "Category": "Detect",
           "Value": "Partial",
           "Comment": "The following finding types in GuardDuty flag events where adversaries may perform Network Denial of Service (DoS) attacks to degrade or block the availability of targeted resources to users. Backdoor:EC2/DenialOfService.UdpOnTcpPorts Backdoor:EC2/DenialOfService.UnusualProtocol Backdoor:EC2/DenialOfService.Udp Backdoor:EC2/DenialOfService.Tcp Backdoor:EC2/DenialOfService.Dns"
         },
         {
-          "AWSService": "Amazon Virtual Private Cloud",
+          "Service": "Amazon Virtual Private Cloud",
           "Category": "Protect",
           "Value": "Minimal",
           "Comment": "VPC security groups and network access control lists (NACLs) can be used to restrict access to endpoints but will prove effective at mitigating only low-end DOS attacks resulting in a Minimal score."
@@ -1724,7 +1724,7 @@
       ],
       "Attributes": [
         {
-          "AWSService": "AWS Organizations",
+          "Service": "AWS Organizations",
           "Category": "Protect",
           "Value": "Minimal",
           "Comment": "This control may protect against cloud account discovery but does not mitigate against other forms of account discovery."
@@ -1757,25 +1757,25 @@
       ],
       "Attributes": [
         {
-          "AWSService": "AWS Organizations",
+          "Service": "AWS Organizations",
           "Category": "Protect",
           "Value": "Partial",
           "Comment": "This control may protect against cloud infrastructure discovery by segmenting accounts into separate organizational units and restricting infrastructure access by least privilege."
         },
         {
-          "AWSService": "AWS Security Hub",
+          "Service": "AWS Security Hub",
           "Category": "Detect",
           "Value": "Partial",
           "Comment": "AWS Security Hub detects improperly secured data from S3 buckets such as public read and write access as well as accessible EC2 instances that may result in an adversary learning about cloud infrastructure used by the organization. AWS Security Hub provides these detections with the following managed insights. S3 buckets with public write or read permissions EC2 instances that have ports accessible from the Internet EC2 instances that are open to the Internet. AWS Security Hub also performs checks from the AWS Foundations CIS Benchmark that, if implemented, would help towards detecting improperly secured S3 buckets which could result in them being discovered. AWS Security Hub provides this detection with the following check. 3.8 Ensure a log metric filter and alarm exist for S3 bucket policy changes. This is scored as Partial because S3 and EC2 only represent a subset of available cloud infrastructure components."
         },
         {
-          "AWSService": "Amazon GuardDuty",
+          "Service": "Amazon GuardDuty",
           "Category": "Detect",
           "Value": "Partial",
           "Comment": "The following GuardDuty finding types flag events that are linked to Discovery techniques and can be used to capture events where a malicious user may be searching through the account looking for available resources. The finding types are also used to flag certain signatures of running services to detect malicious user activities from commonly used pentest operating systems. Discovery:IAMUser/AnomalousBehavior Discovery:S3/MaliciousIPCaller Discovery:S3/MaliciousIPCaller.Custom Discovery:S3/TorIPCaller PenTest:IAMUser/KaliLinux PenTest:IAMUser/ParrotLinux PenTest:IAMUser/PentooLinux PenTest:S3/KaliLinux PenTest:S3/ParrotLinux PenTest:S3/PentooLinux."
         },
         {
-          "AWSService": "AWS IAM",
+          "Service": "AWS IAM",
           "Category": "Protect",
           "Value": "Significant",
           "Comment": "Limit IAM permissions to discover cloud infrastructure in accordance with least privilege. Organizations should limit the number of users within the organization with an IAM role that has administrative privileges, strive to reduce all permanent privileged role assignments, and conduct periodic entitlement reviews on IAM users, roles and policies."
@@ -1806,13 +1806,13 @@
       ],
       "Attributes": [
         {
-          "AWSService": "AWS Organizations",
+          "Service": "AWS Organizations",
           "Category": "Protect",
           "Value": "Partial",
           "Comment": "This control may protect against cloud service dashboard abuse by segmenting accounts into separate organizational units and restricting dashboard access by least privilege."
         },
         {
-          "AWSService": "AWS Config",
+          "Service": "AWS Config",
           "Category": "Protect",
           "Value": "Significant",
           "Comment": "The 'mfa-enabled-for-iam-console-access' managed rule checks whether multi-factor authentication is enabled for all AWS IAM users that use a console password, protecting against misuse of those accounts' dashboard access. It is run periodically, and provides significant coverage, resulting in an overall score of Significant."
@@ -1840,7 +1840,7 @@
       ],
       "Attributes": [
         {
-          "AWSService": "Amazon GuardDuty",
+          "Service": "Amazon GuardDuty",
           "Category": "Detect",
           "Value": "Partial",
           "Comment": "GuardDuty has the following finding types to flag events where there is an attempt to discover information about resources on the account. Recon:IAMUser/MaliciousIPCaller Recon:IAMUser/MaliciousIPCaller.Custom Recon:IAMUser/TorIPCaller"
@@ -1867,7 +1867,7 @@
       ],
       "Attributes": [
         {
-          "AWSService": "AWS IAM",
+          "Service": "AWS IAM",
           "Category": "Protect",
           "Value": "Significant",
           "Comment": "Restrict granting of permissions related to listing objects in AWS S3 Buckets to necessary accounts."
@@ -1918,37 +1918,37 @@
       ],
       "Attributes": [
         {
-          "AWSService": "AWS IoT Device Defender",
+          "Service": "AWS IoT Device Defender",
           "Category": "Detect",
           "Value": "Partial",
           "Comment": "The following AWS IoT Device Defender device-side detection metrics can detect indicators that an adversary may be leveraging compromised AWS IoT devices to search their networks for other hosts and their running services, possibly to subsequently carry out lateral movement techniques: 'Destination IPs' ('aws:destination-ip-addresses') outside of expected IP address ranges may suggest that a device is communicating with unexpected devices. 'Bytes in' ('aws:all-bytes-in'), 'Bytes out' ('aws:all-bytes-out'), 'Packets in' ('aws:all-packets-in'), and 'Packets out' ('aws:all-packets-out') values outside of expected norms may indicate that the device is sending and/or receiving non-standard traffic, which may traffic used to discover other hosts/services. 'Listening TCP ports' ('aws:listening-tcp-ports'), 'Listening TCP port count' ('aws:num-listening-tcp-ports'), 'Established TCP connections count' ('aws:num-established-tcp-connections'), 'Listening UDP ports' ('aws:listening-udp-ports'), and 'Listening UDP port count' ('aws:num-listening-udp-ports') values outside of expected norms may indicate that devices are communicating via unexpected ports/protocols that may suggest scanning is taking place. Coverage factor is partial, since these metrics are limited to IoT device communication and detection is only based on network traffic, resulting in an overall score of Partial."
         },
         {
-          "AWSService": "AWS Network Firewall",
+          "Service": "AWS Network Firewall",
           "Category": "Protect",
           "Value": "Partial",
           "Comment": "AWS Network Firewall has the ability to pass, drop, or alert on traffic based on the network protocol as well as perform deep packet inspection on the payload. This functionality can be used to restrict access to the endpoints within the virtual private cloud and protect against network service scanning. This mapping is given a score of Partial because it only protects against network service scanning attacks that originate from outside the firewall and not from within network protected by the firewall."
         },
         {
-          "AWSService": "AWS Web Application Firewall",
+          "Service": "AWS Web Application Firewall",
           "Category": "Protect",
           "Value": "Partial",
           "Comment": "AWS WAF protects against bots that run scans against web applications such as Nessus (vulnerability assessments) and Nmap (IP address and port scans) among others. AWS WAF does this by blocking malicious traffic that indicate bad bots such as those listed above (e.g., via User-Agent values). AWS WAF uses the following rule sets to provide this protection. AWSManagedRulesCommonRuleSet AWSManagedRulesBotControlRuleSet. This is scored as Partial because the rule sets, while they block malicious traffic in near real-time, only protect web applications against scans performed by bots."
         },
         {
-          "AWSService": "Amazon GuardDuty",
+          "Service": "Amazon GuardDuty",
           "Category": "Detect",
           "Value": "Partial",
           "Comment": "The following GuardDuty finding types reflect flagged events where there is an attempt to get a list of services running on a remote host. Recon:EC2/PortProbeEMRUnprotectedPort Recon:EC2/PortProbeUnprotectedPort Recon:EC2/Portscan Impact:EC2/PortSweep"
         },
         {
-          "AWSService": "Amazon Inspector",
+          "Service": "Amazon Inspector",
           "Category": "Protect",
           "Value": "Partial",
           "Comment": "The Amazon Inspector Network Reachability assessment package can assess whether or not cloud/network components are vulnerable (e.g., publicly accessible from the Internet). Amazon Inspector does not directly protect cloud/network components rather reports on vulnerabilities that it identifies which can then be used to securely configure the cloud/network components. Due to this, the score is capped at Partial."
         },
         {
-          "AWSService": "Amazon Virtual Private Cloud",
+          "Service": "Amazon Virtual Private Cloud",
           "Category": "Protect",
           "Value": "Significant",
           "Comment": "VPC security groups and network access control lists (NACLs) can filter both internal and external network traffic and therefore, can mitigate unauthorized network service scanning."
@@ -1979,7 +1979,7 @@
       ],
       "Attributes": [
         {
-          "AWSService": "AWS IAM",
+          "Service": "AWS IAM",
           "Category": "Protect",
           "Value": "Significant",
           "Comment": "Ensure least privilege in IAM since password policies can be discovered in cloud environments using available APIs such as GetAccountPasswordPolicy in AWS."

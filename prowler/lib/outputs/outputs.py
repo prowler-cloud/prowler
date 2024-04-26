@@ -88,7 +88,6 @@ def report(check_findings, provider):
                                 available_compliance_frameworks
                             )
                         )
-
                         fill_compliance(
                             output_options,
                             finding,

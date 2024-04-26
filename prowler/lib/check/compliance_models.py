@@ -123,7 +123,7 @@ class ISO27001_2013_Requirement_Attribute(BaseModel):
 class Mitre_Requirement_Attribute(BaseModel):
     """MITRE Requirement Attribute"""
 
-    AWSService: str
+    Service: str
     Category: str
     Value: str
     Comment: str
