@@ -59,34 +59,6 @@ class Check_Output_MITRE_ATTACK_Azure(BaseModel):
     Muted: bool
 
 
-# class Check_Output_MITRE_ATTACK(BaseModel):
-#     """
-#     Check_Output_MITRE_ATTACK generates a finding's output in CSV MITRE ATTACK format for AZURE.
-#     """
-
-#     Provider: str
-#     Description: str
-#     AccountId: str
-#     Region: str
-#     AssessmentDate: str
-#     Requirements_Id: str
-#     Requirements_Name: str
-#     Requirements_Description: str
-#     Requirements_Tactics: str
-#     Requirements_SubTechniques: str
-#     Requirements_Platforms: str
-#     Requirements_TechniqueURL: str
-#     Requirements_Attributes_AzureServices: str
-#     Requirements_Attributes_Categories: str
-#     Requirements_Attributes_Values: str
-#     Requirements_Attributes_Comments: str
-#     Status: str
-#     StatusExtended: str
-#     ResourceId: str
-#     CheckId: str
-#     Muted: bool
-
-
 class Check_Output_CSV_ENS_RD2022(BaseModel):
     """
     Check_Output_CSV_ENS_RD2022 generates a finding's output in CSV ENS RD2022 format.
