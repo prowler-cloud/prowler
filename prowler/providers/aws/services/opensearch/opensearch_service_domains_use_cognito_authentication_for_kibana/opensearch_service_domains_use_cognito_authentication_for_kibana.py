@@ -17,7 +17,7 @@ class opensearch_service_domains_use_cognito_authentication_for_kibana(Check):
             report.status_extended = f"Opensearch domain {domain.name} has either Amazon Cognito authentication or SAML authentication for Kibana enabled."
             if not domain.cognito_options and not domain.saml_enabled:
                 report.status = "FAIL"
-                report.status_extended = f"Opensearch domain {domain.name} has neither Amazon Cognito authentication nor SAML authentication for Kibana enabled."
+                report.status_extended = f"Opensearch domain {domain.name} has neither Amazon Cognito nor SAML authentication for Kibana enabled."
 
             findings.append(report)
 
