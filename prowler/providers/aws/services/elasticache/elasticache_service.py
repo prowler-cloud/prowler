@@ -32,7 +32,9 @@ class ElastiCache(AWSService):
                         id=cache_cluster["CacheClusterId"],
                         arn=cluster_arn,
                         region=regional_client.region,
-                        cache_subnet_group_id=cache_cluster["CacheSubnetGroupName"],
+                        cache_subnet_group_id=cache_cluster.get(
+                            "CacheSubnetGroupName", None
+                        ),
                     )
         except Exception as error:
             logger.error(
@@ -46,16 +48,17 @@ class ElastiCache(AWSService):
                 if cluster.region == regional_client.region:
                     try:
                         subnets = []
-                        cache_subnet_groups = (
-                            regional_client.describe_cache_subnet_groups(
-                                CacheSubnetGroupName=cluster.cache_subnet_group_id
-                            )["CacheSubnetGroups"]
-                        )
-                        for subnet_group in cache_subnet_groups:
-                            for subnet in subnet_group["Subnets"]:
-                                subnets.append(subnet["SubnetIdentifier"])
+                        if cluster.cache_subnet_group_id:
+                            cache_subnet_groups = (
+                                regional_client.describe_cache_subnet_groups(
+                                    CacheSubnetGroupName=cluster.cache_subnet_group_id
+                                )["CacheSubnetGroups"]
+                            )
+                            for subnet_group in cache_subnet_groups:
+                                for subnet in subnet_group["Subnets"]:
+                                    subnets.append(subnet["SubnetIdentifier"])
 
-                        cluster.subnets = subnets
+                            cluster.subnets = subnets
                     except Exception as error:
                         logger.error(
                             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -97,6 +100,6 @@ class Cluster(BaseModel):
     id: str
     arn: str
     region: str
-    cache_subnet_group_id: str
+    cache_subnet_group_id: Optional[str]
     subnets: Optional[list]
     tags: Optional[list]
