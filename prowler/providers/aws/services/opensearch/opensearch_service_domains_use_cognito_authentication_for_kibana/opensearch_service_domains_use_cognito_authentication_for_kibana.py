@@ -4,7 +4,7 @@ from prowler.providers.aws.services.opensearch.opensearch_client import (
 )
 
 
-class opensearch_service_domains_use_cognito_or_saml_authentication_for_kibana(Check):
+class opensearch_service_domains_use_cognito_authentication_for_kibana(Check):
     def execute(self):
         findings = []
         for domain in opensearch_client.opensearch_domains:

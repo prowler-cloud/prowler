@@ -13,7 +13,7 @@ domain_name = "test-domain"
 domain_arn = f"arn:aws:es:us-west-2:{AWS_ACCOUNT_NUMBER}:domain/{domain_name}"
 
 
-class Test_opensearch_service_domains_use_cognito_or_saml_authentication_for_kibana:
+class Test_opensearch_service_domains_use_cognito_authentication_for_kibana:
     def test_no_domains(self):
         opensearch_client = mock.MagicMock
         opensearch_client.opensearch_domains = []
@@ -21,11 +21,11 @@ class Test_opensearch_service_domains_use_cognito_or_saml_authentication_for_kib
             "prowler.providers.aws.services.opensearch.opensearch_service.OpenSearchService",
             opensearch_client,
         ):
-            from prowler.providers.aws.services.opensearch.opensearch_service_domains_use_cognito_or_saml_authentication_for_kibana.opensearch_service_domains_use_cognito_or_saml_authentication_for_kibana import (
-                opensearch_service_domains_use_cognito_or_saml_authentication_for_kibana,
+            from prowler.providers.aws.services.opensearch.opensearch_service_domains_use_cognito_authentication_for_kibana.opensearch_service_domains_use_cognito_authentication_for_kibana import (
+                opensearch_service_domains_use_cognito_authentication_for_kibana,
             )
 
-            check = opensearch_service_domains_use_cognito_or_saml_authentication_for_kibana()
+            check = opensearch_service_domains_use_cognito_authentication_for_kibana()
             result = check.execute()
             assert len(result) == 0
 
@@ -46,11 +46,11 @@ class Test_opensearch_service_domains_use_cognito_or_saml_authentication_for_kib
             "prowler.providers.aws.services.opensearch.opensearch_service.OpenSearchService",
             opensearch_client,
         ):
-            from prowler.providers.aws.services.opensearch.opensearch_service_domains_use_cognito_or_saml_authentication_for_kibana.opensearch_service_domains_use_cognito_or_saml_authentication_for_kibana import (
-                opensearch_service_domains_use_cognito_or_saml_authentication_for_kibana,
+            from prowler.providers.aws.services.opensearch.opensearch_service_domains_use_cognito_authentication_for_kibana.opensearch_service_domains_use_cognito_authentication_for_kibana import (
+                opensearch_service_domains_use_cognito_authentication_for_kibana,
             )
 
-            check = opensearch_service_domains_use_cognito_or_saml_authentication_for_kibana()
+            check = opensearch_service_domains_use_cognito_authentication_for_kibana()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
@@ -78,11 +78,11 @@ class Test_opensearch_service_domains_use_cognito_or_saml_authentication_for_kib
             "prowler.providers.aws.services.opensearch.opensearch_service.OpenSearchService",
             opensearch_client,
         ):
-            from prowler.providers.aws.services.opensearch.opensearch_service_domains_use_cognito_or_saml_authentication_for_kibana.opensearch_service_domains_use_cognito_or_saml_authentication_for_kibana import (
-                opensearch_service_domains_use_cognito_or_saml_authentication_for_kibana,
+            from prowler.providers.aws.services.opensearch.opensearch_service_domains_use_cognito_authentication_for_kibana.opensearch_service_domains_use_cognito_authentication_for_kibana import (
+                opensearch_service_domains_use_cognito_authentication_for_kibana,
             )
 
-            check = opensearch_service_domains_use_cognito_or_saml_authentication_for_kibana()
+            check = opensearch_service_domains_use_cognito_authentication_for_kibana()
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"

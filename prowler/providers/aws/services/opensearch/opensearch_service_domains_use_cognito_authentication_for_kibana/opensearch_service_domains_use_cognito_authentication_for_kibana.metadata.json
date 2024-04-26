@@ -1,6 +1,6 @@
 {
   "Provider": "aws",
-  "CheckID": "opensearch_service_domains_use_cognito_or_saml_authentication_for_kibana",
+  "CheckID": "opensearch_service_domains_use_cognito_authentication_for_kibana",
   "CheckTitle": "Check if Amazon Elasticsearch/Opensearch Service domains has either Amazon Cognito authentication or SAML authentication for Kibana enabled",
   "CheckType": [
     "Identify",
