@@ -79,7 +79,10 @@ def mock_make_api_call(self, operation_name, kwarg):
                 },
                 "ServiceSoftwareOptions": {"UpdateAvailable": True},
                 "DomainEndpointOptions": {"EnforceHTTPS": True},
-                "AdvancedSecurityOptions": {"InternalUserDatabaseEnabled": True},
+                "AdvancedSecurityOptions": {
+                    "InternalUserDatabaseEnabled": True,
+                    "SAMLOptions": {"Enabled": True},
+                },
             }
         }
     if operation_name == "ListTags":
