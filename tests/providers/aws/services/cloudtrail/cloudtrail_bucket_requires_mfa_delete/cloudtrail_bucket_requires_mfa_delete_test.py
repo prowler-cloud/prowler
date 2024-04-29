@@ -254,3 +254,35 @@ class Test_cloudtrail_bucket_requires_mfa_delete:
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_arn == trail_us["TrailARN"]
             assert result[0].resource_tags == []
+
+    @mock_aws
+    @patch(
+        "botocore.client.BaseClient._make_api_call",
+        new=mock_make_api_call_getbucketversioning_mfadelete_enabled,
+    )
+    def test_access_denied(self):
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
+        )
+
+        with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.cloudtrail.cloudtrail_bucket_requires_mfa_delete.cloudtrail_bucket_requires_mfa_delete.cloudtrail_client",
+            new=Cloudtrail(aws_provider),
+        ) as cloudtrail_client, mock.patch(
+            "prowler.providers.aws.services.cloudtrail.cloudtrail_bucket_requires_mfa_delete.cloudtrail_bucket_requires_mfa_delete.s3_client",
+            new=S3(aws_provider),
+        ) as s3_client:
+            # Test Check
+            from prowler.providers.aws.services.cloudtrail.cloudtrail_bucket_requires_mfa_delete.cloudtrail_bucket_requires_mfa_delete import (
+                cloudtrail_bucket_requires_mfa_delete,
+            )
+
+            cloudtrail_client.trails = None
+            s3_client.buckets = []
+
+            check = cloudtrail_bucket_requires_mfa_delete()
+            result = check.execute()
+            assert len(result) == 0
