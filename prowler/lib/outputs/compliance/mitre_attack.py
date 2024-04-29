@@ -32,12 +32,18 @@ def write_compliance_row_mitre_attack(
             delimiter=";",
         )
         for requirement in compliance.Requirements:
+
+            if compliance.Provider == "AWS":
+                attributes_services = ", ".join(
+                    attribute.AWSService for attribute in requirement.Attributes
+                )
+            elif compliance.Provider == "Azure":
+                attributes_services = ", ".join(
+                    attribute.AzureService for attribute in requirement.Attributes
+                )
             requirement_description = requirement.Description
             requirement_id = requirement.Id
             requirement_name = requirement.Name
-            attributes_services = ", ".join(
-                attribute.Service for attribute in requirement.Attributes
-            )
             attributes_categories = ", ".join(
                 attribute.Category for attribute in requirement.Attributes
             )

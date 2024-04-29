@@ -120,17 +120,27 @@ class ISO27001_2013_Requirement_Attribute(BaseModel):
 
 
 # MITRE Requirement Attribute
-class Mitre_Requirement_Attribute(BaseModel):
+class Mitre_Requirement_Attribute_AWS(BaseModel):
     """MITRE Requirement Attribute"""
 
-    Service: str
+    AWSService: str
+    Category: str
+    Value: str
+    Comment: str
+
+
+# MITRE Requirement Attribute
+class Mitre_Requirement_Attribute_Azure(BaseModel):
+    """MITRE Requirement Attribute"""
+
+    AzureService: str
     Category: str
     Value: str
     Comment: str
 
 
 # MITRE Requirement
-class Mitre_Requirement(BaseModel):
+class Mitre_Requirement_AWS(BaseModel):
     """Mitre_Requirement holds the model for every MITRE requirement"""
 
     Name: str
@@ -140,7 +150,22 @@ class Mitre_Requirement(BaseModel):
     Description: str
     Platforms: list[str]
     TechniqueURL: str
-    Attributes: list[Mitre_Requirement_Attribute]
+    Attributes: list[Mitre_Requirement_Attribute_AWS]
+    Checks: list[str]
+
+
+# MITRE Requirement
+class Mitre_Requirement_Azure(BaseModel):
+    """Mitre_Requirement holds the model for every MITRE requirement"""
+
+    Name: str
+    Id: str
+    Tactics: list[str]
+    SubTechniques: list[str]
+    Description: str
+    Platforms: list[str]
+    TechniqueURL: str
+    Attributes: list[Mitre_Requirement_Attribute_Azure]
     Checks: list[str]
 
 
@@ -172,7 +197,9 @@ class Compliance_Base_Model(BaseModel):
     Provider: str
     Version: Optional[str]
     Description: str
-    Requirements: list[Union[Mitre_Requirement, Compliance_Requirement]]
+    Requirements: list[
+        Union[Mitre_Requirement_Azure, Mitre_Requirement_AWS, Compliance_Requirement]
+    ]
 
     @root_validator(pre=True)
     # noqa: F841 - since vulture raises unused variable 'cls'
