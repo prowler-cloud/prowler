@@ -54,91 +54,91 @@
       ],
       "Attributes": [
         {
-          "Service": "Azure SQL Database",
+          "AzureService": "Azure SQL Database",
           "Category": "Detect",
           "Value": "Minimal",
           "Comment": "This control may alert on usage of faulty SQL statements. This generates an alert for a possible SQL injection by an application. Alerts may not be generated on usage of valid SQL statements by attackers for malicious purposes."
         },
         {
-          "Service": "Azure Virtual Machine",
+          "AzureService": "Azure Virtual Machine",
           "Category": "Detect",
           "Value": "Partial",
           "Comment": "This control's Fileless Attack Detection identifies shellcode executing within process memory, including shellcode executed as a payload in the exploitation of a software vulnerability. Detection is periodic at an unknown rate. The following alerts may be generated: \"Fileless attack technique detected\",\"Fileless attack behavior detected\", \"Fileless attack toolkit detected\", \"Suspicious SVCHOST process executed\"."
         },
         {
-          "Service": "Azure Automation Update Management",
+          "AzureService": "Azure Automation Update Management",
           "Category": "Protect",
           "Value": "Partial",
           "Comment": "This control provides partial coverage for techniques that exploit vulnerabilities in (common) unpatched software since it enables automated updates of software and rapid configuration change management."
         },
         {
-          "Service": "Azure App Service",
+          "AzureService": "Azure App Service",
           "Category": "Detect",
           "Value": "Partial",
           "Comment": "This control's Fileless Attack Detection identifies shellcode executing within process memory, including shellcode injected to exploit a vulnerability in a public-facing application. Detection is periodic at an unknown rate."
         },
         {
-          "Service": "Azure Container Service",
+          "AzureService": "Azure Container Service",
           "Category": "Protect",
           "Value": "Minimal",
           "Comment": "This control may provide provide information about vulnerabilities within container images. The limited scope of containers and registries that are applicable to this control contribute to the lower score."
         },
         {
-          "Service": "Azure Kubernetes Service",
+          "AzureService": "Azure Kubernetes Service",
           "Category": "Protect",
           "Value": "Partial",
           "Comment": "This control may alert on publicly exposed Kubernetes services. This may provide context on services that should be patched or hardened for public access."
         },
         {
-          "Service": "Azure Network Watcher",
+          "AzureService": "Azure Network Watcher",
           "Category": "Protect",
           "Value": "Significant",
           "Comment": "This control can detect anomalous traffic to and from externally facing systems with respect to network security group (NSG) policy."
         },
         {
-          "Service": "Azure Policy",
+          "AzureService": "Azure Policy",
           "Category": "Protect",
           "Value": "Partial",
           "Comment": "This control may provide recommendations to restrict access to applications that are public facing and providing information on vulnerable applications."
         },
         {
-          "Service": "Azure Security Center ",
+          "AzureService": "Azure Security Center ",
           "Category": "Protect",
           "Value": "Minimal",
           "Comment": "This control's CORS related recommendations can help lead to hardened web applications. This can reduce the likelihood of an application being exploited to reveal sensitive data that can lead to the compromise of an environment.Likewise this control's recommendations related to keeping Java/PHP up to date for API/Function/Web apps can lead to hardening the public facing content that uses these runtimes. This control's recommendations related to disabling Public network access for Azure databases can lead to reducing the exposure of resources to the public Internet and thereby reduce the attack surface.These recommendations are limited to specific technologies (Java, PHP and CORS, SQL DBs) and therefore provide Minimal coverage leading to a Minimal score."
         },
         {
-          "Service": "Azure Sentinel",
+          "AzureService": "Azure Sentinel",
           "Category": "Detect",
           "Value": "Minimal",
           "Comment": "The Azure Sentinel Hunting \"Potential IIS code injection attempt\" query can detect some potential injection attacks against public-facing applications. The Azure Sentinel Analytics \"A potentially malicious web request was executed against a web server\" query can detect a high ratio of blocked requests and unobstructed requests to a Web Application Firewall (WAF) for a given client IP and hostname. The coverage for these queries is minimal (e.g. IIS) resulting in an overall Minimal score."
         },
         {
-          "Service": "Azure Web Application Firewall",
+          "AzureService": "Azure Web Application Firewall",
           "Category": "Detect",
           "Value": "Significant",
           "Comment": "This control can detect common web application attack vectors."
         },
         {
-          "Service": "Azure Web Application Firewall",
+          "AzureService": "Azure Web Application Firewall",
           "Category": "Protect",
           "Value": "Significant",
           "Comment": "This control can protect web applications from common attacks (e.g. SQL injection, XSS)."
         },
         {
-          "Service": "Azure Microsoft Defender Vulnerability Management.",
+          "AzureService": "Azure Microsoft Defender Vulnerability Management.",
           "Category": "Protect",
           "Value": "Partial",
           "Comment": "Once this control is deployed, it can detect known vulnerabilities in Windows and various Linux endpoints. This information can be used to patch, isolate, or remove vulnerable software and machines. This control does not directly protect against exploitation and it is not effective against zero day attacks, vulnerabilities with no available patch, and software that may not be analyzed by the scanner. As a result, the score is capped at Partial."
         },
         {
-          "Service": "Azure Virtual Machine",
+          "AzureService": "Azure Virtual Machine",
           "Category": "Protect",
           "Value": "Partial",
           "Comment": "This control can be configured to completely block inbound access to selected ports until access is requested. This prevents any attempt at exploitation of a public-facing application unless the attacker has the credentials and permissions to request such access. Even if permission has been granted to an authorized user to access the virtual machine, a list of authorized IP addresses for that access can be configured. The score is minimal, since this control only applies to specific applications requiring credentialed access, as opposed to a public webserver"
         },
         {
-          "Service": "Azure SQL Database",
+          "AzureService": "Azure SQL Database",
           "Category": "Protect",
           "Value": "Partial",
           "Comment": "This control provides recommendations to patch if SQL server is out of date and to disable unneeded features to reduce exploitable surface area."
@@ -170,13 +170,13 @@
       ],
       "Attributes": [
         {
-          "Service": "Azure Network Watcher",
+          "AzureService": "Azure Network Watcher",
           "Category": "Detect",
           "Value": "Partial",
           "Comment": "This control can be used to gain insight into normal traffic from trusted third parties which can then be used to detect anomalous traffic that may be indicative of a threat."
         },
         {
-          "Service": "Azure Virtual Network",
+          "AzureService": "Azure Virtual Network",
           "Category": "Protect",
           "Value": "Partial",
           "Comment": "This control can isolate portions of network that do not require network-wide access, limiting some attackers that leverage trusted relationships such as remote access for vendor maintenance. Coverage partial, Temporal Immediate."
@@ -229,97 +229,97 @@
       ],
       "Attributes": [
         {
-          "Service": "Azure SQL Database",
+          "AzureService": "Azure SQL Database",
           "Category": "Detect",
           "Value": "Minimal",
           "Comment": "This control only provides alerts for a set of Azure database offerings. Databases that have been deployed to endpoints within Azure or third-party databases deployed to Azure do not generate alerts for this control."
         },
         {
-          "Service": "Azure Cosmos DB",
+          "AzureService": "Azure Cosmos DB",
           "Category": "Detect",
           "Value": "Minimal",
           "Comment": "This control's detection is specific to the Cosmos DB and therefore provides minimal overall detection coverage for Valid Accounts resulting in a Minimal score. A relevant alert is \"Access from an unusual location to a Cosmos DB account\"."
         },
         {
-          "Service": "Azure Windows Machines",
+          "AzureService": "Azure Windows Machines",
           "Category": "Detect",
           "Value": "Partial",
           "Comment": "This control is able to detect some of this technique's sub-techniques resulting in a Partial Coverage score and consequently an overall score of Partial."
         },
         {
-          "Service": "Azure AD",
+          "AzureService": "Azure AD",
           "Category": "Detect",
           "Value": "Partial",
           "Comment": "This control provides partial detection for some of this technique's sub-techniques and procedure examples resulting in an overall Partial detection score."
         },
         {
-          "Service": "Azure AD",
+          "AzureService": "Azure AD",
           "Category": "Respond",
           "Value": "Partial",
           "Comment": "This control provides a response capability that accompanies its detection capability that can contain and eradicate the impact of this technique. Because this capability varies between containment (federated accounts) and eradication (cloud accounts) and is only able to respond to some of this technique's sub-techniques, it has been scored as Partial."
         },
         {
-          "Service": "Azure AD",
+          "AzureService": "Azure AD",
           "Category": "Detect",
           "Value": "Minimal",
           "Comment": "This control provides recommendations that can lead to the detection of the malicious usage of valid cloud accounts but does not provide recommendations for the remaining sub-techniques Additionally, it provides limited detection for this technique's procedure examples. Consequently, its overall detection coverage score is minimal."
         },
         {
-          "Service": "Azure AD",
+          "AzureService": "Azure AD",
           "Category": "Protect",
           "Value": "Minimal",
           "Comment": "This control provides recommendations that can lead to protecting against the malicious usage of valid cloud accounts but does not provide recommendations for the remaining sub-techniques Additionally, it provides limited protection for this technique's procedure examples. Consequently, its overall protection coverage score is minimal."
         },
         {
-          "Service": "Azure AD",
+          "AzureService": "Azure AD",
           "Category": "Protect",
           "Value": "Minimal",
           "Comment": "This control only protects cloud accounts and therefore its overall protection coverage is Minimal."
         },
         {
-          "Service": "Azure AD",
+          "AzureService": "Azure AD",
           "Category": "Protect",
           "Value": "Minimal",
           "Comment": "This control only provides protection for one of this technique's sub-techniques while not providing any protection for the remaining and therefore its coverage score is Minimal, resulting in a Minimal score."
         },
         {
-          "Service": "Azure Defender",
+          "AzureService": "Azure Defender",
           "Category": "Detect",
           "Value": "Minimal",
           "Comment": "This control provides minimal detection for its procedure examples. Additionally, it is able to detect only one of its sub-techniques (Cloud Accounts) resulting in a Minimal Coverage score and consequently an overall score of Minimal."
         },
         {
-          "Service": "Azure Policy",
+          "AzureService": "Azure Policy",
           "Category": "Protect",
           "Value": "Minimal",
           "Comment": ""
         },
         {
-          "Service": "Azure Security Center",
+          "AzureService": "Azure Security Center",
           "Category": "Protect",
           "Value": "Minimal",
           "Comment": "This control's recommendations about removing deprecated and external accounts with sensitive permissions from your subscription can lead to mitigating the Cloud Accounts sub-technique of this technique. Because this is a recommendation and has low coverage, it is assessed as Minimal."
         },
         {
-          "Service": "Azure Sentinel",
+          "AzureService": "Azure Sentinel",
           "Category": "Detect",
           "Value": "Partial",
           "Comment": "This control's recommendations about removing deprecated and external accounts with sensitive permissions from your subscription can lead to mitigating the Cloud Accounts sub-technique of this technique. Because this is a recommendation and has low coverage, it is assessed as Minimal."
         },
         {
-          "Service": "Azure App Service",
+          "AzureService": "Azure App Service",
           "Category": "Detect",
           "Value": "Partial",
           "Comment": "This control can identify anomalous behavior such as geographically impossible logins and out-of-character activity.Relevant alerts include \"Activity from anonymous IP address\" , \"Activity from infrequent country\", \"Activity from suspicious IP address\", \"Impossible Travel\", and \"Activity performed by terminated user\"."
         },
         {
-          "Service": "Azure AD",
+          "AzureService": "Azure AD",
           "Category": "Protect",
           "Value": "Minimal",
           "Comment": "This control only provides minimal protection for this technique's procedure examples along and also only protects one of its sub-techniques resulting in an overall Minimal score."
         },
         {
-          "Service": "Azure AD",
+          "AzureService": "Azure AD",
           "Category": "Respond",
           "Value": "Minimal",
           "Comment": "This control only protects cloud accounts and therefore its overall coverage is minimal resulting in a Minimal respond score for this technique."
@@ -353,25 +353,25 @@
       ],
       "Attributes": [
         {
-          "Service": "Azure Virtual Machine",
+          "AzureService": "Azure Virtual Machine",
           "Category": "Detect",
           "Value": "Minimal",
           "Comment": "TThis control's detection is specific to a minority of this technique's sub-techniques resulting in a Minimal Coverage score and consequently an overall score of Minimal."
         },
         {
-          "Service": "Azure Defender",
+          "AzureService": "Azure Defender",
           "Category": "Detect",
           "Value": "Minimal",
           "Comment": "This control provides minimal detection for this technique's procedure examples and only two of its sub-techniques (only certain specific sub-technique behaviors), resulting in a Minimal score."
         },
         {
-          "Service": "Azure Sentinel",
+          "AzureService": "Azure Sentinel",
           "Category": "Detect",
           "Value": "Minimal",
           "Comment": "This control provides minimal coverage for most of this technique's sub-techniques, along with additional mappings for its procedure examples, resulting in an overall score of Minimal.The following Azure Sentinel Hunting queries can identify potentially malicious use of command and scripting interpreters that does not map directly to one/more sub-techniques: \"Anomalous Code Execution\" can identifyanomalous runCommand operations on virtual machines, \"Azure CloudShell Usage\" can identify potentially malicious use of CloudShell, \"New processes observed in last 24 hours\", \"Rare processes run by Service accounts\", and \"Rare Custom Script Extension\" can identify execution outliers that may suggest misuse.The following Azure Sentinel Analytics queries can identify potentially malicious use of command and scripting interpreters that does not map directly to one/more sub-techniques: \"New CloudShell User\" can identify potentially malicious use of CloudShell, \"Rare and Potentially high-risk Office operations\" can identify specific rare mailbox-related ccount and permission changes via execution."
         },
         {
-          "Service": "Microsoft Defender for Identity",
+          "AzureService": "Microsoft Defender for Identity",
           "Category": "Detect",
           "Value": "Minimal",
           "Comment": "This control provides Minimal detection for one of this technique's sub-techniques, while not providing any detection for the remaining, resulting in a Minimal score."
@@ -419,25 +419,25 @@
       ],
       "Attributes": [
         {
-          "Service": "Azure Security Center",
+          "AzureService": "Azure Security Center",
           "Category": "Detect",
           "Value": "Partial",
           "Comment": "This control only provides detection for one of this technique's sub-techniques while not providing any detection capability for its other sub-technique, and therefore its coverage score is Partial, resulting in a Partial score."
         },
         {
-          "Service": "Azure Virtual Machines",
+          "AzureService": "Azure Virtual Machines",
           "Category": "Detect",
           "Value": "Partial",
           "Comment": "This control provides detection for one of the two sub-techniques of this technique, Malicious File, resulting in a Partial Coverage score and consequently an overall score of Partial.."
         },
         {
-          "Service": "Azure Defender",
+          "AzureService": "Azure Defender",
           "Category": "Detect",
           "Value": "Partial",
           "Comment": "This control only provides meaningful detection for one of the technique's two sub-techniques, and the temporal factor is unknown, resulting in a score of Minimal."
         },
         {
-          "Service": "Microsoft Antimalware for Azure",
+          "AzureService": "Microsoft Antimalware for Azure",
           "Category": "Protect",
           "Value": "Minimal",
           "Comment": ""
@@ -481,61 +481,61 @@
       ],
       "Attributes": [
         {
-          "Service": "Azure AD",
+          "AzureService": "Azure AD",
           "Category": "Detect",
           "Value": "Minimal",
           "Comment": "This control only provides detection for one of this technique's sub-techniques while not providing any detection for the remaining and therefore its coverage score is Minimal, resulting in a Minimal score."
         },
         {
-          "Service": "Azure AD",
+          "AzureService": "Azure AD",
           "Category": "Protect",
           "Value": "Partial",
           "Comment": "This control provides significant protection for some of this technique's sub-techniques while not providing any protection for others, resulting in a Partial score."
         },
         {
-          "Service": "Azure Policy",
+          "AzureService": "Azure Policy",
           "Category": "Protect",
           "Value": "Minimal",
           "Comment": ""
         },
         {
-          "Service": "Azure Security Center",
+          "AzureService": "Azure Security Center",
           "Category": "Protect",
           "Value": "Minimal",
           "Comment": "This control's \"Immutable (read-only) root filesystem should be enforced for containers\" recommendation can prevent modifying the ssh_authorized keys file. Because it is a recommendation and limited to only one sub-technique, its score is Minimal."
         },
         {
-          "Service": "Azure Sentinel",
+          "AzureService": "Azure Sentinel",
           "Category": "Detect",
           "Value": "Minimal",
           "Comment": "The following Azure Sentinel Hunting queries can identify potentially malicious manipulation of accounts to increase or maintain access: \"Azure DevOps - Guest users access enabled\", \"Azure DevOps - Additional Org Admin added\", \"Anomalous Activity Role Assignment\", \"Anomalous Role Assignment\", and \"Anomalous AAD Account Manipulation\", which indicate expansion of accounts' access/privileges; \"Bots added to multiple teams\" which indicates workspace access granted to automated accounts. The following Azure Sentinel Analytics queries can identify potentially malicious manipulation of accounts to increase or maintain access: \"Suspicious granting of permissions to an account\" from a previously unobserved IP address, \"External user added and removed in short timeframe\" for Teams resources, \"Account added and removed from privileged group\", \"User account added to built in domain local or global group\", and \"New user created and added to the built-in administrator group\". \"Multiple Password Reset by user\" can detect potentially malicious iterative password resets."
         },
         {
-          "Service": "Microsoft Cloud App Security",
+          "AzureService": "Microsoft Cloud App Security",
           "Category": "Detect",
           "Value": "Minimal",
           "Comment": "This control can detect anomalous admin activity that may be indicative of account manipulation. Relevant alerts include \"Unusual administrative activity (by user)\" and \"Unusual addition of credentials to an OAuth app\"."
         },
         {
-          "Service": "Microsoft Defender for Cloud",
+          "AzureService": "Microsoft Defender for Cloud",
           "Category": "Detect",
           "Value": "Minimal",
           "Comment": ""
         },
         {
-          "Service": "Azure Monitor",
+          "AzureService": "Azure Monitor",
           "Category": "Detect",
           "Value": "Minimal",
           "Comment": "This control provides partial detection for only one of this technique's sub-techniques and does not cover most of its procedure examples, resulting in a score of Minimal."
         },
         {
-          "Service": "Microsoft Defender for Identity",
+          "AzureService": "Microsoft Defender for Identity",
           "Category": "Detect",
           "Value": "Minimal",
           "Comment": "This controls's \"Suspicious additions to sensitive groups (external ID 2024)\" alert can utilize machine learning to detect when an attacker adds users to highly privileged groups. Adding users is done to gain access to more resources, and gain persistency. This detection relies on profiling the group modification activities of users, and alerting when an abnormal addition to a sensitive group is observed. Defender for Identity profiles continuously.This alert provides Partial coverage of this technique with a reduced false-positive rate by utilizing machine learning models."
         },
         {
-          "Service": "Azure Resource Manager",
+          "AzureService": "Azure Resource Manager",
           "Category": "Protect",
           "Value": "Partial",
           "Comment": "This control provides protection for some of this technique's sub-techniques and therefore its coverage score factor is Partial, resulting in a Partial score."
@@ -566,37 +566,37 @@
       "Checks": [],
       "Attributes": [
         {
-          "Service": "Azure Defender",
+          "AzureService": "Azure Defender",
           "Category": "Detect",
           "Value": "Minimal",
           "Comment": "This control's detection is specific to a minority of this technique's sub-techniques resulting in a Minimal Coverage score and consequently an overall score of Minimal."
         },
         {
-          "Service": "Azure AD Privileged Identity Management",
+          "AzureService": "Azure AD Privileged Identity Management",
           "Category": "Protect",
           "Value": "Minimal",
           "Comment": "This control only provides protection for one of this technique's sub-techniques while not providing any detection for the remaining and therefore its coverage score is Minimal, resulting in a Minimal score."
         },
         {
-          "Service": "Azure Security Center",
+          "AzureService": "Azure Security Center",
           "Category": "Protect",
           "Value": "Minimal",
           "Comment": "This control's \"Immutable (read-only) root filesystem should be enforced for containers\" recommendation can mitigate a sub-technique of this technique. Due to its Minimal coverage, its score is assessed as Minimal."
         },
         {
-          "Service": "Azure Sentinel",
+          "AzureService": "Azure Sentinel",
           "Category": "Detect",
           "Value": "Partial",
           "Comment": "This control provides partial coverage for all of this technique's sub-techniques, resulting in an overall score of Partial."
         },
         {
-          "Service": "Azure Monitor",
+          "AzureService": "Azure Monitor",
           "Category": "Detect",
           "Value": "Partial",
           "Comment": "This control is only relevant for Linux endpoints, and it provides partial coverage for the only sub-technique relevant on Linux endpoints, Local Account."
         },
         {
-          "Service": "Azure Resource Manager",
+          "AzureService": "Azure Resource Manager",
           "Category": "Protect",
           "Value": "Minimal",
           "Comment": "This control only provides protection for one of this technique's sub-techniques while not providing any protection for the remaining and therefore its coverage score factor is Minimal, resulting in a Minimal score."
@@ -624,25 +624,25 @@
       "Checks": [],
       "Attributes": [
         {
-          "Service": "Microsoft Defender for Cloud",
+          "AzureService": "Microsoft Defender for Cloud",
           "Category": "Detect",
           "Value": "Partial",
           "Comment": "The detection score for this technique was assessed as Partial because it doesn't detect some of the sub-techniques of this technique such as Windows Management Instrumentation (WMI) Event Subscription and Trap sub-techniques. Additionally for some sub-techniques, this control can be noisy."
         },
         {
-          "Service": "Azure Sentinel",
+          "AzureService": "Azure Sentinel",
           "Category": "Detect",
           "Value": "Minimal",
           "Comment": "This control can identify one of this technique's sub-techniques when executed via \"Powershell Empire cmdlets seen in command line\", but does not address other procedures."
         },
         {
-          "Service": "Azure Security Center",
+          "AzureService": "Azure Security Center",
           "Category": "Protect",
           "Value": "Minimal",
           "Comment": "This control's \"Immutable (read-only) root filesystem should be enforced for containers\" recommendation can mitigate a sub-technique of this technique. Due to its Minimal coverage, its score is assessed as Minimal."
         },
         {
-          "Service": "Azure Defender",
+          "AzureService": "Azure Defender",
           "Category": "Detect",
           "Value": "Minimal",
           "Comment": "This control's detection is specific to a minority of this technique's sub-techniques resulting in a Minimal Coverage score and consequently an overall score of Minimal."
@@ -685,43 +685,43 @@
       ],
       "Attributes": [
         {
-          "Service": "Azure Defender for Containers",
+          "AzureService": "Azure Defender for Containers",
           "Category": "Detect",
           "Value": "Partial",
           "Comment": "This control may scan and alert on import or creation of container images with known vulnerabilities or a possible expanded surface area for exploitation."
         },
         {
-          "Service": "Azure Defender for Containers",
+          "AzureService": "Azure Defender for Containers",
           "Category": "Protect",
           "Value": "Partial",
           "Comment": "This control may prevent adversaries from implanting malicious container images through fine grained permissions and use of container image tag signing. Image tag signing allows for verifiable container images that have been signed with legitimate keys."
         },
         {
-          "Service": "Azure Defender for Kubernetes",
+          "AzureService": "Azure Defender for Kubernetes",
           "Category": "Detect",
           "Value": "Partial",
           "Comment": "This control may alert on containers with sensitive volume mounts, unneeded privileges, or running an image with digital currency mining software."
         },
         {
-          "Service": "Azure Policy",
+          "AzureService": "Azure Policy",
           "Category": "Detect",
           "Value": "Minimal",
           "Comment": "This control may provide recommendations to enable scanning and auditing of container images. This can provide information on images that have been added with high privileges or vulnerabilities."
         },
         {
-          "Service": "Azure Security Center",
+          "AzureService": "Azure Security Center",
           "Category": "Protect",
           "Value": "Partial",
           "Comment": "This control's \"Container images should be deployed from trusted registries only\", \"Container registries should not allow unrestricted network access\" and \"Container registries should use private link\" recommendations can lead to ensuring that container images are only loaded from trusted registries thereby mitigating this technique."
         },
         {
-          "Service": "Azure Security Center Docker Host Hardening",
+          "AzureService": "Azure Security Center Docker Host Hardening",
           "Category": "Detect",
           "Value": "Minimal",
           "Comment": "This control may alert on Docker containers that are misconfigured or do not conform to CIS Docker Benchmarks. This may result in detection of container images implanted within Linux VMs with specific vulnerabilities or misconfigurations for malicious purposes."
         },
         {
-          "Service": "Azure Monitor",
+          "AzureService": "Azure Monitor",
           "Category": "Detect",
           "Value": "Partial",
           "Comment": "This control may alert on suspicious container images running mining software or SSH servers. Privileged Docker containers and privileged commands running within containers may also be detected. These alerts are only generated on containers in Linux endpoint machines and not for containers running from Azure Docker deployment."
@@ -761,25 +761,25 @@
       ],
       "Attributes": [
         {
-          "Service": "Azure Security Center",
+          "AzureService": "Azure Security Center",
           "Category": "Protect",
           "Value": "Minimal",
           "Comment": "This control's \"Immutable (read-only) root filesystem should be enforced for containers\" recommendation can mitigate a sub-techniques of this technique. Due to it being a recommendation and providing minimal coverage, its score is assessed as Minimal."
         },
         {
-          "Service": "Azure Sentinel",
+          "AzureService": "Azure Sentinel",
           "Category": "Detect",
           "Value": "Minimal",
           "Comment": "The Azure Sentinel Hunting \"Azure DevOps Conditional Access Disabled\" query can identify potentially malicious modifications of the DevOps access policy.The Azure Sentinel Analytics \"MFA disabled for a user\" and \"GitHub Two Factor Auth Disable\" queries can detect potentially malicious changes in multi-factor authentication settings."
         },
         {
-          "Service": "Microsoft Defender for Cloud File Integrity Monitoring",
+          "AzureService": "Microsoft Defender for Cloud File Integrity Monitoring",
           "Category": "Detect",
           "Value": "Partial",
           "Comment": "This control is effective for detecting the Registry and file system artifacts that are generated during the execution of some variations of this technique while minimizing false positives due to the locations being monitored changing infrequently (e.g. /etc/pam.d/)."
         },
         {
-          "Service": "Microsoft Defender for Identity",
+          "AzureService": "Microsoft Defender for Identity",
           "Category": "Detect",
           "Value": "Minimal",
           "Comment": "This control provides minimal detection for one of this technique's sub-techniques, while not providing any detection for the remaining, resulting in a Minimal score."
@@ -813,31 +813,31 @@
       ],
       "Attributes": [
         {
-          "Service": "Azure Monitor",
+          "AzureService": "Azure Monitor",
           "Category": "Detect",
           "Value": "Minimal",
           "Comment": "This control only provides coverage for a miniority of the sub-techniques under this technique and provides no coverage for other relevant sub-techniques, such as Impair Command History Logging or Disable or Modify Tools, resulting in a score of Minimal."
         },
         {
-          "Service": "Azure Defender Alerts for Windows Machines",
+          "AzureService": "Azure Defender Alerts for Windows Machines",
           "Category": "Detect",
           "Value": "Minimal",
           "Comment": "This control's detection is specific to a minority of this technique's sub-techniques resulting in a Minimal Coverage score and consequently an overall score of Minimal."
         },
         {
-          "Service": "Azure Defender for Resource Manager",
+          "AzureService": "Azure Defender for Resource Manager",
           "Category": "Detect",
           "Value": "Minimal",
           "Comment": "This control may alert on Windows Defender security features being disabled but does not alert on other security tools or logging being disabled or tampered with. Consequently, its Coverage score is Minimal resulting in an overall Minimal score."
         },
         {
-          "Service": "Azure Sentinel",
+          "AzureService": "Azure Sentinel",
           "Category": "Detect",
           "Value": "Minimal",
           "Comment": "This control provides minimal (mostly) to partial coverage for most of this technique's sub-techniques, resulting in an overall score of Minimal.The Azure Sentinel Hunting \"Anomalous Defensive Mechanism Modification\" query detects users performing delete operations on security policies, which may indicate an adversary attempting to impair defenses."
         },
         {
-          "Service": "Microsoft Defender for Cloud File Integrity Monitoring",
+          "AzureService": "Microsoft Defender for Cloud File Integrity Monitoring",
           "Category": "Detect",
           "Value": "Minimal",
           "Comment": "TDue to low detection coverage, this technique is scored as minimal."
@@ -874,19 +874,19 @@
       ],
       "Attributes": [
         {
-          "Service": "Azure Resource Manager",
+          "AzureService": "Azure Resource Manager",
           "Category": "Protect",
           "Value": "Partial",
           "Comment": "This control provides partial protection for all of its sub-techniques and therefore its coverage score factor is Partial, resulting in a Partial score"
         },
         {
-          "Service": "Microsoft Cloud App Security",
+          "AzureService": "Microsoft Cloud App Security",
           "Category": "Detect",
           "Value": "Minimal",
           "Comment": "This control can identify anomalous admin activity.Relevant alerts include \"Multiple storage deletion activities\", \"Multiple VM creation activities\", and \"Suspicious creation activity for cloud region\"."
         },
         {
-          "Service": "Azure Sentinel",
+          "AzureService": "Azure Sentinel",
           "Category": "Detect",
           "Value": "Minimal",
           "Comment": "The Azure Sentinel Hunting \"Azure Resources assigned Public IP addresses\" query detect suspicious IP address changes."
@@ -908,19 +908,19 @@
       "Checks": [],
       "Attributes": [
         {
-          "Service": "Azure Policy",
+          "AzureService": "Azure Policy",
           "Category": "Protect",
           "Value": "Partial",
           "Comment": "This control may provide recommendations to restrict the allowed locations your organization can specify when deploying resources or creating resource groups."
         },
         {
-          "Service": "Azure Sentinel",
+          "AzureService": "Azure Sentinel",
           "Category": "Protect",
           "Value": "Partial",
           "Comment": "The Azure Sentinel Analytics \"Suspicious Resource deployment\" query can identify adversary attempts to maintain persistence or evade defenses by leveraging unused and/or unmonitored resources."
         },
         {
-          "Service": "Microsoft Cloud App Security",
+          "AzureService": "Microsoft Cloud App Security",
           "Category": "Detect",
           "Value": "Partial",
           "Comment": "This control can detect unusual region and activity for cloud resources (preview feature as of this writing). Relevant alert is \"Suspicious creation activity for cloud region\"."
@@ -957,19 +957,19 @@
       ],
       "Attributes": [
         {
-          "Service": "Microsoft Defender for Identity",
+          "AzureService": "Microsoft Defender for Identity",
           "Category": "Detect",
           "Value": "Partial",
           "Comment": "This control provides partial detection for some of this technique's sub-techniques (due to unknown false-positive/true-positive rate), resulting in a Partial score."
         },
         {
-          "Service": "Azure Sentinel",
+          "AzureService": "Azure Sentinel",
           "Category": "Detect",
           "Value": "Minimal",
           "Comment": "This control provides minimal coverage of half of this technique's sub-techniques, without additional coverage of procedure examples, resulting in an overall score of Minimal."
         },
         {
-          "Service": "Azure AD Identity Secure Score",
+          "AzureService": "Azure AD Identity Secure Score",
           "Category": "Protect",
           "Value": "Partial",
           "Comment": "This control provides recommendations that lead to protections for some of the sub-techniques of this technique. Due to it only providing a recommendation, its score has been capped at Partial."
@@ -1004,109 +1004,109 @@
       "Checks": [],
       "Attributes": [
         {
-          "Service": "Advanced Threat Protection for Azure SQL Database",
+          "AzureService": "Advanced Threat Protection for Azure SQL Database",
           "Category": "Detect",
           "Value": "Minimal",
           "Comment": "This control covers the majority of sub-techniques for this parent technique and may cover both successful and unsuccessful brute force attacks. This control only provides alerts for a set of Azure database offerings. Databases that have been deployed to endpoints within Azure or third-party databases deployed to Azure do not generate alerts for this control."
         },
         {
-          "Service": "Alerts for Windows Machines",
+          "AzureService": "Alerts for Windows Machines",
           "Category": "Detect",
           "Value": "Partial",
           "Comment": "This control provides detection for some of this technique's sub-techniques and procedure examples resulting in a Partial Coverage score and consequently an overall score of Partial."
         },
         {
-          "Service": "Azure AD Identity Protection",
+          "AzureService": "Azure AD Identity Protection",
           "Category": "Detect",
           "Value": "Minimal",
           "Comment": "This control provides Minimal detection for one of this technique's sub-techniques while not providing any detection for the remaining, resulting in a Minimal score."
         },
         {
-          "Service": "Azure AD Identity Protection",
+          "AzureService": "Azure AD Identity Protection",
           "Category": "Respond",
           "Value": "Minimal",
           "Comment": "Provides significant response capabilities for one of this technique's sub-techniques (Password Spray). Due to this capability being specific to one of its sub-techniques and not its remaining sub-techniques, the coverage score is Minimal resulting in an overall Minimal score."
         },
         {
-          "Service": "Azure AD Identity Secure Score",
+          "AzureService": "Azure AD Identity Secure Score",
           "Category": "Protect",
           "Value": "Partial",
           "Comment": "The MFA recommendation provides significant protection against password compromises, but because this is a recommendation and doesn't actually enforce MFA, the assessed score is capped at Partial."
         },
         {
-          "Service": "Azure AD Multi-Factor Authentication",
+          "AzureService": "Azure AD Multi-Factor Authentication",
           "Category": "Protect",
           "Value": "Significant",
           "Comment": "MFA provides significant protection against password compromises, requiring the adversary to complete an additional authentication method before their access is permitted."
         },
         {
-          "Service": "Azure AD Password Policy",
+          "AzureService": "Azure AD Password Policy",
           "Category": "Protect",
           "Value": "Partial",
           "Comment": "This control provides partial protection for most of this technique's sub-techniques and therefore has been scored as Partial."
         },
         {
-          "Service": "Azure Active Directory Password Protection",
+          "AzureService": "Azure Active Directory Password Protection",
           "Category": "Protect",
           "Value": "Partial",
           "Comment": ""
         },
         {
-          "Service": "Azure Alerts for Network Layer",
+          "AzureService": "Azure Alerts for Network Layer",
           "Category": "Detect",
           "Value": "Significant",
           "Comment": "This control can identify multiple connection attempts by external IPs, which may be indicative of Brute Force attempts, though not T1110.002, which is performed offline. It provides significant detection from most of this technique's sub-techniques and procedure examples resulting in an overall score of Significant."
         },
         {
-          "Service": "Azure Policy",
+          "AzureService": "Azure Policy",
           "Category": "Protect",
           "Value": "Partial",
           "Comment": ""
         },
         {
-          "Service": "Azure Security Center Recommendations",
+          "AzureService": "Azure Security Center Recommendations",
           "Category": "Protect",
           "Value": "Minimal",
           "Comment": "This control's \"Authentication to Linux machines should require SSH keys\" recommendation can lead to obviating SSH Brute Force password attacks. Because this is specific to Linux, the coverage score is Minimal leading to an overall Minimal score."
         },
         {
-          "Service": "Azure Sentinel",
+          "AzureService": "Azure Sentinel",
           "Category": "Detect",
           "Value": "Partial",
           "Comment": "This control includes partial detection coverage for most of this technique's sub-techniques on a periodic basis."
         },
         {
-          "Service": "Cloud App Security Policies",
+          "AzureService": "Cloud App Security Policies",
           "Category": "Detect",
           "Value": "Partial",
           "Comment": "This control can detect some activity indicative of brute force attempts to login. Relevant alert is \"Multiple failed login attempts\"."
         },
         {
-          "Service": "Conditional Access",
+          "AzureService": "Conditional Access",
           "Category": "Protect",
           "Value": "Significant",
           "Comment": "This control only provides minimal protection for this technique's procedure examples along and also only protects one of its sub-techniques resulting in an overall Minimal score."
         },
         {
-          "Service": "Just-in-Time VM Access",
+          "AzureService": "Just-in-Time VM Access",
           "Category": "Protect",
           "Value": "Significant",
           "Comment": "This control can be configured to completely block inbound access to selected ports until access is requested. This prevents any attempt at brute forcing a protocol, such as RDP or SSH, unless the attacker has the credentials and permissions to request such access. Even if permission has been granted to an authorized user to access the virtual machine, a list of authorized IP addresses for that access can be configured."
         },
         {
-          "Service": "Azure Monitor",
+          "AzureService": "Azure Monitor",
           "Category": "Detect",
           "Value": "Partial",
           "Comment": "This control provides partial coverage for most of this technique's sub-techniques and procedures."
         },
         {
-          "Service": "Microsoft Defender for Identity",
+          "AzureService": "Microsoft Defender for Identity",
           "Category": "Detect",
           "Value": "Partial",
           "Comment": "This control provides significant detection of some of the sub-techniques of this technique and has therefore been assessed an overall score of Partial."
         },
         {
-          "Service": "Azure AD Passwordless Authentication",
+          "AzureService": "Azure AD Passwordless Authentication",
           "Category": "Protect",
           "Value": "Significant",
           "Comment": "This control provides significant protection against this brute force technique by completing obviating the need for passwords by replacing it with passwordless credentials."
@@ -1144,19 +1144,19 @@
       ],
       "Attributes": [
         {
-          "Service": "Azure AD Identity Protection",
+          "AzureService": "Azure AD Identity Protection",
           "Category": "Detect",
           "Value": "Partial",
           "Comment": "This control can be effective at detecting forged web credentials because it uses environmental properties (e.g. IP address, device info, etc.) to detect risky users and sign-ins even when valid credentials are utilized. It provides partial coverage of this technique's sub-techniques and therefore has been assessed a Partial score."
         },
         {
-          "Service": "Azure AD Identity Protection",
+          "AzureService": "Azure AD Identity Protection",
           "Category": "Respond",
           "Value": "Partial",
           "Comment": "Provides Significant response capabilities for one of this technique's sub-techniques (SAML tokens)."
         },
         {
-          "Service": "Azure AD Identity Secure Score",
+          "AzureService": "Azure AD Identity Secure Score",
           "Category": "Detect",
           "Value": "Partial",
           "Comment": "This control's \"Turn on sign-in risk policy\" and \"Turn on user risk policy\" recommendations recommend the usage of Azure AD Identity Protection which can detect one of the sub-techniques of this technique. This is a recommendation and therefore the score is capped at Partial."
@@ -1227,49 +1227,49 @@
       ],
       "Attributes": [
         {
-          "Service": "Azure AD Identity Secure Score",
+          "AzureService": "Azure AD Identity Secure Score",
           "Category": "Protect",
           "Value": "Minimal",
           "Comment": "This control's \"Stop clear text credentials exposure\" provides a recommendation to run the \"Entities exposing credentials in clear text\" assessment that monitors your traffic for any entities exposing credentials in clear text (via LDAP simple-bind). This assessment seems specific to LDAP simple-binds and coupled with the fact that it is a recommendation and is not enforced, results in a Minimal score."
         },
         {
-          "Service": "Azure Key Vault",
+          "AzureService": "Azure Key Vault",
           "Category": "Protect",
           "Value": "Minimal",
           "Comment": "This control provides secure methods for accessing secrets and passwords. This can reduce the incidences of credentials and other authentication material being transmitted in plain text or by insecure encryption methods. Any communication between applications or endpoints after access to Key Vault may not be secure."
         },
         {
-          "Service": "Azure Policy",
+          "AzureService": "Azure Policy",
           "Category": "Protect",
           "Value": "Partial",
           "Comment": "This control may provide recommendations to enable various Azure services that route traffic through secure networks, segment all network traffic, and enable TLS encryption where available."
         },
         {
-          "Service": "Azure Private Link",
+          "AzureService": "Azure Private Link",
           "Category": "Protect",
           "Value": "Partial",
           "Comment": "This control reduces the likelihood of a network sniffing attack for traffic between remote users, cloud, and 3rd parties by routing the traffic via the Microsoft backbone rather than over the Internet."
         },
         {
-          "Service": "Azure Security Center Recommendations",
+          "AzureService": "Azure Security Center Recommendations",
           "Category": "Protect",
           "Value": "Minimal",
           "Comment": "This control's recommendations related to enforcing the usage of the secure versions of the HTTP and FTP protocols (HTTPS and FTPS) can lead to encrypting traffic which reduces the ability for an adversary to gather sensitive data via network sniffing.This also applies to the \"Service Fabric clusters should have the ClusterProtectionLevel property set to EncryptAndSign\", \"Enforce SSL connection should be enabled for MySQL database servers\", \"Enforce SSL connection should be enabled for PostgreSQL database servers\", \"Only secure connections to your Redis Cache should be enabled\" and \"Secure transfer to storage accounts should be enabled\" recommendations for their respective protocols.The \"Usage of host networking and ports should be restricted\" recommendation for Kubernetes clusters can also lead to mitigating this technique.These recommendations are limited to specific technologies on the platform and therefore its coverage score is Minimal."
         },
         {
-          "Service": "Azure Sentinel",
+          "AzureService": "Azure Sentinel",
           "Category": "Detect",
           "Value": "Minimal",
           "Comment": "The Azure Sentinel Analytics \"Powershell Empire cmdlets seen in command line\" query can detect the use of Empire, which can be used to conduct packet capture on target hosts, but does not address other procedures."
         },
         {
-          "Service": "Azure VPN Gateway",
+          "AzureService": "Azure VPN Gateway",
           "Category": "Protect",
           "Value": "Significant",
           "Comment": "This control encrypts traffic traversing over untrusted networks which can prevent information from being gathered via network sniffing."
         },
         {
-          "Service": "Azure Security Center Docker Host Hardening",
+          "AzureService": "Azure Security Center Docker Host Hardening",
           "Category": "Protect",
           "Value": "Minimal",
           "Comment": "This control may recommend usage of TLS to encrypt communication between the Docker daemon and clients. This can prevent possible leakage of sensitive information through network sniffing."
@@ -1305,43 +1305,43 @@
       ],
       "Attributes": [
         {
-          "Service": "Azure AD Identity Secure Score",
+          "AzureService": "Azure AD Identity Secure Score",
           "Category": "Protect",
           "Value": "Minimal",
           "Comment": "This control's \"Resolve unsecure account attributes\" provides recommendations that can lead to strengthening how accounts are stored in Active Directory. This control provides recommendations specific to a few types of unsecured credentials (reversible and weakly encrypted credentials) while not providing recommendations for any other, resulting in a Minimal score."
         },
         {
-          "Service": "Azure Dedicated HSM",
+          "AzureService": "Azure Dedicated HSM",
           "Category": "Protect",
           "Value": "Minimal",
           "Comment": "This control's protection is specific to a minority of this technique's sub-techniques and procedure examples resulting in a Minimal Coverage score and consequently an overall score of Minimal."
         },
         {
-          "Service": "Azure Defender for App Service",
+          "AzureService": "Azure Defender for App Service",
           "Category": "Detect",
           "Value": "Minimal",
           "Comment": "This control does not address this technique's procedure example and provides minimal detection for some of its sub-techniques resulting in an overall Minimal score."
         },
         {
-          "Service": "Azure Key Vault",
+          "AzureService": "Azure Key Vault",
           "Category": "Protect",
           "Value": "Partial",
           "Comment": "This control provides a central, secure location for storage of credentials to reduce the possibility of attackers discovering unsecured credentials."
         },
         {
-          "Service": "Azure Sentinel",
+          "AzureService": "Azure Sentinel",
           "Category": "Detect",
           "Value": "Minimal",
           "Comment": "This control provides minimal to partial coverage for a minority of this technique's sub-techniques, resulting in an overall detection score of Minimal."
         },
         {
-          "Service": "Azure Sentinel",
+          "AzureService": "Azure Sentinel",
           "Category": "Protect",
           "Value": "Minimal",
           "Comment": "This control provides a highly specific detection for a misconfiguration that can lead to one of this technique's sub-techniques, ultimately preventing it."
         },
         {
-          "Service": "Managed identities for Azure resources",
+          "AzureService": "Managed identities for Azure resources",
           "Category": "Protect",
           "Value": "Minimal",
           "Comment": "This control provides protection for one of this technique's sub-techniques, while not providing any protection for its procedure examples nor its remaining sub-techniques, resulting in an overall Minimal score."
@@ -1377,49 +1377,49 @@
       ],
       "Attributes": [
         {
-          "Service": "Alerts for DNS",
+          "AzureService": "Alerts for DNS",
           "Category": "Detect",
           "Value": "Minimal",
           "Comment": "Can detect anomalous use of DNS. Because this detection is specific to DNS, its coverage score is Minimal resulting in an overall Minimal score."
         },
         {
-          "Service": "Azure Defender Alerts for Windows Machines",
+          "AzureService": "Azure Defender Alerts for Windows Machines",
           "Category": "Detect",
           "Value": "Minimal",
           "Comment": "This control's detection is specific to a minority of this technique's sub-techniques and procedure examples resulting in a Minimal Coverage score and consequently an overall score of Minimal."
         },
         {
-          "Service": "Azure DNS Analytics",
+          "AzureService": "Azure DNS Analytics",
           "Category": "Detect",
           "Value": "Minimal",
           "Comment": "This control can identify anomalous / high talker DNS clients, possibly related to exfil via DNS"
         },
         {
-          "Service": "Azure Firewall",
+          "AzureService": "Azure Firewall",
           "Category": "Protect",
           "Value": "Partial",
           "Comment": "This control provides partial protection for this technique's sub-techniques and some of its procedure examples resulting in an overall Partial score."
         },
         {
-          "Service": "Azure Network Traffic Analytics",
+          "AzureService": "Azure Network Traffic Analytics",
           "Category": "Detect",
           "Value": "Partial",
           "Comment": "This control can detect anomalous traffic with respect to specific protocols/ports."
         },
         {
-          "Service": "Azure Network Traffic Analytics",
+          "AzureService": "Azure Network Traffic Analytics",
           "Category": "Detect",
           "Value": "Minimal",
           "Comment": "This control provides minimal coverage for a minority of this technique's sub-techniques and does not cover all procedure examples, resulting in an overall score of Minimal."
         },
         {
-          "Service": "Microsoft Defender for Identity",
+          "AzureService": "Microsoft Defender for Identity",
           "Category": "Detect",
           "Value": "Minimal",
           "Comment": "This control provides Partial detection for one of this technique's sub-techniques, while not providing any detection for the remaining, resulting in a Minimal score."
         },
         {
-          "Service": "Network Security Groups",
+          "AzureService": "Network Security Groups",
           "Category": "Detect",
           "Value": "Minimal",
           "Comment": "This control provides Partial detection for one of this technique's sub-techniques, while not providing any detection for the remaining, resulting in a Minimal score."
@@ -1443,13 +1443,13 @@
       ],
       "Attributes": [
         {
-          "Service": "Azure Defender for Storage",
+          "AzureService": "Azure Defender for Storage",
           "Category": "Detect",
           "Value": "Partial",
           "Comment": "This control may alert on unusually large amounts of data being extracted from Azure storage and suspicious access to storage accounts. There are no alerts specifically tied to data transfer between cloud accounts but there are several alerts for anomalous storage access and transfer."
         },
         {
-          "Service": "Azure Policy",
+          "AzureService": "Azure Policy",
           "Category": "Protect",
           "Value": "Minimal",
           "Comment": "This control may provide recommendations to enable security controls that monitor and prevent malicious transfer of data to cloud accounts."
@@ -1480,19 +1480,19 @@
       ],
       "Attributes": [
         {
-          "Service": "Cloud App Security Policies",
+          "AzureService": "Cloud App Security Policies",
           "Category": "Detect",
           "Value": "Partial",
           "Comment": "This control can detect sensitive information at rest, which may be indicative of data collection activities."
         },
         {
-          "Service": "Cloud App Security Policies",
+          "AzureService": "Cloud App Security Policies",
           "Category": "Protect",
           "Value": "Partial",
           "Comment": "This control's Information protection policies can detect and encrypt sensitive information at rest on supported platforms, which can inhibit automated data collection activities."
         },
         {
-          "Service": "Azure Sentinel",
+          "AzureService": "Azure Sentinel",
           "Category": "Detect",
           "Value": "Minimal",
           "Comment": "The following Azure Sentinel Hunting queries can identify potentially malicious automated collection: \"Multiple large queries made by user\" and \"Query data volume anomolies\" can identify that automated queries are being used to collect data in bulk. \"New ServicePrincipal running queries\" can indicate that an application is performing automated collection via queries.The following Azure Sentinel Analytics queries can identify potentially malicious automated collection: \"Mass secret retrieval from Azure Key Vault\" and \"Azure Key Vault access TimeSeries anomaly\" can detect a sudden increase in access counts, which may indicate that an adversary is dumping credentials via automated methods. \"Users searching for VIP user activity\" can identify potentially suspicious Log Analytics queries by users looking for a listing of 'VIP' activity.The coverage for these queries is minimal (applicable to specific technologies) resulting in an overall Minimal score."
@@ -1534,37 +1534,37 @@
       ],
       "Attributes": [
         {
-          "Service": "Azure Defender for Storage",
+          "AzureService": "Azure Defender for Storage",
           "Category": "Detect",
           "Value": "Significant",
           "Comment": "A variety of alerts may be generated by malicious access and enumeration of Azure Storage."
         },
         {
-          "Service": "Azure Policy",
+          "AzureService": "Azure Policy",
           "Category": "Protect",
           "Value": "Partial",
           "Comment": "This control may provide recommendations to enable Azure Defender for Storage and other security controls to prevent access to data from cloud storage objects."
         },
         {
-          "Service": "Azure Sentinel",
+          "AzureService": "Azure Sentinel",
           "Category": "Detect",
           "Value": "Minimal",
           "Comment": "The Azure Sentinel Hunting \"Anomalous Data Access\" query identifies all users performing out-of-profile read operations regarding data or files, which may be indicative of adversarial collection from cloud storage objects."
         },
         {
-          "Service": "Cloud App Security Policies",
+          "AzureService": "Cloud App Security Policies",
           "Category": "Detect",
           "Value": "Partial",
           "Comment": "This control can detect use of unsanctioned business apps and data exfil to unsanctioned storage apps."
         },
         {
-          "Service": "Conditional Access",
+          "AzureService": "Conditional Access",
           "Category": "Protect",
           "Value": "Minimal",
           "Comment": "Conditional Access, when granting (risky) users access to cloud storage, specifically OneDrive, can restrict what they can do in these applications using its app-enforced restrictions. For example, it can enforce that users on unmanaged devices will have browser-only access to OneDrive with no ability to download, print, or sync files. This can impede an adversary's ability to exfiltrate data from OneDrive. The protection coverage provided by this control is Minimal as it doesn't provide protection for other storage services available on Azure such as the Azure Storage service."
         },
         {
-          "Service": "Azure Resource Manager",
+          "AzureService": "Azure Resource Manager",
           "Category": "Protect",
           "Value": "Partial",
           "Comment": "This control can be used to limit the number of users that have access to storage solutions except for the applications, users, and services that require access, thereby reducing the attack surface."
@@ -1592,37 +1592,37 @@
       "Checks": [],
       "Attributes": [
         {
-          "Service": "Advanced Threat Protection for Azure SQL Database",
+          "AzureService": "Advanced Threat Protection for Azure SQL Database",
           "Category": "Detect",
           "Value": "Minimal",
           "Comment": "This control may alert on extraction of a large amount of data to an unusual location. No documentation is provided on the logic for determining an unusual location."
         },
         {
-          "Service": "Alerts for Azure Cosmos DB",
+          "AzureService": "Alerts for Azure Cosmos DB",
           "Category": "Detect",
           "Value": "Minimal",
           "Comment": "This control triggers an alert when an unusually large amount of data is extracted from/by an account compared to recent activity. False positives are fairly likely and extraction in quantities below the control's threshold is not detected, so score is Minimal. Neither of the sub-techniques are relevant in this context, since they are repository-specific. Relevant alert is \"Unusual amount of data extracted from a Cosmos DB account\"."
         },
         {
-          "Service": "Azure Sentinel",
+          "AzureService": "Azure Sentinel",
           "Category": "Detect",
           "Value": "Minimal",
           "Comment": "This control provides partial detection coverage for only this technique's SharePoint sub-technique.The Azure Sentinel Hunting \"Cross workspace query anomaly\" query can identify potential adversary information collection (in this case from Azure ML workspaces), but does not map directly to any sub-techniques."
         },
         {
-          "Service": "Cloud App Security Policies",
+          "AzureService": "Cloud App Security Policies",
           "Category": "Detect",
           "Value": "Minimal",
           "Comment": "This control may detect anomalous user behavior wrt information repositories such as Sharepoint or Confluence. Due to this capability being limited to these services, it has been scored as Partial coverage resulting in a Partial score."
         },
         {
-          "Service": "Cloud App Security Policies",
+          "AzureService": "Cloud App Security Policies",
           "Category": "Protect",
           "Value": "Minimal",
           "Comment": "This control can provide fine-grained access control to information sharing repositories such as Sharepoint or Confluence. Due to this capability being limited to these services, it has been scored as Partial coverage resulting in a Partial score."
         },
         {
-          "Service": "Conditional Access",
+          "AzureService": "Conditional Access",
           "Category": "Protect",
           "Value": "Minimal",
           "Comment": "This control only provides the ability to restrict an adversary from collecting valuable information for a limited set of applications (SharePoint, Exchange, OneDrive) and therefore its overall Coverage score is minimal."
@@ -1649,19 +1649,19 @@
       "Checks": [],
       "Attributes": [
         {
-          "Service": "Conditional Access",
+          "AzureService": "Conditional Access",
           "Category": "Protect",
           "Value": "Minimal",
           "Comment": "This control only provides the ability to restrict file downloads for a limited set of applications and therefore its overall Coverage score is minimal."
         },
         {
-          "Service": "Azure Security Center Recommendations",
+          "AzureService": "Azure Security Center Recommendations",
           "Category": "Protect",
           "Value": "Partial",
           "Comment": "This control's \"Immutable (read-only) root filesystem should be enforced for containers\" recommendation can lead to mitigating a sub-technique of this technique by preventing modification of the local filesystem. Due to it being a recommendation, its score is capped at Partial."
         },
         {
-          "Service": "Azure Sentinel",
+          "AzureService": "Azure Sentinel",
           "Category": "Detect",
           "Value": "Minimal",
           "Comment": ""
@@ -1694,37 +1694,37 @@
       ],
       "Attributes": [
         {
-          "Service": "Azure Backup",
+          "AzureService": "Azure Backup",
           "Category": "Respond",
           "Value": "Significant",
           "Comment": "Data backups provide a significant response to data destruction by enabling the restoration of data from backup."
         },
         {
-          "Service": "Azure Defender for Storage",
+          "AzureService": "Azure Defender for Storage",
           "Category": "Detect",
           "Value": "Minimal",
           "Comment": "This control may generate alerts when there has been an unusual or unexpected delete operation within Azure cloud storage. Alerts may not be generated by disabling of storage backups, versioning, or editing of storage objects."
         },
         {
-          "Service": "Azure Policy",
+          "AzureService": "Azure Policy",
           "Category": "Protect",
           "Value": "Minimal",
           "Comment": "This control may provide recommendations to enable soft deletion and purge protection in Azure Key Vault. This can help mitigate against malicious deletion of keys and secrets stored within Key Vault."
         },
         {
-          "Service": "Azure Security Center Recommendations",
+          "AzureService": "Azure Security Center Recommendations",
           "Category": "Protect",
           "Value": "Partial",
           "Comment": "This control's \"Immutable (read-only) root filesystem should be enforced for containers\" recommendation can lead to mitigating this technique by preventing modification of the local filesystem. Due to it being a recommendation, its score is capped at Partial."
         },
         {
-          "Service": "Azure Sentinel",
+          "AzureService": "Azure Sentinel",
           "Category": "Detect",
           "Value": "Minimal",
           "Comment": "The Azure Sentinel Hunting \"Multiple Teams deleted by a single user\" query can detect when a threshold is met for number of Teams deleted within an hour. Coverage is minimal because the control is limited to a specific resource (teams) and only works when the threshold is met.The Azure Sentinel Analytics \"Multiple Teams deleted by a single user\" query can detect when a threshold is met for number of Teams deleted within an hour. Coverage is minimal because the control is limited to a specific resource (teams) and only works when the threshold is met."
         },
         {
-          "Service": "Cloud App Security Policies",
+          "AzureService": "Cloud App Security Policies",
           "Category": "Detect",
           "Value": "Partial",
           "Comment": "This control can identify deletion activity which could be potential malicious data destruction. Relevant Alerts include \"Multiple storage deletion activities\", \"Multiple VM deletion activity\", \"Unusual file deletion activity (by user), \"Suspicous email deletion activiy\", and \"Ransomware activity\"."
@@ -1767,25 +1767,25 @@
       ],
       "Attributes": [
         {
-          "Service": "Azure Backup",
+          "AzureService": "Azure Backup",
           "Category": "Respond",
           "Value": "Significant",
           "Comment": "Data backups provide a significant response to data encryption/ransomware by enabling the restoration of data from backup."
         },
         {
-          "Service": "Azure Security Center Recommendations",
+          "AzureService": "Azure Security Center Recommendations",
           "Category": "Protect",
           "Value": "Partial",
           "Comment": "This control's \"Immutable (read-only) root filesystem should be enforced for containers\" recommendation can lead to mitigating this technique by preventing modification of the local filesystem. Due to it being a recommendation, its score is capped at Partial."
         },
         {
-          "Service": "Azure Sentinel",
+          "AzureService": "Azure Sentinel",
           "Category": "Detect",
           "Value": "Minimal",
           "Comment": "The Azure Sentinel Analytics \"Sensitive Azure Key Vault Operations\" query can identify potential attacker activity intended to delete private key(s) required to decrypt content."
         },
         {
-          "Service": "Cloud App Security Policies",
+          "AzureService": "Cloud App Security Policies",
           "Category": "Detect",
           "Value": "Partial",
           "Comment": "This control can detect a range of ransomware-related activities including encryption. Relevant alert include \"Ransomware activities\" and \"Unusual file deletion activity (by user)\"."
@@ -1812,7 +1812,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Service": "Azure Backup",
+          "AzureService": "Azure Backup",
           "Category": "Respond",
           "Value": "Significant",
           "Comment": "Data backups provide a significant response to data defacement attacks by enabling the restoration of data from backup."
@@ -1867,37 +1867,37 @@
       ],
       "Attributes": [
         {
-          "Service": "Azure Automation Update Management",
+          "AzureService": "Azure Automation Update Management",
           "Category": "Protect",
           "Value": "Partial",
           "Comment": "This control provides protection against the subset of Denial of Service (DOS) attacks that leverage system/application vulnerabilities as opposed to volumetric attacks since it enables automated updates of software and rapid configuration change management."
         },
         {
-          "Service": "Azure DDOS Protection Standard",
+          "AzureService": "Azure DDOS Protection Standard",
           "Category": "Protect",
           "Value": "Significant",
           "Comment": "Protects against volumetric and protocol DOS, though not application."
         },
         {
-          "Service": "Azure Network Traffic Analytics",
+          "AzureService": "Azure Network Traffic Analytics",
           "Category": "Detect",
           "Value": "Partial",
           "Comment": "This control can identify volumetric and multi-sourced denial-of-service attacks."
         },
         {
-          "Service": "Azure Private Link",
+          "AzureService": "Azure Private Link",
           "Category": "Protect",
           "Value": "Partial",
           "Comment": "Prevents Denial of Service (DOS) against systems that would otherwise need to connect via an internet-traversing path (coverage partial, since doesn't apply to systems that must be directly exposed to the Internet)"
         },
         {
-          "Service": "Azure Security Center Recommendations",
+          "AzureService": "Azure Security Center Recommendations",
           "Category": "Protect",
           "Value": "Minimal",
           "Comment": "This control provides recommendations for limiting the CPU and memory resources consumed by a container to minimize resource exhaustion attacks. Because this control only covers one sub-technique of this technique, its score is assessed as Minimal."
         },
         {
-          "Service": "Network Security Groups",
+          "AzureService": "Network Security Groups",
           "Category": "Protect",
           "Value": "Partial",
           "Comment": "This control provides partial protection for a majority of this control's sub-techinques and procedure examples resulting in overall score of Partial."
@@ -1923,7 +1923,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Service": "Azure Sentinel",
+          "AzureService": "Azure Sentinel",
           "Category": "Detect",
           "Value": "Minimal",
           "Comment": "The Azure Sentinel Analytics \"Sensitive Azure Key Vault Operations\" query can identify potential attacker activity intended to interfere with backups."
@@ -1960,19 +1960,19 @@
       ],
       "Attributes": [
         {
-          "Service": "Azure Defender for App Service",
+          "AzureService": "Azure Defender for App Service",
           "Category": "Detect",
           "Value": "Partial",
           "Comment": "This control detects file downloads associated with digital currency mining as well as host data related to process and command execution associated with mining. It also includes fileless attack detection, which specifically targets crypto mining activity. Temporal factor is unknown."
         },
         {
-          "Service": "Azure Sentinel",
+          "AzureService": "Azure Sentinel",
           "Category": "Detect",
           "Value": "Partial",
           "Comment": "The following Azure Sentinel Hunting queries can identify potential resource hijacking based on anomolies in access and usage patterns: \"Anomalous Resource Creation and related Network Activity\", \"Creation of an anomalous number of resources\".The following Azure Sentinel Analytis queries can identify potential resource hijacking: \"Creation of Expensive Computes in Azure\" and \"Suspicious number of resource creation or deployed\" [sic] can identify suspicious outliers in resource quantities requested. \"Suspicious Resource deployment\" can identify deployments from new, potentially malicious, users. \"Process execution frequency anomaly\" can identify execution that may indicate hijacking. \"DNS events related to mining pools\", can identify potential cryptocurrency mining activity."
         },
         {
-          "Service": "Cloud App Security Policies",
+          "AzureService": "Cloud App Security Policies",
           "Category": "Detect",
           "Value": "Partial",
           "Comment": "This control can identify some behaviors that are potential instances of resource hijacking. Relevant alerts include \"Multiple VM Creation activities\" and \"Suspicious creation activity for cloud region\"."
@@ -2008,19 +2008,19 @@
       ],
       "Attributes": [
         {
-          "Service": " Azure DDOS Protection Standard",
+          "AzureService": " Azure DDOS Protection Standard",
           "Category": "Protect",
           "Value": "Significant",
           "Comment": "Designed to address multiple DDOS techniques including volumetric attacks."
         },
         {
-          "Service": "Azure Private Link",
+          "AzureService": "Azure Private Link",
           "Category": "Protect",
           "Value": "Partial",
           "Comment": "Prevents Denial of Service (DOS) against systems that would otherwise need to connect via an internet-traversing path (coverage partial, since doesn't apply to systems that must be directly exposed to the Internet)"
         },
         {
-          "Service": "Network Security Groups",
+          "AzureService": "Network Security Groups",
           "Category": "Protect",
           "Value": "Partial",
           "Comment": "This control can be used to restrict access to endpoints and thereby mitigate low-end network DOS attacks."
@@ -2055,37 +2055,37 @@
       ],
       "Attributes": [
         {
-          "Service": "Alerts for Windows Machines",
+          "AzureService": "Alerts for Windows Machines",
           "Category": "Detect",
           "Value": "Partial",
           "Comment": "This control provides partial detection for some of this technique's sub-techniques and procedure examples resulting in a Partial Coverage score and consequently an overall score of Partial."
         },
         {
-          "Service": "Azure Defender for App Service",
+          "AzureService": "Azure Defender for App Service",
           "Category": "Detect",
           "Value": "Minimal",
           "Comment": "This control only covers one platform and procedure for one of this technique's sub-techniques, and minimal coverage of its procedure examples resulting in a Minimal overall score."
         },
         {
-          "Service": "Azure Defender for Resource Manager",
+          "AzureService": "Azure Defender for Resource Manager",
           "Category": "Detect",
           "Value": "Minimal",
           "Comment": "This control may alert on Azure cloud account discovery activity but may not provide alerts for other account types or undocumented exploitation toolkits. Consequently, its Coverage score is Minimal resulting in an overall Minimal score."
         },
         {
-          "Service": "Azure Sentinel",
+          "AzureService": "Azure Sentinel",
           "Category": "Detect",
           "Value": "Minimal",
           "Comment": "This control provides specific forms of minimal coverage for half of this technique's sub-techniques, but does not address other procedures, resulting in an overall score of Minimal."
         },
         {
-          "Service": "Microsoft Defender for Identity",
+          "AzureService": "Microsoft Defender for Identity",
           "Category": "Detect",
           "Value": "Minimal",
           "Comment": "This control provides significant detection for one of this technique's sub-techniques, while not providing any detection for the remaining, resulting in a Minimal score."
         },
         {
-          "Service": "Azure Resource Manager Role Based Access Control",
+          "AzureService": "Azure Resource Manager Role Based Access Control",
           "Category": "Detect",
           "Value": "Minimal",
           "Comment": "This control only provides protection for one of this technique's sub-techniques while not providing any protection for its procedure examples nor its remaining sub-technqiues and therefore its coverage score factor is Minimal, resulting in a Minimal score."
@@ -2117,31 +2117,31 @@
       ],
       "Attributes": [
         {
-          "Service": "Azure Defender for Key Vault",
+          "AzureService": "Azure Defender for Key Vault",
           "Category": "Detect",
           "Value": "Minimal",
           "Comment": "This control may alert on suspicious access of key vaults, including suspicious listing of key vault contents. This control does not alert on discovery of other cloud services, such as VMs, snapshots, cloud storage and therefore has minimal coverage. Suspicious activity based on patterns of access from certain users and applications allows for managing false positive rates."
         },
         {
-          "Service": "Azure Defender for Resource Manager",
+          "AzureService": "Azure Defender for Resource Manager",
           "Category": "Detect",
           "Value": "Partial",
           "Comment": "This control may alert on Cloud Infrastructure Discovery activity generated by specific toolkits, such as MicroBurst, PowerZure, etc. It may not generate alerts on undocumented discovery techniques or exploitation toolkits. The following alerts may be generated: \"PowerZure exploitation toolkit used to enumerate storage containers, shares, and tables\", \"PowerZure exploitation toolkit used to enumerate resources\", \"MicroBurst exploitation toolkit used to enumerate resources in your subscriptions\", \"Azurite toolkit run detected\"."
         },
         {
-          "Service": "Azure Policy",
+          "AzureService": "Azure Policy",
           "Category": "Protect",
           "Value": "Partial",
           "Comment": "This control may provide recommendations to enable Azure services that limit access to cloud infrastructure. Several Azure services and controls provide mitigations against cloud infrastructure discovery."
         },
         {
-          "Service": "Azure Sentinel",
+          "AzureService": "Azure Sentinel",
           "Category": "Detect",
           "Value": "Minimal",
           "Comment": "The Azure Sentinel Hunting \"Azure storage key enumeration\" query can identify potential attempts by an attacker to discover cloud infrastructure resources."
         },
         {
-          "Service": "Azure Resource Manager Role Based Access Control",
+          "AzureService": "Azure Resource Manager Role Based Access Control",
           "Category": "Protect",
           "Value": "Partial",
           "Comment": "This control can be used to limit the number of users that have privileges to discover cloud infrastructure thereby reducing an organization's cloud infrastructure attack surface."
@@ -2169,19 +2169,19 @@
       ],
       "Attributes": [
         {
-          "Service": "Azure Resource Manager Role Based Access Control",
+          "AzureService": "Azure Resource Manager Role Based Access Control",
           "Category": "Protect",
           "Value": "Partial",
           "Comment": "This control can be used to limit the number of users that have dashboard visibility thereby reducing the attack surface."
         },
         {
-          "Service": "Azure Defender for Resource Manager",
+          "AzureService": "Azure Defender for Resource Manager",
           "Category": "Detect",
           "Value": "Partial",
           "Comment": "This control may alert on suspicious management activity based on IP, time, anomalous behaviour, or PowerShell usage. Machine learning algorithms are used to reduce false positives. The following alerts may be generated: \"Activity from a risky IP address\", \"Activity from infrequent country\", \"Impossible travel activity\", \"Suspicious management session using PowerShell detected\", \"Suspicious management session using an inactive account detected\", \"Suspicious management session using Azure portal detected\"."
         },
         {
-          "Service": "Azure Policy",
+          "AzureService": "Azure Policy",
           "Category": "Protect",
           "Value": "Partial",
           "Comment": "This control may provide recommendations to enable Azure services that limit access to Azure Resource Manager and other Azure dashboards. Several Azure services and controls provide mitigations against this technique."
@@ -2209,19 +2209,19 @@
       ],
       "Attributes": [
         {
-          "Service": "Azure Defender for Resource Manager",
+          "AzureService": "Azure Defender for Resource Manager",
           "Category": "Detect",
           "Value": "Partial",
           "Comment": "This control may alert on Cloud Service Discovery activity generated by specific toolkits, such as MicroBurst, PowerZure, etc. It may not generate alerts on undocumented discovery techniques or exploitation toolkits. The following alerts may be generated: \"PowerZure exploitation toolkit used to enumerate storage containers, shares, and tables\", \"PowerZure exploitation toolkit used to enumerate resources\", \"MicroBurst exploitation toolkit used to enumerate resources in your subscriptions\"."
         },
         {
-          "Service": "Azure Policy",
+          "AzureService": "Azure Policy",
           "Category": "Protect",
           "Value": "Partial",
           "Comment": "This control may provide recommendations to enable Azure services that limit access to cloud services. Several Azure services and controls provide mitigations against cloud service discovery."
         },
         {
-          "Service": "Cloud App Security Policies",
+          "AzureService": "Cloud App Security Policies",
           "Category": "Detect",
           "Value": "Partial",
           "Comment": "This control can detect anomalous user activity that may be associated with cloud service discovery. Relevant alert is \"Unusual file share activty (by user)\"."
@@ -2270,37 +2270,37 @@
       ],
       "Attributes": [
         {
-          "Service": "Azure Firewall",
+          "AzureService": "Azure Firewall",
           "Category": "Protect",
           "Value": "Partial",
           "Comment": "This control typically filters external network traffic and therefore can be effective for preventing external network service scanning but network service scanning originating from inside the trusted network is not mitigated. Due to this partial protection coverage, it has been scored as Partial protection."
         },
         {
-          "Service": "Azure Network Traffic Analytics",
+          "AzureService": "Azure Network Traffic Analytics",
           "Category": "Detect",
           "Value": "Significant",
           "Comment": "This control can detect network service scanning/discovery activity."
         },
         {
-          "Service": "Azure Sentinel",
+          "AzureService": "Azure Sentinel",
           "Category": "Detect",
           "Value": "Partial",
           "Comment": "The Azure Sentinel Analytics \"High count of connections by client IP on many ports\" query can detect when a given client IP has 30 or more ports used within a 10 minute window, which may indicate malicious scanning. The Azure Sentinel Analytics \"Powershell Empire cmdlets seen in command line\" query can detect scanning via Empire, but does not address other procedures."
         },
         {
-          "Service": "Azure Web Application Firewall",
+          "AzureService": "Azure Web Application Firewall",
           "Category": "Detect",
           "Value": "Partial",
           "Comment": "This control can detect network service scanning of web applications by an adversary. Because this detection is specific to web applications (although frequent targets) and not other application types enumerated in the procedure examples of this technique (e.g. Active Directory), it has been scored as Partial."
         },
         {
-          "Service": "Azure Web Application Firewall",
+          "AzureService": "Azure Web Application Firewall",
           "Category": "Protect",
           "Value": "Partial",
           "Comment": "This control can protect web applications from network service scanning by an adversary. Because this protection is specific to web applications (although frequent targets) and not other application types enumerated in the procedure examples of this technique (e.g. Active Directory), it has been scored as Partial."
         },
         {
-          "Service": "Network Security Groups",
+          "AzureService": "Network Security Groups",
           "Category": "Protect",
           "Value": "Partial",
           "Comment": "This control can be used to restrict access to trusted networks."
@@ -2330,7 +2330,7 @@
       ],
       "Attributes": [
         {
-          "Service": "Microsoft Defender for Identity",
+          "AzureService": "Microsoft Defender for Identity",
           "Category": "Detect",
           "Value": "Minimal",
           "Comment": "This control's \"Active Directory attributes reconnaissance (LDAP) (external ID 2210)\" alert may be able to detect this operation. There are statements in the documentation for the alert, such as: \"Active Directory LDAP reconnaissance is used by attackers to gain critical information about the domain environment. This information can help attackers map the domain structure ...\", that may indicate support for detecting this technique. The level of detection though is unknown and therefore a conservative assessment of a Minimal score is assigned."
@@ -2358,7 +2358,7 @@
       ],
       "Attributes": [
         {
-          "Service": "Azure Sentinel",
+          "AzureService": "Azure Sentinel",
           "Category": "Detect",
           "Value": "Minimal",
           "Comment": "The Azure Sentinel Analytics \"Powershell Empire cmdlets seen in command line\" query can detect the use of Empire, which can enumerate the current network connections of a host, but does not address other procedures."
@@ -2402,13 +2402,13 @@
       "Checks": [],
       "Attributes": [
         {
-          "Service": "Azure Sentinel",
+          "AzureService": "Azure Sentinel",
           "Category": "Detect",
           "Value": "Minimal",
           "Comment": "The Azure Sentinel Analytics \"Powershell Empire cmdlets seen in command line\" query can detect the use of Empire, which can enumerate the current network connections of a host, but does not address other procedures."
         },
         {
-          "Service": "Azure Sentinel",
+          "AzureService": "Azure Sentinel",
           "Category": "Detect",
           "Value": "Minimal",
           "Comment": "This control may detect local reconnaissance activity specific to using the systeminfo commands. The following alerts may be generated: \"Detected possible local reconnaissance activity\"."
@@ -2439,7 +2439,7 @@
       "Checks": [],
       "Attributes": [
         {
-          "Service": "Azure Sentinel",
+          "AzureService": "Azure Sentinel",
           "Category": "Detect",
           "Value": "Minimal",
           "Comment": "This control can identify one of this technique's sub-techniques when executed via \"Powershell Empire cmdlets seen in command line\", but does not address other procedures."
@@ -2473,19 +2473,19 @@
       ],
       "Attributes": [
         {
-          "Service": "Azure Defender for Resource Manager",
+          "AzureService": "Azure Defender for Resource Manager",
           "Category": "Detect",
           "Value": "Minimal",
           "Comment": "This control may alert on Azure domain cloud groups discovery activity but may not provide alerts for other account types or undocumented exploitation toolkits. Consequently, its Coverage score is Minimal resulting in an overall Minimal score."
         },
         {
-          "Service": "Azure Sentinel",
+          "AzureService": "Azure Sentinel",
           "Category": "Detect",
           "Value": "Minimal",
           "Comment": "This control provides minimal coverage for one of this technique's sub-techniques and only minimal coverage for its procedure examples, resulting in an overall score of Minimal."
         },
         {
-          "Service": "Microsoft Defender for Identity",
+          "AzureService": "Microsoft Defender for Identity",
           "Category": "Detect",
           "Value": "Minimal",
           "Comment": "This control provides significant detection for one of this technique's sub-techniques, while not providing any detection for the remaining, resulting in a Minimal score."
