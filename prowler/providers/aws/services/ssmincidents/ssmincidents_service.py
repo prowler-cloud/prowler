@@ -45,6 +45,17 @@ class SSMIncidents(AWSService):
                                 arn=replication_set,
                             )
                         ]
+        except ClientError as error:
+            if error.response["Error"]["Code"] == "AccessDeniedException":
+                logger.error(
+                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+                if not self.replication_set:
+                    self.replication_set = None
+            else:
+                logger.error(
+                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"

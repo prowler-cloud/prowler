@@ -12,9 +12,10 @@ def check_cloudwatch_log_metric_filter(
 ):
     # 1. Iterate for CloudWatch Log Group in CloudTrail trails
     log_groups = []
-    for trail in trails.values():
-        if trail.log_group_arn:
-            log_groups.append(trail.log_group_arn.split(":")[6])
+    if trails is not None:
+        for trail in trails.values():
+            if trail.log_group_arn:
+                log_groups.append(trail.log_group_arn.split(":")[6])
     # 2. Describe metric filters for previous log groups
     for metric_filter in metric_filters:
         if metric_filter.log_group in log_groups:

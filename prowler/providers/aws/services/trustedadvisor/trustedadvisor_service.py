@@ -108,6 +108,19 @@ class TrustedAdvisor(AWSService):
                     f" {error.__class__.__name__}[{error.__traceback__.tb_lineno}]:"
                     f" {error}"
                 )
+            elif error.response["Error"]["Code"] == "AccessDeniedException":
+                logger.error(
+                    f"{self.region} --"
+                    f" {error.__class__.__name__}[{error.__traceback__.tb_lineno}]:"
+                    f" {error}"
+                )
+                self.premium_support = None
+            else:
+                logger.error(
+                    f"{self.region} --"
+                    f" {error.__class__.__name__}[{error.__traceback__.tb_lineno}]:"
+                    f" {error}"
+                )
 
         except Exception as error:
             logger.error(
