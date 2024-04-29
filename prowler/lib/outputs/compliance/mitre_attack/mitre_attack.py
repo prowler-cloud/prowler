@@ -87,7 +87,7 @@ def write_compliance_row_mitre_attack(file_descriptors, finding, compliance, pro
 
             csv_writer.writerow(compliance_row.__dict__)
     except Exception as error:
-        logger.critical(
+        logger.error(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
         )
 

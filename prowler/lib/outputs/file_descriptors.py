@@ -9,6 +9,10 @@ from prowler.config.config import (
 )
 from prowler.lib.logger import logger
 from prowler.lib.outputs.common_models import FindingOutput
+from prowler.lib.outputs.compliance.mitre_attack.models import (
+    MitreAttackAWS,
+    MitreAttackAzure,
+)
 from prowler.lib.outputs.compliance.models import (
     Check_Output_CSV_AWS_CIS,
     Check_Output_CSV_AWS_ISO27001_2013,
@@ -18,8 +22,6 @@ from prowler.lib.outputs.compliance.models import (
     Check_Output_CSV_GCP_CIS,
     Check_Output_CSV_Generic_Compliance,
     Check_Output_CSV_KUBERNETES_CIS,
-    Check_Output_MITRE_ATTACK_AWS,
-    Check_Output_MITRE_ATTACK_Azure,
 )
 from prowler.lib.outputs.csv.csv import generate_csv_fields
 from prowler.lib.utils.utils import file_exists, open_file
@@ -122,7 +124,7 @@ def fill_file_descriptors(output_modes, output_directory, output_filename, provi
                         file_descriptor = initialize_file_descriptor(
                             filename,
                             output_mode,
-                            Check_Output_MITRE_ATTACK_Azure,
+                            MitreAttackAzure,
                         )
                         file_descriptors.update({output_mode: file_descriptor})
                     else:
@@ -178,7 +180,7 @@ def fill_file_descriptors(output_modes, output_directory, output_filename, provi
                             file_descriptor = initialize_file_descriptor(
                                 filename,
                                 output_mode,
-                                Check_Output_MITRE_ATTACK_AWS,
+                                MitreAttackAWS,
                             )
                             file_descriptors.update({output_mode: file_descriptor})
 

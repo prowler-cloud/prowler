@@ -17,7 +17,7 @@ from prowler.lib.outputs.compliance.generic import (
 from prowler.lib.outputs.compliance.iso27001_2013_aws import (
     write_compliance_row_iso27001_2013_aws,
 )
-from prowler.lib.outputs.compliance.mitre_attack import (
+from prowler.lib.outputs.compliance.mitre_attack.mitre_attack import (
     get_mitre_attack_table,
     write_compliance_row_mitre_attack,
 )
