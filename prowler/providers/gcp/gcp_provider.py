@@ -249,19 +249,25 @@ class GcpProvider(Provider):
                 )
 
         except HttpError as http_error:
-
             if http_error.status_code == 403 and "organizations" in http_error.uri:
                 logger.error(
                     f"{http_error.__class__.__name__}[{http_error.__traceback__.tb_lineno}]: {http_error.error_details} to get Organizations data."
                 )
         except Exception as error:
-            logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
-            # TODO: we cannot print this for whatever exception
-            print(
-                f"\n{Fore.YELLOW}Cloud Resource Manager API {Style.RESET_ALL}has not been used before or it is disabled.\nEnable it by visiting https://console.developers.google.com/apis/api/cloudresourcemanager.googleapis.com/ then retry."
-            )
+            if error.__class__.__name__ == "RefreshError":
+                logger.critical(
+                    "Google Cloud SDK has not been authenticated or the credentials have expired. Authenticate by running 'gcloud auth application-default login' then retry."
+                )
+            elif "Cloud Resource Manager API has not been used" in str(error):
+                logger.critical(
+                    "Cloud Resource Manager API has not been used before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/cloudresourcemanager.googleapis.com/ then retry."
+                )
+                sys.exit(1)
+            else:
+                logger.critical(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+            sys.exit(1)
         finally:
             return projects
 
