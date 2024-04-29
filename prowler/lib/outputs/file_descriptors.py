@@ -12,6 +12,7 @@ from prowler.lib.outputs.common_models import FindingOutput
 from prowler.lib.outputs.compliance.mitre_attack.models import (
     MitreAttackAWS,
     MitreAttackAzure,
+    MitreAttackGCP,
 )
 from prowler.lib.outputs.compliance.models import (
     Check_Output_CSV_AWS_CIS,
@@ -125,6 +126,13 @@ def fill_file_descriptors(output_modes, output_directory, output_filename, provi
                             filename,
                             output_mode,
                             MitreAttackAzure,
+                        )
+                        file_descriptors.update({output_mode: file_descriptor})
+                    elif output_mode == "mitre_attack_gcp":
+                        file_descriptor = initialize_file_descriptor(
+                            filename,
+                            output_mode,
+                            MitreAttackGCP,
                         )
                         file_descriptors.update({output_mode: file_descriptor})
                     else:

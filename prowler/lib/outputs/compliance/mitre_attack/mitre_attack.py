@@ -19,8 +19,8 @@ def write_compliance_row_mitre_attack(file_descriptors, finding, compliance, pro
         if compliance.Provider != "":
             compliance_output += "_" + compliance.Provider
 
-        mitre_attack_model_name = "Check_Output_MITRE_ATTACK_" + compliance.Provider
-        module = import_module("prowler.lib.outputs.compliance.models")
+        mitre_attack_model_name = "MitreAttack" + compliance.Provider
+        module = import_module("prowler.lib.outputs.compliance.mitre_attack.models")
         mitre_attack_model = getattr(module, mitre_attack_model_name)
         compliance_output = compliance_output.lower().replace("-", "_")
         csv_header = generate_csv_fields(mitre_attack_model)
@@ -38,6 +38,10 @@ def write_compliance_row_mitre_attack(file_descriptors, finding, compliance, pro
             elif compliance.Provider == "Azure":
                 attributes_services = ", ".join(
                     attribute.AzureService for attribute in requirement.Attributes
+                )
+            elif compliance.Provider == "GCP":
+                attributes_services = ", ".join(
+                    attribute.GCPService for attribute in requirement.Attributes
                 )
             requirement_description = requirement.Description
             requirement_id = requirement.Id
@@ -82,6 +86,8 @@ def write_compliance_row_mitre_attack(file_descriptors, finding, compliance, pro
                 common_data["SubscriptionId"] = unroll_list(
                     provider.identity.subscriptions
                 )
+            elif compliance.Provider == "GCP":
+                common_data["ProjectId"] = unroll_list(provider.projects)
 
             compliance_row = mitre_attack_model(**common_data)
 
