@@ -256,11 +256,11 @@ class GcpProvider(Provider):
         except Exception as error:
             if error.__class__.__name__ == "RefreshError":
                 logger.critical(
-                    f"Google Cloud SDK has not been authenticated or the credentials have expired. Authenticate by running 'gcloud auth application-default login' then retry."
+                    "Google Cloud SDK has not been authenticated or the credentials have expired. Authenticate by running 'gcloud auth application-default login' then retry."
                 )
             elif "Cloud Resource Manager API has not been used" in str(error):
                 logger.critical(
-                    f"Cloud Resource Manager API has not been used before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/cloudresourcemanager.googleapis.com/ then retry."
+                    "Cloud Resource Manager API has not been used before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/cloudresourcemanager.googleapis.com/ then retry."
                 )
                 sys.exit(1)
             else:
