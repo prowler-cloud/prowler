@@ -17,8 +17,8 @@
     "Code": {
       "CLI": "aws eks update-cluster-config --region <region_name> --name <cluster_name> --logging '{\"clusterLogging\":[{\"types\":[\"api\",\"audit\",\"authenticator\",\"controllerManager\",\"scheduler\"],\"enabled\":true}]}'",
       "NativeIaC": "",
-      "Other": "https://docs.prowler.com/checks/aws/general-policies/bc_aws_kubernetes_4#aws-console",
-      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/bc_aws_kubernetes_4#fix---buildtime"
+      "Other": "https://docs.prowler.com/checks/aws/kubernetes-policies-1/bc_aws_kubernetes_4#aws-console",
+      "Terraform": "https://docs.prowler.com/checks/aws/kubernetes-policies-1/bc_aws_kubernetes_4#fix---buildtime"
     },
     "Recommendation": {
       "Text": "Make sure you logging for EKS control plane is enabled.",
