@@ -117,12 +117,11 @@ class AccessApproval(GCPService):
                         name=f"projects/{project_id}/accessApprovalSettings"
                     )
                 ).execute()
-                self.settings[project_id].append(
-                    Setting(
-                        name=response["name"],
-                        project_id=project_id,
-                    )
+                self.settings[project_id] = Setting(
+                    name=response["name"],
+                    project_id=project_id,
                 )
+
             except Exception as error:
                 logger.error(
                     f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -156,7 +155,7 @@ class EssentialContacts(GCPService):
                 self.organizations.append(
                     Organization(
                         name=org.name,
-                        email=org.id,
+                        id=org.id,
                         contacts=contacts,
                     )
                 )
