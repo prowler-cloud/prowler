@@ -95,3 +95,25 @@ class Test_iam_support_role_created:
                 result[0].resource_arn
                 == "arn:aws:iam::aws:policy/aws-service-role/AWSSupportServiceRolePolicy"
             )
+
+    @mock_aws(config={"iam": {"load_aws_managed_policies": True}})
+    def test_access_denied(self):
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        from prowler.providers.aws.services.iam.iam_service import IAM
+
+        with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=aws_provider,
+        ), mock.patch(
+            "prowler.providers.aws.services.iam.iam_support_role_created.iam_support_role_created.iam_client",
+            new=IAM(aws_provider),
+        ) as service_client:
+            from prowler.providers.aws.services.iam.iam_support_role_created.iam_support_role_created import (
+                iam_support_role_created,
+            )
+
+            service_client.entities_role_attached_to_support_policy = None
+
+            check = iam_support_role_created()
+            result = check.execute()
+            assert len(result) == 0
