@@ -27,7 +27,7 @@ Those credentials must be associated to a user or role with proper permissions t
 
 Prowler can use your custom AWS Profile with:
 ```console
-prowler <provider> -p/--profile <profile_name>
+prowler aws -p/--profile <profile_name>
 ```
 
 ## Multi-Factor Authentication
