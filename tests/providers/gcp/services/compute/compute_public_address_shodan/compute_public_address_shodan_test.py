@@ -8,7 +8,6 @@ class Test_compute_public_address_shodan:
     def test_no_public_ip_addresses(self):
         compute_client = mock.MagicMock
         compute_client.addresses = {}
-        compute_client.audit_info = mock.MagicMock
 
         with mock.patch(
             "prowler.providers.common.common.get_global_provider",
@@ -37,7 +36,6 @@ class Test_compute_public_address_shodan:
             "isp": "Microsoft Corporation",
             "country_name": "country_name",
         }
-        compute_client.audit_info = mock.MagicMock
 
         compute_client.addresses = [
             Address(
