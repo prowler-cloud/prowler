@@ -1,7 +1,11 @@
+import mock
 from boto3 import client
 from moto import mock_aws
 
-from prowler.providers.aws.services.cognito.cognito_service import CognitoIDP
+from prowler.providers.aws.services.cognito.cognito_service import (
+    CognitoIDP,
+    RiskConfiguration,
+)
 from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_WEST_1,
@@ -87,6 +91,8 @@ class Test_Cognito_Service:
             assert user_pool.deletion_protection is not None
             assert user_pool.advanced_security_mode is not None
             assert user_pool.tags is not None
+            assert user_pool.account_recovery_settings is not None
+            assert user_pool.user_pool_client is not None
 
     @mock_aws
     def test_get_user_pool_mfa_config(self):
@@ -115,3 +121,53 @@ class Test_Cognito_Service:
                 "Enabled": True
             }
             assert user_pool.mfa_config.status == "ON"
+
+    def test_get_user_pool_risk_configuration(self):
+        cognito_client = mock.MagicMock()
+        user_pool_arn = "user_pool_test_1"
+        cognito_client.user_pools[user_pool_arn].id = "user_pool_id"
+        cognito_client.user_pools[user_pool_arn].arn = user_pool_arn
+        cognito_client.user_pools[user_pool_arn].name = "user_pool_name"
+        cognito_client.user_pools[user_pool_arn].region = "eu-west-1"
+        cognito_client.user_pools[user_pool_arn].risk_configuration = RiskConfiguration(
+            compromised_credentials_risk_configuration={
+                "EventFilter": ["PASSWORD_CHANGE", "SIGN_UP", "SIGN_IN"],
+                "Actions": {"EventAction": "BLOCK"},
+            },
+            account_takeover_risk_configuration={
+                "Actions": {
+                    "LowAction": {"Notify": False, "EventAction": "BLOCK"},
+                    "MediumAction": {"Notify": False, "EventAction": "BLOCK"},
+                    "HighAction": {"Notify": False, "EventAction": "BLOCK"},
+                }
+            },
+        )
+
+        with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_aws_provider(),
+        ), mock.patch(
+            "prowler.providers.aws.services.cognito.cognito_idp_client.cognito_idp_client",
+            new=cognito_client,
+        ):
+            for user_pool in cognito_client.user_pools.values():
+                assert user_pool.region == "eu-west-1"
+                assert user_pool.name == "user_pool_name"
+                assert user_pool.id == "user_pool_id"
+                assert (
+                    user_pool.risk_configuration.compromised_credentials_risk_configuration
+                    == {
+                        "EventFilter": ["PASSWORD_CHANGE", "SIGN_UP", "SIGN_IN"],
+                        "Actions": {"EventAction": "BLOCK"},
+                    }
+                )
+                assert (
+                    user_pool.risk_configuration.account_takeover_risk_configuration
+                    == {
+                        "Actions": {
+                            "LowAction": {"Notify": False, "EventAction": "BLOCK"},
+                            "MediumAction": {"Notify": False, "EventAction": "BLOCK"},
+                            "HighAction": {"Notify": False, "EventAction": "BLOCK"},
+                        }
+                    }
+                )

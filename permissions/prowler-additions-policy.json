@@ -10,6 +10,7 @@
         "cloudtrail:GetInsightSelectors",
         "codeartifact:List*",
         "codebuild:BatchGet*",
+        "cognito-idp:GetUserPoolMfaConfig",
         "dlm:Get*",
         "drs:Describe*",
         "ds:Get*",

@@ -1,0 +1,30 @@
+{
+  "Provider": "aws",
+  "CheckID": "cognito_user_pool_advanced_security_adaptative_authentication_block_sign_in",
+  "CheckTitle": "Ensure cognito user pools has advanced security enabled with full-function with adaptive authentication automatic risk response as block sign-in",
+  "CheckType": [],
+  "ServiceName": "cognito",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:cognito-idp:region:account:userpool/userpool-id",
+  "Severity": "medium",
+  "ResourceType": "Other",
+  "Description": "Amazon Cognito advanced security features provide adaptive authentication and protection against compromised credentials. Adaptive authentication helps protect your applications from malicious actors and compromised credentials by evaluating the risk associated with each user login and providing the appropriate level of security to mitigate that risk. Adaptive authentication is a feature of advanced security that uses contextual data and intelligent mechanisms to evaluate the risk of each authentication attempt and respond with the appropriate level of security. Adaptive authentication can be configured to block sign-in when the risk is too high.",
+  "Risk": "If adaptive authentication is not enabled, your user pool is more vulnerable to attacks that use compromised credentials. Adaptive authentication helps protect your applications from malicious actors and compromised credentials by evaluating the risk associated with each user login and providing the appropriate level of security to mitigate that risk.",
+  "RelatedUrl": "https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pool-settings-advanced-security.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "To enable adaptive authentication with automatic risk response as block sign-in, follow the Amazon Cognito documentation",
+      "Url": "https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pool-settings-advanced-security.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
