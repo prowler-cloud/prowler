@@ -109,14 +109,12 @@ def get_mitre_attack_table(
     for index, finding in enumerate(findings):
         check = bulk_checks_metadata[finding.check_metadata.CheckID]
         check_compliances = check.Compliance
-        # print(check_compliances)
         for compliance in check_compliances:
             if (
                 "MITRE-ATTACK" in compliance.Framework
                 and compliance.Version in compliance_framework
             ):
                 for requirement in compliance.Requirements:
-                    # print(requirement)
                     for tactic in requirement.Tactics:
                         if tactic not in tactics:
                             tactics[tactic] = {"FAIL": 0, "PASS": 0, "Muted": 0}
