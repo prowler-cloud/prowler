@@ -16,7 +16,7 @@
       "CLI": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/SecurityCenter/defender-sql-server-virtual-machines.html",
       "NativeIaC": "",
       "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/SecurityCenter/defender-sql-server-virtual-machines.html",
-      "Terraform": "https://docs.bridgecrew.io/docs/ensure-that-azure-defender-is-set-to-on-for-sql-servers-on-machines#terraform"
+      "Terraform": "https://docs.prowler.com/checks/azure/azure-general-policies/ensure-that-azure-defender-is-set-to-on-for-sql-servers-on-machines#terraform"
     },
     "Recommendation": {
       "Text": "By default, Microsoft Defender for Cloud is disabled for the Microsoft SQL servers running on virtual machines. Defender for Cloud for SQL Server virtual machines continuously monitors your SQL database servers for threats such as SQL injection, brute-force attacks, and privilege abuse. The security service provides security alerts together with details of the suspicious activity and guidance on how to mitigate to the security threats.",

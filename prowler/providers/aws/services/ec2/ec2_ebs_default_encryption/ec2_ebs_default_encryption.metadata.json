@@ -17,8 +17,8 @@
     "Code": {
       "CLI": "aws ec2 enable-ebs-encryption-by-default",
       "NativeIaC": "",
-      "Other": "https://docs.bridgecrew.io/docs/ensure-ebs-default-encryption-is-enabled#aws-console",
-      "Terraform": "https://docs.bridgecrew.io/docs/ensure-ebs-default-encryption-is-enabled#terraform"
+      "Other": "https://docs.prowler.com/checks/aws/general-policies/ensure-ebs-default-encryption-is-enabled#aws-console",
+      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/ensure-ebs-default-encryption-is-enabled#terraform"
     },
     "Recommendation": {
       "Text": "Enable Encryption. Use a CMK where possible. It will provide additional management and privacy benefits.",

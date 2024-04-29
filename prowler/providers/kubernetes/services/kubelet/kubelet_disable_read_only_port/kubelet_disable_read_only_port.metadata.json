@@ -14,7 +14,7 @@
   "Remediation": {
     "Code": {
       "CLI": "--read-only-port=0",
-      "NativeIaC": "https://docs.bridgecrew.io/docs/ensure-that-the-read-only-port-argument-is-set-to-0",
+      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-read-only-port-argument-is-set-to-0",
       "Other": "",
       "Terraform": ""
     },

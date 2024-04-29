@@ -16,7 +16,7 @@
       "CLI": "aws rds modify-db-instance --db-instance-identifier <db_instance_id> --backup-retention-period 7 --apply-immediately",
       "NativeIaC": "",
       "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/rds-automated-backups-enabled.html",
-      "Terraform": "https://docs.bridgecrew.io/docs/ensure-that-rds-instances-have-backup-policy#terraform"
+      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/ensure-that-rds-instances-have-backup-policy#terraform"
     },
     "Recommendation": {
       "Text": "Enable automated backup for production data. Define a retention period and periodically test backup restoration. A Disaster Recovery process should be in place to govern Data Protection approach.",

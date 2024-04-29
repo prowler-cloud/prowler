@@ -16,7 +16,7 @@
       "CLI": "",
       "NativeIaC": "",
       "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudIAM/enforce-separation-of-duties-for-service-account-roles.html",
-      "Terraform": "https://docs.bridgecrew.io/docs/bc_gcp_iam_10#terraform"
+      "Terraform": "https://docs.prowler.com/checks/gcp/google-cloud-iam-policies/bc_gcp_iam_10#terraform"
     },
     "Recommendation": {
       "Text": "Ensure that separation of duties (also known as segregation of duties - SoD) is enforced for all Google Cloud Platform (GCP) service-account related roles. The security principle of separation of duties has as its primary objective the prevention of fraud and human error. This objective is achieved by disbanding the tasks and associated privileges for a specific business process among multiple users/members. To follow security best practices, your GCP service accounts should not have the Service Account Admin and Service Account User roles assigned at the same time.",

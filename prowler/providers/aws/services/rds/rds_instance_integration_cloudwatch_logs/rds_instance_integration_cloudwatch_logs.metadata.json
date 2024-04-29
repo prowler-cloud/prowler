@@ -16,7 +16,7 @@
       "CLI": "aws rds modify-db-instance --db-instance-identifier <db_instance_id> --cloudwatch-logs-export-configuration {'EnableLogTypes':['audit',error','general','slowquery']} --apply-immediately",
       "NativeIaC": "",
       "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/log-exports.html",
-      "Terraform": "https://docs.bridgecrew.io/docs/ensure-that-respective-logs-of-amazon-relational-database-service-amazon-rds-are-enabled#terraform"
+      "Terraform": "https://docs.prowler.com/checks/aws/iam-policies/ensure-that-respective-logs-of-amazon-relational-database-service-amazon-rds-are-enabled#terraform"
     },
     "Recommendation": {
       "Text": "Use CloudWatch Logs to perform real-time analysis of the log data. Create alarms and view metrics.",

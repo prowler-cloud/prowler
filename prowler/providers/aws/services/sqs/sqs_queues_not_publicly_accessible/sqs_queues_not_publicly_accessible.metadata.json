@@ -16,7 +16,7 @@
       "CLI": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/SQS/sqs-queue-exposed.html",
       "NativeIaC": "",
       "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/SQS/sqs-queue-exposed.html",
-      "Terraform": "https://docs.bridgecrew.io/docs/ensure-sqs-queue-policy-is-not-public-by-only-allowing-specific-services-or-principals-to-access-it#terraform"
+      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/ensure-sqs-queue-policy-is-not-public-by-only-allowing-specific-services-or-principals-to-access-it#terraform"
     },
     "Recommendation": {
       "Text": "Review service with overly permissive policies. Adhere to Principle of Least Privilege.",

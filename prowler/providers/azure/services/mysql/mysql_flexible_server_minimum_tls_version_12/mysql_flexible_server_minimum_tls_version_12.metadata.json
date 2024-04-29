@@ -16,7 +16,7 @@
       "CLI": "az mysql flexible-server parameter set --name tls_version --resource-group <resourceGroupName> --server-name <serverName> --value TLSV1.2",
       "NativeIaC": "",
       "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/MySQL/mysql-flexible-server-tls-version.html",
-      "Terraform": "https://docs.bridgecrew.io/docs/ensure-mysql-is-using-the-latest-version-of-tls-encryption#terraform"
+      "Terraform": "https://docs.prowler.com/checks/azure/azure-general-policies/ensure-mysql-is-using-the-latest-version-of-tls-encryption#terraform"
     },
     "Recommendation": {
       "Text": "1. Login to Azure Portal using https://portal.azure.com 2. Go to Azure Database for MySQL flexible servers 3. For each database, click on Server parameters under Settings 4. In the search box, type in tls_version 5. Click on the VALUE dropdown, and ensure only TLSV1.2 is selected for tls_version",

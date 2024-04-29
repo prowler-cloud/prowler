@@ -14,9 +14,9 @@
   "Remediation": {
     "Code": {
       "CLI": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Redshift/redshift-cluster-audit-logging-enabled.html",
-      "NativeIaC": "https://docs.bridgecrew.io/docs/bc_aws_logging_12#cloudformation",
-      "Other": "https://docs.bridgecrew.io/docs/bc_aws_logging_12#aws-console",
-      "Terraform": "https://docs.bridgecrew.io/docs/bc_aws_logging_12#terraform"
+      "NativeIaC": "https://docs.prowler.com/checks/aws/logging-policies/bc_aws_logging_12#cloudformation",
+      "Other": "https://docs.prowler.com/checks/aws/logging-policies/bc_aws_logging_12#aws-console",
+      "Terraform": "https://docs.prowler.com/checks/aws/logging-policies/bc_aws_logging_12#terraform"
     },
     "Recommendation": {
       "Text": "Enable logs. Create an S3 lifecycle policy. Define use cases, metrics and automated responses where applicable.",

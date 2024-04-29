@@ -14,9 +14,9 @@
   "Remediation": {
     "Code": {
       "CLI": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudFront/security-policy.html",
-      "NativeIaC": "https://docs.bridgecrew.io/docs/networking_32#cloudformation",
+      "NativeIaC": "https://docs.prowler.com/checks/aws/networking-policies/networking_32#cloudformation",
       "Other": "",
-      "Terraform": "https://docs.bridgecrew.io/docs/networking_32#terraform"
+      "Terraform": "https://docs.prowler.com/checks/aws/networking-policies/networking_32#terraform"
     },
     "Recommendation": {
       "Text": "Use HTTPS everywhere possible. It will enforce privacy and protect against account hijacking and other threats.",

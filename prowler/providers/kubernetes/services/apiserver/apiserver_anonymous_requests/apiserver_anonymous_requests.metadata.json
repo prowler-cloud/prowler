@@ -14,7 +14,7 @@
   "Remediation": {
     "Code": {
       "CLI": "--anonymous-auth=false",
-      "NativeIaC": "https://docs.bridgecrew.io/docs/ensure-that-the-anonymous-auth-argument-is-set-to-false-1#kubernetes",
+      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-anonymous-auth-argument-is-set-to-false-1#kubernetes",
       "Other": "",
       "Terraform": ""
     },

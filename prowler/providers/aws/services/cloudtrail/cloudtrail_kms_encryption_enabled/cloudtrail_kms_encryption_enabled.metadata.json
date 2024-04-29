@@ -18,7 +18,7 @@
   "Remediation": {
     "Code": {
       "CLI": "aws cloudtrail update-trail --name <trail_name> --kms-id <cloudtrail_kms_key> aws kms put-key-policy --key-id <cloudtrail_kms_key> --policy <cloudtrail_kms_key_policy>",
-      "NativeIaC": "https://docs.bridgecrew.io/docs/logging_7#fix---buildtime",
+      "NativeIaC": "https://docs.prowler.com/checks/aws/logging-policies/logging_7#fix---buildtime",
       "Other": "",
       "Terraform": ""
     },

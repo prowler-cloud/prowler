@@ -15,10 +15,10 @@
   "RelatedUrl": "",
   "Remediation": {
     "Code": {
-      "CLI": "https://docs.bridgecrew.io/docs/networking_2#cli-command",
-      "NativeIaC": "https://docs.bridgecrew.io/docs/networking_2#cloudformation",
-      "Other": "https://docs.bridgecrew.io/docs/networking_2#aws-console",
-      "Terraform": "https://docs.bridgecrew.io/docs/networking_2#terraform"
+      "CLI": "https://docs.prowler.com/checks/aws/networking-policies/networking_2#cli-command",
+      "NativeIaC": "https://docs.prowler.com/checks/aws/networking-policies/networking_2#cloudformation",
+      "Other": "https://docs.prowler.com/checks/aws/networking-policies/networking_2#aws-console",
+      "Terraform": "https://docs.prowler.com/checks/aws/networking-policies/networking_2#terraform"
     },
     "Recommendation": {
       "Text": "Use a Zero Trust approach. Narrow ingress traffic as much as possible. Consider north-south as well as east-west traffic.",

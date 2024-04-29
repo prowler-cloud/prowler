@@ -16,7 +16,7 @@
       "CLI": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/GuardDuty/guardduty-enabled.html",
       "NativeIaC": "",
       "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/GuardDuty/guardduty-enabled.html",
-      "Terraform": "https://docs.bridgecrew.io/docs/ensure-guardduty-is-enabled-to-specific-orgregion#fix---buildtime"
+      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/ensure-guardduty-is-enabled-to-specific-orgregion#fix---buildtime"
     },
     "Recommendation": {
       "Text": "Enable GuardDuty and analyze its findings.",

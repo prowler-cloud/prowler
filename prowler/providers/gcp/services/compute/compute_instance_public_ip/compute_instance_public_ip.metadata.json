@@ -13,10 +13,10 @@
   "RelatedUrl": "",
   "Remediation": {
     "Code": {
-      "CLI": "https://docs.bridgecrew.io/docs/bc_gcp_public_2#cli-command",
+      "CLI": "https://docs.prowler.com/checks/gcp/google-cloud-public-policies/bc_gcp_public_2#cli-command",
       "NativeIaC": "",
       "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/Compute/instances-with-public-ip-addresses.html",
-      "Terraform": "https://docs.bridgecrew.io/docs/bc_gcp_public_2#terraform"
+      "Terraform": "https://docs.prowler.com/checks/gcp/google-cloud-public-policies/bc_gcp_public_2#terraform"
     },
     "Recommendation": {
       "Text": "Ensure that your Google Compute Engine instances are not configured to have external IP addresses in order to minimize their exposure to the Internet.",

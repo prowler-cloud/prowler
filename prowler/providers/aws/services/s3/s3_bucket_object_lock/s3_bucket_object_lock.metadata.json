@@ -15,10 +15,10 @@
   "RelatedUrl": "",
   "Remediation": {
     "Code": {
-      "CLI": "https://docs.bridgecrew.io/docs/ensure-that-s3-bucket-has-lock-configuration-enabled-by-default#cli-command",
+      "CLI": "https://docs.prowler.com/checks/aws/general-policies/ensure-that-s3-bucket-has-lock-configuration-enabled-by-default#cli-command",
       "NativeIaC": "",
       "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/S3/object-lock.html",
-      "Terraform": "https://docs.bridgecrew.io/docs/ensure-that-s3-bucket-has-lock-configuration-enabled-by-default#terraform"
+      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/ensure-that-s3-bucket-has-lock-configuration-enabled-by-default#terraform"
     },
     "Recommendation": {
       "Text": "Ensure that your Amazon S3 buckets have Object Lock feature enabled in order to prevent the objects they store from being deleted.",

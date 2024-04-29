@@ -14,9 +14,9 @@
   "Remediation": {
     "Code": {
       "CLI": "aws redshift modify-cluster --cluster-identifier <cluster_id> --allow-version-upgrade",
-      "NativeIaC": "https://docs.bridgecrew.io/docs/public_9#cloudformation",
+      "NativeIaC": "https://docs.prowler.com/checks/aws/public-policies/public_9#cloudformation",
       "Other": "",
-      "Terraform": "https://docs.bridgecrew.io/docs/ensure-that-redshift-clusters-allow-version-upgrade-by-default#terraform"
+      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/ensure-that-redshift-clusters-allow-version-upgrade-by-default#terraform"
     },
     "Recommendation": {
       "Text": "Enabled AutomaticVersionUpgrade on Redshift Cluster",

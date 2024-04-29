@@ -17,8 +17,8 @@
   "Remediation": {
     "Code": {
       "CLI": "",
-      "NativeIaC": "https://docs.bridgecrew.io/docs/public_1-ecr-repositories-not-public#cloudformation",
-      "Other": "https://docs.bridgecrew.io/docs/public_1-ecr-repositories-not-public#aws-console",
+      "NativeIaC": "https://docs.prowler.com/checks/aws/public-policies/public_1-ecr-repositories-not-public#cloudformation",
+      "Other": "https://docs.prowler.com/checks/aws/public-policies/public_1-ecr-repositories-not-public#aws-console",
       "Terraform": ""
     },
     "Recommendation": {

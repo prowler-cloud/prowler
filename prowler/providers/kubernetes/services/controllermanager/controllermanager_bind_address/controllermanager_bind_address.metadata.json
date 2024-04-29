@@ -14,7 +14,7 @@
   "Remediation": {
     "Code": {
       "CLI": "--bind-address=127.0.0.1",
-      "NativeIaC": "https://docs.bridgecrew.io/docs/ensure-that-the-bind-address-argument-is-set-to-127001",
+      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-bind-address-argument-is-set-to-127001",
       "Other": "",
       "Terraform": ""
     },

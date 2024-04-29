@@ -18,9 +18,9 @@
   "Remediation": {
     "Code": {
       "CLI": "aws cloudtrail create-trail --name <trail_name> --bucket-name <s3_bucket_for_cloudtrail> --is-multi-region-trail aws cloudtrail update-trail --name <trail_name> --is-multi-region-trail ",
-      "NativeIaC": "https://docs.bridgecrew.io/docs/logging_1#cloudformation",
-      "Other": "https://docs.bridgecrew.io/docs/logging_1#aws-console",
-      "Terraform": "https://docs.bridgecrew.io/docs/logging_1#terraform"
+      "NativeIaC": "https://docs.prowler.com/checks/aws/logging-policies/logging_1#cloudformation",
+      "Other": "https://docs.prowler.com/checks/aws/logging-policies/logging_1#aws-console",
+      "Terraform": "https://docs.prowler.com/checks/aws/logging-policies/logging_1#terraform"
     },
     "Recommendation": {
       "Text": "Ensure Logging is set to ON on all regions (even if they are not being used at the moment.",

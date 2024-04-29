@@ -18,7 +18,7 @@
       "CLI": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/S3/encrypted-with-kms-customer-master-keys.html",
       "NativeIaC": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/S3/encrypted-with-kms-customer-master-keys.html",
       "Other": "",
-      "Terraform": "https://docs.bridgecrew.io/docs/ensure-that-s3-buckets-are-encrypted-with-kms-by-default#terraform"
+      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/ensure-that-s3-buckets-are-encrypted-with-kms-by-default#terraform"
     },
     "Recommendation": {
       "Text": "Ensure that S3 buckets have encryption at rest enabled using KMS.",

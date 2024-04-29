@@ -14,7 +14,7 @@
   "Remediation": {
     "Code": {
       "CLI": "--make-iptables-util-chains=true",
-      "NativeIaC": "https://docs.bridgecrew.io/docs/ensure-that-the-make-iptables-util-chains-argument-is-set-to-true",
+      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-make-iptables-util-chains-argument-is-set-to-true",
       "Other": "",
       "Terraform": ""
     },

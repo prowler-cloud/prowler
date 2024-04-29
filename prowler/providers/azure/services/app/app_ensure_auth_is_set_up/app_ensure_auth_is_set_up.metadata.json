@@ -16,7 +16,7 @@
       "CLI": "az webapp auth update --resource-group <RESOURCE_GROUP_NAME> --name <APP_NAME> --enabled true",
       "NativeIaC": "",
       "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/AppService/enable-app-service-authentication.html",
-      "Terraform": "https://docs.bridgecrew.io/docs/bc_azr_general_2#terraform"
+      "Terraform": "https://docs.prowler.com/checks/azure/azure-general-policies/bc_azr_general_2#terraform"
     },
     "Recommendation": {
       "Text": "1. Login to Azure Portal using https://portal.azure.com 2. Go to App Services 3. Click on each App 4. Under Setting section, click on Authentication 5. If no identity providers are set up, then click Add identity provider 6. Choose other parameters as per your requirements and click on Add",
