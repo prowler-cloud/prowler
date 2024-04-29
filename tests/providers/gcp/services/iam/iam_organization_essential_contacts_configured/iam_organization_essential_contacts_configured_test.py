@@ -9,7 +9,6 @@ class Test_iam_organization_essential_contacts_configured:
         essentialcontacts_client = mock.MagicMock
         essentialcontacts_client.organizations = []
         essentialcontacts_client.region = "global"
-
         with mock.patch(
             "prowler.providers.gcp.services.iam.iam_organization_essential_contacts_configured.iam_organization_essential_contacts_configured.essentialcontacts_client",
             new=essentialcontacts_client,
@@ -28,11 +27,16 @@ class Test_iam_organization_essential_contacts_configured:
             Organization(id="test_id", name="test", contacts=True)
         ]
         essentialcontacts_client.region = "global"
-
+        essentialcontacts_client.organizations = []
         with mock.patch(
             "prowler.providers.gcp.services.iam.iam_organization_essential_contacts_configured.iam_organization_essential_contacts_configured.essentialcontacts_client",
             new=essentialcontacts_client,
         ):
+            from prowler.providers.gcp.services.iam.iam_service import Organization
+
+            essentialcontacts_client.organizations = [
+                Organization(id="test_id", name="test", contacts=True)
+            ]
             from prowler.providers.gcp.services.iam.iam_organization_essential_contacts_configured.iam_organization_essential_contacts_configured import (
                 iam_organization_essential_contacts_configured,
             )
@@ -56,7 +60,7 @@ class Test_iam_organization_essential_contacts_configured:
             Organization(id="test_id", name="test", contacts=False)
         ]
         essentialcontacts_client.region = "global"
-
+        essentialcontacts_client.organizations = []
         with mock.patch(
             "prowler.providers.gcp.services.iam.iam_organization_essential_contacts_configured.iam_organization_essential_contacts_configured.essentialcontacts_client",
             new=essentialcontacts_client,
