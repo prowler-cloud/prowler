@@ -1,7 +1,6 @@
 import os
 import sys
 
-from colorama import Fore, Style
 from google import auth
 from googleapiclient import discovery
 
@@ -83,10 +82,16 @@ class GCP_Provider:
 
             return project_ids
         except Exception as error:
-            logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
-            print(
-                f"\n{Fore.YELLOW}Cloud Resource Manager API {Style.RESET_ALL}has not been used before or it is disabled.\nEnable it by visiting https://console.developers.google.com/apis/api/cloudresourcemanager.googleapis.com/ then retry."
-            )
-            return []
+            if error.__class__.__name__ == "RefreshError":
+                logger.critical(
+                    "Google Cloud SDK has not been authenticated or the credentials have expired. Authenticate by running 'gcloud auth application-default login' then retry."
+                )
+            elif "Cloud Resource Manager API has not been used" in str(error):
+                logger.critical(
+                    "Cloud Resource Manager API has not been used before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/cloudresourcemanager.googleapis.com/ then retry."
+                )
+            else:
+                logger.critical(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+            sys.exit(1)
