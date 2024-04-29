@@ -11,9 +11,7 @@ from prowler.lib.outputs.utils import unroll_list
 from prowler.lib.utils.utils import outputs_unix_timestamp
 
 
-def write_compliance_row_mitre_attack(
-    file_descriptors, finding, compliance, output_options, provider
-):
+def write_compliance_row_mitre_attack(file_descriptors, finding, compliance, provider):
     try:
         compliance_output = compliance.Framework
         if compliance.Version != "":
@@ -58,7 +56,7 @@ def write_compliance_row_mitre_attack(
                 "Provider": finding.check_metadata.Provider,
                 "Description": compliance.Description,
                 "AssessmentDate": outputs_unix_timestamp(
-                    output_options.unix_timestamp, timestamp
+                    provider.output_options.unix_timestamp, timestamp
                 ),
                 "Requirements_Id": requirement_id,
                 "Requirements_Name": requirement_name,

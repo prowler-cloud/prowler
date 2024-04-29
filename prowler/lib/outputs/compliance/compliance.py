@@ -125,9 +125,8 @@ def fill_compliance(
                 )
 
             elif compliance.Framework == "MITRE-ATTACK" and compliance.Version == "":
-                # print(file_descriptors)
                 write_compliance_row_mitre_attack(
-                    file_descriptors, finding, compliance, output_options, provider
+                    file_descriptors, finding, compliance, provider
                 )
 
             else:
