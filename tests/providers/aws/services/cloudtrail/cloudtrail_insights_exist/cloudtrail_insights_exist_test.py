@@ -128,3 +128,26 @@ class Test_cloudtrail_insights_exist:
                 assert result[0].region == AWS_REGION_US_EAST_1
                 assert result[0].resource_arn == trail_us["TrailARN"]
                 assert result[0].resource_tags == []
+
+    @mock_aws
+    def test_access_denied(self):
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
+        )
+        with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=aws_provider,
+        ):
+            with mock.patch(
+                "prowler.providers.aws.services.cloudtrail.cloudtrail_insights_exist.cloudtrail_insights_exist.cloudtrail_client",
+                new=Cloudtrail(aws_provider),
+            ) as service_client:
+                # Test Check
+                from prowler.providers.aws.services.cloudtrail.cloudtrail_insights_exist.cloudtrail_insights_exist import (
+                    cloudtrail_insights_exist,
+                )
+
+                service_client.trails = None
+                check = cloudtrail_insights_exist()
+                result = check.execute()
+                assert len(result) == 0

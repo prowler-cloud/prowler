@@ -144,3 +144,30 @@ class Test_trustedadvisor_errors_and_warnings:
             check = trustedadvisor_errors_and_warnings()
             result = check.execute()
             assert len(result) == 0
+
+    def test_access_denied(self):
+        trustedadvisor_client = mock.MagicMock
+        trustedadvisor_client.checks = []
+        trustedadvisor_client.premium_support = None
+        trustedadvisor_client.audited_account = AWS_ACCOUNT_NUMBER
+        trustedadvisor_client.audited_account_arn = AWS_ACCOUNT_ARN
+        trustedadvisor_client.checks.append(
+            Check(
+                id=CHECK_NAME,
+                name=CHECK_NAME,
+                arn=CHECK_ARN,
+                region=AWS_REGION_US_EAST_1,
+                status="not_available",
+            )
+        )
+        with mock.patch(
+            "prowler.providers.aws.services.trustedadvisor.trustedadvisor_service.TrustedAdvisor",
+            trustedadvisor_client,
+        ):
+            from prowler.providers.aws.services.trustedadvisor.trustedadvisor_errors_and_warnings.trustedadvisor_errors_and_warnings import (
+                trustedadvisor_errors_and_warnings,
+            )
+
+            check = trustedadvisor_errors_and_warnings()
+            result = check.execute()
+            assert len(result) == 0
