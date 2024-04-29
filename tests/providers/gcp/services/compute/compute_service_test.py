@@ -9,7 +9,7 @@ from tests.providers.gcp.gcp_fixtures import (
 )
 
 
-class Test_Compute_Service:
+class TestComputeService:
     def test_service(self):
         with patch(
             "prowler.providers.gcp.lib.service.service.GCPService.__is_api_active__",

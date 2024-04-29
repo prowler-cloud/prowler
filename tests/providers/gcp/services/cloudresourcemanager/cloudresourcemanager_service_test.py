@@ -11,8 +11,8 @@ from tests.providers.gcp.gcp_fixtures import (
 )
 
 
-class Test_CloudResourceManager_Service:
-    def test__get_service__(self):
+class TestCloudResourceManagerService:
+    def test_service(self):
         with patch(
             "prowler.providers.gcp.lib.service.service.GCPService.__is_api_active__",
             new=mock_is_api_active,

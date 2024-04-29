@@ -12,7 +12,7 @@ from tests.providers.gcp.gcp_fixtures import (
 )
 
 
-class Test_IAM_Service:
+class TestIAMService:
     def test_service(self):
         with patch(
             "prowler.providers.gcp.lib.service.service.GCPService.__is_api_active__",
@@ -74,7 +74,7 @@ class Test_IAM_Service:
             assert iam_client.service_accounts[1].keys[0].type == "KEY_TYPE_UNSPECIFIED"
 
 
-class Test_AccessApproval:
+class TestAccessApproval:
     def test_service(self):
         with patch(
             "prowler.providers.gcp.lib.service.service.GCPService.__is_api_active__",
@@ -105,7 +105,7 @@ class Test_AccessApproval:
             )
 
 
-class Test_EssentialContacts:
+class TestEssentialContacts:
     def test_service(self):
         with patch(
             "prowler.providers.gcp.lib.service.service.GCPService.__is_api_active__",
