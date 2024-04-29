@@ -19,8 +19,8 @@ def write_compliance_row_mitre_attack(file_descriptors, finding, compliance, pro
         if compliance.Provider != "":
             compliance_output += "_" + compliance.Provider
 
-        mitre_attack_model_name = "Check_Output_MITRE_ATTACK_" + compliance.Provider
-        module = import_module("prowler.lib.outputs.compliance.models")
+        mitre_attack_model_name = "MitreAttack" + compliance.Provider
+        module = import_module("prowler.lib.outputs.compliance.mitre_attack.models")
         mitre_attack_model = getattr(module, mitre_attack_model_name)
         compliance_output = compliance_output.lower().replace("-", "_")
         csv_header = generate_csv_fields(mitre_attack_model)
