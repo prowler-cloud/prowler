@@ -16,9 +16,9 @@
   "Remediation": {
     "Code": {
       "CLI": "aws ec2 release-address --public-ip <theIPyoudontneed>",
-      "NativeIaC": "https://docs.bridgecrew.io/docs/general_19#cloudformation",
-      "Other": "https://docs.bridgecrew.io/docs/general_19#ec2-console",
-      "Terraform": "https://docs.bridgecrew.io/docs/general_19#terraform"
+      "NativeIaC": "https://docs.prowler.com/checks/aws/general-policies/general_19#cloudformation",
+      "Other": "https://docs.prowler.com/checks/aws/general-policies/general_19#ec2-console",
+      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/general_19#terraform"
     },
     "Recommendation": {
       "Text": "Ensure Elastic IPs are not unassigned.",

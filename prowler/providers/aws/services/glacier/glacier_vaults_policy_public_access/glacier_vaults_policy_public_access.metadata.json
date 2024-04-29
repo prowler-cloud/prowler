@@ -16,7 +16,7 @@
       "CLI": "",
       "NativeIaC": "",
       "Other": "",
-      "Terraform": "https://docs.bridgecrew.io/docs/ensure-glacier-vault-access-policy-is-not-public-by-only-allowing-specific-services-or-principals-to-access-it#terraform"
+      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/ensure-glacier-vault-access-policy-is-not-public-by-only-allowing-specific-services-or-principals-to-access-it#terraform"
     },
     "Recommendation": {
       "Text": "Ensure vault policy does not have principle as *.",

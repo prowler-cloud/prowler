@@ -14,9 +14,9 @@
   "Remediation": {
     "Code": {
       "CLI": "aws sns set-topic-attributes --topic-arn <TOPIC_ARN> --attribute-name 'KmsMasterKeyId' --attribute-value <KEY>",
-      "NativeIaC": "https://docs.bridgecrew.io/docs/general_15#cloudformation",
+      "NativeIaC": "https://docs.prowler.com/checks/aws/general-policies/general_15#cloudformation",
       "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/SNS/topic-encrypted-with-kms-customer-master-keys.html",
-      "Terraform": "https://docs.bridgecrew.io/docs/general_15#terraform"
+      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/general_15#terraform"
     },
     "Recommendation": {
       "Text": "Use Amazon SNS with AWS KMS.",

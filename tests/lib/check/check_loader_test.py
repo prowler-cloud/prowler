@@ -40,7 +40,7 @@ class TestCheckLoader:
             Remediation=Remediation(
                 Code=Code(
                     NativeIaC="",
-                    Terraform="https://docs.bridgecrew.io/docs/bc_aws_s3_20#terraform",
+                    Terraform="https://docs.prowler.com/checks/aws/s3-policies/bc_aws_s3_20#terraform",
                     CLI="aws s3api put-public-access-block --region <REGION_NAME> --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true --bucket <BUCKET_NAME>",
                     Other="https://github.com/cloudmatos/matos/tree/master/remediations/aws/s3/s3/block-public-access",
                 ),

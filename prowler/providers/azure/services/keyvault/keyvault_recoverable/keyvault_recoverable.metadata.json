@@ -16,7 +16,7 @@
       "CLI": "az resource update --id /subscriptions/xxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/<resourceGroupName>/providers/Microsoft.KeyVault/vaults/<keyVaultName> --set properties.enablePurgeProtection=trueproperties.enableSoftDelete=true",
       "NativeIaC": "",
       "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/KeyVault/enable-key-vault-recoverability.html#",
-      "Terraform": "https://docs.bridgecrew.io/docs/ensure-the-key-vault-is-recoverable#terraform"
+      "Terraform": "https://docs.prowler.com/checks/azure/azure-general-policies/ensure-the-key-vault-is-recoverable#terraform"
     },
     "Recommendation": {
       "Text": "To enable 'Do Not Purge' and 'Soft Delete' for a Key Vault: From Azure Portal 1. Go to Key Vaults 2. For each Key Vault 3. Click Properties 4. Ensure the status of soft-delete reads Soft delete has been enabled on this key vault. 5. At the bottom of the page, click 'Enable Purge Protection' Note, once enabled you cannot disable it. From Azure CLI az resource update --id /subscriptions/xxxxxx-xxxx-xxxx-xxxx- xxxxxxxxxxxx/resourceGroups/<resourceGroupName>/providers/Microsoft.KeyVault /vaults/<keyVaultName> --set properties.enablePurgeProtection=true properties.enableSoftDelete=true From PowerShell Update-AzKeyVault -VaultName <vaultName -ResourceGroupName <resourceGroupName -EnablePurgeProtection",

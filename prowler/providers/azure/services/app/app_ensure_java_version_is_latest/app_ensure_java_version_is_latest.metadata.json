@@ -16,7 +16,7 @@
       "CLI": "",
       "NativeIaC": "",
       "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/AppService/latest-version-of-java.html",
-      "Terraform": "https://docs.bridgecrew.io/docs/ensure-that-java-version-is-the-latest-if-used-to-run-the-web-app#terraform"
+      "Terraform": "https://docs.prowler.com/checks/azure/azure-general-policies/ensure-that-java-version-is-the-latest-if-used-to-run-the-web-app#terraform"
     },
     "Recommendation": {
       "Text": "1. Login to Azure Portal using https://portal.azure.com 2. Go to App Services 3. Click on each App 4. Under Settings section, click on Configuration 5. Click on the General settings pane and ensure that for a Stack of Java the Major Version and Minor Version reflect the latest stable and supported release, and that the Java web server version is set to the auto-update option. NOTE: No action is required if Java version is set to Off, as Java is not used by your web app.",

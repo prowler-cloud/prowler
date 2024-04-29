@@ -16,7 +16,7 @@
       "CLI": "az webapp update --resource-group <RESOURCE_GROUP_NAME> --name <APP_NAME> --set httpsOnly=true",
       "NativeIaC": "",
       "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/AppService/enable-https-only-traffic.html#",
-      "Terraform": "https://docs.bridgecrew.io/docs/bc_azr_networking_5#terraform"
+      "Terraform": "https://docs.prowler.com/checks/azure/azure-networking-policies/bc_azr_networking_5#terraform"
     },
     "Recommendation": {
       "Text": "1. Login to Azure Portal using https://portal.azure.com 2. Go to App Services 3. Click on each App 4. Under Setting section, Click on Configuration 5. In the General Settings section, set the HTTPS Only to On 6. Click Save",

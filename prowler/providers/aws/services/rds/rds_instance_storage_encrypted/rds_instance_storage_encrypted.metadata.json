@@ -14,9 +14,9 @@
   "Remediation": {
     "Code": {
       "CLI": "aws rds create-db-instance --db-instance-identifier <db_instance_id> --db-instance-class <instance_class> --engine <engine> --storage-encrypted true",
-      "NativeIaC": "https://docs.bridgecrew.io/docs/general_4#cloudformation",
+      "NativeIaC": "https://docs.prowler.com/checks/aws/general-policies/general_4#cloudformation",
       "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/rds-encryption-enabled.html",
-      "Terraform": "https://docs.bridgecrew.io/docs/general_4#terraform"
+      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/general_4#terraform"
     },
     "Recommendation": {
       "Text": "Enable Encryption. Use a CMK where possible. It will provide additional management and privacy benefits.",

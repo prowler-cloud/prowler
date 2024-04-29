@@ -16,7 +16,7 @@
       "CLI": "az sql server ad-admin create --resource-group resource_group_name --server server_name --display-name display_name --object-id user_object_id",
       "NativeIaC": "",
       "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/Sql/active-directory-admin.html",
-      "Terraform": "https://docs.bridgecrew.io/docs/ensure-that-azure-active-directory-admin-is-configured#terraform"
+      "Terraform": "https://docs.prowler.com/checks/azure/azure-general-policies/ensure-that-azure-active-directory-admin-is-configured#terraform"
     },
     "Recommendation": {
       "Text": "Enable an Azure Active Directory administrator",

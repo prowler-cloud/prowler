@@ -18,7 +18,7 @@
       "CLI": "aws kms enable-key-rotation --key-id <key_id>",
       "NativeIaC": "",
       "Other": "",
-      "Terraform": "https://docs.bridgecrew.io/docs/ensure-kms-have-rotation-policy#terraform"
+      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/ensure-kms-have-rotation-policy#terraform"
     },
     "Recommendation": {
       "Text": "For every KMS Customer Master Keys (CMKs), ensure that Rotate this key every year is enabled.",

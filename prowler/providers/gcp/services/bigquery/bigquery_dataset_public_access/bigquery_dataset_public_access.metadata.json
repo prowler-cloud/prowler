@@ -16,7 +16,7 @@
       "CLI": "",
       "NativeIaC": "",
       "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/BigQuery/publicly-accessible-big-query-datasets.html",
-      "Terraform": "https://docs.bridgecrew.io/docs/bc_gcp_general_3#terraform"
+      "Terraform": "https://docs.prowler.com/checks/gcp/google-cloud-general-policies/bc_gcp_general_3#terraform"
     },
     "Recommendation": {
       "Text": "It is recommended that the IAM policy on BigQuery datasets does not allow anonymous and/or public access.",

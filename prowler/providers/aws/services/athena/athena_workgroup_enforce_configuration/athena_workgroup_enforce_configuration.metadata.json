@@ -16,9 +16,9 @@
   "Remediation": {
     "Code": {
       "CLI": "aws athena update-work-group --region <REGION> --work-group <workgroup_name> --configuration-updates EnforceWorkGroupConfiguration=True",
-      "NativeIaC": "https://docs.bridgecrew.io/docs/bc_aws_general_33#cloudformation",
+      "NativeIaC": "https://docs.prowler.com/checks/aws/general-policies/bc_aws_general_33#cloudformation",
       "Other": "",
-      "Terraform": "https://docs.bridgecrew.io/docs/bc_aws_general_33#terraform"
+      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/bc_aws_general_33#terraform"
     },
     "Recommendation": {
       "Text": "Ensure that workgroup configuration is enforced so it cannot be overriden by client-side settings.",

@@ -19,7 +19,7 @@
     "Code": {
       "CLI": "aws cloudtrail update-trail --name <trail_name> --cloudwatch-logs-log-group- arn <cloudtrail_log_group_arn> --cloudwatch-logs-role-arn <cloudtrail_cloudwatchLogs_role_arn>",
       "NativeIaC": "",
-      "Other": "https://docs.bridgecrew.io/docs/logging_4#aws-console",
+      "Other": "https://docs.prowler.com/checks/aws/logging-policies/logging_4#aws-console",
       "Terraform": ""
     },
     "Recommendation": {
