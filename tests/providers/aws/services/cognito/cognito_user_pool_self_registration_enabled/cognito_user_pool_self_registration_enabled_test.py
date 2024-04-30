@@ -12,9 +12,14 @@ class Test_cognito_user_pool_self_registration_enabled:
     def test_cognito_no_user_pools(self):
         cognito_client = mock.MagicMock
         cognito_client.user_pools = {}
+        cognito_identity_client = mock.MagicMock
+        cognito_identity_client.identity_pools = {}
         with mock.patch(
             "prowler.providers.aws.services.cognito.cognito_service.CognitoIDP",
             cognito_client,
+        ), mock.patch(
+            "prowler.providers.aws.services.cognito.cognito_service.CognitoIdentity",
+            cognito_identity_client,
         ):
             from prowler.providers.aws.services.cognito.cognito_user_pool_self_registration_enabled.cognito_user_pool_self_registration_enabled import (
                 cognito_user_pool_self_registration_enabled,
@@ -155,5 +160,5 @@ class Test_cognito_user_pool_self_registration_enabled:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert result[0].status_extended == (
-                "User pool {user_pool_name} has self registration enabled and is associated with the following identity pools: {identity_pool_name}"
+                f"User pool {user_pool_name} has self registration enabled and is associated with the following identity pools: {identity_pool_name}"
             )
