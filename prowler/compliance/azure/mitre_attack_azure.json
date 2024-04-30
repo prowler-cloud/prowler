@@ -2265,8 +2265,7 @@
         "network_rdp_internet_access_restricted",
         "network_ssh_internet_access_restricted",
         "network_udp_internet_access_restricted",
-        "network_watcher_enabled",
-        "networkfirewall_in_all_vpc"
+        "network_watcher_enabled"
       ],
       "Attributes": [
         {
