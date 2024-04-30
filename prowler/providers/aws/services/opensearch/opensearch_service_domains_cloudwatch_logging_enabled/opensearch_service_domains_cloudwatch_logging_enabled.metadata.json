@@ -12,7 +12,7 @@
   "Severity": "medium",
   "ResourceType": "AwsOpenSearchDomain",
   "Description": "Check if Amazon Elasticsearch/Opensearch Service domains have logging enabled",
-  "Risk": "Amazon ES exposes four Elasticsearch/Opensearch logs through Amazon CloudWatch Logs: error logs; search slow logs; index slow logs; and audit logs.",
+  "Risk": "Amazon ES exposes four Elasticsearch/Opensearch logs through Amazon CloudWatch Logs: error logs, search slow logs, index slow logs, and audit logs.",
   "RelatedUrl": "",
   "Remediation": {
     "Code": {

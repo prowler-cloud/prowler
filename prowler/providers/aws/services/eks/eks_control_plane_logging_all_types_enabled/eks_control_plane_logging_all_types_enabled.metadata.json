@@ -11,7 +11,7 @@
   "Severity": "medium",
   "ResourceType": "AwsEksCluster",
   "Description": "Ensure EKS Control Plane Audit Logging is enabled for all log types",
-  "Risk": "If logs are not enabled; monitoring of service use and threat analysis is not possible.",
+  "Risk": "If logs are not enabled, monitoring of service use and threat analysis is not possible.",
   "RelatedUrl": "",
   "Remediation": {
     "Code": {
