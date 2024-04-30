@@ -16,7 +16,7 @@
       "CLI": "aws rds modify-db-instance --db-instance-identifier <db_instance_id> --deletion-protection --apply-immediately",
       "NativeIaC": "",
       "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/instance-deletion-protection.html",
-      "Terraform": "https://docs.bridgecrew.io/docs/ensure-that-rds-clusters-and-instances-have-deletion-protection-enabled#terraform"
+      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/ensure-that-rds-clusters-and-instances-have-deletion-protection-enabled#terraform"
     },
     "Recommendation": {
       "Text": "Enable deletion protection using the AWS Management Console for production DB instances.",

@@ -16,7 +16,7 @@
       "CLI": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/SNS/topics-everyone-publish.html",
       "NativeIaC": "",
       "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/SNS/topics-everyone-publish.html",
-      "Terraform": "https://docs.bridgecrew.io/docs/ensure-sns-topic-policy-is-not-public-by-only-allowing-specific-services-or-principals-to-access-it#terraform"
+      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/ensure-sns-topic-policy-is-not-public-by-only-allowing-specific-services-or-principals-to-access-it#terraform"
     },
     "Recommendation": {
       "Text": "Ensure there is a business requirement for service to be public.",

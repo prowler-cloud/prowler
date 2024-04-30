@@ -630,7 +630,7 @@ class AwsProvider(Provider):
                 audited_regions.add(region)
         return audited_regions
 
-    def get_tagged_resources(self, input_resource_tags: list[str]):
+    def get_tagged_resources(self, input_resource_tags: list[str]) -> list[str]:
         """
         Returns a list of the resources that are going to be scanned based on the given input tags.
 
@@ -789,18 +789,25 @@ class AwsProvider(Provider):
 
     def get_aws_enabled_regions(self, current_session: Session) -> set:
         """get_aws_enabled_regions returns a set of enabled AWS regions"""
+        try:
+            # EC2 Client to check enabled regions
+            service = "ec2"
+            default_region = self.get_default_region(service)
+            ec2_client = current_session.client(service, region_name=default_region)
 
-        # EC2 Client to check enabled regions
-        service = "ec2"
-        default_region = self.get_default_region(service)
-        ec2_client = current_session.client(service, region_name=default_region)
+            enabled_regions = set()
+            # With AllRegions=False we only get the enabled regions for the account
+            for region in ec2_client.describe_regions(AllRegions=False).get(
+                "Regions", []
+            ):
+                enabled_regions.add(region.get("RegionName"))
 
-        enabled_regions = set()
-        # With AllRegions=False we only get the enabled regions for the account
-        for region in ec2_client.describe_regions(AllRegions=False).get("Regions", []):
-            enabled_regions.add(region.get("RegionName"))
-
-        return enabled_regions
+            return enabled_regions
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            return set()
 
     # TODO: review this function
     # Maybe this should be done within the AwsProvider and not in __main__.py

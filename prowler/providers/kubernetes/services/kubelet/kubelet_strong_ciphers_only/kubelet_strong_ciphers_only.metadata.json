@@ -14,7 +14,7 @@
   "Remediation": {
     "Code": {
       "CLI": "--tls-cipher-suites=TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,...",
-      "NativeIaC": "https://docs.bridgecrew.io/docs/ensure-that-the-kubelet-only-makes-use-of-strong-cryptographic-ciphers",
+      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-kubelet-only-makes-use-of-strong-cryptographic-ciphers",
       "Other": "",
       "Terraform": ""
     },

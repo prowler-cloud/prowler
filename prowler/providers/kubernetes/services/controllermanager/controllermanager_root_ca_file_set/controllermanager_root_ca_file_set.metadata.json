@@ -14,7 +14,7 @@
   "Remediation": {
     "Code": {
       "CLI": "--root-ca-file=/path/to/ca-file",
-      "NativeIaC": "https://docs.bridgecrew.io/docs/ensure-that-the-root-ca-file-argument-is-set-as-appropriate",
+      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-root-ca-file-argument-is-set-as-appropriate",
       "Other": "",
       "Terraform": ""
     },

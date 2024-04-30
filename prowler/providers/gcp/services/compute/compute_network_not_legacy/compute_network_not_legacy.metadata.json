@@ -16,7 +16,7 @@
       "CLI": "gcloud compute networks delete <LEGACY_NETWORK_NAME>",
       "NativeIaC": "",
       "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudVPC/legacy-vpc-in-use.html#",
-      "Terraform": "https://docs.bridgecrew.io/docs/ensure-legacy-networks-do-not-exist-for-a-project#terraform"
+      "Terraform": "https://docs.prowler.com/checks/gcp/google-cloud-networking-policies/ensure-legacy-networks-do-not-exist-for-a-project#terraform"
     },
     "Recommendation": {
       "Text": "Ensure that your Google Cloud Platform (GCP) projects are not using legacy networks as this type of network is no longer recommended for production environments because it does not support advanced networking features. Instead, it is strongly recommended to use Virtual Private Cloud (VPC) networks for existing and future GCP projects.",

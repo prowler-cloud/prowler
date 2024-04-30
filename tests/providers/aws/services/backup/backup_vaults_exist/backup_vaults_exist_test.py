@@ -85,3 +85,28 @@ class Test_backup_vaults_exist:
             assert result[0].resource_id == "MyBackupVault"
             assert result[0].resource_arn == backup_vault_arn
             assert result[0].region == AWS_REGION
+
+    def test_access_denied(self):
+        backup_client = mock.MagicMock
+        backup_client.audited_account = AWS_ACCOUNT_NUMBER
+        backup_client.audited_account_arn = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
+        backup_client.region = AWS_REGION
+        backup_client.audited_partition = "aws"
+        backup_client.backup_vault_arn_template = f"arn:{backup_client.audited_partition}:backup:{backup_client.region}:{backup_client.audited_account}:backup-vault"
+        backup_client.__get_backup_vault_arn_template__ = mock.MagicMock(
+            return_value=backup_client.backup_vault_arn_template
+        )
+        backup_client.backup_vaults = None
+        with mock.patch(
+            "prowler.providers.aws.services.backup.backup_service.Backup",
+            new=backup_client,
+        ):
+            # Test Check
+            from prowler.providers.aws.services.backup.backup_vaults_exist.backup_vaults_exist import (
+                backup_vaults_exist,
+            )
+
+            check = backup_vaults_exist()
+            result = check.execute()
+
+            assert len(result) == 0

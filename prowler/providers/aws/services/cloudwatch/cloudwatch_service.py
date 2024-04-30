@@ -16,7 +16,8 @@ class CloudWatch(AWSService):
         super().__init__(__class__.__name__, provider)
         self.metric_alarms = []
         self.__threading_call__(self.__describe_alarms__)
-        self.__list_tags_for_resource__()
+        if self.metric_alarms:
+            self.__list_tags_for_resource__()
 
     def __describe_alarms__(self, regional_client):
         logger.info("CloudWatch - Describing alarms...")
@@ -33,6 +34,8 @@ class CloudWatch(AWSService):
                         namespace = None
                         if "Namespace" in alarm:
                             namespace = alarm["Namespace"]
+                        if self.metric_alarms is None:
+                            self.metric_alarms = []
                         self.metric_alarms.append(
                             MetricAlarm(
                                 arn=alarm["AlarmArn"],
@@ -42,6 +45,17 @@ class CloudWatch(AWSService):
                                 region=regional_client.region,
                             )
                         )
+        except ClientError as error:
+            if error.response["Error"]["Code"] == "AccessDenied":
+                logger.error(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+                if not self.metric_alarms:
+                    self.metric_alarms = None
+            else:
+                logger.error(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -72,15 +86,16 @@ class Logs(AWSService):
         self.log_groups = []
         self.__threading_call__(self.__describe_metric_filters__)
         self.__threading_call__(self.__describe_log_groups__)
-        if (
-            "cloudwatch_log_group_no_secrets_in_logs"
-            in provider.audit_metadata.expected_checks
-        ):
-            self.events_per_log_group_threshold = (
-                1000  # The threshold for number of events to return per log group.
-            )
-            self.__threading_call__(self.__get_log_events__)
-        self.__list_tags_for_resource__()
+        if self.log_groups:
+            if (
+                "cloudwatch_log_group_no_secrets_in_logs"
+                in provider.audit_metadata.expected_checks
+            ):
+                self.events_per_log_group_threshold = (
+                    1000  # The threshold for number of events to return per log group.
+                )
+                self.__threading_call__(self.__get_log_events__)
+            self.__list_tags_for_resource__()
 
     def __describe_metric_filters__(self, regional_client):
         logger.info("CloudWatch Logs - Describing metric filters...")
@@ -94,6 +109,8 @@ class Logs(AWSService):
                     if not self.audit_resources or (
                         is_resource_filtered(arn, self.audit_resources)
                     ):
+                        if self.metric_filters is None:
+                            self.metric_filters = []
                         self.metric_filters.append(
                             MetricFilter(
                                 arn=arn,
@@ -104,6 +121,17 @@ class Logs(AWSService):
                                 region=regional_client.region,
                             )
                         )
+        except ClientError as error:
+            if error.response["Error"]["Code"] == "AccessDeniedException":
+                logger.error(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+                if not self.metric_filters:
+                    self.metric_filters = []
+            else:
+                logger.error(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -126,6 +154,8 @@ class Logs(AWSService):
                         if not retention_days:
                             never_expire = True
                             retention_days = 9999
+                        if self.log_groups is None:
+                            self.log_groups = []
                         self.log_groups.append(
                             LogGroup(
                                 arn=log_group["arn"],
@@ -136,6 +166,17 @@ class Logs(AWSService):
                                 region=regional_client.region,
                             )
                         )
+        except ClientError as error:
+            if error.response["Error"]["Code"] == "AccessDeniedException":
+                logger.error(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+                if not self.log_groups:
+                    self.log_groups = None
+            else:
+                logger.error(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

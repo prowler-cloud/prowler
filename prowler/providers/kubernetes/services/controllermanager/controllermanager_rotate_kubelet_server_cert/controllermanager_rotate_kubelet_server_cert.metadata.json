@@ -14,7 +14,7 @@
   "Remediation": {
     "Code": {
       "CLI": "--feature-gates='RotateKubeletServerCertificate=true'",
-      "NativeIaC": "https://docs.bridgecrew.io/docs/ensure-that-the-rotatekubeletservercertificate-argument-is-set-to-true-for-controller-manager#kubernetes",
+      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-rotatekubeletservercertificate-argument-is-set-to-true-for-controller-manager#kubernetes",
       "Other": "",
       "Terraform": ""
     },

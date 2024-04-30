@@ -18,7 +18,7 @@
       "CLI": "",
       "NativeIaC": "",
       "Other": "",
-      "Terraform": "https://docs.bridgecrew.io/docs/ensure-that-dynamodb-tables-are-encrypted#terraform"
+      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/ensure-that-dynamodb-tables-are-encrypted#terraform"
     },
     "Recommendation": {
       "Text": "Specify an encryption key when you create a new table or switch the encryption keys on an existing table by using the AWS Management Console.",

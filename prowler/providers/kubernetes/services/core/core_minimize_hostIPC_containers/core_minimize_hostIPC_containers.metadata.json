@@ -14,7 +14,7 @@
   "Remediation": {
     "Code": {
       "CLI": "",
-      "NativeIaC": "https://docs.bridgecrew.io/docs/bc_k8s_3#kubernetes",
+      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/bc_k8s_3#kubernetes",
       "Other": "",
       "Terraform": ""
     },

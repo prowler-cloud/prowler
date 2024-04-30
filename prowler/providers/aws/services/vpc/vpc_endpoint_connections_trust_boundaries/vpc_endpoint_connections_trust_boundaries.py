@@ -55,10 +55,14 @@ class vpc_endpoint_connections_trust_boundaries(Check):
                             break
 
                     else:
-                        if isinstance(statement["Principal"]["AWS"], str):
-                            principals = [statement["Principal"]["AWS"]]
+                        if "AWS" in statement["Principal"]:
+                            if isinstance(statement["Principal"]["AWS"], str):
+                                principals = [statement["Principal"]["AWS"]]
+                            else:
+                                principals = statement["Principal"]["AWS"]
                         else:
-                            principals = statement["Principal"]["AWS"]
+                            # If the principal is not an AWS principal, we don't need to check it since it could be a service or a federated principal
+                            principals = []
                         for principal_arn in principals:
                             report = Check_Report_AWS(self.metadata())
                             report.region = endpoint.region

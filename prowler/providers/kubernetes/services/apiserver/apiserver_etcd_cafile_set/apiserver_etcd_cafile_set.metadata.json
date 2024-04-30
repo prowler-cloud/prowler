@@ -14,7 +14,7 @@
   "Remediation": {
     "Code": {
       "CLI": "--etcd-cafile=<path/to/ca-file>",
-      "NativeIaC": "https://docs.bridgecrew.io/docs/ensure-that-the-etcd-cafile-argument-is-set-as-appropriate-1",
+      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-etcd-cafile-argument-is-set-as-appropriate-1",
       "Other": "",
       "Terraform": ""
     },

@@ -19,7 +19,7 @@
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "https://docs.bridgecrew.io/docs/logging_6#aws-console",
+      "Other": "https://docs.prowler.com/checks/aws/logging-policies/logging_6#aws-console",
       "Terraform": ""
     },
     "Recommendation": {

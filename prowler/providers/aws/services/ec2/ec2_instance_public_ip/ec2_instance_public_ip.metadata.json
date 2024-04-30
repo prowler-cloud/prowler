@@ -16,9 +16,9 @@
   "Remediation": {
     "Code": {
       "CLI": "",
-      "NativeIaC": "https://docs.bridgecrew.io/docs/public_12#cloudformation",
-      "Other": "https://docs.bridgecrew.io/docs/public_12#aws-console",
-      "Terraform": "https://docs.bridgecrew.io/docs/public_12#terraform"
+      "NativeIaC": "https://docs.prowler.com/checks/aws/public-policies/public_12#cloudformation",
+      "Other": "https://docs.prowler.com/checks/aws/public-policies/public_12#aws-console",
+      "Terraform": "https://docs.prowler.com/checks/aws/public-policies/public_12#terraform"
     },
     "Recommendation": {
       "Text": "Use an ALB and apply WAF ACL.",

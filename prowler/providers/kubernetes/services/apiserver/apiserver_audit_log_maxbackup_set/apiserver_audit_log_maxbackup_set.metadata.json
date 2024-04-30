@@ -14,7 +14,7 @@
   "Remediation": {
     "Code": {
       "CLI": "--audit-log-maxbackup=10",
-      "NativeIaC": "https://docs.bridgecrew.io/docs/ensure-that-the-audit-log-maxbackup-argument-is-set-to-10-or-as-appropriate#kubernetes",
+      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-audit-log-maxbackup-argument-is-set-to-10-or-as-appropriate#kubernetes",
       "Other": "",
       "Terraform": ""
     },

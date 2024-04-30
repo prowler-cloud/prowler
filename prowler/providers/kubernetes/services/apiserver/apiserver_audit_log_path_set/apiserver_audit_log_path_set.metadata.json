@@ -14,7 +14,7 @@
   "Remediation": {
     "Code": {
       "CLI": "--audit-log-path=/var/log/apiserver/audit.log",
-      "NativeIaC": "https://docs.bridgecrew.io/docs/ensure-that-the-audit-log-path-argument-is-set#kubernetes",
+      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-audit-log-path-argument-is-set#kubernetes",
       "Other": "",
       "Terraform": ""
     },

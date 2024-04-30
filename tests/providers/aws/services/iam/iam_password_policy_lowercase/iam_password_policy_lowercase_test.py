@@ -85,3 +85,25 @@ class Test_iam_password_policy_lowercase:
                 == f"arn:aws:iam:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:password-policy"
             )
             assert result[0].region == AWS_REGION_US_EAST_1
+
+    def test_access_denied(self):
+        from prowler.providers.aws.services.iam.iam_service import IAM
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+
+        with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=aws_provider,
+        ):
+            with mock.patch(
+                "prowler.providers.aws.services.iam.iam_password_policy_lowercase.iam_password_policy_lowercase.iam_client",
+                new=IAM(aws_provider),
+            ) as service_client:
+                from prowler.providers.aws.services.iam.iam_password_policy_lowercase.iam_password_policy_lowercase import (
+                    iam_password_policy_lowercase,
+                )
+
+                service_client.password_policy = None
+                check = iam_password_policy_lowercase()
+                result = check.execute()
+                assert len(result) == 0

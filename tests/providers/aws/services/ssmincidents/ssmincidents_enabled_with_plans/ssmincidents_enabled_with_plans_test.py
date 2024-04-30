@@ -164,3 +164,30 @@ class Test_ssmincidents_enabled_with_plans:
             assert result[0].resource_id == AWS_ACCOUNT_NUMBER
             assert result[0].resource_arn == REPLICATION_SET_ARN
             assert result[0].region == AWS_REGION_US_EAST_1
+
+    def test_access_denied(self):
+        ssmincidents_client = mock.MagicMock
+        ssmincidents_client.audited_account = AWS_ACCOUNT_NUMBER
+        ssmincidents_client.audited_partition = "aws"
+        ssmincidents_client.audited_account_arn = (
+            f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
+        )
+        ssmincidents_client.region = AWS_REGION_US_EAST_1
+        ssmincidents_client.replication_set_arn_template = f"arn:{ssmincidents_client.audited_partition}:ssm-incidents:{ssmincidents_client.region}:{ssmincidents_client.audited_account}:replication-set"
+        ssmincidents_client.__get_replication_set_arn_template__ = mock.MagicMock(
+            return_value=ssmincidents_client.replication_set_arn_template
+        )
+        ssmincidents_client.replication_set = None
+        with mock.patch(
+            "prowler.providers.aws.services.ssmincidents.ssmincidents_service.SSMIncidents",
+            new=ssmincidents_client,
+        ):
+            # Test Check
+            from prowler.providers.aws.services.ssmincidents.ssmincidents_enabled_with_plans.ssmincidents_enabled_with_plans import (
+                ssmincidents_enabled_with_plans,
+            )
+
+            check = ssmincidents_enabled_with_plans()
+            result = check.execute()
+
+            assert len(result) == 0

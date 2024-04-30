@@ -22,7 +22,6 @@ class TrustedAdvisor(AWSService):
                 support_region = "us-east-1"
             else:
                 support_region = "us-gov-west-1"
-
             self.client = self.session.client(self.service, region_name=support_region)
             self.client.region = support_region
             self.__describe_services__()
@@ -102,6 +101,19 @@ class TrustedAdvisor(AWSService):
                 == "Amazon Web Services Premium Support Subscription is required to use this service."
             ):
                 logger.warning(
+                    f"{self.region} --"
+                    f" {error.__class__.__name__}[{error.__traceback__.tb_lineno}]:"
+                    f" {error}"
+                )
+            elif error.response["Error"]["Code"] == "AccessDeniedException":
+                logger.error(
+                    f"{self.region} --"
+                    f" {error.__class__.__name__}[{error.__traceback__.tb_lineno}]:"
+                    f" {error}"
+                )
+                self.premium_support = None
+            else:
+                logger.error(
                     f"{self.region} --"
                     f" {error.__class__.__name__}[{error.__traceback__.tb_lineno}]:"
                     f" {error}"

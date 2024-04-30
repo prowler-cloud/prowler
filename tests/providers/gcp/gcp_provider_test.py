@@ -28,7 +28,7 @@ class TestGCPProvider:
                 number="55555555",
                 id="project/55555555",
                 name="test-project",
-                labels="",
+                labels=["test:value"],
                 lifecycle_state="",
             )
         }
@@ -73,7 +73,7 @@ class TestGCPProvider:
                 number="55555555",
                 id="project/55555555",
                 name="test-project",
-                labels="",
+                labels=["test:value"],
                 lifecycle_state="",
             )
         }
@@ -140,7 +140,7 @@ class TestGCPProvider:
                 number="55555555",
                 id="project/55555555",
                 name="test-project",
-                labels="",
+                labels=["test:value"],
                 lifecycle_state="",
             )
         }

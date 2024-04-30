@@ -58,12 +58,12 @@ from prowler.providers.<provider>.lib.service.service import ServiceParentClass
 # Create a class for the Service
 ################## <Service>
 class <Service>(ServiceParentClass):
-    def __init__(self, audit_info):
+    def __init__(self, provider):
         # Call Service Parent Class __init__
         # We use the __class__.__name__ to get it automatically
         # from the Service Class name but you can pass a custom
         # string if the provider's API service name is different
-        super().__init__(__class__.__name__, audit_info)
+        super().__init__(__class__.__name__, provider)
 
         # Create an empty dictionary of items to be gathered,
         # using the unique ID as the dictionary key
@@ -178,6 +178,8 @@ class <Service>(ServiceParentClass):
                 f"{<item>.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 ```
+???+note
+    To avoid fake findings, when Prowler can't retrieve the items, because an Access Denied or similar error, we set that items value as `None`.
 
 #### Service Models
 
@@ -223,10 +225,10 @@ Each Prowler service requires a service client to use the service in the checks.
 The following is the `<new_service_name>_client.py` containing the initialization of the service's class we have just created so the service's checks can use them:
 
 ```python
-from prowler.providers.<provider>.lib.audit_info.audit_info import audit_info
+from prowler.providers.common.common import get_global_provider
 from prowler.providers.<provider>.services.<new_service_name>.<new_service_name>_service import <Service>
 
-<new_service_name>_client = <Service>(audit_info)
+<new_service_name>_client = <Service>(get_global_provider())
 ```
 
 ## Permissions

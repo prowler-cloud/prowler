@@ -16,9 +16,9 @@
   "Remediation": {
     "Code": {
       "CLI": "aws s3control put-public-access-block --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true --account-id <account_id>",
-      "NativeIaC": "https://docs.bridgecrew.io/docs/bc_aws_s3_21#cloudformation",
+      "NativeIaC": "https://docs.prowler.com/checks/aws/s3-policies/bc_aws_s3_21#cloudformation",
       "Other": "https://github.com/cloudmatos/matos/tree/master/remediations/aws/s3/s3control/block-public-access",
-      "Terraform": "https://docs.bridgecrew.io/docs/bc_aws_s3_21#terraform"
+      "Terraform": "https://docs.prowler.com/checks/aws/s3-policies/bc_aws_s3_21#terraform"
     },
     "Recommendation": {
       "Text": "You can enable Public Access Block at the account level to prevent the exposure of your data stored in S3.",

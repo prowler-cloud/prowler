@@ -249,11 +249,11 @@ Each Prowler check has metadata associated which is stored at the same level of 
     # Code holds different methods to remediate the FAIL finding
     "Code": {
       # CLI holds the command in the provider native CLI to remediate it
-      "CLI": "https://docs.bridgecrew.io/docs/public_8#cli-command",
+      "CLI": "https://docs.prowler.com/checks/public_8#cli-command",
       # NativeIaC holds the native IaC code to remediate it, use "https://docs.bridgecrew.io/docs"
       "NativeIaC": "",
       # Other holds the other commands, scripts or code to remediate it, use "https://www.trendmicro.com/cloudoneconformity"
-      "Other": "https://docs.bridgecrew.io/docs/public_8#aws-console",
+      "Other": "https://docs.prowler.com/checks/public_8#aws-console",
       # Terraform holds the Terraform code to remediate it, use "https://docs.bridgecrew.io/docs"
       "Terraform": ""
     },

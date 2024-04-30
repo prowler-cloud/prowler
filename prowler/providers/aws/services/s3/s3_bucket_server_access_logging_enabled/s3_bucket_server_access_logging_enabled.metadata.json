@@ -15,10 +15,10 @@
   "RelatedUrl": "",
   "Remediation": {
     "Code": {
-      "CLI": "https://docs.bridgecrew.io/docs/s3_13-enable-logging#cli-command",
+      "CLI": "https://docs.prowler.com/checks/aws/s3-policies/s3_13-enable-logging#cli-command",
       "NativeIaC": "",
-      "Other": "https://docs.bridgecrew.io/docs/s3_13-enable-logging#aws-console",
-      "Terraform": "https://docs.bridgecrew.io/docs/s3_13-enable-logging#terraform"
+      "Other": "https://docs.prowler.com/checks/aws/s3-policies/s3_13-enable-logging#aws-console",
+      "Terraform": "https://docs.prowler.com/checks/aws/s3-policies/s3_13-enable-logging#terraform"
     },
     "Recommendation": {
       "Text": "Ensure that S3 buckets have Logging enabled. CloudTrail data events can be used in place of S3 bucket logging. If that is the case, this finding can be considered a false positive.",

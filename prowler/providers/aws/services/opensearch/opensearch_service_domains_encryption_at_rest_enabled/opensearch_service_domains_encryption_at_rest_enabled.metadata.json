@@ -18,7 +18,7 @@
   "Remediation": {
     "Code": {
       "CLI": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Elasticsearch/encryption-at-rest.html",
-      "NativeIaC": "https://docs.bridgecrew.io/docs/elasticsearch_3-enable-encryptionatrest#fix---builtime",
+      "NativeIaC": "https://docs.prowler.com/checks/aws/elasticsearch-policies/elasticsearch_3-enable-encryptionatrest#fix---builtime",
       "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Elasticsearch/encryption-at-rest.html",
       "Terraform": ""
     },
