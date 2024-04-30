@@ -11,7 +11,8 @@ class cognito_user_pool_token_revocation_enabled(Check):
             report.resource_name = pool.name
             report.resource_id = pool.id
             report.resource_arn = pool.arn
-            if pool.user_pool_client.get("EnableTokenRevocation"):
+            report.resource_tags = pool.tags
+            if pool.user_pool_client.enable_token_revocation:
                 report.status = "PASS"
                 report.status_extended = (
                     f"User pool {pool.id} has token revocation enabled."

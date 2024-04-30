@@ -11,6 +11,7 @@ class cognito_user_pool_deletion_protection_enabled(Check):
             report.resource_name = pool.name
             report.resource_id = pool.id
             report.resource_arn = pool.arn
+            report.resource_tags = pool.tags
             if pool.deletion_protection == "ACTIVE":
                 report.status = "PASS"
                 report.status_extended = (

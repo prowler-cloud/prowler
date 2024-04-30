@@ -2,6 +2,7 @@ from datetime import datetime
 from unittest import mock
 
 from prowler.providers.aws.services.cognito.cognito_service import (
+    CompromisedCredentialsRiskConfiguration,
     RiskConfiguration,
     UserPool,
 )
@@ -36,10 +37,10 @@ class Test_cognito_user_pool_advanced_security_block_sign_in_compromised_credent
             user_pool_arn: UserPool(
                 advanced_security_mode="OFF",
                 risk_configuration=RiskConfiguration(
-                    compromised_credentials_risk_configuration={
-                        "EventFilter": "SIGN_IN",
-                        "Actions": {"EventAction": "BLOCK"},
-                    }
+                    compromised_credentials_risk_configuration=CompromisedCredentialsRiskConfiguration(
+                        event_filter=["SIGN_IN"],
+                        actions={"EventAction": "BLOCK"},
+                    )
                 ),
                 region=AWS_REGION_US_EAST_1,
                 id=user_pool_id,
@@ -81,10 +82,10 @@ class Test_cognito_user_pool_advanced_security_block_sign_in_compromised_credent
             user_pool_arn: UserPool(
                 advanced_security_mode="AUDIT",
                 risk_configuration=RiskConfiguration(
-                    compromised_credentials_risk_configuration={
-                        "EventFilter": "SIGN_IN",
-                        "Actions": {"EventAction": "BLOCK"},
-                    }
+                    compromised_credentials_risk_configuration=CompromisedCredentialsRiskConfiguration(
+                        event_filter=["SIGN_IN"],
+                        actions={"EventAction": "BLOCK"},
+                    )
                 ),
                 region=AWS_REGION_US_EAST_1,
                 id=user_pool_id,
@@ -126,10 +127,10 @@ class Test_cognito_user_pool_advanced_security_block_sign_in_compromised_credent
             user_pool_arn: UserPool(
                 advanced_security_mode="ENFORCED",
                 risk_configuration=RiskConfiguration(
-                    compromised_credentials_risk_configuration={
-                        "EventFilter": ["SIGN_IN"],
-                        "Actions": {"EventAction": "BLOCK"},
-                    }
+                    compromised_credentials_risk_configuration=CompromisedCredentialsRiskConfiguration(
+                        event_filter=["SIGN_IN"],
+                        actions={"EventAction": "BLOCK"},
+                    )
                 ),
                 region=AWS_REGION_US_EAST_1,
                 id=user_pool_id,
@@ -171,10 +172,10 @@ class Test_cognito_user_pool_advanced_security_block_sign_in_compromised_credent
             user_pool_arn: UserPool(
                 advanced_security_mode="ENFORCED",
                 risk_configuration=RiskConfiguration(
-                    compromised_credentials_risk_configuration={
-                        "EventFilter": [],
-                        "Actions": {"EventAction": "BLOCK"},
-                    }
+                    compromised_credentials_risk_configuration=CompromisedCredentialsRiskConfiguration(
+                        event_filter=[],
+                        actions={"EventAction": "BLOCK"},
+                    )
                 ),
                 region=AWS_REGION_US_EAST_1,
                 id=user_pool_id,

@@ -14,6 +14,7 @@ class cognito_user_pool_self_registration_enabled(Check):
             report.resource_name = user_pool.name
             report.resource_id = user_pool.id
             report.resource_arn = user_pool.arn
+            report.resource_tags = user_pool.tags
             report.status = "PASS"
             report.status_extended = (
                 f"User pool {user_pool.id} has self registration disabled."
@@ -27,12 +28,17 @@ class cognito_user_pool_self_registration_enabled(Check):
                 )
                 associated_identity_pools = []
                 for identity_pool in cognito_identity_client.identity_pools.values():
-                    for associated_pool in identity_pool.associated_pools.values():
+                    for associated_pool in identity_pool.associated_pools:
                         if (
                             f"cognito-idp.{user_pool.region}.amazonaws.com/{user_pool.id}"
-                            == associated_pool
+                            == associated_pool.get("ProviderName", "")
                         ):
-                            associated_identity_pools.append(identity_pool.name)
+                            if identity_pool.roles.authenticated:
+                                associated_identity_pools.append(
+                                    f"{identity_pool.name }({identity_pool.roles.authenticated})"
+                                )
+                            else:
+                                associated_identity_pools.append(identity_pool.name)
                 if associated_identity_pools:
                     report.status_extended = f"User pool {user_pool.id} has self registration enabled and is associated with the following identity pools: {(', ').join(associated_identity_pools)}"
             findings.append(report)

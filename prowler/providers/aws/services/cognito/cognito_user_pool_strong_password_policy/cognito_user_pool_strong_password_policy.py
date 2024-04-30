@@ -11,6 +11,7 @@ class cognito_user_pool_strong_password_policy(Check):
             report.resource_name = pool.name
             report.resource_id = pool.id
             report.resource_arn = pool.arn
+            report.resource_tags = pool.tags
             if pool.password_policy:
                 if (
                     pool.password_policy.get("RequireLowercase", False)

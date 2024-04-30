@@ -12,6 +12,7 @@ class cognito_user_pool_web_acl_associated(Check):
             report.resource_name = pool.name
             report.resource_id = pool.id
             report.resource_arn = pool.arn
+            report.resource_tags = pool.tags
             has_association = False
             acl_associated = ""
             for acl in wafv2_client.web_acls:

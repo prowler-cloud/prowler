@@ -2,6 +2,7 @@ from datetime import datetime
 from unittest import mock
 
 from prowler.providers.aws.services.cognito.cognito_service import (
+    AccountTakeoverRiskConfiguration,
     RiskConfiguration,
     UserPool,
 )
@@ -36,11 +37,11 @@ class Test_cognito_user_pool_advanced_security_adaptative_authentication_block_s
             user_pool_arn: UserPool(
                 advanced_security_mode="OFF",
                 risk_configuration=RiskConfiguration(
-                    account_takeover_risk_configuration={
-                        "LowAction": {"EventAction": "BLOCK"},
-                        "MediumAction": {"EventAction": "BLOCK"},
-                        "HighAction": {"EventAction": "BLOCK"},
-                    }
+                    account_takeover_risk_configuration=AccountTakeoverRiskConfiguration(
+                        low_action={"EventAction": "BLOCK"},
+                        medium_action={"EventAction": "BLOCK"},
+                        high_action={"EventAction": "BLOCK"},
+                    )
                 ),
                 region=AWS_REGION_US_EAST_1,
                 id=user_pool_id,
@@ -82,11 +83,11 @@ class Test_cognito_user_pool_advanced_security_adaptative_authentication_block_s
             user_pool_arn: UserPool(
                 advanced_security_mode="AUDIT",
                 risk_configuration=RiskConfiguration(
-                    account_takeover_risk_configuration={
-                        "LowAction": {"EventAction": "BLOCK"},
-                        "MediumAction": {"EventAction": "BLOCK"},
-                        "HighAction": {"EventAction": "BLOCK"},
-                    }
+                    account_takeover_risk_configuration=AccountTakeoverRiskConfiguration(
+                        low_action={"EventAction": "BLOCK"},
+                        medium_action={"EventAction": "BLOCK"},
+                        high_action={"EventAction": "BLOCK"},
+                    )
                 ),
                 region=AWS_REGION_US_EAST_1,
                 id=user_pool_id,
@@ -128,11 +129,11 @@ class Test_cognito_user_pool_advanced_security_adaptative_authentication_block_s
             user_pool_arn: UserPool(
                 advanced_security_mode="ENFORCED",
                 risk_configuration=RiskConfiguration(
-                    account_takeover_risk_configuration={
-                        "LowAction": {"EventAction": "BLOCK"},
-                        "MediumAction": {"EventAction": "BLOCK"},
-                        "HighAction": {"EventAction": "BLOCK"},
-                    }
+                    account_takeover_risk_configuration=AccountTakeoverRiskConfiguration(
+                        low_action={"EventAction": "BLOCK"},
+                        medium_action={"EventAction": "BLOCK"},
+                        high_action={"EventAction": "BLOCK"},
+                    )
                 ),
                 region=AWS_REGION_US_EAST_1,
                 id=user_pool_id,
@@ -174,10 +175,10 @@ class Test_cognito_user_pool_advanced_security_adaptative_authentication_block_s
             user_pool_arn: UserPool(
                 advanced_security_mode="ENFORCED",
                 risk_configuration=RiskConfiguration(
-                    account_takeover_risk_configuration={
-                        "MediumAction": {"EventAction": "BLOCK"},
-                        "HighAction": {"EventAction": "BLOCK"},
-                    }
+                    account_takeover_risk_configuration=AccountTakeoverRiskConfiguration(
+                        medium_action={"EventAction": "BLOCK"},
+                        high_action={"EventAction": "BLOCK"},
+                    )
                 ),
                 region=AWS_REGION_US_EAST_1,
                 id=user_pool_id,

@@ -13,20 +13,25 @@ class cognito_user_pool_advanced_security_adaptative_authentication_block_sign_i
             report.resource_name = pool.name
             report.resource_id = pool.id
             report.resource_arn = pool.arn
-            if (
-                pool.advanced_security_mode == "ENFORCED"
-                and pool.risk_configuration.account_takeover_risk_configuration.get(
-                    "LowAction", {}
-                ).get("EventAction", "")
-                == "BLOCK"
-                and pool.risk_configuration.account_takeover_risk_configuration.get(
-                    "MediumAction", {}
-                ).get("EventAction", "")
-                == "BLOCK"
-                and pool.risk_configuration.account_takeover_risk_configuration.get(
-                    "HighAction", {}
-                ).get("EventAction", "")
-                == "BLOCK"
+            report.resource_tags = pool.tags
+            if pool.advanced_security_mode == "ENFORCED" and all(
+                [
+                    pool.risk_configuration.account_takeover_risk_configuration.low_action
+                    and pool.risk_configuration.account_takeover_risk_configuration.low_action.get(
+                        "EventAction", ""
+                    )
+                    == "BLOCK",
+                    pool.risk_configuration.account_takeover_risk_configuration.medium_action
+                    and pool.risk_configuration.account_takeover_risk_configuration.medium_action.get(
+                        "EventAction", ""
+                    )
+                    == "BLOCK",
+                    pool.risk_configuration.account_takeover_risk_configuration.high_action
+                    and pool.risk_configuration.account_takeover_risk_configuration.high_action.get(
+                        "EventAction", ""
+                    )
+                    == "BLOCK",
+                ]
             ):
                 report.status = "PASS"
                 report.status_extended = f"User pool {pool.id} has advanced security enforced with adaptative authentication sign-in blocked."

@@ -1,7 +1,10 @@
 from datetime import datetime
 from unittest import mock
 
-from prowler.providers.aws.services.cognito.cognito_service import UserPool
+from prowler.providers.aws.services.cognito.cognito_service import (
+    UserPool,
+    UserPoolClient,
+)
 from tests.providers.aws.utils import AWS_ACCOUNT_NUMBER, AWS_REGION_US_EAST_1
 
 
@@ -29,7 +32,9 @@ class Test_cognito_user_pool_prevent_reveal_user_existence:
         user_pool_name = "eu-west-1_123456789"
         cognito_client.user_pools = {
             user_pool_arn: UserPool(
-                user_pool_client={"PreventUserExistenceErrors": "DISABLED"},
+                user_pool_client=UserPoolClient(
+                    prevent_user_existence_errors="DISABLED"
+                ),
                 region=AWS_REGION_US_EAST_1,
                 id=user_pool_id,
                 arn=user_pool_arn,
@@ -63,7 +68,9 @@ class Test_cognito_user_pool_prevent_reveal_user_existence:
         user_pool_name = "user_pool_name"
         cognito_client.user_pools = {
             user_pool_arn: UserPool(
-                user_pool_client={"PreventUserExistenceErrors": "ENABLED"},
+                user_pool_client=UserPoolClient(
+                    prevent_user_existence_errors="ENABLED"
+                ),
                 region=AWS_REGION_US_EAST_1,
                 id=user_pool_id,
                 arn=user_pool_arn,

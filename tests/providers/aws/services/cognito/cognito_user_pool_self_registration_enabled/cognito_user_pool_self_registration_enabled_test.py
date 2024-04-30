@@ -3,6 +3,7 @@ from unittest import mock
 
 from prowler.providers.aws.services.cognito.cognito_service import (
     IdentityPool,
+    IdentityPoolRoles,
     UserPool,
 )
 from tests.providers.aws.utils import AWS_ACCOUNT_NUMBER, AWS_REGION_US_EAST_1
@@ -93,15 +94,21 @@ class Test_cognito_user_pool_self_registration_enabled:
         identity_pool_name = "identity_pool_name"
         identity_pool_id = "eu-west-1_123456789"
         identity_pool_arn = f"arn:aws:cognito-identity:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:identitypool/eu-west-1_123456789"
+        authenticated_role = "authenticated_role"
         cognito_identity_client.identity_pools = {
             identity_pool_arn: IdentityPool(
                 id=identity_pool_id,
                 arn=identity_pool_arn,
                 region=AWS_REGION_US_EAST_1,
                 name=identity_pool_name,
-                associated_pools={
-                    "ProviderName": f"cognito-idp.{AWS_REGION_US_EAST_1}.amazonaws.com/eu-west-1_123456789"
-                },
+                associated_pools=[
+                    {
+                        "ProviderName": f"cognito-idp.{AWS_REGION_US_EAST_1}.amazonaws.com/eu-west-1_123456789"
+                    }
+                ],
+                roles=IdentityPoolRoles(
+                    authenticated=authenticated_role,
+                ),
             )
         }
         with mock.patch(
@@ -148,15 +155,21 @@ class Test_cognito_user_pool_self_registration_enabled:
         identity_pool_name = "eu-west-1_123456789"
         identity_pool_id = "eu-west-1_123456789"
         identity_pool_arn = f"arn:aws:cognito-identity:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:identitypool/eu-west-1_123456789"
+        authenticated_role = "authenticated_role"
         cognito_identity_client.identity_pools = {
             identity_pool_arn: IdentityPool(
                 id=identity_pool_id,
                 arn=identity_pool_arn,
                 region=AWS_REGION_US_EAST_1,
                 name=identity_pool_name,
-                associated_pools={
-                    "ProviderName": f"cognito-idp.{AWS_REGION_US_EAST_1}.amazonaws.com/eu-west-1_123456789"
-                },
+                associated_pools=[
+                    {
+                        "ProviderName": f"cognito-idp.{AWS_REGION_US_EAST_1}.amazonaws.com/eu-west-1_123456789"
+                    }
+                ],
+                roles=IdentityPoolRoles(
+                    authenticated=authenticated_role,
+                ),
             )
         }
         with mock.patch(
@@ -176,7 +189,7 @@ class Test_cognito_user_pool_self_registration_enabled:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert result[0].status_extended == (
-                f"User pool {user_pool_name} has self registration enabled and is associated with the following identity pools: {identity_pool_name}"
+                f"User pool {user_pool_name} has self registration enabled and is associated with the following identity pools: {identity_pool_name}({authenticated_role})"
             )
             assert result[0].resource_name == user_pool_name
             assert result[0].resource_id == user_pool_id

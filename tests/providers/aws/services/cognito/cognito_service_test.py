@@ -3,9 +3,13 @@ from boto3 import client
 from moto import mock_aws
 
 from prowler.providers.aws.services.cognito.cognito_service import (
+    AccountTakeoverRiskConfiguration,
     CognitoIdentity,
     CognitoIDP,
+    CompromisedCredentialsRiskConfiguration,
+    IdentityPoolRoles,
     RiskConfiguration,
+    UserPoolClient,
 )
 from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
@@ -93,7 +97,41 @@ class Test_Cognito_Service:
             assert user_pool.advanced_security_mode is not None
             assert user_pool.tags is not None
             assert user_pool.account_recovery_settings is not None
-            assert user_pool.user_pool_client is not None
+            assert user_pool.tags is not None
+
+    @mock_aws
+    def test_get_user_pool_client(self):
+        cognito_client = mock.MagicMock()
+        user_pool_arn = "user_pool_test_1"
+        cognito_client[user_pool_arn].id = "user_pool_id"
+        cognito_client[user_pool_arn].arn = user_pool_arn
+        cognito_client[user_pool_arn].name = "user_pool_name"
+        cognito_client[user_pool_arn].region = "eu-west-1"
+        cognito_client[user_pool_arn].user_pool_client = UserPoolClient(
+            prevent_user_existence_errors="ENABLED",
+            enable_token_revocation=True,
+        )
+
+        with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_aws_provider(),
+        ), mock.patch(
+            "prowler.providers.aws.services.cognito.cognito_idp_client.cognito_idp_client",
+            new=cognito_client,
+        ):
+            for user_pool in cognito_client.user_pools.values():
+                assert user_pool.region == "eu-west-1"
+                assert user_pool.name == "user_pool_name"
+                assert user_pool.id == "user_pool_id"
+                assert (
+                    user_pool.user_pool_client.prevent_user_existence_errors
+                    == "ENABLED"
+                )
+                assert user_pool.user_pool_client.enable_token_revocation is True
+                assert (
+                    user_pool.user_pool_client.prevent_user_existence_errors
+                    == "ENABLED"
+                )
 
     @mock_aws
     def test_get_user_pool_mfa_config(self):
@@ -131,17 +169,15 @@ class Test_Cognito_Service:
         cognito_client.user_pools[user_pool_arn].name = "user_pool_name"
         cognito_client.user_pools[user_pool_arn].region = "eu-west-1"
         cognito_client.user_pools[user_pool_arn].risk_configuration = RiskConfiguration(
-            compromised_credentials_risk_configuration={
-                "EventFilter": ["PASSWORD_CHANGE", "SIGN_UP", "SIGN_IN"],
-                "Actions": {"EventAction": "BLOCK"},
-            },
-            account_takeover_risk_configuration={
-                "Actions": {
-                    "LowAction": {"Notify": False, "EventAction": "BLOCK"},
-                    "MediumAction": {"Notify": False, "EventAction": "BLOCK"},
-                    "HighAction": {"Notify": False, "EventAction": "BLOCK"},
-                }
-            },
+            compromised_credentials_risk_configuration=CompromisedCredentialsRiskConfiguration(
+                event_filter=["PASSWORD_CHANGE", "SIGN_UP", "SIGN_IN"],
+                actions={"EventAction": "BLOCK"},
+            ),
+            account_takeover_risk_configuration=AccountTakeoverRiskConfiguration(
+                low_action={"Notify": False, "EventAction": "BLOCK"},
+                medium_action={"Notify": False, "EventAction": "BLOCK"},
+                high_action={"Notify": False, "EventAction": "BLOCK"},
+            ),
         )
 
         with mock.patch(
@@ -163,14 +199,19 @@ class Test_Cognito_Service:
                     }
                 )
                 assert (
-                    user_pool.risk_configuration.account_takeover_risk_configuration
+                    user_pool.risk_configuration.account_takeover_risk_configuration.low_action
                     == {
-                        "Actions": {
-                            "LowAction": {"Notify": False, "EventAction": "BLOCK"},
-                            "MediumAction": {"Notify": False, "EventAction": "BLOCK"},
-                            "HighAction": {"Notify": False, "EventAction": "BLOCK"},
-                        }
+                        "Notify": False,
+                        "EventAction": "BLOCK",
                     }
+                )
+                assert (
+                    user_pool.risk_configuration.account_takeover_risk_configuration.medium_action
+                    == {"Notify": False, "EventAction": "BLOCK"}
+                )
+                assert (
+                    user_pool.risk_configuration.account_takeover_risk_configuration.high_action
+                    == {"Notify": False, "EventAction": "BLOCK"}
                 )
 
     @mock_aws
@@ -253,3 +294,38 @@ class Test_Cognito_Service:
             assert identity_pool.region == "eu-west-1"
             assert identity_pool.id == identity_pool_id
             assert identity_pool.associated_pools is not None
+            assert identity_pool.tags is not None
+            assert identity_pool.allow_unauthenticated_identities is not None
+
+    @mock_aws
+    def test_get_identity_pool_tags(self):
+        cognito_identity_client = mock.MagicMock()
+        identity_pool_arn = "identity_pool_test_1"
+        cognito_identity_client[identity_pool_arn].id = "identity_pool_id"
+        cognito_identity_client[identity_pool_arn].arn = identity_pool_arn
+        cognito_identity_client[identity_pool_arn].name = "identity_pool_name"
+        cognito_identity_client[identity_pool_arn].region = "eu-west-1"
+        cognito_identity_client[identity_pool_arn].tags = {"tag_key": "tag_value"}
+        cognito_identity_client[identity_pool_arn].allow_unauthenticated_identities = (
+            True
+        )
+        cognito_identity_client[identity_pool_arn].roles = IdentityPoolRoles(
+            authenticated="authenticated_role",
+            unauthenticated="unauthenticated_role",
+        )
+
+        with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_aws_provider(),
+        ), mock.patch(
+            "prowler.providers.aws.services.cognito.cognito_identity_client.cognito_identity_client",
+            new=cognito_identity_client,
+        ):
+            for identity_pool in cognito_identity_client.identity_pools.values():
+                assert identity_pool.region == "eu-west-1"
+                assert identity_pool.name == "identity_pool_name"
+                assert identity_pool.id == "identity_pool_id"
+                assert identity_pool.tags == {"tag_key": "tag_value"}
+                assert identity_pool.allow_unauthenticated_identities is True
+                assert identity_pool.roles.authenticated == "authenticated_role"
+                assert identity_pool.roles.unauthenticated == "unauthenticated_role"

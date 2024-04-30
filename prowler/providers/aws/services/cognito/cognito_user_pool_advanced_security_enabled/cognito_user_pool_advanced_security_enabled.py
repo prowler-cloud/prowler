@@ -11,6 +11,7 @@ class cognito_user_pool_advanced_security_enabled(Check):
             report.resource_name = pool.name
             report.resource_id = pool.id
             report.resource_arn = pool.arn
+            report.resource_tags = pool.tags
             if pool.advanced_security_mode == "ENFORCED":
                 report.status = "PASS"
                 report.status_extended = (

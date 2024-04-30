@@ -16,6 +16,7 @@ class CognitoIDP(AWSService):
         self.user_pools = {}
         self.__threading_call__(self.__list_user_pools__)
         self.__describe_user_pools__()
+        self.__get_user_pool_client__()
         self.__get_user_pool_mfa_config__()
         self.__get_user_pool_risk_configuration__()
 
@@ -73,6 +74,26 @@ class CognitoIDP(AWSService):
                     self.user_pools[user_pool.arn].account_recovery_settings = (
                         user_pool_details.get("AccountRecoverySetting", {})
                     )
+                    self.user_pools[user_pool.arn].admin_create_user_config = (
+                        user_pool_details.get("AdminCreateUserConfig", {})
+                    )
+                    self.user_pools[user_pool.arn].tags = user_pool_details.get(
+                        "UserPoolTags", []
+                    )
+                except Exception as error:
+                    logger.error(
+                        f"{user_pool.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
+        except Exception as error:
+            logger.error(
+                f"{user_pool.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def __get_user_pool_client__(self):
+        logger.info("Cognito - Getting User Pool Client...")
+        try:
+            for user_pool in self.user_pools.values():
+                try:
                     user_pool_client = self.regional_clients[
                         user_pool.region
                     ].describe_user_pool_client(
@@ -89,9 +110,13 @@ class CognitoIDP(AWSService):
                     )[
                         "UserPoolClient"
                     ]
-                    self.user_pools[user_pool.arn].user_pool_client = user_pool_client
-                    self.user_pools[user_pool.arn].admin_create_user_config = (
-                        user_pool_details.get("AdminCreateUserConfig", {})
+                    self.user_pools[user_pool.arn].user_pool_client = UserPoolClient(
+                        prevent_user_existence_errors=user_pool_client.get(
+                            "PreventUserExistenceErrors", ""
+                        ),
+                        enable_token_revocation=user_pool_client.get(
+                            "EnableTokenRevocation", False
+                        ),
                     )
                 except Exception as error:
                     logger.error(
@@ -140,16 +165,38 @@ class CognitoIDP(AWSService):
                     if risk_configuration.get("RiskConfiguration"):
                         self.user_pools[user_pool.arn].risk_configuration = (
                             RiskConfiguration(
-                                compromised_credentials_risk_configuration=risk_configuration.get(
-                                    "RiskConfiguration", {}
-                                ).get(
-                                    "CompromisedCredentialsRiskConfiguration", {}
+                                compromised_credentials_risk_configuration=CompromisedCredentialsRiskConfiguration(
+                                    event_filter=risk_configuration.get(
+                                        "RiskConfiguration", {}
+                                    )
+                                    .get("CompromisedCredentialsRiskConfiguration", {})
+                                    .get("EventFilter", []),
+                                    actions=risk_configuration.get(
+                                        "RiskConfiguration", {}
+                                    )
+                                    .get("CompromisedCredentialsRiskConfiguration", {})
+                                    .get("Actions", {}),
                                 ),
-                                account_takeover_risk_configuration=risk_configuration.get(
-                                    "RiskConfiguration", {}
-                                )
-                                .get("AccountTakeoverRiskConfiguration", {})
-                                .get("Actions", {}),
+                                account_takeover_risk_configuration=AccountTakeoverRiskConfiguration(
+                                    low_action=risk_configuration.get(
+                                        "RiskConfiguration", {}
+                                    )
+                                    .get("AccountTakeoverRiskConfiguration", {})
+                                    .get("Actions", {})
+                                    .get("LowAction", {}),
+                                    medium_action=risk_configuration.get(
+                                        "RiskConfiguration", {}
+                                    )
+                                    .get("AccountTakeoverRiskConfiguration", {})
+                                    .get("Actions", {})
+                                    .get("MediumAction", {}),
+                                    high_action=risk_configuration.get(
+                                        "RiskConfiguration", {}
+                                    )
+                                    .get("AccountTakeoverRiskConfiguration", {})
+                                    .get("Actions", {})
+                                    .get("HighAction", {}),
+                                ),
                             )
                         )
                 except Exception as error:
@@ -168,6 +215,7 @@ class CognitoIdentity(AWSService):
         self.identity_pools = {}
         self.__threading_call__(self.__list_identity_pools__)
         self.__describe_identity_pools__()
+        self.__get_identity_pool_roles__()
 
     def __list_identity_pools__(self, regional_client):
         logger.info("Cognito - Listing Identity Pools...")
@@ -206,7 +254,40 @@ class CognitoIdentity(AWSService):
                         identity_pool.region
                     ].describe_identity_pool(IdentityPoolId=identity_pool.id)
                     self.identity_pools[identity_pool.arn].associated_pools = (
-                        identity_pool_details.get("CognitoIdentityProviders", {})
+                        identity_pool_details.get("CognitoIdentityProviders", [])
+                    )
+                    self.identity_pools[identity_pool.arn].tags = (
+                        identity_pool_details.get("IdentityPoolTags", {})
+                    )
+                    self.identity_pools[
+                        identity_pool.arn
+                    ].allow_unauthenticated_identities = identity_pool_details.get(
+                        "AllowUnauthenticatedIdentities", False
+                    )
+                except Exception as error:
+                    logger.error(
+                        f"{identity_pool.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
+        except Exception as error:
+            logger.error(
+                f"{identity_pool.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def __get_identity_pool_roles__(self):
+        logger.info("Cognito - Getting Identity Pool Roles...")
+        try:
+            for identity_pool in self.identity_pools.values():
+                try:
+                    identity_pool_roles = self.regional_clients[
+                        identity_pool.region
+                    ].get_identity_pool_roles(IdentityPoolId=identity_pool.id)
+                    self.identity_pools[identity_pool.arn].roles = IdentityPoolRoles(
+                        authenticated=identity_pool_roles.get("Roles", {}).get(
+                            "authenticated", ""
+                        ),
+                        unauthenticated=identity_pool_roles.get("Roles", {}).get(
+                            "unauthenticated", ""
+                        ),
                     )
                 except Exception as error:
                     logger.error(
@@ -224,9 +305,27 @@ class MFAConfig(BaseModel):
     status: str
 
 
+class AccountTakeoverRiskConfiguration(BaseModel):
+    low_action: Optional[dict]
+    medium_action: Optional[dict]
+    high_action: Optional[dict]
+
+
+class CompromisedCredentialsRiskConfiguration(BaseModel):
+    event_filter: Optional[list]
+    actions: Optional[dict]
+
+
 class RiskConfiguration(BaseModel):
-    compromised_credentials_risk_configuration: Optional[dict]
-    account_takeover_risk_configuration: Optional[dict]
+    compromised_credentials_risk_configuration: Optional[
+        CompromisedCredentialsRiskConfiguration
+    ]
+    account_takeover_risk_configuration: Optional[AccountTakeoverRiskConfiguration]
+
+
+class UserPoolClient(BaseModel):
+    prevent_user_existence_errors: Optional[str]
+    enable_token_revocation: Optional[bool]
 
 
 class UserPool(BaseModel):
@@ -241,11 +340,17 @@ class UserPool(BaseModel):
     status: str
     password_policy: Optional[dict]
     mfa_config: Optional[MFAConfig]
-    tags: Optional[list] = []
+    tags: Optional[dict]
     account_recovery_settings: Optional[dict]
-    user_pool_client: Optional[dict] = {}
+    user_pool_client: Optional[UserPoolClient]
     risk_configuration: Optional[RiskConfiguration]
     admin_create_user_config: Optional[dict] = {}
+    tags: Optional[list]
+
+
+class IdentityPoolRoles(BaseModel):
+    authenticated: Optional[str]
+    unauthenticated: Optional[str]
 
 
 class IdentityPool(BaseModel):
@@ -253,4 +358,7 @@ class IdentityPool(BaseModel):
     arn: str
     name: str
     region: str
-    associated_pools: Optional[dict]
+    tags: Optional[dict]
+    associated_pools: Optional[list]
+    allow_unauthenticated_identities: Optional[bool]
+    roles: Optional[IdentityPoolRoles]
