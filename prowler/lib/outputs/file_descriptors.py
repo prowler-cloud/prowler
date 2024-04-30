@@ -89,6 +89,13 @@ def fill_file_descriptors(output_modes, output_directory, output_filename, provi
                             filename, output_mode, Check_Output_CSV_GCP_CIS
                         )
                         file_descriptors.update({output_mode: file_descriptor})
+                    elif output_mode == "mitre_attack_gcp":
+                        file_descriptor = initialize_file_descriptor(
+                            filename,
+                            output_mode,
+                            MitreAttackGCP,
+                        )
+                        file_descriptors.update({output_mode: file_descriptor})
                     else:
                         file_descriptor = initialize_file_descriptor(
                             filename,
@@ -126,13 +133,6 @@ def fill_file_descriptors(output_modes, output_directory, output_filename, provi
                             filename,
                             output_mode,
                             MitreAttackAzure,
-                        )
-                        file_descriptors.update({output_mode: file_descriptor})
-                    elif output_mode == "mitre_attack_gcp":
-                        file_descriptor = initialize_file_descriptor(
-                            filename,
-                            output_mode,
-                            MitreAttackGCP,
                         )
                         file_descriptors.update({output_mode: file_descriptor})
                     else:
