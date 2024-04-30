@@ -25,7 +25,7 @@ class Test_ec2_securitygroup_with_many_ingress_egress_rules:
         aws_provider._audit_config = {"max_security_group_rules": 50}
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_securitygroup_with_many_ingress_egress_rules.ec2_securitygroup_with_many_ingress_egress_rules.ec2_client",
@@ -77,7 +77,7 @@ class Test_ec2_securitygroup_with_many_ingress_egress_rules:
         aws_provider._audit_config = {"max_security_group_rules": 50}
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_securitygroup_with_many_ingress_egress_rules.ec2_securitygroup_with_many_ingress_egress_rules.ec2_client",
@@ -139,7 +139,7 @@ class Test_ec2_securitygroup_with_many_ingress_egress_rules:
         aws_provider._audit_config = {"max_security_group_rules": 50}
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ), mock.patch(
             "prowler.providers.aws.services.ec2.ec2_securitygroup_with_many_ingress_egress_rules.ec2_securitygroup_with_many_ingress_egress_rules.ec2_client",

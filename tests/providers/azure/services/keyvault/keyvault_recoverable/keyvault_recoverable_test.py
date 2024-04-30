@@ -16,7 +16,7 @@ class Test_keyvault_recoverable:
         keyvault_client.key_vaults = {}
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_azure_provider(),
         ), mock.patch(
             "prowler.providers.azure.services.keyvault.keyvault_recoverable.keyvault_recoverable.keyvault_client",
@@ -36,7 +36,7 @@ class Test_keyvault_recoverable:
         keyvault_id = str(uuid4())
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_azure_provider(),
         ), mock.patch(
             "prowler.providers.azure.services.keyvault.keyvault_recoverable.keyvault_recoverable.keyvault_client",
@@ -87,7 +87,7 @@ class Test_keyvault_recoverable:
         keyvault_id = str(uuid4())
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_azure_provider(),
         ), mock.patch(
             "prowler.providers.azure.services.keyvault.keyvault_recoverable.keyvault_recoverable.keyvault_client",
@@ -153,7 +153,7 @@ class Test_keyvault_recoverable:
         keyvault_id = str(uuid4())
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_azure_provider(),
         ), mock.patch(
             "prowler.providers.azure.services.keyvault.keyvault_recoverable.keyvault_recoverable.keyvault_client",

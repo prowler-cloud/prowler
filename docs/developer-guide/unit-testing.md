@@ -465,7 +465,7 @@ class Test_compute_project_os_login_enabled:
         # In this scenario we have to mock the app_client from the check to enforce that the compute_client used is the one created above
         # And also is mocked the return value of get_global_provider function to return our GCP mocked provider defined in fixtures
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_gcp_provider(),
         ), mock.patch(
             "prowler.providers.gcp.services.compute.compute_project_os_login_enabled.compute_project_os_login_enabled.compute_client",
@@ -505,7 +505,7 @@ class Test_compute_project_os_login_enabled:
         compute_client.projects = [project]
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_gcp_provider(),
         ), mock.patch(
             "prowler.providers.gcp.services.compute.compute_project_os_login_enabled.compute_project_os_login_enabled.compute_client",
@@ -567,7 +567,7 @@ class Test_app_ensure_http_is_redirected_to_https:
         # In this scenario we have to mock the app_client from the check to enforce that the app_client used is the one created above
         # And also is mocked the return value of get_global_provider function to return our Azure mocked provider defined in fixtures
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_azure_provider(),
         ), mock.patch(
             "prowler.providers.azure.services.app.app_ensure_http_is_redirected_to_https.app_ensure_http_is_redirected_to_https.app_client",
@@ -617,7 +617,7 @@ class Test_app_ensure_http_is_redirected_to_https:
         app_client = mock.MagicMock
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_azure_provider(),
         ), mock.patch(
             "prowler.providers.azure.services.app.app_ensure_http_is_redirected_to_https.app_ensure_http_is_redirected_to_https.app_client",

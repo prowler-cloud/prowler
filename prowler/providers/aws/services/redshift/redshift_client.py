@@ -1,4 +1,4 @@
 from prowler.providers.aws.services.redshift.redshift_service import Redshift
-from prowler.providers.common.common import get_global_provider
+from prowler.providers.common.provider import Provider
 
-redshift_client = Redshift(get_global_provider())
+redshift_client = Redshift(Provider.get_global_provider())

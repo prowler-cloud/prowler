@@ -48,11 +48,12 @@ from prowler.providers.aws.lib.security_hub.security_hub import (
     resolve_security_hub_previous_findings,
     verify_security_hub_integration_enabled_per_region,
 )
-from prowler.providers.common.common import set_global_provider_object
+from prowler.providers.common.provider import Provider
 from prowler.providers.common.quick_inventory import run_provider_quick_inventory
 
 
 def prowler():
+
     # Parse Arguments
     parser = ProwlerArgumentParser()
     args = parser.parse()
@@ -167,7 +168,8 @@ def prowler():
         sys.exit()
 
     # Provider to scan
-    global_provider = set_global_provider_object(args)
+    Provider.set_global_provider(args)
+    global_provider = Provider.get_global_provider()
 
     # Print Provider Credentials
     if not args.only_logs:

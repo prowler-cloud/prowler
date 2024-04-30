@@ -1,4 +1,4 @@
-from prowler.providers.common.common import get_global_provider
+from prowler.providers.common.provider import Provider
 from prowler.providers.gcp.services.kms.kms_service import KMS
 
-kms_client = KMS(get_global_provider())
+kms_client = KMS(Provider.get_global_provider())
