@@ -3,7 +3,7 @@ from pydantic import BaseModel
 
 class MitreAttackAWS(BaseModel):
     """
-    Check_Output_MITRE_ATTACK generates a finding's output in CSV MITRE ATTACK format for AWS.
+    MitreAttackAWS generates a finding's output in CSV MITRE ATTACK format for AWS.
     """
 
     Provider: str
