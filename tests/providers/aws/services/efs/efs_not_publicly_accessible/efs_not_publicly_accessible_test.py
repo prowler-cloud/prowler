@@ -1,4 +1,3 @@
-from re import search
 from unittest import mock
 
 from prowler.providers.aws.services.efs.efs_service import FileSystem
@@ -101,12 +100,14 @@ class Test_efs_not_publicly_accessible:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
-            assert search(
-                "has a policy which does not allow access to everyone",
-                result[0].status_extended,
+            assert (
+                result[0].status_extended
+                == f"EFS {file_system_id} has a policy which does not allow access to everyone."
             )
             assert result[0].resource_id == file_system_id
             assert result[0].resource_arn == efs_arn
+            assert result[0].region == AWS_REGION
+            assert result[0].resource_tags == []
 
     def test_efs_valid_policy_with_mount_target_condition(self):
         efs_client = mock.MagicMock
@@ -133,12 +134,14 @@ class Test_efs_not_publicly_accessible:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
-            assert search(
-                "has a policy which does not allow access to everyone",
-                result[0].status_extended,
+            assert (
+                result[0].status_extended
+                == f"EFS {file_system_id} has a policy which does not allow access to everyone."
             )
             assert result[0].resource_id == file_system_id
             assert result[0].resource_arn == efs_arn
+            assert result[0].region == AWS_REGION
+            assert result[0].resource_tags == []
 
     def test_efs_valid_policy_with_source_arn_condition(self):
         efs_client = mock.MagicMock
@@ -165,12 +168,14 @@ class Test_efs_not_publicly_accessible:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
-            assert search(
-                "has a policy which does not allow access to everyone",
-                result[0].status_extended,
+            assert (
+                result[0].status_extended
+                == f"EFS {file_system_id} has a policy which does not allow access to everyone."
             )
             assert result[0].resource_id == file_system_id
             assert result[0].resource_arn == efs_arn
+            assert result[0].region == AWS_REGION
+            assert result[0].resource_tags == []
 
     def test_efs_invalid_policy(self):
         efs_client = mock.MagicMock
@@ -198,12 +203,14 @@ class Test_efs_not_publicly_accessible:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert search(
-                "has a policy which allows access to everyone",
-                result[0].status_extended,
+            assert (
+                result[0].status_extended
+                == f"EFS {file_system_id} has a policy which allows access to everyone."
             )
             assert result[0].resource_id == file_system_id
             assert result[0].resource_arn == efs_arn
+            assert result[0].region == AWS_REGION
+            assert result[0].resource_tags == []
 
     def test_efs_no_policy(self):
         efs_client = mock.MagicMock
@@ -230,9 +237,11 @@ class Test_efs_not_publicly_accessible:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert search(
-                "doesn't have any policy which means it grants full access to any client",
-                result[0].status_extended,
+            assert (
+                result[0].status_extended
+                == f"EFS {file_system_id} doesn't have any policy which means it grants full access to any client."
             )
             assert result[0].resource_id == file_system_id
             assert result[0].resource_arn == efs_arn
+            assert result[0].region == AWS_REGION
+            assert result[0].resource_tags == []
