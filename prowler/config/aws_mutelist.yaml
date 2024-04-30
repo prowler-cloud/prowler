@@ -21,9 +21,13 @@ Mutelist:
             - "*"
           Resources:
             - "StackSet-AWSControlTowerGuardrailAWS-*"
+            - "StackSet-AWSControlTowerGuardrailAWS-GR-*"
             - "StackSet-AWSControlTowerBP-*"
             - "StackSet-AWSControlTowerSecurityResources-*"
             - "StackSet-AWSControlTowerLoggingResources-*"
+            - "StackSet-AWSControlTowerExecutionRole-*"
+            - "AWSControlTowerBP-BASELINE-CLOUDTRAIL-MASTER"
+            - "AWSControlTowerBP-BASELINE-CONFIG-MASTER"
         "cloudtrail_*":
           Regions:
             - "*"
@@ -54,6 +58,10 @@ Mutelist:
             - "aws-controltower-ReadOnlyExecutionRole"
             - "AWSControlTower_VPCFlowLogsRole"
             - "AWSControlTowerExecution"
+            - "AWSControlTowerCloudTrailRole"
+            - "AWSControlTowerConfigAggregatorRoleForOrganizations"
+            - "AWSControlTowerStackSetRole"
+            - "AWSControlTowerAdmin"
             - "AWSAFTAdmin"
             - "AWSAFTExecution"
             - "AWSAFTService"
@@ -61,7 +69,13 @@ Mutelist:
           Regions:
             - "*"
           Resources:
+            - "AWSControlTowerAccountServiceRolePolicy"
             - "AWSControlTowerServiceRolePolicy"
+            - "AWSControlTowerStackSetRolePolicy"
+            - "AWSControlTowerCloudTrailRolePolicy"
+            - "AWSControlTowerAdminPolicy"
+            - "AWSLoadBalancerControllerIAMPolicy"
+            - "AWSControlTowerCloudTrailRolePolicy"
         "s3_bucket_*":
           Regions:
             - "*"
