@@ -410,7 +410,7 @@ Then, at the check_level when Python tries to import the client with `from prowl
 
 ### Services
 
-For testing the AWS services we have to follow the same logic as with the AWS checks, we have to check if the AWS API calls made by the service are covered by Moto and we have to test the service `__init__` to verifiy that the information is being correctly retrieved.
+For testing the AWS services we have to follow the same logic as with the AWS checks, we have to check if the AWS API calls made by the service are covered by Moto and we have to test the service `__init__` to verify that the information is being correctly retrieved.
 
 The service tests could act as *Integration Tests* since we test how the service retrieves the information from the provider, but since Moto or the custom mock objects mocks that calls this test will fall into *Unit Tests*.
 

@@ -15,7 +15,7 @@ MAX_WORKERS = 10
 class AWSService:
     """The AWSService class offers a parent class for each AWS Service to generate:
     - AWS Regional Clients
-    - Shared information like the account ID and ARN, the the AWS partition and the checks audited
+    - Shared information like the account ID and ARN, the AWS partition and the checks audited
     - AWS Session
     - Thread pool for the __threading_call__
     - Also handles if the AWS Service is Global

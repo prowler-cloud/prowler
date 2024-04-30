@@ -222,7 +222,7 @@ else:
     # Handle the case where there is location column
     if "LOCATION" in data.columns:
         data["REGION"] = data["LOCATION"]
-    # Hande the case where there is no region column
+    # Handle the case where there is no region column
     if "REGION" not in data.columns:
         data["REGION"] = "-"
     # Handle the case where the region is null
@@ -685,7 +685,7 @@ def filter_data(
             ########################################################
             """Line  PLOT 1"""
             ########################################################
-            # Formating date columns
+            # Formatting date columns
             filtered_data_sp["TIMESTAMP_formatted"] = pd.to_datetime(
                 filtered_data_sp["TIMESTAMP"]
             ).dt.strftime("%Y-%m-%d")
