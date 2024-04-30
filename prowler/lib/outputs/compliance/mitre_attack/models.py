@@ -31,7 +31,7 @@ class MitreAttackAWS(BaseModel):
 
 class MitreAttackAzure(BaseModel):
     """
-    Check_Output_MITRE_ATTACK generates a finding's output in CSV MITRE ATTACK format for AWS.
+    MitreAttackAzure generates a finding's output in CSV MITRE ATTACK format for Azure.
     """
 
     Provider: str
