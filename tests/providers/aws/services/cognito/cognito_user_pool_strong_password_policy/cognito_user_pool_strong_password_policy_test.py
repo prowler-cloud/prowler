@@ -25,6 +25,8 @@ class Test_cognito_user_pool_strong_password_policy:
     def test_cognito_user_pools_bad_password_policy(self):
         cognito_client = mock.MagicMock
         user_pool_arn = f"arn:aws:cognito-idp:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:userpool/eu-west-1_123456789"
+        user_pool_id = "eu-west-1_123456789"
+        user_pool_name = "user_pool_name"
         cognito_client.user_pools = {
             user_pool_arn: UserPool(
                 password_policy={
@@ -35,9 +37,9 @@ class Test_cognito_user_pool_strong_password_policy:
                     "MinimumLength": 13,
                 },
                 region=AWS_REGION_US_EAST_1,
-                id="eu-west-1_123456789",
+                id=user_pool_id,
                 arn=user_pool_arn,
-                name="eu-west-1_123456789",
+                name=user_pool_name,
                 last_modified=datetime.now(),
                 creation_date=datetime.now(),
                 status="ACTIVE",
@@ -57,12 +59,17 @@ class Test_cognito_user_pool_strong_password_policy:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert result[0].status_extended == (
-                "User pool eu-west-1_123456789 does not have strong password policy."
+                f"User pool {user_pool_id} does not have strong password policy."
             )
+            assert result[0].resource_name == user_pool_name
+            assert result[0].resource_id == user_pool_id
+            assert result[0].resource_arn == user_pool_arn
 
     def test_cognito_user_pools_strong_password_policy(self):
         cognito_client = mock.MagicMock
         user_pool_arn = f"arn:aws:cognito-idp:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:userpool/eu-west-1_123456789"
+        user_pool_id = "eu-west-1_123456789"
+        user_pool_name = "user_pool_name"
         cognito_client.user_pools = {
             user_pool_arn: UserPool(
                 password_policy={
@@ -73,9 +80,9 @@ class Test_cognito_user_pool_strong_password_policy:
                     "MinimumLength": 14,
                 },
                 region=AWS_REGION_US_EAST_1,
-                id="eu-west-1_123456789",
+                id=user_pool_id,
                 arn=user_pool_arn,
-                name="eu-west-1_123456789",
+                name=user_pool_name,
                 last_modified=datetime.now(),
                 creation_date=datetime.now(),
                 status="ACTIVE",
@@ -95,19 +102,24 @@ class Test_cognito_user_pool_strong_password_policy:
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert result[0].status_extended == (
-                "User pool eu-west-1_123456789 has strong password policy."
+                f"User pool {user_pool_id} has strong password policy."
             )
+            assert result[0].resource_name == user_pool_name
+            assert result[0].resource_id == user_pool_id
+            assert result[0].resource_arn == user_pool_arn
 
     def test_cognito_user_pools_no_password_policy(self):
         cognito_client = mock.MagicMock
         user_pool_arn = f"arn:aws:cognito-idp:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:userpool/eu-west-1_123456789"
+        user_pool_id = "eu-west-1_123456789"
+        user_pool_name = "user_pool_name"
         cognito_client.user_pools = {
             user_pool_arn: UserPool(
                 password_policy=None,
                 region=AWS_REGION_US_EAST_1,
-                id="eu-west-1_123456789",
+                id=user_pool_id,
                 arn=user_pool_arn,
-                name="eu-west-1_123456789",
+                name=user_pool_name,
                 last_modified=datetime.now(),
                 creation_date=datetime.now(),
                 status="ACTIVE",
@@ -127,5 +139,8 @@ class Test_cognito_user_pool_strong_password_policy:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert result[0].status_extended == (
-                "User pool eu-west-1_123456789 has not password policy set."
+                f"User pool {user_pool_id} has not password policy set."
             )
+            assert result[0].resource_name == user_pool_name
+            assert result[0].resource_id == user_pool_id
+            assert result[0].resource_arn == user_pool_arn

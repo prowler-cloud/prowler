@@ -25,13 +25,15 @@ class Test_cognito_user_pool_advanced_security_enabled:
     def test_cognito_user_pools_advanced_security_off(self):
         cognito_client = mock.MagicMock
         user_pool_arn = f"arn:aws:cognito-idp:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:userpool/eu-west-1_123456789"
+        user_pool_name = "user_pool_name"
+        user_pool_id = "eu-west-1_123456789"
         cognito_client.user_pools = {
             user_pool_arn: UserPool(
                 advanced_security_mode="OFF",
                 region=AWS_REGION_US_EAST_1,
-                id="eu-west-1_123456789",
+                id=user_pool_id,
                 arn=user_pool_arn,
-                name="eu-west-1_123456789",
+                name=user_pool_name,
                 last_modified=datetime.now(),
                 creation_date=datetime.now(),
                 status="ACTIVE",
@@ -51,19 +53,24 @@ class Test_cognito_user_pool_advanced_security_enabled:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert result[0].status_extended == (
-                "User pool eu-west-1_123456789 has advanced security disabled."
+                f"User pool {user_pool_id} has advanced security disabled."
             )
+            assert result[0].resource_name == user_pool_name
+            assert result[0].resource_id == user_pool_id
+            assert result[0].resource_arn == user_pool_arn
 
     def test_cognito_user_pools_advanced_security_audit(self):
         cognito_client = mock.MagicMock
         user_pool_arn = f"arn:aws:cognito-idp:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:userpool/eu-west-1_123456789"
+        user_pool_name = "user_pool_name"
+        user_pool_id = "eu-west-1_123456789"
         cognito_client.user_pools = {
             user_pool_arn: UserPool(
                 advanced_security_mode="AUDIT",
                 region=AWS_REGION_US_EAST_1,
-                id="eu-west-1_123456789",
+                id=user_pool_id,
                 arn=user_pool_arn,
-                name="eu-west-1_123456789",
+                name=user_pool_name,
                 last_modified=datetime.now(),
                 creation_date=datetime.now(),
                 status="ACTIVE",
@@ -83,19 +90,24 @@ class Test_cognito_user_pool_advanced_security_enabled:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert result[0].status_extended == (
-                "User pool eu-west-1_123456789 has advanced security audit enabled."
+                f"User pool {user_pool_id} has advanced security audit enabled."
             )
+            assert result[0].resource_name == user_pool_name
+            assert result[0].resource_id == user_pool_id
+            assert result[0].resource_arn == user_pool_arn
 
     def test_cognito_user_pools_advanced_security_enforced(self):
         cognito_client = mock.MagicMock
         user_pool_arn = f"arn:aws:cognito-idp:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:userpool/eu-west-1_123456789"
+        user_pool_name = "user_pool_name"
+        user_pool_id = "eu-west-1_123456789"
         cognito_client.user_pools = {
             user_pool_arn: UserPool(
                 advanced_security_mode="ENFORCED",
                 region=AWS_REGION_US_EAST_1,
-                id="eu-west-1_123456789",
+                id=user_pool_id,
                 arn=user_pool_arn,
-                name="eu-west-1_123456789",
+                name=user_pool_name,
                 last_modified=datetime.now(),
                 creation_date=datetime.now(),
                 status="ACTIVE",
@@ -115,5 +127,8 @@ class Test_cognito_user_pool_advanced_security_enabled:
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert result[0].status_extended == (
-                "User pool eu-west-1_123456789 has advanced security enforced."
+                f"User pool {user_pool_id} has advanced security enforced."
             )
+            assert result[0].resource_name == user_pool_name
+            assert result[0].resource_id == user_pool_id
+            assert result[0].resource_arn == user_pool_arn

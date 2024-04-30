@@ -32,12 +32,14 @@ class Test_cognito_user_pool_web_acl_associated:
     def test_cognito_no_web_acls(self):
         cognito_client = mock.MagicMock
         user_pool_arn = f"arn:aws:cognito-idp:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:userpool/eu-west-1_123456789"
+        user_pool_id = "eu-west-1_123456789"
+        user_pool_name = "user_pool_name"
         cognito_client.user_pools = {
             user_pool_arn: UserPool(
                 region=AWS_REGION_US_EAST_1,
-                id="eu-west-1_123456789",
+                id=user_pool_id,
                 arn=user_pool_arn,
-                name="eu-west-1_123456789",
+                name=user_pool_name,
                 last_modified=datetime.now(),
                 creation_date=datetime.now(),
                 status="ACTIVE",
@@ -67,16 +69,21 @@ class Test_cognito_user_pool_web_acl_associated:
                 result[0].status_extended
                 == "Cognito User Pool is not associated with a Web ACL"
             )
+            assert result[0].resource_id == user_pool_id
+            assert result[0].resource_arn == user_pool_arn
+            assert result[0].resource_name == user_pool_name
 
     def test_cognito_with_web_acls(self):
         cognito_client = mock.MagicMock
         user_pool_arn = f"arn:aws:cognito-idp:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:userpool/eu-west-1_123456789"
+        user_pool_id = "eu-west-1_123456789"
+        user_pool_name = "user_pool_name"
         cognito_client.user_pools = {
             user_pool_arn: UserPool(
                 region=AWS_REGION_US_EAST_1,
-                id="eu-west-1_123456789",
+                id=user_pool_id,
                 arn=user_pool_arn,
-                name="eu-west-1_123456789",
+                name=user_pool_name,
                 last_modified=datetime.now(),
                 creation_date=datetime.now(),
                 status="ACTIVE",
@@ -84,11 +91,14 @@ class Test_cognito_user_pool_web_acl_associated:
         }
         cognito_client.audited_account = AWS_ACCOUNT_NUMBER
         wafv2_client = mock.MagicMock
+        web_acl_arn = "arn:aws:wafv2:us-east-1:123456789012:regional/webacl/abcd1234"
+        web_acl_name = "abcd1234"
+        web_acl_id = "abcd1234"
         wafv2_client.web_acls = [
             WebAclv2(
-                arn="arn:aws:wafv2:us-east-1:123456789012:regional/webacl/abcd1234",
-                name="abcd1234",
-                id="abcd1234",
+                arn=web_acl_arn,
+                name=web_acl_name,
+                id=web_acl_id,
                 albs=[],
                 user_pools=["userpool/eu-west-1_123456789"],
                 region="us-east-1",
@@ -113,7 +123,8 @@ class Test_cognito_user_pool_web_acl_associated:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "Cognito User Pool is associated with the Web ACL abcd1234"
+                == f"Cognito User Pool is associated with the Web ACL {web_acl_name}"
             )
-            assert result[0].resource_id == "eu-west-1_123456789"
+            assert result[0].resource_id == user_pool_id
             assert result[0].resource_arn == user_pool_arn
+            assert result[0].resource_name == user_pool_name
