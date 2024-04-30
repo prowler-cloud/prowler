@@ -16,12 +16,14 @@ Mutelist:
             - "*"
           Resources:
             - "aws-controltower-NotificationForwarder"
-        "cloudformation_stacks_*":
+        "cloudformation_stack*":
           Regions:
             - "*"
           Resources:
             - "StackSet-AWSControlTowerGuardrailAWS-*"
             - "StackSet-AWSControlTowerBP-*"
+            - "StackSet-AWSControlTowerSecurityResources-*"
+            - "StackSet-AWSControlTowerLoggingResources-*"
         "cloudtrail_*":
           Regions:
             - "*"
@@ -55,7 +57,7 @@ Mutelist:
             - "AWSAFTAdmin"
             - "AWSAFTExecution"
             - "AWSAFTService"
-        "iam_policy_*":
+        "iam_*_policy_*":
           Regions:
             - "*"
           Resources:
