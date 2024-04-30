@@ -3,14 +3,8 @@ Mutelist:
     "*":
       ########################### AWS CONTROL TOWER ###########################
       ### The following entries includes all resources created by AWS Control Tower when setting up a landing zone ###
-      # https://docs.aws.amazon.com/controltower/latest/userguide/how-control-tower-works.html #
+      # https://docs.aws.amazon.com/controltower/latest/userguide/shared-account-resources.html #
       Checks:
-        "cloudwatch_log_group_*":
-          Regions:
-            - "*"
-          Resources:
-            - "/aws/lambda/aws-controltower-NotificationForwarder"
-            - "StackSet-AWSControlTowerBP-*"
         "awslambda_function_*":
           Regions:
             - "*"
@@ -21,7 +15,6 @@ Mutelist:
             - "*"
           Resources:
             - "StackSet-AWSControlTowerGuardrailAWS-*"
-            - "StackSet-AWSControlTowerGuardrailAWS-GR-*"
             - "StackSet-AWSControlTowerBP-*"
             - "StackSet-AWSControlTowerSecurityResources-*"
             - "StackSet-AWSControlTowerLoggingResources-*"
@@ -38,6 +31,8 @@ Mutelist:
             - "*"
           Resources:
             - "aws-controltower/CloudTrailLogs"
+            - "/aws/lambda/aws-controltower-NotificationForwarder"
+            - "StackSet-AWSControlTowerBP-*"
         "iam_inline_policy_no_administrative_privileges":
           Regions:
             - "*"
@@ -72,7 +67,6 @@ Mutelist:
             - "AWSControlTowerAccountServiceRolePolicy"
             - "AWSControlTowerServiceRolePolicy"
             - "AWSControlTowerStackSetRolePolicy"
-            - "AWSControlTowerCloudTrailRolePolicy"
             - "AWSControlTowerAdminPolicy"
             - "AWSLoadBalancerControllerIAMPolicy"
             - "AWSControlTowerCloudTrailRolePolicy"
