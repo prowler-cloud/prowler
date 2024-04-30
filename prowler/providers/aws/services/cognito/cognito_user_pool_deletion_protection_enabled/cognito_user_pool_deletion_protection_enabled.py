@@ -21,5 +21,6 @@ class cognito_user_pool_deletion_protection_enabled(Check):
                 report.status_extended = (
                     f"User pool {pool.id} has deletion protection disabled."
                 )
+            findings.append(report)
 
         return findings

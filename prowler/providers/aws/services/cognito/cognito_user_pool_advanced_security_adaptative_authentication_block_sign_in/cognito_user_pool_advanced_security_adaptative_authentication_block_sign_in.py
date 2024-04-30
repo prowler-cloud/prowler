@@ -16,22 +16,16 @@ class cognito_user_pool_advanced_security_adaptative_authentication_block_sign_i
             if (
                 pool.advanced_security_mode == "ENFORCED"
                 and pool.risk_configuration.account_takeover_risk_configuration.get(
-                    "Actions"
-                )
-                .get("LowAction")
-                .get("EventAction")
+                    "LowAction", {}
+                ).get("EventAction", None)
                 == "BLOCK"
                 and pool.risk_configuration.account_takeover_risk_configuration.get(
-                    "Actions"
-                )
-                .get("MediumAction")
-                .get("EventAction")
+                    "MediumAction", {}
+                ).get("EventAction", None)
                 == "BLOCK"
                 and pool.risk_configuration.account_takeover_risk_configuration.get(
-                    "Actions"
-                )
-                .get("HighAction")
-                .get("EventAction")
+                    "HighAction", {}
+                ).get("EventAction", None)
                 == "BLOCK"
             ):
                 report.status = "PASS"

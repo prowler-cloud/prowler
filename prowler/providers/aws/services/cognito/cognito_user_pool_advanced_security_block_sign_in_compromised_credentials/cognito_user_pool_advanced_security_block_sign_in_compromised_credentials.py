@@ -24,6 +24,7 @@ class cognito_user_pool_advanced_security_block_sign_in_compromised_credentials(
                 )
                 == "BLOCK"
             ):
+                print(pool.risk_configuration)
                 report.status = "PASS"
                 report.status_extended = f"User pool {pool.id} has advanced security enforced with compromised credentials sign-in blocked."
             else:

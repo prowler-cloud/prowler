@@ -19,7 +19,7 @@ class cognito_user_pool_token_revocation_enabled(Check):
             else:
                 report.status = "FAIL"
                 report.status_extended = (
-                    f"User pool {pool.id} does not have token revocation enabled."
+                    f"User pool {pool.id} has token revocation disabled."
                 )
             findings.append(report)
 

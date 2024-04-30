@@ -147,9 +147,9 @@ class CognitoIDP(AWSService):
                                 ),
                                 account_takeover_risk_configuration=risk_configuration.get(
                                     "RiskConfiguration", {}
-                                ).get(
-                                    "AccountTakeoverRiskConfiguration", {}
-                                ),
+                                )
+                                .get("AccountTakeoverRiskConfiguration", {})
+                                .get("Actions", {}),
                             )
                         )
                 except Exception as error:
@@ -244,7 +244,7 @@ class UserPool(BaseModel):
     tags: Optional[list] = []
     account_recovery_settings: Optional[dict]
     user_pool_client: Optional[dict] = {}
-    risk_configuration: Optional[dict] = {}
+    risk_configuration: Optional[RiskConfiguration]
     admin_create_user_config: Optional[dict] = {}
 
 
@@ -253,4 +253,4 @@ class IdentityPool(BaseModel):
     arn: str
     name: str
     region: str
-    associated_pools: dict = {}
+    associated_pools: Optional[dict]

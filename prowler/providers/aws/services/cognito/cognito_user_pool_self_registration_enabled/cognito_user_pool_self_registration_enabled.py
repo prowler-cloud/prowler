@@ -25,10 +25,10 @@ class cognito_user_pool_self_registration_enabled(Check):
                 )
                 associated_identity_pools = []
                 for identity_pool in cognito_identity_client.identity_pools.values():
-                    for associated_pool in identity_pool.associated_pools:
+                    for associated_pool in identity_pool.associated_pools.values():
                         if (
                             f"cognito-idp.{user_pool.region}.amazonaws.com/{user_pool.id}"
-                            == associated_pool.get("ProviderName")
+                            == associated_pool
                         ):
                             associated_identity_pools.append(identity_pool.name)
                 if associated_identity_pools:

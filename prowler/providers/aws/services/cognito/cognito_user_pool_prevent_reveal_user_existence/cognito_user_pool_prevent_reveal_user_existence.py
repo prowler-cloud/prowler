@@ -18,7 +18,9 @@ class cognito_user_pool_prevent_reveal_user_existence(Check):
                 )
             else:
                 report.status = "FAIL"
-                report.status_extended = f"User pool {pool.id} does not have PreventUserExistenceErrors enabled."
+                report.status_extended = (
+                    f"User pool {pool.id} has PreventUserExistenceErrors disabled."
+                )
             findings.append(report)
 
         return findings

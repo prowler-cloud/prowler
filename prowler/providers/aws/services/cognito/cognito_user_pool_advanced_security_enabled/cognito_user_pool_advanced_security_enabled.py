@@ -16,6 +16,11 @@ class cognito_user_pool_advanced_security_enabled(Check):
                 report.status_extended = (
                     f"User pool {pool.id} has advanced security enforced."
                 )
+            elif pool.advanced_security_mode == "AUDIT":
+                report.status = "FAIL"
+                report.status_extended = (
+                    f"User pool {pool.id} has advanced security audit enabled."
+                )
             else:
                 report.status = "FAIL"
                 report.status_extended = (

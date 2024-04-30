@@ -3,6 +3,7 @@ from boto3 import client
 from moto import mock_aws
 
 from prowler.providers.aws.services.cognito.cognito_service import (
+    CognitoIdentity,
     CognitoIDP,
     RiskConfiguration,
 )
@@ -17,7 +18,7 @@ from tests.providers.aws.utils import (
 class Test_Cognito_Service:
     # Test Cognito Service
     @mock_aws
-    def test_service(self):
+    def test_service_idp(self):
         aws_provider = set_mocked_aws_provider(
             audited_regions=[AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
@@ -26,7 +27,7 @@ class Test_Cognito_Service:
 
     # Test Cognito client
     @mock_aws
-    def test_client(self):
+    def test_client_idp(self):
         aws_provider = set_mocked_aws_provider(
             audited_regions=[AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
@@ -36,7 +37,7 @@ class Test_Cognito_Service:
 
     # Test Cognito session
     @mock_aws
-    def test__get_session__(self):
+    def test__get_session_idp__(self):
         aws_provider = set_mocked_aws_provider(
             audited_regions=[AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
@@ -45,7 +46,7 @@ class Test_Cognito_Service:
 
     # Test Cognito Session
     @mock_aws
-    def test_audited_account(self):
+    def test_audited_account_idp(self):
         aws_provider = set_mocked_aws_provider(
             audited_regions=[AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
@@ -171,3 +172,84 @@ class Test_Cognito_Service:
                         }
                     }
                 )
+
+    @mock_aws
+    def test_service_identity(self):
+        aws_provider = set_mocked_aws_provider(
+            audited_regions=[AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
+        )
+        cognito = CognitoIdentity(aws_provider)
+        assert cognito.service == "cognito-identity"
+
+    # Test Cognito client
+    @mock_aws
+    def test_client_identity(self):
+        aws_provider = set_mocked_aws_provider(
+            audited_regions=[AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
+        )
+        cognito = CognitoIdentity(aws_provider)
+        for regional_client in cognito.regional_clients.values():
+            assert regional_client.__class__.__name__ == "CognitoIdentity"
+
+    # Test Cognito session
+    @mock_aws
+    def test__get_session_identity__(self):
+        aws_provider = set_mocked_aws_provider(
+            audited_regions=[AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
+        )
+        cognito = CognitoIdentity(aws_provider)
+        assert cognito.session.__class__.__name__ == "Session"
+
+    # Test Cognito Session
+    @mock_aws
+    def test_audited_account_identity(self):
+        aws_provider = set_mocked_aws_provider(
+            audited_regions=[AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
+        )
+        cognito = CognitoIdentity(aws_provider)
+        assert cognito.audited_account == AWS_ACCOUNT_NUMBER
+
+    @mock_aws
+    def test_list_identity_pools(self):
+        identity_pool_name_1 = "identity_pool_test_1"
+        identity_pool_name_2 = "identity_pool_test_2"
+        aws_provider = set_mocked_aws_provider(
+            audited_regions=[AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
+        )
+        cognito_client_eu_west_1 = client("cognito-identity", region_name="eu-west-1")
+        cognito_client_us_east_1 = client("cognito-identity", region_name="us-east-1")
+        cognito_client_eu_west_1.create_identity_pool(
+            IdentityPoolName=identity_pool_name_1, AllowUnauthenticatedIdentities=True
+        )
+        cognito_client_us_east_1.create_identity_pool(
+            IdentityPoolName=identity_pool_name_2, AllowUnauthenticatedIdentities=True
+        )
+        cognito = CognitoIdentity(aws_provider)
+        assert len(cognito.identity_pools) == 2
+        for identity_pool in cognito.identity_pools.values():
+            assert (
+                identity_pool.name == identity_pool_name_1
+                or identity_pool.name == identity_pool_name_2
+            )
+            assert (
+                identity_pool.region == "eu-west-1"
+                or identity_pool.region == "us-east-1"
+            )
+
+    @mock_aws
+    def test_describe_identity_pools(self):
+        identity_pool_name_1 = "identity_pool_test_1"
+        aws_provider = set_mocked_aws_provider(
+            audited_regions=[AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
+        )
+        cognito_client_eu_west_1 = client("cognito-identity", region_name="eu-west-1")
+        identity_pool_id = cognito_client_eu_west_1.create_identity_pool(
+            IdentityPoolName=identity_pool_name_1, AllowUnauthenticatedIdentities=True
+        )["IdentityPoolId"]
+        cognito = CognitoIdentity(aws_provider)
+        assert len(cognito.identity_pools) == 1
+        for identity_pool in cognito.identity_pools.values():
+            assert identity_pool.name == identity_pool_name_1
+            assert identity_pool.region == "eu-west-1"
+            assert identity_pool.id == identity_pool_id
+            assert identity_pool.associated_pools is not None
