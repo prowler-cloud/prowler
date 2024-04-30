@@ -40,6 +40,16 @@ Mutelist:
             - "aws-controltower-ForwardSnsNotificationRole/sns"
             - "aws-controltower-AuditAdministratorRole/AssumeRole-aws-controltower-AuditAdministratorRole"
             - "aws-controltower-AuditReadOnlyRole/AssumeRole-aws-controltower-AuditReadOnlyRole"
+        "iam.*policy_*":
+          Regions:
+            - "*"
+          Resources:
+            - "AWSControlTowerAccountServiceRolePolicy"
+            - "AWSControlTowerServiceRolePolicy"
+            - "AWSControlTowerStackSetRolePolicy"
+            - "AWSControlTowerAdminPolicy"
+            - "AWSLoadBalancerControllerIAMPolicy"
+            - "AWSControlTowerCloudTrailRolePolicy"
         "iam_role_*":
           Regions:
             - "*"
@@ -60,16 +70,6 @@ Mutelist:
             - "AWSAFTAdmin"
             - "AWSAFTExecution"
             - "AWSAFTService"
-        "iam_*_policy_*":
-          Regions:
-            - "*"
-          Resources:
-            - "AWSControlTowerAccountServiceRolePolicy"
-            - "AWSControlTowerServiceRolePolicy"
-            - "AWSControlTowerStackSetRolePolicy"
-            - "AWSControlTowerAdminPolicy"
-            - "AWSLoadBalancerControllerIAMPolicy"
-            - "AWSControlTowerCloudTrailRolePolicy"
         "s3_bucket_*":
           Regions:
             - "*"
