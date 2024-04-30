@@ -18,7 +18,9 @@ class cognito_user_pool_self_registration_enabled(Check):
             report.status_extended = (
                 f"User pool {user_pool.id} has self registration disabled."
             )
-            if not user_pool.admin_create_user_config.get("AllowAdminCreateUserOnly"):
+            if not user_pool.admin_create_user_config.get(
+                "AllowAdminCreateUserOnly", False
+            ):
                 report.status = "FAIL"
                 report.status_extended = (
                     f"User pool {user_pool.id} has self registration enabled."

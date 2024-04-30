@@ -15,12 +15,12 @@ class cognito_user_pool_advanced_security_block_sign_in_compromised_credentials(
                 pool.advanced_security_mode == "ENFORCED"
                 and "SIGN_IN"
                 in pool.risk_configuration.compromised_credentials_risk_configuration.get(
-                    "EventFilter"
+                    "EventFilter", []
                 )
                 and pool.risk_configuration.compromised_credentials_risk_configuration.get(
-                    "Actions"
+                    "Actions", {}
                 ).get(
-                    "EventAction"
+                    "EventAction", {}
                 )
                 == "BLOCK"
             ):

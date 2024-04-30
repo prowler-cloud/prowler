@@ -13,11 +13,11 @@ class cognito_user_pool_strong_password_policy(Check):
             report.resource_arn = pool.arn
             if pool.password_policy:
                 if (
-                    pool.password_policy["RequireLowercase"]
-                    and pool.password_policy["RequireUppercase"]
-                    and pool.password_policy["RequireNumbers"]
-                    and pool.password_policy["RequireSymbols"]
-                    and pool.password_policy["MinimumLength"] >= 14
+                    pool.password_policy.get("RequireLowercase", False)
+                    and pool.password_policy.get("RequireUppercase", False)
+                    and pool.password_policy.get("RequireNumbers", False)
+                    and pool.password_policy.get("RequireSymbols", False)
+                    and pool.password_policy.get("MinimumLength", 8) >= 14
                 ):
                     report.status = "PASS"
                     report.status_extended = (
