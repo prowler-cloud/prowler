@@ -27,11 +27,25 @@ Mutelist:
             - "*"
           Resources:
             - "aws-controltower-BaselineCloudTrail"
+        "cloudwatch_log_group_*":
+          Regions:
+            - "*"
+          Resources:
+            - "aws-controltower/CloudTrailLogs"
+        "iam_inline_policy_no_administrative_privileges":
+          Regions:
+            - "*"
+          Resources:
+            - "aws-controltower-ForwardSnsNotificationRole/sns"
+            - "aws-controltower-AuditAdministratorRole/AssumeRole-aws-controltower-AuditAdministratorRole"
+            - "aws-controltower-AuditReadOnlyRole/AssumeRole-aws-controltower-AuditReadOnlyRole"
         "iam_role_*":
           Regions:
             - "*"
           Resources:
             - "aws-controltower-AdministratorExecutionRole"
+            - "aws-controltower-AuditAdministratorRole"
+            - "aws-controltower-AuditReadOnlyRole"
             - "aws-controltower-CloudWatchLogsRole"
             - "aws-controltower-ConfigRecorderRole"
             - "aws-controltower-ForwardSnsNotificationRole"
@@ -56,6 +70,8 @@ Mutelist:
           Regions:
             - "*"
           Resources:
+            - "aws-controltower-AggregateSecurityNotifications"
+            - "aws-controltower-AllConfigNotifications"
             - "aws-controltower-SecurityNotifications"
         "vpc_*":
           Regions:
