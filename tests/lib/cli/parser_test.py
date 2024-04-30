@@ -30,7 +30,7 @@ class Test_Parser:
         # We need this to mock the get_available_providers function call
         # since the importlib.import_module is not working starting from the test class
         self.patch_get_available_providers = patch(
-            "prowler.providers.common.arguments.get_available_providers",
+            "prowler.providers.common.provider.Provider.get_available_providers",
             new=mock_get_available_providers,
         )
         self.patch_get_available_providers.start()
