@@ -14,6 +14,9 @@ Standard results will be shown and additionally the framework information as the
 
 <img src="../img/compliance/compliance-cis-sample1.png"/>
 
+???+ note
+    **If Prowler can't find a resource related with a check from a compliance requirement, this requirement won't appear on the output**
+
 ## List Available Compliance Frameworks
 In order to see which compliance frameworks are cover by Prowler, you can use option `--list-compliance`:
 ```sh
