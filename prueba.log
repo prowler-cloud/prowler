@@ -1,0 +1,33 @@
+{"timestamp": "2024-05-02 10:33:25,469", "filename": "aws_provider.py:61", "level": "INFO", "module": "aws_provider", "message": "Initializing AWS provider ..."}
+{"timestamp": "2024-05-02 10:33:25,470", "filename": "aws_provider.py:83", "level": "INFO", "module": "aws_provider", "message": "Generating original session ..."}
+{"timestamp": "2024-05-02 10:33:25,470", "filename": "aws_provider.py:375", "level": "INFO", "module": "aws_provider", "message": "Creating original session ..."}
+{"timestamp": "2024-05-02 10:33:25,473", "filename": "aws_provider.py:98", "level": "INFO", "module": "aws_provider", "message": "Validating credentials ..."}
+{"timestamp": "2024-05-02 10:33:26,590", "filename": "aws_provider.py:106", "level": "INFO", "module": "aws_provider", "message": "Credentials validated"}
+{"timestamp": "2024-05-02 10:33:26,591", "filename": "aws_provider.py:355", "level": "INFO", "module": "aws_provider", "message": "Original AWS Caller Identity UserId: AROARRZCCE4WMYJ66QFYI:pedro@prowler.com"}
+{"timestamp": "2024-05-02 10:33:26,591", "filename": "aws_provider.py:356", "level": "INFO", "module": "aws_provider", "message": "Original AWS Caller Identity ARN: arn='arn:aws:sts::106908755756:assumed-role/AWSReservedSSO_ProwlerRole_def33315910be503/pedro@prowler.com' partition='aws' service='sts' region=None account_id='106908755756' resource='AWSReservedSSO_ProwlerRole_def33315910be503/pedro@prowler.com' resource_type='assumed-role'"}
+{"timestamp": "2024-05-02 10:33:26,591", "filename": "aws_provider.py:314", "level": "INFO", "module": "aws_provider", "message": "Getting AWS Organizations metadata for account 106908755756"}
+{"timestamp": "2024-05-02 10:33:27,477", "filename": "aws_provider.py:327", "level": "INFO", "module": "aws_provider", "message": "AWS Organizations metadata retrieved for account 106908755756"}
+{"timestamp": "2024-05-02 10:33:28,251", "filename": "iam_service.py:241", "level": "INFO", "module": "iam_service", "message": "IAM - List Users..."}
+{"timestamp": "2024-05-02 10:33:28,731", "filename": "iam_service.py:103", "level": "INFO", "module": "iam_service", "message": "IAM - List Roles..."}
+{"timestamp": "2024-05-02 10:33:29,337", "filename": "iam_service.py:178", "level": "INFO", "module": "iam_service", "message": "IAM - Get Account Summary..."}
+{"timestamp": "2024-05-02 10:33:29,514", "filename": "iam_service.py:268", "level": "INFO", "module": "iam_service", "message": "IAM - List Virtual MFA Devices..."}
+{"timestamp": "2024-05-02 10:33:29,648", "filename": "iam_service.py:128", "level": "INFO", "module": "iam_service", "message": "IAM - Get Credential Report..."}
+{"timestamp": "2024-05-02 10:33:30,003", "filename": "iam_service.py:159", "level": "INFO", "module": "iam_service", "message": "IAM - Get Groups..."}
+{"timestamp": "2024-05-02 10:33:30,128", "filename": "iam_service.py:311", "level": "INFO", "module": "iam_service", "message": "IAM - Get Group Users..."}
+{"timestamp": "2024-05-02 10:33:30,128", "filename": "iam_service.py:286", "level": "INFO", "module": "iam_service", "message": "IAM - List Attached Group Policies..."}
+{"timestamp": "2024-05-02 10:33:30,129", "filename": "iam_service.py:360", "level": "INFO", "module": "iam_service", "message": "IAM - List Attached User Policies..."}
+{"timestamp": "2024-05-02 10:33:30,129", "filename": "iam_service.py:396", "level": "INFO", "module": "iam_service", "message": "IAM - List Attached User Policies..."}
+{"timestamp": "2024-05-02 10:33:46,702", "filename": "iam_service.py:337", "level": "INFO", "module": "iam_service", "message": "IAM - List MFA Devices..."}
+{"timestamp": "2024-05-02 10:33:46,702", "filename": "iam_service.py:190", "level": "INFO", "module": "iam_service", "message": "IAM - Get Password Policy..."}
+{"timestamp": "2024-05-02 10:33:46,814", "filename": "iam_service.py:612", "level": "INFO", "module": "iam_service", "message": "IAM - List Entities Role For Policy..."}
+{"timestamp": "2024-05-02 10:33:46,957", "filename": "iam_service.py:612", "level": "INFO", "module": "iam_service", "message": "IAM - List Entities Role For Policy..."}
+{"timestamp": "2024-05-02 10:33:47,083", "filename": "iam_service.py:626", "level": "INFO", "module": "iam_service", "message": "IAM - List Policies..."}
+{"timestamp": "2024-05-02 10:33:47,338", "filename": "iam_service.py:626", "level": "INFO", "module": "iam_service", "message": "IAM - List Policies..."}
+{"timestamp": "2024-05-02 10:33:47,476", "filename": "iam_service.py:657", "level": "INFO", "module": "iam_service", "message": "IAM - List Policies Version..."}
+{"timestamp": "2024-05-02 10:34:03,032", "filename": "iam_service.py:432", "level": "INFO", "module": "iam_service", "message": "IAM - List Inline User Policies..."}
+{"timestamp": "2024-05-02 10:34:03,033", "filename": "iam_service.py:490", "level": "INFO", "module": "iam_service", "message": "IAM - List Inline Group Policies..."}
+{"timestamp": "2024-05-02 10:34:03,033", "filename": "iam_service.py:550", "level": "INFO", "module": "iam_service", "message": "IAM - List Inline Role Policies..."}
+{"timestamp": "2024-05-02 10:34:23,503", "filename": "iam_service.py:681", "level": "INFO", "module": "iam_service", "message": "IAM - List SAML Providers..."}
+{"timestamp": "2024-05-02 10:34:23,621", "filename": "iam_service.py:693", "level": "INFO", "module": "iam_service", "message": "IAM - List Server Certificates..."}
+{"timestamp": "2024-05-02 10:34:23,741", "filename": "iam_service.py:718", "level": "INFO", "module": "iam_service", "message": "IAM - List Tags..."}
+{"timestamp": "2024-05-02 10:34:40,748", "filename": "outputs.py:202", "level": "INFO", "module": "outputs", "message": "Extracting audit statistics..."}
