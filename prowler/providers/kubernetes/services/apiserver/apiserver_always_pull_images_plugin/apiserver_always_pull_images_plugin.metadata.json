@@ -14,7 +14,7 @@
   "Remediation": {
     "Code": {
       "CLI": "--enable-admission-plugins=...,AlwaysPullImages,...",
-      "NativeIaC": "https://docs.bridgecrew.io/docs/ensure-that-the-admission-control-plugin-alwayspullimages-is-set#kubernetes",
+      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-admission-control-plugin-alwayspullimages-is-set#kubernetes",
       "Other": "",
       "Terraform": ""
     },

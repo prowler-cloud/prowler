@@ -12,14 +12,14 @@
   "Severity": "medium",
   "ResourceType": "AwsOpenSearchDomain",
   "Description": "Check if Amazon Elasticsearch/Opensearch Service domains have logging enabled",
-  "Risk": "Amazon ES exposes four Elasticsearch/Opensearch logs through Amazon CloudWatch Logs: error logs; search slow logs; index slow logs; and audit logs.",
+  "Risk": "Amazon ES exposes four Elasticsearch/Opensearch logs through Amazon CloudWatch Logs: error logs, search slow logs, index slow logs, and audit logs.",
   "RelatedUrl": "",
   "Remediation": {
     "Code": {
-      "CLI": "https://docs.bridgecrew.io/docs/elasticsearch_7#cli-command",
-      "NativeIaC": "https://docs.bridgecrew.io/docs/elasticsearch_7#cloudformation",
-      "Other": "https://docs.bridgecrew.io/docs/elasticsearch_7#fix---runtime",
-      "Terraform": "https://docs.bridgecrew.io/docs/elasticsearch_7#fix---buildtime"
+      "CLI": "https://docs.prowler.com/checks/aws/elasticsearch-policies/elasticsearch_7#cli-command",
+      "NativeIaC": "https://docs.prowler.com/checks/aws/elasticsearch-policies/elasticsearch_7#cloudformation",
+      "Other": "https://docs.prowler.com/checks/aws/elasticsearch-policies/elasticsearch_7#fix---runtime",
+      "Terraform": "https://docs.prowler.com/checks/aws/elasticsearch-policies/elasticsearch_7#fix---buildtime"
     },
     "Recommendation": {
       "Text": "Enable Elasticsearch/Opensearch log. Create use cases for them. Using audit logs check for access denied events.",

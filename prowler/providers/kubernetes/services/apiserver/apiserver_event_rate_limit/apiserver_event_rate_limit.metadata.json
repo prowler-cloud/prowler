@@ -14,7 +14,7 @@
   "Remediation": {
     "Code": {
       "CLI": "--enable-admission-plugins=...,EventRateLimit,... --admission-control-config-file=/path/to/configuration/file",
-      "NativeIaC": "https://docs.bridgecrew.io/docs/ensure-that-the-admission-control-plugin-eventratelimit-is-set",
+      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-admission-control-plugin-eventratelimit-is-set",
       "Other": "",
       "Terraform": ""
     },

@@ -17,7 +17,7 @@
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "https://docs.bridgecrew.io/docs/s3_18-write-permissions-public#aws-console",
+      "Other": "https://docs.prowler.com/checks/aws/s3-policies/s3_18-write-permissions-public#aws-console",
       "Terraform": ""
     },
     "Recommendation": {

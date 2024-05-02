@@ -62,50 +62,6 @@ For the AWS provider we have ways to test a Prowler check based on the following
 
 In the following section we are going to explain all of the above scenarios with examples. The main difference between those scenarios comes from if the [Moto](https://github.com/getmoto/moto) library covers the AWS API calls made by the service. You can check the covered API calls [here](https://github.com/getmoto/moto/blob/master/IMPLEMENTATION_COVERAGE.md).
 
-An important point for the AWS testing is that in each check we MUST have a unique `audit_info` which is the key object during the AWS execution to isolate the test execution.
-
-Check the [Audit Info](./audit-info.md) section to get more details.
-
-```python
-# We need to import the AWS_Audit_Info and the Audit_Metadata
-# to set the audit_info to call AWS APIs
-from prowler.providers.aws.lib.audit_info.models import AWS_Audit_Info
-from prowler.providers.common.models import Audit_Metadata
-
-AWS_ACCOUNT_NUMBER = "123456789012"
-
-def set_mocked_audit_info(self):
-  audit_info = AWS_Audit_Info(
-      session_config=None,
-      original_session=None,
-      audit_session=session.Session(
-          profile_name=None,
-          botocore_session=None,
-      ),
-      audit_config=None,
-      audited_account=AWS_ACCOUNT_NUMBER,
-      audited_account_arn=f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root",
-      audited_user_id=None,
-      audited_partition="aws",
-      audited_identity_arn=None,
-      profile=None,
-      profile_region=None,
-      credentials=None,
-      assumed_role_info=None,
-      audited_regions=["us-east-1", "eu-west-1"],
-      organizations_metadata=None,
-      audit_resources=None,
-      mfa_enabled=False,
-      audit_metadata=Audit_Metadata(
-          services_scanned=0,
-          expected_checks=[],
-          completed_checks=0,
-          audit_progress=0,
-      ),
-  )
-
-  return audit_info
-```
 ### Checks
 
 For the AWS tests examples we are going to use the tests for the `iam_password_policy_uppercase` check.
@@ -148,29 +104,29 @@ class Test_iam_password_policy_uppercase:
     # policy we want to set to False the RequireUppercaseCharacters
     iam_client.update_account_password_policy(RequireUppercaseCharacters=False)
 
-    # We set a mocked audit_info for AWS not to share the same audit state
-    # between checks
-    current_audit_info = self.set_mocked_audit_info()
+    # The aws_provider is mocked using set_mocked_aws_provider to use it as the return of the get_global_provider method.
+    # this mocked provider is defined in fixtures
+    aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
     # The Prowler service import MUST be made within the decorated
     # code not to make real API calls to the AWS service.
     from prowler.providers.aws.services.iam.iam_service import IAM
 
-    # Prowler for AWS uses a shared object called `current_audit_info` where it stores
-    # the audit's state, credentials and configuration.
+    # Prowler for AWS uses a shared object called aws_provider where it stores
+    # the info related with the provider
     with mock.patch(
-        "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-        new=current_audit_info,
+        "prowler.providers.common.common.get_global_provider",
+        return_value=aws_provider,
     ),
     # We have to mock also the iam_client from the check to enforce that the iam_client used is the one
     # created within this check because patch != import, and if you execute tests in parallel some objects
     # can be already initialised hence the check won't be isolated
       mock.patch(
         "prowler.providers.aws.services.iam.iam_password_policy_uppercase.iam_password_policy_uppercase.iam_client",
-        new=IAM(current_audit_info),
+        new=IAM(aws_provider),
     ):
         # We import the check within the two mocks not to initialise the iam_client with some shared information from
-        # the current_audit_info or the IAM service.
+        # the aws_provider or the IAM service.
         from prowler.providers.aws.services.iam.iam_password_policy_uppercase.iam_password_policy_uppercase import (
             iam_password_policy_uppercase,
         )
@@ -235,9 +191,8 @@ class Test_iam_password_policy_uppercase:
         expiration=True,
     )
 
-    # We set a mocked audit_info for AWS not to share the same audit state
-    # between checks
-    current_audit_info = self.set_mocked_audit_info()
+    # We set a mocked aws_provider to unify providers, this way will isolate each test not to step on other tests configuration
+    aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
     # In this scenario we have to mock also the IAM service and the iam_client from the check to enforce    # that the iam_client used is the one created within this check because patch != import, and if you     # execute tests in parallel some objects can be already initialised hence the check won't be isolated.
     # In this case we don't use the Moto decorator, we use the mocked IAM client for both objects
@@ -249,7 +204,7 @@ class Test_iam_password_policy_uppercase:
         new=mocked_iam_client,
     ):
         # We import the check within the two mocks not to initialise the iam_client with some shared information from
-        # the current_audit_info or the IAM service.
+        # the aws_provider or the IAM service.
         from prowler.providers.aws.services.iam.iam_password_policy_uppercase.iam_password_policy_uppercase import (
             iam_password_policy_uppercase,
         )
@@ -333,19 +288,48 @@ Note that this does not use Moto, to keep it simple, but if you use any `moto`-d
 
 #### Mocking more than one service
 
+Since we are mocking the provider, it can be customized setting multiple attributes to the provider:
+```python
+def set_mocked_aws_provider(
+    audited_regions: list[str] = [],
+    audited_account: str = AWS_ACCOUNT_NUMBER,
+    audited_account_arn: str = AWS_ACCOUNT_ARN,
+    audited_partition: str = AWS_COMMERCIAL_PARTITION,
+    expected_checks: list[str] = [],
+    profile_region: str = None,
+    audit_config: dict = {},
+    fixer_config: dict = {},
+    scan_unused_services: bool = True,
+    audit_session: session.Session = session.Session(
+        profile_name=None,
+        botocore_session=None,
+    ),
+    original_session: session.Session = None,
+    enabled_regions: set = None,
+    arguments: Namespace = Namespace(),
+    create_default_organization: bool = True,
+) -> AwsProvider:
+```
+
 If the test your are creating belongs to a check that uses more than one provider service, you should mock each of the services used. For example, the check `cloudtrail_logs_s3_bucket_access_logging_enabled` requires the CloudTrail and the S3 client, hence the service's mock part of the test will be as follows:
 
 
 ```python
 with mock.patch(
-    "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
-    new=mock_audit_info,
+    "prowler.providers.common.common.get_global_provider",
+    return_value=set_mocked_aws_provider(
+        [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
+    ),
 ), mock.patch(
     "prowler.providers.aws.services.cloudtrail.cloudtrail_logs_s3_bucket_access_logging_enabled.cloudtrail_logs_s3_bucket_access_logging_enabled.cloudtrail_client",
-    new=Cloudtrail(mock_audit_info),
+    new=Cloudtrail(
+        set_mocked_aws_provider([AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1])
+    ),
 ), mock.patch(
     "prowler.providers.aws.services.cloudtrail.cloudtrail_logs_s3_bucket_access_logging_enabled.cloudtrail_logs_s3_bucket_access_logging_enabled.s3_client",
-    new=S3(mock_audit_info),
+    new=S3(
+        set_mocked_aws_provider([AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1])
+    ),
 ):
 ```
 
@@ -363,10 +347,10 @@ from prowler.providers.<provider>.services.<service>.<service>_client import <se
 ```
 2. `<service>_client.py`:
 ```python
-from prowler.providers.<provider>.lib.audit_info.audit_info import audit_info
+from prowler.providers.common.common import get_global_provider
 from prowler.providers.<provider>.services.<service>.<service>_service import <SERVICE>
 
-<service>_client = <SERVICE>(audit_info)
+<service>_client = <SERVICE>(mocked_provider)
 ```
 
 Due to the above import path it's not the same to patch the following objects because if you run a bunch of tests, either in parallel or not, some clients can be already instantiated by another check, hence your test execution will be using another test's service instance:
@@ -384,19 +368,20 @@ A useful read about this topic can be found in the following article: https://st
 
 Mocking a service client using the following code ...
 
+Once the needed attributes are set for the mocked provider, you can use the mocked provider:
 ```python title="Mocking the service_client"
 with mock.patch(
-    "prowler.providers.<provider>.lib.audit_info.audit_info.audit_info",
-    new=audit_info,
+    "prowler.providers.common.common.get_global_provider",
+    new=set_mocked_aws_provider([<region>]),
 ), mock.patch(
     "prowler.providers.<provider>.services.<service>.<check>.<check>.<service>_client",
-    new=<SERVICE>(audit_info),
+    new=<SERVICE>(set_mocked_aws_provider([<region>])),
 ):
 ```
 will cause that the service will be initialised twice:
 
-1. When the `<SERVICE>(audit_info)` is mocked out using `mock.patch` to have the object ready for the patching.
-2. At the `<service>_client.py` when we are patching it since the `mock.patch` needs to go to that object an initialise it, hence the `<SERVICE>(audit_info)` will be called again.
+1. When the `<SERVICE>(set_mocked_aws_provider([<region>]))` is mocked out using `mock.patch` to have the object ready for the patching.
+2. At the `<service>_client.py` when we are patching it since the `mock.patch` needs to go to that object an initialise it, hence the `<SERVICE>(set_mocked_aws_provider([<region>]))` will be called again.
 
 Then, when we import the `<service>_client.py` at `<check>.py`, since we are mocking where the object is used, Python will use the mocked one.
 
@@ -408,24 +393,24 @@ Mocking a service client using the following code ...
 
 ```python title="Mocking the service and the service_client"
 with mock.patch(
-    "prowler.providers.<provider>.lib.audit_info.audit_info.audit_info",
-    new=audit_info,
+    "prowler.providers.common.common.get_global_provider",
+    new=set_mocked_aws_provider([<region>]),
 ), mock.patch(
     "prowler.providers.<provider>.services.<service>.<SERVICE>",
-    new=<SERVICE>(audit_info),
+    new=<SERVICE>(set_mocked_aws_provider([<region>])),
 ) as service_client, mock.patch(
     "prowler.providers.<provider>.services.<service>.<service>_client.<service>_client",
     new=service_client,
 ):
 ```
-will cause that the service will be initialised once, just when the `<SERVICE>(audit_info)` is mocked out using `mock.patch`.
+will cause that the service will be initialised once, just when the `set_mocked_aws_provider([<region>])` is mocked out using `mock.patch`.
 
 Then, at the check_level when Python tries to import the client with `from prowler.providers.<provider>.services.<service>.<service>_client`, since it is already mocked out, the execution will continue using the `service_client` without getting into the `<service>_client.py`.
 
 
 ### Services
 
-For testing the AWS services we have to follow the same logic as with the AWS checks, we have to check if the AWS API calls made by the service are covered by Moto and we have to test the service `__init__` to verifiy that the information is being correctly retrieved.
+For testing the AWS services we have to follow the same logic as with the AWS checks, we have to check if the AWS API calls made by the service are covered by Moto and we have to test the service `__init__` to verify that the information is being correctly retrieved.
 
 The service tests could act as *Integration Tests* since we test how the service retrieves the information from the provider, but since Moto or the custom mock objects mocks that calls this test will fall into *Unit Tests*.
 
@@ -532,7 +517,113 @@ class Test_compute_project_os_login_enabled:
 
 ### Services
 
-Coming soon ...
+For testing Google Cloud Services, we have to follow the same logic as with the Google Cloud checks. We still mocking all API calls, but in this case, every API call to set up an attribute is defined in [fixtures file](https://github.com/prowler-cloud/prowler/blob/master/tests/providers/gcp/gcp_fixtures.py) in `mock_api_client` function. Remember that EVERY method of a service must be tested.
+
+The following code shows a real example of a testing class, but it has more comments than usual for educational purposes.
+
+```python title="BigQuery Service Test"
+# We need to import the unittest.mock.patch to allow us to patch some objects
+# not to use shared ones between test, hence to isolate the test
+from unittest.mock import patch
+# Import the class needed from the service file
+from prowler.providers.gcp.services.bigquery.bigquery_service import BigQuery
+# Necessary constans and functions from fixtures file
+from tests.providers.gcp.gcp_fixtures import (
+    GCP_PROJECT_ID,
+    mock_api_client,
+    mock_is_api_active,
+    set_mocked_gcp_provider,
+)
+
+
+class TestBigQueryService:
+    # Only method needed to test full service
+    def test_service(self):
+        # In this case we are mocking the __is_api_active__ to ensure our mocked project is used
+        # And all the client to use our mocked API calls
+        with patch(
+            "prowler.providers.gcp.lib.service.service.GCPService.__is_api_active__",
+            new=mock_is_api_active,
+        ), patch(
+            "prowler.providers.gcp.lib.service.service.GCPService.__generate_client__",
+            new=mock_api_client,
+        ):
+            # Instantiate an object of class with the mocked provider
+            bigquery_client = BigQuery(
+                set_mocked_gcp_provider(project_ids=[GCP_PROJECT_ID])
+            )
+            # Check all attributes of the tested class is well set up according API calls mocked from GCP fixture file
+            assert bigquery_client.service == "bigquery"
+            assert bigquery_client.project_ids == [GCP_PROJECT_ID]
+
+            assert len(bigquery_client.datasets) == 2
+
+            assert bigquery_client.datasets[0].name == "unique_dataset1_name"
+            assert bigquery_client.datasets[0].id.__class__.__name__ == "str"
+            assert bigquery_client.datasets[0].region == "US"
+            assert bigquery_client.datasets[0].cmk_encryption
+            assert bigquery_client.datasets[0].public
+            assert bigquery_client.datasets[0].project_id == GCP_PROJECT_ID
+
+            assert bigquery_client.datasets[1].name == "unique_dataset2_name"
+            assert bigquery_client.datasets[1].id.__class__.__name__ == "str"
+            assert bigquery_client.datasets[1].region == "EU"
+            assert not bigquery_client.datasets[1].cmk_encryption
+            assert not bigquery_client.datasets[1].public
+            assert bigquery_client.datasets[1].project_id == GCP_PROJECT_ID
+
+            assert len(bigquery_client.tables) == 2
+
+            assert bigquery_client.tables[0].name == "unique_table1_name"
+            assert bigquery_client.tables[0].id.__class__.__name__ == "str"
+            assert bigquery_client.tables[0].region == "US"
+            assert bigquery_client.tables[0].cmk_encryption
+            assert bigquery_client.tables[0].project_id == GCP_PROJECT_ID
+
+            assert bigquery_client.tables[1].name == "unique_table2_name"
+            assert bigquery_client.tables[1].id.__class__.__name__ == "str"
+            assert bigquery_client.tables[1].region == "US"
+            assert not bigquery_client.tables[1].cmk_encryption
+            assert bigquery_client.tables[1].project_id == GCP_PROJECT_ID
+```
+As it can be confusing where all these values come from, I'll give an example to make this clearer. First we need to check
+what is the API call used to obtain the datasets. In this case if we check the service the call is
+`self.client.datasets().list(projectId=project_id)`.
+
+Now in the fixture file we have to mock this call in our `MagicMock` client in the function `mock_api_client`. The best way to mock
+is following the actual format, add one function where the client is passed to be changed, the format of this function name must be
+`mock_api_<endpoint>_calls` (*endpoint* refers to the first attribute pointed after *client*).
+
+In the example of BigQuery the function is called `mock_api_dataset_calls`. And inside of this function we found an assignation to
+be used in the `__get_datasets__` method in BigQuery class:
+
+```python
+# Mocking datasets
+dataset1_id = str(uuid4())
+dataset2_id = str(uuid4())
+
+client.datasets().list().execute.return_value = {
+    "datasets": [
+        {
+            "datasetReference": {
+                "datasetId": "unique_dataset1_name",
+                "projectId": GCP_PROJECT_ID,
+            },
+            "id": dataset1_id,
+            "location": "US",
+        },
+        {
+            "datasetReference": {
+                "datasetId": "unique_dataset2_name",
+                "projectId": GCP_PROJECT_ID,
+            },
+            "id": dataset2_id,
+            "location": "EU",
+        },
+    ]
+}
+```
+
 
 ## Azure
 

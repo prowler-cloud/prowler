@@ -313,7 +313,7 @@ prowler gcp --project-ids <Project ID 1> <Project ID 2> ... <Project ID N>
 
 See more details about GCP Authentication in [Requirements](getting-started/requirements.md#google-cloud)
 
-## Kubernetes
+### Kubernetes
 
 Prowler allows you to scan your Kubernetes Cluster either from within the cluster or from outside the cluster.
 

@@ -16,7 +16,7 @@
       "CLI": "az storage account update --name <StorageAccountName> --resource-group <resourceGroupName> --bypass AzureServices",
       "NativeIaC": "",
       "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/StorageAccounts/enable-trusted-microsoft-services.html",
-      "Terraform": "https://docs.bridgecrew.io/docs/enable-trusted-microsoft-services-for-storage-account-access#terraform"
+      "Terraform": "https://docs.prowler.com/checks/azure/azure-networking-policies/enable-trusted-microsoft-services-for-storage-account-access#terraform"
     },
     "Recommendation": {
       "Text": "To allow these Azure services to work as intended and be able to access your storage account resources, you have to add an exception so that the trusted Microsoft Azure services can bypass your network rules",

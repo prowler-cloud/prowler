@@ -16,7 +16,7 @@
       "CLI": "",
       "NativeIaC": "",
       "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudDNS/dns-sec-zone-signing-algorithm-in-use.html",
-      "Terraform": "https://docs.bridgecrew.io/docs/bc_gcp_networking_6#terraform"
+      "Terraform": "https://docs.prowler.com/checks/gcp/google-cloud-networking-policies/bc_gcp_networking_6#terraform"
     },
     "Recommendation": {
       "Text": "Ensure that Domain Name System Security Extensions (DNSSEC) feature is not using the deprecated RSASHA1 algorithm for the Zone-Signing Key (ZSK) associated with your public DNS managed zone. The algorithm used for DNSSEC signing should be a strong one, such as RSASHA256, as this algorithm is secure and widely deployed, and therefore it is a good candidate for both DNSSEC validation and signing.",

@@ -13,12 +13,12 @@
   "Severity": "medium",
   "ResourceType": "AwsCloudTrailTrail",
   "Description": "Ensure CloudTrail logs are encrypted at rest using KMS CMKs",
-  "Risk": "By default; the log files delivered by CloudTrail to your bucket are encrypted by Amazon server-side encryption with Amazon S3-managed encryption keys (SSE-S3). To provide a security layer that is directly manageable; you can instead use server-side encryption with AWS KMS–managed keys (SSE-KMS) for your CloudTrail log files.",
+  "Risk": "By default, the log files delivered by CloudTrail to your bucket are encrypted by Amazon server-side encryption with Amazon S3-managed encryption keys (SSE-S3). To provide a security layer that is directly manageable, you can instead use server-side encryption with AWS KMS–managed keys (SSE-KMS) for your CloudTrail log files.",
   "RelatedUrl": "",
   "Remediation": {
     "Code": {
       "CLI": "aws cloudtrail update-trail --name <trail_name> --kms-id <cloudtrail_kms_key> aws kms put-key-policy --key-id <cloudtrail_kms_key> --policy <cloudtrail_kms_key_policy>",
-      "NativeIaC": "https://docs.bridgecrew.io/docs/logging_7#fix---buildtime",
+      "NativeIaC": "https://docs.prowler.com/checks/aws/logging-policies/logging_7#fix---buildtime",
       "Other": "",
       "Terraform": ""
     },

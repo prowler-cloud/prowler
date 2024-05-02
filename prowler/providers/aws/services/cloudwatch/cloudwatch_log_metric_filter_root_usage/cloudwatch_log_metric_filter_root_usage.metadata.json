@@ -15,10 +15,10 @@
   "RelatedUrl": "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudwatch-alarms-for-cloudtrail.html",
   "Remediation": {
     "Code": {
-      "CLI": "https://docs.bridgecrew.io/docs/monitoring_3#procedure",
+      "CLI": "https://docs.prowler.com/checks/aws/monitoring-policies/monitoring_3#procedure",
       "NativeIaC": "",
       "Other": "",
-      "Terraform": "https://docs.bridgecrew.io/docs/monitoring_3#fix---buildtime"
+      "Terraform": "https://docs.prowler.com/checks/aws/monitoring-policies/monitoring_3#fix---buildtime"
     },
     "Recommendation": {
       "Text": "It is recommended that a metric filter and alarm be established for unauthorized requests.",

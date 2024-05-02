@@ -137,3 +137,32 @@ class Test_cloudtrail_kms_encryption_enabled:
             assert result[0].resource_arn == trail_us["TrailARN"]
             assert result[0].resource_tags == []
             assert result[0].region == AWS_REGION_US_EAST_1
+
+    @mock_aws
+    def test_access_denied(self):
+
+        from prowler.providers.aws.services.cloudtrail.cloudtrail_service import (
+            Cloudtrail,
+        )
+
+        with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=set_mocked_aws_provider(
+                [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
+            ),
+        ), mock.patch(
+            "prowler.providers.aws.services.cloudtrail.cloudtrail_kms_encryption_enabled.cloudtrail_kms_encryption_enabled.cloudtrail_client",
+            new=Cloudtrail(
+                set_mocked_aws_provider([AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1])
+            ),
+        ) as service_client:
+            # Test Check
+            from prowler.providers.aws.services.cloudtrail.cloudtrail_kms_encryption_enabled.cloudtrail_kms_encryption_enabled import (
+                cloudtrail_kms_encryption_enabled,
+            )
+
+            service_client.trails = None
+            check = cloudtrail_kms_encryption_enabled()
+            result = check.execute()
+
+            assert len(result) == 0

@@ -14,7 +14,7 @@
   "Remediation": {
     "Code": {
       "CLI": "--disable-admission-plugins=...,AlwaysAdmit,...",
-      "NativeIaC": "https://docs.bridgecrew.io/docs/ensure-that-the-admission-control-plugin-alwaysadmit-is-not-set",
+      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-admission-control-plugin-alwaysadmit-is-not-set",
       "Other": "",
       "Terraform": ""
     },

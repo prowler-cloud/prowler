@@ -14,7 +14,7 @@
   "Remediation": {
     "Code": {
       "CLI": "--client-ca-file=<path/to/client-ca-file>",
-      "NativeIaC": "https://docs.bridgecrew.io/docs/ensure-that-the-client-ca-file-argument-is-set-as-appropriate-scored",
+      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-client-ca-file-argument-is-set-as-appropriate-scored",
       "Other": "",
       "Terraform": ""
     },

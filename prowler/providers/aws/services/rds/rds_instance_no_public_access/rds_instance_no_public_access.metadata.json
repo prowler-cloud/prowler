@@ -14,9 +14,9 @@
   "Remediation": {
     "Code": {
       "CLI": "aws rds modify-db-instance --db-instance-identifier <db_instance_id> --no-publicly-accessible --apply-immediately",
-      "NativeIaC": "https://docs.bridgecrew.io/docs/public_2#cloudformation",
+      "NativeIaC": "https://docs.prowler.com/checks/aws/public-policies/public_2#cloudformation",
       "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/rds-publicly-accessible.html",
-      "Terraform": "https://docs.bridgecrew.io/docs/public_2#terraform"
+      "Terraform": "https://docs.prowler.com/checks/aws/public-policies/public_2#terraform"
     },
     "Recommendation": {
       "Text": "Using an AWS Config rule check for RDS public instances periodically and check there is a business reason for it.",

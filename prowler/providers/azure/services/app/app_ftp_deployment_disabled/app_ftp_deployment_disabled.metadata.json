@@ -16,7 +16,7 @@
       "CLI": "az webapp config set --resource-group <resource group name> --name <app name> --ftps-state [disabled|FtpsOnly]",
       "NativeIaC": "",
       "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/AppService/ftp-access-disabled.html",
-      "Terraform": "https://docs.bridgecrew.io/docs/ensure-ftp-deployments-are-disabled#terraform"
+      "Terraform": "https://docs.prowler.com/checks/azure/azure-general-policies/ensure-ftp-deployments-are-disabled#terraform"
     },
     "Recommendation": {
       "Text": "1. Go to the Azure Portal 2. Select App Services 3. Click on an app 4. Select Settings and then Configuration 5. Under General Settings, for the Platform Settings, the FTP state should be set to Disabled or FTPS Only",

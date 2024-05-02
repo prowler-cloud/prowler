@@ -16,7 +16,7 @@
       "CLI": "az storage account update --name <StorageAccountName> --resource-group <resourceGroupName> --default-action Deny",
       "NativeIaC": "",
       "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/StorageAccounts/restrict-default-network-access.html",
-      "Terraform": "https://docs.bridgecrew.io/docs/set-default-network-access-rule-for-storage-accounts-to-deny#terraform"
+      "Terraform": "https://docs.prowler.com/checks/azure/azure-networking-policies/set-default-network-access-rule-for-storage-accounts-to-deny#terraform"
     },
     "Recommendation": {
       "Text": "1. Go to Storage Accounts 2. For each storage account, Click on the Networking blade 3. Click the Firewalls and virtual networks heading. 4. Ensure that you have elected to allow access from Selected networks 5. Add rules to allow traffic from specific network. 6. Click Save to apply your changes.",

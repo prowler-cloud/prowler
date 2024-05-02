@@ -13,14 +13,14 @@
   "Severity": "high",
   "ResourceType": "AwsCloudTrailTrail",
   "Description": "Ensure CloudTrail is enabled in all regions",
-  "Risk": "AWS CloudTrail is a web service that records AWS API calls for your account and delivers log files to you. The recorded information includes the identity of the API caller; the time of the API call; the source IP address of the API caller; the request parameters; and the response elements returned by the AWS service.",
+  "Risk": "AWS CloudTrail is a web service that records AWS API calls for your account and delivers log files to you. The recorded information includes the identity of the API caller, the time of the API call, the source IP address of the API caller, the request parameters, and the response elements returned by the AWS service.",
   "RelatedUrl": "",
   "Remediation": {
     "Code": {
       "CLI": "aws cloudtrail create-trail --name <trail_name> --bucket-name <s3_bucket_for_cloudtrail> --is-multi-region-trail aws cloudtrail update-trail --name <trail_name> --is-multi-region-trail ",
-      "NativeIaC": "https://docs.bridgecrew.io/docs/logging_1#cloudformation",
-      "Other": "https://docs.bridgecrew.io/docs/logging_1#aws-console",
-      "Terraform": "https://docs.bridgecrew.io/docs/logging_1#terraform"
+      "NativeIaC": "https://docs.prowler.com/checks/aws/logging-policies/logging_1#cloudformation",
+      "Other": "https://docs.prowler.com/checks/aws/logging-policies/logging_1#aws-console",
+      "Terraform": "https://docs.prowler.com/checks/aws/logging-policies/logging_1#terraform"
     },
     "Recommendation": {
       "Text": "Ensure Logging is set to ON on all regions (even if they are not being used at the moment.",

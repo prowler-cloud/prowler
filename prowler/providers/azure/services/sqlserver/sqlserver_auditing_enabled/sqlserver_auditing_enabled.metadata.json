@@ -13,10 +13,10 @@
   "RelatedUrl": "https://docs.microsoft.com/en-us/azure/sql-database/sql-database-auditing",
   "Remediation": {
     "Code": {
-      "CLI": "https://docs.bridgecrew.io/docs/bc_azr_logging_2#cli-command",
+      "CLI": "https://docs.prowler.com/checks/azure/azure-logging-policies/bc_azr_logging_2#cli-command",
       "NativeIaC": "",
       "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/Sql/auditing.html",
-      "Terraform": "https://docs.bridgecrew.io/docs/bc_azr_logging_2#terraform"
+      "Terraform": "https://docs.prowler.com/checks/azure/azure-logging-policies/bc_azr_logging_2#terraform"
     },
     "Recommendation": {
       "Text": "Create an audit policy for the SQL server",

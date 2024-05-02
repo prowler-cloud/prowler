@@ -16,9 +16,9 @@
   "Remediation": {
     "Code": {
       "CLI": "aws glue put-data-catalog-encryption-settings --data-catalog-encryption-settings EncryptionAtRest={CatalogEncryptionMode=SSE-KMS,SseAwsKmsKeyId=<ksm_key_arn>",
-      "NativeIaC": "https://docs.bridgecrew.io/docs/bc_aws_general_37#cloudformation",
+      "NativeIaC": "https://docs.prowler.com/checks/aws/general-policies/bc_aws_general_37#cloudformation",
       "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Glue/data-catalog-encryption-at-rest.html",
-      "Terraform": "https://docs.bridgecrew.io/docs/bc_aws_general_37#terraform"
+      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/bc_aws_general_37#terraform"
     },
     "Recommendation": {
       "Text": "Enable Encryption. Use a CMK where possible. It will provide additional management and privacy benefits.",

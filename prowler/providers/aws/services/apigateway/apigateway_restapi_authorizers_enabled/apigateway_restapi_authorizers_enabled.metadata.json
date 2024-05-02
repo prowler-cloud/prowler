@@ -19,9 +19,9 @@
   "Remediation": {
     "Code": {
       "CLI": "",
-      "NativeIaC": "https://docs.bridgecrew.io/docs/public_6-api-gateway-authorizer-set#cloudformation",
+      "NativeIaC": "https://docs.prowler.com/checks/aws/public-policies/public_6-api-gateway-authorizer-set#cloudformation",
       "Other": "",
-      "Terraform": "https://docs.bridgecrew.io/docs/public_6-api-gateway-authorizer-set#terraform"
+      "Terraform": "https://docs.prowler.com/checks/aws/public-policies/public_6-api-gateway-authorizer-set#terraform"
     },
     "Recommendation": {
       "Text": "Implement Amazon Cognito or a Lambda function to control access to your API.",

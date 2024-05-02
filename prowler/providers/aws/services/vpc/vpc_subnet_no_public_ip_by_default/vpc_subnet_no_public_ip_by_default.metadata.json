@@ -18,7 +18,7 @@
       "CLI": "",
       "NativeIaC": "",
       "Other": "",
-      "Terraform": "https://docs.bridgecrew.io/docs/ensure-vpc-subnets-do-not-assign-public-ip-by-default#terraform"
+      "Terraform": "https://docs.prowler.com/checks/aws/networking-policies/ensure-vpc-subnets-do-not-assign-public-ip-by-default#terraform"
     },
     "Recommendation": {
       "Text": "VPC subnets should not allow automatic public IP assignment",

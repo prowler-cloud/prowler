@@ -14,7 +14,7 @@
   "Remediation": {
     "Code": {
       "CLI": "--terminated-pod-gc-threshold=10",
-      "NativeIaC": "https://docs.bridgecrew.io/docs/ensure-that-the-terminated-pod-gc-threshold-argument-is-set-as-appropriate",
+      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-terminated-pod-gc-threshold-argument-is-set-as-appropriate",
       "Other": "",
       "Terraform": ""
     },

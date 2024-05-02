@@ -17,9 +17,9 @@ from prowler.lib.outputs.compliance.generic import (
 from prowler.lib.outputs.compliance.iso27001_2013_aws import (
     write_compliance_row_iso27001_2013_aws,
 )
-from prowler.lib.outputs.compliance.mitre_attack_aws import (
+from prowler.lib.outputs.compliance.mitre_attack.mitre_attack import (
     get_mitre_attack_table,
-    write_compliance_row_mitre_attack_aws,
+    write_compliance_row_mitre_attack,
 )
 
 
@@ -77,7 +77,6 @@ def get_check_compliance_frameworks_in_input(
                 )
             if compliance_name.replace("-", "_") in input_compliance_frameworks:
                 check_compliances.append(compliance)
-
     return check_compliances
 
 
@@ -125,13 +124,9 @@ def fill_compliance(
                     file_descriptors, finding, compliance, output_options, provider
                 )
 
-            elif (
-                compliance.Framework == "MITRE-ATTACK"
-                and compliance.Version == ""
-                and compliance.Provider == "AWS"
-            ):
-                write_compliance_row_mitre_attack_aws(
-                    file_descriptors, finding, compliance, output_options, provider
+            elif compliance.Framework == "MITRE-ATTACK" and compliance.Version == "":
+                write_compliance_row_mitre_attack(
+                    file_descriptors, finding, compliance, provider
                 )
 
             else:

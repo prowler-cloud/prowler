@@ -14,7 +14,7 @@
   "Remediation": {
     "Code": {
       "CLI": "--streaming-connection-idle-timeout=<non-zero value>",
-      "NativeIaC": "https://docs.bridgecrew.io/docs/ensure-that-the-streaming-connection-idle-timeout-argument-is-not-set-to-0",
+      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-streaming-connection-idle-timeout-argument-is-not-set-to-0",
       "Other": "",
       "Terraform": ""
     },

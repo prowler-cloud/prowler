@@ -16,7 +16,7 @@
       "CLI": "gcloud compute networks subnets update [SUBNET_NAME] --region [REGION] --enable-flow-logs",
       "NativeIaC": "",
       "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudVPC/enable-vpc-flow-logs.html",
-      "Terraform": "https://docs.bridgecrew.io/docs/bc_gcp_logging_1#terraform"
+      "Terraform": "https://docs.prowler.com/checks/gcp/logging-policies-1/bc_gcp_logging_1#terraform"
     },
     "Recommendation": {
       "Text": "Ensure that VPC Flow Logs is enabled for every subnet created within your production Virtual Private Cloud (VPC) network. Flow Logs is a logging feature that enables users to capture information about the IP traffic (accepted, rejected, or all traffic) going to and from the network interfaces (ENIs) available within your VPC subnets.",

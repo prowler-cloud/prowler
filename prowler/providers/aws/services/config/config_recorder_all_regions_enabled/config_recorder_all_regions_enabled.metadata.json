@@ -15,10 +15,10 @@
   "RelatedUrl": "https://aws.amazon.com/blogs/mt/aws-config-best-practices/",
   "Remediation": {
     "Code": {
-      "CLI": "https://docs.bridgecrew.io/docs/logging_5-enable-aws-config-regions#cli-command",
+      "CLI": "https://docs.prowler.com/checks/aws/logging-policies/logging_5-enable-aws-config-regions#cli-command",
       "NativeIaC": "",
-      "Other": "https://docs.bridgecrew.io/docs/logging_5-enable-aws-config-regions#aws-console",
-      "Terraform": "https://docs.bridgecrew.io/docs/logging_5-enable-aws-config-regions#terraform"
+      "Other": "https://docs.prowler.com/checks/aws/logging-policies/logging_5-enable-aws-config-regions#aws-console",
+      "Terraform": "https://docs.prowler.com/checks/aws/logging-policies/logging_5-enable-aws-config-regions#terraform"
     },
     "Recommendation": {
       "Text": "It is recommended to enable AWS Config in all regions.",

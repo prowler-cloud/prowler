@@ -289,3 +289,31 @@ class Test_cloudtrail_multi_region_enabled:
                         assert report.resource_id == trail_name_us
                         assert report.resource_arn == trail_us["TrailARN"]
                         assert report.resource_tags == []
+
+    @mock_aws
+    def test_access_denied(self):
+        from prowler.providers.aws.services.cloudtrail.cloudtrail_service import (
+            Cloudtrail,
+        )
+
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
+        )
+
+        with mock.patch(
+            "prowler.providers.common.common.get_global_provider",
+            return_value=aws_provider,
+        ):
+            with mock.patch(
+                "prowler.providers.aws.services.cloudtrail.cloudtrail_multi_region_enabled.cloudtrail_multi_region_enabled.cloudtrail_client",
+                new=Cloudtrail(aws_provider),
+            ) as service_client:
+                # Test Check
+                from prowler.providers.aws.services.cloudtrail.cloudtrail_multi_region_enabled.cloudtrail_multi_region_enabled import (
+                    cloudtrail_multi_region_enabled,
+                )
+
+                service_client.trails = None
+                check = cloudtrail_multi_region_enabled()
+                result = check.execute()
+                assert len(result) == 0

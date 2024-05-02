@@ -120,10 +120,20 @@ class ISO27001_2013_Requirement_Attribute(BaseModel):
 
 
 # MITRE Requirement Attribute
-class Mitre_Requirement_Attribute(BaseModel):
+class Mitre_Requirement_Attribute_AWS(BaseModel):
     """MITRE Requirement Attribute"""
 
     AWSService: str
+    Category: str
+    Value: str
+    Comment: str
+
+
+# MITRE Requirement Attribute
+class Mitre_Requirement_Attribute_Azure(BaseModel):
+    """MITRE Requirement Attribute"""
+
+    AzureService: str
     Category: str
     Value: str
     Comment: str
@@ -140,7 +150,9 @@ class Mitre_Requirement(BaseModel):
     Description: str
     Platforms: list[str]
     TechniqueURL: str
-    Attributes: list[Mitre_Requirement_Attribute]
+    Attributes: Union[
+        list[Mitre_Requirement_Attribute_AWS], list[Mitre_Requirement_Attribute_Azure]
+    ]
     Checks: list[str]
 
 

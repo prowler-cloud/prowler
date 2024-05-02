@@ -14,7 +14,7 @@
   "Remediation": {
     "Code": {
       "CLI": "--request-timeout=300s",
-      "NativeIaC": "https://docs.bridgecrew.io/docs/ensure-that-the-request-timeout-argument-is-set-as-appropriate",
+      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-request-timeout-argument-is-set-as-appropriate",
       "Other": "",
       "Terraform": ""
     },

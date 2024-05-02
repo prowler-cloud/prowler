@@ -1,0 +1,2495 @@
+{
+  "Framework": "MITRE-ATTACK",
+  "Version": "",
+  "Provider": "Azure",
+  "Description": "MITRE ATT&CK® is a globally-accessible knowledge base of adversary tactics and techniques based on real-world observations. The ATT&CK knowledge base is used as a foundation for the development of specific threat models and methodologies in the private sector, in government, and in the cybersecurity product and service community.",
+  "Requirements": [
+    {
+      "Name": "Exploit Public-Facing Application",
+      "Id": "T1190",
+      "Tactics": [
+        "Initial Access"
+      ],
+      "SubTechniques": [],
+      "Platforms": [
+        "Containers",
+        "IaaS",
+        "Linux",
+        "Network",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Adversaries may attempt to exploit a weakness in an Internet-facing host or system to initially access a network. The weakness in the system can be a software bug, a temporary glitch, or a misconfiguration.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1190/",
+      "Checks": [
+        "aks_clusters_created_with_private_nodes",
+        "aks_clusters_public_access_disabled",
+        "app_ensure_java_version_is_latest",
+        "app_ensure_php_version_is_latest",
+        "app_ensure_python_version_is_latest",
+        "defender_assessments_vm_endpoint_protection_installed",
+        "defender_assessments_vm_endpoint_protection_installed",
+        "defender_auto_provisioning_log_analytics_agent_vms_on",
+        "defender_auto_provisioning_vulnerabilty_assessments_machines_on",
+        "defender_container_images_resolved_vulnerabilities",
+        "defender_container_images_scan_enabled",
+        "defender_ensure_defender_for_app_services_is_on",
+        "defender_ensure_defender_for_arm_is_on",
+        "defender_ensure_defender_for_azure_sql_databases_is_on",
+        "defender_ensure_defender_for_containers_is_on",
+        "defender_ensure_defender_for_cosmosdb_is_on",
+        "defender_ensure_defender_for_databases_is_on",
+        "defender_ensure_defender_for_dns_is_on",
+        "defender_ensure_defender_for_keyvault_is_on",
+        "defender_ensure_defender_for_os_relational_databases_is_on",
+        "defender_ensure_defender_for_server_is_on",
+        "defender_ensure_defender_for_sql_servers_is_on",
+        "defender_ensure_defender_for_storage_is_on",
+        "defender_ensure_iot_hub_defender_is_on",
+        "defender_ensure_mcas_is_enabled",
+        "defender_ensure_notify_alerts_severity_is_high",
+        "defender_ensure_notify_emails_to_owners",
+        "defender_ensure_system_updates_are_applied",
+        "defender_ensure_wdatp_is_enabled"
+      ],
+      "Attributes": [
+        {
+          "AzureService": "Azure SQL Database",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "This control may alert on usage of faulty SQL statements. This generates an alert for a possible SQL injection by an application. Alerts may not be generated on usage of valid SQL statements by attackers for malicious purposes."
+        },
+        {
+          "AzureService": "Azure Virtual Machine",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "This control's Fileless Attack Detection identifies shellcode executing within process memory, including shellcode executed as a payload in the exploitation of a software vulnerability. Detection is periodic at an unknown rate. The following alerts may be generated: \"Fileless attack technique detected\",\"Fileless attack behavior detected\", \"Fileless attack toolkit detected\", \"Suspicious SVCHOST process executed\"."
+        },
+        {
+          "AzureService": "Azure Automation Update Management",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "This control provides partial coverage for techniques that exploit vulnerabilities in (common) unpatched software since it enables automated updates of software and rapid configuration change management."
+        },
+        {
+          "AzureService": "Azure App Service",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "This control's Fileless Attack Detection identifies shellcode executing within process memory, including shellcode injected to exploit a vulnerability in a public-facing application. Detection is periodic at an unknown rate."
+        },
+        {
+          "AzureService": "Azure Container Service",
+          "Category": "Protect",
+          "Value": "Minimal",
+          "Comment": "This control may provide provide information about vulnerabilities within container images. The limited scope of containers and registries that are applicable to this control contribute to the lower score."
+        },
+        {
+          "AzureService": "Azure Kubernetes Service",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "This control may alert on publicly exposed Kubernetes services. This may provide context on services that should be patched or hardened for public access."
+        },
+        {
+          "AzureService": "Azure Network Watcher",
+          "Category": "Protect",
+          "Value": "Significant",
+          "Comment": "This control can detect anomalous traffic to and from externally facing systems with respect to network security group (NSG) policy."
+        },
+        {
+          "AzureService": "Azure Policy",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "This control may provide recommendations to restrict access to applications that are public facing and providing information on vulnerable applications."
+        },
+        {
+          "AzureService": "Azure Security Center ",
+          "Category": "Protect",
+          "Value": "Minimal",
+          "Comment": "This control's CORS related recommendations can help lead to hardened web applications. This can reduce the likelihood of an application being exploited to reveal sensitive data that can lead to the compromise of an environment.Likewise this control's recommendations related to keeping Java/PHP up to date for API/Function/Web apps can lead to hardening the public facing content that uses these runtimes. This control's recommendations related to disabling Public network access for Azure databases can lead to reducing the exposure of resources to the public Internet and thereby reduce the attack surface.These recommendations are limited to specific technologies (Java, PHP and CORS, SQL DBs) and therefore provide Minimal coverage leading to a Minimal score."
+        },
+        {
+          "AzureService": "Azure Sentinel",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "The Azure Sentinel Hunting \"Potential IIS code injection attempt\" query can detect some potential injection attacks against public-facing applications. The Azure Sentinel Analytics \"A potentially malicious web request was executed against a web server\" query can detect a high ratio of blocked requests and unobstructed requests to a Web Application Firewall (WAF) for a given client IP and hostname. The coverage for these queries is minimal (e.g. IIS) resulting in an overall Minimal score."
+        },
+        {
+          "AzureService": "Azure Web Application Firewall",
+          "Category": "Detect",
+          "Value": "Significant",
+          "Comment": "This control can detect common web application attack vectors."
+        },
+        {
+          "AzureService": "Azure Web Application Firewall",
+          "Category": "Protect",
+          "Value": "Significant",
+          "Comment": "This control can protect web applications from common attacks (e.g. SQL injection, XSS)."
+        },
+        {
+          "AzureService": "Azure Microsoft Defender Vulnerability Management.",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "Once this control is deployed, it can detect known vulnerabilities in Windows and various Linux endpoints. This information can be used to patch, isolate, or remove vulnerable software and machines. This control does not directly protect against exploitation and it is not effective against zero day attacks, vulnerabilities with no available patch, and software that may not be analyzed by the scanner. As a result, the score is capped at Partial."
+        },
+        {
+          "AzureService": "Azure Virtual Machine",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "This control can be configured to completely block inbound access to selected ports until access is requested. This prevents any attempt at exploitation of a public-facing application unless the attacker has the credentials and permissions to request such access. Even if permission has been granted to an authorized user to access the virtual machine, a list of authorized IP addresses for that access can be configured. The score is minimal, since this control only applies to specific applications requiring credentialed access, as opposed to a public webserver"
+        },
+        {
+          "AzureService": "Azure SQL Database",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "This control provides recommendations to patch if SQL server is out of date and to disable unneeded features to reduce exploitable surface area."
+        }
+      ]
+    },
+    {
+      "Name": "Trusted Relationship",
+      "Id": "T1199",
+      "Tactics": [
+        "Initial Access"
+      ],
+      "SubTechniques": [],
+      "Platforms": [
+        "Office 365",
+        "IaaS",
+        "Linux",
+        "SaaS",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Adversaries may breach or otherwise leverage organizations who have access to intended victims. Access through trusted third party relationship abuses an existing connection that may not be protected or receives less scrutiny than standard mechanisms of gaining access to a network.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1199/",
+      "Checks": [
+        "network_http_internet_access_restricted",
+        "network_rdp_internet_access_restricted",
+        "network_ssh_internet_access_restricted",
+        "network_udp_internet_access_restricted"
+      ],
+      "Attributes": [
+        {
+          "AzureService": "Azure Network Watcher",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "This control can be used to gain insight into normal traffic from trusted third parties which can then be used to detect anomalous traffic that may be indicative of a threat."
+        },
+        {
+          "AzureService": "Azure Virtual Network",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "This control can isolate portions of network that do not require network-wide access, limiting some attackers that leverage trusted relationships such as remote access for vendor maintenance. Coverage partial, Temporal Immediate."
+        }
+      ]
+    },
+    {
+      "Name": "Valid Accounts",
+      "Id": "T1078",
+      "Tactics": [
+        "Defense Evasion",
+        "Persistence",
+        "Privilege Escalation",
+        "Initial Access"
+      ],
+      "SubTechniques": [
+        "T1078.001 - Default Accounts",
+        "T1078.004 - Cloud Accounts"
+      ],
+      "Platforms": [
+        "Azure AD",
+        "Containers",
+        "Google Workspace",
+        "IaaS",
+        "Linux",
+        "Network",
+        "Office 365",
+        "SaaS",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Adversaries may obtain and abuse credentials of existing accounts as a means of gaining Initial Access, Persistence, Privilege Escalation, or Defense Evasion. Compromised credentials may be used to bypass access controls placed on various resources on systems within the network and may even be used for persistent access to remote systems and externally available services, such as VPNs, Outlook Web Access, network devices, and remote desktop.[1] Compromised credentials may also grant an adversary increased privilege to specific systems or access to restricted areas of the network. Adversaries may choose not to use malware or tools in conjunction with the legitimate access those credentials provide to make it harder to detect their presence.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1078/",
+      "Checks": [
+        "entra_conditional_access_policy_require_mfa_for_management_api",
+        "entra_global_admin_in_less_than_five_users",
+        "entra_non_privileged_user_has_mfa",
+        "entra_policy_default_users_cannot_create_security_groups",
+        "entra_policy_ensure_default_user_cannot_create_apps",
+        "entra_policy_ensure_default_user_cannot_create_tenants",
+        "entra_policy_guest_invite_only_for_admin_roles",
+        "entra_policy_guest_users_access_restrictions",
+        "entra_policy_restricts_user_consent_for_apps",
+        "entra_policy_user_consent_for_verified_apps",
+        "entra_privileged_user_has_mfa",
+        "entra_security_defaults_enabled",
+        "entra_trusted_named_locations_exists",
+        "entra_user_with_vm_access_has_mfa",
+        "entra_users_cannot_create_microsoft_365_groups"
+      ],
+      "Attributes": [
+        {
+          "AzureService": "Azure SQL Database",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "This control only provides alerts for a set of Azure database offerings. Databases that have been deployed to endpoints within Azure or third-party databases deployed to Azure do not generate alerts for this control."
+        },
+        {
+          "AzureService": "Azure Cosmos DB",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "This control's detection is specific to the Cosmos DB and therefore provides minimal overall detection coverage for Valid Accounts resulting in a Minimal score. A relevant alert is \"Access from an unusual location to a Cosmos DB account\"."
+        },
+        {
+          "AzureService": "Azure Windows Machines",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "This control is able to detect some of this technique's sub-techniques resulting in a Partial Coverage score and consequently an overall score of Partial."
+        },
+        {
+          "AzureService": "Azure AD",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "This control provides partial detection for some of this technique's sub-techniques and procedure examples resulting in an overall Partial detection score."
+        },
+        {
+          "AzureService": "Azure AD",
+          "Category": "Respond",
+          "Value": "Partial",
+          "Comment": "This control provides a response capability that accompanies its detection capability that can contain and eradicate the impact of this technique. Because this capability varies between containment (federated accounts) and eradication (cloud accounts) and is only able to respond to some of this technique's sub-techniques, it has been scored as Partial."
+        },
+        {
+          "AzureService": "Azure AD",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "This control provides recommendations that can lead to the detection of the malicious usage of valid cloud accounts but does not provide recommendations for the remaining sub-techniques Additionally, it provides limited detection for this technique's procedure examples. Consequently, its overall detection coverage score is minimal."
+        },
+        {
+          "AzureService": "Azure AD",
+          "Category": "Protect",
+          "Value": "Minimal",
+          "Comment": "This control provides recommendations that can lead to protecting against the malicious usage of valid cloud accounts but does not provide recommendations for the remaining sub-techniques Additionally, it provides limited protection for this technique's procedure examples. Consequently, its overall protection coverage score is minimal."
+        },
+        {
+          "AzureService": "Azure AD",
+          "Category": "Protect",
+          "Value": "Minimal",
+          "Comment": "This control only protects cloud accounts and therefore its overall protection coverage is Minimal."
+        },
+        {
+          "AzureService": "Azure AD",
+          "Category": "Protect",
+          "Value": "Minimal",
+          "Comment": "This control only provides protection for one of this technique's sub-techniques while not providing any protection for the remaining and therefore its coverage score is Minimal, resulting in a Minimal score."
+        },
+        {
+          "AzureService": "Azure Defender",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "This control provides minimal detection for its procedure examples. Additionally, it is able to detect only one of its sub-techniques (Cloud Accounts) resulting in a Minimal Coverage score and consequently an overall score of Minimal."
+        },
+        {
+          "AzureService": "Azure Policy",
+          "Category": "Protect",
+          "Value": "Minimal",
+          "Comment": ""
+        },
+        {
+          "AzureService": "Azure Security Center",
+          "Category": "Protect",
+          "Value": "Minimal",
+          "Comment": "This control's recommendations about removing deprecated and external accounts with sensitive permissions from your subscription can lead to mitigating the Cloud Accounts sub-technique of this technique. Because this is a recommendation and has low coverage, it is assessed as Minimal."
+        },
+        {
+          "AzureService": "Azure Sentinel",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "This control's recommendations about removing deprecated and external accounts with sensitive permissions from your subscription can lead to mitigating the Cloud Accounts sub-technique of this technique. Because this is a recommendation and has low coverage, it is assessed as Minimal."
+        },
+        {
+          "AzureService": "Azure App Service",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "This control can identify anomalous behavior such as geographically impossible logins and out-of-character activity.Relevant alerts include \"Activity from anonymous IP address\" , \"Activity from infrequent country\", \"Activity from suspicious IP address\", \"Impossible Travel\", and \"Activity performed by terminated user\"."
+        },
+        {
+          "AzureService": "Azure AD",
+          "Category": "Protect",
+          "Value": "Minimal",
+          "Comment": "This control only provides minimal protection for this technique's procedure examples along and also only protects one of its sub-techniques resulting in an overall Minimal score."
+        },
+        {
+          "AzureService": "Azure AD",
+          "Category": "Respond",
+          "Value": "Minimal",
+          "Comment": "This control only protects cloud accounts and therefore its overall coverage is minimal resulting in a Minimal respond score for this technique."
+        }
+      ]
+    },
+    {
+      "Name": "Command and Scripting Interpreter",
+      "Id": "T1059",
+      "Tactics": [
+        "Execution"
+      ],
+      "SubTechniques": [
+        "T1059.009 - Cloud API"
+      ],
+      "Platforms": [
+        "Azure AD",
+        "IaaS",
+        "Google Workspace",
+        "Linux",
+        "Network",
+        "Office 365",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Adversaries may abuse command and script interpreters to execute commands, scripts, or binaries. These interfaces and languages provide ways of interacting with computer systems and are a common feature across many different platforms. Most systems come with some built-in command-line interface and scripting capabilities, for example, macOS and Linux distributions include some flavor of Unix Shell while Windows installations include the Windows Command Shell and PowerShell.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1059/",
+      "Checks": [
+        "defender_assessments_vm_endpoint_protection_installed",
+        "defender_ensure_defender_for_app_services_is_on"
+      ],
+      "Attributes": [
+        {
+          "AzureService": "Azure Virtual Machine",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "TThis control's detection is specific to a minority of this technique's sub-techniques resulting in a Minimal Coverage score and consequently an overall score of Minimal."
+        },
+        {
+          "AzureService": "Azure Defender",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "This control provides minimal detection for this technique's procedure examples and only two of its sub-techniques (only certain specific sub-technique behaviors), resulting in a Minimal score."
+        },
+        {
+          "AzureService": "Azure Sentinel",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "This control provides minimal coverage for most of this technique's sub-techniques, along with additional mappings for its procedure examples, resulting in an overall score of Minimal.The following Azure Sentinel Hunting queries can identify potentially malicious use of command and scripting interpreters that does not map directly to one/more sub-techniques: \"Anomalous Code Execution\" can identifyanomalous runCommand operations on virtual machines, \"Azure CloudShell Usage\" can identify potentially malicious use of CloudShell, \"New processes observed in last 24 hours\", \"Rare processes run by Service accounts\", and \"Rare Custom Script Extension\" can identify execution outliers that may suggest misuse.The following Azure Sentinel Analytics queries can identify potentially malicious use of command and scripting interpreters that does not map directly to one/more sub-techniques: \"New CloudShell User\" can identify potentially malicious use of CloudShell, \"Rare and Potentially high-risk Office operations\" can identify specific rare mailbox-related ccount and permission changes via execution."
+        },
+        {
+          "AzureService": "Microsoft Defender for Identity",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "This control provides Minimal detection for one of this technique's sub-techniques, while not providing any detection for the remaining, resulting in a Minimal score."
+        }
+      ]
+    },
+    {
+      "Name": "Serverless Execution",
+      "Id": "T1648",
+      "Tactics": [
+        "Execution"
+      ],
+      "SubTechniques": [],
+      "Platforms": [
+        "IaaS",
+        "Office 365",
+        "SaaS"
+      ],
+      "Description": "Adversaries may abuse serverless computing, integration, and automation services to execute arbitrary code in cloud environments. Many cloud providers offer a variety of serverless resources, including compute engines, application integration services, and web servers.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1648/",
+      "Checks": [],
+      "Attributes": []
+    },
+    {
+      "Name": "User Execution",
+      "Id": "T1204",
+      "Tactics": [
+        "Execution"
+      ],
+      "SubTechniques": [
+        "T1204.003 - Malicious Image"
+      ],
+      "Platforms": [
+        "IaaS",
+        "Containers",
+        "Linux",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "An adversary may rely upon specific actions by a user in order to gain execution. Users may be subjected to social engineering to get them to execute malicious code by, for example, opening a malicious document file or link. These user actions will typically be observed as follow-on behavior from forms of Phishing.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1204/",
+      "Checks": [
+        "defender_assessments_vm_endpoint_protection_installed",
+        "defender_ensure_defender_for_app_services_is_on"
+      ],
+      "Attributes": [
+        {
+          "AzureService": "Azure Security Center",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "This control only provides detection for one of this technique's sub-techniques while not providing any detection capability for its other sub-technique, and therefore its coverage score is Partial, resulting in a Partial score."
+        },
+        {
+          "AzureService": "Azure Virtual Machines",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "This control provides detection for one of the two sub-techniques of this technique, Malicious File, resulting in a Partial Coverage score and consequently an overall score of Partial.."
+        },
+        {
+          "AzureService": "Azure Defender",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "This control only provides meaningful detection for one of the technique's two sub-techniques, and the temporal factor is unknown, resulting in a score of Minimal."
+        },
+        {
+          "AzureService": "Microsoft Antimalware for Azure",
+          "Category": "Protect",
+          "Value": "Minimal",
+          "Comment": ""
+        }
+      ]
+    },
+    {
+      "Name": "Account Manipulation",
+      "Id": "T1098",
+      "Tactics": [
+        "Persistence"
+      ],
+      "SubTechniques": [
+        "T1098.001 - Additional Cloud Credentials",
+        "T1098.003 - Additional Cloud Roles",
+        "T1098.004 - SSH Authorized Keys"
+      ],
+      "Platforms": [
+        "IaaS",
+        "Office 365",
+        "SaaS"
+      ],
+      "Description": "Adversaries may manipulate accounts to maintain access to victim systems. Account manipulation may consist of any action that preserves adversary access to a compromised account, such as modifying credentials or permission groups. These actions could also include account activity designed to subvert security policies, such as performing iterative password updates to bypass password duration policies and preserve the life of compromised credentials.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1098/",
+      "Checks": [
+        "entra_conditional_access_policy_require_mfa_for_management_api",
+        "entra_global_admin_in_less_than_five_users",
+        "entra_non_privileged_user_has_mfa",
+        "entra_policy_default_users_cannot_create_security_groups",
+        "entra_policy_ensure_default_user_cannot_create_apps",
+        "entra_policy_ensure_default_user_cannot_create_tenants",
+        "entra_policy_guest_invite_only_for_admin_roles",
+        "entra_policy_guest_users_access_restrictions",
+        "entra_policy_restricts_user_consent_for_apps",
+        "entra_policy_user_consent_for_verified_apps",
+        "entra_privileged_user_has_mfa",
+        "entra_security_defaults_enabled",
+        "entra_trusted_named_locations_exists",
+        "entra_user_with_vm_access_has_mfa",
+        "entra_users_cannot_create_microsoft_365_groups"
+      ],
+      "Attributes": [
+        {
+          "AzureService": "Azure AD",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "This control only provides detection for one of this technique's sub-techniques while not providing any detection for the remaining and therefore its coverage score is Minimal, resulting in a Minimal score."
+        },
+        {
+          "AzureService": "Azure AD",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "This control provides significant protection for some of this technique's sub-techniques while not providing any protection for others, resulting in a Partial score."
+        },
+        {
+          "AzureService": "Azure Policy",
+          "Category": "Protect",
+          "Value": "Minimal",
+          "Comment": ""
+        },
+        {
+          "AzureService": "Azure Security Center",
+          "Category": "Protect",
+          "Value": "Minimal",
+          "Comment": "This control's \"Immutable (read-only) root filesystem should be enforced for containers\" recommendation can prevent modifying the ssh_authorized keys file. Because it is a recommendation and limited to only one sub-technique, its score is Minimal."
+        },
+        {
+          "AzureService": "Azure Sentinel",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "The following Azure Sentinel Hunting queries can identify potentially malicious manipulation of accounts to increase or maintain access: \"Azure DevOps - Guest users access enabled\", \"Azure DevOps - Additional Org Admin added\", \"Anomalous Activity Role Assignment\", \"Anomalous Role Assignment\", and \"Anomalous AAD Account Manipulation\", which indicate expansion of accounts' access/privileges; \"Bots added to multiple teams\" which indicates workspace access granted to automated accounts. The following Azure Sentinel Analytics queries can identify potentially malicious manipulation of accounts to increase or maintain access: \"Suspicious granting of permissions to an account\" from a previously unobserved IP address, \"External user added and removed in short timeframe\" for Teams resources, \"Account added and removed from privileged group\", \"User account added to built in domain local or global group\", and \"New user created and added to the built-in administrator group\". \"Multiple Password Reset by user\" can detect potentially malicious iterative password resets."
+        },
+        {
+          "AzureService": "Microsoft Cloud App Security",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "This control can detect anomalous admin activity that may be indicative of account manipulation. Relevant alerts include \"Unusual administrative activity (by user)\" and \"Unusual addition of credentials to an OAuth app\"."
+        },
+        {
+          "AzureService": "Microsoft Defender for Cloud",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": ""
+        },
+        {
+          "AzureService": "Azure Monitor",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "This control provides partial detection for only one of this technique's sub-techniques and does not cover most of its procedure examples, resulting in a score of Minimal."
+        },
+        {
+          "AzureService": "Microsoft Defender for Identity",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "This controls's \"Suspicious additions to sensitive groups (external ID 2024)\" alert can utilize machine learning to detect when an attacker adds users to highly privileged groups. Adding users is done to gain access to more resources, and gain persistency. This detection relies on profiling the group modification activities of users, and alerting when an abnormal addition to a sensitive group is observed. Defender for Identity profiles continuously.This alert provides Partial coverage of this technique with a reduced false-positive rate by utilizing machine learning models."
+        },
+        {
+          "AzureService": "Azure Resource Manager",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "This control provides protection for some of this technique's sub-techniques and therefore its coverage score factor is Partial, resulting in a Partial score."
+        }
+      ]
+    },
+    {
+      "Name": "Create Account",
+      "Id": "T1136",
+      "Tactics": [
+        "Persistence"
+      ],
+      "SubTechniques": [
+        "T1136.003 - Cloud Account"
+      ],
+      "Platforms": [
+        "Azure AD",
+        "Google Workspace",
+        "IaaS",
+        "Linux",
+        "Network",
+        "Office 365",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Adversaries may create an account to maintain access to victim systems. With a sufficient level of access, creating such accounts may be used to establish secondary credentialed access that do not require persistent remote access tools to be deployed on the system.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1136/",
+      "Checks": [],
+      "Attributes": [
+        {
+          "AzureService": "Azure Defender",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "This control's detection is specific to a minority of this technique's sub-techniques resulting in a Minimal Coverage score and consequently an overall score of Minimal."
+        },
+        {
+          "AzureService": "Azure AD Privileged Identity Management",
+          "Category": "Protect",
+          "Value": "Minimal",
+          "Comment": "This control only provides protection for one of this technique's sub-techniques while not providing any detection for the remaining and therefore its coverage score is Minimal, resulting in a Minimal score."
+        },
+        {
+          "AzureService": "Azure Security Center",
+          "Category": "Protect",
+          "Value": "Minimal",
+          "Comment": "This control's \"Immutable (read-only) root filesystem should be enforced for containers\" recommendation can mitigate a sub-technique of this technique. Due to its Minimal coverage, its score is assessed as Minimal."
+        },
+        {
+          "AzureService": "Azure Sentinel",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "This control provides partial coverage for all of this technique's sub-techniques, resulting in an overall score of Partial."
+        },
+        {
+          "AzureService": "Azure Monitor",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "This control is only relevant for Linux endpoints, and it provides partial coverage for the only sub-technique relevant on Linux endpoints, Local Account."
+        },
+        {
+          "AzureService": "Azure Resource Manager",
+          "Category": "Protect",
+          "Value": "Minimal",
+          "Comment": "This control only provides protection for one of this technique's sub-techniques while not providing any protection for the remaining and therefore its coverage score factor is Minimal, resulting in a Minimal score."
+        }
+      ]
+    },
+    {
+      "Name": "Event Triggered Execution",
+      "Id": "T1546",
+      "Tactics": [
+        "Privilege Escalation",
+        "Persistence"
+      ],
+      "SubTechniques": [],
+      "Platforms": [
+        "Google Workspace",
+        "IaaS",
+        "Linux",
+        "Office 365",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Adversaries may establish persistence and/or elevate privileges using system mechanisms that trigger execution based on specific events. Various operating systems have means to monitor and subscribe to events such as logons or other user activity such as running specific applications/binaries. Cloud environments may also support various functions and services that monitor and can be invoked in response to specific cloud events.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1546/",
+      "Checks": [],
+      "Attributes": [
+        {
+          "AzureService": "Microsoft Defender for Cloud",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "The detection score for this technique was assessed as Partial because it doesn't detect some of the sub-techniques of this technique such as Windows Management Instrumentation (WMI) Event Subscription and Trap sub-techniques. Additionally for some sub-techniques, this control can be noisy."
+        },
+        {
+          "AzureService": "Azure Sentinel",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "This control can identify one of this technique's sub-techniques when executed via \"Powershell Empire cmdlets seen in command line\", but does not address other procedures."
+        },
+        {
+          "AzureService": "Azure Security Center",
+          "Category": "Protect",
+          "Value": "Minimal",
+          "Comment": "This control's \"Immutable (read-only) root filesystem should be enforced for containers\" recommendation can mitigate a sub-technique of this technique. Due to its Minimal coverage, its score is assessed as Minimal."
+        },
+        {
+          "AzureService": "Azure Defender",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "This control's detection is specific to a minority of this technique's sub-techniques resulting in a Minimal Coverage score and consequently an overall score of Minimal."
+        }
+      ]
+    },
+    {
+      "Name": "Cloud Administration Command",
+      "Id": "T1651",
+      "Tactics": [
+        "Privilege Escalation",
+        "Persistence"
+      ],
+      "SubTechniques": [],
+      "Platforms": [
+        "Azure AD",
+        "IaaS"
+      ],
+      "Description": "Adversaries may abuse cloud management services to execute commands within virtual machines or hybrid-joined devices. Resources such as AWS Systems Manager, Azure RunCommand, and Runbooks allow users to remotely run scripts in virtual machines by leveraging installed virtual machine agents. Similarly, in Azure AD environments, Microsoft Endpoint Manager allows Global or Intune Administrators to run scripts as SYSTEM on on-premises devices joined to the Azure AD.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1651/",
+      "Checks": [],
+      "Attributes": []
+    },
+    {
+      "Name": "Implant Internal Image",
+      "Id": "T1525",
+      "Tactics": [
+        "Persistence"
+      ],
+      "SubTechniques": [],
+      "Platforms": [
+        "IaaS",
+        "Containers"
+      ],
+      "Description": "Adversaries may implant cloud or container images with malicious code to establish persistence after gaining access to an environment. Amazon Web Services (AWS) Amazon Machine Images (AMIs), Google Cloud Platform (GCP) Images, and Azure Images as well as popular container runtimes such as Docker can be implanted or backdoored. Unlike Upload Malware, this technique focuses on adversaries implanting an image in a registry within a victim’s environment. Depending on how the infrastructure is provisioned, this could provide persistent access if the infrastructure provisioning tool is instructed to always use the latest image.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1525/",
+      "Checks": [
+        "defender_container_images_scan_enabled",
+        "defender_ensure_defender_for_containers_is_on"
+      ],
+      "Attributes": [
+        {
+          "AzureService": "Azure Defender for Containers",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "This control may scan and alert on import or creation of container images with known vulnerabilities or a possible expanded surface area for exploitation."
+        },
+        {
+          "AzureService": "Azure Defender for Containers",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "This control may prevent adversaries from implanting malicious container images through fine grained permissions and use of container image tag signing. Image tag signing allows for verifiable container images that have been signed with legitimate keys."
+        },
+        {
+          "AzureService": "Azure Defender for Kubernetes",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "This control may alert on containers with sensitive volume mounts, unneeded privileges, or running an image with digital currency mining software."
+        },
+        {
+          "AzureService": "Azure Policy",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "This control may provide recommendations to enable scanning and auditing of container images. This can provide information on images that have been added with high privileges or vulnerabilities."
+        },
+        {
+          "AzureService": "Azure Security Center",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "This control's \"Container images should be deployed from trusted registries only\", \"Container registries should not allow unrestricted network access\" and \"Container registries should use private link\" recommendations can lead to ensuring that container images are only loaded from trusted registries thereby mitigating this technique."
+        },
+        {
+          "AzureService": "Azure Security Center Docker Host Hardening",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "This control may alert on Docker containers that are misconfigured or do not conform to CIS Docker Benchmarks. This may result in detection of container images implanted within Linux VMs with specific vulnerabilities or misconfigurations for malicious purposes."
+        },
+        {
+          "AzureService": "Azure Monitor",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "This control may alert on suspicious container images running mining software or SSH servers. Privileged Docker containers and privileged commands running within containers may also be detected. These alerts are only generated on containers in Linux endpoint machines and not for containers running from Azure Docker deployment."
+        }
+      ]
+    },
+    {
+      "Name": "Modify Authentication Process",
+      "Id": "T1556",
+      "Tactics": [
+        "Credential Access",
+        "Defense Evasion",
+        "Persistence"
+      ],
+      "SubTechniques": [
+        "T1556.006 - Multi-Factor Authentication",
+        "T1556.007 - Hybrid Identity"
+      ],
+      "Platforms": [
+        "Azure AD",
+        "Google Workspace",
+        "IaaS",
+        "Linux",
+        "Network",
+        "Office 365",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Adversaries may modify authentication mechanisms and processes to access user credentials or enable otherwise unwarranted access to accounts. The authentication process is handled by mechanisms, such as the Local Security Authentication Server (LSASS) process and the Security Accounts Manager (SAM) on Windows, pluggable authentication modules (PAM) on Unix-based systems, and authorization plugins on MacOS systems, responsible for gathering, storing, and validating credentials. By modifying an authentication process, an adversary may be able to authenticate to a service or system without using Valid Accounts.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1556/",
+      "Checks": [
+        "entra_conditional_access_policy_require_mfa_for_management_api",
+        "entra_global_admin_in_less_than_five_users",
+        "entra_non_privileged_user_has_mfa",
+        "entra_privileged_user_has_mfa",
+        "entra_user_with_vm_access_has_mfa"
+      ],
+      "Attributes": [
+        {
+          "AzureService": "Azure Security Center",
+          "Category": "Protect",
+          "Value": "Minimal",
+          "Comment": "This control's \"Immutable (read-only) root filesystem should be enforced for containers\" recommendation can mitigate a sub-techniques of this technique. Due to it being a recommendation and providing minimal coverage, its score is assessed as Minimal."
+        },
+        {
+          "AzureService": "Azure Sentinel",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "The Azure Sentinel Hunting \"Azure DevOps Conditional Access Disabled\" query can identify potentially malicious modifications of the DevOps access policy.The Azure Sentinel Analytics \"MFA disabled for a user\" and \"GitHub Two Factor Auth Disable\" queries can detect potentially malicious changes in multi-factor authentication settings."
+        },
+        {
+          "AzureService": "Microsoft Defender for Cloud File Integrity Monitoring",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "This control is effective for detecting the Registry and file system artifacts that are generated during the execution of some variations of this technique while minimizing false positives due to the locations being monitored changing infrequently (e.g. /etc/pam.d/)."
+        },
+        {
+          "AzureService": "Microsoft Defender for Identity",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "This control provides minimal detection for one of this technique's sub-techniques, while not providing any detection for the remaining, resulting in a Minimal score."
+        }
+      ]
+    },
+    {
+      "Name": "Impair Defenses",
+      "Id": "T1562",
+      "Tactics": [
+        "Defense Evasion"
+      ],
+      "SubTechniques": [
+        "T1562.006 - Disable or Modify Tools",
+        "T1562.007 - Disable or Modify Cloud Firewall",
+        "T1562.008 - Disable Cloud Logs"
+      ],
+      "Platforms": [
+        "Containers",
+        "IaaS",
+        "Linux",
+        "Network",
+        "Office 365",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Adversaries may maliciously modify components of a victim environment in order to hinder or disable defensive mechanisms. This not only involves impairing preventative defenses, such as firewalls and anti-virus, but also detection capabilities that defenders can use to audit activity and identify malicious behavior. This may also span both native defenses as well as supplemental capabilities installed by users and administrators.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1562/",
+      "Checks": [
+        "defender_ensure_defender_for_arm_is_on"
+      ],
+      "Attributes": [
+        {
+          "AzureService": "Azure Monitor",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "This control only provides coverage for a miniority of the sub-techniques under this technique and provides no coverage for other relevant sub-techniques, such as Impair Command History Logging or Disable or Modify Tools, resulting in a score of Minimal."
+        },
+        {
+          "AzureService": "Azure Defender Alerts for Windows Machines",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "This control's detection is specific to a minority of this technique's sub-techniques resulting in a Minimal Coverage score and consequently an overall score of Minimal."
+        },
+        {
+          "AzureService": "Azure Defender for Resource Manager",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "This control may alert on Windows Defender security features being disabled but does not alert on other security tools or logging being disabled or tampered with. Consequently, its Coverage score is Minimal resulting in an overall Minimal score."
+        },
+        {
+          "AzureService": "Azure Sentinel",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "This control provides minimal (mostly) to partial coverage for most of this technique's sub-techniques, resulting in an overall score of Minimal.The Azure Sentinel Hunting \"Anomalous Defensive Mechanism Modification\" query detects users performing delete operations on security policies, which may indicate an adversary attempting to impair defenses."
+        },
+        {
+          "AzureService": "Microsoft Defender for Cloud File Integrity Monitoring",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "TDue to low detection coverage, this technique is scored as minimal."
+        }
+      ]
+    },
+    {
+      "Name": "Modify Cloud Compute Infrastructure",
+      "Id": "T1578",
+      "Tactics": [
+        "Defense Evasion"
+      ],
+      "SubTechniques": [
+        "T1578.001 - Create Snapshot",
+        "T1578.002 - Create Cloud Instance",
+        "T1578.003 - Delete Cloud Instance",
+        "T1578.004 - Revert Cloud Instance"
+      ],
+      "Platforms": [
+        "IaaS"
+      ],
+      "Description": "An adversary may attempt to modify a cloud account's compute service infrastructure to evade defenses. A modification to the compute service infrastructure can include the creation, deletion, or modification of one or more components such as compute instances, virtual machines, and snapshots.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1578/",
+      "Checks": [
+        "entra_policy_default_users_cannot_create_security_groups",
+        "entra_policy_ensure_default_user_cannot_create_apps",
+        "entra_policy_ensure_default_user_cannot_create_tenants",
+        "entra_policy_guest_invite_only_for_admin_roles",
+        "entra_policy_guest_users_access_restrictions",
+        "entra_policy_restricts_user_consent_for_apps",
+        "entra_policy_user_consent_for_verified_apps",
+        "entra_privileged_user_has_mfa",
+        "entra_security_defaults_enabled"
+      ],
+      "Attributes": [
+        {
+          "AzureService": "Azure Resource Manager",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "This control provides partial protection for all of its sub-techniques and therefore its coverage score factor is Partial, resulting in a Partial score"
+        },
+        {
+          "AzureService": "Microsoft Cloud App Security",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "This control can identify anomalous admin activity.Relevant alerts include \"Multiple storage deletion activities\", \"Multiple VM creation activities\", and \"Suspicious creation activity for cloud region\"."
+        },
+        {
+          "AzureService": "Azure Sentinel",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "The Azure Sentinel Hunting \"Azure Resources assigned Public IP addresses\" query detect suspicious IP address changes."
+        }
+      ]
+    },
+    {
+      "Name": "Unused/Unsupported Cloud Regions",
+      "Id": "T1535",
+      "Tactics": [
+        "Defense Evasion"
+      ],
+      "SubTechniques": [],
+      "Platforms": [
+        "IaaS"
+      ],
+      "Description": "Adversaries may create cloud instances in unused geographic service regions in order to evade detection. Access is usually obtained through compromising accounts used to manage cloud infrastructure.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1535/",
+      "Checks": [],
+      "Attributes": [
+        {
+          "AzureService": "Azure Policy",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "This control may provide recommendations to restrict the allowed locations your organization can specify when deploying resources or creating resource groups."
+        },
+        {
+          "AzureService": "Azure Sentinel",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "The Azure Sentinel Analytics \"Suspicious Resource deployment\" query can identify adversary attempts to maintain persistence or evade defenses by leveraging unused and/or unmonitored resources."
+        },
+        {
+          "AzureService": "Microsoft Cloud App Security",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "This control can detect unusual region and activity for cloud resources (preview feature as of this writing). Relevant alert is \"Suspicious creation activity for cloud region\"."
+        }
+      ]
+    },
+    {
+      "Name": "Use Alternate Authentication Material",
+      "Id": "T1550",
+      "Tactics": [
+        "Defense Evasion",
+        "Lateral Movement"
+      ],
+      "SubTechniques": [
+        "T1550.001 - Application Access Token",
+        "T1550.004 - Web Session Cookie"
+      ],
+      "Platforms": [
+        "IaaS"
+      ],
+      "Description": "Adversaries may use alternate authentication material, such as password hashes, Kerberos tickets, and application access tokens, in order to move laterally within an environment and bypass normal system access controls.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1550/",
+      "Checks": [
+        "entra_global_admin_in_less_than_five_users",
+        "entra_non_privileged_user_has_mfa",
+        "entra_policy_default_users_cannot_create_security_groups",
+        "entra_policy_ensure_default_user_cannot_create_apps",
+        "entra_policy_ensure_default_user_cannot_create_tenants",
+        "entra_policy_guest_invite_only_for_admin_roles",
+        "entra_policy_guest_users_access_restrictions",
+        "entra_policy_user_consent_for_verified_apps",
+        "entra_privileged_user_has_mfa",
+        "entra_user_with_vm_access_has_mfa"
+      ],
+      "Attributes": [
+        {
+          "AzureService": "Microsoft Defender for Identity",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "This control provides partial detection for some of this technique's sub-techniques (due to unknown false-positive/true-positive rate), resulting in a Partial score."
+        },
+        {
+          "AzureService": "Azure Sentinel",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "This control provides minimal coverage of half of this technique's sub-techniques, without additional coverage of procedure examples, resulting in an overall score of Minimal."
+        },
+        {
+          "AzureService": "Azure AD Identity Secure Score",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "This control provides recommendations that lead to protections for some of the sub-techniques of this technique. Due to it only providing a recommendation, its score has been capped at Partial."
+        }
+      ]
+    },
+    {
+      "Name": "Brute Force",
+      "Id": "T1110",
+      "Tactics": [
+        "Credential Access"
+      ],
+      "SubTechniques": [
+        "T1110.001 - Password Guessing",
+        "T1110.003 - Password Spraying",
+        "T1110.004 - Credential Stuffing"
+      ],
+      "Platforms": [
+        "Azure AD",
+        "Containers",
+        "Google Workspace",
+        "IaaS",
+        "Linux",
+        "Network",
+        "Office 365",
+        "SaaS",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Adversaries may use brute force techniques to gain access to accounts when passwords are unknown or when password hashes are obtained. Without knowledge of the password for an account or set of accounts, an adversary may systematically guess the password using a repetitive or iterative mechanism. Brute forcing passwords can take place via interaction with a service that will check the validity of those credentials or offline against previously acquired credential data, such as password hashes.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1110/",
+      "Checks": [],
+      "Attributes": [
+        {
+          "AzureService": "Advanced Threat Protection for Azure SQL Database",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "This control covers the majority of sub-techniques for this parent technique and may cover both successful and unsuccessful brute force attacks. This control only provides alerts for a set of Azure database offerings. Databases that have been deployed to endpoints within Azure or third-party databases deployed to Azure do not generate alerts for this control."
+        },
+        {
+          "AzureService": "Alerts for Windows Machines",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "This control provides detection for some of this technique's sub-techniques and procedure examples resulting in a Partial Coverage score and consequently an overall score of Partial."
+        },
+        {
+          "AzureService": "Azure AD Identity Protection",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "This control provides Minimal detection for one of this technique's sub-techniques while not providing any detection for the remaining, resulting in a Minimal score."
+        },
+        {
+          "AzureService": "Azure AD Identity Protection",
+          "Category": "Respond",
+          "Value": "Minimal",
+          "Comment": "Provides significant response capabilities for one of this technique's sub-techniques (Password Spray). Due to this capability being specific to one of its sub-techniques and not its remaining sub-techniques, the coverage score is Minimal resulting in an overall Minimal score."
+        },
+        {
+          "AzureService": "Azure AD Identity Secure Score",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "The MFA recommendation provides significant protection against password compromises, but because this is a recommendation and doesn't actually enforce MFA, the assessed score is capped at Partial."
+        },
+        {
+          "AzureService": "Azure AD Multi-Factor Authentication",
+          "Category": "Protect",
+          "Value": "Significant",
+          "Comment": "MFA provides significant protection against password compromises, requiring the adversary to complete an additional authentication method before their access is permitted."
+        },
+        {
+          "AzureService": "Azure AD Password Policy",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "This control provides partial protection for most of this technique's sub-techniques and therefore has been scored as Partial."
+        },
+        {
+          "AzureService": "Azure Active Directory Password Protection",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": ""
+        },
+        {
+          "AzureService": "Azure Alerts for Network Layer",
+          "Category": "Detect",
+          "Value": "Significant",
+          "Comment": "This control can identify multiple connection attempts by external IPs, which may be indicative of Brute Force attempts, though not T1110.002, which is performed offline. It provides significant detection from most of this technique's sub-techniques and procedure examples resulting in an overall score of Significant."
+        },
+        {
+          "AzureService": "Azure Policy",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": ""
+        },
+        {
+          "AzureService": "Azure Security Center Recommendations",
+          "Category": "Protect",
+          "Value": "Minimal",
+          "Comment": "This control's \"Authentication to Linux machines should require SSH keys\" recommendation can lead to obviating SSH Brute Force password attacks. Because this is specific to Linux, the coverage score is Minimal leading to an overall Minimal score."
+        },
+        {
+          "AzureService": "Azure Sentinel",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "This control includes partial detection coverage for most of this technique's sub-techniques on a periodic basis."
+        },
+        {
+          "AzureService": "Cloud App Security Policies",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "This control can detect some activity indicative of brute force attempts to login. Relevant alert is \"Multiple failed login attempts\"."
+        },
+        {
+          "AzureService": "Conditional Access",
+          "Category": "Protect",
+          "Value": "Significant",
+          "Comment": "This control only provides minimal protection for this technique's procedure examples along and also only protects one of its sub-techniques resulting in an overall Minimal score."
+        },
+        {
+          "AzureService": "Just-in-Time VM Access",
+          "Category": "Protect",
+          "Value": "Significant",
+          "Comment": "This control can be configured to completely block inbound access to selected ports until access is requested. This prevents any attempt at brute forcing a protocol, such as RDP or SSH, unless the attacker has the credentials and permissions to request such access. Even if permission has been granted to an authorized user to access the virtual machine, a list of authorized IP addresses for that access can be configured."
+        },
+        {
+          "AzureService": "Azure Monitor",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "This control provides partial coverage for most of this technique's sub-techniques and procedures."
+        },
+        {
+          "AzureService": "Microsoft Defender for Identity",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "This control provides significant detection of some of the sub-techniques of this technique and has therefore been assessed an overall score of Partial."
+        },
+        {
+          "AzureService": "Azure AD Passwordless Authentication",
+          "Category": "Protect",
+          "Value": "Significant",
+          "Comment": "This control provides significant protection against this brute force technique by completing obviating the need for passwords by replacing it with passwordless credentials."
+        }
+      ]
+    },
+    {
+      "Name": "Forge Web Credentials",
+      "Id": "T1606",
+      "Tactics": [
+        "Credential Access"
+      ],
+      "SubTechniques": [
+        "T1606.001 - Web Cookies",
+        "T1606.002 - SAML Tokens"
+      ],
+      "Platforms": [
+        "Azure AD",
+        "Google Workspace",
+        "IaaS",
+        "Linux",
+        "Office 365",
+        "SaaS",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Adversaries may forge credential materials that can be used to gain access to web applications or Internet services. Web applications and services (hosted in cloud SaaS environments or on-premise servers) often use session cookies, tokens, or other materials to authenticate and authorize user access.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1606/",
+      "Checks": [
+        "entra_policy_default_users_cannot_create_security_groups",
+        "entra_policy_ensure_default_user_cannot_create_apps",
+        "entra_policy_ensure_default_user_cannot_create_tenants",
+        "entra_policy_guest_invite_only_for_admin_roles",
+        "entra_policy_guest_users_access_restrictions"
+      ],
+      "Attributes": [
+        {
+          "AzureService": "Azure AD Identity Protection",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "This control can be effective at detecting forged web credentials because it uses environmental properties (e.g. IP address, device info, etc.) to detect risky users and sign-ins even when valid credentials are utilized. It provides partial coverage of this technique's sub-techniques and therefore has been assessed a Partial score."
+        },
+        {
+          "AzureService": "Azure AD Identity Protection",
+          "Category": "Respond",
+          "Value": "Partial",
+          "Comment": "Provides Significant response capabilities for one of this technique's sub-techniques (SAML tokens)."
+        },
+        {
+          "AzureService": "Azure AD Identity Secure Score",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "This control's \"Turn on sign-in risk policy\" and \"Turn on user risk policy\" recommendations recommend the usage of Azure AD Identity Protection which can detect one of the sub-techniques of this technique. This is a recommendation and therefore the score is capped at Partial."
+        }
+      ]
+    },
+    {
+      "Name": "Multi-Factor Authentication Request Generation",
+      "Id": "T1621",
+      "Tactics": [
+        "Credential Access"
+      ],
+      "SubTechniques": [],
+      "Platforms": [
+        "Azure AD",
+        "Google Workspace",
+        "IaaS",
+        "Linux",
+        "Office 365",
+        "SaaS",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Adversaries may attempt to bypass multi-factor authentication (MFA) mechanisms and gain access to accounts by generating MFA requests sent to users.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1621/",
+      "Checks": [],
+      "Attributes": []
+    },
+    {
+      "Name": "Network Sniffing",
+      "Id": "T1040",
+      "Tactics": [
+        "Credential Access",
+        "Discovery"
+      ],
+      "SubTechniques": [],
+      "Platforms": [
+        "IaaS",
+        "Linux",
+        "Network",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Adversaries may sniff network traffic to capture information about an environment, including authentication material passed over the network. Network sniffing refers to using the network interface on a system to monitor or capture information sent over a wired or wireless connection. An adversary may place a network interface into promiscuous mode to passively access data in transit over the network, or use span ports to capture a larger amount of data.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1040/",
+      "Checks": [
+        "entra_conditional_access_policy_require_mfa_for_management_api",
+        "entra_global_admin_in_less_than_five_users",
+        "entra_non_privileged_user_has_mfa",
+        "entra_policy_default_users_cannot_create_security_groups",
+        "entra_policy_ensure_default_user_cannot_create_apps",
+        "entra_policy_ensure_default_user_cannot_create_tenants",
+        "entra_policy_guest_invite_only_for_admin_roles",
+        "entra_policy_guest_users_access_restrictions",
+        "entra_policy_restricts_user_consent_for_apps",
+        "entra_policy_user_consent_for_verified_apps",
+        "entra_privileged_user_has_mfa",
+        "entra_user_with_vm_access_has_mfa",
+        "entra_users_cannot_create_microsoft_365_groups",
+        "app_client_certificates_on",
+        "app_ensure_http_is_redirected_to_https",
+        "app_minimum_tls_version_12",
+        "storage_ensure_minimum_tls_version_12",
+        "storage_secure_transfer_required_is_enabled",
+        "postgresql_flexible_server_enforce_ssl_enabled",
+        "sqlserver_tde_encrypted_with_cmk",
+        "sqlserver_tde_encryption_enabled"
+      ],
+      "Attributes": [
+        {
+          "AzureService": "Azure AD Identity Secure Score",
+          "Category": "Protect",
+          "Value": "Minimal",
+          "Comment": "This control's \"Stop clear text credentials exposure\" provides a recommendation to run the \"Entities exposing credentials in clear text\" assessment that monitors your traffic for any entities exposing credentials in clear text (via LDAP simple-bind). This assessment seems specific to LDAP simple-binds and coupled with the fact that it is a recommendation and is not enforced, results in a Minimal score."
+        },
+        {
+          "AzureService": "Azure Key Vault",
+          "Category": "Protect",
+          "Value": "Minimal",
+          "Comment": "This control provides secure methods for accessing secrets and passwords. This can reduce the incidences of credentials and other authentication material being transmitted in plain text or by insecure encryption methods. Any communication between applications or endpoints after access to Key Vault may not be secure."
+        },
+        {
+          "AzureService": "Azure Policy",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "This control may provide recommendations to enable various Azure services that route traffic through secure networks, segment all network traffic, and enable TLS encryption where available."
+        },
+        {
+          "AzureService": "Azure Private Link",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "This control reduces the likelihood of a network sniffing attack for traffic between remote users, cloud, and 3rd parties by routing the traffic via the Microsoft backbone rather than over the Internet."
+        },
+        {
+          "AzureService": "Azure Security Center Recommendations",
+          "Category": "Protect",
+          "Value": "Minimal",
+          "Comment": "This control's recommendations related to enforcing the usage of the secure versions of the HTTP and FTP protocols (HTTPS and FTPS) can lead to encrypting traffic which reduces the ability for an adversary to gather sensitive data via network sniffing.This also applies to the \"Service Fabric clusters should have the ClusterProtectionLevel property set to EncryptAndSign\", \"Enforce SSL connection should be enabled for MySQL database servers\", \"Enforce SSL connection should be enabled for PostgreSQL database servers\", \"Only secure connections to your Redis Cache should be enabled\" and \"Secure transfer to storage accounts should be enabled\" recommendations for their respective protocols.The \"Usage of host networking and ports should be restricted\" recommendation for Kubernetes clusters can also lead to mitigating this technique.These recommendations are limited to specific technologies on the platform and therefore its coverage score is Minimal."
+        },
+        {
+          "AzureService": "Azure Sentinel",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "The Azure Sentinel Analytics \"Powershell Empire cmdlets seen in command line\" query can detect the use of Empire, which can be used to conduct packet capture on target hosts, but does not address other procedures."
+        },
+        {
+          "AzureService": "Azure VPN Gateway",
+          "Category": "Protect",
+          "Value": "Significant",
+          "Comment": "This control encrypts traffic traversing over untrusted networks which can prevent information from being gathered via network sniffing."
+        },
+        {
+          "AzureService": "Azure Security Center Docker Host Hardening",
+          "Category": "Protect",
+          "Value": "Minimal",
+          "Comment": "This control may recommend usage of TLS to encrypt communication between the Docker daemon and clients. This can prevent possible leakage of sensitive information through network sniffing."
+        }
+      ]
+    },
+    {
+      "Name": "Unsecured Credentials",
+      "Id": "T1552",
+      "Tactics": [
+        "Credential Access"
+      ],
+      "SubTechniques": [
+        "T1552.001 - Credentials In Files",
+        "T1552.005 - Cloud Instance Metadata API"
+      ],
+      "Platforms": [
+        "Azure AD",
+        "Containers",
+        "Google Workspace",
+        "IaaS",
+        "Linux",
+        "Network",
+        "Office 365",
+        "SaaS",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Adversaries may search compromised systems to find and obtain insecurely stored credentials. These credentials can be stored and/or misplaced in many locations on a system, including plaintext files (e.g. Bash History), operating system or application-specific repositories (e.g. Credentials in Registry), or other specialized files/artifacts (e.g. Private Keys).",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1552/",
+      "Checks": [
+        "defender_ensure_defender_for_app_services_is_on"
+      ],
+      "Attributes": [
+        {
+          "AzureService": "Azure AD Identity Secure Score",
+          "Category": "Protect",
+          "Value": "Minimal",
+          "Comment": "This control's \"Resolve unsecure account attributes\" provides recommendations that can lead to strengthening how accounts are stored in Active Directory. This control provides recommendations specific to a few types of unsecured credentials (reversible and weakly encrypted credentials) while not providing recommendations for any other, resulting in a Minimal score."
+        },
+        {
+          "AzureService": "Azure Dedicated HSM",
+          "Category": "Protect",
+          "Value": "Minimal",
+          "Comment": "This control's protection is specific to a minority of this technique's sub-techniques and procedure examples resulting in a Minimal Coverage score and consequently an overall score of Minimal."
+        },
+        {
+          "AzureService": "Azure Defender for App Service",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "This control does not address this technique's procedure example and provides minimal detection for some of its sub-techniques resulting in an overall Minimal score."
+        },
+        {
+          "AzureService": "Azure Key Vault",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "This control provides a central, secure location for storage of credentials to reduce the possibility of attackers discovering unsecured credentials."
+        },
+        {
+          "AzureService": "Azure Sentinel",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "This control provides minimal to partial coverage for a minority of this technique's sub-techniques, resulting in an overall detection score of Minimal."
+        },
+        {
+          "AzureService": "Azure Sentinel",
+          "Category": "Protect",
+          "Value": "Minimal",
+          "Comment": "This control provides a highly specific detection for a misconfiguration that can lead to one of this technique's sub-techniques, ultimately preventing it."
+        },
+        {
+          "AzureService": "Managed identities for Azure resources",
+          "Category": "Protect",
+          "Value": "Minimal",
+          "Comment": "This control provides protection for one of this technique's sub-techniques, while not providing any protection for its procedure examples nor its remaining sub-techniques, resulting in an overall Minimal score."
+        }
+      ]
+    },
+    {
+      "Name": "Exfiltration Over Alternative Protocol",
+      "Id": "T1048",
+      "Tactics": [
+        "Exfiltration"
+      ],
+      "SubTechniques": [],
+      "Platforms": [
+        "Google Workspace",
+        "IaaS",
+        "Linux",
+        "Network",
+        "Office 365",
+        "SaaS",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Adversaries may steal data by exfiltrating it over a different protocol than that of the existing command and control channel. The data may also be sent to an alternate network location from the main command and control server.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1048/",
+      "Checks": [
+        "network_flow_log_captured_sent",
+        "network_http_internet_access_restricted",
+        "network_rdp_internet_access_restricted",
+        "network_ssh_internet_access_restricted",
+        "network_udp_internet_access_restricted",
+        "network_watcher_enabled"
+      ],
+      "Attributes": [
+        {
+          "AzureService": "Alerts for DNS",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "Can detect anomalous use of DNS. Because this detection is specific to DNS, its coverage score is Minimal resulting in an overall Minimal score."
+        },
+        {
+          "AzureService": "Azure Defender Alerts for Windows Machines",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "This control's detection is specific to a minority of this technique's sub-techniques and procedure examples resulting in a Minimal Coverage score and consequently an overall score of Minimal."
+        },
+        {
+          "AzureService": "Azure DNS Analytics",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "This control can identify anomalous / high talker DNS clients, possibly related to exfil via DNS"
+        },
+        {
+          "AzureService": "Azure Firewall",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "This control provides partial protection for this technique's sub-techniques and some of its procedure examples resulting in an overall Partial score."
+        },
+        {
+          "AzureService": "Azure Network Traffic Analytics",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "This control can detect anomalous traffic with respect to specific protocols/ports."
+        },
+        {
+          "AzureService": "Azure Network Traffic Analytics",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "This control provides minimal coverage for a minority of this technique's sub-techniques and does not cover all procedure examples, resulting in an overall score of Minimal."
+        },
+        {
+          "AzureService": "Microsoft Defender for Identity",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "This control provides Partial detection for one of this technique's sub-techniques, while not providing any detection for the remaining, resulting in a Minimal score."
+        },
+        {
+          "AzureService": "Network Security Groups",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "This control provides Partial detection for one of this technique's sub-techniques, while not providing any detection for the remaining, resulting in a Minimal score."
+        }
+      ]
+    },
+    {
+      "Name": "Transfer Data to Cloud Account",
+      "Id": "T1537",
+      "Tactics": [
+        "Exfiltration"
+      ],
+      "SubTechniques": [],
+      "Platforms": [
+        "IaaS"
+      ],
+      "Description": "Adversaries may exfiltrate data by transferring the data, including backups of cloud environments, to another cloud account they control on the same service to avoid typical file transfers/downloads and network-based exfiltration detection.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1537/",
+      "Checks": [
+        "defender_ensure_defender_for_storage_is_on"
+      ],
+      "Attributes": [
+        {
+          "AzureService": "Azure Defender for Storage",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "This control may alert on unusually large amounts of data being extracted from Azure storage and suspicious access to storage accounts. There are no alerts specifically tied to data transfer between cloud accounts but there are several alerts for anomalous storage access and transfer."
+        },
+        {
+          "AzureService": "Azure Policy",
+          "Category": "Protect",
+          "Value": "Minimal",
+          "Comment": "This control may provide recommendations to enable security controls that monitor and prevent malicious transfer of data to cloud accounts."
+        }
+      ]
+    },
+    {
+      "Name": "Automated Collection",
+      "Id": "T1119",
+      "Tactics": [
+        "Collection"
+      ],
+      "SubTechniques": [],
+      "Platforms": [
+        "IaaS",
+        "Linux",
+        "SaaS",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Once established within a system or network, an adversary may use automated techniques for collecting internal data. Methods for performing this technique could include use of a Command and Scripting Interpreter to search for and copy information fitting set criteria such as file type, location, or name at specific time intervals. In cloud-based environments, adversaries may also use cloud APIs, command line interfaces, or extract, transform, and load (ETL) services to automatically collect data. This functionality could also be built into remote access tools.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1119/",
+      "Checks": [
+        "vm_ensure_attached_disks_encrypted_with_cmk",
+        "vm_ensure_unattached_disks_encrypted_with_cmk",
+        "sqlserver_tde_encrypted_with_cmk",
+        "sqlserver_tde_encryption_enabled"
+      ],
+      "Attributes": [
+        {
+          "AzureService": "Cloud App Security Policies",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "This control can detect sensitive information at rest, which may be indicative of data collection activities."
+        },
+        {
+          "AzureService": "Cloud App Security Policies",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "This control's Information protection policies can detect and encrypt sensitive information at rest on supported platforms, which can inhibit automated data collection activities."
+        },
+        {
+          "AzureService": "Azure Sentinel",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "The following Azure Sentinel Hunting queries can identify potentially malicious automated collection: \"Multiple large queries made by user\" and \"Query data volume anomolies\" can identify that automated queries are being used to collect data in bulk. \"New ServicePrincipal running queries\" can indicate that an application is performing automated collection via queries.The following Azure Sentinel Analytics queries can identify potentially malicious automated collection: \"Mass secret retrieval from Azure Key Vault\" and \"Azure Key Vault access TimeSeries anomaly\" can detect a sudden increase in access counts, which may indicate that an adversary is dumping credentials via automated methods. \"Users searching for VIP user activity\" can identify potentially suspicious Log Analytics queries by users looking for a listing of 'VIP' activity.The coverage for these queries is minimal (applicable to specific technologies) resulting in an overall Minimal score."
+        }
+      ]
+    },
+    {
+      "Name": "Data from Cloud Storage",
+      "Id": "T1530",
+      "Tactics": [
+        "Collection"
+      ],
+      "SubTechniques": [],
+      "Platforms": [
+        "IaaS",
+        "SaaS"
+      ],
+      "Description": "Adversaries may collect sensitive data from these cloud storage solutions. Providers typically offer security guides to help end users configure systems, though misconfigurations are a common problem.[5][6][7] There have been numerous incidents where cloud storage has been improperly secured, typically by unintentionally allowing public access to unauthenticated users, overly-broad access by all users, or even access for any anonymous person outside the control of the Identity Access Management system without even needing basic user permissions.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1530/",
+      "Checks": [
+        "defender_ensure_defender_for_storage_is_on",
+        "vm_ensure_attached_disks_encrypted_with_cmk",
+        "vm_ensure_unattached_disks_encrypted_with_cmk",
+        "sqlserver_tde_encrypted_with_cmk",
+        "sqlserver_tde_encryption_enabled",
+        "aks_clusters_created_with_private_nodes",
+        "aks_clusters_public_access_disabled",
+        "cosmosdb_account_use_private_endpoints",
+        "mysql_flexible_server_minimum_tls_version_12",
+        "mysql_flexible_server_ssl_connection_enabled",
+        "postgresql_flexible_server_enforce_ssl_enabled",
+        "sqlserver_tde_encrypted_with_cmk",
+        "sqlserver_tde_encryption_enabled",
+        "storage_blob_public_access_level_is_disabled",
+        "storage_ensure_azure_services_are_trusted_to_access_is_enabled",
+        "storage_ensure_encryption_with_customer_managed_keys",
+        "storage_ensure_private_endpoints_in_storage_accounts",
+        "storage_infrastructure_encryption_is_enabled"
+      ],
+      "Attributes": [
+        {
+          "AzureService": "Azure Defender for Storage",
+          "Category": "Detect",
+          "Value": "Significant",
+          "Comment": "A variety of alerts may be generated by malicious access and enumeration of Azure Storage."
+        },
+        {
+          "AzureService": "Azure Policy",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "This control may provide recommendations to enable Azure Defender for Storage and other security controls to prevent access to data from cloud storage objects."
+        },
+        {
+          "AzureService": "Azure Sentinel",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "The Azure Sentinel Hunting \"Anomalous Data Access\" query identifies all users performing out-of-profile read operations regarding data or files, which may be indicative of adversarial collection from cloud storage objects."
+        },
+        {
+          "AzureService": "Cloud App Security Policies",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "This control can detect use of unsanctioned business apps and data exfil to unsanctioned storage apps."
+        },
+        {
+          "AzureService": "Conditional Access",
+          "Category": "Protect",
+          "Value": "Minimal",
+          "Comment": "Conditional Access, when granting (risky) users access to cloud storage, specifically OneDrive, can restrict what they can do in these applications using its app-enforced restrictions. For example, it can enforce that users on unmanaged devices will have browser-only access to OneDrive with no ability to download, print, or sync files. This can impede an adversary's ability to exfiltrate data from OneDrive. The protection coverage provided by this control is Minimal as it doesn't provide protection for other storage services available on Azure such as the Azure Storage service."
+        },
+        {
+          "AzureService": "Azure Resource Manager",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "This control can be used to limit the number of users that have access to storage solutions except for the applications, users, and services that require access, thereby reducing the attack surface."
+        }
+      ]
+    },
+    {
+      "Name": "Data from Information Repositories",
+      "Id": "T1213",
+      "Tactics": [
+        "Collection"
+      ],
+      "SubTechniques": [],
+      "Platforms": [
+        "Google Workspace",
+        "IaaS",
+        "Linux",
+        "Office 365",
+        "SaaS",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Adversaries may leverage information repositories to mine valuable information. Information repositories are tools that allow for storage of information, typically to facilitate collaboration or information sharing between users, and can store a wide variety of data that may aid adversaries in further objectives, or direct access to the target information. Adversaries may also abuse external sharing features to share sensitive documents with recipients outside of the organization.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1213/",
+      "Checks": [],
+      "Attributes": [
+        {
+          "AzureService": "Advanced Threat Protection for Azure SQL Database",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "This control may alert on extraction of a large amount of data to an unusual location. No documentation is provided on the logic for determining an unusual location."
+        },
+        {
+          "AzureService": "Alerts for Azure Cosmos DB",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "This control triggers an alert when an unusually large amount of data is extracted from/by an account compared to recent activity. False positives are fairly likely and extraction in quantities below the control's threshold is not detected, so score is Minimal. Neither of the sub-techniques are relevant in this context, since they are repository-specific. Relevant alert is \"Unusual amount of data extracted from a Cosmos DB account\"."
+        },
+        {
+          "AzureService": "Azure Sentinel",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "This control provides partial detection coverage for only this technique's SharePoint sub-technique.The Azure Sentinel Hunting \"Cross workspace query anomaly\" query can identify potential adversary information collection (in this case from Azure ML workspaces), but does not map directly to any sub-techniques."
+        },
+        {
+          "AzureService": "Cloud App Security Policies",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "This control may detect anomalous user behavior wrt information repositories such as Sharepoint or Confluence. Due to this capability being limited to these services, it has been scored as Partial coverage resulting in a Partial score."
+        },
+        {
+          "AzureService": "Cloud App Security Policies",
+          "Category": "Protect",
+          "Value": "Minimal",
+          "Comment": "This control can provide fine-grained access control to information sharing repositories such as Sharepoint or Confluence. Due to this capability being limited to these services, it has been scored as Partial coverage resulting in a Partial score."
+        },
+        {
+          "AzureService": "Conditional Access",
+          "Category": "Protect",
+          "Value": "Minimal",
+          "Comment": "This control only provides the ability to restrict an adversary from collecting valuable information for a limited set of applications (SharePoint, Exchange, OneDrive) and therefore its overall Coverage score is minimal."
+        }
+      ]
+    },
+    {
+      "Name": "Data from Cloud Storage",
+      "Id": "T1074",
+      "Tactics": [
+        "Collection"
+      ],
+      "SubTechniques": [
+        "T1074.002 - Remote Data Staging"
+      ],
+      "Platforms": [
+        "IaaS",
+        "Linux",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Adversaries may stage collected data in a central location or directory prior to Exfiltration. Data may be kept in separate files or combined into one file through techniques such as Archive Collected Data. Interactive command shells may be used, and common functionality within cmd and bash may be used to copy data into a staging location.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1074/",
+      "Checks": [],
+      "Attributes": [
+        {
+          "AzureService": "Conditional Access",
+          "Category": "Protect",
+          "Value": "Minimal",
+          "Comment": "This control only provides the ability to restrict file downloads for a limited set of applications and therefore its overall Coverage score is minimal."
+        },
+        {
+          "AzureService": "Azure Security Center Recommendations",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "This control's \"Immutable (read-only) root filesystem should be enforced for containers\" recommendation can lead to mitigating a sub-technique of this technique by preventing modification of the local filesystem. Due to it being a recommendation, its score is capped at Partial."
+        },
+        {
+          "AzureService": "Azure Sentinel",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": ""
+        }
+      ]
+    },
+    {
+      "Name": "Data Destruction",
+      "Id": "T1485",
+      "Tactics": [
+        "Impact"
+      ],
+      "SubTechniques": [],
+      "Platforms": [
+        "IaaS",
+        "Linux",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Adversaries may destroy data and files on specific systems or in large numbers on a network to interrupt availability to systems, services, and network resources. Data destruction is likely to render stored data irrecoverable by forensic techniques through overwriting files or data on local and remote drives.[1][2][3][4][5][6] Common operating system file deletion commands such as del and rm often only remove pointers to files without wiping the contents of the files themselves, making the files recoverable by proper forensic methodology. This behavior is distinct from Disk Content Wipe and Disk Structure Wipe because individual files are destroyed rather than sections of a storage disk or the disk's logical structure.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1485/",
+      "Checks": [
+        "monitor_alert_delete_nsg",
+        "monitor_alert_delete_policy_assignment",
+        "monitor_alert_delete_public_ip_address_rule",
+        "monitor_alert_delete_security_solution",
+        "monitor_alert_delete_sqlserver_fr",
+        "storage_ensure_soft_delete_is_enabled",
+        "defender_ensure_defender_for_storage_is_on"
+      ],
+      "Attributes": [
+        {
+          "AzureService": "Azure Backup",
+          "Category": "Respond",
+          "Value": "Significant",
+          "Comment": "Data backups provide a significant response to data destruction by enabling the restoration of data from backup."
+        },
+        {
+          "AzureService": "Azure Defender for Storage",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "This control may generate alerts when there has been an unusual or unexpected delete operation within Azure cloud storage. Alerts may not be generated by disabling of storage backups, versioning, or editing of storage objects."
+        },
+        {
+          "AzureService": "Azure Policy",
+          "Category": "Protect",
+          "Value": "Minimal",
+          "Comment": "This control may provide recommendations to enable soft deletion and purge protection in Azure Key Vault. This can help mitigate against malicious deletion of keys and secrets stored within Key Vault."
+        },
+        {
+          "AzureService": "Azure Security Center Recommendations",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "This control's \"Immutable (read-only) root filesystem should be enforced for containers\" recommendation can lead to mitigating this technique by preventing modification of the local filesystem. Due to it being a recommendation, its score is capped at Partial."
+        },
+        {
+          "AzureService": "Azure Sentinel",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "The Azure Sentinel Hunting \"Multiple Teams deleted by a single user\" query can detect when a threshold is met for number of Teams deleted within an hour. Coverage is minimal because the control is limited to a specific resource (teams) and only works when the threshold is met.The Azure Sentinel Analytics \"Multiple Teams deleted by a single user\" query can detect when a threshold is met for number of Teams deleted within an hour. Coverage is minimal because the control is limited to a specific resource (teams) and only works when the threshold is met."
+        },
+        {
+          "AzureService": "Cloud App Security Policies",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "This control can identify deletion activity which could be potential malicious data destruction. Relevant Alerts include \"Multiple storage deletion activities\", \"Multiple VM deletion activity\", \"Unusual file deletion activity (by user), \"Suspicous email deletion activiy\", and \"Ransomware activity\"."
+        }
+      ]
+    },
+    {
+      "Name": "Data Encrypted for Impact",
+      "Id": "T1486",
+      "Tactics": [
+        "Impact"
+      ],
+      "SubTechniques": [],
+      "Platforms": [
+        "IaaS",
+        "Linux",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Adversaries may encrypt data on target systems or on large numbers of systems in a network to interrupt availability to system and network resources. They can attempt to render stored data inaccessible by encrypting files or data on local and remote drives and withholding access to a decryption key. This may be done in order to extract monetary compensation from a victim in exchange for decryption or a decryption key (ransomware) or to render data permanently inaccessible in cases where the key is not saved or transmitted.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1486/",
+      "Checks": [
+        "defender_ensure_defender_for_app_services_is_on",
+        "defender_ensure_defender_for_arm_is_on",
+        "defender_ensure_defender_for_azure_sql_databases_is_on",
+        "defender_ensure_defender_for_containers_is_on",
+        "defender_ensure_defender_for_cosmosdb_is_on",
+        "defender_ensure_defender_for_databases_is_on",
+        "defender_ensure_defender_for_dns_is_on",
+        "defender_ensure_defender_for_keyvault_is_on",
+        "defender_ensure_defender_for_os_relational_databases_is_on",
+        "defender_ensure_defender_for_server_is_on",
+        "defender_ensure_defender_for_sql_servers_is_on",
+        "defender_ensure_defender_for_storage_is_on",
+        "defender_ensure_iot_hub_defender_is_on",
+        "defender_ensure_mcas_is_enabled",
+        "defender_ensure_notify_alerts_severity_is_high",
+        "defender_ensure_notify_emails_to_owners",
+        "defender_ensure_system_updates_are_applied"
+      ],
+      "Attributes": [
+        {
+          "AzureService": "Azure Backup",
+          "Category": "Respond",
+          "Value": "Significant",
+          "Comment": "Data backups provide a significant response to data encryption/ransomware by enabling the restoration of data from backup."
+        },
+        {
+          "AzureService": "Azure Security Center Recommendations",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "This control's \"Immutable (read-only) root filesystem should be enforced for containers\" recommendation can lead to mitigating this technique by preventing modification of the local filesystem. Due to it being a recommendation, its score is capped at Partial."
+        },
+        {
+          "AzureService": "Azure Sentinel",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "The Azure Sentinel Analytics \"Sensitive Azure Key Vault Operations\" query can identify potential attacker activity intended to delete private key(s) required to decrypt content."
+        },
+        {
+          "AzureService": "Cloud App Security Policies",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "This control can detect a range of ransomware-related activities including encryption. Relevant alert include \"Ransomware activities\" and \"Unusual file deletion activity (by user)\"."
+        }
+      ]
+    },
+    {
+      "Name": "Defacement",
+      "Id": "T1491",
+      "Tactics": [
+        "Impact"
+      ],
+      "SubTechniques": [
+        "T1491.002 - External Defacement"
+      ],
+      "Platforms": [
+        "IaaS",
+        "Linux",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Adversaries may modify visual content available internally or externally to an enterprise network, thus affecting the integrity of the original content. Reasons for Defacement include delivering messaging, intimidation, or claiming (possibly false) credit for an intrusion. Disturbing or offensive images may be used as a part of Defacement in order to cause user discomfort, or to pressure compliance with accompanying messages.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1491/",
+      "Checks": [],
+      "Attributes": [
+        {
+          "AzureService": "Azure Backup",
+          "Category": "Respond",
+          "Value": "Significant",
+          "Comment": "Data backups provide a significant response to data defacement attacks by enabling the restoration of data from backup."
+        }
+      ]
+    },
+    {
+      "Name": "Endpoint Denial of Service",
+      "Id": "T1499",
+      "Tactics": [
+        "Impact"
+      ],
+      "SubTechniques": [
+        "T1499.002 - Service Exhaustion Flood",
+        "T1499.003 - Application Exhaustion Flood",
+        "T1499.004 - Application or System Exploitation"
+      ],
+      "Platforms": [
+        "Azure AD",
+        "Containers",
+        "Google Workspace",
+        "IaaS",
+        "Linux",
+        "Office 365",
+        "SaaS",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Adversaries may perform Endpoint Denial of Service (DoS) attacks to degrade or block the availability of services to users. Endpoint DoS can be performed by exhausting the system resources those services are hosted on or exploiting the system to cause a persistent crash condition. Example services include websites, email services, DNS, and web-based applications. Adversaries have been observed conducting DoS attacks for political purposes[1] and to support other malicious activities, including distraction[2], hacktivism, and extortion.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1499/",
+      "Checks": [
+        "network_flow_log_captured_sent",
+        "network_flow_log_more_than_90_days",
+        "network_http_internet_access_restricted",
+        "network_rdp_internet_access_restricted",
+        "network_ssh_internet_access_restricted",
+        "network_udp_internet_access_restricted",
+        "network_watcher_enabled",
+        "defender_ensure_defender_for_app_services_is_on",
+        "defender_ensure_defender_for_arm_is_on",
+        "defender_ensure_defender_for_azure_sql_databases_is_on",
+        "defender_ensure_defender_for_containers_is_on",
+        "defender_ensure_defender_for_cosmosdb_is_on",
+        "defender_ensure_defender_for_databases_is_on",
+        "defender_ensure_defender_for_dns_is_on",
+        "defender_ensure_defender_for_keyvault_is_on",
+        "defender_ensure_defender_for_os_relational_databases_is_on",
+        "defender_ensure_defender_for_server_is_on",
+        "defender_ensure_defender_for_sql_servers_is_on",
+        "defender_ensure_defender_for_storage_is_on",
+        "defender_ensure_iot_hub_defender_is_on"
+      ],
+      "Attributes": [
+        {
+          "AzureService": "Azure Automation Update Management",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "This control provides protection against the subset of Denial of Service (DOS) attacks that leverage system/application vulnerabilities as opposed to volumetric attacks since it enables automated updates of software and rapid configuration change management."
+        },
+        {
+          "AzureService": "Azure DDOS Protection Standard",
+          "Category": "Protect",
+          "Value": "Significant",
+          "Comment": "Protects against volumetric and protocol DOS, though not application."
+        },
+        {
+          "AzureService": "Azure Network Traffic Analytics",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "This control can identify volumetric and multi-sourced denial-of-service attacks."
+        },
+        {
+          "AzureService": "Azure Private Link",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "Prevents Denial of Service (DOS) against systems that would otherwise need to connect via an internet-traversing path (coverage partial, since doesn't apply to systems that must be directly exposed to the Internet)"
+        },
+        {
+          "AzureService": "Azure Security Center Recommendations",
+          "Category": "Protect",
+          "Value": "Minimal",
+          "Comment": "This control provides recommendations for limiting the CPU and memory resources consumed by a container to minimize resource exhaustion attacks. Because this control only covers one sub-technique of this technique, its score is assessed as Minimal."
+        },
+        {
+          "AzureService": "Network Security Groups",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "This control provides partial protection for a majority of this control's sub-techinques and procedure examples resulting in overall score of Partial."
+        }
+      ]
+    },
+    {
+      "Name": "Inhibit System Recovery",
+      "Id": "T1490",
+      "Tactics": [
+        "Impact"
+      ],
+      "SubTechniques": [],
+      "Platforms": [
+        "IaaS",
+        "Linux",
+        "Network",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Adversaries may delete or remove built-in data and turn off services designed to aid in the recovery of a corrupted system to prevent recovery.[1][2] This may deny access to available backups and recovery options.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1490/",
+      "Checks": [],
+      "Attributes": [
+        {
+          "AzureService": "Azure Sentinel",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "The Azure Sentinel Analytics \"Sensitive Azure Key Vault Operations\" query can identify potential attacker activity intended to interfere with backups."
+        }
+      ]
+    },
+    {
+      "Name": "Resource Hijacking",
+      "Id": "T1496",
+      "Tactics": [
+        "Impact"
+      ],
+      "SubTechniques": [],
+      "Platforms": [
+        "IaaS",
+        "Linux",
+        "Containers",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Adversaries may leverage the resources of co-opted systems in order to solve resource intensive problems, which may impact system and/or hosted service availability.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1496/",
+      "Checks": [
+        "defender_ensure_defender_for_app_services_is_on",
+        "monitor_alert_create_policy_assignment",
+        "monitor_alert_create_update_public_ip_address_rule",
+        "monitor_alert_create_update_security_solution",
+        "monitor_alert_create_update_sqlserver_fr",
+        "monitor_alert_delete_nsg",
+        "monitor_alert_delete_policy_assignment",
+        "monitor_alert_delete_public_ip_address_rule",
+        "monitor_alert_delete_security_solution",
+        "monitor_alert_delete_sqlserver_fr"
+      ],
+      "Attributes": [
+        {
+          "AzureService": "Azure Defender for App Service",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "This control detects file downloads associated with digital currency mining as well as host data related to process and command execution associated with mining. It also includes fileless attack detection, which specifically targets crypto mining activity. Temporal factor is unknown."
+        },
+        {
+          "AzureService": "Azure Sentinel",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "The following Azure Sentinel Hunting queries can identify potential resource hijacking based on anomolies in access and usage patterns: \"Anomalous Resource Creation and related Network Activity\", \"Creation of an anomalous number of resources\".The following Azure Sentinel Analytis queries can identify potential resource hijacking: \"Creation of Expensive Computes in Azure\" and \"Suspicious number of resource creation or deployed\" [sic] can identify suspicious outliers in resource quantities requested. \"Suspicious Resource deployment\" can identify deployments from new, potentially malicious, users. \"Process execution frequency anomaly\" can identify execution that may indicate hijacking. \"DNS events related to mining pools\", can identify potential cryptocurrency mining activity."
+        },
+        {
+          "AzureService": "Cloud App Security Policies",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "This control can identify some behaviors that are potential instances of resource hijacking. Relevant alerts include \"Multiple VM Creation activities\" and \"Suspicious creation activity for cloud region\"."
+        }
+      ]
+    },
+    {
+      "Name": "Network Denial of Service",
+      "Id": "T1498",
+      "Tactics": [
+        "Impact"
+      ],
+      "SubTechniques": [],
+      "Platforms": [
+        "Azure AD",
+        "Containers",
+        "Google Workspace",
+        "IaaS",
+        "Linux",
+        "Office 365",
+        "SaaS",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Adversaries may perform Network Denial of Service (DoS) attacks to degrade or block the availability of targeted resources to users. Network DoS can be performed by exhausting the network bandwidth services rely on. Example resources include specific websites, email services, DNS, and web-based applications. Adversaries have been observed conducting network DoS attacks for political purposes[1] and to support other malicious activities, including distraction[2], hacktivism, and extortion.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1498/",
+      "Checks": [
+        "network_http_internet_access_restricted",
+        "network_rdp_internet_access_restricted",
+        "network_ssh_internet_access_restricted",
+        "network_udp_internet_access_restricted",
+        "network_watcher_enabled"
+      ],
+      "Attributes": [
+        {
+          "AzureService": " Azure DDOS Protection Standard",
+          "Category": "Protect",
+          "Value": "Significant",
+          "Comment": "Designed to address multiple DDOS techniques including volumetric attacks."
+        },
+        {
+          "AzureService": "Azure Private Link",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "Prevents Denial of Service (DOS) against systems that would otherwise need to connect via an internet-traversing path (coverage partial, since doesn't apply to systems that must be directly exposed to the Internet)"
+        },
+        {
+          "AzureService": "Network Security Groups",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "This control can be used to restrict access to endpoints and thereby mitigate low-end network DOS attacks."
+        }
+      ]
+    },
+    {
+      "Name": "Account Discovery",
+      "Id": "T1087",
+      "Tactics": [
+        "Discovery"
+      ],
+      "SubTechniques": [
+        "T1087.004 - Cloud Account"
+      ],
+      "Platforms": [
+        "Azure AD",
+        "Google Workspace",
+        "IaaS",
+        "Linux",
+        "Office 365",
+        "SaaS",
+        "Network",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Adversaries may attempt to get a listing of valid accounts, usernames, or email addresses on a system or within a compromised environment. This information can help adversaries determine which accounts exist, which can aid in follow-on behavior such as brute-forcing, spear-phishing attacks, or account takeovers (e.g., Valid Accounts).",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1087/",
+      "Checks": [
+        "defender_ensure_defender_for_app_services_is_on",
+        "defender_ensure_defender_for_arm_is_on"
+      ],
+      "Attributes": [
+        {
+          "AzureService": "Alerts for Windows Machines",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "This control provides partial detection for some of this technique's sub-techniques and procedure examples resulting in a Partial Coverage score and consequently an overall score of Partial."
+        },
+        {
+          "AzureService": "Azure Defender for App Service",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "This control only covers one platform and procedure for one of this technique's sub-techniques, and minimal coverage of its procedure examples resulting in a Minimal overall score."
+        },
+        {
+          "AzureService": "Azure Defender for Resource Manager",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "This control may alert on Azure cloud account discovery activity but may not provide alerts for other account types or undocumented exploitation toolkits. Consequently, its Coverage score is Minimal resulting in an overall Minimal score."
+        },
+        {
+          "AzureService": "Azure Sentinel",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "This control provides specific forms of minimal coverage for half of this technique's sub-techniques, but does not address other procedures, resulting in an overall score of Minimal."
+        },
+        {
+          "AzureService": "Microsoft Defender for Identity",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "This control provides significant detection for one of this technique's sub-techniques, while not providing any detection for the remaining, resulting in a Minimal score."
+        },
+        {
+          "AzureService": "Azure Resource Manager Role Based Access Control",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "This control only provides protection for one of this technique's sub-techniques while not providing any protection for its procedure examples nor its remaining sub-technqiues and therefore its coverage score factor is Minimal, resulting in a Minimal score."
+        }
+      ]
+    },
+    {
+      "Name": "Cloud Infrastructure Discovery",
+      "Id": "T1580",
+      "Tactics": [
+        "Discovery"
+      ],
+      "SubTechniques": [],
+      "Platforms": [
+        "IaaS"
+      ],
+      "Description": "An adversary may attempt to discover infrastructure and resources that are available within an infrastructure-as-a-service (IaaS) environment. This includes compute service resources such as instances, virtual machines, and snapshots as well as resources of other services including the storage and database services.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1580/",
+      "Checks": [
+        "defender_ensure_defender_for_keyvault_is_on",
+        "defender_ensure_defender_for_arm_is_on",
+        "entra_policy_default_users_cannot_create_security_groups",
+        "entra_policy_ensure_default_user_cannot_create_apps",
+        "entra_policy_ensure_default_user_cannot_create_tenants",
+        "entra_policy_guest_invite_only_for_admin_roles",
+        "entra_policy_guest_users_access_restrictions",
+        "entra_policy_restricts_user_consent_for_apps",
+        "entra_policy_user_consent_for_verified_apps"
+      ],
+      "Attributes": [
+        {
+          "AzureService": "Azure Defender for Key Vault",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "This control may alert on suspicious access of key vaults, including suspicious listing of key vault contents. This control does not alert on discovery of other cloud services, such as VMs, snapshots, cloud storage and therefore has minimal coverage. Suspicious activity based on patterns of access from certain users and applications allows for managing false positive rates."
+        },
+        {
+          "AzureService": "Azure Defender for Resource Manager",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "This control may alert on Cloud Infrastructure Discovery activity generated by specific toolkits, such as MicroBurst, PowerZure, etc. It may not generate alerts on undocumented discovery techniques or exploitation toolkits. The following alerts may be generated: \"PowerZure exploitation toolkit used to enumerate storage containers, shares, and tables\", \"PowerZure exploitation toolkit used to enumerate resources\", \"MicroBurst exploitation toolkit used to enumerate resources in your subscriptions\", \"Azurite toolkit run detected\"."
+        },
+        {
+          "AzureService": "Azure Policy",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "This control may provide recommendations to enable Azure services that limit access to cloud infrastructure. Several Azure services and controls provide mitigations against cloud infrastructure discovery."
+        },
+        {
+          "AzureService": "Azure Sentinel",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "The Azure Sentinel Hunting \"Azure storage key enumeration\" query can identify potential attempts by an attacker to discover cloud infrastructure resources."
+        },
+        {
+          "AzureService": "Azure Resource Manager Role Based Access Control",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "This control can be used to limit the number of users that have privileges to discover cloud infrastructure thereby reducing an organization's cloud infrastructure attack surface."
+        }
+      ]
+    },
+    {
+      "Name": "Cloud Service Dashboard",
+      "Id": "T1538",
+      "Tactics": [
+        "Discovery"
+      ],
+      "SubTechniques": [],
+      "Platforms": [
+        "Azure AD",
+        "Google Workspace",
+        "IaaS",
+        "Office 365"
+      ],
+      "Description": "An adversary may use a cloud service dashboard GUI with stolen credentials to gain useful information from an operational cloud environment, such as specific services, resources, and features. For example, the GCP Command Center can be used to view all assets, findings of potential security risks, and to run additional queries, such as finding public IP addresses and open ports.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1538/",
+      "Checks": [
+        "defender_ensure_defender_for_arm_is_on",
+        "entra_privileged_user_has_mfa"
+      ],
+      "Attributes": [
+        {
+          "AzureService": "Azure Resource Manager Role Based Access Control",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "This control can be used to limit the number of users that have dashboard visibility thereby reducing the attack surface."
+        },
+        {
+          "AzureService": "Azure Defender for Resource Manager",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "This control may alert on suspicious management activity based on IP, time, anomalous behaviour, or PowerShell usage. Machine learning algorithms are used to reduce false positives. The following alerts may be generated: \"Activity from a risky IP address\", \"Activity from infrequent country\", \"Impossible travel activity\", \"Suspicious management session using PowerShell detected\", \"Suspicious management session using an inactive account detected\", \"Suspicious management session using Azure portal detected\"."
+        },
+        {
+          "AzureService": "Azure Policy",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "This control may provide recommendations to enable Azure services that limit access to Azure Resource Manager and other Azure dashboards. Several Azure services and controls provide mitigations against this technique."
+        }
+      ]
+    },
+    {
+      "Name": "Cloud Service Discovery",
+      "Id": "T1526",
+      "Tactics": [
+        "Discovery"
+      ],
+      "SubTechniques": [],
+      "Platforms": [
+        "Azure AD",
+        "Google Workspace",
+        "IaaS",
+        "Office 365",
+        "SaaS"
+      ],
+      "Description": "An adversary may attempt to enumerate the cloud services running on a system after gaining access. These methods can differ from platform-as-a-service (PaaS), to infrastructure-as-a-service (IaaS), or software-as-a-service (SaaS). Many services exist throughout the various cloud providers and can include Continuous Integration and Continuous Delivery (CI/CD), Lambda Functions, Azure AD, etc. They may also include security services, such as AWS GuardDuty and Microsoft Defender for Cloud, and logging services, such as AWS CloudTrail and Google Cloud Audit Logs.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1526/",
+      "Checks": [
+        "defender_ensure_defender_for_arm_is_on"
+      ],
+      "Attributes": [
+        {
+          "AzureService": "Azure Defender for Resource Manager",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "This control may alert on Cloud Service Discovery activity generated by specific toolkits, such as MicroBurst, PowerZure, etc. It may not generate alerts on undocumented discovery techniques or exploitation toolkits. The following alerts may be generated: \"PowerZure exploitation toolkit used to enumerate storage containers, shares, and tables\", \"PowerZure exploitation toolkit used to enumerate resources\", \"MicroBurst exploitation toolkit used to enumerate resources in your subscriptions\"."
+        },
+        {
+          "AzureService": "Azure Policy",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "This control may provide recommendations to enable Azure services that limit access to cloud services. Several Azure services and controls provide mitigations against cloud service discovery."
+        },
+        {
+          "AzureService": "Cloud App Security Policies",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "This control can detect anomalous user activity that may be associated with cloud service discovery. Relevant alert is \"Unusual file share activty (by user)\"."
+        }
+      ]
+    },
+    {
+      "Name": "Cloud Storage Object Discovery",
+      "Id": "T1619",
+      "Tactics": [
+        "Discovery"
+      ],
+      "SubTechniques": [],
+      "Platforms": [
+        "IaaS"
+      ],
+      "Description": "Adversaries may enumerate objects in cloud storage infrastructure. Adversaries may use this information during automated discovery to shape follow-on behaviors, including requesting all or specific objects from cloud storage. Similar to File and Directory Discovery on a local host, after identifying available storage services (i.e. Cloud Infrastructure Discovery) adversaries may access the contents/objects stored in cloud infrastructure.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1619/",
+      "Checks": [],
+      "Attributes": []
+    },
+    {
+      "Name": "Network Service Discovery",
+      "Id": "T1046",
+      "Tactics": [
+        "Discovery"
+      ],
+      "SubTechniques": [],
+      "Platforms": [
+        "Containers",
+        "IaaS",
+        "Linux",
+        "Network",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Adversaries may attempt to get a listing of services running on remote hosts and local network infrastructure devices, including those that may be vulnerable to remote software exploitation. Common methods to acquire this information include port and/or vulnerability scans using tools that are brought onto a system.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1046/",
+      "Checks": [
+        "network_http_internet_access_restricted",
+        "network_rdp_internet_access_restricted",
+        "network_ssh_internet_access_restricted",
+        "network_udp_internet_access_restricted",
+        "network_watcher_enabled"
+      ],
+      "Attributes": [
+        {
+          "AzureService": "Azure Firewall",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "This control typically filters external network traffic and therefore can be effective for preventing external network service scanning but network service scanning originating from inside the trusted network is not mitigated. Due to this partial protection coverage, it has been scored as Partial protection."
+        },
+        {
+          "AzureService": "Azure Network Traffic Analytics",
+          "Category": "Detect",
+          "Value": "Significant",
+          "Comment": "This control can detect network service scanning/discovery activity."
+        },
+        {
+          "AzureService": "Azure Sentinel",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "The Azure Sentinel Analytics \"High count of connections by client IP on many ports\" query can detect when a given client IP has 30 or more ports used within a 10 minute window, which may indicate malicious scanning. The Azure Sentinel Analytics \"Powershell Empire cmdlets seen in command line\" query can detect scanning via Empire, but does not address other procedures."
+        },
+        {
+          "AzureService": "Azure Web Application Firewall",
+          "Category": "Detect",
+          "Value": "Partial",
+          "Comment": "This control can detect network service scanning of web applications by an adversary. Because this detection is specific to web applications (although frequent targets) and not other application types enumerated in the procedure examples of this technique (e.g. Active Directory), it has been scored as Partial."
+        },
+        {
+          "AzureService": "Azure Web Application Firewall",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "This control can protect web applications from network service scanning by an adversary. Because this protection is specific to web applications (although frequent targets) and not other application types enumerated in the procedure examples of this technique (e.g. Active Directory), it has been scored as Partial."
+        },
+        {
+          "AzureService": "Network Security Groups",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "This control can be used to restrict access to trusted networks."
+        }
+      ]
+    },
+    {
+      "Name": "Password Policy Discovery",
+      "Id": "T1201",
+      "Tactics": [
+        "Discovery"
+      ],
+      "SubTechniques": [],
+      "Platforms": [
+        "IaaS",
+        "Linux",
+        "Network",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Adversaries may attempt to access detailed information about the password policy used within an enterprise network or cloud environment. Password policies are a way to enforce complex passwords that are difficult to guess or crack through Brute Force. This information may help the adversary to create a list of common passwords and launch dictionary and/or brute force attacks which adheres to the policy (e.g. if the minimum password length should be 8, then not trying passwords such as 'pass123'; not checking for more than 3-4 passwords per account if the lockout is set to 6 as to not lock out accounts).",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1201/",
+      "Checks": [
+        "entra_global_admin_in_less_than_five_users",
+        "entra_privileged_user_has_mfa",
+        "entra_security_defaults_enabled"
+      ],
+      "Attributes": [
+        {
+          "AzureService": "Microsoft Defender for Identity",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "This control's \"Active Directory attributes reconnaissance (LDAP) (external ID 2210)\" alert may be able to detect this operation. There are statements in the documentation for the alert, such as: \"Active Directory LDAP reconnaissance is used by attackers to gain critical information about the domain environment. This information can help attackers map the domain structure ...\", that may indicate support for detecting this technique. The level of detection though is unknown and therefore a conservative assessment of a Minimal score is assigned."
+        }
+      ]
+    },
+    {
+      "Name": "System Network Connections Discovery",
+      "Id": "T1049",
+      "Tactics": [
+        "Discovery"
+      ],
+      "SubTechniques": [],
+      "Platforms": [
+        "IaaS",
+        "Linux",
+        "Network",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Adversaries may attempt to get a listing of network connections to or from the compromised system they are currently accessing or from remote systems by querying for information over the network.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1049/",
+      "Checks": [
+        "network_watcher_enabled"
+      ],
+      "Attributes": [
+        {
+          "AzureService": "Azure Sentinel",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "The Azure Sentinel Analytics \"Powershell Empire cmdlets seen in command line\" query can detect the use of Empire, which can enumerate the current network connections of a host, but does not address other procedures."
+        }
+      ]
+    },
+    {
+      "Name": "System Location Discovery",
+      "Id": "T1614",
+      "Tactics": [
+        "Discovery"
+      ],
+      "SubTechniques": [],
+      "Platforms": [
+        "IaaS",
+        "Linux",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Adversaries may gather information in an attempt to calculate the geographical location of a victim host. Adversaries may use the information from System Location Discovery during automated discovery to shape follow-on behaviors, including whether or not the adversary fully infects the target and/or attempts specific actions.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1614/",
+      "Checks": [],
+      "Attributes": []
+    },
+    {
+      "Name": "System Information Discovery",
+      "Id": "T1082",
+      "Tactics": [
+        "Discovery"
+      ],
+      "SubTechniques": [],
+      "Platforms": [
+        "IaaS",
+        "Linux",
+        "Network",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "An adversary may attempt to get detailed information about the operating system and hardware, including version, patches, hotfixes, service packs, and architecture. Adversaries may use the information from System Information Discovery during automated discovery to shape follow-on behaviors, including whether or not the adversary fully infects the target and/or attempts specific actions.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1082/",
+      "Checks": [],
+      "Attributes": [
+        {
+          "AzureService": "Azure Sentinel",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "The Azure Sentinel Analytics \"Powershell Empire cmdlets seen in command line\" query can detect the use of Empire, which can enumerate the current network connections of a host, but does not address other procedures."
+        },
+        {
+          "AzureService": "Azure Sentinel",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "This control may detect local reconnaissance activity specific to using the systeminfo commands. The following alerts may be generated: \"Detected possible local reconnaissance activity\"."
+        }
+      ]
+    },
+    {
+      "Name": "Software Discovery",
+      "Id": "T1518",
+      "Tactics": [
+        "Discovery"
+      ],
+      "SubTechniques": [
+        "T1518.001 - Security Software Discovery"
+      ],
+      "Platforms": [
+        "Azure AD",
+        "Google Workspace",
+        "IaaS",
+        "Linux",
+        "Office 365",
+        "SaaS",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Adversaries may attempt to get a listing of software and software versions that are installed on a system or in a cloud environment. Adversaries may use the information from Software Discovery during automated discovery to shape follow-on behaviors, including whether or not the adversary fully infects the target and/or attempts specific actions.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1518/",
+      "Checks": [],
+      "Attributes": [
+        {
+          "AzureService": "Azure Sentinel",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "This control can identify one of this technique's sub-techniques when executed via \"Powershell Empire cmdlets seen in command line\", but does not address other procedures."
+        }
+      ]
+    },
+    {
+      "Name": "Permission Groups Discovery",
+      "Id": "T1069",
+      "Tactics": [
+        "Discovery"
+      ],
+      "SubTechniques": [
+        "T1069.003 - Cloud Groups"
+      ],
+      "Platforms": [
+        "Azure AD",
+        "Containers",
+        "Google Workspace",
+        "IaaS",
+        "Linux",
+        "Office 365",
+        "SaaS",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Adversaries may attempt to discover group and permission settings. This information can help adversaries determine which user accounts and groups are available, the membership of users in particular groups, and which users and groups have elevated permissions.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1069/",
+      "Checks": [
+        "defender_ensure_defender_for_arm_is_on"
+      ],
+      "Attributes": [
+        {
+          "AzureService": "Azure Defender for Resource Manager",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "This control may alert on Azure domain cloud groups discovery activity but may not provide alerts for other account types or undocumented exploitation toolkits. Consequently, its Coverage score is Minimal resulting in an overall Minimal score."
+        },
+        {
+          "AzureService": "Azure Sentinel",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "This control provides minimal coverage for one of this technique's sub-techniques and only minimal coverage for its procedure examples, resulting in an overall score of Minimal."
+        },
+        {
+          "AzureService": "Microsoft Defender for Identity",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "This control provides significant detection for one of this technique's sub-techniques, while not providing any detection for the remaining, resulting in a Minimal score."
+        }
+      ]
+    }
+  ]
+}

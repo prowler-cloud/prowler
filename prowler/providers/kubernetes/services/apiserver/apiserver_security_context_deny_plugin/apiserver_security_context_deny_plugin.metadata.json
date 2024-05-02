@@ -14,7 +14,7 @@
   "Remediation": {
     "Code": {
       "CLI": "--enable-admission-plugins=...,SecurityContextDeny,...",
-      "NativeIaC": "https://docs.bridgecrew.io/docs/ensure-that-the-admission-control-plugin-securitycontextdeny-is-set-if-podsecuritypolicy-is-not-used",
+      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-admission-control-plugin-securitycontextdeny-is-set-if-podsecuritypolicy-is-not-used",
       "Other": "",
       "Terraform": ""
     },
