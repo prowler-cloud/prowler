@@ -35,7 +35,7 @@ class cognito_user_pool_self_registration_enabled(Check):
                         ):
                             if identity_pool.roles.authenticated:
                                 associated_identity_pools.append(
-                                    f"{identity_pool.name }({identity_pool.roles.authenticated})"
+                                    f"{identity_pool.name}({identity_pool.roles.authenticated})"
                                 )
                             else:
                                 associated_identity_pools.append(identity_pool.name)
