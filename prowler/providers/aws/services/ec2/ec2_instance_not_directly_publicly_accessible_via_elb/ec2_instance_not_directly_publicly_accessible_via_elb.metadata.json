@@ -1,0 +1,34 @@
+{
+  "Provider": "aws",
+  "CheckID": "ec2_instance_not_directly_publicly_accessible_via_elb",
+  "CheckTitle": "Check for EC2 instances behind internet facing classic load balancers.",
+  "CheckType": [
+    "Infrastructure Security"
+  ],
+  "ServiceName": "ec2",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "Severity": "medium",
+  "ResourceType": "AwsEc2Instance",
+  "Description": "Check for EC2 instances behind internet facing classic load balancers.",
+  "Risk": "Exposing an EC2 to a classic load balancer that is internet facing can lead to comprimisation",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Apply security groups to classic load balancers",
+      "Url": ""
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

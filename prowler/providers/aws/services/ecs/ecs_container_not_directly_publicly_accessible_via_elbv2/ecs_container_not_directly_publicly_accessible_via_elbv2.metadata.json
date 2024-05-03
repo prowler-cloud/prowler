@@ -1,0 +1,35 @@
+{
+    "Provider": "aws",
+    "CheckID": "ecs_container_not_directly_publicly_accessible_via_elbv2",
+    "CheckTitle": "Check for internet facing ALBs in front of a ECS container",
+    "CheckType": [
+      "Data Protection"
+    ],
+    "ServiceName": "ecs",
+    "SubServiceName": "",
+    "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+    "Severity": "critical",
+    "ResourceType": "AwsEcsService",
+    "Description": "Check if the load balancer in front of the ECS container is public, and if so, check if it has security groups to have a firewall",
+    "Risk": "Having your ECS containers public with no security groups are prone to be comprimised",
+    "RelatedUrl": "",
+    "Remediation": {
+      "Code": {
+        "CLI": "",
+        "NativeIaC": "",
+        "Other": "",
+        "Terraform": ""
+      },
+      "Recommendation": {
+        "Text": "Place security groups on your ECS containers",
+        "Url": ""
+      }
+    },
+    "Categories": [
+      "internet-facing"
+    ],
+    "DependsOn": [],
+    "RelatedTo": [],
+    "Notes": ""
+  }
+  

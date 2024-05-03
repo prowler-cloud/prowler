@@ -14,7 +14,9 @@ class ECS(AWSService):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
         self.task_definitions = []
+        self.containers = []
         self.__threading_call__(self.__list_task_definitions__)
+        self.__threading_call__(self.__describe_container_instances__)
         self.__describe_task_definition__()
 
     def __list_task_definitions__(self, regional_client):
@@ -72,6 +74,38 @@ class ECS(AWSService):
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def __describe_container_instances__(self, regional_client):
+        logger.info("ECS - Describing Container Instances...")
+        try:
+            for container in regional_client.describe_container_instances()["containerInstances"]:
+                if not self.audit_resources or (
+                    is_resource_filtered(container, self.audit_resources)
+                ):
+                    cont = Containers(
+                        arn=container['containerInstanceArn'],
+                        tags=container['tags'],
+                    )
+                    for attachment in container['attachments']:
+                        if attachment['type'] == 'ElasticNetworkInterface':
+                            for detail in attachment['details']:
+                                if detail['name'] == 'networkInterfaceId':
+                                    for eni in regional_client.describe_network_interfaces(NetworkInterfaceIds=detail['value'])["NetworkInterfaces"]:
+                                        cont.availability_zone = eni['AvailabilityZone']
+                                        for ipv6 in eni["Ipv6Addresses"]:
+                                            if ipv6['Primary']:
+                                                cont.ipv6 = ipv6['Ipv6Addresses']
+                                                break
+                                        for ipv4 in eni["PrivateIpAddresses"]:
+                                            if ipv4['Primary']:
+                                                cont.ipv4 = ipv4['PrivateIpAddress']
+                                                break
+
+                    self.containers.append(cont)
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
 
 class ContainerEnvVariable(BaseModel):
     name: str
@@ -86,3 +120,10 @@ class TaskDefinition(BaseModel):
     environment_variables: list[ContainerEnvVariable]
     tags: Optional[list] = []
     network_mode: Optional[str]
+
+class Containers(BaseModel):
+    arn: str
+    availability_zone: str
+    ipv6: Optional[str]
+    ipv4: Optional[str]
+    tags: Optional[list] = []
