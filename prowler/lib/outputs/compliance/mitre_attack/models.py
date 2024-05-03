@@ -54,8 +54,8 @@ class MitreAttackAzure(BaseModel):
     ResourceId: str
     CheckId: str
     Muted: bool
-      
-      
+
+
 class MitreAttackGCP(BaseModel):
     """
     MitreAttackGCP generates a finding's output in CSV MITRE ATTACK format for AWS.
