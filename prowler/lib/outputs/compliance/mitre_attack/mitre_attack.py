@@ -154,10 +154,9 @@ def get_mitre_attack_table(
             mitre_compliance_table["Status"].append(
                 f"{Fore.GREEN}PASS({tactics[tactic]['PASS']}){Style.RESET_ALL}"
             )
-        if tactics[tactic]["Muted"] > 0:
-            mitre_compliance_table["Muted"].append(
-                f"{orange_color}{tactics[tactic]['Muted']}{Style.RESET_ALL}"
-            )
+        mitre_compliance_table["Muted"].append(
+            f"{orange_color}{tactics[tactic]['Muted']}{Style.RESET_ALL}"
+        )
     if (
         len(fail_count) + len(pass_count) + len(muted_count) > 1
     ):  # If there are no resources, don't print the compliance table
