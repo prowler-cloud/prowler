@@ -18,7 +18,9 @@ class TestComputeService:
             "prowler.providers.gcp.lib.service.service.GCPService.__generate_client__",
             new=mock_api_client,
         ):
-            compute_client = Compute(set_mocked_gcp_audit_info([GCP_PROJECT_ID]))
+            compute_client = Compute(
+                set_mocked_gcp_audit_info(project_ids=[GCP_PROJECT_ID])
+            )
             assert compute_client.service == "compute"
             assert compute_client.project_ids == [GCP_PROJECT_ID]
 
