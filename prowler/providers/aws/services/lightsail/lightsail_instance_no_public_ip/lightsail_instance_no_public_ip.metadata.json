@@ -1,0 +1,34 @@
+{
+  "Provider": "aws",
+  "CheckID": "lightsail_instance_no_public_ip",
+  "CheckTitle": "Check if there are lightsail instances with a public IP.",
+  "CheckType": [
+    "Infrastructure Security"
+  ],
+  "ServiceName": "lightsail",
+  "SubServiceName": "instance",
+  "ResourceIdTemplate": "arn:partition:lightsail:region:account:Instance/instance-id",
+  "Severity": "high",
+  "ResourceType": "Instance",
+  "Description": "Checks whether the Lightsail instance has a public IP address.",
+  "Risk": "If a Lightsail instance has a public IP address, it can be accessed from the internet. This can expose the instance to security threats.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Remove the public IP address from the Lightsail instance.",
+      "Url": "https://docs.aws.amazon.com/lightsail/latest/userguide/how-to-create-amazon-lightsail-instance-virtual-private-server-vps.html"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
