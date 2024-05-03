@@ -5,7 +5,7 @@ from tests.providers.gcp.gcp_fixtures import (
     GCP_PROJECT_ID,
     mock_api_client,
     mock_is_api_active,
-    set_mocked_gcp_provider,
+    set_mocked_gcp_audit_info,
 )
 
 
@@ -18,7 +18,7 @@ class TestKMSService:
             "prowler.providers.gcp.lib.service.service.GCPService.__generate_client__",
             new=mock_api_client,
         ):
-            kms_client = KMS(set_mocked_gcp_provider(project_ids=[GCP_PROJECT_ID]))
+            kms_client = KMS(set_mocked_gcp_audit_info(project_ids=[GCP_PROJECT_ID]))
             assert kms_client.service == "cloudkms"
             assert kms_client.project_ids == [GCP_PROJECT_ID]
 

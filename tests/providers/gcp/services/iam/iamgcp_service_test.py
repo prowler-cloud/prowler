@@ -8,7 +8,7 @@ from tests.providers.gcp.gcp_fixtures import (
     GCP_PROJECT_ID,
     mock_api_client,
     mock_is_api_active,
-    set_mocked_gcp_provider,
+    set_mocked_gcp_audit_info,
 )
 
 
@@ -22,11 +22,11 @@ class TestIAMService:
             new=mock_api_client,
         ), patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
+            return_value=set_mocked_gcp_audit_info(),
         ):
             from prowler.providers.gcp.services.iam.iam_service import IAM
 
-            iam_client = IAM(set_mocked_gcp_provider(project_ids=[GCP_PROJECT_ID]))
+            iam_client = IAM(set_mocked_gcp_audit_info(project_ids=[GCP_PROJECT_ID]))
             assert iam_client.service == "iam"
             assert iam_client.project_ids == [GCP_PROJECT_ID]
 
@@ -84,12 +84,12 @@ class TestAccessApproval:
             new=mock_api_client,
         ), patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
+            return_value=set_mocked_gcp_audit_info(),
         ):
             from prowler.providers.gcp.services.iam.iam_service import AccessApproval
 
             access_approval_client = AccessApproval(
-                set_mocked_gcp_provider(project_ids=[GCP_PROJECT_ID])
+                set_mocked_gcp_audit_info(project_ids=[GCP_PROJECT_ID])
             )
 
             assert access_approval_client.service == "accessapproval"
@@ -115,17 +115,17 @@ class TestEssentialContacts:
             new=mock_api_client,
         ), patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
+            return_value=set_mocked_gcp_audit_info(),
         ), patch(  # Reinstancing the CloudResourceManager client to secure that is not instancied first by a test
             "prowler.providers.gcp.services.iam.iam_service.cloudresourcemanager_client",
             new=CloudResourceManager(
-                set_mocked_gcp_provider(),
+                set_mocked_gcp_audit_info(),
             ),
         ):
             from prowler.providers.gcp.services.iam.iam_service import EssentialContacts
 
             essential_contacts_client = EssentialContacts(
-                set_mocked_gcp_provider(project_ids=[GCP_PROJECT_ID])
+                set_mocked_gcp_audit_info(project_ids=[GCP_PROJECT_ID])
             )
 
             assert essential_contacts_client.service == "essentialcontacts"

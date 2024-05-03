@@ -1,25 +1,27 @@
 from uuid import uuid4
 
+from google.oauth2.credentials import Credentials
 from mock import MagicMock
 
-from prowler.providers.gcp.gcp_provider import GcpProvider
-from prowler.providers.gcp.models import GCPIdentityInfo
+from prowler.providers.gcp.lib.audit_info.models import GCP_Audit_Info
 
 GCP_PROJECT_ID = "123456789012"
 
 
-def set_mocked_gcp_provider(
-    project_ids: list[str] = [], profile: str = ""
-) -> GcpProvider:
-    provider = MagicMock()
-    provider.type = "gcp"
-    provider.session = None
-    provider.project_ids = project_ids
-    provider.identity = GCPIdentityInfo(
-        profile=profile,
+# Mocked Azure Audit Info
+def set_mocked_gcp_audit_info(
+    credentials: Credentials = None,
+    project_ids: list = [],
+    audit_config: dict = None,
+):
+    audit_info = GCP_Audit_Info(
+        credentials=credentials,
+        project_ids=project_ids,
+        audit_metadata=None,
+        audit_resources=None,
+        audit_config=audit_config,
     )
-
-    return provider
+    return audit_info
 
 
 def mock_api_client(GCPService, service, api_version, _):

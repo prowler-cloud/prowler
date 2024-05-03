@@ -4,7 +4,7 @@ from tests.providers.gcp.gcp_fixtures import (
     GCP_PROJECT_ID,
     mock_api_client,
     mock_is_api_active,
-    set_mocked_gcp_provider,
+    set_mocked_gcp_audit_info,
 )
 
 
@@ -18,7 +18,7 @@ class TestDataprocService:
             new=mock_api_client,
         ), patch(
             "prowler.providers.common.common.get_global_provider",
-            return_value=set_mocked_gcp_provider(),
+            return_value=set_mocked_gcp_audit_info(),
         ), patch(
             "prowler.providers.gcp.services.dataproc.dataproc_service.compute_client.regions",
             new=["europe-west1-b"],
@@ -28,7 +28,7 @@ class TestDataprocService:
             )
 
             dataproc_client = Dataproc(
-                set_mocked_gcp_provider(project_ids=[GCP_PROJECT_ID])
+                set_mocked_gcp_audit_info(project_ids=[GCP_PROJECT_ID])
             )
             assert dataproc_client.service == "dataproc"
 
