@@ -289,7 +289,7 @@ class Test_cloudtrail_logs_s3_bucket_is_not_publicly_accessible:
         from prowler.providers.aws.services.s3.s3_service import S3
 
         with mock.patch(
-            "prowler.providers.common.common.get_global_provider",
+            "prowler.providers.aws.lib.audit_info.audit_info.current_audit_info",
             return_value=set_mocked_aws_audit_info(
                 [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
             ),
